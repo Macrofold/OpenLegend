@@ -25,7 +25,9 @@ pub(crate) enum CommandOperationError {
     Occurrence(crate::events::OccurrenceError),
 }
 impl From<crate::events::OccurrenceError> for CommandOperationError {
-    fn from(error: crate::events::OccurrenceError)->Self { Self::Occurrence(error) }
+    fn from(error: crate::events::OccurrenceError) -> Self {
+        Self::Occurrence(error)
+    }
 }
 impl From<ExecutionError> for CommandOperationError {
     fn from(error: ExecutionError) -> Self {

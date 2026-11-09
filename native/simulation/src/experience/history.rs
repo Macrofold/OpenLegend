@@ -277,7 +277,9 @@ pub(crate) fn capture_history_input(
         max_guards
             .checked_mul(size_of::<ByteReservation>())
             .ok_or_else(capacity)?,
-        max_guards.checked_mul(size_of::<Arc<crate::host::SharedMemoryPin>>()).ok_or_else(capacity)?,
+        max_guards
+            .checked_mul(size_of::<Arc<crate::host::SharedMemoryPin>>())
+            .ok_or_else(capacity)?,
         max_subjects
             .checked_mul(size_of::<Subject>())
             .ok_or_else(capacity)?,
@@ -301,7 +303,7 @@ pub(crate) fn capture_history_input(
     let skeleton = reserve(budget, Some(skeleton))?;
     let mut reservations = Vec::new();
     let mut pins = Vec::new();
-    pins.try_reserve_exact(max_guards).map_err(|_|capacity())?;
+    pins.try_reserve_exact(max_guards).map_err(|_| capacity())?;
     reservations
         .try_reserve_exact(max_guards)
         .map_err(|_| capacity())?;
@@ -323,7 +325,7 @@ pub(crate) fn capture_history_input(
     for placed in history.appended() {
         let original = placed.event();
         let event = original.event();
-        pins.push(original.capture_pin(budget).map_err(|_|capacity())?);
+        pins.push(original.capture_pin(budget).map_err(|_| capacity())?);
         changed.push(Original(Arc::clone(original)));
         reservations.push(reserve(
             budget,

@@ -814,13 +814,6 @@ export function captureSituation(
     bodyReads,
   );
   const phaseCut = captureEvidenceCut(world, actorId, { acquired: geometry.observations });
-  const cut = { ...phaseCut, current: [] as CapturedCurrentFacet[] };
-  const visualTracks = new Map(
-    [...scene.bodies].flatMap(([id, body]) => {
-      const track = receivedTrack(current, id, body.track);
-      return track ? [[id, track] as const] : [];
-    }),
-  );
   const bodyBindings = new Map(
     [...scene.bodies.keys()].flatMap((id) => {
       const grant = currentBodyGrant(world, actorId, id, bodyReads);
@@ -843,6 +836,109 @@ export function captureSituation(
           },
         ] as const,
       ];
+    }),
+  );
+  const prepared = captureSituationFromRead(
+    {
+      worldId: world.id,
+      at: world.simTime,
+      actorId,
+      jobId,
+      policy,
+      scene,
+      frame,
+      geometry,
+      entries,
+      candidates,
+      current,
+      phaseCut,
+      bodyBindings,
+      activeCues: currentAttentionCues(world, actorId),
+      relationBodyClear: selectedAttentionPolicy(world).relation.body.clear,
+      receiptPrefix: captureTemporalReceiptPrefix(world, actorId),
+      historyMaxAgeSeconds: selectedTemporalPolicy(world).recent.maxAgeSeconds,
+      privacyRevision: world.experience?.privacyRevisions?.[actorId] ?? 0,
+      entityHandle: (id) => entityHandle(world, actorId, id),
+      observationKey: (observation, ordinal) => observationFactKey(world, observation, ordinal),
+      presentation: (values) => captureExperienceContext(world, actorId, frame, values),
+      attentionPresentation: (keys) => captureAttentionPresentation(world, actorId, keys),
+    },
+    retainedHistory,
+    representedObservations,
+  );
+  return {
+    ...prepared,
+    valid: validSituationCut.bind(undefined, prepared.cut, prepared.receiptDetails),
+  };
+}
+
+/** Semantic owners supply one actual scoped cut. This interface contains no
+ * WorldState or resolver for arbitrary actors; model presentation and alias
+ * selection stay shared between Source and the native read producer. */
+export interface SituationRead {
+  readonly worldId: string;
+  readonly at: number;
+  readonly actorId: string;
+  readonly jobId: string;
+  readonly policy: ReturnType<typeof selectedAttentionPolicy>['scene'];
+  readonly scene: ReturnType<typeof receivedScene>;
+  readonly frame: ModelSpatialFrame;
+  readonly geometry: ReturnType<typeof currentReceivedGeometry>;
+  readonly entries: ReturnType<typeof currentDetailedAttention>;
+  readonly candidates: ReturnType<typeof attentionCandidates>;
+  readonly current: ReturnType<typeof captureCurrentSources>;
+  readonly phaseCut: ReturnType<typeof captureEvidenceCut>;
+  readonly bodyBindings: Map<
+    string,
+    {
+      handle: string;
+      leaseId: string;
+      subject?: ObserverSubject;
+      episode?: string;
+    }
+  >;
+  readonly activeCues: ReturnType<typeof currentAttentionCues>;
+  readonly relationBodyClear: number;
+  readonly receiptPrefix: TemporalReceiptPrefix;
+  readonly historyMaxAgeSeconds: number;
+  readonly privacyRevision: number;
+  readonly entityHandle: (id: string) => string;
+  readonly observationKey: (
+    observation: ObservationContribution,
+    ordinal: number,
+  ) => ObservationFactKey;
+  readonly presentation: (values: readonly unknown[]) => CapturedExperienceContext;
+  readonly attentionPresentation: (
+    keys: Parameters<typeof captureAttentionPresentation>[2],
+  ) => ReturnType<typeof captureAttentionPresentation>;
+}
+
+/** Build the actual received-situation packet from already acquired facts.
+ * The native caller retains its source guards and issues the resulting aliases
+ * through its opaque ticket; formatting does not grant physical permissions. */
+export function captureSituationFromRead(
+  read: SituationRead,
+  retainedHistory: TemporalHistorySelection,
+  representedObservations: readonly ObservationContribution[] = [],
+) {
+  const {
+    actorId,
+    jobId,
+    policy,
+    scene,
+    frame,
+    geometry,
+    entries,
+    candidates,
+    current,
+    bodyBindings,
+  } = read;
+  const scope = { id: read.worldId };
+  const cut = { ...read.phaseCut, current: [] as CapturedCurrentFacet[] };
+  const visualTracks = new Map(
+    [...scene.bodies].flatMap(([id, body]) => {
+      const track = receivedTrack(current, id, body.track);
+      return track ? [[id, track] as const] : [];
     }),
   );
   const candidateTracks = new Map(
@@ -920,8 +1016,8 @@ export function captureSituation(
     for (const track of tracks.values()) selectTrack({ sourceId, ...track });
   const trackReference = (track: SituationCurrentTrack) =>
     sameCurrentTrack(track, visualTracks.get(track.sourceId))
-      ? entityHandle(world, actorId, track.sourceId)
-      : permittedSourceHandle(world, actorId, ['received-track', currentTrackKey(track)]);
+      ? read.entityHandle(track.sourceId)
+      : permittedSourceHandle(scope, actorId, ['received-track', currentTrackKey(track)]);
   const referenceByEntry = new Map(
     [...candidateTracks].map(([key, track]) => [key, trackReference(track)]),
   );
@@ -930,7 +1026,7 @@ export function captureSituation(
   );
   const subjectReferences = new Map(
     [...visualTracks].map(([id, track]) => [
-      entityHandle(world, actorId, id),
+      read.entityHandle(id),
       receivedTrackKey(track.exposure, track.channel),
     ]),
   );
@@ -947,7 +1043,7 @@ export function captureSituation(
       return reference ? [[reference, entry] as const] : [];
     }),
   );
-  const presentation = captureExperienceContext(world, actorId, frame, [
+  const presentation = read.presentation([
     cut,
     retainedHistory,
     representedObservations,
@@ -961,7 +1057,7 @@ export function captureSituation(
   // they need no duplicate history row, but retain their supplied source grant.
   const observationReferences: Record<string, ObservationContribution> = Object.fromEntries(
     representedObservations.map((observation) => [
-      evidenceSourceHandle(world, actorId, observationFactKey(world, observation, 0).source),
+      evidenceSourceHandle(scope, actorId, read.observationKey(observation, 0).source),
       observation,
     ]),
   );
@@ -974,30 +1070,29 @@ export function captureSituation(
   );
   for (const observation of staticObservations) {
     if (staticRows.length >= policy.staticRows) break;
-    const row = observationForModel(world, actorId, observation, frame),
+    const row = observationForModel(presentation, actorId, observation, frame),
       size = Buffer.byteLength(JSON.stringify(row));
     if (staticBytes + size > policy.staticBytes) continue;
     staticRows.push(row);
     staticBytes += size;
     observationReferences[row.source] = observation;
     for (const facet of row.facets)
-      suppliedFacts.set(canonicalJson(observationFactKey(world, observation, facet.ordinal)), {
+      suppliedFacts.set(canonicalJson(read.observationKey(observation, facet.ordinal)), {
         source: row.source,
         ordinal: facet.ordinal,
         encodedValue: canonicalJson(facet.value),
       });
   }
-  const receiptPrefix = captureTemporalReceiptPrefix(world, actorId);
+  const receiptPrefix = read.receiptPrefix;
   const representedFacts = new Map(
     representedObservations.flatMap((observation) =>
       observation.facets.map(
-        (facet) =>
-          [canonicalJson(observationFactKey(world, observation, facet.ordinal)), facet] as const,
+        (facet) => [canonicalJson(read.observationKey(observation, facet.ordinal)), facet] as const,
       ),
     ),
   );
   const boundedHistory = boundedTemporalHistoryForModel(
-    world,
+    presentation,
     actorId,
     unrepresentedSituationHistory(retainedHistory, receiptPrefix, representedFacts),
     policy.historyBytes,
@@ -1005,23 +1100,21 @@ export function captureSituation(
     suppliedFacts,
   );
   const history = boundedHistory.selection;
-  const references = new Map(
-    [...scene.bodies.keys()].map((id) => [entityHandle(world, actorId, id), id]),
-  );
+  const references = new Map([...scene.bodies.keys()].map((id) => [read.entityHandle(id), id]));
   let cover = scene.index.cover(
     policy.maxRows - policy.staticRows - policy.discoveryRows,
     policy.nodeVisits,
   );
   const regions = new Map(
     cover.rows.map((row) => [
-      permittedSourceHandle(world, actorId, ['region', jobId, row.key]),
+      permittedSourceHandle(scope, actorId, ['region', jobId, row.key]),
       row.key,
     ]),
   );
   const { frames, indexed: indexedFrame, compact: compactFrames } = modelFrameTable();
   const allCurrentReferences: Record<string, CapturedCurrentFacet> = {};
-  const activeCues = currentAttentionCues(world, actorId);
-  const cueAnchors = new Set(activeCues.map((cue) => entityHandle(world, actorId, cue.sourceId)));
+  const activeCues = read.activeCues;
+  const cueAnchors = new Set(activeCues.map((cue) => read.entityHandle(cue.sourceId)));
   const prioritizedDetails = new Set([
     ...cueAnchors,
     ...entries
@@ -1068,7 +1161,7 @@ export function captureSituation(
           {
             reference,
             subject: receivedSubjectHandle(
-              world,
+              presentation,
               actorId,
               receivedTrackKey(track.exposure, track.channel),
             ),
@@ -1109,7 +1202,7 @@ export function captureSituation(
   );
   const retentionReferences: Record<string, TemporalReceiptLocator> = {};
   const receiptDetails: NonNullable<SituationProposalBinding['receiptDetails']> = {};
-  const historyMaxAgeSeconds = selectedTemporalPolicy(world).recent.maxAgeSeconds;
+  const historyMaxAgeSeconds = read.historyMaxAgeSeconds;
   const bindHistory = bindSituationHistory.bind(
     undefined,
     presentation,
@@ -1136,12 +1229,7 @@ export function captureSituation(
       policy.perAnchorVisits,
       Math.floor((policy.initialVisits - initialVisits) / (entries.length - index)),
     );
-    const nearby = receivedNear(
-      scene,
-      anchor,
-      selectedAttentionPolicy(world).relation.body.clear,
-      Math.floor(allowance / 2),
-    );
+    const nearby = receivedNear(scene, anchor, read.relationBodyClear, Math.floor(allowance / 2));
     initialVisits += nearby.visited;
     const bodies = nearby.values
       .map(
@@ -1149,7 +1237,7 @@ export function captureSituation(
           body,
         ): { reference: string } & ReturnType<typeof receivedSeparation> &
           ReturnType<typeof readableMeasurement> => ({
-          reference: entityHandle(world, actorId, body.sourceId),
+          reference: read.entityHandle(body.sourceId),
           ...receivedSeparation(anchor, body),
         }),
       )
@@ -1165,7 +1253,7 @@ export function captureSituation(
           boundary,
         }): { reference: string } & ReturnType<typeof receivedBoundarySeparation> &
           ReturnType<typeof readableMeasurement> => ({
-          reference: evidenceSourceHandle(world, actorId, {
+          reference: evidenceSourceHandle(scope, actorId, {
             family: 'native-exposure',
             observer: observation.observer,
             id: observation.id,
@@ -1181,7 +1269,7 @@ export function captureSituation(
       .slice(0, 2);
     return [
       {
-        anchor: entityHandle(world, actorId, entry.sourceId),
+        anchor: read.entityHandle(entry.sourceId),
         bodies,
         boundaries: edges,
         coverage:
@@ -1194,7 +1282,7 @@ export function captureSituation(
     ];
   });
   const packet = {
-    measuredAt: world.simTime,
+    measuredAt: read.at,
     historyEncoding: RECEIVED_HISTORY_INSTRUCTIONS,
     frames,
     frameEncoding:
@@ -1203,7 +1291,7 @@ export function captureSituation(
       'Relation lower/upper conservatively bound body separation or boundary clearance in metres. Positive decreaseLower is the minimum supported decrease between measured endpoints, not a continuous path, speed or intent. dropLower is the minimum received vertical drop beyond the observed boundary; it proves neither crossing nor danger. Partial coverage is not absence.',
     units: { space: 'metres', time: 'simulation-seconds', frame: 'decision-relative' },
     broad: cover.rows.map((row) => ({
-      reference: permittedSourceHandle(world, actorId, ['region', jobId, row.key]),
+      reference: permittedSourceHandle(scope, actorId, ['region', jobId, row.key]),
       count: row.count,
       bounds: modelSpatialBounds(frame, row.bounds),
       detail: 'unexpanded',
@@ -1259,7 +1347,7 @@ export function captureSituation(
   ) {
     cover = scene.index.cover(rows, policy.nodeVisits);
     packet.broad = cover.rows.map((row) => ({
-      reference: permittedSourceHandle(world, actorId, ['region', jobId, row.key]),
+      reference: permittedSourceHandle(scope, actorId, ['region', jobId, row.key]),
       count: row.count,
       bounds: modelSpatialBounds(frame, row.bounds),
       detail: 'unexpanded',
@@ -1356,7 +1444,7 @@ export function captureSituation(
     for (const edge of relation.boundaries) {
       const observation = boundaries.find(
         ({ observation }) =>
-          evidenceSourceHandle(world, actorId, {
+          evidenceSourceHandle(scope, actorId, {
             family: 'native-exposure',
             observer: observation.observer,
             id: observation.id,
@@ -1367,10 +1455,10 @@ export function captureSituation(
     }
   regions.clear();
   for (const row of cover.rows)
-    regions.set(permittedSourceHandle(world, actorId, ['region', jobId, row.key]), row.key);
+    regions.set(permittedSourceHandle(scope, actorId, ['region', jobId, row.key]), row.key);
   packet.coverage.broadRows = cover.rows.length;
   packet.coverage.hierarchyVisits = cover.visited;
-  const presented = captureAttentionPresentation(world, actorId, presentedKeys);
+  const presented = read.attentionPresentation(presentedKeys);
   const currentReferences = Object.fromEntries(
     [...packet.detailed, ...packet.discovery].flatMap((row) =>
       row.facts.facts.map(
@@ -1392,13 +1480,13 @@ export function captureSituation(
     handles: new Map([...references].map(([handle, id]) => [id, handle])),
   });
   const allPresented = new Map(
-    captureAttentionPresentation(world, actorId, Object.values(allAttentionReferences)).map(
-      (entry) => [entry.key, entry],
-    ),
+    read
+      .attentionPresentation(Object.values(allAttentionReferences))
+      .map((entry) => [entry.key, entry]),
   );
   return {
     presentation,
-    at: world.simTime,
+    at: read.at,
     bodyBindings,
     allPresented,
     frame,
@@ -1411,7 +1499,7 @@ export function captureSituation(
     cut,
     frames,
     compactFrames,
-    privacyRevision: world.experience?.privacyRevisions?.[actorId] ?? 0,
+    privacyRevision: read.privacyRevision,
     scene,
     geometry,
     policy,
@@ -1431,13 +1519,12 @@ export function captureSituation(
     allAttentionReferences,
     allCurrentReferences,
     currentReferences,
-    valid: validSituationCut.bind(undefined, cut, receiptDetails),
   };
 }
 /** Complete asynchronous history preparation without replacing the original
  * current cut, scene, attention allocation, frame or source prefix. */
 export function completeSituationHistory(
-  captured: ReturnType<typeof captureSituation>,
+  captured: CapturedSituation,
   retainedHistory: TemporalHistorySelection,
   represented: readonly {
     observation: ObservationContribution;
@@ -1471,7 +1558,7 @@ export function completeSituationHistory(
   return captured;
 }
 
-export type CapturedSituation = ReturnType<typeof captureSituation>;
+export type CapturedSituation = ReturnType<typeof captureSituationFromRead>;
 export interface SituationHistoryPage extends TemporalHistoryPage {
   presentation?: CapturedExperienceContext;
 }

@@ -23,7 +23,9 @@ pub(super) struct ResponseDigest {
     _reservation: ByteReservation,
 }
 impl ResponseDigest {
-    pub(super) fn into_parts(self)->(String,ByteReservation){(self.body,self._reservation)}
+    pub(super) fn into_parts(self) -> (String, ByteReservation) {
+        (self.body, self._reservation)
+    }
 }
 impl ResponseDigestRequest {
     pub(super) fn prepare<T: Serialize>(

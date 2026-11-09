@@ -11,7 +11,7 @@ use crate::state::{Entity, EntityStore, WorkState, WorldHeader};
 use crate::values::{NativeValueWindow, deserialize_safe_integer};
 use crate::work::{WorkBook, WorkPolicy};
 use indexmap::IndexMap;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
 use serde_json::{Map, Value};
 use std::sync::Arc;
@@ -103,7 +103,7 @@ pub(crate) struct NativeDefinitionInputs {
     #[serde(deserialize_with = "crate::values::deserialize_nullable")]
     pub body_policy: Option<DefinitionInput>,
 }
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct MovementSettings {
     pub skin: f64,
@@ -116,7 +116,7 @@ pub(crate) struct MovementSettings {
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub max_replans: u64,
 }
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct SpatialSettings {
     pub epsilon: f64,
@@ -139,7 +139,7 @@ pub(crate) struct ResponseSettings {
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub maximum_candidates: u64,
 }
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct PersonalEvidencePreparationSettings {
     #[serde(deserialize_with = "deserialize_safe_integer")]
@@ -428,6 +428,7 @@ pub(crate) fn install_physical(
     import: &mut RowImport,
     root: PhysicalRoot,
     installed: &PhysicalDefinitions<'_>,
+    budget: &crate::host::ByteBudget,
 ) -> Result<PhysicalInstallation, InstallError> {
     let PhysicalRoot {
         header,
@@ -537,7 +538,8 @@ pub(crate) fn install_physical(
         .map_err(|_| InstallError::CurrentFormat)?;
     }
     let coaching = super::ClosedCoachingState::install(import, &mut children)?;
-    let bodies = crate::movement::BodyIndex::install(&entities);
+    let bodies = crate::movement::BodyIndex::install(&entities, budget)
+        .map_err(|_| InstallError::Capacity)?;
     Ok(PhysicalInstallation {
         state: PhysicalState {
             actor_only_families: ActorOnlyPhysicalFamilies { _private: () },

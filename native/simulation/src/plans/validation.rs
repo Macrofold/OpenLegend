@@ -42,7 +42,11 @@ pub(crate) fn valid_command(
                     .as_ref()
                     .is_none_or(|v| acoustics.volume(v).is_some())
         }
-        NativeCommand::Cancel { .. } => false,
+        NativeCommand::Cancel { .. }
+        | NativeCommand::Follow { .. }
+        | NativeCommand::Strike { .. }
+        | NativeCommand::InspectInventory { .. }
+        | NativeCommand::InspectActivities { .. } => false,
     }
 }
 fn valid_evidence(value: Option<&ResultEvidence>, actor: &str) -> bool {

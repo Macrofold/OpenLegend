@@ -22,6 +22,7 @@ use crate::host::{ByteBudget, ByteReservation};
 use crate::narration::{Narration, NarrationPart, PersonRole};
 use crate::state::{Action, NavigationPending, SurfacePoint};
 use crate::work::{MeterToken, WorkUnit};
+mod discovery;
 
 pub(crate) struct NativeMovementInput {
     pub binding: crate::native_response::NativeLocomotion,
@@ -87,6 +88,9 @@ enum Phase {
     ImmediateResult,
     Tail,
     Conditions,
+    DiscoverySight,
+    DiscoveryReach,
+    DiscoveryRoute,
     Done,
 }
 enum PersonalTask {
@@ -116,6 +120,8 @@ pub(crate) struct CommandCursor {
     exposure: Option<super::exposure::CommandExposure>,
     options: CommandOptions,
     preparation_mode: Option<super::WorkTransitionMode>,
+    discovery_approaching: bool,
+    discovery_starts_work: bool,
     phase: Phase,
     queries: Option<GeometryQueries>,
     binding: GeometryBinding,
@@ -191,6 +197,8 @@ impl CommandCursor {
             exposure: None,
             options,
             preparation_mode: None,
+            discovery_approaching: false,
+            discovery_starts_work: false,
             phase: Phase::Start,
             queries: None,
             binding,
@@ -305,10 +313,11 @@ impl CommandCursor {
         view: &mut ActivityView,
         ordinary: &crate::worlds::InstalledOrdinaryActionRules,
     ) -> Result<(), ExecutionError> {
-        if self
-            .action
-            .as_ref()
-            .is_some_and(|action| action.stage == "approaching")
+        if self.discovery_approaching
+            || self
+                .action
+                .as_ref()
+                .is_some_and(|action| action.stage == "approaching")
         {
             self.reserve(
                 crate::activity::approach_view_bytes(
@@ -325,6 +334,25 @@ impl CommandCursor {
             );
         }
         Ok(())
+    }
+    fn take_prepared_view(
+        &mut self,
+        ordinary: &crate::worlds::InstalledOrdinaryActionRules,
+    ) -> Result<(ActivityView, ByteReservation), ExecutionError> {
+        let mut view = self.view.take().ok_or(ExecutionError::Invariant)?;
+        let mut storage = self
+            .view_reservation
+            .take()
+            .ok_or(ExecutionError::Invariant)?;
+        self.prepare_view(&mut view, ordinary)?;
+        let actual = view.heap_bytes().ok_or(ExecutionError::Capacity)?;
+        if actual > storage.bytes() {
+            // prepare_view already funded the added approach facts. Move that
+            // same custody with the enriched view into its canonical owner.
+            storage.merge(self._reservation.split_off(actual - storage.bytes())?)?;
+        }
+        storage.resize(actual)?;
+        Ok((view, storage))
     }
     fn reserve(&mut self, bytes: usize) -> Result<(), ExecutionError> {
         self._reservation.resize(
@@ -501,6 +529,13 @@ impl CommandCursor {
                         }
                     }
                     CommandAnswer::Geometry(mut answer) => {
+                        if matches!(
+                            self.phase,
+                            Phase::DiscoverySight | Phase::DiscoveryReach | Phase::DiscoveryRoute
+                        ) {
+                            self.finish_discovery_geometry(core, answer)?;
+                            return self.drive(core, None);
+                        }
                         if matches!(self.phase, Phase::StatusSight) {
                             let sight = self
                                 .sight
@@ -767,6 +802,15 @@ impl CommandCursor {
                         self.phase = Phase::Done;
                         continue;
                     }
+                    if self.command.discovery_only() {
+                        if self.preparation_mode.is_none() {
+                            return Err(ExecutionError::UnsupportedFamily);
+                        }
+                        if self.start_discovery(core)? {
+                            return Ok(Progress::Geometry);
+                        }
+                        continue;
+                    }
                     match &self.command {
                         NativeCommand::Move { destination, .. } => {
                             if ![destination.x, destination.y, destination.z]
@@ -824,6 +868,12 @@ impl CommandCursor {
                                 continue;
                             }
                             self.phase = Phase::Interrupt;
+                        }
+                        NativeCommand::Follow { .. }
+                        | NativeCommand::Strike { .. }
+                        | NativeCommand::InspectInventory { .. }
+                        | NativeCommand::InspectActivities { .. } => {
+                            return Err(ExecutionError::Invariant);
                         }
                         NativeCommand::StatusEffect { .. } => self.phase = Phase::Deactivate,
                         NativeCommand::Say { .. } => self.phase = Phase::Speech,
@@ -1024,7 +1074,7 @@ impl CommandCursor {
                 }
                 Phase::Choice => {
                     if self.preparation_mode == Some(super::WorkTransitionMode::Continue)
-                        && self.action.is_some()
+                        && (self.action.is_some() || self.discovery_starts_work)
                     {
                         let message = "Starting this activity requires choosing how to replace or pause the current work.";
                         self.reserve(message.len() + "work-transition".len())?;
@@ -1035,16 +1085,7 @@ impl CommandCursor {
                     if self.needs_display(core)? {
                         return Ok(Progress::Display);
                     }
-                    let mut view = self.view.take().ok_or(ExecutionError::Invariant)?;
-                    let mut storage = self
-                        .view_reservation
-                        .take()
-                        .ok_or(ExecutionError::Invariant)?;
-                    self.prepare_view(&mut view, ordinary)?;
-                    let actual = view.heap_bytes().ok_or(ExecutionError::Capacity)?;
-                    if actual > storage.bytes() {
-                        storage.merge(self._reservation.split_off(actual - storage.bytes())?)?;
-                    }
+                    let (view, storage) = self.take_prepared_view(ordinary)?;
                     let problem = crate::activity::check_activity_start(
                         &core.state.activity,
                         &core.state.physical.entities,
@@ -1079,12 +1120,7 @@ impl CommandCursor {
                         return Ok(Progress::Display);
                     }
                     if !self.options.native_controller {
-                        let mut view = self.view.take().ok_or(ExecutionError::Invariant)?;
-                        let view_guard = self
-                            .view_reservation
-                            .take()
-                            .ok_or(ExecutionError::Invariant)?;
-                        self.prepare_view(&mut view, ordinary)?;
+                        let (view, view_guard) = self.take_prepared_view(ordinary)?;
                         let id = core
                             .journal
                             .activity
@@ -1878,7 +1914,12 @@ impl CommandCursor {
                         &self.budget,
                     )?));
                 }
-                Phase::Support | Phase::Probe | Phase::StatusSight => {
+                Phase::Support
+                | Phase::Probe
+                | Phase::StatusSight
+                | Phase::DiscoverySight
+                | Phase::DiscoveryReach
+                | Phase::DiscoveryRoute => {
                     return Ok(Progress::Geometry);
                 }
             }
@@ -1971,8 +2012,12 @@ fn actor_problem(
     if native && (actor.controller != "native" || entity.animal.is_none()) {
         return Ok(Some(ordinary.unsupported_controller.outcome(false)));
     }
-    if !matches!(command, NativeCommand::Cancel { .. })
-        && entity.has_memory()
+    if !matches!(
+        command,
+        NativeCommand::Cancel { .. }
+            | NativeCommand::InspectInventory { .. }
+            | NativeCommand::InspectActivities { .. }
+    ) && entity.has_memory()
         && core.state.activity.header.admitted >= core.state.activity.limits.retained_records
     {
         return Ok(Some(ordinary.experience_capacity.outcome(false)));

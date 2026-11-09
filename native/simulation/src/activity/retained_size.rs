@@ -151,6 +151,26 @@ impl HeapBytes for NativeCommand {
                 envelope,
                 expected_action_id,
             } => heap_sum([envelope.heap_bytes()?, expected_action_id.heap_bytes()?]),
+            Self::Follow {
+                envelope,
+                target_id,
+                ..
+            } => heap_sum([envelope.heap_bytes()?, target_id.heap_bytes()?]),
+            Self::Strike {
+                envelope,
+                target_id,
+                definition_id,
+                weapon_item_id,
+                ..
+            } => heap_sum([
+                envelope.heap_bytes()?,
+                target_id.heap_bytes()?,
+                definition_id.heap_bytes()?,
+                weapon_item_id.heap_bytes()?,
+            ]),
+            Self::InspectInventory { envelope } | Self::InspectActivities { envelope, .. } => {
+                envelope.heap_bytes()
+            }
         }
     }
 }

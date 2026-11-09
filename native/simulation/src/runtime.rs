@@ -15,10 +15,15 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 static NEXT_GENERATION: AtomicU64 = AtomicU64::new(1);
 mod handoff;
+mod input;
+mod npc;
 mod player;
+mod privacy;
+mod read_cut;
 pub use handoff::RuntimeOutputHandoff;
 mod consumer;
 pub use consumer::RuntimeConsumer;
+pub use npc::RuntimeNpcRead;
 pub use player::{RuntimePlayerPublication, RuntimePlayerRead};
 
 #[derive(Debug)]
@@ -79,6 +84,26 @@ pub struct RuntimeJson {
     handoff: Option<RuntimeOutputHandoff>,
 }
 impl RuntimeJson {
+    /// Join already encoded semantic-owner products without constructing a
+    /// second mutable graph. The final allocation is admitted before copying.
+    fn join(parts: &[&[u8]], budget: &ByteBudget) -> Result<Self, RuntimeError> {
+        let length = parts
+            .iter()
+            .try_fold(0usize, |n, part| n.checked_add(part.len()))
+            .ok_or_else(|| failure("capacity"))?;
+        let mut custody = budget.reserve(length).map_err(failure)?;
+        let mut bytes = Vec::new();
+        bytes.try_reserve_exact(length).map_err(failure)?;
+        for part in parts {
+            bytes.extend_from_slice(part);
+        }
+        custody.resize(bytes.capacity()).map_err(failure)?;
+        Ok(Self {
+            bytes,
+            custody,
+            handoff: None,
+        })
+    }
     /// Reserve decoded consumer custody before Node copies/parses these exact
     /// selected bytes. Buffer finalization has a separate ownership lifetime.
     pub fn consumer(&self, budget: &ByteBudget) -> Result<RuntimeConsumer, RuntimeError> {
@@ -205,7 +230,7 @@ impl NativeWorldSession {
         let budget = budget.for_world();
         // Parsed rows coexist with the caller's input and consuming installers.
         // This is transient preparation, not a canonical-world size policy.
-        let _decode = decode_preparation(bytes, &budget)?;
+        let _decode = input::prepare_installation(bytes, &budget)?;
         let input: Installation = serde_json::from_slice(bytes).map_err(failure)?;
         let pending_save_budget = budget.pending_save(input.storage.pending_save_bytes);
         let temporal_save_limits = crate::received::TemporalSaveLimits {
@@ -278,6 +303,19 @@ impl NativeWorldSession {
             &self.session.current_installation().map_err(failure)?,
             &self.budget,
         )
+    }
+    /// Immutable authored setup can be prepared before SQL adoption. It never
+    /// supplies an actor, current clock, private account or write capability.
+    pub fn definitions(&self) -> Result<RuntimeJson, RuntimeError> {
+        let simulation = self.session.accepted().map_err(failure)?;
+        let (json, custody) =
+            crate::capture::write_installed_definitions(&simulation.state.installed, &self.budget)
+                .map_err(failure)?;
+        Ok(RuntimeJson {
+            bytes: json.into_bytes(),
+            custody,
+            handoff: None,
+        })
     }
     pub fn world_id(&self) -> Result<&str, RuntimeError> {
         Ok(&self
@@ -394,7 +432,7 @@ impl NativeWorldSession {
                 RuntimeStep::Preview(RuntimeJson::encode(preview.outcome(), &self.budget)?)
             }
             SessionStep::Prepared(prepared) => {
-                let (operation, history, notices) =
+                let (operation, history, notices, records, progress) =
                     self.session.prepared_products(key).map_err(failure)?;
                 let output = (|| {
                     let handoff = RuntimeOutputHandoff::new(&self.budget)?;
@@ -403,6 +441,8 @@ impl NativeWorldSession {
                             operation,
                             history,
                             notices,
+                            records,
+                            progress,
                         },
                         &self.budget,
                     )?;
@@ -529,14 +569,19 @@ struct Products<'a> {
     operation: &'a CompletedOperation,
     history: &'a crate::experience::CapturedHistoryInput,
     notices: &'a crate::cognition::PreparedSemanticNotices,
+    records: &'a crate::records::ChangedRows,
+    progress: crate::simulation::session::PreparedReadProgress<'a>,
 }
 impl Serialize for Products<'_> {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(Some(4))?;
+        let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("outcome", self.operation.outcome())?;
         map.serialize_entry("events", &Events(self.operation))?;
         map.serialize_entry("history", &self.history.value())?;
         map.serialize_entry("notices", self.notices)?;
+        map.serialize_entry("records", self.records)?;
+        map.serialize_entry("progress", &self.progress)?;
+        privacy::serialize(self.operation, &mut map)?;
         map.end()
     }
 }

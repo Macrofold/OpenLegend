@@ -1,0 +1,117 @@
+import type {
+  NativeChangedRows,
+  NativeWorld,
+  NativeWorldTurn,
+} from '@open-legend/native-simulation';
+import type { Outcome, ExperiencePrivacy, WorkVector, WorldEvent } from '@open-legend/domain';
+import type { HostWork } from './host-work.js';
+import type { NativeGeometryProviders } from './native-geometry.js';
+import type { NativeHistoryInput } from './native-history.js';
+import type { NativeHistoryReadContext } from './native-providers.js';
+import { driveNativeOperation } from './native-providers.js';
+import { decodeNativeProduct, retainNativeSources } from './native-consumer.js';
+
+/** A finite proposed publication, never an accepted authority or client view.
+ * Every semantic owner's actual changed rows accompany its occurrence and
+ * private account products; consumers cannot request a shorter save pipeline. */
+export interface NativePublication {
+  readonly outcome: Outcome;
+  readonly events: readonly WorldEvent[];
+  readonly history: NativeHistoryInput;
+  readonly notices: {
+    readonly changes: readonly (
+      | { readonly kind: 'state'; readonly entityId: string; readonly field: 'appraisal' }
+      | { readonly kind: 'knowledge'; readonly actorId: string }
+    )[];
+    readonly conservative: boolean;
+    readonly appraisalRevision: number;
+  };
+  readonly records: NativeChangedRows;
+  readonly progress: {
+    readonly worldId: string;
+    readonly generation: string;
+    readonly baseCut: number;
+    readonly throughCut: number;
+    readonly identityThrough: number;
+    readonly at: number;
+    readonly sequence: number;
+    readonly paused: boolean;
+  };
+  readonly invalidatedMemoryIds?: Readonly<Record<string, readonly string[]>>;
+  readonly privacyChange?: {
+    readonly actorId: string;
+    readonly forgotten: ExperiencePrivacy['forgotten'][string];
+    readonly corrections: ExperiencePrivacy['corrections'][string];
+  };
+}
+
+export type NativeAcceptance<T> =
+  | { readonly accepted: true; readonly value: T }
+  | {
+      readonly accepted: false;
+    };
+
+/** The application prepares its complete immutable read/save consumers before
+ * Ready, then checks its actual authority/input epoch synchronously at settle.
+ * Provider/SQL waits retain no native compute job or publication lock. */
+export async function acceptNativeOperation<T extends object>(request: {
+  readonly world: NativeWorld;
+  readonly first: NativeWorldTurn;
+  readonly geometry: NativeGeometryProviders;
+  readonly work: HostWork;
+  readonly stage: (publication: NativePublication) => T;
+  readonly current: () => boolean;
+  readonly signal?: AbortSignal;
+  readonly history?: NativeHistoryReadContext;
+}): Promise<NativeAcceptance<T>> {
+  const { world, work, signal } = request;
+  const turn = await driveNativeOperation(
+    world,
+    request.first,
+    request.geometry,
+    signal,
+    request.history,
+  );
+  if (turn.kind !== 'prepared' || !turn.prepared)
+    throw new Error('Native acceptance requires a complete prepared operation.');
+  const prepared = turn.prepared;
+  let allocation: ReturnType<HostWork['reserveAllocation']> | undefined;
+  let ready = false;
+  let settled = false;
+  let accepted = false;
+  let completed = false;
+  try {
+    allocation = work.reserveAllocation(JSON.parse(prepared.allocation()) as WorkVector);
+    const publication = decodeNativeProduct<NativePublication>(prepared.takePublication());
+    // A failure in history/source projection or consumer admission still rolls
+    // back the genuine native checkpoint. No fallible staging follows accept.
+    const value = retainNativeSources(request.stage(publication), publication);
+    prepared.ready();
+    ready = true;
+    accepted = !signal?.aborted && request.current();
+    const actual = prepared.settle(accepted);
+    settled = true;
+    if (actual !== accepted) throw new Error('Native settlement returned a different decision.');
+    if ((await world.finishSettlement(turn.key)) !== accepted)
+      throw new Error('Native settlement completion returned a different decision.');
+    completed = true;
+    if (!accepted) {
+      allocation.rollback();
+      return { accepted: false };
+    }
+    allocation.commit();
+    return { accepted: true, value };
+  } catch (error) {
+    if (!settled) {
+      if (ready) {
+        prepared.settle(false);
+        if (await world.finishSettlement(turn.key))
+          throw new Error('Native rejection unexpectedly accepted an operation.', { cause: error });
+      } else await world.cancel(turn.key);
+      allocation?.rollback();
+    } else if (completed && !accepted) allocation?.rollback();
+    // An accepted candidate whose undo destruction failed keeps the pending
+    // maximum HostWork allocation. Its poisoned world must stop before release.
+    throw error;
+  }
+}

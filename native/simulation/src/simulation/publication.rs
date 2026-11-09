@@ -99,6 +99,12 @@ impl PreparedPublication {
     pub(crate) fn allocation(&self) -> WorkVector {
         self.allocation
     }
+    pub(crate) fn read_changes<'a>(
+        &self,
+        save: &'a SaveJournal,
+    ) -> Result<&'a crate::records::ChangedRows, PublicationError> {
+        save.prepared_changes(&self.append).map_err(Into::into)
+    }
     /// Check exact owners immediately before the separate host fence flips.
     /// There is no serialization, world traversal or capacity admission here.
     pub(crate) fn validate(

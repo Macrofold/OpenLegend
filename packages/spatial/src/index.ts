@@ -14,4 +14,4 @@ export {
   cylinderIntersects,
   type CollisionSolid,
 } from './body-query.js';
-export { findApproachRoute, relativeSurfacePoint } from './approach.js';
+export { findApproachRoute, headingFrame, relativeSurfacePoint } from './approach.js';

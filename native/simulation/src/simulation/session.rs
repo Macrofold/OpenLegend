@@ -30,6 +30,46 @@ pub(crate) struct CurrentInstallation<'a> {
     history_event_count: u64,
     memory_allowance: MemoryAllowance<'a>,
 }
+/// Finite progress beside one prepared delta. The application publishes these
+/// facts only after the same candidate is accepted; they are never a world.
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct PreparedReadProgress<'a> {
+    world_id: &'a str,
+    generation: &'a str,
+    base_cut: u64,
+    through_cut: u64,
+    identity_through: u64,
+    at: f64,
+    sequence: u64,
+    paused: bool,
+}
+
+pub(crate) struct CapturedActorReadCut<'a> {
+    state: &'a SimulationState,
+    actor: &'a str,
+    save: crate::records::save::SaveReadMetadata,
+    temporal: crate::records::EncodedRows,
+    history: crate::experience::CapturedHistoryCuts,
+}
+impl serde::Serialize for CapturedActorReadCut<'_> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeStruct;
+        let mut out = serializer.serialize_struct("ActorReadCut", 11)?;
+        out.serialize_field("worldId", &self.state.physical.header.id)?;
+        out.serialize_field("generation", &self.state.generation)?;
+        out.serialize_field("actorId", self.actor)?;
+        out.serialize_field("acceptedCut", &self.state.accepted_cut)?;
+        out.serialize_field("identityThrough", &self.state.physical.identity.next_id())?;
+        out.serialize_field("at", &self.state.physical.header.sim_time)?;
+        out.serialize_field("sequence", &self.state.physical.header.sequence)?;
+        out.serialize_field("paused", &self.state.physical.header.paused)?;
+        out.serialize_field("save", &self.save)?;
+        out.serialize_field("temporal", self.temporal.changes())?;
+        out.serialize_field("history", &self.history.value())?;
+        out.end()
+    }
+}
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 struct MemoryAllowance<'a> {
@@ -234,6 +274,57 @@ impl Session {
     pub(crate) fn current_installation(&self) -> Result<CurrentInstallation<'_>, SessionError> {
         CurrentInstallation::capture(&self.accepted()?.state)
     }
+    /// Capture the actor's real unsaved page representation before any private
+    /// writes. Pending non-temporal deltas/history already belong to the
+    /// application's pre-Ready immutable publication owner and are not copied
+    /// again for this read. Metadata binds that owner to this exact accepted cut.
+    pub(crate) fn read_cut<'a>(
+        &'a self,
+        actor: &'a str,
+        limits: TemporalSaveLimits,
+        budget: &ByteBudget,
+    ) -> Result<CapturedActorReadCut<'a>, SessionError> {
+        let state = &self.accepted()?.state;
+        if !state
+            .physical
+            .entities
+            .get(actor)
+            .is_some_and(|entity| entity.has_memory())
+            && state.temporal.actor(actor).is_none()
+            && state.experience.actor(actor).is_none()
+        {
+            return Err(ExecutionError::MissingActor.into());
+        }
+        let save = self.save.read_metadata()?;
+        if save.through_cut != state.accepted_cut {
+            return Err(ExecutionError::Invariant.into());
+        }
+        let temporal = crate::received::preview_temporal_rows(
+            &TemporalSaveCut {
+                world_id: &state.physical.header.id,
+                generation: &state.generation,
+                through_cut: state.accepted_cut,
+                identity_through: state.physical.identity.next_id(),
+                temporal: &state.temporal,
+            },
+            actor,
+            save.represented_before,
+            limits,
+            &state.installed.schema,
+            budget,
+        )
+        .map_err(SaveError::from)?;
+        let history =
+            crate::experience::capture_history_cuts(state, std::iter::once(actor), budget)
+                .map_err(ExecutionError::from)?;
+        Ok(CapturedActorReadCut {
+            state,
+            actor,
+            save,
+            temporal,
+            history,
+        })
+    }
     pub(crate) fn begin_advance(
         &mut self,
         seconds: f64,
@@ -330,6 +421,30 @@ impl Session {
             )
             .map_err(DriveError::from)?;
             OperationDriver::response(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    pub(crate) fn begin_forget(
+        &mut self,
+        actor: &str,
+        source: &str,
+        limits: crate::experience::HistoryEditLimits,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::experience::ForgetExperienceCursor::new(
+                &mut core,
+                actor,
+                source,
+                key,
+                limits,
+                &self.budget,
+            )?;
+            OperationDriver::forget(&mut core, cursor, &self.budget)
         })();
         self.install_driver(key, journal, driver, false)
     }
@@ -600,6 +715,8 @@ impl Session {
             &CompletedOperation,
             &CapturedHistoryInput,
             &crate::cognition::PreparedSemanticNotices,
+            &crate::records::ChangedRows,
+            PreparedReadProgress<'_>,
         ),
         SessionError,
     > {
@@ -609,7 +726,23 @@ impl Session {
         if prepared.key != key {
             return Err(FenceError::Stale.into());
         }
-        Ok((&prepared.result, &prepared.history, &prepared.notices))
+        let state = &self.simulation.state;
+        Ok((
+            &prepared.result,
+            &prepared.history,
+            &prepared.notices,
+            prepared.publication.read_changes(&self.save)?,
+            PreparedReadProgress {
+                world_id: &state.physical.header.id,
+                generation: &state.generation,
+                base_cut: key.base_cut,
+                through_cut: key.base_cut + 1,
+                identity_through: state.physical.identity.next_id(),
+                at: state.physical.header.sim_time,
+                sequence: state.physical.header.sequence,
+                paused: state.physical.header.paused,
+            },
+        ))
     }
     pub(crate) fn cancel(&mut self, key: CandidateKey) -> Result<(), SessionError> {
         if self.simulation.fence.phase() != CandidatePhase::Preparing {

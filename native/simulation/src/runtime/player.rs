@@ -167,21 +167,6 @@ impl RuntimePlayerRead {
             controls.as_bytes(),
             b"}",
         ];
-        let length = parts
-            .iter()
-            .try_fold(0usize, |n, part| n.checked_add(part.len()))
-            .ok_or_else(|| failure("capacity"))?;
-        let mut custody = budget.reserve(length).map_err(failure)?;
-        let mut bytes = Vec::new();
-        bytes.try_reserve_exact(length).map_err(failure)?;
-        for part in parts {
-            bytes.extend_from_slice(part);
-        }
-        custody.resize(bytes.capacity()).map_err(failure)?;
-        Ok(RuntimeJson {
-            bytes,
-            custody,
-            handoff: None,
-        })
+        RuntimeJson::join(&parts, budget)
     }
 }

@@ -6,7 +6,9 @@ use crate::host::CandidateKey;
 use crate::reception::BoundsQueryCursor;
 use crate::state::{BodyProfile, Bounds, NavigationRequest, Point, SurfacePoint};
 use crate::values::{deserialize_present_option, deserialize_safe_integer};
+mod residency;
 mod route;
+pub(crate) use residency::OwnedGeometry;
 pub(crate) use route::{GuardedRoutePlan, route_plan};
 
 use indexmap::IndexMap;

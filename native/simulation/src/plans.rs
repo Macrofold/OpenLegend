@@ -37,7 +37,7 @@ pub(crate) use goals::{GoalChange, GoalOperation, change_goal};
 pub(crate) use resume::{PlanResumeCursor, PlanResumeStep, ResumeMode};
 pub(crate) use validation::validate_installation;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct AgencyLimits {
     #[serde(deserialize_with = "deserialize_safe_integer")]

@@ -55,6 +55,12 @@ impl CommandExposure {
                 &envelope.actor_id
             }
             NativeCommand::Say { .. } => return Ok(None),
+            NativeCommand::Follow { .. }
+            | NativeCommand::Strike { .. }
+            | NativeCommand::InspectInventory { .. }
+            | NativeCommand::InspectActivities { .. } => {
+                return Err(ExecutionError::UnsupportedFamily);
+            }
         };
         if core.state.physical.entities.get(id).is_none() {
             return Ok(None);

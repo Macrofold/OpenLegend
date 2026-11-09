@@ -217,8 +217,14 @@ impl ByteBudget {
 
     /// Rollback restores an already allocated, still-funded before-image.
     /// Moving it back to canonical custody creates no new candidate workspace.
-    pub(crate) fn restore_backing(&self, backing: &mut super::resident::ResidentReservation, storage: ByteReservation) -> Result<(), CapacityError> {
-        if !self.owns(&storage) { return Err(CapacityError); }
+    pub(crate) fn restore_backing(
+        &self,
+        backing: &mut super::resident::ResidentReservation,
+        storage: ByteReservation,
+    ) -> Result<(), CapacityError> {
+        if !self.owns(&storage) {
+            return Err(CapacityError);
+        }
         let restored = self.resident().reserve(storage.bytes())?;
         backing.merge(restored)?;
         drop(storage);

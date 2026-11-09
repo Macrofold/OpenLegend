@@ -7,7 +7,7 @@ use crate::host::retained_size::map_storage;
 use crate::records::{RecordEncodingError, RecordLedger, RecordPlacement, RowEffects, RowEncoder};
 use indexmap::IndexSet;
 mod packing;
-pub(crate) use packing::{TemporalSaveLimits, pack_temporal_save};
+pub(crate) use packing::{TemporalSaveLimits, pack_temporal_save, preview_temporal_rows};
 
 fn error() -> RecordEncodingError {
     RecordEncodingError("Temporal save requires exact current row ownership and byte allowance.")

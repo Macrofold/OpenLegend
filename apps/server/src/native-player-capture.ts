@@ -1,10 +1,13 @@
 import type { NativeWorld, NativeWorldPlayerRead } from '@open-legend/native-simulation';
-import type { GameView } from '@open-legend/protocol';
 import type { RequestScope } from './authority.js';
 import type { NativeGeometryProviders } from './native-geometry.js';
 import type { NativePlayerRead } from './native-player-view.js';
 import { ViewChangedError } from './player-view-async.js';
-import { decodeNativeProduct, retainNativeSources } from './native-consumer.js';
+import {
+  decodeNativeProduct,
+  freezeNativeProduct,
+  retainNativeSources,
+} from './native-consumer.js';
 
 type PlayerPacket = Pick<NativePlayerRead, 'self' | 'perception' | 'events' | 'controls'>;
 
@@ -40,7 +43,7 @@ export class NativePlayerCapture {
         await read.finishControls(Buffer.from(JSON.stringify(answers)));
       }
       return new NativePlayerCapture(
-        decodeNativeProduct<PlayerPacket>(await read.packet()),
+        freezeNativeProduct(decodeNativeProduct<PlayerPacket>(await read.packet())),
         world,
         read,
       );
@@ -55,10 +58,10 @@ export class NativePlayerCapture {
    * neither a captured pause value nor a global world cut replaces that check. */
   async publishIfPermitted(
     selectedEventIds: readonly string[],
-    complete: (canUseInventory: boolean) => GameView,
+    complete: (canUseInventory: boolean, own: (bytes: Buffer) => Buffer) => Buffer,
     operational: () => { paused: boolean; controlling: boolean },
     operationalStillCurrent: () => boolean,
-  ): Promise<GameView> {
+  ): Promise<Buffer> {
     if (this.released) throw new ViewChangedError();
     const before = operational();
     const publication = await this.world.playerPublication(
@@ -76,7 +79,9 @@ export class NativePlayerCapture {
         !operationalStillCurrent()
       )
         throw new ViewChangedError();
-      return retainNativeSources(complete(publication.canUseInventory()), this.facts);
+      return complete(publication.canUseInventory(), (bytes) =>
+        retainNativeSources(bytes, this.facts),
+      );
     } finally {
       publication.release();
     }

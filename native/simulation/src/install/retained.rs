@@ -28,6 +28,9 @@ pub(crate) struct RetainedMap {
     next_ordinal: u64,
 }
 impl RetainedMap {
+    pub(crate) fn len(&self) -> usize {
+        self.rows.len()
+    }
     pub(crate) fn entries(&self) -> impl Iterator<Item = (&str, &str)> {
         self.rows
             .iter()
@@ -100,6 +103,7 @@ pub(crate) struct RetainedDefinitions {
     pub participation_policy: Option<RetainedOne>,
     pub participation_read: Option<ParticipationReadPolicy>,
     pub native_strikes: Option<RetainedMap>,
+    pub native_strike_read: IndexMap<String, crate::worlds::base_decision_offers::NativeStrikeRead>,
     pub native_foraging_profiles: Option<RetainedMap>,
     pub supply_opportunities: Option<RetainedMap>,
     pub food_preparations: RetainedMap,
@@ -279,6 +283,47 @@ pub(crate) fn install_retained(
         .transpose()
         .map_err(|_| InstallError::CurrentFormat)?
         .flatten();
+    let native_strikes = r.map(
+        "nativeStrikes",
+        "config_native_strikes",
+        input.native_strikes,
+    )?;
+    let count = native_strikes.as_ref().map_or(0, RetainedMap::len);
+    let typed_bound = native_strikes
+        .as_ref()
+        .into_iter()
+        .flat_map(RetainedMap::entries)
+        .try_fold(
+            crate::host::retained_size::map_storage::<
+                String,
+                crate::worlds::base_decision_offers::NativeStrikeRead,
+            >(count)
+            .ok_or(InstallError::Capacity)?,
+            |n, (key, body)| {
+                n.checked_add(
+                    crate::experience::encoded_body_bound(body)
+                        .map_err(|_| InstallError::Capacity)?,
+                )
+                .and_then(|n| n.checked_add(key.len()))
+                .ok_or(InstallError::Capacity)
+            },
+        )?;
+    let _typed_preparation = budget
+        .reserve(typed_bound)
+        .map_err(|_| InstallError::Capacity)?;
+    let mut native_strike_read = IndexMap::with_capacity(count);
+    for (key, body) in native_strikes
+        .as_ref()
+        .into_iter()
+        .flat_map(RetainedMap::entries)
+    {
+        let read: crate::worlds::base_decision_offers::NativeStrikeRead =
+            serde_json::from_str(body).map_err(|_| InstallError::CurrentFormat)?;
+        if !read.valid(key) {
+            return Err(InstallError::CurrentFormat);
+        }
+        native_strike_read.insert(key.to_owned(), read);
+    }
     let mut installed = RetainedDefinitions {
         _storage: None,
         knowledge_policy,
@@ -327,11 +372,8 @@ pub(crate) fn install_retained(
         )?,
         participation_policy,
         participation_read,
-        native_strikes: r.map(
-            "nativeStrikes",
-            "config_native_strikes",
-            input.native_strikes,
-        )?,
+        native_strikes,
+        native_strike_read,
         native_foraging_profiles: r.map(
             "nativeForagingProfiles",
             "config_native_foraging_profiles",

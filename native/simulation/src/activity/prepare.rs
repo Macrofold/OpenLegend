@@ -39,6 +39,9 @@ pub(super) fn start_record(
             resting_place_id,
             ..
         } => [Some(target_id.as_str()), resting_place_id.as_deref()],
+        NativeCommand::Follow { target_id, .. } | NativeCommand::Strike { target_id, .. } => {
+            [Some(target_id.as_str()), None]
+        }
         _ => [None, None],
     };
     let object_bytes = fields

@@ -17,6 +17,7 @@ pub(crate) struct CompletedForgetExperience {
     source: String,
     outcome: Outcome,
     invalidated: Option<CompletedPrivacyEdit>,
+    privacy: Option<PrivacyConstraintChange>,
     _storage: ByteReservation,
 }
 impl CompletedForgetExperience {
@@ -33,6 +34,80 @@ impl CompletedForgetExperience {
         self.invalidated
             .iter()
             .flat_map(CompletedPrivacyEdit::affected)
+    }
+    pub(crate) fn privacy_change(&self) -> Option<impl Serialize + '_> {
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Change<'a> {
+            actor_id: &'a str,
+            forgotten: &'a [String],
+            corrections: &'a IndexMap<String, String>,
+        }
+        self.privacy.as_ref().map(|value| Change {
+            actor_id: &self.actor,
+            forgotten: &value.forgotten,
+            corrections: &value.corrections,
+        })
+    }
+}
+struct PrivacyConstraintChange {
+    forgotten: Vec<String>,
+    corrections: IndexMap<String, String>,
+    _storage: ByteReservation,
+}
+impl PrivacyConstraintChange {
+    fn capture(
+        core: &CoreMutation<'_>,
+        actor: &str,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let privacy = &core
+            .state
+            .experience
+            .actor(actor)
+            .ok_or(ExecutionError::Invariant)?
+            .privacy;
+        let names = privacy
+            .forgotten
+            .iter()
+            .try_fold(0usize, |n, id| n.checked_add(id.len()))
+            .and_then(|n| {
+                privacy.corrections.iter().try_fold(n, |n, (id, value)| {
+                    n.checked_add(id.len())?.checked_add(value.len())
+                })
+            })
+            .ok_or(ExecutionError::Capacity)?;
+        let storage = budget.reserve(
+            heap_sum([
+                std::mem::size_of::<Self>(),
+                names,
+                privacy
+                    .forgotten
+                    .len()
+                    .checked_mul(std::mem::size_of::<String>())
+                    .ok_or(ExecutionError::Capacity)?,
+                crate::host::retained_size::map_storage::<String, String>(
+                    privacy.corrections.len(),
+                )
+                .ok_or(ExecutionError::Capacity)?,
+            ])
+            .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let mut forgotten = Vec::new();
+        forgotten
+            .try_reserve_exact(privacy.forgotten.len())
+            .map_err(|_| ExecutionError::Capacity)?;
+        forgotten.extend(privacy.forgotten.iter().cloned());
+        let corrections = privacy
+            .corrections
+            .iter()
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect();
+        Ok(Self {
+            forgotten,
+            corrections,
+            _storage: storage,
+        })
     }
 }
 pub(crate) struct ForgetExperienceCursor {
@@ -117,6 +192,7 @@ impl ForgetExperienceCursor {
         &mut self,
         accepted: bool,
         invalidated: Option<CompletedPrivacyEdit>,
+        privacy: Option<PrivacyConstraintChange>,
     ) -> Result<CompletedForgetExperience, ExecutionError> {
         let (refused, success) = self.outcomes.take().ok_or(ExecutionError::Invariant)?;
         self.done = true;
@@ -125,6 +201,7 @@ impl ForgetExperienceCursor {
             source: std::mem::take(&mut self.source),
             outcome: if accepted { success } else { refused },
             invalidated,
+            privacy,
             _storage: self.storage.take().ok_or(ExecutionError::Invariant)?,
         })
     }
@@ -164,7 +241,9 @@ impl ForgetExperienceCursor {
             let extra = match readiness {
                 Ok(ForgetReadiness::Refused) => {
                     self.abort(core)?;
-                    return Ok(ForgetExperienceStep::Complete(self.complete(false, None)?));
+                    return Ok(ForgetExperienceStep::Complete(
+                        self.complete(false, None, None)?,
+                    ));
                 }
                 Ok(ForgetReadiness::Ready(extra)) => extra,
                 Err(error) => {
@@ -278,14 +357,23 @@ impl ForgetExperienceCursor {
             self.abort(core)?;
             return Err(error.into());
         }
+        let privacy = match PrivacyConstraintChange::capture(core, &self.actor, budget) {
+            Ok(value) => value,
+            Err(error) => {
+                self.abort(core)?;
+                return Err(error.into());
+            }
+        };
         let checkpoint = self
             .checkpoint
             .take()
             .ok_or(ExecutionError::InvalidCheckpoint)?;
         core.journal.keep(core.state, checkpoint)?;
-        Ok(ForgetExperienceStep::Complete(
-            self.complete(true, Some(completed))?,
-        ))
+        Ok(ForgetExperienceStep::Complete(self.complete(
+            true,
+            Some(completed),
+            Some(privacy),
+        )?))
     }
 }
 enum ForgetReadiness {

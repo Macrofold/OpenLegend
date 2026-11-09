@@ -40,6 +40,7 @@ pub struct OccurrenceRules {
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ResponseRules {
+    pub offers: super::base_decision_offers::DecisionOfferRules,
     pub thought: ThoughtRule,
     pub interpretation: InterpretationRule,
     pub expression: ExpressionRules,

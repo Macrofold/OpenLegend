@@ -21,7 +21,7 @@ export * from './social-policy.js';
 export * from './ranged-policy.js';
 export * from './native-command-contracts.js';
 export * from './types.js';
-export { headingFrame } from './follow.js';
+export { headingFrame } from '@open-legend/spatial';
 export * from './perception-evidence.js';
 export { validateEvidenceSource } from './perception-values.js';
 export * from './received-values.js';
@@ -576,3 +576,7 @@ export { receivedBatchStorageBytes } from './temporal-frames.js';
 export { hasTemporalRecentIndividual } from './temporal-evidence.js';
 
 export { retainCapturedTemporalSupport } from './temporal-evidence.js';
+export {
+  decisionOfferDescription,
+  type DecisionOfferDescription,
+} from './worlds/base/decision-offers.js';

@@ -31,10 +31,10 @@ pub(crate) use warning::ordinary_warning;
 #[path = "recognition/prune.rs"]
 mod prune;
 pub(crate) use prune::{IndividualPruneMode, prune_observer_individuals};
-#[path = "recognition/validation.rs"]
-mod validation;
 #[path = "recognition/privacy.rs"]
 mod privacy;
+#[path = "recognition/validation.rs"]
+mod validation;
 pub(crate) use privacy::RecognitionPrivacyPreparation;
 pub(crate) use validation::validate_selected_identities;
 

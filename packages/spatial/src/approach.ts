@@ -111,6 +111,20 @@ export function findApproachRoute(
     : null;
 }
 
+/** Unit vectors in the right-handed, Y-up world frame for a heading measured from +Z
+ * toward +X: facing +Z puts the right hand at -X.
+ * docs/action-capabilities.md#102-entity-relative-navigation
+ */
+export function headingFrame(heading: number): {
+  forward: { x: number; z: number };
+  right: { x: number; z: number };
+} {
+  return {
+    forward: { x: Math.sin(heading), z: Math.cos(heading) },
+    right: { x: -Math.cos(heading), z: Math.sin(heading) },
+  };
+}
+
 /** Project an actor-relative offset only onto its supplied current support.
  * Uses the same JS trigonometry and arithmetic order as ordinary invocation. */
 export function relativeSurfacePoint(
@@ -120,8 +134,7 @@ export function relativeSurfacePoint(
   x: number,
   z: number,
 ): SurfacePoint | null {
-  const forward = { x: Math.sin(heading), z: Math.cos(heading) };
-  const right = { x: -Math.cos(heading), z: Math.sin(heading) };
+  const { forward, right } = headingFrame(heading);
   const px = from.x + right.x * x + forward.x * z;
   const pz = from.z + right.z * x + forward.z * z;
   const surface = surfaceById(map, from.surfaceId);

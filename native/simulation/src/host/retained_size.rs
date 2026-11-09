@@ -111,3 +111,32 @@ impl<T: HeapBytes + Eq + Hash> HeapBytes for IndexSet<T> {
             })
     }
 }
+
+/// Only immutable, freshly decoded serde_json values may use this walk. The
+/// pinned Map API hides capacity; fresh decoder growth is bounded by twice its
+/// live members plus the allocator minimum. An editable family must retain its
+/// own actual map backing owner instead of applying this after arbitrary edits.
+pub(crate) fn fresh_json_bytes(value: &serde_json::Value) -> Option<usize> {
+    match value {
+        serde_json::Value::Null | serde_json::Value::Bool(_) | serde_json::Value::Number(_) => {
+            Some(0)
+        }
+        serde_json::Value::String(value) => value.heap_bytes(),
+        serde_json::Value::Array(values) => values.iter().try_fold(
+            values
+                .capacity()
+                .checked_mul(size_of::<serde_json::Value>())?,
+            |sum, value| sum.checked_add(fresh_json_bytes(value)?),
+        ),
+        serde_json::Value::Object(values) => values.iter().try_fold(
+            map_storage::<String, serde_json::Value>(values.len().checked_mul(2)?.checked_add(4)?)?,
+            |sum, (key, value)| heap_sum([sum, key.capacity(), fresh_json_bytes(value)?]),
+        ),
+    }
+}
+impl HeapBytes for crate::state::UnconvertedField {
+    fn heap_bytes(&self) -> Option<usize> {
+        // Unconverted data is parsed once, inspected/refused, never edited.
+        fresh_json_bytes(&self.0)
+    }
+}

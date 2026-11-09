@@ -5,7 +5,6 @@
 use crate::activity::ActivityState;
 use crate::events::OccurrenceHistory;
 use crate::experience::ExperienceState;
-use crate::geometry::GeometryMap;
 use crate::host::CandidateFence;
 use crate::identity::IdentityState;
 use crate::install::VerifiedDefinition;
@@ -53,11 +52,11 @@ pub(crate) struct InstalledWorld {
     pub status_work: IndexMap<String, crate::status::CompiledStatusWork>,
     pub population_work: crate::status::StatusInstallationWork,
     pub status_rosters: crate::status::StatusRosters,
-    pub geometry: Arc<GeometryMap>,
+    pub geometry: Arc<crate::geometry::OwnedGeometry>,
     pub work_policy: Arc<InstalledWorkPolicy>,
     pub event_disclosure: VerifiedDefinition<crate::worlds::InstalledEventDisclosure>,
     pub attention: VerifiedDefinition<crate::attention::AttentionPolicy>,
-    pub cognition: Arc<crate::experience::CognitionPolicy>,
+    pub cognition: Arc<crate::experience::InstalledCognitionPolicy>,
     pub prepared_responses: VerifiedDefinition<crate::experience::PreparedResponseProfile>,
     pub name_rules: VerifiedDefinition<crate::worlds::InstalledPersonalNameRules>,
     pub recognition: VerifiedDefinition<crate::worlds::InstalledRecognitionPolicy>,

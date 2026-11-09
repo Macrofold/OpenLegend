@@ -7,6 +7,8 @@ use crate::status::StatusEffectPolicy;
 use crate::values::{DefinitionPin, deserialize_nullable, deserialize_safe_integer};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+mod custody;
+pub(crate) use custody::InstalledCognitionPolicy;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -106,8 +108,9 @@ pub(crate) fn install_cognition(
     present: bool,
     selected_prepared: Option<&VerifiedDefinition<PreparedResponseProfile>>,
     statuses: &StatusEffectPolicy,
-) -> Result<Arc<CognitionPolicy>, InstallError> {
-    let (row, policy) = crate::install::rows::take_one::<CognitionPolicy>(
+    budget: &crate::host::ByteBudget,
+) -> Result<Arc<InstalledCognitionPolicy>, InstallError> {
+    let row = crate::install::rows::take_one_row(
         import,
         "config_cognition",
         "[\"world\"]",
@@ -118,8 +121,7 @@ pub(crate) fn install_cognition(
     if !row.extra.is_empty() {
         return Err(InstallError::CurrentFormat);
     }
-    policy.validate(selected_prepared, statuses)?;
-    Ok(Arc::new(policy))
+    InstalledCognitionPolicy::parse(&row.payload, selected_prepared, statuses, budget)
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]

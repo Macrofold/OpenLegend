@@ -21,14 +21,24 @@ fn select(
     {
         return Ok(());
     }
-    let before = CurrentCohort::capture(
-        &core.state.physical,
-        &core.state.reception,
-        &core.state.installed,
-        &core.state.experience,
-        observer,
-        budget,
+    let entity = core
+        .state
+        .physical
+        .entities
+        .get(observer)
+        .ok_or(ExecutionError::MissingActor)?;
+    let _observer_copy = budget.reserve(observer.len())?;
+    let life = ObserverLife {
+        actor_id: observer.to_owned(),
+        physical_life: entity.physical_life().ok_or(ExecutionError::MissingActor)?,
+    };
+    // selectVisualAttention enters the same current reception owner even for
+    // an empty presentation. This advances the original phase, and one actual
+    // actor acquisition groups its terminal/admission writes before sealing.
+    let mut lifetime = super::super::current_lifetime::CurrentReceptionLifetime::begin(
+        core, &life, None, None, budget,
     )?;
+    lifetime.ensure_prefix(core, budget)?;
     core.sync_attention_changes()?;
     update_attention(
         &core.state.physical,
@@ -42,10 +52,11 @@ fn select(
             ..AttentionUpdate::default()
         },
     )?;
-    if let Some(before) = before {
+    if let Some(before) = lifetime.before.as_ref().map(std::sync::Arc::clone) {
         reconcile_current_cohort(core, before, None, budget)?;
     }
-    Ok(())
+    lifetime.reconciled = true;
+    lifetime.finish(core, budget)
 }
 pub(crate) fn set_attention_focus(
     core: &mut CoreMutation<'_>,

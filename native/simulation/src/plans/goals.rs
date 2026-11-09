@@ -5,7 +5,7 @@ use crate::execution::{CoreMutation, ExecutionError, PhysicalMutation};
 use crate::host::{ByteBudget, ByteReservation};
 use crate::state::{FundedGoals, Goal};
 use crate::text::JsText;
-use crate::values::is_safe_record_id;
+use crate::values::{is_safe_record_id, is_safe_record_text};
 use std::mem::size_of;
 
 #[derive(Clone, Copy, Deserialize)]
@@ -23,13 +23,13 @@ pub(crate) enum GoalOperation {
 pub(crate) struct GoalChange {
     pub operation: GoalOperation,
     #[serde(deserialize_with = "deserialize_nullable")]
-    pub goal_id: Option<String>,
+    pub goal_id: Option<JsText>,
     #[serde(deserialize_with = "crate::values::deserialize_nullable_safe_integer")]
     pub expected_revision: Option<u64>,
     #[serde(deserialize_with = "deserialize_nullable")]
     pub objective: Option<JsText>,
     #[serde(deserialize_with = "deserialize_nullable")]
-    pub parent_id: Option<String>,
+    pub parent_id: Option<JsText>,
 }
 fn terminal(goal: &Goal) -> bool {
     matches!(goal.status.as_str(), "completed" | "abandoned")
@@ -101,17 +101,17 @@ pub(crate) fn change_goal(
         || change
             .goal_id
             .as_ref()
-            .is_some_and(|id| !is_safe_record_id(id))
+            .is_some_and(|id| !is_safe_record_text(id))
         || change
             .parent_id
             .as_ref()
-            .is_some_and(|id| !is_safe_record_id(id))
+            .is_some_and(|id| !is_safe_record_text(id))
     {
         return reject("Invalid goal mutation identity or reference.");
     }
     let index = goals
         .iter()
-        .position(|goal| Some(&goal.id) == change.goal_id.as_ref());
+        .position(|goal| change.goal_id.as_ref().is_some_and(|id| id == &goal.id));
     let goal = index.map(|at| &goals[at]);
     if if create {
         change.goal_id.is_some() || change.expected_revision.is_some()
@@ -134,7 +134,7 @@ pub(crate) fn change_goal(
         if let Some(parent_id) = change.parent_id.as_ref().filter(|id| !id.is_empty()) {
             let Some(parent) = goals
                 .iter()
-                .find(|goal| &goal.id == parent_id)
+                .find(|goal| parent_id == &goal.id)
                 .filter(|goal| !terminal(goal))
             else {
                 return reject("Parent must be a current goal of this actor.");
@@ -262,7 +262,13 @@ pub(crate) fn change_goal(
                 .ok_or(ExecutionError::Invariant)?
                 .trimmed(),
             status: "active".into(),
-            parent_id: change.parent_id.clone(),
+            // A supplied reference can contain isolated UTF16 units. Only a
+            // reference that matched an actual retained parent reaches a write.
+            parent_id: change
+                .parent_id
+                .as_ref()
+                .and_then(|id| id.as_unicode())
+                .map(str::to_owned),
             author: author.into(),
             source_id: id.into(),
             completion: None,
@@ -278,7 +284,11 @@ pub(crate) fn change_goal(
                     .as_ref()
                     .ok_or(ExecutionError::Invariant)?
                     .trimmed();
-                goal.parent_id = change.parent_id.clone();
+                goal.parent_id = change
+                    .parent_id
+                    .as_ref()
+                    .and_then(|id| id.as_unicode())
+                    .map(str::to_owned);
             }
             GoalOperation::Pause => {
                 goal.status = "paused".into();

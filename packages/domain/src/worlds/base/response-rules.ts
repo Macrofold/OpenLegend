@@ -1,8 +1,10 @@
 import { BASE_MANUAL_WORK_BODY_PLANS } from './bodies.js';
+import { BASE_DECISION_OFFERS } from './decision-offers.js';
 
 /** The bundled world's gestures and private-thought presentation. The native
  * owner imports this same definition; the engine supplies structured grammar. */
 export const BASE_RESPONSE_RULES = {
+  offers: BASE_DECISION_OFFERS,
   thought: { source: 'self_thought', summaryPrefix: 'thought: ', importance: 5 },
   interpretation: { importance: 5 },
   expression: {

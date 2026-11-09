@@ -65,6 +65,22 @@ pub(crate) fn take_one<T: DeserializeOwned>(
     field: &str,
     expected_present: bool,
 ) -> Result<Option<(InstalledRow, T)>, InstallError> {
+    let Some(row) = take_one_row(import, table, parent, field, expected_present)? else {
+        return Ok(None);
+    };
+    let value = serde_json::from_str(&row.payload).map_err(|_| InstallError::CurrentFormat)?;
+    Ok(Some((row, value)))
+}
+
+/// Consume and validate the actual singleton before its family materializes a
+/// typed body. The decoder can now fund that construction from these bytes.
+pub(crate) fn take_one_row(
+    import: &mut RowImport,
+    table: &str,
+    parent: &str,
+    field: &str,
+    expected_present: bool,
+) -> Result<Option<InstalledRow>, InstallError> {
     let mut collection = take_collection(import, table, parent, expected_present, true)?;
     if !expected_present {
         return Ok(None);
@@ -84,8 +100,7 @@ pub(crate) fn take_one<T: DeserializeOwned>(
         field,
         collection.coverage.next_ordinal,
     )?;
-    let value = serde_json::from_str(&row.payload).map_err(|_| InstallError::CurrentFormat)?;
-    Ok(Some((row, value)))
+    Ok(Some(row))
 }
 
 pub(crate) fn validate_marker(row: &InstalledRow, shape: ChildShape) -> Result<(), InstallError> {

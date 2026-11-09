@@ -6,7 +6,7 @@ use crate::geometry::{GeometryAnswers, GeometryBinding, GeometryQueries};
 use crate::host::retained_size::HeapBytes;
 use crate::host::{ByteBudget, ByteReservation};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct InvocationLimits {
     pub offset: f64,

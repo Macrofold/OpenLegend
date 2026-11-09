@@ -293,6 +293,12 @@ impl ActivityOccurrence {
         {
             return Err(ActivityError::UnsupportedFamily);
         }
+        if matches!(
+            self.command,
+            NativeCommand::InspectInventory { .. } | NativeCommand::InspectActivities { .. }
+        ) {
+            return Err(ActivityError::InvalidStructure);
+        }
         if self.actor_id != actor_id
             || !is_safe_record_id(&self.id)
             || !is_safe_record_id(&self.action_id)
@@ -761,7 +767,9 @@ impl ActivityState {
             limits,
             display,
             metadata_bytes: 0,
-            metadata_storage: budget.reserve_backing(0).map_err(|_| ActivityError::Capacity)?,
+            metadata_storage: budget
+                .reserve_backing(0)
+                .map_err(|_| ActivityError::Capacity)?,
             budget: budget.clone(),
         };
         state.install_metadata()?;

@@ -21,7 +21,7 @@ use retained_size::{inner_contents_bytes, mind_contents_bytes, mind_parent_bytes
 mod save;
 pub(crate) use save::encode_cognition_changes;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct MindLimits {
     #[serde(deserialize_with = "deserialize_safe_integer")]

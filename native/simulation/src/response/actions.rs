@@ -761,21 +761,22 @@ pub(super) fn goal_ref(
     value: &SqlCell,
     dependencies: &[SqlCell],
     components: &IndexMap<String, Outcome>,
-) -> Option<Option<String>> {
+) -> Option<Option<JsText>> {
     if value.is_null() {
         return Some(None);
     }
-    let reference = value.as_str()?;
-    if let Some(alias) = reference.strip_prefix('$') {
+    let reference = value.as_text()?;
+    if reference.starts_with_str("$") {
+        let alias = reference.as_unicode()?.strip_prefix('$')?;
         if !dependencies.iter().any(|v| v.as_str() == Some(alias)) {
             return None;
         }
         return components
             .get(alias)
             .and_then(|o| o.goal_id.clone())
-            .map(Some);
+            .map(|id| Some(id.into()));
     }
-    Some(Some(reference.into()))
+    Some(Some(reference.clone()))
 }
 pub(super) fn prepare_plan(
     core: &CoreMutation<'_>,
@@ -913,7 +914,7 @@ pub(super) fn prepare_plan(
         &id,
         commands,
         mode,
-        goal,
+        goal.and_then(|id| id.as_unicode().map(str::to_owned)),
         data.get("expectedRevision").and_then(SqlCell::as_u64),
     )
 }

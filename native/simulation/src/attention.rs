@@ -41,7 +41,11 @@ pub(crate) struct AttentionPresentation {
     pub key: String,
     pub description_revision: String,
     pub change_revision: String,
-    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub point: Option<AttentionPoint>,
 }
 

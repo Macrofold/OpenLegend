@@ -100,7 +100,7 @@ impl PhysicalMutation<'_> {
             actor.alive = false;
             entity.spatial.local_avoidance_ready_at = None;
         }
-        self.state.bodies.refresh(&self.state.entities, id);
+        self.state.bodies.refresh(&self.state.entities, id)?;
         Ok(())
     }
     pub(crate) fn set_remains(
@@ -150,7 +150,7 @@ impl PhysicalMutation<'_> {
             .resolve_mut(handle)
             .ok_or(ExecutionError::Invariant)?
             .remains = after;
-        self.state.bodies.refresh(&self.state.entities, id);
+        self.state.bodies.refresh(&self.state.entities, id)?;
         Ok(())
     }
     pub(crate) fn separate_dead_body(
@@ -194,7 +194,7 @@ impl PhysicalMutation<'_> {
         actor.pending_death = Some(pending);
         actor.combat_ready_at = None;
         actor.evasion_ready_at = None;
-        self.state.bodies.refresh(&self.state.entities, id);
+        self.state.bodies.refresh(&self.state.entities, id)?;
         Ok(())
     }
     pub(crate) fn add_death_scar(&mut self, id: &str, scar: &str) -> Result<(), ExecutionError> {
@@ -311,9 +311,9 @@ impl PhysicalMutation<'_> {
             .entities
             .settle_store_memory(&mut self.journal.reservation, false)?;
         if renumbered {
-            self.state.bodies.refresh_ordering(&self.state.entities);
+            self.state.bodies.refresh_ordering(&self.state.entities)?;
         }
-        self.state.bodies.refresh(&self.state.entities, &id);
+        self.state.bodies.refresh(&self.state.entities, &id)?;
         self.journal.change(PhysicalChange::Membership {
             entity_id: id,
             before: None,

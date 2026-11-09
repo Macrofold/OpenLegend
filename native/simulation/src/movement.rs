@@ -6,6 +6,7 @@ use crate::state::{BodyProfile, Bounds, Entity, EntityHandle, EntityStore, Point
 use crate::status::StatusEffectPolicy;
 use std::collections::{BTreeMap, BTreeSet};
 mod advance;
+mod residency;
 pub(crate) use advance::{MoveAdvanceAnswer, MoveAdvanceCursor, MoveAdvanceStep};
 mod execution;
 pub(crate) use execution::{MotionOperation, MotionStep};
@@ -42,6 +43,9 @@ pub(crate) struct BodyIndex {
     points: BTreeMap<String, BodyPoint>,
     cells: BTreeMap<(i64, i64, i64), BTreeSet<String>>,
     extents: BTreeMap<u64, usize>,
+    strings: usize,
+    storage: crate::host::ResidentReservation,
+    budget: crate::host::ByteBudget,
 }
 fn cell(point: Point) -> (i64, i64, i64) {
     (
@@ -51,94 +55,6 @@ fn cell(point: Point) -> (i64, i64, i64) {
     )
 }
 impl BodyIndex {
-    pub(crate) fn refresh_ordering(&mut self, entities: &EntityStore) {
-        for (id, point) in &mut self.points {
-            if let Some(order) = entities.ordering(id) {
-                point.order.clear();
-                point.order.push_str(order);
-            }
-        }
-    }
-    pub(crate) fn install(entities: &EntityStore) -> Self {
-        let mut value = Self {
-            roots: BTreeSet::new(),
-            points: BTreeMap::new(),
-            cells: BTreeMap::new(),
-            extents: BTreeMap::new(),
-        };
-        for id in entities.ordered_ids() {
-            value.refresh(entities, id);
-        }
-        value
-    }
-    pub(crate) fn refresh(&mut self, entities: &EntityStore, id: &str) {
-        if entities.get(id).is_some_and(Entity::physical_root) {
-            if !self.roots.contains(id) {
-                self.roots.insert(id.to_owned());
-            }
-        } else {
-            self.roots.remove(id);
-        }
-        if let (Some(old), Some(entity)) = (self.points.get(id), entities.get(id)) {
-            let body = entity.body_profile();
-            let extent = (body.height + body.radius).max(2.0 * body.radius);
-            if entity.actor.is_some()
-                && entity.actively_participates()
-                && entity.world_position() == Some(old.position)
-                && extent == old.extent
-                && entities.handle(id) == Some(old.handle)
-                && entities.ordering(id) == Some(old.order.as_str())
-            {
-                return;
-            }
-        }
-        if let Some(old) = self.points.remove(id) {
-            let key = cell(old.position);
-            if let Some(ids) = self.cells.get_mut(&key) {
-                ids.remove(id);
-                if ids.is_empty() {
-                    self.cells.remove(&key);
-                }
-            }
-            if let Some(count) = self.extents.get_mut(&old.extent.to_bits()) {
-                *count -= 1;
-                if *count == 0 {
-                    self.extents.remove(&old.extent.to_bits());
-                }
-            }
-        }
-        let Some(entity) = entities.get(id) else {
-            return;
-        };
-        if entity.actor.is_none() || !entity.actively_participates() {
-            return;
-        }
-        let Some(position) = entity.world_position() else {
-            return;
-        };
-        let body = entity.body_profile();
-        let extent = (body.height + body.radius).max(2.0 * body.radius);
-        let Some(handle) = entities.handle(id) else {
-            return;
-        };
-        let Some(order) = entities.ordering(id) else {
-            return;
-        };
-        self.cells
-            .entry(cell(position))
-            .or_default()
-            .insert(id.to_owned());
-        *self.extents.entry(extent.to_bits()).or_default() += 1;
-        self.points.insert(
-            id.to_owned(),
-            BodyPoint {
-                handle,
-                position,
-                extent,
-                order: order.to_owned(),
-            },
-        );
-    }
     pub(crate) fn root_count(&self) -> u64 {
         self.roots.len() as u64
     }

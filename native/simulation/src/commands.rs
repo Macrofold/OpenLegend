@@ -124,6 +124,28 @@ pub(crate) enum NativeCommand {
         envelope: CommandEnvelope,
         expected_action_id: Option<String>,
     },
+    /// These current syntax families participate in genuine discovery and
+    /// record-size preparation. Their physical executors are outside the
+    /// selected installation, so ordinary execution refuses before effects.
+    Follow {
+        envelope: CommandEnvelope,
+        target_id: String,
+        distance: Option<f64>,
+    },
+    Strike {
+        envelope: CommandEnvelope,
+        target_id: String,
+        definition_id: String,
+        weapon_item_id: Option<String>,
+        auto_equip: Option<bool>,
+    },
+    InspectInventory {
+        envelope: CommandEnvelope,
+    },
+    InspectActivities {
+        envelope: CommandEnvelope,
+        history_after: i64,
+    },
 }
 
 macro_rules! optional {
@@ -137,7 +159,7 @@ macro_rules! optional {
         }
     }
 }
-optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:SurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String);
+optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:SurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,history_after:i64);
 
 impl<'de> Deserialize<'de> for NativeCommand {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
@@ -167,7 +189,12 @@ impl<'de> Deserialize<'de> for NativeCommand {
         {
             return Err(D::Error::custom("Invalid selected native command binding."));
         }
-        let extras_for_move = input.text.is_some()
+        let discovery_fields = input.distance.is_some()
+            || input.weapon_item_id.is_some()
+            || input.auto_equip.is_some()
+            || input.history_after.is_some();
+        let extras_for_move = discovery_fields
+            || input.text.is_some()
             || input.target_id.is_some()
             || input.target_role.is_some()
             || input.self_introduction.is_some()
@@ -178,20 +205,23 @@ impl<'de> Deserialize<'de> for NativeCommand {
             || input.resting_place_id.is_some()
             || input.resting_bay.is_some()
             || input.expected_action_id.is_some();
-        let extras_for_say = input.destination.is_some()
+        let extras_for_say = discovery_fields
+            || input.destination.is_some()
             || input.definition_id.is_some()
             || input.operation.is_some()
             || input.facing_heading.is_some()
             || input.resting_place_id.is_some()
             || input.resting_bay.is_some()
             || input.expected_action_id.is_some();
-        let extras_for_status = input.destination.is_some()
+        let extras_for_status = discovery_fields
+            || input.destination.is_some()
             || input.text.is_some()
             || input.target_role.is_some()
             || input.self_introduction.is_some()
             || input.volume.is_some()
             || input.expected_action_id.is_some();
-        let extras_for_cancel = input.destination.is_some()
+        let extras_for_cancel = discovery_fields
+            || input.destination.is_some()
             || input.text.is_some()
             || input.target_id.is_some()
             || input.target_role.is_some()
@@ -202,6 +232,16 @@ impl<'de> Deserialize<'de> for NativeCommand {
             || input.facing_heading.is_some()
             || input.resting_place_id.is_some()
             || input.resting_bay.is_some();
+        let discovery_extras = input.destination.is_some()
+            || input.text.is_some()
+            || input.target_role.is_some()
+            || input.self_introduction.is_some()
+            || input.volume.is_some()
+            || input.operation.is_some()
+            || input.facing_heading.is_some()
+            || input.resting_place_id.is_some()
+            || input.resting_bay.is_some()
+            || input.expected_action_id.is_some();
         let envelope = CommandEnvelope {
             encoding: CommandEncoding::decode(raw.get()).map_err(D::Error::custom)?,
             id: input.id,
@@ -248,6 +288,61 @@ impl<'de> Deserialize<'de> for NativeCommand {
                 envelope,
                 expected_action_id: input.expected_action_id,
             }),
+            "follow"
+                if !discovery_extras
+                    && input.definition_id.is_none()
+                    && input.weapon_item_id.is_none()
+                    && input.auto_equip.is_none()
+                    && input.history_after.is_none() =>
+            {
+                Ok(Self::Follow {
+                    envelope,
+                    target_id: input.target_id.ok_or_else(|| {
+                        D::Error::custom("Following requires its selected target.")
+                    })?,
+                    distance: input.distance,
+                })
+            }
+            "strike"
+                if !discovery_extras
+                    && input.distance.is_none()
+                    && input.history_after.is_none() =>
+            {
+                Ok(Self::Strike {
+                    envelope,
+                    target_id: input.target_id.ok_or_else(|| {
+                        D::Error::custom("A strike requires its selected target.")
+                    })?,
+                    definition_id: input.definition_id.ok_or_else(|| {
+                        D::Error::custom("A strike requires its selected definition.")
+                    })?,
+                    weapon_item_id: input.weapon_item_id,
+                    auto_equip: input.auto_equip,
+                })
+            }
+            "inspect-inventory"
+                if !discovery_extras
+                    && !discovery_fields
+                    && input.target_id.is_none()
+                    && input.definition_id.is_none() =>
+            {
+                Ok(Self::InspectInventory { envelope })
+            }
+            "inspect-activities"
+                if !discovery_extras
+                    && input.target_id.is_none()
+                    && input.definition_id.is_none()
+                    && input.distance.is_none()
+                    && input.weapon_item_id.is_none()
+                    && input.auto_equip.is_none() =>
+            {
+                Ok(Self::InspectActivities {
+                    envelope,
+                    history_after: input.history_after.ok_or_else(|| {
+                        D::Error::custom("Activity inspection requires its selected cursor.")
+                    })?,
+                })
+            }
             _ => Err(D::Error::custom(
                 "This native command family or parameter is not installed.",
             )),
@@ -268,7 +363,11 @@ impl NativeCommand {
             Self::Move { envelope, .. }
             | Self::Say { envelope, .. }
             | Self::StatusEffect { envelope, .. }
-            | Self::Cancel { envelope, .. } => envelope,
+            | Self::Cancel { envelope, .. }
+            | Self::Follow { envelope, .. }
+            | Self::Strike { envelope, .. }
+            | Self::InspectInventory { envelope }
+            | Self::InspectActivities { envelope, .. } => envelope,
         }
     }
     pub(crate) fn source_encoding(&self) -> &str {
@@ -282,7 +381,11 @@ impl NativeCommand {
             Self::Move { envelope, .. }
             | Self::Say { envelope, .. }
             | Self::StatusEffect { envelope, .. }
-            | Self::Cancel { envelope, .. } => envelope,
+            | Self::Cancel { envelope, .. }
+            | Self::Follow { envelope, .. }
+            | Self::Strike { envelope, .. }
+            | Self::InspectInventory { envelope }
+            | Self::InspectActivities { envelope, .. } => envelope,
         }
     }
     pub(crate) fn kind(&self) -> &'static str {
@@ -291,7 +394,20 @@ impl NativeCommand {
             Self::Say { .. } => "say",
             Self::StatusEffect { .. } => "status-effect",
             Self::Cancel { .. } => "cancel",
+            Self::Follow { .. } => "follow",
+            Self::Strike { .. } => "strike",
+            Self::InspectInventory { .. } => "inspect-inventory",
+            Self::InspectActivities { .. } => "inspect-activities",
         }
+    }
+    pub(crate) fn discovery_only(&self) -> bool {
+        matches!(
+            self,
+            Self::Follow { .. }
+                | Self::Strike { .. }
+                | Self::InspectInventory { .. }
+                | Self::InspectActivities { .. }
+        )
     }
     pub(crate) fn recorded(&self) -> Result<Self, serde_json::Error> {
         let mut value = self.clone();

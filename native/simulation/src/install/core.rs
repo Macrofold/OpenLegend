@@ -205,7 +205,9 @@ fn assemble_selected_core(
         work,
     )?;
     let map_present = child(&mut root.children, "map", true)?;
-    let geometry = Arc::new(install_geometry(&mut import, map_present)?);
+    let geometry =
+        crate::geometry::OwnedGeometry::new(install_geometry(&mut import, map_present)?, budget)
+            .map_err(|_| InstallError::Capacity)?;
     let social = install_social(
         &mut import,
         root.children.take("socialPolicy")?,
@@ -217,6 +219,7 @@ fn assemble_selected_core(
         child(&mut root.children, "cognitionPolicy", true)?,
         Some(&prepared),
         &meanings.status_policy,
+        budget,
     )?;
     let attention = selected::<crate::attention::AttentionPolicy>(attention)?;
     let account_rules = selected::<crate::worlds::InstalledAccountRules>(account_rules)?;
@@ -263,6 +266,7 @@ fn assemble_selected_core(
             epsilon: spatial.epsilon,
             population_work: &meanings.population_work,
         },
+        budget,
     )?;
     physical.entities.fund_installed_actions(budget)?;
     physical.entities.fund_installed_goals(budget)?;
@@ -270,6 +274,12 @@ fn assemble_selected_core(
     physical.entities.fund_entity_metadata(budget)?;
     content.fund(budget)?;
     let retained = install_retained(&mut import, &mut children, retained, &schema, budget)?;
+    crate::worlds::base_decision_offers::validate_strike_reads(
+        &retained.native_strike_read,
+        &meanings.response_profiles,
+        &physical.entities,
+        budget,
+    )?;
     super::physical::validate_physical_item_references(&physical, &retained)?;
     let installed = Arc::new(InstalledWorld {
         encounter_batch_entries,

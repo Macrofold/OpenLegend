@@ -400,6 +400,15 @@ pub fn is_safe_record_id(value: &str) -> bool {
         )
 }
 
+/// JavaScript record keys can contain isolated UTF16 units. Their identity is
+/// preserved even when no existing Unicode-backed native record can match it.
+pub(crate) fn is_safe_record_text(value: &crate::text::JsText) -> bool {
+    value.as_unicode().map_or_else(
+        || !value.trim_is_empty() && value.units_len() <= MAX_RECORD_ID_UNITS,
+        is_safe_record_id,
+    )
+}
+
 pub(crate) fn js_min(a: f64, b: f64) -> f64 {
     if a.is_nan() || b.is_nan() {
         f64::NAN

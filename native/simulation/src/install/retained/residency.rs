@@ -31,6 +31,7 @@ heap_record!(RetainedDefinitions {
     participation_policy,
     participation_read,
     native_strikes,
+    native_strike_read,
     native_foraging_profiles,
     supply_opportunities,
     food_preparations,

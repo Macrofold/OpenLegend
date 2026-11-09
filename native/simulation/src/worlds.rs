@@ -15,6 +15,9 @@ pub(crate) fn require_profile(
 #[path = "../../../packages/domain/src/worlds/base/native/recognition.rs"]
 pub mod base_recognition;
 
+#[path = "../../../packages/domain/src/worlds/base/native/decision_offers.rs"]
+pub(crate) mod base_decision_offers;
+
 #[path = "../../../packages/domain/src/worlds/base/native/observed.rs"]
 pub mod base_observed;
 
@@ -65,10 +68,10 @@ pub use base_event_disclosure::EventDisclosure as InstalledEventDisclosure;
 pub use base_knowledge::ObserverIdentity as InstalledObserverIdentity;
 pub use base_recognition::IndividualRecognition as InstalledIndividualRecognition;
 pub use base_recognition::RecognitionPolicy as InstalledRecognitionPolicy;
+pub(crate) use base_recognition::RecognitionPrivacyPreparation;
 pub use base_recognition::VoiceFeatures as InstalledVoiceFeatures;
 pub use base_recognition::WildernessEvidenceMeaning as InstalledEvidenceMeaning;
 pub(crate) use base_recognition::validate_selected_identities;
-pub(crate) use base_recognition::RecognitionPrivacyPreparation;
 pub(crate) use base_recognition::{
     BodyFamiliarityPreparation as InstalledBodyFamiliarityPreparation,
     RecognitionCheckpoint as InstalledRecognitionCheckpoint,
@@ -87,11 +90,11 @@ pub(crate) mod base_cognition;
 pub(crate) use base_cognition::OccurrenceRules as InstalledOccurrenceRules;
 
 pub use base_knowledge::PersonalNameRules as InstalledPersonalNameRules;
-pub(crate) use base_knowledge::{CommunicationSubject, RememberedCommunications};
 pub(crate) use base_knowledge::{
     CapturedNames, OwnedPersonalName, PersonalName as InstalledPersonalName,
     PersonalNameReader as InstalledPersonalNameReader,
 };
+pub(crate) use base_knowledge::{CommunicationSubject, RememberedCommunications};
 
 pub(crate) use base_recognition::{
     IndividualPruneMode, prune_observer_individuals as prune_selected_observer_individuals,

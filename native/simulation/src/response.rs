@@ -75,7 +75,7 @@ impl ComponentResult {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct ResponseLimits {
     pub invocation: crate::commands::InvocationLimits,

@@ -13,7 +13,10 @@ use openlegend_simulation::runtime::{
 };
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
+mod npc;
 mod player;
+mod privacy;
+mod read_cut;
 
 fn operation_error(error: impl std::fmt::Debug) -> napi::Error {
     failure(format!("{error:?}"))
@@ -444,6 +447,15 @@ impl NativeWorld {
 }
 #[napi]
 impl NativeWorld {
+    #[napi(ts_return_type = "Promise<NativeWorldJson>")]
+    pub fn definitions<'a>(&self, env: &'a Env) -> Result<Object<'a>> {
+        self.compute(env, |session, _cancel, budget| {
+            session
+                .definitions()
+                .map(|value| NativeWorldJson::new(value, budget.clone()))
+                .map_err(operation_error)
+        })
+    }
     #[napi(ts_return_type = "Promise<NativeWorldJson>")]
     pub fn installation<'a>(&self, env: &'a Env) -> Result<Object<'a>> {
         self.compute(env, |session, _cancel, budget| {

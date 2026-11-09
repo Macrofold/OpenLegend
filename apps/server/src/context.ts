@@ -1,4 +1,4 @@
-import { nativeText } from '@open-legend/domain';
+import { nativeText, decisionOfferDescription, selectedOccurrenceRules } from '@open-legend/domain';
 import { entityHandle, permittedSourceHandle } from './entity-references.js';
 import { memoryForModel, acceptedMindForModel, eventFieldsForModel } from './experience-context.js';
 import {
@@ -534,6 +534,7 @@ export function npcCandidates(
   // Explicit player-action callers share these native suggestions. Only implicit
   // resident selection may be absent; never substitute the controlled person.
   if (!actorId || !observed || !actor?.alive || actor.incapacitated || service.paused) return [];
+  const offerRules = selectedOccurrenceRules(service.world).response.offers;
   const craftCommand = prepareManufactureChoices(service.world, actorId);
   const personallyThreatened =
     Object.keys(actor.encounters?.unknown ?? {}).length > 0 ||
@@ -637,8 +638,7 @@ export function npcCandidates(
       : []),
     {
       id: 'inspect-inventory',
-      description:
-        'Inspect the first page of my own accessible possessions if the selected context omits needed information. This reads at most 16 possessions; it does not change them.',
+      ...decisionOfferDescription({ kind: 'inspection' }),
       command: { type: 'inspect-inventory' },
     },
     ...(cursor?.more && !cursor.containerId
@@ -695,17 +695,18 @@ export function npcCandidates(
       }),
     {
       id: 'continue',
-      description: actor.action
-        ? `Continue the ${actor.action.type} already in progress.`
-        : actor.agency.plan?.status === 'active' &&
-            (actor.agency.plan.activity ||
-              actor.agency.plan.steps.some(
-                (step) => step.status === 'queued' || step.status === 'running',
-              ))
-          ? // Between steps, continuation still advances chosen work; it is not idleness.
-            // docs/agent-agency.md#4-plans-preserve-continuity-without-prescribing-a-life
-            'Continue the remaining chosen work, including steps not yet started. Each step rechecks its prerequisites.'
-          : 'Remain in place while considering the next useful step.',
+      ...decisionOfferDescription({
+        kind: 'continuation',
+        actionType: actor.action?.type,
+        // Between steps, continuation includes chosen work not yet started.
+        planPending: !!(
+          actor.agency.plan?.status === 'active' &&
+          (actor.agency.plan.activity ||
+            actor.agency.plan.steps.some(
+              (step) => step.status === 'queued' || step.status === 'running',
+            ))
+        ),
+      }),
       command: null,
     },
   ];
@@ -833,7 +834,7 @@ export function npcCandidates(
     if (previewChoice(command).ok)
       actions.push({
         id: `follow:${target.id}`,
-        description: `Follow ${namePhrase(target, 'definite')} while visible; no stealth or automatic sunset stop.`,
+        ...decisionOfferDescription({ kind: 'follow', target }),
         command,
       });
   }
@@ -957,15 +958,10 @@ export function npcCandidates(
 
   if (visionRadius(service.world, observed.actor) === 0) {
     // Offer probes independently of hidden walkability; native admission supplies blocked feedback.
-    for (const [direction, dx, dz] of [
-      ['north', 0, -0.75],
-      ['east', 0.75, 0],
-      ['south', 0, 0.75],
-      ['west', -0.75, 0],
-    ] as const)
+    for (const { direction, dx, dz } of offerRules.probes)
       actions.push({
         id: `probe-${direction}`,
-        description: `Probe a short distance ${direction}.`,
+        ...decisionOfferDescription({ kind: 'probe', direction }),
         command: {
           type: 'move',
           position:
@@ -1020,8 +1016,16 @@ export function npcCandidates(
       actions.push({
         id: `approach:${entity.id}`,
         subjectIds: [entity.id],
-        firstActionDescription: `Move once near ${observerDescription(service.world, actorId, entity.id, 'definite')}'s observed position`,
-        description: `Move near the currently observed position of ${observerDescription(service.world, actorId, entity.id, 'definite')}, currently ${Math.hypot(worldPosition(observed.actor).x - worldPosition(entity).x, worldPosition(observed.actor).y - worldPosition(entity).y, worldPosition(observed.actor).z - worldPosition(entity).z).toFixed(1)} m away. Stop at the selected reachable place within ${SIMULATION_RULES.interactionRadius} m of that observed position; route length is not known. This moves to that location once; it does not follow later movement.`,
+        ...decisionOfferDescription({
+          kind: 'approach',
+          targetDescription: observerDescription(service.world, actorId, entity.id, 'definite'),
+          distance: Math.hypot(
+            worldPosition(observed.actor).x - worldPosition(entity).x,
+            worldPosition(observed.actor).y - worldPosition(entity).y,
+            worldPosition(observed.actor).z - worldPosition(entity).z,
+          ).toFixed(1),
+          reach: offerRules.interactionRadius,
+        }),
         command,
       });
   }
@@ -1204,7 +1208,7 @@ export function npcCandidates(
         const command: CommandInput = {
           type: 'strike',
           autoEquip: true,
-          ...(description ? { purpose: 'Hunt once' } : {}),
+          ...(description ? { purpose: offerRules.huntingPurpose } : {}),
           definitionId: definition.id,
           itemId: definition.weaponItemId,
           targetId: entity.id,
@@ -1357,6 +1361,7 @@ export function planningCandidates(
   observed = decisionObservation(service.world, actorId),
 ): CandidateAction[] {
   if (!observed || !supportsManualWork(observed.actor)) return [];
+  const offerRules = selectedOccurrenceRules(service.world).response.offers;
   const craftCommand = prepareManufactureChoices(service.world, actorId);
   const gatheringTools = carriedGatheringTools(observed);
   return describeTargets(service, actorId, [

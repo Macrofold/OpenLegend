@@ -10,12 +10,12 @@ use serde::{Deserialize, Serialize, Serializer};
 use std::mem::size_of;
 
 mod state;
-pub(crate) use state::{KnowledgeCheckpoint, KnowledgeJournal, KnowledgeState};
+pub(crate) use state::{KnowledgeCheckpoint, KnowledgeEntry, KnowledgeJournal, KnowledgeState};
 mod edit;
-mod save;
 mod revoke;
-pub(crate) use revoke::revoke_knowledge_documents;
+mod save;
 pub(crate) use edit::{CompletedKnowledgeEdit, KnowledgeEdit, edit_knowledge};
+pub(crate) use revoke::revoke_knowledge_documents;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

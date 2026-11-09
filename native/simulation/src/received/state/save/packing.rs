@@ -214,7 +214,7 @@ fn flush(
     world_id: &str,
     limits: TemporalSaveLimits,
     output: &mut RowEncoder<'_>,
-    saved: &mut Vec<Arc<TemporalPageRecord>>,
+    mut saved: Option<&mut Vec<Arc<TemporalPageRecord>>>,
     budget: &ByteBudget,
 ) -> Result<(), RecordEncodingError> {
     if pages.is_empty() {
@@ -292,7 +292,14 @@ fn flush(
         drop(id);
         drop(metadata);
         drop(_metadata);
-        flush(&pages[..middle], world_id, limits, output, saved, budget)?;
+        flush(
+            &pages[..middle],
+            world_id,
+            limits,
+            output,
+            saved.as_mut().map(|sink| &mut **sink),
+            budget,
+        )?;
         return flush(&pages[middle..], world_id, limits, output, saved, budget);
     }
     let _payload = budget
@@ -367,16 +374,60 @@ fn flush(
             ..RowEffects::default()
         },
     )?;
-    let mut batches = Vec::new();
-    batches
-        .try_reserve_exact(pages.len())
-        .map_err(|_| error())?;
-    batches.extend(pages.iter().map(|page| Arc::clone(page.batch())));
-    saved.push(Arc::new(
-        TemporalPageRecord::from_packed(&placement, payload, columns, batches, metadata, budget)
+    if let Some(saved) = saved {
+        let mut batches = Vec::new();
+        batches
+            .try_reserve_exact(pages.len())
+            .map_err(|_| error())?;
+        batches.extend(pages.iter().map(|page| Arc::clone(page.batch())));
+        saved.push(Arc::new(
+            TemporalPageRecord::from_packed(
+                &placement, payload, columns, batches, metadata, budget,
+            )
             .map_err(|_| error())?,
-    ));
+        ));
+    }
     Ok(())
+}
+
+fn pending_count<'a>(
+    mut actors: impl Iterator<Item = &'a TemporalActorHistory>,
+) -> Result<usize, RecordEncodingError> {
+    actors.try_fold(0usize, |count, actor| {
+        count
+            .checked_add(actor.pending_pages.len())
+            .ok_or_else(error)
+    })
+}
+
+/// The immutable read overlay uses exactly the save packer's physical IDs and
+/// bytes. Capture it at the protected accepted cut before any private mutation:
+/// a later frontier cannot reconstruct the earlier cut's eligible batches.
+/// `represented_before` excludes the fixed in-flight prefix when present, or
+/// the durable prefix otherwise. The caller retains both prefixes and these
+/// rows for the complete read lifetime; previewing never changes page custody.
+pub(crate) fn preview_temporal_rows(
+    cut: &crate::records::save::TemporalSaveCut<'_>,
+    actor_id: &str,
+    represented_before: u64,
+    limits: TemporalSaveLimits,
+    schema: &RecordSchema,
+    budget: &ByteBudget,
+) -> Result<EncodedRows, RecordEncodingError> {
+    // The temporal actor directory is installed as complete. A missing owner
+    // therefore has no pending batches; historical page residency is separate.
+    let actors = cut.temporal.actors.get(actor_id).into_iter();
+    let count = pending_count(actors.clone())?;
+    pack_rows(
+        cut.world_id,
+        actors,
+        count,
+        Some(represented_before),
+        limits,
+        schema,
+        None,
+        budget,
+    )
 }
 
 /// This read is performed synchronously at the accepted cut before handing the
@@ -389,18 +440,50 @@ pub(crate) fn pack_temporal_save(
     schema: &RecordSchema,
     budget: &ByteBudget,
 ) -> Result<PackedTemporalSave, RecordEncodingError> {
-    let state = cut.temporal;
-    let world_id = cut.world_id;
+    let actors = cut.temporal.actors.values();
+    let count = pending_count(actors.clone())?;
+    let _saved_backing = budget
+        .reserve(
+            count
+                .checked_mul(2 * size_of::<Arc<TemporalPageRecord>>())
+                .ok_or_else(error)?,
+        )
+        .map_err(|_| error())?;
+    let mut saved = Vec::new();
+    saved.try_reserve_exact(count).map_err(|_| error())?;
+    let rows = pack_rows(
+        cut.world_id,
+        actors,
+        count,
+        acknowledged_before,
+        limits,
+        schema,
+        Some(&mut saved),
+        budget,
+    )?;
+    let residency = SavedTemporalResidency::prepare(
+        cut,
+        saved,
+        existing_changes,
+        limits.resident_bytes,
+        budget,
+    )?;
+    Ok(PackedTemporalSave { rows, residency })
+}
+
+fn pack_rows<'a>(
+    world_id: &str,
+    actors: impl Iterator<Item = &'a TemporalActorHistory>,
+    count: usize,
+    represented_before: Option<u64>,
+    limits: TemporalSaveLimits,
+    schema: &RecordSchema,
+    mut saved: Option<&mut Vec<Arc<TemporalPageRecord>>>,
+    budget: &ByteBudget,
+) -> Result<EncodedRows, RecordEncodingError> {
     if limits.target_bytes == 0 || limits.row_bytes == 0 {
         return Err(error());
     }
-    let count = state
-        .actors
-        .values()
-        .try_fold(0usize, |count, actor| {
-            count.checked_add(actor.pending_pages.len())
-        })
-        .ok_or_else(error)?;
     let _selection = budget
         .reserve(
             count
@@ -416,21 +499,12 @@ pub(crate) fn pack_temporal_save(
                 .ok_or_else(error)?,
         )
         .map_err(|_| error())?;
-    let _saved_backing = budget
-        .reserve(
-            count
-                .checked_mul(2 * size_of::<Arc<TemporalPageRecord>>())
-                .ok_or_else(error)?,
-        )
-        .map_err(|_| error())?;
-    let mut saved = Vec::new();
-    saved.try_reserve_exact(count).map_err(|_| error())?;
     let mut pending = Vec::new();
     pending.try_reserve_exact(count).map_err(|_| error())?;
-    for actor in state.actors.values() {
+    for actor in actors {
         for page in &actor.pending_pages {
             let batch = page.batch();
-            if acknowledged_before.is_some_and(|before| batch.batch_order < before) {
+            if represented_before.is_some_and(|before| batch.batch_order < before) {
                 continue;
             }
             if let Some(frontier) = &actor.header.frontier {
@@ -486,7 +560,7 @@ pub(crate) fn pack_temporal_save(
                     world_id,
                     limits,
                     &mut output,
-                    &mut saved,
+                    saved.as_mut().map(|sink| &mut **sink),
                     budget,
                 )?;
                 start = index;
@@ -499,17 +573,9 @@ pub(crate) fn pack_temporal_save(
             world_id,
             limits,
             &mut output,
-            &mut saved,
+            saved.as_mut().map(|sink| &mut **sink),
             budget,
         )?;
     }
-    let rows = output.finish()?;
-    let residency = SavedTemporalResidency::prepare(
-        cut,
-        saved,
-        existing_changes,
-        limits.resident_bytes,
-        budget,
-    )?;
-    Ok(PackedTemporalSave { rows, residency })
+    output.finish()
 }

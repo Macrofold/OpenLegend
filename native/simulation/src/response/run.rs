@@ -1340,23 +1340,11 @@ impl ResponseCursor {
                         .get(self.bindings.actor_id())
                         .and_then(|e| e.actor.as_ref())
                         .ok_or(ExecutionError::MissingActor)?;
-                    let invalid_id = ["goalId", "parentId"]
-                        .iter()
-                        .filter_map(|key| op.text(key))
-                        .any(|text| {
-                            text.as_unicode().is_none() && text.unit_at(0) != Some(b'$' as u16)
-                        });
                     let result = if actor.controller == "player" {
                         self.result(
                             false,
                             "player-intention",
                             "Player intentions require explicit player input.",
-                        )?
-                    } else if invalid_id {
-                        self.result(
-                            false,
-                            "invalid-goal",
-                            "Invalid goal mutation identity or reference.",
                         )?
                     } else {
                         let goal = actions::goal_ref(

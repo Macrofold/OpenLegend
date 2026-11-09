@@ -1,3 +1,4 @@
+import { selectedOccurrenceRules } from './world-composition.js';
 import { selectedMovementRules, selectedTimeRules } from './world-composition.js';
 import { beginPerceptionMeasurements } from './perception-timing.js';
 import { beginAttentionPreparation } from './attention.js';
@@ -1669,7 +1670,10 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
   if (scopedTargetId) {
     const target = entityOwn(world.entities, scopedTargetId);
     if (!target || !visible(world, source, target))
-      return reject('not-visible', 'The action target is not currently perceived.');
+      return reject(
+        selectedOccurrenceRules(world).response.offers.availability.unperceived.code,
+        selectedOccurrenceRules(world).response.offers.availability.unperceived.message,
+      );
   }
   if (
     isRecordedActivityCommand(command, activityCommandSyntax(world)) &&
@@ -2304,8 +2308,8 @@ function prepareNativeOperation(
         desiredDistance > FOLLOW_RULES.maximumDistance
       )
         return reject(
-          'invalid-follow',
-          'Choose another perceived actor and a following distance between 1.5 and 12 world units.',
+          selectedOccurrenceRules(world).response.offers.availability.invalidFollow.code,
+          selectedOccurrenceRules(world).response.offers.availability.invalidFollow.message,
         );
       if (command.until !== undefined && command.until <= world.simTime)
         return reject('invalid-follow', 'That stopping time has already passed.');
@@ -2319,7 +2323,11 @@ function prepareNativeOperation(
       action.targetLife = entityGet(world.entities, command.targetId)!.actor?.physicalLife ?? 0;
       action.follow = followState(world, actor, command, desiredDistance);
       const error = updateFollowPath(world, actor, action, false);
-      if (error) return reject('follow-unavailable', error);
+      if (error)
+        return reject(
+          selectedOccurrenceRules(world).response.offers.availability.followUnavailableCode,
+          error,
+        );
       break;
     }
     case 'evade': {
@@ -2351,9 +2359,16 @@ function prepareNativeOperation(
     case 'strike': {
       const definition = strikeDefinition(command.definitionId, world, command.weaponItemId);
       const target = entityOwn(world.entities, command.targetId);
-      if (!definition) return reject('unknown-action', 'Choose a registered strike.');
+      if (!definition)
+        return reject(
+          selectedOccurrenceRules(world).response.offers.availability.unknownStrike.code,
+          selectedOccurrenceRules(world).response.offers.availability.unknownStrike.message,
+        );
       if (!supportsStrike(actor, definition, world))
-        return reject('unsupported-body', 'This body cannot perform that natural strike.');
+        return reject(
+          selectedOccurrenceRules(world).response.offers.availability.unsupportedStrike.code,
+          selectedOccurrenceRules(world).response.offers.availability.unsupportedStrike.message,
+        );
       if (combatRecoveryDeadline(world, actor) > world.simTime)
         return reject('combat-recovery', BASE_GUARD_TEXT.recovery);
       if (
@@ -2385,7 +2400,10 @@ function prepareNativeOperation(
           ? !movingStrikeInReach(world, actor, target, definition.preparationMotion.startRange)
           : !definition.autoMoveToRange && !canReachEntity(world, actor, target, definition.range))
       )
-        return reject('out-of-range', 'Move within strike range first.');
+        return reject(
+          selectedOccurrenceRules(world).response.offers.availability.strikeRange.code,
+          selectedOccurrenceRules(world).response.offers.availability.strikeRange.message,
+        );
       action = temporary('strike', definition.workSeconds);
       action.definitionId = definition.id;
       action.definitionVersion = definition.version;

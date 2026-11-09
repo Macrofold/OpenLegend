@@ -36,6 +36,19 @@ struct HistoryBinding {
     #[serde(deserialize_with = "deserialize_safe_integer")]
     request_serial: u64,
 }
+impl HistoryBinding {
+    fn provider_binding(&self, geometry_revision: u64) -> crate::geometry::GeometryBinding {
+        crate::geometry::GeometryBinding::new(
+            CandidateKey {
+                id: self.candidate_id,
+                base_cut: self.accepted_cut,
+                generation: self.candidate_generation,
+            },
+            geometry_revision,
+            self.request_serial,
+        )
+    }
+}
 #[derive(Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 enum HistoryPhase {
@@ -73,6 +86,14 @@ pub(crate) struct HistoryEditReadRequest {
     totals: HistoryTotals,
     maximum_transfer_bytes: usize,
     predecessors: Vec<HistoryPredecessor>,
+}
+impl HistoryEditReadRequest {
+    pub(crate) fn provider_binding(
+        &self,
+        geometry_revision: u64,
+    ) -> crate::geometry::GeometryBinding {
+        self.binding.provider_binding(geometry_revision)
+    }
 }
 pub(crate) struct HistoryEditQuestion {
     request: HistoryEditReadRequest,
@@ -119,6 +140,12 @@ impl From<ExecutionError> for HistoryPreparationError {
     }
 }
 impl HistoryEditAnswer {
+    pub(crate) fn provider_binding(
+        &self,
+        geometry_revision: u64,
+    ) -> crate::geometry::GeometryBinding {
+        self.value.binding.provider_binding(geometry_revision)
+    }
     /// The caller retains its input buffer. Finite carriers and JSON structure
     /// are counted before typed allocation, including nested exact-text cells.
     pub(crate) fn decode(text: &str, budget: &ByteBudget) -> Result<Self, HistoryPreparationError> {

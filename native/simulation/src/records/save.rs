@@ -88,6 +88,7 @@ pub(crate) struct SaveJournal {
     world_id: String,
     generation: String,
     durable_revision: u64,
+    initial_cut: u64,
     next_prefix: u64,
     through_cut: u64,
     identity_through: u64,
@@ -107,6 +108,18 @@ struct AcknowledgedPrefix {
     revision: u64,
     through_cut: u64,
     identity_through: u64,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct SaveReadMetadata {
+    pub durable_revision: u64,
+    pub durable_cut: u64,
+    pub through_cut: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub in_flight_through: Option<u64>,
+    /// Earlier logical batches are already represented by the closed prefix.
+    pub represented_before: u64,
 }
 
 impl SaveJournal {
@@ -144,6 +157,7 @@ impl SaveJournal {
             world_id,
             generation,
             durable_revision,
+            initial_cut: through_cut,
             next_prefix: 1,
             through_cut,
             identity_through,
@@ -153,6 +167,29 @@ impl SaveJournal {
             in_flight: None,
             last_acknowledged: None,
             budget,
+        })
+    }
+
+    pub(crate) fn read_metadata(&self) -> Result<SaveReadMetadata, SaveError> {
+        if self.pending_append.is_some() {
+            return Err(SaveError::Preparing);
+        }
+        Ok(SaveReadMetadata {
+            durable_revision: self.durable_revision,
+            durable_cut: self
+                .last_acknowledged
+                .map_or(self.initial_cut, |ack| ack.through_cut),
+            through_cut: self.through_cut,
+            in_flight_through: self
+                .in_flight
+                .as_ref()
+                .map(|prefix| prefix.rows.through_cut),
+            represented_before: self
+                .in_flight
+                .as_ref()
+                .map_or(self.durable_identity_through, |prefix| {
+                    prefix.rows.identity_through
+                }),
         })
     }
 
@@ -262,6 +299,19 @@ impl SaveJournal {
             return Err(SaveError::Binding);
         }
         Ok(())
+    }
+    /// Borrow the real funded incoming delta for an immutable application read
+    /// overlay. This grants no append or acceptance authority.
+    pub(crate) fn prepared_changes(
+        &self,
+        prepared: &PreparedSaveAppend,
+    ) -> Result<&ChangedRows, SaveError> {
+        self.validate_prepared(prepared)?;
+        Ok(&self
+            .pending_append
+            .as_ref()
+            .ok_or(SaveError::Binding)?
+            .changes)
     }
     pub(crate) fn reject_append(&mut self, prepared: PreparedSaveAppend) -> Result<(), SaveError> {
         self.validate_prepared(&prepared)?;

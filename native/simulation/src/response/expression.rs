@@ -55,7 +55,9 @@ fn outcome(ok: bool, code: &str, message: &str) -> Outcome {
     }
 }
 impl ExpressionCursor {
-    pub(super) fn geometry_request(&self)->Option<&GeometryQueries>{self.queries.as_ref()}
+    pub(super) fn geometry_request(&self) -> Option<&GeometryQueries> {
+        self.queries.as_ref()
+    }
     pub(crate) fn new(
         core: &mut CoreMutation<'_>,
         actor: &str,

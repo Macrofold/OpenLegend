@@ -8,6 +8,12 @@ import { nativeActivityDisplay } from './native-activity.js';
 import { nativeCanonicalCommand } from './native-command.js';
 import type { NativeGeometryProviders } from './native-geometry.js';
 import { decodeNativeProduct, retainNativeSources } from './native-consumer.js';
+import type { SqlDatabase } from './store.js';
+import type { LiveReadCutsProvider } from './live-read-overlay.js';
+import {
+  readNativeHistoryEdit,
+  type NativeHistoryEditReadRequest,
+} from './native-temporal-pages.js';
 import {
   nativeAttemptNormalization,
   nativeCollation,
@@ -21,24 +27,38 @@ type Question = { kind: string; value: unknown };
 export interface NativeProviderAnswer {
   readonly json: string;
 }
+export interface NativeHistoryReadContext {
+  readonly db: SqlDatabase;
+  readonly liveReadCuts: LiveReadCutsProvider;
+}
 
 /** Pure physical/language preparation for the real native cursor. The selected
  * question contains no world setter, grant, provider spending or model request. */
 export async function answerNativeProvider(
   provider: NativeWorldProvider,
   geometry: NativeGeometryProviders,
+  history?: NativeHistoryReadContext,
 ): Promise<NativeProviderAnswer> {
   const question = decodeNativeProduct<Question>(provider.question());
-  const json = await prepareProviderAnswer(question, geometry);
+  const json = await prepareProviderAnswer(question, geometry, history);
   return retainNativeSources({ json }, question);
 }
 
 async function prepareProviderAnswer(
   question: Question,
   geometry: NativeGeometryProviders,
+  history?: NativeHistoryReadContext,
 ): Promise<string> {
   const value = question.value;
   switch (question.kind) {
+    case 'history': {
+      const cut = history?.liveReadCuts();
+      if (!history || !cut)
+        throw new Error('Native history preparation has no accepted SQL read cut.');
+      return JSON.stringify(
+        await readNativeHistoryEdit(history.db, value as NativeHistoryEditReadRequest, cut),
+      );
+    }
     case 'geometry':
       return JSON.stringify(await geometry.compute(value as NativeGeometryQueries));
     case 'utterance': {
@@ -91,13 +111,14 @@ export async function driveNativeOperation(
   first: NativeWorldTurn,
   geometry: NativeGeometryProviders,
   signal?: AbortSignal,
+  history?: NativeHistoryReadContext,
 ): Promise<NativeWorldTurn> {
   let turn = first;
   while (turn.kind === 'provider') {
     if (!turn.provider) throw new Error('Native provider continuation has no owned question.');
     try {
       if (signal?.aborted) throw signal.reason ?? new Error('Native request was canceled.');
-      const answer = await answerNativeProvider(turn.provider, geometry);
+      const answer = await answerNativeProvider(turn.provider, geometry, history);
       if (signal?.aborted) throw signal.reason ?? new Error('Native request was canceled.');
       turn = await world.answer(turn.key, turn.provider, Buffer.from(answer.json, 'utf8'));
     } catch (error) {

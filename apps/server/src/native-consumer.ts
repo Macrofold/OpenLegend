@@ -38,6 +38,20 @@ export function decodeNativeProduct<T extends object>(encoded: NativeWorldJson):
   }
 }
 
+/** The decoded JSON graph is owned and admitted already. Freeze it in place so
+ * shared domain formatters can prove/reuse its immutable children instead of
+ * cloning all received bodies or installed geometry into another graph. */
+export function freezeNativeProduct<T extends object>(owner: T): T {
+  if (!holders.has(owner)) throw new Error('Native immutable data has no decoded product owner.');
+  const freeze = (value: object): void => {
+    for (const child of Object.values(value))
+      if (child !== null && typeof child === 'object') freeze(child);
+    Object.freeze(value);
+  };
+  freeze(owner);
+  return owner;
+}
+
 /** A derived view/save/context can retain individual strings or child arrays
  * without otherwise keeping the decoded root alive. Its actual owner must
  * share their allocation admission until that derived product is unreachable.

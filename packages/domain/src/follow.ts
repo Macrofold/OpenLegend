@@ -1,3 +1,4 @@
+import { selectedOccurrenceRules } from './world-composition.js';
 import { navigationMembershipChanged } from './entity-index.js';
 import { entityGet, entityHas } from './entity-collection.js';
 import { seesEntity } from './perception.js';
@@ -9,7 +10,7 @@ import {
   worldPosition,
   worldSupport,
 } from './spatial-state.js';
-import { surfaceById, surfaceContains, surfaceHeight } from '@open-legend/spatial';
+import { headingFrame, surfaceById, surfaceContains, surfaceHeight } from '@open-legend/spatial';
 import { subjectReferenceCurrent } from './worlds/base/knowledge.js';
 import { activelyParticipates } from './participation-state.js';
 import { capabilityBlocked } from './status-capabilities.js';
@@ -19,20 +20,6 @@ import type { Action, Command, Entity, WorldState } from './types.js';
 
 import { FOLLOW_RULES } from './worlds/base/navigation.js';
 export { FOLLOW_RULES } from './worlds/base/navigation.js';
-
-/** Unit vectors in the right-handed, Y-up world frame for a heading measured from +Z
- * toward +X: facing +Z puts the right hand at -X.
- * docs/action-capabilities.md#102-entity-relative-navigation
- */
-export function headingFrame(heading: number): {
-  forward: { x: number; z: number };
-  right: { x: number; z: number };
-} {
-  return {
-    forward: { x: Math.sin(heading), z: Math.cos(heading) },
-    right: { x: -Math.cos(heading), z: Math.sin(heading) },
-  };
-}
 
 /** Initial controller state from the admitted command; the kernel owns the action. */
 export function followState(
@@ -89,19 +76,21 @@ function perceived(world: WorldState, actor: Entity, action: Action): Entity | u
  */
 export function followUnavailable(world: WorldState, actor: Entity, action: Action): string | null {
   const follow = action.follow;
-  if (!follow) return 'the followed target is no longer perceived.';
+  if (!follow) return selectedOccurrenceRules(world).response.offers.availability.followUnperceived;
   if (capabilityBlocked(world, actor, 'actions') || capabilityBlocked(world, actor, 'locomotion'))
-    return 'following is no longer available to this body.';
-  if (!supportedPosition(actor)) return 'a supported ground stance is required.';
+    return selectedOccurrenceRules(world).response.offers.availability.followRestricted;
+  if (!supportedPosition(actor))
+    return selectedOccurrenceRules(world).response.offers.availability.followUnsupported;
   const target = perceived(world, actor, action);
   // The disclosed loss policy moves only to the recorded sighting; nothing tracks the target.
   if (!target)
     return follow.onLost === 'last-seen' && follow.lastSeen
       ? null
-      : 'the followed target is no longer perceived.';
-  if (!target.actor?.alive) return 'the followed actor is no longer alive.';
+      : selectedOccurrenceRules(world).response.offers.availability.followUnperceived;
+  if (!target.actor?.alive)
+    return selectedOccurrenceRules(world).response.offers.availability.followDead;
   if ((target.actor.physicalLife ?? 0) !== action.targetLife)
-    return 'the physical participant selected for following has changed.';
+    return selectedOccurrenceRules(world).response.offers.availability.followChanged;
   return null;
 }
 
@@ -252,8 +241,8 @@ export function updateFollowPath(
       findApproachPath(world, actor, target, follow.distance);
     if (!path || (path.status !== 'reached' && path.status !== 'pending'))
       return path?.status === 'budget-exceeded'
-        ? 'the follow route exceeds the current navigation budget.'
-        : 'no supported route to the perceived target remains.';
+        ? selectedOccurrenceRules(world).response.offers.availability.followBudget
+        : selectedOccurrenceRules(world).response.offers.availability.followNoRoute;
     action.path = path.path;
     navigationMembershipChanged(world, actor.id);
     action.navigation = path.status === 'pending' ? { request: path.request } : undefined;

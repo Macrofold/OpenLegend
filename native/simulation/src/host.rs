@@ -3,8 +3,8 @@
 
 mod budget;
 mod resident;
-mod world_memory;
 pub(crate) mod retained_size;
+mod world_memory;
 pub use budget::{ByteBudget, ByteReservation, CapacityError};
 pub use resident::{ResidentMemory, ResidentReservation, SharedMemoryPin};
 pub(crate) use world_memory::{CandidateMemory, MemoryCheckpoint};

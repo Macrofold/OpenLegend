@@ -69,13 +69,59 @@ export function captureCurrentSources(
   if (!actor?.actor) throw new Error('A current source cut requires an observer.');
   const observer = { actorId, physicalLife: actor.actor.physicalLife ?? 0 },
     state = world.perceptionEvidence?.[actorId];
+  return captureCurrentSourcesFromRead(
+    {
+      observer,
+      at: world.simTime,
+      privacyRevision: world.experience?.privacyRevisions?.[actorId] ?? 0,
+      lastIncludedOrder: world.events.at(-1)?.order ?? 0,
+      state,
+      values: world.receivedValues?.sources ?? {},
+      leaseEligible: (record) =>
+        currentLeaseEligible(world, actorId, record, {
+          allowUnchecked: true,
+          bodyReadScope: reads,
+        }),
+      hasBodyGrant: (id) => !!currentBodyGrant(world, actorId, id, reads),
+      revoked: (alias) =>
+        (world.experience?.forgotten[actorId] ?? []).includes(alias) ||
+        Object.hasOwn(world.experience?.corrections?.[actorId] ?? {}, alias),
+    },
+    selection,
+  );
+}
+
+/** A single receiver's actual current metadata/value closure and eligibility
+ * decisions. Native callers supply their scoped grant owner's decisions, never
+ * a WorldState adapter or an arbitrary physical lookup. */
+export interface CurrentCaptureRead {
+  readonly observer: ObserverLife;
+  readonly at: number;
+  readonly privacyRevision: number;
+  readonly lastIncludedOrder: number;
+  readonly state:
+    | (ReceivedCurrentReader & Pick<PerceptionEvidenceOwner, 'motionSamples'>)
+    | undefined;
+  readonly values: ReceivedValueLookup;
+  readonly leaseEligible: (record: Parameters<typeof currentLeaseEligible>[2]) => boolean;
+  readonly hasBodyGrant: (id: string) => boolean;
+  readonly revoked: (alias: string) => boolean;
+}
+
+/** Copy the same admitted current groups, effective checks, referenced payloads
+ * and earlier motion proofs for both Source and native context consumers. */
+export function captureCurrentSourcesFromRead(
+  read: CurrentCaptureRead,
+  selection?: { sourceIds?: ReadonlySet<string>; kinds?: ReadonlySet<string> },
+): CapturedCurrentSources {
+  const { observer, state } = read;
   const sources: CapturedCurrentSources['sources'] = {},
     values: Record<string, { value: NonNullable<ReturnType<typeof receivedValueAt>> }> = {},
     subjects = new Map<string, ObserverSubject>(),
     current: PerceptionEvidenceOwner['current'] = { size: 0 };
   const captureRef = (ref: ReceivedValueReference) => {
     if (typeof ref !== 'string' || Object.hasOwn(values, ref)) return;
-    const value = receivedValueAt(world.receivedValues?.sources ?? {}, ref);
+    const value = receivedValueAt(read.values, ref);
     if (!value) throw new Error('A granted current source payload is unavailable.');
     values[ref] = { value };
   };
@@ -112,14 +158,7 @@ export function captureCurrentSources(
           contact.content.originals[group.received.grant.original]!,
           representative,
         );
-        if (
-          !first ||
-          !currentLeaseEligible(world, actorId, first, {
-            allowUnchecked: true,
-            bodyReadScope: reads,
-          })
-        )
-          continue;
+        if (!first || !read.leaseEligible(first)) continue;
         const association =
           group.received.fields['association'] &&
           currentGroupNativeFacet(
@@ -127,12 +166,7 @@ export function captureCurrentSources(
             contact.content.originals[group.received.grant.original]!,
             'association',
           );
-        const dropAssociation =
-          association &&
-          !currentLeaseEligible(world, actorId, association, {
-            allowUnchecked: true,
-            bodyReadScope: reads,
-          });
+        const dropAssociation = association && !read.leaseEligible(association);
         const fields =
           dropAssociation || selection?.kinds
             ? Object.fromEntries(
@@ -162,10 +196,7 @@ export function captureCurrentSources(
           captureValue(field.value);
           addSubject(field.localSubject);
           if (field.value.kind === 'association' || field.value.kind === 'claim') {
-            const value = receivedValueAt(
-              world.receivedValues?.sources ?? {},
-              field.value.reference,
-            );
+            const value = receivedValueAt(read.values, field.value.reference);
             if (value?.kind === 'association') addSubject(value.subject);
             if (value?.kind === 'claim' && value.speaker.kind === 'individual')
               addSubject(value.speaker.subject);
@@ -211,34 +242,22 @@ export function captureCurrentSources(
   }
   const motions: CapturedCurrentSources['motions'] = {};
   for (const [id, motion] of Object.entries(state?.motionSamples ?? {})) {
-    if (
-      world.simTime >= motion.expiresAt ||
-      !sources[id] ||
-      !currentBodyGrant(world, actorId, id, reads)
-    )
-      continue;
+    if (read.at >= motion.expiresAt || !sources[id] || !read.hasBodyGrant(id)) continue;
     const location = state && currentFacetGet(state, `${id}:location`, { modality: 'sight' });
     if (!location) continue;
     const source = motion.earlier.original.id,
       ordinal = motion.earlier.original.ordinal;
     const aliases = [source, personalFactAlias(source, ordinal), ...(motion.earlier.aliases ?? [])];
-    if (
-      aliases.some(
-        (alias) =>
-          (world.experience?.forgotten[actorId] ?? []).includes(alias) ||
-          Object.hasOwn(world.experience?.corrections?.[actorId] ?? {}, alias),
-      )
-    )
-      continue;
+    if (aliases.some((alias) => read.revoked(alias))) continue;
     motions[id] = { track: motion, channel: location.grant.channel };
     captureValue(motion.earlier.value);
   }
   return immutableDataSnapshot(
     {
       observer,
-      at: world.simTime,
-      privacyRevision: world.experience?.privacyRevisions?.[actorId] ?? 0,
-      lastIncludedOrder: world.events.at(-1)?.order ?? 0,
+      at: read.at,
+      privacyRevision: read.privacyRevision,
+      lastIncludedOrder: read.lastIncludedOrder,
       sources,
       subjects: [...subjects.values()],
       reader: {

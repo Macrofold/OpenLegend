@@ -25,7 +25,9 @@ pub(crate) use inventory::ClosedInventory;
 mod knowledge;
 mod retained;
 pub(crate) use knowledge::{LearnedCapabilities, install_learned_capabilities};
-pub(crate) use retained::{RetainedDefinitionInputs, RetainedDefinitions, install_retained};
+pub(crate) use retained::{
+    RetainedDefinitionInputs, RetainedDefinitions, RetainedMap, RetainedOne, install_retained,
+};
 mod social;
 pub(crate) use social::{SocialSettings, install_social};
 mod definitions;
@@ -46,7 +48,9 @@ pub(crate) use scope::{SelectedInstallation, finish_selected_installation};
 
 mod physical;
 pub(crate) mod rows;
+mod typed_parse;
 pub(crate) use physical::*;
+pub(crate) use typed_parse::reserve_typed_parse;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum InstallError {

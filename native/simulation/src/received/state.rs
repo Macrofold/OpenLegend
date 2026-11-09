@@ -43,7 +43,9 @@ pub use append::{
     PendingTemporalPage, ReceivedTransition, TemporalAcquisition, TemporalAppendError,
     TemporalCaptureFacet, TemporalCaptureInput,
 };
-pub(crate) use save::{TemporalSaveLimits, encode_temporal_changes, pack_temporal_save};
+pub(crate) use save::{
+    TemporalSaveLimits, encode_temporal_changes, pack_temporal_save, preview_temporal_rows,
+};
 pub(super) use support::encoding::SupportEncoding;
 pub(crate) use support::{
     SupportRetentionContext, record_snapshot_support, retain_captured_support,

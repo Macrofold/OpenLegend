@@ -104,6 +104,18 @@ enum Command<'a> {
         purpose: Purpose<'a>,
         operation: &'static str,
     },
+    #[serde(rename = "follow")]
+    Follow {
+        #[serde(flatten)]
+        purpose: Purpose<'a>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        distance: Option<f64>,
+    },
+    #[serde(rename = "strike")]
+    Strike {
+        #[serde(flatten)]
+        purpose: Purpose<'a>,
+    },
 }
 #[derive(Serialize)]
 struct Input<'a> {
@@ -113,6 +125,8 @@ struct Input<'a> {
     target: Option<Target<'a>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     effect: Option<Effect<'a>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    strike: Option<&'a crate::worlds::base_decision_offers::NativeStrikeRead>,
 }
 enum Phase {
     Sight,
@@ -135,7 +149,12 @@ impl ActivityDisplayCursor {
         candidate: CandidateKey,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
-        if matches!(command, NativeCommand::Cancel { .. }) {
+        if matches!(
+            command,
+            NativeCommand::Cancel { .. }
+                | NativeCommand::InspectInventory { .. }
+                | NativeCommand::InspectActivities { .. }
+        ) {
             return Err(ExecutionError::UnsupportedFamily);
         }
         let bytes = heap_sum([
@@ -368,7 +387,16 @@ impl ActivityDisplayCursor {
                     "deactivate"
                 },
             },
-            NativeCommand::Cancel { .. } => return Err(ExecutionError::UnsupportedFamily),
+            NativeCommand::Follow { distance, .. } => Command::Follow {
+                purpose,
+                distance: *distance,
+            },
+            NativeCommand::Strike { .. } => Command::Strike { purpose },
+            NativeCommand::Cancel { .. }
+            | NativeCommand::InspectInventory { .. }
+            | NativeCommand::InspectActivities { .. } => {
+                return Err(ExecutionError::UnsupportedFamily);
+            }
         };
         let effect = match &self.command {
             NativeCommand::StatusEffect { definition_id, .. } => state
@@ -400,6 +428,15 @@ impl ActivityDisplayCursor {
             },
             target,
             effect,
+            strike: if let NativeCommand::Strike { definition_id, .. } = &self.command {
+                state
+                    .installed
+                    .retained
+                    .native_strike_read
+                    .get(definition_id)
+            } else {
+                None
+            },
         };
         let length =
             crate::encoding::json_record_len(&input).map_err(|_| ExecutionError::Invariant)?;
@@ -438,6 +475,9 @@ fn target_id(command: &NativeCommand) -> Option<&str> {
     match command {
         NativeCommand::Say { target_id, .. } => target_id.as_deref(),
         NativeCommand::StatusEffect { target_id, .. } => Some(target_id),
+        NativeCommand::Follow { target_id, .. } | NativeCommand::Strike { target_id, .. } => {
+            Some(target_id)
+        }
         _ => None,
     }
 }

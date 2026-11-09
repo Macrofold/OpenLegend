@@ -37,6 +37,7 @@ pub(crate) enum ProviderKind {
     Canonical,
     Normalization,
     Digest,
+    History,
 }
 #[derive(Debug)]
 pub(crate) enum DriveError {
@@ -69,6 +70,17 @@ impl From<crate::events::EventError> for DriveError {
 impl From<crate::reception::ObserverReceptionError> for DriveError {
     fn from(e: crate::reception::ObserverReceptionError) -> Self {
         Self::Semantic(e.into())
+    }
+}
+impl From<crate::experience::HistoryPreparationError> for DriveError {
+    fn from(error: crate::experience::HistoryPreparationError) -> Self {
+        use crate::experience::HistoryPreparationError as E;
+        match error {
+            E::StaleResponse => Self::StaleResponse,
+            E::MalformedResponse => Self::MalformedResponse,
+            E::Capacity => Self::Capacity,
+            E::Owner(error) => Self::from(error),
+        }
     }
 }
 
@@ -219,7 +231,7 @@ impl DecodeShape {
             ProviderKind::Utterance => size_of::<SpeechWord>(),
             ProviderKind::Words => size_of::<Vec<JsText>>().max(size_of::<JsText>()),
             ProviderKind::Collation => size_of::<u32>(),
-            ProviderKind::Canonical | ProviderKind::Digest => 0,
+            ProviderKind::Canonical | ProviderKind::Digest | ProviderKind::History => 0,
             ProviderKind::Normalization => size_of::<JsText>(),
         };
         let arrays = self
@@ -283,9 +295,10 @@ enum Answer {
     Canonical(Canonical),
     Normalization(crate::language::AttemptNormalizationAnswer),
     Digest(crate::response::ResponseDigestAnswer),
+    History(crate::experience::HistoryEditAnswer),
 }
 impl Answer {
-    fn decode(input: &ProviderResponse) -> Result<Self, DriveError> {
+    fn decode(input: &ProviderResponse, budget: &ByteBudget) -> Result<Self, DriveError> {
         let parse = |error: serde_json::Error| {
             drop(error);
             DriveError::MalformedResponse
@@ -311,13 +324,17 @@ impl Answer {
                 Self::Canonical(serde_json::from_str(&input.json).map_err(parse)?)
             }
             ProviderKind::Digest => Self::Digest(serde_json::from_str(&input.json).map_err(parse)?),
+            ProviderKind::History => Self::History(crate::experience::HistoryEditAnswer::decode(
+                &input.json,
+                budget,
+            )?),
         };
-        if value.binding() != input.binding {
+        if value.binding(input.binding.geometry_revision) != input.binding {
             return Err(DriveError::StaleResponse);
         }
         Ok(value)
     }
-    fn binding(&self) -> GeometryBinding {
+    fn binding(&self, geometry_revision: u64) -> GeometryBinding {
         match self {
             Self::Geometry(v) => v.binding,
             Self::Utterance(v) => v.binding,
@@ -327,6 +344,7 @@ impl Answer {
             Self::Canonical(v) => v.binding,
             Self::Normalization(v) => v.binding,
             Self::Digest(v) => v.binding,
+            Self::History(v) => v.provider_binding(geometry_revision),
         }
     }
     fn kind(&self) -> ProviderKind {
@@ -339,6 +357,7 @@ impl Answer {
             Self::Canonical(_) => ProviderKind::Canonical,
             Self::Normalization(_) => ProviderKind::Normalization,
             Self::Digest(_) => ProviderKind::Digest,
+            Self::History(_) => ProviderKind::History,
         }
     }
 }
@@ -434,6 +453,7 @@ pub(crate) enum CompletedOperation {
     Advance(CompletedAdvance),
     Command(CompletedCommandOperation),
     Response(crate::response::CompletedResponse),
+    Forget(crate::experience::CompletedForgetExperience),
 }
 impl CompletedOperation {
     pub(crate) fn outcome(&self) -> &crate::commands::Outcome {
@@ -441,6 +461,7 @@ impl CompletedOperation {
             Self::Advance(a) => &a.outcome,
             Self::Command(c) => c.command.outcome(),
             Self::Response(r) => &r.outcome,
+            Self::Forget(f) => f.outcome(),
         }
     }
     pub(crate) fn events(&self) -> impl Iterator<Item = &crate::events::WorldEvent> + Clone {
@@ -448,6 +469,7 @@ impl CompletedOperation {
             Self::Advance(a) => (Some(a), None, None),
             Self::Command(c) => (None, Some(c), None),
             Self::Response(r) => (None, None, Some(r)),
+            Self::Forget(_) => (None, None, None),
         };
         advance
             .into_iter()
@@ -458,7 +480,7 @@ impl CompletedOperation {
     pub(crate) fn take_continuation(&mut self) -> Option<crate::time::AdvanceContinuation> {
         match self {
             Self::Advance(a) => a.continuation.take(),
-            Self::Command(_) | Self::Response(_) => None,
+            Self::Command(_) | Self::Response(_) | Self::Forget(_) => None,
         }
     }
 }
@@ -467,11 +489,13 @@ enum OperationReply {
     Advance(AdvanceReply),
     Command(CommandReply),
     Response(ResponseReply),
+    Forget(ForgetReply),
 }
 enum OperationCursor {
     Advance(AdvanceCursor),
     Command(CommandOperation),
     Response(crate::response::ResponseCursor),
+    Forget(crate::experience::ForgetExperienceCursor),
 }
 impl<T, R> Poll<T, R> {
     fn map<V, S>(self, completed: fn(T) -> V, route: fn(R) -> S) -> Poll<V, S> {
@@ -488,6 +512,7 @@ impl OperationCursor {
             Self::Advance(a) => a.abort(core),
             Self::Command(c) => c.abort(core),
             Self::Response(r) => r.abort(core),
+            Self::Forget(f) => f.abort(core),
         }
     }
     fn poll(
@@ -524,6 +549,15 @@ impl OperationCursor {
                 };
                 Ok(poll_response(cursor, core, answer, route, budget)?
                     .map(CompletedOperation::Response, OperationReply::Response))
+            }
+            Self::Forget(cursor) => {
+                let route = match route {
+                    None => None,
+                    Some(OperationReply::Forget(route)) => Some(route),
+                    _ => return Err(DriveError::StaleResponse),
+                };
+                Ok(poll_forget(cursor, core, answer, route, budget)?
+                    .map(CompletedOperation::Forget, OperationReply::Forget))
             }
         }
     }
@@ -563,6 +597,13 @@ impl OperationDriver {
         budget: &ByteBudget,
     ) -> Result<Self, DriveError> {
         Self::new(core, OperationCursor::Response(cursor), budget)
+    }
+    pub(crate) fn forget(
+        core: &mut CoreMutation<'_>,
+        cursor: crate::experience::ForgetExperienceCursor,
+        budget: &ByteBudget,
+    ) -> Result<Self, DriveError> {
+        Self::new(core, OperationCursor::Forget(cursor), budget)
     }
     fn new(
         core: &mut CoreMutation<'_>,
@@ -633,11 +674,20 @@ impl OperationDriver {
                 if !v._reservation.shares_owner(&self._reservation) {
                     return Err(DriveError::StaleResponse);
                 }
+                if v.kind == ProviderKind::History {
+                    return Ok(None);
+                }
                 let bytes = DecodeShape::read(&v.json)?.bound(v.kind, v.json.len())?;
-                budget.reserve(bytes).map_err(|_| DriveError::Capacity)
+                budget
+                    .reserve(bytes)
+                    .map(Some)
+                    .map_err(|_| DriveError::Capacity)
             })
             .transpose()?;
-        let mut answer = input.as_ref().map(Answer::decode).transpose()?;
+        let mut answer = input
+            .as_ref()
+            .map(|input| Answer::decode(input, budget))
+            .transpose()?;
         let route = input
             .as_ref()
             .and_then(|_| self.pending.as_ref().map(|(_, route)| *route));
@@ -765,6 +815,57 @@ fn poll_event(
                 );
             }
         }
+    }
+}
+
+#[derive(Clone, Copy)]
+enum ForgetReply {
+    History,
+    Collation,
+}
+fn poll_forget(
+    cursor: &mut crate::experience::ForgetExperienceCursor,
+    core: &mut CoreMutation<'_>,
+    answer: &mut Option<Answer>,
+    route: Option<ForgetReply>,
+    budget: &ByteBudget,
+) -> Result<Poll<crate::experience::CompletedForgetExperience, ForgetReply>, DriveError> {
+    use crate::experience::{ForgetExperienceStep as Step, PrivacyEditAnswer as Reply};
+    let supplied = match route {
+        None => None,
+        Some(ForgetReply::History) => {
+            let Answer::History(value) = direct(answer, ProviderKind::History)? else {
+                return Err(DriveError::StaleResponse);
+            };
+            Some(Reply::History(value))
+        }
+        Some(ForgetReply::Collation) => {
+            let Answer::Collation(value) = direct(answer, ProviderKind::Collation)? else {
+                return Err(DriveError::StaleResponse);
+            };
+            Some(Reply::Collation(value))
+        }
+    };
+    match cursor.step(core, supplied, budget)? {
+        Step::Complete(done) => Ok(Poll::Complete(done)),
+        Step::Collation(request) => question(
+            answer,
+            ProviderKind::Collation,
+            request.binding(),
+            request,
+            budget,
+            ForgetReply::Collation,
+        ),
+        Step::History(request) => question(
+            answer,
+            ProviderKind::History,
+            request
+                .request()
+                .provider_binding(core.state.installed.geometry.spatial.revision),
+            request.request(),
+            budget,
+            ForgetReply::History,
+        ),
     }
 }
 

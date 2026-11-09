@@ -2,6 +2,8 @@ import type { ActivityView } from '../../action-experience.js';
 import type { AttributeView } from '../../world-modules.js';
 import type { Position } from '../../types.js';
 import { formatObservedBodyHealth } from './hunting.js';
+import { describeAttack, type StrikeDefinition } from '../../strikes.js';
+import { FOLLOW_RULES } from './navigation.js';
 
 type DisplayPurpose = { purpose?: string; chosenPurpose?: string };
 export type OrdinaryActivityViewInput = {
@@ -10,25 +12,53 @@ export type OrdinaryActivityViewInput = {
       | { type: 'move'; destination: Position }
       | { type: 'say'; text: string }
       | { type: 'status-effect'; operation: 'activate' | 'deactivate' }
+      | { type: 'follow'; complete?: boolean; distance?: number; until?: number }
+      | { type: 'strike' }
     );
   actor?: { position: Position; heading: number };
   target?: { name: string; position: Position; health?: AttributeView };
   effect?: { label: string; activate?: string; deactivate?: string };
+  strike?: Pick<
+    StrikeDefinition,
+    'damage' | 'workSeconds' | 'recoverySeconds' | 'range' | 'accuracy' | 'approachRange'
+  >;
 };
 
 /** Facts are already selected by the physical/name/current-value owners. This
  * authored formatter reads no world and grants no target or executable action. */
 export function ordinaryActivityView(input: OrdinaryActivityViewInput): ActivityView {
-  const { command, actor, target, effect } = input;
+  const { command, actor, target, effect, strike } = input;
   const view: ActivityView = {
     name:
       command.purpose ??
-      (command.type === 'move' ? 'Move' : command.type === 'say' ? 'Speak' : 'Act'),
+      (command.type === 'move'
+        ? 'Move'
+        : command.type === 'say'
+          ? 'Speak'
+          : command.type === 'follow'
+            ? 'Follow'
+            : command.type === 'strike'
+              ? 'Attack once'
+              : 'Act'),
     facts: [],
   };
   if (command.chosenPurpose !== undefined)
     view.facts.push({ name: 'chosen purpose', value: command.chosenPurpose, critical: true });
+  if (command.type === 'follow' && command.complete)
+    view.facts.push({
+      name: 'finite approach',
+      value: `End on reaching the selected ${command.distance ?? FOLLOW_RULES.defaultDistance} m proximity, or at game time ${command.until}. This movement performs no attack.`,
+      critical: true,
+    });
   appendObservedActivityFacts(view, actor, target);
+  if (command.type === 'strike' && strike) {
+    view.facts.push({ name: 'attack', value: describeAttack(strike), critical: true });
+    view.facts.push({
+      name: 'approach',
+      value: `Move to within ${strike.approachRange ?? strike.range} m; route length is not known`,
+      critical: true,
+    });
+  }
   if (command.type === 'move' && actor) {
     const from = actor.position,
       to = command.destination;

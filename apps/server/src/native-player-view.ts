@@ -80,9 +80,9 @@ export interface NativePlayerRead {
    * canUseInventory; captured own fields cannot supply that post-await check. */
   publishIfPermitted(
     ids: readonly string[],
-    complete: (canUseInventory: boolean) => GameView,
+    complete: (canUseInventory: boolean, own: (bytes: Buffer) => Buffer) => Buffer,
     operationalStillCurrent: () => boolean,
-  ): Promise<GameView>;
+  ): Promise<Buffer>;
   release(): void;
 }
 export interface NativePlayerRequestOwner extends PlayerAsyncOwner {
@@ -109,6 +109,10 @@ export interface NativePlayerViewRequest {
   readonly budgetUsd: number;
   readonly jevConfigured: boolean;
   readonly llmConfigured: boolean;
+  /** Queue these exact bytes synchronously in the actual HTTP/connection sink.
+   * Native disclosure remains fenced through serialization and this handoff;
+   * a slow socket does not retain the publication lock while it drains. */
+  readonly publish: (bytes: Buffer) => void;
 }
 const caches = new WeakMap<NativePlayerRequestOwner, Map<string, PlayerAsyncCache>>();
 function scopedCache(owner: NativePlayerRequestOwner, scope: RequestScope): PlayerAsyncCache {
@@ -128,7 +132,7 @@ function scopedCache(owner: NativePlayerRequestOwner, scope: RequestScope): Play
  * finite captures above; formatting and asynchronous repositories see no Entity
  * or WorldState. The supported installation refuses positive unconverted item,
  * recipe and agreement families; this request explicitly refuses inspection. */
-export async function projectNativePlayerView(request: NativePlayerViewRequest): Promise<GameView> {
+export async function projectNativePlayerView(request: NativePlayerViewRequest): Promise<void> {
   const { owner, scope, definitions, store } = request;
   owner.assertScope(scope);
   if (scope.audience !== 'embodied')
@@ -265,9 +269,18 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
     )
       throw new ViewChangedError();
     owner.assertScope(scope);
-    return await read.publishIfPermitted(
+    await read.publishIfPermitted(
       selectedEvents.map((event) => event.id),
-      (canUseInventory) => ({ ...projected, player: { ...projected.player, canUseInventory } }),
+      (canUseInventory, own) => {
+        const bytes = own(
+          Buffer.from(
+            JSON.stringify({ ...projected, player: { ...projected.player, canUseInventory } }),
+            'utf8',
+          ),
+        );
+        request.publish(bytes);
+        return bytes;
+      },
       () => {
         owner.assertScope(scope);
         const final = owner.lifecycle();

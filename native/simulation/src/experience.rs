@@ -63,12 +63,18 @@ pub(crate) use save::{
 };
 mod privacy_prepare;
 mod privacy_run;
-pub(crate) use privacy_run::{PrivacyEditCursor, PrivacyEditAnswer, PrivacyEditStep, PrivacyEditMode, CompletedPrivacyEdit};
+pub(crate) use privacy_run::{
+    CompletedPrivacyEdit, PrivacyEditAnswer, PrivacyEditCursor, PrivacyEditMode, PrivacyEditStep,
+};
 mod forget;
-pub(crate) use forget::{ForgetExperienceCursor, ForgetExperienceStep, CompletedForgetExperience};
-pub(crate) use privacy_prepare::{HistoryEditLimits, HistoryEditAnswer, HistoryEditQuestion, HistoryEditReadRequest, HistoryPreparationError, PreparedPrivacyEdit, PrivacyPreparationCursor, PrivacyPreparationStep, ClosedPrivacyScope};
-mod invalidation;
+pub(crate) use forget::{CompletedForgetExperience, ForgetExperienceCursor, ForgetExperienceStep};
+pub(crate) use privacy_prepare::{
+    ClosedPrivacyScope, HistoryEditAnswer, HistoryEditLimits, HistoryEditQuestion,
+    HistoryEditReadRequest, HistoryPreparationError, PreparedPrivacyEdit, PrivacyPreparationCursor,
+    PrivacyPreparationStep,
+};
 mod hydration;
+mod invalidation;
 mod mutation;
 mod privacy_header;
 pub(crate) use invalidation::{

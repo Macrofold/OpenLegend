@@ -43,7 +43,18 @@ export function selectedKnowledgeReferences(
 }
 
 export function generalKnowledgeContext(world: WorldState, actorId: string) {
-  const doc = knowledgeDocument(world, actorId, null);
+  return formatGeneralKnowledgeContext(
+    knowledgeDocument(world, actorId, null),
+    world.knowledgePolicy?.maxCharacters.general,
+  );
+}
+
+/** Both native and Source context reads use the same selected private pad.
+ * This formatter cannot acquire another subject or grant an edit reference. */
+export function formatGeneralKnowledgeContext(
+  doc: ReturnType<typeof knowledgeDocument>,
+  maxCharacters: number | undefined,
+) {
   const seeded = doc?.origin === 'authored-starting' && !!doc.text;
   return {
     subjectId: null,
@@ -51,7 +62,7 @@ export function generalKnowledgeContext(world: WorldState, actorId: string) {
     origin: doc?.origin ?? null,
     ...(seeded ? { provenance: 'Authored starting understanding' } : {}),
     characters: characterCount(doc?.text ?? ''),
-    maxCharacters: world.knowledgePolicy?.maxCharacters.general,
+    maxCharacters,
     text: historicalAccountText(doc?.text ?? ''),
   };
 }

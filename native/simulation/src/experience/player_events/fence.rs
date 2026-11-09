@@ -88,7 +88,7 @@ impl PlayerEventFence {
                 Evidence::Awareness(value) => {
                     let source = value.source.ok_or(ExperienceError::Unavailable)?;
                     Snapshot::Awareness(Arc::clone(source), source.capture_pin(budget)?)
-                },
+                }
                 Evidence::Current {
                     original,
                     members,
@@ -114,7 +114,11 @@ impl PlayerEventFence {
                         .ok_or_else(capacity)?;
                     let bytes = map_storage::<String, Arc<ReceivedValueRecord>>(count)
                         .and_then(|n| n.checked_add(keys))
-                        .and_then(|n| n.checked_add(count.checked_mul(size_of::<Arc<crate::host::SharedMemoryPin>>())?))
+                        .and_then(|n| {
+                            n.checked_add(
+                                count.checked_mul(size_of::<Arc<crate::host::SharedMemoryPin>>())?,
+                            )
+                        })
                         .ok_or_else(capacity)?;
                     let values_guard = budget.reserve(bytes).map_err(|_| capacity())?;
                     let mut shared = IndexMap::new();
@@ -129,7 +133,7 @@ impl PlayerEventFence {
                                     .as_ref()
                                     .and_then(|pool| pool.shared_record(id))
                                     .ok_or(ExperienceError::Unavailable)?;
-                                pins.push(record.capture_pin(budget).map_err(|_|capacity())?);
+                                pins.push(record.capture_pin(budget).map_err(|_| capacity())?);
                                 shared.insert(id.clone(), Arc::clone(record));
                             }
                         }
@@ -144,8 +148,15 @@ impl PlayerEventFence {
                     }
                 }
             };
-            let original_pin = original.capture_pin(budget).map_err(|_|capacity())?;
-            retained.insert(id.to_owned(), AccountSnapshot { original, evidence, _original_pin: original_pin });
+            let original_pin = original.capture_pin(budget).map_err(|_| capacity())?;
+            retained.insert(
+                id.to_owned(),
+                AccountSnapshot {
+                    original,
+                    evidence,
+                    _original_pin: original_pin,
+                },
+            );
         }
         Ok(Self {
             world_id: state.physical.header.id.clone(),

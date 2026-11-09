@@ -7,7 +7,10 @@
  * flavor napi-rs can build is listed, because `NAPI_RS_NATIVE_LIBRARY_PATH`
  * can point the loader at a WASI artifact this package does not build itself.
  */
-export declare const __napiBindingTarget: 'native' | 'wasm32-wasi' | 'wasm32-wasip1';
+export declare const __napiBindingTarget:
+  | "native"
+  | "wasm32-wasi"
+  | "wasm32-wasip1";
 
 export declare class NativeHost {
   installWorld(bytes: Buffer, databaseSchema: string): Promise<NativeWorld>;
@@ -22,17 +25,33 @@ export declare class NativeHost {
 }
 
 export declare class NativeWorld {
-  readPlayer(account: string, actor: string, eventWindow: number): Promise<NativeWorldPlayerRead>;
+  readNpc(request: Buffer): Promise<NativeWorldNpcRead>;
+  readPlayer(
+    account: string,
+    actor: string,
+    eventWindow: number,
+  ): Promise<NativeWorldPlayerRead>;
   playerPublication(
     read: NativeWorldPlayerRead,
     selectedEventIds: Array<string>,
     paused: boolean,
     controlling: boolean,
   ): Promise<NativeWorldPlayerPublication>;
+  forget(bytes: Buffer): Promise<NativeWorldTurn>;
+  readCut(request: Buffer): Promise<NativeWorldJson>;
   activate(receipt: string): Promise<void>;
+  definitions(): Promise<NativeWorldJson>;
   installation(): Promise<NativeWorldJson>;
-  advance(seconds: number, maximumIntervals: number, bytes: Buffer): Promise<NativeWorldTurn>;
-  command(bytes: Buffer, canonical: Buffer, preview: boolean): Promise<NativeWorldTurn>;
+  advance(
+    seconds: number,
+    maximumIntervals: number,
+    bytes: Buffer,
+  ): Promise<NativeWorldTurn>;
+  command(
+    bytes: Buffer,
+    canonical: Buffer,
+    preview: boolean,
+  ): Promise<NativeWorldTurn>;
   answer(
     key: NativeCandidateKey,
     provider: NativeWorldProvider,
@@ -65,6 +84,11 @@ export declare class NativeWorldJson {
   consume(): Buffer;
 }
 
+export declare class NativeWorldNpcRead {
+  packet(): Promise<NativeWorldJson>;
+  release(): void;
+}
+
 export declare class NativeWorldPlayerPublication {
   canUseInventory(): boolean;
   release(): void;
@@ -94,11 +118,11 @@ export declare class NativeWorldSave {
 }
 
 export declare const enum HostPhase {
-  Open = 'Open',
-  Closing = 'Closing',
-  ShutdownPending = 'ShutdownPending',
-  Closed = 'Closed',
-  Unavailable = 'Unavailable',
+  Open = "Open",
+  Closing = "Closing",
+  ShutdownPending = "ShutdownPending",
+  Closed = "Closed",
+  Unavailable = "Unavailable",
 }
 
 export interface HostStatus {
@@ -303,6 +327,12 @@ export interface NativePoint {
   z: number;
 }
 
+export interface NativeRelativeSupport {
+  x: number;
+  z: number;
+  heading: number;
+}
+
 export interface NativeRoutePlan {
   status: string;
   path: Array<NativeSurfacePoint>;
@@ -373,6 +403,7 @@ export interface NativeStandingSelection {
 export interface NativeSupportQuery {
   point: NativePoint;
   surfaceId?: string;
+  relative?: NativeRelativeSupport;
 }
 
 export interface NativeSurfaceLine {

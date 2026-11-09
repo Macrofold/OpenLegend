@@ -383,6 +383,9 @@ impl CandidateJournal {
             // A rejected binding must not destroy the only rollback owner.
             return Err((ExecutionError::InvalidCheckpoint, self));
         }
+        if state.physical.bodies.settle_memory().is_err() {
+            return Err((ExecutionError::Invariant, self));
+        }
         state.temporal.discard_undo();
         state.occurrences.discard_undo();
         state.appraisals.discard_undo();
@@ -1633,7 +1636,10 @@ impl PhysicalJournal {
         while let Some(frame) = self.frames.pop() {
             self.rollback_frame(state, frame)?;
         }
-        Ok(())
+        state
+            .bodies
+            .settle_memory()
+            .map_err(|_| ExecutionError::Invariant)
     }
     fn rollback_frame(
         &mut self,
@@ -1711,9 +1717,9 @@ impl PhysicalJournal {
                         .undo_insertion(before, &mut self.reservation)
                         .map_err(|_| ExecutionError::Invariant)?;
                     if renumbered {
-                        state.bodies.refresh_ordering(&state.entities);
+                        state.bodies.refresh_ordering(&state.entities)?;
                     }
-                    state.bodies.refresh(&state.entities, &id);
+                    state.bodies.refresh(&state.entities, &id)?;
                 }
                 Undo::BodyRevision { entity, before } => {
                     state
@@ -1741,7 +1747,7 @@ impl PhysicalJournal {
                     entity.spatial.fall_velocity = fall_velocity;
                     entity.spatial.local_avoidance_ready_at = local_avoidance_ready_at;
                     let id = entity.id.clone();
-                    state.bodies.refresh(&state.entities, &id);
+                    state.bodies.refresh(&state.entities, &id)?;
                 }
                 Undo::Remains { entity, before } => {
                     let entity = state
@@ -1750,7 +1756,7 @@ impl PhysicalJournal {
                         .ok_or(ExecutionError::Invariant)?;
                     entity.remains = before;
                     let id = entity.id.clone();
-                    state.bodies.refresh(&state.entities, &id);
+                    state.bodies.refresh(&state.entities, &id)?;
                 }
                 Undo::PendingDeath {
                     entity,
@@ -1767,7 +1773,7 @@ impl PhysicalJournal {
                     actor.combat_ready_at = combat_ready_at;
                     actor.evasion_ready_at = evasion_ready_at;
                     let id = entity.id.clone();
-                    state.bodies.refresh(&state.entities, &id);
+                    state.bodies.refresh(&state.entities, &id)?;
                 }
                 Undo::Scar {
                     entity,
@@ -1908,7 +1914,7 @@ impl PhysicalJournal {
                     entity.placement = Some(before);
                     entity.spatial.heading = heading;
                     let id = entity.id.clone();
-                    state.bodies.refresh(&state.entities, &id);
+                    state.bodies.refresh(&state.entities, &id)?;
                 }
                 Undo::ActionNavigation {
                     entity,
@@ -2731,7 +2737,7 @@ impl PhysicalMutation<'_> {
                 .spatial
                 .heading = heading;
         }
-        self.state.bodies.refresh(&self.state.entities, id);
+        self.state.bodies.refresh(&self.state.entities, id)?;
         Ok(())
     }
 

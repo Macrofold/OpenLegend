@@ -4,9 +4,9 @@ use super::SimulationState;
 use crate::administration::InstalledHostSettings;
 use crate::host::ByteBudget;
 use crate::host::retained_size::map_storage;
+use crate::records::SqlCell;
 use crate::records::{RecordEncodingError, RowEncoder};
 use indexmap::IndexMap;
-use crate::records::SqlCell;
 
 /// One complete gameplay delta for the existing SQL writer. Each semantic
 /// journal selects its own rows and columns; this composition does not diff a
@@ -78,7 +78,11 @@ fn optional<T: serde::Serialize>(
     value: Option<&T>,
 ) -> Result<(), RecordEncodingError> {
     if let Some(value) = value {
-        set(map, key, serde_json::to_value(value).map_err(|_| error())?.into());
+        set(
+            map,
+            key,
+            serde_json::to_value(value).map_err(|_| error())?.into(),
+        );
     } else {
         map.shift_remove(key);
     }

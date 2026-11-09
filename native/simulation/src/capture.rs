@@ -13,6 +13,8 @@ use crate::worlds::{InstalledPersonalNameReader, OwnedPersonalName};
 use serde::{Serialize, Serializer};
 use std::mem::size_of;
 mod controls;
+mod definitions;
+pub(crate) use definitions::write_installed_definitions;
 mod metadata;
 mod navigation;
 mod outcomes;
@@ -494,6 +496,8 @@ struct OwnActorProduct<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     mind: Option<&'a crate::cognition::ActorMind>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    knowledge: Option<&'a indexmap::IndexMap<String, crate::knowledge::KnowledgeEntry>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     inner_world: Option<&'a crate::cognition::InnerWorld>,
     #[serde(skip_serializing_if = "Option::is_none")]
     player: Option<OwnPlayerView<'a>>,
@@ -698,6 +702,15 @@ pub(crate) fn write_actor_self(
             .as_ref()
             .map(outcomes::RequiredResults::values),
         mind,
+        knowledge: private
+            .then(|| {
+                state
+                    .reception
+                    .actor_knowledge
+                    .as_ref()
+                    .and_then(|root| root.get(actor_id))
+            })
+            .flatten(),
         inner_world: private
             .then(|| {
                 state
