@@ -171,75 +171,16 @@ struct Canonical {
     binding: GeometryBinding,
     canonical: String,
 }
-/// Count JSON allocation-bearing shape without decoding text or constructing a
-/// tree. Escaped isolated UTF16 units must reach the actual JsText decoder.
-/// Syntax/field validation remains the typed family's owning boundary below.
-#[derive(Default)]
-struct DecodeShape {
-    array_items: usize,
-    members: usize,
-    strings: usize,
+use crate::encoding::{JsonAllocationShape as DecodeShape, JsonShapeError};
+impl From<JsonShapeError> for DriveError {
+    fn from(error: JsonShapeError) -> Self {
+        match error {
+            JsonShapeError::Capacity => Self::Capacity,
+            JsonShapeError::MalformedResponse => Self::MalformedResponse,
+        }
+    }
 }
 impl DecodeShape {
-    fn read(source: &str) -> Result<Self, DriveError> {
-        let mut result = Self::default();
-        let mut stack = [0_u8; 128]; // serde_json's current recursion limit.
-        let mut depth = 0;
-        let mut quoted = false;
-        let mut escaped = false;
-        let bytes = source.as_bytes();
-        for (at, byte) in bytes.iter().copied().enumerate() {
-            if quoted {
-                if escaped {
-                    escaped = false;
-                } else if byte == b'\\' {
-                    escaped = true;
-                } else if byte == b'"' {
-                    quoted = false;
-                }
-                continue;
-            }
-            match byte {
-                b'"' => {
-                    quoted = true;
-                    result.strings = result.strings.checked_add(1).ok_or(DriveError::Capacity)?;
-                }
-                b'[' | b'{' => {
-                    let slot = stack.get_mut(depth).ok_or(DriveError::MalformedResponse)?;
-                    *slot = byte;
-                    depth += 1;
-                    if byte == b'['
-                        && bytes[at + 1..].iter().find(|b| !b.is_ascii_whitespace()) != Some(&b']')
-                    {
-                        result.array_items = result
-                            .array_items
-                            .checked_add(1)
-                            .ok_or(DriveError::Capacity)?;
-                    }
-                }
-                b']' | b'}' => {
-                    depth = depth.checked_sub(1).ok_or(DriveError::MalformedResponse)?;
-                    if stack[depth] != if byte == b']' { b'[' } else { b'{' } {
-                        return Err(DriveError::MalformedResponse);
-                    }
-                }
-                b',' if depth > 0 && stack[depth - 1] == b'[' => {
-                    result.array_items = result
-                        .array_items
-                        .checked_add(1)
-                        .ok_or(DriveError::Capacity)?;
-                }
-                b':' => {
-                    result.members = result.members.checked_add(1).ok_or(DriveError::Capacity)?
-                }
-                _ => {}
-            }
-        }
-        if quoted || depth != 0 {
-            return Err(DriveError::MalformedResponse);
-        }
-        Ok(result)
-    }
     fn bound(&self, kind: ProviderKind, wire: usize) -> Result<usize, DriveError> {
         use crate::host::retained_size::map_storage;
         use crate::{

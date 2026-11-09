@@ -12,7 +12,9 @@ use std::fmt::Write as _;
 use std::io;
 
 mod fields;
+mod json_shape;
 pub(crate) use fields::RawFields;
+pub(crate) use json_shape::{JsonAllocationShape, JsonShapeError};
 
 /// Source `<`/`>` string ordering compares UTF-16 code units, including keys
 /// containing supplementary characters. It is distinct from localeCompare.

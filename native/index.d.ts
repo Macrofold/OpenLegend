@@ -10,6 +10,7 @@
 export declare const __napiBindingTarget: 'native' | 'wasm32-wasi' | 'wasm32-wasip1';
 
 export declare class NativeHost {
+  installWorld(bytes: Buffer, databaseSchema: string): Promise<NativeWorld>;
   constructor(workers: number);
   /** This status reads control metadata only, never tentative gameplay state. */
   status(): HostStatus;
@@ -18,6 +19,48 @@ export declare class NativeHost {
    * to observe successful joining; a pending timeout keeps capacity owned.
    */
   requestShutdown(): HostStatus;
+}
+
+export declare class NativeWorld {
+  installation(): Promise<NativeWorldJson>;
+  advance(seconds: number, maximumIntervals: number, bytes: Buffer): Promise<NativeWorldTurn>;
+  command(bytes: Buffer, canonical: string, preview: boolean): Promise<NativeWorldTurn>;
+  answer(
+    key: NativeCandidateKey,
+    provider: NativeWorldProvider,
+    json: string,
+  ): Promise<NativeWorldTurn>;
+  finishSettlement(key: NativeCandidateKey): Promise<boolean>;
+  cancel(key: NativeCandidateKey): Promise<void>;
+  requestYield(): void;
+  closeAdmission(): void;
+  captureSave(limits: string): Promise<NativeWorldSave>;
+  acknowledge(ack: string): Promise<void>;
+  finishStop(): Promise<void>;
+}
+
+export declare class NativeWorldJson {
+  /**
+   * Consume once. Both external-buffer and engine-copy implementations keep
+   * the reservation on the actual Node Buffer until its finalizer runs.
+   */
+  consume(): Buffer;
+}
+
+export declare class NativeWorldPrepared {
+  key(): NativeCandidateKey;
+  allocation(): string;
+  takePublication(): Buffer;
+  ready(): void;
+  settle(accept: boolean): boolean;
+}
+
+export declare class NativeWorldProvider {
+  question(): NativeWorldJson;
+}
+
+export declare class NativeWorldSave {
+  rows(): NativeWorldJson;
 }
 
 export declare const enum HostPhase {
@@ -85,6 +128,12 @@ export interface NativeBuildInfo {
   sourceSha256?: string;
   features?: Array<string>;
   rustFlags?: string;
+}
+
+export interface NativeCandidateKey {
+  id: number;
+  baseCut: number;
+  generation: number;
 }
 
 export interface NativeChangedRow {
@@ -310,4 +359,12 @@ export interface NativeWalkingSegment {
   from: NativeSurfacePoint;
   to: NativeSurfacePoint;
   body: NativeBodyProfile;
+}
+
+export interface NativeWorldTurn {
+  key: NativeCandidateKey;
+  kind: string;
+  provider?: NativeWorldProvider;
+  prepared?: NativeWorldPrepared;
+  preview?: NativeWorldJson;
 }

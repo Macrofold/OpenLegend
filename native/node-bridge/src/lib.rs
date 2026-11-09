@@ -4,6 +4,7 @@
 pub mod geometry;
 pub mod pool;
 pub mod records;
+mod world;
 
 use napi::{Error, Result, Status};
 use napi_derive::napi;
@@ -62,6 +63,7 @@ struct HostRuntime {
     phase: AtomicU8,
     poisoned: AtomicBool,
     error: Mutex<Option<String>>,
+    worlds: Mutex<Vec<Arc<world::WorldRuntime>>>,
 }
 
 impl HostRuntime {
@@ -93,7 +95,20 @@ impl HostRuntime {
     }
 
     fn begin_shutdown(runtime: &Arc<Self>) -> Result<()> {
-        runtime.pool.close_admission();
+        {
+            let worlds = runtime
+                .worlds
+                .lock()
+                .map_err(|_| failure("native world registry unavailable"))?;
+            if worlds.iter().any(|world| !world.stopped()) {
+                return Err(failure(
+                    "native worlds must finish their actual save and stop barriers before host shutdown",
+                ));
+            }
+            // Installation registers under this same short control lock and
+            // rechecks admission. It cannot arrive between this test and close.
+            runtime.pool.close_admission();
+        }
         let previous = runtime.phase.load(Ordering::Acquire);
         if previous == CLOSING || previous == CLOSED {
             return Ok(());
@@ -200,6 +215,7 @@ impl NativeHost {
                 phase: AtomicU8::new(OPEN),
                 poisoned: AtomicBool::new(false),
                 error: Mutex::new(None),
+                worlds: Mutex::new(Vec::new()),
             });
             *registry = Some(Arc::clone(&runtime));
             Ok(Self { runtime })

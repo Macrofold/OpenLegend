@@ -552,6 +552,27 @@ impl Session {
             notices: prepared.notices,
         }))
     }
+    /// The bridge funds and encodes accepted outputs before Ready. Returning
+    /// borrowed products cannot publish them or consume their rollback owner.
+    pub(crate) fn prepared_products(
+        &self,
+        key: CandidateKey,
+    ) -> Result<
+        (
+            &CompletedOperation,
+            &CapturedHistoryInput,
+            &crate::cognition::PreparedSemanticNotices,
+        ),
+        SessionError,
+    > {
+        let Some(Candidate::Prepared(prepared)) = self.candidate.as_ref() else {
+            return Err(FenceError::NotReady.into());
+        };
+        if prepared.key != key {
+            return Err(FenceError::Stale.into());
+        }
+        Ok((&prepared.result, &prepared.history, &prepared.notices))
+    }
     pub(crate) fn cancel(&mut self, key: CandidateKey) -> Result<(), SessionError> {
         if self.simulation.fence.phase() != CandidatePhase::Preparing {
             return Err(FenceError::NotReady.into());

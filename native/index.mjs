@@ -970,8 +970,23 @@ if (__napiLoadedBindingTarget === 'native' && nativeBinding !== __napiRequiredNa
   }
 }
 
-const { NativeHost, HostPhase, nativeBuildInfo, nativeHostStatus } = nativeBinding;
+const {
+  NativeHost,
+  NativeWorld,
+  NativeWorldJson,
+  NativeWorldPrepared,
+  NativeWorldProvider,
+  NativeWorldSave,
+  HostPhase,
+  nativeBuildInfo,
+  nativeHostStatus,
+} = nativeBinding;
 export { NativeHost };
+export { NativeWorld };
+export { NativeWorldJson };
+export { NativeWorldPrepared };
+export { NativeWorldProvider };
+export { NativeWorldSave };
 export { HostPhase };
 export { nativeBuildInfo };
 export { nativeHostStatus };

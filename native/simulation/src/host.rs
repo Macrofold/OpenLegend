@@ -10,7 +10,7 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 const STATE_BITS: u32 = 4;
 const STATE_MASK: u64 = (1 << STATE_BITS) - 1;
-const MAX_CANDIDATE_ID: u64 = u64::MAX >> STATE_BITS;
+const MAX_CANDIDATE_ID: u64 = crate::identity::MAX_SAFE_INTEGER;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[repr(u64)]
