@@ -2516,7 +2516,7 @@ impl PhysicalMutation<'_> {
         let dz = point.z - before.z;
         let heading = movement.and_then(|m| m.heading).unwrap_or_else(|| {
             if dx.hypot(dz) > 1e-8 {
-                dx.atan2(dz)
+                crate::spatial::atan2(dx, dz)
             } else {
                 entity.spatial.heading
             }

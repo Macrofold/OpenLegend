@@ -819,7 +819,7 @@ impl MotionCursor {
         let dx = point.x - from.x;
         let dz = point.z - from.z;
         if dx.hypot(dz) > 1e-8 {
-            self.heading = dx.atan2(dz);
+            self.heading = crate::spatial::atan2(dx, dz);
         }
         if point != from || support != self.position.surface_id {
             self.travelled += distance(from, point);

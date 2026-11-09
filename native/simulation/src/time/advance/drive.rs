@@ -639,9 +639,9 @@ impl AdvanceCursor {
                             self.next += 1;
                             continue;
                         }
-                        if self.pending_flush(core, Phase::AnimalChoices, budget)? {
-                            continue;
-                        }
+                        // A private review may only renew its clock. Source
+                        // retains earned rates through that read; an actual
+                        // route/stop settles them at NativeCommand admission.
                         let id = self.actor(core, handle)?;
                         let supplied = prepared.map(|at| self.prepared.remove(at).1);
                         self.response = Some(GroundResponseCursor::prepare(

@@ -92,14 +92,13 @@ export function motionTravelBounds(
   actorIds: readonly string[],
   moverIds: readonly string[],
 ) {
+  const normalTravel = selectedTimeRules(world).perceptionTravelMetres;
   const observers = actorIds.flatMap((id) => {
     const entity = entityGet(world.entities, id);
     if (!entity?.actor?.alive || entity.actor.incapacitated || !hasMemory(entity)) return [];
     const senses = sensesFor(world, entity).filter(
       (s): s is Extract<typeof s, { radius: number }> =>
-        'radius' in s &&
-        s.radius > 0 &&
-        s.radius / 4 < selectedTimeRules(world).perceptionTravelMetres,
+        'radius' in s && s.radius > 0 && s.radius / 4 < normalTravel,
     );
     if (!senses.length) return [];
     const radius = Math.max(...senses.map((s) => s.radius));
@@ -108,14 +107,13 @@ export function motionTravelBounds(
         position: { ...worldPosition(entity) },
         radius,
         reach: motionReach(world, entity, seconds) + bodyProfile(entity).height,
-        travel: Math.min(
-          selectedTimeRules(world).perceptionTravelMetres,
-          ...senses.map((s) => s.radius / 4),
-        ),
+        travel: Math.min(normalTravel, ...senses.map((s) => s.radius / 4)),
       },
     ];
   });
-  if (!observers.length) return () => selectedTimeRules(world).perceptionTravelMetres;
+  // The retained forecast outlives this draft. Its fallback owns the selected
+  // scalar just as the populated lookup below owns its captured bounds.
+  if (!observers.length) return () => normalTravel;
   const near = spatialCandidates(observers);
   const maximum = observers.reduce(
     (max, observer) => Math.max(max, observer.radius + observer.reach),
@@ -126,7 +124,7 @@ export function motionTravelBounds(
     const entity = entityGet(world.entities, id)!;
     const position = worldPosition(entity);
     const reach = motionReach(world, entity, seconds) + bodyProfile(entity).height;
-    let travel: number = selectedTimeRules(world).perceptionTravelMetres;
+    let travel: number = normalTravel;
     for (const observer of near(position, reach + maximum))
       if (distance3D(position, observer.position) <= reach + observer.reach + observer.radius)
         travel = Math.min(travel, observer.travel);

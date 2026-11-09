@@ -95,13 +95,13 @@ pub fn escape_bearing(from: Point, dangers: &[&NativeDanger], draw: f64, epsilon
             let dx = point.x - from.x;
             let dz = point.z - from.z;
             if dx.hypot(dz) > epsilon {
-                return Some((dz.atan2(dx) + tau) % tau);
+                return Some((crate::spatial::atan2(dz, dx) + tau) % tau);
             }
             match danger {
                 NativeDanger::Region {
                     incoming: Some(incoming),
                     ..
-                } => Some((incoming.z.atan2(incoming.x) + tau) % tau),
+                } => Some((crate::spatial::atan2(incoming.z, incoming.x) + tau) % tau),
                 _ => None,
             }
         })

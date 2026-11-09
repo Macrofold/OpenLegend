@@ -143,9 +143,10 @@ pub(crate) fn encode_map_changes<T: Serialize>(
                 address.value(),
                 &payload,
                 &[],
-                // Match the Source storage codec's ordinary upsert. Sparse
-                // position custody does not certify an insert-only SQL write.
-                false,
+                // Complete owner coverage (or a newly created semantic entry)
+                // proves absence from the accepted SQL cut. Preserve that
+                // insertion proof even after several unsaved replacements.
+                address.create(),
                 RowEffects::default(),
             )?;
         }

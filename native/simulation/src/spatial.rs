@@ -4,6 +4,9 @@
 
 use crate::state::{BodyProfile, Point};
 
+mod angle;
+pub(crate) use angle::atan2;
+
 /// Current JavaScript Math.hypot(dx,dy,dz) evaluation order, including its
 /// scaled compensated sum. Squared sums or nested hypot alter real route cuts.
 pub(crate) fn distance(from: Point, to: Point) -> f64 {

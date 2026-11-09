@@ -437,7 +437,8 @@ pub fn acoustic_direction(source: Point, listener: Point) -> Option<AcousticDire
         return None;
     }
     // Math.round ties toward +infinity; Rust round ties away from zero.
-    let sector = ((dz.atan2(dx) / (std::f64::consts::PI / 4.0) + 0.5).floor() + 8.0) % 8.0;
+    let sector =
+        ((crate::spatial::atan2(dz, dx) / (std::f64::consts::PI / 4.0) + 0.5).floor() + 8.0) % 8.0;
     Some(AcousticDirection {
         sector: sector as u64,
         elevation: if dy > 2.0 {
