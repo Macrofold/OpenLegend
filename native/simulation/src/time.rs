@@ -15,6 +15,7 @@ pub(crate) use endpoint::{EndpointAnswer, EndpointCursor, EndpointStep};
 mod movement;
 pub(crate) use movement::MotionSliceCursor;
 mod advance;
+mod navigation;
 mod reconcile;
 mod sensing;
 pub(crate) use advance::{

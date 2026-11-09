@@ -10,7 +10,7 @@ impl AdvanceCursor {
         core: &mut CoreMutation<'_>,
         budget: &ByteBudget,
     ) -> Result<(), AdvanceError> {
-        if self.navigation_blocked || self.world_navigation_pending(core)? {
+        if self.navigation_blocked {
             self.phase = Phase::Publish;
             return Ok(());
         }
@@ -344,7 +344,7 @@ impl AdvanceCursor {
         )?);
         Ok(())
     }
-    pub(super) fn complete_publication(
+    pub(super) fn prepare_publication(
         &mut self,
         core: &mut CoreMutation<'_>,
         budget: &ByteBudget,
@@ -391,7 +391,14 @@ impl AdvanceCursor {
             .filter(|sequence| *sequence <= MAX_SAFE_INTEGER)
             .ok_or(ExecutionError::Identity)?;
         core.journal.current.end_attention_preparation()?;
-        let code = if self.navigation_blocked || self.world_navigation_pending(core)? {
+        Ok(())
+    }
+    pub(super) fn complete_publication(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        budget: &ByteBudget,
+    ) -> Result<(), AdvanceError> {
+        let code = if self.navigation_blocked {
             "navigation-pending"
         } else if core.state.physical.header.sim_time < self.end_at {
             "advance-budget"

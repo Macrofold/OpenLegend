@@ -1,6 +1,7 @@
 //! One ordered elapsed transition over the selected installed family closure.
 //! Provider work and child commands return sealed completions. Time, effects,
 //! receiving and publication remain in this one rollback-owned candidate.
+use super::navigation::{NavigationGate, NavigationGateStep};
 use super::reconcile::{ReconcileAnswer, ReconcileCursor, ReconcileStep};
 use super::sensing::sensory_bound;
 use super::{
@@ -208,6 +209,11 @@ struct ExpectedEvent {
     sequence: u64,
     _reservation: ByteReservation,
 }
+enum NavigationAfter {
+    Start,
+    Slice,
+    Publication,
+}
 enum EventDestination {
     Reconcile,
     Motion,
@@ -227,6 +233,7 @@ pub(crate) struct AdvanceCursor {
     child: Option<CandidateCheckpoint>,
     start_at: f64,
     end_at: f64,
+    zero_duration: bool,
     max_intervals: usize,
     intervals: usize,
     motion_slices: usize,
@@ -278,6 +285,8 @@ pub(crate) struct AdvanceCursor {
     flush: Option<Phase>,
     saved_interval: Option<NativeInterval>,
     navigation_blocked: bool,
+    navigation_gate: Option<NavigationGate>,
+    navigation_after: Option<NavigationAfter>,
     outcome: Option<Outcome>,
     continuation: Option<AdvanceContinuation>,
     reservation: Option<ByteReservation>,
@@ -305,9 +314,14 @@ impl AdvanceCursor {
         self.events.iter().flat_map(EventBatch::events)
     }
     fn geometry_request(&self) -> Option<&GeometryQueries> {
-        self.response
+        self.navigation_gate
             .as_ref()
-            .and_then(GroundResponseCursor::geometry_request)
+            .and_then(NavigationGate::question)
+            .or_else(|| {
+                self.response
+                    .as_ref()
+                    .and_then(GroundResponseCursor::geometry_request)
+            })
             .or_else(|| {
                 self.wander
                     .as_ref()
@@ -363,6 +377,7 @@ impl AdvanceCursor {
             child: None,
             start_at: now,
             end_at: now + seconds,
+            zero_duration: seconds == 0.0,
             max_intervals,
             intervals: 0,
             motion_slices: 0,
@@ -411,6 +426,8 @@ impl AdvanceCursor {
             flush: None,
             saved_interval: None,
             navigation_blocked: false,
+            navigation_gate: None,
+            navigation_after: None,
             outcome: None,
             continuation: continuation.cloned(),
             reservation: Some(reservation),
@@ -424,34 +441,12 @@ impl AdvanceCursor {
             result.reserve(message.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
             result.outcome = Some(outcome(false, "invalid-duration", message.clone()));
             result.phase = Phase::Done;
-        } else if core.state.physical.header.paused
-            || seconds == 0.0
-            || result.world_navigation_pending(core)?
-        {
-            let code = if core.state.physical.header.paused {
-                "paused"
-            } else if seconds == 0.0 {
-                "unchanged"
-            } else {
-                "navigation-pending"
-            };
-            result.outcome = Some(outcome(true, code, "No game time advanced."));
+        } else if core.state.physical.header.paused {
+            result.outcome = Some(outcome(true, "paused", "No game time advanced."));
             result.phase = Phase::Done;
         } else {
             result.child = Some(core.journal.checkpoint(core.state)?);
-            let initialized = (|| -> Result<(), AdvanceError> {
-                core.begin_received_value_scope()?;
-                core.journal.current.begin_attention_preparation()?;
-                result.policies = Some(RoutinePolicyCache::new(
-                    core.state.installed.clone(),
-                    budget,
-                )?);
-                result.saved_interval = core.state.physical.header.native_interval.take();
-                if result.mechanics.is_some() {
-                    result.saved_interval = None;
-                }
-                Ok(())
-            })();
+            let initialized = result.begin_navigation_gate(core, NavigationAfter::Start, budget);
             if let Err(error) = initialized {
                 result.abort(core)?;
                 return Err(error);
@@ -512,39 +507,35 @@ impl AdvanceCursor {
             .ok_or(ExecutionError::MissingActor)?
             .id)
     }
-    fn world_navigation_pending(&self, core: &CoreMutation<'_>) -> Result<bool, ExecutionError> {
-        for id in core.state.physical.entities.ordered_ids() {
-            let entity = core
-                .state
-                .physical
-                .entities
-                .get(id)
-                .ok_or(ExecutionError::Invariant)?;
-            if entity
-                .actor
-                .as_ref()
-                .and_then(|actor| actor.action.as_ref())
-                .is_some_and(|action| {
-                    action
-                        .navigation
-                        .as_ref()
-                        .is_some_and(|pending| pending.request.wait.as_deref() != Some("entity"))
-                })
-            {
-                return Ok(true);
-            }
-            if entity
-                .animal
-                .as_ref()
-                .and_then(|animal| animal.episode.as_ref())
-                .and_then(|episode| episode.proposal.as_ref())
-                .is_some_and(|proposal| proposal.wait == Some(NavigationWait::World))
-                && !self.prepared.iter().any(|(actor, _)| actor == id)
-            {
-                return Ok(true);
-            }
+    fn begin_navigation_gate(
+        &mut self,
+        core: &CoreMutation<'_>,
+        after: NavigationAfter,
+        budget: &ByteBudget,
+    ) -> Result<(), AdvanceError> {
+        if self.navigation_gate.is_some() || self.navigation_after.is_some() {
+            return Err(invalid().into());
         }
-        Ok(false)
+        self.navigation_gate = Some(NavigationGate::prepare(core, self.candidate, budget)?);
+        self.navigation_after = Some(after);
+        Ok(())
+    }
+    fn begin_scope(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        budget: &ByteBudget,
+    ) -> Result<(), AdvanceError> {
+        core.begin_received_value_scope()?;
+        core.journal.current.begin_attention_preparation()?;
+        self.policies = Some(RoutinePolicyCache::new(
+            core.state.installed.clone(),
+            budget,
+        )?);
+        self.saved_interval = core.state.physical.header.native_interval.take();
+        if self.mechanics.is_some() {
+            self.saved_interval = None;
+        }
+        Ok(())
     }
     fn stage_event(
         &mut self,

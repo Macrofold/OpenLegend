@@ -292,6 +292,50 @@ impl AdvanceCursor {
             self.perception = None;
         }
         loop {
+            if let Some(gate) = &mut self.navigation_gate {
+                let response = match answer.take() {
+                    None => None,
+                    Some(AdvanceAnswer::Geometry(value)) => Some(value),
+                    _ => return Err(invalid().into()),
+                };
+                let blocked = match gate.step(core, response, &self.prepared, budget)? {
+                    NavigationGateStep::Geometry(_) => return Ok(Progress::Geometry),
+                    NavigationGateStep::Complete(blocked) => blocked,
+                };
+                self.navigation_gate = None;
+                match self.navigation_after.take().ok_or_else(invalid)? {
+                    NavigationAfter::Start => {
+                        // A zero-duration read still classifies a current world
+                        // wait before opening receiving/attention scopes.
+                        if blocked || self.zero_duration {
+                            let child =
+                                self.child.take().ok_or(ExecutionError::InvalidCheckpoint)?;
+                            core.journal.rollback_to(core.state, child)?;
+                            self.outcome = Some(outcome(
+                                true,
+                                if blocked {
+                                    "navigation-pending"
+                                } else {
+                                    "unchanged"
+                                },
+                                "No game time advanced.",
+                            ));
+                            self.phase = Phase::Done;
+                        } else {
+                            self.begin_scope(core, budget)?;
+                        }
+                    }
+                    NavigationAfter::Slice => {
+                        self.navigation_blocked |= blocked;
+                        self.prepare_slice(core, budget)?;
+                    }
+                    NavigationAfter::Publication => {
+                        self.navigation_blocked = blocked;
+                        self.complete_publication(core, budget)?;
+                    }
+                }
+                continue;
+            }
             if self.roster.is_some()
                 && self.reconcile.is_none()
                 && self.endpoint.is_none()
@@ -635,11 +679,11 @@ impl AdvanceCursor {
                             .ok_or(ExecutionError::Invariant)?;
                         let episode = state.episode.as_ref().ok_or(ExecutionError::Invariant)?;
                         let prepared = self.prepared.iter().position(|(actor, _)| actor == id);
+                        // A saved wait can become ready or stale before its
+                        // review date. The controller owns that readiness read.
                         if episode.review_at > core.state.physical.header.sim_time
                             && prepared.is_none()
-                            && episode.proposal.as_ref().is_none_or(|proposal| {
-                                proposal.wait == Some(NavigationWait::Entity)
-                            })
+                            && episode.proposal.is_none()
                         {
                             self.next += 1;
                             continue;
@@ -766,7 +810,7 @@ impl AdvanceCursor {
                     return Ok(Progress::Perception);
                 }
                 Phase::Predict => {
-                    self.prepare_slice(core, budget)?;
+                    self.begin_navigation_gate(core, NavigationAfter::Slice, budget)?;
                 }
                 Phase::NativeCommand => {
                     if self.pending_flush(core, Phase::NativeCommand, budget)? {
@@ -841,7 +885,8 @@ impl AdvanceCursor {
                     if self.pending_flush(core, Phase::Publish, budget)? {
                         continue;
                     }
-                    self.complete_publication(core, budget)?;
+                    self.prepare_publication(core, budget)?;
+                    self.begin_navigation_gate(core, NavigationAfter::Publication, budget)?;
                 }
                 Phase::Done => {
                     if answer.is_some() {

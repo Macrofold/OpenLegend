@@ -2,12 +2,15 @@
 //! Completing this decision admits no movement: the command owner still checks
 //! and commits the chosen intention through its ordinary occurrence boundaries.
 use super::ground::{block_response, physical_unavailable};
-use super::search::{GroundSearchCursor, GuardedRoutePlan, SearchDecision, SearchStep, route_plan};
+use super::search::{GroundSearchCursor, SearchDecision, SearchStep};
 use super::{
     GroundTurn, expire_acoustic_patterns, ground_turn, proposal_current, selected_profile,
 };
 use crate::execution::{CoreMutation, ExecutionError, PhysicalMutation};
-use crate::geometry::{GeometryAnswers, GeometryBinding, GeometryQueries, RoutePlan, RouteQuery};
+use crate::geometry::{
+    GeometryAnswers, GeometryBinding, GeometryQueries, GuardedRoutePlan, RoutePlan, RouteQuery,
+    route_plan,
+};
 use crate::host::{ByteBudget, ByteReservation, CandidateKey};
 use crate::native_danger::DangerBatch;
 use crate::native_refuge::{PendingRefugeNavigation, PreparedRefugeNavigation, RefugeRoute};

@@ -4,8 +4,8 @@
 use super::selected_profile;
 use crate::execution::{CoreMutation, ExecutionError};
 use crate::geometry::{
-    GeometryAnswers, GeometryBinding, GeometryQueries, NavigationResult, RoutePlan, RouteQuery,
-    SurfaceLineQuery,
+    GeometryAnswers, GeometryBinding, GeometryQueries, GuardedRoutePlan, NavigationResult,
+    RoutePlan, RouteQuery, SurfaceLineQuery, route_plan,
 };
 use crate::host::retained_size::{HeapBytes, heap_sum};
 use crate::host::{ByteBudget, ByteReservation, CandidateKey};
@@ -19,8 +19,6 @@ use crate::native_response::{
 use crate::spatial::distance;
 use crate::state::SurfacePoint;
 use std::mem::size_of;
-
-pub(super) struct GuardedRoutePlan(pub RoutePlan, pub ByteReservation);
 
 pub(super) struct PlannedRoute {
     pub route: RefugeRoute,
@@ -75,31 +73,6 @@ impl GroundSearchCursor {
     }
 }
 
-pub(super) fn route_plan(
-    plan: RoutePlan,
-    budget: &ByteBudget,
-) -> Result<GuardedRoutePlan, ExecutionError> {
-    let bytes = match &plan {
-        RoutePlan::Reached { path, .. } => path.heap_bytes(),
-        RoutePlan::Pending { request, .. } => heap_sum([
-            request.from.heap_bytes().ok_or(ExecutionError::Capacity)?,
-            request
-                .destinations
-                .heap_bytes()
-                .ok_or(ExecutionError::Capacity)?,
-            request.body.id.capacity(),
-            request.wait.heap_bytes().ok_or(ExecutionError::Capacity)?,
-        ]),
-        _ => Some(0),
-    }
-    .ok_or(ExecutionError::Capacity)?;
-    let guard = budget.reserve(
-        size_of::<RoutePlan>()
-            .checked_add(bytes)
-            .ok_or(ExecutionError::Capacity)?,
-    )?;
-    Ok(GuardedRoutePlan(plan, guard))
-}
 fn path_length(from: &SurfacePoint, path: &[SurfacePoint]) -> f64 {
     let mut previous = from.point();
     let mut length = 0.0;
