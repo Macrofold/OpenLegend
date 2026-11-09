@@ -4,7 +4,7 @@ import type { WorldState } from './types.js';
 import { getOwn, hasRecordFields, isSafeRecordId } from './records.js';
 import { definitionPin } from './world-modules.js';
 import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
-import { inDailyWindow, localHour } from './status-effects.js';
+import { inDailyWindow, localHour, localHourAt } from './status-effects.js';
 import { dailyWindowBoundary } from './simulation-time.js';
 
 export type DailyRainShape = Pick<
@@ -81,22 +81,23 @@ export function validateDailyRain(world: WorldState): void {
       throw new Error('The selected daily rain is missing or changed.');
   }
 }
-export function selectedDailyRain(world: WorldState): DailyRainDefinition | undefined {
+export function selectedDailyRain(world: Pick<WorldState, 'constructionProfile' | 'dailyRainDefinitions'>): DailyRainDefinition | undefined {
   const pin = world.constructionProfile?.dailyRain;
   return pin && world.dailyRainDefinitions?.[pin.id];
 }
 /** At most one ordinary source and one explicitly requested finite cue. No mutable weather phase. */
 export function incidentRain(world: WorldState): readonly IncidentRain[] {
-  const daily = selectedDailyRain(world),
-    sources: IncidentRain[] = [];
+  return incidentRainAt(selectedDailyRain(world), world.finiteRain, world.simTime, localHour(world));
+}
+function incidentRainAt(daily: DailyRainDefinition | undefined, cue: WorldState['finiteRain'], at: number, hour: number): readonly IncidentRain[] {
+  const sources: IncidentRain[] = [];
   if (
     daily &&
     daily.intensity > 0 &&
-    inDailyWindow(localHour(world), daily.windowLocalHours.start, daily.windowLocalHours.end)
+    inDailyWindow(hour, daily.windowLocalHours.start, daily.windowLocalHours.end)
   )
     sources.push({ ...daily.region.bounds, intensity: daily.intensity });
-  const cue = world.finiteRain;
-  if (cue && cue.intensity > 0 && world.simTime >= cue.startsAt && world.simTime < cue.endsAt)
+  if (cue && cue.intensity > 0 && at >= cue.startsAt && at < cue.endsAt)
     sources.push(cue);
   return sources;
 }
@@ -108,9 +109,12 @@ export function localWeatherView(
   world: WorldState,
   point: WorldPoint,
 ): { label: string; intensity: number } | undefined {
-  const daily = selectedDailyRain(world);
+  return localWeatherAt(selectedDailyRain(world), world.finiteRain, world.simTime, world.statusEffectPolicy.clockOffsetHours, point);
+}
+/** A read-only display of the installed rain and this cut's finite cue. */
+export function localWeatherAt(daily: DailyRainDefinition | undefined, cue: WorldState['finiteRain'], at: number, offsetHours: number, point: WorldPoint): {label:string;intensity:number}|undefined {
   if (!daily) return;
-  const intensity = incidentRain(world).reduce(
+  const intensity = incidentRainAt(daily, cue, at, localHourAt(at, offsetHours)).reduce(
     (maximum, source) =>
       point.x >= source.minX &&
       point.x <= source.maxX &&

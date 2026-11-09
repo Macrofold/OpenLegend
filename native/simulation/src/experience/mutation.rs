@@ -32,6 +32,7 @@ pub(super) enum ExperienceUndo {
     Header {
         before: ExperienceHeader,
         payload: Arc<str>,
+        storage: ByteReservation,
     },
     Privacy(super::privacy_mutation::PrivacyUndo),
     Replace {
@@ -115,13 +116,18 @@ impl ExperienceJournal {
             let operation = self.undo.pop().expect("journal cursor checked");
             let undo = match operation {
                 ExperienceUndo::Append(undo) => undo,
-                ExperienceUndo::Header { before, payload } => {
+                ExperienceUndo::Header {
+                    before,
+                    payload,
+                    storage,
+                } => {
                     state.header = before;
                     state.header_payload = payload;
+                    state.header_storage = storage;
                     continue;
                 }
                 ExperienceUndo::Privacy(undo) => {
-                    undo.rollback(state)?;
+                    undo.rollback(state, &mut self.reservation)?;
                     continue;
                 }
                 ExperienceUndo::Remove {
@@ -142,6 +148,7 @@ impl ExperienceJournal {
                     {
                         return Err(ExperienceError::InvalidOrdinal);
                     }
+                    adjust_agreements(source, false, before.header.agreement_body)?;
                     source
                         .lookup
                         .insert(before.header.reference.id.clone(), before.position);
@@ -175,6 +182,7 @@ impl ExperienceJournal {
                     if current.header.reference.id != id {
                         return Err(ExperienceError::InvalidOrdinal);
                     }
+                    let current_agreement = current.header.agreement_body;
                     let current_event = current.header.completion_event_type.clone();
                     state.sensory.exchange(Some(current), Some(&before));
                     replace_completion(
@@ -182,20 +190,37 @@ impl ExperienceJournal {
                         current_event.as_deref(),
                         before.header.completion_event_type.as_deref(),
                     )?;
-                    actor
+                    let source = actor
                         .sources
                         .get_mut(&kind)
-                        .ok_or(ExperienceError::UnknownCoverage)?
-                        .by_ordinal
-                        .insert(position, before);
+                        .ok_or(ExperienceError::UnknownCoverage)?;
+                    adjust_agreements(source, current_agreement, before.header.agreement_body)?;
+                    source.by_ordinal.insert(position, before);
                     continue;
                 }
                 ExperienceUndo::KnownPlaces { actor_id, before } => {
-                    if let Some(before) = before {
-                        state.known_places.insert(actor_id, before);
+                    let metadata = super::residency::MetadataBefore::capture(state, &actor_id)?;
+                    let old_strings = state
+                        .known_places
+                        .get_key_value(&actor_id)
+                        .map_or(0, |(k, _)| k.capacity());
+                    let new_strings = if let Some(before) = before {
+                        *state
+                            .known_places
+                            .get_mut(&actor_id)
+                            .ok_or(ExperienceError::StaleHydration)? = before;
+                        old_strings
                     } else {
                         state.known_places.shift_remove(&actor_id);
-                    }
+                        0
+                    };
+                    state.settle_metadata(
+                        metadata,
+                        &actor_id,
+                        old_strings,
+                        new_strings,
+                        &mut self.reservation,
+                    )?;
                     continue;
                 }
                 ExperienceUndo::Collection {
@@ -204,6 +229,32 @@ impl ExperienceJournal {
                     owner_next,
                     new_actor,
                 } => {
+                    let metadata_before =
+                        super::residency::MetadataBefore::capture(state, &actor_id)?;
+                    let old_strings = state
+                        .owner_maps
+                        .get(&kind)
+                        .and_then(|o| o.placements.get_key_value(&actor_id))
+                        .map(|(k, _)| k.capacity())
+                        .and_then(|n| {
+                            n.checked_add(
+                                state
+                                    .actors
+                                    .get(&actor_id)?
+                                    .sources
+                                    .get(&kind)?
+                                    .actor_id
+                                    .capacity(),
+                            )
+                        })
+                        .and_then(|n| {
+                            n.checked_add(if new_actor {
+                                state.actors.get_key_value(&actor_id)?.0.capacity()
+                            } else {
+                                0
+                            })
+                        })
+                        .ok_or(ExperienceError::ForeignOwner)?;
                     let actor = state
                         .actors
                         .get_mut(&actor_id)
@@ -229,6 +280,14 @@ impl ExperienceJournal {
                         }
                         state.actors.shift_remove(&actor_id);
                     }
+                    drop(collection);
+                    state.settle_metadata(
+                        metadata_before,
+                        &actor_id,
+                        old_strings,
+                        0,
+                        &mut self.reservation,
+                    )?;
                     continue;
                 }
             };
@@ -247,6 +306,7 @@ impl ExperienceJournal {
                 .by_ordinal
                 .remove(&undo.position)
                 .ok_or(ExperienceError::InvalidOrdinal)?;
+            adjust_agreements(source, record.header.agreement_body, false)?;
             state.sensory.exchange(Some(&record), None);
             if let Some(event_type) = &record.header.completion_event_type {
                 let count = actor
@@ -301,6 +361,7 @@ impl ExperienceJournal {
         {
             return Err(ExperienceError::UnknownCoverage);
         }
+        let metadata_before = super::residency::MetadataBefore::capture(state, actor_id)?;
         let owner_next = owners.coverage.next_ordinal;
         let next = owner_next
             .checked_add(1)
@@ -332,11 +393,25 @@ impl ExperienceJournal {
             .ok_or(ExperienceError::Capacity)?,
         )
         .ok_or(ExperienceError::Capacity)?;
+        let source_growth = crate::host::retained_size::map_storage::<
+            PersonalSourceKind,
+            PersonalSourceCollection,
+        >(
+            state
+                .actors
+                .get(actor_id)
+                .map_or(0, |a| a.sources.capacity())
+                .checked_add(1)
+                .and_then(|n| n.checked_mul(2))
+                .ok_or(ExperienceError::Capacity)?,
+        )
+        .ok_or(ExperienceError::Capacity)?;
         self.reservation
             .resize(
                 self.reservation
                     .bytes()
-                    .checked_add(metadata)
+                    .checked_add(source_growth)
+                    .and_then(|n| n.checked_add(metadata))
                     .and_then(|n| n.checked_add(map_growth))
                     .and_then(|n| n.checked_add(actor_id.len().checked_mul(5)?))
                     .ok_or(ExperienceError::Capacity)?,
@@ -345,52 +420,70 @@ impl ExperienceJournal {
         self.undo
             .try_reserve(1)
             .map_err(|_| ExperienceError::Capacity)?;
-        state
-            .actors
-            .try_reserve(usize::from(new_actor))
-            .map_err(|_| ExperienceError::Capacity)?;
-        state
-            .owner_maps
-            .get_mut(&kind)
-            .ok_or(ExperienceError::UnknownCoverage)?
-            .placements
-            .try_reserve(1)
-            .map_err(|_| ExperienceError::Capacity)?;
-        let mut collection = Some(PersonalSourceCollection {
-            kind,
-            actor_id: actor_id.to_owned(),
-            by_ordinal: BTreeMap::new(),
-            lookup: BTreeMap::new(),
-            coverage: SourceCoverage {
-                complete: true,
-                next_ordinal: 0,
-                parent_present: true,
-            },
-        });
-        let prepared_history = if new_actor {
-            let mut history = PersonalHistory::install(
-                Vec::new(),
-                ActorPrivacy::install(Vec::new(), IndexMap::new(), None)?,
-                None,
-            )?;
-            history
-                .sources
-                .try_reserve(1)
-                .map_err(|_| ExperienceError::Capacity)?;
-            history
-                .sources
-                .insert(kind, collection.take().expect("prepared collection"));
-            Some(history)
-        } else {
-            let actor = state
+        state.fund_metadata(
+            &mut self.reservation,
+            map_growth
+                .checked_add(source_growth)
+                .and_then(|n| n.checked_add(actor_id.len() * (2 + usize::from(new_actor))))
+                .ok_or(ExperienceError::Capacity)?,
+        )?;
+        let prepared = (|| -> Result<_, ExperienceError> {
+            state
                 .actors
-                .get_mut(actor_id)
-                .ok_or(ExperienceError::ForeignOwner)?;
-            actor
-                .sources
+                .try_reserve(usize::from(new_actor))
+                .map_err(|_| ExperienceError::Capacity)?;
+            state
+                .owner_maps
+                .get_mut(&kind)
+                .ok_or(ExperienceError::UnknownCoverage)?
+                .placements
                 .try_reserve(1)
                 .map_err(|_| ExperienceError::Capacity)?;
-            None
+            let mut collection = Some(PersonalSourceCollection {
+                kind,
+                actor_id: actor_id.to_owned(),
+                by_ordinal: BTreeMap::new(),
+                lookup: BTreeMap::new(),
+                agreement_body_count: 0,
+                coverage: SourceCoverage {
+                    complete: true,
+                    next_ordinal: 0,
+                    parent_present: true,
+                },
+            });
+            let prepared_history = if new_actor {
+                let mut history = PersonalHistory::install(
+                    Vec::new(),
+                    ActorPrivacy::install(Vec::new(), IndexMap::new(), None)?,
+                    None,
+                )?;
+                history
+                    .sources
+                    .try_reserve(1)
+                    .map_err(|_| ExperienceError::Capacity)?;
+                history
+                    .sources
+                    .insert(kind, collection.take().expect("prepared collection"));
+                Some(history)
+            } else {
+                let actor = state
+                    .actors
+                    .get_mut(actor_id)
+                    .ok_or(ExperienceError::ForeignOwner)?;
+                actor
+                    .sources
+                    .try_reserve(1)
+                    .map_err(|_| ExperienceError::Capacity)?;
+                None
+            };
+            Ok((collection, prepared_history))
+        })();
+        let (mut collection, prepared_history) = match prepared {
+            Ok(prepared) => prepared,
+            Err(error) => {
+                state.settle_metadata(metadata_before, actor_id, 0, 0, &mut self.reservation)?;
+                return Err(error);
+            }
         };
         // All fallible allocation and canonical-owner checks precede mutation.
         if let Some(history) = prepared_history {
@@ -409,6 +502,13 @@ impl ExperienceJournal {
             .expect("actual map owner checked");
         owners.placements.insert(actor_id.to_owned(), owner_next);
         owners.coverage.next_ordinal = next;
+        state.settle_metadata(
+            metadata_before,
+            actor_id,
+            0,
+            actor_id.len() * (2 + usize::from(new_actor)),
+            &mut self.reservation,
+        )?;
         self.undo.push(ExperienceUndo::Collection {
             actor_id: actor_id.to_owned(),
             kind,
@@ -465,11 +565,8 @@ impl ExperienceJournal {
             .checked_add(1)
             .filter(|n| *n <= MAX_SAFE_INTEGER)
             .ok_or(ExperienceError::InvalidOrdinal)?;
-        let index_node = 11 * (size_of::<String>() + size_of::<u64>()) + 16 * size_of::<usize>();
-        let bytes = retained_bytes(&record)
-            .and_then(|n| n.checked_add(index_node.checked_mul(3)?))
-            .and_then(|n| n.checked_add(2 * size_of::<ExperienceUndo>()))
-            .and_then(|n| n.checked_add(header.actor_id.len()))
+        let bytes = (2 * size_of::<ExperienceUndo>())
+            .checked_add(header.actor_id.len())
             .and_then(|n| n.checked_add(header.reference.id.len().checked_mul(2)?))
             .and_then(|n| n.checked_add(self.reservation.bytes()))
             .ok_or(ExperienceError::Capacity)?;
@@ -506,6 +603,7 @@ impl ExperienceJournal {
             .sources
             .get_mut(&undo.kind)
             .ok_or(ExperienceError::UnknownCoverage)?;
+        adjust_agreements(source, false, record.header.agreement_body)?;
         source.coverage.next_ordinal = next;
         source.lookup.insert(undo.id.clone(), undo.position);
         state.sensory.exchange(None, Some(&record));
@@ -540,24 +638,11 @@ impl ExperienceJournal {
         {
             return Err(ExperienceError::StaleHydration);
         }
-        let index_node = 11 * (size_of::<String>() + size_of::<u64>()) + 16 * size_of::<usize>();
-        let bytes = retained_bytes(&record)
-            .and_then(|bytes| bytes.checked_add(retained_bytes(before)?))
-            .and_then(|bytes| bytes.checked_add(self.reservation.bytes()))
-            .and_then(|bytes| bytes.checked_add(2 * size_of::<ExperienceUndo>() + 2 * index_node))
-            .and_then(|bytes| bytes.checked_add(record.header.actor_id.len()))
-            .and_then(|bytes| bytes.checked_add(record.header.reference.id.len()))
-            .and_then(|bytes| {
-                bytes.checked_add(
-                    record
-                        .header
-                        .completion_event_type
-                        .as_ref()
-                        .map_or(0, String::len),
-                )
-            })
-            .and_then(|bytes| {
-                bytes.checked_add(
+        let bytes = (2 * size_of::<ExperienceUndo>())
+            .checked_add(record.header.actor_id.len())
+            .and_then(|n| n.checked_add(record.header.reference.id.len()))
+            .and_then(|n| {
+                n.checked_add(
                     before
                         .header
                         .completion_event_type
@@ -565,6 +650,7 @@ impl ExperienceJournal {
                         .map_or(0, String::len),
                 )
             })
+            .and_then(|n| n.checked_add(self.reservation.bytes()))
             .ok_or(ExperienceError::Capacity)?;
         self.reservation
             .resize(bytes)
@@ -579,6 +665,7 @@ impl ExperienceJournal {
             position: record.position,
             before: Arc::clone(before),
         };
+        let old_agreement = before.header.agreement_body;
         let old_event = before.header.completion_event_type.clone();
         let before = Arc::clone(before);
         let record = Arc::new(record);
@@ -595,12 +682,12 @@ impl ExperienceJournal {
             record.header.completion_event_type.as_deref(),
         )?;
         state.sensory.exchange(Some(&before), Some(&record));
-        actor
+        let source = actor
             .sources
             .get_mut(&expected.kind)
-            .ok_or(ExperienceError::UnknownCoverage)?
-            .by_ordinal
-            .insert(record.position, record);
+            .ok_or(ExperienceError::UnknownCoverage)?;
+        adjust_agreements(source, old_agreement, record.header.agreement_body)?;
+        source.by_ordinal.insert(record.position, record);
         self.undo.push(undo);
         Ok(())
     }
@@ -661,6 +748,7 @@ impl ExperienceJournal {
         {
             return Err(ExperienceError::InvalidOrdinal);
         }
+        adjust_agreements(source, before.header.agreement_body, false)?;
         replace_completion(actor, before.header.completion_event_type.as_deref(), None)?;
         state.sensory.exchange(Some(&before), None);
         self.undo.push(undo);
@@ -717,10 +805,15 @@ impl ExperienceJournal {
                 crate::encoding::serialize_js_map(self.0, s)
             }
         }
-        let payload = Arc::from(
+        let payload: Arc<str> = Arc::from(
             json_record(&Header(&fields))
                 .map_err(|_| ExperienceError::InvalidBody("experience header encoding"))?,
         );
+        let storage = self
+            .reservation
+            .split_off(payload.len() + 2 * size_of::<usize>())
+            .map_err(|_| ExperienceError::Capacity)?;
+        let old_storage = std::mem::replace(&mut state.header_storage, storage);
         let before = state.header.clone();
         let old_payload = Arc::clone(&state.header_payload);
         if corrections {
@@ -732,6 +825,7 @@ impl ExperienceJournal {
         self.undo.push(ExperienceUndo::Header {
             before,
             payload: old_payload,
+            storage: old_storage,
         });
         Ok(())
     }
@@ -815,70 +909,18 @@ fn replace_completion(
     Ok(())
 }
 
-fn receipt_heap(value: &TemporalReceiptLocator) -> Option<usize> {
-    value
-        .actor_id
-        .capacity()
-        .checked_add(value.epoch.capacity())
-}
-fn retained_bytes(record: &PersonalSourceRecord) -> Option<usize> {
-    let mut bytes = size_of::<PersonalSourceRecord>()
-        .checked_add(2 * size_of::<usize>() + align_of::<PersonalSourceRecord>() - 1)?;
-    for text in [
-        &record.row_id,
-        &record.parent,
-        &record.slot,
-        &record.header.reference.id,
-        &record.header.reference.revision,
-        &record.header.actor_id,
-    ] {
-        bytes = bytes.checked_add(text.capacity())?;
+fn adjust_agreements(
+    source: &mut PersonalSourceCollection,
+    before: bool,
+    after: bool,
+) -> Result<(), ExperienceError> {
+    if before != after {
+        source.agreement_body_count = if after {
+            source.agreement_body_count.checked_add(1)
+        } else {
+            source.agreement_body_count.checked_sub(1)
+        }
+        .ok_or(ExperienceError::InvalidOrdinal)?;
     }
-    bytes = bytes
-        .checked_add(record.payload.len())?
-        .checked_add(2 * size_of::<usize>())?;
-    bytes = bytes
-        .checked_add(
-            record
-                .columns
-                .len()
-                .checked_mul(size_of::<crate::records::SqlCell>())?,
-        )?
-        .checked_add(2 * size_of::<usize>())?;
-    for cell in record.columns.iter() {
-        bytes = bytes.checked_add(crate::records::save::cell_heap(cell)?)?;
-    }
-    for text in [
-        &record.header.event_id,
-        &record.header.evidence_source_id,
-        &record.header.evidence_target_id,
-        &record.header.activity_id,
-        &record.header.record_kind,
-        &record.header.source,
-        &record.header.completion_event_type,
-    ]
-    .into_iter()
-    .flatten()
-    {
-        bytes = bytes.checked_add(text.capacity())?;
-    }
-    for values in [
-        &record.header.owned_observations,
-        &record.header.dependencies,
-        &record.header.privacy_dependencies,
-    ] {
-        bytes = bytes.checked_add(values.heap_bytes()?)?;
-    }
-    if let Some(receipt) = &record.header.source_receipt {
-        bytes = bytes.checked_add(receipt_heap(receipt)?)?;
-    }
-    if let Some(receipt) = record
-        .header
-        .retention
-        .as_ref()
-        .and_then(|retention| retention.receipt.as_ref())
-    {
-        bytes = bytes.checked_add(receipt_heap(receipt)?)?;
-    }
-    Some(bytes)
+    Ok(())
 }

@@ -35,6 +35,15 @@ pub struct AttentionPoint {
     pub error_radius: f64,
     pub at: f64,
 }
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct AttentionPresentation {
+    pub key: String,
+    pub description_revision: String,
+    pub change_revision: String,
+    #[serde(default, deserialize_with = "deserialize_present_option", skip_serializing_if = "Option::is_none")]
+    pub point: Option<AttentionPoint>,
+}
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

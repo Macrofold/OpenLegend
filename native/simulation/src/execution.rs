@@ -28,6 +28,7 @@ use indexmap::{IndexMap, IndexSet};
 use std::mem::size_of;
 use std::sync::Arc;
 
+mod action_storage;
 mod agency;
 mod attributes;
 mod body;
@@ -141,6 +142,7 @@ struct CandidateFrame {
     activity: ActivityCheckpoint,
     experience: ExperienceCheckpoint,
     commands: CommandCheckpoint,
+    responses: crate::response::ResponseCheckpoint,
     recognition: crate::worlds::InstalledRecognitionCheckpoint,
     sensory_cursor: PhysicalChangeCursor,
     attention_cursor: PhysicalChangeCursor,
@@ -170,6 +172,7 @@ pub(crate) struct CandidateJournal {
     pub activity: ActivityJournal,
     pub experience: ExperienceJournal,
     pub commands: CommandJournal,
+    pub responses: crate::response::ResponseJournal,
     pub acquisitions: TemporalScopes,
     pub recognition: crate::worlds::InstalledRecognitionJournal,
     root_received: Option<ReceivedValuesCheckpoint>,
@@ -182,6 +185,7 @@ pub(crate) struct CandidateJournal {
     root_activity: ActivityCheckpoint,
     root_experience: ExperienceCheckpoint,
     root_commands: CommandCheckpoint,
+    root_responses: crate::response::ResponseCheckpoint,
     root_recognition: crate::worlds::InstalledRecognitionCheckpoint,
     root_cognition: crate::cognition::CognitionCheckpoint,
     root_appraisals: crate::appraisals::AppraisalCheckpoint,
@@ -402,6 +406,8 @@ impl CandidateJournal {
         let root_experience = experience.checkpoint();
         let commands = CommandJournal::new(budget)?;
         let root_commands = commands.checkpoint();
+        let responses = crate::response::ResponseJournal::new(budget)?;
+        let root_responses = responses.checkpoint();
         let acquisitions = TemporalScopes::new(budget)?;
         let recognition = crate::worlds::InstalledRecognitionJournal::new(budget)
             .map_err(ExecutionError::Received)?;
@@ -427,6 +433,7 @@ impl CandidateJournal {
             activity,
             experience,
             commands,
+            responses,
             acquisitions,
             recognition,
             root_received: state
@@ -443,6 +450,7 @@ impl CandidateJournal {
             root_activity,
             root_experience,
             root_commands,
+            root_responses,
             root_recognition,
             sensory_cursor,
             attention_cursor: sensory_cursor,
@@ -499,6 +507,7 @@ impl CandidateJournal {
             activity: self.activity.checkpoint(),
             experience: self.experience.checkpoint(),
             commands: self.commands.checkpoint(),
+            responses: self.responses.checkpoint(),
             recognition: self.recognition.checkpoint(&state.reception),
             sensory_cursor: self.sensory_cursor,
             attention_cursor: self.attention_cursor,
@@ -551,6 +560,8 @@ impl CandidateJournal {
             .map_err(ExecutionError::Activity)?;
         self.commands
             .rollback_to(&mut state.commands, frame.commands)?;
+        self.responses
+            .rollback_to(&mut state.responses, frame.responses)?;
         self.experience
             .rollback_to(&mut state.experience, frame.experience)
             .map_err(|_| ExecutionError::OwnerRollback)?;
@@ -606,6 +617,8 @@ impl CandidateJournal {
             .map_err(ExecutionError::Activity)?;
         self.commands
             .rollback_to(&mut state.commands, self.root_commands)?;
+        self.responses
+            .rollback_to(&mut state.responses, self.root_responses)?;
         self.experience
             .rollback_to(&mut state.experience, self.root_experience)
             .map_err(|_| ExecutionError::OwnerRollback)?;
@@ -1075,6 +1088,7 @@ enum UndoKey {
     CoachingPresence,
     AgencyPlaces(usize, u64),
     AgencyPlan(usize, u64),
+    AgencyGoals(usize, u64),
     AgencySuspended(usize, u64),
     AgencyHistory(usize, u64),
     AgencyRevision(usize, u64),
@@ -1185,6 +1199,10 @@ enum Undo {
         entity: EntityHandle,
         before: Option<crate::plans::ActorPlan>,
     },
+    AgencyGoals {
+        entity: EntityHandle,
+        before: crate::state::FundedGoals,
+    },
     AgencySuspended {
         entity: EntityHandle,
         before: Option<Option<crate::plans::ActorPlan>>,
@@ -1246,7 +1264,7 @@ enum Undo {
     ActionNavigation {
         entity: EntityHandle,
         action_id: String,
-        before: Option<crate::state::NavigationPending>,
+        before: crate::state::FundedActionNavigation,
     },
     ActionRemaining {
         entity: EntityHandle,
@@ -1266,7 +1284,7 @@ enum Undo {
     ActionRoute {
         entity: EntityHandle,
         action_id: String,
-        before: ActionRouteWrite,
+        before: crate::state::FundedActionRoute,
     },
     Heading {
         entity: EntityHandle,
@@ -1295,13 +1313,13 @@ enum Undo {
     },
     Action {
         entity: EntityHandle,
-        before: Option<Action>,
+        before: Option<crate::state::FundedAction>,
         plan_generation: u64,
     },
     ActionPath {
         entity: EntityHandle,
         action_id: String,
-        before: Vec<crate::state::SurfacePoint>,
+        before: crate::state::FundedActionPath,
     },
     AnimalEpisode {
         entity: EntityHandle,
@@ -1585,6 +1603,9 @@ impl PhysicalJournal {
                         .agency
                         .plan = before;
                 }
+                Undo::AgencyGoals { entity, before } => {
+                    drop(state.entities.swap_funded_goals(entity, before)?);
+                }
                 Undo::CoachingPresence { before } => {
                     state.coaching.present = before;
                 }
@@ -1842,14 +1863,9 @@ impl PhysicalJournal {
                     action_id,
                     before,
                 } => {
-                    state
-                        .entities
-                        .resolve_mut(entity)
-                        .and_then(|entity| entity.actor.as_mut())
-                        .and_then(|actor| actor.action.as_mut())
-                        .filter(|action| action.id == action_id)
-                        .ok_or(ExecutionError::Invariant)?
-                        .navigation = before;
+                    drop(action_storage::swap_navigation(
+                        state, entity, &action_id, before,
+                    )?);
                 }
                 Undo::ActionRemaining {
                     entity,
@@ -1905,17 +1921,9 @@ impl PhysicalJournal {
                     action_id,
                     before,
                 } => {
-                    let action = state
-                        .entities
-                        .resolve_mut(entity)
-                        .and_then(|entity| entity.actor.as_mut())
-                        .and_then(|actor| actor.action.as_mut())
-                        .filter(|action| action.id == action_id)
-                        .ok_or(ExecutionError::Invariant)?;
-                    action.path = before.path;
-                    action.navigation = before.navigation;
-                    action.stage = before.stage;
-                    action.replans = before.replans;
+                    drop(action_storage::swap_route(
+                        state, entity, &action_id, before,
+                    )?);
                 }
                 Undo::Heading { entity, before } => {
                     state
@@ -1970,29 +1978,22 @@ impl PhysicalJournal {
                     before,
                     plan_generation,
                 } => {
-                    let actor = state
+                    drop(state.entities.swap_funded_action(entity, before)?);
+                    state
                         .entities
                         .resolve_mut(entity)
                         .and_then(|e| e.actor.as_mut())
-                        .ok_or(ExecutionError::Invariant)?;
-                    actor.action = before;
-                    actor.plan_generation = plan_generation;
+                        .ok_or(ExecutionError::Invariant)?
+                        .plan_generation = plan_generation;
                 }
                 Undo::ActionPath {
                     entity,
                     action_id,
                     before,
                 } => {
-                    let action = state
-                        .entities
-                        .resolve_mut(entity)
-                        .and_then(|e| e.actor.as_mut())
-                        .and_then(|a| a.action.as_mut())
-                        .ok_or(ExecutionError::Invariant)?;
-                    if action.id != action_id {
-                        return Err(ExecutionError::Invariant);
-                    }
-                    action.path = before;
+                    drop(action_storage::swap_path(
+                        state, entity, &action_id, before,
+                    )?);
                 }
                 Undo::AnimalEpisode { entity, before } => {
                     state
@@ -2737,7 +2738,7 @@ impl PhysicalMutation<'_> {
     pub(crate) fn replace_action(
         &mut self,
         id: &str,
-        action: Option<Action>,
+        action: Option<crate::state::FundedAction>,
         write: ActionWrite,
     ) -> Result<(), ExecutionError> {
         let handle = self
@@ -2745,6 +2746,12 @@ impl PhysicalMutation<'_> {
             .entities
             .handle(id)
             .ok_or(ExecutionError::MissingEntity)?;
+        if action
+            .as_ref()
+            .is_some_and(|a| !a.storage.shares_owner(&self.journal.reservation))
+        {
+            return Err(ExecutionError::Invariant);
+        }
         let actor = self
             .state
             .entities
@@ -2776,15 +2783,14 @@ impl PhysicalMutation<'_> {
                 outward_change,
             })?;
         }
-        let actor = self
-            .state
+        let generation = actor.plan_generation;
+        let before = self.state.entities.swap_funded_action(handle, action)?;
+        self.state
             .entities
             .resolve_mut(handle)
             .and_then(|e| e.actor.as_mut())
-            .ok_or(ExecutionError::Invariant)?;
-        let before = std::mem::replace(&mut actor.action, action);
-        let generation = actor.plan_generation;
-        actor.plan_generation = next;
+            .ok_or(ExecutionError::Invariant)?
+            .plan_generation = next;
         // Preserve each binding transition. Field inverses taken while a new
         // action runs must see that action again before the earlier binding is
         // restored. The old action moves into this inverse without cloning.
@@ -3056,11 +3062,26 @@ impl PhysicalMutation<'_> {
                 return Err(ExecutionError::Invariant);
             }
             if cursor.consumed_points > 0 {
+                let tail = cursor
+                    .path
+                    .get(cursor.consumed_points..)
+                    .ok_or(ExecutionError::Invariant)?;
+                let tail_bytes = tail
+                    .iter()
+                    .try_fold(
+                        tail.len()
+                            .checked_mul(size_of::<crate::state::SurfacePoint>())
+                            .ok_or(ExecutionError::Capacity)?,
+                        |bytes, point| bytes.checked_add(point.heap_bytes()?),
+                    )
+                    .ok_or(ExecutionError::Capacity)?;
+                // The previous path carries its resident guard into the inverse.
+                // Only the new split backing and its moved point buffers need
+                // custody here, not a second charge for the previous path.
                 self.journal.reserve(
-                    size_of::<Undo>() * 2
-                        + action_id.len() * 2
-                        + action.path.heap_bytes().ok_or(ExecutionError::Capacity)?
-                        + cursor.path.len() * size_of::<crate::state::SurfacePoint>(),
+                    (size_of::<Undo>() * 2 + action_id.len() * 2)
+                        .checked_add(tail_bytes)
+                        .ok_or(ExecutionError::Capacity)?,
                 )?;
                 self.journal
                     .undo
@@ -3069,14 +3090,18 @@ impl PhysicalMutation<'_> {
                 let key = UndoKey::ActionPath(cursor.actor.slot, cursor.actor.generation);
                 let first = self.journal.first(&key)?;
                 let remaining = cursor.path.split_off(cursor.consumed_points);
-                let action = self
-                    .state
-                    .entities
-                    .resolve_mut(cursor.actor)
-                    .and_then(|e| e.actor.as_mut())
-                    .and_then(|a| a.action.as_mut())
-                    .ok_or(ExecutionError::Invariant)?;
-                let before = std::mem::replace(&mut action.path, remaining);
+                let bytes = remaining.heap_bytes().ok_or(ExecutionError::Capacity)?;
+                let storage = self.journal.reservation.split_off(bytes)?;
+                let before = action_storage::swap_path(
+                    self.state,
+                    cursor.actor,
+                    action_id,
+                    crate::state::FundedActionPath {
+                        value: remaining,
+                        storage,
+                    },
+                )?;
+
                 if first {
                     self.journal.retain(
                         key,

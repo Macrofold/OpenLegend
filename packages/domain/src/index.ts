@@ -226,6 +226,7 @@ export {
   availableStrikes,
   describeAttack,
   validMelee,
+  supportsStrikeBody,
   type StrikeDefinition,
   type MeleeProfile,
 } from './strikes.js';
@@ -338,6 +339,7 @@ export {
   soundOrigin,
   hearingReferenceRadius,
   perceptionGuide,
+  perceptionGuideFrom,
 } from './perception.js';
 export * from './speech.js';
 export * from './sound.js';

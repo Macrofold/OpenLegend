@@ -25,6 +25,12 @@ mod save;
 pub(crate) use save::{encode_candidate_changes, encode_root_changes};
 mod publication;
 pub(crate) use publication::{PreparedPublication, PublicationError};
+mod driver;
+mod session;
+pub(crate) use session::{Session, SessionError, SessionStep};
+pub(crate) use driver::{
+    AdvanceDriver, DriveError, DriveStep, ProviderKind, ProviderQuestion, ProviderResponse,
+};
 
 /// Immutable selected definitions. Their exact source canonical bodies remain
 /// with their typed meanings; a digest is never used as content equality.
@@ -74,6 +80,7 @@ pub(crate) struct InstalledWorld {
     pub personal_evidence_preparation: crate::install::PersonalEvidencePreparationSettings,
     pub mind_limits: crate::cognition::MindLimits,
     pub agency_limits: crate::plans::AgencyLimits,
+    pub actor_response_limits: crate::response::ResponseLimits,
 }
 impl InstalledWorld {
     pub(crate) fn movement_speed(
@@ -135,6 +142,7 @@ pub(crate) struct SimulationState {
     pub occurrences: OccurrenceHistory,
     pub activity: ActivityState,
     pub commands: crate::commands::CommandState,
+    pub responses: crate::response::ResponseState,
     pub minds: crate::cognition::MindState,
     pub administration: crate::administration::AdministrationState,
     pub inventory: crate::install::ClosedInventory,

@@ -547,6 +547,7 @@ pub(crate) fn acquire_awareness_accounts(
                 extra,
             },
             &law,
+            budget,
         )?;
         core.state.temporal.adjust_account(
             &admission.actor_id,

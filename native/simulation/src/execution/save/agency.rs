@@ -8,12 +8,70 @@ pub(super) fn encode(
     agency: &crate::state::ActorAgency,
     plan_before: Option<&Option<ActorPlan>>,
     history_before: Option<&Vec<PlanStep>>,
+    goals_before: Option<&Vec<crate::state::Goal>>,
     ledger: &RecordLedger,
     output: &mut RowEncoder<'_>,
     budget: &ByteBudget,
 ) -> Result<(), RecordEncodingError> {
     let parent = ["world", "entities", actor_id, "actor", "agency"];
     let plan_path = ["world", "entities", actor_id, "actor", "agency", "plan"];
+    if let Some(before) = goals_before {
+        for prior in before {
+            if !agency.goals.iter().any(|goal| goal.id == prior.id) {
+                let path = [
+                    "world", "entities", actor_id, "actor", "agency", "goals", &prior.id,
+                ];
+                let _guard = budget
+                    .reserve(
+                        crate::encoding::json_record_len(&path)
+                            .map_err(|_| error())?
+                            .checked_mul(2)
+                            .ok_or_else(error)?,
+                    )
+                    .map_err(|_| error())?;
+                output.delete(
+                    "sim_goals",
+                    &crate::encoding::json_record(&path).map_err(|_| error())?,
+                    false,
+                )?;
+            }
+        }
+        for (index, goal) in agency.goals.iter().enumerate() {
+            if before.get(index) == Some(goal) {
+                continue;
+            }
+            let _slot = budget.reserve(32).map_err(|_| error())?;
+            let slot = index.to_string();
+            let address = SelectedPlacement::new(
+                ledger,
+                "sim_goals",
+                &[
+                    "world", "entities", actor_id, "actor", "agency", "goals", &goal.id,
+                ],
+                &parent,
+                &slot,
+                index as u64,
+                !before.iter().any(|prior| prior.id == goal.id),
+                budget,
+            )?;
+            output.write(
+                "sim_goals",
+                address.value(),
+                goal,
+                &[],
+                address.create(),
+                RowEffects::default(),
+            )?;
+        }
+        observe(
+            output,
+            "sim_goals",
+            &parent,
+            true,
+            agency.goals.len() as u64,
+            budget,
+        )?;
+    }
     if let Some(before) = plan_before {
         if before.as_ref() != agency.plan.as_ref() {
             if let Some(plan) = &agency.plan {

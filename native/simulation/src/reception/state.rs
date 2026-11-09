@@ -176,7 +176,7 @@ pub struct KnowledgeDocument {
     pub origin: KnowledgeOrigin,
     #[serde(deserialize_with = "crate::values::deserialize_nullable")]
     pub subject_id: Option<KnowledgeSubject>,
-    pub text: String,
+    pub text: crate::text::JsText,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub revision: u64,
     pub evidence_ids: Vec<String>,
@@ -188,7 +188,7 @@ pub struct MapMarker {
     pub id: String,
     pub x: f64,
     pub z: f64,
-    pub label: String,
+    pub label: crate::text::JsText,
     pub icon: String,
 }
 
@@ -206,7 +206,7 @@ pub struct ReceptionState {
     pub observer_identities:
         Option<IndexMap<String, IndexMap<String, crate::worlds::InstalledObserverIdentity>>>,
     pub perception_episodes: Option<IndexMap<String, IndexMap<String, String>>>,
-    pub actor_knowledge: Option<IndexMap<String, IndexMap<String, KnowledgeDocument>>>,
+    pub(crate) actor_knowledge: crate::knowledge::KnowledgeState,
     pub knowledge_revisions: Option<IndexMap<String, u64>>,
     pub visible_objects: Option<IndexMap<String, Vec<String>>>,
     pub visible_people: Option<IndexMap<String, Vec<String>>>,

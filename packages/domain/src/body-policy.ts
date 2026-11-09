@@ -528,7 +528,7 @@ export function bodyNarration(template: string, subject: Entity, item?: Named): 
 
 /** Exact eligibility inputs captured before background work; numeric meter drift is rechecked separately. */
 export function bodyEligibilityRevision(world: WorldState, entity: Entity): string {
-  return canonicalJson({
+  return bodyEligibilityRevisionFor({
     manifest: world.moduleManifest.revision,
     bodyPolicy: world.moduleManifest.bodyPolicyPin,
     attributes: world.moduleManifest.pins,
@@ -536,4 +536,18 @@ export function bodyEligibilityRevision(world: WorldState, entity: Entity): stri
     cognition: world.cognitionPolicy,
     body: entity.actor?.body,
   });
+}
+
+/** A revision describes the already selected body's actual dependencies. Native
+ * captures supply the same finite facts without recreating a world or Entity. */
+export interface BodyEligibilityWitness {
+  readonly manifest: WorldState['moduleManifest']['revision'];
+  readonly bodyPolicy: WorldState['moduleManifest']['bodyPolicyPin'];
+  readonly attributes: WorldState['moduleManifest']['pins'];
+  readonly status: WorldState['statusEffectPolicy']['revision'];
+  readonly cognition: WorldState['cognitionPolicy'];
+  readonly body: NonNullable<Entity['actor']>['body'];
+}
+export function bodyEligibilityRevisionFor(witness: BodyEligibilityWitness): string {
+  return canonicalJson(witness);
 }

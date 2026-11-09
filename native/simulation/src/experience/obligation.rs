@@ -124,6 +124,7 @@ pub(crate) fn prepare_obligation_replacement(
             extra,
         },
         &law,
+        budget,
     )?;
     Ok(Some(PreparedObligationReplacement {
         before: Arc::clone(before),

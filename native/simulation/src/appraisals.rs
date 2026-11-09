@@ -16,6 +16,15 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{collections::BTreeMap, mem::size_of, sync::Arc};
+mod index;
+use index::AppraisalIndex;
+mod read;
+mod response;
+pub(crate) use read::{AppraisalScope, write_actor_appraisals};
+pub(crate) use response::{
+    AppraisalBindings, AppraisalChangeCursor, AppraisalChangeStep, AppraisalPublication,
+    CompletedAppraisalChange,
+};
 
 #[derive(Clone, Deserialize, Serialize)]
 #[serde(
@@ -45,6 +54,7 @@ pub(crate) enum LifetimeLaw {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct Definition {
     pub id: String,
+    #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
     pub version: u64,
     pub implementation: String,
     pub label: String,
@@ -88,7 +98,7 @@ pub(crate) enum AppraisalLifetime {
     Expires { at: f64 },
     Decays { anchor_time: f64, anchor_value: f64 },
 }
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct PerceivedCause {
     pub kind: String,
@@ -99,6 +109,12 @@ pub(crate) struct PerceivedCause {
     pub source_version: String,
     pub coverage: String,
     pub subject_ids: Vec<String>,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub recall_episode_id: Option<String>,
 }
 #[derive(Clone, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -111,21 +127,38 @@ pub(crate) struct AppraisalOperation {
 pub(crate) struct Appraisal {
     pub id: String,
     pub actor_id: String,
+    #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
     pub revision: u64,
     pub definition_pin: DefinitionPin,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
     pub target_id: Option<String>,
     pub stack_key: String,
     pub state: String,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
     pub cause: Option<PerceivedCause>,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub interpretation_source: Option<PerceivedCause>,
     pub value: AppraisalValue,
     pub lifetime: AppraisalLifetime,
     pub created_at: f64,
     pub changed_at: f64,
     pub last_operation: AppraisalOperation,
     pub creation_operation: AppraisalOperation,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub predecessor_id: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub next_at: Option<f64>,
 }
 pub(crate) struct AppraisalRecord {
@@ -137,6 +170,7 @@ pub(crate) struct AppraisalOwner {
     pub row: Option<InstalledRow>,
     pub coverage: OwnerCoverage,
     pub records: IndexMap<String, Arc<AppraisalRecord>>,
+    index: AppraisalIndex,
 }
 pub(crate) struct AppraisalState {
     pub definitions: IndexMap<String, Arc<InstalledAppraisalDefinition>>,
@@ -146,6 +180,7 @@ pub(crate) struct AppraisalState {
     pub process_next_ordinal: u64,
     deadlines: BTreeMap<(u64, String), (String, String)>,
     undo: Vec<AppraisalUndo>,
+    initial_index: Option<ByteReservation>,
 }
 enum AppraisalUndo {
     Record {
@@ -270,10 +305,9 @@ pub(crate) fn install_appraisals(
                 || definitions
                     .get(&value.definition_pin.id)
                     .is_none_or(|definition| definition.pin != value.definition_pin)
-                || value
-                    .cause
-                    .as_ref()
-                    .is_some_and(|cause| cause.kind != "perceived-event")
+                || value.cause.as_ref().is_some_and(|cause| {
+                    !matches!(cause.kind.as_str(), "perceived-event" | "remembered")
+                })
             {
                 return Err(InstallError::CurrentFormat);
             }
@@ -297,6 +331,7 @@ pub(crate) fn install_appraisals(
                 row: Some(row),
                 coverage: records.coverage,
                 records: values,
+                index: AppraisalIndex::default(),
             },
         );
     }
@@ -320,6 +355,7 @@ pub(crate) fn install_appraisals(
         process_next_ordinal: process.coverage.next_ordinal,
         deadlines: BTreeMap::new(),
         undo: Vec::new(),
+        initial_index: None,
     };
     for owner in state.owners.values() {
         for record in owner.records.values() {
@@ -329,6 +365,25 @@ pub(crate) fn install_appraisals(
     Ok(state)
 }
 impl AppraisalState {
+    /// Imported rich rows already have their resident owner. These additional
+    /// query keys are funded once and stay owned after candidate undo is freed.
+    pub(crate) fn prepare_indices(&mut self, budget: &ByteBudget) -> Result<(), ExecutionError> {
+        let bytes = self.owners.values().try_fold(0usize, |bytes, owner| {
+            owner.records.values().try_fold(bytes, |bytes, record| {
+                bytes
+                    .checked_add(AppraisalIndex::entry_bound(&record.value)?)
+                    .ok_or(ExecutionError::Capacity)
+            })
+        })?;
+        let reservation = budget.reserve(bytes)?;
+        for owner in self.owners.values_mut() {
+            for record in owner.records.values() {
+                owner.index.insert(&record.value)?;
+            }
+        }
+        self.initial_index = Some(reservation);
+        Ok(())
+    }
     pub(crate) fn checkpoint(&self) -> AppraisalCheckpoint {
         AppraisalCheckpoint {
             undo: self.undo.len(),
@@ -365,9 +420,11 @@ impl AppraisalState {
                         .get_mut(&actor)
                         .ok_or(ExecutionError::Invariant)?;
                     if let Some(current) = owner.records.shift_remove(&id) {
+                        owner.index.remove(&current.value)?;
                         unindex_deadline(&mut self.deadlines, &current.value);
                     }
                     if let Some((at, record)) = prior {
+                        owner.index.insert(&record.value)?;
                         index_deadline(&mut self.deadlines, &record.value);
                         owner.records.shift_insert(at, id, record);
                     }
@@ -484,8 +541,11 @@ fn next_deadline(record: &Appraisal, definition: &Definition, now: f64) -> Optio
 fn put(
     core: &mut CoreMutation<'_>,
     value: Appraisal,
-    reservation: ByteReservation,
+    mut reservation: ByteReservation,
+    budget: &ByteBudget,
+    checked: Option<&response::CheckedCreation>,
 ) -> Result<(), ExecutionError> {
+    reservation.merge(budget.reserve(AppraisalIndex::entry_bound(&value)?)?)?;
     let actor = &value.actor_id;
     let id = &value.id;
     let state = &mut core.state.appraisals;
@@ -521,6 +581,7 @@ fn put(
                 next_ordinal: 0,
             },
             records: IndexMap::new(),
+            index: AppraisalIndex::default(),
         };
         state.undo.push(AppraisalUndo::Owner {
             actor: actor.clone(),
@@ -543,7 +604,10 @@ fn put(
         .records
         .get_full(id)
         .map(|(at, _, record)| (at, Arc::clone(record)));
-    if prior.is_none() && !owner.coverage.complete {
+    if prior.is_none()
+        && !owner.coverage.complete
+        && !checked.is_some_and(|proof| proof.matches(actor, id))
+    {
         return Err(ExecutionError::Invariant);
     }
     let next = owner.coverage.next_ordinal;
@@ -571,8 +635,10 @@ fn put(
         .try_reserve(1)
         .map_err(|_| ExecutionError::Capacity)?;
     if let Some(prior) = owner.records.get(id) {
+        owner.index.remove(&prior.value)?;
         unindex_deadline(&mut state.deadlines, &prior.value);
     }
+    owner.index.insert(&value)?;
     index_deadline(&mut state.deadlines, &value);
     owner.records.insert(
         id.clone(),
@@ -597,13 +663,9 @@ pub(crate) fn appraise_perceived_event(
     value: f64,
     budget: &ByteBudget,
 ) -> Result<(), ExecutionError> {
-    let Some(entity) = core
-        .state
-        .physical
-        .entities
-        .get(actor)
-        .filter(|entity| entity.has_memory())
-    else {
+    let Some(entity) = core.state.physical.entities.get(actor).filter(|entity| {
+        entity.has_memory() && entity.actor.as_ref().is_some_and(|actor| actor.alive)
+    }) else {
         return Ok(());
     };
     if !event.audience.iter().any(|id| id == actor) {
@@ -688,6 +750,7 @@ pub(crate) fn appraise_perceived_event(
         ),
         coverage: "personally experienced".to_owned(),
         subject_ids: vec![target.to_owned()],
+        recall_episode_id: None,
     };
     let value = AppraisalValue::Scaled { value };
     #[derive(Serialize)]
@@ -726,6 +789,7 @@ pub(crate) fn appraise_perceived_event(
         stack_key,
         state: "active".to_owned(),
         cause: Some(cause),
+        interpretation_source: None,
         value,
         lifetime,
         created_at: now,
@@ -825,9 +889,11 @@ pub(crate) fn appraise_perceived_event(
         value.changed_at = now;
         value.next_at = None;
         core.physical().release_work(&value.id)?;
-        put(core, value, reservation)?;
+        put(core, value, reservation, budget, None)?;
+        core.journal.cognition.note_appraisal_change(actor)?;
     }
-    put(core, record, reservation)
+    put(core, record, reservation, budget, None)?;
+    core.journal.cognition.note_appraisal_change(actor)
 }
 
 /// Consume one due native lifetime, then deliver its actual private occurrence
@@ -897,7 +963,8 @@ pub(crate) fn advance_next_appraisal(
     let actor = value.actor_id.clone();
     let revision = value.revision;
     let active = value.state == "active";
-    put(core, value, reservation)?;
+    put(core, value, reservation, budget, None)?;
+    core.journal.cognition.note_appraisal_change(&actor)?;
     let parts = if active {
         vec![
             NarrationPart::Participant {
@@ -1000,6 +1067,7 @@ pub(crate) fn invalidate_appraisals(
             .ok_or(ExecutionError::Capacity)?;
         let reservation = budget.reserve(bound)?;
         let mut value = record.value.clone();
+        let changed = value.state != "invalidated";
         if value.state != "invalidated" {
             value.state = "invalidated".into();
             value.revision = value
@@ -1012,6 +1080,7 @@ pub(crate) fn invalidate_appraisals(
             core.physical().release_work(&id)?;
         }
         value.cause = None;
+        value.interpretation_source = None;
         value.target_id = None;
         value.stack_key.clear();
         value.value = AppraisalValue::Qualitative;
@@ -1025,7 +1094,10 @@ pub(crate) fn invalidate_appraisals(
             body: String::new(),
         };
         value.predecessor_id = None;
-        put(core, value, reservation)?;
+        put(core, value, reservation, budget, None)?;
+        if changed {
+            core.journal.cognition.note_appraisal_change(actor_id)?;
+        }
     }
     // Enrolled processes are a refused installed family and have no selected
     // producer. Their absent owner is not replaced by a synthesized process.

@@ -183,6 +183,7 @@ pub(crate) fn install_personal<M: PersonalEvidenceMeaning + TemporalValueMeaning
         "memories",
         context.presence.memories,
         meaning,
+        context.budget,
     )?;
     owner_maps.insert(PersonalSourceKind::Memory, memory_owners);
     let awareness_owners = install_sources(
@@ -194,6 +195,7 @@ pub(crate) fn install_personal<M: PersonalEvidenceMeaning + TemporalValueMeaning
         "awareness",
         true,
         meaning,
+        context.budget,
     )?;
     owner_maps.insert(PersonalSourceKind::Awareness, awareness_owners);
     let summary_owners = install_sources(
@@ -205,6 +207,7 @@ pub(crate) fn install_personal<M: PersonalEvidenceMeaning + TemporalValueMeaning
         "summaries",
         true,
         meaning,
+        context.budget,
     )?;
     owner_maps.insert(PersonalSourceKind::Summary, summary_owners);
     install_forgotten(import, &mut actors, &experience_row.id)?;
@@ -304,6 +307,7 @@ fn install_sources(
     field: &str,
     present: bool,
     meaning: &impl PersonalEvidenceMeaning,
+    budget: &crate::host::ByteBudget,
 ) -> Result<PersonalOwnerMap, PersonalInstallError> {
     let owners = take_collection(import, owner_table, parent, present, true)?;
     let mut placements = IndexMap::new();
@@ -323,6 +327,7 @@ fn install_sources(
             child.rows,
             child.coverage,
             meaning,
+            budget,
         )?;
         placements.insert(owner.slot.clone(), owner.position);
         actors

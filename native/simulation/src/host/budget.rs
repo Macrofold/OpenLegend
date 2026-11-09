@@ -99,6 +99,10 @@ impl ByteReservation {
         })
     }
 
+    pub(crate) fn shares_owner(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.owner, &other.owner)
+    }
+
     /// Transfer already admitted storage without opening an unfunded interval.
     /// Both guards must belong to the same host allowance; the global count
     /// stays unchanged while the transferred guard is disarmed.

@@ -99,12 +99,3 @@ export function nativeMovementSpeed(
   );
 }
 
-export const BASE_EXPRESSION_VERBS = {
-  nod: 'nod',
-  smile: 'smile',
-  frown: 'frown',
-  wave: 'wave',
-  shrug: 'shrug',
-  shake_head: 'shake',
-  slap: 'slap',
-} as const;

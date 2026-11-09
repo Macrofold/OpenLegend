@@ -137,7 +137,7 @@ enum ActivityUndo {
 pub(crate) struct ActivityJournal {
     undo: Vec<ActivityUndo>,
     pending: BTreeSet<(String, String)>,
-    reservation: ByteReservation,
+    pub(super) reservation: ByteReservation,
 }
 impl ActivityJournal {
     pub(crate) fn revoke_evidence(
@@ -230,11 +230,43 @@ impl ActivityJournal {
             + before.heap_bytes().ok_or(ActivityError::Capacity)?
             + after.heap_bytes().ok_or(ActivityError::Capacity)?;
         let count = old.len() + usize::from(found.is_none());
+        let effects_capacity = entry.effects.as_ref().map_or(0, Vec::capacity);
+        let effects_growth = if found.is_none() && old.len() == effects_capacity {
+            effects_capacity
+                .checked_mul(2)
+                .map(|n| n.max(4))
+                .and_then(|n| n.checked_sub(effects_capacity))
+                .and_then(|n| n.checked_mul(size_of::<ActivityEffect>()))
+                .ok_or(ActivityError::Capacity)?
+        } else {
+            0
+        };
+        let facts_growth = if !entry
+            .view
+            .facts
+            .iter()
+            .any(|f| f.name == "observed changes")
+            && entry.view.facts.len() == entry.view.facts.capacity()
+        {
+            entry
+                .view
+                .facts
+                .capacity()
+                .checked_mul(2)
+                .map(|n| n.max(4))
+                .and_then(|n| n.checked_sub(entry.view.facts.capacity()))
+                .and_then(|n| n.checked_mul(size_of::<ActivityFact>()))
+                .ok_or(ActivityError::Capacity)?
+        } else {
+            0
+        };
         let fields =
             map_storage::<crate::text::JsText, ActivityDetail>(5).ok_or(ActivityError::Capacity)?;
         self.reserve(
             labels
                 .checked_mul(4)
+                .and_then(|n| n.checked_add(effects_growth))
+                .and_then(|n| n.checked_add(facts_growth))
                 .and_then(|n| {
                     n.checked_add(
                         count
@@ -344,6 +376,7 @@ impl ActivityJournal {
         } else {
             entry.view.facts.push(fact);
         }
+        self.settle_record(state, &actor, &id)?;
         Ok(())
     }
     pub(crate) fn new(budget: &ByteBudget) -> Result<Self, ActivityError> {
@@ -355,7 +388,7 @@ impl ActivityJournal {
             pending: BTreeSet::new(),
         })
     }
-    fn reserve(&mut self, bytes: usize) -> Result<(), ActivityError> {
+    pub(super) fn reserve(&mut self, bytes: usize) -> Result<(), ActivityError> {
         let next = self
             .reservation
             .bytes()
@@ -365,15 +398,35 @@ impl ActivityJournal {
             .resize(next)
             .map_err(|_| ActivityError::Capacity)
     }
+    fn prepare_undo_slots(&mut self, count: usize) -> Result<(), ActivityError> {
+        let needed = self
+            .undo
+            .len()
+            .checked_add(count)
+            .ok_or(ActivityError::Capacity)?;
+        if needed > self.undo.capacity() {
+            let target = needed
+                .max(
+                    self.undo
+                        .capacity()
+                        .checked_mul(2)
+                        .ok_or(ActivityError::Capacity)?,
+                )
+                .max(4);
+            self.reserve(
+                target
+                    .checked_sub(self.undo.capacity())
+                    .and_then(|n| n.checked_mul(size_of::<ActivityUndo>()))
+                    .ok_or(ActivityError::Capacity)?,
+            )?;
+            self.undo
+                .try_reserve_exact(target - self.undo.len())
+                .map_err(|_| ActivityError::Capacity)?;
+        }
+        Ok(())
+    }
     fn push(&mut self, undo: ActivityUndo) -> Result<(), ActivityError> {
-        self.reserve(
-            size_of::<ActivityUndo>()
-                .checked_mul(2)
-                .ok_or(ActivityError::Capacity)?,
-        )?;
-        self.undo
-            .try_reserve(1)
-            .map_err(|_| ActivityError::Capacity)?;
+        self.prepare_undo_slots(1)?;
         self.undo.push(undo);
         Ok(())
     }
@@ -410,6 +463,7 @@ impl ActivityJournal {
             .occurrence;
         let bytes = heap_sum([
             MutableRecord::heap_bound(entry).ok_or(ActivityError::Capacity)?,
+            entry.action_id.len(),
             actor.len(),
             id.len(),
         ])
@@ -466,7 +520,12 @@ impl ActivityJournal {
         })
     }
     fn pending_before(&mut self, actor: &str, id: &str) -> Result<(), ActivityError> {
-        self.reserve(actor.len() * 2 + id.len() * 2 + size_of::<(String, String)>() * 4)?;
+        self.reserve(
+            actor.len() * 2
+                + id.len() * 2
+                + crate::host::retained_size::tree_node_bound::<(String, String), ()>()
+                    .ok_or(ActivityError::Capacity)?,
+        )?;
         let key = (actor.to_owned(), id.to_owned());
         let before = self.is_pending(actor, id);
         self.push(ActivityUndo::Pending {
@@ -494,11 +553,15 @@ impl ActivityJournal {
                         .records
                         .get_mut(&id)
                         .ok_or(ActivityError::InvalidStructure)?;
-                    let current = record.occurrence.action_id.clone();
-                    let old = before.action_id.clone();
-                    let position = record.position;
+                    super::state::index_action_map(
+                        &mut owner.actions,
+                        &id,
+                        record.position,
+                        Some(&record.occurrence.action_id),
+                        Some(&before.action_id),
+                    );
                     before.restore(&mut record.occurrence);
-                    owner.index_action(&id, position, Some(&current), Some(&old));
+                    self.settle_record(state, &actor, &id)?;
                 }
                 ActivityUndo::Insert {
                     actor,
@@ -508,6 +571,15 @@ impl ActivityJournal {
                     parent_present,
                     new_owner,
                 } => {
+                    let metadata = super::residency::MetadataBefore::capture(state, None, &[])?;
+                    let old_key = if new_owner {
+                        state
+                            .collections
+                            .get_key_value(&actor)
+                            .map_or(0, |(k, _)| k.capacity())
+                    } else {
+                        0
+                    };
                     let owner = state
                         .collections
                         .get_mut(&actor)
@@ -526,25 +598,54 @@ impl ActivityJournal {
                         }
                         state.collections.shift_remove(&actor);
                     }
+                    drop(record);
+                    state.settle_component(metadata, old_key, 0, &mut self.reservation)?;
                 }
                 ActivityUndo::Admitted(before) => state.header.admitted = before,
                 ActivityUndo::Current { key, before } => {
+                    let metadata = super::residency::MetadataBefore::capture(state, None, &[])?;
+                    let old = super::residency::current_bytes(state, &key)?;
+                    let new = before
+                        .as_ref()
+                        .map_or(Some(0), |(_, value)| {
+                            key.capacity().checked_add(value.heap_bytes()?)
+                        })
+                        .ok_or(ActivityError::Capacity)?;
                     state.current.shift_remove(&key);
                     if let Some((at, value)) = before {
                         state.current.shift_insert(at, key, value);
                     }
+                    state.settle_component(metadata, old, new, &mut self.reservation)?;
                 }
                 ActivityUndo::Active { key, before } => {
+                    let metadata = super::residency::MetadataBefore::capture(state, None, &[])?;
+                    let old = super::residency::active_bytes(state, &key)?;
+                    let new = before
+                        .as_ref()
+                        .map_or(Some(0), |(_, value)| {
+                            key.capacity().checked_add(value.heap_bytes()?)
+                        })
+                        .ok_or(ActivityError::Capacity)?;
                     state.active.shift_remove(&key);
                     if let Some((at, value)) = before {
                         state.active.shift_insert(at, key, value);
                     }
+                    state.settle_component(metadata, old, new, &mut self.reservation)?;
                 }
                 ActivityUndo::Learning { key, before } => {
+                    let metadata = super::residency::MetadataBefore::capture(state, None, &[])?;
+                    let old = super::residency::learning_bytes(state, &key)?;
+                    let new = before
+                        .as_ref()
+                        .map_or(Some(0), |(_, value)| {
+                            key.capacity().checked_add(value.heap_bytes()?)
+                        })
+                        .ok_or(ActivityError::Capacity)?;
                     state.learning.shift_remove(&key);
                     if let Some((at, value)) = before {
                         state.learning.shift_insert(at, key, value);
                     }
+                    state.settle_component(metadata, old, new, &mut self.reservation)?;
                 }
                 ActivityUndo::Pending { actor, id, before } => {
                     let key = (actor, id);
@@ -711,6 +812,27 @@ impl ActivityJournal {
             .checked_add(1)
             .filter(|n| *n <= MAX_SAFE_INTEGER)
             .ok_or(ActivityError::Capacity)?;
+        self.current_before(state, actor_id)?;
+        self.active_before(state, action_id)?;
+        if !state.learning.contains_key(actor_id) {
+            self.learning_before(state, actor_id)?;
+        }
+        self.prepare_undo_slots(2)?;
+        let record_slot = position.to_string();
+        let bytes =
+            super::residency::record_bytes(&entry, &record_slot).ok_or(ActivityError::Capacity)?;
+        let record_storage = self
+            .reservation
+            .split_off(bytes)
+            .map_err(|_| ActivityError::Capacity)?;
+        let record = ActivityRecord {
+            occurrence: entry,
+            position,
+            slot: record_slot,
+            storage: record_storage,
+        };
+        let prepared_owner = self.prepare_collection(state, actor_id)?;
+        let metadata = self.prepare_metadata(state, actor_id, action_id, id, None)?;
         self.push(ActivityUndo::Insert {
             actor: actor_id.clone(),
             id: id.clone(),
@@ -720,35 +842,18 @@ impl ActivityJournal {
             new_owner,
         })?;
         self.push(ActivityUndo::Admitted(state.header.admitted))?;
-        self.current_before(state, actor_id)?;
-        self.active_before(state, action_id)?;
-        if !state.learning.contains_key(actor_id) {
-            self.learning_before(state, actor_id)?;
+        if let Some(owner) = prepared_owner {
+            state.collections.insert(actor_id.clone(), owner);
         }
         let owner = state
             .collections
-            .entry(actor_id.clone())
-            .or_insert_with(|| ActivityCollection {
-                actor_id: actor_id.clone(),
-                complete: true,
-                next_ordinal: 0,
-                parent_present: false,
-                records: IndexMap::new(),
-                order: BTreeMap::new(),
-                actions: BTreeMap::new(),
-            });
+            .get_mut(actor_id)
+            .ok_or(ActivityError::InvalidStructure)?;
         owner.parent_present = true;
         owner.next_ordinal = next;
         owner.order.insert(position, id.clone());
         owner.index_action(id, position, None, Some(action_id));
-        owner.records.insert(
-            id.clone(),
-            ActivityRecord {
-                occurrence: entry,
-                position,
-                slot: position.to_string(),
-            },
-        );
+        owner.records.insert(id.clone(), record);
         state.header.admitted = admitted;
         state.current.insert(actor_id.clone(), action_id.to_owned());
         state.active.insert(
@@ -769,6 +874,12 @@ impl ActivityJournal {
                 pending: Vec::new(),
                 assessed: Vec::new(),
             });
+        state.settle_metadata(
+            metadata,
+            Some(actor_id),
+            &[action_id],
+            &mut self.reservation,
+        )?;
         Ok(id.clone())
     }
     pub(crate) fn begin_approach(
@@ -799,6 +910,7 @@ impl ActivityJournal {
             .ok_or(ActivityError::InvalidStructure)?
             .occurrence;
         prepare_approach_view(&mut entry.view, name, facts);
+        self.settle_record(state, actor, id)?;
         Ok(())
     }
     pub(crate) fn bind_action(
@@ -821,11 +933,31 @@ impl ActivityJournal {
         if entry.status != ActivityStatus::Running {
             return Err(ActivityError::InvalidStructure);
         }
-        let old = entry.action_id.clone();
+        self.reserve(
+            entry
+                .action_id
+                .len()
+                .checked_add(
+                    action_id
+                        .len()
+                        .checked_mul(3)
+                        .ok_or(ActivityError::Capacity)?,
+                )
+                .ok_or(ActivityError::Capacity)?,
+        )?;
+        let old = state
+            .collections
+            .get(actor)
+            .and_then(|o| o.records.get(id))
+            .ok_or(ActivityError::InvalidStructure)?
+            .occurrence
+            .action_id
+            .clone();
         self.record_before(state, actor, id)?;
         self.active_before(state, &old)?;
         self.active_before(state, action_id)?;
         self.current_before(state, actor)?;
+        let metadata = self.prepare_metadata(state, actor, action_id, id, Some(&old))?;
         let owner = state
             .collections
             .get_mut(actor)
@@ -846,6 +978,13 @@ impl ActivityJournal {
             },
         );
         state.current.insert(actor.to_owned(), action_id.to_owned());
+        state.settle_metadata(
+            metadata,
+            Some(actor),
+            &[&old, action_id],
+            &mut self.reservation,
+        )?;
+        self.settle_record(state, actor, id)?;
         Ok(())
     }
     /// Complete the physical result before personal recording, in source order.
@@ -899,6 +1038,7 @@ impl ActivityJournal {
                     .ok_or(ActivityError::Capacity)?,
         )?;
         let id = entry.id.clone();
+        let metadata = super::residency::MetadataBefore::capture(state, Some(actor), &[action_id])?;
         self.record_before(state, actor, &id)?;
         self.active_before(state, action_id)?;
         if state.current.get(actor).is_some_and(|v| v == action_id) {
@@ -950,6 +1090,8 @@ impl ActivityJournal {
             state.current.shift_remove(actor);
         }
         self.pending.insert((actor.to_owned(), id.clone()));
+        state.settle_metadata(metadata, Some(actor), &[action_id], &mut self.reservation)?;
+        self.settle_record(state, actor, &id)?;
         Ok(Some(PendingActivityResult {
             actor_id: actor.to_owned(),
             occurrence_id: id,
@@ -978,6 +1120,7 @@ impl ActivityJournal {
             .learning
             .get(&actor)
             .ok_or(ActivityError::InvalidStructure)?;
+        let metadata = super::residency::MetadataBefore::capture(state, Some(&actor), &[])?;
         self.reserve(
             heap_sum([
                 acquired
@@ -987,12 +1130,18 @@ impl ActivityJournal {
                     .checked_mul(3)
                     .ok_or(ActivityError::Capacity)?,
                 id.len(),
-                cursor
-                    .pending
-                    .len()
-                    .checked_add(1)
-                    .and_then(|n| n.checked_mul(size_of::<String>() * 2))
-                    .ok_or(ActivityError::Capacity)?,
+                if cursor.pending.len() == cursor.pending.capacity() {
+                    cursor
+                        .pending
+                        .capacity()
+                        .checked_mul(2)
+                        .map(|n| n.max(4))
+                        .and_then(|n| n.checked_sub(cursor.pending.capacity()))
+                        .and_then(|n| n.checked_mul(size_of::<String>()))
+                        .ok_or(ActivityError::Capacity)?
+                } else {
+                    0
+                },
             ])
             .ok_or(ActivityError::Capacity)?,
         )?;
@@ -1019,6 +1168,8 @@ impl ActivityJournal {
         if cursor.pending.len() as u64 > state.limits.page {
             cursor.pending.remove(0);
         }
+        state.settle_metadata(metadata, Some(&actor), &[], &mut self.reservation)?;
+        self.settle_record(state, &actor, &id)?;
         self.pending.remove(&(actor, id));
         Ok(evidence)
     }

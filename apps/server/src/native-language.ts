@@ -1,4 +1,4 @@
-import { prepareSpeechWords } from '@open-legend/domain';
+import { canonicalJson, prepareSpeechWords } from '@open-legend/domain';
 
 /** ICU word boundaries are prepared once per utterance by the existing language
  * owner. No listener, identity, evidence or world state participates here.
@@ -33,4 +33,20 @@ export function nativeCollation(values: readonly string[]): { order: number[]; g
  * segments. The native world decides whether that evidence can teach a name. */
 export function nativeWordSegments(values: readonly string[]): string[][] {
   return values.map((value) => prepareSpeechWords(value).map(({ segment }) => segment));
+}
+
+/** One supplied response's exact replay digest. Native code constructs these
+ * finite cells, checks the returned binding and compares their meaning before
+ * any component can run. This formatter has no world or policy access. */
+export function nativeResponseDigest(request: {
+  binding: {
+    candidateId: number;
+    baseCut: number;
+    generation: number;
+    geometryRevision: number;
+    serial: number;
+  };
+  value: unknown;
+}) {
+  return { binding: request.binding, canonical: canonicalJson(request.value) };
 }

@@ -345,7 +345,10 @@ export function inDailyWindow(hour: number, start: number, end: number): boolean
 /** Local hour in [0, 24). The daily-window matcher and its forecast share this expression so
  * a floating-point residue cannot put the forecast on an edge the matcher has not reached. */
 export function localHour(world: WorldState): number {
-  const hour = (world.simTime / 3600 + world.statusEffectPolicy.clockOffsetHours) % 24;
+  return localHourAt(world.simTime, world.statusEffectPolicy.clockOffsetHours);
+}
+export function localHourAt(seconds: number, offsetHours: number): number {
+  const hour = (seconds / 3600 + offsetHours) % 24;
   return hour < 0 ? hour + 24 : hour;
 }
 export function matchesStatusCondition(

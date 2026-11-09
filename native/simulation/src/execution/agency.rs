@@ -4,6 +4,31 @@ use super::*;
 use crate::plans::{ActorPlan, PlanStep};
 
 impl PhysicalMutation<'_> {
+    pub(crate) fn replace_goals(
+        &mut self,
+        id: &str,
+        after: crate::state::FundedGoals,
+    ) -> Result<(), ExecutionError> {
+        let handle = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let key = UndoKey::AgencyGoals(handle.slot, handle.generation);
+        let first = self.journal.first(&key)?;
+        self.journal.reserve(2 * size_of::<Undo>())?;
+        let before = self.state.entities.swap_funded_goals(handle, after)?;
+        if first {
+            self.journal.retain(
+                key,
+                Undo::AgencyGoals {
+                    entity: handle,
+                    before,
+                },
+            )?;
+        }
+        Ok(())
+    }
     pub(crate) fn reserve_plan_growth(&mut self, bytes: usize) -> Result<(), ExecutionError> {
         self.journal.reserve(bytes)
     }

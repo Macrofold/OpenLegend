@@ -13,6 +13,7 @@ use crate::work::{WorkBook, WorkPolicy};
 use indexmap::IndexMap;
 use serde::Deserialize;
 use serde_json::{Map, Value};
+use serde_json::value::RawValue;
 use std::sync::Arc;
 mod imported;
 use imported::{install_entities, take_window, take_work};
@@ -164,6 +165,7 @@ pub(crate) struct NativeSetupSettings {
     pub personal_evidence_preparation: PersonalEvidencePreparationSettings,
     pub mind: crate::cognition::MindLimits,
     pub agency: crate::plans::AgencyLimits,
+    pub actor_response: crate::response::ResponseLimits,
 }
 
 /// Presence is consumed only during installation by the actual child owners.
@@ -290,26 +292,28 @@ const ROOT_CHILDREN: &[(&str, bool)] = &[
 #[derive(Deserialize)]
 struct Ordinal(#[serde(deserialize_with = "deserialize_safe_integer")] u64);
 fn remove_optional<T: serde::de::DeserializeOwned>(
-    object: &mut Map<String, Value>,
+    object: &mut IndexMap<String, Box<RawValue>>,
     key: &str,
 ) -> Result<Option<T>, InstallError> {
     object
-        .remove(key)
-        .map(|value| serde_json::from_value(value).map_err(|_| InstallError::CurrentFormat))
+        .shift_remove(key)
+        .map(|value| serde_json::from_str(value.get()).map_err(|_| InstallError::CurrentFormat))
         .transpose()
 }
 fn required<T: serde::de::DeserializeOwned>(
-    object: &mut Map<String, Value>,
+    object: &mut IndexMap<String, Box<RawValue>>,
     key: &str,
 ) -> Result<T, InstallError> {
     remove_optional(object, key)?.ok_or(InstallError::CurrentFormat)
 }
-fn empty_marker(value: &Value, array: bool) -> bool {
-    if array {
-        value.as_array().is_some_and(Vec::is_empty)
-    } else {
-        value.as_object().is_some_and(Map::is_empty)
-    }
+fn empty_marker(value: &RawValue, array: bool) -> bool {
+    // RawValue has already validated JSON syntax. Only whitespace may occur
+    // between an actual empty container's delimiters.
+    let text = value.get().trim();
+    let (open, close) = if array { ('[', ']') } else { ('{', '}') };
+    text.strip_prefix(open)
+        .and_then(|text| text.strip_suffix(close))
+        .is_some_and(|text| text.trim().is_empty())
 }
 
 pub(crate) fn read_physical_root(
@@ -317,7 +321,7 @@ pub(crate) fn read_physical_root(
     presentation_input: Option<&CanonicalInput>,
 ) -> Result<PhysicalRoot, InstallError> {
     let (row, mut root) =
-        super::rows::take_one::<Map<String, Value>>(import, "world_settings", "[]", "world", true)?
+        super::rows::take_one::<IndexMap<String, Box<RawValue>>>(import, "world_settings", "[]", "world", true)?
             .ok_or(InstallError::CurrentFormat)?;
     if !row.extra.is_empty() {
         return Err(InstallError::CurrentFormat);
@@ -329,11 +333,15 @@ pub(crate) fn read_physical_root(
         next_id,
     )
     .map_err(|_| InstallError::Identity)?;
-    let presentation: Option<Value> = remove_optional(&mut root, "presentation")?;
+    // Quoted presentation text is opaque authored content. Decoding the whole
+    // parent as Value would reject usable JavaScript isolated UTF-16 units.
+    let presentation = root.shift_remove("presentation");
     match (presentation.as_ref(), presentation_input) {
         (None, None) => {}
         (Some(value), Some(input)) => {
-            input.verify_json(value)?;
+            let actual: crate::records::SqlCell = serde_json::from_str(value.get())
+                .map_err(|_| InstallError::DefinitionBody)?;
+            input.verify(&actual)?;
         }
         _ => return Err(InstallError::DefinitionBody),
     }
@@ -348,23 +356,33 @@ pub(crate) fn read_physical_root(
         remove_optional::<Ordinal>(&mut root, "storyPolicyRevision")?.map(|n| n.0);
     // This optional live map has no selected command/clock owner yet. A real
     // pending offer must be refused, rather than vanish into static metadata.
-    if let Some(offers) = root.remove("itemOffers") {
+    if let Some(offers) = root.shift_remove("itemOffers") {
         if !empty_marker(&offers, false) {
             return Err(InstallError::CurrentFormat);
         }
     }
     let mut fields = IndexMap::new();
     for &(field, array) in ROOT_CHILDREN {
-        let presence = match root.remove(field) {
+        let presence = match root.shift_remove(field) {
             None => None,
-            Some(Value::Null) => Some(false),
+            Some(value) if value.get().trim() == "null" => Some(false),
             Some(value) if empty_marker(&value, array) => Some(true),
             _ => return Err(InstallError::CurrentFormat),
         };
         fields.insert(field.to_owned(), presence);
     }
-    let header: WorldHeader =
-        serde_json::from_value(Value::Object(root)).map_err(|_| InstallError::CurrentFormat)?;
+    let header = WorldHeader {
+        schema_version: required::<Ordinal>(&mut root, "schemaVersion")?.0,
+        id: required(&mut root, "id")?,
+        seed: required::<Ordinal>(&mut root, "seed")?.0,
+        sequence: required::<Ordinal>(&mut root, "sequence")?.0,
+        sim_time: required(&mut root, "simTime")?,
+        paused: required(&mut root, "paused")?,
+        native_interval: remove_optional(&mut root, "nativeInterval")?,
+    };
+    if !root.is_empty() {
+        return Err(InstallError::CurrentFormat);
+    }
     if header.id != import.world_id()
         || !header.sim_time.is_finite()
         || header.sim_time < 0.0

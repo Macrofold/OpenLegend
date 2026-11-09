@@ -53,6 +53,7 @@ impl ActivityJournal {
                 id: event_id.into(),
             });
         }
+        self.settle_record(state, &activity.actor_id, &activity.occurrence_id)?;
         Ok(())
     }
 }

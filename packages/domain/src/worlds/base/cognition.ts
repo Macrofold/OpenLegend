@@ -3,6 +3,7 @@ import { definitionPin } from '../../world-modules.js';
 import { BASE_THREAT_RESPONSE_PROFILE } from './threat-response-profile.js';
 import type { WorldEvent } from '../../types.js';
 import { freeze } from 'immer';
+import { BASE_RESPONSE_RULES } from './response-rules.js';
 
 export const BASE_OCCURRENCE_RULES = freeze(
   {
@@ -68,6 +69,7 @@ export const BASE_OCCURRENCE_RULES = freeze(
     projectilePassageEvent: 'projectile-passage',
     importancePolicy: 'native-v1',
     significantReason: 'significant',
+    response: BASE_RESPONSE_RULES,
   },
   true,
 );

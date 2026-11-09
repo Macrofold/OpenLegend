@@ -4,7 +4,6 @@ import {
   type ResultEvidence,
   type TemporalHistorySelection,
 } from '@open-legend/domain';
-import { acceptedMindText } from '@open-legend/domain';
 import { currentBodyGrant } from '@open-legend/domain';
 import {
   captureTemporalReceiptPrefix,
@@ -62,7 +61,7 @@ import {
 } from './entity-references.js';
 import { digest } from './store.js';
 import { contextSections, type SharedModelExperience } from './perceived-context.js';
-import { type AttemptBinding, currentGoal } from '@open-legend/domain';
+import { type AttemptBinding } from '@open-legend/domain';
 import {
   bodyContext,
   bodyPolicy,
@@ -108,6 +107,7 @@ import {
 } from './conversation-context.js';
 import { captureExperienceContext } from './experience-context.js';
 import { decisionFeelings } from './appraisal-context.js';
+import { formatDecisionSelfContext } from './decision-self-context.js';
 
 import {
   captureTemporalHistoryReadContext,
@@ -719,6 +719,19 @@ export async function prepareDecision(
     // Work results and current causes remain required independently of optional dialogue.
     const recallIds = [...new Set([...evidenceIds, ...accountOutcomeIds])];
     const snapshotActor = observed.actor.actor!;
+    const acceptedDocuments = readWorld().minds?.[actorId]?.documents;
+    const selfContext = formatDecisionSelfContext({
+      label: entityLabel(readWorld(), observed.actor, actorId),
+      species: snapshotActor.species,
+      traits: snapshotActor.traits,
+      mind: {
+        accepted: !!acceptedDocuments?.length,
+        documents: acceptedDocuments?.length
+          ? acceptedDocuments
+          : mindFor(readWorld(), actorId).documents,
+      },
+      goals: snapshotActor.agency.goals,
+    });
     const requiredActivity = activityDecisionFacts(readWorld(), actorId, observed);
     const requiredContext: Record<string, unknown> = {
       situationQueries: mode !== 'native-only',
@@ -766,14 +779,10 @@ export async function prepareDecision(
         [],
         capturedSituation.frame,
       ).references,
-      identity: `I am ${entityLabel(readWorld(), observed.actor, actorId)}. Species: ${snapshotActor.species ?? 'unknown'}.${snapshotActor.traits?.length ? ` My traits: ${snapshotActor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
+      identity: selfContext.identity,
       feelings: decisionFeelings(readWorld(), actorId, requiredChoices?.feelings),
       ...(requiredChoices ? { requiredChoices: requiredChoices.facts } : {}),
-      aboutMe:
-        acceptedMindText(readWorld(), actorId) ??
-        mindFor(readWorld(), actorId)
-          .documents.map((document) => `${document.title}\n${document.text}`)
-          .join('\n'),
+      aboutMe: selfContext.aboutMe,
       now: gameTime(
         readWorld().simTime,
         readWorld().statusEffectPolicy.clockOffsetHours,
@@ -781,7 +790,7 @@ export async function prepareDecision(
       ),
       body: bodyContext(readWorld(), observed.actor),
       contacts: observed.contacts.map((c) => c.text),
-      goal: currentGoal(snapshotActor),
+      goal: selfContext.goal,
       commitments: (readWorld().memories[actorId] ?? [])
         .filter(
           (memory) =>
@@ -1110,6 +1119,19 @@ export async function prepareDecision(
       ).values(),
     ];
     const currentActivity = activityDecisionFacts(currentWorld, actorId, currentObserved);
+    const currentDocuments = currentWorld.minds?.[actorId]?.documents;
+    const currentSelfContext = formatDecisionSelfContext({
+      label: entityLabel(currentWorld, currentObserved.actor, actorId),
+      species: actor.species,
+      traits: actor.traits,
+      mind: {
+        accepted: !!currentDocuments?.length,
+        documents: currentDocuments?.length
+          ? currentDocuments
+          : mindFor(currentWorld, actorId).documents,
+      },
+      goals: actor.agency.goals,
+    });
     const currentSupplyOpportunities = renderSupplyOpportunityContext(
       currentObserved.supplyOpportunities,
       knownSupplyPlaces,
@@ -1154,14 +1176,10 @@ export async function prepareDecision(
           ? currentWorld.map.spatial.surfaces.map(({ id, name }) => ({ id, name }))
           : [],
       intentActions: intentActions.map(({ id, description }) => ({ id, description })),
-      identity: `I am ${entityLabel(currentWorld, currentObserved.actor, actorId)}. Species: ${actor.species ?? 'unknown'}.${actor.traits?.length ? ` My traits: ${actor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
+      identity: currentSelfContext.identity,
       feelings: decisionFeelings(currentWorld, actorId, requiredChoices?.feelings),
       ...(requiredChoices ? { requiredChoices: requiredChoices.facts } : {}),
-      aboutMe:
-        acceptedMindText(currentWorld, actorId) ??
-        mindFor(currentWorld, actorId)
-          .documents.map((d) => `${d.title}\n${d.text}`)
-          .join('\n'),
+      aboutMe: currentSelfContext.aboutMe,
       now: gameTime(
         currentWorld.simTime,
         currentWorld.statusEffectPolicy.clockOffsetHours,
@@ -1177,7 +1195,7 @@ export async function prepareDecision(
         : {}),
       commitments: requiredContext['commitments'],
       activityCoverage: requiredContext['activityCoverage'],
-      goal: currentGoal(actor),
+      goal: currentSelfContext.goal,
       agency: {
         outcomeCoverage,
         goals: actor.agency.goals,

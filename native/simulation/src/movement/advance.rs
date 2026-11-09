@@ -299,17 +299,22 @@ impl MoveAdvanceCursor {
                     }
                     _ => return Err(ExecutionError::Invariant),
                 };
+                let crate::geometry::GuardedRoutePlan(route, storage) =
+                    crate::geometry::route_plan(route, &self.budget)?;
                 match route {
                     RoutePlan::Reached { path, .. } => {
                         core.physical().replace_action_route(
                             &self.actor_id,
                             action_id,
-                            ActionRouteWrite {
-                                path,
-                                navigation: None,
-                                stage: "approaching".into(),
-                                replans,
-                            },
+                            crate::state::FundedActionRoute::from_storage(
+                                ActionRouteWrite {
+                                    path,
+                                    navigation: None,
+                                    stage: "approaching".into(),
+                                    replans,
+                                },
+                                storage,
+                            )?,
                         )?;
                         self.start_motion(
                             core,
@@ -374,15 +379,18 @@ impl MoveAdvanceCursor {
                         core.physical().replace_action_route(
                             &self.actor_id,
                             action_id,
-                            ActionRouteWrite {
-                                path: Vec::new(),
-                                navigation: Some(NavigationPending {
-                                    request,
-                                    failure: None,
-                                }),
-                                stage: "approaching".into(),
-                                replans,
-                            },
+                            crate::state::FundedActionRoute::from_storage(
+                                ActionRouteWrite {
+                                    path: Vec::new(),
+                                    navigation: Some(NavigationPending {
+                                        request,
+                                        failure: None,
+                                    }),
+                                    stage: "approaching".into(),
+                                    replans,
+                                },
+                                storage,
+                            )?,
                         )?;
                         self.phase = Phase::Done;
                     }

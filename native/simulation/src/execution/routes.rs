@@ -1,23 +1,6 @@
 //! The selected movement family's canonical route fields. Replanning does not
 //! replace the actor, its action identity, or unrelated private continuation.
 use super::*;
-fn navigation_bytes(
-    value: Option<&crate::state::NavigationPending>,
-) -> Result<usize, ExecutionError> {
-    let Some(value) = value else { return Ok(0) };
-    let request = &value.request;
-    heap_sum([
-        request.wait.as_ref().map_or(0, String::capacity),
-        request.from.surface_id.capacity(),
-        request
-            .destinations
-            .heap_bytes()
-            .ok_or(ExecutionError::Capacity)?,
-        request.body.id.capacity(),
-        value.failure.as_ref().map_or(0, String::capacity),
-    ])
-    .ok_or(ExecutionError::Capacity)
-}
 impl PhysicalMutation<'_> {
     /// Private sampling is saved route continuation, not a new outward change.
     /// docs/simulation-time.md#native-interval-contract
@@ -92,7 +75,6 @@ impl PhysicalMutation<'_> {
                 size_of::<PhysicalChange>(),
                 action_id.len(),
                 id.len(),
-                navigation_bytes(action.navigation.as_ref())?,
             ])
             .ok_or(ExecutionError::Capacity)?,
         )?;
@@ -101,15 +83,16 @@ impl PhysicalMutation<'_> {
         self.journal.change(PhysicalChange::Navigation {
             entity_id: id.into(),
         })?;
-        let action = self
-            .state
-            .entities
-            .resolve_mut(handle)
-            .and_then(|entity| entity.actor.as_mut())
-            .and_then(|actor| actor.action.as_mut())
-            .filter(|action| action.id == action_id)
-            .ok_or(ExecutionError::Invariant)?;
-        let before = action.navigation.take();
+        let storage = self.journal.reservation.split_off(0)?;
+        let before = action_storage::swap_navigation(
+            self.state,
+            handle,
+            action_id,
+            crate::state::FundedActionNavigation {
+                value: None,
+                storage,
+            },
+        )?;
         if first {
             self.journal.retain(
                 key,
@@ -132,7 +115,7 @@ impl PhysicalMutation<'_> {
             .entities
             .handle(id)
             .ok_or(ExecutionError::MissingEntity)?;
-        let action = self
+        let _action = self
             .state
             .entities
             .resolve(handle)
@@ -141,24 +124,20 @@ impl PhysicalMutation<'_> {
             .filter(|action| action.id == action_id && action.kind == "move")
             .ok_or(ExecutionError::Invariant)?;
         self.journal.reserve(
-            heap_sum([
-                2 * size_of::<Undo>(),
-                action_id.len(),
-                action.path.heap_bytes().ok_or(ExecutionError::Capacity)?,
-            ])
-            .ok_or(ExecutionError::Capacity)?,
+            heap_sum([2 * size_of::<Undo>(), action_id.len()]).ok_or(ExecutionError::Capacity)?,
         )?;
         let key = UndoKey::ActionPath(handle.slot, handle.generation);
         let first = self.journal.first(&key)?;
-        let action = self
-            .state
-            .entities
-            .resolve_mut(handle)
-            .and_then(|entity| entity.actor.as_mut())
-            .and_then(|actor| actor.action.as_mut())
-            .filter(|action| action.id == action_id)
-            .ok_or(ExecutionError::Invariant)?;
-        let before = std::mem::take(&mut action.path);
+        let storage = self.journal.reservation.split_off(0)?;
+        let before = action_storage::swap_path(
+            self.state,
+            handle,
+            action_id,
+            crate::state::FundedActionPath {
+                value: Vec::new(),
+                storage,
+            },
+        )?;
         if first {
             self.journal.retain(
                 key,
@@ -274,7 +253,7 @@ impl PhysicalMutation<'_> {
         &mut self,
         id: &str,
         action_id: &str,
-        after: ActionRouteWrite,
+        after: crate::state::FundedActionRoute,
     ) -> Result<(), ExecutionError> {
         let handle = self
             .state
@@ -292,18 +271,20 @@ impl PhysicalMutation<'_> {
         if action.kind != "move" {
             return Err(ExecutionError::UnsupportedFamily);
         }
+        if !self
+            .state
+            .entities
+            .action_storage(handle)?
+            .shares_owner(&after.storage)
+        {
+            return Err(ExecutionError::Invariant);
+        }
         self.journal.reserve(
             heap_sum([
                 2 * size_of::<Undo>(),
                 size_of::<PhysicalChange>(),
                 action_id.len(),
                 id.len(),
-                action.path.heap_bytes().ok_or(ExecutionError::Capacity)?,
-                navigation_bytes(action.navigation.as_ref())?,
-                action.stage.capacity(),
-                after.path.heap_bytes().ok_or(ExecutionError::Capacity)?,
-                navigation_bytes(after.navigation.as_ref())?,
-                after.stage.capacity(),
             ])
             .ok_or(ExecutionError::Capacity)?,
         )?;
@@ -312,20 +293,7 @@ impl PhysicalMutation<'_> {
         self.journal.change(PhysicalChange::Navigation {
             entity_id: id.to_owned(),
         })?;
-        let action = self
-            .state
-            .entities
-            .resolve_mut(handle)
-            .and_then(|entity| entity.actor.as_mut())
-            .and_then(|actor| actor.action.as_mut())
-            .filter(|action| action.id == action_id)
-            .ok_or(ExecutionError::Invariant)?;
-        let before = ActionRouteWrite {
-            path: std::mem::replace(&mut action.path, after.path),
-            navigation: std::mem::replace(&mut action.navigation, after.navigation),
-            stage: std::mem::replace(&mut action.stage, after.stage),
-            replans: std::mem::replace(&mut action.replans, after.replans),
-        };
+        let before = action_storage::swap_route(self.state, handle, action_id, after)?;
         if first {
             self.journal.retain(
                 key,

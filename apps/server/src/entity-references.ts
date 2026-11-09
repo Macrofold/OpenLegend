@@ -8,7 +8,7 @@ import {
   canonicalJson,
   coachingFor,
 } from '@open-legend/domain';
-import type { EncounterPreferenceBinding } from '@open-legend/domain';
+import type { DefinitionPin, EncounterPreferenceBinding } from '@open-legend/domain';
 import type { CatalogueAction } from '@open-legend/protocol';
 import type {
   ActorResponse,
@@ -67,6 +67,34 @@ export function primaryActionReference(
 }
 /** Constant-sized player-owned meaning only. No hidden target activity, location,
  * inventory or meters invalidate the permitted hover preview. */
+export interface ContextActionWitness {
+  readonly moduleRevision: number;
+  readonly actorLife: number | null;
+  readonly targetLife: number | null;
+  readonly encounter: EncounterPreferenceBinding | null;
+  readonly coaching:
+    | readonly [id: string, phase: string, pin: DefinitionPin, eventId: string | undefined]
+    | null;
+  readonly combatReady: boolean;
+  readonly rangedReady: boolean | null;
+}
+export function contextActionRevisionFor(scope: string, witness: ContextActionWitness): string {
+  return createHmac('sha256', bodyReferenceKey)
+    .update(
+      canonicalJson([
+        'context-preview',
+        scope,
+        witness.moduleRevision,
+        witness.actorLife,
+        witness.targetLife,
+        witness.encounter,
+        witness.coaching,
+        witness.combatReady,
+        witness.rangedReady,
+      ]),
+    )
+    .digest('hex');
+}
 export function contextActionRevision(
   scope: string,
   world: WorldState,
@@ -75,23 +103,18 @@ export function contextActionRevision(
   binding: EncounterPreferenceBinding | undefined,
 ): string {
   const coaching = coachingFor(world, actor.id);
-  return createHmac('sha256', bodyReferenceKey)
-    .update(
-      canonicalJson([
-        'context-preview',
-        scope,
-        world.moduleManifest.revision,
-        actor.actor?.physicalLife ?? null,
-        target.actor?.physicalLife ?? null,
-        binding ?? null,
-        coaching && [coaching.coachId, coaching.learnerId].includes(target.id)
-          ? [coaching.id, coaching.phase, coaching.pin, coaching.observed?.eventId]
-          : null,
-        (actor.actor?.combatReadyAt ?? 0) > world.simTime,
-        actor.actor?.action?.ranged?.ready ?? null,
-      ]),
-    )
-    .digest('hex');
+  return contextActionRevisionFor(scope, {
+    moduleRevision: world.moduleManifest.revision,
+    actorLife: actor.actor?.physicalLife ?? null,
+    targetLife: target.actor?.physicalLife ?? null,
+    encounter: binding ?? null,
+    coaching:
+      coaching && [coaching.coachId, coaching.learnerId].includes(target.id)
+        ? [coaching.id, coaching.phase, coaching.pin, coaching.observed?.eventId]
+        : null,
+    combatReady: (actor.actor?.combatReadyAt ?? 0) > world.simTime,
+    rangedReady: actor.actor?.action?.ranged?.ready ?? null,
+  });
 }
 
 // These are display/binding tokens, not native source revisions. 144 keyed bits

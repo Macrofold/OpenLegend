@@ -32,6 +32,8 @@ pub(crate) use awareness_encoding::{AwarenessEncoding, AwarenessFactory, Awarene
 mod evidence;
 pub use evidence::*;
 mod history;
+mod player_events;
+pub(crate) use player_events::write_player_events;
 pub(crate) use history::{
     CapturedHistoryCuts, CapturedHistoryInput, HistorySettings, capture_history_cuts,
     capture_history_input,
@@ -78,6 +80,7 @@ pub use places::{KnownPlaceCapsule, PlaceProvenance, PreparedKnownPlaceEvidence}
 mod owners;
 mod sensory;
 pub(crate) use sensory::{expire_sensory_awareness, next_sensory_expiry};
+mod residency;
 mod retained_size;
 pub use owners::PersonalOwnerMap;
 pub(crate) use owners::{MemoryOwner, MemoryOwners};
@@ -289,6 +292,11 @@ pub struct PersonalSourceHeader {
     /// Every unresolved commitment counts, including forgotten records and a
     /// commitment that has no native obligation. This is not protection.
     pub unresolved_commitment: bool,
+    /// The ordinary trade reader interprets only these acquired agreements.
+    /// Positive social terms still require their own native semantic owner.
+    pub personal_agreement: bool,
+    pub agreement_body: bool,
+    pub event_type: Option<String>,
     pub unresolved_obligation: bool,
     pub obligation_due_at: Option<f64>,
     pub obligation_evidence_id: Option<String>,
@@ -839,6 +847,19 @@ fn header(
             .get("resolved")
             .and_then(Value::as_bool)
             .unwrap_or(false);
+    let agreement_body = kind == PersonalSourceKind::Awareness
+        && body.get("retentionClass").and_then(Value::as_str) == Some("memory")
+        && body
+            .get("eventData")
+            .and_then(Value::as_object)
+            .is_some_and(|data| data.get("agreement").and_then(Value::as_bool) == Some(true));
+    let personal_agreement = agreement_body
+        && body
+            .get("eventData")
+            .and_then(Value::as_object)
+            .is_some_and(|data| {
+                data.get("personalAgreement").and_then(Value::as_bool) == Some(true)
+            });
     let obligation_due_at = if unresolved_obligation {
         let obligation = object(
             body.get("obligation")
@@ -882,6 +903,9 @@ fn header(
         retention,
         impression,
         unresolved_commitment,
+        personal_agreement,
+        agreement_body,
+        event_type: optional_text(body, "eventType")?,
         unresolved_obligation,
         obligation_due_at,
         obligation_evidence_id: body
@@ -908,6 +932,7 @@ pub struct PersonalSourceRecord {
     payload: Arc<str>,
     columns: Arc<[crate::records::SqlCell]>,
     header: PersonalSourceHeader,
+    _storage: crate::host::ByteReservation,
 }
 
 impl PersonalSourceRecord {
@@ -992,6 +1017,7 @@ impl PersonalSourceRecord {
         actor_id: &str,
         row: InstalledRow,
         meaning: &impl PersonalEvidenceMeaning,
+        budget: &crate::host::ByteBudget,
     ) -> Result<Self, ExperienceError> {
         let body = header_input::header_input(&row.payload)?;
         let header = header(object(&body)?, kind, actor_id, &row.payload, meaning)?;
@@ -1012,6 +1038,11 @@ impl PersonalSourceRecord {
         if row.position > MAX_SAFE_INTEGER {
             return Err(ExperienceError::InvalidOrdinal);
         }
+        // The caller still owns its funded import/preparation while this
+        // immutable record acquires independent canonical custody.
+        let storage = budget
+            .reserve(residency::record_parts_bytes(&row, &header).ok_or(ExperienceError::Capacity)?)
+            .map_err(|_| ExperienceError::Capacity)?;
         Ok(Self {
             row_id: row.id,
             parent: row.parent,
@@ -1020,6 +1051,7 @@ impl PersonalSourceRecord {
             payload: Arc::from(row.payload),
             columns: Arc::from(row.extra),
             header,
+            _storage: storage,
         })
     }
 
@@ -1069,6 +1101,7 @@ pub struct PersonalSourceCollection {
     by_ordinal: BTreeMap<u64, Arc<PersonalSourceRecord>>,
     lookup: BTreeMap<String, u64>,
     coverage: SourceCoverage,
+    agreement_body_count: usize,
 }
 
 impl PersonalSourceCollection {
@@ -1078,6 +1111,7 @@ impl PersonalSourceCollection {
         rows: Vec<InstalledRow>,
         coverage: OwnerCoverage,
         meaning: &impl PersonalEvidenceMeaning,
+        budget: &crate::host::ByteBudget,
     ) -> Result<Self, ExperienceError> {
         if coverage.table != kind.table()
             || coverage.owner != collection_owner(kind, &actor_id)?
@@ -1091,6 +1125,7 @@ impl PersonalSourceCollection {
             actor_id,
             by_ordinal: BTreeMap::new(),
             lookup: BTreeMap::new(),
+            agreement_body_count: 0,
             coverage: SourceCoverage {
                 complete: coverage.complete,
                 next_ordinal: coverage.next_ordinal,
@@ -1098,7 +1133,8 @@ impl PersonalSourceCollection {
             },
         };
         for row in rows {
-            let record = PersonalSourceRecord::install(kind, &installed.actor_id, row, meaning)?;
+            let record =
+                PersonalSourceRecord::install(kind, &installed.actor_id, row, meaning, budget)?;
             if !installed.coverage.parent_present
                 || record.position >= installed.coverage.next_ordinal
                 || installed.lookup.contains_key(&record.header.reference.id)
@@ -1106,6 +1142,7 @@ impl PersonalSourceCollection {
             {
                 return Err(ExperienceError::InvalidOrdinal);
             }
+            installed.agreement_body_count += usize::from(record.header.agreement_body);
             installed
                 .lookup
                 .insert(record.header.reference.id.clone(), record.position);
@@ -1116,6 +1153,16 @@ impl PersonalSourceCollection {
         Ok(installed)
     }
 
+    pub(crate) fn has_agreement_bodies(&self) -> Result<bool, ExperienceError> {
+        if self.agreement_body_count != 0 {
+            return Ok(true);
+        }
+        if self.coverage.complete {
+            Ok(false)
+        } else {
+            Err(ExperienceError::Unavailable)
+        }
+    }
     pub fn kind(&self) -> PersonalSourceKind {
         self.kind
     }
@@ -1125,7 +1172,7 @@ impl PersonalSourceCollection {
     pub fn coverage(&self) -> &SourceCoverage {
         &self.coverage
     }
-    pub fn records(&self) -> impl Iterator<Item = &Arc<PersonalSourceRecord>> {
+    pub fn records(&self) -> impl DoubleEndedIterator<Item = &Arc<PersonalSourceRecord>> + ExactSizeIterator {
         self.by_ordinal.values()
     }
     pub fn get(&self, id: &str) -> Result<Option<&Arc<PersonalSourceRecord>>, ExperienceError> {
@@ -1293,6 +1340,10 @@ pub struct ExperienceState {
     owner_maps: IndexMap<PersonalSourceKind, PersonalOwnerMap>,
     known_places: IndexMap<String, places::KnownPlacePreparation>,
     sensory: sensory::SensoryDeadlines,
+    metadata_data: usize,
+    metadata_backing: usize,
+    header_storage: crate::host::ByteReservation,
+    metadata_storage: crate::host::ByteReservation,
 }
 
 impl ExperienceState {
@@ -1346,7 +1397,10 @@ impl ExperienceState {
             }
         }
         let sensory = sensory::SensoryDeadlines::install(&actors, budget)?;
-        Ok(Self {
+        let header_storage = budget
+            .reserve(header_payload.len() + 2 * std::mem::size_of::<usize>())
+            .map_err(|_| ExperienceError::Capacity)?;
+        let mut state = Self {
             generation,
             header,
             header_payload: Arc::from(header_payload),
@@ -1354,7 +1408,13 @@ impl ExperienceState {
             owner_maps,
             known_places: IndexMap::new(),
             sensory,
-        })
+            metadata_data: 0,
+            metadata_backing: 0,
+            header_storage,
+            metadata_storage: budget.reserve(0).map_err(|_| ExperienceError::Capacity)?,
+        };
+        state.install_metadata()?;
+        Ok(state)
     }
 
     pub fn header(&self) -> &ExperienceHeader {

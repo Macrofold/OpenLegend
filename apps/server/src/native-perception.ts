@@ -8,6 +8,10 @@ import {
   type EvidenceCut,
   type Position,
   type ObserverSubject,
+  type ActorGoal,
+  type CharacterTrait,
+  type OutcomeEvidenceRead,
+  type ResultEvidence,
 } from '@open-legend/domain';
 import { personalEntityHandle } from './entity-references.js';
 import { formatPerceivedEntityText, formatRelativeLocation } from './perceived-context.js';
@@ -48,14 +52,38 @@ export interface NativeActorSelf {
   readonly worldId: string;
   readonly actorId: string;
   readonly generation: string;
+  readonly acceptedCut: number;
+  readonly physicalLife?: number;
   readonly at: number;
   readonly sequence: number;
-  readonly identity: Named & Pick<Entity, 'id' | 'appearance'>;
+  readonly identity: Named &
+    Pick<Entity, 'id' | 'appearance'> & {
+      readonly species?: string;
+      readonly traits?: readonly Pick<CharacterTrait, 'name' | 'description'>[];
+    };
+  readonly observerName: Named;
+  readonly referenceAttribution: string | number;
   readonly position: Position;
   readonly heading: number;
   readonly attributes: Parameters<typeof formatBodyContext>[0];
   readonly actionStatusLabels: readonly string[];
   readonly action: { readonly type: string } | null;
+  /** Present only for the actual NPC purpose; player captures do not supply a mind. */
+  readonly agency?: OutcomeEvidenceRead & {
+    readonly goals: readonly Pick<ActorGoal, 'status' | 'objective'>[];
+  };
+  readonly recentResultEligibility?: readonly {
+    readonly evidence: ResultEvidence;
+    readonly recentEligible: boolean;
+  }[];
+  readonly mind?: {
+    readonly documents: readonly {
+      readonly id: string;
+      readonly title: string;
+      readonly text: string;
+    }[];
+  };
+  readonly innerWorld?: { readonly reconsiderationRequired?: boolean };
 }
 
 /** Current capture already contains the independently composed pose/detail.

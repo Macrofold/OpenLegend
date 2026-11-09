@@ -1,6 +1,10 @@
 import { namePhrase, type Named } from '@open-legend/language';
 import type { StrikeDefinition } from '../../strikes.js';
 
+export const BASE_STRIKE_BODY_RULES = {
+  unrestrictedBodyPlans: ['biped'],
+} as const;
+
 export function weaponStrikeWording(weapon: Named | string, target?: Named | string) {
   return {
     label: target

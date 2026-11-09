@@ -18,6 +18,7 @@ import { PERSONAL_EVIDENCE_PREPARATION } from './experience-source.js';
 import { MIND_LIMITS } from './mind.js';
 import { AGENCY_LIMITS } from './agency.js';
 import { AUTOMATIC_ENCOUNTER_BATCH_ENTRIES } from './event-batch-limits.js';
+import { RESPONSE_LIMITS, RESPONSE_RECEIPT_LIMIT } from './response-settings.js';
 
 export { selectedNativeLawDefinitions } from './world-composition.js';
 export { navigationResultProblem } from './navigation-result.js';
@@ -70,4 +71,5 @@ export const nativeSetupSettings = immutableDataSnapshot({
   mind: MIND_LIMITS,
   agency: AGENCY_LIMITS,
   encounterBatchEntries: AUTOMATIC_ENCOUNTER_BATCH_ENTRIES,
+  actorResponse: { ...RESPONSE_LIMITS, receipts: RESPONSE_RECEIPT_LIMIT },
 });

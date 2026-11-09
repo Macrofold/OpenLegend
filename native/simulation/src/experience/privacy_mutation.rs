@@ -30,15 +30,33 @@ impl PrivacyUndo {
             | Self::Correction { actor, .. } => actor,
         }
     }
-    pub(super) fn rollback(self, state: &mut ExperienceState) -> Result<(), ExperienceError> {
-        let privacy = &mut state
-            .actors
-            .get_mut(self.actor())
-            .ok_or(ExperienceError::ForeignOwner)?
-            .privacy;
+    pub(super) fn rollback(
+        self,
+        state: &mut ExperienceState,
+        funding: &mut crate::host::ByteReservation,
+    ) -> Result<(), ExperienceError> {
+        let metadata = super::residency::MetadataBefore::capture(state, self.actor())?;
         match self {
-            Self::Revision { before, .. } => privacy.revision = before,
-            Self::Forgotten { id, length, .. } => {
+            Self::Revision { actor, before } => {
+                state
+                    .actors
+                    .get_mut(&actor)
+                    .ok_or(ExperienceError::ForeignOwner)?
+                    .privacy
+                    .revision = before;
+            }
+            Self::Forgotten { actor, id, length } => {
+                let privacy = &mut state
+                    .actors
+                    .get_mut(&actor)
+                    .ok_or(ExperienceError::ForeignOwner)?
+                    .privacy;
+                let old_strings = privacy
+                    .forgotten
+                    .last()
+                    .map(String::capacity)
+                    .and_then(|n| n.checked_add(privacy.forgotten_index.get(&id)?.capacity()))
+                    .ok_or(ExperienceError::StaleHydration)?;
                 if privacy.forgotten.len() != length + 1
                     || privacy.forgotten.last() != Some(&id)
                     || !privacy.forgotten_index.remove(&id)
@@ -46,16 +64,41 @@ impl PrivacyUndo {
                     return Err(ExperienceError::StaleHydration);
                 }
                 privacy.forgotten.pop();
+                state.settle_metadata(metadata, &actor, old_strings, 0, funding)?;
             }
-            Self::Correction { id, before, .. } => {
+            Self::Correction { actor, id, before } => {
+                let privacy = &mut state
+                    .actors
+                    .get_mut(&actor)
+                    .ok_or(ExperienceError::ForeignOwner)?
+                    .privacy;
+                let old_strings = correction_bytes(privacy, &id)?;
                 privacy.corrections.shift_remove(&id);
-                if let Some((position, value)) = before {
+                let new_strings = if let Some((position, value)) = before {
+                    let bytes = id
+                        .capacity()
+                        .checked_add(value.capacity())
+                        .ok_or(ExperienceError::Capacity)?;
                     privacy.corrections.shift_insert(position, id, value);
-                }
+                    bytes
+                } else {
+                    0
+                };
+                state.settle_metadata(metadata, &actor, old_strings, new_strings, funding)?;
             }
         }
         Ok(())
     }
+}
+fn correction_bytes(privacy: &ActorPrivacy, id: &str) -> Result<usize, ExperienceError> {
+    privacy
+        .corrections
+        .get_full(id)
+        .map_or(Ok(0), |(_, key, value)| {
+            key.capacity()
+                .checked_add(value.capacity())
+                .ok_or(ExperienceError::Capacity)
+        })
 }
 impl ExperienceJournal {
     fn privacy_capacity(&mut self, bytes: usize) -> Result<(), ExperienceError> {
@@ -135,16 +178,28 @@ impl ExperienceJournal {
             .and_then(|bytes| bytes.checked_add(tree_node_bound::<String, ()>()?))
             .ok_or(ExperienceError::Capacity)?;
         self.privacy_capacity(bytes)?;
+        let metadata = super::residency::MetadataBefore::capture(state, actor)?;
+        state.fund_metadata(
+            &mut self.reservation,
+            growth
+                .checked_add(id.len() * 2)
+                .and_then(|n| n.checked_add(tree_node_bound::<String, ()>()?))
+                .ok_or(ExperienceError::Capacity)?,
+        )?;
         let privacy = &mut state
             .actors
             .get_mut(actor)
             .ok_or(ExperienceError::ForeignOwner)?
             .privacy;
         if target > privacy.forgotten.capacity() {
-            privacy
+            if privacy
                 .forgotten
                 .try_reserve_exact(target - length)
-                .map_err(|_| ExperienceError::Capacity)?;
+                .is_err()
+            {
+                state.settle_metadata(metadata, actor, 0, 0, &mut self.reservation)?;
+                return Err(ExperienceError::Capacity);
+            }
         }
         let operation = PrivacyUndo::Forgotten {
             actor: actor.to_owned(),
@@ -153,6 +208,13 @@ impl ExperienceJournal {
         };
         privacy.forgotten.push(id.to_owned());
         privacy.forgotten_index.insert(id.to_owned());
+        let new_strings = privacy
+            .forgotten
+            .last()
+            .map(String::capacity)
+            .and_then(|n| n.checked_add(privacy.forgotten_index.get(id)?.capacity()))
+            .ok_or(ExperienceError::Capacity)?;
+        state.settle_metadata(metadata, actor, 0, new_strings, &mut self.reservation)?;
         self.undo
             .push(super::mutation::ExperienceUndo::Privacy(operation));
         Ok(true)
@@ -208,16 +270,42 @@ impl ExperienceJournal {
         if evidence.is_some() {
             self.ensure_privacy_header(state, true)?;
         }
+        let metadata = super::residency::MetadataBefore::capture(state, actor)?;
+        let old_strings = correction_bytes(
+            &state
+                .actors
+                .get(actor)
+                .ok_or(ExperienceError::ForeignOwner)?
+                .privacy,
+            id,
+        )?;
+        state.fund_metadata(
+            &mut self.reservation,
+            growth
+                .checked_add(if evidence.is_some() { id.len() } else { 0 })
+                .and_then(|n| n.checked_add(evidence.map_or(0, str::len)))
+                .ok_or(ExperienceError::Capacity)?,
+        )?;
         let privacy = &mut state
             .actors
             .get_mut(actor)
             .ok_or(ExperienceError::ForeignOwner)?
             .privacy;
         if target > privacy.corrections.capacity() {
-            privacy
+            if privacy
                 .corrections
                 .try_reserve(target - privacy.corrections.len())
-                .map_err(|_| ExperienceError::Capacity)?;
+                .is_err()
+            {
+                state.settle_metadata(
+                    metadata,
+                    actor,
+                    old_strings,
+                    old_strings,
+                    &mut self.reservation,
+                )?;
+                return Err(ExperienceError::Capacity);
+            }
         }
         let before = privacy
             .corrections
@@ -235,6 +323,14 @@ impl ExperienceJournal {
         } else {
             privacy.corrections.shift_remove(id);
         }
+        let new_strings = correction_bytes(privacy, id)?;
+        state.settle_metadata(
+            metadata,
+            actor,
+            old_strings,
+            new_strings,
+            &mut self.reservation,
+        )?;
         self.undo
             .push(super::mutation::ExperienceUndo::Privacy(operation));
         Ok(true)

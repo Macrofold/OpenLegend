@@ -22,6 +22,14 @@ pub enum TextRef<'a> {
     Unicode(&'a str),
     Text(&'a JsText),
 }
+impl Serialize for TextRef<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            Self::Unicode(text) => serializer.serialize_str(text),
+            Self::Text(text) => text.serialize(serializer),
+        }
+    }
+}
 impl<'a> From<&'a str> for TextRef<'a> {
     fn from(value: &'a str) -> Self {
         Self::Unicode(value)

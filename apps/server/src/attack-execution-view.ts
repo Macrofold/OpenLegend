@@ -14,6 +14,7 @@ import {
   worldSupport,
   type ItemInstance,
   type WorldState,
+  type StrikeDefinition,
 } from '@open-legend/domain';
 import type { GameView } from '@open-legend/protocol';
 
@@ -63,16 +64,33 @@ export function attackSourceView(
       ? strikeDefinition(definition.id, world, item.id)
       : strikes.find((candidate) => !candidate.weaponItemId);
   if (!strike) return;
-  const reason =
-    !nativeCommandSupported(world, 'strike') ||
-    !strikes.some(
+  const selected = strike.weaponItemId && world.itemDefinitions[strike.id];
+  return projectMeleeAttackSource(
+    strike,
+    nativeCommandSupported(world, 'strike'),
+    strikes.some(
       (candidate) => candidate.id === strike.id && candidate.weaponItemId === strike.weaponItemId,
-    )
+    ),
+    recovering,
+    selected && selected.execution ? selected.execution.profile : undefined,
+  );
+}
+
+/** The selected source and its actual availability are already known. Neither
+ * this display nor its command installs a target or grants an attack. */
+export function projectMeleeAttackSource(
+  strike: StrikeDefinition,
+  supported: boolean,
+  available: boolean,
+  recovering: boolean,
+  profile: NonNullable<GameView['player']['attackSource']>['profile'],
+): NonNullable<GameView['player']['attackSource']> {
+  const reason =
+    !supported || !available
       ? BASE_SKILLED_TEXT.sourceUnavailable
       : recovering
         ? BASE_GUARD_TEXT.recovery
         : undefined;
-  const selected = strike.weaponItemId && world.itemDefinitions[strike.id];
   return {
     label: strike.label,
     enabled: !reason,
@@ -83,6 +101,6 @@ export function attackSourceView(
       definitionId: strike.id,
       ...(strike.weaponItemId ? { itemId: strike.weaponItemId } : {}),
     },
-    ...(selected && selected.execution ? { profile: selected.execution.profile } : {}),
+    ...(profile ? { profile } : {}),
   };
 }

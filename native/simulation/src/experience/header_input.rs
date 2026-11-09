@@ -8,10 +8,12 @@ use serde_json::{Map, Value, value::RawValue};
 
 enum Field {
     Scalar,
+    StringPresence,
+    TruePresence,
     Object(&'static [(&'static str, Field)]),
     Array(&'static [(&'static str, Field)]),
 }
-use Field::{Array, Object, Scalar};
+use Field::{Array, Object, Scalar, StringPresence, TruePresence};
 const FACT: &[(&str, Field)] = &[("source", Scalar), ("ordinal", Scalar)];
 const PROOF: &[(&str, Field)] = &[
     ("original", Scalar),
@@ -78,6 +80,13 @@ const ROOT: &[(&str, Field)] = &[
     ("activityId", Scalar),
     ("sourceReceipt", Scalar),
     ("retentionClass", Scalar),
+    (
+        "eventData",
+        Object(&[
+            ("personalAgreement", TruePresence),
+            ("agreement", StringPresence),
+        ]),
+    ),
     ("expiresAt", Scalar),
     ("resolved", Scalar),
     ("retention", Scalar),
@@ -166,6 +175,10 @@ fn project_fields<'a>(
         };
         let value = match field {
             Scalar => serde_json::from_str(raw.get()).map_err(|_| invalid())?,
+            // The read header only needs the actual string-type predicate.
+            // Keeping its body opaque also preserves quoted UTF-16 units.
+            StringPresence => Value::Bool(raw.get().trim_start().starts_with('"')),
+            TruePresence => Value::Bool(raw.get().trim() == "true"),
             Object(fields) => object(raw, fields)?,
             Array(fields) => {
                 if !raw.get().trim_start().starts_with('[') {

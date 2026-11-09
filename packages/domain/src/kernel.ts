@@ -2352,7 +2352,7 @@ function prepareNativeOperation(
       const definition = strikeDefinition(command.definitionId, world, command.weaponItemId);
       const target = entityOwn(world.entities, command.targetId);
       if (!definition) return reject('unknown-action', 'Choose a registered strike.');
-      if (!supportsStrike(actor, definition))
+      if (!supportsStrike(actor, definition, world))
         return reject('unsupported-body', 'This body cannot perform that natural strike.');
       if (combatRecoveryDeadline(world, actor) > world.simTime)
         return reject('combat-recovery', BASE_GUARD_TEXT.recovery);
@@ -5654,7 +5654,11 @@ function advanceAction(
     action.type === 'strike' &&
     (strikeDefinition(action.definitionId, world, action.weaponItemId)?.version !==
       action.definitionVersion ||
-      !supportsStrike(actor, strikeDefinition(action.definitionId, world, action.weaponItemId)!))
+      !supportsStrike(
+        actor,
+        strikeDefinition(action.definitionId, world, action.weaponItemId)!,
+        world,
+      ))
   ) {
     failAction(world, actor, events, 'the strike definition is unavailable or changed.');
     return;

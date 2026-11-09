@@ -360,6 +360,11 @@ impl ExperienceJournal {
         value: Option<Arc<PreparedKnownPlaceEvidence>>,
         advance: bool,
     ) -> Result<(), ExperienceError> {
+        let metadata = super::residency::MetadataBefore::capture(state, actor_id)?;
+        let old_strings = state
+            .known_places
+            .get_key_value(actor_id)
+            .map_or(0, |(k, _)| k.capacity());
         let prior = state.known_places.get(actor_id);
         let revision = prior.map_or(0, |prior| prior.revision);
         let revision = if advance {
@@ -369,15 +374,20 @@ impl ExperienceJournal {
         } else {
             revision
         };
-        let growth = map_storage::<String, KnownPlacePreparation>(
-            state
-                .known_places
-                .capacity()
-                .checked_mul(2)
-                .and_then(|n| n.checked_add(2))
-                .ok_or(ExperienceError::Capacity)?,
-        )
-        .ok_or(ExperienceError::Capacity)?;
+        let new_entry = prior.is_none();
+        let growth = if new_entry && state.known_places.len() == state.known_places.capacity() {
+            map_storage::<String, KnownPlacePreparation>(
+                state
+                    .known_places
+                    .capacity()
+                    .checked_mul(2)
+                    .and_then(|n| n.checked_add(2))
+                    .ok_or(ExperienceError::Capacity)?,
+            )
+            .ok_or(ExperienceError::Capacity)?
+        } else {
+            0
+        };
         self.reservation
             .resize(
                 heap_sum([
@@ -395,15 +405,42 @@ impl ExperienceJournal {
         self.undo
             .try_reserve(1)
             .map_err(|_| ExperienceError::Capacity)?;
-        state
+        state.fund_metadata(
+            &mut self.reservation,
+            growth
+                .checked_add(if old_strings == 0 { actor_id.len() } else { 0 })
+                .ok_or(ExperienceError::Capacity)?,
+        )?;
+        if state
             .known_places
-            .try_reserve(1)
-            .map_err(|_| ExperienceError::Capacity)?;
+            .try_reserve(usize::from(new_entry))
+            .is_err()
+        {
+            state.settle_metadata(
+                metadata,
+                actor_id,
+                old_strings,
+                old_strings,
+                &mut self.reservation,
+            )?;
+            return Err(ExperienceError::Capacity);
+        }
         let actor = actor_id.to_owned();
         let before = state.known_places.insert(
             actor_id.to_owned(),
             KnownPlacePreparation { value, revision },
         );
+        let new_strings = state
+            .known_places
+            .get_key_value(actor_id)
+            .map_or(0, |(k, _)| k.capacity());
+        state.settle_metadata(
+            metadata,
+            actor_id,
+            old_strings,
+            new_strings,
+            &mut self.reservation,
+        )?;
         self.undo
             .push(super::mutation::ExperienceUndo::KnownPlaces {
                 actor_id: actor,

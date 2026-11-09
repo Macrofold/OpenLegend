@@ -1,5 +1,6 @@
 import { BASE_FOOD_ACTION_WORDING } from './action-views.js';
 import { BASE_GUARD_TEXT } from './shield-defense.js';
+import { BASE_RANGED_TEXT } from './ranged-counterplay.js';
 import type { ItemInstance, WorldState } from '../../types.js';
 import { prepareManufactureChoices } from '../../manufacture.js';
 import type { AssemblyFamily } from '../../assembly-types.js';
@@ -20,6 +21,96 @@ export function baseObservedBodyKind(kind: string) {
             : kind === 'practice-target'
               ? 'practice-target'
               : 'station';
+}
+
+/** The player's ordinary publication uses this world's words and action
+ * families. Source and native captures feed the same finite formatter. */
+export const BASE_PLAYER_VIEW_RULES = {
+  defaultAppearance: 'sprite',
+  working: 'Working',
+  activeState: 'Active state',
+  preparingRoute: 'Preparing route',
+  stopLabel: 'Stop all work',
+  noWork: 'No work to stop.',
+  pausedAction: 'Resume the world to act.',
+  unavailableAction: 'You cannot act in your current condition.',
+  recoverReason: 'Personal playtest recovery; world history is retained.',
+  respawnReason: 'Resume here before continuing.',
+  attackNormally: 'Attack normally',
+  cancelLabel: 'Cancel',
+  selectedTool: 'Selected tool',
+  actionStatusTypes: ['aim'],
+  noProgressTypes: ['follow'],
+  workingStatusTypes: [
+    'gather',
+    'craft',
+    'assemble',
+    'cook',
+    'harvest',
+    'treat-scar',
+    'hunt',
+    'aim',
+    'shoot-once',
+    'practice-shot',
+    'coaching',
+    'strike',
+    'guard',
+    'replenish',
+    'tend-fire',
+  ],
+} as const;
+export interface BasePlayerWorkContext {
+  readonly scarLabel?: string;
+  readonly replenishmentLabel?: string;
+  readonly statusLabel?: string;
+  readonly targetName?: string | false;
+  readonly waitingForFeedback: boolean;
+  readonly toolName?: string;
+  readonly rangedReady: boolean;
+  readonly evasionLabel?: string;
+  readonly fireOperation?: string;
+  readonly craftOutputs?: readonly string[];
+}
+export function basePlayerWorkLabels(input: BasePlayerWorkContext): Record<string, string> {
+  const target = input.targetName;
+  return {
+    'treat-scar': input.scarLabel ?? BASE_PLAYER_VIEW_RULES.working,
+    move: 'Walking',
+    follow: 'Following',
+    replenish: input.replenishmentLabel ?? BASE_PLAYER_VIEW_RULES.working,
+    'status-effect': input.statusLabel ?? BASE_PLAYER_VIEW_RULES.activeState,
+    gather: `Gathering${target ? ` ${target.toLowerCase()}` : ''}`,
+    harvest: `Harvesting${target ? ` ${target.toLowerCase()}` : ''}`,
+    strike: `Striking${target ? ` ${target}` : ''}`,
+    'practice-shot': 'Preparing one practice shot',
+    coaching: input.waitingForFeedback
+      ? 'Waiting for the other person to choose feedback'
+      : 'Guided feedback',
+    evade: input.evasionLabel ?? 'Moving',
+    hunt: `Hunting${target ? ` ${target.toLowerCase()}` : ''}`,
+    aim: `${input.toolName !== undefined ? `${input.toolName}: ` : ''}${input.rangedReady ? BASE_RANGED_TEXT.readyLabel : BASE_RANGED_TEXT.aimingLabel}${target ? ` (${target})` : ''}`,
+    'shoot-once': `${BASE_RANGED_TEXT.shootingLabel}${target ? ` (${target})` : ''}`,
+    cook: 'Cooking',
+    fish: 'Fishing',
+    'tend-fire':
+      input.fireOperation === 'light'
+        ? 'Lighting the fire'
+        : input.fireOperation === 'fuel'
+          ? 'Adding fuel'
+          : 'Putting out the fire',
+    craft: `Crafting${input.craftOutputs ? ` ${input.craftOutputs.join(', ')}` : ''}`,
+  };
+}
+
+export function basePlayerControlCanUseInactive(command: {
+  type: string;
+  coachingOperation?: string;
+}): boolean {
+  return (
+    command.type === 'cancel' ||
+    (command.type === 'coaching' &&
+      (command.coachingOperation === 'withdraw' || command.coachingOperation === 'decline'))
+  );
 }
 
 const itemArt = (file: string): ItemArt => ({

@@ -404,6 +404,7 @@ pub(crate) struct ActivityRecord {
     pub occurrence: ActivityOccurrence,
     pub position: u64,
     pub slot: String,
+    pub(super) storage: crate::host::ByteReservation,
 }
 pub(crate) struct ActivityCollection {
     pub actor_id: String,
@@ -415,6 +416,7 @@ pub(crate) struct ActivityCollection {
     // The source searches in original list order. Keep only an address index,
     // including all equal-action addresses, rather than scan personal history.
     pub(super) actions: BTreeMap<String, BTreeMap<u64, String>>,
+    pub(super) storage: crate::host::ByteReservation,
 }
 impl ActivityCollection {
     pub(crate) fn install(
@@ -423,6 +425,7 @@ impl ActivityCollection {
         coverage: OwnerCoverage,
         limits: &ActivityLimits,
         display: &ActivityDisplayLimits,
+        budget: &crate::host::ByteBudget,
     ) -> Result<Self, ActivityError> {
         let parent = crate::encoding::json_record(&[
             "world",
@@ -483,13 +486,22 @@ impl ActivityCollection {
                 .insert(row.position, occurrence.id.clone());
             records.insert(
                 occurrence.id.clone(),
-                ActivityRecord {
-                    occurrence,
-                    position: row.position,
-                    slot: row.slot,
-                },
+                ActivityRecord::installed(occurrence, row.position, row.slot, budget)?,
             );
         }
+        let storage = budget
+            .reserve(
+                actor_id
+                    .capacity()
+                    .checked_add(
+                        crate::host::retained_size::map_storage::<String, ActivityRecord>(
+                            records.capacity(),
+                        )
+                        .ok_or(ActivityError::Capacity)?,
+                    )
+                    .ok_or(ActivityError::Capacity)?,
+            )
+            .map_err(|_| ActivityError::Capacity)?;
         Ok(Self {
             actor_id,
             complete: coverage.complete,
@@ -498,6 +510,7 @@ impl ActivityCollection {
             records,
             order,
             actions,
+            storage,
         })
     }
     pub(crate) fn get(&self, id: &str) -> Result<Option<&ActivityRecord>, ActivityError> {
@@ -531,20 +544,30 @@ impl ActivityCollection {
         old: Option<&str>,
         new: Option<&str>,
     ) {
-        if let Some(old) = old {
-            if let Some(rows) = self.actions.get_mut(old) {
-                rows.remove(&position);
-                if rows.is_empty() {
-                    self.actions.remove(old);
-                }
+        index_action_map(&mut self.actions, id, position, old, new);
+    }
+}
+
+pub(super) fn index_action_map(
+    actions: &mut BTreeMap<String, BTreeMap<u64, String>>,
+    id: &str,
+    position: u64,
+    old: Option<&str>,
+    new: Option<&str>,
+) {
+    if let Some(old) = old {
+        if let Some(rows) = actions.get_mut(old) {
+            rows.remove(&position);
+            if rows.is_empty() {
+                actions.remove(old);
             }
         }
-        if let Some(new) = new {
-            self.actions
-                .entry(new.to_owned())
-                .or_default()
-                .insert(position, id.to_owned());
-        }
+    }
+    if let Some(new) = new {
+        actions
+            .entry(new.to_owned())
+            .or_default()
+            .insert(position, id.to_owned());
     }
 }
 
@@ -618,6 +641,8 @@ pub(crate) struct ActivityState {
     pub changes: IndexMap<String, Vec<ActivityReference>>,
     pub limits: Arc<ActivityLimits>,
     pub display: Arc<ActivityDisplayLimits>,
+    pub(super) metadata_bytes: usize,
+    pub(super) metadata_storage: crate::host::ByteReservation,
 }
 impl ActivityState {
     pub(crate) fn occurrence_for(
@@ -644,6 +669,7 @@ impl ActivityState {
         changes: IndexMap<String, Vec<ActivityReference>>,
         limits: Arc<ActivityLimits>,
         display: Arc<ActivityDisplayLimits>,
+        budget: &crate::host::ByteBudget,
     ) -> Result<Self, ActivityError> {
         if header.version != 1 || header.admitted > limits.retained_records {
             return Err(ActivityError::InvalidStructure);
@@ -723,7 +749,7 @@ impl ActivityState {
                 return Err(ActivityError::InvalidStructure);
             }
         }
-        Ok(Self {
+        let mut state = Self {
             header,
             collections,
             learning,
@@ -733,7 +759,11 @@ impl ActivityState {
             changes,
             limits,
             display,
-        })
+            metadata_bytes: 0,
+            metadata_storage: budget.reserve(0).map_err(|_| ActivityError::Capacity)?,
+        };
+        state.install_metadata()?;
+        Ok(state)
     }
     pub(crate) fn active(
         &self,

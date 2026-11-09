@@ -84,6 +84,7 @@ pub(crate) struct RetainedDefinitionInputs {
 pub(crate) struct RetainedDefinitions {
     pub knowledge_policy: Option<RetainedOne>,
     pub item_handling: RetainedOne,
+    pub item_handling_read: ItemHandlingReadPolicy,
     pub gathering_policy: Option<RetainedOne>,
     pub work_batch_policy: Option<RetainedOne>,
     pub social_offer_policy: Option<RetainedOne>,
@@ -93,6 +94,7 @@ pub(crate) struct RetainedDefinitions {
     pub contents_exposure_profiles: Option<RetainedMap>,
     pub daily_rain_definitions: Option<RetainedMap>,
     pub participation_policy: Option<RetainedOne>,
+    pub participation_read: Option<ParticipationReadPolicy>,
     pub native_strikes: Option<RetainedMap>,
     pub native_foraging_profiles: Option<RetainedMap>,
     pub supply_opportunities: Option<RetainedMap>,
@@ -104,6 +106,33 @@ pub(crate) struct RetainedDefinitions {
     pub recipes: RetainedMap,
     pub flight_routes: RetainedMap,
     pub places: RetainedMap,
+}
+
+/// Derived once from the same validated immutable definition body. Read-only
+/// trade presentation needs these fields; item effects remain unsupported.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ItemHandlingReadPolicy {
+    enabled: bool,
+    actor_body_profiles: Vec<String>,
+}
+impl ItemHandlingReadPolicy {
+    pub(crate) fn can_handle(&self, profile: &str) -> bool {
+        self.enabled && self.actor_body_profiles.iter().any(|id| id == profile)
+    }
+}
+
+/// Only the selected recovery location is needed by body admission and player
+/// controls. Keep its immutable authored source beside this shared read header;
+/// do not parse the complete policy again for every actor or publication.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ParticipationReadPolicy {
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_option"
+    )]
+    pub safe_return_anchor: Option<crate::state::SurfacePoint>,
 }
 
 struct Reader<'a> {
@@ -212,19 +241,35 @@ pub(crate) fn install_retained(
         children,
         schema,
     };
+    let knowledge_policy = r.one(
+        "knowledgePolicy",
+        "config_knowledge",
+        input.knowledge_policy,
+    )?;
+    let item_handling = r
+        .one(
+            "itemHandling",
+            "config_item_handling",
+            Some(input.item_handling),
+        )?
+        .ok_or(InstallError::ParentPresence)?;
+    let item_handling_read =
+        serde_json::from_str(item_handling.payload()).map_err(|_| InstallError::CurrentFormat)?;
+    let participation_policy = r.one(
+        "participationPolicy",
+        "config_participation",
+        input.participation_policy,
+    )?;
+    let participation_read = participation_policy
+        .as_ref()
+        .map(|policy| serde_json::from_str(policy.payload()))
+        .transpose()
+        .map_err(|_| InstallError::CurrentFormat)?
+        .flatten();
     Ok(RetainedDefinitions {
-        knowledge_policy: r.one(
-            "knowledgePolicy",
-            "config_knowledge",
-            input.knowledge_policy,
-        )?,
-        item_handling: r
-            .one(
-                "itemHandling",
-                "config_item_handling",
-                Some(input.item_handling),
-            )?
-            .ok_or(InstallError::ParentPresence)?,
+        knowledge_policy,
+        item_handling,
+        item_handling_read,
         gathering_policy: r.one(
             "gatheringPolicy",
             "config_gathering",
@@ -265,11 +310,8 @@ pub(crate) fn install_retained(
             "config_daily_rain_definitions",
             input.daily_rain_definitions,
         )?,
-        participation_policy: r.one(
-            "participationPolicy",
-            "config_participation",
-            input.participation_policy,
-        )?,
+        participation_policy,
+        participation_read,
         native_strikes: r.map(
             "nativeStrikes",
             "config_native_strikes",

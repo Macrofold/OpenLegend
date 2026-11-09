@@ -9,6 +9,7 @@ use crate::identity::MAX_SAFE_INTEGER;
 use std::mem::size_of;
 
 enum Undo {
+    SemanticNotice(super::SemanticNotice),
     Reconsideration {
         actor: String,
         before: Option<bool>,
@@ -67,6 +68,37 @@ fn next(value: u64) -> Result<u64, ExecutionError> {
 }
 
 impl CognitionJournal {
+    pub(crate) fn note_appraisal_change(&mut self, actor: &str) -> Result<(), ExecutionError> {
+        self.reserve(1, actor.len())?;
+        self.undo
+            .push(Undo::SemanticNotice(super::SemanticNotice::State {
+                entity_id: actor.into(),
+                field: super::notices::PrivateStateField::Appraisal,
+            }));
+        Ok(())
+    }
+    pub(crate) fn note_knowledge_change(&mut self, actor: &str) -> Result<(), ExecutionError> {
+        self.reserve(1, actor.len())?;
+        self.undo
+            .push(Undo::SemanticNotice(super::SemanticNotice::Knowledge {
+                actor_id: actor.into(),
+            }));
+        Ok(())
+    }
+    pub(crate) fn prepare_semantic_notices(
+        &self,
+        maximum_scopes: usize,
+        budget: &ByteBudget,
+    ) -> Result<super::PreparedSemanticNotices, ExecutionError> {
+        super::PreparedSemanticNotices::prepare(
+            self.undo.iter().filter_map(|undo| match undo {
+                Undo::SemanticNotice(notice) => Some(notice),
+                _ => None,
+            }),
+            maximum_scopes,
+            budget,
+        )
+    }
     pub(crate) fn new(budget: &ByteBudget) -> Result<Self, ExecutionError> {
         Ok(Self {
             undo: Vec::new(),
@@ -81,17 +113,20 @@ impl CognitionJournal {
         }
     }
     pub(crate) fn changes(&self) -> impl Iterator<Item = CognitionChange<'_>> {
-        self.undo.iter().map(|undo| match undo {
-            Undo::Reconsideration { actor, .. } | Undo::InnerRevision { actor, .. } => {
-                CognitionChange::InnerWorld(actor)
-            }
-            Undo::MindRevision { actor, .. } => CognitionChange::MindRevision(actor),
-            Undo::Record { actor, index, .. } => CognitionChange::MindRecord {
-                actor,
-                index: *index,
-            },
-            Undo::ResetMind { actor, .. } => CognitionChange::MindContents(actor),
-            Undo::ResetInner { actor, .. } => CognitionChange::InnerWorld(actor),
+        self.undo.iter().filter_map(|undo| {
+            Some(match undo {
+                Undo::SemanticNotice(_) => return None,
+                Undo::Reconsideration { actor, .. } | Undo::InnerRevision { actor, .. } => {
+                    CognitionChange::InnerWorld(actor)
+                }
+                Undo::MindRevision { actor, .. } => CognitionChange::MindRevision(actor),
+                Undo::Record { actor, index, .. } => CognitionChange::MindRecord {
+                    actor,
+                    index: *index,
+                },
+                Undo::ResetMind { actor, .. } => CognitionChange::MindContents(actor),
+                Undo::ResetInner { actor, .. } => CognitionChange::InnerWorld(actor),
+            })
         })
     }
     pub(super) fn resets(
@@ -398,6 +433,7 @@ impl CognitionJournal {
         }
         while self.undo.len() > checkpoint.undo {
             match self.undo.pop().ok_or(ExecutionError::Invariant)? {
+                Undo::SemanticNotice(_) => {}
                 Undo::Reconsideration { actor, before } => {
                     state
                         .inner_worlds

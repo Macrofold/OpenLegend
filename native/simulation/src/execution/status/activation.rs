@@ -369,17 +369,27 @@ impl StatusActivationCursor {
                             .get(&self.subject)
                             .is_some_and(|entity| entity.actor.is_some())
                     {
-                        let episode = self.episode.as_ref().ok_or(ExecutionError::Invariant)?;
-                        self.reserve(episode.len() + definition.id.len() + size_of::<Action>())?;
+                        let bytes = self
+                            .episode
+                            .as_ref()
+                            .ok_or(ExecutionError::Invariant)?
+                            .len()
+                            + definition.id.len()
+                            + size_of::<Action>();
+                        self.reserve(bytes)?;
+                        let action = Action::status_effect(
+                            self.episode
+                                .as_ref()
+                                .ok_or(ExecutionError::Invariant)?
+                                .clone(),
+                            definition.id.clone(),
+                        );
+                        let storage = self
+                            .reservation
+                            .split_off(action.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
                         core.physical().replace_action(
                             &self.subject,
-                            Some(Action::status_effect(
-                                self.episode
-                                    .as_ref()
-                                    .ok_or(ExecutionError::Invariant)?
-                                    .clone(),
-                                definition.id.clone(),
-                            )),
+                            Some(crate::state::FundedAction::from_storage(action, storage)?),
                             ActionWrite {
                                 generation: PlanGenerationWrite::Advance,
                                 behavior: None,

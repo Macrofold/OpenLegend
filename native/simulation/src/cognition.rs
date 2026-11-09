@@ -13,6 +13,8 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
 mod journal;
+mod notices;
+pub(crate) use notices::{PreparedSemanticNotices, SemanticNotice};
 pub(crate) use journal::{CognitionChange, CognitionCheckpoint, CognitionJournal};
 mod retained_size;
 mod save;
@@ -52,8 +54,8 @@ pub(crate) struct EvidenceLink {
 #[serde(deny_unknown_fields)]
 pub(crate) struct MindDocument {
     pub id: String,
-    pub title: String,
-    pub text: String,
+    pub title: crate::text::JsText,
+    pub text: crate::text::JsText,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub revision: u64,
     pub evidence: Vec<EvidenceLink>,

@@ -148,12 +148,18 @@ pub(crate) enum ZeroHealthOutcome {
 pub(crate) struct RecoveryPolicy {
     pub controllers: Vec<String>,
     pub when: StatusCondition,
-    pub anchor: String,
+    pub anchor: RecoveryAnchor,
     pub floors: Vec<RecoveryFloor>,
     pub label: String,
     pub narration: String,
     pub success_text: String,
     pub refusal_text: String,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) enum RecoveryAnchor {
+    SafeReturnAnchor,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

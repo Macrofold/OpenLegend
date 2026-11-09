@@ -236,6 +236,7 @@ pub(crate) fn read_reception_rows(
     roots: ReceptionRoots,
     received_values: Option<ReceivedValues>,
     schema: &RecordSchema,
+    budget: &crate::host::ByteBudget,
 ) -> Result<ReceptionState, InstallError> {
     let world = path(&["world"])?;
     let sensory = take_one::<Box<RawValue>>(
@@ -495,13 +496,13 @@ pub(crate) fn read_reception_rows(
             "perceptionEpisodes",
             roots.perception_episodes,
         )?,
-        actor_knowledge: nested_maps(
+        actor_knowledge: crate::knowledge::KnowledgeState::install(nested_maps(
             import,
             "mind_knowledge_documents_owners",
             "mind_knowledge_documents",
             "actorKnowledge",
             roots.actor_knowledge,
-        )?,
+        )?, budget).map_err(|_| invalid())?,
         knowledge_revisions: revision_map(
             import,
             "mind_knowledge_revisions",

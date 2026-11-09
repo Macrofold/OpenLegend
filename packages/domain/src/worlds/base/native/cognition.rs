@@ -35,6 +35,35 @@ pub struct OccurrenceRules {
     pub projectile_passage_event: String,
     pub importance_policy: String,
     pub significant_reason: String,
+    pub response: ResponseRules,
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ResponseRules {
+    pub thought: ThoughtRule,
+    pub expression: ExpressionRules,
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ThoughtRule {
+    pub source: String,
+    pub summary_prefix: String,
+    pub importance: f64,
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ExpressionRules {
+    pub event_type: String,
+    pub verbs: indexmap::IndexMap<String, ExpressionRule>,
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ExpressionRule {
+    pub verb: String,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub head_suffix: Option<String>,
+    pub target_prefix: String,
+    pub requires_reach: bool,
 }
 impl crate::install::DefinitionIdentity for OccurrenceRules {
     fn definition_id(&self) -> &str {

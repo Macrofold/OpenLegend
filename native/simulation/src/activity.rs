@@ -17,6 +17,7 @@ mod journal;
 pub(crate) use journal::*;
 mod fields;
 mod install;
+mod residency;
 mod retained_size;
 pub use fields::ActivityFields;
 pub(crate) use install::install_activity;

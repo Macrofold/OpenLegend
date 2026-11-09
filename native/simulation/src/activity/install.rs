@@ -42,6 +42,7 @@ pub(crate) fn install_activity(
     present: bool,
     limits: Arc<ActivityLimits>,
     display: Arc<ActivityDisplayLimits>,
+    budget: &crate::host::ByteBudget,
 ) -> Result<ActivityState, InstallError> {
     let (row, header) = take_one::<ActivityHeader>(
         import,
@@ -78,6 +79,7 @@ pub(crate) fn install_activity(
             rows.coverage,
             &limits,
             &display,
+            budget,
         )
         .map_err(|_| InstallError::CurrentFormat)?;
         if collections.insert(row.slot, collection).is_some() {
@@ -122,6 +124,7 @@ pub(crate) fn install_activity(
         changes,
         limits,
         display,
+        budget,
     )
     .map_err(|_| InstallError::CurrentFormat)
 }

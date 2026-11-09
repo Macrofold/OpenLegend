@@ -31,6 +31,7 @@ import {
   type AcousticExposure,
   SPEECH_VOLUMES,
   type SpeechVolume,
+  type AcousticPolicy,
 } from './acoustics.js';
 import { effectiveBodyProfile, spatialMap } from './spatial-state.js';
 import { current, isDraft } from 'immer';
@@ -582,11 +583,38 @@ export function perceptionGuide(world: WorldState, observer: Entity) {
   const { hearingFloor: floor, policy, visionAngle } = resolveSenses(world, observer);
   const enabled =
     activelyParticipates(observer) && !capabilityBlocked(world, observer, 'perception');
+  return perceptionGuideFrom({
+    body,
+    heading: observer.spatial.heading,
+    enabled,
+    hearingFloor: floor,
+    visionAngle,
+    policy,
+  });
+}
+
+/** Display the selected observer's actual detector parameters. This formatter
+ * consumes an acquired own-body read; it never performs a sensory query. */
+export function perceptionGuideFrom({
+  body,
+  heading,
+  enabled,
+  hearingFloor: floor,
+  visionAngle,
+  policy,
+}: {
+  body: Pick<Entity['spatial']['body'], 'height' | 'eyeHeight' | 'earHeight'>;
+  heading: number;
+  enabled: boolean;
+  hearingFloor: number | null;
+  visionAngle: number;
+  policy: AcousticPolicy;
+}) {
   return {
     vision: {
       enabled,
       fieldOfViewRadians: visionAngle,
-      ...(visionAngle < 2 * Math.PI ? { heading: observer.spatial.heading } : {}),
+      ...(visionAngle < 2 * Math.PI ? { heading } : {}),
       eyeHeight: body.eyeHeight,
       targetHeights: SIGHT_BODY_FRACTIONS.map((fraction) => fraction * body.height),
     },

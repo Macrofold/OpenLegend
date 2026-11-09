@@ -21,6 +21,7 @@ import {
   clockDeadline,
   namedClockTimes,
   type WorldState,
+  type Entity,
 } from '@open-legend/domain';
 import type {
   ActivityRequestsView,
@@ -60,11 +61,25 @@ export function projectActivityStatus(
 ): ActivityRequestsView['status'] {
   const plan = entityGet(world.entities, actorId)?.actor?.agency.plan,
     execution = plan?.activity;
+  return projectActivityStatusFrom(
+    plan,
+    !!entityGet(world.entities, actorId)?.actor?.action,
+    execution?.control?.kind === 'counted'
+      ? activityHostForCommand(world, execution.control.budget.command)?.definition.spending?.unit
+      : undefined,
+  );
+}
+/** The actor's own selected frontier and its installed spending label suffice;
+ * native readers do not reconstruct a WorldState to format this status. */
+export function projectActivityStatusFrom(
+  plan: NonNullable<Entity['actor']>['agency']['plan'] | undefined,
+  hasAction: boolean,
+  spendingUnit: string | undefined,
+): ActivityRequestsView['status'] {
+  const execution = plan?.activity;
   if (!execution) return undefined;
   const waiting =
-    plan!.status === 'active' &&
-    !entityGet(world.entities, actorId)!.actor!.action &&
-    execution.pending.at(-1)?.node.kind === 'wait'
+    plan!.status === 'active' && !hasAction && execution.pending.at(-1)?.node.kind === 'wait'
       ? execution.pending.at(-1)!.node.name
       : undefined;
   let reason = execution.reason ?? waiting;
@@ -90,8 +105,7 @@ export function projectActivityStatus(
             ? {
                 spent: execution.spent ?? 0,
                 maximumSpent: execution.control.budget.maximumSpent,
-                spendingUnit: activityHostForCommand(world, execution.control.budget.command)
-                  ?.definition.spending?.unit,
+                spendingUnit,
                 attempts: execution.attempts ?? 0,
               }
             : {}),

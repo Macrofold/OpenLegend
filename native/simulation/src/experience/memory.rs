@@ -423,6 +423,7 @@ pub(crate) fn acquire_memory(
             extra,
         },
         &law,
+        &pending.budget,
     )?;
     let capsules = columns::known_place_capsules(
         &projected,

@@ -6,14 +6,11 @@ import {
   canonicalJson,
   experienceEntryKey,
   scopedAppraisals,
-  renderNarration,
-  subjectNarration,
-  person,
-  presentVerb,
   appraisalById,
   appraisalDefinition,
   appraisalPin,
   appraisalCreationIdentity,
+  observerName,
   type AppraisalBindings,
   type AppraisalChange,
   type AppraisalEvidence,
@@ -24,6 +21,7 @@ import type { WorldService } from './world-service.js';
 import type { DecisionAppraisalProposal, AppraisalProposal } from './cognition-contracts.js';
 import { decisionAppraisalSchema } from './cognition-contracts.js';
 import { z } from 'zod';
+import { formatDecisionFeelings } from './decision-feelings.js';
 import {
   experienceForModel,
   experienceModelBindings,
@@ -59,37 +57,26 @@ export function decisionFeelings(
   actorId: string,
   required: readonly AppraisalScope[] = [],
 ): string {
-  return selectedFeelings(world, actorId, required)
-    .map((value) => {
-      return renderNarration(
-        world,
-        subjectNarration(actorId, [
-          presentVerb(actorId, 'feel'),
-          ` ${value.feeling}`,
-          ...(value.targetId && entityGet(world.entities, value.targetId)
-            ? [
-                ' concerning ',
-                person(value.targetId, value.targetId === actorId ? 'reflexive' : 'object'),
-              ]
-            : []),
-          (() => {
-            const definition = appraisalDefinition(world, value.definitionPin);
-            if (!definition) throw new Error('An appraisal definition is unavailable.');
-            const amount =
-              value.value.kind === 'scaled' && definition.value.kind === 'scaled'
-                ? `; current intensity ${value.value.value} on the installed ${definition.value.min}–${definition.value.max} scale`
-                : '';
-            const duration =
-              definition.lifetime.kind === 'decays'
-                ? `decays by ${definition.lifetime.perHour} per game hour without a new interpretation`
-                : value.lifetime;
-            return `${amount}. Source: ${value.coverage}; lifetime: ${duration}.`;
-          })(),
-        ]),
-        actorId,
-      );
-    })
-    .join(' ');
+  const values = selectedFeelings(world, actorId, required).map((value) => {
+    const definition = appraisalDefinition(world, value.definitionPin);
+    if (!definition) throw new Error('An appraisal definition is unavailable.');
+    return {
+      ...value,
+      ...(definition.value.kind === 'scaled'
+        ? { scale: { min: definition.value.min, max: definition.value.max } }
+        : {}),
+      ...(definition.lifetime.kind === 'decays'
+        ? { decayPerHour: definition.lifetime.perHour }
+        : {}),
+    };
+  });
+  if (!values.length) return '';
+  const names = new Map(
+    [...new Set([actorId, ...values.flatMap((value) => value.targetId ?? [])])]
+      .filter((id) => entityGet(world.entities, id))
+      .map((id) => [id, observerName(world, actorId, id)]),
+  );
+  return formatDecisionFeelings(actorId, values, names);
 }
 
 /** One request's source/subject/appraisal capabilities. Generated output can select

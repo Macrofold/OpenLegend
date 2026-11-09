@@ -15,6 +15,8 @@ mod relations;
 mod selection;
 mod timing;
 mod withdrawal;
+mod response;
+pub(crate) use response::{acknowledge_attention, set_attention_focus};
 use candidates::{AttentionCandidate, build_candidates, current_point};
 pub(crate) use relations::evaluate_attention_relations;
 pub(crate) use timing::next_attention_work_at;

@@ -5,10 +5,16 @@
 //! the selected installed closure would require their owner. No accepted world
 //! can silently replace such a field with an empty value.
 
+mod action_storage;
+mod goal_storage;
+pub(crate) use goal_storage::FundedGoals;
 use crate::identity::MAX_SAFE_INTEGER;
 use crate::values::{
     AttributeState, DefinitionPin, StatusInstance, WorkInvocation, deserialize_present_option,
     deserialize_safe_integer,
+};
+pub(crate) use action_storage::{
+    FundedAction, FundedActionNavigation, FundedActionPath, FundedActionRoute,
 };
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
@@ -299,8 +305,8 @@ pub struct Capabilities {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CharacterTrait {
     pub id: String,
-    pub name: String,
-    pub description: String,
+    pub name: crate::text::JsText,
+    pub description: crate::text::JsText,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -1491,6 +1497,8 @@ struct EntitySlot {
     generation: u64,
     entity: Option<Entity>,
     order: String,
+    action_storage: Option<crate::host::ByteReservation>,
+    goal_storage: Option<crate::host::ByteReservation>,
 }
 /// Ordering labels are the source collection's actual labels. They are not
 /// identities and never change merely because jobs move between workers.
@@ -1537,6 +1545,13 @@ impl EntityStore {
         // a changed installation closure before this store may admit it.
         if entity.actor.is_none() {
             return Err("The installed physical family requires an actor.");
+        }
+        if entity
+            .actor
+            .as_ref()
+            .is_some_and(|actor| actor.action.is_some())
+        {
+            return Err("A newly created action must enter its funded semantic owner.");
         }
         if self.by_id.contains_key(&entity.id) {
             return Err("Existing entity membership.");
@@ -1586,6 +1601,8 @@ impl EntityStore {
             generation: 0,
             entity: Some(entity),
             order,
+            action_storage: None,
+            goal_storage: None,
         });
         Ok(EntityInsertion {
             handle,
@@ -1644,6 +1661,8 @@ impl EntityStore {
                 generation: 0,
                 entity: Some(entity),
                 order,
+                action_storage: None,
+                goal_storage: None,
             });
         }
         Ok(value)

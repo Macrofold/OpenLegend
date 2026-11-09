@@ -220,7 +220,22 @@ export interface ActorAgency {
 /** Existing plan/history bounds limit these actor-local references. Retrieval applies
  * correction, forgetting and retention; execution receipts cannot recreate lost evidence. */
 export function requiredOutcomeEvidence(world: WorldState, actorId: string): ResultEvidence[] {
-  const agency = entityGet(world.entities, actorId)?.actor?.agency;
+  return requiredAgencyOutcomeEvidence(entityGet(world.entities, actorId)?.actor?.agency);
+}
+export interface OutcomeEvidenceRead {
+  readonly lastResultEvidence?: ResultEvidence;
+  readonly plan: {
+    readonly resultEvidence?: ResultEvidence;
+    readonly steps: readonly { readonly resultEvidence?: ResultEvidence }[];
+  } | null;
+  readonly suspended?: OutcomeEvidenceRead['plan'];
+  readonly history: readonly { readonly resultEvidence?: ResultEvidence }[];
+}
+/** The scoped self product supplies only existing personal-evidence addresses.
+ * Selecting them neither hydrates execution records nor renews a receipt. */
+export function requiredAgencyOutcomeEvidence(
+  agency: OutcomeEvidenceRead | undefined,
+): ResultEvidence[] {
   if (!agency) return [];
   const evidence = [
     agency.lastResultEvidence,
@@ -287,9 +302,14 @@ export function rememberedPlace(
   return actor.agency.places?.find((place) => place.subjectId === subjectId);
 }
 export function goalTexts(actor: ActorComponent): string[] {
-  return actor.agency.goals
-    .filter((goal) => goal.status === 'active')
-    .map((goal) => goal.objective);
+  return activeGoalTexts(actor.agency.goals);
+}
+/** The same first-person selection accepts an owned native read without
+ * constructing an actor or granting any goal mutation. */
+export function activeGoalTexts(
+  goals: readonly Pick<ActorGoal, 'status' | 'objective'>[],
+): string[] {
+  return goals.filter((goal) => goal.status === 'active').map((goal) => goal.objective);
 }
 export function currentGoal(actor: ActorComponent): string {
   return goalTexts(actor).join('; ');

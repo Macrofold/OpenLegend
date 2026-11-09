@@ -19,6 +19,7 @@ import { nativeResponseProfile } from './native-response.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { namePhrase, type Named } from '@open-legend/language';
 import { weaponStrikeWording } from './worlds/base/strikes.js';
+import { selectedNaturalStrikeBodyPlans } from './world-composition.js';
 import { itemFor } from './objects.js';
 import { equippedItems } from './equipment.js';
 import type { Action, Entity, WorldState } from './types.js';
@@ -122,23 +123,42 @@ export function availableStrikes(
 ): StrikeDefinition[] {
   const melee = equippedItems(world, actorId, 'melee').flatMap((item) => {
     const definition = strikeDefinition(item.definitionId, world, item.id, target);
-    return definition && supportsStrike(entityGet(world.entities, actorId), definition)
+    return definition && supportsStrike(entityGet(world.entities, actorId), definition, world)
       ? [definition]
       : [];
   });
   const native = Object.values(world.nativeStrikes ?? {})
-    .filter((definition) => supportsStrike(entityGet(world.entities, actorId), definition))
+    .filter((definition) => supportsStrike(entityGet(world.entities, actorId), definition, world))
     .map((definition) =>
       target ? { ...definition, label: `${definition.label} ${namePhrase(target)}` } : definition,
     );
   return [...native, ...melee];
 }
 /** The same anatomical/capability requirement governs discovery, admission and impact. */
-export function supportsStrike(actor: Entity | undefined, definition: StrikeDefinition): boolean {
+export function supportsStrike(
+  actor: Entity | undefined,
+  definition: StrikeDefinition,
+  world: Pick<WorldState, 'profile'>,
+): boolean {
+  return supportsStrikeBody(
+    actor?.actor?.body?.plan,
+    actor?.actor?.naturalStrikeIds,
+    definition,
+    selectedNaturalStrikeBodyPlans(world),
+  );
+}
+/** An owned body and its installed natural capabilities suffice for discovery.
+ * No current target or physical world is needed to describe that source. */
+export function supportsStrikeBody(
+  bodyPlan: string | undefined,
+  naturalStrikeIds: readonly string[] | undefined,
+  definition: StrikeDefinition,
+  unrestrictedBodyPlans: readonly string[],
+): boolean {
   return (
-    !!actor?.actor?.body &&
-    (!definition.requiredBodyPlan || definition.requiredBodyPlan === actor.actor.body.plan) &&
-    (actor.actor.body.plan === 'biped' || !!actor.actor.naturalStrikeIds?.includes(definition.id))
+    bodyPlan !== undefined &&
+    (!definition.requiredBodyPlan || definition.requiredBodyPlan === bodyPlan) &&
+    (unrestrictedBodyPlans.includes(bodyPlan) || !!naturalStrikeIds?.includes(definition.id))
   );
 }
 export function validateNativeStrikes(world: WorldState): void {

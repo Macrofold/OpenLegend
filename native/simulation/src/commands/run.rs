@@ -117,6 +117,7 @@ pub(crate) struct CommandCursor {
     binding: GeometryBinding,
     resolved: Option<SurfacePoint>,
     action: Option<Action>,
+    action_storage: Option<ByteReservation>,
     activity_id: Option<String>,
     interrupt_at: usize,
     personal: Option<PersonalTask>,
@@ -190,6 +191,7 @@ impl CommandCursor {
             binding,
             resolved: None,
             action: None,
+            action_storage: None,
             activity_id: None,
             interrupt_at: 0,
             personal: None,
@@ -293,6 +295,32 @@ impl CommandCursor {
                 .checked_add(bytes)
                 .ok_or(ExecutionError::Capacity)?,
         )?;
+        Ok(())
+    }
+    fn grow_action_storage(&mut self, extra: usize) -> Result<(), ExecutionError> {
+        let storage = self
+            .action_storage
+            .as_mut()
+            .ok_or(ExecutionError::Invariant)?;
+        storage.resize(
+            storage
+                .bytes()
+                .checked_add(extra)
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        Ok(())
+    }
+    fn size_action_storage(&mut self) -> Result<(), ExecutionError> {
+        let bytes = self
+            .action
+            .as_ref()
+            .ok_or(ExecutionError::Invariant)?
+            .heap_bytes()
+            .ok_or(ExecutionError::Capacity)?;
+        self.action_storage
+            .as_mut()
+            .ok_or(ExecutionError::Invariant)?
+            .resize(bytes)?;
         Ok(())
     }
     fn refuse(&mut self, message: &crate::worlds::InstalledActionMessage) {
@@ -465,6 +493,7 @@ impl CommandCursor {
                                     self.refuse(&ordinary.blocked);
                                     return self.drive(core, None);
                                 };
+                                self.reserve(point.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
                                 self.resolved = Some(point);
                                 self.phase = Phase::Standing;
                                 self.queries = None;
@@ -479,6 +508,12 @@ impl CommandCursor {
                             }
                             Phase::Route => {
                                 let route = answer.routes.pop().ok_or(ExecutionError::Invariant)?;
+                                let crate::geometry::GuardedRoutePlan(route, storage) =
+                                    crate::geometry::route_plan(route, &self.budget)?;
+                                self.action_storage
+                                    .as_mut()
+                                    .ok_or(ExecutionError::Invariant)?
+                                    .merge(storage)?;
                                 let action =
                                     self.action.as_mut().ok_or(ExecutionError::Invariant)?;
                                 match route {
@@ -507,6 +542,7 @@ impl CommandCursor {
                                     }
                                 }
                                 if !matches!(self.phase, Phase::Done) {
+                                    self.size_action_storage()?;
                                     self.phase = Phase::Prepared;
                                 }
                                 self.queries = None;
@@ -523,6 +559,18 @@ impl CommandCursor {
                                 if !answer.walking.pop().ok_or(ExecutionError::Invariant)? {
                                     self.refuse(&ordinary.unreachable);
                                 } else {
+                                    let point_bytes = self
+                                        .resolved
+                                        .as_ref()
+                                        .ok_or(ExecutionError::Invariant)?
+                                        .heap_bytes()
+                                        .ok_or(ExecutionError::Capacity)?;
+                                    self.grow_action_storage(
+                                        std::mem::size_of::<SurfacePoint>()
+                                            .checked_add(point_bytes)
+                                            .and_then(|n| n.checked_add("approaching".len()))
+                                            .ok_or(ExecutionError::Capacity)?,
+                                    )?;
                                     let action =
                                         self.action.as_mut().ok_or(ExecutionError::Invariant)?;
                                     action.stage = "approaching".to_owned();
@@ -532,6 +580,7 @@ impl CommandCursor {
                                             .ok_or(ExecutionError::Invariant)?
                                             .clone(),
                                     ];
+                                    self.size_action_storage()?;
                                     self.phase = Phase::Prepared;
                                 }
                                 self.queries = None;
@@ -763,6 +812,17 @@ impl CommandCursor {
                     let in_reach = from.surface_id == destination.surface_id
                         && crate::spatial::distance(from.point(), destination.point())
                             <= core.state.installed.movement_settings.arrival_tolerance;
+                    // This storage follows the actual pending action into its
+                    // entity slot; a cursor's own guard cannot fund accepted buffers.
+                    let base_bytes = self
+                        .command
+                        .envelope()
+                        .id
+                        .len()
+                        .checked_add(destination.heap_bytes().ok_or(ExecutionError::Capacity)?)
+                        .and_then(|n| n.checked_add("move".len() + "approaching".len()))
+                        .ok_or(ExecutionError::Capacity)?;
+                    self.action_storage = Some(self.budget.reserve(base_bytes)?);
                     let action = Action::movement(
                         self.command.envelope().id.clone(),
                         destination.clone(),
@@ -776,7 +836,22 @@ impl CommandCursor {
                         self.phase = Phase::Prepared;
                         continue;
                     }
-                    if let Some(native) = &self.options.native_movement {
+                    if self.options.native_movement.is_some() {
+                        let path_bytes = self
+                            .options
+                            .native_movement
+                            .as_ref()
+                            .ok_or(ExecutionError::Invariant)?
+                            .route
+                            .path
+                            .heap_bytes()
+                            .ok_or(ExecutionError::Capacity)?;
+                        self.grow_action_storage(path_bytes)?;
+                        let native = self
+                            .options
+                            .native_movement
+                            .as_ref()
+                            .ok_or(ExecutionError::Invariant)?;
                         self.action.as_mut().ok_or(ExecutionError::Invariant)?.path =
                             native.route.path.clone();
                         self.phase = Phase::Prepared;
@@ -867,11 +942,26 @@ impl CommandCursor {
                             self.refuse(&ordinary.stale_native_movement);
                             continue;
                         }
+                        let extra = native
+                            .binding
+                            .heap_bytes()
+                            .ok_or(ExecutionError::Capacity)?;
+                        let storage = self
+                            .action_storage
+                            .as_mut()
+                            .ok_or(ExecutionError::Invariant)?;
+                        storage.resize(
+                            storage
+                                .bytes()
+                                .checked_add(extra)
+                                .ok_or(ExecutionError::Capacity)?,
+                        )?;
                         self.action
                             .as_mut()
                             .ok_or(ExecutionError::Invariant)?
                             .native_locomotion = Some(native.binding.clone());
                     }
+                    self.size_action_storage()?;
                     core.physical().settle_entity(&actor_id)?;
                     self.materialized = true;
                     self.phase = Phase::RecordPrepared;
@@ -928,8 +1018,12 @@ impl CommandCursor {
                             .map_err(ExecutionError::Activity)?;
                         self.activity_id = Some(id);
                     }
+                    // Saved IDs are bounded by MAX_SAFE_INTEGER (16 decimal
+                    // digits). Admission precedes allocation and the retained copy.
+                    self.grow_action_storage("action-".len() + 16)?;
                     let action_id = core.physical().allocate("action")?.id;
                     self.action.as_mut().ok_or(ExecutionError::Invariant)?.id = action_id.clone();
+                    self.size_action_storage()?;
                     if let Some(id) = &self.activity_id {
                         core.journal
                             .activity
@@ -1046,7 +1140,12 @@ impl CommandCursor {
                     let action_id = action.id.clone();
                     core.physical().replace_action(
                         &actor_id,
-                        Some(action),
+                        Some(crate::state::FundedAction::from_storage(
+                            action,
+                            self.action_storage
+                                .take()
+                                .ok_or(ExecutionError::Invariant)?,
+                        )?),
                         ActionWrite {
                             generation: PlanGenerationWrite::Advance,
                             behavior: Some(false),

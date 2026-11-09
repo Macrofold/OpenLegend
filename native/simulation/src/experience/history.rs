@@ -129,7 +129,7 @@ fn reserve(budget: &ByteBudget, bytes: Option<usize>) -> Result<ByteReservation,
         .reserve(bytes.ok_or_else(capacity)?)
         .map_err(|_| capacity())
 }
-fn receipt_bound(batch: &ReceivedBatch, entry: &ReceivedEntry) -> Option<usize> {
+pub(super) fn receipt_bound(batch: &ReceivedBatch, entry: &ReceivedEntry) -> Option<usize> {
     let record = &entry.receipt;
     let fields = record.facets.len();
     let sources = record.sources.heap_bytes()?;

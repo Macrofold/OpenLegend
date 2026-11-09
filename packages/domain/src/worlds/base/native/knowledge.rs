@@ -136,10 +136,13 @@ fn capacity() -> ReceivedError {
     ReceivedError("Personal names exceed native byte allowance.")
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub(crate) struct PersonalName<'a> {
     pub name: crate::text::TextRef<'a>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub name_form: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub indefinite_article: Option<&'a str>,
 }
 impl<'a> From<&'a Named> for PersonalName<'a> {
@@ -423,7 +426,7 @@ impl<'a> PersonalNameReader<'a> {
                             .ok()
                             .and_then(|key| documents.get(&format!("subject:{key}")))
                             .is_some_and(|document| {
-                                !crate::encoding::js_trim(&document.text).is_empty()
+                                !document.text.trim_is_empty()
                             })
                     });
             if annotated {

@@ -21,6 +21,8 @@ pub(crate) use run::{
 mod resume;
 pub(crate) use ready::{PlanReadyAnswer, PlanReadyCursor, PlanReadyStep, ReadyPlanStep};
 mod validation;
+mod goals;
+pub(crate) use goals::{GoalChange, GoalOperation, change_goal};
 pub(crate) use control::{
     PlanControlCursor, PlanControlKind, PlanControlProgress, PlanControlStep,
 };

@@ -25,7 +25,7 @@ import {
   type SpeechTargetRole,
 } from '@open-legend/domain';
 import { scopeKey, type RequestScope } from './authority.js';
-import { entityBodyReference } from './entity-references.js';
+import { bodyReferenceFor, entityBodyReference } from './entity-references.js';
 import type {
   ActionCatalogue,
   AssemblyView,
@@ -51,8 +51,24 @@ export const currentContactReference = (
 ): string => {
   const observed = currentBodyGrant(world, scope.actorId, entity.id, reads);
   if (!observed) throw new ContactReferenceError();
-  return `contact-${entityBodyReference(`${scopeKey(scope)}:${observed.leaseId}`, entity)}`;
+  return currentContactReferenceFor(
+    scope,
+    entity.id,
+    entity.actor?.physicalLife ?? 0,
+    observed.leaseId,
+  );
 };
+
+/** The capture owner already proved this current body. This shared token
+ * formatter retains its exact lease/life namespace and grants no new access. */
+export function currentContactReferenceFor(
+  scope: RequestScope,
+  id: string,
+  life: number,
+  leaseId: string,
+): string {
+  return `contact-${bodyReferenceFor(`${scopeKey(scope)}:${leaseId}`, id, life)}`;
+}
 
 /** Communication remembers an acquired person independently from a replaceable body. */
 export const communicationReference = (scope: RequestScope, entity: Pick<Entity, 'id'>): string =>

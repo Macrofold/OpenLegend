@@ -1,5 +1,6 @@
 import type { CurrentFacetValue, ObservedBody, ObservedBodyDetails } from '@open-legend/domain';
 import type { EntityView } from '@open-legend/protocol';
+import type { Named } from '@open-legend/language';
 import { permittedSourceHandle, type PersonalReferenceScope } from './entity-references.js';
 
 export function projectObservedAppearance(
@@ -35,6 +36,55 @@ export interface ObservedBodyViewInput {
   sightConfirmedThrough: number | null;
   resourceArt: EntityView['art'];
   storage: EntityView['storage'];
+}
+
+export interface ObservedEntityViewInput extends ObservedBodyViewInput {
+  readonly display: Named;
+  readonly references: Pick<EntityView, 'id' | 'bodyReference' | 'contextActionRevision'>;
+  readonly observation: EntityView['observation'];
+  readonly identity?: EntityView['identity'];
+  readonly attentionPreference?: boolean;
+  readonly construction?: Pick<EntityView, 'assembly' | 'actionRevision'>;
+  readonly communication?: Pick<
+    EntityView,
+    'canTalk' | 'talkRequiresAi' | 'talkUnavailableReason' | 'communicationReference' | 'trade'
+  >;
+}
+
+export function projectObservedCommunication(input: {
+  readonly bodyAlive: boolean;
+  readonly playerCanSpeak: boolean;
+  readonly talkRequiresAi: boolean;
+  readonly communicationReference: string | undefined;
+  readonly trade: EntityView['trade'];
+}): NonNullable<ObservedEntityViewInput['communication']> {
+  return {
+    canTalk: input.bodyAlive && input.playerCanSpeak,
+    talkRequiresAi: input.talkRequiresAi,
+    ...(!input.playerCanSpeak ? { talkUnavailableReason: 'Your character cannot speak now.' } : {}),
+    ...(input.communicationReference
+      ? { communicationReference: input.communicationReference }
+      : {}),
+    trade: input.trade,
+  };
+}
+
+/** One permitted current contact reaches the ordinary player view through this
+ * formatter in both runtimes. References and optional reader products are
+ * supplied by their actual owners; no missing fact is filled from an Entity. */
+export function projectObservedEntity(input: ObservedEntityViewInput): EntityView {
+  return {
+    ...input.references,
+    ...(input.construction ?? {}),
+    ...(input.attentionPreference !== undefined
+      ? { attentionPreference: input.attentionPreference }
+      : {}),
+    ...input.display,
+    ...(input.identity ? { identity: input.identity } : {}),
+    observation: input.observation,
+    ...projectObservedBody(input),
+    ...(input.communication ?? {}),
+  };
 }
 
 /** The same received body reaches both runtime implementations' real player

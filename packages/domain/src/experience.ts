@@ -1370,11 +1370,19 @@ export function acceptedMindFiles(world: WorldState, actorId: string): MindFiles
 }
 const acceptedTexts = new WeakMap<object, string>();
 export function acceptedMindText(world: WorldState, actorId: string): string | undefined {
-  const documents = world.minds?.[actorId]?.documents;
+  return acceptedMindDocumentText(world.minds?.[actorId]?.documents);
+}
+/** Accepted files can be formatted from an actor-scoped immutable capture. The
+ * same quota, filename order and cache apply without retaining a world. */
+export function acceptedMindDocumentText(
+  documents: readonly { readonly id: string; readonly text: string }[] | undefined,
+): string | undefined {
   if (!documents?.length) return;
   const prior = Object.isFrozen(documents) ? acceptedTexts.get(documents) : undefined;
   if (prior !== undefined) return prior;
-  const text = flattenFiles(acceptedMindFiles(world, actorId));
+  const text = flattenFiles(
+    documents.map((document) => ({ path: `${document.id}.md`, text: document.text })),
+  );
   if (Object.isFrozen(documents)) acceptedTexts.set(documents, text);
   return text;
 }

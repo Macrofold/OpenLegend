@@ -18,6 +18,7 @@ pub(crate) struct InventoryProjection<'a> {
     pub revision: u64,
     pub equipped: &'a [CarriedItem],
     pub pile: &'a [ObservedPileItem],
+    pub held_stock: &'a [(String, f64)],
 }
 impl ClosedInventory {
     /// Complete installation consumed and rejected every positive reservation.
@@ -30,6 +31,7 @@ impl ClosedInventory {
             revision: membership.revision,
             equipped: &[],
             pile: &[],
+            held_stock: &[],
         }
     }
     pub(crate) fn resource_reservations(&self) -> &OwnerCoverage {

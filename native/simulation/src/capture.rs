@@ -12,6 +12,13 @@ use crate::simulation::SimulationState;
 use crate::worlds::{InstalledPersonalNameReader, OwnedPersonalName};
 use serde::{Serialize, Serializer};
 use std::mem::size_of;
+mod controls;
+mod outcomes;
+mod player;
+mod practice;
+mod metadata;
+pub(crate) use controls::{CapturedPlayerControls, PlayerControlPreparation};
+use player::{CapturedPlayerBody, CapturedPlayerPerception, OwnPlayerView, PlayerReadScope};
 
 // The Source currentObservedFacetValues default is a finite presentation
 // selection, not every field of every channel in a stored contact. In
@@ -59,6 +66,10 @@ pub(crate) struct CapturedBodyBinding {
     pub identity: Option<PreferredName>,
     pub actor: bool,
     pub talk_requires_ai: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    player: Option<CapturedPlayerBody>,
+    #[serde(skip)]
+    _player_reservation: Option<ByteReservation>,
     pub first: usize,
     pub count: usize,
 }
@@ -76,6 +87,7 @@ pub(crate) struct CapturedActorPerception {
     pub bodies: Vec<CapturedBodyBinding>,
     pub evidence: CapturedEvidenceCut,
     pub geometry: Option<CapturedGeometryRange>,
+    player: Option<CapturedPlayerPerception>,
     _reservation: ByteReservation,
 }
 #[derive(Serialize)]
@@ -98,6 +110,8 @@ struct PerceptionProduct<'a> {
     cut: &'a crate::experience::EvidenceCut,
     #[serde(skip_serializing_if = "Option::is_none")]
     geometry: Option<&'a CapturedGeometryRange>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    player: Option<&'a CapturedPlayerPerception>,
 }
 impl CapturedActorPerception {
     pub(crate) fn write_json(
@@ -112,6 +126,7 @@ impl CapturedActorPerception {
             bodies: &self.bodies,
             cut: self.evidence.cut(),
             geometry: self.geometry.as_ref(),
+            player: self.player.as_ref(),
         };
         let length =
             crate::encoding::json_record_len(&product).map_err(|_| ExecutionError::Invariant)?;
@@ -160,6 +175,9 @@ pub(crate) fn capture_actor_perception(
         &state.experience,
         actor_id,
     )?;
+    let player = matches!(purpose, ActorReadPurpose::PlayerView)
+        .then(|| PlayerReadScope::prepare(state, actor_id, budget))
+        .transpose()?;
     let mut bytes = size_of::<CapturedActorPerception>()
         .checked_add(state.physical.header.id.len())
         .and_then(|n| n.checked_add(actor_id.len()))
@@ -260,6 +278,17 @@ pub(crate) fn capture_actor_perception(
             }) {
                 return Err(ExecutionError::Invariant);
             }
+            if player.is_some()
+                && current[first..].iter().any(|field| {
+                    matches!(&field.facet().value, crate::reception::SensoryFacet::Body { body }
+                    if body.storage.is_some() || body.assembly.is_some())
+                })
+            {
+                // These controls need real inventory/assembly reader products.
+                // Refusing the positive unconverted family is safer than an
+                // apparently complete contact with its controls silently gone.
+                return Err(ExecutionError::UnsupportedFamily);
+            }
             let subject = names.current_body_subject(id)?;
             let identity = subject
                 .as_ref()
@@ -280,6 +309,13 @@ pub(crate) fn capture_actor_perception(
                 .entities
                 .get(id)
                 .and_then(|entity| entity.actor.as_ref());
+            let (player_body, player_reservation) = player
+                .as_ref()
+                .map(|player| player.capture(id, &names, budget))
+                .transpose()?
+                .map_or((None, None), |(body, reservation)| {
+                    (Some(body), Some(reservation))
+                });
             bodies.push(CapturedBodyBinding {
                 source_id: id.to_owned(),
                 physical_life: body.grant.subject_physical_life,
@@ -289,6 +325,8 @@ pub(crate) fn capture_actor_perception(
                 identity,
                 actor: actor.is_some(),
                 talk_requires_ai: actor.is_some_and(|actor| actor.controller == "npc"),
+                player: player_body,
+                _player_reservation: player_reservation,
                 first,
                 count: current.len() - first,
             });
@@ -354,6 +392,15 @@ pub(crate) fn capture_actor_perception(
         bodies,
         evidence,
         geometry,
+        player: player.as_ref().map(|_| CapturedPlayerPerception {
+            trade_history: "no-acquired-agreements",
+            // Physical installation admits only actors. Source exposedPlaces
+            // requires a non-actor landmark; remembered sites cannot fill it.
+            physical_landmarks: "absent",
+            // Accepted read construction consumes SelectedInstallation, which
+            // refuses the live finiteRain family before creating Simulation.
+            finite_weather_cue: "absent",
+        }),
         _reservation: reservation,
     })
 }
@@ -383,9 +430,28 @@ struct OwnAction<'a> {
     stage: &'a str,
     #[serde(skip_serializing_if = "Option::is_none")]
     target_id: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    definition_id: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    attribute_id: Option<&'a str>,
     total_seconds: f64,
     remaining_seconds: f64,
     preparing_navigation: bool,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct OwnObserverName<'a> {
+    name: crate::text::TextRef<'a>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    name_form: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    indefinite_article: Option<&'a str>,
+}
+#[derive(Serialize)]
+#[serde(untagged)]
+enum OwnReferenceAttribution<'a> {
+    Received(&'a str),
+    Sequence(u64),
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -393,9 +459,12 @@ struct OwnActorProduct<'a> {
     world_id: &'a str,
     actor_id: &'a str,
     generation: &'a str,
+    accepted_cut: u64,
     at: f64,
     sequence: u64,
     identity: OwnIdentity<'a>,
+    observer_name: OwnObserverName<'a>,
+    reference_attribution: OwnReferenceAttribution<'a>,
     #[serde(skip_serializing_if = "Option::is_none")]
     physical_life: Option<u64>,
     alive: bool,
@@ -410,13 +479,18 @@ struct OwnActorProduct<'a> {
     action: Option<OwnAction<'a>>,
     speech: bool,
     speech_blocked: bool,
+    actions_blocked: bool,
     manual_work: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     agency: Option<&'a crate::state::ActorAgency>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    recent_result_eligibility: Option<&'a [outcomes::RequiredResult<'a>]>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     mind: Option<&'a crate::cognition::ActorMind>,
     #[serde(skip_serializing_if = "Option::is_none")]
     inner_world: Option<&'a crate::cognition::InnerWorld>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    player: Option<OwnPlayerView<'a>>,
 }
 
 /// First-person facts for the real player/NPC formatters. Purpose controls the
@@ -501,10 +575,53 @@ pub(crate) fn write_actor_self(
     } else {
         None
     };
+    let names = InstalledPersonalNameReader::prepare(
+        &state.physical,
+        &state.reception,
+        &state.installed,
+        &state.experience,
+        actor_id,
+    )?;
+    let observer_name = names.observer_name(actor_id)?;
+    let body_scope = CurrentBodyReadScope::prepare(
+        &state.reception,
+        &state.physical.entities,
+        &state.installed,
+        &state.experience,
+        &crate::worlds::InstalledEvidenceMeaning,
+        actor_id,
+    )?;
+    let own_body = body_scope
+        .as_ref()
+        .map(|scope| scope.native_body(actor_id))
+        .transpose()?
+        .flatten();
+    let reference_attribution = if let Some(body) = own_body {
+        OwnReferenceAttribution::Received(&body.field.id)
+    } else if names.recognizes_subject(actor_id)? {
+        OwnReferenceAttribution::Received("known")
+    } else {
+        OwnReferenceAttribution::Sequence(state.physical.header.sequence)
+    };
+    let inventory = state
+        .inventory
+        .project(&state.administration.object_membership);
+    let (practice_records, _practice_guard) = if private {
+        (Vec::new(), budget.reserve(0)?)
+    } else {
+        practice::practice_records(state, entity, budget)?
+    };
+    let required_results = if private {
+        Some(outcomes::capture(state, actor_id, &actor.agency, budget)?)
+    } else {
+        None
+    };
+    let player_metadata = if private { None } else { Some(metadata::PlayerMetadata::prepare(state, entity, budget)?) };
     let product = OwnActorProduct {
         world_id: &state.physical.header.id,
         actor_id,
         generation: &state.generation,
+        accepted_cut: state.accepted_cut,
         at: state.physical.header.sim_time,
         sequence: state.physical.header.sequence,
         identity: OwnIdentity {
@@ -516,6 +633,12 @@ pub(crate) fn write_actor_self(
             species: actor.species.as_deref(),
             traits: actor.traits.as_deref(),
         },
+        observer_name: OwnObserverName {
+            name: observer_name.name,
+            name_form: observer_name.name_form,
+            indefinite_article: observer_name.indefinite_article,
+        },
+        reference_attribution,
         physical_life: actor.physical_life,
         alive: actor.alive,
         incapacitated: actor.incapacitated,
@@ -538,6 +661,8 @@ pub(crate) fn write_actor_self(
             kind: &action.kind,
             stage: &action.stage,
             target_id: action.target_id.as_deref(),
+            definition_id: action.definition_id.as_deref(),
+            attribute_id: action.attribute_id.as_deref(),
             total_seconds: action.total_seconds,
             remaining_seconds: action.remaining_seconds,
             preparing_navigation: action.navigation.is_some(),
@@ -552,8 +677,15 @@ pub(crate) fn write_actor_self(
             .installed
             .capabilities
             .capability_blocked(Some(entity), "speech")?,
+        actions_blocked: state
+            .installed
+            .capabilities
+            .capability_blocked(Some(entity), "actions")?,
         manual_work: actor.body.as_ref().is_some_and(|body| body.plan == "biped"),
         agency: private.then_some(&actor.agency),
+        recent_result_eligibility: required_results
+            .as_ref()
+            .map(outcomes::RequiredResults::values),
         mind,
         inner_world: private
             .then(|| {
@@ -564,6 +696,41 @@ pub(crate) fn write_actor_self(
                     .and_then(|worlds| worlds.get(actor_id))
             })
             .flatten(),
+        player: if private { None } else { Some(OwnPlayerView {
+            seed: state.physical.header.seed,
+            module_revision: state.installed.manifest.revision,
+            spatial_revision: state.installed.geometry.spatial.revision,
+            body: actor.body.as_ref(),
+            held_stock: inventory.held_stock,
+            equipped: inventory.equipped,
+            knowledge_revision: state
+                .reception
+                .knowledge_revisions
+                .as_ref()
+                .and_then(|revisions| revisions.get(actor_id))
+                .copied()
+                .unwrap_or(0),
+            agency: &actor.agency,
+            practice: actor.practice.as_ref(),
+            practice_records: &practice_records,
+            participation: actor.participation.as_ref(),
+            scars: actor.scars.as_ref(),
+            pending_death: actor.pending_death.as_ref(),
+            remains_phase: entity
+                .remains
+                .as_ref()
+                .map(|remains| remains.phase.as_str()),
+            evasion_ready_at: actor.evasion_ready_at,
+            combat_ready_at: actor.combat_ready_at,
+            natural_strike_ids: actor.natural_strike_ids.as_deref(),
+            action_animation: state
+                .installed
+                .observation_rules
+                .value()
+                .observed_action_animation(entity)?,
+            senses: &player_metadata.as_ref().ok_or(ExecutionError::Invariant)?.senses,
+            map_markers: &player_metadata.as_ref().ok_or(ExecutionError::Invariant)?.markers,
+        }) },
     };
     let length =
         crate::encoding::json_record_len(&product).map_err(|_| ExecutionError::Invariant)?;

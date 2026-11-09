@@ -61,6 +61,7 @@ import {
   compactContributionHistory,
 } from './history-residency.js';
 import { MemoryRepository } from './memory-repository.js';
+import type { DerivedMemoryAllowance } from './memory-derivatives.js';
 import {
   materializeTemporalChanges,
   WorldRecords,
@@ -235,6 +236,25 @@ export interface SavedWorld {
   speed: number;
   manuallyPaused: boolean;
   actorMilestones?: Record<string, Record<string, boolean>>;
+}
+
+/** Operational read providers retain actual native products, never a mutable
+ * TypeScript world. They are installed only with the matching SQL authority. */
+export interface NativeWorldProviders {
+  readonly liveReadCuts: LiveReadCutsProvider;
+  readonly retainedValues: (worldId: string) => Readonly<Record<string, unknown>>;
+  readonly backgroundSearchAdmission: () => boolean;
+}
+
+/** Finite facts from a successfully validated native current-record install.
+ * Publication cuts are independent of in-world occurrence sequences. */
+export interface NativeCurrentWorldInstallation {
+  readonly worldId: string;
+  readonly generation: string;
+  readonly revision: number;
+  readonly acceptedCut: number;
+  readonly historyEventCount: number;
+  readonly memoryAllowance: Readonly<DerivedMemoryAllowance>;
 }
 
 export interface JobRecord extends AiJobView {
@@ -1204,6 +1224,8 @@ export class SqlGameRepository implements GameRepository {
           : this.history.auditEventCount(loaded.state.world.id)),
       };
     });
+    if (this.capturedOwner)
+      throw new Error('A native world acquired the writer while this source load was pending.');
     if (captured) {
       const { canonical, historyCount } = captured;
       const state = canonical.state;
@@ -1217,11 +1239,13 @@ export class SqlGameRepository implements GameRepository {
         throw new Error(
           'Archived history coverage disagrees with the records; restore the complete database.',
         );
-      // A failed read, audit or validation cannot restore a lost incremental baseline.
-      this.baselineLost = false;
       // Accepted canonical records are immutable predecessors. Physical evidence
       // page layouts must survive the next diff, including direct store callers.
       freezeWorld(state.world);
+      if (this.capturedOwner)
+        throw new Error('A native world acquired the writer while this source load was pending.');
+      // A failed read, audit or validation cannot restore a lost incremental baseline.
+      this.baselineLost = false;
       // The validated SQL snapshot is already committed; publish its placement
       // cut just like a successful writer, never an arbitrary live wrapper.
       recordSavedTemporalPages(state.world, state.world, []);
@@ -1236,6 +1260,85 @@ export class SqlGameRepository implements GameRepository {
   }
 
   private readonly readyHistoryWorlds = new Set<string>();
+  /** Adopt a fresh native cold install without constructing a Source world.
+   * The native handle stays private until this current SQL/head/ownership check
+   * succeeds. A previously used or lost baseline requires its actual recovery,
+   * never reinterpreting current rows as a replacement incremental predecessor. */
+  async adoptNativeCurrentWorld(
+    input: NativeCurrentWorldInstallation,
+    providers: NativeWorldProviders,
+  ): Promise<void> {
+    const installed = {
+      worldId: input.worldId,
+      generation: input.generation,
+      revision: input.revision,
+      acceptedCut: input.acceptedCut,
+      historyEventCount: input.historyEventCount,
+    };
+    const allowance: DerivedMemoryAllowance = {
+      worldId: input.memoryAllowance.worldId,
+      policyId: input.memoryAllowance.policyId,
+      policyVersion: input.memoryAllowance.policyVersion,
+      maxBytes: input.memoryAllowance.maxBytes,
+      hardBytes: input.memoryAllowance.hardBytes,
+      lowBytes: input.memoryAllowance.lowBytes,
+    };
+    const capturedProviders: NativeWorldProviders = {
+      liveReadCuts: providers.liveReadCuts,
+      retainedValues: providers.retainedValues,
+      backgroundSearchAdmission: providers.backgroundSearchAdmission,
+    };
+    await this.ready;
+    this.assertWriteAdmission();
+    const fresh = () =>
+      !this.capturedOwner &&
+      !this.acceptedState &&
+      this.acceptedRevision === -1 &&
+      !this.baselineLost;
+    if (
+      !fresh() ||
+      !installed.worldId ||
+      !installed.generation ||
+      [installed.revision, installed.acceptedCut, installed.historyEventCount].some(
+        (value) => !Number.isSafeInteger(value) || value < 0,
+      ) ||
+      allowance.worldId !== installed.worldId
+    )
+      throw new Error('Native cold installation no longer owns a fresh current-record writer.');
+    await this.db.transaction(async () => {
+      const head = await this.records.head();
+      if (
+        !head ||
+        head.worldId !== installed.worldId ||
+        head.revision !== installed.revision ||
+        head.generation !== installed.generation
+      )
+        throw new Error('Native installation no longer matches the committed world head.');
+      await this.receivedOwnership.validate(installed.worldId, 'retained');
+      if (
+        (await this.history.retainedEventCount(installed.worldId)) !== installed.historyEventCount
+      )
+        throw new Error('Native installation history coverage disagrees with current storage.');
+    });
+    this.memories.configureAllowance(allowance);
+    await this.memories.enforceDerivedWorld(installed.worldId);
+    // An awaited Source load or another installation cannot publish over this
+    // handoff. Finish fallible maintenance first; no await separates the final
+    // ownership check and publication of the native writer.
+    this.assertWriteAdmission();
+    if (!fresh())
+      throw new Error(
+        'Native cold installation lost its current-record writer during preparation.',
+      );
+    this.installNativeOwner(
+      installed.worldId,
+      installed.revision,
+      installed.generation,
+      installed.acceptedCut,
+      capturedProviders,
+    );
+  }
+
   /** Called only after the host installs the validated native authority. Failed
    * installation leaves the loaded predecessor and its writer baseline intact. */
   releaseLoadedWorld(
@@ -1243,14 +1346,14 @@ export class SqlGameRepository implements GameRepository {
     revision: number,
     generation: string,
     acceptedCut: number,
-    providers: {
-      liveReadCuts: LiveReadCutsProvider;
-      retainedValues: (worldId: string) => Readonly<Record<string, unknown>>;
-      backgroundSearchAdmission: () => boolean;
-    },
+    providers: NativeWorldProviders,
   ): void {
+    this.assertWriteAdmission();
     if (
       this.capturedOwner ||
+      this.baselineLost ||
+      !Number.isSafeInteger(revision) ||
+      revision < 0 ||
       this.acceptedRevision !== revision ||
       this.acceptedState?.world.id !== worldId ||
       !generation ||
@@ -1258,13 +1361,23 @@ export class SqlGameRepository implements GameRepository {
       acceptedCut < 0
     )
       throw new Error('Loaded world no longer matches the installed native authority.');
+    // Native publication cuts and in-world occurrence sequences have separate
+    // owners. A cold world can already contain many events before native cut 0.
+    this.installNativeOwner(worldId, revision, generation, acceptedCut, providers);
+  }
+  private installNativeOwner(
+    worldId: string,
+    revision: number,
+    generation: string,
+    acceptedCut: number,
+    providers: NativeWorldProviders,
+  ): void {
     this.setLiveReadCuts(providers.liveReadCuts);
     this.setRetainedValueLookup(providers.retainedValues);
     this.memories.setBackgroundSearchAdmission(providers.backgroundSearchAdmission);
-    // Native publication cuts and in-world occurrence sequences have separate
-    // owners. A cold world can already contain many events before native cut 0.
     this.capturedOwner = { worldId, generation, through: acceptedCut };
     this.acceptedState = null;
+    this.acceptedRevision = revision;
   }
 
   /** Apply one complete immutable native save cut through the same ordered SQL

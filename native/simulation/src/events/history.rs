@@ -230,7 +230,7 @@ impl OccurrenceHistory {
             .and_then(|(_, record)| record.event.event.order)
             .unwrap_or(0)
     }
-    pub fn hot(&self) -> impl Iterator<Item = &HotOccurrencePlacement> {
+    pub fn hot(&self) -> impl DoubleEndedIterator<Item = &HotOccurrencePlacement> + ExactSizeIterator {
         self.hot.values()
     }
     pub(crate) fn appended(&self) -> impl Iterator<Item = &HotOccurrencePlacement> {

@@ -1,7 +1,7 @@
 //! Physical loss may retire empty encounter subjects, while actual personal
 //! notes, recent members and independently owned proof keep their local IDs.
 use super::*;
-use crate::encoding::{js_trim, json_record};
+use crate::encoding::json_record;
 use crate::execution::{CoreMutation, ExecutionError};
 use crate::host::ByteBudget;
 use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
@@ -243,7 +243,7 @@ pub(crate) fn prune_observer_individuals(
             );
             if documents
                 .get(&slot)
-                .is_some_and(|document| !js_trim(&document.text).is_empty())
+                .is_some_and(|document| !document.text.trim_is_empty())
             {
                 pinned.insert(id.clone());
             }

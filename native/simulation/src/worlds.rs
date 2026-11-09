@@ -87,7 +87,8 @@ pub(crate) use base_cognition::OccurrenceRules as InstalledOccurrenceRules;
 
 pub use base_knowledge::PersonalNameRules as InstalledPersonalNameRules;
 pub(crate) use base_knowledge::{
-    CapturedNames, OwnedPersonalName, PersonalNameReader as InstalledPersonalNameReader,
+    CapturedNames, OwnedPersonalName, PersonalName as InstalledPersonalName,
+    PersonalNameReader as InstalledPersonalNameReader,
 };
 
 pub(crate) use base_recognition::{

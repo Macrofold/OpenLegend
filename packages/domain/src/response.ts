@@ -29,14 +29,13 @@ import {
   type TemporalReceipt,
   type TemporalValue,
 } from './temporal-evidence.js';
-import { selectedTemporalPolicy } from './world-composition.js';
+import { selectedTemporalPolicy, selectedOccurrenceRules } from './world-composition.js';
 import { entityGet, entityHas, entityOwn } from './entity-collection.js';
 import { changeAppraisal, type AppraisalChange, type AppraisalBindings } from './appraisals.js';
 import { accessiblePossession } from './object-access.js';
 import { subjectNarration, presentVerb, person } from './narration.js';
 import { namePhrase } from '@open-legend/language';
 import { worldPosition } from './spatial-state.js';
-import { BASE_EXPRESSION_VERBS } from './worlds/base/actions.js';
 import { installedActionMeaning } from './activity-hosts.js';
 import { activelyParticipates } from './participation-state.js';
 import {
@@ -102,6 +101,8 @@ import type { Command, Outcome, Transition, WorldState } from './types.js';
 import type { ActivityNode, ActivityPredicate } from './action-experience.js';
 import { reconcileOutings } from './outings.js';
 import { resolveSemanticCause } from './semantic-opportunities.js';
+import { RESPONSE_LIMITS, RESPONSE_RECEIPT_LIMIT } from './response-settings.js';
+export { RESPONSE_LIMITS, RESPONSE_RECEIPT_LIMIT } from './response-settings.js';
 
 export interface SituationProposalBinding {
   /** Trusted server-captured native conditions, never supplied by model output. */
@@ -143,7 +144,7 @@ export interface ResponseOperation {
     /** Proposal-only exact references; see unmetSlots for the admission check. */
     slots?: IntentSlots | null;
     actionId: string | null;
-    verb: 'nod' | 'smile' | 'frown' | 'wave' | 'shrug' | 'shake_head' | 'slap' | null;
+    verb: string | null;
     targetEntityId: string | null;
     description: string | null;
     mode: 'enqueue' | 'replace' | 'interrupt';
@@ -184,8 +185,6 @@ export interface ResponseReceipt {
   components: Record<string, Outcome>;
   outcome: Outcome;
 }
-export const RESPONSE_LIMITS = { operations: 16, bytes: 40000 } as const;
-
 export function validResponseEnvelope(value: ActorResponse): boolean {
   if (
     !value ||
@@ -358,8 +357,6 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
   }
   return true;
 }
-export const RESPONSE_RECEIPT_LIMIT = 300;
-
 /** Only the next selected action must be possible now. Later steps may depend on
  * earlier equipment or typed outputs; their native owner rechecks when they start.
  * docs/projects/parallel-batch-01-playable-week-tech-design.md#admission-before-execution
@@ -1197,13 +1194,15 @@ export function commitActorResponse(
             : 'Existing behavior continues.',
         );
     } else if (act?.kind === 'expression') {
+      const rules = selectedOccurrenceRules(world).response.expression;
+      const expression = act.verb ? getOwn(rules.verbs, act.verb) : undefined;
       const source = entityGet(world.entities, actorId)!;
       const target = act.targetEntityId ? entityGet(world.entities, act.targetEntityId) : undefined;
       const invalidTarget =
         !!act.targetEntityId &&
         (!permitted.has(act.targetEntityId) || !entityHas(world.entities, act.targetEntityId));
       const reachable =
-        act.verb !== 'slap' ||
+        !expression?.requiresReach ||
         (!!target &&
           !invalidTarget &&
           activelyParticipates(target) &&
@@ -1214,7 +1213,7 @@ export function commitActorResponse(
       if (
         !supportsManualWork(source) ||
         !act.verb ||
-        !Object.hasOwn(BASE_EXPRESSION_VERBS, act.verb) ||
+        !expression ||
         invalidTarget ||
         !reachable ||
         (target &&
@@ -1233,13 +1232,13 @@ export function commitActorResponse(
         emit(
           world,
           events,
-          'expression',
+          rules.eventType,
           subjectNarration(source, [
-            presentVerb(source, BASE_EXPRESSION_VERBS[act.verb!]),
-            ...(act.verb === 'shake_head' ? [' ', person(source, 'possessive'), ' head'] : []),
+            presentVerb(source, expression!.verb),
+            ...(expression!.headSuffix ? [' ', person(source, 'possessive'), expression!.headSuffix] : []),
             ...(target
               ? [
-                  act.verb === 'slap' ? ' ' : ' toward ',
+                  expression!.targetPrefix,
                   person(target, target.id === source.id ? 'reflexive' : 'object'),
                 ]
               : []),
@@ -1441,6 +1440,7 @@ export function commitActorResponse(
     }
 
     if (op.think) {
+      const thought = selectedOccurrenceRules(world).response.thought;
       const invalidReferences = op.think.aboutEntityIds.some(
         (target) => !permitted.has(target) || !entityHas(world.entities, target),
       );
@@ -1459,10 +1459,10 @@ export function commitActorResponse(
       else {
         appendMemory(world, actorId, {
           kind: 'episode',
-          source: 'self_thought',
-          summary: subjectNarration(actorId, `thought: ${op.think.text}`),
+          source: thought.source,
+          summary: subjectNarration(actorId, `${thought.summaryPrefix}${op.think.text}`),
           entityIds: op.think.aboutEntityIds,
-          importance: 5,
+          importance: thought.importance,
           responseId: id,
         });
         components[localId] = outcome(true, 'thought', 'Private thought remembered.');
@@ -1684,7 +1684,7 @@ export function recordPlayerExpression(
   emit(
     world,
     events,
-    'expression',
+    selectedOccurrenceRules(world).response.expression.eventType,
     subjectNarration(source, parts),
     entityGet(world.entities, actorId),
     targetId,

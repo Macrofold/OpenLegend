@@ -21,6 +21,7 @@ pub(crate) enum CoreInstallError {
     Personal(crate::experience::PersonalInstallError),
     Receiving(crate::received::ReceivedError),
     Activity(crate::activity::ActivityError),
+    Execution(crate::execution::ExecutionError),
     MissingTemporal,
 }
 impl From<InstallError> for CoreInstallError {
@@ -46,6 +47,11 @@ impl From<crate::received::ReceivedError> for CoreInstallError {
 impl From<crate::activity::ActivityError> for CoreInstallError {
     fn from(value: crate::activity::ActivityError) -> Self {
         Self::Activity(value)
+    }
+}
+impl From<crate::execution::ExecutionError> for CoreInstallError {
+    fn from(value: crate::execution::ExecutionError) -> Self {
+        Self::Execution(value)
     }
 }
 
@@ -148,6 +154,7 @@ pub(crate) fn assemble_core(
         personal_evidence_preparation,
         mind,
         agency,
+        actor_response,
     } = settings;
     let encounter_batch_entries = usize::try_from(encounter_batch_entries)
         .ok()
@@ -206,7 +213,7 @@ pub(crate) fn assemble_core(
     let maximum_path_points =
         usize::try_from(spatial.max_path_points).map_err(|_| InstallError::CurrentFormat)?;
     let PhysicalInstallation {
-        state: physical,
+        state: mut physical,
         content,
         personal,
         archived_event_count,
@@ -230,6 +237,8 @@ pub(crate) fn assemble_core(
             population_work: &meanings.population_work,
         },
     )?;
+    physical.entities.fund_installed_actions(budget)?;
+    physical.entities.fund_installed_goals(budget)?;
     let retained = install_retained(&mut import, &mut children, retained, &schema)?;
     super::physical::validate_physical_item_references(&physical, &retained)?;
     let installed = Arc::new(InstalledWorld {
@@ -278,6 +287,7 @@ pub(crate) fn assemble_core(
         personal_evidence_preparation,
         mind_limits: mind,
         agency_limits: agency,
+        actor_response_limits: actor_response,
     });
     crate::plans::validate_installation(&physical, &installed)?;
     // Every presence below is consumed from the actual root, including empty
@@ -307,7 +317,7 @@ pub(crate) fn assemble_core(
         physical.header.sequence,
         display.clone(),
     )?;
-    let reception = read_reception_rows(&mut import, roots, received, &schema)?;
+    let reception = read_reception_rows(&mut import, roots, received, &schema, budget)?;
     let mut revisions = OriginalRevisionRegistry::new(budget)?;
     let personal_install = install_personal(
         &mut import,
@@ -332,10 +342,17 @@ pub(crate) fn assemble_core(
         child(&mut children, "actionExperience", true)?,
         Arc::new(activity),
         display,
+        budget,
     )?;
     let commands = crate::commands::CommandState::install(
         &mut import,
         child(&mut children, "commandReceipts", true)?,
+    )?;
+    let responses = crate::response::ResponseState::install(
+        &mut import,
+        child(&mut children, "responseReceipts", false)?,
+        &installed.actor_response_limits,
+        budget,
     )?;
     let minds = crate::cognition::install_minds(
         &mut import,
@@ -362,13 +379,14 @@ pub(crate) fn assemble_core(
         child(&mut children, "knowledge", true)?,
         &physical.entities,
     )?;
-    let appraisals = crate::appraisals::install_appraisals(
+    let mut appraisals = crate::appraisals::install_appraisals(
         &mut import,
         child(&mut children, "appraisals", false)?,
         child(&mut children, "appraisalProcesses", false)?,
         &physical.entities,
         &installed,
     )?;
+    appraisals.prepare_indices(budget)?;
     let state = SimulationState {
         records: record_ledger,
         generation: import.generation().to_owned(),
@@ -382,6 +400,7 @@ pub(crate) fn assemble_core(
         occurrences: personal_install.occurrences,
         activity,
         commands,
+        responses,
         minds,
         administration,
         inventory,

@@ -76,6 +76,7 @@ mod current_journal;
 pub(crate) use attention_control::{
     AttentionSelection, AttentionUpdate, evaluate_attention_relations, next_attention_work_at,
     prune_withdrawn_attention, update_attention,
+    acknowledge_attention, set_attention_focus,
 };
 mod cohort;
 pub(crate) use cohort::{

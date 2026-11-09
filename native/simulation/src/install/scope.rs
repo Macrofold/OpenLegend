@@ -22,7 +22,6 @@ pub(crate) fn finish_selected_installation(
         ("outings", "activity_outings", true),
         ("socialCompacts", "social_compacts", true),
         ("familyTree", "sim_family_tree", false),
-        ("responseReceipts", "response_receipts", true),
         ("declarationReceipts", "declaration_receipts", true),
     ] {
         inactive(
