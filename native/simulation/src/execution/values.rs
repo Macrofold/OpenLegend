@@ -274,11 +274,9 @@ impl PhysicalMutation<'_> {
                     .undo
                     .try_reserve(1)
                     .map_err(|_| ExecutionError::Capacity)?;
-                let attributes = binding.attributes.keys().cloned().collect();
                 self.journal.undo.push(Undo::RetainedBinding {
                     episode: binding.episode.clone(),
                     entity_id: binding.entity_id.clone(),
-                    attributes,
                 });
             }
             self.journal.reserve(binding.entity_id.len())?;

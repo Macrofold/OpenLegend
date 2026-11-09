@@ -135,9 +135,9 @@ enum ActivityUndo {
     },
 }
 pub(crate) struct ActivityJournal {
-    reservation: ByteReservation,
     undo: Vec<ActivityUndo>,
     pending: BTreeSet<(String, String)>,
+    reservation: ByteReservation,
 }
 impl ActivityJournal {
     pub(crate) fn revoke_evidence(

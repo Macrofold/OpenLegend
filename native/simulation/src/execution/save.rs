@@ -478,6 +478,64 @@ fn map<T: Serialize>(
     }
     observe(output, table, parent, values.is_some(), next, budget)
 }
+/// A rate binding can be settled and retained again without changing this
+/// subject's links. Reconstruct just that small record from the existing
+/// inverses, preserving order, rather than emitting an unchanged SQL row.
+fn subject_links_changed(
+    current: Option<&IndexMap<String, String>>,
+    changes: &[&Undo],
+    budget: &ByteBudget,
+) -> Result<bool, RecordEncodingError> {
+    let count = changes
+        .iter()
+        .try_fold(current.map_or(0, IndexMap::len), |count, change| {
+            count.checked_add(match change {
+                Undo::Episode(episode) => episode.links.len(),
+                _ => 0,
+            })
+        })
+        .ok_or_else(error)?;
+    let _allowance = budget
+        .reserve(map_storage::<&str, &str>(count).ok_or_else(error)?)
+        .map_err(|_| error())?;
+    let mut before = IndexMap::with_capacity(count);
+    if let Some(current) = current {
+        before.extend(
+            current
+                .iter()
+                .map(|(key, value)| (key.as_str(), value.as_str())),
+        );
+    }
+    for change in changes.iter().rev() {
+        match change {
+            Undo::RetainedBinding { episode, .. } => {
+                before.retain(|_, value| *value != episode.as_str());
+            }
+            Undo::Episode(episode) => {
+                before.retain(|_, value| *value != episode.episode.as_str());
+                for (position, key, value) in &episode.links {
+                    if *position > before.len() {
+                        return Err(error());
+                    }
+                    before.shift_insert(*position, key.as_str(), value.as_str());
+                }
+            }
+            _ => return Err(error()),
+        }
+    }
+    let before_present =
+        !before.is_empty() || matches!(changes.first().copied(), Some(Undo::Episode(_)));
+    Ok(match current {
+        Some(current) => {
+            !before_present
+                || !before.iter().map(|(key, value)| (*key, *value)).eq(current
+                    .iter()
+                    .map(|(key, value)| (key.as_str(), value.as_str())))
+        }
+        None => before_present,
+    })
+}
+
 impl PhysicalJournal {
     /// Receiver-owned scalar progress shares sim_entities with physical child
     /// presence. Its exact changed IDs join this one parent projection.
@@ -508,6 +566,11 @@ impl PhysicalJournal {
                 .and_then(|bytes| bytes.checked_mul(5))
                 .ok_or_else(error)?,
             map_storage::<&str, bool>(maximum).ok_or_else(error)?,
+            map_storage::<&str, Vec<&Undo>>(maximum).ok_or_else(error)?,
+            self.undo
+                .len()
+                .checked_mul(4 * size_of::<&Undo>())
+                .ok_or_else(error)?,
         ])
         .ok_or_else(error)?;
         let _selection = budget.reserve(bytes).map_err(|_| error())?;
@@ -515,6 +578,7 @@ impl PhysicalJournal {
         let mut work = IndexMap::with_capacity(maximum);
         let mut bindings = IndexMap::with_capacity(maximum);
         let mut subjects = IndexMap::with_capacity(maximum);
+        let mut subject_changes: IndexMap<&str, Vec<&Undo>> = IndexMap::with_capacity(maximum);
         let mut window = false;
         let mut coaching = false;
         let mut added = 0u64;
@@ -537,6 +601,10 @@ impl PhysicalJournal {
                     window = true;
                     bindings.entry(episode.as_str()).or_insert(false);
                     subjects.entry(entity_id.as_str()).or_insert(false);
+                    subject_changes
+                        .entry(entity_id.as_str())
+                        .or_default()
+                        .push(change);
                 }
                 Undo::Episode(episode) => {
                     window = true;
@@ -544,6 +612,10 @@ impl PhysicalJournal {
                     subjects
                         .entry(episode.binding.1.entity_id.as_str())
                         .or_insert(true);
+                    subject_changes
+                        .entry(episode.binding.1.entity_id.as_str())
+                        .or_default()
+                        .push(change);
                     let rows = selected
                         .entry((episode.entity.slot, episode.entity.generation))
                         .or_default();
@@ -1132,6 +1204,15 @@ impl PhysicalJournal {
             )?;
         }
         if window {
+            for (id, changes) in &subject_changes {
+                let current = state
+                    .pending_values
+                    .as_ref()
+                    .and_then(|window| window.by_entity.get(*id));
+                if !subject_links_changed(current, changes, budget)? {
+                    subjects.shift_remove(*id);
+                }
+            }
             one(
                 ledger,
                 output,

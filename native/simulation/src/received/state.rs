@@ -585,6 +585,11 @@ impl TemporalState {
         Ok(())
     }
     pub fn discard_undo(&mut self) {
-        self.undo.clear();
+        // Resource guards precede the before-images they fund in the logical
+        // stack. Free those images first, just like reverse-order rollback.
+        while let Some(undo) = self.undo.pop() {
+            drop(undo);
+        }
+        self.undo = Vec::new();
     }
 }

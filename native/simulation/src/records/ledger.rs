@@ -55,6 +55,9 @@ fn owner_bytes(key: &str, owner: &OwnerCoverage) -> Option<usize> {
     heap_sum([key.len(), owner.table.capacity(), owner.owner.capacity()])
 }
 impl RecordLedger {
+    pub(crate) fn accepted_cut(&self) -> u64 {
+        self.accepted_cut
+    }
     pub(crate) fn from_records(
         records: &CurrentRecords,
         accepted_cut: u64,

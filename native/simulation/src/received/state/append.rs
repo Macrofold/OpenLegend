@@ -153,7 +153,6 @@ struct Terminal {
 /// its actual owner before a snapshot/yield; beginning it allocates no IDs.
 pub struct TemporalAcquisition {
     budget: ByteBudget,
-    reservation: ByteReservation,
     batch: ReceivedBatch,
     frame: Option<ObservationFrame>,
     next_entry: u64,
@@ -166,6 +165,8 @@ pub struct TemporalAcquisition {
     values: IndexSet<String>,
     terminals: IndexMap<String, IndexMap<String, Terminal>>,
     decisions: IndexMap<String, Option<TemporalReceiptLocator>>,
+    // The builder's owned storage must drop before its allowance is released.
+    reservation: ByteReservation,
 }
 impl TemporalAcquisition {
     pub(crate) fn prepared_frame(&self) -> Option<&ObservationFrame> {
@@ -346,6 +347,7 @@ impl TemporalState {
         values: &ReceivedValues,
         identity: &mut IdentityState,
         meaning: &dyn TemporalValueMeaning,
+        backing: &mut ByteReservation,
     ) -> Result<Option<u64>, ReceivedError> {
         if batch.entries.is_empty() {
             return Ok(None);
@@ -377,6 +379,24 @@ impl TemporalState {
             .entry_bytes
             .checked_sub(rich_bytes)
             .ok_or(ReceivedError("Temporal block encoded charge underflow."))?;
+        // Flush empties the builder. Its scratch cannot keep this new retained
+        // batch funded through the remaining private candidate and rollback.
+        let allocation = heap_sum([
+            std::mem::size_of::<PendingTemporalPage>(),
+            std::mem::size_of::<ReceivedBatch>(),
+            4 * std::mem::size_of::<usize>(),
+            issued.id.capacity(),
+            batch
+                .heap_bytes()
+                .ok_or(ReceivedError("Temporal block allocation overflow."))?,
+            metadata
+                .heap_bytes()
+                .ok_or(ReceivedError("Temporal block allocation overflow."))?,
+        ])
+        .ok_or(ReceivedError("Temporal block allocation overflow."))?;
+        let retained = backing
+            .split_off(allocation)
+            .map_err(|_| ReceivedError("Temporal block capacity exhausted."))?;
         let actor = self
             .actors
             .get(&batch.actor_id)
@@ -400,7 +420,7 @@ impl TemporalState {
             header.bytes > policy.max_bytes || header.count > policy.max_changes;
         let actor_id = batch.actor_id.clone();
         self.undo
-            .try_reserve(2)
+            .try_reserve(3)
             .map_err(|_| ReceivedError("Temporal undo reservation failed."))?;
         self.actors
             .get_mut(&actor_id)
@@ -420,6 +440,7 @@ impl TemporalState {
             through_at,
             batch_encoded_bytes,
         }));
+        self.undo.push(TemporalUndo::Reservation(retained));
         self.undo.push(TemporalUndo::PendingAppend { actor_id });
         Ok(Some(batch_encoded_bytes))
     }
@@ -485,6 +506,7 @@ impl TemporalAcquisition {
             values,
             identity,
             meaning,
+            &mut self.reservation,
         )? {
             // Source charges the actual compact native append immediately,
             // including before allocating the next entry after a block split.

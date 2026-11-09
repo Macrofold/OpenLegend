@@ -9,7 +9,7 @@ use crate::events::{
 };
 use crate::experience::{ExperienceCheckpoint, ExperienceJournal};
 use crate::host::retained_size::{HeapBytes, heap_sum};
-use crate::host::{ByteBudget, ByteReservation, CapacityError};
+use crate::host::{AcceptedCandidate, ByteBudget, ByteReservation, CandidateKey, CapacityError};
 use crate::identity::{IdentityExhausted, IdentityState, IssuedIdentity, MAX_SAFE_INTEGER};
 use crate::received::{ReceivedValuesCheckpoint, TemporalCheckpoint};
 use crate::reception::{
@@ -26,6 +26,7 @@ use crate::values::{
 use crate::work::{InvocationEdit, WorkDemand, WorkError, WorkPlan, WorkRequest, WorkUndo};
 use indexmap::{IndexMap, IndexSet};
 use std::mem::size_of;
+use std::sync::Arc;
 
 mod agency;
 mod attributes;
@@ -151,14 +152,16 @@ pub(crate) struct CandidateCheckpoint {
     depth: usize,
 }
 
-/// All owner journals enter/leave one nested checkpoint together. No Ready or
-/// accept path is provided until actual receiving/history mutation and changed
-/// record encoding have joined this owner completely.
+/// All owner journals enter/leave one nested checkpoint together. Its release
+/// token certifies semantic closure; Ready additionally needs complete encoded
+/// output, save/host admission and the actual current authority/input checks.
 pub(crate) struct CandidateJournal {
+    owner: Arc<()>,
+    base_cut: u64,
+    installed: Arc<crate::simulation::InstalledWorld>,
     pub encounters: crate::events::EncounterScopes,
     budget: ByteBudget,
     pub cognition: crate::cognition::CognitionJournal,
-    pub physical: PhysicalJournal,
     pub meters: crate::work::WorkMeters,
     pub originals: OriginalJournal,
     pub current: CurrentJournal,
@@ -188,6 +191,15 @@ pub(crate) struct CandidateJournal {
     pending: Vec<PendingOccurrence>,
     next_occurrence: u64,
     next_provider_serial: u64,
+    // This guard also funds outer frames/meters. Drop it after their backing
+    // allocations and every other owned journal, including on cancellation.
+    pub physical: PhysicalJournal,
+}
+/// Sealed before Ready. This certifies closed semantic work, not row/save or
+/// host-input admission; those independent products must also be prepared.
+pub(crate) struct PreparedJournalRelease {
+    owner: Arc<()>,
+    candidate: CandidateKey,
 }
 impl CandidateJournal {
     pub(crate) fn byte_budget(&self) -> &ByteBudget {
@@ -296,13 +308,69 @@ impl CandidateJournal {
         self.encounters.require_closed()?;
         self.acquisitions.require_closed()
     }
+    pub(crate) fn prepare_release(
+        &self,
+        state: &SimulationState,
+        candidate: CandidateKey,
+    ) -> Result<PreparedJournalRelease, ExecutionError> {
+        self.require_closed_operations()?;
+        if candidate.base_cut != self.base_cut
+            || state.accepted_cut != self.base_cut
+            || !Arc::ptr_eq(&self.installed, &state.installed)
+        {
+            return Err(ExecutionError::InvalidCheckpoint);
+        }
+        Ok(PreparedJournalRelease {
+            owner: self.owner.clone(),
+            candidate,
+        })
+    }
+    /// All current buffers remain owned by the accepted canonical state or its
+    /// detached products. Destroy before-images and their real backing storage
+    /// before releasing this candidate's transient allowance. No SQL ACK occurs.
+    pub(crate) fn finish_accepted(
+        self,
+        state: &mut SimulationState,
+        prepared: PreparedJournalRelease,
+        accepted: &AcceptedCandidate,
+    ) -> Result<(), (ExecutionError, Self)> {
+        let closed = self.require_closed_operations();
+        if let Err(error) = closed {
+            return Err((error, self));
+        }
+        if !Arc::ptr_eq(&self.owner, &prepared.owner)
+            || prepared.candidate != accepted.key()
+            || accepted.key().base_cut != self.base_cut
+            || self.base_cut.checked_add(1) != Some(state.accepted_cut)
+            || state.records.accepted_cut() != state.accepted_cut
+            || !Arc::ptr_eq(&self.installed, &state.installed)
+        {
+            // A rejected binding must not destroy the only rollback owner.
+            return Err((ExecutionError::InvalidCheckpoint, self));
+        }
+        state.temporal.discard_undo();
+        state.occurrences.discard_undo();
+        state.appraisals.discard_undo();
+        if let Some(values) = &mut state.reception.received_values {
+            values.discard_undo();
+        }
+        // Dropping self destroys all physical/personal/current before-images;
+        // it does not remove canonical records or the independent save suffix.
+        drop(prepared);
+        drop(self);
+        Ok(())
+    }
     pub(crate) fn begin(
         state: &SimulationState,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         let group = state.installed.work_policy.policy().group;
         let mut physical = PhysicalJournal::begin(&state.physical, budget)?;
-        physical.reserve(size_of::<Self>() + crate::work::WorkMeters::heap_bound(group)?)?;
+        physical.reserve(
+            size_of::<Self>()
+                + 2 * size_of::<usize>()
+                + crate::work::WorkMeters::heap_bound(group)?,
+        )?;
         let originals = OriginalJournal::new(budget).map_err(|_| ExecutionError::Capacity)?;
         let root_originals = originals.checkpoint();
         let current = CurrentJournal::new(budget).map_err(ExecutionError::Received)?;
@@ -325,6 +393,9 @@ impl CandidateJournal {
         let cognition = crate::cognition::CognitionJournal::new(budget)?;
         let root_cognition = cognition.checkpoint();
         Ok(Self {
+            owner: Arc::new(()),
+            base_cut: state.accepted_cut,
+            installed: state.installed.clone(),
             encounters: crate::events::EncounterScopes::new(budget)?,
             budget: budget.clone(),
             root_appraisals: state.appraisals.checkpoint(),
@@ -1190,7 +1261,6 @@ enum Undo {
     RetainedBinding {
         episode: String,
         entity_id: String,
-        attributes: Vec<String>,
     },
     Attribute {
         entity: EntityHandle,
@@ -1262,11 +1332,12 @@ enum Undo {
 /// transferred all owned scratch. Nested rollback does not claim freed capacity
 /// while Vec allocations and before-values are still retained by this batch.
 pub(crate) struct PhysicalJournal {
-    reservation: ByteReservation,
     undo: Vec<Undo>,
     frames: Vec<Frame>,
     changes: Vec<PhysicalChange>,
     next_frame: u64,
+    // Rust drops fields in declaration order: storage must precede its guard.
+    reservation: ByteReservation,
 }
 impl PhysicalJournal {
     pub(crate) fn begin(
@@ -1664,11 +1735,7 @@ impl PhysicalJournal {
                         window.binding_count = before.binding_count;
                     }
                 },
-                Undo::RetainedBinding {
-                    episode,
-                    entity_id,
-                    attributes,
-                } => {
+                Undo::RetainedBinding { episode, entity_id } => {
                     if let Some(window) = state.pending_values.as_mut() {
                         if window.bindings.shift_remove(&episode).is_some() {
                             window.binding_count = window
@@ -1677,11 +1744,10 @@ impl PhysicalJournal {
                                 .ok_or(ExecutionError::Invariant)?;
                         }
                         if let Some(subject) = window.by_entity.get_mut(&entity_id) {
-                            for id in attributes {
-                                if subject.get(&id) == Some(&episode) {
-                                    subject.shift_remove(&id);
-                                }
-                            }
+                            // Conditional rates can select another attribute
+                            // subset later in the same checkpoint. All links
+                            // to this introduced episode must leave together.
+                            subject.retain(|_, value| value != &episode);
                             if subject.is_empty() {
                                 window.by_entity.shift_remove(&entity_id);
                             }
@@ -2834,6 +2900,9 @@ impl PhysicalMutation<'_> {
                     links.get_full(id).ok_or(ValueError::InvalidContinuation)?;
                 prior_links.push((index, id.clone(), value.clone()));
             }
+            // A binding's authored attribute order need not match the subject
+            // index. Restore low positions first, including an empty subject.
+            prior_links.sort_by_key(|(position, _, _)| *position);
             self.journal.retain(
                 key,
                 Undo::Episode(EpisodeUndo {
@@ -3033,9 +3102,6 @@ fn restore_episode(state: &mut PhysicalState, undo: EpisodeUndo) -> Result<(), E
     window.elapsed_seconds = undo.elapsed_seconds;
     window.sim_time = undo.sim_time;
     window.binding_count = undo.binding_count;
-    window
-        .bindings
-        .shift_insert(undo.binding.0, undo.episode, undo.binding.1);
     if !window.by_entity.contains_key(&entity_id) {
         window
             .by_entity
@@ -3045,11 +3111,13 @@ fn restore_episode(state: &mut PhysicalState, undo: EpisodeUndo) -> Result<(), E
         .by_entity
         .get_mut(&entity_id)
         .ok_or(ExecutionError::Invariant)?;
-    let mut links = undo.links;
-    links.sort_by_key(|(index, _, _)| *index);
-    for (index, id, value) in links {
+    subject.retain(|_, value| value != &undo.episode);
+    for (index, id, value) in undo.links {
         subject.shift_insert(index, id, value);
     }
+    window
+        .bindings
+        .shift_insert(undo.binding.0, undo.episode, undo.binding.1);
     let entity = state
         .entities
         .resolve_mut(undo.entity)

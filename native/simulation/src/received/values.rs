@@ -669,6 +669,6 @@ impl ReceivedValues {
     /// Called once the outer candidate is accepted, after all nested event
     /// checkpoints have finished. No durable-save acknowledgement is implied.
     pub fn discard_undo(&mut self) {
-        self.undo.clear();
+        self.undo = Vec::new();
     }
 }
