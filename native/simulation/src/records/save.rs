@@ -9,6 +9,7 @@ use crate::host::retained_size::tree_node_bound;
 use crate::host::{AcceptedCandidate, ByteBudget, ByteReservation, CandidateKey};
 use crate::identity::MAX_SAFE_INTEGER;
 use std::{collections::BTreeMap, mem::size_of, sync::Arc};
+mod protected;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum SaveError {
@@ -80,6 +81,7 @@ struct PendingAppend {
     schema: Arc<RecordSchema>,
     reservation: ByteReservation,
     _workspace: ByteReservation,
+    protected: Option<Arc<SavePrefix>>,
 }
 pub(crate) struct SaveJournal {
     owner: Arc<()>,
@@ -282,6 +284,7 @@ impl SaveJournal {
             schema: Arc::clone(schema),
             reservation,
             _workspace: workspace,
+            protected: None,
         });
         Ok(PreparedSaveAppend {
             owner: Arc::clone(&self.owner),
@@ -307,11 +310,11 @@ impl SaveJournal {
         prepared: &PreparedSaveAppend,
     ) -> Result<&ChangedRows, SaveError> {
         self.validate_prepared(prepared)?;
-        Ok(&self
-            .pending_append
+        let pending = self.pending_append.as_ref().ok_or(SaveError::Binding)?;
+        Ok(pending
+            .protected
             .as_ref()
-            .ok_or(SaveError::Binding)?
-            .changes)
+            .map_or(&pending.changes, |prefix| &prefix.rows.changes))
     }
     pub(crate) fn reject_append(&mut self, prepared: PreparedSaveAppend) -> Result<(), SaveError> {
         self.validate_prepared(&prepared)?;
@@ -334,6 +337,16 @@ impl SaveJournal {
             .pending_append
             .take()
             .expect("validated pending append");
+        if let Some(prefix) = pending.protected {
+            // SQL has already committed this exact private prefix. Its bodies,
+            // presence index and residency were funded before Ready; acceptance
+            // only installs that same owner so the exact ACK can follow.
+            self.through_cut = pending.through_cut;
+            self.identity_through = pending.identity_through;
+            self.next_prefix += 1;
+            self.in_flight = Some(prefix);
+            return Ok(());
+        }
         if pending.changes.writes.is_empty()
             && pending.changes.deletes.is_empty()
             && pending.changes.expired.is_empty()
@@ -447,30 +460,9 @@ impl SaveJournal {
             .expect("validated immutable save inputs with complete capacity admission");
         drop(owners);
         drop(pages_guard);
-        let presence = prefix_index(&changes);
-        let actual = changes_heap(&changes)
-            .and_then(|n| n.checked_add(fixed))
-            .and_then(|n| n.checked_add(prefix_index_bound(&changes)?))
-            .expect("merged save is bounded by its admitted inputs");
-        assert!(actual <= peak, "save prefix exceeded its admitted peak");
-        self.suffix_reservation
-            .resize(actual)
-            .expect("shrinking fully admitted immutable save prefix");
         let reservation = std::mem::replace(&mut self.suffix_reservation, replacement);
-        let prefix = Arc::new(SavePrefix {
-            rows: SaveRows {
-                world_id: self.world_id.clone(),
-                generation: self.generation.clone(),
-                prefix: self.next_prefix,
-                base_revision: self.durable_revision,
-                through_cut: self.through_cut,
-                identity_through: self.identity_through,
-                changes,
-            },
-            presence,
-            temporal_residency,
-            _reservation: reservation,
-        });
+        debug_assert!(reservation.bytes() >= peak);
+        let prefix = self.finish_prefix(&cut, changes, temporal_residency, reservation);
         ledger
             .apply_temporal_pages(projection)
             .expect("validated same-cut temporal save placement metadata");

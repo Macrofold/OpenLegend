@@ -212,3 +212,6 @@ impl AcousticPolicy {
             })
     }
 }
+
+#[path = "policy_residency/acoustics.rs"]
+mod policy_residency;

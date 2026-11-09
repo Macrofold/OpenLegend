@@ -490,12 +490,14 @@ enum OperationReply {
     Command(CommandReply),
     Response(ResponseReply),
     Forget(ForgetReply),
+    NpcCandidates(NpcCandidateReply),
 }
 enum OperationCursor {
     Advance(AdvanceCursor),
     Command(CommandOperation),
     Response(crate::response::ResponseCursor),
     Forget(crate::experience::ForgetExperienceCursor),
+    NpcCandidates(crate::capture::NpcCandidateCursor),
 }
 impl<T, R> Poll<T, R> {
     fn map<V, S>(self, completed: fn(T) -> V, route: fn(R) -> S) -> Poll<V, S> {
@@ -513,6 +515,7 @@ impl OperationCursor {
             Self::Command(c) => c.abort(core),
             Self::Response(r) => r.abort(core),
             Self::Forget(f) => f.abort(core),
+            Self::NpcCandidates(cursor) => cursor.abort(core),
         }
     }
     fn poll(
@@ -521,7 +524,7 @@ impl OperationCursor {
         answer: &mut Option<Answer>,
         route: Option<OperationReply>,
         budget: &ByteBudget,
-    ) -> Result<Poll<CompletedOperation, OperationReply>, DriveError> {
+    ) -> Result<Poll<DriverCompletion, OperationReply>, DriveError> {
         match self {
             Self::Advance(cursor) => {
                 let route = match route {
@@ -529,8 +532,10 @@ impl OperationCursor {
                     Some(OperationReply::Advance(r)) => Some(r),
                     _ => return Err(DriveError::StaleResponse),
                 };
-                Ok(poll_advance(cursor, core, answer, route, budget)?
-                    .map(CompletedOperation::Advance, OperationReply::Advance))
+                Ok(poll_advance(cursor, core, answer, route, budget)?.map(
+                    |value| DriverCompletion::Operation(CompletedOperation::Advance(value)),
+                    OperationReply::Advance,
+                ))
             }
             Self::Command(cursor) => {
                 let route = match route {
@@ -538,8 +543,10 @@ impl OperationCursor {
                     Some(OperationReply::Command(r)) => Some(r),
                     _ => return Err(DriveError::StaleResponse),
                 };
-                Ok(poll_command(cursor, core, answer, route, budget)?
-                    .map(CompletedOperation::Command, OperationReply::Command))
+                Ok(poll_command(cursor, core, answer, route, budget)?.map(
+                    |value| DriverCompletion::Operation(CompletedOperation::Command(value)),
+                    OperationReply::Command,
+                ))
             }
             Self::Response(cursor) => {
                 let route = match route {
@@ -547,8 +554,10 @@ impl OperationCursor {
                     Some(OperationReply::Response(r)) => Some(r),
                     _ => return Err(DriveError::StaleResponse),
                 };
-                Ok(poll_response(cursor, core, answer, route, budget)?
-                    .map(CompletedOperation::Response, OperationReply::Response))
+                Ok(poll_response(cursor, core, answer, route, budget)?.map(
+                    |value| DriverCompletion::Operation(CompletedOperation::Response(value)),
+                    OperationReply::Response,
+                ))
             }
             Self::Forget(cursor) => {
                 let route = match route {
@@ -556,16 +565,36 @@ impl OperationCursor {
                     Some(OperationReply::Forget(route)) => Some(route),
                     _ => return Err(DriveError::StaleResponse),
                 };
-                Ok(poll_forget(cursor, core, answer, route, budget)?
-                    .map(CompletedOperation::Forget, OperationReply::Forget))
+                Ok(poll_forget(cursor, core, answer, route, budget)?.map(
+                    |value| DriverCompletion::Operation(CompletedOperation::Forget(value)),
+                    OperationReply::Forget,
+                ))
+            }
+            Self::NpcCandidates(cursor) => {
+                let route = match route {
+                    None => None,
+                    Some(OperationReply::NpcCandidates(route)) => Some(route),
+                    _ => return Err(DriveError::StaleResponse),
+                };
+                Ok(
+                    poll_npc_candidates(cursor, core, answer, route, budget)?.map(
+                        DriverCompletion::NpcCandidates,
+                        OperationReply::NpcCandidates,
+                    ),
+                )
             }
         }
     }
+}
+enum DriverCompletion {
+    Operation(CompletedOperation),
+    NpcCandidates(crate::capture::PreparedNpcCandidates),
 }
 pub(crate) enum DriveStep {
     Continue,
     Question(Arc<ProviderQuestion>),
     Complete(CompletedOperation),
+    NpcCandidates(crate::capture::PreparedNpcCandidates),
 }
 pub(crate) struct OperationDriver {
     cursor: OperationCursor,
@@ -597,6 +626,16 @@ impl OperationDriver {
         budget: &ByteBudget,
     ) -> Result<Self, DriveError> {
         Self::new(core, OperationCursor::Response(cursor), budget)
+    }
+    pub(crate) fn npc_candidates(
+        core: &mut CoreMutation<'_>,
+        cursor: crate::capture::NpcCandidateCursor,
+        budget: &ByteBudget,
+    ) -> Result<Self, DriveError> {
+        Self::new(core, OperationCursor::NpcCandidates(cursor), budget)
+    }
+    pub(crate) fn is_npc_candidates(&self) -> bool {
+        matches!(self.cursor, OperationCursor::NpcCandidates(_))
     }
     pub(crate) fn forget(
         core: &mut CoreMutation<'_>,
@@ -707,7 +746,10 @@ impl OperationDriver {
             Ok(Poll::Complete(done)) => {
                 self.pending = None;
                 self.done = true;
-                Ok(DriveStep::Complete(done))
+                Ok(match done {
+                    DriverCompletion::Operation(done) => DriveStep::Complete(done),
+                    DriverCompletion::NpcCandidates(done) => DriveStep::NpcCandidates(done),
+                })
             }
             Err(DriveError::Semantic(error)) => {
                 self.abort(core)?;
@@ -1472,6 +1514,58 @@ fn poll_response(
                     Poll::Complete(value) => supplied = Some(ResponseAnswer::Event(value)),
                     Poll::Continue => return Ok(Poll::Continue),
                     Poll::Question(q, r) => return Ok(Poll::Question(q, ResponseReply::Event(r))),
+                }
+            }
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+enum NpcCandidateReply {
+    Geometry,
+    Display(DisplayReply),
+}
+fn poll_npc_candidates(
+    cursor: &mut crate::capture::NpcCandidateCursor,
+    core: &mut CoreMutation<'_>,
+    answer: &mut Option<Answer>,
+    mut route: Option<NpcCandidateReply>,
+    budget: &ByteBudget,
+) -> Result<Poll<crate::capture::PreparedNpcCandidates, NpcCandidateReply>, DriveError> {
+    use crate::capture::{NpcCandidateAnswer as Reply, NpcCandidateStep as Step};
+    let mut supplied = None;
+    if matches!(route, Some(NpcCandidateReply::Geometry)) {
+        route = None;
+        let Answer::Geometry(value) = direct(answer, ProviderKind::Geometry)? else {
+            return Err(DriveError::StaleResponse);
+        };
+        supplied = Some(Reply::Geometry(value));
+    }
+    loop {
+        match cursor.step(core, supplied.take())? {
+            Step::Complete(done) => return Ok(Poll::Complete(done)),
+            Step::Geometry(request) => {
+                return question(
+                    answer,
+                    ProviderKind::Geometry,
+                    request.binding,
+                    request,
+                    budget,
+                    NpcCandidateReply::Geometry,
+                );
+            }
+            Step::Display(child) => {
+                let child_route = match route.take() {
+                    None => None,
+                    Some(NpcCandidateReply::Display(route)) => Some(route),
+                    _ => return Err(DriveError::StaleResponse),
+                };
+                match poll_display(child, core, answer, child_route, budget)? {
+                    Poll::Complete(done) => supplied = Some(Reply::Display(done)),
+                    Poll::Continue => return Ok(Poll::Continue),
+                    Poll::Question(question, route) => {
+                        return Ok(Poll::Question(question, NpcCandidateReply::Display(route)));
+                    }
                 }
             }
         }

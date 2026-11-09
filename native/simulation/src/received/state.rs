@@ -30,6 +30,9 @@ pub(crate) use revoke::{
     invalidate_temporal_evidence, invalidate_temporal_facets,
 };
 mod append;
+mod tail;
+use tail::ReceiptTailState;
+pub(crate) use tail::{TemporalReceiptPrefix, TemporalReceiptTail, TemporalReceiptTailRequest};
 mod residency;
 mod save;
 pub(crate) use residency::{PackedTemporalSave, PreparedTemporalResidency, SavedTemporalResidency};
@@ -159,6 +162,7 @@ pub struct TemporalActorHistory {
     pages: BTreeMap<u64, Arc<TemporalPageRecord>>,
     complete_pages: bool,
     page_order_upper_bound: u64,
+    tail: ReceiptTailState,
     recent: ReceivedRecentDirectory,
     pending_pages: Vec<Arc<PendingTemporalPage>>,
     pending_storage: crate::host::ResidentReservation,
@@ -181,6 +185,7 @@ impl TemporalActorHistory {
         directories: &[ReceivedChargeDirectory],
         recordings: &[&TemporalCurrentGroupCheckpoint],
         through: f64,
+        closed_tail: bool,
         budget: &crate::host::ByteBudget,
     ) -> Result<Self, ReceivedError> {
         let header: TemporalActorHeader = serde_json::from_str(&row.payload)
@@ -306,6 +311,7 @@ impl TemporalActorHistory {
                 ));
             }
         }
+        let tail = ReceiptTailState::installed(&installed, coverage.complete || closed_tail);
         let header_storage = budget
             .reserve_record(
                 header
@@ -329,6 +335,7 @@ impl TemporalActorHistory {
             pages: installed,
             complete_pages: coverage.complete,
             page_order_upper_bound: coverage.next_ordinal,
+            tail,
             recent,
             pending_pages: Vec::new(),
             pending_storage: budget.reserve_backing(0).map_err(|_| {
@@ -448,6 +455,7 @@ enum TemporalUndo {
     },
     PendingAppend {
         actor_id: String,
+        tail_before: ReceiptTailState,
     },
     PageEdit {
         actor_id: String,
@@ -455,6 +463,7 @@ enum TemporalUndo {
         after_position: Option<u64>,
         removed: Vec<super::RecentDirectoryBlock>,
         appended: Vec<ReceivedChargeDirectory>,
+        tail_before: ReceiptTailState,
     },
     HydratedPages {
         actor_id: String,
@@ -620,7 +629,10 @@ impl TemporalState {
                     actor.payload = payload;
                     actor.header_storage = storage;
                 }
-                TemporalUndo::PendingAppend { actor_id } => {
+                TemporalUndo::PendingAppend {
+                    actor_id,
+                    tail_before,
+                } => {
                     let actor = self
                         .actors
                         .get_mut(&actor_id)
@@ -632,6 +644,7 @@ impl TemporalState {
                     actor
                         .recent
                         .rollback_append(&page.metadata().charge_directory)?;
+                    actor.tail = tail_before;
                 }
                 TemporalUndo::PageEdit {
                     actor_id,
@@ -639,6 +652,7 @@ impl TemporalState {
                     after_position,
                     removed,
                     appended,
+                    tail_before,
                 } => {
                     let actor = self
                         .actors
@@ -654,6 +668,7 @@ impl TemporalState {
                         actor.pages.remove(&position);
                     }
                     actor.pages.insert(before.position(), before);
+                    actor.tail = tail_before;
                 }
                 TemporalUndo::HydratedPages {
                     actor_id,

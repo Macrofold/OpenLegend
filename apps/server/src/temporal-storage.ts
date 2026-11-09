@@ -154,6 +154,13 @@ export interface TemporalHistoryReadContext {
   readonly disclosure: TemporalReadContext;
   readonly cut: TemporalReceiptPrefix;
 }
+/** An indexed native read holds no Node copy of the resident page/value graph.
+ * Every selected body comes from the fixed PostgreSQL plus accepted-row
+ * projection; the reader below still applies the same limits and disclosure. */
+export interface IndexedTemporalHistoryReadContext
+  extends Omit<TemporalHistoryReadContext, 'pages' | 'sources'> {
+  readonly storage: 'indexed';
+}
 export function captureTemporalHistoryReadContext(
   world: WorldState,
   actorId: string,
@@ -309,11 +316,12 @@ export class MemoryRetentionError extends Error {
 export async function readTemporalHistory(
   db: SqlDatabase,
   scope: MemoryScope,
-  context: TemporalHistoryReadContext,
+  context: TemporalHistoryReadContext | IndexedTemporalHistoryReadContext,
   query: TemporalHistoryQuery,
 ): Promise<TemporalHistoryPage> {
   if (context.worldId !== scope.worldId || context.actorId !== scope.actorId)
     throw new MemoryRetentionError('Foreign temporal history scope.');
+  const residentPages = 'pages' in context ? context.pages : [];
   const cut = query.cut ?? context.cut;
   if (cut.throughOrder > context.cut.throughOrder)
     throw new MemoryRetentionError('Temporal history selection exceeds its captured cut.');
@@ -431,7 +439,7 @@ export async function readTemporalHistory(
     }
   };
   await hydrate(selected);
-  for (const page of context.pages)
+  for (const page of residentPages)
     if (
       (!subjects.length ||
         query.includeGeometry ||
@@ -443,7 +451,7 @@ export async function readTemporalHistory(
   // Pending members replace the same immutable logical coordinates. Physical
   // slices can share an entry, so overlay only their actual member intersection.
   const nativeMembers = new Map<string, Set<number>>();
-  for (const page of context.pages)
+  for (const page of residentPages)
     for (const batch of page.batches)
       for (const entry of batch.entries) {
         const key = JSON.stringify([
@@ -458,7 +466,7 @@ export async function readTemporalHistory(
       }
   const trimmedPages = new Map<string, readonly ReceivedEntrySelection[]>();
   for (const [id, page] of pages) {
-    const nativePage = context.pages.includes(page);
+    const nativePage = residentPages.includes(page);
     if (nativePage && !receiptKeys) continue;
     let changed = false;
     const selections = page.batches.flatMap((batch) =>
@@ -525,7 +533,7 @@ export async function readTemporalHistory(
   const sources: Record<string, { value: ReceivedValueFragment }> = {},
     missing: string[] = [];
   for (const id of sourceIds.keys()) {
-    const value = context.sources[id]?.value;
+    const value = 'sources' in context ? context.sources[id]?.value : undefined;
     if (value) {
       sources[id] = { value };
       preparationBytes += Buffer.byteLength(JSON.stringify(value));

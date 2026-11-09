@@ -233,3 +233,6 @@ impl ObservationRules {
         Some(text)
     }
 }
+
+#[path = "policy_residency/observation.rs"]
+mod policy_residency;

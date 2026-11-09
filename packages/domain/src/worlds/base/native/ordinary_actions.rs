@@ -180,3 +180,6 @@ impl OrdinaryActionRules {
         )
     }
 }
+
+#[path = "policy_residency/ordinary_actions.rs"]
+mod policy_residency;

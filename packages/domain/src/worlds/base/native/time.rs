@@ -15,9 +15,19 @@ pub(crate) struct InstalledTimeRules {
     value: TimeRules,
     canonical: Arc<str>,
     sha256: String,
+    _storage: crate::host::ResidentReservation,
 }
 impl InstalledTimeRules {
-    pub(crate) fn install(input: CanonicalInput) -> Result<Self, InstallError> {
+    pub(crate) fn install(
+        input: CanonicalInput,
+        budget: &crate::host::ByteBudget,
+    ) -> Result<Self, InstallError> {
+        let mut workspace = crate::install::reserve_typed_parse::<TimeRules>(
+            &input.canonical,
+            std::mem::size_of::<String>(),
+            None,
+            budget,
+        )?;
         let value: TimeRules =
             serde_json::from_str(&input.canonical).map_err(|_| InstallError::DefinitionBody)?;
         input.verify(&value)?;
@@ -31,10 +41,25 @@ impl InstalledTimeRules {
         {
             return Err(InstallError::DefinitionBody);
         }
+        let bytes = crate::host::retained_size::heap_sum([
+            input.canonical.len(),
+            input.sha256.capacity(),
+            2 * std::mem::size_of::<usize>(),
+            crate::host::retained_size::HeapBytes::heap_bytes(&value.invalid_duration_message)
+                .ok_or(InstallError::Capacity)?,
+        ])
+        .ok_or(InstallError::Capacity)?;
+        let storage = workspace
+            .split_off(bytes)
+            .map_err(|_| InstallError::Capacity)?;
+        let storage = budget
+            .adopt_record(storage)
+            .map_err(|_| InstallError::Capacity)?;
         Ok(Self {
             value,
             canonical: Arc::from(input.canonical),
             sha256: input.sha256,
+            _storage: storage,
         })
     }
     pub(crate) fn idle_horizon_seconds(&self) -> f64 {

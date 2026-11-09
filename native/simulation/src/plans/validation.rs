@@ -4,6 +4,55 @@ use super::*;
 use crate::install::InstallError;
 use crate::values::is_safe_record_id;
 
+/// Discovery also describes current syntax with no selected physical executor.
+/// A prepared option is not an executable frontier or a permission to queue it.
+pub(crate) fn valid_choice_command(
+    command: &NativeCommand,
+    world: &crate::simulation::InstalledWorld,
+) -> bool {
+    match command {
+        NativeCommand::Follow {
+            target_id,
+            distance,
+            ..
+        } => {
+            let rules = &world.occurrence_rules.value().response.offers.follow;
+            is_safe_record_id(target_id)
+                && distance.is_none_or(|n| {
+                    n.is_finite()
+                        && n > 0.
+                        && n >= rules.minimum_distance
+                        && n <= rules.maximum_distance
+                })
+        }
+        NativeCommand::Strike {
+            target_id,
+            definition_id,
+            weapon_item_id,
+            ..
+        } => {
+            is_safe_record_id(target_id)
+                && is_safe_record_id(definition_id)
+                && weapon_item_id.as_deref().is_none_or(is_safe_record_id)
+        }
+        NativeCommand::InspectInventory { .. } => true,
+        NativeCommand::InspectActivities {
+            history_after,
+            method_after,
+            ..
+        } => {
+            *history_after >= -1
+                && *history_after <= crate::identity::MAX_SAFE_INTEGER as i64
+                && *method_after <= crate::identity::MAX_SAFE_INTEGER
+        }
+        _ => valid_command(
+            command,
+            world.speech_action.value(),
+            world.acoustics.value(),
+        ),
+    }
+}
+
 pub(crate) fn valid_command(
     command: &NativeCommand,
     speech: &crate::worlds::InstalledSpeechAction,

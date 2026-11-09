@@ -2,9 +2,46 @@
 //! immutable physical map is validated by the existing provider before install
 //! acceptance, and shared by all native geometry phases thereafter.
 
-use super::{InstallError, RowImport, rows};
-use crate::geometry::GeometryMap;
+use super::{InstallError, RowImport, reserve_typed_parse, rows};
+use crate::geometry::{
+    GeometryMap, OwnedGeometry, SceneryInstance, SpatialBlocker, SpatialLevel, TerrainDefinition,
+    WalkableSurface,
+};
+use crate::host::{ByteBudget, ByteReservation};
 use serde_json::{Map, Value};
+use std::{mem::size_of, sync::Arc};
+
+fn fund_body(
+    source: &str,
+    construction: &mut ByteReservation,
+    budget: &ByteBudget,
+) -> Result<(), InstallError> {
+    // The split rows first become JSON values, then move through the existing
+    // typed map decoder. Cover both carrier layouts during that conversion.
+    let carrier = [
+        size_of::<GeometryMap>(),
+        size_of::<TerrainDefinition>(),
+        size_of::<WalkableSurface>(),
+        size_of::<SpatialBlocker>(),
+        size_of::<SpatialLevel>(),
+        size_of::<SceneryInstance>(),
+        size_of::<Vec<String>>(),
+        size_of::<Value>(),
+    ]
+    .into_iter()
+    .max()
+    .expect("finite geometry carriers");
+    let buckets =
+        size_of::<(usize, String, Value)>().max(size_of::<(usize, String, TerrainDefinition)>());
+    construction
+        .merge(reserve_typed_parse::<GeometryMap>(
+            source,
+            carrier,
+            Some(buckets),
+            budget,
+        )?)
+        .map_err(|_| InstallError::Capacity)
+}
 
 fn object(value: Value) -> Result<Map<String, Value>, InstallError> {
     match value {
@@ -30,13 +67,40 @@ fn list(
     field: &str,
     present: bool,
     member_id: Option<&str>,
+    construction: &mut ByteReservation,
+    budget: &ByteBudget,
 ) -> Result<Vec<Value>, InstallError> {
     let rows = rows::take_collection(import, table, parent, present, true)?;
+    construction
+        .merge(
+            budget
+                .reserve(
+                    rows.rows
+                        .len()
+                        .checked_mul(size_of::<Value>())
+                        .ok_or(InstallError::Capacity)?,
+                )
+                .map_err(|_| InstallError::Capacity)?,
+        )
+        .map_err(|_| InstallError::Capacity)?;
     let mut values = Vec::with_capacity(rows.rows.len());
     for (at, row) in rows.rows.into_iter().enumerate() {
+        let _path = budget
+            .reserve(
+                row.id
+                    .len()
+                    .checked_add(parent.len())
+                    .and_then(|n| n.checked_add(field.len()))
+                    .and_then(|n| n.checked_add(row.slot.len()))
+                    .and_then(|n| n.checked_mul(8))
+                    .and_then(|n| n.checked_add(256))
+                    .ok_or(InstallError::Capacity)?,
+            )
+            .map_err(|_| InstallError::Capacity)?;
         if row.position != at as u64 || row.slot != at.to_string() || !row.extra.is_empty() {
             return Err(InstallError::RowPlacement);
         }
+        fund_body(&row.payload, construction, budget)?;
         let value: Value =
             serde_json::from_str(&row.payload).map_err(|_| InstallError::CurrentFormat)?;
         let key = match member_id {
@@ -66,13 +130,17 @@ fn list(
 pub(crate) fn install_geometry(
     import: &mut RowImport,
     present: bool,
-) -> Result<GeometryMap, InstallError> {
-    let (map_row, map) = rows::take_one::<Value>(import, "sim_map", "[\"world\"]", "map", present)?
+    budget: &ByteBudget,
+) -> Result<Arc<OwnedGeometry>, InstallError> {
+    let mut construction = budget.reserve(0).map_err(|_| InstallError::Capacity)?;
+    let map_row = rows::take_one_row(import, "sim_map", "[\"world\"]", "map", present)?
         .ok_or(InstallError::ParentPresence)?;
     if !map_row.extra.is_empty() {
         return Err(InstallError::CurrentFormat);
     }
-    let mut map = object(map)?;
+    fund_body(&map_row.payload, &mut construction, budget)?;
+    let mut map =
+        object(serde_json::from_str(&map_row.payload).map_err(|_| InstallError::CurrentFormat)?)?;
     array_marker(&mut map, "tiles", false)?;
     match map.remove("spatial") {
         Some(Value::Object(fields)) if fields.is_empty() => {}
@@ -87,15 +155,19 @@ pub(crate) fn install_geometry(
             "tiles",
             true,
             None,
+            &mut construction,
+            budget,
         )?),
     );
-    let (spatial_row, spatial) =
-        rows::take_one::<Value>(import, "sim_geometry", &map_row.id, "spatial", true)?
-            .ok_or(InstallError::ParentPresence)?;
+    let spatial_row = rows::take_one_row(import, "sim_geometry", &map_row.id, "spatial", true)?
+        .ok_or(InstallError::ParentPresence)?;
     if !spatial_row.extra.is_empty() {
         return Err(InstallError::CurrentFormat);
     }
-    let mut spatial = object(spatial)?;
+    fund_body(&spatial_row.payload, &mut construction, budget)?;
+    let mut spatial = object(
+        serde_json::from_str(&spatial_row.payload).map_err(|_| InstallError::CurrentFormat)?,
+    )?;
     for (field, table, optional) in [
         ("surfaces", "sim_surfaces", false),
         ("blockers", "sim_blockers", false),
@@ -103,11 +175,22 @@ pub(crate) fn install_geometry(
         ("scenery", "sim_scenery", true),
     ] {
         let present = array_marker(&mut spatial, field, optional)?;
-        let values = list(import, table, &spatial_row.id, field, present, Some("id"))?;
+        let values = list(
+            import,
+            table,
+            &spatial_row.id,
+            field,
+            present,
+            Some("id"),
+            &mut construction,
+            budget,
+        )?;
         if present {
             spatial.insert(field.to_owned(), Value::Array(values));
         }
     }
     map.insert("spatial".to_owned(), Value::Object(spatial));
-    serde_json::from_value(Value::Object(map)).map_err(|_| InstallError::CurrentFormat)
+    let value =
+        serde_json::from_value(Value::Object(map)).map_err(|_| InstallError::CurrentFormat)?;
+    OwnedGeometry::from_storage(value, construction, budget).map_err(|_| InstallError::Capacity)
 }

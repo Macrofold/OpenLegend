@@ -4,6 +4,7 @@ import {
   activeContributionId,
   type Entity,
   type WorldState,
+  decisionOfferDescription,
 } from '@open-legend/domain';
 import type { CommandInput } from '@open-legend/protocol';
 
@@ -29,7 +30,11 @@ export function statusEffectActions(
     return [
       {
         id: `${d.id}:${target.id}:${active ? 'deactivate' : 'activate'}`,
-        label: `${active ? d.actions.deactivate : d.actions.activate}${source.id === target.id ? '' : ` · ${target.name}`}`,
+        label: decisionOfferDescription({
+          kind: 'status',
+          label: active ? d.actions.deactivate : d.actions.activate,
+          ...(source.id === target.id ? {} : { targetName: target.name }),
+        }).description,
         icon: active ? d.actions.deactivateIcon : d.actions.activateIcon,
         command: {
           type: 'status-effect',

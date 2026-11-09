@@ -287,6 +287,8 @@ impl TemporalState {
                 .try_reserve_exact(appended.len())
                 .map_err(|_| capacity())?;
             let after_position = after.as_ref().map(|page| page.position());
+            let tail_before = actor.tail;
+            let tail_after = tail_before.edited(&page, after.as_deref(), actor)?;
             if after_position
                 .is_some_and(|next| next != position && actor.pages.contains_key(&next))
             {
@@ -301,6 +303,7 @@ impl TemporalState {
                 after_position,
                 removed,
                 appended: appended_undo,
+                tail_before,
             });
             let actor = self.actors.get_mut(actor_id).ok_or_else(invalid)?;
             let TemporalUndo::PageEdit {
@@ -325,6 +328,7 @@ impl TemporalState {
                 appended_undo.push(directory);
             }
             actor.pages.remove(&position).ok_or_else(invalid)?;
+            actor.tail = tail_after;
             if let Some(after) = after {
                 if actor.pages.insert(after.position(), after).is_some() {
                     return Err(invalid());

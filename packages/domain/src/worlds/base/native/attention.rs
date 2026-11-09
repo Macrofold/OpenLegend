@@ -469,3 +469,6 @@ impl crate::attention::AccountRecordingLaw for AccountLaw<'_> {
         AccountLaw::routine_result(self, physical, experience, actor_id, activity)
     }
 }
+
+#[path = "policy_residency/attention.rs"]
+mod policy_residency;

@@ -80,11 +80,18 @@ fn child(children: &mut WorldChildren, field: &str, required: bool) -> Result<bo
         _ => Err(InstallError::ParentPresence),
     }
 }
-fn selected<T: DefinitionIdentity + DeserializeOwned + PartialEq>(
+fn selected<T: DefinitionIdentity + DeserializeOwned + PartialEq + DefinitionAllocation>(
     input: DefinitionInput,
+    budget: &ByteBudget,
 ) -> Result<VerifiedDefinition<T>, InstallError> {
+    let mut construction = reserve_typed_parse::<T>(
+        &input.canonical,
+        T::array_item_bytes(),
+        T::map_entry_bytes(),
+        budget,
+    )?;
     let value = serde_json::from_str(&input.canonical).map_err(|_| InstallError::DefinitionBody)?;
-    input.verify(value)
+    input.verify(value, &mut construction, budget)
 }
 
 pub(crate) fn assemble_core(
@@ -203,17 +210,17 @@ fn assemble_selected_core(
             work_policy,
         },
         work,
+        budget,
     )?;
     let map_present = child(&mut root.children, "map", true)?;
-    let geometry =
-        crate::geometry::OwnedGeometry::new(install_geometry(&mut import, map_present)?, budget)
-            .map_err(|_| InstallError::Capacity)?;
+    let geometry = install_geometry(&mut import, map_present, budget)?;
     let social = install_social(
         &mut import,
         root.children.take("socialPolicy")?,
         &social_defaults,
     )?;
-    let prepared = selected::<crate::experience::PreparedResponseProfile>(prepared_responses)?;
+    let prepared =
+        selected::<crate::experience::PreparedResponseProfile>(prepared_responses, budget)?;
     let cognition = install_cognition(
         &mut import,
         child(&mut root.children, "cognitionPolicy", true)?,
@@ -221,23 +228,25 @@ fn assemble_selected_core(
         &meanings.status_policy,
         budget,
     )?;
-    let attention = selected::<crate::attention::AttentionPolicy>(attention)?;
-    let account_rules = selected::<crate::worlds::InstalledAccountRules>(account_rules)?;
-    let name_rules = selected::<crate::worlds::InstalledPersonalNameRules>(name_rules)?;
-    let recognition = selected::<crate::worlds::InstalledRecognitionPolicy>(recognition)?;
-    let occurrence_rules = selected::<crate::worlds::InstalledOccurrenceRules>(occurrence_rules)?;
-    let speech_action = selected::<crate::worlds::InstalledSpeechAction>(speech_action)?;
+    let attention = selected::<crate::attention::AttentionPolicy>(attention, budget)?;
+    let account_rules = selected::<crate::worlds::InstalledAccountRules>(account_rules, budget)?;
+    let name_rules = selected::<crate::worlds::InstalledPersonalNameRules>(name_rules, budget)?;
+    let recognition = selected::<crate::worlds::InstalledRecognitionPolicy>(recognition, budget)?;
+    let occurrence_rules =
+        selected::<crate::worlds::InstalledOccurrenceRules>(occurrence_rules, budget)?;
+    let speech_action = selected::<crate::worlds::InstalledSpeechAction>(speech_action, budget)?;
     let ordinary_actions =
-        selected::<crate::worlds::InstalledOrdinaryActionRules>(ordinary_actions)?;
-    let promises = selected::<crate::worlds::InstalledPromiseRules>(promises)?;
+        selected::<crate::worlds::InstalledOrdinaryActionRules>(ordinary_actions, budget)?;
+    let promises = selected::<crate::worlds::InstalledPromiseRules>(promises, budget)?;
     let observation_rules =
-        selected::<crate::worlds::InstalledObservationRules>(observation_rules)?;
+        selected::<crate::worlds::InstalledObservationRules>(observation_rules, budget)?;
     let event_appraisal_rules =
-        selected::<crate::worlds::InstalledEventAppraisalRules>(event_appraisal_rules)?;
-    let event_disclosure = selected::<crate::worlds::InstalledEventDisclosure>(event_disclosure)?;
+        selected::<crate::worlds::InstalledEventAppraisalRules>(event_appraisal_rules, budget)?;
+    let event_disclosure =
+        selected::<crate::worlds::InstalledEventDisclosure>(event_disclosure, budget)?;
     let detection_support =
-        selected::<crate::reception::DetectionSupportPolicy>(detection_support)?;
-    let movement_law = crate::worlds::InstalledMovementPolicy::install(movement_policy)?;
+        selected::<crate::reception::DetectionSupportPolicy>(detection_support, budget)?;
+    let movement_law = crate::worlds::InstalledMovementPolicy::install(movement_policy, budget)?;
     let maximum_candidates = usize::try_from(native_response.maximum_candidates)
         .map_err(|_| InstallError::CurrentFormat)?;
     let maximum_path_points =
@@ -271,7 +280,6 @@ fn assemble_selected_core(
     physical.entities.fund_installed_actions(budget)?;
     physical.entities.fund_installed_goals(budget)?;
     physical.entities.fund_installed_intents(budget)?;
-    physical.entities.fund_entity_metadata(budget)?;
     content.fund(budget)?;
     let retained = install_retained(&mut import, &mut children, retained, &schema, budget)?;
     crate::worlds::base_decision_offers::validate_strike_reads(
@@ -281,7 +289,17 @@ fn assemble_selected_core(
         budget,
     )?;
     super::physical::validate_physical_item_references(&physical, &retained)?;
+    use crate::host::retained_size::HeapBytes;
+    let mut definition_storage = meanings.storage;
+    definition_storage
+        .merge(
+            budget
+                .reserve_record(actor_response.heap_bytes().ok_or(InstallError::Capacity)?)
+                .map_err(|_| InstallError::Capacity)?,
+        )
+        .map_err(|_| InstallError::Capacity)?;
     let installed = Arc::new(InstalledWorld {
+        _definition_storage: definition_storage,
         encounter_batch_entries,
         manifest: meanings.manifest,
         retained,
@@ -294,7 +312,6 @@ fn assemble_selected_core(
         response_profiles: meanings.response_profiles,
         status_policy: meanings.status_policy,
         capabilities: meanings.capabilities,
-        status_policy_canonical: meanings.status_policy_canonical,
         status_work: meanings.status_work,
         population_work: meanings.population_work,
         status_rosters: crate::status::StatusRosters::new(),
@@ -318,7 +335,7 @@ fn assemble_selected_core(
         maximum_change_scopes: usize::try_from(maximum_change_scopes)
             .map_err(|_| InstallError::CurrentFormat)?,
         movement: movement_law,
-        time_rules: crate::worlds::InstalledTimeRules::install(time_rules)?,
+        time_rules: crate::worlds::InstalledTimeRules::install(time_rules, budget)?,
         body_policy: meanings.body_policy,
         spatial,
         movement_settings: movement,

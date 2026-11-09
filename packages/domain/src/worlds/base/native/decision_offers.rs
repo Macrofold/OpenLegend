@@ -11,11 +11,31 @@ pub struct DecisionOfferRules {
     pub strike_command: String,
     pub interaction_radius: f64,
     pub follow: FollowOfferRules,
+    #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
+    pub follow_suggestions: u64,
     pub manual_work_body_plans: Vec<String>,
     pub natural_strike_body_plans: Vec<String>,
     pub hunting_purpose: String,
+    pub hunting: HuntingOfferRules,
     pub availability: DiscoveryMessages,
     pub probes: Vec<ProbeOffer>,
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct HuntingOfferRules {
+    pub label: String,
+    pub purpose: String,
+    pub scope: String,
+    pub known_prey: Vec<String>,
+    pub methods: HuntingMethods,
+    pub unarmed_tool: String,
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct HuntingMethods {
+    pub melee: bool,
+    pub ranged_weapon: bool,
+    pub unarmed: bool,
 }
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -23,6 +43,7 @@ pub struct DiscoveryMessages {
     pub invalid_follow: super::base_ordinary_actions::ActionMessage,
     pub unknown_strike: super::base_ordinary_actions::ActionMessage,
     pub unsupported_strike: super::base_ordinary_actions::ActionMessage,
+    pub manual_work: super::base_ordinary_actions::ActionMessage,
     pub combat_recovery: super::base_ordinary_actions::ActionMessage,
     pub strike_range: super::base_ordinary_actions::ActionMessage,
     pub unperceived: super::base_ordinary_actions::ActionMessage,
@@ -220,3 +241,6 @@ pub(crate) fn validate_strike_reads(
     }
     Ok(())
 }
+
+#[path = "policy_residency/decision_offers.rs"]
+mod policy_residency;

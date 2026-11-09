@@ -351,6 +351,9 @@ export async function captureWorkingSources(records: WorldRecords, databaseSchem
         removedHotEvents,
         hotEventWindow: HOT_EVENT_RECENT_ROWS,
         receivedValueClosure: true,
+        // readTemporalTail includes the physical last block even after its
+        // receipts expire. Eligibility-only directories cannot prove this cut.
+        temporalTailActors: rows('mind_perception_value_state').length ? temporalActors : [],
         activeAppraisals: actorOwners('mind_appraisals_owners'),
         openAgreementHeads: actorOwners('mind_awareness_owners'),
         sensoryAwareness: actorOwners('mind_awareness_owners'),

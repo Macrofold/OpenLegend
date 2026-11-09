@@ -1,5 +1,10 @@
 import { entityGet, entityHas } from './entity-collection.js';
-import { surfaceContains, surfaceHeight, relativeSurfacePoint, type SurfacePoint } from '@open-legend/spatial';
+import {
+  surfaceContains,
+  surfaceHeight,
+  relativeSurfacePoint,
+  type SurfacePoint,
+} from '@open-legend/spatial';
 import { FOLLOW_RULES } from './follow.js';
 export { FOLLOW_RULES } from './follow.js';
 import { rememberedPlace, suspensionProblem } from './agency.js';
@@ -19,6 +24,8 @@ import { activityRequestDescriptors, bindActivityRequest } from './activity-host
 import type { Action, Command, Entity, Outcome, WorldState } from './types.js';
 
 export type WorkTransitionMode = 'continue' | 'enqueue' | 'replace' | 'interrupt';
+export const WORK_TRANSITION_AVAILABLE_MESSAGE =
+  'This handling of current work is supported; committed effects remain.';
 /** One read-only proposal, not permission or another work queue. Recompute its
  * prerequisites at admission. docs/action-capabilities.md#prepared-choices-and-prospective-work-transitions */
 export interface ProspectiveWork {
@@ -146,11 +153,7 @@ export function prospectiveWork(
     },
     outcome:
       (mode === 'interrupt' ? suspensionProblem(world, actorId) : null) ??
-      outcome(
-        true,
-        'available',
-        'This handling of current work is supported; committed effects remain.',
-      ),
+      outcome(true, 'available', WORK_TRANSITION_AVAILABLE_MESSAGE),
   };
 }
 
@@ -669,7 +672,8 @@ export function bindActionInvocation(
   if (raw.frame === 'actor') {
     // The actor's own facing is the frame, never a camera; only its current ground qualifies.
     const from = supportedPosition(actor);
-    const destination = from && relativeSurfacePoint(spatialMap(world), from, actor.spatial.heading, raw.x!, raw.z!);
+    const destination =
+      from && relativeSurfacePoint(spatialMap(world), from, actor.spatial.heading, raw.x!, raw.z!);
     return destination
       ? { id, actorId, type: 'move', destination }
       : outcome(

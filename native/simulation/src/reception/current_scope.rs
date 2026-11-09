@@ -440,7 +440,7 @@ impl<'a> CurrentBodyReadScope<'a> {
         };
         self.capture_input(input, kind, budget).map(Some)
     }
-    fn capture_input(
+    pub(crate) fn capture_input(
         &self,
         input: CurrentNativeFacet<'a>,
         kind: &str,

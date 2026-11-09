@@ -59,6 +59,7 @@ impl PreparedPublication {
         key: CandidateKey,
         host: &InstalledHostSettings,
         write_host: bool,
+        protected: Option<crate::received::TemporalSaveLimits>,
         budget: &ByteBudget,
     ) -> Result<Self, PublicationError> {
         let reservation = budget
@@ -68,20 +69,38 @@ impl PreparedPublication {
         let release = journal.prepare_release(state, key)?;
         let allocation = state.work_allocation().map_err(ExecutionError::from)?;
         let rows = encode_candidate_changes(state, journal, host, write_host, budget)?;
-        let ledger = state
-            .records
-            .prepare_accepted(key, rows.changes(), rows.owners())?;
         let (changes, owners, rows_guard) = rows.into_parts();
         // The encoded rows keep their original custody until the accumulating
         // save has funded and taken the actual bodies. This is the last
         // fallible preparation, so refusal leaves no pending save admission.
-        let append = save.prepare_append(
-            key,
-            state.physical.identity.next_id(),
-            changes,
-            &state.installed.schema,
-            budget,
-        )?;
+        let (append, ledger) = if let Some(limits) = protected {
+            save.prepare_protected_append(
+                key,
+                crate::records::save::TemporalSaveCut {
+                    world_id: &state.physical.header.id,
+                    generation: &state.generation,
+                    through_cut: key.base_cut + 1,
+                    identity_through: state.physical.identity.next_id(),
+                    temporal: &state.temporal,
+                },
+                changes,
+                &owners,
+                limits,
+                &state.installed.schema,
+                &mut state.records,
+                budget,
+            )?
+        } else {
+            let ledger = state.records.prepare_accepted(key, &changes, &owners)?;
+            let append = save.prepare_append(
+                key,
+                state.physical.identity.next_id(),
+                changes,
+                &state.installed.schema,
+                budget,
+            )?;
+            (append, ledger)
+        };
         drop(owners);
         drop(rows_guard);
         Ok(Self {
@@ -104,6 +123,12 @@ impl PreparedPublication {
         save: &'a SaveJournal,
     ) -> Result<&'a crate::records::ChangedRows, PublicationError> {
         save.prepared_changes(&self.append).map_err(Into::into)
+    }
+    pub(crate) fn read_protected_prefix<'a>(
+        &self,
+        save: &'a SaveJournal,
+    ) -> Result<Option<&'a crate::records::SaveRows>, PublicationError> {
+        save.prepared_prefix(&self.append).map_err(Into::into)
     }
     /// Check exact owners immediately before the separate host fence flips.
     /// There is no serialization, world traversal or capacity admission here.

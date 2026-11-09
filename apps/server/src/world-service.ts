@@ -7,8 +7,10 @@ import {
   type TemporalHistorySelection,
   type ActionResultValue,
   activityCommandSyntax,
+  COMMAND_CHOICE_PREPARATION_ID,
 } from '@open-legend/domain';
 import { captureTemporalHistoryReadContext, temporalHistoryWindow } from './temporal-storage.js';
+import { ordinaryPlayerCommand } from './ordinary-player-command.js';
 import { historicalAccountText } from './entity-references.js';
 import {
   nextRecentRetentionAt,
@@ -264,7 +266,6 @@ import {
 } from '@open-legend/domain';
 import {
   AuthorityError,
-  commandRecoveryFields,
   scopeKey,
   type RequestScope,
   type Capability,
@@ -332,7 +333,12 @@ import {
   profilingEnabled,
 } from './performance.js';
 import { retainHotEvents } from './hot-events.js';
-import { COMMAND_RETRY_MS, type CommandEpoch, type GameplayReceipt } from './command-receipts.js';
+import {
+  COMMAND_RETRY_MS,
+  commandRecoveryFingerprint,
+  type CommandEpoch,
+  type GameplayReceipt,
+} from './command-receipts.js';
 import { createPersonMemoryPager, formatMemoryEntry } from './person-memory-page.js';
 import {
   controlledEntityId,
@@ -405,13 +411,6 @@ import type { CreationActivationReceipt } from './creation-target-contracts.js';
 import { initialWorldArtwork, prepareWorldForStartup } from './initial-world-preparation.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
 import { primaryActionRefusal } from './action-catalogue.js';
-
-function commandRecoveryFingerprint(input: CommandInput, scope: RequestScope): string {
-  // A reconnect may read its committed result after taking control again. It cannot execute
-  // through this fingerprint, nor cross a login, grant, character or restored timeline.
-  // docs/projects/game-interaction-redesign-tech-design.md#direct-transfer-without-weaker-authority
-  return digest({ input, scope: commandRecoveryFields(scope) });
-}
 
 function updateMilestones(
   saved: SavedWorld,
@@ -7266,7 +7265,7 @@ export class WorldService {
     actorId: string,
     transition: WorkTransitionMode,
   ): PreparedNativeChoice | Outcome | ApiResult {
-    const bound = this.bindCommand('prepared-choice', input, actorId, false);
+    const bound = this.bindCommand(COMMAND_CHOICE_PREPARATION_ID, input, actorId, false);
     if ('ok' in bound) return bound;
     if (
       !isActivityCommand(bound, activityCommandSyntax(this.world)) &&
@@ -7583,27 +7582,11 @@ export class WorldService {
         };
         break;
       case 'say':
-        if (!input.text?.trim())
-          return { ok: false, code: 'speech', message: 'Enter something to say.' };
-        command = {
-          ...envelope,
-          type: 'say',
-          text: input.text,
-          ...(input.volume ? { volume: input.volume } : {}),
-          ...(input.targetId
-            ? { targetId: input.targetId, targetRole: input.targetRole ?? 'body' }
-            : {}),
-        };
-        break;
       case 'evade':
       case 'move':
-        if (!input.position)
-          return { ok: false, code: 'position', message: 'Choose a destination.' };
-        command = { ...envelope, type: input.type, destination: input.position };
-        break;
       case 'cancel':
-        command = { ...envelope, type: 'cancel', expectedActionId: input.expectedActionId };
-        break;
+      case 'status-effect':
+        return ordinaryPlayerCommand(input, envelope)!;
       case 'encounter-preference': {
         const binding =
           input.targetId && encounterPreferenceBinding(this.world, actorId, input.targetId);
@@ -7640,21 +7623,6 @@ export class WorldService {
           type: 'resume-work',
           planId: input.planId,
           expectedRevision: input.expectedRevision,
-        };
-        break;
-      case 'status-effect':
-        if (!input.targetId || !input.definitionId || !input.effectOperation)
-          return {
-            ok: false,
-            code: 'binding',
-            message: 'Choose a status effect, operation and target.',
-          };
-        command = {
-          ...envelope,
-          type: 'status-effect',
-          targetId: input.targetId,
-          definitionId: input.definitionId,
-          operation: input.effectOperation,
         };
         break;
       case 'pickup':

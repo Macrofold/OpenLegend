@@ -17,13 +17,15 @@ static NEXT_GENERATION: AtomicU64 = AtomicU64::new(1);
 mod handoff;
 mod input;
 mod npc;
+mod npc_labels;
 mod player;
 mod privacy;
 mod read_cut;
+mod retained_values;
 pub use handoff::RuntimeOutputHandoff;
 mod consumer;
 pub use consumer::RuntimeConsumer;
-pub use npc::RuntimeNpcRead;
+pub use npc::{RuntimeNpcCandidateStep, RuntimeNpcRead};
 pub use player::{RuntimePlayerPublication, RuntimePlayerRead};
 
 #[derive(Debug)]
@@ -74,6 +76,23 @@ fn decode_preparation(bytes: &[u8], budget: &ByteBudget) -> Result<ByteReservati
         })
         .ok_or_else(|| failure("capacity"))?;
     budget.reserve(bound).map_err(failure)
+}
+fn provider_response(
+    answer: Option<(&RuntimeProvider, String)>,
+    budget: &ByteBudget,
+) -> Result<Option<ProviderResponse>, RuntimeError> {
+    answer
+        .map(|(ticket, json)| {
+            let custody = budget.reserve(json.capacity()).map_err(failure)?;
+            ProviderResponse::new(
+                ticket.question.kind(),
+                ticket.question.binding(),
+                json,
+                custody,
+            )
+            .map_err(failure)
+        })
+        .transpose()
 }
 
 /// A detached immutable JSON encoding, never a writable canonical record.
@@ -282,8 +301,14 @@ impl NativeWorldSession {
             })
             .map_err(failure)?;
         Ok(Self {
-            session: Session::new(installed, generation, budget.clone(), pending_save_budget)
-                .map_err(failure)?,
+            session: Session::new(
+                installed,
+                generation,
+                budget.clone(),
+                pending_save_budget,
+                temporal_save_limits,
+            )
+            .map_err(failure)?,
             budget,
             prepared_output: None,
             history_policy_id,
@@ -401,18 +426,10 @@ impl NativeWorldSession {
         key: CandidateKey,
         answer: Option<(&RuntimeProvider, String)>,
     ) -> Result<RuntimeStep, RuntimeError> {
-        let answer = answer
-            .map(|(ticket, json)| {
-                let custody = self.budget.reserve(json.capacity()).map_err(failure)?;
-                ProviderResponse::new(
-                    ticket.question.kind(),
-                    ticket.question.binding(),
-                    json,
-                    custody,
-                )
-                .map_err(failure)
-            })
-            .transpose()?;
+        if self.session.is_npc_candidates(key) {
+            return Err(failure("NPC discovery requires its originating read"));
+        }
+        let answer = provider_response(answer, &self.budget)?;
         // This is the installed story policy, not a bridge-selected world law.
         let step = self
             .session
@@ -431,9 +448,19 @@ impl NativeWorldSession {
             SessionStep::Preview(preview) => {
                 RuntimeStep::Preview(RuntimeJson::encode(preview.outcome(), &self.budget)?)
             }
+            SessionStep::NpcCandidates(_) => {
+                return Err(failure("NPC discovery requires its originating read"));
+            }
             SessionStep::Prepared(prepared) => {
-                let (operation, history, notices, records, progress) =
-                    self.session.prepared_products(key).map_err(failure)?;
+                let (
+                    operation,
+                    history,
+                    notices,
+                    records,
+                    personal_predecessors,
+                    protected_save,
+                    progress,
+                ) = self.session.prepared_products(key).map_err(failure)?;
                 let output = (|| {
                     let handoff = RuntimeOutputHandoff::new(&self.budget)?;
                     let mut output = RuntimeJson::encode(
@@ -442,6 +469,8 @@ impl NativeWorldSession {
                             history,
                             notices,
                             records,
+                            personal_predecessors,
+                            protected_save,
                             progress,
                         },
                         &self.budget,
@@ -501,7 +530,7 @@ impl NativeWorldSession {
     }
     pub fn capture_save(&mut self) -> Result<RuntimeSave, RuntimeError> {
         self.session
-            .capture_save(self.temporal_save_limits)
+            .capture_save()
             .map(|prefix| RuntimeSave { prefix })
             .map_err(failure)
     }
@@ -570,6 +599,8 @@ struct Products<'a> {
     history: &'a crate::experience::CapturedHistoryInput,
     notices: &'a crate::cognition::PreparedSemanticNotices,
     records: &'a crate::records::ChangedRows,
+    personal_predecessors: &'a crate::experience::PersonalPredecessors,
+    protected_save: Option<&'a crate::records::SaveRows>,
     progress: crate::simulation::session::PreparedReadProgress<'a>,
 }
 impl Serialize for Products<'_> {
@@ -580,6 +611,10 @@ impl Serialize for Products<'_> {
         map.serialize_entry("history", &self.history.value())?;
         map.serialize_entry("notices", self.notices)?;
         map.serialize_entry("records", self.records)?;
+        map.serialize_entry("personalPredecessors", &self.personal_predecessors.value())?;
+        if let Some(prefix) = self.protected_save {
+            map.serialize_entry("protectedSave", prefix)?;
+        }
         map.serialize_entry("progress", &self.progress)?;
         privacy::serialize(self.operation, &mut map)?;
         map.end()

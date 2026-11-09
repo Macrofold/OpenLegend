@@ -297,3 +297,6 @@ impl PromiseRules {
         Some(SpokenPromise { completion })
     }
 }
+
+#[path = "policy_residency/promises.rs"]
+mod policy_residency;

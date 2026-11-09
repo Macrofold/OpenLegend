@@ -323,3 +323,6 @@ impl DetectionSupportState {
         Ok(())
     }
 }
+
+#[path = "support/policy_residency.rs"]
+mod policy_residency;

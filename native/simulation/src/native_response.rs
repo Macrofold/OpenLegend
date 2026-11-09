@@ -821,6 +821,9 @@ pub fn region_danger_key(source: &RegionSource) -> Result<String, serde_json::Er
 pub fn profile_key(profile: &DefinitionPin) -> Result<String, serde_json::Error> {
     crate::encoding::json_record(&(&profile.id, profile.version, &profile.digest))
 }
+pub(crate) fn profile_key_len(profile: &DefinitionPin) -> Result<usize, serde_json::Error> {
+    crate::encoding::json_record_len(&(&profile.id, profile.version, &profile.digest))
+}
 
 pub fn acoustic_pattern_key(
     cue: &NativeAcousticCue,
@@ -941,3 +944,6 @@ impl NativeResponseProfile {
         }
     }
 }
+
+#[path = "native_response/policy_residency.rs"]
+mod policy_residency;

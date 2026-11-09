@@ -2,13 +2,16 @@
 //! Only known owned children are stitched; typed current-format decoders admit
 //! the resulting entity/window/work records. No JSON world survives install.
 use super::{PhysicalDefinitions, validate_body_references, validate_entity};
+use crate::host::{ByteBudget, ByteReservation};
 use crate::install::rows;
 use crate::install::{InstallError, RowImport};
 use crate::state::{Entity, EntityStore, WorkState};
 use crate::values::NativeValueWindow;
+use crate::values::{AttributeState, StatusInstance};
 use indexmap::IndexMap;
-use serde::{Serialize, de::DeserializeOwned};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use serde_json::{Map, Value, value::RawValue};
+use std::mem::size_of;
 type RawRecord = IndexMap<String, Box<RawValue>>;
 fn encode<T: Serialize + ?Sized>(value: &T) -> Result<Box<RawValue>, InstallError> {
     RawValue::from_string(serde_json::to_string(value).map_err(|_| InstallError::CurrentFormat)?)
@@ -372,11 +375,68 @@ fn entity(import: &mut RowImport, value: &mut RawRecord, id: &str) -> Result<(),
         plain,
     )
 }
+// Only these typed leaf allocations belong to this owner. Other entity raw
+// assembly/typed fields retain their separate admission obligations.
+type ValueDecode = [Option<ByteReservation>; 3];
+fn value_decode(value: &RawRecord, budget: &ByteBudget) -> Result<ValueDecode, InstallError> {
+    fn attributes(
+        raw: Option<&RawValue>,
+        budget: &ByteBudget,
+    ) -> Result<Option<ByteReservation>, InstallError> {
+        raw.filter(|raw| raw.get().trim() != "null")
+            .map(|raw| {
+                crate::install::reserve_typed_parse::<IndexMap<String, AttributeState>>(
+                    raw.get(),
+                    size_of::<AttributeState>(),
+                    Some(size_of::<(usize, String, AttributeState)>()),
+                    budget,
+                )
+            })
+            .transpose()
+    }
+    #[derive(Deserialize)]
+    struct ActorAttributes<'a> {
+        #[serde(borrow)]
+        attributes: Option<&'a RawValue>,
+    }
+    // Borrow this one child. Unknown actor fields are skipped by the JSON
+    // deserializer rather than materialized into another actor/value graph.
+    let actor = value
+        .get("actor")
+        .filter(|raw| raw.get().trim() != "null")
+        .map(|raw| {
+            serde_json::from_str::<ActorAttributes<'_>>(raw.get())
+                .map_err(|_| InstallError::CurrentFormat)
+        })
+        .transpose()?;
+    let statuses = value
+        .get("statusEffects")
+        .filter(|raw| raw.get().trim() != "null")
+        .map(|raw| {
+            crate::install::reserve_typed_parse::<IndexMap<String, StatusInstance>>(
+                raw.get(),
+                size_of::<StatusInstance>().max(size_of::<Value>()),
+                Some(size_of::<(usize, String, StatusInstance)>().max(size_of::<(
+                    usize,
+                    String,
+                    Value,
+                )>())),
+                budget,
+            )
+        })
+        .transpose()?;
+    Ok([
+        attributes(value.get("attributes").map(|raw| &**raw), budget)?,
+        attributes(actor.as_ref().and_then(|actor| actor.attributes), budget)?,
+        statuses,
+    ])
+}
 pub(super) fn install_entities(
     import: &mut RowImport,
     present: bool,
     installed: &PhysicalDefinitions<'_>,
     now: f64,
+    budget: &ByteBudget,
 ) -> Result<EntityStore, InstallError> {
     if !present {
         return Err(InstallError::ParentPresence);
@@ -388,6 +448,16 @@ pub(super) fn install_entities(
         .into_iter()
         .map(|e| (e.id, e.key))
         .collect();
+    let _value_storage = budget
+        .reserve(
+            input
+                .rows
+                .len()
+                .checked_mul(size_of::<ValueDecode>())
+                .ok_or(InstallError::Capacity)?,
+        )
+        .map_err(|_| InstallError::Capacity)?;
+    let mut value_storage = Vec::with_capacity(input.rows.len());
     let mut entries = Vec::with_capacity(input.rows.len());
     for row in input.rows {
         let mut value: RawRecord =
@@ -402,6 +472,7 @@ pub(super) fn install_entities(
             input.coverage.next_ordinal,
         )?;
         entity(import, &mut value, &row.id)?;
+        value_storage.push(value_decode(&value, budget)?);
         let entity: Entity = decode(&value)?;
         let expected_id = crate::records::SqlCell::from(id.clone());
         let expected_kind = crate::records::SqlCell::from(entity.kind.clone());
@@ -433,9 +504,13 @@ pub(super) fn install_entities(
     if !orders.is_empty() {
         return Err(InstallError::Identity);
     }
-    let entities = EntityStore::install(entries, ordering.next_insertion)
+    let mut entities = EntityStore::install(entries, ordering.next_insertion)
         .map_err(|_| InstallError::Identity)?;
     validate_body_references(&entities, installed, now)?;
+    entities
+        .fund_entity_metadata(budget)
+        .map_err(|_| InstallError::Capacity)?;
+    drop(value_storage);
     Ok(entities)
 }
 pub(super) fn take_window(

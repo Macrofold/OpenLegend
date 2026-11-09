@@ -16,7 +16,8 @@ fixed!(
     CurrentReceivedPart,
     AccountClass,
     AccountCharge,
-    ReceivedFrontier
+    ReceivedFrontier,
+    TemporalRetentionPolicy
 );
 heap_record!(TemporalStateHeader { namespace });
 heap_record!(TemporalAccounts { archives });

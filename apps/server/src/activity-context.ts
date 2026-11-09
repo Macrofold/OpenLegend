@@ -8,7 +8,6 @@ import {
   activityCommandSyntax,
   nativeActivityView,
   renderActivity,
-  ACTIVITY_SYNTAX,
   itemFor,
   accessiblePossession,
   canAccessContainer,
@@ -32,6 +31,7 @@ import { consumptionDescription } from './body-services.js';
 import { gameTime } from './recall.js';
 import type { CandidateAction } from './context.js';
 import type { WorldService } from './world-service.js';
+import { formatRemainingActivity } from './decision-work-context.js';
 
 /** Read-only rendering of a supplied structure. Future outputs are described as
  * future requirements, never installed into the world or treated as possessions. */
@@ -562,7 +562,7 @@ export function remainingActivityText(
   actorId: string,
   plan = entityGet(world.entities, actorId)?.actor?.agency.plan,
 ): string {
-  if (!plan) return 'No remaining chosen work.';
+  if (!plan) return formatRemainingActivity(null);
   // Personal outcomes are selected as required memories. This projection owns only
   // executable status and remaining work. docs/projects/compelling-characters-tech-design.md
   const execution = plan.activity;
@@ -594,8 +594,7 @@ export function remainingActivityText(
     });
   }
   const terminal = plan.status === 'completed' || plan.status === 'cancelled';
-  if (terminal)
-    return `Chosen work is ${plan.status}. No remaining steps in this plan. Actual outcomes are in my selected memories; finishing steps does not establish goal fulfillment.`;
+  if (terminal) return formatRemainingActivity({ status: plan.status, paused: false });
   const children = plan.steps
     .filter((step) => step.status === 'queued' || step.status === 'running')
     .map((step) =>
@@ -624,11 +623,9 @@ export function remainingActivityText(
           ),
         ),
     );
-  const disposition =
-    plan.status === 'blocked'
-      ? 'Choosing a new action replaces this stopped plan.'
-      : plan === entityGet(world.entities, actorId)?.actor?.agency.suspended
-        ? 'This work is paused; its remaining steps are not currently running.'
-        : 'Choosing a different action interrupts this activity.';
-  return `${ACTIVITY_SYNTAX}\n${renderActivity({ name: method?.name ?? 'Chosen work', facts, children }, 'Remaining')} ${disposition} Completed effects and spent materials remain.`;
+  return formatRemainingActivity({
+    status: plan.status,
+    paused: plan === entityGet(world.entities, actorId)?.actor?.agency.suspended,
+    view: { ...(method ? { name: method.name } : {}), facts, children },
+  });
 }

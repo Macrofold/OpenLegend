@@ -913,6 +913,24 @@ export interface SituationRead {
   ) => ReturnType<typeof captureAttentionPresentation>;
 }
 
+/** Exact finite inputs whose personally known labels the situation will render.
+ * Current fields enter this list only through the selected subject catalogue;
+ * merely retaining a native cut does not request labels for all its contents. */
+export function situationPresentationValues(
+  read: Pick<SituationRead, 'phaseCut' | 'current' | 'bodyBindings' | 'candidates'>,
+  retainedHistory: TemporalHistorySelection,
+  representedObservations: readonly ObservationContribution[],
+): readonly unknown[] {
+  return [
+    { ...read.phaseCut, current: [] },
+    retainedHistory,
+    representedObservations,
+    read.current.subjects,
+    [...read.bodyBindings.values()].map((value) => value.subject),
+    Object.values(read.candidates).map((value) => value.subject),
+  ];
+}
+
 /** Build the actual received-situation packet from already acquired facts.
  * The native caller retains its source guards and issues the resulting aliases
  * through its opaque ticket; formatting does not grant physical permissions. */
@@ -1043,14 +1061,9 @@ export function captureSituationFromRead(
       return reference ? [[reference, entry] as const] : [];
     }),
   );
-  const presentation = read.presentation([
-    cut,
-    retainedHistory,
-    representedObservations,
-    current.subjects,
-    [...bodyBindings.values()].map((value) => value.subject),
-    Object.values(candidates).map((value) => value.subject),
-  ]);
+  const presentation = read.presentation(
+    situationPresentationValues(read, retainedHistory, representedObservations),
+  );
   const staticRows: unknown[] = [];
   const suppliedFacts = new Map<string, SuppliedModelFact>();
   // Exact required observations are already rendered by their owning context;

@@ -102,7 +102,11 @@ import type { ActivityNode, ActivityPredicate } from './action-experience.js';
 import { reconcileOutings } from './outings.js';
 import { resolveSemanticCause } from './semantic-opportunities.js';
 import { RESPONSE_LIMITS, RESPONSE_RECEIPT_LIMIT } from './response-settings.js';
-export { RESPONSE_LIMITS, RESPONSE_RECEIPT_LIMIT } from './response-settings.js';
+export {
+  RESPONSE_LIMITS,
+  RESPONSE_RECEIPT_LIMIT,
+  COMMAND_CHOICE_PREPARATION_ID,
+} from './response-settings.js';
 
 export interface SituationProposalBinding {
   /** Trusted server-captured native conditions, never supplied by model output. */

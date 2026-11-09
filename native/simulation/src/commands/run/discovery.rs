@@ -33,6 +33,14 @@ impl CommandCursor {
     ) -> Result<bool, ExecutionError> {
         let installed = core.state.installed.clone();
         let rules = &installed.occurrence_rules.value().response.offers;
+        if !crate::plans::valid_choice_command(&self.command, &installed) {
+            self.discovery_result(
+                false,
+                "invalid-plan",
+                "Only supported native physical work can be queued.",
+            )?;
+            return Ok(false);
+        }
         let actor_id = &self.command.envelope().actor_id;
         let entity = core
             .state
@@ -56,8 +64,12 @@ impl CommandCursor {
                 )?;
                 return Ok(false);
             }
-            NativeCommand::InspectActivities { history_after, .. } => {
-                if *history_after != -1 {
+            NativeCommand::InspectActivities {
+                history_after,
+                method_after,
+                ..
+            } => {
+                if *history_after != -1 || *method_after != 0 {
                     return Err(ExecutionError::UnsupportedFamily);
                 }
                 self.discovery_result(
@@ -102,11 +114,26 @@ impl CommandCursor {
                 if weapon_item_id.is_some() {
                     return Err(ExecutionError::UnsupportedFamily);
                 }
-                let Some(strike) = installed.retained.native_strike_read.get(definition_id) else {
+                let body = actor.body.as_ref().map(|body| body.plan.as_str());
+                let selected = installed.retained.native_strike_read.get(definition_id);
+                let manual = rules
+                    .manual_work_body_plans
+                    .iter()
+                    .any(|plan| Some(plan.as_str()) == body);
+                if !manual
+                    && !(actor
+                        .natural_strike_ids
+                        .as_ref()
+                        .is_some_and(|ids| ids.contains(definition_id))
+                        && selected.and_then(|strike| strike.required_body_plan.as_deref()) == body)
+                {
+                    self.discovery_refuse(&rules.availability.manual_work)?;
+                    return Ok(false);
+                }
+                let Some(strike) = selected else {
                     self.discovery_refuse(&rules.availability.unknown_strike)?;
                     return Ok(false);
                 };
-                let body = actor.body.as_ref().map(|body| body.plan.as_str());
                 if body.is_none()
                     || strike
                         .required_body_plan

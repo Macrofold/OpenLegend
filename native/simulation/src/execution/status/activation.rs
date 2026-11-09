@@ -344,18 +344,22 @@ impl StatusActivationCursor {
                         .ok_or(ExecutionError::Invariant)?;
                     core.physical()
                         .admit_status_work(&self.subject, &episode, work)?;
+                    let state = StatusInstance {
+                        active: true,
+                        episode: episode.clone(),
+                        elapsed_seconds: 0.0,
+                        automatic_after: 0.0,
+                        source_id: self.source.clone(),
+                        action_target_id: self.action_target.clone(),
+                        contribution: None,
+                    };
+                    let storage = self
+                        .reservation
+                        .split_off(state.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
                     core.physical().replace_status(
                         &self.subject,
                         &definition.id,
-                        StatusInstance {
-                            active: true,
-                            episode: episode.clone(),
-                            elapsed_seconds: 0.0,
-                            automatic_after: 0.0,
-                            source_id: self.source.clone(),
-                            action_target_id: self.action_target.clone(),
-                            contribution: None,
-                        },
+                        crate::state::FundedStatus::from_storage(state, storage, &self.budget)?,
                     )?;
                     self.episode = Some(episode);
                     self.accepted = true;

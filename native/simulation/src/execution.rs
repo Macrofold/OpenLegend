@@ -1220,7 +1220,8 @@ struct EpisodeUndo {
     entity: EntityHandle,
     attributes: Vec<(String, AttributeState)>,
     status_id: String,
-    status: StatusInstance,
+    status: crate::state::FundedStatus,
+    status_index: usize,
 }
 #[derive(Clone, Copy)]
 struct WindowClock {
@@ -1406,7 +1407,7 @@ enum Undo {
     Status {
         entity: EntityHandle,
         key: String,
-        before: Option<(usize, StatusInstance)>,
+        before: Option<(usize, crate::state::FundedStatus)>,
         root_present: bool,
     },
     Episode(EpisodeUndo),
@@ -2014,22 +2015,9 @@ impl PhysicalJournal {
                     before,
                     root_present,
                 } => {
-                    let statuses = &mut state
+                    state
                         .entities
-                        .resolve_mut(entity)
-                        .ok_or(ExecutionError::Invariant)?
-                        .status_effects;
-                    let map = statuses.as_mut().ok_or(ExecutionError::Invariant)?;
-                    map.shift_remove(&key);
-                    if let Some((at, value)) = before {
-                        map.shift_insert(at, key, value);
-                    }
-                    if !root_present {
-                        if !map.is_empty() {
-                            return Err(ExecutionError::Invariant);
-                        }
-                        *statuses = None;
-                    }
+                        .restore_funded_status(entity, &key, before, root_present)?;
                 }
                 Undo::Action {
                     entity,
@@ -2288,8 +2276,11 @@ impl PhysicalMutation<'_> {
         &mut self,
         id: &str,
         status_id: &str,
-        status: StatusInstance,
+        status: crate::state::FundedStatus,
     ) -> Result<(), ExecutionError> {
+        if !status.is_funded_by(&self.journal.budget) {
+            return Err(ExecutionError::Invariant);
+        }
         let handle = self
             .state
             .entities
@@ -2327,46 +2318,41 @@ impl PhysicalMutation<'_> {
         self.journal.reserve(status_id.len())?;
         let key = UndoKey::Status(handle.slot, handle.generation, status_id.to_owned());
         let first = self.journal.first(&key)?;
-        let capacity = entity.status_effects.as_ref().map_or(0, IndexMap::capacity);
-        let len = entity.status_effects.as_ref().map_or(0, IndexMap::len);
-        let growth = if len == capacity {
-            crate::host::retained_size::map_storage::<String, StatusInstance>(
-                capacity.saturating_add(1).saturating_mul(2),
-            )
-            .ok_or(ExecutionError::Capacity)?
-        } else {
-            0
-        };
+        let root_present = entity.status_effects.is_some();
+        let new = !entity
+            .status_effects
+            .as_ref()
+            .is_some_and(|map| map.contains_key(status_id));
         self.journal.reserve(
             size_of::<Undo>() * 2
                 + size_of::<PhysicalChange>() * 2
                 + status_id.len() * 3
-                + id.len() * 2
-                + growth,
+                + id.len() * 2,
         )?;
-        self.journal
-            .undo
-            .try_reserve(1)
-            .map_err(|_| ExecutionError::Capacity)?;
+        if first && new {
+            // Empty-root creation/reservation can fail before the actual value
+            // is installed. Its inverse already owns exact parent presence.
+            self.journal.retain(
+                key.clone(),
+                Undo::Status {
+                    entity: handle,
+                    key: status_id.to_owned(),
+                    before: None,
+                    root_present,
+                },
+            )?;
+        }
+        self.state
+            .entities
+            .prepare_status_insert(handle, status_id, &self.journal.budget)?;
         self.journal.change(PhysicalChange::Contribution {
             entity_id: id.to_owned(),
         })?;
-        let target = self
+        let before = self
             .state
             .entities
-            .resolve_mut(handle)
-            .ok_or(ExecutionError::Invariant)?;
-        let root_present = target.status_effects.is_some();
-        let map = target.status_effects.get_or_insert_with(IndexMap::new);
-        let before = map
-            .shift_remove_full(status_id)
-            .map(|(at, _, value)| (at, value));
-        if let Some((at, _)) = &before {
-            map.shift_insert(*at, status_id.to_owned(), status);
-        } else {
-            map.insert(status_id.to_owned(), status);
-        }
-        if first {
+            .swap_funded_status(handle, status_id, status)?;
+        if first && !new {
             self.journal.retain(
                 key,
                 Undo::Status {
@@ -2936,8 +2922,8 @@ impl PhysicalMutation<'_> {
             .status_effects
             .as_ref()
             .ok_or(ValueError::MissingStatus)?;
-        let status = statuses
-            .get(&binding.status_id)
+        let (status_index, _, status) = statuses
+            .get_full(&binding.status_id)
             .ok_or(ValueError::MissingStatus)?;
         let (subject_index, _, links) = window
             .by_entity
@@ -2956,9 +2942,6 @@ impl PhysicalMutation<'_> {
                 .checked_mul(2)
                 .ok_or(ExecutionError::Capacity)?,
             binding.status_id.len(),
-            status.episode.len(),
-            status.source_id.len(),
-            status.action_target_id.len(),
         ])
         .ok_or(ExecutionError::Capacity)?;
         for id in binding.attributes.keys() {
@@ -3009,7 +2992,8 @@ impl PhysicalMutation<'_> {
                     entity: handle,
                     attributes: prior_attributes,
                     status_id: binding.status_id.clone(),
-                    status: status.clone(),
+                    status: crate::state::FundedStatus::copy(status, &self.journal.budget)?,
+                    status_index,
                 }),
             )?;
         }
@@ -3248,10 +3232,11 @@ fn restore_episode(state: &mut PhysicalState, undo: EpisodeUndo) -> Result<(), E
     for (id, value) in undo.attributes {
         *attributes.get_mut(&id).ok_or(ExecutionError::Invariant)? = value;
     }
-    *entity
-        .status_effects
-        .as_mut()
-        .and_then(|s| s.get_mut(&undo.status_id))
-        .ok_or(ExecutionError::Invariant)? = undo.status;
+    state.entities.restore_funded_status(
+        undo.entity,
+        &undo.status_id,
+        Some((undo.status_index, undo.status)),
+        true,
+    )?;
     Ok(())
 }

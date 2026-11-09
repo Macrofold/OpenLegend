@@ -250,3 +250,6 @@ impl EventDisclosure {
             .collect()
     }
 }
+
+#[path = "policy_residency/event_disclosure.rs"]
+mod policy_residency;

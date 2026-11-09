@@ -95,8 +95,25 @@ export function receivedScene(world: WorldState, observerId: string): ReceivedSc
     )
       nonlocalized++;
   }
+  const scene = receivedSceneFromBodies(observerId, physicalLife, bodies, nonlocalized);
+  if (Object.isFrozen(world)) {
+    let byActor = cached.get(world);
+    if (!byActor) cached.set(world, (byActor = new Map()));
+    byActor.set(observerId, scene);
+  }
+  return scene;
+}
+
+/** A scene indexes only bodies already admitted by the receiver's native or
+ * Source read owner. Building this query index acquires no physical facts. */
+export function receivedSceneFromBodies(
+  observerId: string,
+  physicalLife: number,
+  bodies: ReadonlyMap<string, ReceivedSceneBody>,
+  nonlocalized: number,
+): ReceivedScene {
   let index: ReceivedScene['index'] | undefined;
-  const scene: ReceivedScene = {
+  return {
     observerId,
     physicalLife,
     bodies,
@@ -109,12 +126,6 @@ export function receivedScene(world: WorldState, observerId: string): ReceivedSc
     },
     nonlocalized,
   };
-  if (Object.isFrozen(world)) {
-    let byActor = cached.get(world);
-    if (!byActor) cached.set(world, (byActor = new Map()));
-    byActor.set(observerId, scene);
-  }
-  return scene;
 }
 
 /** Full received body extent, expanded only by the supplied measurement error. */

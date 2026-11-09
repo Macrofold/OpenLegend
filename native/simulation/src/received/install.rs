@@ -86,6 +86,9 @@ pub(crate) fn install_temporal(
             cold
         };
         let checkpoints = reception.recordings(&actor_id).collect::<Vec<_>>();
+        let closed_tail = import
+            .working_set()
+            .is_some_and(|selection| selection.temporal_tail(&actor_id));
         let mut history = TemporalActorHistory::install(
             actor_id.clone(),
             row,
@@ -94,6 +97,7 @@ pub(crate) fn install_temporal(
             directories,
             &checkpoints,
             through,
+            closed_tail,
             budget,
         )?;
         let supports = take_collection(

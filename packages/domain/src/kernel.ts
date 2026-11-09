@@ -1633,8 +1633,8 @@ function nativeActorProblem(world: WorldState, command: Command): Outcome | null
     )
   )
     return reject(
-      'unsupported-body',
-      'This native manual-work family requires a supported biped body.',
+      selectedOccurrenceRules(world).response.offers.availability.manualWork.code,
+      selectedOccurrenceRules(world).response.offers.availability.manualWork.message,
     );
   if (worldSupport(source) === null && !['say', 'teach', 'goal', 'cancel'].includes(command.type))
     return reject(

@@ -6,8 +6,12 @@ use crate::encoding::{content_label, json_record, json_record_len};
 use crate::received::ReceivedValueFragment;
 use serde::{Serialize, Serializer, ser::SerializeSeq};
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub(super) struct AttentionCandidate {
+    #[serde(flatten)]
     pub annotation: AttentionAnnotation,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub subject: Option<ObserverSubject>,
     pub description_revision: String,
     pub change_revision: String,

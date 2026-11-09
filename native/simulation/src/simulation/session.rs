@@ -29,6 +29,7 @@ pub(crate) struct CurrentInstallation<'a> {
     accepted_cut: u64,
     history_event_count: u64,
     memory_allowance: MemoryAllowance<'a>,
+    work_allocation: WorkVector,
 }
 /// Finite progress beside one prepared delta. The application publishes these
 /// facts only after the same candidate is accepted; they are never a world.
@@ -103,6 +104,7 @@ impl<'a> CurrentInstallation<'a> {
             revision: state.durable_revision,
             accepted_cut: state.accepted_cut,
             history_event_count,
+            work_allocation: state.work_allocation().map_err(ExecutionError::Work)?,
             memory_allowance: MemoryAllowance {
                 world_id: &state.physical.header.id,
                 policy_id: &policy.id,
@@ -177,6 +179,7 @@ pub(crate) enum SessionStep {
     Question(Arc<ProviderQuestion>),
     Prepared(PreparedCandidate),
     Preview(PreviewOutcome),
+    NpcCandidates(crate::capture::PreparedNpcCandidates),
 }
 pub(crate) struct PreviewOutcome {
     command: crate::commands::CompletedCommand,
@@ -205,6 +208,7 @@ struct Prepared {
     publication: PreparedPublication,
     result: CompletedOperation,
     history: CapturedHistoryInput,
+    predecessors: crate::experience::PersonalPredecessors,
     notices: crate::cognition::PreparedSemanticNotices,
     key: CandidateKey,
 }
@@ -222,6 +226,7 @@ pub(crate) struct Session {
     continuation: Option<AcceptedAdvanceContinuation>,
     generation: u64,
     budget: ByteBudget,
+    temporal_save_limits: TemporalSaveLimits,
     _reservation: ResidentReservation,
 }
 impl Session {
@@ -232,9 +237,13 @@ impl Session {
         generation: u64,
         budget: ByteBudget,
         pending_save_budget: ByteBudget,
+        temporal_save_limits: TemporalSaveLimits,
     ) -> Result<Self, SessionError> {
         if generation == 0 || generation > crate::identity::MAX_SAFE_INTEGER {
             return Err(FenceError::Stale.into());
+        }
+        if temporal_save_limits.target_bytes == 0 || temporal_save_limits.row_bytes == 0 {
+            return Err(SaveError::Binding.into());
         }
         let reservation = budget
             .reserve_record(std::mem::size_of::<Self>())
@@ -260,6 +269,7 @@ impl Session {
             continuation: None,
             generation,
             budget,
+            temporal_save_limits,
             _reservation: reservation,
         })
     }
@@ -424,12 +434,44 @@ impl Session {
         })();
         self.install_driver(key, journal, driver, false)
     }
+    pub(crate) fn begin_npc_candidates(
+        &mut self,
+        read: &super::AcceptedActorRead,
+        expanded: &[usize],
+        coverage: crate::capture::NpcOfferCoverage,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::capture::NpcCandidateCursor::prepare(
+                &core,
+                read,
+                expanded,
+                coverage,
+                key,
+                &self.budget,
+            )?;
+            OperationDriver::npc_candidates(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    pub(crate) fn is_npc_candidates(&self, key: CandidateKey) -> bool {
+        matches!(&self.candidate, Some(Candidate::Preparing(preparing)) if preparing.key == key && preparing.driver.is_npc_candidates())
+    }
     pub(crate) fn begin_forget(
         &mut self,
         actor: &str,
         source: &str,
         limits: crate::experience::HistoryEditLimits,
     ) -> Result<CandidateKey, SessionError> {
+        // This protected edit commits its proposed prefix before acceptance.
+        // An ordinary accepted suffix must finish its genuine SQL barrier first.
+        if !self.save_barrier_complete() {
+            return Err(FenceError::Busy.into());
+        }
         let (key, mut journal) = self.begin()?;
         let driver = (|| {
             let mut core = CoreMutation {
@@ -554,6 +596,16 @@ impl Session {
         match step {
             DriveStep::Continue => Ok(SessionStep::Continue),
             DriveStep::Question(question) => Ok(SessionStep::Question(question)),
+            DriveStep::NpcCandidates(done) => {
+                let closed = preparing.journal.require_closed_operations();
+                let Some(Candidate::Preparing(mut preparing)) = self.candidate.take() else {
+                    unreachable!()
+                };
+                self.simulation.fence.rollback_preparation(key)?;
+                self.rollback(&mut preparing.journal, key)?;
+                closed?;
+                Ok(SessionStep::NpcCandidates(done))
+            }
             DriveStep::Complete(result) => {
                 if preparing.preview {
                     let Some(Candidate::Preparing(mut preparing)) = self.candidate.take() else {
@@ -582,6 +634,13 @@ impl Session {
                         history,
                         &self.budget,
                     )?;
+                    let predecessors = crate::experience::capture_personal_predecessors(
+                        &preparing.journal.experience,
+                        &self.budget,
+                    )
+                    .map_err(PublicationError::from)?;
+                    let protected = matches!(&result, CompletedOperation::Forget(done)
+                        if done.privacy_change().is_some());
                     let publication = PreparedPublication::prepare(
                         &mut self.simulation.state,
                         &preparing.journal,
@@ -590,21 +649,23 @@ impl Session {
                         key,
                         &self.host,
                         false,
+                        protected.then_some(self.temporal_save_limits),
                         &self.budget,
                     )?;
-                    Ok::<_, SessionError>((captured, notices, publication))
+                    Ok::<_, SessionError>((captured, predecessors, notices, publication))
                 })();
                 let Some(Candidate::Preparing(mut preparing)) = self.candidate.take() else {
                     unreachable!()
                 };
                 match products {
-                    Ok((history, notices, publication)) => {
+                    Ok((history, predecessors, notices, publication)) => {
                         let allocation = publication.allocation();
                         self.candidate = Some(Candidate::Prepared(Prepared {
                             journal: preparing.journal,
                             publication,
                             result,
                             history,
+                            predecessors,
                             notices,
                             key,
                         }));
@@ -716,6 +777,8 @@ impl Session {
             &CapturedHistoryInput,
             &crate::cognition::PreparedSemanticNotices,
             &crate::records::ChangedRows,
+            &crate::experience::PersonalPredecessors,
+            Option<&crate::records::SaveRows>,
             PreparedReadProgress<'_>,
         ),
         SessionError,
@@ -732,6 +795,8 @@ impl Session {
             &prepared.history,
             &prepared.notices,
             prepared.publication.read_changes(&self.save)?,
+            &prepared.predecessors,
+            prepared.publication.read_protected_prefix(&self.save)?,
             PreparedReadProgress {
                 world_id: &state.physical.header.id,
                 generation: &state.generation,
@@ -789,10 +854,7 @@ impl Session {
         self.apply_pending_residency()?;
         Ok(())
     }
-    pub(crate) fn capture_save(
-        &mut self,
-        limits: TemporalSaveLimits,
-    ) -> Result<Arc<SavePrefix>, SessionError> {
+    pub(crate) fn capture_save(&mut self) -> Result<Arc<SavePrefix>, SessionError> {
         if self.simulation.fence.phase() != CandidatePhase::Idle {
             return Err(FenceError::Busy.into());
         }
@@ -810,7 +872,7 @@ impl Session {
                 identity_through: state.physical.identity.next_id(),
                 temporal: &state.temporal,
             },
-            limits,
+            self.temporal_save_limits,
             &state.installed.schema,
             &mut state.records,
             &self.budget,
@@ -855,6 +917,30 @@ impl Session {
             return Err(FenceError::Busy.into());
         }
         Ok(&self.simulation)
+    }
+    pub(crate) fn resolve_receipt_tail(
+        &mut self,
+        world_id: &str,
+        generation: &str,
+        accepted_cut: u64,
+        identity_through: u64,
+        request: &crate::received::TemporalReceiptTailRequest<'_>,
+        tail: Option<crate::received::TemporalReceiptTail>,
+    ) -> Result<(), SessionError> {
+        let state = &self.accepted()?.state;
+        if state.physical.header.id != world_id
+            || state.generation != generation
+            || state.accepted_cut != accepted_cut
+            || state.physical.identity.next_id() != identity_through
+        {
+            return Err(ExecutionError::InvalidCheckpoint.into());
+        }
+        self.simulation
+            .state
+            .temporal
+            .resolve_receipt_tail(request, tail, identity_through)
+            .map_err(ExecutionError::Received)?;
+        Ok(())
     }
     /// Closing admission is a separate fence operation. Final shutdown waits
     /// for the actual accepted save prefix acknowledgement, not merely for the

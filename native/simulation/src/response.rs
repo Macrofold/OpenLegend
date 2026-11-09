@@ -79,6 +79,7 @@ impl ComponentResult {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct ResponseLimits {
     pub invocation: crate::commands::InvocationLimits,
+    pub choice_preparation_id: String,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub operations: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
@@ -89,10 +90,16 @@ pub(crate) struct ResponseLimits {
 impl ResponseLimits {
     pub(crate) fn valid(&self) -> bool {
         self.operations > 0
+            && is_safe_record_id(&self.choice_preparation_id)
             && self.bytes > 0
             && self.receipts > 0
             && self.invocation.offset.is_finite()
             && self.invocation.offset > 0.0
+    }
+}
+impl HeapBytes for ResponseLimits {
+    fn heap_bytes(&self) -> Option<usize> {
+        self.choice_preparation_id.heap_bytes()
     }
 }
 

@@ -1,5 +1,6 @@
 import type {
   NativeChangedRows,
+  NativeSaveRows,
   NativeWorld,
   NativeWorldTurn,
 } from '@open-legend/native-simulation';
@@ -10,6 +11,7 @@ import type { NativeHistoryInput } from './native-history.js';
 import type { NativeHistoryReadContext } from './native-providers.js';
 import { driveNativeOperation } from './native-providers.js';
 import { decodeNativeProduct, retainNativeSources } from './native-consumer.js';
+import type { NativePersonalPredecessor } from './native-source-versions.js';
 
 /** A finite proposed publication, never an accepted authority or client view.
  * Every semantic owner's actual changed rows accompany its occurrence and
@@ -27,6 +29,10 @@ export interface NativePublication {
     readonly appraisalRevision: number;
   };
   readonly records: NativeChangedRows;
+  readonly personalPredecessors: readonly NativePersonalPredecessor[];
+  /** The complete private SQL prefix for a protected edit. SQL acknowledgement
+   * becomes available only after the same prepared operation is accepted. */
+  readonly protectedSave?: NativeSaveRows;
   readonly progress: {
     readonly worldId: string;
     readonly generation: string;
@@ -59,7 +65,7 @@ export async function acceptNativeOperation<T extends object>(request: {
   readonly first: NativeWorldTurn;
   readonly geometry: NativeGeometryProviders;
   readonly work: HostWork;
-  readonly stage: (publication: NativePublication) => T;
+  readonly stage: (publication: NativePublication) => T | Promise<T>;
   readonly current: () => boolean;
   readonly signal?: AbortSignal;
   readonly history?: NativeHistoryReadContext;
@@ -83,9 +89,11 @@ export async function acceptNativeOperation<T extends object>(request: {
   try {
     allocation = work.reserveAllocation(JSON.parse(prepared.allocation()) as WorkVector);
     const publication = decodeNativeProduct<NativePublication>(prepared.takePublication());
+    if (publication.protectedSave)
+      throw new Error('Protected native edits require their database commit owner.');
     // A failure in history/source projection or consumer admission still rolls
     // back the genuine native checkpoint. No fallible staging follows accept.
-    const value = retainNativeSources(request.stage(publication), publication);
+    const value = retainNativeSources(await request.stage(publication), publication);
     prepared.ready();
     ready = true;
     accepted = !signal?.aborted && request.current();

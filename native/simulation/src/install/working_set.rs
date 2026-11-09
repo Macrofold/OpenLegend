@@ -19,6 +19,7 @@ pub(crate) struct WorkingSetSelection {
     #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
     hot_event_window: u64,
     received_value_closure: bool,
+    temporal_tail_actors: Vec<String>,
     active_appraisals: Vec<String>,
     open_agreement_heads: Vec<String>,
     sensory_awareness: Vec<String>,
@@ -30,6 +31,7 @@ pub(crate) struct InstalledWorkingSet {
     pub removed_hot_events: u64,
     pub received_value_closure: bool,
     pub hot_event_window: usize,
+    temporal_tail_actors: IndexSet<String>,
     active_appraisals: IndexSet<String>,
     open_agreement_heads: IndexSet<String>,
     sensory_awareness: IndexSet<String>,
@@ -73,6 +75,7 @@ impl WorkingSetSelection {
         let bytes = heap_sum([
             std::mem::size_of::<InstalledWorkingSet>(),
             set_bound(&self.active_appraisals).ok_or(InstallError::Capacity)?,
+            set_bound(&self.temporal_tail_actors).ok_or(InstallError::Capacity)?,
             set_bound(&self.open_agreement_heads).ok_or(InstallError::Capacity)?,
             set_bound(&self.sensory_awareness).ok_or(InstallError::Capacity)?,
             set_bound(&self.unresolved_memories).ok_or(InstallError::Capacity)?,
@@ -86,6 +89,7 @@ impl WorkingSetSelection {
             hot_event_window: usize::try_from(self.hot_event_window)
                 .map_err(|_| InstallError::Capacity)?,
             received_value_closure: self.received_value_closure,
+            temporal_tail_actors: self.temporal_tail_actors.into_iter().collect(),
             active_appraisals: self.active_appraisals.into_iter().collect(),
             open_agreement_heads: self.open_agreement_heads.into_iter().collect(),
             sensory_awareness: self.sensory_awareness.into_iter().collect(),
@@ -97,6 +101,7 @@ impl WorkingSetSelection {
         let actual = heap_sum([
             std::mem::size_of::<InstalledWorkingSet>(),
             set_heap(&selected.active_appraisals).ok_or(InstallError::Capacity)?,
+            set_heap(&selected.temporal_tail_actors).ok_or(InstallError::Capacity)?,
             set_heap(&selected.open_agreement_heads).ok_or(InstallError::Capacity)?,
             set_heap(&selected.sensory_awareness).ok_or(InstallError::Capacity)?,
             set_heap(&selected.unresolved_memories).ok_or(InstallError::Capacity)?,
@@ -112,6 +117,9 @@ impl WorkingSetSelection {
     }
 }
 impl InstalledWorkingSet {
+    pub(crate) fn temporal_tail(&self, actor: &str) -> bool {
+        self.temporal_tail_actors.contains(actor)
+    }
     pub(crate) fn active_appraisals(&self, actor: &str) -> bool {
         self.active_appraisals.contains(actor)
     }

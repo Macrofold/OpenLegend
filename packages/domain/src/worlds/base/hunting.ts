@@ -55,6 +55,11 @@ export function huntingDescription(
 ): string | undefined {
   if (!species || !BASE_HUNTING.knownPrey.includes(species) || !BASE_HUNTING.methods[method])
     return;
+  return formatHuntingDescription(target, tool);
+}
+/** Wording for an already selected hunting interpretation. Eligibility stays
+ * with huntingDescription and the native selected-world discovery owner. */
+export function formatHuntingDescription(target: Named | string, tool?: Named | string): string {
   return `${BASE_HUNTING.label} ${namePhrase(target)} with ${tool ? namePhrase(tool) : BASE_HUNTING.unarmedTool} ${BASE_HUNTING.purpose}. ${BASE_HUNTING.scope}`;
 }
 

@@ -6,6 +6,8 @@ use crate::execution::ExecutionError;
 use crate::host::retained_size::{HeapBytes, heap_record};
 use crate::host::{ByteBudget, ByteReservation, ResidentReservation};
 mod authored;
+mod status;
+pub(crate) use status::FundedStatus;
 mod store;
 pub(super) use store::EntityStoreMemory;
 
@@ -22,6 +24,7 @@ heap_record!(SemanticContinuation {
 
 pub(super) struct EntityMetadata {
     _authored: ResidentReservation,
+    values: status::ValueStorage,
     semantic: usize,
     storage: ResidentReservation,
     budget: ByteBudget,
@@ -30,6 +33,7 @@ impl EntityMetadata {
     pub(super) fn new(entity: &Entity, budget: &ByteBudget) -> Result<Self, ExecutionError> {
         let semantic = semantic_bytes(entity)?;
         Ok(Self {
+            values: status::ValueStorage::new(entity, budget)?,
             _authored: budget
                 .reserve_record(authored::bytes(entity).ok_or(ExecutionError::Capacity)?)?,
             semantic,

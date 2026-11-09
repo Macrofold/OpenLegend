@@ -11,12 +11,14 @@ use indexmap::IndexSet;
 use std::mem::size_of;
 
 mod candidates;
+mod read;
 mod relations;
 mod response;
 mod selection;
 mod timing;
 mod withdrawal;
 use candidates::{AttentionCandidate, build_candidates, current_point};
+pub(crate) use read::capture_attention_read;
 pub(crate) use relations::evaluate_attention_relations;
 pub(crate) use response::{acknowledge_attention, acknowledge_semantic_cause, set_attention_focus};
 pub(crate) use timing::next_attention_work_at;

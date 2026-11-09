@@ -44,6 +44,7 @@ import {
   type TemporalHistoryPage,
   captureTemporalHistoryReadContext,
   type TemporalHistoryReadContext,
+  type IndexedTemporalHistoryReadContext,
   type TemporalHistoryWindow,
   type TemporalHistoryQuery,
   type PreparedMemoryRetention,
@@ -1704,7 +1705,7 @@ export class MemoryRepository {
   temporalHistory(
     scope: MemoryScope,
     query: TemporalHistoryQuery,
-    source: WorldState | TemporalHistoryReadContext,
+    source: WorldState | TemporalHistoryReadContext | IndexedTemporalHistoryReadContext,
   ): Promise<TemporalHistoryPage> {
     const context =
       'worldId' in source ? source : captureTemporalHistoryReadContext(source, scope.actorId);

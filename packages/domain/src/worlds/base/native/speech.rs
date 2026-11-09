@@ -216,3 +216,6 @@ impl SpeechPlan<'_> {
         }
     }
 }
+
+#[path = "policy_residency/speech.rs"]
+mod policy_residency;

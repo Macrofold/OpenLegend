@@ -215,3 +215,6 @@ impl DefinitionIdentity for PreparedResponseProfile {
         self.version
     }
 }
+
+#[path = "policy/prepared_residency.rs"]
+mod policy_residency;

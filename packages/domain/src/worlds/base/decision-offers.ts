@@ -4,6 +4,9 @@ import { BASE_MANUAL_WORK_BODY_PLANS } from './bodies.js';
 import { FOLLOW_RULES } from './navigation.js';
 import { BASE_STRIKE_BODY_RULES } from './strikes.js';
 import { BASE_GUARD_TEXT } from './shield-defense.js';
+import { BASE_HUNTING } from './hunting.js';
+import { formatHuntingDescription } from './hunting.js';
+import { describeAttack, type StrikeDefinition } from '../../strikes.js';
 
 /** These are discovery rules and labels for this world's finite native choices.
  * Offering a choice never grants execution, target continuity or future work. */
@@ -13,9 +16,11 @@ export const BASE_DECISION_OFFERS = {
   strikeCommand: 'strike',
   interactionRadius: BASE_ACTION_DEFAULTS.interactionRadius,
   follow: FOLLOW_RULES,
+  followSuggestions: 4,
   manualWorkBodyPlans: BASE_MANUAL_WORK_BODY_PLANS,
   naturalStrikeBodyPlans: BASE_STRIKE_BODY_RULES.unrestrictedBodyPlans,
   huntingPurpose: 'Hunt once',
+  hunting: BASE_HUNTING,
   availability: {
     invalidFollow: {
       code: 'invalid-follow',
@@ -26,6 +31,10 @@ export const BASE_DECISION_OFFERS = {
     unsupportedStrike: {
       code: 'unsupported-body',
       message: 'This body cannot perform that natural strike.',
+    },
+    manualWork: {
+      code: 'unsupported-body',
+      message: 'This native manual-work family requires a supported biped body.',
     },
     combatRecovery: { code: 'combat-recovery', message: BASE_GUARD_TEXT.recovery },
     strikeRange: { code: 'out-of-range', message: 'Move within strike range first.' },
@@ -60,19 +69,51 @@ export const BASE_DECISION_OFFERS = {
 } as const;
 
 export type DecisionOfferDescription =
+  | { kind: 'activities' }
   | { kind: 'inspection' }
   | { kind: 'continuation'; actionType?: string; planPending: boolean }
   | { kind: 'follow'; target: Named | string }
   | { kind: 'probe'; direction: string }
   | { kind: 'approach'; targetDescription: string; distance: string; reach: number };
+// A status action's authored label and a strike's installed profile are supplied
+// by their actual selected owners. These formatter inputs create no availability.
+export type PhysicalDecisionOfferDescription =
+  | { kind: 'status'; label: string; targetName?: string }
+  | {
+      kind: 'natural-strike';
+      target: Named | string;
+      definition: StrikeDefinition;
+      hunting: boolean;
+    };
 
 /** Both current Source discovery and the detached native candidate formatter
  * call this owner with already permitted names and measured facts. */
-export function decisionOfferDescription(input: DecisionOfferDescription): {
+export function decisionOfferDescription(
+  input: DecisionOfferDescription | PhysicalDecisionOfferDescription,
+): {
   description: string;
   firstActionDescription?: string;
 } {
   switch (input.kind) {
+    case 'activities':
+      return {
+        description:
+          'Inspect a page of my own past actions, results and learned activities. This does not perform them again.',
+      };
+    case 'status':
+      return {
+        description: `${input.label}${input.targetName === undefined ? '' : ` · ${input.targetName}`}`,
+      };
+    case 'natural-strike': {
+      const definition = input.definition;
+      const attack = input.hunting
+        ? formatHuntingDescription(input.target)
+        : `${definition.label}. ${definition.autoMoveToRange ? 'Approach and attempt one attack.' : 'Attempt one attack from my current position.'}`;
+      return {
+        firstActionDescription: `${definition.label} ${namePhrase(input.target, 'definite')}`,
+        description: `${attack} ${definition.label}. ${describeAttack(definition)}`,
+      };
+    }
     case 'inspection':
       return {
         description:

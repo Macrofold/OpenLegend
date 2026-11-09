@@ -1,4 +1,6 @@
-import type { ApiResult } from '@open-legend/protocol';
+import type { ApiResult, CommandInput } from '@open-legend/protocol';
+import { commandRecoveryFields, type RequestScope } from './authority.js';
+import { digest } from './content-digest.js';
 import type { SqlDatabase } from './store.js';
 import { z } from 'zod';
 
@@ -17,6 +19,12 @@ export interface CommandEpoch {
   generation: number;
   openedAt: number;
   token: string;
+}
+
+/** Reconnection can recover a result within its original private authority;
+ * this identity never admits execution or crosses a restored timeline. */
+export function commandRecoveryFingerprint(input: CommandInput, scope: RequestScope): string {
+  return digest({ input, scope: commandRecoveryFields(scope) });
 }
 
 const receiptSchema = z

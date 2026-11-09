@@ -9,6 +9,9 @@ use crate::values::{
 };
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
+mod decode;
+mod residency;
+pub(crate) use residency::InstalledStatusPolicy;
 mod integration;
 pub(crate) use integration::{
     BodyPeriodicChange, BodyRate, BodyRates, StatusIntegrationCursor, StatusIntegrationStep,
@@ -27,7 +30,8 @@ pub(crate) use roster::{StatusRoster, StatusRosters};
 
 mod work;
 pub(crate) use work::{
-    CompiledStatusWork, StatusInstallationWork, compile_status_installation, compile_status_work,
+    CompiledStatusWork, CompiledStatusWorkMap, StatusInstallationWork, compile_status_installation,
+    compile_status_work,
 };
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -345,7 +349,7 @@ pub struct StatusActive {
     pub value: bool,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(untagged, deny_unknown_fields)]
 pub enum StatusCondition {
     All {
@@ -399,7 +403,7 @@ pub struct RestrictCapabilities {
     pub capabilities: Vec<String>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(untagged, deny_unknown_fields)]
 pub enum StatusOperation {
     Rate {
@@ -578,28 +582,9 @@ pub struct StatusEffectPolicy {
 /// Activity is always read from the current canonical status instances.
 pub struct StatusCapabilities {
     restrictions: IndexMap<String, Vec<String>>,
+    _storage: crate::host::ResidentReservation,
 }
 impl StatusCapabilities {
-    pub fn compile(policy: &StatusEffectPolicy) -> Self {
-        let mut restrictions: IndexMap<String, Vec<String>> = IndexMap::new();
-        for definition in &policy.definitions {
-            for operation in &definition.while_active {
-                if let StatusOperation::Restrict {
-                    restrict_capabilities,
-                } = operation
-                {
-                    for capability in &restrict_capabilities.capabilities {
-                        let ids = restrictions.entry(capability.clone()).or_default();
-                        if !ids.contains(&definition.id) {
-                            ids.push(definition.id.clone());
-                        }
-                    }
-                }
-            }
-        }
-        Self { restrictions }
-    }
-
     pub fn capability_blocked(
         &self,
         entity: Option<&Entity>,

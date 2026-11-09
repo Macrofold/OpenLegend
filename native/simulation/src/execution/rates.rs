@@ -148,21 +148,18 @@ impl PhysicalMutation<'_> {
         let key = UndoKey::Status(handle.slot, handle.generation, status_id.into());
         if self.journal.first(&key)? {
             self.journal.reserve(
-                heap_sum([
-                    2 * size_of::<Undo>(),
-                    status_id.len(),
-                    status.episode.len(),
-                    status.source_id.len(),
-                    status.action_target_id.len(),
-                ])
-                .ok_or(ExecutionError::Capacity)?,
+                heap_sum([2 * size_of::<Undo>(), status_id.len()])
+                    .ok_or(ExecutionError::Capacity)?,
             )?;
             self.journal.retain(
                 key,
                 Undo::Status {
                     entity: handle,
                     key: status_id.into(),
-                    before: Some((position, status.clone())),
+                    before: Some((
+                        position,
+                        crate::state::FundedStatus::copy(status, &self.journal.budget)?,
+                    )),
                     root_present: true,
                 },
             )?;

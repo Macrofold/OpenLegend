@@ -123,6 +123,7 @@ pub struct PersonalNameRules {
     pub person_noun: String,
     pub unidentified: Named,
     pub unidentified_voice: String,
+    pub unidentified_individual: String,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub given_name_characters: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
@@ -341,6 +342,34 @@ impl<'a> PersonalNameReader<'a> {
                 .identities()
                 .and_then(|identities| identities.get(individual_id)),
             ObserverSubject::Entity { entity_id } => self.identity_for_entity(entity_id),
+        }
+    }
+    /// Personal labels use this observer's own naming evidence. Entity fallback
+    /// reads the admitted body name; it never exposes a hidden authored name.
+    pub(crate) fn subject_label(
+        &self,
+        subject: &ObserverSubject,
+    ) -> Result<crate::text::TextRef<'_>, ReceivedError> {
+        let identity = self.observer_individual(subject);
+        if let Some(name) = identity.and_then(|identity| {
+            identity
+                .nickname
+                .as_ref()
+                .filter(|name| !name.is_empty())
+                .or_else(|| (!identity.given_name.is_empty()).then_some(&identity.given_name))
+        }) {
+            return Ok(name.into());
+        }
+        match subject {
+            ObserverSubject::Entity { entity_id } => Ok(self.observer_name(entity_id)?.name),
+            ObserverSubject::Individual { .. } => Ok(if identity
+                .is_some_and(|identity| identity.voice.is_some())
+            {
+                self.rules.unidentified_voice.as_str()
+            } else {
+                self.rules.unidentified_individual.as_str()
+            }
+            .into()),
         }
     }
     pub(crate) fn current_body_local_subject(
@@ -667,3 +696,6 @@ pub(crate) fn allocate_individual(
         }
     }
 }
+
+#[path = "policy_residency/knowledge.rs"]
+mod policy_residency;

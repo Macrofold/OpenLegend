@@ -77,3 +77,6 @@ pub(crate) fn appraise_event(
         budget,
     )
 }
+
+#[path = "policy_residency/appraisals.rs"]
+mod policy_residency;

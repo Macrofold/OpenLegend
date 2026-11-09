@@ -3,7 +3,7 @@
 //! never lends a mutable geometry graph to Node or drops custody at acceptance.
 use super::*;
 use crate::host::retained_size::{HeapBytes, heap_record};
-use crate::host::{ByteBudget, CapacityError, ResidentReservation};
+use crate::host::{ByteBudget, ByteReservation, CapacityError, ResidentReservation};
 use std::{
     mem::{align_of, size_of},
     ops::Deref,
@@ -68,14 +68,24 @@ impl Serialize for OwnedGeometry {
     }
 }
 impl OwnedGeometry {
-    pub(crate) fn new(value: GeometryMap, budget: &ByteBudget) -> Result<Arc<Self>, CapacityError> {
+    pub(crate) fn from_storage(
+        value: GeometryMap,
+        mut construction: ByteReservation,
+        budget: &ByteBudget,
+    ) -> Result<Arc<Self>, CapacityError> {
         let bytes = value
             .heap_bytes()
             .and_then(|n| {
                 n.checked_add(size_of::<Self>() + 2 * size_of::<usize>() + align_of::<Self>() - 1)
             })
             .ok_or(CapacityError)?;
-        let storage = budget.reserve_record(bytes)?;
+        // The row owner funded both the split JSON assembly and its typed
+        // conversion before decoding. Move that same admission into custody.
+        if bytes > construction.bytes() {
+            return Err(CapacityError);
+        }
+        construction.resize(bytes)?;
+        let storage = budget.adopt_record(construction)?;
         Ok(Arc::new(Self {
             value,
             _storage: storage,

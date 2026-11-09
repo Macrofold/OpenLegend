@@ -170,3 +170,6 @@ impl crate::install::DefinitionIdentity for AttentionPolicy {
         self.version
     }
 }
+
+#[path = "policy_residency.rs"]
+mod policy_residency;

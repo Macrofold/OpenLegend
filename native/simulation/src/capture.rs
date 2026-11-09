@@ -17,6 +17,11 @@ mod definitions;
 pub(crate) use definitions::write_installed_definitions;
 mod metadata;
 mod navigation;
+mod npc_current;
+mod npc_selection;
+pub(crate) use npc_selection::NpcObservationSelection;
+mod npc_candidates;
+pub(crate) use npc_candidates::{NpcCandidateAnswer,NpcCandidateCursor,NpcCandidateStep,NpcOfferCoverage,PreparedNpcCandidates};
 mod outcomes;
 mod player;
 mod practice;
@@ -91,6 +96,7 @@ pub(crate) struct CapturedActorPerception {
     pub evidence: CapturedEvidenceCut,
     pub geometry: Option<CapturedGeometryRange>,
     player: Option<CapturedPlayerPerception>,
+    npc_current: Option<npc_current::NpcCurrentCapture>,
     _reservation: ByteReservation,
 }
 #[derive(Serialize)]
@@ -115,6 +121,8 @@ struct PerceptionProduct<'a> {
     geometry: Option<&'a CapturedGeometryRange>,
     #[serde(skip_serializing_if = "Option::is_none")]
     player: Option<&'a CapturedPlayerPerception>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    npc_current: Option<&'a npc_current::NpcCurrentCapture>,
 }
 impl CapturedActorPerception {
     pub(crate) fn write_json(
@@ -130,6 +138,7 @@ impl CapturedActorPerception {
             cut: self.evidence.cut(),
             geometry: self.geometry.as_ref(),
             player: self.player.as_ref(),
+            npc_current: self.npc_current.as_ref(),
         };
         let length =
             crate::encoding::json_record_len(&product).map_err(|_| ExecutionError::Invariant)?;
@@ -345,6 +354,39 @@ pub(crate) fn capture_actor_perception(
         .filter(|owner| owner.life == observer.physical_life.unwrap_or(0))
         .and_then(|owner| owner.visual_confirmation.as_ref())
         .map(|confirmation| confirmation.through);
+    let (npc_current, current, _current_backing) =
+        if matches!(purpose, ActorReadPurpose::NpcDecision) {
+            let prepared = npc_current::prepare(
+                state,
+                actor_id,
+                scope.as_ref(),
+                &names,
+                current.len(),
+                budget,
+            )?;
+            let count = current
+                .len()
+                .checked_add(prepared.current.len())
+                .ok_or(ExecutionError::Capacity)?;
+            let backing = budget.reserve(
+                count
+                    .checked_mul(size_of::<OwnedCurrentFacet>())
+                    .ok_or(ExecutionError::Capacity)?,
+            )?;
+            let mut combined = Vec::new();
+            combined
+                .try_reserve_exact(count)
+                .map_err(|_| ExecutionError::Capacity)?;
+            combined.extend(current);
+            combined.extend(prepared.current);
+            (
+                Some(prepared.capture),
+                combined,
+                Some((backing, prepared.backing)),
+            )
+        } else {
+            (None, current, None)
+        };
     drop(names);
     drop(scope);
     let (acquired, geometry) = if matches!(purpose, ActorReadPurpose::NpcDecision) {
@@ -401,6 +443,7 @@ pub(crate) fn capture_actor_perception(
         bodies,
         evidence,
         geometry,
+        npc_current,
         player: player.as_ref().map(|_| CapturedPlayerPerception {
             trade_terms: "none",
             // Physical installation admits only actors. Source exposedPlaces

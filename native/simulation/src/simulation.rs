@@ -13,7 +13,9 @@ use crate::native_response::NativeResponseProfile;
 use crate::received::TemporalState;
 use crate::reception::{AcousticPolicy, ReceptionState, SenseDefinition};
 use crate::state::{EntityStore, WorldHeader};
-use crate::status::{AttributeDefinition, StatusCapabilities, StatusEffectPolicy};
+use crate::status::{
+    AttributeDefinition, CompiledStatusWorkMap, InstalledStatusPolicy, StatusCapabilities,
+};
 use crate::values::NativeValueWindow;
 use crate::work::{InstalledWorkPolicy, WorkBook};
 use indexmap::IndexMap;
@@ -46,10 +48,9 @@ pub(crate) struct InstalledWorld {
     pub default_senses: Vec<String>,
     pub acoustics: VerifiedDefinition<AcousticPolicy>,
     pub response_profiles: IndexMap<String, VerifiedDefinition<NativeResponseProfile>>,
-    pub status_policy: StatusEffectPolicy,
+    pub status_policy: InstalledStatusPolicy,
     pub capabilities: StatusCapabilities,
-    pub status_policy_canonical: Arc<str>,
-    pub status_work: IndexMap<String, crate::status::CompiledStatusWork>,
+    pub status_work: CompiledStatusWorkMap,
     pub population_work: crate::status::StatusInstallationWork,
     pub status_rosters: crate::status::StatusRosters,
     pub geometry: Arc<crate::geometry::OwnedGeometry>,
@@ -81,6 +82,7 @@ pub(crate) struct InstalledWorld {
     pub mind_limits: crate::cognition::MindLimits,
     pub agency_limits: crate::plans::AgencyLimits,
     pub actor_response_limits: crate::response::ResponseLimits,
+    pub(crate) _definition_storage: crate::host::ResidentReservation,
 }
 impl InstalledWorld {
     pub(crate) fn movement_speed(

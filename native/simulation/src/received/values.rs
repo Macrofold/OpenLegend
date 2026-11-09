@@ -743,6 +743,12 @@ impl ReceivedValues {
         self.sources.get(id).map(|owned| &owned.record.value)
     }
 
+    /// SQL reclamation protects the actual canonical resident members. This
+    /// read exports their IDs only; it supplies neither bodies nor disclosure.
+    pub(crate) fn shared_ids(&self) -> impl ExactSizeIterator<Item = &str> {
+        self.sources.keys().map(String::as_str)
+    }
+
     pub fn shared_value_bytes(&self, id: &str) -> Option<u64> {
         self.sources
             .get(id)

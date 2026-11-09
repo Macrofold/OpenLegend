@@ -25,6 +25,20 @@ export declare class NativeHost {
 }
 
 export declare class NativeWorld {
+  npcPresentationLabels(
+    read: NativeWorldNpcRead,
+    request: Buffer,
+  ): Promise<NativeWorldJson>;
+  npcCandidates(
+    read: NativeWorldNpcRead,
+    request: Buffer,
+  ): Promise<NativeWorldNpcTurn>;
+  answerNpcCandidates(
+    read: NativeWorldNpcRead,
+    key: NativeCandidateKey,
+    provider: NativeWorldProvider,
+    answer: Buffer,
+  ): Promise<NativeWorldNpcTurn>;
   readNpc(request: Buffer): Promise<NativeWorldNpcRead>;
   readPlayer(
     account: string,
@@ -39,6 +53,7 @@ export declare class NativeWorld {
   ): Promise<NativeWorldPlayerPublication>;
   forget(bytes: Buffer): Promise<NativeWorldTurn>;
   readCut(request: Buffer): Promise<NativeWorldJson>;
+  retainedValues(): Promise<NativeWorldJson>;
   activate(receipt: string): Promise<void>;
   definitions(): Promise<NativeWorldJson>;
   installation(): Promise<NativeWorldJson>;
@@ -428,6 +443,12 @@ export interface NativeWalkingSegment {
   from: NativeSurfacePoint;
   to: NativeSurfacePoint;
   body: NativeBodyProfile;
+}
+
+export interface NativeWorldNpcTurn {
+  key: NativeCandidateKey;
+  kind: string;
+  provider?: NativeWorldProvider;
 }
 
 export interface NativeWorldTurn {

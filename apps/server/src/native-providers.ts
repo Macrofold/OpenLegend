@@ -3,6 +3,8 @@ import type {
   NativeWorld,
   NativeWorldProvider,
   NativeWorldTurn,
+  NativeWorldNpcRead,
+  NativeWorldNpcTurn,
 } from '@open-legend/native-simulation';
 import { nativeActivityDisplay } from './native-activity.js';
 import { nativeCanonicalCommand } from './native-command.js';
@@ -127,4 +129,35 @@ export async function driveNativeOperation(
     }
   }
   return turn;
+}
+
+/** Choice discovery parks the same native checkpoint for real providers and
+ * closes it through the read-only completion. It produces no Ready/accept path. */
+export async function driveNativeNpcCandidates(
+  world: NativeWorld,
+  read: NativeWorldNpcRead,
+  first: NativeWorldNpcTurn,
+  geometry: NativeGeometryProviders,
+  signal?: AbortSignal,
+): Promise<void> {
+  let turn = first;
+  while (turn.kind === 'provider') {
+    if (!turn.provider) throw new Error('Native NPC choices have no owned provider question.');
+    try {
+      signal?.throwIfAborted();
+      const answer = await answerNativeProvider(turn.provider, geometry);
+      signal?.throwIfAborted();
+      turn = await world.answerNpcCandidates(
+        read,
+        turn.key,
+        turn.provider,
+        Buffer.from(answer.json),
+      );
+    } catch (error) {
+      await world.cancel(turn.key);
+      throw error;
+    }
+  }
+  if (turn.kind !== 'complete')
+    throw new Error('Native NPC discovery did not close its read-only checkpoint.');
 }

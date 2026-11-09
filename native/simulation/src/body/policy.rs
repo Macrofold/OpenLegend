@@ -252,3 +252,6 @@ pub(crate) struct ReconsiderationInput {
     pub when: StatusCondition,
     pub director: bool,
 }
+
+#[path = "policy/residency.rs"]
+mod policy_residency;

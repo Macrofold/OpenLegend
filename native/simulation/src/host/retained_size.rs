@@ -73,6 +73,11 @@ impl<A: HeapBytes, B: HeapBytes> HeapBytes for (A, B) {
 // Retain a conservative two-times power-of-two bound for the dense buckets and
 // hash-index/control arrays. Payload fields use their actual owned capacities.
 pub(crate) fn map_storage<K, V>(capacity: usize) -> Option<usize> {
+    map_storage_layout(capacity, size_of::<(usize, K, V)>())
+}
+/// The same pinned IndexMap layout for a family whose pure decoder chooses the
+/// largest actual entry carrier among several supported dictionary fields.
+pub(crate) fn map_storage_layout(capacity: usize, entry_bytes: usize) -> Option<usize> {
     if capacity == 0 {
         return Some(0);
     }
@@ -82,7 +87,7 @@ pub(crate) fn map_storage<K, V>(capacity: usize) -> Option<usize> {
         .checked_mul(2)?;
     buckets
         .checked_mul(
-            size_of::<(usize, K, V)>()
+            entry_bytes
                 .checked_add(size_of::<usize>())?
                 .checked_add(1)?,
         )?

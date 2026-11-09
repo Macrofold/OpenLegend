@@ -35,6 +35,7 @@ pub(crate) use control::{
 pub(crate) use edit::{PlanEditCursor, PlanEditInput, PlanEditStep};
 pub(crate) use goals::{GoalChange, GoalOperation, change_goal};
 pub(crate) use resume::{PlanResumeCursor, PlanResumeStep, ResumeMode};
+pub(crate) use validation::valid_choice_command;
 pub(crate) use validation::validate_installation;
 
 #[derive(Debug, Deserialize, Serialize)]

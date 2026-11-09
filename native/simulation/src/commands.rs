@@ -145,6 +145,7 @@ pub(crate) enum NativeCommand {
     InspectActivities {
         envelope: CommandEnvelope,
         history_after: i64,
+        method_after: u64,
     },
 }
 
@@ -159,7 +160,7 @@ macro_rules! optional {
         }
     }
 }
-optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:SurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,history_after:i64);
+optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:SurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,after:i64,method_after:u64);
 
 impl<'de> Deserialize<'de> for NativeCommand {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
@@ -192,7 +193,8 @@ impl<'de> Deserialize<'de> for NativeCommand {
         let discovery_fields = input.distance.is_some()
             || input.weapon_item_id.is_some()
             || input.auto_equip.is_some()
-            || input.history_after.is_some();
+            || input.after.is_some()
+            || input.method_after.is_some();
         let extras_for_move = discovery_fields
             || input.text.is_some()
             || input.target_id.is_some()
@@ -293,7 +295,8 @@ impl<'de> Deserialize<'de> for NativeCommand {
                     && input.definition_id.is_none()
                     && input.weapon_item_id.is_none()
                     && input.auto_equip.is_none()
-                    && input.history_after.is_none() =>
+                    && input.after.is_none()
+                    && input.method_after.is_none() =>
             {
                 Ok(Self::Follow {
                     envelope,
@@ -306,7 +309,8 @@ impl<'de> Deserialize<'de> for NativeCommand {
             "strike"
                 if !discovery_extras
                     && input.distance.is_none()
-                    && input.history_after.is_none() =>
+                    && input.after.is_none()
+                    && input.method_after.is_none() =>
             {
                 Ok(Self::Strike {
                     envelope,
@@ -338,8 +342,11 @@ impl<'de> Deserialize<'de> for NativeCommand {
             {
                 Ok(Self::InspectActivities {
                     envelope,
-                    history_after: input.history_after.ok_or_else(|| {
+                    history_after: input.after.ok_or_else(|| {
                         D::Error::custom("Activity inspection requires its selected cursor.")
+                    })?,
+                    method_after: input.method_after.ok_or_else(|| {
+                        D::Error::custom("Activity inspection requires its selected method cursor.")
                     })?,
                 })
             }

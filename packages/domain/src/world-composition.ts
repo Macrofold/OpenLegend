@@ -21,6 +21,7 @@ import {
 import { BASE_EVENT_PRESENTATION } from './worlds/base/event-presentation.js';
 import { BASE_ACTION_DEFAULTS, BASE_SPEECH_ACTION } from './worlds/base/actions.js';
 import { BASE_ORDINARY_ACTION_RULES } from './worlds/base/ordinary-action-rules.js';
+import { BASE_PLAYTEST_MILESTONES } from './worlds/base/playtest.js';
 import { BASE_STRIKE_BODY_RULES } from './worlds/base/strikes.js';
 import { BASE_OBSERVATION_RULES } from './worlds/base/observation-rules.js';
 import { BASE_EVENT_APPRAISAL_RULES } from './worlds/base/appraisals.js';
@@ -94,6 +95,7 @@ import {
   pruneObserverIndividuals,
   retainedIndividualEvidenceKeys,
   captureSubjectLabelReader,
+  capturedSubjectLabels,
 } from './worlds/base/knowledge.js';
 import { DETECTION_SUPPORT_POLICY } from './worlds/base/senses.js';
 import { normalSpeedSeconds } from './simulation-time.js';
@@ -275,7 +277,7 @@ export function selectedRecognitionSupportSourceIds(
   return recognitionSupportSourceIds(keys);
 }
 /** Capture the installed pure source interpretation without retaining its world. */
-export function selectedRecognitionSupportReader(world: WorldState) {
+export function selectedRecognitionSupportReader(world: Pick<WorldState, 'profile'>) {
   selectedCreationProfileForWorld(world);
   return recognitionSupportSourceIds;
 }
@@ -286,6 +288,15 @@ export function selectedSubjectLabelReader(
 ) {
   selectedCreationProfileForWorld(world);
   return captureSubjectLabelReader(world, observerId, subjects);
+}
+/** Decode only an already captured observer's label roster. The selected world
+ * owns its unidentified wording as it does for ordinary Source presentation. */
+export function selectedCapturedSubjectLabelReader(
+  world: Pick<WorldState, 'profile'>,
+  labels: ReadonlyMap<string, string>,
+) {
+  selectedCreationProfileForWorld(world);
+  return capturedSubjectLabels(labels);
 }
 export function selectedRetainedIndividualEvidenceKeys(
   world: WorldState,
@@ -538,6 +549,10 @@ export function selectedTradeViewTitle(world: Pick<WorldState, 'profile'>) {
 export function selectedPlayerViewRules(world: Pick<WorldState, 'profile'>) {
   selectedCreationProfileForWorld(world);
   return BASE_PLAYER_VIEW_RULES;
+}
+export function selectedPlaytestMilestoneRules(world: Pick<WorldState, 'profile'>) {
+  selectedCreationProfileForWorld(world);
+  return BASE_PLAYTEST_MILESTONES;
 }
 export function selectedPlayerControlCanUseInactive(
   world: Pick<WorldState, 'profile'>,

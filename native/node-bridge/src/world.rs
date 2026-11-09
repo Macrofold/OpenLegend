@@ -17,6 +17,7 @@ mod npc;
 mod player;
 mod privacy;
 mod read_cut;
+mod retained_values;
 
 fn operation_error(error: impl std::fmt::Debug) -> napi::Error {
     failure(format!("{error:?}"))

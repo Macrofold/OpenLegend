@@ -2,14 +2,17 @@
 //! canonical policy. Raw slices preserve the source digest without replacing
 //! JavaScript locale collation with a different generic sorter.
 
-use super::{StatusDefinition, StatusEffectPolicy, status_work};
+use super::{StatusEffectPolicy, status_work};
 use crate::encoding::content_label;
+use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
+use crate::host::{ByteBudget, ResidentReservation};
 use crate::install::InstallError;
 use crate::values::{DefinitionPin, RecurringWork, WorkVector};
 use crate::work::{WorkRequest, multiply_work};
 use indexmap::IndexMap;
 use serde::Deserialize;
 use serde_json::value::RawValue;
+use std::mem::size_of;
 
 pub(crate) struct CompiledStatusWork {
     pub pin: DefinitionPin,
@@ -55,27 +58,68 @@ impl CompiledStatusWork {
         })
     }
 }
+pub(crate) struct CompiledStatusWorkMap {
+    values: IndexMap<String, CompiledStatusWork>,
+    _storage: ResidentReservation,
+}
+impl std::ops::Deref for CompiledStatusWorkMap {
+    type Target = IndexMap<String, CompiledStatusWork>;
+    fn deref(&self) -> &Self::Target {
+        &self.values
+    }
+}
 pub(crate) fn compile_status_work(
     policy: &StatusEffectPolicy,
     canonical: &str,
-) -> Result<IndexMap<String, CompiledStatusWork>, InstallError> {
+    budget: &ByteBudget,
+) -> Result<CompiledStatusWorkMap, InstallError> {
     #[derive(Deserialize)]
     struct Policy<'a> {
         #[serde(borrow)]
         definitions: Vec<&'a RawValue>,
     }
+    let _parse = crate::install::reserve_typed_parse::<Policy<'_>>(
+        canonical,
+        size_of::<&RawValue>(),
+        None,
+        budget,
+    )?;
     let raw: Policy<'_> =
         serde_json::from_str(canonical).map_err(|_| InstallError::DefinitionBody)?;
     if raw.definitions.len() != policy.definitions.len() {
         return Err(InstallError::DefinitionBody);
     }
+    let names = policy
+        .definitions
+        .iter()
+        .try_fold(0usize, |n, value| {
+            n.checked_add(value.id.len().checked_mul(2)?)
+        })
+        .ok_or(InstallError::Capacity)?;
+    let bound = heap_sum([
+        map_storage::<String, CompiledStatusWork>(if raw.definitions.is_empty() {
+            0
+        } else {
+            raw.definitions
+                .len()
+                .checked_mul(2)
+                .and_then(|n| n.checked_add(4))
+                .ok_or(InstallError::Capacity)?
+        })
+        .ok_or(InstallError::Capacity)?,
+        names,
+        raw.definitions
+            .len()
+            .checked_mul(7)
+            .ok_or(InstallError::Capacity)?,
+    ])
+    .ok_or(InstallError::Capacity)?;
+    let mut storage = budget.reserve(bound).map_err(|_| InstallError::Capacity)?;
     let mut result = IndexMap::with_capacity(raw.definitions.len());
     for (definition, raw) in policy.definitions.iter().zip(raw.definitions) {
-        let parsed: StatusDefinition =
-            serde_json::from_str(raw.get()).map_err(|_| InstallError::DefinitionBody)?;
-        if &parsed != definition {
-            return Err(InstallError::DefinitionBody);
-        }
+        // The consuming policy constructor already compared the complete
+        // canonical typed value. Raw slices remain only for the actual Source
+        // content-label spelling; parsing every definition again adds no fact.
         let cost = status_work(definition);
         // JSON.stringify length is UTF-16 units in the current native-work.ts
         // quota. UTF-8 resident allocation is accounted separately by the host.
@@ -98,7 +142,15 @@ pub(crate) fn compile_status_work(
             return Err(InstallError::DefinitionCollision);
         }
     }
-    Ok(result)
+    storage
+        .resize(result.heap_bytes().ok_or(InstallError::Capacity)?)
+        .map_err(|_| InstallError::Capacity)?;
+    Ok(CompiledStatusWorkMap {
+        values: result,
+        _storage: budget
+            .adopt_record(storage)
+            .map_err(|_| InstallError::Capacity)?,
+    })
 }
 
 pub(crate) struct StatusInstallationWork {
@@ -148,6 +200,7 @@ pub(crate) fn compile_status_installation(
     policy: &StatusEffectPolicy,
     costs: &IndexMap<String, CompiledStatusWork>,
     body: Option<&crate::body::BodyPolicy>,
+    budget: &ByteBudget,
 ) -> Result<StatusInstallationWork, InstallError> {
     #[derive(Deserialize)]
     struct Appraisals<'a> {
@@ -163,6 +216,12 @@ pub(crate) fn compile_status_installation(
         #[serde(borrow)]
         appraisals: Option<Appraisals<'a>>,
     }
+    let _parse = crate::install::reserve_typed_parse::<Manifest<'_>>(
+        manifest_payload,
+        size_of::<&RawValue>(),
+        None,
+        budget,
+    )?;
     let manifest: Manifest<'_> =
         serde_json::from_str(manifest_payload).map_err(|_| InstallError::DefinitionBody)?;
     let interfaces = manifest

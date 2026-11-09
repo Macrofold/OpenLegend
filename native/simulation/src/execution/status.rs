@@ -131,6 +131,13 @@ impl CoreMutation<'_> {
         state.active = false;
         state.automatic_after =
             self.state.physical.header.sim_time + definition.reactivation_delay_seconds;
+        let storage = self
+            .journal
+            .physical
+            .reservation
+            .split_off(state.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+        let state =
+            crate::state::FundedStatus::from_storage(state, storage, self.journal.byte_budget())?;
         self.physical()
             .replace_status(subject, definition_id, state)?;
         let owns_action = self

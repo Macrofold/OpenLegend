@@ -634,3 +634,6 @@ impl Serialize for IndividualRecognition {
         fields.end()
     }
 }
+
+#[path = "policy_residency/recognition.rs"]
+mod policy_residency;

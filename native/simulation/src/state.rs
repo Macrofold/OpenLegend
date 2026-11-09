@@ -20,6 +20,7 @@ pub(crate) use action_storage::{
 pub(crate) use goal_storage::FundedGoals;
 use indexmap::IndexMap;
 pub(crate) use intent_storage::FundedIntents;
+pub(crate) use residency::FundedStatus;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::borrow::Cow;

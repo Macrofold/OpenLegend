@@ -487,7 +487,7 @@ pub(crate) fn install_physical(
             }
         }
     }
-    let entities = install_entities(import, true, installed, header.sim_time)?;
+    let entities = install_entities(import, true, installed, header.sim_time, budget)?;
     installed
         .population_work
         .require_population(&entities, &installed.work_policy)

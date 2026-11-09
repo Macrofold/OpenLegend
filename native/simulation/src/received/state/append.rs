@@ -440,6 +440,11 @@ impl TemporalState {
                 "Temporal batch belongs to another receiver timeline.",
             ));
         }
+        let tail_before = actor.tail;
+        let tail_after = tail_before.appended(super::TemporalReceiptTail {
+            batch_order: batch.batch_order,
+            entry_index: batch.entries.last().expect("Batch not empty").entry_index,
+        })?;
         let mut header = actor.header.clone();
         header.bytes = add_count(header.bytes, metadata.entry_bytes)?;
         header.count = add_count(header.count, metadata.count)?;
@@ -484,6 +489,7 @@ impl TemporalState {
         self.replace_header(&actor_id, header)?;
         let actor = self.actors.get_mut(&actor_id).expect("Actor checked");
         actor.recent.append(&metadata.charge_directory)?;
+        actor.tail = tail_after;
         actor.pending_pages.push(Arc::new(PendingTemporalPage {
             id: issued.id,
             flush_order: issued.sequence,
@@ -496,7 +502,10 @@ impl TemporalState {
                 .adopt_record(retained)
                 .map_err(|_| ReceivedError("Temporal page exceeds native allowance."))?,
         }));
-        self.undo.push(TemporalUndo::PendingAppend { actor_id });
+        self.undo.push(TemporalUndo::PendingAppend {
+            actor_id,
+            tail_before,
+        });
         Ok(Some(batch_encoded_bytes))
     }
 }

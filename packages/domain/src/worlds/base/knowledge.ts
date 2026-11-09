@@ -1091,6 +1091,7 @@ export const BASE_PERSONAL_NAME_RULES = {
   personNoun: 'person',
   unidentified: { name: 'unidentified subject', nameForm: 'count' },
   unidentifiedVoice: 'unidentified voice',
+  unidentifiedIndividual: 'unidentified individual',
   givenNameCharacters: 120,
   nicknameCharacters: NICKNAME_CHARACTERS,
 } as const;
@@ -1276,15 +1277,17 @@ export function subjectLabel(
     (subject.kind === 'entity'
       ? observerDescription(world, observerId, subject.entityId)
       : identity?.voice
-        ? 'unidentified voice'
-        : 'unidentified individual')
+        ? BASE_PERSONAL_NAME_RULES.unidentifiedVoice
+        : BASE_PERSONAL_NAME_RULES.unidentifiedIndividual)
   );
 }
 
-function capturedSubjectLabels(labels: ReadonlyMap<string, string>) {
+export function capturedSubjectLabels(labels: ReadonlyMap<string, string>) {
   return (subject: ObserverSubject): string =>
     labels.get(subjectKey(subject)) ??
-    (subject.kind === 'individual' ? 'unidentified individual' : 'unidentified subject');
+    (subject.kind === 'individual'
+      ? BASE_PERSONAL_NAME_RULES.unidentifiedIndividual
+      : BASE_PERSONAL_NAME_RULES.unidentified.name);
 }
 
 /** Labels are a request's acquired perspective, not a later lookup of the same

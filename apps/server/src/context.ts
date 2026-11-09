@@ -1,4 +1,5 @@
 import { nativeText, decisionOfferDescription, selectedOccurrenceRules } from '@open-legend/domain';
+import { formatCandidateDetails, formatCandidateTemporary } from './candidate-description.js';
 import { entityHandle, permittedSourceHandle } from './entity-references.js';
 import { memoryForModel, acceptedMindForModel, eventFieldsForModel } from './experience-context.js';
 import {
@@ -171,19 +172,9 @@ function describeTargets(
       ...candidate,
       transition: candidate.transition ?? suggestedWorkTransition(command),
     };
-    if (entityGet(service.world.entities, actorId)?.actor?.action && command)
-      candidate.description +=
-        candidate.transition === 'replace'
-          ? ' Choosing this replaces my current work; spent materials and committed effects remain.'
-          : candidate.transition === 'interrupt'
-            ? ' Choosing this pauses the supported current plan; its unfinished step restarts later.'
-            : candidate.transition === 'enqueue'
-              ? ' Choosing this queues it after my current work.'
-              : ' This choice keeps my current work.';
     const id = command && 'targetId' in command ? command.targetId : undefined;
     const consequence =
       command && knownCeasefireConsequence(service.world, actorId, command.type, id);
-    if (consequence) candidate.description += ' ' + consequence;
     const candidateTarget = id ? entityGet(service.world.entities, id) : undefined;
     const target =
       candidateTarget &&
@@ -202,12 +193,26 @@ function describeTargets(
     const position = target && positions.get(target.id);
     // Descriptions already use permitted names where they are constructed.
     // Substring replacement here would corrupt personal names and their articles.
-    return target && position
-      ? {
-          ...candidate,
-          description: `${candidate.description} Target: ${observerDescription(service.world, actorId, target.id)}.${health.get(target.id) ? ` Last observed ${health.get(target.id)}` : ''} Distance to the observed position: ${Math.hypot(origin.x - position.x, origin.y - position.y, origin.z - position.z).toFixed(1)} m. Route length is not known.`,
-        }
-      : candidate;
+    return {
+      ...candidate,
+      description: formatCandidateDetails(
+        candidate.description,
+        candidate.transition!,
+        !!(entityGet(service.world.entities, actorId)?.actor?.action && command),
+        consequence || undefined,
+        target && position
+          ? {
+              description: observerDescription(service.world, actorId, target.id),
+              health: health.get(target.id) ?? '',
+              distance: Math.hypot(
+                origin.x - position.x,
+                origin.y - position.y,
+                origin.z - position.z,
+              ),
+            }
+          : undefined,
+      ),
+    };
   });
 }
 
@@ -580,7 +585,7 @@ export function npcCandidates(
           return blocker
             ? {
                 ...candidate,
-                description: `${candidate.description} Temporarily unavailable: ${blocker.message}${blocker.nextAt !== undefined ? ` Recovery ends at game time ${blocker.nextAt}.` : ''}`,
+                description: formatCandidateTemporary(candidate.description, blocker),
               }
             : candidate;
         }),
@@ -630,8 +635,7 @@ export function npcCandidates(
       ? [
           {
             id: 'inspect-activities',
-            description:
-              'Inspect a page of my own past actions, results and learned activities. This does not perform them again.',
+            ...decisionOfferDescription({ kind: 'activities' }),
             command: { type: 'inspect-activities' as const, historyAfter: -1 },
           },
         ]
@@ -829,7 +833,7 @@ export function npcCandidates(
   const followTargets = observed.visibleEntities.filter((e) => e.actor?.alive && e.id !== actorId);
   for (const target of coverage === 'complete-physical'
     ? followTargets
-    : followTargets.slice(0, 4)) {
+    : followTargets.slice(0, offerRules.followSuggestions)) {
     const command: CommandInput = { type: 'follow', targetId: target.id };
     if (previewChoice(command).ok)
       actions.push({
@@ -1231,10 +1235,17 @@ export function npcCandidates(
             : `${definition.label}.`;
         actions.push({
           id: `${definition.id}:${definition.weaponItemId ?? 'unarmed'}:${entity.id}`,
-          firstActionDescription: definition.weaponItemId
-            ? selectedStrike.label
-            : `${definition.label} ${namePhrase(entity, 'definite')}`,
-          description: `${equipmentText}${attackText} ${toolText} ${describeAttack(definition)}`,
+          ...(!definition.weaponItemId
+            ? decisionOfferDescription({
+                kind: 'natural-strike',
+                target: entity,
+                definition,
+                hunting: !!description,
+              })
+            : {
+                firstActionDescription: selectedStrike.label,
+                description: `${equipmentText}${attackText} ${toolText} ${describeAttack(definition)}`,
+              }),
           command,
         });
       }

@@ -182,3 +182,131 @@ heap_record!(StatusEffectPolicy {
     definitions
 });
 heap_record!(CompiledStatusWork { pin });
+
+use crate::host::{ByteBudget, ResidentReservation};
+use crate::install::{CanonicalInput, InstallError, reserve_typed_parse};
+use std::mem::size_of;
+
+/// The complete immutable typed policy owns its allocation admission. The
+/// canonical input serves verification and work pins only, so no unused copy
+/// of that input survives the consuming installer.
+pub(crate) struct InstalledStatusPolicy {
+    value: StatusEffectPolicy,
+    _storage: ResidentReservation,
+}
+impl std::ops::Deref for InstalledStatusPolicy {
+    type Target = StatusEffectPolicy;
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+impl Serialize for InstalledStatusPolicy {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.value.serialize(serializer)
+    }
+}
+fn policy_workspace(
+    source: &str,
+    budget: &ByteBudget,
+) -> Result<crate::host::ByteReservation, InstallError> {
+    // The contribution field is immutable JSON even when its live family is
+    // excluded; its vectors/maps need their actual carrier as well.
+    reserve_typed_parse::<StatusEffectPolicy>(
+        source,
+        size_of::<StatusDefinition>().max(size_of::<serde_json::Value>()),
+        Some(
+            size_of::<(usize, String, f64)>().max(size_of::<(usize, String, serde_json::Value)>()),
+        ),
+        budget,
+    )
+}
+impl InstalledStatusPolicy {
+    pub(crate) fn parse_verified(
+        source: &str,
+        canonical: &CanonicalInput,
+        budget: &ByteBudget,
+    ) -> Result<Self, InstallError> {
+        let mut storage = policy_workspace(source, budget)?;
+        let value: StatusEffectPolicy =
+            serde_json::from_str(source).map_err(|_| InstallError::CurrentFormat)?;
+        let verification = policy_workspace(&canonical.canonical, budget)?;
+        canonical.verify(&value)?;
+        drop(verification);
+        storage
+            .resize(value.heap_bytes().ok_or(InstallError::Capacity)?)
+            .map_err(|_| InstallError::Capacity)?;
+        let storage = budget
+            .adopt_record(storage)
+            .map_err(|_| InstallError::Capacity)?;
+        Ok(Self {
+            value,
+            _storage: storage,
+        })
+    }
+}
+
+impl StatusCapabilities {
+    pub fn compile(policy: &StatusEffectPolicy, budget: &ByteBudget) -> Result<Self, InstallError> {
+        use crate::host::retained_size::map_storage;
+        let mut edges = 0usize;
+        let mut names = 0usize;
+        for definition in &policy.definitions {
+            for operation in &definition.while_active {
+                if let StatusOperation::Restrict {
+                    restrict_capabilities,
+                } = operation
+                {
+                    for capability in &restrict_capabilities.capabilities {
+                        edges = edges.checked_add(1).ok_or(InstallError::Capacity)?;
+                        names = heap_sum([names, capability.len(), definition.id.len()])
+                            .ok_or(InstallError::Capacity)?;
+                    }
+                }
+            }
+        }
+        let bound = heap_sum([
+            map_storage::<String, Vec<String>>(if edges == 0 {
+                0
+            } else {
+                edges
+                    .checked_mul(2)
+                    .and_then(|n| n.checked_add(4))
+                    .ok_or(InstallError::Capacity)?
+            })
+            .ok_or(InstallError::Capacity)?,
+            edges
+                .checked_mul(4 * size_of::<String>())
+                .ok_or(InstallError::Capacity)?,
+            names.checked_mul(2).ok_or(InstallError::Capacity)?,
+        ])
+        .ok_or(InstallError::Capacity)?;
+        let mut storage = budget.reserve(bound).map_err(|_| InstallError::Capacity)?;
+        let mut restrictions: IndexMap<String, Vec<String>> = IndexMap::with_capacity(edges);
+        for definition in &policy.definitions {
+            for operation in &definition.while_active {
+                if let StatusOperation::Restrict {
+                    restrict_capabilities,
+                } = operation
+                {
+                    for capability in &restrict_capabilities.capabilities {
+                        let ids = restrictions.entry(capability.clone()).or_default();
+                        if !ids.contains(&definition.id) {
+                            ids.push(definition.id.clone());
+                        }
+                    }
+                }
+            }
+        }
+        storage
+            .resize(restrictions.heap_bytes().ok_or(InstallError::Capacity)?)
+            .map_err(|_| InstallError::Capacity)?;
+        Ok(Self {
+            restrictions,
+            _storage: budget
+                .adopt_record(storage)
+                .map_err(|_| InstallError::Capacity)?,
+        })
+    }
+}
+
+crate::install::definition_layout!(AttributeDefinition; arrays [String, ConditionBand, StatusCondition]; maps []);

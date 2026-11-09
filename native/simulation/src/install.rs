@@ -50,7 +50,7 @@ mod physical;
 pub(crate) mod rows;
 mod typed_parse;
 pub(crate) use physical::*;
-pub(crate) use typed_parse::reserve_typed_parse;
+pub(crate) use typed_parse::{DefinitionAllocation, definition_layout, reserve_typed_parse};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum InstallError {
@@ -164,14 +164,20 @@ pub struct VerifiedDefinition<T> {
     canonical: Arc<str>,
     source: Arc<str>,
     value: T,
+    _storage: crate::host::ResidentReservation,
 }
 
 impl DefinitionInput {
     /// `expected` is the complete typed definition consumed from the actual
     /// installed world record. A small content label alone is never equality.
-    pub fn verify<T>(self, expected: T) -> Result<VerifiedDefinition<T>, InstallError>
+    pub fn verify<T>(
+        self,
+        expected: T,
+        construction: &mut crate::host::ByteReservation,
+        budget: &crate::host::ByteBudget,
+    ) -> Result<VerifiedDefinition<T>, InstallError>
     where
-        T: DefinitionIdentity + DeserializeOwned + PartialEq,
+        T: DefinitionIdentity + DeserializeOwned + PartialEq + DefinitionAllocation,
     {
         if !self.pin.is_valid()
             || self.pin.id != expected.definition_id()
@@ -180,13 +186,36 @@ impl DefinitionInput {
         {
             return Err(InstallError::DefinitionPin);
         }
-        let decoded: T =
-            serde_json::from_str(&self.canonical).map_err(|_| InstallError::DefinitionBody)?;
-        let source: T =
-            serde_json::from_str(&self.source).map_err(|_| InstallError::DefinitionBody)?;
-        if decoded != expected || source != expected {
-            return Err(InstallError::DefinitionBody);
+        for encoded in [&self.canonical, &self.source] {
+            let _parse = reserve_typed_parse::<T>(
+                encoded,
+                T::array_item_bytes(),
+                T::map_entry_bytes(),
+                budget,
+            )?;
+            let decoded: T =
+                serde_json::from_str(encoded).map_err(|_| InstallError::DefinitionBody)?;
+            if decoded != expected {
+                return Err(InstallError::DefinitionBody);
+            }
         }
+        use crate::host::retained_size::{HeapBytes, heap_sum};
+        let bytes = heap_sum([
+            self.pin.heap_bytes().ok_or(InstallError::Capacity)?,
+            expected.heap_bytes().ok_or(InstallError::Capacity)?,
+            self.canonical.len(),
+            self.source.len(),
+            // The value/pin/Arc pointers live inside their funded parent. Each
+            // encoded body has its own actual shared Arc<str> allocation.
+            4 * std::mem::size_of::<usize>(),
+        ])
+        .ok_or(InstallError::Capacity)?;
+        let storage = construction
+            .split_off(bytes)
+            .map_err(|_| InstallError::Capacity)?;
+        let storage = budget
+            .adopt_record(storage)
+            .map_err(|_| InstallError::Capacity)?;
         Ok(VerifiedDefinition {
             pin: self.pin,
             canonical: Arc::from(self.canonical),
@@ -195,6 +224,7 @@ impl DefinitionInput {
             // record retains its own declared enumeration order; validating its
             // canonical content must not replace that order with sorted keys.
             value: expected,
+            _storage: storage,
         })
     }
 }
@@ -212,10 +242,6 @@ impl<T> VerifiedDefinition<T> {
     pub fn value(&self) -> &T {
         &self.value
     }
-    pub fn into_value(self) -> T {
-        self.value
-    }
-
     pub fn same_content(&self, other: &Self) -> bool {
         self.pin == other.pin && self.canonical == other.canonical && self.source == other.source
     }

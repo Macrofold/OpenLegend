@@ -45,7 +45,7 @@ pub(crate) struct CompletedActivityDisplay {
     reservation: ByteReservation,
 }
 impl CompletedActivityDisplay {
-    pub(super) fn into_view(
+    pub(crate) fn into_view(
         self,
         command: &NativeCommand,
     ) -> Result<(ActivityView, ByteReservation), ExecutionError> {

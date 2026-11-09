@@ -33,6 +33,7 @@ import {
 } from '@open-legend/domain';
 import { outingContext } from './outing-view.js';
 import { remainingActivityText, learnedActivityCandidates } from './activity-context.js';
+import { formatPausedWork, formatDecisionWorkHandling } from './decision-work-context.js';
 import { MemoryReadCache, type CognitionPreparation } from './memory-repository.js';
 import { decisionObservation } from './decision-observation.js';
 import {
@@ -392,32 +393,25 @@ function decisionActionCandidates(
 /** Paused work is part of the actor's own intentions: it resumes when current work ends. */
 function pausedWorkText(world: import('@open-legend/domain').WorldState, actorId: string) {
   const paused = entityGet(world.entities, actorId)?.actor?.agency.suspended;
-  if (!paused) return null;
-  return `Earlier work is paused. ${remainingActivityText(world, actorId, paused)} It resumes, after rechecking its targets, when my current work ends. An explicitly offered return checks its remaining first action before ending the intervention and retains its original limits. Ordinary stopping or replacement discards paused work.`;
+  return formatPausedWork(paused ? remainingActivityText(world, actorId, paused) : null);
 }
 
 function workTransitionContext(world: import('@open-legend/domain').WorldState, actorId: string) {
   return (['continue', 'replace', 'interrupt'] as const).map((mode) => {
     const work = prospectiveWork(world, actorId, mode);
-    if ('ok' in work) return { handling: mode, available: false, reason: work.message };
-    return {
+    if ('ok' in work)
+      return formatDecisionWorkHandling({ handling: mode, unavailable: work.message });
+    return formatDecisionWorkHandling({
       handling: mode,
-      available: work.outcome.ok,
-      explanation: work.outcome.message,
-      lostGameSecondsOfWork: work.lostWorkSeconds,
-      spentMaterialsNotRefunded: work.spentInputs.map((input) => ({
+      outcome: work.outcome,
+      lostWorkSeconds: work.lostWorkSeconds,
+      spentInputs: work.spentInputs.map((input) => ({
         material: world.itemDefinitions[input.definitionId]?.name ?? 'Unknown material',
         quantity: input.quantity,
       })),
-      pausedWork:
-        work.pausedWork === 'discarded'
-          ? 'Earlier paused work is discarded.'
-          : work.pausedWork === 'restart-current-step'
-            ? 'Current unfinished step restarts when resumed.'
-            : 'Earlier paused work is unchanged.',
-      combatRecoveryUntilGameTime: work.recovery.combatUntil,
-      evasionRecoveryUntilGameTime: work.recovery.evadeUntil,
-    };
+      pausedWork: work.pausedWork,
+      recovery: work.recovery,
+    });
   });
 }
 

@@ -790,3 +790,14 @@ impl HeapBytes for ReceivedValueFragment {
         }
     }
 }
+
+impl HeapBytes for SenseDefinition {
+    fn heap_bytes(&self) -> Option<usize> {
+        match self {
+            Self::VisionGeometry { id, .. }
+            | Self::BodyContact { id, .. }
+            | Self::HearingDb { id, .. } => id.heap_bytes(),
+        }
+    }
+}
+crate::install::definition_layout!(SenseDefinition; arrays []; maps []);

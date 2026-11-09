@@ -58,7 +58,7 @@ export interface CapturedExperienceContext {
 export type ExperiencePresentation = WorldState | CapturedExperienceContext;
 
 /** Visit the already admitted finite DTO, not the actor's entire identity/history catalogue. */
-function presentationSubjects(values: readonly unknown[]): ObserverSubject[] {
+export function presentationSubjects(values: readonly unknown[]): ObserverSubject[] {
   const subjects: ObserverSubject[] = [],
     seen = new WeakSet<object>();
   const visit = (value: unknown): void => {

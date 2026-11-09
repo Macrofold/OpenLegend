@@ -258,13 +258,22 @@ pub struct InstalledWorkPolicy {
     canonical: Arc<str>,
     sha256: String,
     value: WorkPolicy,
+    _storage: crate::host::ResidentReservation,
 }
 impl InstalledWorkPolicy {
     pub fn verify(
         canonical: String,
         sha256: String,
         expected: WorkPolicy,
+        budget: &crate::host::ByteBudget,
     ) -> Result<Self, WorkError> {
+        let mut workspace = crate::install::reserve_typed_parse::<WorkPolicy>(
+            &canonical,
+            std::mem::size_of::<String>(),
+            None,
+            budget,
+        )
+        .map_err(|_| WorkError::Capacity)?;
         let decoded: WorkPolicy =
             serde_json::from_str(&canonical).map_err(|_| WorkError::InvalidPolicy)?;
         if sha256_hex(canonical.as_bytes()) != sha256
@@ -277,10 +286,27 @@ impl InstalledWorkPolicy {
         for limit in [decoded.group, decoded.actor, decoded.module, decoded.world] {
             require_work(WorkVector::default(), limit, false)?;
         }
+        let bytes = crate::host::retained_size::heap_sum([
+            std::mem::size_of::<Self>()
+                + 2 * std::mem::size_of::<usize>()
+                + std::mem::align_of::<Self>()
+                - 1,
+            canonical.len() + 2 * std::mem::size_of::<usize>(),
+            sha256.capacity(),
+            decoded.version.capacity(),
+        ])
+        .ok_or(WorkError::Capacity)?;
+        let storage = workspace
+            .split_off(bytes)
+            .map_err(|_| WorkError::Capacity)?;
+        let storage = budget
+            .adopt_record(storage)
+            .map_err(|_| WorkError::Capacity)?;
         Ok(Self {
             canonical: Arc::from(canonical),
             sha256,
             value: decoded,
+            _storage: storage,
         })
     }
     pub fn canonical(&self) -> &str {

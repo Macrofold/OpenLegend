@@ -257,6 +257,7 @@ export interface NativeCurrentWorldInstallation {
   readonly acceptedCut: number;
   readonly historyEventCount: number;
   readonly memoryAllowance: Readonly<DerivedMemoryAllowance>;
+  readonly workAllocation: import('@open-legend/domain').WorkVector;
 }
 
 export interface JobRecord extends AiJobView {

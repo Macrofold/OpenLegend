@@ -7206,6 +7206,8 @@ export function validateSensoryFacet(
 
 export {
   captureCurrentSources,
+  captureCurrentSourcesFromRead,
   captureCurrentSource,
   type CapturedCurrentSources,
+  type CurrentCaptureRead,
 } from './perception-capture.js';

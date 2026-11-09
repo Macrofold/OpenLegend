@@ -235,7 +235,12 @@ export { canonicalJson, isConversationEvent } from './events.js';
 
 export * from './knowledge.js';
 export * from './worlds/base/knowledge.js';
-export { BASE_HUNTING, huntingDescription, observedBodyHealth } from './worlds/base/hunting.js';
+export {
+  BASE_HUNTING,
+  huntingDescription,
+  observedBodyHealth,
+  formatObservedBodyHealth,
+} from './worlds/base/hunting.js';
 export * from './handover.js';
 export { BASE_HANDOVER } from './worlds/base/handover.js';
 export {
