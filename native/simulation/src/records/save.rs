@@ -437,6 +437,12 @@ impl SaveJournal {
     pub(crate) fn durable_revision(&self) -> u64 {
         self.durable_revision
     }
+    pub(crate) fn barrier_complete(&self) -> bool {
+        self.pending_append.is_none()
+            && self.in_flight.is_none()
+            && self.durable_identity_through == self.identity_through
+            && self.suffix.rows == 0
+    }
     pub(crate) fn durable_identity_through(&self) -> u64 {
         self.durable_identity_through
     }

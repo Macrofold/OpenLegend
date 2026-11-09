@@ -514,6 +514,9 @@ impl AdvanceDriver {
     pub(crate) fn pending(&self) -> Option<&Arc<ProviderQuestion>> {
         self.pending.as_ref().map(|(question, _)| question)
     }
+    pub(crate) fn finished(&self) -> bool {
+        self.done
+    }
     pub(crate) fn abort(&mut self, core: &mut CoreMutation<'_>) -> Result<(), DriveError> {
         self.cursor.abort(core)?;
         self.pending = None;
