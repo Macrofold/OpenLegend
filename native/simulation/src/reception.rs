@@ -54,10 +54,12 @@ pub use capture::*;
 mod acquisition;
 pub(crate) use acquisition::*;
 mod attention_control;
+mod measurement;
+pub(crate) use measurement::{ContactMeasurements, MeasurementWork, next_perception_work_at};
 mod current_journal;
 pub(crate) use attention_control::{
-    AttentionSelection, AttentionUpdate, evaluate_attention_relations, prune_withdrawn_attention,
-    update_attention,
+    AttentionSelection, AttentionUpdate, evaluate_attention_relations, next_attention_work_at,
+    prune_withdrawn_attention, update_attention,
 };
 mod cohort;
 pub(crate) use cohort::{

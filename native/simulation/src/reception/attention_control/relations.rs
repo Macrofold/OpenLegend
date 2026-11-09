@@ -19,7 +19,7 @@ struct Opportunity {
     families: IndexMap<String, IndexSet<AttentionRelationFamily>>,
     candidates: u64,
 }
-fn elapsed_deadline(start: f64, seconds: f64) -> f64 {
+pub(super) fn elapsed_deadline(start: f64, seconds: f64) -> f64 {
     let mut at = start + seconds;
     while at - start < seconds {
         at += (at.abs() * f64::EPSILON).max(f64::from_bits(1));

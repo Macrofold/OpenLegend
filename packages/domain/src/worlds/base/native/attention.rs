@@ -70,6 +70,23 @@ pub(crate) enum MovementRecordingPhase {
     Result,
 }
 impl<'a> AccountLaw<'a> {
+    /// An existing individual's credit deadline requests contact only while
+    /// it is later than the body's held confirmation. It grants no new sample.
+    pub(crate) fn attention_contact_at(
+        &self,
+        reception: &crate::reception::ReceptionState,
+        observer: &str,
+        individual: &str,
+        confirmed_through: f64,
+    ) -> Option<f64> {
+        let identity = reception
+            .observer_identities
+            .as_ref()?
+            .get(observer)?
+            .get(individual)?;
+        let at = identity.familiarity.as_ref()?.next_credit_at?;
+        (identity.seed_only != Some(true) && at > confirmed_through).then_some(at)
+    }
     pub(crate) fn attention_contact_due(
         &self,
         reception: &crate::reception::ReceptionState,
