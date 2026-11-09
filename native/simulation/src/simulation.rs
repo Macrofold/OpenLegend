@@ -23,6 +23,8 @@ mod read;
 pub(crate) use read::{AcceptedActorRead, ActorReadError};
 mod save;
 pub(crate) use save::{encode_candidate_changes, encode_root_changes};
+mod publication;
+pub(crate) use publication::{PreparedPublication, PublicationError};
 
 /// Immutable selected definitions. Their exact source canonical bodies remain
 /// with their typed meanings; a digest is never used as content equality.

@@ -98,6 +98,10 @@ pub struct PendingTemporalPage {
     from_at: f64,
     through_at: f64,
     batch_encoded_bytes: u64,
+    // Canonical history and detached page captures can outlive candidate undo.
+    // The last actual page owner releases its admitted storage, not acceptance
+    // or an unrelated/older database acknowledgement.
+    _reservation: ByteReservation,
 }
 
 impl PendingTemporalPage {
@@ -379,8 +383,8 @@ impl TemporalState {
             .entry_bytes
             .checked_sub(rich_bytes)
             .ok_or(ReceivedError("Temporal block encoded charge underflow."))?;
-        // Flush empties the builder. Its scratch cannot keep this new retained
-        // batch funded through the remaining private candidate and rollback.
+        // Flush empties the builder. Transfer its funded storage to the actual
+        // retained page, through private rollback and accepted residency alike.
         let allocation = heap_sum([
             std::mem::size_of::<PendingTemporalPage>(),
             std::mem::size_of::<ReceivedBatch>(),
@@ -420,7 +424,7 @@ impl TemporalState {
             header.bytes > policy.max_bytes || header.count > policy.max_changes;
         let actor_id = batch.actor_id.clone();
         self.undo
-            .try_reserve(3)
+            .try_reserve(2)
             .map_err(|_| ReceivedError("Temporal undo reservation failed."))?;
         self.actors
             .get_mut(&actor_id)
@@ -439,8 +443,8 @@ impl TemporalState {
             from_at,
             through_at,
             batch_encoded_bytes,
+            _reservation: retained,
         }));
-        self.undo.push(TemporalUndo::Reservation(retained));
         self.undo.push(TemporalUndo::PendingAppend { actor_id });
         Ok(Some(batch_encoded_bytes))
     }

@@ -124,6 +124,18 @@ impl CandidateFence {
         self.transition(key.id, CandidatePhase::Preparing, CandidatePhase::Ready)
     }
 
+    pub(crate) fn validate_phase(
+        &self,
+        key: CandidateKey,
+        expected: CandidatePhase,
+    ) -> Result<(), FenceError> {
+        self.check_bindings(key)?;
+        if self.token.load(Ordering::Acquire) != token(key.id, expected) {
+            return Err(FenceError::NotReady);
+        }
+        Ok(())
+    }
+
     /// The application rechecks current input/authority and reserved output/save
     /// capacity immediately before this synchronous constant-size exchange.
     pub fn settle(&self, key: CandidateKey, accept: bool) -> Result<Settlement, FenceError> {

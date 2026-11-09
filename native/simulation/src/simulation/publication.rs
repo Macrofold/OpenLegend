@@ -1,0 +1,178 @@
+//! One preflight for the accepted record ledger, accumulating save and undo
+//! release. Host input/permission and live-work reservations remain independent
+//! gates: preparing this private product alone never exposes a Ready candidate.
+use super::{SimulationState, encode_candidate_changes};
+use crate::administration::InstalledHostSettings;
+use crate::execution::{CandidateJournal, ExecutionError, PreparedJournalRelease};
+use crate::host::{
+    AcceptedCandidate, ByteBudget, ByteReservation, CandidateFence, CandidateKey, CandidatePhase,
+    FenceError,
+};
+use crate::records::save::{PreparedSaveAppend, SaveError, SaveJournal};
+use crate::records::{PreparedRecordLedger, RecordEncodingError};
+use crate::values::WorkVector;
+use std::sync::Arc;
+
+#[derive(Debug)]
+pub(crate) enum PublicationError {
+    Execution(ExecutionError),
+    Records(RecordEncodingError),
+    Save(SaveError),
+    Fence(FenceError),
+}
+impl From<ExecutionError> for PublicationError {
+    fn from(error: ExecutionError) -> Self {
+        Self::Execution(error)
+    }
+}
+impl From<RecordEncodingError> for PublicationError {
+    fn from(error: RecordEncodingError) -> Self {
+        Self::Records(error)
+    }
+}
+impl From<SaveError> for PublicationError {
+    fn from(error: SaveError) -> Self {
+        Self::Save(error)
+    }
+}
+impl From<FenceError> for PublicationError {
+    fn from(error: FenceError) -> Self {
+        Self::Fence(error)
+    }
+}
+
+pub(crate) struct PreparedPublication {
+    key: CandidateKey,
+    fence: Arc<CandidateFence>,
+    release: PreparedJournalRelease,
+    ledger: PreparedRecordLedger,
+    append: PreparedSaveAppend,
+    allocation: WorkVector,
+    _reservation: ByteReservation,
+}
+impl PreparedPublication {
+    pub(crate) fn prepare(
+        state: &mut SimulationState,
+        journal: &CandidateJournal,
+        save: &mut SaveJournal,
+        fence: &Arc<CandidateFence>,
+        key: CandidateKey,
+        host: &InstalledHostSettings,
+        write_host: bool,
+        budget: &ByteBudget,
+    ) -> Result<Self, PublicationError> {
+        let reservation = budget
+            .reserve(std::mem::size_of::<Self>())
+            .map_err(|_| ExecutionError::Capacity)?;
+        fence.validate_phase(key, CandidatePhase::Preparing)?;
+        let release = journal.prepare_release(state, key)?;
+        let allocation = state.work_allocation().map_err(ExecutionError::from)?;
+        let rows = encode_candidate_changes(state, journal, host, write_host, budget)?;
+        let ledger = state
+            .records
+            .prepare_accepted(key, rows.changes(), rows.owners())?;
+        let (changes, owners, rows_guard) = rows.into_parts();
+        // The encoded rows keep their original custody until the accumulating
+        // save has funded and taken the actual bodies. This is the last
+        // fallible preparation, so refusal leaves no pending save admission.
+        let append = save.prepare_append(
+            key,
+            state.physical.identity.next_id(),
+            changes,
+            &state.installed.schema,
+        )?;
+        drop(owners);
+        drop(rows_guard);
+        Ok(Self {
+            key,
+            fence: Arc::clone(fence),
+            release,
+            ledger,
+            append,
+            allocation,
+            _reservation: reservation,
+        })
+    }
+    /// The server reserves this actual native allocation summary through its
+    /// existing HostWork owner, without rebuilding a TypeScript world.
+    pub(crate) fn allocation(&self) -> WorkVector {
+        self.allocation
+    }
+    /// Check exact owners immediately before the separate host fence flips.
+    /// There is no serialization, world traversal or capacity admission here.
+    pub(crate) fn validate(
+        &self,
+        state: &SimulationState,
+        journal: &CandidateJournal,
+        save: &SaveJournal,
+        key: CandidateKey,
+    ) -> Result<(), PublicationError> {
+        if key != self.key {
+            return Err(ExecutionError::InvalidCheckpoint.into());
+        }
+        self.fence.validate_phase(key, CandidatePhase::Preparing)?;
+        self.validate_owners(state, journal, save)
+    }
+    fn validate_owners(
+        &self,
+        state: &SimulationState,
+        journal: &CandidateJournal,
+        save: &SaveJournal,
+    ) -> Result<(), PublicationError> {
+        let key = self.key;
+        journal.validate_release(state, &self.release, key)?;
+        state.records.validate_prepared(&self.ledger, key)?;
+        save.validate_prepared(&self.append)?;
+        Ok(())
+    }
+    /// Rejecting publication only releases its provisional record/save work.
+    /// The writer still owns the journal and must roll the candidate back.
+    pub(crate) fn reject(self, save: &mut SaveJournal) -> Result<(), (PublicationError, Self)> {
+        let phase = self.fence.phase();
+        if !matches!(
+            phase,
+            CandidatePhase::Preparing | CandidatePhase::Rejected | CandidatePhase::RollingBack
+        ) {
+            return Err((FenceError::NotReady.into(), self));
+        }
+        if let Err(error) = self.fence.validate_phase(self.key, phase) {
+            return Err((error.into(), self));
+        }
+        if let Err(error) = save.validate_prepared(&self.append) {
+            return Err((error.into(), self));
+        }
+        save.reject_append(self.append)
+            .expect("validated rejected save admission");
+        Ok(())
+    }
+    /// Only a genuine acceptance receipt advances canonical record metadata and
+    /// the save suffix. The caller seals derived continuation and destroys undo
+    /// before completing the fence; no readers may enter during this phase.
+    pub(crate) fn apply_accepted(
+        self,
+        state: &mut SimulationState,
+        journal: &CandidateJournal,
+        save: &mut SaveJournal,
+    ) -> Result<(PreparedJournalRelease, AcceptedCandidate), (PublicationError, Self)> {
+        // The receipt comes from the same fence retained at preparation, never
+        // from another world's coincidentally equal numeric candidate key.
+        let accepted = match self.fence.accepted_candidate(self.key) {
+            Ok(accepted) => accepted,
+            Err(error) => return Err((error.into(), self)),
+        };
+        if let Err(error) = self.validate_owners(state, journal, save) {
+            return Err((error, self));
+        }
+        // All owner/binding/capacity checks have passed without an intervening
+        // callback. Failure now is an invariant/panic requiring runtime poison,
+        // never rollback of already accepted play or a second admission attempt.
+        save.accept_append(self.append, &accepted)
+            .expect("validated accepted save admission");
+        state
+            .records
+            .apply_accepted(self.ledger, &accepted)
+            .expect("validated accepted record ledger");
+        state.accepted_cut = self.key.base_cut + 1;
+        Ok((self.release, accepted))
+    }
+}

@@ -61,8 +61,10 @@ export function nativeAppendHistoryProjection(input: NativeHistoryInput): Histor
   if (indexed.size !== changed.length) throw new Error('Duplicate native history original.');
   const accounts = new Map<string, Map<string, ReceivedEventAccount>>();
   const cuts = nativeHistoryAccountCuts(input.cuts);
-  const accountCuts = new Map<string, HistoryAccountCut>();
-  const forgotten = new Map<string, ReadonlySet<string>>();
+  // A later accepted cut may retire an earlier pending perspective without
+  // appending an occurrence. Keep every supplied eligibility cut, not just this
+  // packet's audience, so the merged SQL prefix never revives that account.
+  const forgotten = new Map([...cuts].map(([actor, cut]) => [actor, cut.forgotten]));
   const personalText = new Map<string, ReadonlyMap<string, string>>();
   for (const event of changed) {
     accounts.set(event.id, new Map());
@@ -108,12 +110,7 @@ export function nativeAppendHistoryProjection(input: NativeHistoryInput): Histor
   }
   for (const event of changed)
     for (const actor of event.audience) {
-      const cut = cuts.get(actor);
-      if (!cut) throw new Error('Native history is missing an original audience cut.');
-      if (!accountCuts.has(actor)) {
-        accountCuts.set(actor, cut);
-        forgotten.set(actor, cut.forgotten);
-      }
+      if (!cuts.has(actor)) throw new Error('Native history is missing an original audience cut.');
     }
   const policy = (
     input.policyPayload === undefined ? undefined : JSON.parse(input.policyPayload)
@@ -131,7 +128,7 @@ export function nativeAppendHistoryProjection(input: NativeHistoryInput): Histor
     removed: [],
     newEventIds: new Set(indexed.keys()),
     accounts,
-    accountCuts,
+    accountCuts: cuts,
     personalText,
     subjects: new Map(input.subjects.map((subject) => [subject.id, subject])),
     forgotten,

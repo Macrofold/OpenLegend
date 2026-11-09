@@ -193,6 +193,94 @@ export interface HistoryProjection {
   readonly correctedEvents: ReadonlyMap<string, readonly string[]>;
 }
 
+/** Fold successive accepted cuts behind one SQL prefix. Occurrences keep the
+ * personal accounts captured when they were admitted; eligibility follows the
+ * latest supplied actor cut. Neither resident eviction nor a later empty cut
+ * can erase an earlier admitted perspective.
+ * docs/projects/native-simulation-core-tech-design.md#62-direct-changed-record-saving
+ */
+export function mergeHistoryProjection(
+  before: HistoryProjection,
+  after: HistoryProjection,
+): HistoryProjection {
+  if (before.worldId !== after.worldId)
+    throw new Error('Cannot merge history from different worlds.');
+  if (before.initial || after.initial || before.restore || after.restore)
+    throw new Error('Initial and restored history require their own SQL prefix.');
+  const changed = new Map<string, WorldEvent>();
+  const removed = new Set<string>();
+  const newEventIds = new Set<string>();
+  const accounts = new Map<string, ReadonlyMap<string, ReceivedEventAccount>>();
+  const personalText = new Map<string, ReadonlyMap<string, string>>();
+  for (const input of [before, after]) {
+    const incomingIds = new Set<string>();
+    if (input.fastAppend && input.removed.length)
+      throw new Error('Append-only history cannot remove an original.');
+    for (const id of input.removed) {
+      changed.delete(id);
+      removed.add(id);
+      newEventIds.delete(id);
+      accounts.delete(id);
+      personalText.delete(id);
+    }
+    for (const event of input.changed) {
+      if (incomingIds.has(event.id)) throw new Error('Duplicate changed history event identity.');
+      incomingIds.add(event.id);
+      if (input.fastAppend && (!input.newEventIds.has(event.id) || changed.has(event.id)))
+        throw new Error('Append-only history cannot replace an original.');
+      changed.set(event.id, event);
+      removed.delete(event.id);
+      if (input.newEventIds.has(event.id)) newEventIds.add(event.id);
+      const captured = input.accounts.get(event.id);
+      if (captured) accounts.set(event.id, captured);
+      else accounts.delete(event.id);
+      const text = input.personalText.get(event.id);
+      if (text) personalText.set(event.id, text);
+      else personalText.delete(event.id);
+    }
+  }
+  const forgottenChanges = mergeHistoryIds(before.forgottenChanges, after.forgottenChanges);
+  const correctedEvents = mergeHistoryIds(before.correctedEvents, after.correctedEvents);
+  const awarenessChanges = new Map<string, readonly Awareness[]>();
+  for (const input of [before, after])
+    for (const [actor, entries] of input.awarenessChanges) {
+      const selected = new Map(awarenessChanges.get(actor)?.map((entry) => [entry.eventId, entry]));
+      for (const entry of entries) selected.set(entry.eventId, entry);
+      awarenessChanges.set(actor, [...selected.values()]);
+    }
+  return {
+    worldId: after.worldId,
+    initial: false,
+    restore: false,
+    policy: after.policy,
+    policyRevision: after.policyRevision,
+    policyChanged: before.policyChanged || after.policyChanged,
+    principals: after.principals,
+    fastAppend: before.fastAppend && after.fastAppend,
+    changed: [...changed.values()],
+    removed: [...removed],
+    newEventIds,
+    accounts,
+    accountCuts: new Map([...before.accountCuts, ...after.accountCuts]),
+    personalText,
+    subjects: new Map([...before.subjects, ...after.subjects]),
+    forgotten: new Map([...before.forgotten, ...after.forgotten]),
+    forgottenChanges,
+    awarenessChanges,
+    correctedEvents,
+  };
+}
+
+function mergeHistoryIds(
+  before: ReadonlyMap<string, readonly string[]>,
+  after: ReadonlyMap<string, readonly string[]>,
+): ReadonlyMap<string, readonly string[]> {
+  const merged = new Map(before);
+  for (const [actor, ids] of after)
+    merged.set(actor, [...new Set([...(merged.get(actor) ?? []), ...ids])]);
+  return merged;
+}
+
 export function captureHistoryProjection(
   previous: WorldState | undefined,
   world: WorldState,

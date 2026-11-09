@@ -177,9 +177,6 @@ impl SaveJournal {
             return Err(SaveError::Binding);
         }
         schema.validate_changes(&changes)?;
-        if changes.writes.is_empty() && changes.deletes.is_empty() && changes.expired.is_empty() {
-            return Err(SaveError::NoChanges);
-        }
         if let Some(prefix) = &self.in_flight {
             // A certified insert already in flight will be present before this
             // suffix can be saved. A preceding deletion establishes absence.
@@ -198,14 +195,21 @@ impl SaveJournal {
                 }
             }
         }
-        let old = changes_heap(&self.suffix).ok_or(SaveError::Capacity)?;
-        let new = changes_heap(&changes).ok_or(SaveError::Capacity)?;
         // Fold creates temporary ordered key indexes and vectors. Keep a
         // conservative six-copy allowance until those temporaries are freed.
-        let peak = old
-            .checked_add(new)
-            .and_then(|n| n.checked_mul(6))
-            .ok_or(SaveError::Capacity)?;
+        // A coherent accepted call may leave every saved record unchanged.
+        // Advance its publication binding without copying the existing suffix
+        // or manufacturing a SQL write solely to carry that operational cut.
+        let unchanged =
+            changes.writes.is_empty() && changes.deletes.is_empty() && changes.expired.is_empty();
+        let peak = if unchanged {
+            0
+        } else {
+            changes_heap(&self.suffix)
+                .and_then(|old| old.checked_add(changes_heap(&changes)?))
+                .and_then(|n| n.checked_mul(6))
+                .ok_or(SaveError::Capacity)?
+        };
         let reservation = self.budget.reserve(peak).map_err(|_| SaveError::Capacity)?;
         let serial = self
             .next_admission
@@ -259,6 +263,14 @@ impl SaveJournal {
             .pending_append
             .take()
             .expect("validated pending append");
+        if pending.changes.writes.is_empty()
+            && pending.changes.deletes.is_empty()
+            && pending.changes.expired.is_empty()
+        {
+            self.through_cut = pending.through_cut;
+            self.identity_through = pending.identity_through;
+            return Ok(());
+        }
         let peak = pending.reservation.bytes();
         let previous_guard = std::mem::replace(&mut self.suffix_reservation, pending.reservation);
         let previous = std::mem::take(&mut self.suffix);
@@ -285,6 +297,7 @@ impl SaveJournal {
         cut: TemporalSaveCut<'_>,
         limits: crate::received::TemporalSaveLimits,
         schema: &RecordSchema,
+        ledger: &mut super::RecordLedger,
         scratch: &ByteBudget,
     ) -> Result<Arc<SavePrefix>, SaveError> {
         if cut.world_id != self.world_id || cut.generation != self.generation {
@@ -310,52 +323,58 @@ impl SaveJournal {
             schema,
             scratch,
         )?;
-        if pages.changes().rows > 0 {
-            schema.validate_changes(&self.suffix)?;
-            let (pages, _owners, _reservation) = pages.into_parts();
-            let bytes = changes_heap(&self.suffix)
-                .and_then(|bytes| bytes.checked_add(changes_heap(&pages)?))
-                .and_then(|bytes| bytes.checked_mul(6))
-                .ok_or(SaveError::Capacity)?;
-            self.suffix_reservation
-                .resize(bytes)
-                .map_err(|_| SaveError::Capacity)?;
-            let previous = std::mem::take(&mut self.suffix);
-            // Both inputs just passed this same immutable schema. Folding
-            // changes only owned output and cannot fail after this move.
-            self.suffix = merge_changes(previous, pages, schema)
-                .expect("checked current changed-row layouts");
-            self.suffix_reservation
-                .resize(changes_heap(&self.suffix).ok_or(SaveError::Capacity)?)
-                .expect("shrinking an admitted save reservation");
-        }
         if self.suffix.writes.is_empty()
             && self.suffix.deletes.is_empty()
             && self.suffix.expired.is_empty()
+            && pages.changes().rows == 0
         {
             return Err(SaveError::NoChanges);
         }
         if self.next_prefix > MAX_SAFE_INTEGER {
             return Err(SaveError::Binding);
         }
+        schema.validate_changes(&self.suffix)?;
         let fixed = size_of::<SavePrefix>()
             .checked_add(2 * size_of::<usize>())
             .and_then(|n| n.checked_add(self.world_id.len()))
             .and_then(|n| n.checked_add(self.generation.len()))
             .ok_or(SaveError::Capacity)?;
-        let index_bytes = prefix_index_bound(&self.suffix).ok_or(SaveError::Capacity)?;
-        let actual = self
-            .suffix_reservation
-            .bytes()
-            .checked_add(fixed)
-            .and_then(|n| n.checked_add(index_bytes))
+        let old = changes_heap(&self.suffix).ok_or(SaveError::Capacity)?;
+        let new = changes_heap(pages.changes()).ok_or(SaveError::Capacity)?;
+        let index = prefix_index_bound(&self.suffix)
+            .and_then(|n| n.checked_add(prefix_index_bound(pages.changes())?))
             .ok_or(SaveError::Capacity)?;
+        // Fund the complete merge, fixed prefix and its presence index before
+        // moving any accepted suffix. A refused capture must not leave packed
+        // pages behind to be repacked with later gameplay into overlapping rows.
+        let peak = old
+            .checked_add(new)
+            .and_then(|n| n.checked_mul(6))
+            .and_then(|n| n.checked_add(index))
+            .and_then(|n| n.checked_add(fixed))
+            .ok_or(SaveError::Capacity)?;
+        let projection =
+            ledger.prepare_temporal_pages(cut.through_cut, pages.changes(), pages.owners())?;
         self.suffix_reservation
-            .resize(actual)
+            .resize(peak)
             .map_err(|_| SaveError::Capacity)?;
         let replacement = self.budget.reserve(0).map_err(|_| SaveError::Capacity)?;
+        let (pages, owners, pages_guard) = pages.into_parts();
+        let previous = std::mem::take(&mut self.suffix);
+        let changes = merge_changes(previous, pages, schema)
+            .expect("validated immutable save inputs with complete capacity admission");
+        drop(owners);
+        drop(pages_guard);
+        let presence = prefix_index(&changes);
+        let actual = changes_heap(&changes)
+            .and_then(|n| n.checked_add(fixed))
+            .and_then(|n| n.checked_add(prefix_index_bound(&changes)?))
+            .expect("merged save is bounded by its admitted inputs");
+        assert!(actual <= peak, "save prefix exceeded its admitted peak");
+        self.suffix_reservation
+            .resize(actual)
+            .expect("shrinking fully admitted immutable save prefix");
         let reservation = std::mem::replace(&mut self.suffix_reservation, replacement);
-        let presence = prefix_index(&self.suffix);
         let prefix = Arc::new(SavePrefix {
             rows: SaveRows {
                 world_id: self.world_id.clone(),
@@ -364,11 +383,14 @@ impl SaveJournal {
                 base_revision: self.durable_revision,
                 through_cut: self.through_cut,
                 identity_through: self.identity_through,
-                changes: std::mem::take(&mut self.suffix),
+                changes,
             },
             presence,
             _reservation: reservation,
         });
+        ledger
+            .apply_temporal_pages(projection)
+            .expect("validated same-cut temporal save placement metadata");
         self.next_prefix += 1;
         self.in_flight = Some(Arc::clone(&prefix));
         Ok(prefix)

@@ -325,6 +325,23 @@ impl CandidateJournal {
             candidate,
         })
     }
+    pub(crate) fn validate_release(
+        &self,
+        state: &SimulationState,
+        prepared: &PreparedJournalRelease,
+        candidate: CandidateKey,
+    ) -> Result<(), ExecutionError> {
+        self.require_closed_operations()?;
+        if !Arc::ptr_eq(&self.owner, &prepared.owner)
+            || prepared.candidate != candidate
+            || candidate.base_cut != self.base_cut
+            || state.accepted_cut != self.base_cut
+            || !Arc::ptr_eq(&self.installed, &state.installed)
+        {
+            return Err(ExecutionError::InvalidCheckpoint);
+        }
+        Ok(())
+    }
     /// All current buffers remain owned by the accepted canonical state or its
     /// detached products. Destroy before-images and their real backing storage
     /// before releasing this candidate's transient allowance. No SQL ACK occurs.

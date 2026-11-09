@@ -28,17 +28,29 @@ struct OwnerEdit {
     id: String,
     after: OwnerCoverage,
 }
-pub(crate) struct PreparedRecordLedger {
+struct PreparedMetadata {
     world_template: Option<String>,
     host_template: Option<String>,
     identity: Arc<()>,
-    key: CandidateKey,
-    after_cut: u64,
     after_payload: usize,
     after_bytes: usize,
     rows: Vec<RowEdit>,
     owners: Vec<OwnerEdit>,
     reservation: ByteReservation,
+}
+pub(crate) struct PreparedRecordLedger {
+    key: CandidateKey,
+    after_cut: u64,
+    metadata: PreparedMetadata,
+}
+/// Physical page placement is save-layout metadata at the same gameplay cut.
+/// It is intentionally not an accepted-candidate capability or a row body.
+pub(crate) struct PreparedTemporalPageLedger {
+    identity: Arc<()>,
+    accepted_cut: u64,
+    metadata: Option<PreparedMetadata>,
+    next_identity: Option<Arc<()>>,
+    identity_reservation: Option<ByteReservation>,
 }
 fn error() -> RecordEncodingError {
     RecordEncodingError("Accepted record metadata has unavailable binding, placement or capacity.")
@@ -256,6 +268,21 @@ impl RecordLedger {
             .checked_add(1)
             .filter(|cut| *cut <= crate::identity::MAX_SAFE_INTEGER)
             .ok_or_else(error)?;
+        let metadata = self.prepare_metadata(changes, observed)?;
+        Ok(PreparedRecordLedger {
+            key,
+            after_cut,
+            metadata,
+        })
+    }
+    /// Both genuine gameplay acceptance and fixed-cut physical page packing
+    /// stage the same placement/coverage buffers. Capability validation remains
+    /// with their distinct public methods, not a generic mutation interface.
+    fn prepare_metadata(
+        &mut self,
+        changes: &ChangedRows,
+        observed: &[OwnerCoverage],
+    ) -> Result<PreparedMetadata, RecordEncodingError> {
         let count = changes
             .rows
             .checked_add(changes.deletes.values().map(Vec::len).sum::<usize>())
@@ -516,12 +543,10 @@ impl RecordLedger {
                 )
                 .map_err(|_| error())?;
         }
-        Ok(PreparedRecordLedger {
+        Ok(PreparedMetadata {
             world_template,
             host_template,
             identity: self.identity.clone(),
-            key,
-            after_cut,
             after_payload,
             after_bytes,
             rows,
@@ -529,19 +554,33 @@ impl RecordLedger {
             reservation,
         })
     }
+    pub(crate) fn validate_prepared(
+        &self,
+        prepared: &PreparedRecordLedger,
+        key: CandidateKey,
+    ) -> Result<(), RecordEncodingError> {
+        if !Arc::ptr_eq(&self.identity, &prepared.metadata.identity)
+            || prepared.key != key
+            || self.accepted_cut != key.base_cut
+        {
+            return Err(error());
+        }
+        Ok(())
+    }
     /// No allocation or capacity admission occurs after the actual fence
     /// receipt. Its sealed key cannot be manufactured from an intended accept.
     pub(crate) fn apply_accepted(
         &mut self,
         prepared: PreparedRecordLedger,
-        accepted: AcceptedCandidate,
+        accepted: &AcceptedCandidate,
     ) -> Result<(), RecordEncodingError> {
-        if !Arc::ptr_eq(&self.identity, &prepared.identity)
-            || prepared.key != accepted.key()
-            || self.accepted_cut != prepared.key.base_cut
-        {
-            return Err(error());
-        }
+        self.validate_prepared(&prepared, accepted.key())?;
+        let after_cut = prepared.after_cut;
+        self.apply_metadata(prepared.metadata)?;
+        self.accepted_cut = after_cut;
+        Ok(())
+    }
+    fn apply_metadata(&mut self, prepared: PreparedMetadata) -> Result<(), RecordEncodingError> {
         self.reservation
             .merge(prepared.reservation)
             .map_err(|_| error())?;
@@ -573,10 +612,108 @@ impl RecordLedger {
             self.host_settings_template = template;
         }
         self.payload_bytes = prepared.after_payload;
-        self.accepted_cut = prepared.after_cut;
         self.reservation
             .resize(prepared.after_bytes)
             .map_err(|_| error())?;
+        Ok(())
+    }
+}
+
+impl RecordLedger {
+    pub(crate) fn prepare_temporal_pages(
+        &mut self,
+        through_cut: u64,
+        changes: &ChangedRows,
+        observed: &[OwnerCoverage],
+    ) -> Result<PreparedTemporalPageLedger, RecordEncodingError> {
+        const TABLE: &str = "mind_temporal_pages";
+        if through_cut != self.accepted_cut
+            || !changes.deletes.is_empty()
+            || !changes.expired.is_empty()
+            || changes.writes.keys().any(|table| table != TABLE)
+            || observed.iter().any(|owner| owner.table != TABLE)
+        {
+            return Err(error());
+        }
+        let writes = changes.writes.get(TABLE).map(Vec::as_slice).unwrap_or(&[]);
+        // The trusted packer already constructs/validates complete page rows.
+        // This boundary protects only existing ownership and same-cut metadata;
+        // it never re-parses payloads or derives another canonical page layout.
+        for row in writes {
+            if !self
+                .coverage(TABLE, &row.parent)
+                .is_some_and(|owner| owner.parent_present)
+            {
+                return Err(error());
+            }
+        }
+        for owner in observed {
+            let before = self.coverage(TABLE, &owner.owner).ok_or_else(error)?;
+            if owner.complete != before.complete
+                || owner.parent_present != before.parent_present
+                || owner.next_ordinal < before.next_ordinal
+            {
+                return Err(error());
+            }
+        }
+        let metadata = if writes.is_empty() && observed.is_empty() {
+            None
+        } else {
+            Some(self.prepare_metadata(changes, observed)?)
+        };
+        let identity_reservation = if metadata.is_some() {
+            Some(
+                self.budget
+                    .reserve(2 * size_of::<usize>())
+                    .map_err(|_| error())?,
+            )
+        } else {
+            None
+        };
+        let next_identity = metadata.as_ref().map(|_| Arc::new(()));
+        Ok(PreparedTemporalPageLedger {
+            identity: self.identity.clone(),
+            accepted_cut: through_cut,
+            metadata,
+            next_identity,
+            identity_reservation,
+        })
+    }
+    pub(crate) fn validate_temporal_pages(
+        &self,
+        prepared: &PreparedTemporalPageLedger,
+    ) -> Result<(), RecordEncodingError> {
+        if !Arc::ptr_eq(&self.identity, &prepared.identity)
+            || self.accepted_cut != prepared.accepted_cut
+        {
+            return Err(error());
+        }
+        Ok(())
+    }
+    /// The caller applies only after every prefix allocation succeeds. Rotating
+    /// the existing private owner identity rejects a stale same-cut projection;
+    /// no gameplay identity, sequence, randomness, time or accepted cut changes.
+    pub(crate) fn apply_temporal_pages(
+        &mut self,
+        prepared: PreparedTemporalPageLedger,
+    ) -> Result<(), RecordEncodingError> {
+        self.validate_temporal_pages(&prepared)?;
+        let PreparedTemporalPageLedger {
+            identity,
+            metadata,
+            next_identity,
+            identity_reservation,
+            ..
+        } = prepared;
+        if let Some(metadata) = metadata {
+            self.apply_metadata(metadata)?;
+            self.identity =
+                next_identity.expect("nonempty prepared projection owns its replacement identity");
+        }
+        // The canonical ledger's existing identity allowance now owns the new
+        // Arc. Keep the transition guard until its old reference is destroyed.
+        drop(identity);
+        drop(identity_reservation);
         Ok(())
     }
 }
