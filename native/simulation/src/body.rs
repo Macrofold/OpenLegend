@@ -8,7 +8,7 @@ pub(crate) use reincarnation::*;
 mod corpse;
 mod reconcile;
 mod scars;
-pub(crate) use reconcile::{BodyAnswer, BodyReconcileCursor, BodyStep};
+pub(crate) use reconcile::{BodyAnswer, BodyReconcileCursor, BodyStep, reconcile_native_control};
 mod health;
 pub(crate) use health::HealthChangeCursor;
 mod rates;

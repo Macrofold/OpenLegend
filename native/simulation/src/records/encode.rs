@@ -168,6 +168,38 @@ impl<'a> RowEncoder<'a> {
         create: bool,
         effects: RowEffects<'_>,
     ) -> Result<(), RecordEncodingError> {
+        self.write_projected(table, placement, value, extra, create, effects, None)
+    }
+    /// Finite parent headers keep their accepted encoded baseline. Compare the
+    /// actual storage projection, including JavaScript number normalization,
+    /// so an unchanged clock/marker does not become another database write.
+    pub(crate) fn write_if_changed<T: Serialize + ?Sized>(
+        &mut self,
+        table: &str,
+        placement: &RecordPlacement,
+        value: &T,
+        baseline: &str,
+    ) -> Result<(), RecordEncodingError> {
+        self.write_projected(
+            table,
+            placement,
+            value,
+            &[],
+            false,
+            RowEffects::default(),
+            Some(baseline),
+        )
+    }
+    fn write_projected<T: Serialize + ?Sized>(
+        &mut self,
+        table: &str,
+        placement: &RecordPlacement,
+        value: &T,
+        extra: &[SqlCell],
+        create: bool,
+        effects: RowEffects<'_>,
+        baseline: Option<&str>,
+    ) -> Result<(), RecordEncodingError> {
         let layout = self.schema.layout(table)?;
         let bytes = layout
             .project_len(value)
@@ -176,11 +208,17 @@ impl<'a> RowEncoder<'a> {
             .checked_mul(2)
             .map(|bytes| bytes.max(8))
             .ok_or_else(error)?;
+        let before = self.reservation.bytes();
         self.reserve(self.row_bound(table, placement, encoded, extra, &effects)?)?;
         let payload =
             self.schema.layout(table)?.project(value).map_err(|_| {
                 RecordEncodingError("Canonical row requires its actual storage codec.")
             })?;
+        if baseline == Some(payload.as_str()) {
+            drop(payload);
+            self.reservation.resize(before).map_err(|_| error())?;
+            return Ok(());
+        }
         self.insert(table, placement, payload, extra, create, effects)
     }
     pub(crate) fn delete(

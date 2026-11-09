@@ -9,6 +9,8 @@ mod advance;
 pub(crate) use advance::{MoveAdvanceAnswer, MoveAdvanceCursor, MoveAdvanceStep};
 mod execution;
 pub(crate) use execution::{MotionOperation, MotionStep};
+mod clearance;
+pub(crate) use clearance::{CompletedPathClearance, PathClearanceCursor, PathClearanceStep};
 
 const BODY_CELL_SIZE: f64 = 8.0;
 

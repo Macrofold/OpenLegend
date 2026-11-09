@@ -555,7 +555,10 @@ impl BodyReconcileCursor {
     }
 }
 
-fn reconcile_native_control(core: &mut CoreMutation<'_>, id: &str) -> Result<(), ExecutionError> {
+pub(crate) fn reconcile_native_control(
+    core: &mut CoreMutation<'_>,
+    id: &str,
+) -> Result<(), ExecutionError> {
     let installed = core.state.installed.clone();
     let entity = core
         .state

@@ -19,6 +19,11 @@ mod ground;
 pub(crate) use ground::{GroundTurn, ground_turn, proposal_current};
 mod movement;
 pub(crate) use movement::complete_movement;
+mod response;
+mod search;
+pub(crate) use response::{
+    CompletedGroundResponse, GroundResponseCursor, GroundResponseDecision, GroundResponseStep,
+};
 
 /// The ordinary animal turn alone creates this saved search. Geometry resumes
 /// may fill its current candidate but never redraw its bearing, distance or side.

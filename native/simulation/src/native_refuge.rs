@@ -9,6 +9,8 @@ use crate::work::{WorkError, WorkMeters, WorkUnit};
 
 mod candidate;
 pub(crate) use candidate::RefugeCandidateBatch;
+mod navigation;
+pub(crate) use navigation::{PendingRefugeNavigation, PreparedRefugeNavigation};
 
 pub struct RefugeRoute {
     pub candidate: RefugeCandidate,

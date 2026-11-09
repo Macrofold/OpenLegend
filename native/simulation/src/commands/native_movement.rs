@@ -32,6 +32,61 @@ struct MovementInput<'a> {
     kind: &'static str,
     destination: &'a SurfacePoint,
 }
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct StopInput<'a> {
+    id: &'a str,
+    actor_id: &'a str,
+    #[serde(rename = "type")]
+    kind: &'static str,
+}
+
+pub(crate) fn begin_native_stop(
+    core: &mut CoreMutation<'_>,
+    actor_id: &str,
+    candidate: CandidateKey,
+    budget: &ByteBudget,
+) -> Result<CommandOperation, CommandOperationError> {
+    let _scratch = budget.reserve((actor_id.len() + 64) * 12 + size_of::<NativeCommand>())?;
+    let id = format!("native-stop-{}", core.state.physical.identity.next_id());
+    let input = StopInput {
+        id: &id,
+        actor_id,
+        kind: "cancel",
+    };
+    let bytes = json_record_len(&input).map_err(|_| ExecutionError::Invariant)?;
+    let _encoded = budget.reserve(bytes.checked_mul(8).ok_or(ExecutionError::Capacity)?)?;
+    let encoded = json_record(&input).map_err(|_| ExecutionError::Invariant)?;
+    let command = NativeCommand::Cancel {
+        expected_action_id: None,
+        envelope: CommandEnvelope {
+            encoding: CommandEncoding::decode(&encoded).map_err(|_| ExecutionError::Invariant)?,
+            id,
+            actor_id: actor_id.into(),
+            cooperation: None,
+            combat_help_id: None,
+            human_initiated: None,
+            purpose: None,
+            chosen_purpose: None,
+        },
+    };
+    let geometry = GeometryBinding::new(
+        candidate,
+        core.state.installed.geometry.spatial.revision,
+        core.journal.next_provider_serial()?,
+    );
+    let cursor = CommandCursor::new(
+        command,
+        encoded,
+        CommandOptions {
+            native_controller: true,
+            native_movement: None,
+        },
+        geometry,
+        budget,
+    )?;
+    CommandOperation::from_cursor(core, cursor, candidate, budget)
+}
 pub(crate) fn begin_native_movement(
     core: &mut CoreMutation<'_>,
     actor_id: &str,

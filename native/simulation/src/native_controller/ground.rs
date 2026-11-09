@@ -13,10 +13,14 @@ pub(crate) enum GroundTurn {
     None,
     /// The private turn seeded a proposal and must resolve its actual ordered
     /// support probes before it can ask for a route or become ready.
-    Candidate,
+    Candidate {
+        stop_on_failure: bool,
+    },
     /// An existing saved proposal is current. A native host may prepare it
     /// asynchronously under its entity-local source binding, not a world-cut veto.
-    Route,
+    Route {
+        stop_on_failure: bool,
+    },
 }
 
 pub(crate) fn proposal_current(
@@ -62,6 +66,66 @@ pub(crate) fn proposal_current(
         && body.max_slope == proposal.body.max_slope)
 }
 
+pub(super) fn physical_unavailable(
+    physical: &PhysicalState,
+    installed: &InstalledWorld,
+    actor_id: &str,
+) -> Result<bool, ExecutionError> {
+    let animal = physical
+        .entities
+        .get(actor_id)
+        .ok_or(ExecutionError::MissingEntity)?;
+    let actor = animal.actor.as_ref().ok_or(ExecutionError::MissingActor)?;
+    Ok(actor.incapacitated
+        || !animal.actively_participates()
+        || installed
+            .capabilities
+            .capability_blocked(Some(animal), "locomotion")?
+        || installed
+            .capabilities
+            .capability_blocked(Some(animal), "actions")?
+        || animal.spatial.fall_velocity.is_some()
+        || animal.supported_position().is_none())
+}
+
+pub(super) fn block_response(
+    mutation: &mut PhysicalMutation<'_>,
+    installed: &InstalledWorld,
+    actor_id: &str,
+    physical_unavailable: bool,
+) -> Result<(), ExecutionError> {
+    let animal = mutation
+        .state
+        .entities
+        .get(actor_id)
+        .and_then(|entity| entity.animal.as_ref())
+        .ok_or(ExecutionError::Invariant)?;
+    let review = mutation.state.header.sim_time
+        + selected_profile(installed, animal)?.blocked_review_seconds;
+    let blocked = if physical_unavailable {
+        BlockedResponse {
+            reason: "capability-unavailable".into(),
+            basis: "physical-capability".into(),
+        }
+    } else {
+        BlockedResponse {
+            reason: "perception-unavailable".into(),
+            basis: "perception".into(),
+        }
+    };
+    mutation.reserve_response_growth(blocked.reason.capacity() + blocked.basis.capacity())?;
+    let episode = mutation
+        .snapshot_episode(actor_id)?
+        .as_mut()
+        .ok_or(ExecutionError::Invariant)?;
+    episode.mode = ResponseMode::Blocked;
+    episode.review_at = review;
+    episode.blocked = Some(blocked);
+    episode.clear_since = None;
+    episode.proposal = None;
+    mutation.behavior_changed(actor_id, false)
+}
+
 pub(crate) fn ground_turn(
     mutation: &mut PhysicalMutation<'_>,
     installed: &InstalledWorld,
@@ -92,39 +156,9 @@ pub(crate) fn ground_turn(
     if episode.review_at > at && episode.proposal.is_none() {
         return Ok(GroundTurn::None);
     }
-    let physical_unavailable = actor.incapacitated
-        || !animal.actively_participates()
-        || installed
-            .capabilities
-            .capability_blocked(Some(animal), "locomotion")?
-        || installed
-            .capabilities
-            .capability_blocked(Some(animal), "actions")?
-        || animal.spatial.fall_velocity.is_some()
-        || animal.supported_position().is_none();
+    let physical_unavailable = physical_unavailable(mutation.state, installed, actor_id)?;
     if physical_unavailable || !frame.complete {
-        let blocked = if physical_unavailable {
-            BlockedResponse {
-                reason: "capability-unavailable".to_owned(),
-                basis: "physical-capability".to_owned(),
-            }
-        } else {
-            BlockedResponse {
-                reason: "perception-unavailable".to_owned(),
-                basis: "perception".to_owned(),
-            }
-        };
-        mutation.reserve_response_growth(blocked.reason.capacity() + blocked.basis.capacity())?;
-        let episode = mutation
-            .snapshot_episode(actor_id)?
-            .as_mut()
-            .ok_or(ExecutionError::Invariant)?;
-        episode.mode = ResponseMode::Blocked;
-        episode.review_at = at + profile.blocked_review_seconds;
-        episode.blocked = Some(blocked);
-        episode.clear_since = None;
-        episode.proposal = None;
-        mutation.behavior_changed(actor_id, false)?;
+        block_response(mutation, installed, actor_id, physical_unavailable)?;
         return Ok(GroundTurn::None);
     }
     let action = actor.action.as_ref();
@@ -286,8 +320,12 @@ pub(crate) fn ground_turn(
     }
     if seed {
         begin_ground_proposal(mutation, installed, actor_id, frame, epsilon)?;
-        Ok(GroundTurn::Candidate)
+        Ok(GroundTurn::Candidate {
+            stop_on_failure: owned,
+        })
     } else {
-        Ok(GroundTurn::Route)
+        Ok(GroundTurn::Route {
+            stop_on_failure: owned,
+        })
     }
 }

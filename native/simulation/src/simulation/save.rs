@@ -4,7 +4,7 @@ use super::SimulationState;
 use crate::administration::InstalledHostSettings;
 use crate::host::ByteBudget;
 use crate::host::retained_size::map_storage;
-use crate::records::{RecordEncodingError, RowEffects, RowEncoder};
+use crate::records::{RecordEncodingError, RowEncoder};
 use serde_json::{Map, Value};
 fn error() -> RecordEncodingError {
     RecordEncodingError("Native parent save has unavailable scalar fields or capacity.")
@@ -161,14 +161,7 @@ pub(crate) fn encode_root_changes(
         .records
         .placement("world_settings", "[\"world\"]")
         .ok_or_else(error)?;
-    output.write(
-        "world_settings",
-        placement,
-        &body,
-        &[],
-        false,
-        RowEffects::default(),
-    )?;
+    output.write_if_changed("world_settings", placement, &body, template)?;
     if write_host {
         let template = state.records.host_settings_template();
         let _host = budget
@@ -194,14 +187,7 @@ pub(crate) fn encode_root_changes(
             .records
             .placement("data_world", "[]")
             .ok_or_else(error)?;
-        output.write(
-            "data_world",
-            placement,
-            &body,
-            &[],
-            false,
-            RowEffects::default(),
-        )?;
+        output.write_if_changed("data_world", placement, &body, template)?;
     }
     Ok(())
 }

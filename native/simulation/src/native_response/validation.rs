@@ -246,6 +246,15 @@ pub(crate) fn validate_native_response(
             {
                 return Err(Continuation);
             }
+            // The selected ground producer only creates ordinary search legs.
+            // Retained paths need their current-action corridor validator
+            // before they can enter this installed closure.
+            if candidates
+                .iter()
+                .any(|candidate| candidate.retained == Some(true))
+            {
+                return Err(UnconvertedFamily);
+            }
             if let Some(best) = &search.best {
                 if !surface(&best.point)
                     || best.path.is_empty()
