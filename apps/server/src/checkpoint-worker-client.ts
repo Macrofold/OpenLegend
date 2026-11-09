@@ -2,6 +2,7 @@ import { Worker } from 'node:worker_threads';
 import { randomUUID } from 'node:crypto';
 import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
+import { workerPerformanceConfiguration, registerPerformanceWorker } from './performance.js';
 import {
   CheckpointAllowanceError,
   type CheckpointAllowanceDetails,
@@ -43,15 +44,30 @@ export class CheckpointWorker {
     // A data URL fixes this trusted bootstrap's ESM mode independently of a
     // parent's stdin/eval flags. Anchor the pinned tsx loader to this module;
     // a data URL itself cannot resolve workspace packages.
+    const measurement = suppliedWorker ? undefined : workerPerformanceConfiguration('checkpoint');
+    const measurementBootstrap = measurement
+      ? `
+      const { workerData, parentPort } = await import('node:worker_threads');
+      try {
+        const { startWorkerPerformance } = await tsImport(${JSON.stringify(new URL('./performance-worker.ts', import.meta.url).href)}, ${JSON.stringify(import.meta.url)});
+        await startWorkerPerformance(workerData.measurement, parentPort);
+      } catch {
+        parentPort.on('message', (message) => {
+          if (message.type === 'profiling-export') parentPort.postMessage({ type: 'profiling-export', captureId: message.captureId, report: { status: 'failed', reason: 'Checkpoint measurement bootstrap failed.' } });
+        });
+      }`
+      : '';
     const bootstrap = `import { createRequire } from 'node:module';
       const { tsImport } = createRequire(${JSON.stringify(import.meta.url)})('tsx/esm/api');
+      ${measurementBootstrap}
       await tsImport(${JSON.stringify(url)}, ${JSON.stringify(import.meta.url)});`;
     this.worker =
       suppliedWorker ??
       new Worker(new URL(`data:text/javascript,${encodeURIComponent(bootstrap)}`), {
-        workerData: source,
+        workerData: measurement ? { ...source, measurement } : source,
         resourceLimits: { maxOldGenerationSizeMb: 256 },
       });
+    if (!suppliedWorker) registerPerformanceWorker(this.worker, 'checkpoint');
     this.ready = new Promise<void>((resolve, reject) => {
       this.worker.on(
         'message',

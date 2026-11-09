@@ -22,6 +22,8 @@ import {
   beginTiming,
   endTiming,
   profilingEnabled,
+  workerPerformanceConfiguration,
+  registerPerformanceWorker,
   recordDuration,
   gaugeMetric,
   countMetric,
@@ -270,11 +272,16 @@ export class NavigationCoordinator {
         this.worker = new Worker(new URL('./worker.mjs', import.meta.url), {
           execArgv: [],
           env: {},
-          workerData: { profiling: this.profiling },
+          workerData: {
+            profiling: this.profiling,
+            measurement: workerPerformanceConfiguration('navigation'),
+          },
           resourceLimits: { maxOldGenerationSizeMb: 128 },
         });
         const worker = this.worker;
+        registerPerformanceWorker(worker, 'navigation');
         worker.on('message', (reply: NavigationReply) => {
+          if ((reply as { type?: string }).type?.startsWith('profiling-')) return;
           if (this.worker === worker) this.completion = this.completed(reply);
         });
         worker.on('error', () => {

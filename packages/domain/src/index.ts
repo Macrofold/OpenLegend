@@ -62,6 +62,7 @@ export {
   type DomainCounter,
   type DomainCounters,
 } from './diagnostic-counters.js';
+export * from './diagnostic-measurements.js';
 export * from './action-experience.js';
 export * from './activity-learning.js';
 export * from './activity-execution.js';

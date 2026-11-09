@@ -1,0 +1,180 @@
+{
+  "campaignId": "2026-11-07-hierarchical-opening-3812",
+  "archivedAt": "2026-11-09T00:02:14.600572+00:00",
+  "canonicalReport": "../../hierarchical-server-opening-2026-11-07.md",
+  "evidenceDisposition": {
+    "timedCasesRequested": 27,
+    "timedCasesCompleted": 27,
+    "acceptedSafetyConfigurations": 5,
+    "qualification": "incomplete",
+    "limits": "../../hierarchical-server-opening-2026-11-07.md#interpretation-and-remaining-measurement-gaps",
+    "failedAttempts": "Earlier source/fixture/qualification attempts and the rejected detailed stage remain in the complete archive; they are not timed performance evidence."
+  },
+  "sources": {
+    "repository": "https://github.com/Macrofold/OpenLegend.git",
+    "game": "2a17fa7c42f777c5eefd3fba67c652ef2c5f54ec",
+    "executableTools": "363e24841a40d9b05c72e21b4e01a0aed752c09f",
+    "reportCorrection": "6ec6a145c2cf0ca7b975d7782b83d57200ac016d",
+    "analysisCommit": "6d1ab370730da807624885da0e0e026610426591",
+    "managedWorker": "0d9d2419a3a1951fdd268fc4fd4048d6a6f7efec",
+    "sourceConfigurations": {
+      "control": {
+        "commit": "33a7808ab93a94ce6acb898ad3a0c894196c47cc",
+        "archiveHash": "963387bc97ff7ea9bc4c12831eaaedb263ee4ca4ed7ae244210d0337b25be654",
+        "patchHash": "148a900df27ed3d8ccd566b4875476f48aad4493dd0db5373aa7ec79d1875252"
+      },
+      "instrumented": {
+        "commit": "7ef532933169fbec6a8d625abb167427dba60729",
+        "archiveHash": "5fdbc75aff73962e72aa78d1f957684830e310f6797bcb87498b618e82857d46",
+        "patchHash": "c33e124982075667980e5bdbb1d1d4ef98f9c4edd6854dab0d19bab47186e098"
+      }
+    },
+    "planHash": "0340f98c96c68c5b9ecfaaa242a5b88df1b77a9222c0398879d36f94300e1dde",
+    "acceptedStageHash": "a47cf814898c773cd334fd235f31ec58edafc53f1539493375f66deabea0e0d1",
+    "safetyProofHash": "eb25bb267a6ca17a9a5573ba0857ff9c15a14387575f95c0949e7506005bd647"
+  },
+  "local": {
+    "directory": "/Users/mzw/.codex/verification/OpenLegend/comprehensive-profiling-results/2026-11-07-hierarchical-opening-3812",
+    "campaignDirectory": "/Users/mzw/.codex/verification/OpenLegend/comprehensive-profiling-results/2026-11-07-hierarchical-opening-3812/campaign",
+    "originalPathAlias": "/Users/mzw/.codex/verification/OpenLegend/experiments/2026-11-07-hierarchical-opening-parallel-3812",
+    "aliasPurpose": "Preserves historical embedded paths and managed collection links without rewriting sealed evidence; not needed to retrieve the portable archive."
+  },
+  "inventory": {
+    "objectRole": "inventory",
+    "sha256": "b4efc703c43efdf221e83e6746df80a4e1c70df3f9cd3760a8eb56e1be5742c4",
+    "fileCount": 1646,
+    "logicalBytes": 2008413333,
+    "archiveIncludesInventory": true,
+    "memberHashes": "SHA-256 of uncompressed file bytes; inventory object is independently hashed to avoid self-reference.",
+    "scope": "Complete hierarchical campaign including failed attempts;22ownedmanagedsource/input/metadata closures; exact game/tool/worker source snapshots; committed analysis and original HTML.",
+    "exclusions": [
+      "credentials/access configuration",
+      "claim/private capability files",
+      "unrelated older campaign",
+      "node_modules and worker binary caches",
+      "EC2 disks/AMI snapshots"
+    ]
+  },
+  "archive": {
+    "accountId": "027677879749",
+    "region": "us-east-2",
+    "bucket": "openlegend-profiling-archive-027677879749-us-east-2",
+    "prefix": "2026-11-07-hierarchical-opening-3812/",
+    "storageClass": "STANDARD",
+    "payloadObjectCount": 5,
+    "payloadBytes": 1075385990,
+    "protection": {
+      "separateFromExpiringWorkerBucket": true,
+      "publicAccessBlocked": true,
+      "objectOwnership": "BucketOwnerEnforced",
+      "encryption": "AES256",
+      "httpsRequired": true,
+      "versioning": "Enabled",
+      "objectLock": "Enabled",
+      "legalHold": "ON on every recorded version, with no end date",
+      "lifecycleConfiguration": "absent; GetBucketLifecycleConfiguration returned NoSuchLifecycleConfiguration",
+      "automaticExpiration": false,
+      "verifiedAt": "2026-11-08T23:55:36.592574+00:00",
+      "removal": "Only by explicit project-owner instruction; release exact-version legal holds before deliberate deletion. Never add disposable/expiration treatment to these archives."
+    },
+    "objects": [
+      {
+        "role": "complete-archive",
+        "bucket": "openlegend-profiling-archive-027677879749-us-east-2",
+        "region": "us-east-2",
+        "key": "2026-11-07-hierarchical-opening-3812/objects/888ac0230658138f9deaa389e0428bee874deea436c0e678b8914c581750972a/complete-results.tar.gz",
+        "versionId": "k3.pOd1tGa9kSEN9hcyaocBEn4gR7umb",
+        "bytes": 1052618241,
+        "sha256": "888ac0230658138f9deaa389e0428bee874deea436c0e678b8914c581750972a",
+        "checksumSha256Base64": "iIrAIwZYE4+d6qOJ4EKL7odN7qQ2wOZ4uJFMWBdQlyo=",
+        "uri": "s3://openlegend-profiling-archive-027677879749-us-east-2/2026-11-07-hierarchical-opening-3812/objects/888ac0230658138f9deaa389e0428bee874deea436c0e678b8914c581750972a/complete-results.tar.gz",
+        "versionedUrl": "https://openlegend-profiling-archive-027677879749-us-east-2.s3.us-east-2.amazonaws.com/2026-11-07-hierarchical-opening-3812/objects/888ac0230658138f9deaa389e0428bee874deea436c0e678b8914c581750972a/complete-results.tar.gz?versionId=k3.pOd1tGa9kSEN9hcyaocBEn4gR7umb",
+        "consoleUrl": "https://s3.console.aws.amazon.com/s3/object/openlegend-profiling-archive-027677879749-us-east-2?region=us-east-2&prefix=2026-11-07-hierarchical-opening-3812%2Fobjects%2F888ac0230658138f9deaa389e0428bee874deea436c0e678b8914c581750972a%2Fcomplete-results.tar.gz&versionId=k3.pOd1tGa9kSEN9hcyaocBEn4gR7umb",
+        "legalHold": "ON",
+        "verifiedAt": "2026-11-08T23:54:14.761336+00:00"
+      },
+      {
+        "role": "inventory",
+        "bucket": "openlegend-profiling-archive-027677879749-us-east-2",
+        "region": "us-east-2",
+        "key": "2026-11-07-hierarchical-opening-3812/objects/b4efc703c43efdf221e83e6746df80a4e1c70df3f9cd3760a8eb56e1be5742c4/inventory.json",
+        "versionId": "cddz6vrGljv484OmA5lK3twyNGbxBGgU",
+        "bytes": 417367,
+        "sha256": "b4efc703c43efdf221e83e6746df80a4e1c70df3f9cd3760a8eb56e1be5742c4",
+        "checksumSha256Base64": "tO/HA8Q+/fIh6D5nRt+ApOHHDfP5zTdgqOtW4b5XQsQ=",
+        "uri": "s3://openlegend-profiling-archive-027677879749-us-east-2/2026-11-07-hierarchical-opening-3812/objects/b4efc703c43efdf221e83e6746df80a4e1c70df3f9cd3760a8eb56e1be5742c4/inventory.json",
+        "versionedUrl": "https://openlegend-profiling-archive-027677879749-us-east-2.s3.us-east-2.amazonaws.com/2026-11-07-hierarchical-opening-3812/objects/b4efc703c43efdf221e83e6746df80a4e1c70df3f9cd3760a8eb56e1be5742c4/inventory.json?versionId=cddz6vrGljv484OmA5lK3twyNGbxBGgU",
+        "consoleUrl": "https://s3.console.aws.amazon.com/s3/object/openlegend-profiling-archive-027677879749-us-east-2?region=us-east-2&prefix=2026-11-07-hierarchical-opening-3812%2Fobjects%2Fb4efc703c43efdf221e83e6746df80a4e1c70df3f9cd3760a8eb56e1be5742c4%2Finventory.json&versionId=cddz6vrGljv484OmA5lK3twyNGbxBGgU",
+        "legalHold": "ON",
+        "verifiedAt": "2026-11-08T23:54:17.201689+00:00"
+      },
+      {
+        "role": "measurement-json",
+        "bucket": "openlegend-profiling-archive-027677879749-us-east-2",
+        "region": "us-east-2",
+        "key": "2026-11-07-hierarchical-opening-3812/objects/960e06da0fa87736d3f3df9813abe7452cdd64d2f7b054aea2549fed5c81c472/report.json.gz",
+        "versionId": "WeMBCi4G8s3BlwdHLCceZjbV2YiBrhYb",
+        "bytes": 21994830,
+        "sha256": "960e06da0fa87736d3f3df9813abe7452cdd64d2f7b054aea2549fed5c81c472",
+        "checksumSha256Base64": "lg4G2g+odzbT89+YE6vnRSzdZNL3sFSuolSf7VyBxHI=",
+        "uri": "s3://openlegend-profiling-archive-027677879749-us-east-2/2026-11-07-hierarchical-opening-3812/objects/960e06da0fa87736d3f3df9813abe7452cdd64d2f7b054aea2549fed5c81c472/report.json.gz",
+        "versionedUrl": "https://openlegend-profiling-archive-027677879749-us-east-2.s3.us-east-2.amazonaws.com/2026-11-07-hierarchical-opening-3812/objects/960e06da0fa87736d3f3df9813abe7452cdd64d2f7b054aea2549fed5c81c472/report.json.gz?versionId=WeMBCi4G8s3BlwdHLCceZjbV2YiBrhYb",
+        "consoleUrl": "https://s3.console.aws.amazon.com/s3/object/openlegend-profiling-archive-027677879749-us-east-2?region=us-east-2&prefix=2026-11-07-hierarchical-opening-3812%2Fobjects%2F960e06da0fa87736d3f3df9813abe7452cdd64d2f7b054aea2549fed5c81c472%2Freport.json.gz&versionId=WeMBCi4G8s3BlwdHLCceZjbV2YiBrhYb",
+        "legalHold": "ON",
+        "verifiedAt": "2026-11-08T23:54:24.594465+00:00"
+      },
+      {
+        "role": "html-report",
+        "bucket": "openlegend-profiling-archive-027677879749-us-east-2",
+        "region": "us-east-2",
+        "key": "2026-11-07-hierarchical-opening-3812/objects/53351a3a55f6bf3e6542c689f091313d7bc1ac97c7087c78b2135dd6152acef9/report.html",
+        "versionId": "9DxD8gRa1Al55gfMdL5dhtlIRnq3E6cK",
+        "bytes": 312779,
+        "sha256": "53351a3a55f6bf3e6542c689f091313d7bc1ac97c7087c78b2135dd6152acef9",
+        "checksumSha256Base64": "UzUaOlX2vz5lQsaJ8JExPXvBrJfHCHx4shNd1hUqzvk=",
+        "uri": "s3://openlegend-profiling-archive-027677879749-us-east-2/2026-11-07-hierarchical-opening-3812/objects/53351a3a55f6bf3e6542c689f091313d7bc1ac97c7087c78b2135dd6152acef9/report.html",
+        "versionedUrl": "https://openlegend-profiling-archive-027677879749-us-east-2.s3.us-east-2.amazonaws.com/2026-11-07-hierarchical-opening-3812/objects/53351a3a55f6bf3e6542c689f091313d7bc1ac97c7087c78b2135dd6152acef9/report.html?versionId=9DxD8gRa1Al55gfMdL5dhtlIRnq3E6cK",
+        "consoleUrl": "https://s3.console.aws.amazon.com/s3/object/openlegend-profiling-archive-027677879749-us-east-2?region=us-east-2&prefix=2026-11-07-hierarchical-opening-3812%2Fobjects%2F53351a3a55f6bf3e6542c689f091313d7bc1ac97c7087c78b2135dd6152acef9%2Freport.html&versionId=9DxD8gRa1Al55gfMdL5dhtlIRnq3E6cK",
+        "legalHold": "ON",
+        "verifiedAt": "2026-11-08T23:54:26.962192+00:00"
+      },
+      {
+        "role": "analysis",
+        "bucket": "openlegend-profiling-archive-027677879749-us-east-2",
+        "region": "us-east-2",
+        "key": "2026-11-07-hierarchical-opening-3812/objects/02b59d2f3dc9162c28d47ab358afdf2fb45a4a3ee8aadbd91e79796f6882b6cf/analysis.md",
+        "versionId": "y39TBVn8Siq4j8vJMAE6MxK3uwMURF0a",
+        "bytes": 42773,
+        "sha256": "02b59d2f3dc9162c28d47ab358afdf2fb45a4a3ee8aadbd91e79796f6882b6cf",
+        "checksumSha256Base64": "ArWdLz3JFiwo1HqzWK/fL7RaSj7oqtvZHnl5b2iCts8=",
+        "uri": "s3://openlegend-profiling-archive-027677879749-us-east-2/2026-11-07-hierarchical-opening-3812/objects/02b59d2f3dc9162c28d47ab358afdf2fb45a4a3ee8aadbd91e79796f6882b6cf/analysis.md",
+        "versionedUrl": "https://openlegend-profiling-archive-027677879749-us-east-2.s3.us-east-2.amazonaws.com/2026-11-07-hierarchical-opening-3812/objects/02b59d2f3dc9162c28d47ab358afdf2fb45a4a3ee8aadbd91e79796f6882b6cf/analysis.md?versionId=y39TBVn8Siq4j8vJMAE6MxK3uwMURF0a",
+        "consoleUrl": "https://s3.console.aws.amazon.com/s3/object/openlegend-profiling-archive-027677879749-us-east-2?region=us-east-2&prefix=2026-11-07-hierarchical-opening-3812%2Fobjects%2F02b59d2f3dc9162c28d47ab358afdf2fb45a4a3ee8aadbd91e79796f6882b6cf%2Fanalysis.md&versionId=y39TBVn8Siq4j8vJMAE6MxK3uwMURF0a",
+        "legalHold": "ON",
+        "verifiedAt": "2026-11-08T23:54:29.287144+00:00"
+      }
+    ],
+    "cost": {
+      "storageRateUsdPerGbMonth": 0.023,
+      "priceRegion": "us-east-2",
+      "pricePublicationDate": "2026-11-04T17:44:45Z",
+      "pricingUrl": "https://aws.amazon.com/s3/pricing/",
+      "priceSource": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/us-east-2/index.json",
+      "estimatedMonthlyStorageUsd": 0.025,
+      "estimateBasis": "Rounded estimate for these payloads at the retrieved first-tier Standard rate; requests, transfer and future datasets are additional. Not an invoice.",
+      "conservativeFirstYearAllowanceUsd": 3,
+      "taskSpendLimitUsd": 10,
+      "paidModelCostUsd": 0
+    }
+  },
+  "verification": {
+    "status": "verified",
+    "verifiedAt": "2026-11-09T00:01:49.358208+00:00",
+    "exactVersionDownloads": 5,
+    "archiveMembersVerified": 1646,
+    "logicalBytesVerified": 2008413333,
+    "inventoryMatchesArchive": true,
+    "measurementJsonDecompressionMatchesOriginal": true,
+    "checksums": "SHA-256 per downloaded object and every uncompressed archive member"
+  }
+}

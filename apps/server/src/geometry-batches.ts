@@ -1,5 +1,6 @@
 import { Worker } from 'node:worker_threads';
 import { evaluateGeometryBatch, type GeometryBatch } from '@open-legend/spatial';
+import { workerPerformanceConfiguration, registerPerformanceWorker } from './performance.js';
 
 interface Slot {
   worker?: Worker;
@@ -58,9 +59,11 @@ export class GeometryBatches {
       const worker = new Worker(new URL('./geometry-worker.mjs', import.meta.url), {
         execArgv: [],
         env: {},
+        workerData: { measurement: workerPerformanceConfiguration('geometry') },
         resourceLimits: { maxOldGenerationSizeMb: 128 },
       });
       slot.worker = worker;
+      registerPerformanceWorker(worker, 'geometry');
       worker.on('message', (reply: { id?: number; results?: boolean[]; error?: string }) => {
         const pending = slot.pending;
         if (slot.worker !== worker || !pending || reply.id !== pending.id) return;

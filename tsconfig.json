@@ -17,9 +17,15 @@
       "@open-legend/assets": ["./packages/assets/src/index.ts"],
       "@open-legend/domain": ["./packages/domain/src/index.ts"],
       "@open-legend/domain/execution-input": ["./packages/domain/src/execution-input.ts"],
+      "@open-legend/domain/diagnostic-measurements": [
+        "./packages/domain/src/diagnostic-measurements.ts"
+      ],
       "@open-legend/ai": ["./packages/ai/src/index.ts"],
       "@open-legend/protocol": ["./packages/protocol/src/index.ts"],
       "@open-legend/spatial": ["./packages/spatial/src/index.ts"],
+      "@open-legend/spatial/diagnostic-measurements": [
+        "./packages/spatial/src/diagnostic-measurements.ts"
+      ],
       "@open-legend/language": ["./packages/language/src/index.ts"],
       "@open-legend/network": ["./packages/network/src/index.ts"],
       "@open-legend/network/node": ["./packages/network/src/node.ts"],

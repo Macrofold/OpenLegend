@@ -123,7 +123,7 @@ import { assertAssetRevisionReference, type ArtifactReference } from '@open-lege
 import { z } from 'zod';
 import { intentSlotsSchema } from './navigation-contracts.js';
 import type { AiClient } from '@open-legend/ai';
-import { AiDirector } from './ai-director.js';
+import { AiDirector, type DecisionPreparationObserver } from './ai-director.js';
 import { readConfig, type AppConfig } from './config.js';
 import { PostgresDatabase } from './postgres.js';
 import { SqlGameRepository, digest } from './store.js';
@@ -530,6 +530,8 @@ export interface ShutdownReport {
 
 /** One serialized world host with explicit local or verified OIDC account authority. */
 interface GameServerOptions {
+  /** Trusted fixture diagnostics, absent during ordinary and timed gameplay. */
+  observeDecisionPreparation?: DecisionPreparationObserver;
   config?: AppConfig;
   production?: boolean;
   store?: SqlGameRepository;
@@ -651,6 +653,7 @@ async function initializeGameServer(
     options.now,
     undefined,
     cognitionExecution,
+    options.observeDecisionPreparation,
   );
   onFailure(() => director.close());
   let loadingSave = false;
@@ -2071,6 +2074,7 @@ async function initializeGameServer(
                     options.now,
                     undefined,
                     cognitionExecution,
+                    options.observeDecisionPreparation,
                   );
                   mcp = makeMcp();
                   agentRuns.resume();

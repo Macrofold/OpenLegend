@@ -284,6 +284,11 @@ function captureDiscoveryReservations(world: WorldState, active: ReadonlySet<str
   });
 }
 
+/** Trusted, non-timing replay diagnostics; never part of a model or wire input. */
+export type DecisionPreparationObserver = (
+  prepared: Awaited<ReturnType<typeof prepareDecision>>,
+) => void | Promise<void>;
+
 export class AiDirector {
   diagnosticCaptureSnapshot() {
     return this.log.captureSnapshot();
@@ -345,6 +350,7 @@ export class AiDirector {
       ? 'test-fixture'
       : 'live-model',
     execution?: CognitionExecution,
+    private readonly observePreparation?: DecisionPreparationObserver,
   ) {
     const config = service.config;
     const log = (this.log = new IntelligenceLog(service.store));
@@ -3001,6 +3007,7 @@ export class AiDirector {
       run.job.decision ? 'native-only' : 'ordinary',
     );
     this.holdPreparedSources(run, prepared);
+    if (this.observePreparation) await this.observePreparation(prepared);
     run.validateJudgmentSource = () => prepared.validateConversation();
     this.current(run);
     const validity = run.job.decision ? decisionValidity(this.service.world, actorId) : undefined;

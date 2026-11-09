@@ -12,6 +12,7 @@ parentPort.on(
       | { kind: 'walking'; queries: import('@open-legend/spatial').WalkingSegment[] }
     ),
   ) => {
+    if ((request as { type?: string }).type?.startsWith('profiling-')) return;
     try {
       if (request.map) map = request.map;
       if (!map || !request.queries.length || request.queries.length > 128)

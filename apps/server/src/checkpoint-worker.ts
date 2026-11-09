@@ -10,6 +10,7 @@ const port = parentPort;
 if (!port) throw new Error('Checkpoint worker requires an owner.');
 let busy = false;
 port.on('message', async (request: CheckpointRequest) => {
+  if ((request as { type?: string }).type?.startsWith('profiling-')) return;
   if (busy) {
     port.postMessage({ type: 'failed', error: 'Checkpoint worker is already occupied.' });
     return;

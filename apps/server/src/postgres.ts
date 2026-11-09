@@ -5,7 +5,15 @@ import {
   endTiming,
   beginDatabaseQuery,
   finishDatabaseQuery,
+  submitDatabaseQuery,
+  returnedDatabaseQuery,
+  observeDatabaseDecoder,
+  beginCampaignOperation,
+  databaseMeasurementOwner,
+  sqlProfilingEnabled,
+  type DatabaseMeasurementOwner,
 } from './performance.js';
+import { endMeasurement } from '@open-legend/domain/diagnostic-measurements';
 import pg from 'pg';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { SqlDatabase } from './store.js';
@@ -30,6 +38,7 @@ interface TransactionScope {
   liveOverlays?: Map<string, LiveReadOverlay>;
   exactCut?: boolean;
   actor?: { worldId: string; actorId: string };
+  measurementOwner?: DatabaseMeasurementOwner;
 }
 
 /** Independent bounded read and write lanes; a large recall cannot occupy the writer. */
@@ -96,6 +105,7 @@ export class PostgresDatabase implements SqlDatabase {
     private readonly readOnly = false,
     readonly writeGroups = true,
   ) {
+    observeDatabaseDecoder((pg as unknown as { Query?: { prototype?: object } }).Query?.prototype);
     this.client = new pg.Client({
       connectionString,
       connectionTimeoutMillis: 5000,
@@ -211,6 +221,7 @@ export class PostgresDatabase implements SqlDatabase {
         readOnly: true,
         committed: [] as (() => void)[],
         rolledBack: [] as (() => void)[],
+        measurementOwner: sqlProfilingEnabled() ? databaseMeasurementOwner() : undefined,
       };
       try {
         return await this.transactionContext.run(scope, operation);
@@ -236,9 +247,11 @@ export class PostgresDatabase implements SqlDatabase {
       liveCuts,
       exactCut,
       actor,
+      measurementOwner: sqlProfilingEnabled() ? databaseMeasurementOwner() : undefined,
     };
     return this.transactionContext.run(scope, async () => {
       let result: T;
+      const measuredTransaction = beginCampaignOperation('S13.05.transaction');
       try {
         // Cold extraction/restore can update an entire retained source set. Keep
         // interactive read deadlines separate from these atomic write operations.
@@ -252,10 +265,12 @@ export class PostgresDatabase implements SqlDatabase {
         if (!readOnly && !this.writeGroups) await this.query("SET LOCAL statement_timeout = '30s'");
         result = await operation();
         await this.query('COMMIT');
+        endMeasurement(measuredTransaction);
       } catch (error) {
         await this.query('ROLLBACK').catch(() => {
           this.fail();
         });
+        endMeasurement(measuredTransaction, 'error');
         scope.active = false;
         for (const callback of scope.rolledBack) callback();
         throw error;
@@ -335,16 +350,28 @@ export class PostgresDatabase implements SqlDatabase {
       }
       let index = 0;
       const translated = sql.replace(/\?/g, () => `$${++index}`);
-      const diagnostic = beginDatabaseQuery(template);
+      const client = this.transactionContext.getStore()?.active
+        ? this.transactionContext.getStore()!.client
+        : this.client;
+      const diagnostic = beginDatabaseQuery(
+        template,
+        params,
+        client,
+        translated,
+        scope?.measurementOwner,
+      );
       try {
-        const result = await timed('postgres.statement', () =>
-          (this.transactionContext.getStore()?.active
-            ? this.transactionContext.getStore()!.client
-            : this.client
-          ).query(translated, params),
-        );
-        const value = { rows: result.rows ?? [], changes: result.rowCount ?? 0 };
-        finishDatabaseQuery(diagnostic, value);
+        submitDatabaseQuery(diagnostic);
+        const result = await timed('postgres.statement', () => client.query(translated, params));
+        returnedDatabaseQuery(diagnostic);
+        const measuredDecode = beginCampaignOperation('S13.04.decode');
+        let value: { rows: typeof result.rows; changes: number };
+        try {
+          value = { rows: result.rows ?? [], changes: result.rowCount ?? 0 };
+        } finally {
+          endMeasurement(measuredDecode);
+        }
+        finishDatabaseQuery(diagnostic, value, result);
         return value;
       } catch (error) {
         finishDatabaseQuery(diagnostic);

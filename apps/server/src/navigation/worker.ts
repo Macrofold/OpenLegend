@@ -12,6 +12,7 @@ let startupMs: number | undefined = profiling
 let planner: RecastPlanner | undefined,
   key = '';
 parentPort.on('message', (message: NavigationMessage) => {
+  if ((message as { type?: string }).type?.startsWith('profiling-')) return;
   const reply: NavigationReply = { id: message.id, key: message.key };
   const timing: NavigationReply['timing'] = profiling
     ? { builds: [], buildMs: 0, queryMs: 0 }

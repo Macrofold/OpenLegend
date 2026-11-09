@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./execution-input": "./src/execution-input.ts"
+    "./execution-input": "./src/execution-input.ts",
+    "./diagnostic-measurements": "./src/diagnostic-measurements.ts"
   },
   "types": "./src/index.ts",
   "license": "AGPL-3.0-only",

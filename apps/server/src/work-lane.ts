@@ -1,4 +1,11 @@
-import { recordDuration, beginTiming, elapsedTiming } from './performance.js';
+import {
+  recordDuration,
+  beginTiming,
+  elapsedTiming,
+  beginDatabaseQueue,
+  admitDatabaseQueue,
+  finishDatabaseQueue,
+} from './performance.js';
 import { AsyncLocalStorage } from 'node:async_hooks';
 
 export class OverloadError extends Error {
@@ -40,6 +47,7 @@ export class WorkLane {
     if (this.pending.length >= this.maximum || waitMs <= 0)
       return Promise.reject(new OverloadError());
     const queuedAt = performance.now();
+    const databaseObservation = beginDatabaseQueue(this.name, queuedAt);
     const measured = beginTiming(queuedAt);
     // A queued operation belongs to its submitter, not whoever finishes before it.
     // Preserve request/diagnostic/transaction contexts across the queue boundary.
@@ -56,8 +64,24 @@ export class WorkLane {
           if (measuredWait !== undefined) recordDuration(`${this.name}.wait`, measuredWait);
           // Timers cannot fire during synchronous native work; check age on admission too.
           if (waited > waitMs) {
+            finishDatabaseQueue(databaseObservation, true);
             reject(new OverloadError());
             this.finish();
+            return;
+          }
+          if (databaseObservation) {
+            admitDatabaseQueue(databaseObservation, admittedAt);
+            let failed = false;
+            Promise.resolve()
+              .then(run)
+              .then(resolve, (error: unknown) => {
+                failed = true;
+                reject(error);
+              })
+              .finally(() => {
+                finishDatabaseQueue(databaseObservation, failed);
+                this.finish();
+              });
             return;
           }
           Promise.resolve()
@@ -69,6 +93,7 @@ export class WorkLane {
           const index = this.pending.indexOf(entry);
           if (index < 0) return;
           this.pending.splice(index, 1);
+          finishDatabaseQueue(databaseObservation, true);
           reject(new OverloadError());
         },
       };

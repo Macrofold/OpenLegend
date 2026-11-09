@@ -1,3 +1,4 @@
+import { occurrenceFor } from '../../packages/domain/src/action-experience.js';
 import { evidenceStorageStats } from './evidence-storage.ts';
 import { toolHttp, toolStream } from '../network.ts';
 import { createNetworkOwner } from '@open-legend/network';
@@ -485,7 +486,7 @@ async function startNativePressure(service, fixture, phase) {
 
 // Drive presence/control with the measured login's current lease. The process-local
 // setup lease can become stale when HTTP entry or a restart replaces control.
-async function controlWorld(base, cookie, input, clientId = 'local-internal') {
+export async function controlWorld(base, cookie, input, clientId = 'local-internal') {
   const view = await (
     await toolHttp(base + '/api/state', { headers: { cookie, 'x-ol-client': clientId } })
   ).json();
@@ -504,7 +505,7 @@ async function controlWorld(base, cookie, input, clientId = 'local-internal') {
   if (!response.ok || !result.ok)
     throw Error(result.message ?? 'Could not control profiling world');
 }
-async function resumeWorld(base, cookie, clientId = 'local-internal') {
+export async function resumeWorld(base, cookie, clientId = 'local-internal') {
   const view = await (
     await toolHttp(base + '/api/state', { headers: { cookie, 'x-ol-client': clientId } })
   ).json();
@@ -567,7 +568,28 @@ async function clientLoad() {
       Math.max(0, timing.end - performance.now()),
     );
   };
+  let releaseViewer,
+    released = false,
+    rowsReady;
+  const viewerRelease = new Promise((resolve) => {
+    releaseViewer = () => {
+      released = true;
+      resolve();
+    };
+  });
+  const readyRows = [];
+  const rowsAvailable = new Promise((resolve) => {
+    rowsReady = resolve;
+  });
+  const completed = new Map();
+  const completionWaiters = new Map();
   const measurementMessage = (message) => {
+    if (message.releaseViewer) releaseViewer();
+    if (message.movementCompleted) {
+      const { actorId, commandId } = message.movementCompleted;
+      completed.set(actorId, { commandId, kind: message.movementCompleted.kind ?? 'completed' });
+      completionWaiters.get(commandId)?.(message.movementCompleted.kind ?? 'completed');
+    }
     if (message.measureAt !== undefined) beginMeasurement(message.measureAt);
   };
   process.on('message', measurementMessage);
@@ -663,8 +685,9 @@ async function clientLoad() {
               }
             }
           };
-          const command = async (index) => {
+          const command = async (index, intendedAt = timestamp()) => {
             const at = performance.now();
+            const commandId = randomUUID();
             const value = settings.continuousMovement
               ? {
                   type: 'move',
@@ -684,45 +707,75 @@ async function clientLoad() {
                 'x-ol-scope': client.scope,
               },
               body: JSON.stringify({
-                commandId: randomUUID(),
+                commandId,
                 commandEpoch: settings.epoch,
                 command: value,
               }),
               signal: AbortSignal.timeout(15000),
             });
             const result = await response.json();
-            commands.push({
+            const record = {
+              intendedAt,
+              commandId,
               at: performance.timeOrigin + at,
               completedAt: timestamp(),
               ms: performance.now() - at,
               ok: response.ok && result.ok === true,
               code: result.code ?? response.status,
+            };
+            commands.push(record);
+            if (settings.completionDriven) {
+              const actionId = result.actionId ?? commandId;
+              let timer;
+              let resolveDone;
+              const done = new Promise((resolve) => {
+                resolveDone = resolve;
+              });
+              completionWaiters.set(actionId, resolveDone);
+              if (completed.get(client.actorId)?.commandId === actionId)
+                resolveDone(completed.get(client.actorId).kind);
+              timer = setTimeout(
+                () => resolveDone('deadline'),
+                settings.nextCommandDeadlineMs ?? 10000,
+              );
+              record.nextMoveTrigger = await done;
+              record.actionSettledAt = timestamp();
+              clearTimeout(timer);
+              completionWaiters.delete(actionId);
+            }
+          };
+          const movementLoop = async () => {
+            let index = 0;
+            while (performance.now() < timing.end) await command(index++);
+          };
+          let presenceSequence = 2;
+          const heartbeat = async () => {
+            const response = await request('/api/presence', {
+              method: 'POST',
+              headers: {
+                origin: settings.base,
+                'content-type': 'application/json',
+                'x-ol-scope': client.scope,
+              },
+              body: JSON.stringify({
+                clientId: client.clientId,
+                visible: true,
+                sequence: presenceSequence++,
+              }),
+              signal: AbortSignal.timeout(15000),
             });
+            const result = await response.json();
+            if (!response.ok || !result.ok) throw Error('Presence heartbeat failed');
           };
           await Promise.all([
-            periodic(3000, async (index) => {
-              const response = await request('/api/presence', {
-                method: 'POST',
-                headers: {
-                  origin: settings.base,
-                  'content-type': 'application/json',
-                  'x-ol-scope': client.scope,
-                },
-                body: JSON.stringify({
-                  clientId: client.clientId,
-                  visible: true,
-                  sequence: index + 2,
-                }),
-                signal: AbortSignal.timeout(15000),
-              });
-              const result = await response.json();
-              if (!response.ok || !result.ok) throw Error('Presence heartbeat failed');
-            }),
-            periodic(settings.commandIntervalMs ?? 500, (index) =>
-              settings.burst && index % 30 === 10
-                ? Promise.all([0, 1, 2].map((offset) => command(index + offset)))
-                : command(index),
-            ),
+            periodic(3000, heartbeat),
+            settings.completionDriven
+              ? movementLoop()
+              : periodic(settings.commandIntervalMs ?? 500, (index) =>
+                  settings.burst && index % 30 === 10
+                    ? Promise.all([0, 1, 2].map((offset) => command(index + offset)))
+                    : command(index),
+                ),
             periodic(settings.readIntervalMs ?? 250, async () => {
               const at = performance.now();
               const response = await request('/api/state', { signal: AbortSignal.timeout(15000) });
@@ -735,7 +788,7 @@ async function clientLoad() {
               });
             }),
           ]);
-          return {
+          const row = {
             actorId: client.actorId,
             clientId: client.clientId,
             start: performance.timeOrigin + start,
@@ -747,6 +800,17 @@ async function clientLoad() {
             skipped,
             chunks,
           };
+          if (settings.holdViewer) {
+            readyRows.push(row);
+            if (readyRows.length === clients.length) rowsReady(readyRows);
+            // Offers have stopped. Retain the ordinary viewer/presence while
+            // already-started game work drains, so disconnect cannot pause it.
+            while (!released) {
+              await Promise.race([delay(3000, undefined, { ref: false }), viewerRelease]);
+              if (!released) await heartbeat();
+            }
+          }
+          return row;
         } finally {
           streamAbort.abort();
           await reading;
@@ -764,9 +828,10 @@ async function clientLoad() {
   ]);
   if (first.measureAt !== undefined) beginMeasurement(first.measureAt);
   begin();
-  const samples = await pending;
+  const samples = settings.holdViewer
+    ? await Promise.race([rowsAvailable, pending])
+    : await pending;
   offeredEnd('post-drain-fallback');
-  process.off('message', measurementMessage);
   const completedAt = Math.max(...samples.map((sample) => sample.completedAt));
   const summarize = (rows, from, until) => {
     const during = (key) =>
@@ -784,6 +849,15 @@ async function clientLoad() {
         commands.filter((value) => !value.ok).map((value) => value.ms),
       ),
       commandCodes: codes,
+      movementTriggers: Object.fromEntries(
+        ['completed', 'replaced', 'blocked', 'cancelled', 'unknown', 'deadline'].map((kind) => [
+          kind,
+          commands.filter((value) => value.nextMoveTrigger === kind).length,
+        ]),
+      ),
+      scheduledToReply: distribution(
+        commands.map((value) => value.completedAt - (value.intendedAt ?? value.at)),
+      ),
       reads: distribution(during('reads').map((value) => value.ms)),
       requestTimerLateness: distribution(during('late').map((value) => value.ms)),
       skippedIntervals: during('skipped').reduce((sum, value) => sum + value.count, 0),
@@ -796,6 +870,19 @@ async function clientLoad() {
   const measured = summarize(samples, timing.measuredAt, completedAt);
   const result = {
     measurementStartsAtUnixMs: timing.measuredAt,
+    offeredWindow: summarize(
+      samples,
+      timing.measuredAt,
+      timing.measuredAt + settings.seconds * 1000,
+    ),
+    drain: summarize(samples, timing.measuredAt + settings.seconds * 1000, completedAt),
+    observations: samples.map(({ actorId, commands, reads, skipped, errors }) => ({
+      actorId,
+      commands,
+      reads,
+      skipped,
+      errors,
+    })),
     measured: {
       ...measured,
       offeredSeconds: settings.seconds,
@@ -821,15 +908,28 @@ async function clientLoad() {
       : {}),
   };
   await new Promise((done) => process.send({ result }, done));
+  if (settings.holdViewer) {
+    await viewerRelease;
+    await pending;
+  }
+  process.off('message', measurementMessage);
   process.disconnect();
 }
 
-async function startLoad(settings, onOfferedEnd) {
+export async function startLoad(settings, onOfferedEnd) {
   const child = fork(fileURLToPath(import.meta.url), ['--client'], {
     execArgv: ['--import', 'tsx'],
     stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
   });
   const diagnostics = {};
+  const exited = new Promise((resolve) =>
+    child.once('exit', (code, signal) => {
+      diagnostics.exit = { code, signal, atUnixMs: performance.timeOrigin + performance.now() };
+      if (settings.holdViewer && !diagnostics.viewerReleasedAtUnixMs)
+        diagnostics.viewerClosedBeforeRelease = true;
+      resolve({ code, signal });
+    }),
+  );
   let readyResolve, resultResolve, reject;
   const ready = new Promise((resolve, fail) => {
     readyResolve = resolve;
@@ -867,7 +967,7 @@ async function startLoad(settings, onOfferedEnd) {
   } finally {
     clearTimeout(timeout);
   }
-  return { child, result, diagnostics };
+  return { child, result, diagnostics, exited };
 }
 
 function metricDelta(before, after) {
@@ -916,6 +1016,452 @@ function metricDelta(before, after) {
     if (rows) database.prepared[key] = { rows, bytes: value.bytes - (old?.bytes ?? 0) };
   }
   return { counters, gauges: after.runtime?.gauges, metrics, database };
+}
+
+async function closeCampaignGame(game, phase) {
+  const report = await game.shutdown();
+  phase?.('shutdown', report);
+  if (!report.saved || report.problems.length)
+    throw Error('Disposable server shutdown was incomplete: ' + report.problems.join('; '));
+  return report;
+}
+
+function campaignConfig(directory, seed, databaseUrl) {
+  // Configuration validates the game database at admission. Create the owned
+  // fixture first and read its actual target, rather than inherit another URL.
+  const config = readConfig({
+    ...process.env,
+    OPEN_LEGEND_DATABASE_URL: databaseUrl,
+    OPEN_LEGEND_DATA_DIR: directory,
+    OPEN_LEGEND_AUTH_MODE: 'local',
+    OPEN_LEGEND_HOST: '127.0.0.1',
+    OPEN_LEGEND_PROFILING: 'off',
+    OPEN_LEGEND_GOD_MODE: 'false',
+    OPEN_LEGEND_WORLD_PRESET: 'wilderness',
+    WORLD_SEED: String(seed),
+    AI_BUDGET_USD: '0',
+    DECISION_ESCALATION_JSON: '{"mode":"off","origins":[],"reasons":[]}',
+    OPENAI_API_KEY: '',
+    JEV_API_KEY: '',
+    MACROFOLD_API_KEY: '',
+    OPENAI_EMBEDDING_API_KEY: '',
+  });
+  config.budgetUsd = 0;
+  config.llmKey = '';
+  config.jevKey = '';
+  config.macrofoldKey = '';
+  config.embeddingKey = '';
+  return config;
+}
+
+/** Non-timing, supplied-transport safety replay through the same full-server
+ * composition root. No external provider or artificial world rule is installed. */
+export async function runCampaignSafety(seed, run, signal) {
+  const directory = await mkdtemp(join(tmpdir(), 'openlegend-profile-safety-'));
+  let config, game, database, suppliedClient;
+  const { createReferenceWitness } = await import('./profiling-reference-witness.ts');
+  const referenceWitness = createReferenceWitness(async (prepared) => {
+    const service = game.service;
+    const head = await service.store.records.head();
+    const scope = {
+      worldId: service.world.id,
+      actorId: prepared.binding.actorId,
+      generation: head.generation,
+    };
+    const selected = [...prepared.sharedExperiences.keys()].map((key) => JSON.parse(key));
+    const evidence = await service.store.memories.evidence(
+      scope,
+      selected.filter(([kind]) => kind === 'awareness').map(([, id]) => id),
+    );
+    const entries = await Promise.all(
+      selected
+        .filter(([kind]) => kind !== 'awareness')
+        .map(([kind, id]) => service.store.memories.entry(scope, `${kind}:${id}`)),
+    );
+    return [
+      ...evidence.map((entry) => entry.entry),
+      ...entries.filter((entry) => entry !== undefined),
+    ];
+  });
+  const client = {
+    judge(request) {
+      if (!suppliedClient) throw Error('No supplied safety judgment transport.');
+      return suppliedClient.judge(request);
+    },
+    generate(request) {
+      if (!suppliedClient) throw Error('No supplied safety generation transport.');
+      return suppliedClient.generate(request);
+    },
+  };
+  const abort = () => {
+    void game?.shutdown().catch(() => {});
+  };
+  signal?.addEventListener('abort', abort, { once: true });
+  const now = () => 1700000000000;
+  const open = async () => {
+    game = await createProfileGame(config, false, client, now, referenceWitness.capture);
+    await new Promise((done) => game.server.listen(0, config.host, done));
+    const base = 'http://' + config.host + ':' + game.server.address().port;
+    const response = await toolHttp(base + '/api/state'),
+      cookie = response.headers.get('set-cookie')?.split(';')[0];
+    await response.arrayBuffer();
+    if (!cookie) throw Error('Safety replay local login unavailable.');
+    // The native replay and supplied director use this same local connection.
+    // Acquiring a second tab would correctly revoke their controlling lease.
+    const clientId = game.service.localScope.connectionId;
+    await resumeWorld(base, cookie, clientId);
+    await controlWorld(base, cookie, { paused: false, clientId, presenceSequence: 1 }, clientId);
+    return game.service;
+  };
+  try {
+    await initializeCollisionRuntime();
+    database = await createDisposableDatabase(process.env.OPEN_LEGEND_PROFILE_POSTGRES_URL);
+    config = campaignConfig(directory, seed, database.url);
+    // This non-timing replay edits an NPC's memory through normal creator
+    // authority. The timed opening retains its ordinary player configuration.
+    config.godMode = true;
+    const service = await open();
+    return await run({
+      service,
+      now,
+      referenceWitness,
+      installClient(next) {
+        suppliedClient = next;
+        return game.director;
+      },
+      reopen: async () => {
+        await game.service.flush();
+        await closeCampaignGame(game);
+        game = undefined;
+        return await open();
+      },
+    });
+  } finally {
+    signal?.removeEventListener('abort', abort);
+    suppliedClient = undefined;
+    const failures = [];
+    try {
+      if (game) await closeCampaignGame(game);
+    } catch (error) {
+      failures.push(error);
+    }
+    try {
+      if (database) await database.close();
+    } catch (error) {
+      failures.push(error);
+    }
+    try {
+      await rm(directory, { recursive: true, force: true });
+    } catch (error) {
+      failures.push(error);
+    }
+    if (failures.length)
+      throw new AggregateError(failures, 'Disposable safety cleanup was incomplete.');
+  }
+}
+
+/** The campaign reuses this server, authentication, SSE and separate-process
+ * driver. Fixture and phase policy stay in the tool-side case adapter. */
+export async function runCampaignHarness(item, hooks) {
+  const directory = await mkdtemp(join(tmpdir(), 'openlegend-campaign-'));
+  let config, database, game, base, cookie, state, load, unsubscribe, residents;
+  const abort = () => {
+    load?.child.kill();
+    void game?.shutdown().catch(() => {});
+  };
+  hooks.signal?.addEventListener('abort', abort, { once: true });
+  try {
+    await initializeCollisionRuntime();
+    database = await createDisposableDatabase(process.env.OPEN_LEGEND_PROFILE_POSTGRES_URL);
+    config = campaignConfig(directory, item.seed, database.url);
+    game = await createProfileGame(config, false);
+    if (item.workload.variant === '100-movement') {
+      await game.service.transition((world) => {
+        const present = worldRootEntities(world).filter(
+          (entity) => entity.actor?.alive && entity.kind !== 'animal',
+        ).length;
+        if (present > 100) throw Error('Opening population exceeds optional fixture total.');
+        const scene = populateScenario(
+          world,
+          parseScenario({
+            seed: item.seed,
+            layout: 'scattered',
+            mapSize: 256,
+            people: 100 - present,
+            animals: 0,
+            objects: [],
+          }),
+        );
+        return {
+          world: scene.world,
+          events: [],
+          outcome: { ok: true, code: 'fixture', message: 'Native movement population' },
+        };
+      });
+    }
+    await game.service.flush();
+    await closeCampaignGame(game, hooks?.phase);
+    game = undefined;
+    game = await createProfileGame(config, true);
+    await new Promise((done) => game.server.listen(0, config.host, done));
+    base = 'http://' + config.host + ':' + game.server.address().port;
+    const response = await toolHttp(base + '/api/state');
+    cookie = response.headers.get('set-cookie')?.split(';')[0];
+    await response.arrayBuffer();
+    if (!cookie) throw Error('Campaign local login unavailable.');
+    state = await resumeWorld(base, cookie, 'hierarchical-campaign');
+    await controlWorld(
+      base,
+      cookie,
+      { paused: false, clientId: 'hierarchical-campaign', presenceSequence: 1 },
+      'hierarchical-campaign',
+    );
+    const actorId = game.service.controlledEntityId;
+    const actor = entityGet(game.service.world.entities, actorId);
+    const clients = [
+      {
+        cookie,
+        scope: state.access.scope,
+        position: { ...worldPosition(actor), surfaceId: worldSupport(actor) },
+        actorId,
+        clientId: 'hierarchical-campaign',
+        destinations: prepareWalkingRoute(game.service.world, actorId),
+      },
+    ];
+    // One notification on actual completion; no polling, travel prediction or
+    // history reconstruction is added to the game. ID is the admitted action ID.
+    let previousAction = actor.actor.action;
+    let previousOrigin = worldPosition(actor);
+    unsubscribe = game.service.subscribe(() => {
+      const action = entityGet(game.service.world.entities, actorId)?.actor?.action;
+      if (previousAction && previousAction.id !== action?.id && load?.child.connected) {
+        const point = worldPosition(entityGet(game.service.world.entities, actorId));
+        const metres = Math.hypot(point.x - previousOrigin.x, point.z - previousOrigin.z);
+        const occurrence = occurrenceFor(game.service.world, actorId, previousAction.id);
+        const kind =
+          occurrence?.status === 'completed' && metres > 1e-6
+            ? 'completed'
+            : occurrence?.status === 'blocked'
+              ? 'blocked'
+              : occurrence?.status === 'cancelled'
+                ? 'cancelled'
+                : action
+                  ? 'replaced'
+                  : 'unknown';
+        load.child.send({
+          movementCompleted: { actorId, commandId: previousAction.id, kind, metres },
+        });
+      }
+      if (previousAction?.id !== action?.id)
+        previousOrigin = worldPosition(entityGet(game.service.world.entities, actorId));
+      previousAction = action;
+    });
+    if (item.workload.variant === '100-movement') {
+      const roster = worldRootEntities(game.service.world).filter(
+        (entity) => entity.actor?.alive && entity.kind !== 'animal' && entity.id !== actorId,
+      );
+      const routes = new Map(
+        roster.map((entity) => [entity.id, prepareWalkingRoute(game.service.world, entity.id)]),
+      );
+      const activity = new Map(
+        roster.map((entity) => [
+          entity.id,
+          {
+            admitted: 0,
+            start: worldPosition(entity),
+            last: worldPosition(entity),
+            distance: 0,
+            next: 0,
+          },
+        ]),
+      );
+      let stopped = false;
+      const task = (async () => {
+        while (!stopped) {
+          for (const person of roster) {
+            const current = entityGet(game.service.world.entities, person.id);
+            if (!current?.actor?.alive) throw Error('Assigned mover died.');
+            const evidence = activity.get(person.id),
+              point = worldPosition(current);
+            evidence.distance += Math.hypot(point.x - evidence.last.x, point.z - evidence.last.z);
+            evidence.last = point;
+            if (current.actor.action) continue;
+            const result = await game.service.transition((world) =>
+              executeCommand(
+                world,
+                {
+                  type: 'move',
+                  id: randomUUID(),
+                  actorId: person.id,
+                  destination: routes.get(person.id)[activity.get(person.id).next % 2],
+                },
+                game.service.nativeExecutionPermissions,
+              ),
+            );
+            if (!result.ok) throw Error('Assigned native movement refused: ' + result.code);
+            activity.get(person.id).admitted++;
+            activity.get(person.id).next++;
+          }
+          await delay(500);
+        }
+      })();
+      task.catch(() => {});
+      residents = {
+        async close() {
+          stopped = true;
+          await task;
+        },
+        activity,
+      };
+    }
+    load = await startLoad(
+      {
+        base,
+        clients,
+        epoch: game.service.commandEpoch,
+        seconds: item.measureSeconds,
+        warmupSeconds: item.warmupSeconds,
+        continuousMovement: true,
+        completionDriven: true,
+        holdViewer: true,
+        nextCommandDeadlineMs: 10000,
+        readIntervalMs: 0,
+        burst: false,
+      },
+      (boundary) => hooks.phase('offer-stop', boundary),
+    );
+    hooks.driver(load.child.pid, load.diagnostics);
+    load.child.send({ go: true });
+    const warmupEnd = performance.now() + item.warmupSeconds * 1000;
+    hooks.phase('warmup', { untilMs: warmupEnd });
+    await delay(Math.max(0, warmupEnd - performance.now()));
+    const measured = await hooks.measure(
+      async (startUnixMs) => {
+        load.child.send({ measureAt: startUnixMs });
+        return await load.result;
+      },
+      game.service,
+      game.database,
+    );
+    if (load.diagnostics.viewerClosedBeforeRelease || !load.child.connected)
+      throw Error('The profiling viewer disconnected before capture drain completed.');
+    load.diagnostics.viewerReleasedAtUnixMs = performance.timeOrigin + performance.now();
+    load.child.send({ releaseViewer: true });
+    let exitTimer;
+    try {
+      const exit = await Promise.race([
+        load.exited,
+        new Promise((_, reject) => {
+          exitTimer = setTimeout(() => reject(Error('Profiling viewer shutdown timed out.')), 5000);
+        }),
+      ]);
+      if (exit.code !== 0) throw Error('Profiling viewer failed during drain.');
+    } finally {
+      clearTimeout(exitTimer);
+    }
+
+    if (residents) await residents.close();
+    validateCurrentWorldState(game.service.world);
+    const checks = [
+      {
+        name: 'actual-native-movement-completed',
+        passed: (measured.offeredWindow?.movementTriggers?.completed ?? 0) > 0,
+        detail: measured.offeredWindow?.movementTriggers,
+      },
+      {
+        name: 'ordinary-opening-alive-controlled',
+        passed: !!entityGet(game.service.world.entities, actorId)?.actor?.alive,
+        detail: { actorId },
+      },
+      {
+        name: 'no-client-bursts-or-periodic-state-polling',
+        passed: true,
+        detail: { completionDeadlineMs: 10000 },
+      },
+    ];
+    if (residents)
+      for (const [id, evidence] of residents.activity) {
+        const p = worldPosition(entityGet(game.service.world.entities, id));
+        evidence.distance += Math.hypot(p.x - evidence.last.x, p.z - evidence.last.z);
+        checks.push({
+          name: 'assigned-native-movement',
+          passed: evidence.admitted > 0 && evidence.distance > 0,
+          detail: { id, ...evidence },
+        });
+      }
+    if (checks.some((check) => !check.passed))
+      throw Error('Campaign positive gameplay evidence failed.');
+    return {
+      checks,
+      external: measured,
+      work: {
+        commands: measured.measured.commands.count,
+        advancedGameSeconds: game.service.world.simTime,
+      },
+      outcome: 'completed',
+      database: database.details,
+      settings: evidenceSettings(game.service.world),
+      population: populationCensus(game.service.world),
+      residentActivity: residents ? Object.fromEntries(residents.activity) : undefined,
+    };
+  } finally {
+    hooks.signal?.removeEventListener('abort', abort);
+    load?.child.kill();
+    unsubscribe?.();
+    if (residents) await residents.close().catch(() => {});
+    const failures = [];
+    try {
+      if (game) await closeCampaignGame(game, hooks?.phase);
+    } catch (error) {
+      failures.push(error);
+    }
+    try {
+      if (database) await database.close();
+    } catch (error) {
+      failures.push(error);
+    }
+    try {
+      await rm(directory, { recursive: true, force: true });
+    } catch (error) {
+      failures.push(error);
+    }
+    if (failures.length)
+      throw new AggregateError(failures, 'Disposable campaign cleanup was incomplete.');
+  }
+}
+
+/** Shared by the ordinary diagnostic and campaign cases: one server/store factory. */
+export async function createProfileGame(config, tick, aiClient, now, observeDecisionPreparation) {
+  const store = new SqlGameRepository(
+    config.dataDirectory,
+    new PostgresDatabase(config.databaseUrl, false, config.sqlWriteGroups),
+  );
+  try {
+    if (!tick) {
+      const opening = new WorldService(store, config, now);
+      try {
+        await opening.ready;
+      } finally {
+        opening.releaseHostWork();
+        await opening.settleBackgroundSaves();
+      }
+    }
+    const game = await createGameServer({
+      config,
+      production: true,
+      tick,
+      store,
+      ...(aiClient ? { aiClient } : {}),
+      ...(now ? { now } : {}),
+      ...(observeDecisionPreparation ? { observeDecisionPreparation } : {}),
+    });
+    // Raw SQL observations belong to this tool's concrete repository, not the
+    // generic gameplay service's repository contract.
+    return Object.assign(game, { database: store.db });
+  } catch (error) {
+    await store.close().catch(() => {});
+    throw error;
+  }
 }
 
 async function main() {
@@ -1049,30 +1595,7 @@ async function main() {
   let residentFixture;
   // Retain the resource until the factory returns a closeable server. An initialization
   // failure otherwise leaves the database socket/worker alive with no returned handle.
-  const startGame = async (tick) => {
-    const store = new SqlGameRepository(
-      config.dataDirectory,
-      new PostgresDatabase(config.databaseUrl, false, config.sqlWriteGroups),
-    );
-    try {
-      if (!tick) {
-        // This disposable native/server workload owns no asset publication catalogue.
-        // Seed through the normal world service before HTTP, preserving initial
-        // observations, condition effects, construction grants and Main content.
-        const opening = new WorldService(store, config);
-        try {
-          await opening.ready;
-        } finally {
-          opening.releaseHostWork();
-          await opening.settleBackgroundSaves();
-        }
-      }
-      return await createGameServer({ config, production: true, tick, store });
-    } catch (error) {
-      await store.close().catch(() => {});
-      throw error;
-    }
-  };
+  const startGame = (tick) => createProfileGame(config, tick);
   const beginPhase = () => {
     const nativeStart = nativePopulation(game.service.world, cohortIds);
     const recentStart = recentOwnerCensus(game.service.world);
@@ -1696,5 +2219,7 @@ async function main() {
     }),
   );
 }
-if (process.argv[2] === '--client') await clientLoad();
-else await main();
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  if (process.argv[2] === '--client') await clientLoad();
+  else await main();
+}
