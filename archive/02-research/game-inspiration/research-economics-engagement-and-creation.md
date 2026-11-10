@@ -84,7 +84,7 @@ Preserve ambiguity instead of inventing a coherent timeline when sources disagre
 
 ## R09 and R13 — Explain how players and creators actually author content
 
-For creation platforms and games with modding or in-game building, distinguish at least three levels: **playing/building within an existing game's allowed rules**, **authoring assets or reusable components**, and **creating or scripting a new game/ruleset**. State which levels are available to ordinary players, authors, approved contributors or external modders.
+For creation platforms and games with modding or in-game building, distinguish at least three levels: **playing/building within an existing game's allowed rules**, **authoring assets or reusable components**, and **creating or scripting a new game/ruleset**. State which levels are available to ordinary players, authors, approved contributors or external modders. Ordinary in-game construction does not itself trigger a full external-modding investigation; apply the [conditional R15 gate](research-requirements.md#r15-modding-investigation-only-for-popular-modding-communities) and describe the authoring levels and workflows that actually exist.
 
 Describe the actual tools and workflow: editor and templates; terrain/scene/room construction; modeling/importing, animation, audio and UI; reusable models/packages/plugins and dependencies; visual configuration versus scripting; language, APIs and client/server execution; testing/debugging/profiling; collaboration/versioning; saving and persistence; publishing, permissions, moderation and discovery; and monetization when applicable. Separate native tooling, community tools, external DCC applications, AI assistance, reverse engineering and unverified promises.
 

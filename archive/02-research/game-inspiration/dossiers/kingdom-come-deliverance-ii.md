@@ -198,7 +198,7 @@ Narrower player testimony is available in quest comments: **GotrekAK** identifie
 
 ## Transferable patterns and counterexamples — interpretation
 
-**Connect preparation to a later situation.** Washing or changing clothes matters when it changes admission or treatment. Otherwise maintenance becomes a tax. The requirement is intelligible feedback about which state matters and how to alter it; hidden standards frustrate rather than deepen society.
+**Connect preparation to a later situation.** Washing or changing clothes can make preparation consequential when it changes admission or treatment; repeated maintenance needs to earn its cost. Where preparation gates a wanted activity, ask whether available observations offer a plausible way to learn what matters or try another approach. Distinguish an intriguing unknown preference from an unexplained command or state check.
 
 **Let ordinary life create reasons to engage.** Work, rest and leisure can make a place feel occupied by people with purposes beyond Henry. Arriving tired, poorly supplied or in need of repairs makes local services and relationships immediately relevant. This is an interpretive connection between the supplied commentary and the documented preparation, routines and maintenance above, not evidence that all social life is autonomously simulated. [Commentary provenance](#s-supplied-commentary)
 
