@@ -32,9 +32,11 @@ pub(crate) use selection::{
     select_temporal_receipt_facets, temporal_field_aliases, temporal_receipt_account_aliases,
     temporal_receipt_aliases,
 };
+mod knowledge_retention;
 mod recent;
 mod recent_residency;
 mod support_retention;
+pub(crate) use knowledge_retention::{CompletedKnowledgeRetention, KnowledgeRetentionCursor};
 pub(crate) use recent::{CompletedRecentRetention, RecentRetentionCursor};
 pub(crate) use support_retention::{
     CompletedSupportRetention, SupportMembershipAnswer, SupportMembershipRequest,

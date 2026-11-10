@@ -589,6 +589,7 @@ pub(crate) enum CompletedOperation {
     Response(crate::response::CompletedResponse),
     Forget(crate::experience::CompletedForgetExperience),
     RecentRetention(crate::received::CompletedRecentRetention),
+    KnowledgeRetention(crate::received::CompletedKnowledgeRetention),
     SupportRetention(crate::received::CompletedSupportRetention),
     HostControl(super::host_control::CompletedHostControl),
     NpcIntake(super::npc_intake::CompletedNpcIntake),
@@ -607,6 +608,7 @@ impl CompletedOperation {
             Self::Response(r) => &r.outcome,
             Self::Forget(f) => f.outcome(),
             Self::RecentRetention(r) => &r.outcome,
+            Self::KnowledgeRetention(r) => &r.outcome,
             Self::SupportRetention(r) => &r.outcome,
             Self::HostControl(r) => &r.outcome,
             Self::NpcIntake(r) => &r.outcome,
@@ -625,6 +627,7 @@ impl CompletedOperation {
             | Self::Restore(_)
             | Self::Forget(_)
             | Self::SupportRetention(_)
+            | Self::KnowledgeRetention(_)
             | Self::RecentRetention(_)
             | Self::HostControl(_)
             | Self::NpcIntake(_) => (None, None, None, None),
@@ -660,6 +663,7 @@ impl CompletedOperation {
             | Self::Response(_)
             | Self::Forget(_)
             | Self::SupportRetention(_)
+            | Self::KnowledgeRetention(_)
             | Self::RecentRetention(_)
             | Self::HostControl(_)
             | Self::NpcIntake(_) => None,
@@ -699,6 +703,7 @@ enum OperationCursor {
     Forget(crate::experience::ForgetExperienceCursor),
     NpcCandidates(crate::capture::NpcCandidateCursor),
     RecentRetention(crate::received::RecentRetentionCursor),
+    KnowledgeRetention(crate::received::KnowledgeRetentionCursor),
     SupportRetention(crate::received::SupportRetentionCursor),
     HostControl(super::host_control::HostControlCursor),
     NpcIntake(super::npc_intake::NpcIntakeCursor),
@@ -728,6 +733,7 @@ impl OperationCursor {
             | Self::LearningPublish(_)
             | Self::Startup(_)
             | Self::SupportRetention(_)
+            | Self::KnowledgeRetention(_)
             | Self::RecentRetention(_)
             | Self::HostControl(_)
             | Self::NpcIntake(_)
@@ -963,6 +969,17 @@ impl OperationCursor {
                     )),
                 }
             }
+            Self::KnowledgeRetention(cursor) => {
+                if route.is_some() || answer.is_some() {
+                    return Err(DriveError::StaleResponse);
+                }
+                Ok(match cursor.step(core, budget)? {
+                    Some(done) => Poll::Complete(DriverCompletion::Operation(
+                        CompletedOperation::KnowledgeRetention(done),
+                    )),
+                    None => Poll::Continue,
+                })
+            }
             Self::RecentRetention(cursor) => {
                 if route.is_some() || answer.is_some() {
                     return Err(DriveError::StaleResponse);
@@ -1077,6 +1094,13 @@ impl OperationDriver {
     ) -> Result<Self, DriveError> {
         Self::new(core, OperationCursor::SupportRetention(cursor), budget)
     }
+    pub(crate) fn knowledge_retention(
+        core: &mut CoreMutation<'_>,
+        cursor: crate::received::KnowledgeRetentionCursor,
+        budget: &ByteBudget,
+    ) -> Result<Self, DriveError> {
+        Self::new(core, OperationCursor::KnowledgeRetention(cursor), budget)
+    }
     pub(crate) fn recent_retention(
         core: &mut CoreMutation<'_>,
         cursor: crate::received::RecentRetentionCursor,
@@ -1166,6 +1190,11 @@ impl OperationDriver {
         self.source_versions
             .take()
             .map(SourceVersionsAnswer::into_parts)
+    }
+    pub(crate) fn request_advance_publication(&mut self) {
+        if let OperationCursor::Advance(cursor) = &mut self.cursor {
+            cursor.request_publication();
+        }
     }
     pub(crate) fn finished(&self) -> bool {
         self.done

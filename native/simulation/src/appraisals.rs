@@ -747,7 +747,10 @@ fn put(
         next,
         _workspace: reservation,
     };
-    owner.reserve_record_member(&budget)?;
+    // Replacing an existing key does not grow its map, even at full capacity.
+    if matches!(&undo, AppraisalUndo::Record { prior: None, .. }) {
+        owner.reserve_record_member(&budget)?;
+    }
     if let Some(prior) = owner.records.get(id) {
         owner.index.remove(&prior.value)?;
         unindex_deadline(&mut state.deadlines, &prior.value);

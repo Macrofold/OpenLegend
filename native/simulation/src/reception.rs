@@ -354,10 +354,13 @@ pub enum ComparisonRounding {
     NearestInteger,
 }
 
+/// Source projectAttributes constructs operator/rounding/value in this order;
+/// its actual encoding participates in decision fingerprints and received sharing.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct AttributeComparison {
     pub operator: ComparisonOperator,
+    pub rounding: ComparisonRounding,
     pub value: f64,
     #[serde(
         default,
@@ -365,7 +368,6 @@ pub struct AttributeComparison {
         skip_serializing_if = "Option::is_none"
     )]
     pub unit: Option<ComparisonUnit>,
-    pub rounding: ComparisonRounding,
 }
 
 /// Field order follows `world-modules.ts::projectAttributeInput` and its owner

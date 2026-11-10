@@ -618,6 +618,21 @@ impl Session {
         })();
         self.install_driver(key, journal, driver, false)
     }
+    pub(crate) fn begin_knowledge_retention(
+        &mut self,
+        actors: Vec<String>,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::received::KnowledgeRetentionCursor::new(actors, &self.budget)?;
+            OperationDriver::knowledge_retention(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
     pub(crate) fn begin_recent_retention(
         &mut self,
         actors: Vec<String>,
@@ -829,6 +844,9 @@ impl Session {
         };
         if preparing.key != key {
             return Err(FenceError::Stale.into());
+        }
+        if self.simulation.fence.take_advance_publication(key) {
+            preparing.driver.request_advance_publication();
         }
         let step = {
             let mut core = CoreMutation {

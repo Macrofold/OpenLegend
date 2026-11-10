@@ -17,7 +17,12 @@ import { nativeActivityDisplay } from './native-activity.js';
 import { nativeCanonicalCommand } from './native-command.js';
 import { worldControlOutcome } from './world-control-outcome.js';
 import type { NativeGeometryProviders } from './native-geometry.js';
-import { decodeNativeProduct, retainNativeSources } from './native-consumer.js';
+import {
+  decodeNativeProduct,
+  releaseNativeProduct,
+  retainNativeProduct,
+  retainNativeSources,
+} from './native-consumer.js';
 import type { SqlDatabase } from './store.js';
 import type { LiveReadCutsProvider } from './live-read-overlay.js';
 import {
@@ -89,9 +94,14 @@ export async function answerNativeProvider(
   geometry: NativeGeometryProviders,
   history?: NativeHistoryReadContext,
 ): Promise<NativeProviderAnswer> {
-  const question = decodeNativeProduct<Question>(provider.question());
-  const json = await prepareProviderAnswer(question, geometry, history);
-  return retainNativeSources({ json }, question);
+  const question = retainNativeProduct(decodeNativeProduct<Question>(provider.question()));
+  try {
+    const json = await prepareProviderAnswer(question, geometry, history);
+    return retainNativeSources({ json }, question);
+  } finally {
+    // A cancelled caller cannot free a still-awaited handler's actual input.
+    releaseNativeProduct(question);
+  }
 }
 
 async function prepareProviderAnswer(
@@ -292,8 +302,12 @@ export async function driveNativeOperation(
     try {
       if (signal?.aborted) throw signal.reason ?? new Error('Native request was canceled.');
       const answer = await answerNativeProvider(turn.provider, geometry, history);
-      if (signal?.aborted) throw signal.reason ?? new Error('Native request was canceled.');
-      turn = await world.answer(turn.key, turn.provider, Buffer.from(answer.json, 'utf8'));
+      try {
+        if (signal?.aborted) throw signal.reason ?? new Error('Native request was canceled.');
+        turn = await world.answer(turn.key, turn.provider, Buffer.from(answer.json, 'utf8'));
+      } finally {
+        releaseNativeProduct(answer);
+      }
     } catch (error) {
       await world.cancel(turn.key);
       throw error;
@@ -339,13 +353,17 @@ async function driveNativeNpcPreparation(
     try {
       signal?.throwIfAborted();
       const answer = await answerNativeProvider(turn.provider, geometry, history);
-      signal?.throwIfAborted();
-      turn = await world.answerNpcPreparation(
-        read,
-        turn.key,
-        turn.provider,
-        Buffer.from(answer.json),
-      );
+      try {
+        signal?.throwIfAborted();
+        turn = await world.answerNpcPreparation(
+          read,
+          turn.key,
+          turn.provider,
+          Buffer.from(answer.json),
+        );
+      } finally {
+        releaseNativeProduct(answer);
+      }
     } catch (error) {
       await world.cancel(turn.key);
       throw error;

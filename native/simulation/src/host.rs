@@ -73,6 +73,7 @@ pub struct CandidateFence {
     generation: AtomicU64,
     closed: AtomicBool,
     stop_requested: AtomicBool,
+    publication_requested: AtomicU64,
     last_settlement: Mutex<Option<(CandidateKey, Settlement)>>,
 }
 /// Held only for the final synchronous Node disclosure turn. Slow SQL/provider
@@ -125,6 +126,7 @@ impl CandidateFence {
             generation: AtomicU64::new(0),
             closed: AtomicBool::new(false),
             stop_requested: AtomicBool::new(false),
+            publication_requested: AtomicU64::new(0),
             last_settlement: Mutex::new(None),
         }
     }
@@ -267,6 +269,27 @@ impl CandidateFence {
     pub fn rollback_complete(&self, key: CandidateKey) -> Result<(), FenceError> {
         self.check_bindings(key)?;
         self.transition(key.id, CandidatePhase::RollingBack, CandidatePhase::Idle)
+    }
+
+    /// Ask only the currently preparing candidate to publish earned elapsed
+    /// work at its next coherent boundary. This never requests cancellation.
+    pub fn request_advance_publication(&self) {
+        if self.closed.load(Ordering::Acquire) {
+            return;
+        }
+        let current = self.token.load(Ordering::Acquire);
+        if phase(current) == CandidatePhase::Preparing {
+            self.publication_requested
+                .fetch_max(current >> STATE_BITS, Ordering::AcqRel);
+        }
+    }
+
+    pub(crate) fn take_advance_publication(&self, key: CandidateKey) -> bool {
+        // A late host wake cannot affect another operation or a newer world
+        // candidate. Cancellation and close keep their independent stop flag.
+        self.publication_requested
+            .compare_exchange(key.id, 0, Ordering::AcqRel, Ordering::Acquire)
+            .is_ok()
     }
 
     pub fn request_stop(&self) {

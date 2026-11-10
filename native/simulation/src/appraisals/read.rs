@@ -173,7 +173,7 @@ impl CapturedActorAppraisals {
         actor: &str,
         budget: &ByteBudget,
     ) -> Result<bool, ExecutionError> {
-        let current = select_views(state, actor, &self.required_scopes, budget)?;
+        let current = select_views(state, actor, &self.required_scopes, true, budget)?;
         Ok(current.subscribed.len() == self.required_revisions.len()
             && current
                 .subscribed
@@ -277,10 +277,11 @@ pub(crate) fn capture_validity_views<'a>(
     state: &'a SimulationState,
     actor: &str,
     required: &[AppraisalScope],
+    include_hot: bool,
     budget: &ByteBudget,
 ) -> Result<CapturedValidityViews<'a>, ExecutionError> {
     Ok(CapturedValidityViews {
-        selected: select_views(state, actor, required, budget)?,
+        selected: select_views(state, actor, required, include_hot, budget)?,
         state: &state.appraisals,
     })
 }
@@ -288,6 +289,7 @@ fn select_views<'a>(
     state: &'a SimulationState,
     actor_id: &str,
     required: &[AppraisalScope],
+    include_hot: bool,
     budget: &ByteBudget,
 ) -> Result<SelectedViews<'a>, ExecutionError> {
     let group = state.installed.work_policy.policy().group;
@@ -341,7 +343,11 @@ fn select_views<'a>(
         // same-query active witness is distinct from historical completeness.
         return Err(ExecutionError::UnsupportedFamily);
     }
-    let active_maximum = owner.map_or(0, |owner| owner.index.active_len().min(24));
+    let active_maximum = if include_hot {
+        owner.map_or(0, |owner| owner.index.active_len().min(24))
+    } else {
+        0
+    };
     let mut maximum = active_maximum;
     for scope in required {
         meter
@@ -396,7 +402,7 @@ fn select_views<'a>(
     let now = state.physical.header.sim_time;
     let mut hot_count = 0;
     if let Some(owner) = owner {
-        for id in owner.index.active().take(200) {
+        for id in owner.index.active().take(if include_hot { 200 } else { 0 }) {
             if selected.len() >= 24 {
                 break;
             }
@@ -483,7 +489,7 @@ pub(crate) fn capture_actor_appraisals(
         subscribed,
         hot_count,
         _storage: _selection,
-    } = select_views(state, actor_id, required, budget)?;
+    } = select_views(state, actor_id, required, true, budget)?;
     let owner = state.appraisals.owners.get(actor_id);
     let now = state.physical.header.sim_time;
     let names = if selected.is_empty() {

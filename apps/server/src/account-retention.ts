@@ -53,7 +53,12 @@ const tables = {
   summary: 'mind_summaries',
 } as const;
 type Kind = keyof typeof tables;
-const maximumPreparationBytes = 4 * 1024 * 1024;
+export const ACCOUNT_RETENTION_PREPARATION = Object.freeze({
+  rows: 64,
+  bytes: 4 * 1024 * 1024,
+  metadataRows: 8192,
+});
+const maximumPreparationBytes = ACCOUNT_RETENTION_PREPARATION.bytes;
 interface Candidate {
   kind: Kind;
   id: string;
@@ -163,7 +168,7 @@ export async function prepareAccountRetention(
               })),
           )
         : [];
-    if (metadata.length > 8192)
+    if (metadata.length > ACCOUNT_RETENTION_PREPARATION.metadataRows)
       throw new MemoryRetentionError(
         'Personal memory maintenance exceeds its complete preparation allowance.',
       );
@@ -231,7 +236,7 @@ export async function prepareAccountRetention(
         if (candidate.bytes > maximumPreparationBytes)
           throw new MemoryRetentionError('One personal memory exceeds bounded preparation.');
         if (
-          selectedCandidates.length === 64 ||
+          selectedCandidates.length === ACCOUNT_RETENTION_PREPARATION.rows ||
           selectedBytes + candidate.bytes > maximumPreparationBytes
         ) {
           moreCandidates = true;

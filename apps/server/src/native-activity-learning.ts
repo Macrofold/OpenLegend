@@ -9,7 +9,11 @@ import type { NativeMaintenanceRead } from './native-maintenance-read.js';
 import type { NativeGeometryProviders } from './native-geometry.js';
 import type { NativeHistoryReadContext } from './native-providers.js';
 import { answerNativeProvider } from './native-providers.js';
-import { decodeNativeProduct, retainNativeSources } from './native-consumer.js';
+import {
+  decodeNativeProduct,
+  releaseNativeProduct,
+  retainNativeSources,
+} from './native-consumer.js';
 
 const origins = new WeakMap<MaintenanceLearningBatch, NativeWorldActivityLearningBatch>();
 
@@ -27,7 +31,11 @@ export async function prepareNativeActivityLearning(
     while (turn.kind === 'provider') {
       if (!turn.provider) throw new Error('Native learning has no provider question.');
       const answer = await answerNativeProvider(turn.provider, geometry, history);
-      turn = await world.answerActivityLearning(native, turn.provider, Buffer.from(answer.json));
+      try {
+        turn = await world.answerActivityLearning(native, turn.provider, Buffer.from(answer.json));
+      } finally {
+        releaseNativeProduct(answer);
+      }
     }
     if (turn.kind !== 'complete')
       throw new Error('Native learning did not complete its preparation.');

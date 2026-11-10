@@ -8,7 +8,11 @@ import {
   retainMemorySource,
   type MemoryHydrationBudget,
 } from './memory-read-allocation.js';
-import { attachNativeConsumer } from './native-consumer.js';
+import {
+  attachNativeConsumer,
+  releaseNativeProduct,
+  retainNativeProduct,
+} from './native-consumer.js';
 import { personalVectorScope } from './vector-store.js';
 import {
   objectIndexGet,
@@ -478,6 +482,7 @@ export const MEMORY_CACHE_TABLES = ['memory_vector_cache'] as const;
 export class MemoryReadCache {
   private values = new Map<string, { value: RetrievedMemory; bytes: number }>();
   private bytes = 0;
+  private closed = false;
   private key(row: Record<string, unknown>): string {
     return JSON.stringify([
       row['world_id'],
@@ -491,6 +496,7 @@ export class MemoryReadCache {
     return this.values.get(this.key(row));
   }
   put(row: Record<string, unknown>, value: RetrievedMemory, bytes: number) {
+    if (this.closed) return;
     const key = this.key(row);
     if (this.values.has(key)) return;
     while (
@@ -498,13 +504,27 @@ export class MemoryReadCache {
       (this.bytes + bytes > RETRIEVAL_BYTES || this.values.size >= RETRIEVAL_ROWS)
     ) {
       const oldest = this.values.keys().next().value!;
-      this.bytes -= this.values.get(oldest)!.bytes;
+      const prior = this.values.get(oldest)!;
+      this.bytes -= prior.bytes;
       this.values.delete(oldest);
+      releaseNativeProduct(prior.value);
     }
     if (bytes <= RETRIEVAL_BYTES) {
+      // Cache custody is independent of the temporary read that populated it.
+      // Returned readings retain their own pins before later cache eviction.
+      if (memorySourceAdmitted(value)) retainNativeProduct(value);
       this.values.set(key, { value, bytes });
       this.bytes += bytes;
     }
+  }
+  clear(): void {
+    for (const { value } of this.values.values()) releaseNativeProduct(value);
+    this.values.clear();
+    this.bytes = 0;
+  }
+  dispose(): void {
+    this.closed = true;
+    this.clear();
   }
 }
 
@@ -647,6 +667,7 @@ interface CanonicalSourceWatch {
   /** Exact storage timeline for finite detached temporal inputs. */
   temporalGeneration?: string;
   retention?: {
+    archivesChanged: boolean;
     accounts: Set<string>;
     dependentAccounts: Set<string>;
     supportAliases?: Set<string>;
@@ -1075,6 +1096,7 @@ export class MemoryRepository {
         expected: new Map(),
         valid: true,
         retention: {
+          archivesChanged: false,
           accounts: new Set(),
           dependentAccounts: new Set(),
           ...(kind === 'support' ? { supportAliases: new Set<string>() } : {}),
@@ -1097,6 +1119,7 @@ export class MemoryRepository {
                 ? { supportAliases: watch.retention!.supportAliases }
                 : {}),
               temporalPages: watch.retention!.temporalPages,
+              archivesChanged: watch.retention!.archivesChanged,
             },
           ]),
         ),
@@ -1504,6 +1527,20 @@ export class MemoryRepository {
       if (selected.length) deletes.set(table, selected);
     }
     return { ...changes, writes, deletes };
+  }
+  /** Source compares its actual immutable archive owner. Native publication
+   * carries that same owner's exact plan separately from canonical row edits. */
+  retentionArchivesAccepted(worldId: string, plan: SourceVersionPlan): void {
+    if (!plan.changes.length) return;
+    for (const watch of this.canonicalSourceFences)
+      if (
+        watch.worldId === worldId &&
+        watch.valid &&
+        watch.retention &&
+        !watch.retention.supportAliases &&
+        plan.changes.some((change) => change.actorId === watch.actorId)
+      )
+        watch.retention.archivesChanged = true;
   }
   accepted(worldId: string, changes: RecordChanges, through: number): void {
     this.publishSourceChanges(worldId, this.publicationChanges(worldId, changes, true, through));
@@ -3832,9 +3869,18 @@ export class MemoryRepository {
         // the same decoder rather than retrospectively claiming its allocation.
         return cached && (!budget || memorySourceAdmitted(cached.value)) ? cached : undefined;
       };
+      const copySource = (row: Record<string, unknown>, value: RetrievedMemory) => {
+        const copy = () => ({
+          ...value,
+          ...(row['score'] !== undefined ? { score: Number(row['score']) } : {}),
+        });
+        return budget ? retainMemorySource(copy, budget, value) : copy();
+      };
       const reused = rows.flatMap((row) => {
         const cached = cachedSource(row);
-        return cached ? [{ row, ...cached }] : [];
+        // A concurrent cache clear may run during the SQL awaits below. Take
+        // this reading's independent pins before yielding, not after hydration.
+        return cached ? [{ row, bytes: cached.bytes, value: copySource(row, cached.value) }] : [];
       });
       let bytes = reused.reduce((sum, entry) => sum + entry.bytes, reservedBytes);
       if (bytes > RETRIEVAL_BYTES) throw new MemoryPreparationError();
@@ -3868,14 +3914,7 @@ export class MemoryRepository {
           });
         }
       }
-      const copySource = (row: Record<string, unknown>, value: RetrievedMemory) => {
-        const copy = () => ({
-          ...value,
-          ...(row['score'] !== undefined ? { score: Number(row['score']) } : {}),
-        });
-        return budget ? retainMemorySource(copy, budget, value) : copy();
-      };
-      const result: RetrievedMemory[] = reused.map(({ row, value }) => copySource(row, value));
+      const result: RetrievedMemory[] = reused.map(({ value }) => value);
       for (const { kind, batch, bytes: bodyBytes, idBytes, count } of transfers) {
         const transfer = budget && reserveMemoryTransfer(budget, bodyBytes, idBytes, count);
         try {

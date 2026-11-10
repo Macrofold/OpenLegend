@@ -215,10 +215,17 @@ impl AdvanceCursor {
             return Ok(Progress::Event);
         }
         if self.participation.is_some() {
-            let Some(AdvanceAnswer::Participation(done)) = answer.take() else { return Ok(Progress::Participation) };
+            let Some(AdvanceAnswer::Participation(done)) = answer.take() else {
+                return Ok(Progress::Participation);
+            };
             if self.participation_endpoint {
-                self.endpoint.as_mut().ok_or_else(invalid)?.complete_participation(&done)?;
-            } else { self.exits.as_mut().ok_or_else(invalid)?.complete(&done)?; }
+                self.endpoint
+                    .as_mut()
+                    .ok_or_else(invalid)?
+                    .complete_participation(&done)?;
+            } else {
+                self.exits.as_mut().ok_or_else(invalid)?.complete(&done)?;
+            }
             self.participation = None;
             self.retain(EventBatch::Participation(done))?;
         }
@@ -360,7 +367,9 @@ impl AdvanceCursor {
                     .any(|change| {
                         matches!(
                             change,
-                            PhysicalChange::Body { .. } | PhysicalChange::Participation { .. } | PhysicalChange::Membership { .. }
+                            PhysicalChange::Body { .. }
+                                | PhysicalChange::Participation { .. }
+                                | PhysicalChange::Membership { .. }
                         )
                     });
                 self.roster_cursor = core.journal.physical.change_cursor();
@@ -419,7 +428,12 @@ impl AdvanceCursor {
                 };
                 match cursor.step(core, input)? {
                     EndpointStep::Participation(actor) => {
-                        self.participation = Some(crate::participation::ParticipationCursor::due(core, actor, self.candidate, budget)?);
+                        self.participation = Some(crate::participation::ParticipationCursor::due(
+                            core,
+                            actor,
+                            self.candidate,
+                            budget,
+                        )?);
                         self.participation_endpoint = true;
                         return Ok(Progress::Participation);
                     }
@@ -478,7 +492,11 @@ impl AdvanceCursor {
                         self.capture_perceivers(core)?;
                     }
                     self.phase = if self.mechanics.is_none() {
-                        self.exits = Some(crate::participation::DueExits::prepare(&core.state.physical, core.state.installed.time_epsilon, budget)?);
+                        self.exits = Some(crate::participation::DueExits::prepare(
+                            &core.state.physical,
+                            core.state.installed.time_epsilon,
+                            budget,
+                        )?);
                         Phase::ExitsStart
                     } else {
                         Phase::ActorCondition
@@ -487,7 +505,12 @@ impl AdvanceCursor {
                 }
                 Phase::ExitsStart => {
                     if let Some(actor) = self.exits.as_ref().and_then(|exits| exits.current()) {
-                        self.participation = Some(crate::participation::ParticipationCursor::due(core, actor, self.candidate, budget)?);
+                        self.participation = Some(crate::participation::ParticipationCursor::due(
+                            core,
+                            actor,
+                            self.candidate,
+                            budget,
+                        )?);
                         self.participation_endpoint = false;
                         return Ok(Progress::Participation);
                     }
@@ -900,6 +923,7 @@ impl AdvanceCursor {
                     self.phase = if core.state.physical.header.sim_time >= self.end_at
                         || self.intervals >= self.max_intervals
                         || self.motion_slices >= 4096
+                        || self.publication_requested
                         || self.navigation_blocked
                     {
                         Phase::Publish

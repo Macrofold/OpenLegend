@@ -231,8 +231,10 @@ impl AppraisalState {
             ])
             .ok_or(ExecutionError::Capacity)?;
             budget.resize_backing(&mut allocation.storage, bytes)?;
+            // Exact dense capacity keeps the pinned IndexMap rounding within
+            // map_storage(target), already funding its separate hash buckets.
             self.owners
-                .try_reserve(target - self.owners.len())
+                .try_reserve_exact(target - self.owners.len())
                 .map_err(|_| ExecutionError::Capacity)?;
             let actual = heap_sum([
                 allocation.fixed,
@@ -297,8 +299,10 @@ impl AppraisalOwner {
                 )
                 .ok_or(ExecutionError::Capacity)?,
         )?;
+        // IndexMap::try_reserve otherwise rounds the dense Vec up to its hash
+        // capacity after allocation; that larger buffer must not appear unfunded.
         self.records
-            .try_reserve(target - self.records.len())
+            .try_reserve_exact(target - self.records.len())
             .map_err(|_| ExecutionError::Capacity)?;
         let actual = allocation
             .fixed

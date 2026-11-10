@@ -92,6 +92,7 @@ export function nativeTriggerContext(
 export function nativeResponseReferences(
   current: NativeNpcCapture,
   original: NativeNpcCapture,
+  selectedVisibleIds: readonly string[],
   sources: readonly NativePersonalSource[],
   evidenceIds: readonly string[],
   rememberedIds: readonly string[],
@@ -106,11 +107,16 @@ export function nativeResponseReferences(
     facts.perception.bodies.map((body, ordinal) => [body.sourceId, { body, ordinal }]),
   );
   const bodySubjects = new Map(metadata.bodies.map((body) => [body.ordinal, body.subject]));
-  const visibleIds = current.candidates().bodyOrdinals.map((ordinal) => {
-    const body = facts.perception.bodies[ordinal];
-    if (!body) throw new Error('Native references have no selected current body.');
-    return body.sourceId;
-  });
+  const currentIds = new Set(
+    current.candidates().bodyOrdinals.map((ordinal) => {
+      const body = facts.perception.bodies[ordinal];
+      if (!body) throw new Error('Native references have no selected current body.');
+      return body.sourceId;
+    }),
+  );
+  // Source preserves the refreshed attention selection's order. The current
+  // native roster filters permission; it does not choose presentation order.
+  const visibleIds = selectedVisibleIds.filter((id) => currentIds.has(id));
   const visible = new Set(visibleIds),
     evidence = new Set(evidenceIds);
   const selected = sources.flatMap((source) => {

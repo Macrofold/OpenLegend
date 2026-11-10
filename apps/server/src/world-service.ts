@@ -241,6 +241,7 @@ import { scopedInventionErrors } from './invention-context.js';
 import { advanceWorldSlices, appendedRecordCount } from '@open-legend/domain';
 import { setContainerAccess, type ContainerAccessRequest } from '@open-legend/domain';
 import { WorkLane, OverloadError } from './work-lane.js';
+import { NATIVE_IO_YIELD_MS, NATIVE_PUBLICATION_MS } from './native-advance-budget.js';
 import {
   authorAppraisal,
   changeAppraisal,
@@ -4644,7 +4645,7 @@ export class WorldService {
               endTiming('native.geometryBatch', started);
             }
           }
-          if (performance.now() - sliceStarted >= 8) {
+          if (performance.now() - sliceStarted >= NATIVE_IO_YIELD_MS) {
             if (measured) recordDuration('native.noYield', performance.now() - sliceStarted);
             await new Promise<void>((resolve) => setImmediate(resolve));
             sliceStarted = performance.now();
@@ -4658,7 +4659,8 @@ export class WorldService {
           result = nextSlice(
             ((result.value === 'boundary' || result.value === 'preparation') &&
               this.pendingOperations > 0) ||
-              (result.value === 'boundary' && performance.now() - batchStarted >= 32),
+              (result.value === 'boundary' &&
+                performance.now() - batchStarted >= NATIVE_PUBLICATION_MS),
           );
         }
         const advanced = result.value;
@@ -4697,7 +4699,7 @@ export class WorldService {
           candidateInputs.length ||
           delta <= 0 ||
           this.pendingOperations > 0 ||
-          performance.now() - batchStarted >= 32
+          performance.now() - batchStarted >= NATIVE_PUBLICATION_MS
         )
           break;
       }

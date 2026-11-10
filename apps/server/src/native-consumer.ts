@@ -10,12 +10,13 @@ type Entry = {
   /** This admission funds this object's own allocation, beyond borrowed pins. */
   readonly owned?: true;
 };
-type Holder = { readonly entries: readonly Entry[]; scope?: Set<Holder>; released?: true };
-const scopes = new AsyncLocalStorage<Set<Holder>>();
+type Scope = { readonly holders: Set<Holder>; closed: boolean };
+type Holder = { readonly entries: readonly Entry[]; scope?: Scope; released?: true };
+const scopes = new AsyncLocalStorage<Scope>();
 function release(holder: Holder): void {
   if (holder.released) return;
   holder.released = true;
-  holder.scope?.delete(holder);
+  holder.scope?.holders.delete(holder);
   for (const entry of holder.entries) entry.consumer.release();
 }
 const decodedConsumers = new FinalizationRegistry<Holder>(release);
@@ -23,24 +24,55 @@ const holders = new WeakMap<object, Holder>();
 
 /** Temporary formatting products end with the real request. An output that
  * leaves it must explicitly retain its holder through its actual consumer. */
-export async function withNativeConsumerScope<T>(operation: () => Promise<T>): Promise<T> {
-  const scope = new Set<Holder>();
-  return scopes.run(scope, async () => {
-    try {
-      return await operation();
-    } finally {
-      for (const holder of scope) {
-        decodedConsumers.unregister(holder);
-        release(holder);
-      }
+export function createNativeConsumerScope() {
+  const scope: Scope = { holders: new Set(), closed: false };
+  let active = 0;
+  let ending = false;
+  const finish = () => {
+    if (!ending || active || scope.closed) return;
+    scope.closed = true;
+    for (const holder of scope.holders) {
+      decodedConsumers.unregister(holder);
+      release(holder);
     }
-  });
+  };
+  return {
+    async run<T>(operation: () => Promise<T>): Promise<T> {
+      if (ending) throw new Error('The native consumer owner was released.');
+      active++;
+      try {
+        return await scopes.run(scope, operation);
+      } finally {
+        active--;
+        finish();
+      }
+    },
+    dispose(): void {
+      ending = true;
+      finish();
+    },
+  };
+}
+
+export async function withNativeConsumerScope<T>(operation: () => Promise<T>): Promise<T> {
+  const scope = createNativeConsumerScope();
+  try {
+    return await scope.run(operation);
+  } finally {
+    scope.dispose();
+  }
+}
+
+/** Accepted publications and independent save/provider owners cannot inherit a
+ * caller's temporary preparation lifetime through async context propagation. */
+export function withoutNativeConsumerScope<T>(operation: () => T): T {
+  return scopes.exit(operation);
 }
 
 export function retainNativeProduct<T extends object>(owner: T): T {
   const holder = holders.get(owner);
   if (!holder || holder.released) throw new Error('Native output has no live allocation owner.');
-  holder.scope?.delete(holder);
+  holder.scope?.holders.delete(holder);
   holder.scope = undefined;
   return owner;
 }
@@ -56,9 +88,10 @@ export function releaseNativeProduct(owner: object): void {
 
 function attach(owner: object, entries: readonly Entry[]): void {
   const previous = holders.get(owner);
-  const holder: Holder = { entries, scope: scopes.getStore() };
+  const active = scopes.getStore();
+  const holder: Holder = { entries, scope: active?.closed ? undefined : active };
   holders.set(owner, holder);
-  holder.scope?.add(holder);
+  holder.scope?.holders.add(holder);
   decodedConsumers.register(owner, holder, holder);
   if (previous) {
     decodedConsumers.unregister(previous);

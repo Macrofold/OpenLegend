@@ -657,36 +657,9 @@ fn perceive_voice(
     }
     let policy_key =
         json_record(&(&policy.id, policy.version, definition.pin())).map_err(|_| invalid())?;
-    let mut expired: Vec<String> = state
-        .observer_identities
-        .as_ref()
-        .and_then(|root| root.get(observer))
-        .into_iter()
-        .flat_map(|records| records.iter())
-        .filter(|(_, identity)| {
-            identity.seed_only == Some(true)
-                && identity.voice.as_ref().is_some_and(|voice| {
-                    voice.samples.iter().all(|sample| {
-                        sample.at + policy.seed_seconds * scale <= physical.header.sim_time
-                    })
-                })
-        })
-        .map(|(key, _)| key.clone())
-        .collect();
-    expired.sort_by(|a, b| property_order(a, b));
-    for key in expired {
-        journal.retire(
-            state,
-            temporal,
-            observer,
-            &key,
-            physical.header.sim_time,
-            retention,
-            physical,
-            installed,
-            receiving,
-        )?;
-    }
+    super::maintenance::expire_seeds(
+        physical, state, installed, temporal, journal, receiving, observer,
+    )?;
     journal.ensure_observer(state, observer)?;
     let episode = visible
         .and_then(|visible| {

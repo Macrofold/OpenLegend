@@ -302,6 +302,7 @@ pub(crate) struct AdvanceCursor {
     end_at: f64,
     zero_duration: bool,
     max_intervals: usize,
+    publication_requested: bool,
     intervals: usize,
     motion_slices: usize,
     slices_since_boundary: usize,
@@ -467,6 +468,7 @@ impl AdvanceCursor {
             end_at: now + seconds,
             zero_duration: seconds == 0.0,
             max_intervals,
+            publication_requested: false,
             intervals: 0,
             motion_slices: 0,
             slices_since_boundary: 0,
@@ -658,6 +660,14 @@ impl AdvanceCursor {
         self.event_destination = Some(destination);
         Ok(())
     }
+    pub(crate) fn request_publication(&mut self) {
+        self.publication_requested = true;
+        // Continue parks here only after the complete motion/receiving endpoint.
+        // Initial admission still has to complete its first coherent slice.
+        if self.phase == Phase::Begin && self.motion_slices > 0 {
+            self.phase = Phase::Publish;
+        }
+    }
     pub(crate) fn abort(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
         if let Some(command) = &mut self.command {
             command.abort(core)?;
@@ -693,7 +703,9 @@ impl AdvanceCursor {
                 AdvanceStep::Collation(self.preparation.as_ref().ok_or_else(invalid)?.request())
             }
             Progress::Event => AdvanceStep::Event(self.event.as_mut().ok_or_else(invalid)?),
-            Progress::Participation => AdvanceStep::Participation(self.participation.as_mut().ok_or_else(invalid)?),
+            Progress::Participation => {
+                AdvanceStep::Participation(self.participation.as_mut().ok_or_else(invalid)?)
+            }
             Progress::Plan => AdvanceStep::Plan(self.plan.as_mut().ok_or_else(invalid)?),
             Progress::Command => AdvanceStep::Command(self.command.as_mut().ok_or_else(invalid)?),
             Progress::Perception => {

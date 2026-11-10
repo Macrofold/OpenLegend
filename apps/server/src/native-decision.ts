@@ -70,7 +70,12 @@ import { attentionRequest } from './attention-request.js';
 import { attentionIncludes, ACTION_EVIDENCE_POLICY } from './jev-questions.js';
 import { ACTION_RETRIEVAL_LIMIT } from './action-retrieval.js';
 import { noteReference } from './knowledge-context.js';
-import { retainNativeSources } from './native-consumer.js';
+import {
+  createNativeConsumerScope,
+  retainNativeSources,
+  withNativeConsumerScope,
+  withoutNativeConsumerScope,
+} from './native-consumer.js';
 import type { NativeFormattedNpcOffer } from './native-npc-candidates.js';
 import type { NativeNpcBindingSelection } from './native-npc-sources.js';
 import { nativeNpcPersonalSelection } from './native-npc-sources.js';
@@ -91,7 +96,7 @@ export interface NativeAppraisalPreparation {
 /** Complete ordinary decision preparation from native read owners and actual
  * indexed personal storage. The director supplies paid dispatch/accounting and
  * the appraisal owner; neither callback may supply world facts or permissions. */
-export async function prepareNativeDecision(input: {
+type NativeDecisionInput = {
   service: NativeWorldService;
   runtime: NativeRecallRuntime;
   actorId: string;
@@ -121,7 +126,22 @@ export async function prepareNativeDecision(input: {
     frame: ReturnType<typeof situationResponseCapabilities>['frame'];
     currentTicket(): Promise<boolean>;
   }): Promise<NativeAppraisalPreparation>;
-}) {
+};
+
+export async function prepareNativeDecision(input: NativeDecisionInput) {
+  const owner = createNativeConsumerScope();
+  try {
+    return await owner.run(() => prepareOwnedDecision(input, owner));
+  } catch (error) {
+    owner.dispose();
+    throw error;
+  }
+}
+
+async function prepareOwnedDecision(
+  input: NativeDecisionInput,
+  owner: ReturnType<typeof createNativeConsumerScope>,
+) {
   const { service, actorId, jobId, signal } = input;
   let decisionId = jobId;
   const generation = service.generation;
@@ -162,7 +182,7 @@ export async function prepareNativeDecision(input: {
   const publishHistory = <T>(start: () => T) =>
     service.publishNpcHistory(original, () => {
       assertCurrent();
-      return start();
+      return withoutNativeConsumerScope(start);
     });
   const judge = (request: Omit<JudgeRequest, 'requestId' | 'signal'>) =>
     input.judge(request, publishHistory);
@@ -322,6 +342,7 @@ export async function prepareNativeDecision(input: {
       references: nativeResponseReferences(
         original,
         original,
+        original.recallEntities().flatMap((candidate) => candidate.entityIds),
         evidence,
         evidenceIds,
         original.facts.referenceFacts.social.flatMap((fact) => fact.canonicalId ?? []),
@@ -460,24 +481,25 @@ export async function prepareNativeDecision(input: {
     const conversationCheck = async (
       _flush = true,
       additionalSources: CurrentMemorySource[] = [],
-    ) => {
-      original.guardPerspectives(selectedPerspectives());
-      if (!(await historyCurrent())) throw new Error('Native decision sources changed.');
-      const valid = await sql(() =>
-        repository.validatePreparation(
-          scope,
-          { sequence: 0, sources: validity.boundSources },
-          additionalSources,
-        ),
-      );
-      const coverage =
-        !validity.usedCache ||
-        (await sql(() =>
-          repository.currentCompactionSources(scope, validity.usedCache!.value.sources),
-        ));
-      if (!valid || !coverage) throw new Error('Selected speech or recall sources changed.');
-      if (!(await historyCurrent())) throw new Error('Native decision sources changed.');
-    };
+    ) =>
+      withNativeConsumerScope(async () => {
+        original.guardPerspectives(selectedPerspectives());
+        if (!(await historyCurrent())) throw new Error('Native decision sources changed.');
+        const valid = await sql(() =>
+          repository.validatePreparation(
+            scope,
+            { sequence: 0, sources: validity.boundSources },
+            additionalSources,
+          ),
+        );
+        const coverage =
+          !validity.usedCache ||
+          (await sql(() =>
+            repository.currentCompactionSources(scope, validity.usedCache!.value.sources),
+          ));
+        if (!valid || !coverage) throw new Error('Selected speech or recall sources changed.');
+        if (!(await historyCurrent())) throw new Error('Native decision sources changed.');
+      });
     const conversation = await buildNativeConversationContext({
       original,
       current: conversationCurrent,
@@ -635,6 +657,9 @@ export async function prepareNativeDecision(input: {
     const references = nativeResponseReferences(
       now,
       original,
+      refreshed
+        .filter((candidate) => candidate.kind === 'entity')
+        .flatMap((candidate) => candidate.entityIds),
       evidence,
       evidenceIds,
       [
@@ -906,7 +931,7 @@ export async function prepareNativeDecision(input: {
       boundResponseSchema(
         Object.keys(references.entityReferences),
         [...offered.map((offer) => offer.id), ...intentActions.map((offer) => offer.id)],
-        { ...fields.capabilities, proposals: false },
+        fields.capabilities,
         Object.keys(knowledge),
         fields.namedTimes,
         service.definitions.requestDescriptors(),
@@ -995,108 +1020,125 @@ export async function prepareNativeDecision(input: {
         awarenessSequence: conversation.awarenessSequence,
         async current() {
           if (!ticket && !reflectionTicket) return false;
-          await conversationCheck(false, selectedProofs);
-          return (!appraisal || (await appraisal.current())) && (await currentTicket());
+          return owner.run(() =>
+            withNativeConsumerScope(async () => {
+              await conversationCheck(false, selectedProofs);
+              return (!appraisal || (await appraisal.current())) && (await currentTicket());
+            }),
+          );
         },
         async publish<T>(start: () => T): Promise<{ result: T }> {
-          await conversationCheck(false, selectedProofs);
-          return service.publishRecall(async () => {
-            if (!ticket && !reflectionTicket)
-              throw new Error('Native decision has no issued response ticket.');
-            const publication = reflectionTicket
-              ? await service.world.reflectionPublication(reflectionTicket)
-              : await service.world.npcResponsePublication(ticket!);
-            try {
-              assertCurrent();
-              if (!publication?.isCurrent())
-                throw new Error('The native response became stale before dispatch.');
-              return { result: start() };
-            } finally {
-              publication?.release();
-            }
+          return owner.run(async () => {
+            await conversationCheck(false, selectedProofs);
+            return service.publishRecall(async () => {
+              if (!ticket && !reflectionTicket)
+                throw new Error('Native decision has no issued response ticket.');
+              const publication = reflectionTicket
+                ? await service.world.reflectionPublication(reflectionTicket)
+                : await service.world.npcResponsePublication(ticket!);
+              try {
+                assertCurrent();
+                if (!publication?.isCurrent())
+                  throw new Error('The native response became stale before dispatch.');
+                const result = withoutNativeConsumerScope(start);
+                // Actual local provider consumption, rather than cancellation
+                // time, closes the last lease on its originating preparation.
+                void owner.run(() => Promise.resolve(result)).catch(() => undefined);
+                return { result };
+              } finally {
+                publication?.release();
+              }
+            });
           });
         },
         async expandQueries(queries: readonly SituationQuery[]) {
-          if (queryUsed || !ticket || !queries.length)
-            throw new Error('The situation query continuation is unavailable.');
-          await conversationCheck(false, selectedProofs);
-          if ((appraisal && !(await appraisal.current())) || !(await currentTicket()))
-            throw new Error('The native decision became stale before its situation query.');
-          queryUsed = true;
-          const expansion = await expandNativeDecisionSituation({
-            service,
-            original,
-            current: now,
-            ticket,
-            jobId: decisionId,
-            scope,
-            situation,
-            queries,
-            references,
-            knowledge,
-            sources: selectedProofs,
-            offered,
-            actionSource,
-            prototypeSource: actionSource,
-            perspectives: selectedPerspectives(),
-            semanticCauses: input.semanticCauses,
-            ...(input.semanticTrigger ? { semanticTrigger: input.semanticTrigger } : {}),
-            intents: intentActions,
-            appraisals: appraisal?.selection ?? null,
-            validity: input.validity,
-            purpose: input.mode === 'reflection' ? 'reflection' : 'decision',
-            consumer: input.consumer,
-            context,
-            additionalContext,
-            instructions,
-            signal,
-            check: () => conversationCheck(false, selectedProofs),
-            reopened: () => {
-              ticket = undefined;
-            },
+          return owner.run(async () => {
+            if (queryUsed || !ticket || !queries.length)
+              throw new Error('The situation query continuation is unavailable.');
+            await conversationCheck(false, selectedProofs);
+            if ((appraisal && !(await appraisal.current())) || !(await currentTicket()))
+              throw new Error('The native decision became stale before its situation query.');
+            queryUsed = true;
+            const expansion = await expandNativeDecisionSituation({
+              service,
+              original,
+              current: now,
+              ticket,
+              jobId: decisionId,
+              scope,
+              situation,
+              queries,
+              references,
+              knowledge,
+              sources: selectedProofs,
+              offered,
+              actionSource,
+              prototypeSource: actionSource,
+              perspectives: selectedPerspectives(),
+              semanticCauses: input.semanticCauses,
+              ...(input.semanticTrigger ? { semanticTrigger: input.semanticTrigger } : {}),
+              intents: intentActions,
+              appraisals: appraisal?.selection ?? null,
+              validity: input.validity,
+              purpose: input.mode === 'reflection' ? 'reflection' : 'decision',
+              consumer: input.consumer,
+              context,
+              additionalContext,
+              instructions,
+              signal,
+              check: () => conversationCheck(false, selectedProofs),
+              reopened: () => {
+                ticket = undefined;
+              },
+            });
+            ticket = expansion.ticket;
+            prompt = expansion.prompt;
+            context = expansion.context;
+            offered = expansion.offered;
+            schema = schemaFor();
+            return expansion.disclosed;
           });
-          ticket = expansion.ticket;
-          prompt = expansion.prompt;
-          context = expansion.context;
-          offered = expansion.offered;
-          schema = schemaFor();
-          return expansion.disclosed;
         },
         async rebindDecision(childId: string): Promise<void> {
-          if (!ticket) throw new Error('Native decision has no issued response ticket.');
-          await conversationCheck(false, selectedProofs);
-          if (!(await currentTicket()))
-            throw new Error('The retained native decision became stale.');
-          const nextOffers = fitActionCandidates(retainedContext, [...retainedOffers]).map(
-            (offer, index) => ({ ...offer, id: `a${index}` }),
-          );
-          const nextPrompt =
-            readableDecisionContext(retainedContext, nextOffers, true) + additionalContext;
-          if (Buffer.byteLength(nextPrompt) + Buffer.byteLength(instructions) > CONTEXT_BYTE_LIMIT)
-            throw new ContextBudgetError(
-              'Complete accepted inner world and required context exceed the input budget.',
+          return owner.run(async () => {
+            if (!ticket) throw new Error('Native decision has no issued response ticket.');
+            await conversationCheck(false, selectedProofs);
+            if (!(await currentTicket()))
+              throw new Error('The retained native decision became stale.');
+            const nextOffers = fitActionCandidates(retainedContext, [...retainedOffers]).map(
+              (offer, index) => ({ ...offer, id: `a${index}` }),
             );
-          await service.world.rebindNpcResponse(
-            ticket,
-            Buffer.from(
-              JSON.stringify({
-                decisionId: childId,
-                actions: nextOffers.map(({ id: alias, ordinal }) => ({
-                  alias,
-                  ordinal,
-                  source: 'original',
-                })),
-                prototypeSource: 'original',
-              }),
-            ),
-          );
-          decisionId = childId;
-          actionSource = 'original';
-          context = retainedContext;
-          offered = nextOffers;
-          prompt = nextPrompt;
-          queryUsed = false;
-          schema = withSituationQueries(schemaFor(), situation.policy.maximumQueries);
+            const nextPrompt =
+              readableDecisionContext(retainedContext, nextOffers, true) + additionalContext;
+            if (
+              Buffer.byteLength(nextPrompt) + Buffer.byteLength(instructions) >
+              CONTEXT_BYTE_LIMIT
+            )
+              throw new ContextBudgetError(
+                'Complete accepted inner world and required context exceed the input budget.',
+              );
+            await service.world.rebindNpcResponse(
+              ticket,
+              Buffer.from(
+                JSON.stringify({
+                  decisionId: childId,
+                  actions: nextOffers.map(({ id: alias, ordinal }) => ({
+                    alias,
+                    ordinal,
+                    source: 'original',
+                  })),
+                  prototypeSource: 'original',
+                }),
+              ),
+            );
+            decisionId = childId;
+            actionSource = 'original';
+            context = retainedContext;
+            offered = nextOffers;
+            prompt = nextPrompt;
+            queryUsed = false;
+            schema = withSituationQueries(schemaFor(), situation.policy.maximumQueries);
+          });
         },
         adoptReflectionTicket(owner: NativeWorldReflectionTicket): void {
           if (input.mode !== 'reflection' || !ticket || reflectionTicket)
@@ -1115,6 +1157,8 @@ export async function prepareNativeDecision(input: {
           fence.release();
           original.release();
           now.release();
+          bodies.dispose();
+          owner.dispose();
         },
         diagnostics: {
           instructionsVersion: COGNITION_VERSION,
@@ -1148,6 +1192,7 @@ export async function prepareNativeDecision(input: {
       conversationCurrent?.release();
       current?.release();
       original.release();
+      bodies.dispose();
     }
   }
 }

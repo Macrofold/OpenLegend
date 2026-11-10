@@ -23,9 +23,9 @@ export declare class NativeHost {
 }
 
 export declare class NativeWorld {
-  beginControl(bytes: Buffer): Promise<NativeWorldTurn>;
   reserveConsumerBytes(bytes: number): NativeWorldConsumer;
   reserveConsumerJson(bytes: Buffer): NativeWorldConsumer;
+  beginControl(bytes: Buffer): Promise<NativeWorldTurn>;
   bindConsolidationDream(
     ticket: NativeWorldConsolidationTicket,
     bytes: Buffer,
@@ -83,6 +83,7 @@ export declare class NativeWorld {
     bytes: Buffer,
   ): Promise<NativeWorldMaintenancePublication | null>;
   beginSupportRetention(bytes: Buffer): Promise<NativeWorldTurn>;
+  beginKnowledgeRetention(bytes: Buffer): Promise<NativeWorldTurn>;
   beginRecentRetention(bytes: Buffer): Promise<NativeWorldTurn>;
   npcPerspectives(read: NativeWorldNpcRead, request: Buffer): Promise<NativeWorldJson>;
   /**
@@ -151,7 +152,7 @@ export declare class NativeWorld {
   ): Promise<NativeWorldTurn>;
   finishSettlement(key: NativeCandidateKey): Promise<boolean>;
   cancel(key: NativeCandidateKey): Promise<void>;
-  requestYield(): void;
+  requestAdvancePublication(): void;
   closeAdmission(): void;
   captureSave(): Promise<NativeWorldSave>;
   acknowledge(ack: string): Promise<void>;

@@ -14,6 +14,7 @@ import type {
   ObservationContribution,
   TemporalHistorySelection,
 } from '@open-legend/domain';
+import { contributionFactKey } from '@open-legend/domain';
 import type { NativeActorPerception, NativeActorSelf } from './native-perception.js';
 import {
   nativeDecisionFeelings,
@@ -31,7 +32,11 @@ import type { NativeHistoryInput } from './native-history.js';
 import type { NativeDecisionValidityRead } from './native-decision-validity.js';
 import { formatGeneralKnowledgeContext } from './knowledge-context.js';
 import { presentationSubjects } from './experience-context.js';
-import { captureSituationFromRead, situationPresentationValues } from './situation-context.js';
+import {
+  captureSituationFromRead,
+  completeSituationHistory,
+  situationPresentationValues,
+} from './situation-context.js';
 import {
   nativeExperiencePresentation,
   nativeNpcSpatialFrame,
@@ -532,9 +537,28 @@ export class NativeNpcCapture {
         presentation: (selected) =>
           nativeExperiencePresentation(facts, installed, source.frame, labels, selected),
       },
-      retainedHistory,
-      representedObservations,
+      { entries: [], incomplete: true },
     );
+    // Match the real decision caller: acquired geometry establishes its grants
+    // before personally selected history adds evidence grants and recent rows.
+    // Their insertion order is also the model's permitted-source enum order.
+    const historyPresentation = nativeExperiencePresentation(
+      facts,
+      installed,
+      source.frame,
+      labels,
+      values,
+    );
+    completeSituationHistory(
+      prepared,
+      retainedHistory,
+      representedObservations.map((observation) => ({
+        observation,
+        keys: observation.facets.map((facet) => contributionFactKey(observation, facet.ordinal)),
+      })),
+      historyPresentation,
+    );
+    prepared.presentation = historyPresentation;
     return retainNativeSources(prepared, facts, installed, labels);
   }
 

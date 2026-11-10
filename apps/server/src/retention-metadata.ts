@@ -30,6 +30,7 @@ import { countMetric } from './performance.js';
 import { receiptLookupBucket } from './temporal-page-storage.js';
 import type { MetadataBaseline } from './live-read-overlay.js';
 import { sqlRowBatches } from './sql-rows.js';
+import { ACCOUNT_RETENTION_PREPARATION } from './account-retention.js';
 
 interface RetentionSelection {
   changes: RecordChanges;
@@ -244,6 +245,82 @@ function parseRetentionRow(row: Record<string, unknown>): RetentionRow {
   };
 }
 
+function retentionProjection(table: Table) {
+  const encoded =
+    table === 'mind_temporal_pages'
+      ? 't.encoded_bytes'
+      : accountTables.includes(table as (typeof accountTables)[number])
+        ? 't.logical_bytes'
+        : 'octet_length(t.payload)';
+  return `SELECT '${table}' AS table_name,t.id,t.parent_id,t.position,t.actor_id,
+        jsonb_build_object(${selectedColumns[table].flatMap((name) => [`'${name}'`, `t.${name}`]).join(',')}) AS columns,
+        ${encoded} AS encoded_bytes`;
+}
+
+export interface AccountRetentionQuery {
+  actor_id: string;
+  at: number;
+  due: boolean;
+  pressured: readonly ('optional' | 'required' | 'speech')[];
+  overridden: readonly string[];
+  changed: readonly string[];
+}
+/** Both actual retention callers select the same bounded indexed metadata.
+ * Opaque account prose is fetched only after the single per-actor selection. */
+export async function readAccountRetentionCandidates(
+  db: SqlDatabase,
+  worldId: string,
+  table: (typeof accountTables)[number],
+  requests: readonly AccountRetentionQuery[],
+): Promise<Record<string, unknown>[]> {
+  const result: Record<string, unknown>[] = [];
+  const worldBindings = [worldId, worldId, worldId, worldId];
+  const requestRows = requests.map((request) => [
+    request.actor_id,
+    request.at,
+    request.due,
+    request.pressured,
+    request.overridden,
+    request.changed,
+  ]);
+  for (const batch of sqlRowBatches(requestRows, worldBindings)) {
+    const selected = await db
+      .prepare(
+        `WITH requested(actor_id,at,due,pressured,overridden,changed) AS MATERIALIZED (
+          VALUES ${batch.map(() => '(?::text,?::double precision,?::boolean,?::text[],?::text[],?::text[])').join(',')}
+        ), scoped AS (
+          ${retentionProjection(table)},'due'::text AS criterion FROM requested q CROSS JOIN LATERAL (
+            SELECT t.* FROM ${table} t WHERE q.due AND t.world_id=? AND t.actor_id=q.actor_id
+              AND t.retention_class<>'sensory' AND t.active_or_protected=0 AND t.next_due_at<=q.at
+              AND NOT(t.id=ANY(q.overridden))
+            ORDER BY t.policy_priority,t.at,t.source_id COLLATE "C" LIMIT ${ACCOUNT_RETENTION_PREPARATION.rows + 1}
+          ) t
+          UNION ALL
+          ${retentionProjection(table)},'pressure'::text AS criterion FROM requested q
+          CROSS JOIN LATERAL unnest(q.pressured) pool(kind) CROSS JOIN LATERAL (
+            SELECT t.* FROM ${table} t WHERE t.world_id=? AND t.actor_id=q.actor_id
+              AND t.retention_class=pool.kind AND t.active_or_protected=0 AND NOT(t.id=ANY(q.overridden))
+            ORDER BY t.policy_priority,t.at,t.source_id COLLATE "C" LIMIT ${ACCOUNT_RETENTION_PREPARATION.rows + 1}
+          ) t
+          UNION ALL
+          ${retentionProjection(table)},'changed'::text AS criterion FROM requested q JOIN ${table} t
+            ON t.world_id=? AND t.actor_id=q.actor_id AND t.id=ANY(q.changed)
+          UNION ALL
+          SELECT '${table}',NULL::text,NULL::text,NULL::bigint,q.actor_id,
+            jsonb_build_object('next_due_at',next.due),0::bigint,'deadline'::text
+          FROM requested q CROSS JOIN LATERAL (
+            SELECT MIN(t.next_due_at) AS due FROM ${table} t
+            WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.retention_class<>'sensory'
+              AND t.active_or_protected=0 AND t.next_due_at>q.at AND NOT(t.id=ANY(q.overridden))
+          ) next
+        ) SELECT * FROM scoped`,
+      )
+      .all(...batch.flat(), ...worldBindings);
+    result.push(...selected);
+  }
+  return result;
+}
+
 /** Native counters own append charges; only edits or actual exact dependencies
  * require the prior-account/source-version closure. */
 export function accountWriteNeedsRetentionClosure(
@@ -344,17 +421,7 @@ export class RetentionMetadata {
           revision: Number(row?.['revision']),
         })));
     if (!head || head.worldId !== worldId) throw new Error('Retention metadata world changed.');
-    const projection = (table: Table) => {
-      const encoded =
-        table === 'mind_temporal_pages'
-          ? 't.encoded_bytes'
-          : accountTables.includes(table as (typeof accountTables)[number])
-            ? 't.logical_bytes'
-            : 'octet_length(t.payload)';
-      return `SELECT '${table}' AS table_name,t.id,t.parent_id,t.position,t.actor_id,
-        jsonb_build_object(${selectedColumns[table].flatMap((name) => [`'${name}'`, `t.${name}`]).join(',')}) AS columns,
-        ${encoded} AS encoded_bytes`;
-    };
+
     const rows = new Map<string, RetentionRow>();
     const add = (values: Record<string, unknown>[]) => {
       for (const row of values) {
@@ -442,48 +509,8 @@ export class RetentionMetadata {
           changed: [...(changed.get(actorId) ?? [])],
         };
       });
-      const worldBindings = [worldId, worldId, worldId, worldId];
-      const requestRows = requests.map((request) => [
-        request.actor_id,
-        request.at,
-        request.due,
-        request.pressured,
-        request.overridden,
-        request.changed,
-      ]);
-      for (const batch of sqlRowBatches(requestRows, worldBindings)) {
-        const selected = await db
-          .prepare(
-            `WITH requested(actor_id,at,due,pressured,overridden,changed) AS MATERIALIZED (
-          VALUES ${batch.map(() => '(?::text,?::double precision,?::boolean,?::text[],?::text[],?::text[])').join(',')}
-        ), scoped AS (
-          ${projection(table)},'due'::text AS criterion FROM requested q CROSS JOIN LATERAL (
-            SELECT t.* FROM ${table} t WHERE q.due AND t.world_id=? AND t.actor_id=q.actor_id
-              AND t.retention_class<>'sensory' AND t.active_or_protected=0 AND t.next_due_at<=q.at
-              AND NOT(t.id=ANY(q.overridden))
-            ORDER BY t.policy_priority,t.at,t.source_id COLLATE "C" LIMIT 65
-          ) t
-          UNION ALL
-          ${projection(table)},'pressure'::text AS criterion FROM requested q
-          CROSS JOIN LATERAL unnest(q.pressured) pool(kind) CROSS JOIN LATERAL (
-            SELECT t.* FROM ${table} t WHERE t.world_id=? AND t.actor_id=q.actor_id
-              AND t.retention_class=pool.kind AND t.active_or_protected=0 AND NOT(t.id=ANY(q.overridden))
-            ORDER BY t.policy_priority,t.at,t.source_id COLLATE "C" LIMIT 65
-          ) t
-          UNION ALL
-          ${projection(table)},'changed'::text AS criterion FROM requested q JOIN ${table} t
-            ON t.world_id=? AND t.actor_id=q.actor_id AND t.id=ANY(q.changed)
-          UNION ALL
-          SELECT '${table}',NULL::text,NULL::text,NULL::bigint,q.actor_id,
-            jsonb_build_object('next_due_at',next.due),0::bigint,'deadline'::text
-          FROM requested q CROSS JOIN LATERAL (
-            SELECT MIN(t.next_due_at) AS due FROM ${table} t
-            WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.retention_class<>'sensory'
-              AND t.active_or_protected=0 AND t.next_due_at>q.at AND NOT(t.id=ANY(q.overridden))
-          ) next
-        ) SELECT * FROM scoped`,
-          )
-          .all(...batch.flat(), ...worldBindings);
+      const selected = await readAccountRetentionCandidates(db, worldId, table, requests);
+      {
         const dueCounts = new Map<string, number>();
         for (const row of selected) {
           const actorId = String(row['actor_id']);
@@ -500,7 +527,7 @@ export class RetentionMetadata {
             if (row['criterion'] === 'due') {
               const count = (dueCounts.get(actorId) ?? 0) + 1;
               dueCounts.set(actorId, count);
-              if (count === 65) accountMore.add(actorId);
+              if (count === ACCOUNT_RETENTION_PREPARATION.rows + 1) accountMore.add(actorId);
             }
           }
         }
@@ -520,7 +547,7 @@ export class RetentionMetadata {
       add(
         await db
           .prepare(
-            `${projection('mind_temporal_pages')} FROM mind_temporal_pages t
+            `${retentionProjection('mind_temporal_pages')} FROM mind_temporal_pages t
         WHERE t.world_id=? AND t.actor_id=ANY(?::text[]) AND t.id=ANY(?::text[]) AND ${liveEvidenceRowSql('mind_temporal_pages')}`,
           )
           .all(worldId, actorIds, headers),

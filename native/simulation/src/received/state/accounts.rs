@@ -291,6 +291,30 @@ impl TemporalState {
     }
 }
 impl TemporalState {
+    /// The due native pass recomputes this marker after the selected world's
+    /// actual identity retirements. A removed last seed clears the wake.
+    pub(crate) fn set_knowledge_due(
+        &mut self,
+        actor_id: &str,
+        due: Option<f64>,
+    ) -> Result<(), ReceivedError> {
+        let Some(actor) = self.actors.get(actor_id) else {
+            return Ok(());
+        };
+        let Some(accounts) = actor.header.accounts.as_ref() else {
+            return Ok(());
+        };
+        if accounts.knowledge_due == due {
+            return Ok(());
+        }
+        let mut header = actor.header.clone();
+        header
+            .accounts
+            .as_mut()
+            .ok_or(ReceivedError("Personal accounts vanished."))?
+            .knowledge_due = due;
+        self.replace_header(actor_id, header)
+    }
     pub(crate) fn note_knowledge_due(
         &mut self,
         actor_id: &str,

@@ -17,6 +17,7 @@ export class WorkLane {
     start: () => void;
     expire: () => void;
     maintenance: boolean;
+    progress: boolean;
     queuedAt: number;
   }[] = [];
   private foregroundBatches = 0;
@@ -30,13 +31,23 @@ export class WorkLane {
   get depth() {
     return this.pending.length;
   }
+  /** Save acknowledgements and routine progress do not interrupt an elapsed
+   * batch. This classification never changes queue order or admission. */
+  get waitingForeground(): boolean {
+    return this.pending.some((entry) => !entry.maintenance && !entry.progress);
+  }
   idle(): Promise<void> {
     return this.running || this.pending.length
       ? new Promise((resolve) => this.waiters.push(resolve))
       : Promise.resolve();
   }
   /** `waitMs` narrows the admission deadline for a caller that already waited elsewhere. */
-  run<T>(operation: () => T | Promise<T>, waitMs = this.waitMs, maintenance = false): Promise<T> {
+  run<T>(
+    operation: () => T | Promise<T>,
+    waitMs = this.waitMs,
+    maintenance = false,
+    progress = false,
+  ): Promise<T> {
     if (this.pending.length >= this.maximum || waitMs <= 0)
       return Promise.reject(new OverloadError());
     const queuedAt = performance.now();
@@ -47,6 +58,7 @@ export class WorkLane {
     return new Promise<T>((resolve, reject) => {
       const entry = {
         maintenance,
+        progress,
         queuedAt,
         start: () => {
           clearTimeout(timer);

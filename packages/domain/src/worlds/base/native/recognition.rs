@@ -8,6 +8,9 @@ use serde::{Deserialize, Serialize};
 #[path = "recognition/journal.rs"]
 mod journal;
 pub(crate) use journal::{RecognitionCheckpoint, RecognitionJournal};
+#[path = "recognition/maintenance.rs"]
+mod maintenance;
+pub(crate) use maintenance::maintain_recognition;
 #[path = "recognition/familiarity.rs"]
 mod familiarity;
 #[path = "recognition/voice.rs"]

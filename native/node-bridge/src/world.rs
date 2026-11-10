@@ -13,8 +13,8 @@ use openlegend_simulation::runtime::{
 };
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
-mod control;
 mod consumer;
+mod control;
 mod maintenance;
 mod npc;
 mod npc_intake;
@@ -583,8 +583,8 @@ impl NativeWorld {
         })
     }
     #[napi]
-    pub fn request_yield(&self) {
-        self.world.fence.request_stop();
+    pub fn request_advance_publication(&self) {
+        self.world.fence.request_advance_publication();
     }
     #[napi]
     pub fn close_admission(&self) {

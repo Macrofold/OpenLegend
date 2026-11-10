@@ -26,6 +26,9 @@ export function supportRetentionDeadline(actor: Pick<TemporalActorHistory, 'acco
     ? 0
     : Infinity;
 }
+export function knowledgeRetentionDeadline(actor: Pick<TemporalActorHistory, 'accounts'>): number {
+  return actor.accounts?.knowledgeDue ?? Infinity;
+}
 export type RetentionWorkKind = 'recent' | 'accounts' | 'knowledge' | 'support';
 const emptyActors: Record<string, TemporalActorHistory> = Object.freeze({});
 const byPolicy = new WeakMap<
@@ -66,7 +69,7 @@ function indexes(world: WorldState) {
           ? 0
           : (actor.accounts.nextDue ?? Infinity),
       ),
-      knowledge: make((actor) => actor.accounts?.knowledgeDue ?? Infinity),
+      knowledge: make(knowledgeRetentionDeadline),
       support: make(supportRetentionDeadline),
     };
     byPolicy.set(policy, indexes);
