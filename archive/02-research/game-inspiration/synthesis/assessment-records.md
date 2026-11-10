@@ -1,5 +1,17 @@
 # Source-to-topic assessment evidence
 
+## Chrono Trigger transcript expansion — November 9, 2026
+
+**Scope and provenance:** Mike requested additional G187 research using a supplied YouTube transcript. Inspected baseline: `Macrofold/OpenLegend`, published `main` at `00b96687b853ed7a2c5e9fc9b11542e10147ea0f`; the expanded dossier and this record are maintained together on `docs/chrono-trigger-video-research-20261109`. The [dossier's additional source register](../dossiers/chrono-trigger.md#supplied-retrospective-and-additional-evidence) owns the attachment hash, unverified video attribution, script transcriptions, creator interviews, community mechanics and dated player accounts. This is an additive assessment of the same two topic relationships, not a new whole-game or library-wide pass.
+
+**STORY contribution:** the Time Egg case distinguishes a clue's existence from discovery, understanding and emotional acceptance; Robo's work connects a particular lifespan with lasting contribution; the North Cape refusal separates cooperation from forgiveness. Kato's interview and the Marle production decision qualify transferring temporal novelty into a shared world while preserving attachment. These strengthen [STORY-L002](quests-narrative-and-consequences.md#story-l002) and [STORY-L003](quests-narrative-and-consequences.md#story-l003). The supplied reviewer's philosophical reading remains interpretation, and source-script dialogue is not autonomous simulation evidence.
+
+**PACING contribution:** the supplied SNES completionist account and contrasting DS/Steam testimony distinguish initial progression, purposeful return, exhaustive collection and later additions. Approachable commands can support favored companions while offering less build variation; optional closure can coexist with obligation or excessive preparation. These qualify [PACING-L002](pacing-difficulty-and-replay-variety.md#pacing-l002) and [PACING-L004](pacing-difficulty-and-replay-variety.md#pacing-l004). Two concrete boss cases support diagnosing the actual rule rather than blaming all failure on strategy.
+
+**Limits and disposition:** selected accounts establish possible experiences, not prevalence or causal retention effects. The original November 7 assessment records below remain historical evidence. G187 remains incorporated in STORY and PACING; no coverage-cell disposition, other game's assessment, accepted feature or implementation task changes. The existing ND01/DG34 and ND28/ND38 design routes continue to own any selected follow-through.
+
+## Assessment conventions and earlier records
+
 [Topic map](README.md) · [Game coverage](coverage.csv) · [World coverage](world-coverage.csv) · [Record requirements](progress.md) · [Structural source/goal review](source-and-goal-map.md).
 
 The October 14, 2026 intelligence/simulation pass contributes 30 scoped NPC assessments below. The October 17 combat-response pass adds four scoped COMBAT assessments. The October 18 Sea of Stars records contribute to COMBAT, PRESENT and EXPLORE; the October 25 Elden Ring records contribute to COMBAT and EXPLORE. The November 7 Chrono Trigger / Expedition 33 comparison adds four focused STORY/PACING assessments. Other source/topic cells remain unassessed, awaiting sources or historical coverage as recorded in their matrices. Earlier essays are not discarded or automatically credited. Reading sources for the framework's structural review remains distinct from substantive incorporation.
@@ -280,3 +292,4 @@ This is a scoped four-source comparison of creature escape, tactical pursuit, ta
 **Contribution:** optional challenge needs a legible purpose, supporting [PACING-L001](pacing-difficulty-and-replay-variety.md#pacing-l001). Preparation and recovery costs qualify [L002](pacing-difficulty-and-replay-variety.md#pacing-l002). Separating recognition, response, execution and sustained effort deepens [L003](pacing-difficulty-and-replay-variety.md#pacing-l003). Stopping, resuming, intending replay and completing another run remain distinct under [L004](pacing-difficulty-and-replay-variety.md#pacing-l004).
 
 **Counterevidence and confidence:** high hours can coexist with dissatisfaction; comfort cannot be inferred from persistence. A challenge can be worthwhile for one player and a reasonable endpoint for another. The guide proposes an observed outing/return comparison rather than prescribing one ideal session length or difficulty. Independent review checked source-specific claims, date boundaries, lowercase lesson anchors and retained ownership.
+

@@ -1,6 +1,6 @@
 # Quests, narrative and consequences
 
-**Status: Focused Chrono Trigger / Clair Obscur: Expedition 33 comparison, November 7, 2026. Topic: STORY.** G187 and G77 inform the lessons below; broader topic coverage remains open. These are research hypotheses, not approved behavior. The linked dossiers own source dates, editions and access limits.
+**Status: Focused Chrono Trigger / Clair Obscur: Expedition 33 comparison, November 7, 2026; Chrono Trigger evidence expanded November 9. Topic: STORY.** G187 and G77 inform the lessons below; broader topic coverage remains open. These are research hypotheses, not approved behavior. The linked dossiers own source dates, editions and access limits.
 
 [Topic map](README.md) · [Coverage tracker](coverage.csv) · [Assessment records](assessment-records.md)
 
@@ -30,6 +30,8 @@ This incorporation compares two authored adventures; it establishes no genre-wid
 
 G77 adds a contrasting late reframe: JC feels earlier stakes are devalued, while Holland makes inhabitants’ survival decisive. See [Expedition 33’s later reception](../dossiers/clair-obscur-expedition-33.md#e33-nov-reception) (ERV03, ERV05). These interpretations concern the value of the outcome, not merely whether a route branches. They justify testing coherence, understanding, attachment and approval separately; a player can understand a choice and reasonably reject its values.
 
+G187's [supplied retrospective](../dossiers/chrono-trigger.md#supplied-snes-retrospective-and-contrasting-playthroughs) finds a reunion moving while disliking its device. Its [script check](../dossiers/chrono-trigger.md#major-spoilers-losing-the-protagonist-and-choosing-restoration) establishes an earlier clue; that does not establish that the viewer encountered or accepted it. The [creator accounts](../dossiers/chrono-trigger.md#production-collaboration-constraints-and-iteration) add deliberate character continuity and a separate warning about transferring one player's story sequence into shared-world events. These support the distinctions below, not a new universal narrative structure.
+
 ## Consolidated lessons and tradeoffs
 
 <a id="story-l001"></a>
@@ -44,11 +46,15 @@ G77 adds a contrasting late reframe: JC feels earlier stakes are devalued, while
 
 **Hypothesis:** an accomplishment can change practical capability and personal significance together. **Counterpoint:** requiring emotional exposition for every improvement burdens ordinary play. Let useful work, affection and historical discovery sometimes stand alone; reserve combined rewards for situations where their relationship is intelligible.
 
+A person's capacities can also change the cost of a contribution: [Robo's restoration](../dossiers/chrono-trigger.md#care-consequence-and-uncertainty) makes elapsed time into service. For a continuing world, preserving a useful result and its remembered contributors can support meaning without continually undoing accomplishments to create more quests.
+
 <a id="story-l003"></a>
 
 ### STORY-L003 — Let interpretation change without silently changing history
 
 **Hypothesis:** discovering another person's perspective can renew a familiar place without generating an incompatible past. **Counterpoint:** consistency alone produces no worthwhile investigation. Evidence must support a decision or wanted understanding; some mysteries can remain unresolved. KNOW owns discovery methods, while LORE owns historical meaning. G77 motivates a further question: does a revelation preserve reasons to care about what the player already accomplished? A coherent explanation can still change the perceived value of earlier effort. Test that reaction separately from whether the reveal was predicted.
+
+For a selected revelation, distinguish the clue being present, being encountered, being remembered, explaining an available action and earning an emotional response. Those questions can diverge. A later participant may find the aftermath in a different order and still deserve an intelligible opportunity. A newly understood adversary may become a collaborator while grievances remain; explanation does not itself confer trust. These are questions within the existing authored-history work, not additional approval or implementation gates.
 
 <a id="story-l004"></a>
 
@@ -98,3 +104,4 @@ Route the lessons through these existing owners. ND01's authored-history extensi
 | [DG34 — Shared consequences and retelling](../../../../docs/maintainers/needs-design.md#dg34--shared-campaigns-with-local-opportunities) | STORY-L001/L004: what was actually accomplished, who can recognize it, and what remains worthwhile for a later participant?                             | [Contribution and recognition](../../../../docs/projects/shared-campaigns-feature-spec.md#8-contribution-recognition-and-actual-property); [existing campaign authority](../../../../docs/projects/product-scalability-tech-design.md).   | [PS07.4/PS07.7](../../../../docs/maintainers/product-scalability.md#dg34--linked-local-campaign-opportunities) own distinct contribution evidence and a worthwhile aftermath. The existing DG34 bard checkbox owns its additional design; broader qualification remains PS08.                                                                                                       |
 
 Use the relevant question within the selected work; no additional approval gate, narrative engine or lesson-specific task follows. The [first-playable learning plan](../../../../docs/projects/first-playable-playtest-plan.md#step-5--separate-the-questions-being-answered) already separates correctness, understanding and enjoyment where that build actually offers the experience.
+

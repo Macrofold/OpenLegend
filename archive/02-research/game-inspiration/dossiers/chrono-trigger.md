@@ -6,7 +6,7 @@
 
 ## Reading map
 
-[Player promise](#the-player-promise-and-the-shape-of-the-adventure) · [Mechanics, editions and situations](#mechanics-editions-and-worked-situations) · [Story and people](#story-history-and-what-the-player-learns) · [Art and music](#art-music-and-the-production-of-feeling) · [Production, economics and creation](#production-distribution-economics-and-creation) · [Advertising](#advertising-cases-what-the-promotion-chose-to-communicate) · [Reviews and player experience](#reception-and-player-experience) · [OpenLegend lessons](#what-openlegend-can-learn--hypotheses-tradeoffs-and-existing-owners) · [Coverage and limits](#coverage-evidence-boundaries-and-reading-routes) · [Sources](#annotated-source-register)
+[Player promise](#the-player-promise-and-the-shape-of-the-adventure) · [Mechanics, editions and situations](#mechanics-editions-and-worked-situations) · [Story and people](#story-history-and-what-the-player-learns) · [Art and music](#art-music-and-the-production-of-feeling) · [Production, economics and creation](#production-distribution-economics-and-creation) · [Advertising](#advertising-cases-what-the-promotion-chose-to-communicate) · [Reviews and player experience](#reception-and-player-experience) · [Supplied retrospective](#supplied-snes-retrospective-and-contrasting-playthroughs) · [Transcript claim audit](#transcript-claims-checked-against-the-game-and-creator-accounts) · [OpenLegend lessons](#what-openlegend-can-learn--hypotheses-tradeoffs-and-existing-owners) · [Coverage and limits](#coverage-evidence-boundaries-and-reading-routes) · [Sources](#annotated-source-register)
 
 ## The player promise and the shape of the adventure
 
@@ -48,7 +48,7 @@ These associations do not mean that every action uses the character's named elem
 
 Experience advances levels; Tech Points advance a prescribed technique sequence. Some techniques begin known or are taught through a story event. Learned components unlock combinations. [CTM09], [CTM10]
 
-**Evidence boundary.** The inspected references establish this growth loop, but not a reliable platform-by-platform reserve-party XP/TP distribution formula. None is asserted here.
+**Reserve growth, with edition limits.** A SNES guide documents 75% of battle XP, rounded down, for recruited characters outside the active party. A DS-labeled player Q&A reports reduced XP and no reserve Tech Points. This supports rotation for techniques while allowing some growth on the bench; it does not certify identical formulas or every recruitment edge case across all ports. Reserve growth is not a guarantee that unused companions remain equally prepared. [CTM24], [CTM27]
 
 HP measures survival and MP funds techniques. Power, Hit, Magic, Speed, Evade, Stamina, and Magic Defense contribute to different outcomes; Hit is particularly relevant to bow and gun damage. Equipment modifies both offense and protection. The community systems reference identifies 999 HP, 99 MP, and a normal Speed ceiling of 16. Speed does not ordinarily rise through leveling in the same way as other attributes. These are named boundaries, not a claim that every displayed statistic caps at 99; equipment-derived Defense must be treated separately. [CTM06], [CTM18]
 
@@ -71,6 +71,8 @@ Magus is an exception to ordinary combination breadth: his database lists two ac
 Characters use weapon, armor, helmet, and accessory slots. Availability is constrained by character eligibility, including character-specific weapons and some gender-restricted armor. The equipment loop is compact enough to compare individual changes, but not reducible to a single attack or defense rating. [CTM18], [CTM20], [CTM21]
 
 Weapons can supply secondary behavior. The reference lists Slasher with a Speed bonus and other swords with magical bonuses or unusual critical-hit properties. A weapon upgrade can therefore change action frequency or situational damage, not only the ordinary attack figure. The practical question is what the character will do in the coming encounters. [CTM20]
+
+**Crisis Arm makes a useful counterexample to a universal best weapon.** The SNES guide describes Robo's attack-power multiplier as half the final digit of his current HP, with Robo Tackle using a separate calculation. A last digit of nine therefore gives this mechanic's largest multiplier; it does not guarantee the game's damage cap or the best outcome in every fight. [CTM24] **Interpretation:** a powerful reward can change how healing and attack timing are valued. That can create an interesting specialization, but an unexplained decimal-digit rule can also make equipment comparison opaque. The useful inspiration is a legible conditional advantage, not copying this numerical trick into OpenLegend.
 
 Accessories support recognizably different priorities: Speed, offensive attributes, maximum HP, evasion, counters, status immunity, reduced MP expenditure, or access to a special triple technique. The Silver Stud halves MP costs and the Gold Stud reduces them by three quarters; choosing one occupies the same accessory opportunity that could supply another benefit. [CTM17]
 
@@ -110,9 +112,15 @@ These examples explain decision structure. Where no exact enemy, level, or damag
 
 6. **Convert hunting materials into protection.** Prerequisites: prehistoric trading is available and the party can obtain the materials for the listed Ruby Vest exchange. The player gathers the necessary drops, returns to the trader, and exchanges them for equipment. The outcome converts combat effort into fire protection; the next decision is which eligible character needs that protection most. The cost is additional encounters and the materials no longer available for another exchange. It demonstrates an authored alternative to simply accumulating gold. [CTM13], [CTM21]
 
-7. **Use time travel to improve a reward.** Prerequisites: the relevant sealed-treasure interactions are available in both eras. The reference records that the Truce Inn's future Blue Vest can become Blue Mail through the earlier-era treasure interaction. The player investigates the earlier version before taking the later reward, then returns to collect the improved item. The next decision is whether to inspect similar cross-era opportunities. This example establishes the state dependency; exact dialogue choices should be checked in a route guide rather than inferred from this database entry. The tradeoff is extra travel and attention for better equipment. [CTM15]
+7. **Use time travel to improve a reward.** Prerequisites: the charged pendant and access to an eligible paired sealed chest. At Truce Inn in 600 AD, inspect the chest but decline to take its contents; then collect the upgraded Blue Mail in 1000 AD. Taking the past reward first forfeits that future upgrade. Some sealed chests open immediately and do not upgrade. The earlier reward can subsequently be collected. The next decision is whether to investigate another pair; the cost is extra travel and remembering the order. This is a specific authored dependency, not a rule that waiting improves every object. [CTM15], [CTE06]
 
 8. **Buy a weapon or preserve the expedition budget.** Prerequisites: limited gold and the early merchant choices listed above. The player compares a substantial weapon purchase with cheaper equipment plus supplies. The outcome prioritizes stronger ordinary attacks or a larger recovery reserve. The next choice is whether to fight, save more gold, or postpone the upgrade. The better purchase depends on survivability and expected technique use, not a universal optimal route. [CTM12], [CTM20]
+
+### Two worked boss situations: reading a changing problem
+
+**Magus: match the current vulnerability.** During the barrier phase, use a physical attack to provoke a change if the party cannot exploit the current element; use the appropriate magic when it can. Frog's Masamune can weaken magic defense. Later, the barrier phase ends and recovery must accommodate the stronger assault. This is not the transcript's simple instruction to alternate elements after every spell. The walkthrough's preferred party and preparation levels are its suggested strategy, not universal prerequisites. [CTM25], [CTM23] **Interpretation:** a small command vocabulary can produce new decisions through state changes, provided the player can understand the feedback. Failure may concern preparation, an unavailable response, unclear information or execution; it is not proof of poor strategy alone.
+
+**Lavos Core: identify the functional target.** The right-hand bit is the Core, and its defense drops when another part is destroyed; the left bit absorbs elemental attacks. The player must distinguish visual prominence from function, create an opening, then spend available actions on the relevant target. [CTM26] **Interpretation:** an apparent reversal becomes a playable discovery when observation changes the next action. Repeating uninformative attacks until a guide supplies the answer would deliver a different experience. These are encounter-specific examples, not evidence that every boss should require a concealed gimmick.
 
 ### New Game Plus and the limit of retained power
 
@@ -184,11 +192,15 @@ Zeal's floating civilization places people who wield magic above those excluded 
 
 **Interpretation:** a place can communicate a social order before an exposition scene explains it. A familiar person encountered in another historical role can make information emotionally meaningful. The limitation is that this effect depends on remembering a small, legible cast; adding names and eras without reinforcing their relationships would increase confusion rather than depth.
 
+The supplied reviewer describes Zeal as the point when short evening sessions became sustained curiosity: a sophisticated civilization in the distant past raises the question of what happened to it. [CTV01] **Interpretation:** the invitation is a contradiction the player wants to investigate, supported by beauty, inhabitants and practical access. The lesson is to give a striking place a question and a possible next action. The reviewer's comparison with Atlantis and conjecture about Marle's ancestry remain associations, not established production influence or genealogy.
+
 ### Care, consequence and uncertainty
 
 The forest restoration joins environmental work, Robo's unusual lifespan and a changed destination. The camp conversation then invites the party to wonder whether a greater Entity has guided the Gates. The game presents this through the characters' thinking; treating every speculation as a fully defined cosmological law overstates what the scene establishes. [CTN04], [CTN05]
 
 This is a particularly valuable counterweight to reading all RPG progress as defeating stronger enemies. The interesting result can be a place restored, a companion's commitment made visible, or a familiar event understood differently. It also warns against flattening mystery into a knowledge database: an NPC's belief, an observed change and an established world law are different kinds of information.
+
+**Interpretation of the restoration:** the player can skip the intervening centuries, while Robo spends them doing the work. His lifespan becomes a commitment with visible results rather than a cosmetic difference. The supplied retrospective reads these acts as an answer to an indifferent universe: people make meaning through care even when a catastrophe lies beyond their ordinary lifetimes. [CTV01] Treat that as a philosophical reading, not the creators' declared doctrine or proof that every character shares it. For OpenLegend, hope can come from a useful, lasting contribution while grief and danger remain; a peaceful accomplishment need not be another pretext for destroying what was built.
 
 ### Guided familiarity before late freedom
 
@@ -241,6 +253,8 @@ The table records specific authored arcs. Its lessons are interpretations, not c
 
 **A boundary worth preserving:** these characters are memorable through authored scenes, role differences, selected dialogue and bounded consequences. That does not establish an underlying simulation of their daily lives, open-ended romance, universal reputation or independent strategic goals. OpenLegend's more general individuals can learn from the specificity of these moments, but require their own truthful state, observations, permissions and opportunities to act.
 
+At North Cape, declining revenge does not create instant trust: Frog says killing Magus would not recover the people lost, then reacts suspiciously to his offer to join. [CTV03] **Interpretation:** a common undertaking can coexist with grievances and incompatible motives. Later disclosure should change what people understand without automatically forgiving harm or replacing their memories with a uniformly friendly relationship.
+
 ## Art, music and the production of feeling
 
 ### Character expression without photorealism
@@ -282,6 +296,8 @@ Research date: November 6, 2026. Edition dates and commercial observations retai
 **Interpretation:** preserve the player's valuable choice while controlling the authoring burden. A small set of distinctive combinations can be preferable to a nominally universal system whose possibilities cannot all be made worthwhile. Reuse and automation should support deliberate exceptions, with visible costs.
 
 **The premise is not the experience.** In a July 2025 interview, Kato recalls opposing time-travel designs that amounted to setting a past flag and checking the future; he wanted adventure and surprises particular to games. In the interview's separate Final Fantasy XI discussion, he describes the difficulty of transforming a shared place when newcomers and established players have different histories. These are retrospective accounts of distinct projects. [CTP22] **Interpretation:** evaluate what a changed place enables someone to understand or do. For OpenLegend, a later arrival needs a coherent situation and worthwhile choices of their own. This supports careful treatment of shared consequences, without prescribing either an immutable world or a private copy of history for every player.
+
+**Continuity with a person was an explicit choice.** In Famitsu's December 2014 conversation, Kitase recalls an alternate-timeline Marle proposal that Sakaguchi rejected in favor of preserving the companion the player knew. They also describe adding Marle and Lucca episodes late in development. [CTP23] **Interpretation:** revision can strengthen attachment; a late addition is not automatically a careless patch, and a clever temporal possibility can cost more emotional continuity than it creates. This interview does not establish the development history of the Time Egg specifically. The earlier warnings about overwork remain applicable.
 
 **What is not known.** These interviews do not establish the complete internal toolchain, source-control system, exact editor implementation, production burn rate, milestone acceptance criteria, outsourcing allocation, staff-month count, or quantitative playtest sample. Their observations are stronger evidence of intent and remembered working practices than of measured productivity. The community tools discussed below must not be retroactively described as Square's original tools. No inspectable production ledger was found; detailed internal economics remain unknown.
 
@@ -463,7 +479,30 @@ Two April 2024 DS accounts sharpen the contrast. **joshakazam** praises party sy
 
 Selected October 2025 Tildes group-play comments add a different tension. **Wes**, identifying Steam play, enjoys learning equipment and elemental interactions but later finds repeated probing tiresome and suspects overpreparation weakened the finale. **Mendanbar** values companion resolutions while using guides under time pressure. **kfwyre** praises a first experience without childhood nostalgia while describing the final stretch as partly obligation. These are selected accounts from one community, not independent surveys. [CTR22]
 
-**Research interpretation:** distinguish initial discovery, purposeful return, exhaustive collection and later-edition additions before prescribing faster travel. Optional personal closure can feel worthwhile while still creating pressure to finish everything. A low burden of rules can support expressive party choices even when it offers less build variation; those are separate kinds of agency. The transcript's broad claims about younger audiences, perfect balance and the inevitable superiority of newer features are judgments, not measured audience findings.
+**Research interpretation:** distinguish initial discovery, purposeful return, exhaustive collection and later-edition additions before prescribing faster travel. Optional personal closure can feel worthwhile while still creating pressure to finish everything. A low burden of rules can support expressive party choices even when it offers less build variation; those are separate kinds of agency. The transcript's broad claims about younger audiences, perfect balance and how age should affect greatest-game rankings are judgments, not measured audience findings.
+
+### Transcript claims checked against the game and creator accounts
+
+This table checks claims that would materially change a design lesson. It preserves the narrator's reactions while correcting plot, rules and attribution. The supplied text also contains transcription slips such as 1 AD for 1000 AD, 23 AD for 2300 AD, and inconsistent names; the dossier uses the established chronology and names. [CTV01]
+
+| Transcript claim or inference | Checked treatment and consequence for this research |
+| --- | --- |
+| The trial always finds Crono guilty. | Acquittal is possible; confinement still follows, and the Chancellor engineers execution. Recognition and route divergence are different. [CTV03] |
+| Magus must be hit with a different element from the last spell. | Follow the current vulnerability and phase; see the [worked encounter](#two-worked-boss-situations-reading-a-changing-problem). This is not a never-repeat rule. [CTM25] |
+| Opening an earlier sealed chest improves its future reward. | For eligible pairs, inspect and leave the earlier contents before collecting the future upgrade. The corrected [worked situation](#eight-worked-situations-decisions-crossing-systems) owns the sequence. [CTE06] |
+| Ocean Palace Lavos seems almost impossible; the narrator speculates a Game Genie might permit victory. | Legitimate victory can produce the developer ending, especially with New Game Plus strength. This is not ordinary first-play balance. [CTE15] |
+| The Black Omen is described as the final dungeon, and optional quests are strongly recommended for readiness. | The Epoch and End of Time bucket provide other routes. Crono's restoration can be omitted with a different ending. The narrator's recommendation is not an entrance requirement or a universal difficulty result. [CTE15], [CTE16] |
+| The Queen deliberately scattered the Gurus through time. | The North Cape account describes dimensional displacement during the Lavos catastrophe. Do not conflate her persecution with deliberate control of those destinations. [CTV03] |
+| Magus chiefly wants to prevent the 1999 apocalypse. | His explanation emphasizes settling his own score with Lavos. Shared opposition does not establish altruism or absolve earlier acts. [CTV03] |
+| Mother Brain plans to starve and defeat Lavos by eliminating organic life. | Her speech anticipates Lavos's offspring and proposes a machine order replacing humans. It is her ideology, not an established ecological explanation or that proposed anti-Lavos strategy. [CTV02] |
+| The party discovers that it helped create the legendary Masamune. | Preserve that payoff with its collaborators: Melchior supplies the knife, and the party participates in its transformation through the Mammon Machine's energy. [CTV03] |
+| Defeating Magus with Frog leads to a human Frog at the end. | Qualify the described route: Magus's death supplies the curse condition, while Frog's presence supplies the personal duel. Ending variants and added animations retain their edition boundaries. [CTE15], [CTV03] |
+| The Time Egg feels as though it was added to undo Crono's death. | The game supplies an earlier clue, but the reaction remains useful criticism. The [revival analysis](#major-spoilers-losing-the-protagonist-and-choosing-restoration) separates foreshadowing from acceptance; the alleged specific draft history is not newly verified. [CTV02], [CTP23] |
+| Horii was credited as head writer; the Dream Team's fame explains authorship. | The preserved credits name Kato for story planning and a broader directing/production team. Period roles and credit labels are not interchangeable. [CTP21] |
+| A precise 1992 conference and cancelled console disc drive establish the origin chain. | Creator recollections give approximate early-1990s timing and an early CD concept. The inspected accounts do not establish the exact conference and cancellation chain together. [CTP12], [CTP24] |
+| Crono/Chrono spelling proves a deliberate theme about time rather than the hero. | No authorial explanation was verified. The Japanese presentation uses クロノ for the hero; the English spelling interpretation remains the reviewer's reading. [CTP24] |
+
+**Other historical boundaries.** The existing creator accounts support Mitsuda's composing opportunity and deliberately consolidated guidance, but not the transcript's precise raise motive or tester-to-Gaspar creation sequence. [CTN08], [CTN06] The documented New Game Plus mode is sufficient for the replay lesson; this expansion does not certify an absolute first use of either the term or retained-progression play. PC/mobile ports provide access, while remake, remaster and platform availability are separate claims; one person's unfamiliar friends do not measure a younger generation's awareness. [CTM02], [CTM05] Broad judgments about older RPGs requiring grind, modern features guaranteeing improvement, and a universal greatest game are not adopted as factual premises.
 
 ### Why play remains enjoyable—or stops being enjoyable
 
@@ -529,11 +568,15 @@ The techniques and party-role evidence asks a concrete question: what becomes po
 
 The late optional structure and the reception of the Lost Sanctum separate meaningful return from repeated travel. The relevant difference is what the visit reveals, enables or asks the player to decide; geographical reuse alone is neither a virtue nor a flaw. [CTN06], [CTR03], [CTR04]
 
+The [route-specific accounts](#supplied-snes-retrospective-and-contrasting-playthroughs) sharpen the application: a revelation can create a wonderful destination and still impose a dull trip to reach it. Compare discovery, collection and repeat visits separately. A shortcut, changed access, a different route or a new social situation can each alter the trip; faster transport is only one option. Preserve travel that supplies wanted decisions or atmosphere.
+
 **Existing owners:** [The frontier](../../../../docs/narrative/authored-worlds-and-personal-discovery.md#make-the-frontier-inviting-and-consequential) and [the whole activity's time cost](../../../../docs/repertoires/gameplay-priorities.md#keep-play-worthwhile-as-players-learn-and-return). **Counterpoint:** a familiar routine can itself be enjoyable. Assess the player's purpose and the complete trip rather than imposing novelty on every visit.
 
 ### Give understanding a payoff without rewriting truth
 
 A place, adversary or object can remain physically the same while its significance changes. OpenLegend already distinguishes what happened, what survives, what somebody believes and what the player can do with a discovery. This research strengthens the reason to keep those distinctions. A revelation can open a new possibility without generating a different past for each visitor.
+
+Use a small number of recognizable anchors across different activities: a useful object, a remembered place or a particular relationship can acquire another meaning. Judge the connection by whether ordinary players can find and use it, and whether a later visitor still has a coherent opportunity. The [Time Egg disagreement](#major-spoilers-losing-the-protagonist-and-choosing-restoration) and [creator accounts](#production-collaboration-constraints-and-iteration) make those separate questions. Avoid turning every prop into a compulsory hidden prerequisite.
 
 **Existing owner:** [Five elements of discoverable history](../../../../docs/narrative/authored-worlds-and-personal-discovery.md#author-a-history-let-people-discover-and-change-the-world). **Counterpoint:** surprise is not a substitute for evidence. A twist that invalidates everything learned without fair clues can make investment feel wasted.
 
@@ -546,6 +589,8 @@ The cast's usefulness is tied to recognizable concerns, relationships and capabi
 ### Preserve the difference between mastery, knowledge and convenience
 
 The mechanics and review sections show several separate costs: selecting a sensible action, learning an enemy rule, navigating a route, enduring a loading delay and operating a touch interface. Reducing the last two need not remove the first three. Conversely, easy battles can lose interest for players who want sustained strategic pressure.
+
+Also distinguish **expressive companion choice**, **tactical adaptation**, **character-build authorship** and **new decisions on a repeat run**. A game can support one strongly and another weakly. The [new player accounts](#supplied-snes-retrospective-and-contrasting-playthroughs) motivate keeping favored companions viable and examining when optional preparation removes the challenge someone wanted. Neither complexity nor simplicity is a sufficient target by itself.
 
 **Existing owner:** [Enjoyment after learning an efficient method](../../../../docs/repertoires/gameplay-priorities.md#keep-play-worthwhile-as-players-learn-and-return). **Counterpoint:** a convenience can erase an intentional uncertainty or preparation decision. Evaluate the decision it changes, not whether the option is labeled modern or accessible.
 
@@ -759,14 +804,32 @@ The following sources were read November 9, 2026. The supplied transcript is aud
 
 - **CTV01 — User-supplied YouTube transcript, `Pasted text(7).txt`.** Full supplied text read. SHA-256: `62d15e6954679b885381a1855502af3f170668d25f527b078d8b86a056c5811a`. The narrator describes a completionist SNES replay after playing on DS. No verified title, channel, URL, publication date or timestamps; the sign-off is insufficient attribution. Speech-to-text spellings are normalized in discussion. Raw transcript remains the supplied attachment rather than a duplicate repository document.
 - **CTV02 — ZeaLitY, Chrono Trigger SNES game-script transcription, GameFAQs.** https://gamefaqs.gamespot.com/snes/563538-chrono-trigger/faqs/31563 — Relevant complete passages read, including Zeal's Time Egg reference and Geno Dome. Preserved primary game dialogue through a community host; compiler organization and stage directions are not developer testimony. No ROM comparison performed.
+- **CTV03 — SineNomine, Chrono Trigger SNES game-script transcription, GameFAQs.** https://gamefaqs.gamespot.com/snes/563538-chrono-trigger/faqs/29744 — Relevant complete trial, Ocean Palace and North Cape passages read. Preserved dialogue and explicitly distinguishable compiler narration; not a second independent witness to the underlying fictional events. Used for verdicts, displacement, motive, knife provenance and the refusal branch.
+- **CTM24 — Phoenix_1911, SNES FAQ/Walkthrough, revision 1.337, May 13, 2003.** https://gamefaqs.gamespot.com/snes/563538-chrono-trigger/faqs/17035 — Relevant reserve-XP, damage and special-equipment sections read. Community mechanics documentation, not a new instrumented test. Source formulas are not asserted for uninspected ports.
+- **CTM25 — Thonky, “Magus's Castle.”** https://www.thonky.com/chrono-trigger/magus-castle — Complete relevant encounter instructions read. Distinguishes a barrier/phase rule from the author's recommended party, HP preparation and strategy; corroborates the existing CTM23 reference.
+- **CTM26 — Gamer Corner Guides, “Lavos Core.”** https://guides.gamercorner.net/ct/bosses/lavos-core — Complete encounter note read; community reference for the right-hand Core, defense opening and left-bit absorption. No damage test or enemy-script execution performed.
+- **CTM27 — GameFAQs, reserve XP/TP question and answers, DS-labeled question.** https://gamefaqs.gamespot.com/ps/562913-chrono-trigger/answers/25105-how-exactly-are-experience-points-and-tech-points-divided-up-between-the-members — Relevant original answers read, including Vladislak's stated small XP test. The URL and page shell say PlayStation while the question is explicitly labeled DS; use that qualification, not a PlayStation test claim. Displayed relative posting age does not establish an exact publication date.
+- **CTE15 — Thonky, “Chrono Trigger Endings.”** https://www.thonky.com/chrono-trigger/endings — Relevant ending-condition entries read: Ocean Palace victory, optional restoration and Magus/Glenn variations. Detailed ending conditions are not generalized to every port's additional cutscenes.
+- **CTE16 — Thonky, “The Final Battle.”** https://www.thonky.com/chrono-trigger/final-battle — Relevant route list and combat sections read. Used for alternative Lavos entry routes; its edition-unspecific Black Omen/New Game Plus unlock assertion is not adopted.
 - **CTP22 — DenFamiNicoGamer, Masato Kato interview, July 11, 2025, page 3.** https://news.denfaminicogamer.jp/interview/250711b/3 — Japanese interview body read; summaries paraphrase Kato's recollections. Chrono Trigger's time-travel discussion and Final Fantasy XI's shared-world constraints are explicitly separate subjects. The interview does not establish OpenLegend's architecture or a measured production advantage.
+- **CTP23 — Famitsu, Hironobu Sakaguchi and Yoshinori Kitase conversation, December 25, 2014.** https://www.famitsu.com/news/201412/25068666.html — Relevant Japanese interview passage read. Direct original for the Marle continuity decision and late character episodes; related translated material is collected in CTP11, not an independent corroborating interview. No primary passage establishing the alleged Time Egg draft history was retrieved.
+- **CTP24 — V-Jump 1994 presentation, Japanese transcript and English translation preserved by GlitterBerri, December 27, 2008.** https://glitterberri.com/chrono-trigger/v-jump-presentation/ — Relevant complete presentation text read. Supports an approximate US research trip and the Japanese hero name; prerelease discussion is not proof every described feature shipped. Hosting date is not the presentation date.
 - **CTR20 — joshakazam, “In Dedication to Akira Toriyama,” Grouvee, April 22, 2024.** https://www.grouvee.com/user/115694-joshakazam/reviews/3641928/ — Complete original review read; Nintendo DS. Individual retrospective about authored encounters and repeated traversal, without an isolated SNES route or representative timing sample.
 - **CTR21 — Fancy_Flapjacks, “Timeless,” Grouvee, April 9, 2024.** https://www.grouvee.com/user/137543-Fancy_Flapjacks/reviews/3631904/ — Complete original review read; Nintendo DS, with the reviewer explicitly skipping added dungeons. Used for stated preferences and navigation difficulty, not as a mechanics authority.
 - **CTR22 — Tildes, October 2025 Colossal Game Adventure completion discussion.** https://tildes.net/~games/1qsz/cga_2025_10_remove_cartridge_chrono_trigger — Selected original comment chains read: Wes, October 19; Mendanbar, October 26; kfwyre, October 28. Steam is identified for Wes; do not assign unstated editions to others. One self-selected community source; reproduced historical reviews in the opening post are not counted as newly inspected originals.
 
 [CTV01]: #supplied-transcript-source
 [CTV02]: https://gamefaqs.gamespot.com/snes/563538-chrono-trigger/faqs/31563
+[CTV03]: https://gamefaqs.gamespot.com/snes/563538-chrono-trigger/faqs/29744
+[CTM24]: https://gamefaqs.gamespot.com/snes/563538-chrono-trigger/faqs/17035
+[CTM25]: https://www.thonky.com/chrono-trigger/magus-castle
+[CTM26]: https://guides.gamercorner.net/ct/bosses/lavos-core
+[CTM27]: https://gamefaqs.gamespot.com/ps/562913-chrono-trigger/answers/25105-how-exactly-are-experience-points-and-tech-points-divided-up-between-the-members
+[CTE15]: https://www.thonky.com/chrono-trigger/endings
+[CTE16]: https://www.thonky.com/chrono-trigger/final-battle
 [CTP22]: https://news.denfaminicogamer.jp/interview/250711b/3
+[CTP23]: https://www.famitsu.com/news/201412/25068666.html
+[CTP24]: https://glitterberri.com/chrono-trigger/v-jump-presentation/
 [CTR20]: https://www.grouvee.com/user/115694-joshakazam/reviews/3641928/
 [CTR21]: https://www.grouvee.com/user/137543-Fancy_Flapjacks/reviews/3631904/
 [CTR22]: https://tildes.net/~games/1qsz/cga_2025_10_remove_cartridge_chrono_trigger

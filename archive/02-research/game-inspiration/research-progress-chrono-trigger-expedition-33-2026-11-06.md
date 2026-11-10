@@ -4,7 +4,7 @@
 
 Mike requested additional Chrono Trigger research using a supplied YouTube transcript. The full G187 dossier already exists; this scoped expansion preserves its R01–R15 coverage and the completed November 6–7 assignment below. Base: `https://github.com/Macrofold/OpenLegend.git`, published `main` at `00b96687b853ed7a2c5e9fc9b11542e10147ea0f`. New branch: `docs/chrono-trigger-video-research-20261109`. Research only.
 
-**In progress:** incorporated the supplied SNES completionist perspective, contrasting DS/Steam player accounts, Time Egg foreshadowing and Kato's later distinction between a time-travel premise and a worthwhile experience. Remaining: integrate checked mechanical/story corrections and worked examples, reconcile the existing STORY/PACING lessons, review the complete affected diff and links, then commit the finished expansion. No other game or runtime work is opened.
+**In progress:** the dossier now incorporates the supplied SNES completionist perspective, contrasting DS/Steam accounts, checked story/mechanics claims, two worked boss situations and later creator interviews. STORY/PACING and their source assessments are reconciled. Independent narrative/mechanics and production reviews found only wording that overstated the narrator's claims; those labels are corrected. Remaining: final affected-diff, citation and link review, then commit the finished expansion. No other game or runtime work is opened.
 
 ## Original full-dossier assignment
 
