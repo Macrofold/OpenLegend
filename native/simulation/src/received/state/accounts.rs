@@ -4,6 +4,7 @@
 use super::{AccountCharge, TemporalAccounts, TemporalState};
 use crate::attention::AttentionRetentionPolicy;
 use crate::experience::AccountClass;
+use crate::host::retained_size::HeapBytes;
 use crate::identity::MAX_SAFE_INTEGER;
 use crate::received::ReceivedError;
 
@@ -354,5 +355,49 @@ impl TemporalState {
         let mut header = actor.header.clone();
         header.terminal_reserved_bytes -= bytes;
         self.replace_header(actor_id, header)
+    }
+}
+
+impl TemporalState {
+    /// A complete support-set proof settles only its captured dirty generation.
+    pub(crate) fn settle_support_cleanup(
+        &mut self,
+        actor_id: &str,
+        revision: u64,
+    ) -> Result<bool, ReceivedError> {
+        let Some(actor) = self.actors.get(actor_id) else {
+            return Ok(false);
+        };
+        let Some(accounts) = actor.header.accounts.as_ref() else {
+            return Ok(false);
+        };
+        if accounts.support_dirty_revision != revision
+            || accounts.support_settled_revision == revision
+        {
+            return Ok(false);
+        }
+        // The new header is a real temporary before its sole writer installs
+        // canonical custody. Fund its copy before cloning, then release this
+        // workspace after the writer has taken ownership.
+        let _copy = self
+            .budget
+            .reserve(
+                actor
+                    .header
+                    .heap_bytes()
+                    .and_then(|n| n.checked_add(std::mem::size_of::<super::TemporalActorHeader>()))
+                    .ok_or(ReceivedError(
+                        "Support settlement header allocation overflow.",
+                    ))?,
+            )
+            .map_err(|_| ReceivedError("Support settlement exceeds native byte allowance."))?;
+        let mut header = actor.header.clone();
+        header
+            .accounts
+            .as_mut()
+            .ok_or(ReceivedError("Personal accounts vanished."))?
+            .support_settled_revision = revision;
+        self.replace_header(actor_id, header)?;
+        Ok(true)
     }
 }

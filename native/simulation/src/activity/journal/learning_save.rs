@@ -113,6 +113,33 @@ impl ActivityJournal {
         }
         for actor in actors {
             let own = state.library.acquisitions.get(actor).ok_or_else(invalid)?;
+            if owners.contains(actor) {
+                let _owner = budget
+                    .reserve(
+                        actor
+                            .len()
+                            .checked_mul(8)
+                            .and_then(|n| n.checked_add(256))
+                            .ok_or_else(invalid)?,
+                    )
+                    .map_err(|_| invalid())?;
+                // The same journal created this complete actor map. Publish its
+                // real coverage with its first children so accepted placement
+                // metadata never invents an older collection owner.
+                output.observe_owner(&crate::records::OwnerCoverage {
+                    table: "activity_acquisitions".into(),
+                    owner: crate::encoding::json_record(&[
+                        "world",
+                        "actionExperience",
+                        "acquisitions",
+                        actor,
+                    ])
+                    .map_err(|_| invalid())?,
+                    complete: true,
+                    next_ordinal: own.len() as u64,
+                    parent_present: true,
+                })?;
+            }
             let ordered = OrderedMapRows::new(own, budget)?;
             for (position, id, record) in ordered.iter() {
                 let placement = SelectedPlacement::new(
@@ -122,7 +149,10 @@ impl ActivityJournal {
                     &["world", "actionExperience", "acquisitions", actor],
                     id,
                     position,
-                    false,
+                    // This owner was absent in the complete imported directory
+                    // and was created by this same acquisition journal. Its
+                    // first children have no older collection coverage row.
+                    owners.contains(actor),
                     budget,
                 )?;
                 if acquired.contains(&(actor, id))

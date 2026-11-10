@@ -14,7 +14,17 @@ import {
   commandBindingFields,
   commandEntityFields,
 } from '@open-legend/domain';
-import { canonicalName } from '@open-legend/language';
+import {
+  typedBare as bare,
+  typedSameName as sameName,
+  typedMatchLevel as matchLevel,
+  typedBest as best,
+  TYPED_DEICTIC as DEICTIC,
+  selectTypedNavigation,
+  typedNavigationDescription,
+  type TypedNavigationRead,
+  type TypedNavigationSelection,
+} from './typed-navigation.js';
 import {
   nativeCommandSupported,
   validateInstalledActivityConditions,
@@ -123,36 +133,6 @@ const NUMBERS: Record<string, number> = {
   nine: 9,
   ten: 10,
 };
-const bare = (name: string) =>
-  canonicalName(clean(name)).replace(/^(?:my|this|that|these|those|some|your)\s+/u, '');
-/** Tolerate simple English plurals; this is matching, not semantic interpretation. */
-const forms = (name: string) => {
-  const word = bare(name);
-  return new Set([
-    word,
-    word.replace(/ies$/u, 'y'),
-    word.replace(/ves$/u, 'fe'),
-    word.replace(/ves$/u, 'f'),
-    word.replace(/es$/u, ''),
-    word.replace(/s$/u, ''),
-  ]);
-};
-const sameName = (a: string, b: string) => {
-  const left = forms(a);
-  return [...forms(b)].some((form) => left.has(form));
-};
-/** 2: a full name or definition id ("wood"); 1: only the head noun ("Small stone" →
- * "stone"); 0: no match. Callers keep the best level, so a full name beats a head noun. */
-const matchLevel = (names: string[], wanted: string) =>
-  names.some((name) => sameName(name, wanted))
-    ? 2
-    : names.some((name) => sameName(bare(name).split(' ').at(-1) ?? '', wanted))
-      ? 1
-      : 0;
-function best<T>(entries: { value: T; level: number }[]): T[] {
-  const top = Math.max(0, ...entries.map((entry) => entry.level));
-  return top ? entries.filter((entry) => entry.level === top).map((entry) => entry.value) : [];
-}
 function itemNames(world: WorldState, definitionId: string): string[] {
   return [world.itemDefinitions[definitionId]?.name ?? '', definitionId.replace(/_/gu, ' ')];
 }
@@ -166,7 +146,6 @@ const quantityWord = (word: string | undefined): number | 'all' | undefined => {
 const GENERIC_ITEMS = new Set(['items', 'pile', 'everything', 'things', 'stuff']);
 /** "The item": one unnamed stack, meaningful only when exactly one is possible. */
 const SINGLE_ITEM = new Set(['item', 'thing', 'stack']);
-const DEICTIC = new Set(['it', 'this', 'that', 'them', 'him', 'her', 'there']);
 const PRONOUNS = new Set([
   'it',
   'them',
@@ -406,7 +385,11 @@ function bind(scope: Scope, fields: Partial<ActionInvocation>, depends: string[]
     [scope.actorId, ...scope.visible.map((e) => e.id)],
   );
   if (!('ok' in bound)) return bound;
-  const rejected = typedInvocationRefusal(bound, { minimumDistance: FOLLOW_RULES.minimumDistance, maximumDistance: FOLLOW_RULES.maximumDistance, offset: INVOCATION_LIMITS.offset });
+  const rejected = typedInvocationRefusal(bound, {
+    minimumDistance: FOLLOW_RULES.minimumDistance,
+    maximumDistance: FOLLOW_RULES.maximumDistance,
+    offset: INVOCATION_LIMITS.offset,
+  });
   return refuse(rejected.category, rejected.reason, depends);
 }
 const at = (point: { x: number; z: number }) =>
@@ -520,92 +503,103 @@ function offset(
 /** "go where I last saw the deer": the actor's own recorded sighting, matched by how it was
  * described then. A visible thing counts as that subject only when recognition holds, so a
  * new encounter never reveals that it is the same entity. */
-function lastSeen(scope: Scope, name: string): Outcome | undefined {
-  const actor = entityGet(scope.world.entities, scope.actorId)!.actor!;
-  const wanted = bare(name);
-  const matches = best(
-    (actor.agency.places ?? []).map((place) => ({
-      value: place.subjectId,
-      level:
-        // A selected entity names a remembered sighting only in the same encounter.
-        scope.request.targetId === place.subjectId &&
-        DEICTIC.has(wanted) &&
-        subjectReferenceCurrent(scope.world, scope.actorId, place.subjectId, place.episode)
-          ? 3
-          : matchLevel([place.label], wanted),
-    })),
-  );
-  if (matches.length !== 1)
-    return matches.length
-      ? refuse(
-          'needs_clarification',
-          `More than one remembered sighting matches "${wanted}"; select the one you mean.`,
-          matches,
-        )
-      : knownNoun(scope, name)
-        ? refuse('blocked', `There is no remembered sighting of "${wanted}" to return to.`, [])
-        : undefined;
-  const place = actor.agency.places!.find((p) => p.subjectId === matches[0])!;
-  // Only the same encounter (or recognition) still seen now is approached where it is; any
-  // other case walks to this record's own point, never to a hidden entity's current place.
-  const stillSeen =
-    scope.visible.some((entity) => entity.id === place.subjectId) &&
-    subjectReferenceCurrent(scope.world, scope.actorId, place.subjectId, place.episode);
-  // A lone request must use its selection, as for "go to NAME". Only a subject still seen in
-  // the same encounter is compared or recorded as what the walk is about; a walk to an old
-  // point names only a place, as in a sequence.
+function navigationRead(scope: Scope): TypedNavigationRead {
+  const places = entityGet(scope.world.entities, scope.actorId)!.actor!.agency.places ?? [];
   const target = scope.request.targetId;
-  if (stillSeen && target && !scope.sequence && target !== place.subjectId)
-    return refuse(
-      'needs_clarification',
-      `${capitalized(named(scope, target))} is not the one you last saw (${place.label}); select that one, or clear the selection.`,
-      [target],
-    );
+  return {
+    actorId: scope.actorId,
+    target: target ? { id: target, label: named(scope, target) } : null,
+    sequence: !!scope.sequence,
+    visible: scope.visible.map((entity) => ({
+      id: entity.id,
+      label: named(scope, entity.id),
+      heat: !!entity.heat,
+      resourceNames: entity.resource ? itemNames(scope.world, entity.resource.definitionId) : [],
+    })),
+    places: places.map((place) => ({
+      subjectId: place.subjectId,
+      label: place.label,
+      at: place.at,
+      referenceCurrent: subjectReferenceCurrent(
+        scope.world,
+        scope.actorId,
+        place.subjectId,
+        place.episode,
+      ),
+    })),
+    vocabulary: scope.vocabulary,
+    itemNames: Object.keys(scope.world.itemDefinitions).map((id) => itemNames(scope.world, id)),
+  };
+}
+function navigationRefusal(
+  scope: Scope,
+  read: TypedNavigationRead,
+  selected: Extract<TypedNavigationSelection, { kind: 'refused' }>,
+): Outcome {
+  const depends = selected.depends.flatMap((dependency) =>
+    dependency.kind === 'visible'
+      ? ['@visible']
+      : dependency.kind === 'target'
+        ? scope.request.targetId
+          ? [scope.request.targetId]
+          : []
+        : dependency.kind === 'body'
+          ? [read.visible[dependency.ordinal]!.id]
+          : [read.places[dependency.ordinal]!.subjectId],
+  );
+  return refuse(selected.category, selected.reason, depends);
+}
+function lastSeen(scope: Scope, name: string): Outcome | undefined {
+  const read = navigationRead(scope),
+    selected = selectTypedNavigation({ kind: 'last-seen', name }, read);
+  if (selected.kind === 'unknown') return;
+  if (selected.kind === 'refused') return navigationRefusal(scope, read, selected);
+  if (selected.kind !== 'place')
+    throw new Error('Last-seen matching returned no remembered place.');
+  const place = entityGet(scope.world.entities, scope.actorId)!.actor!.agency.places![
+    selected.ordinal
+  ]!;
+  const stillSeen =
+    read.places[selected.ordinal]!.referenceCurrent &&
+    read.visible.some((body) => body.id === place.subjectId);
   if (stillSeen) scope.builder.subjects.add(place.subjectId);
   const bound: Command | Outcome = stillSeen
     ? bind(scope, { family: 'move', place: 'target', targetEntityId: place.subjectId })
-    : {
-        id: scope.localId,
-        actorId: scope.actorId,
-        type: 'move',
-        destination: { ...place.point },
-      };
+    : { id: scope.localId, actorId: scope.actorId, type: 'move', destination: { ...place.point } };
   if ('refuse' in bound) return bound;
   const destination = (bound as Extract<Command, { type: 'move' }>).destination;
   return {
     commands: [bound as Command],
-    description: stillSeen
-      ? `Walk to ${place.label}, which is still in view (${at(destination)}). This does not track it.`
-      : `Walk to where you last saw ${place.label} (${at(destination)}, ${Math.round((scope.world.simTime - place.at) / 60)} min ago). This does not track it.`,
+    description: typedNavigationDescription({
+      kind: 'last-seen',
+      label: place.label,
+      at: place.at,
+      stillSeen,
+      simTime: scope.world.simTime,
+      destination,
+    }),
   };
 }
-
-/** "go to the fire": a reachable stance near a visible thing's current position. */
+/** A reachable stance near a named visible thing, from the actual observed roster. */
 function approach(scope: Scope, name: string): Outcome | undefined {
-  const other = (e: Entity) => e.id !== scope.actorId;
-  const matches = visibleMatches(scope, name, other);
-  if (matches.length !== 1)
-    return matches.length
-      ? refuse(
-          'needs_clarification',
-          `More than one visible thing matches "${bare(name)}"; select the one to go to.`,
-          matches.map((e) => e.id),
-        )
-      : noMatch(
-          scope,
-          name,
-          other,
-          `Nothing called "${bare(name)}" is in view to go to.`,
-          'walked to',
-        );
-  scope.builder.subjects.add(matches[0]!.id);
-  const bound = bind(scope, { family: 'move', place: 'target', targetEntityId: matches[0]!.id }, [
-    matches[0]!.id,
+  const read = navigationRead(scope),
+    selected = selectTypedNavigation({ kind: 'approach', name }, read);
+  if (selected.kind === 'unknown') return;
+  if (selected.kind === 'refused') return navigationRefusal(scope, read, selected);
+  if (selected.kind !== 'body') throw new Error('Approach matching returned no current body.');
+  const body = read.visible[selected.ordinal]!;
+  scope.builder.subjects.add(body.id);
+  const bound = bind(scope, { family: 'move', place: 'target', targetEntityId: body.id }, [
+    body.id,
   ]);
   if ('refuse' in bound) return bound;
   return {
     commands: [bound as Command],
-    description: `Walk near ${named(scope, matches[0]!.id)}'s current position; this does not follow later movement.`,
+    description: typedNavigationDescription({
+      kind: 'approach',
+      label: body.label,
+      destination: (bound as Extract<Command, { type: 'move' }>).destination,
+    }),
   };
 }
 
@@ -1465,7 +1459,13 @@ export function typedAction(
       };
   }
   const unmet = unmetSlots(world, commands, request.slots);
-  const fulfillment = typedActionFulfillment(request.text, result.description, unmet, result.omitted, result.confirm);
+  const fulfillment = typedActionFulfillment(
+    request.text,
+    result.description,
+    unmet,
+    result.omitted,
+    result.confirm,
+  );
   return { ...base, commands, fulfillment };
 }
 

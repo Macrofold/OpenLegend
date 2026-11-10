@@ -1,5 +1,7 @@
 //! Source admission, grouping, attribution and account retirement share one
 //! candidate checkpoint. Rejected groups leave every original in place.
+use super::dream::DreamInput;
+use super::format::{MaintenanceFormatAnswer, MaintenanceFormatRequest};
 use crate::capture::maintenance::{MaintenanceAdmission, MaintenanceCapture};
 use crate::capture::{
     NpcHistoricalScope, NpcSourceSelection, NpcSourcesAnswer, NpcSourcesCursor, NpcSourcesRequest,
@@ -24,21 +26,27 @@ pub(crate) struct ConsolidationInput {
     pub selection: NpcSourceSelection,
     pub groups: Vec<ConsolidationGroup>,
     pub limits: ConsolidationLimits,
+    pub source_count: usize,
+    pub source_bytes: u64,
     pub storage: ByteReservation,
+    pub dream: Option<DreamInput>,
 }
 pub(crate) enum ConsolidationAnswer {
     Sources(NpcSourcesAnswer),
+    Dream(MaintenanceFormatAnswer),
     Format(ConsolidationFormatAnswer),
     Collation(CollationAnswer),
 }
 pub(crate) enum ConsolidationStep<'a> {
     Sources(&'a NpcSourcesRequest),
+    Dream(&'a MaintenanceFormatRequest),
     Format(&'a ConsolidationFormatRequest),
     Collation(&'a CollationRequest),
     Complete(CompletedConsolidation),
 }
 enum Progress {
     Sources,
+    Dream,
     Format,
     Collation,
     Complete(CompletedConsolidation),
@@ -61,6 +69,11 @@ pub(crate) struct ConsolidationCursor {
     collation: Option<CollationRequest>,
     groups: Option<Vec<ConsolidationGroup>>,
     limits: ConsolidationLimits,
+    initial_problem: Option<&'static str>,
+    dream: Option<DreamInput>,
+    dream_question: Option<MaintenanceFormatRequest>,
+    sources: Option<crate::capture::PreparedNpcSources>,
+    duplicate: bool,
     budget: ByteBudget,
     storage: Option<ByteReservation>,
 }
@@ -93,6 +106,16 @@ impl ConsolidationCursor {
                     return Err(e.into());
                 }
             };
+        let preparation = &core.state.installed.personal_evidence_preparation;
+        let initial_problem = if input.source_count == 0 || input.groups.is_empty() {
+            Some("Invalid memory groups.")
+        } else if input.source_count as u64 > preparation.rows
+            || input.source_bytes > preparation.bytes
+        {
+            Some("Complete consolidation sources exceed preparation capacity; originals retained.")
+        } else {
+            None
+        };
         Ok(Self {
             job: input.job,
             body: input.body,
@@ -105,6 +128,11 @@ impl ConsolidationCursor {
             collation: None,
             groups: Some(input.groups),
             limits: input.limits,
+            initial_problem,
+            dream: input.dream,
+            dream_question: None,
+            sources: None,
+            duplicate: false,
             budget: budget.clone(),
             storage: Some(storage),
         })
@@ -124,6 +152,9 @@ impl ConsolidationCursor {
         self.format = None;
         self.prepared = None;
         self.collation = None;
+        self.dream = None;
+        self.dream_question = None;
+        self.sources = None;
         Ok(())
     }
     fn complete(
@@ -193,6 +224,30 @@ impl ConsolidationCursor {
             false,
         )
     }
+    fn after_dream(&mut self, core: &mut CoreMutation<'_>) -> Result<Progress, DriveError> {
+        if let Some(message) = self.initial_problem.take() {
+            return self.reject(core, message);
+        }
+        if self.duplicate {
+            return self.complete(
+                core,
+                true,
+                "duplicate",
+                "Memory groups already accepted.",
+                Vec::new(),
+                true,
+            );
+        }
+        let sources = self.sources.take().ok_or(ExecutionError::Invariant)?;
+        let binding = self.binding(core)?;
+        self.format = Some(ConsolidationFormatRequest::prepare(
+            binding,
+            &self.body.request.actor_id,
+            &sources,
+            &self.budget,
+        )?);
+        Ok(Progress::Format)
+    }
     fn drive(
         &mut self,
         core: &mut CoreMutation<'_>,
@@ -200,6 +255,11 @@ impl ConsolidationCursor {
     ) -> Result<Progress, DriveError> {
         if self.checkpoint.is_none() {
             return Err(ExecutionError::InvalidCheckpoint.into());
+        }
+        if self.dream.is_none() {
+            if let Some(message) = self.initial_problem.take() {
+                return self.reject(core, message);
+            }
         }
         if let Some(source) = self.source.as_mut() {
             let answer = match answer {
@@ -209,28 +269,59 @@ impl ConsolidationCursor {
             };
             let sources = source.complete(core, answer, &self.budget)?;
             self.source = None;
-            if sources.duplicate_summary == Some(true) {
-                return self.complete(
-                    core,
-                    true,
-                    "duplicate",
-                    "Memory groups already accepted.",
-                    Vec::new(),
-                    false,
-                );
-            }
             if !sources.unavailable_personal.is_empty() || !sources.unavailable_receipts.is_empty()
             {
                 return self.reject(core, "Source coverage changed.");
             }
-            let binding = self.binding(core)?;
-            self.format = Some(ConsolidationFormatRequest::prepare(
-                binding,
-                &self.body.request.actor_id,
-                &sources,
+            self.duplicate = sources.duplicate_summary.ok_or(ExecutionError::Invariant)?;
+            self.sources = Some(sources);
+            if let Some(dream) = self.dream.as_ref() {
+                let binding = GeometryBinding::new(
+                    self.candidate,
+                    core.state.installed.geometry.spatial.revision,
+                    core.journal.next_provider_serial()?,
+                );
+                self.dream_question = Some(MaintenanceFormatRequest::prepare(
+                    binding,
+                    &dream.publication,
+                    &self.budget,
+                )?);
+                return Ok(Progress::Dream);
+            }
+            return self.after_dream(core);
+        }
+        if let Some(question) = self.dream_question.as_mut() {
+            let answer = match answer {
+                None => return Ok(Progress::Dream),
+                Some(ConsolidationAnswer::Dream(a)) => a,
+                _ => return Err(DriveError::StaleResponse),
+            };
+            let format = question.finish(answer, &self.budget)?;
+            match super::dream::publish(
+                core,
+                self.checkpoint
+                    .as_ref()
+                    .ok_or(ExecutionError::InvalidCheckpoint)?,
+                self.dream.as_ref().ok_or(ExecutionError::Invariant)?,
+                &format,
                 &self.budget,
-            )?);
-            return Ok(Progress::Format);
+            ) {
+                Ok(()) => {}
+                Err(super::reflection::MindPublicationError::Refused(message)) => {
+                    return self.complete(
+                        core,
+                        false,
+                        "publication-rejected",
+                        message,
+                        Vec::new(),
+                        false,
+                    );
+                }
+                Err(super::reflection::MindPublicationError::Execution(e)) => return Err(e.into()),
+            }
+            self.dream_question = None;
+            self.dream = None;
+            return self.after_dream(core);
         }
         if let Some(format) = self.format.as_ref() {
             let answer = match answer {
@@ -311,6 +402,15 @@ impl ConsolidationCursor {
                 }
                 Err(e) => return Err(e.into()),
             };
+            super::finalization::finish_transition(
+                core,
+                self.checkpoint
+                    .as_ref()
+                    .ok_or(ExecutionError::InvalidCheckpoint)?,
+                &self.body.request.actor_id,
+                &[],
+                &self.budget,
+            )?;
             return self.complete(
                 core,
                 true,
@@ -340,6 +440,11 @@ impl ConsolidationCursor {
             }
         };
         Ok(match progress {
+            Progress::Dream => ConsolidationStep::Dream(
+                self.dream_question
+                    .as_ref()
+                    .ok_or(ExecutionError::Invariant)?,
+            ),
             Progress::Sources => ConsolidationStep::Sources(
                 self.source
                     .as_ref()

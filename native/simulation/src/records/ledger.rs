@@ -346,6 +346,18 @@ impl RecordLedger {
         }
         for (table, writes) in &changes.writes {
             for row in writes {
+                // The saved host root has a real installed placement/template,
+                // but no collection parent or collection-coverage declaration.
+                // Updating it must not invent an owner that Source never stores.
+                if table == "data_world"
+                    && row.id == "[]"
+                    && row.parent.is_empty()
+                    && row.slot.is_empty()
+                    && row.position == 0
+                {
+                    self.placement(table, &row.id).ok_or_else(error)?;
+                    continue;
+                }
                 let key = (table.clone(), row.parent.clone());
                 if !owner_updates.contains_key(&key) {
                     let coverage = self.coverage(table, &row.parent).ok_or_else(error)?.clone();

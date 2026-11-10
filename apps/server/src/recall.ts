@@ -539,8 +539,13 @@ export class RecallService {
             entityGet(service.world.entities, actorId)?.actor?.controller === 'npc';
           return {
             current,
-            embed: (request, sourcesCurrent, lease) =>
-              recall.embedCurrent(request, sourcesCurrent, lease),
+            embed: (request, sources, lease) =>
+              recall.embedCurrent(
+                request,
+                () => sources.validate(),
+                lease,
+                () => sources.current(),
+              ),
           };
         },
         read: (_actorId, work) => work(),
@@ -572,6 +577,7 @@ export class RecallService {
     request: EmbeddingRequest,
     current: () => boolean | Promise<boolean>,
     lease?: ExecutionLease,
+    sourceFence?: () => boolean,
   ): Promise<AiResult<number[][]>> {
     return dispatchEmbedding({
       service: this.service,
@@ -581,11 +587,20 @@ export class RecallService {
       current,
       now: Date.now,
       assertCurrent: () => {
-        if (this.closed) throw new Error('Recall closed before embedding dispatch.');
+        if (this.closed || sourceFence?.() === false)
+          throw new Error(
+            'Recall closed or its selected source changed before embedding dispatch.',
+          );
       },
       publication: (start) =>
         this.service.publishRecall(async () => {
-          if (this.closed || this.service.paused || request.signal?.aborted || !(await current()))
+          if (
+            this.closed ||
+            this.service.paused ||
+            request.signal?.aborted ||
+            !(await current()) ||
+            sourceFence?.() === false
+          )
             throw new Error('Embedding context changed before dispatch.');
           return { result: start() };
         }),

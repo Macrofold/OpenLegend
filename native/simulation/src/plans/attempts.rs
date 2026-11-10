@@ -2,6 +2,8 @@
 //! or permission to dispatch a paid interpreter.
 use super::*;
 mod mutation;
+mod signature;
+pub(crate) use signature::resolution_signature;
 mod types;
 pub(crate) use mutation::{
     CompletedIntentEdit, DeferredIntent, defer_attempt, resolve_attempt, withdraw_attempt,

@@ -519,7 +519,8 @@ export function discoverActivities(
           entry.actorId === actorId &&
           !ids.has(entry.id) &&
           (entry.outcome?.ok === false ||
-            (!!entry.outcome?.code && ACTIVITY_LEARNING_FAILURE_CODES.includes(entry.outcome.code))) &&
+            (!!entry.outcome?.code &&
+              ACTIVITY_LEARNING_FAILURE_CODES.includes(entry.outcome.code))) &&
           'targetId' in entry.command &&
           targets.has(entry.command.targetId),
       )

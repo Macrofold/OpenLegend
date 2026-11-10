@@ -9,6 +9,8 @@ use serde::{Deserialize, ser::SerializeSeq};
 use serde_json::value::RawValue;
 mod interpretation;
 pub(crate) use interpretation::MaintenanceInterpretation;
+mod presentation;
+pub(crate) use presentation::MaintenancePresentation;
 
 pub(crate) fn population(state: &SimulationState) -> impl Serialize + '_ {
     struct Thought<'a>(&'a SimulationState);
@@ -594,18 +596,15 @@ impl MaintenanceCapture {
             && json_record_eq(&body_fence(&state.installed, actor)?, &self.body_fence)
                 .map_err(|_| ExecutionError::Invariant)?)
     }
-    pub(crate) fn workspace_current(
+    pub(crate) fn obligations_current(
         &self,
         state: &SimulationState,
     ) -> Result<bool, ExecutionError> {
-        let inner = state
-            .minds
-            .inner_worlds
-            .as_ref()
-            .and_then(|m| m.get(&self.request.actor_id));
+        // Source's host separately checks its captured obligations. The old
+        // inner revision belongs to publishInnerWorld's actual revision check;
+        // a newer workspace does not mean selected source access was withdrawn.
         Ok(self.world == state.physical.header.id
             && self.generation == state.generation
-            && inner.map(|v| v.revision) == self.inner_revision
             && json_record_eq(
                 &Obligations(memories(state, &self.request.actor_id)?),
                 &self.obligations,

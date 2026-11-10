@@ -4,6 +4,11 @@ import type { ActivityDefinitionScope } from '../../activity-hosts.js';
 import { BASE_SPECIES } from './bodies.js';
 import type { TypedRequestVocabulary } from '../../typed-requests.js';
 
+export const BASE_TYPED_NOUNS = {
+  heatSources: ['fire', 'campfire'],
+  beings: [...BASE_SPECIES, 'person', 'people', 'animal', 'being'],
+} as const;
+
 /** How the bundled world names its things and requests in typed actions. Engine parsing reads
  * this through typedRequestVocabulary() and never restates these words.
  * docs/worlds/base/typed-requests.md */
@@ -11,8 +16,7 @@ export function baseTypedRequestVocabulary(
   world: ActivityDefinitionScope & Pick<WorldState, 'profile'>,
 ): TypedRequestVocabulary {
   return {
-    heatSources: ['fire', 'campfire'],
-    beings: [...BASE_SPECIES, 'person', 'people', 'animal', 'being'],
+    ...BASE_TYPED_NOUNS,
     // Giving is an offer the recipient accepts; typed requests reach it through grounding.
     unsupported: [],
     revisions: [

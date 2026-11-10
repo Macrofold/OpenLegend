@@ -86,6 +86,7 @@ impl ComponentResult {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct ResponseLimits {
     pub invocation: crate::commands::InvocationLimits,
+    pub resolution: ResolutionLimits,
     pub choice_preparation_id: String,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub operations: u64,
@@ -93,6 +94,12 @@ pub(crate) struct ResponseLimits {
     pub bytes: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub receipts: u64,
+}
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct ResolutionLimits {
+    pub depends: usize,
+    pub reason: usize,
 }
 impl ResponseLimits {
     pub(crate) fn valid(&self) -> bool {

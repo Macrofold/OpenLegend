@@ -91,11 +91,12 @@ pub(crate) use base_cognition::OccurrenceRules as InstalledOccurrenceRules;
 
 pub use base_knowledge::PersonalNameRules as InstalledPersonalNameRules;
 pub(crate) use base_knowledge::{
-    CapturedAttributionIdentities, CapturedNames, OwnedPersonalName, PersonalName as InstalledPersonalName,
-    PersonalNameReader as InstalledPersonalNameReader,
+    CapturedAttributionIdentities, CapturedNames, OwnedPersonalName,
+    PersonalName as InstalledPersonalName, PersonalNameReader as InstalledPersonalNameReader,
 };
 pub(crate) use base_knowledge::{CommunicationSubject, RememberedCommunications};
 
 pub(crate) use base_recognition::{
-    IndividualPruneMode, prune_observer_individuals as prune_selected_observer_individuals,
+    IndividualPruneMode, held_support_aliases as selected_held_support_aliases,
+    prune_observer_individuals as prune_selected_observer_individuals,
 };

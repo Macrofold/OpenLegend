@@ -122,6 +122,7 @@ pub(super) fn construct(entity: &Entity, id: String, kind: &str) -> Result<Entit
                 suspended: None,
                 places: None,
                 last_result_evidence: None,
+                order: crate::state::AgencyOrder::opening(),
             },
             attack_mode_notice: None,
             encounters: None,

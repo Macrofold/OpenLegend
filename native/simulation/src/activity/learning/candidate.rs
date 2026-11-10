@@ -46,24 +46,6 @@ impl Serialize for LearningCandidate {
         out.end()
     }
 }
-fn content_label(value: &str) -> String {
-    let mut hash = 2166136261u32;
-    for unit in value.encode_utf16() {
-        hash = (hash ^ u32::from(unit)).wrapping_mul(16777619);
-    }
-    let mut n = hash;
-    let mut digits = Vec::with_capacity(7);
-    loop {
-        let d = (n % 36) as u8;
-        digits.push(if d < 10 { b'0' + d } else { b'a' + d - 10 });
-        n /= 36;
-        if n == 0 {
-            break;
-        }
-    }
-    digits.reverse();
-    String::from_utf8(digits).expect("base36 ASCII")
-}
 impl LearningCandidate {
     pub fn signature(&self) -> &str {
         self.method
@@ -101,7 +83,7 @@ impl LearningCandidate {
                 .ok_or(ExecutionError::Capacity)?,
         )?;
         let name = normalized.name().clone();
-        let id = format!("activity-{}", content_label(&signature));
+        let id = format!("activity-{}", crate::encoding::content_label(&signature));
         let SqlCell::Object(mut shape) = normalized.shape else {
             return Err(ExecutionError::Invariant);
         };

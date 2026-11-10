@@ -302,14 +302,14 @@ pub(crate) fn prepare(
         documents.push(if let Some(prior) = prior.filter(|d| d.text == file.text) {
             prior.clone()
         } else {
-            MindDocument {
-                id: id.into(),
-                title: prior.map_or_else(|| JsText::from(id), |p| p.title.clone()),
-                text: file.text.clone(),
-                revision: next(prior.map_or(0, |p| p.revision))?,
-                protected: prior.is_some_and(|p| p.protected),
-                evidence: prior.map_or_else(Vec::new, |p| p.evidence.clone()),
-            }
+            MindDocument::published(
+                id.into(),
+                prior.map_or_else(|| JsText::from(id), |p| p.title.clone()),
+                file.text.clone(),
+                next(prior.map_or(0, |p| p.revision))?,
+                prior.is_some_and(|p| p.protected),
+                prior.map_or_else(Vec::new, |p| p.evidence.clone()),
+            )
         });
     }
     let mut records = mind.records.clone();

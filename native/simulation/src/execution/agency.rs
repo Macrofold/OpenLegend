@@ -112,14 +112,15 @@ impl PhysicalMutation<'_> {
             .ok_or(ExecutionError::MissingEntity)?;
         let key = UndoKey::AgencySuspended(handle.slot, handle.generation);
         if self.journal.first(&key)? {
-            let paused = &self
+            let agency = &self
                 .state
                 .entities
                 .resolve(handle)
                 .and_then(|e| e.actor.as_ref())
                 .ok_or(ExecutionError::MissingActor)?
-                .agency
-                .suspended;
+                .agency;
+            let paused = &agency.suspended;
+            let order = agency.order;
             let heap = paused
                 .heap_bytes()
                 .ok_or(ExecutionError::UnsupportedFamily)?;
@@ -136,17 +137,19 @@ impl PhysicalMutation<'_> {
                 Undo::AgencySuspended {
                     entity: handle,
                     before,
+                    order,
                 },
             )?;
         }
-        Ok(&mut self
+        let agency = &mut self
             .state
             .entities
             .resolve_mut(handle)
             .and_then(|e| e.actor.as_mut())
             .ok_or(ExecutionError::MissingActor)?
-            .agency
-            .suspended)
+            .agency;
+        agency.order.suspended();
+        Ok(&mut agency.suspended)
     }
     pub(crate) fn replace_plan_history(
         &mut self,
@@ -284,14 +287,15 @@ impl PhysicalMutation<'_> {
             .ok_or(ExecutionError::MissingEntity)?;
         let key = UndoKey::AgencyPlaces(handle.slot, handle.generation);
         if self.journal.first(&key)? {
-            let places = &self
+            let agency = &self
                 .state
                 .entities
                 .resolve(handle)
                 .and_then(|e| e.actor.as_ref())
                 .ok_or(ExecutionError::MissingActor)?
-                .agency
-                .places;
+                .agency;
+            let places = &agency.places;
+            let order = agency.order;
             self.journal.reserve(
                 places
                     .heap_bytes()
@@ -304,17 +308,18 @@ impl PhysicalMutation<'_> {
                 Undo::AgencyPlaces {
                     entity: handle,
                     before,
+                    order,
                 },
             )?;
         }
-        let places = &mut self
+        let agency = &mut self
             .state
             .entities
             .resolve_mut(handle)
             .and_then(|e| e.actor.as_mut())
             .ok_or(ExecutionError::MissingActor)?
-            .agency
-            .places;
+            .agency;
+        let places = &mut agency.places;
         let count = places.as_ref().map_or(0, Vec::len);
         self.journal.reserve(
             heap_sum([
@@ -329,6 +334,7 @@ impl PhysicalMutation<'_> {
             ])
             .ok_or(ExecutionError::Capacity)?,
         )?;
+        agency.order.places();
         let places = places.get_or_insert_with(Vec::new);
         if let Some(last) = places
             .last_mut()

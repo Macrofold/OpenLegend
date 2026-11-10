@@ -3,7 +3,12 @@ import type { NativeWorldConsumer, NativeWorldJson } from '@open-legend/native-s
 // A Buffer can disappear while its parsed strings/arrays still serve a request,
 // save or model context. Keep their separate native admission with the actual
 // decoded root, rather than releasing it at the end of the parsing function.
-type Entry = { readonly origin: symbol; readonly consumer: NativeWorldConsumer };
+type Entry = {
+  readonly origin: symbol;
+  readonly consumer: NativeWorldConsumer;
+  /** This admission funds this object's own allocation, beyond borrowed pins. */
+  readonly owned?: true;
+};
 type Holder = { readonly entries: readonly Entry[] };
 const decodedConsumers = new FinalizationRegistry<Holder>((holder) => {
   for (const entry of holder.entries) entry.consumer.release();
@@ -29,7 +34,7 @@ export function decodeNativeProduct<T extends object>(encoded: NativeWorldJson):
     const value: unknown = JSON.parse(encoded.consume().toString('utf8'));
     if (value === null || typeof value !== 'object')
       throw new Error('A scoped native product requires an owned object root.');
-    attach(value, [{ origin: Symbol(), consumer }]);
+    attach(value, [{ origin: Symbol(), consumer, owned: true }]);
     return value as T;
   } catch (error) {
     // No decoded product escaped this failed boundary.
@@ -63,6 +68,11 @@ export function retainNativeSources<T extends object>(
   const entries: Entry[] = [];
   const seen = new Set<symbol>();
   try {
+    for (const entry of holders.get(owner)?.entries ?? []) {
+      if (!entry.owned) continue;
+      entries.push({ ...entry, consumer: entry.consumer.retain() });
+      seen.add(entry.origin);
+    }
     for (const root of roots) {
       const holder = holders.get(root);
       if (!holder) throw new Error('A derived native product has no scoped allocation owner.');
@@ -70,6 +80,41 @@ export function retainNativeSources<T extends object>(
         if (seen.has(entry.origin)) continue;
         const consumer = entry.consumer.retain();
         entries.push({ origin: entry.origin, consumer });
+        seen.add(entry.origin);
+      }
+    }
+  } catch (error) {
+    for (const entry of entries) entry.consumer.release();
+    throw error;
+  }
+  attach(owner, entries);
+  return owner;
+}
+
+/** Transfer an already reserved allocation to its actual Node object. A failed
+ * attachment consumes/releases the incoming guard too. Source pins keep their
+ * separate lifetimes; later source attachment preserves this owned admission. */
+export function attachNativeConsumer<T extends object>(
+  owner: T,
+  consumer: NativeWorldConsumer,
+  ...sources: readonly object[]
+): T {
+  const entries: Entry[] = [{ origin: Symbol(), consumer, owned: true }];
+  const seen = new Set<symbol>();
+  try {
+    for (const root of [owner, ...sources]) {
+      const holder = holders.get(root);
+      if (!holder) {
+        if (root === owner) continue;
+        throw new Error('A derived native product has no scoped allocation owner.');
+      }
+      for (const entry of holder.entries) {
+        if (seen.has(entry.origin)) continue;
+        entries.push({
+          origin: entry.origin,
+          consumer: entry.consumer.retain(),
+          ...(root === owner && entry.owned ? { owned: true as const } : {}),
+        });
         seen.add(entry.origin);
       }
     }

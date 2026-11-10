@@ -6,16 +6,20 @@ import type { GameRepository } from './store.js';
 import type { IntelligenceLog } from './intelligence-log.js';
 import type { CognitionExecution, ExecutionLease } from './cognition-execution.js';
 import { embeddingBatches } from './embedding-batches.js';
-import { experienceEmbeddingText } from './perceived-context.js';
+import { memoryEmbeddingSource } from './memory-read-allocation.js';
 import { interactiveAllowance } from './cognition-budget.js';
 import { recordBackgroundFailure } from './performance.js';
 import type { MemoryScope } from './memory-repository.js';
 
+export interface MemoryIndexValidity {
+  current(): boolean;
+  validate(): Promise<boolean>;
+}
 export interface MemoryIndexAdmission {
   current(): boolean;
   embed(
     request: EmbeddingRequest,
-    current: () => Promise<boolean>,
+    sources: MemoryIndexValidity,
     lease?: ExecutionLease,
   ): Promise<AiResult<number[][]>>;
   release?(): void;
@@ -203,30 +207,34 @@ export class MemoryIndex {
       const scope: MemoryScope = { worldId: head.worldId, actorId, generation: head.generation };
       const admission = await this.service.admission(actorId);
       if (!admission) continue;
+      let sourceFence: ReturnType<typeof repository.captureCanonicalSourceFence> | undefined;
       try {
         const pending = await this.service.read(actorId, () => repository.pending(scope, model));
-        const batch =
-          embeddingBatches(
-            pending.map((source) => ({
-              ...source,
-              text: experienceEmbeddingText(source.entry, actorId),
-            })),
-          ).next().value ?? [];
+        const batch = embeddingBatches(pending.map(memoryEmbeddingSource)).next().value ?? [];
         if (!batch.length) continue;
-        const current = async () =>
+        const selected = batch.map((source) => ({
+          id: source.memory.id,
+          sourceKind: source.sourceKind,
+          revision: source.revision,
+        }));
+        // Register before SQL validation and dispatch metadata await. A privacy
+        // edit begins its denial before acquiring the mutation lane; the exact
+        // fence closes that interval without vetoing unrelated new accounts.
+        const fence = (sourceFence = repository.captureCanonicalSourceFence(scope, selected));
+        const current = () =>
+          !this.closed &&
+          !controller.signal.aborted &&
           generation === this.service.generation &&
           admission.current() &&
           this.service.isNpc(actorId) &&
-          (await this.service.read(actorId, () =>
-            repository.current(
-              scope,
-              batch.map((source) => ({
-                id: source.memory.id,
-                sourceKind: source.sourceKind,
-                revision: source.revision,
-              })),
-            ),
-          ));
+          fence.current();
+        const validity: MemoryIndexValidity = {
+          current,
+          validate: async () =>
+            current() &&
+            (await this.service.read(actorId, () => repository.current(scope, selected))) &&
+            current(),
+        };
         const requestId = `memory-index:${randomUUID()}`;
         const admitted = await repository.markAttempt(
           scope,
@@ -258,14 +266,14 @@ export class MemoryIndex {
                 texts: batch.map((source) => source.text),
                 signal: controller.signal,
               },
-              current,
+              validity,
               this.executionOwner.getStore()?.lease,
             ),
         );
         await this.service.store.settle(requestId, result.receipt);
         if (result.outcome !== 'value') return false;
         await this.service.publishRecall(async () => {
-          if (this.closed || controller.signal.aborted || !(await current())) return;
+          if (!(await validity.validate())) return;
           await repository.putVectors(
             scope,
             model,
@@ -282,6 +290,7 @@ export class MemoryIndex {
         this.indexRoundMadeProgress = true;
         return true;
       } finally {
+        sourceFence?.release();
         admission.release?.();
       }
     }

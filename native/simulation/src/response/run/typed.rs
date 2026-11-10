@@ -2,6 +2,7 @@
 //! owners before one pure formatting batch. Returned words grant no commands.
 use super::*;
 use crate::language::FreeTypedActionSyntax;
+mod names;
 
 #[derive(Clone, Serialize)]
 #[serde(
@@ -10,6 +11,25 @@ use crate::language::FreeTypedActionSyntax;
     rename_all_fields = "camelCase"
 )]
 enum Prepared {
+    Unknown,
+    Unsupported {
+        family: String,
+    },
+    NamedRefused {
+        category: String,
+        reason: JsText,
+    },
+    Approach {
+        label: JsText,
+        destination: crate::state::SurfacePoint,
+    },
+    LastSeen {
+        label: JsText,
+        at: f64,
+        still_seen: bool,
+        sim_time: f64,
+        destination: crate::state::SurfacePoint,
+    },
     Stop,
     Point {
         destination: crate::state::SurfacePoint,
@@ -37,6 +57,14 @@ impl HeapBytes for Prepared {
                 destination.heap_bytes()
             }
             Self::NotStopping { activity } => activity.heap_bytes(),
+            Self::Unsupported { family } => family.heap_bytes(),
+            Self::NamedRefused { category, reason } => {
+                category.heap_bytes()?.checked_add(reason.heap_bytes()?)
+            }
+            Self::Approach { label, destination }
+            | Self::LastSeen {
+                label, destination, ..
+            } => label.heap_bytes()?.checked_add(destination.heap_bytes()?),
             Self::InvocationRefused { outcome } | Self::PreviewRefused { outcome } => {
                 outcome.heap_bytes()
             }
@@ -49,6 +77,9 @@ struct Item {
     position: usize,
     duplicate: Option<usize>,
     operation_id: String,
+    target: Option<String>,
+    depends: Vec<String>,
+    selected: Option<names::Selection>,
     description: JsText,
     syntax: FreeTypedActionSyntax,
     slots: Option<SqlCell>,
@@ -72,7 +103,13 @@ impl Serialize for TypedActionRequest {
 #[serde(deny_unknown_fields)]
 pub(crate) struct TypedActionAnswer {
     pub binding: GeometryBinding,
-    results: Vec<Rendered>,
+    output: TypedActionOutput,
+}
+#[derive(Deserialize)]
+#[serde(tag = "kind", rename_all = "kebab-case", deny_unknown_fields)]
+enum TypedActionOutput {
+    Name { selection: names::Selection },
+    Format { results: Vec<Rendered> },
 }
 impl TypedActionAnswer {
     pub(crate) fn array_element_bytes() -> usize {
@@ -111,10 +148,13 @@ enum Active {
 pub(super) struct TypedGroundingCursor {
     actor: String,
     candidate: CandidateKey,
+    at: f64,
     items: Vec<Item>,
     index: usize,
     active: Option<Active>,
     request: Option<TypedActionRequest>,
+    name_request: Option<TypedActionRequest>,
+    names: Option<names::Roster>,
     budget: ByteBudget,
     storage: Option<ByteReservation>,
 }
@@ -146,6 +186,19 @@ impl TypedGroundingCursor {
             {
                 continue;
             }
+            if op
+                .data
+                .get("targetEntityId")
+                .filter(|v| !v.is_null())
+                .is_some_and(|v| {
+                    v.as_str()
+                        .is_none_or(|id| !bindings.input.entity_ids.iter().any(|known| known == id))
+                })
+            {
+                // The actual component target gate reports this refusal later.
+                // An unpermitted model token is never a personal-name lookup.
+                continue;
+            }
             let language = normalized.get(position).ok_or(ExecutionError::Invariant)?;
             let Some(syntax) = language.syntax() else {
                 continue;
@@ -159,6 +212,12 @@ impl TypedGroundingCursor {
                     .and_then(|n| n.checked_add(description.heap_bytes()?))
                     .and_then(|n| n.checked_add(syntax.heap_bytes()?))
                     .and_then(|n| n.checked_add(slots.map_or(Some(0), HeapBytes::heap_bytes)?))
+                    .and_then(|n| {
+                        n.checked_add(
+                            op.text("targetEntityId")
+                                .map_or(Some(0), HeapBytes::heap_bytes)?,
+                        )
+                    })
                     .ok_or(ExecutionError::Capacity)?,
             )?;
             let duplicate = items.iter().position(|prior: &Item| {
@@ -177,6 +236,12 @@ impl TypedGroundingCursor {
                 position,
                 duplicate,
                 operation_id: op.local_id.into(),
+                target: op
+                    .text("targetEntityId")
+                    .and_then(JsText::as_unicode)
+                    .map(str::to_owned),
+                depends: Vec::new(),
+                selected: None,
                 description: description.clone(),
                 syntax: syntax.clone(),
                 slots: slots.cloned(),
@@ -191,10 +256,13 @@ impl TypedGroundingCursor {
         Ok(Some(Self {
             actor: bindings.actor_id().into(),
             candidate,
+            at: 0.0,
             items,
             index: 0,
             active: None,
             request: None,
+            name_request: None,
+            names: None,
             budget: budget.clone(),
             storage: Some(storage),
         }))
@@ -239,7 +307,7 @@ impl TypedGroundingCursor {
         }
     }
     pub(super) fn request(&self) -> Option<&TypedActionRequest> {
-        self.request.as_ref()
+        self.name_request.as_ref().or(self.request.as_ref())
     }
     pub(super) fn abort(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
         if let Some(Active::Preview(cursor)) = self.active.as_mut() {
@@ -247,6 +315,8 @@ impl TypedGroundingCursor {
         }
         self.active = None;
         self.request = None;
+        self.name_request = None;
+        self.names = None;
         self.storage = None;
         Ok(())
     }
@@ -289,6 +359,28 @@ impl TypedGroundingCursor {
                 fields.insert("z".into(), z.map_or(SqlCell::Null, SqlCell::from));
                 fields.insert("frame".into(), "actor".into());
             }
+            FreeTypedActionSyntax::Approach { .. } | FreeTypedActionSyntax::LastSeen { .. } => {
+                let roster = self.names.as_ref().ok_or(ExecutionError::Invariant)?;
+                let target = match item.selected.as_ref().ok_or(ExecutionError::Invariant)? {
+                    names::Selection::Body { ordinal } => {
+                        &roster
+                            .bodies
+                            .get(*ordinal)
+                            .ok_or(ExecutionError::InvalidCheckpoint)?
+                            .id
+                    }
+                    names::Selection::Place { ordinal } => {
+                        &roster
+                            .places
+                            .get(*ordinal)
+                            .ok_or(ExecutionError::InvalidCheckpoint)?
+                            .subject_id
+                    }
+                    _ => return Err(ExecutionError::Invariant),
+                };
+                fields.insert("place".into(), "target".into());
+                fields.insert("targetEntityId".into(), target.as_str().into());
+            }
             _ => return Err(ExecutionError::Invariant),
         }
         self.active = Some(Active::Invocation(InvocationCursor::new(
@@ -307,7 +399,24 @@ impl TypedGroundingCursor {
             NativeCommand::Move { destination, .. } => destination,
             _ => return Err(ExecutionError::Invariant),
         };
-        let bytes = destination.heap_bytes().ok_or(ExecutionError::Capacity)?;
+        let label_bytes = match self.items[self.index].selected.as_ref() {
+            Some(names::Selection::Body { ordinal }) => self
+                .names
+                .as_ref()
+                .and_then(|r| r.bodies.get(*ordinal))
+                .map_or(Some(0), |b| b.label.heap_bytes()),
+            Some(names::Selection::Place { ordinal }) => self
+                .names
+                .as_ref()
+                .and_then(|r| r.places.get(*ordinal))
+                .map_or(Some(0), |p| p.label.heap_bytes()),
+            _ => Some(0),
+        }
+        .ok_or(ExecutionError::Capacity)?;
+        let bytes = destination
+            .heap_bytes()
+            .and_then(|n| n.checked_add(label_bytes))
+            .ok_or(ExecutionError::Capacity)?;
         self.grow(bytes)?;
         let item = &mut self.items[self.index];
         let destination = match item.command.as_ref().ok_or(ExecutionError::Invariant)? {
@@ -320,6 +429,30 @@ impl TypedGroundingCursor {
                 x: Some(x),
                 z: Some(z),
             } => Prepared::Offset { x, z, destination },
+            FreeTypedActionSyntax::Approach { .. } => {
+                let Some(names::Selection::Body { ordinal }) = item.selected.as_ref() else {
+                    return Err(ExecutionError::Invariant);
+                };
+                Prepared::Approach {
+                    label: self.names.as_ref().ok_or(ExecutionError::Invariant)?.bodies[*ordinal]
+                        .label
+                        .clone(),
+                    destination,
+                }
+            }
+            FreeTypedActionSyntax::LastSeen { .. } => {
+                let Some(names::Selection::Place { ordinal }) = item.selected.as_ref() else {
+                    return Err(ExecutionError::Invariant);
+                };
+                let place = &self.names.as_ref().ok_or(ExecutionError::Invariant)?.places[*ordinal];
+                Prepared::LastSeen {
+                    label: place.label.clone(),
+                    at: place.at,
+                    still_seen: place.still_seen,
+                    sim_time: self.at,
+                    destination,
+                }
+            }
             _ => return Err(ExecutionError::Invariant),
         });
         self.index += 1;
@@ -378,6 +511,7 @@ impl TypedGroundingCursor {
         }
         #[derive(Serialize)]
         struct Input<'a> {
+            phase: &'static str,
             binding: GeometryBinding,
             limits: Limits,
             requests: Vec<Request<'a>>,
@@ -406,6 +540,7 @@ impl TypedGroundingCursor {
             });
         }
         let input = Input {
+            phase: "format",
             binding,
             limits: Limits {
                 minimum_distance: follow.minimum_distance,
@@ -433,13 +568,16 @@ impl TypedGroundingCursor {
         core: &CoreMutation<'_>,
         answer: TypedActionAnswer,
     ) -> Result<(Vec<ResponseAttemptBinding>, ByteReservation), ExecutionError> {
+        let TypedActionOutput::Format { results } = answer.output else {
+            return Err(ExecutionError::InvalidCheckpoint);
+        };
         if answer.binding
             != self
                 .request
                 .as_ref()
                 .ok_or(ExecutionError::Invariant)?
                 .binding
-            || answer.results.len() != self.items.len()
+            || results.len() != self.items.len()
         {
             return Err(ExecutionError::InvalidCheckpoint);
         }
@@ -449,17 +587,24 @@ impl TypedGroundingCursor {
                 .checked_mul(size_of::<ResponseAttemptBinding>())
                 .ok_or(ExecutionError::Capacity)?,
         )?;
-        let _signature = self.budget.reserve(128)?;
-        let signature = crate::encoding::content_label(
-            &crate::encoding::json_record(&(core.state.installed.manifest.revision, &[] as &[u8]))
-                .map_err(|_| ExecutionError::Invariant)?,
-        );
         let mut bindings = Vec::with_capacity(self.items.len());
-        for (index, rendered) in answer.results.into_iter().enumerate() {
+        for (index, rendered) in results.into_iter().enumerate() {
             let successful = matches!(
                 self.items[index].prepared,
-                Some(Prepared::Stop | Prepared::Point { .. } | Prepared::Offset { .. })
+                Some(
+                    Prepared::Stop
+                        | Prepared::Point { .. }
+                        | Prepared::Offset { .. }
+                        | Prepared::Approach { .. }
+                        | Prepared::LastSeen { .. }
+                )
             );
+            if matches!(self.items[index].prepared, Some(Prepared::Unknown)) {
+                if rendered.fulfillment.is_some() || rendered.resolution.is_some() {
+                    return Err(ExecutionError::InvalidCheckpoint);
+                }
+                continue;
+            }
             if successful != rendered.fulfillment.is_some()
                 || successful == rendered.resolution.is_some()
             {
@@ -467,6 +612,19 @@ impl TypedGroundingCursor {
             }
             let mut resolution = None;
             if let Some(words) = rendered.resolution {
+                let (signature, guard) = crate::plans::resolution_signature(
+                    core.state,
+                    &self.actor,
+                    &self.items[index].depends,
+                    &self.budget,
+                )?;
+                self.merge(guard)?;
+                self.grow(
+                    self.items[index]
+                        .depends
+                        .heap_bytes()
+                        .ok_or(ExecutionError::Capacity)?,
+                )?;
                 self.grow(
                     map_storage::<String, SqlCell>(4)
                         .and_then(|n| n.checked_add(words.category.heap_bytes()?))
@@ -477,7 +635,16 @@ impl TypedGroundingCursor {
                 let mut fields = IndexMap::with_capacity(4);
                 fields.insert("category".into(), words.category.into());
                 fields.insert("reason".into(), words.reason.into());
-                fields.insert("depends".into(), SqlCell::Array(Vec::new()));
+                fields.insert(
+                    "depends".into(),
+                    SqlCell::Array(
+                        self.items[index]
+                            .depends
+                            .iter()
+                            .map(|id| id.as_str().into())
+                            .collect(),
+                    ),
+                );
                 fields.insert("signature".into(), signature.clone().into());
                 let length = crate::encoding::json_record_len(&fields)
                     .map_err(|_| ExecutionError::Invariant)?;
@@ -533,6 +700,20 @@ impl TypedGroundingCursor {
         if self.storage.is_none() {
             return Err(ExecutionError::InvalidCheckpoint);
         }
+        self.at = core.state.physical.header.sim_time;
+        if self.name_request.is_some() {
+            match answer.take() {
+                Some(TypedAnswer::Render(value)) => self.finish_name(core, value)?,
+                Some(_) => return Err(ExecutionError::InvalidCheckpoint),
+                None => {
+                    return Ok(TypedStep::Render(
+                        self.name_request
+                            .as_ref()
+                            .ok_or(ExecutionError::Invariant)?,
+                    ));
+                }
+            }
+        }
         if self.request.is_some() {
             return match answer.take() {
                 Some(TypedAnswer::Render(value)) => {
@@ -572,15 +753,7 @@ impl TypedGroundingCursor {
                                 self.index += 1;
                             }
                             Ok(command) => {
-                                self.grow(command.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
-                                let preview = CommandChoiceCursor::new(
-                                    command.clone(),
-                                    crate::commands::WorkTransitionMode::Replace,
-                                    self.binding(core)?,
-                                    &self.budget,
-                                )?;
-                                self.items[self.index].command = Some(command);
-                                self.active = Some(Active::Preview(preview));
+                                self.begin_preview(core, command)?;
                             }
                         }
                     }
@@ -616,6 +789,7 @@ impl TypedGroundingCursor {
                             self.finish_command()?;
                         } else {
                             self.items[self.index].command = None;
+                            self.items[self.index].depends.clear();
                             self.items[self.index].prepared =
                                 Some(Prepared::PreviewRefused { outcome });
                             self.index += 1;
@@ -638,10 +812,12 @@ impl TypedGroundingCursor {
                     .command
                     .heap_bytes()
                     .and_then(|n| n.checked_add(self.items[prior].prepared.heap_bytes()?))
+                    .and_then(|n| n.checked_add(self.items[prior].depends.heap_bytes()?))
                     .ok_or(ExecutionError::Capacity)?;
                 self.grow(bound)?;
                 self.items[self.index].command = self.items[prior].command.clone();
                 self.items[self.index].prepared = self.items[prior].prepared.clone();
+                self.items[self.index].depends = self.items[prior].depends.clone();
                 self.index += 1;
                 continue;
             }
@@ -700,6 +876,37 @@ impl TypedGroundingCursor {
                 }
                 FreeTypedActionSyntax::DistanceNeeded => {
                     self.items[self.index].prepared = Some(Prepared::DistanceNeeded);
+                    self.index += 1;
+                }
+                FreeTypedActionSyntax::Approach { .. } | FreeTypedActionSyntax::LastSeen { .. } => {
+                    if self.items[self.index]
+                        .slots
+                        .as_ref()
+                        .and_then(|s| s.get("until"))
+                        .is_some_and(|v| !v.is_null())
+                    {
+                        self.items[self.index].prepared = Some(Prepared::Unsupported {
+                            family: "movement-wait".into(),
+                        });
+                        self.index += 1;
+                    } else {
+                        self.prepare_name(core)?;
+                        return Ok(TypedStep::Render(
+                            self.name_request
+                                .as_ref()
+                                .ok_or(ExecutionError::Invariant)?,
+                        ));
+                    }
+                }
+                FreeTypedActionSyntax::Unsupported { family } => {
+                    let bytes = family.len();
+                    self.grow(bytes)?;
+                    self.items[self.index].prepared = Some(Prepared::Unsupported {
+                        family: match &self.items[self.index].syntax {
+                            FreeTypedActionSyntax::Unsupported { family } => family.clone(),
+                            _ => return Err(ExecutionError::Invariant),
+                        },
+                    });
                     self.index += 1;
                 }
                 _ => self.invocation(core)?,

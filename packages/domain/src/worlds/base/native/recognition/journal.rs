@@ -578,7 +578,7 @@ impl RecognitionJournal {
         Ok(())
     }
 }
-fn support_keys(identity: &ObserverIdentity) -> impl Iterator<Item = &String> {
+pub(super) fn support_keys(identity: &ObserverIdentity) -> impl Iterator<Item = &String> {
     identity
         .name_evidence_ids
         .iter()

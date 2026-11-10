@@ -105,6 +105,8 @@ export interface NativeNpcSourceInventory {
   })[];
   readonly unavailablePersonal: readonly number[];
   readonly unavailableReceipts: readonly number[];
+  /** Present only for a genuine job-prefix duplicate query. */
+  readonly duplicateSummary?: boolean;
 }
 
 /** Every number addresses a row owned by the originating native handle. An

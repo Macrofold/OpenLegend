@@ -557,7 +557,14 @@ export class RetentionMetadata {
   initializePartial(world: WorldState, baseline: MetadataBaseline): void {
     if (baseline.worldId !== world.id)
       throw new Error('Personal retention metadata belongs to another world.');
-    this.initializeEmpty(world);
+    this.initializeIndexed(baseline);
+    this.world = world;
+  }
+  /** An aliases-only reader has no resident account graph. All unoverridden
+   * membership remains a real indexed SQL question at this exact baseline. */
+  initializeIndexed(baseline: MetadataBaseline): void {
+    this.clear();
+    this.worldId = baseline.worldId;
     this.revision = baseline.revision;
     this.partial = true;
   }

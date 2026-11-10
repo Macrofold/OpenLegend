@@ -1,13 +1,12 @@
 //! Bounded actor IDs come from the host's actual due-header index. The semantic
 //! owner checks current due state again under its ordinary native checkpoint.
 use super::*;
-mod reflection;
 mod consolidation;
-pub use consolidation::RuntimeConsolidationTicket;
+mod reflection;
+pub use consolidation::{RuntimeConsolidationDream, RuntimeConsolidationTicket};
 pub use reflection::RuntimeReflectionTicket;
 pub struct RuntimeMaintenanceRead {
     pub(crate) read: Arc<crate::capture::maintenance::MaintenanceCapture>,
-    personal: Arc<crate::capture::NpcHistoricalScope>,
 }
 pub struct RuntimeMaintenancePublication {
     _lease: crate::host::PublicationLease,
@@ -32,6 +31,13 @@ impl RuntimeMaintenanceRead {
 struct RecentInput {
     actor_ids: Vec<String>,
 }
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct SupportInput {
+    actor_ids: Vec<String>,
+    preparation: crate::received::SupportPreparation,
+}
+
 impl NativeWorldSession {
     pub fn maintenance_population(&self) -> Result<RuntimeJson, RuntimeError> {
         self.require_active()?;
@@ -75,10 +81,7 @@ impl NativeWorldSession {
             )
             .map_err(failure)
     }
-    pub fn read_maintenance(
-        &mut self,
-        input: &[u8],
-    ) -> Result<RuntimeMaintenanceRead, RuntimeError> {
+    pub fn read_maintenance(&self, input: &[u8]) -> Result<RuntimeMaintenanceRead, RuntimeError> {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let request = serde_json::from_slice(input).map_err(failure)?;
@@ -88,22 +91,8 @@ impl NativeWorldSession {
             &self.budget,
         )
         .map_err(failure)?;
-        let serial = self
-            .next_read_serial
-            .checked_add(1)
-            .filter(|n| *n <= crate::identity::MAX_SAFE_INTEGER)
-            .ok_or_else(|| failure("read identity exhausted"))?;
-        let personal = crate::capture::NpcHistoricalScope::capture_personal(
-            &self.session.accepted().map_err(failure)?.state,
-            &read.request.actor_id,
-            serial,
-            &self.budget,
-        )
-        .map_err(failure)?;
-        self.next_read_serial = serial;
         Ok(RuntimeMaintenanceRead {
             read: Arc::new(read),
-            personal: Arc::new(personal),
         })
     }
     /// This method is deliberately synchronous and accepts the existing
@@ -184,6 +173,14 @@ impl NativeWorldSession {
             fence,
             _storage: storage,
         }))
+    }
+    pub fn begin_support_retention(&mut self, input: &[u8]) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
+        let _decode = decode_preparation(input, &self.budget)?;
+        let input: SupportInput = serde_json::from_slice(input).map_err(failure)?;
+        self.session
+            .begin_support_retention(input.actor_ids, input.preparation)
+            .map_err(failure)
     }
     pub fn begin_recent_retention(&mut self, input: &[u8]) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;

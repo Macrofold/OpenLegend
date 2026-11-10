@@ -462,7 +462,7 @@ export async function prepareNativeDecision(input: {
       additionalSources: CurrentMemorySource[] = [],
     ) => {
       original.guardPerspectives(selectedPerspectives());
-      await historyCurrent();
+      if (!(await historyCurrent())) throw new Error('Native decision sources changed.');
       const valid = await sql(() =>
         repository.validatePreparation(
           scope,
@@ -476,7 +476,7 @@ export async function prepareNativeDecision(input: {
           repository.currentCompactionSources(scope, validity.usedCache!.value.sources),
         ));
       if (!valid || !coverage) throw new Error('Selected speech or recall sources changed.');
-      await historyCurrent();
+      if (!(await historyCurrent())) throw new Error('Native decision sources changed.');
     };
     const conversation = await buildNativeConversationContext({
       original,

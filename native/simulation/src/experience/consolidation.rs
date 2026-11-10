@@ -590,12 +590,9 @@ impl PreparedConsolidation {
             if let Some(receipt) = &record.header.source_receipt {
                 support_ids.insert(receipt.id());
             }
-            if let Some(manifest) = self
-                .sources
-                .iter()
-                .find(|s| s.reference == record.header.reference)
-                .and_then(|s| s.value.get("manifest"))
-            {
+        }
+        for index in &self.retired {
+            if let Some(manifest) = self.sources[*index].value.get("manifest") {
                 for receipt in manifest::array(manifest, "receipts")? {
                     let receipt: TemporalReceiptLocator = serde_json::from_str(
                         &json_record(receipt).map_err(|_| ExecutionError::Invariant)?,
@@ -629,6 +626,14 @@ impl PreparedConsolidation {
                 policy,
             )?;
         }
+        let _retired_index = budget.reserve(
+            map_storage::<(PersonalSourceKind, &str), &Arc<PersonalSourceRecord>>(before.len())
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let retired_by_id: IndexMap<_, _> = before
+            .iter()
+            .map(|r| ((r.header.reference.kind, r.header.reference.id.as_str()), r))
+            .collect();
         if complete {
             let old = core
                 .state
@@ -712,10 +717,12 @@ impl PreparedConsolidation {
             )?;
         } else {
             for record in additions {
-                let expected = before.iter().find(|old| {
-                    old.header.reference.kind == PersonalSourceKind::Summary
-                        && old.header.reference.id == record.header.reference.id
-                });
+                let expected = retired_by_id
+                    .get(&(
+                        PersonalSourceKind::Summary,
+                        record.header.reference.id.as_str(),
+                    ))
+                    .copied();
                 let owned = Arc::try_unwrap(record).map_err(|_| ExecutionError::Invariant)?;
                 if let Some(expected) = expected {
                     core.journal.experience.replace(

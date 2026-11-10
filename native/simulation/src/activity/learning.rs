@@ -13,6 +13,7 @@ mod library;
 mod models;
 mod normalize;
 mod publication;
+mod read;
 mod retention;
 pub(crate) use cursor::{
     LearningPreparationAnswer, LearningPreparationCursor, LearningPreparationStep,
@@ -22,8 +23,9 @@ pub(crate) use format::{LearningFormatAnswer, LearningFormatRequest};
 pub(crate) use history::{LearningHistoryAnswer, LearningHistoryRequest};
 pub(super) use library::{LearningLibrary, install_library};
 pub(crate) use publication::{
-    CompletedActivityLearning, LearningPublicationAnswer, LearningPublicationCursor,
-    LearningPublicationRequest, LearningPublicationStep,
+    CompletedActivityLearning, LearningJudgment, LearningPublicationAnswer,
+    LearningPublicationCursor, LearningPublicationRequest, LearningPublicationStep,
 };
+pub(crate) use read::learning_signatures;
 
 pub(super) use models::{LearningAcquisition, LearningMethod};

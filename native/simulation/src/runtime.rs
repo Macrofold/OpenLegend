@@ -17,10 +17,13 @@ static NEXT_GENERATION: AtomicU64 = AtomicU64::new(1);
 mod control;
 mod handoff;
 mod input;
+mod learning;
 mod maintenance;
+pub use learning::{RuntimeActivityLearning, RuntimeActivityLearningStep};
 mod startup;
 pub use maintenance::{
-    RuntimeMaintenancePublication, RuntimeMaintenanceRead, RuntimeReflectionTicket,
+    RuntimeConsolidationDream, RuntimeConsolidationTicket, RuntimeMaintenancePublication,
+    RuntimeMaintenanceRead, RuntimeReflectionTicket,
 };
 mod npc;
 mod npc_intake;
@@ -495,7 +498,9 @@ impl NativeWorldSession {
             SessionStep::Preview(preview) => {
                 RuntimeStep::Preview(RuntimeJson::encode(preview.outcome(), &self.budget)?)
             }
-            SessionStep::NpcCandidates(_) | SessionStep::NpcSources(_) => {
+            SessionStep::NpcCandidates(_)
+            | SessionStep::NpcSources(_)
+            | SessionStep::LearningBatch(_) => {
                 return Err(failure(
                     "NPC read preparation requires its originating read",
                 ));

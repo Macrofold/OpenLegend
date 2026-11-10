@@ -1,4 +1,14 @@
 import { temporalReadSourceRevoked } from '@open-legend/domain';
+import { AsyncLocalStorage } from 'node:async_hooks';
+import {
+  admitMemoryReading,
+  decodeAdmittedMemory,
+  memorySourceAdmitted,
+  reserveMemoryTransfer,
+  retainMemorySource,
+  type MemoryHydrationBudget,
+} from './memory-read-allocation.js';
+import { attachNativeConsumer } from './native-consumer.js';
 import { personalVectorScope } from './vector-store.js';
 import {
   objectIndexGet,
@@ -792,6 +802,12 @@ function* sourceRows(
 /** SQL owns permission scope, current source eligibility and top-N selection. Text
  * interpretation remains with domain/AI owners; this repository invents no semantics. */
 export class MemoryRepository {
+  private readonly hydrationBudget = new AsyncLocalStorage<MemoryHydrationBudget>();
+  /** Native scoped readers supply capacity callbacks only. Source readers keep
+   * their existing path through the same SQL selection and current decoder. */
+  withHydrationBudget<T>(budget: MemoryHydrationBudget, work: () => Promise<T>): Promise<T> {
+    return this.hydrationBudget.run(budget, work);
+  }
   private readonly versionPlans = new WeakMap<WorldState, SourceVersionPlan>();
   stageSourceVersions(world: WorldState, plan: SourceVersionPlan | undefined) {
     if (plan) this.versionPlans.set(world, plan);
@@ -3800,81 +3816,123 @@ export class MemoryRepository {
     reservedBytes = 0,
   ): Promise<RetrievedMemory[]> {
     if (rows.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
-    // Check serialized source bytes in SQL before bringing bodies into the host. One
-    // read snapshot binds the check and hydration to the same versions.
-    const reused = rows.flatMap((row) => {
-      const cached = cache?.get(row);
-      return cached ? [{ row, ...cached }] : [];
-    });
-    let bytes = reused.reduce((sum, entry) => sum + entry.bytes, reservedBytes);
-    if (bytes > RETRIEVAL_BYTES) throw new MemoryPreparationError();
-    const missing = rows.filter((row) => !cache?.get(row));
-    for (const kind of Object.keys(sourceTables) as SourceKind[]) {
-      const selected = missing.filter((row) => row['source_kind'] === kind);
-      for (let offset = 0; offset < selected.length; offset += 350) {
-        const batch = selected.slice(offset, offset + 350);
-        const size = await this.db
-          .prepare(
-            `SELECT SUM(octet_length(payload)) AS bytes
+    const budget = this.hydrationBudget.getStore();
+    // These collections are metadata/lookup workspace; the escaping result
+    // array and each decoded source have their own, separate lifetime guards.
+    const workspace = budget?.reserveBytes(6 * 256 + rows.length * (8 * 64 + 2 * 512));
+    let output: ReturnType<MemoryHydrationBudget['reserveBytes']> | undefined;
+    let outputAttached = false;
+    try {
+      output = budget?.reserveBytes(256 + rows.length * 64);
+      // Check serialized source bytes in SQL before bringing bodies into the host. One
+      // read snapshot binds the check and hydration to the same versions.
+      const cachedSource = (row: Record<string, unknown>) => {
+        const cached = cache?.get(row);
+        // A Source-only cache entry has no native admission. Rehydrate through
+        // the same decoder rather than retrospectively claiming its allocation.
+        return cached && (!budget || memorySourceAdmitted(cached.value)) ? cached : undefined;
+      };
+      const reused = rows.flatMap((row) => {
+        const cached = cachedSource(row);
+        return cached ? [{ row, ...cached }] : [];
+      });
+      let bytes = reused.reduce((sum, entry) => sum + entry.bytes, reservedBytes);
+      if (bytes > RETRIEVAL_BYTES) throw new MemoryPreparationError();
+      const missing = rows.filter((row) => !cachedSource(row));
+      const transfers: {
+        kind: SourceKind;
+        batch: Record<string, unknown>[];
+        bytes: number;
+        idBytes: number;
+        count: number;
+      }[] = [];
+      for (const kind of Object.keys(sourceTables) as SourceKind[]) {
+        const selected = missing.filter((row) => row['source_kind'] === kind);
+        for (let offset = 0; offset < selected.length; offset += 350) {
+          const batch = selected.slice(offset, offset + 350);
+          const size = await this.db
+            .prepare(
+              `SELECT SUM(octet_length(payload)) AS bytes,SUM(octet_length(id)) AS id_bytes,COUNT(*) AS count
           FROM ${sourceTables[kind]} WHERE world_id=? AND id IN (${batch.map(() => '?').join(',')})`,
-          )
-          .get(batch[0]!['world_id'], ...batch.map((row) => row['record_id']));
-        bytes += Number(size?.['bytes'] ?? 0);
-        if (bytes > RETRIEVAL_BYTES) throw new MemoryPreparationError();
-      }
-    }
-    const result: RetrievedMemory[] = reused.map(({ row, value }) => ({
-      ...value,
-      ...(row['score'] !== undefined ? { score: Number(row['score']) } : {}),
-    }));
-    for (const kind of Object.keys(sourceTables) as SourceKind[]) {
-      const selected = missing.filter((row) => row['source_kind'] === kind);
-      for (let offset = 0; offset < selected.length; offset += 800) {
-        const batch = selected.slice(offset, offset + 800);
-        const values = await this.db
-          .prepare(
-            `SELECT id,payload FROM ${sourceTables[kind]} WHERE world_id=? AND id IN (${batch.map(() => '?').join(',')})`,
-          )
-          .all(batch[0]!['world_id'], ...batch.map((row) => row['record_id']));
-        const byId = new Map(values.map((row) => [row['id'], String(row['payload'])]));
-        for (const row of batch) {
-          const payload = byId.get(row['record_id']);
-          if (!payload || personalAccountRevision(payload) !== row['revision']) continue;
-          const actorId = String(row['actor_id']);
-          const entry = decodeMemorySource(kind, payload, actorId);
-          const memory = experienceReading(entry, actorId);
-          const awareness = entry.source === 'awareness' ? entry.value : undefined;
-          const value: RetrievedMemory = {
-            bodyBytes: Buffer.byteLength(payload),
-            entry,
-            sourceKind: kind,
-            memory,
-            awareness,
-            revision: String(row['revision']),
-          };
-          cache?.put(row, value, Buffer.byteLength(payload));
-          result.push({
-            ...value,
-            ...(row['score'] !== undefined ? { score: Number(row['score']) } : {}),
+            )
+            .get(batch[0]!['world_id'], ...batch.map((row) => row['record_id']));
+          const bodyBytes = Number(size?.['bytes'] ?? 0);
+          bytes += bodyBytes;
+          if (bytes > RETRIEVAL_BYTES) throw new MemoryPreparationError();
+          transfers.push({
+            kind,
+            batch,
+            bytes: bodyBytes,
+            idBytes: Number(size?.['id_bytes'] ?? 0),
+            count: Number(size?.['count'] ?? 0),
           });
         }
       }
+      const copySource = (row: Record<string, unknown>, value: RetrievedMemory) => {
+        const copy = () => ({
+          ...value,
+          ...(row['score'] !== undefined ? { score: Number(row['score']) } : {}),
+        });
+        return budget ? retainMemorySource(copy, budget, value) : copy();
+      };
+      const result: RetrievedMemory[] = reused.map(({ row, value }) => copySource(row, value));
+      for (const { kind, batch, bytes: bodyBytes, idBytes, count } of transfers) {
+        const transfer = budget && reserveMemoryTransfer(budget, bodyBytes, idBytes, count);
+        try {
+          const values = await this.db
+            .prepare(
+              `SELECT id,payload FROM ${sourceTables[kind]} WHERE world_id=? AND id IN (${batch.map(() => '?').join(',')})`,
+            )
+            .all(batch[0]!['world_id'], ...batch.map((row) => row['record_id']));
+          const byId = new Map(values.map((row) => [row['id'], String(row['payload'])]));
+          for (const row of batch) {
+            const payload = byId.get(row['record_id']);
+            if (!payload || personalAccountRevision(payload) !== row['revision']) continue;
+            const actorId = String(row['actor_id']);
+            const decode = () => decodeMemorySource(kind, payload, actorId);
+            const entry = budget ? decodeAdmittedMemory(budget, payload, decode) : decode();
+            const read = () => experienceReading(entry, actorId);
+            const memory = budget ? admitMemoryReading(budget, entry, read) : read();
+            const awareness = entry.source === 'awareness' ? entry.value : undefined;
+            const create = (): RetrievedMemory => ({
+              bodyBytes: Buffer.byteLength(payload),
+              entry,
+              sourceKind: kind,
+              memory,
+              awareness,
+              revision: String(row['revision']),
+            });
+            const value = budget ? retainMemorySource(create, budget, memory) : create();
+            cache?.put(row, value, Buffer.byteLength(payload));
+            result.push(copySource(row, value));
+          }
+        } finally {
+          transfer?.release();
+        }
+      }
+      // Reuse must not change the previous kind/selection order or duplicate grouping.
+      const order = new Map(
+        Object.keys(sourceTables)
+          .flatMap((kind) =>
+            rows
+              .filter((row) => row['source_kind'] === kind)
+              .map((row) => sourceKey(kind, String(row['id']))),
+          )
+          .map((id, index) => [id, index]),
+      );
+      result.sort(
+        (a, b) =>
+          order.get(sourceKey(a.sourceKind, a.memory.id))! -
+          order.get(sourceKey(b.sourceKind, b.memory.id))!,
+      );
+      if (!output) return result;
+      const admitted = attachNativeConsumer(result, output);
+      outputAttached = true;
+      return admitted;
+    } finally {
+      workspace?.release();
+      if (!outputAttached) output?.release();
     }
-    // Reuse must not change the previous kind/selection order or duplicate grouping.
-    const order = new Map(
-      Object.keys(sourceTables)
-        .flatMap((kind) =>
-          rows
-            .filter((row) => row['source_kind'] === kind)
-            .map((row) => sourceKey(kind, String(row['id']))),
-        )
-        .map((id, index) => [id, index]),
-    );
-    return result.sort(
-      (a, b) =>
-        order.get(sourceKey(a.sourceKind, a.memory.id))! -
-        order.get(sourceKey(b.sourceKind, b.memory.id))!,
-    );
   }
   async count(scope: MemoryScope): Promise<number> {
     return this.actorRead(scope, async () => {
@@ -4481,7 +4539,9 @@ export class MemoryRepository {
     generation: string;
     model: string;
     dimensions: number;
-    actors: readonly string[];
+    // The active index owns this roster. A parked registration identity must
+    // not keep its native allocation pins alive after that index has closed.
+    actors: WeakRef<readonly string[]>;
     position: number;
   };
   /** Durable startup registration is bounded just like ordinary pending pages. */
@@ -4505,13 +4565,13 @@ export class MemoryRepository {
       walk.generation !== scope.generation ||
       walk.model !== model.model ||
       walk.dimensions !== model.dimensions ||
-      walk.actors !== actors
+      walk.actors.deref() !== actors
     )
       walk = this.registrationWalk = {
         worldId: scope.worldId,
         generation: scope.generation,
         ...model,
-        actors,
+        actors: new WeakRef(actors),
         position: 0,
       };
     const through = Math.min(actors.length, walk.position + 64);

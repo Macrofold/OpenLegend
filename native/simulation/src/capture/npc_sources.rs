@@ -24,6 +24,7 @@ mod attribution;
 use attribution::NpcSourceAttribution;
 mod personal;
 use personal::CapturedPersonalRecord;
+mod rows;
 
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -57,8 +58,6 @@ pub(crate) struct NpcSourceSelection {
     pub consolidation_job: Option<String>,
 }
 
-#[derive(Deserialize)]
-#[serde(tag = "storage", rename_all = "kebab-case", deny_unknown_fields)]
 pub(crate) enum NpcPersonalSourceRow {
     Current {
         kind: PersonalSourceKind,
@@ -66,7 +65,6 @@ pub(crate) enum NpcPersonalSourceRow {
     },
     Archive {
         archive: NpcArchivedSourceRow,
-        #[serde(deserialize_with = "crate::values::deserialize_nullable")]
         current: Option<InstalledRow>,
     },
 }

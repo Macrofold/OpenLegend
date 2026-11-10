@@ -973,15 +973,23 @@ if (__napiLoadedBindingTarget === 'native' && nativeBinding !== __napiRequiredNa
 const {
   NativeHost,
   NativeWorld,
+  NativeWorldActivityLearningBatch,
+  NativeWorldConsolidationDream,
+  NativeWorldConsolidationTicket,
   NativeWorldConsumer,
   NativeWorldJson,
+  NativeWorldMaintenancePublication,
+  NativeWorldMaintenanceRead,
+  NativeWorldNpcInspection,
   NativeWorldNpcPublication,
   NativeWorldNpcRead,
   NativeWorldNpcResponseTicket,
+  NativeWorldNpcTrigger,
   NativeWorldPlayerPublication,
   NativeWorldPlayerRead,
   NativeWorldPrepared,
   NativeWorldProvider,
+  NativeWorldReflectionTicket,
   NativeWorldSave,
   HostPhase,
   nativeBuildInfo,
@@ -989,15 +997,23 @@ const {
 } = nativeBinding;
 export { NativeHost };
 export { NativeWorld };
+export { NativeWorldActivityLearningBatch };
+export { NativeWorldConsolidationDream };
+export { NativeWorldConsolidationTicket };
 export { NativeWorldConsumer };
 export { NativeWorldJson };
+export { NativeWorldMaintenancePublication };
+export { NativeWorldMaintenanceRead };
+export { NativeWorldNpcInspection };
 export { NativeWorldNpcPublication };
 export { NativeWorldNpcRead };
 export { NativeWorldNpcResponseTicket };
+export { NativeWorldNpcTrigger };
 export { NativeWorldPlayerPublication };
 export { NativeWorldPlayerRead };
 export { NativeWorldPrepared };
 export { NativeWorldProvider };
+export { NativeWorldReflectionTicket };
 export { NativeWorldSave };
 export { HostPhase };
 export { nativeBuildInfo };

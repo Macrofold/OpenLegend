@@ -14,7 +14,9 @@ use encoding::CommandEncoding;
 
 mod invocation;
 mod preparation;
-pub(crate) use invocation::{BoundInvocation, InvocationCursor, InvocationStep};
+pub(crate) use invocation::{
+    BoundInvocation, InvocationCursor, InvocationStep, movement_destination,
+};
 pub(crate) use preparation::{
     CommandChoiceAnswer, CommandChoiceCursor, CommandChoiceStep, InvocationLimits,
     PreparedCommandChoice, WorkTransitionMode,

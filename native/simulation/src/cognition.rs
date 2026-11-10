@@ -13,9 +13,13 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
 pub(crate) mod consolidation;
+mod document;
+pub(crate) mod dream;
+mod finalization;
 pub(crate) mod format;
 mod journal;
 mod notices;
+pub(crate) use document::MindDocument;
 pub(crate) mod publication;
 pub(crate) mod reflection;
 mod reflection_edits;
@@ -55,17 +59,6 @@ pub(crate) enum EvidenceRelation {
 pub(crate) struct EvidenceLink {
     pub id: String,
     pub relation: EvidenceRelation,
-}
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub(crate) struct MindDocument {
-    pub id: String,
-    pub title: crate::text::JsText,
-    pub text: crate::text::JsText,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
-    pub revision: u64,
-    pub evidence: Vec<EvidenceLink>,
-    pub protected: bool,
 }
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]

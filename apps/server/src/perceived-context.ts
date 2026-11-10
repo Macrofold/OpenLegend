@@ -4,7 +4,7 @@ import {
   capturedExperience,
   type ExperiencePresentation,
 } from './experience-context.js';
-import { experienceReading, type ExperienceEntry } from '@open-legend/domain';
+import { experienceReading, type ExperienceEntry, type MemoryRecord } from '@open-legend/domain';
 import {
   currentObservedFacetValues,
   prepareCurrentBodyReadScope,
@@ -61,7 +61,13 @@ export function experienceForModel(entry: ExperienceEntry, bindings: ExperienceM
 /** Retrieval ranks source-stable personal wording. Current body grants, later names
  * and the observer's current pose must never change an unchanged source's index. */
 export function experienceEmbeddingText(entry: ExperienceEntry, ownerId: string): string {
-  const reading = experienceReading(entry, ownerId);
+  return memoryEmbeddingText(experienceReading(entry, ownerId));
+}
+/** A hydrated source already owns the same personal reading. Reuse it for the
+ * index rather than rendering captured narration and validating coverage twice. */
+export function memoryEmbeddingText(
+  reading: Pick<MemoryRecord, 'kind' | 'source' | 'eventType' | 'summary'>,
+): string {
   return JSON.stringify({
     kind: reading.kind,
     source: reading.source,

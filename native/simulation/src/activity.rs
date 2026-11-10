@@ -24,9 +24,10 @@ mod residency;
 pub(crate) use learning::LearningLanguage;
 pub(crate) use learning::{
     CompletedActivityLearning, LearningFormatAnswer, LearningFormatRequest, LearningHistoryAnswer,
-    LearningHistoryRequest, LearningPreparationAnswer, LearningPreparationCursor,
+    LearningHistoryRequest, LearningJudgment, LearningPreparationAnswer, LearningPreparationCursor,
     LearningPreparationStep, LearningPublicationAnswer, LearningPublicationCursor,
     LearningPublicationRequest, LearningPublicationStep, PreparedActivityLearning,
+    learning_signatures,
 };
 mod retained_size;
 pub use fields::ActivityFields;

@@ -47,35 +47,7 @@ struct Action<'a> {
 struct Agency<'a>(&'a ActorAgency);
 impl Serialize for Agency<'_> {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        // Exhaustive destructuring makes a new canonical agency field require
-        // an explicit semantic-validity decision rather than disappearing.
-        let ActorAgency {
-            semantic: _,
-            last_result_evidence,
-            revision,
-            goals,
-            plan,
-            suspended,
-            history,
-            attempts,
-            places,
-        } = self.0;
-        let mut out = s.serialize_map(None)?;
-        if let Some(value) = last_result_evidence {
-            out.serialize_entry("lastResultEvidence", value)?;
-        }
-        out.serialize_entry("revision", revision)?;
-        out.serialize_entry("goals", goals)?;
-        out.serialize_entry("plan", plan)?;
-        if let Some(value) = suspended {
-            out.serialize_entry("suspended", value)?;
-        }
-        out.serialize_entry("history", history)?;
-        out.serialize_entry("attempts", attempts)?;
-        if let Some(value) = places {
-            out.serialize_entry("places", value)?;
-        }
-        out.end()
+        self.0.serialize_without_semantic(s)
     }
 }
 struct Attribute<'a> {

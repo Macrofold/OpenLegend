@@ -1271,6 +1271,7 @@ enum Undo {
     AgencyPlaces {
         entity: EntityHandle,
         before: Option<Vec<crate::state::RememberedPlace>>,
+        order: crate::state::AgencyOrder,
     },
     AgencyPlan {
         entity: EntityHandle,
@@ -1287,6 +1288,7 @@ enum Undo {
     AgencySuspended {
         entity: EntityHandle,
         before: Option<Option<crate::plans::ActorPlan>>,
+        order: crate::state::AgencyOrder,
     },
     AgencyHistory {
         entity: EntityHandle,
@@ -1433,6 +1435,7 @@ enum Undo {
     ResultEvidence {
         entity: EntityHandle,
         before: Option<crate::activity::ResultEvidence>,
+        order: crate::state::AgencyOrder,
     },
     Status {
         entity: EntityHandle,
@@ -1716,23 +1719,25 @@ impl PhysicalJournal {
                     if !root_present { *rows = None; }
                     state.participation.settle_restored(&mut self.reservation)?;
                 }
-                Undo::AgencyPlaces { entity, before } => {
-                    state
+                Undo::AgencyPlaces { entity, before, order } => {
+                    let agency = &mut state
                         .entities
                         .resolve_mut(entity)
                         .and_then(|e| e.actor.as_mut())
                         .ok_or(ExecutionError::Invariant)?
-                        .agency
-                        .places = before;
+                        .agency;
+                    agency.places = before;
+                    agency.order = order;
                 }
-                Undo::AgencySuspended { entity, before } => {
-                    state
+                Undo::AgencySuspended { entity, before, order } => {
+                    let agency = &mut state
                         .entities
                         .resolve_mut(entity)
                         .and_then(|e| e.actor.as_mut())
                         .ok_or(ExecutionError::Invariant)?
-                        .agency
-                        .suspended = before;
+                        .agency;
+                    agency.suspended = before;
+                    agency.order = order;
                 }
                 Undo::AgencyHistory { entity, before } => {
                     state
@@ -2055,14 +2060,15 @@ impl PhysicalJournal {
                         .ok_or(ExecutionError::Invariant)?
                         .health = before
                 }
-                Undo::ResultEvidence { entity, before } => {
-                    state
+                Undo::ResultEvidence { entity, before, order } => {
+                    let agency = &mut state
                         .entities
                         .resolve_mut(entity)
                         .and_then(|e| e.actor.as_mut())
                         .ok_or(ExecutionError::Invariant)?
-                        .agency
-                        .last_result_evidence = before;
+                        .agency;
+                    agency.last_result_evidence = before;
+                    agency.order = order;
                 }
                 Undo::Status {
                     entity,
@@ -2452,6 +2458,8 @@ impl PhysicalMutation<'_> {
             .resolve_mut(handle)
             .and_then(|e| e.actor.as_mut())
             .ok_or(ExecutionError::Invariant)?;
+        let order = actor.agency.order;
+        actor.agency.order.result_evidence();
         let before = std::mem::replace(&mut actor.agency.last_result_evidence, evidence);
         if first {
             self.journal.retain(
@@ -2459,6 +2467,7 @@ impl PhysicalMutation<'_> {
                 Undo::ResultEvidence {
                     entity: handle,
                     before,
+                    order,
                 },
             )?;
         }

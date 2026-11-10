@@ -252,59 +252,7 @@ pub(crate) fn prune_observer_individuals(
     for id in core.state.minds.pinned_individuals(observer) {
         pinned.insert(id.to_owned());
     }
-    let mut held = IndexSet::new();
-    for id in candidates {
-        let Some(identity) = identities.get(id) else {
-            continue;
-        };
-        held.extend(identity.name_evidence_ids.iter().flatten().cloned());
-        for profile in [&identity.voice, &identity.sight].into_iter().flatten() {
-            for sample in &profile.samples {
-                held.insert(sample.source_key.clone());
-                held.extend(sample.support.iter().cloned());
-            }
-        }
-        let meaningful = identity.authored
-            || identity.nickname.as_ref().is_some_and(|n| !n.is_empty())
-            || !identity.given_name.is_empty()
-            || identity
-                .voice
-                .as_ref()
-                .is_some_and(|p| p.authored.is_some() || p.samples.len() >= 2)
-            || identity
-                .sight
-                .as_ref()
-                .is_some_and(|p| p.authored.is_some() || !p.samples.is_empty())
-            || pinned.contains(id)
-            || identity.encounter_id.as_deref().is_some_and(|episode| {
-                core.state
-                    .physical
-                    .entities
-                    .get(observer)
-                    .and_then(|e| e.actor.as_ref())
-                    .and_then(|a| a.agency.plan.as_ref())
-                    .is_some_and(|plan| {
-                        plan.steps
-                            .iter()
-                            .filter(|s| {
-                                matches!(
-                                    s.status,
-                                    crate::plans::StepStatus::Queued
-                                        | crate::plans::StepStatus::Running
-                                )
-                            })
-                            .flat_map(|s| s.target_episodes.iter().flat_map(|m| m.values()))
-                            .flatten()
-                            .any(|held| held == episode)
-                    })
-            });
-        for root in identity.familiarity.iter().flat_map(|state| &state.roots) {
-            if meaningful || root.required {
-                held.insert(root.source_key.clone());
-                held.extend(root.support.iter().cloned());
-            }
-        }
-    }
+    let held = retained_identity_evidence_keys(core, observer, candidates, &pinned);
     let now = core.state.physical.header.sim_time;
     let cutoff = now
         - core
@@ -533,4 +481,77 @@ pub(crate) fn prune_observer_individuals(
         removed += 1;
     }
     Ok(removed)
+}
+
+/// Source retainedIdentityEvidenceKeys is shared by retirement and support
+/// cleanup. Callers fund the selected key copies before entering this factory.
+pub(super) fn retained_identity_evidence_keys(
+    core: &CoreMutation<'_>,
+    observer: &str,
+    candidates: &IndexSet<String>,
+    pinned: &IndexSet<String>,
+) -> IndexSet<String> {
+    let Some(identities) = core
+        .state
+        .reception
+        .observer_identities
+        .as_ref()
+        .and_then(|owners| owners.get(observer))
+    else {
+        return IndexSet::new();
+    };
+    let mut held = IndexSet::new();
+    for id in candidates {
+        let Some(identity) = identities.get(id) else {
+            continue;
+        };
+        held.extend(identity.name_evidence_ids.iter().flatten().cloned());
+        for profile in [&identity.voice, &identity.sight].into_iter().flatten() {
+            for sample in &profile.samples {
+                held.insert(sample.source_key.clone());
+                held.extend(sample.support.iter().cloned());
+            }
+        }
+        let meaningful = identity.authored
+            || identity.nickname.as_ref().is_some_and(|n| !n.is_empty())
+            || !identity.given_name.is_empty()
+            || identity
+                .voice
+                .as_ref()
+                .is_some_and(|p| p.authored.is_some() || p.samples.len() >= 2)
+            || identity
+                .sight
+                .as_ref()
+                .is_some_and(|p| p.authored.is_some() || !p.samples.is_empty())
+            || pinned.contains(id)
+            || identity.encounter_id.as_deref().is_some_and(|episode| {
+                core.state
+                    .physical
+                    .entities
+                    .get(observer)
+                    .and_then(|e| e.actor.as_ref())
+                    .and_then(|a| a.agency.plan.as_ref())
+                    .is_some_and(|plan| {
+                        plan.steps
+                            .iter()
+                            .filter(|s| {
+                                matches!(
+                                    s.status,
+                                    crate::plans::StepStatus::Queued
+                                        | crate::plans::StepStatus::Running
+                                )
+                            })
+                            .flat_map(|s| s.target_episodes.iter().flat_map(|m| m.values()))
+                            .flatten()
+                            .any(|held| held == episode)
+                    })
+            });
+        for root in identity.familiarity.iter().flat_map(|state| &state.roots) {
+            if meaningful || root.required {
+                held.insert(root.source_key.clone());
+                held.extend(root.support.iter().cloned());
+            }
+        }
+    }
+    held
 }

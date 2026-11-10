@@ -47,6 +47,10 @@ pub(crate) struct CompletedActivityLearning {
 }
 pub(crate) struct LearningPublicationCursor {
     batch: Arc<PreparedActivityLearning>,
+    admission: Option<(
+        Arc<crate::capture::maintenance::MaintenanceCapture>,
+        crate::capture::maintenance::MaintenanceAdmission,
+    )>,
     request: LearningPublicationRequest,
     history: Option<LearningHistoryCursor>,
     context: Option<LearningPreparationCursor>,
@@ -61,9 +65,18 @@ impl LearningPublicationCursor {
         core: &mut CoreMutation<'_>,
         batch: Arc<PreparedActivityLearning>,
         request: LearningPublicationRequest,
+        admission: Option<(
+            Arc<crate::capture::maintenance::MaintenanceCapture>,
+            crate::capture::maintenance::MaintenanceAdmission,
+        )>,
         key: CandidateKey,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
+        if let Some((read, expected)) = &admission {
+            if !read.current(core.state, expected)? {
+                return Err(ExecutionError::InvalidCheckpoint);
+            }
+        }
         let bytes = size_of::<Self>()
             .checked_add(
                 request
@@ -109,6 +122,7 @@ impl LearningPublicationCursor {
         };
         Ok(Self {
             batch,
+            admission,
             request,
             history,
             context: None,
@@ -180,43 +194,60 @@ impl LearningPublicationCursor {
             LearningPreparationStep::Canonical(q) => Ok(LearningPublicationStep::Canonical(q)),
             LearningPreparationStep::Complete(_) => Err(ExecutionError::Invariant),
             LearningPreparationStep::Context(context) => {
-                self.context = None;
-                let published = self.publish(core, context)?;
-                self.complete(published)
+                if let Some((read, expected)) = &self.admission {
+                    if !read.current(core.state, expected)? {
+                        return Err(ExecutionError::InvalidCheckpoint);
+                    }
+                }
+                let published =
+                    Self::publish(&self.batch, &self.request, &self.budget, core, context)?;
+                self.done = true;
+                Ok(LearningPublicationStep::Complete(Self::completion(
+                    published,
+                    &self.budget,
+                )?))
             }
         }
     }
     fn complete(&mut self, ok: bool) -> Result<LearningPublicationStep<'_>, ExecutionError> {
         self.done = true;
-        let storage = self
-            .budget
-            .reserve(size_of::<CompletedActivityLearning>() + "activity-learning".len())?;
-        Ok(LearningPublicationStep::Complete(
-            CompletedActivityLearning {
-                outcome: Outcome {
-                    ok,
-                    code: "activity-learning".to_owned(),
-                    message: "".into(),
-                    spent: None,
-                    outputs: None,
-                    recipe_id: None,
-                    item_id: None,
-                    entity_id: None,
-                    goal_id: None,
-                    plan_id: None,
-                    action_id: None,
-                },
-                _storage: storage,
+        Ok(LearningPublicationStep::Complete(Self::completion(
+            ok,
+            &self.budget,
+        )?))
+    }
+    fn completion(
+        ok: bool,
+        budget: &ByteBudget,
+    ) -> Result<CompletedActivityLearning, ExecutionError> {
+        let storage =
+            budget.reserve(size_of::<CompletedActivityLearning>() + "activity-learning".len())?;
+        Ok(CompletedActivityLearning {
+            outcome: Outcome {
+                ok,
+                code: "activity-learning".to_owned(),
+                message: "".into(),
+                spent: None,
+                outputs: None,
+                recipe_id: None,
+                item_id: None,
+                entity_id: None,
+                goal_id: None,
+                plan_id: None,
+                action_id: None,
             },
-        ))
+            _storage: storage,
+        })
     }
     fn publish(
-        &mut self,
+        batch: &PreparedActivityLearning,
+        request: &LearningPublicationRequest,
+        budget: &ByteBudget,
         core: &mut CoreMutation<'_>,
         context: LearningReadContext,
     ) -> Result<bool, ExecutionError> {
-        let actor = self.batch.history.actor.as_str();
-        for candidate in &self.batch.candidates {
+        let actor = batch.history.actor.as_str();
+        for candidate in &batch.candidates {
             for id in candidate
                 .occurrence_ids
                 .iter()
@@ -237,7 +268,7 @@ impl LearningPublicationCursor {
             .get(actor)
             .and_then(|e| e.actor.as_ref())
             .ok_or(ExecutionError::MissingActor)?;
-        if self.request.dispatched
+        if request.dispatched
             && (person.action.is_some()
                 || person
                     .agency
@@ -248,23 +279,21 @@ impl LearningPublicationCursor {
             return Ok(false);
         }
         let cursor = core.state.activity.learning.get(actor);
-        if self.request.dispatched
+        if request.dispatched
             && cursor.is_some_and(|c| {
-                self.batch
+                batch
                     .candidates
                     .iter()
                     .all(|candidate| c.assessed.iter().any(|s| s == candidate.signature()))
-                    && if self.batch.more {
-                        self.batch
+                    && if batch.more {
+                        batch
                             .examined
                             .iter()
                             .all(|id| c.examined.as_ref().is_some_and(|set| set.contains(id)))
                     } else {
-                        c.position == Some(self.batch.history.through)
+                        c.position == Some(batch.history.through)
                             && c.examined.as_ref().is_none_or(Vec::is_empty)
-                            && c.pending
-                                .iter()
-                                .all(|id| self.batch.history.entry(id).is_none())
+                            && c.pending.iter().all(|id| batch.history.entry(id).is_none())
                     }
             })
         {
@@ -273,7 +302,7 @@ impl LearningPublicationCursor {
         // Declared supported transitions keep complete command meanings immutable;
         // the Source-normalized shape is nevertheless rebuilt from these actual
         // current SQL rows, current result eligibility and current installed words.
-        if !self.request.dispatched {
+        if !request.dispatched {
             let read = NormalizationRead {
                 history: &context.history,
                 language: &core.state.activity.language,
@@ -282,14 +311,10 @@ impl LearningPublicationCursor {
                 places: &context.places,
                 manifest: &context.manifest,
             };
-            for (at, candidate) in self.batch.candidates.iter().enumerate() {
-                if matches!(
-                    self.request.judgments.get(at),
-                    Some(LearningJudgment::Retain)
-                ) {
-                    let _slots = self
-                        .budget
-                        .reserve(candidate.occurrence_ids.len() * size_of::<usize>())?;
+            for (at, candidate) in batch.candidates.iter().enumerate() {
+                if matches!(request.judgments.get(at), Some(LearningJudgment::Retain)) {
+                    let _slots =
+                        budget.reserve(candidate.occurrence_ids.len() * size_of::<usize>())?;
                     let indices = candidate
                         .occurrence_ids
                         .iter()
@@ -303,11 +328,11 @@ impl LearningPublicationCursor {
                         })
                         .collect::<Result<Vec<_>, _>>()?;
                     let Some(normalized) =
-                        read.normalize(&indices, !candidate.executable(), &self.budget)?
+                        read.normalize(&indices, !candidate.executable(), budget)?
                     else {
                         return Ok(false);
                     };
-                    let _compare = self.budget.reserve(
+                    let _compare = budget.reserve(
                         crate::experience::encoded_body_bound(candidate.signature())
                             .map_err(|_| ExecutionError::Capacity)?,
                     )?;
@@ -319,18 +344,18 @@ impl LearningPublicationCursor {
                 }
             }
         }
-        let _cursor = self.budget.reserve(
+        let _cursor = budget.reserve(
             cursor
                 .map_or(Some(0), HeapBytes::heap_bytes)
                 .and_then(|n| {
                     n.checked_add(map_storage::<String, ()>(
-                        self.batch.examined.len() + self.batch.candidates.len(),
+                        batch.examined.len() + batch.candidates.len(),
                     )?)
                 })
-                .and_then(|n| n.checked_add(self.batch.examined.heap_bytes()?))
+                .and_then(|n| n.checked_add(batch.examined.heap_bytes()?))
                 .and_then(|n| {
                     n.checked_add(
-                        self.batch
+                        batch
                             .candidates
                             .iter()
                             .map(|c| c.signature().len() + size_of::<String>())
@@ -342,8 +367,8 @@ impl LearningPublicationCursor {
         let next = cursor.cloned();
         let mut changed = false;
         if let Some(mut next) = next {
-            for (at, candidate) in self.batch.candidates.iter().enumerate() {
-                if self.request.dispatched {
+            for (at, candidate) in batch.candidates.iter().enumerate() {
+                if request.dispatched {
                     if !next.assessed.iter().any(|s| s == candidate.signature()) {
                         next.assessed.push(candidate.signature().to_owned());
                         if next.assessed.len() as u64 > core.state.activity.limits.assessed
@@ -355,27 +380,23 @@ impl LearningPublicationCursor {
                             return Err(ExecutionError::Capacity);
                         }
                     }
-                } else if matches!(
-                    self.request.judgments.get(at),
-                    Some(LearningJudgment::Retain)
-                ) {
-                    if !super::retention::retain(core, &context.history, candidate, &self.budget)? {
+                } else if matches!(request.judgments.get(at), Some(LearningJudgment::Retain)) {
+                    if !super::retention::retain(core, &context.history, candidate, budget)? {
                         return Err(ExecutionError::Capacity);
                     }
                     changed = true;
                 }
             }
             let examined = next.examined.get_or_insert_with(Vec::new);
-            for id in &self.batch.examined {
+            for id in &batch.examined {
                 if !examined.contains(id) {
                     examined.push(id.clone());
                 }
             }
-            if !self.batch.more {
-                next.position = Some(self.batch.history.through);
+            if !batch.more {
+                next.position = Some(batch.history.through);
                 *examined = Vec::new();
-                next.pending
-                    .retain(|id| self.batch.history.entry(id).is_none());
+                next.pending.retain(|id| batch.history.entry(id).is_none());
             }
             changed |= core.state.activity.learning.get(actor) != Some(&next);
             core.journal
@@ -383,7 +404,7 @@ impl LearningPublicationCursor {
                 .replace_learning_cursor(&mut core.state.activity, actor, next)
                 .map_err(ExecutionError::Activity)?;
         }
-        let _transfer = self.budget.reserve(
+        let _transfer = budget.reserve(
             context.history.rows.len()
                 * (size_of::<crate::records::InstalledRow>() + size_of::<ByteReservation>()),
         )?;
@@ -395,12 +416,12 @@ impl LearningPublicationCursor {
             .unzip();
         core.journal
             .activity
-            .load_selected_occurrences(&mut core.state.activity, rows, &self.budget)
+            .load_selected_occurrences(&mut core.state.activity, rows, budget)
             .map_err(ExecutionError::Activity)?;
         if changed {
             core.state.physical.header.native_interval = None;
         }
-        let _ = &self.storage;
+
         let _ = &context.storage;
         Ok(true)
     }

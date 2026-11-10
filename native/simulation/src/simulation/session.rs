@@ -177,6 +177,7 @@ impl PreparedCandidate {
     }
 }
 pub(crate) enum SessionStep {
+    LearningBatch(Arc<crate::activity::PreparedActivityLearning>),
     Continue,
     Question(Arc<ProviderQuestion>),
     Prepared(PreparedCandidate),
@@ -596,6 +597,27 @@ impl Session {
         };
         self.install_driver(key, journal, driver, false)
     }
+    pub(crate) fn begin_support_retention(
+        &mut self,
+        actors: Vec<String>,
+        preparation: crate::received::SupportPreparation,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::received::SupportRetentionCursor::new(
+                key,
+                actors,
+                preparation,
+                &self.budget,
+            )?;
+            OperationDriver::support_retention(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
     pub(crate) fn begin_recent_retention(
         &mut self,
         actors: Vec<String>,
@@ -608,6 +630,56 @@ impl Session {
             };
             let cursor = crate::received::RecentRetentionCursor::new(actors, &self.budget)?;
             OperationDriver::recent_retention(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    pub(crate) fn begin_learning_preparation(
+        &mut self,
+        actor: &str,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::activity::LearningPreparationCursor::new(
+                &mut core,
+                actor,
+                key,
+                &self.budget,
+            )?;
+            OperationDriver::learning_prepare(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    pub(crate) fn is_learning_preparation(&self, key: CandidateKey) -> bool {
+        matches!(&self.candidate,Some(Candidate::Preparing(p))if p.key==key&&p.driver.is_learning_prepare())
+    }
+    pub(crate) fn begin_learning_publication(
+        &mut self,
+        batch: Arc<crate::activity::PreparedActivityLearning>,
+        request: crate::activity::LearningPublicationRequest,
+        admission: Option<(
+            Arc<crate::capture::maintenance::MaintenanceCapture>,
+            crate::capture::maintenance::MaintenanceAdmission,
+        )>,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::activity::LearningPublicationCursor::new(
+                &mut core,
+                batch,
+                request,
+                admission,
+                key,
+                &self.budget,
+            )?;
+            OperationDriver::learning_publish(&mut core, cursor, &self.budget)
         })();
         self.install_driver(key, journal, driver, false)
     }
@@ -793,6 +865,16 @@ impl Session {
                 self.rollback(&mut preparing.journal, key)?;
                 closed?;
                 Ok(SessionStep::NpcCandidates(done))
+            }
+            DriveStep::LearningBatch(done) => {
+                let closed = preparing.journal.require_closed_operations();
+                let Some(Candidate::Preparing(mut preparing)) = self.candidate.take() else {
+                    unreachable!()
+                };
+                self.simulation.fence.rollback_preparation(key)?;
+                self.rollback(&mut preparing.journal, key)?;
+                closed?;
+                Ok(SessionStep::LearningBatch(done))
             }
             DriveStep::NpcSources(done) => {
                 let closed = preparing.journal.require_closed_operations();

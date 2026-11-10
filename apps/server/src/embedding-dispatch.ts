@@ -77,9 +77,11 @@ export async function dispatchEmbedding(input: {
     if (result.receipt.completionUncertain) lease?.uncertain(request.requestId);
     return result;
   } catch (error) {
-    // Only a known claim plus an uninvoked final transport callback proves
-    // local non-dispatch. A lost SQL acknowledgement remains uncertain.
-    if (admitted && !invoked) return cancelled();
+    // A veto before any claim, or a known claim with an uninvoked final
+    // transport callback, proves local non-dispatch. Return its receipt so the
+    // caller can settle the reservation it already made. A lost SQL claim
+    // acknowledgement still remains uncertain.
+    if ((!intent || admitted) && !invoked) return cancelled();
     throw error;
   } finally {
     if (intent && !completed && (!admitted || invoked)) lease?.uncertain(request.requestId);

@@ -1,9 +1,19 @@
+import { cleanTypedActionText } from './typed-action-text.js';
+export { cleanTypedActionText } from './typed-action-text.js';
+import {
+  parseTypedNavigation,
+  typedNavigationDescription,
+  type TypedNavigationPrepared,
+  type TypedNavigationSyntax,
+} from './typed-navigation.js';
 import type { ActionFulfillment, ResolutionCategory } from '@open-legend/domain';
 import type { SurfacePoint } from '@open-legend/spatial';
 
 /** Pure lexical facts shared by the Source binder and native preparation.
  * Matching a phrase supplies no target, route, admission or executable effect. */
 export type FreeTypedActionSyntax =
+  | { readonly kind: 'unsupported'; readonly family: 'compose' | 'movement-wait' | 'wait' }
+  | TypedNavigationSyntax
   | {
       readonly kind: 'stop';
       readonly activity: 'following' | 'gathering' | 'moving' | 'walking' | null;
@@ -17,14 +27,6 @@ export type FreeTypedActionSyntax =
   | { readonly kind: 'offset'; readonly x: number; readonly z: number }
   | { readonly kind: 'distance-needed' };
 
-export const cleanTypedActionText = (text: string) =>
-  text
-    .normalize('NFKC')
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/gu, ' ')
-    .replace(/[.!]+$/u, '')
-    .trim();
 const directions: Readonly<Record<string, { readonly x: number; readonly z: number }>> = {
   forward: { x: 0, z: 1 },
   forwards: { x: 0, z: 1 },
@@ -70,7 +72,17 @@ export function parseFreeTypedActionClause(text: string): FreeTypedActionSyntax 
       surfaceId: selected[3] ?? null,
     };
   const moved = offset.exec(text);
-  if (!moved) return null;
+  if (!moved) {
+    const navigation = parseTypedNavigation(text);
+    if (navigation) return navigation;
+    if (
+      /^(?:wait|rest|stay|keep watch)(?: here)?(?: until .+| \d+ (?:minutes?|mins?|hours?))?$/u.test(
+        text,
+      )
+    )
+      return { kind: 'unsupported', family: 'wait' };
+    return null;
+  }
   const stepping = text.startsWith('step');
   let x = 0,
     z = 0;
@@ -91,40 +103,90 @@ export function parseFreeTypedActionClause(text: string): FreeTypedActionSyntax 
  * cannot silently execute the recognized prefix of a multi-step request. */
 export function parseFreeTypedActionSyntax(text: string): FreeTypedActionSyntax | null {
   const cleaned = cleanTypedActionText(text);
-  return cleaned.split(/\s*(?:,\s*(?:and\s+)?then|\s+and\s+then|\s+then|;)\s+/u).length === 1
-    ? parseFreeTypedActionClause(cleaned)
+  const clauses = cleaned.split(/\s*(?:,\s*(?:and\s+)?then|\s+and\s+then|\s+then|;)\s+/u);
+  if (clauses.length === 1) return parseFreeTypedActionClause(cleaned);
+  return clauses.length > 4 ||
+    clauses.every((clause) => parseFreeTypedActionClause(clause) !== null)
+    ? { kind: 'unsupported', family: 'compose' }
     : null;
 }
 
-export function typedActionFulfillment(requested: string, description: string, unmet: readonly string[], omitted: ActionFulfillment['omitted'] = [], confirm = false): ActionFulfillment {
-  const missing = [...omitted, ...unmet.map((requirement) => ({ requirement, reason: 'The typed native action cannot keep this requested detail.' }))];
+export function typedActionFulfillment(
+  requested: string,
+  description: string,
+  unmet: readonly string[],
+  omitted: ActionFulfillment['omitted'] = [],
+  confirm = false,
+): ActionFulfillment {
+  const missing = [
+    ...omitted,
+    ...unmet.map((requirement) => ({
+      requirement,
+      reason: 'The typed native action cannot keep this requested detail.',
+    })),
+  ];
   return {
-    requested, executableDescription: description.slice(0, 1000),
+    requested,
+    executableDescription: description.slice(0, 1000),
     verdict: confirm || unmet.length > 0 ? 'confirm' : missing.length ? 'partial' : 'exact',
-    supported: [description.slice(0, 500)], omitted: missing.slice(0, 8),
-    reason: confirm || unmet.length > 0
-      ? 'Accept only the shown native action; it does not keep every requested detail.'
-      : 'Complete typed form bound without inference.',
+    supported: [description.slice(0, 500)],
+    omitted: missing.slice(0, 8),
+    reason:
+      confirm || unmet.length > 0
+        ? 'Accept only the shown native action; it does not keep every requested detail.'
+        : 'Complete typed form bound without inference.',
   };
 }
-export function typedInvocationRefusal(outcome: { readonly code: string; readonly message: string }, limits: { readonly minimumDistance: number; readonly maximumDistance: number; readonly offset: number }) {
-  return { category: (['ambiguous-destination', 'invalid-invocation'].includes(outcome.code) ? 'needs_clarification' : 'blocked') as ResolutionCategory,
-    reason: outcome.code === 'invalid-invocation'
-      ? `That request is outside what moving or following allows (distance ${limits.minimumDistance}–${limits.maximumDistance} m, offsets up to ${limits.offset} m).`
-      : outcome.message };
+export function typedInvocationRefusal(
+  outcome: { readonly code: string; readonly message: string },
+  limits: {
+    readonly minimumDistance: number;
+    readonly maximumDistance: number;
+    readonly offset: number;
+  },
+) {
+  return {
+    category: (['ambiguous-destination', 'invalid-invocation'].includes(outcome.code)
+      ? 'needs_clarification'
+      : 'blocked') as ResolutionCategory,
+    reason:
+      outcome.code === 'invalid-invocation'
+        ? `That request is outside what moving or following allows (distance ${limits.minimumDistance}–${limits.maximumDistance} m, offsets up to ${limits.offset} m).`
+        : outcome.message,
+  };
 }
 export type FreeTypedActionPrepared =
+  | { readonly kind: 'unsupported'; readonly family: string }
+  | TypedNavigationPrepared
+  | { readonly kind: 'unknown' }
+  | {
+      readonly kind: 'named-refused';
+      readonly category: ResolutionCategory;
+      readonly reason: string;
+    }
   | { readonly kind: 'stop' }
   | { readonly kind: 'point'; readonly destination: SurfacePoint }
-  | { readonly kind: 'offset'; readonly x: number; readonly z: number; readonly destination: SurfacePoint }
+  | {
+      readonly kind: 'offset';
+      readonly x: number;
+      readonly z: number;
+      readonly destination: SurfacePoint;
+    }
   | { readonly kind: 'not-stopping'; readonly activity: string }
   | { readonly kind: 'distance-needed' }
-  | { readonly kind: 'invocation-refused' | 'preview-refused'; readonly outcome: { readonly code: string; readonly message: string } };
+  | {
+      readonly kind: 'invocation-refused' | 'preview-refused';
+      readonly outcome: { readonly code: string; readonly message: string };
+    };
 
-export function freeTypedActionDescription(value: Extract<FreeTypedActionPrepared, { kind: 'stop' | 'point' | 'offset' }>): string {
-  const at = (point: SurfacePoint) => `x=${Number(point.x.toFixed(1))}, z=${Number(point.z.toFixed(1))}`;
+export function freeTypedActionDescription(
+  value: Extract<FreeTypedActionPrepared, { kind: 'stop' | 'point' | 'offset' }>,
+): string {
+  const at = (point: SurfacePoint) =>
+    `x=${Number(point.x.toFixed(1))}, z=${Number(point.z.toFixed(1))}`;
   if (value.kind === 'stop') return 'Stop current work; materials already used stay spent.';
-  if (value.kind === 'point') return `Walk to ${at(value.destination)} on ${value.destination.surfaceId}.`;
+  if (value.kind === 'point')
+    return `Walk to ${at(value.destination)} on ${value.destination.surfaceId}.`;
   return `Walk ${[value.x ? `${Math.abs(value.x)} m ${value.x > 0 ? 'right' : 'left'}` : '', value.z ? `${Math.abs(value.z)} m ${value.z > 0 ? 'forward' : 'back'}` : ''].filter(Boolean).join(' and ')} of your current facing, to ${at(value.destination)}.`;
 }
 
@@ -134,17 +196,58 @@ export function formatFreeTypedActionPreparation(request: {
   readonly requested: string;
   readonly prepared: FreeTypedActionPrepared;
   readonly unmet: readonly string[];
-  readonly limits: { readonly minimumDistance: number; readonly maximumDistance: number; readonly offset: number };
+  readonly limits: {
+    readonly minimumDistance: number;
+    readonly maximumDistance: number;
+    readonly offset: number;
+  };
 }) {
   const value = request.prepared;
+  if (value.kind === 'unknown') return { fulfillment: null, resolution: null };
   let resolution: { category: ResolutionCategory; reason: string } | undefined;
-  if (value.kind === 'not-stopping') resolution = { category: 'needs_clarification', reason: `You are not ${value.activity} right now; nothing was stopped.` };
-  else if (value.kind === 'distance-needed') resolution = { category: 'needs_clarification', reason: 'Say how far, for example "move 3 m left".' };
-  else if (value.kind === 'invocation-refused') resolution = typedInvocationRefusal(value.outcome, request.limits);
-  else if (value.kind === 'preview-refused') resolution = { category: ['unsupported-body', 'unsupported', 'unsupported-capability'].includes(value.outcome.code) ? 'unsupported_capability' : 'blocked', reason: value.outcome.message };
-  if (resolution) return { fulfillment: null, resolution: { ...resolution, reason: resolution.reason.slice(0, 500) } };
-  const description = value.kind === 'stop' || value.kind === 'point' || value.kind === 'offset'
-    ? freeTypedActionDescription(value) : undefined;
-  if (description === undefined) throw new Error('The typed native preparation has no rendered result.');
-  return { fulfillment: typedActionFulfillment(request.requested, description, request.unmet), resolution: null };
+  if (value.kind === 'unsupported')
+    resolution = {
+      category: 'unsupported_capability',
+      reason: 'That complete activity is not available; nothing was started.',
+    };
+  else if (value.kind === 'named-refused')
+    resolution = { category: value.category, reason: value.reason };
+  else if (value.kind === 'not-stopping')
+    resolution = {
+      category: 'needs_clarification',
+      reason: `You are not ${value.activity} right now; nothing was stopped.`,
+    };
+  else if (value.kind === 'distance-needed')
+    resolution = {
+      category: 'needs_clarification',
+      reason: 'Say how far, for example "move 3 m left".',
+    };
+  else if (value.kind === 'invocation-refused')
+    resolution = typedInvocationRefusal(value.outcome, request.limits);
+  else if (value.kind === 'preview-refused')
+    resolution = {
+      category: ['unsupported-body', 'unsupported', 'unsupported-capability'].includes(
+        value.outcome.code,
+      )
+        ? 'unsupported_capability'
+        : 'blocked',
+      reason: value.outcome.message,
+    };
+  if (resolution)
+    return {
+      fulfillment: null,
+      resolution: { ...resolution, reason: resolution.reason.slice(0, 500) },
+    };
+  const description =
+    value.kind === 'approach' || value.kind === 'last-seen'
+      ? typedNavigationDescription(value)
+      : value.kind === 'stop' || value.kind === 'point' || value.kind === 'offset'
+        ? freeTypedActionDescription(value)
+        : undefined;
+  if (description === undefined)
+    throw new Error('The typed native preparation has no rendered result.');
+  return {
+    fulfillment: typedActionFulfillment(request.requested, description, request.unmet),
+    resolution: null,
+  };
 }

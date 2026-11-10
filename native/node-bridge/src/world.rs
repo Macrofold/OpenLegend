@@ -14,6 +14,7 @@ use openlegend_simulation::runtime::{
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 mod control;
+mod consumer;
 mod maintenance;
 mod npc;
 mod npc_intake;

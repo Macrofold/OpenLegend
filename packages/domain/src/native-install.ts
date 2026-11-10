@@ -1,6 +1,9 @@
-import { INVOCATION_LIMITS } from './action-capabilities.js';
+import { INVOCATION_LIMITS, RESOLUTION_LIMITS } from './action-capabilities.js';
 import { activityLearningLanguage } from './native-command-contracts.js';
-import { ACTIVITY_LEARNING_PREPARATION, ACTIVITY_LEARNING_FAILURE_CODES } from './activity-learning.js';
+import {
+  ACTIVITY_LEARNING_PREPARATION,
+  ACTIVITY_LEARNING_FAILURE_CODES,
+} from './activity-learning.js';
 import { MOVEMENT, SPATIAL_LIMITS } from '@open-legend/spatial';
 import { ACTIVITY_DISPLAY_BYTES, ACTIVITY_LIMITS } from './action-experience.js';
 import { MAX_CHANGE_SCOPES } from './dependencies.js';
@@ -88,5 +91,6 @@ export const nativeSetupSettings = immutableDataSnapshot({
     choicePreparationId: COMMAND_CHOICE_PREPARATION_ID,
     receipts: RESPONSE_RECEIPT_LIMIT,
     invocation: INVOCATION_LIMITS,
+    resolution: RESOLUTION_LIMITS,
   },
 });

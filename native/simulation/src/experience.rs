@@ -1527,7 +1527,10 @@ impl ExperienceState {
             return Ok(true);
         }
         let memories = actor.collection(PersonalSourceKind::Memory)?;
-        if !memories.coverage.complete {
+        // The cold installer certifies all unresolved obligations separately
+        // from historical memory residency; only that current set can suppress
+        // an occurrence needed for promise completion.
+        if !memories.complete_current_obligations() {
             return Err(ExperienceError::Unavailable);
         }
         Ok(false)

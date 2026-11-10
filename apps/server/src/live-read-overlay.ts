@@ -207,7 +207,7 @@ const references = (sql: string, table: string) => {
 };
 /** Operational authorization, spending and writer transactions never use this view. */
 export function mayReadLiveTables(sql: string): boolean {
-  return /\b(?:FROM|JOIN)\s+(?:mind_[a-z_]+|recall_sources|recall_place_capsules|history_events|history_perspectives|received_value_uses|world_settings|memory_lexical_progress)\b/i.test(
+  return /\b(?:FROM|JOIN)\s+(?:mind_[a-z_]+|activity_occurrences|recall_sources|recall_place_capsules|history_events|history_perspectives|received_value_uses|world_settings|memory_lexical_progress)\b/i.test(
     sql,
   );
 }

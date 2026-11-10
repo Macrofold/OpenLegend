@@ -18,9 +18,16 @@ pub struct DecisionOfferRules {
     pub hunting_purpose: String,
     pub hunting: HuntingOfferRules,
     pub slot_requirements: SlotRequirements,
+    pub typed_nouns: TypedNouns,
     pub activity_choices: Vec<ActivityChoiceHost>,
     pub availability: DiscoveryMessages,
     pub probes: Vec<ProbeOffer>,
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TypedNouns {
+    pub heat_sources: Vec<String>,
+    pub beings: Vec<String>,
 }
 /// These are the same authored family facts used by installed action meanings.
 /// They describe an already offered command; they never install a family.

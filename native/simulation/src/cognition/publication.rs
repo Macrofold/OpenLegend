@@ -328,11 +328,8 @@ impl ReflectionCursor {
                 );
             }
             if !self.input.admission.requires_body
-                || !self
-                    .input
-                    .body
-                    .current(core.state, &self.input.admission)?
-                || !self.input.workspace.workspace_current(core.state)?
+                || !self.input.body.current(core.state, &self.input.admission)?
+                || !self.input.workspace.obligations_current(core.state)?
                 || !self
                     .input
                     .bindings
@@ -625,6 +622,15 @@ impl ReflectionCursor {
         };
         let actor = self.input.bindings.actor_id();
         super::reflection::publish(core, actor, prepared, &self.budget)?;
+        super::finalization::finish_transition(
+            core,
+            self.checkpoint
+                .as_ref()
+                .ok_or(ExecutionError::InvalidCheckpoint)?,
+            actor,
+            &self.events,
+            &self.budget,
+        )?;
         let _message = self
             .budget
             .reserve("Inner world published atomically.".len())

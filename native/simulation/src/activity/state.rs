@@ -637,14 +637,18 @@ pub(crate) struct LearningInspection {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct LearningCursor {
+    // Source creates after/pending/assessed together; learning publication adds
+    // examined before position. Keep that actual factory order in saved rows.
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub after: Option<String>,
+    pub pending: Vec<String>,
+    pub assessed: Vec<String>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub inspection: Option<LearningInspection>,
-    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
-    pub after: Option<String>,
+    pub examined: Option<Vec<String>>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_cursor",
@@ -656,9 +660,7 @@ pub(crate) struct LearningCursor {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub examined: Option<Vec<String>>,
-    pub pending: Vec<String>,
-    pub assessed: Vec<String>,
+    pub inspection: Option<LearningInspection>,
 }
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

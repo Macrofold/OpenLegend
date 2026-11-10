@@ -339,14 +339,14 @@ impl Manifest {
     ) -> Result<SqlCell, ExecutionError> {
         let mut coverage: Vec<_> = self.coverage.into_iter().collect();
         // Stable ties preserve original Map insertion order, as Source sort.
-        coverage.sort_by(|a, b| {
-            ranks
-                .compare(&a.0, &b.0)
-                .unwrap_or(std::cmp::Ordering::Equal)
-        });
         for (key, _) in &coverage {
             ranks.rank(key).map_err(|_| bad())?;
         }
+        coverage.sort_by(|a, b| {
+            ranks
+                .compare(&a.0, &b.0)
+                .expect("all coverage ranks admitted")
+        });
         let coverage_key = coverage_key(coverage.iter().map(|(_, v)| v))?;
         let mut result = IndexMap::new();
         result.insert("version".into(), cell(&1_u64)?);

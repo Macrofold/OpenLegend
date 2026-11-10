@@ -20,6 +20,12 @@ export function recentRetentionDeadline(actor: RecentRetentionHeader, policy: Po
     ? 0
     : (actor.nextDue ?? Infinity);
 }
+export function supportRetentionDeadline(actor: Pick<TemporalActorHistory, 'accounts'>): number {
+  return actor.accounts &&
+    actor.accounts.supportDirtyRevision !== actor.accounts.supportSettledRevision
+    ? 0
+    : Infinity;
+}
 export type RetentionWorkKind = 'recent' | 'accounts' | 'knowledge' | 'support';
 const emptyActors: Record<string, TemporalActorHistory> = Object.freeze({});
 const byPolicy = new WeakMap<
@@ -61,12 +67,7 @@ function indexes(world: WorldState) {
           : (actor.accounts.nextDue ?? Infinity),
       ),
       knowledge: make((actor) => actor.accounts?.knowledgeDue ?? Infinity),
-      support: make((actor) =>
-        actor.accounts &&
-        actor.accounts.supportDirtyRevision !== actor.accounts.supportSettledRevision
-          ? 0
-          : Infinity,
-      ),
+      support: make(supportRetentionDeadline),
     };
     byPolicy.set(policy, indexes);
   }

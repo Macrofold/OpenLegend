@@ -34,6 +34,9 @@ use consolidation::{ConsolidationReply, poll_consolidation};
 mod reflection;
 use reflection::{ReflectionReply, poll_reflection};
 
+mod learning;
+use learning::LearningReply;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum ProviderKind {
@@ -58,8 +61,14 @@ pub(crate) enum ProviderKind {
     MaintenanceFormat,
     #[serde(rename = "consolidation-format")]
     ConsolidationFormat,
+    #[serde(rename = "activity-history")]
+    ActivityHistory,
+    #[serde(rename = "activity-learning-format")]
+    ActivityLearningFormat,
     #[serde(rename = "restore-archives")]
     RestoreArchives,
+    #[serde(rename = "support-membership")]
+    SupportMembership,
 }
 #[derive(Debug)]
 pub(crate) enum DriveError {
@@ -250,6 +259,7 @@ impl DecodeShape {
             .into_iter()
             .max()
             .unwrap_or(0),
+            ProviderKind::SupportMembership => size_of::<usize>(),
             ProviderKind::Utterance => size_of::<SpeechWord>(),
             ProviderKind::Words => size_of::<Vec<JsText>>().max(size_of::<JsText>()),
             ProviderKind::Collation => size_of::<u32>(),
@@ -261,6 +271,8 @@ impl DecodeShape {
             | ProviderKind::AppraisalOutcomes
             | ProviderKind::MaintenanceFormat
             | ProviderKind::ConsolidationFormat
+            | ProviderKind::ActivityHistory
+            | ProviderKind::ActivityLearningFormat
             | ProviderKind::RestoreArchives => 0,
             ProviderKind::Normalization => {
                 size_of::<JsText>().max(size_of::<Option<crate::language::FreeTypedActionSyntax>>())
@@ -335,9 +347,12 @@ enum Answer {
     History(crate::experience::HistoryEditAnswer),
     Control(super::host_control::ControlAnswer),
     Sources(crate::capture::NpcSourcesAnswer),
+    ActivityHistory(crate::activity::LearningHistoryAnswer),
+    ActivityLearningFormat(crate::activity::LearningFormatAnswer),
     AppraisalOutcomes(crate::response::AppraisalCreatesAnswer),
     ChoiceDescriptions(crate::capture::NpcDescriptionsAnswer),
     RestoreArchives(crate::restore::RestoreArchivesAnswer),
+    SupportMembership(crate::received::SupportMembershipAnswer),
 }
 impl Answer {
     fn decode(input: &ProviderResponse, budget: &ByteBudget) -> Result<Self, DriveError> {
@@ -346,6 +361,9 @@ impl Answer {
             DriveError::MalformedResponse
         };
         let value = match input.kind {
+            ProviderKind::SupportMembership => {
+                Self::SupportMembership(serde_json::from_str(&input.json).map_err(parse)?)
+            }
             ProviderKind::Geometry => {
                 Self::Geometry(serde_json::from_str(&input.json).map_err(parse)?)
             }
@@ -385,6 +403,12 @@ impl Answer {
             ProviderKind::MaintenanceFormat => Self::MaintenanceFormat(
                 crate::cognition::format::MaintenanceFormatAnswer::decode(&input.json, budget)?,
             ),
+            ProviderKind::ActivityHistory => Self::ActivityHistory(
+                crate::activity::LearningHistoryAnswer::decode(&input.json, budget)?,
+            ),
+            ProviderKind::ActivityLearningFormat => Self::ActivityLearningFormat(
+                crate::activity::LearningFormatAnswer::decode(&input.json, budget)?,
+            ),
             ProviderKind::ConsolidationFormat => Self::ConsolidationFormat(
                 crate::experience::consolidation::ConsolidationFormatAnswer::decode(
                     &input.json,
@@ -406,6 +430,7 @@ impl Answer {
     }
     fn binding(&self, geometry_revision: u64) -> GeometryBinding {
         match self {
+            Self::SupportMembership(v) => v.binding,
             Self::Geometry(v) => v.binding,
             Self::Utterance(v) => v.binding,
             Self::Collation(v) => v.binding,
@@ -422,11 +447,14 @@ impl Answer {
             Self::TypedActions(v) => v.binding,
             Self::MaintenanceFormat(v) => v.binding,
             Self::ConsolidationFormat(v) => v.binding,
+            Self::ActivityHistory(v) => v.binding,
+            Self::ActivityLearningFormat(v) => v.binding,
             Self::RestoreArchives(v) => v.provider_binding(geometry_revision),
         }
     }
     fn kind(&self) -> ProviderKind {
         match self {
+            Self::SupportMembership(_) => ProviderKind::SupportMembership,
             Self::Geometry(_) => ProviderKind::Geometry,
             Self::Utterance(_) => ProviderKind::Utterance,
             Self::Collation(_) => ProviderKind::Collation,
@@ -443,6 +471,8 @@ impl Answer {
             Self::TypedActions(_) => ProviderKind::TypedActions,
             Self::MaintenanceFormat(_) => ProviderKind::MaintenanceFormat,
             Self::ConsolidationFormat(_) => ProviderKind::ConsolidationFormat,
+            Self::ActivityHistory(_) => ProviderKind::ActivityHistory,
+            Self::ActivityLearningFormat(_) => ProviderKind::ActivityLearningFormat,
             Self::RestoreArchives(_) => ProviderKind::RestoreArchives,
         }
     }
@@ -540,6 +570,7 @@ pub(crate) enum CompletedOperation {
     Startup(super::startup::CompletedStartup),
     Reflection(crate::cognition::publication::CompletedReflection),
     Consolidation(crate::cognition::consolidation::CompletedConsolidation),
+    ActivityLearning(crate::activity::CompletedActivityLearning),
     Restore(super::restore::CompletedRestore),
     Participation(crate::participation::CompletedParticipation),
     Advance(CompletedAdvance),
@@ -547,6 +578,7 @@ pub(crate) enum CompletedOperation {
     Response(crate::response::CompletedResponse),
     Forget(crate::experience::CompletedForgetExperience),
     RecentRetention(crate::received::CompletedRecentRetention),
+    SupportRetention(crate::received::CompletedSupportRetention),
     HostControl(super::host_control::CompletedHostControl),
     NpcIntake(super::npc_intake::CompletedNpcIntake),
 }
@@ -556,6 +588,7 @@ impl CompletedOperation {
             Self::Startup(value) => &value.outcome,
             Self::Reflection(value) => &value.outcome,
             Self::Consolidation(value) => &value.outcome,
+            Self::ActivityLearning(value) => &value.outcome,
             Self::Restore(value) => &value.outcome,
             Self::Participation(value) => &value.outcome,
             Self::Advance(a) => &a.outcome,
@@ -563,6 +596,7 @@ impl CompletedOperation {
             Self::Response(r) => &r.outcome,
             Self::Forget(f) => f.outcome(),
             Self::RecentRetention(r) => &r.outcome,
+            Self::SupportRetention(r) => &r.outcome,
             Self::HostControl(r) => &r.outcome,
             Self::NpcIntake(r) => &r.outcome,
         }
@@ -576,8 +610,10 @@ impl CompletedOperation {
             Self::Startup(_)
             | Self::Reflection(_)
             | Self::Consolidation(_)
+            | Self::ActivityLearning(_)
             | Self::Restore(_)
             | Self::Forget(_)
+            | Self::SupportRetention(_)
             | Self::RecentRetention(_)
             | Self::HostControl(_)
             | Self::NpcIntake(_) => (None, None, None, None),
@@ -604,12 +640,15 @@ impl CompletedOperation {
     pub(crate) fn take_continuation(&mut self) -> Option<crate::time::AdvanceContinuation> {
         match self {
             Self::Advance(a) => a.continuation.take(),
-            Self::Startup(_) | Self::Reflection(_) | Self::Consolidation(_) | Self::Restore(_) => {
-                None
-            }
+            Self::Startup(_)
+            | Self::Reflection(_)
+            | Self::Consolidation(_)
+            | Self::ActivityLearning(_)
+            | Self::Restore(_) => None,
             Self::Command(_)
             | Self::Response(_)
             | Self::Forget(_)
+            | Self::SupportRetention(_)
             | Self::RecentRetention(_)
             | Self::HostControl(_)
             | Self::NpcIntake(_) => None,
@@ -621,6 +660,8 @@ impl CompletedOperation {
 enum OperationReply {
     Reflection(ReflectionReply),
     Consolidation(ConsolidationReply),
+    LearningPrepare(LearningReply),
+    LearningPublish(LearningReply),
     Restore(restore::RestoreReply),
     Participation(ParticipationReply),
     Advance(AdvanceReply),
@@ -629,12 +670,15 @@ enum OperationReply {
     Forget(ForgetReply),
     NpcCandidates(NpcCandidateReply),
     HostControl,
+    SupportRetention,
     NpcSources,
 }
 enum OperationCursor {
     Startup(super::startup::StartupCursor),
     Reflection(crate::cognition::publication::ReflectionCursor),
     Consolidation(crate::cognition::consolidation::ConsolidationCursor),
+    LearningPrepare(crate::activity::LearningPreparationCursor),
+    LearningPublish(crate::activity::LearningPublicationCursor),
     Restore(super::restore::RestoreReconcileCursor),
     Participation(crate::participation::ParticipationCursor),
     Advance(AdvanceCursor),
@@ -643,6 +687,7 @@ enum OperationCursor {
     Forget(crate::experience::ForgetExperienceCursor),
     NpcCandidates(crate::capture::NpcCandidateCursor),
     RecentRetention(crate::received::RecentRetentionCursor),
+    SupportRetention(crate::received::SupportRetentionCursor),
     HostControl(super::host_control::HostControlCursor),
     NpcIntake(super::npc_intake::NpcIntakeCursor),
     NpcSources(crate::capture::NpcSourcesCursor),
@@ -667,7 +712,10 @@ impl OperationCursor {
             Self::Response(r) => r.abort(core),
             Self::Forget(f) => f.abort(core),
             Self::NpcCandidates(cursor) => cursor.abort(core),
-            Self::Startup(_)
+            Self::LearningPrepare(_)
+            | Self::LearningPublish(_)
+            | Self::Startup(_)
+            | Self::SupportRetention(_)
             | Self::RecentRetention(_)
             | Self::HostControl(_)
             | Self::NpcIntake(_)
@@ -683,6 +731,28 @@ impl OperationCursor {
         budget: &ByteBudget,
     ) -> Result<Poll<DriverCompletion, OperationReply>, DriveError> {
         match self {
+            Self::LearningPrepare(cursor) => {
+                let route = match route {
+                    None => None,
+                    Some(OperationReply::LearningPrepare(r)) => Some(r),
+                    _ => return Err(DriveError::StaleResponse),
+                };
+                Ok(learning::prepare(cursor, core, answer, route, budget)?.map(
+                    DriverCompletion::LearningBatch,
+                    OperationReply::LearningPrepare,
+                ))
+            }
+            Self::LearningPublish(cursor) => {
+                let route = match route {
+                    None => None,
+                    Some(OperationReply::LearningPublish(r)) => Some(r),
+                    _ => return Err(DriveError::StaleResponse),
+                };
+                Ok(learning::publish(cursor, core, answer, route, budget)?.map(
+                    |v| DriverCompletion::Operation(CompletedOperation::ActivityLearning(v)),
+                    OperationReply::LearningPublish,
+                ))
+            }
             Self::Startup(cursor) => {
                 if route.is_some() || answer.is_some() {
                     return Err(DriveError::StaleResponse);
@@ -853,6 +923,34 @@ impl OperationCursor {
                     CompletedOperation::NpcIntake(cursor.complete(core, budget)?),
                 )))
             }
+            Self::SupportRetention(cursor) => {
+                let supplied = match route {
+                    None if answer.is_none() => None,
+                    Some(OperationReply::SupportRetention) => {
+                        let Answer::SupportMembership(value) =
+                            direct(answer, ProviderKind::SupportMembership)?
+                        else {
+                            return Err(DriveError::StaleResponse);
+                        };
+                        Some(value)
+                    }
+                    _ => return Err(DriveError::StaleResponse),
+                };
+                match cursor.step(core, supplied, budget)? {
+                    crate::received::SupportRetentionStep::Continue => Ok(Poll::Continue),
+                    crate::received::SupportRetentionStep::Membership(request) => question(
+                        answer,
+                        ProviderKind::SupportMembership,
+                        request.binding,
+                        request,
+                        budget,
+                        OperationReply::SupportRetention,
+                    ),
+                    crate::received::SupportRetentionStep::Complete(done) => Ok(Poll::Complete(
+                        DriverCompletion::Operation(CompletedOperation::SupportRetention(done)),
+                    )),
+                }
+            }
             Self::RecentRetention(cursor) => {
                 if route.is_some() || answer.is_some() {
                     return Err(DriveError::StaleResponse);
@@ -868,11 +966,13 @@ impl OperationCursor {
     }
 }
 enum DriverCompletion {
+    LearningBatch(Arc<crate::activity::PreparedActivityLearning>),
     Operation(CompletedOperation),
     NpcCandidates(crate::capture::PreparedNpcCandidates),
     NpcSources(crate::capture::PreparedNpcSources),
 }
 pub(crate) enum DriveStep {
+    LearningBatch(Arc<crate::activity::PreparedActivityLearning>),
     Continue,
     Question(Arc<ProviderQuestion>),
     Complete(CompletedOperation),
@@ -889,6 +989,23 @@ pub(crate) struct OperationDriver {
     _reservation: ByteReservation,
 }
 impl OperationDriver {
+    pub(crate) fn learning_prepare(
+        core: &mut CoreMutation<'_>,
+        cursor: crate::activity::LearningPreparationCursor,
+        budget: &ByteBudget,
+    ) -> Result<Self, DriveError> {
+        Self::new(core, OperationCursor::LearningPrepare(cursor), budget)
+    }
+    pub(crate) fn learning_publish(
+        core: &mut CoreMutation<'_>,
+        cursor: crate::activity::LearningPublicationCursor,
+        budget: &ByteBudget,
+    ) -> Result<Self, DriveError> {
+        Self::new(core, OperationCursor::LearningPublish(cursor), budget)
+    }
+    pub(crate) fn is_learning_prepare(&self) -> bool {
+        matches!(self.cursor, OperationCursor::LearningPrepare(_))
+    }
     pub(crate) fn startup(
         core: &mut CoreMutation<'_>,
         budget: &ByteBudget,
@@ -937,6 +1054,13 @@ impl OperationDriver {
         budget: &ByteBudget,
     ) -> Result<Self, DriveError> {
         Self::new(core, OperationCursor::HostControl(cursor), budget)
+    }
+    pub(crate) fn support_retention(
+        core: &mut CoreMutation<'_>,
+        cursor: crate::received::SupportRetentionCursor,
+        budget: &ByteBudget,
+    ) -> Result<Self, DriveError> {
+        Self::new(core, OperationCursor::SupportRetention(cursor), budget)
     }
     pub(crate) fn recent_retention(
         core: &mut CoreMutation<'_>,
@@ -1100,6 +1224,7 @@ impl OperationDriver {
                 self.done = true;
                 Ok(match done {
                     DriverCompletion::Operation(done) => DriveStep::Complete(done),
+                    DriverCompletion::LearningBatch(done) => DriveStep::LearningBatch(done),
                     DriverCompletion::NpcCandidates(done) => DriveStep::NpcCandidates(done),
                     DriverCompletion::NpcSources(done) => DriveStep::NpcSources(done),
                 })

@@ -340,6 +340,41 @@ fn reflection_subject_cell(
 impl ResponseAliases<'_> {
     /// Reflection uses the same offered handles and marker grammar as ordinary
     /// response edits. Only the native ticket supplies these maps.
+    pub(crate) fn resolve_interpretation_records(
+        &self,
+        value: &mut SqlCell,
+        evidence: &IndexMap<String, String>,
+        storage: &mut ByteReservation,
+    ) -> Result<(), ExecutionError> {
+        let SqlCell::Array(records) = value else {
+            return Err(invalid());
+        };
+        for record in records {
+            let record = object(record)?;
+            if record.get("operation").and_then(SqlCell::as_str) == Some("remove") {
+                continue;
+            }
+            let subject = record.get_mut("subjectId").ok_or_else(invalid)?;
+            if !subject.is_null() {
+                let selected = subject
+                    .as_str()
+                    .and_then(|key| self.identities.get(key))
+                    .ok_or_else(invalid)?;
+                *subject = reflection_subject_cell(selected, storage)?;
+            }
+            let SqlCell::Array(links) = record.get_mut("evidence").ok_or_else(invalid)? else {
+                return Err(invalid());
+            };
+            for link in links {
+                scalar(
+                    object(link)?.get_mut("id").ok_or_else(invalid)?,
+                    evidence,
+                    storage,
+                )?;
+            }
+        }
+        Ok(())
+    }
     pub(crate) fn resolve_reflection_proposal(
         &self,
         publication: &mut SqlCell,
@@ -419,36 +454,13 @@ impl ResponseAliases<'_> {
         for thought in thoughts {
             prose(thought, self, true, budget, storage)?;
         }
-        let SqlCell::Array(records) = object(publication)?
-            .get_mut("recordChanges")
-            .ok_or_else(invalid)?
-        else {
-            return Err(invalid());
-        };
-        for record in records {
-            let record = object(record)?;
-            if record.get("operation").and_then(SqlCell::as_str) == Some("remove") {
-                continue;
-            }
-            let subject = record.get_mut("subjectId").ok_or_else(invalid)?;
-            if !subject.is_null() {
-                let selected = subject
-                    .as_str()
-                    .and_then(|key| self.identities.get(key))
-                    .ok_or_else(invalid)?;
-                *subject = reflection_subject_cell(selected, storage)?;
-            }
-            let SqlCell::Array(links) = record.get_mut("evidence").ok_or_else(invalid)? else {
-                return Err(invalid());
-            };
-            for link in links {
-                scalar(
-                    object(link)?.get_mut("id").ok_or_else(invalid)?,
-                    evidence,
-                    storage,
-                )?;
-            }
-        }
+        self.resolve_interpretation_records(
+            object(publication)?
+                .get_mut("recordChanges")
+                .ok_or_else(invalid)?,
+            evidence,
+            storage,
+        )?;
         let SqlCell::Array(changes) = object(publication)?
             .get_mut("appraisalChanges")
             .ok_or_else(invalid)?

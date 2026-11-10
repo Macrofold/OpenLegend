@@ -13,9 +13,14 @@ heap_record!(DecisionOfferRules {
     hunting_purpose,
     hunting,
     slot_requirements,
+    typed_nouns,
     activity_choices,
     availability,
     probes
+});
+heap_record!(TypedNouns {
+    heat_sources,
+    beings
 });
 heap_record!(SlotRequirements {
     tool_fields,

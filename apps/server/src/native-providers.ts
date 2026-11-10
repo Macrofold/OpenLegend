@@ -1,3 +1,8 @@
+import {
+  selectTypedNavigation,
+  type TypedNavigationSyntax,
+  type TypedNavigationRead,
+} from './typed-navigation.js';
 import type {
   NativeGeometryQueries,
   NativeWorld,
@@ -44,7 +49,22 @@ import {
   nativeMaintenanceFormat,
   type NativeMaintenanceFormatRequest,
 } from './native-maintenance-format.js';
-import { nativeConsolidationReadings, type NativeConsolidationFormatRequest } from './native-consolidation-format.js';
+import {
+  nativeConsolidationReadings,
+  type NativeConsolidationFormatRequest,
+} from './native-consolidation-format.js';
+import {
+  nativeActivityLearningFormat,
+  type NativeActivityLearningFormatRequest,
+} from './native-activity-learning-format.js';
+import {
+  readNativeActivityHistory,
+  type NativeActivityHistoryRequest,
+} from './native-activity-history.js';
+import {
+  readNativeSupportMembership,
+  type NativeSupportMembershipRequest,
+} from './native-support-retention.js';
 
 type Binding = NativeGeometryQueries['binding'];
 type Question = { kind: string; value: unknown };
@@ -76,6 +96,23 @@ async function prepareProviderAnswer(
 ): Promise<string> {
   const value = question.value;
   switch (question.kind) {
+    case 'support-membership': {
+      const request = value as NativeSupportMembershipRequest;
+      const cut = history?.liveReadCuts({ worldId: request.worldId, actorId: request.actorId });
+      if (!history || !cut) throw new Error('Native support cleanup requires its actual SQL cut.');
+      return JSON.stringify(await readNativeSupportMembership(history.db, cut, request));
+    }
+    case 'activity-learning-format':
+      return JSON.stringify(
+        nativeActivityLearningFormat(value as NativeActivityLearningFormatRequest),
+      );
+    case 'activity-history': {
+      const request = value as NativeActivityHistoryRequest;
+      const cut = history?.liveReadCuts({ worldId: request.worldId, actorId: request.actorId });
+      if (!history || !cut)
+        throw new Error('Native activity history requires its scoped SQL provider.');
+      return JSON.stringify(await readNativeActivityHistory(history.db, request, cut));
+    }
     case 'maintenance-format':
       return JSON.stringify(nativeMaintenanceFormat(value as NativeMaintenanceFormatRequest));
     case 'consolidation-format':
@@ -83,17 +120,37 @@ async function prepareProviderAnswer(
     case 'typed-actions': {
       const request = value as {
         readonly binding: Binding;
+        readonly phase: 'name' | 'format';
+        readonly input?: {
+          readonly syntax: TypedNavigationSyntax;
+          readonly read: TypedNavigationRead;
+        };
         readonly limits: Parameters<typeof formatFreeTypedActionPreparation>[0]['limits'];
         readonly requests: readonly Omit<
           Parameters<typeof formatFreeTypedActionPreparation>[0],
           'limits'
         >[];
       };
+      if (request.phase === 'name') {
+        if (!request.input) throw new Error('Native typed name selection has no captured roster.');
+        return JSON.stringify({
+          binding: request.binding,
+          output: {
+            kind: 'name',
+            selection: selectTypedNavigation(request.input.syntax, request.input.read),
+          },
+        });
+      }
+      if (request.phase !== 'format')
+        throw new Error('Native typed preparation has no valid phase.');
       return JSON.stringify({
         binding: request.binding,
-        results: request.requests.map((item) =>
-          formatFreeTypedActionPreparation({ ...item, limits: request.limits }),
-        ),
+        output: {
+          kind: 'format',
+          results: request.requests.map((item) =>
+            formatFreeTypedActionPreparation({ ...item, limits: request.limits }),
+          ),
+        },
       });
     }
     case 'choice-descriptions': {

@@ -13,6 +13,37 @@ use crate::records::SqlCell;
 use crate::state::{Point, SurfacePoint};
 use std::mem::size_of;
 
+/// The movement binding owner emits the same command for a provider-selected
+/// stance and for an actor's exact held historical point. No projection or
+/// fresh hidden target lookup is performed by this serialization step.
+pub(crate) fn movement_destination(
+    actor: &str,
+    id: &str,
+    point: &SurfacePoint,
+    budget: &ByteBudget,
+) -> Result<(NativeCommand, ByteReservation), ExecutionError> {
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Move<'a> {
+        id: &'a str,
+        actor_id: &'a str,
+        #[serde(rename = "type")]
+        kind: &'static str,
+        destination: &'a SurfacePoint,
+    }
+    let input = Move {
+        id,
+        actor_id: actor,
+        kind: "move",
+        destination: point,
+    };
+    let bytes = crate::encoding::json_record_len(&input).map_err(|_| ExecutionError::Invariant)?;
+    let guard = budget.reserve(bytes.checked_mul(12).ok_or(ExecutionError::Capacity)?)?;
+    let json = crate::encoding::json_record(&input).map_err(|_| ExecutionError::Invariant)?;
+    let command = serde_json::from_str(&json).map_err(|_| ExecutionError::Invariant)?;
+    Ok((command, guard))
+}
+
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Input {
@@ -215,29 +246,7 @@ impl InvocationCursor {
         Ok(())
     }
     fn bind(&mut self, point: SurfacePoint) -> Result<(), ExecutionError> {
-        #[derive(Serialize)]
-        #[serde(rename_all = "camelCase")]
-        struct Move<'a> {
-            id: &'a str,
-            actor_id: &'a str,
-            #[serde(rename = "type")]
-            kind: &'static str,
-            destination: SurfacePoint,
-        }
-        let input = Move {
-            id: &self.id,
-            actor_id: &self.actor,
-            kind: "move",
-            destination: point,
-        };
-        let bytes =
-            crate::encoding::json_record_len(&input).map_err(|_| ExecutionError::Invariant)?;
-        let guard = self
-            .budget
-            .reserve(bytes.checked_mul(12).ok_or(ExecutionError::Capacity)?)?;
-        let json = crate::encoding::json_record(&input).map_err(|_| ExecutionError::Invariant)?;
-        let command: NativeCommand =
-            serde_json::from_str(&json).map_err(|_| ExecutionError::Invariant)?;
+        let (command, guard) = movement_destination(&self.actor, &self.id, &point, &self.budget)?;
         self.storage
             .as_mut()
             .ok_or(ExecutionError::Invariant)?

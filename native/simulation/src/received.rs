@@ -28,12 +28,18 @@ mod save;
 mod selection;
 pub(crate) use save::encode_received_value_changes;
 pub(crate) use selection::{
-    CapturedTemporalReceipt, capture_received_entry, observation_receipt_member_indices, select_temporal_receipt_facets,
-    temporal_field_aliases, temporal_receipt_account_aliases, temporal_receipt_aliases,
+    CapturedTemporalReceipt, capture_received_entry, observation_receipt_member_indices,
+    select_temporal_receipt_facets, temporal_field_aliases, temporal_receipt_account_aliases,
+    temporal_receipt_aliases,
 };
-mod recent_residency;
 mod recent;
+mod recent_residency;
+mod support_retention;
 pub(crate) use recent::{CompletedRecentRetention, RecentRetentionCursor};
+pub(crate) use support_retention::{
+    CompletedSupportRetention, SupportMembershipAnswer, SupportMembershipRequest,
+    SupportPreparation, SupportRetentionCursor, SupportRetentionStep,
+};
 mod retained_size;
 use recent_residency::RecentDirectoryBlock;
 pub use result::*;
@@ -365,7 +371,9 @@ impl PartialEq for ReceivedRecentDirectory {
 impl ReceivedRecentDirectory {
     pub(crate) fn new(budget: &crate::host::ByteBudget) -> Result<Self, ReceivedError> {
         let roots = crate::host::retained_size::tree_node_bound::<String, RecentDirectoryBlock>()
-            .and_then(|n| n.checked_add(crate::host::retained_size::tree_node_bound::<String, u64>()?))
+            .and_then(|n| {
+                n.checked_add(crate::host::retained_size::tree_node_bound::<String, u64>()?)
+            })
             .ok_or(ReceivedError("Recent directory root allocation overflow."))?;
         Ok(Self {
             blocks: BTreeMap::new(),
@@ -375,7 +383,8 @@ impl ReceivedRecentDirectory {
             budget: budget.clone(),
             // Empty B-trees may retain their allocated root after retirement.
             // Live block guards fund their actual additional nodes/memberships.
-            _roots: budget.reserve_backing(roots)
+            _roots: budget
+                .reserve_backing(roots)
                 .map_err(|_| ReceivedError("Recent directory roots exceed native allowance."))?,
         })
     }
@@ -612,8 +621,6 @@ impl ReceivedRecentDirectory {
         }
         Ok(())
     }
-
-
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

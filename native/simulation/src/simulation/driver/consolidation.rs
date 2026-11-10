@@ -5,6 +5,7 @@ use crate::cognition::consolidation::{
 #[derive(Clone, Copy)]
 pub(super) enum ConsolidationReply {
     Sources,
+    Dream,
     Format,
     Collation,
 }
@@ -16,6 +17,13 @@ pub(super) fn poll_consolidation(
     budget: &ByteBudget,
 ) -> Result<Poll<CompletedConsolidation, ConsolidationReply>, DriveError> {
     let supplied = match route {
+        Some(ConsolidationReply::Dream) => {
+            let Answer::MaintenanceFormat(a) = direct(answer, ProviderKind::MaintenanceFormat)?
+            else {
+                return Err(DriveError::StaleResponse);
+            };
+            Some(ConsolidationAnswer::Dream(a))
+        }
         Some(ConsolidationReply::Sources) => {
             let Answer::Sources(a) = direct(answer, ProviderKind::Sources)? else {
                 return Err(DriveError::StaleResponse);
@@ -39,6 +47,14 @@ pub(super) fn poll_consolidation(
     };
     match cursor.step(core, supplied)? {
         ConsolidationStep::Complete(done) => Ok(Poll::Complete(done)),
+        ConsolidationStep::Dream(q) => question(
+            answer,
+            ProviderKind::MaintenanceFormat,
+            q.binding(),
+            q,
+            budget,
+            ConsolidationReply::Dream,
+        ),
         ConsolidationStep::Sources(q) => question(
             answer,
             ProviderKind::Sources,

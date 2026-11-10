@@ -3,6 +3,8 @@ use super::*;
 use openlegend_simulation::runtime::{RuntimeMaintenancePublication, RuntimeMaintenanceRead};
 use std::mem::size_of;
 use std::sync::Weak;
+mod consolidation;
+mod learning;
 mod reflection;
 
 pub(super) struct MaintenanceOwner {
@@ -25,6 +27,7 @@ pub struct NativeWorldMaintenancePublication {
 enum MaintenancePublicationOwner {
     Read(Arc<MaintenanceOwner>),
     Reflection(Arc<reflection::ReflectionOwner>),
+    Consolidation(Arc<consolidation::ConsolidationOwner>),
 }
 #[napi]
 impl NativeWorldMaintenancePublication {
@@ -33,6 +36,9 @@ impl NativeWorldMaintenancePublication {
         !match &self.owner {
             MaintenancePublicationOwner::Read(owner) => owner.released.load(Ordering::Acquire),
             MaintenancePublicationOwner::Reflection(owner) => {
+                owner.released.load(Ordering::Acquire)
+            }
+            MaintenancePublicationOwner::Consolidation(owner) => {
                 owner.released.load(Ordering::Acquire)
             }
         } && self
@@ -237,6 +243,21 @@ impl NativeWorld {
                 owner: MaintenancePublicationOwner::Read(read),
                 _storage: storage,
             }))
+        })
+    }
+    #[napi(ts_return_type = "Promise<NativeWorldTurn>")]
+    pub fn begin_support_retention<'a>(
+        &self,
+        env: &'a Env,
+        bytes: BufferSlice<'_>,
+    ) -> Result<Object<'a>> {
+        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        self.compute(env, move |session, cancel, budget| {
+            let _custody = custody;
+            let key = session
+                .begin_support_retention(&bytes)
+                .map_err(operation_error)?;
+            turn(session, key, None, cancel, budget)
         })
     }
     #[napi(ts_return_type = "Promise<NativeWorldTurn>")]

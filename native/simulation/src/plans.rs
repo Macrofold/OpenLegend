@@ -23,6 +23,7 @@ pub(crate) use run::{
 mod resume;
 pub(crate) use ready::{PlanReadyAnswer, PlanReadyCursor, PlanReadyStep, ReadyPlanStep};
 mod attempts;
+pub(crate) use attempts::resolution_signature;
 mod goals;
 mod validation;
 pub use attempts::{ActionResolution, IntentSlots, PendingIntent};

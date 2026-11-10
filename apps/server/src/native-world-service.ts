@@ -17,6 +17,9 @@ import type {
   NativeWorld,
   NativeWorldTurn,
   NativeWorldNpcResponseTicket,
+  NativeWorldNpcTurn,
+  NativeWorldMaintenanceRead,
+  NativeWorldConsolidationTicket,
 } from '@open-legend/native-simulation';
 import {
   canonicalJson,
@@ -81,8 +84,9 @@ import { CheckpointBusyError, GameSaveError } from './game-saves.js';
 import { NativePlayerCapture } from './native-player-capture.js';
 import { NativeNpcCapture, type NativeNpcConsumer } from './native-npc-capture.js';
 import type { NativeNpcSourceSelection } from './native-npc-sources.js';
-import { NativeRecentRetention } from './native-retention.js';
+import { NativeRetention } from './native-retention.js';
 import { readNativeTemporalTail } from './native-temporal-tail.js';
+import { SUPPORT_MEMBERSHIP_PREPARATION } from './retention-cleanup.js';
 import { RETENTION_MIN_DELAY_MS } from './retention-deadlines.js';
 import { playerInteractionAvailability } from './player-interaction.js';
 import { nativePlayerCommandReferences } from './native-player-command.js';
@@ -113,7 +117,8 @@ import { OverloadError, WorkLane } from './work-lane.js';
 import { LIVE_SAVE_INTERVAL_MS, LIVE_SAVE_MAX_AGE_MS } from './pending-world-save.js';
 import { WorldInputOwner } from './world-input.js';
 import { permittedSourceHandle } from './entity-references.js';
-import { driveNativeOperation } from './native-providers.js';
+import { prepareNativeActivityLearning } from './native-activity-learning.js';
+import { driveNativeOperation, answerNativeProvider } from './native-providers.js';
 import { NativeRestorePreparation } from './native-restore-operation.js';
 import type { NativeWorldAdoption } from './store.js';
 import { checkpointPrivacy } from './native-restore.js';
@@ -165,7 +170,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   private readonly publicationContext = new AsyncLocalStorage<{ active: boolean }>();
   private readonly publicationListeners = new Set<(publication: NativePublication) => void>();
   private pending: NativePendingSave;
-  private recent: NativeRecentRetention;
+  private retention: NativeRetention;
   private provider?: ReturnType<NativeDefinitionCapture['geometry']>;
   private milestones: Readonly<Record<string, Readonly<Record<string, boolean>>>>;
   private readonly profiles = new Map<string, Promise<GameView['profile']>>();
@@ -253,7 +258,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     this.epoch = epoch;
     this.milestones = milestones;
     this.actors = actors;
-    this.recent = new NativeRecentRetention(
+    this.retention = new NativeRetention(
       installation.worldId,
       selectedTemporalPolicy(definitions.facts.definitions).recent,
       recentRows,
@@ -475,7 +480,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       await service.withSaveBarrier(undefined, 'play', () =>
         service!.lane.run(() => service!.reconcileParticipationInLane()),
       );
-      service.scheduleRecentRetention();
+      service.scheduleRetention();
       return service;
     } catch (error) {
       service?.closeAdmission();
@@ -752,6 +757,69 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     });
   }
 
+  async prepareActivityLearning(actorId: string) {
+    await this.whenDurable();
+    return this.lane.run(async () => {
+      this.assertAdmission();
+      const cut = nativeScopedReadCut(
+        await captureNativeReadCut(this.world, actorId),
+        this.pending.liveReadCuts(),
+      );
+      return prepareNativeActivityLearning(this.world, actorId, this.geometry, {
+        db: this.store.db,
+        liveReadCuts: () => cut,
+      });
+    });
+  }
+  /** Freeze the native source/frame admission in one actual mutation turn.
+   * Only indexed SQL and finite local provider work run here; model work uses
+   * the returned opaque ticket after its genuine read-only candidate closes. */
+  prepareConsolidation(
+    body: NativeWorldMaintenanceRead,
+    actorId: string,
+    binding: Buffer,
+    signal: AbortSignal,
+  ): Promise<NativeWorldConsolidationTicket> {
+    return this.lane.run(async () => {
+      this.assertAdmission();
+      signal.throwIfAborted();
+      const cut = nativeScopedReadCut(
+        await captureNativeReadCut(this.world, actorId),
+        this.pending.liveReadCuts(),
+      );
+      const ticket = await this.world.bindConsolidation(body, binding);
+      try {
+        let turn: NativeWorldNpcTurn = await this.world.consolidationSources(ticket);
+        while (turn.kind === 'provider') {
+          signal.throwIfAborted();
+          if (!turn.provider) throw new Error('Consolidation has no actual source question.');
+          const answer = await answerNativeProvider(turn.provider, this.geometry, {
+            db: this.store.db,
+            liveReadCuts: () => cut,
+          });
+          signal.throwIfAborted();
+          turn = await this.world.answerConsolidationSources(
+            ticket,
+            turn.provider,
+            Buffer.from(answer.json),
+          );
+        }
+        if (turn.kind !== 'complete')
+          throw new Error('Consolidation source preparation did not close its candidate.');
+        signal.throwIfAborted();
+        // packet() later serializes only the ticket's immutable admitted frame
+        // and sources. It never rereads or retargets this accepted world cut.
+        return ticket;
+      } catch (error) {
+        try {
+          await this.world.cancelConsolidationSources(ticket);
+        } finally {
+          ticket.release();
+        }
+        throw error;
+      }
+    });
+  }
   prepareNpcSources(
     capture: NativeNpcCapture,
     selection: NativeNpcSourceSelection,
@@ -879,7 +947,16 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     const cut = await (this.publicationContext.getStore()?.active
       ? capture()
       : this.lane.run(capture));
-    return this.withMemoryRead(cut, () => operation(cut));
+    const world = this.world;
+    return this.withMemoryRead(cut, () =>
+      this.store.memories.withHydrationBudget(
+        {
+          reserveBytes: (bytes) => world.reserveConsumerBytes(bytes),
+          reserveJson: (bytes) => world.reserveConsumerJson(bytes),
+        },
+        () => operation(cut),
+      ),
+    );
   }
 
   /** SQL admission precedes this final short turn when the callback needs SQL.
@@ -1419,7 +1496,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           true,
         );
         if (outcome.ok && resuming) this.clockStartedAt = performance.now();
-        if (outcome.ok) this.scheduleRecentRetention();
+        if (outcome.ok) this.scheduleRetention();
         return outcome.ok ? worldControlOutcome(paused, speed) : outcome;
       }),
     );
@@ -1467,7 +1544,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       return await operation();
     } finally {
       if (!this.protectedHold) this.protectedAdmission = false;
-      this.scheduleRecentRetention();
+      this.scheduleRetention();
     }
   }
 
@@ -1539,7 +1616,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             return {
               prepared,
               privacy,
-              retain: this.recent.prepare(publication.records),
+              retain: this.retention.prepare(publication.records),
               actors: this.prepareActorRows(publication.records),
             };
           },
@@ -1593,7 +1670,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           if (result.publication.privacyChange) this.privacyEpoch++;
           this.publishAccepted(result.publication);
           this.notify(result.publication.events.length !== 0);
-          this.scheduleRecentRetention();
+          this.scheduleRetention();
         } else if (
           result.publication.protectedSave &&
           !(request.requireSuccess && !result.publication.outcome.ok)
@@ -1814,7 +1891,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             this.storageGeneration = receipt.generation;
             this.timeline = timeline;
             this.pending = preparation.pending;
-            this.recent = preparation.recent;
+            this.retention = preparation.retention;
             this.provider = preparation.geometry;
             this.retained = preparation.retained;
             this.progress = this.durableProgress = preparation.publication.progress;
@@ -2000,7 +2077,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           ...pending,
           lives,
           actors: this.prepareActorRows(publication.records),
-          retain: this.recent.prepare(publication.records),
+          retain: this.retention.prepare(publication.records),
         };
       },
     });
@@ -2035,7 +2112,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     this.publishAccepted(publication);
     this.notify(publication.events.length !== 0);
     this.scheduleSave();
-    this.scheduleRecentRetention();
+    this.scheduleRetention();
     return publication;
   }
 
@@ -3094,8 +3171,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     this.saveTimer.unref();
   }
 
-  private scheduleRecentRetention(): void {
-    const at = this.recent.at;
+  private scheduleRetention(): void {
+    const at = this.retention.at;
     if (
       at === undefined ||
       this.retentionTask ||
@@ -3127,24 +3204,44 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           .run(
             async () => {
               if (this.closed || this.failure || this.paused || this.protectedAdmission) return;
-              const actorIds = this.recent.actors(this.progress.at);
+              const actorIds = this.retention.actors('recent', this.progress.at);
               if (actorIds.length)
                 await this.acceptInLane({
                   first: () =>
                     this.world.beginRecentRetention(Buffer.from(JSON.stringify({ actorIds }))),
                   current: () => !this.closed && !this.failure && !this.paused,
                 });
+              const supportActors = this.retention.actors('support', this.progress.at);
+              if (supportActors.length)
+                await this.acceptInLane({
+                  first: () =>
+                    this.world.beginSupportRetention(
+                      Buffer.from(
+                        JSON.stringify({
+                          actorIds: supportActors,
+                          preparation: SUPPORT_MEMBERSHIP_PREPARATION,
+                        }),
+                      ),
+                    ),
+                  current: () =>
+                    !this.closed &&
+                    !this.failure &&
+                    !this.paused &&
+                    supportActors.every(
+                      (actorId) =>
+                        !this.store.memories.sourceEditPending({ worldId: this.worldId, actorId }),
+                    ),
+                });
             },
             this.lane.waitMs,
             true,
           )
           .catch((error: unknown) => {
-            if (!(error instanceof OverloadError))
-              console.error('Native recent retention failed.', error);
+            if (!(error instanceof OverloadError)) console.error('Native retention failed.', error);
           })
           .finally(() => {
             this.retentionTask = undefined;
-            this.scheduleRecentRetention();
+            this.scheduleRetention();
           });
       },
       Math.max(0, wake - performance.now()),

@@ -26,6 +26,15 @@ pub(crate) struct AttemptNormalizationAnswer {
     deny_unknown_fields
 )]
 pub(crate) enum FreeTypedActionSyntax {
+    Approach {
+        name: JsText,
+    },
+    LastSeen {
+        name: JsText,
+    },
+    Unsupported {
+        family: String,
+    },
     Stop {
         activity: Option<String>,
     },
@@ -43,6 +52,8 @@ pub(crate) enum FreeTypedActionSyntax {
 impl HeapBytes for FreeTypedActionSyntax {
     fn heap_bytes(&self) -> Option<usize> {
         match self {
+            Self::Approach { name } | Self::LastSeen { name } => name.heap_bytes(),
+            Self::Unsupported { family } => family.heap_bytes(),
             Self::Stop { activity } => activity.heap_bytes(),
             Self::Point { surface_id, .. } => surface_id.heap_bytes(),
             _ => Some(0),

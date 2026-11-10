@@ -30,7 +30,10 @@ mod warning;
 pub(crate) use warning::ordinary_warning;
 #[path = "recognition/prune.rs"]
 mod prune;
+#[path = "recognition/support_retention.rs"]
+mod support_retention;
 pub(crate) use prune::{IndividualPruneMode, prune_observer_individuals};
+pub(crate) use support_retention::held_support_aliases;
 #[path = "recognition/privacy.rs"]
 mod privacy;
 #[path = "recognition/validation.rs"]

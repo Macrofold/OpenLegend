@@ -214,7 +214,7 @@ function nativeMaintenanceHost(
       );
       return generation === service.generation ? batch : null;
     },
-    ...nativeActivityLearning(service),
+    ...nativeActivityLearning(service, admissionRead),
     withExecution(actorId, id, lease, work) {
       const active = [...admissions].find(
         ([admission]) =>

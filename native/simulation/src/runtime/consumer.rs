@@ -50,18 +50,37 @@ fn decoded_bound(bytes: &[u8]) -> Result<usize, RuntimeError> {
 }
 
 pub(super) fn prepare(bytes: &[u8], budget: &ByteBudget) -> Result<RuntimeConsumer, RuntimeError> {
-    let body = budget.reserve(decoded_bound(bytes)?).map_err(failure)?;
-    let reference = budget
-        .reserve(reference_bytes().ok_or_else(|| failure("capacity"))?)
-        .map_err(failure)?;
-    Ok(RuntimeConsumer {
-        body: Arc::new(body),
-        budget: budget.clone(),
-        _reference: reference,
-    })
+    RuntimeConsumer::fund(decoded_bound(bytes)?, budget)
 }
 
 impl RuntimeConsumer {
+    /// Capacity-only host admission for a finite SQL transfer or formatter
+    /// preparation. It grants no read, write, source or publication authority.
+    pub fn reserve(bytes: usize, budget: &ByteBudget) -> Result<Self, RuntimeError> {
+        let bytes = bytes
+            .checked_add(size_of::<ByteReservation>() + 2 * size_of::<usize>())
+            .ok_or_else(|| failure("native consumer allocation overflow"))?;
+        Self::fund(bytes, budget)
+    }
+
+    /// The host already holds the raw transfer's admission before supplying
+    /// these borrowed bytes. This scan allocates no decoded JSON graph.
+    pub fn for_json(bytes: &[u8], budget: &ByteBudget) -> Result<Self, RuntimeError> {
+        prepare(bytes, budget)
+    }
+
+    fn fund(bytes: usize, budget: &ByteBudget) -> Result<Self, RuntimeError> {
+        let body = budget.reserve(bytes).map_err(failure)?;
+        let reference = budget
+            .reserve(reference_bytes().ok_or_else(|| failure("capacity"))?)
+            .map_err(failure)?;
+        Ok(Self {
+            body: Arc::new(body),
+            budget: budget.clone(),
+            _reference: reference,
+        })
+    }
+
     /// An optional async task/cache or detached result obtains its own real
     /// reference custody while sharing the already admitted decoded graph.
     pub fn retain(&self) -> Result<Self, RuntimeError> {

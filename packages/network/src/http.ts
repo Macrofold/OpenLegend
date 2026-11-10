@@ -102,8 +102,8 @@ export async function openHttp(
     throw new TypeError('Streaming uploads require the owned Node adapter');
   }
   const scope = scopeOf(operation);
-  scope.observeStatus(undefined);
   const activity = scope.httpActivity();
+  scope.observeStatus(undefined);
   const controller = new AbortController();
   let owned: OwnedHttp | undefined;
   let stopped = false;
@@ -127,7 +127,7 @@ export async function openHttp(
     const start = () => {
       operation.throwIfStopped();
       if (requestSignal?.aborted) throw new NetworkError('cancelled', 'connect', 'not_started');
-      scope.markStarted('connect');
+      activity.start();
       request.onDispatch?.();
       return scope.transport(String(request.url), { ...request.init, signal: controller.signal });
     };

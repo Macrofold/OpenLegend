@@ -6,6 +6,7 @@
 //! can silently replace such a field with an empty value.
 
 mod action_storage;
+mod agency;
 mod goal_storage;
 mod intent_storage;
 mod residency;
@@ -17,6 +18,7 @@ use crate::values::{
 pub(crate) use action_storage::{
     FundedAction, FundedActionNavigation, FundedActionPath, FundedActionRoute,
 };
+pub(crate) use agency::AgencyOrder;
 pub(crate) use goal_storage::FundedGoals;
 use indexmap::IndexMap;
 pub(crate) use intent_storage::FundedIntents;
@@ -436,40 +438,18 @@ pub struct RememberedPlace {
     pub at: f64,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[derive(Debug, PartialEq)]
 pub struct ActorAgency {
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
     pub semantic: Option<SemanticContinuation>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
     pub last_result_evidence: Option<crate::activity::ResultEvidence>,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
     pub revision: u64,
     pub goals: Vec<Goal>,
-    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
     pub(crate) plan: Option<crate::plans::ActorPlan>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
     pub(crate) suspended: Option<Option<crate::plans::ActorPlan>>,
     pub(crate) history: Vec<crate::plans::PlanStep>,
     pub attempts: Vec<crate::plans::PendingIntent>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
     pub places: Option<Vec<RememberedPlace>>,
+    pub(crate) order: AgencyOrder,
 }
 impl ActorAgency {
     /// An explicit saved null clears paused work but retains its field presence.

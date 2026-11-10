@@ -24,8 +24,81 @@ export declare class NativeHost {
 
 export declare class NativeWorld {
   beginControl(bytes: Buffer): Promise<NativeWorldTurn>;
+  reserveConsumerBytes(bytes: number): NativeWorldConsumer;
+  reserveConsumerJson(bytes: Buffer): NativeWorldConsumer;
+  bindConsolidationDream(
+    ticket: NativeWorldConsolidationTicket,
+    bytes: Buffer,
+  ): Promise<NativeWorldConsolidationDream>;
+  cancelConsolidationSources(ticket: NativeWorldConsolidationTicket): Promise<void>;
+  bindConsolidation(
+    read: NativeWorldMaintenanceRead,
+    bytes: Buffer,
+  ): Promise<NativeWorldConsolidationTicket>;
+  consolidationSources(ticket: NativeWorldConsolidationTicket): Promise<NativeWorldNpcTurn>;
+  answerConsolidationSources(
+    ticket: NativeWorldConsolidationTicket,
+    provider: NativeWorldProvider,
+    bytes: Buffer,
+  ): Promise<NativeWorldNpcTurn>;
+  consolidationPublication(
+    ticket: NativeWorldConsolidationTicket,
+  ): Promise<NativeWorldMaintenancePublication | null>;
+  beginConsolidation(
+    ticket: NativeWorldConsolidationTicket,
+    bytes: Buffer,
+    dream?: NativeWorldConsolidationDream | undefined | null,
+    interpretation?: Buffer | undefined | null,
+  ): Promise<NativeWorldTurn>;
+  prepareActivityLearning(request: Buffer): Promise<NativeWorldActivityLearningBatch>;
+  stepActivityLearning(
+    batch: NativeWorldActivityLearningBatch,
+  ): Promise<NativeWorldActivityLearningTurn>;
+  answerActivityLearning(
+    batch: NativeWorldActivityLearningBatch,
+    provider: NativeWorldProvider,
+    answer: Buffer,
+  ): Promise<NativeWorldActivityLearningTurn>;
+  beginActivityLearningPublication(
+    batch: NativeWorldActivityLearningBatch,
+    request: Buffer,
+    admission?: NativeWorldMaintenanceRead | undefined | null,
+  ): Promise<NativeWorldTurn>;
+  acquiredActivitySignatures(request: Buffer): Promise<NativeWorldJson>;
+  bindReflection(
+    bodyRead: NativeWorldMaintenanceRead,
+    workspaceRead: NativeWorldMaintenanceRead,
+    npc: NativeWorldNpcResponseTicket,
+    bytes: Buffer,
+  ): Promise<NativeWorldReflectionTicket>;
+  reflectionPublication(
+    ticket: NativeWorldReflectionTicket,
+  ): Promise<NativeWorldMaintenancePublication | null>;
+  beginReflection(ticket: NativeWorldReflectionTicket, bytes: Buffer): Promise<NativeWorldTurn>;
+  maintenancePopulation(): Promise<NativeWorldJson>;
+  maintenancePressure(bytes: Buffer): Promise<NativeWorldJson>;
+  readMaintenance(bytes: Buffer): Promise<NativeWorldMaintenanceRead>;
+  maintenancePublication(
+    read: NativeWorldMaintenanceRead,
+    bytes: Buffer,
+  ): Promise<NativeWorldMaintenancePublication | null>;
   beginRecentRetention(bytes: Buffer): Promise<NativeWorldTurn>;
-  npcHistoryPublication(read: NativeWorldNpcRead): Promise<NativeWorldNpcPublication | null>;
+  npcPerspectives(read: NativeWorldNpcRead, request: Buffer): Promise<NativeWorldJson>;
+  /**
+   * Trusted operational protection chooses the actual SQL-before-acceptance
+   * route. Model JSON contains no persistence or permission selector.
+   */
+  beginNpcResponse(
+    ticket: NativeWorldNpcResponseTicket,
+    response: Buffer,
+    protected: boolean,
+  ): Promise<NativeWorldTurn>;
+  rebindNpcResponse(ticket: NativeWorldNpcResponseTicket, request: Buffer): Promise<void>;
+  openNpcResponse(ticket: NativeWorldNpcResponseTicket): Promise<NativeWorldNpcReads>;
+  npcHistoryPublication(
+    read: NativeWorldNpcRead,
+    request: Buffer,
+  ): Promise<NativeWorldNpcPublication | null>;
   npcResponsePublication(
     ticket: NativeWorldNpcResponseTicket,
   ): Promise<NativeWorldNpcPublication | null>;
@@ -33,6 +106,7 @@ export declare class NativeWorld {
     original: NativeWorldNpcRead,
     current: NativeWorldNpcRead,
     request: Buffer,
+    trigger?: NativeWorldNpcTrigger | undefined | null,
   ): Promise<NativeWorldNpcResponseTicket>;
   npcPresentationLabels(read: NativeWorldNpcRead, request: Buffer): Promise<NativeWorldJson>;
   npcCandidates(read: NativeWorldNpcRead, request: Buffer): Promise<NativeWorldNpcTurn>;
@@ -44,6 +118,10 @@ export declare class NativeWorld {
     answer: Buffer,
   ): Promise<NativeWorldNpcTurn>;
   readNpc(request: Buffer): Promise<NativeWorldNpcRead>;
+  readNpcTrigger(request: Buffer): Promise<NativeWorldNpcTrigger>;
+  inspectNpcTrigger(trigger: NativeWorldNpcTrigger): Promise<NativeWorldNpcInspection | null>;
+  npcTriggerCurrent(trigger: NativeWorldNpcTrigger): Promise<boolean>;
+  beginNpcIntake(request: Buffer): Promise<NativeWorldTurn>;
   beginParticipation(bytes: Buffer): Promise<NativeWorldTurn>;
   playerInteraction(read: NativeWorldPlayerRead, bytes: Buffer): Promise<NativeWorldJson>;
   readPlayer(account: string, actor: string, eventWindow: number): Promise<NativeWorldPlayerRead>;
@@ -59,6 +137,7 @@ export declare class NativeWorld {
   beginRestore(bytes: Buffer): Promise<NativeWorldTurn>;
   activateRestored(key: NativeCandidateKey, receipt: string): Promise<void>;
   retainedValues(): Promise<NativeWorldJson>;
+  beginStartup(): Promise<NativeWorldTurn>;
   activate(receipt: string): Promise<void>;
   definitions(): Promise<NativeWorldJson>;
   installation(): Promise<NativeWorldJson>;
@@ -76,6 +155,22 @@ export declare class NativeWorld {
   captureSave(): Promise<NativeWorldSave>;
   acknowledge(ack: string): Promise<void>;
   finishStop(): Promise<void>;
+}
+
+export declare class NativeWorldActivityLearningBatch {
+  packet(): Promise<NativeWorldJson>;
+  release(): void;
+}
+
+export declare class NativeWorldConsolidationDream {
+  release(): void;
+}
+
+export declare class NativeWorldConsolidationTicket {
+  isCurrent(): boolean;
+  packet(): Promise<NativeWorldJson>;
+  interpretation(): Promise<NativeWorldJson>;
+  release(): void;
 }
 
 /**
@@ -96,6 +191,33 @@ export declare class NativeWorldJson {
   consume(): Buffer;
 }
 
+export declare class NativeWorldMaintenancePublication {
+  isCurrent(): boolean;
+  release(): void;
+}
+
+export declare class NativeWorldMaintenanceRead {
+  /**
+   * Queue acknowledgement checks the originating wakeup inputs separately
+   * from the narrower body admission used when starting an HTTP request.
+   */
+  inputsCurrent(): boolean;
+  /**
+   * Used inside an existing history publication lease, immediately before
+   * fetch. This checks the real resident owner without an asynchronous gap.
+   */
+  isCurrent(input: Buffer): boolean;
+  packet(): Promise<NativeWorldJson>;
+  details(): Promise<NativeWorldJson>;
+  rawTimes(): Promise<NativeWorldJson>;
+  release(): void;
+}
+
+export declare class NativeWorldNpcInspection {
+  isCurrent(): boolean;
+  release(): void;
+}
+
 export declare class NativeWorldNpcPublication {
   isCurrent(): boolean;
   release(): void;
@@ -111,6 +233,12 @@ export declare class NativeWorldNpcRead {
  * issues it only by consuming the two originating accepted read handles.
  */
 export declare class NativeWorldNpcResponseTicket {
+  release(): void;
+}
+
+export declare class NativeWorldNpcTrigger {
+  packet(): Promise<NativeWorldJson>;
+  inputs(): Promise<NativeWorldJson>;
   release(): void;
 }
 
@@ -136,6 +264,15 @@ export declare class NativeWorldPrepared {
 
 export declare class NativeWorldProvider {
   question(): NativeWorldJson;
+}
+
+export declare class NativeWorldReflectionTicket {
+  /**
+   * Source-only freshness can join an already held history disclosure gate.
+   * Body/workspace admission belongs to the maintenance read, separately.
+   */
+  sourcesCurrent(): boolean;
+  release(): void;
 }
 
 export declare class NativeWorldSave {
@@ -453,6 +590,17 @@ export interface NativeWalkingSegment {
   from: NativeSurfacePoint;
   to: NativeSurfacePoint;
   body: NativeBodyProfile;
+}
+
+export interface NativeWorldActivityLearningTurn {
+  key: NativeCandidateKey;
+  kind: string;
+  provider?: NativeWorldProvider;
+}
+
+export interface NativeWorldNpcReads {
+  original: NativeWorldNpcRead;
+  current: NativeWorldNpcRead;
 }
 
 export interface NativeWorldNpcTurn {

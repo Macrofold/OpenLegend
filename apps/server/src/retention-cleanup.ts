@@ -16,6 +16,10 @@ import type { RetentionMetadataView } from './retention-metadata.js';
 import { maximumTemporalPreparationRows } from './temporal-storage.js';
 
 type Support = NonNullable<TemporalActorHistory['supports']>[string];
+export const SUPPORT_MEMBERSHIP_PREPARATION = Object.freeze({
+  bytes: 4 * 1024 * 1024,
+  rows: maximumTemporalPreparationRows,
+});
 export interface SupportCleanupGroup {
   actorId: string;
   candidates: Array<{ capsule: Support; aliases: string[] }>;
@@ -92,11 +96,11 @@ export async function unreferencedSupports(
     let bytes = overhead;
     for (const alias of aliases) {
       const size = Buffer.byteLength(JSON.stringify(alias));
-      if (overhead + size + 3 > 4 * 1024 * 1024)
+      if (overhead + size + 3 > SUPPORT_MEMBERSHIP_PREPARATION.bytes)
         throw new Error('One personal support alias exceeds bounded preparation.');
       if (
-        pending.aliases.length === maximumTemporalPreparationRows ||
-        bytes + size + 3 > 4 * 1024 * 1024
+        pending.aliases.length === SUPPORT_MEMBERSHIP_PREPARATION.rows ||
+        bytes + size + 3 > SUPPORT_MEMBERSHIP_PREPARATION.bytes
       ) {
         requests.push(pending);
         pending = request();

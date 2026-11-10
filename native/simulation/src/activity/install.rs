@@ -88,7 +88,16 @@ pub(crate) fn install_activity(
         }
     }
     let library = super::learning::install_library(import, &language, &limits, budget)?;
-    let learning = map(import, "activity_learning", "learning")?;
+    let learning: IndexMap<String, LearningCursor> = map(import, "activity_learning", "learning")?;
+    // Stored methods and their supports are implemented; the selected proof
+    // has no executable learned-activity inspection/catalogue consumer yet.
+    // A positive current inspection must therefore refuse installation rather
+    // than disappear from the decision menu.
+    if learning.values().any(|cursor| cursor.inspection.is_some()) {
+        return Err(InstallError::UnsupportedFamily(
+            "learned-activity inspection",
+        ));
+    }
     let current = map(import, "activity_current", "current")?;
     let active = map(import, "activity_active", "active")?;
     let items = map(import, "activity_item_sources", "items")?;

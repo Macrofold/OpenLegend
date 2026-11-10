@@ -5,6 +5,7 @@ import { FOLLOW_RULES } from './navigation.js';
 import { BASE_STRIKE_BODY_RULES } from './strikes.js';
 import { BASE_GUARD_TEXT } from './shield-defense.js';
 import { BASE_HUNTING } from './hunting.js';
+import { BASE_TYPED_NOUNS } from './typed-requests.js';
 import { formatHuntingDescription } from './hunting.js';
 import { describeAttack, type StrikeDefinition } from '../../strikes.js';
 
@@ -25,6 +26,7 @@ export const BASE_DECISION_OFFERS = {
     toolFields: BASE_FAMILY_FACTS.toolFields,
     unitPerCommand: BASE_FAMILY_FACTS.unitPerCommand,
   },
+  typedNouns: BASE_TYPED_NOUNS,
   availability: {
     invalidFollow: {
       code: 'invalid-follow',

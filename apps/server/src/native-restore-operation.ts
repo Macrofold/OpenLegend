@@ -21,7 +21,7 @@ import { nativeRestoredHistory } from './native-private-history.js';
 import { driveNativeOperation } from './native-providers.js';
 import { NativePendingSave } from './native-pending-save.js';
 import { NativeActorRoster } from './native-actor-roster.js';
-import { NativeRecentRetention } from './native-retention.js';
+import { NativeRetention } from './native-retention.js';
 import type { NativeRetainedValues } from './native-retained-values.js';
 import type { HostWork } from './host-work.js';
 import type { LiveReadCuts } from './live-read-overlay.js';
@@ -42,7 +42,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
   readonly inputs;
   readonly archives;
   readonly pending: NativePendingSave;
-  readonly recent: NativeRecentRetention;
+  readonly retention: NativeRetention;
   readonly retained: NativeRetainedValues;
   readonly operational;
   readonly milestones;
@@ -123,12 +123,12 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
       },
       backgroundSearchAdmission,
     };
-    this.recent = new NativeRecentRetention(
+    this.retention = new NativeRetention(
       restored.worldId,
       selectedTemporalPolicy(definitions.facts.definitions).recent,
       stage.source.records.tables['mind_temporal_actors'] ?? [],
     );
-    this.recent.prepare(restored.changes)();
+    this.retention.prepare(restored.changes)();
     const host =
       restored.changes.writes['data_world']?.find((row) => row.id === '[]') ??
       stage.source.records.tables['data_world']!.find((row) => row.id === '[]')!;
