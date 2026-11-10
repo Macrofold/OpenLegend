@@ -1,30 +1,157 @@
 # Medieval Dynasty — G189
 
-[Library](../README.md) · [Roster](../research-roster.md) · [Scoped research record](../research-progress-medieval-games-2026-11-09.md)
+[Library](../README.md) · [Dossier index](README.md) · [Roster](../research-roster.md) · [Scoped research record](../research-progress-medieval-games-2026-11-09.md)
 
-**Scope:** Render Cube’s native PC/console game, distinguishing Valley/Oxbow, current and old console generations, and the separate VR adaptation. Source cutoff: November 9, 2026. No firsthand play or instrumented testing is claimed.
+**Scope:** Render Cube’s native PC/console game, distinguishing Valley/Oxbow, current and older console generations, and the separate Spectral Games VR adaptation. Source publication cutoff: **November 9, 2026**. Public PC baseline verified: **2.7.0.4, October 7, 2026**, not a universal platform revision. No firsthand play, mod execution or performance measurement is claimed. Worked situations reconstruct documented rules.
 
-**In-progress checkpoint:** version and simulation boundaries, production/marketing, verified financial reports, five critic bodies, eleven Steam accounts and the creation-gate finding are preserved. The full mechanics/world inventory, worked situations, final assembly and review remain in progress.
+**Retrieval date:** November 10, 2026 UTC. Dynamic review hours, helpful votes and catalog observations refer to this capture; individually stated source/cache dates still apply.
 
-## Identity, maps and delivered scope
+## Read by question
 
-Medieval Dynasty combines personal survival and crafting with settlement management and family succession. Render Cube develops the game and Toplitz publishes it. The original Valley is a solo map; Oxbow supports solo or online cooperative play. The player personally gathers, hunts, travels and builds, then recruits residents and organizes production while preparing a successor. This is a different perspective from directing households solely through a strategy-game camera. [Current Steam description](https://store.steampowered.com/app/1129580/Medieval_Dynasty/).
+- **What can a person do and become?** [Direct actions](#direct-play-verbs-needs-and-feedback), [four kinds of progress](#four-different-kinds-of-progress), [family and danger](#family-danger-and-multiplayer) and [continuity](#saving-death-fresh-starts-and-completion).
+- **How does a village work?** [Construction and labor](#construction-management-and-simulated-labor), [material economy and time](#material-economy-and-time), and [six situations](#six-constructed-rules-based-situations).
+- **What gives the setting meaning?** [Spoiler-marked stories and institutions](#world-institutions-and-story--spoilers), [presentation](#presentation-audio-and-interface-character) and [reception](#reception).
+- **How was it produced, sustained and extended?** [Production](#r09--production-history-resources-and-constraints), [marketing](#r10--positioning-launch-sequence-and-distribution), [actual commercial evidence](#commercial-evidence-disclosed-developer-revenue-and-returns) and [modding gate](#r15--conditional-creationmodding-gate-uncertain-popular-adoption-community-tooling-verified).
+- **What could OpenLegend learn?** [Applications](#openlegend-applications-and-boundaries), as research interpretations with existing owners.
 
-The latest public PC patch verified before the cutoff is **2.7.0.4, dated 7 October 2026**. Among its fixes are Hunting Set crafting access for clients when the host owns it and removal of Exquisite/Legendary items from Market Stalls. These notes matter when discussing the newest paid gear and selling systems. September's Wild Game update, version 2.7.0.2, already delivered fifteen legendary animals, their trophies and trophy wall decorations. These encounters belong to the free update; the Hunting Set is a separate purchase. [Public patch 2.7.0.4](https://steamdb.info/patchnotes/25776186/), [Wild Game release](https://steamdb.info/patchnotes/25343507/).
+## Identity and delivered scope
 
-The Hunting Set supplies two outfits and decorated hunting weapons crafted using materials from legendary animals. The Exquisite Pack, released in December 2025, concerns appearance and settlement presentation through hairstyles, clothing and emblems. They should not be confused with the original game's core survival, village or dynasty systems. [Hunting Set](https://store.steampowered.com/app/4997500/Medieval_Dynasty__Hunting_Set/), [Exquisite Pack](https://store.steampowered.com/app/4159030/Medieval_Dynasty__Exquisite_Pack/).
+Medieval Dynasty combines an embodied survival/crafting game with village management and family succession. Personal gathering, hunting and construction gradually finance a settlement whose residents produce necessities and saleable goods. The player still travels and completes quests while managing the community. Render Cube develops it; Toplitz publishes it. The **Valley** is the original solo campaign, while **Oxbow** supports solo and online cooperative play. [Steam product description](https://store.steampowered.com/app/1129580/Medieval_Dynasty/).
 
-The announced Backwood is an additional map with Creative Mode scheduled for **2027**, beyond this dossier's cutoff. Its proposed freedom from money, resources and reputation requirements cannot be presented as an available mode in November 2026. [Official announcement archive](https://store.steampowered.com/news/posts/?appgroupname=Medieval+Dynasty&appids=1129580&enddate=1781542931&feed=steam_community_announcements), [developer roadmap](https://rendercube.pl/roadmap-update-2026/).
+The latest public PC version verified before the cutoff is **2.7.0.4, released 7 October 2026**. It fixes clients' access to Hunting Set crafting when the host owns the pack and removes Exquisite/Legendary items from Market Stalls. This is a PC verification, not evidence that every platform displays an identical revision number. September's **Wild Game** update had already delivered fifteen legendary animals, trophies and wall displays. [Current patch](https://steamdb.info/patchnotes/25776186/), [Wild Game release](https://steamdb.info/patchnotes/25343507/).
 
-## Shared settlement and multiplayer boundaries
+| Content | Delivered boundary |
+|---|---|
+| Hunting Set, September 2026 | Paid outfits and decorated bow, spear, knife and crossbow recipes using legendary-animal materials; distinguish these from the free legendary encounters. [Store](https://store.steampowered.com/app/4997500/Medieval_Dynasty__Hunting_Set/) |
+| Exquisite Pack, December 2025 | Paid appearance options including hairstyles, clothing and emblems. [Store](https://store.steampowered.com/app/4159030/Medieval_Dynasty__Exquisite_Pack/) |
+| Echoes of Nature, June 2025 | Paid decorative plants, hedges, rocks and ponds; ordinary tree planting also arrived in a free update. [Pack](https://store.steampowered.com/app/3774330/Medieval_Dynasty__Echoes_of_Nature/), [free update](https://store.steampowered.com/news/posts/?appids=1129580&enddate=1751384000&feed=steam_community_announcements) |
+| The Backwood | Announced free map and Creative Mode for **2027**; its proposed removal of money/resource/reputation constraints is future scope. [Official announcement](https://store.steampowered.com/news/posts/?appgroupname=Medieval+Dynasty&appids=1129580&enddate=1781542931&feed=steam_community_announcements) |
+| New Settlement | A separate Spectral Games VR spin-off, not a source for the original game's systems. [Publisher announcement](https://www.toplitz-productions.com/news-2388/medieval-dynasty-goes-virtual-out-now-all-new-standalone-vr-experience.html?clear_privacy_settings=1&page_n167=19) |
 
-The developer's maintained FAQ specifies **four participants total**, a common village and host-controlled permissions. This resolves the store's potentially confusing “up to 4 friends” phrasing. The host owns the save and ending the host session ends the server; no dedicated servers, LAN or split-screen are established. The maps are separate starts rather than regions connected by in-game travel. An Oxbow save can move between offline and online play; Valley remains the separate solo campaign. [Developer FAQ, revised June 2025](https://steamcommunity.com/app/1129580/discussions/0/4027970229978377158/).
+## Direct play: verbs, needs and feedback
 
-## Work simulation and visible activity
+The practical loop is gather resources, make tools, obtain food, build shelter, sell surplus, recruit labor, extend production and prepare another generation. Movement and work compete with health, stamina, hunger, thirst, temperature and carrying capacity. Tools wear out; food is perishable. [Product description](https://store.steampowered.com/app/1129580/Medieval_Dynasty/), [current community beginner reference](https://pindrop.gg/medieval-dynasty/guides/beginner-tips).
 
-The developer distinguishes ordinary production from field work: most assigned workers produce during scheduled work hours even when their displayed character is still traveling. Farmers actually perform field operations, so home, farm shed and field distance affects their available working time. This prevents a misleading interpretation of every visible walk as a physical delivery bottleneck. [Developer FAQ](https://steamcommunity.com/app/1129580/discussions/0/4027970229978377158/), [corroborating community explanation, December 2023](https://steamcommunity.com/app/1129580/discussions/0/4030222834110711121/).
+Direct actions include chopping and processing trees, collecting sticks/stones/plants, digging or mining, tracking and killing animals, skinning, fishing, preparing fields, sowing, harvesting, feeding livestock, cooking, sewing, smithing, placing buildings and completing their components with a hammer. Basic recipes need no advanced workplace; elaborate production uses appropriate stations and unlocked recipes. Batch production saves repeated selection but still consumes inputs. Owning a resource, knowing its recipe and having the place to transform it are different prerequisites. [Crafting guide, dated 2020](https://www.gamepressure.com/medieval-dynasty/crafting/z0dac8), [current recipe reference](https://pindrop.gg/medieval-dynasty/crafting).
 
-June 2026's Full Stock update adds visible filling of food/resource storage and residents using decorative workstations and selected furniture. Its laundry, tanning, lumber and butter-churning activity strengthens the appearance of everyday village life. The release distinguishes these decorative uses from a claim that every animation is an independently simulated production or logistics process. [Official Full Stock announcement and changelog](https://store.steampowered.com/news/posts/?appgroupname=Medieval+Dynasty&appids=1129580&enddate=1781542931&feed=steam_community_announcements).
+The HUD communicates exertion, health, food/water, selected equipment and condition; status indicators expose poisoning and encumbrance. Compass and quest objectives guide travel. Inventory weight makes a load of logs different from an equally valuable light product. These are stable functions documented by an early interface guide, not an assertion that every icon remains in its original screen position. [Interface reference](https://www.gamepressure.com/medieval-dynasty/interface/zddac5).
+
+## Four different kinds of progress
+
+| System | What it represents and changes |
+|---|---|
+| Personal skills | Extraction, Hunting, Farming, Diplomacy, Survival and Production develop through relevant activity. Talent choices improve efficiency, carrying, tracking, negotiation or endurance. They describe a particular character. [Current skill reference](https://pindrop.gg/medieval-dynasty/skills) |
+| Technology | Settlement development unlocks building categories and production opportunities. Reaching a requirement does not automatically buy every recipe: many schemes also cost coins. [Development guide](https://www.gamepressure.com/medieval-dynasty/developing-your-characters-skills/z1dfa6) |
+| Dynasty reputation | Social progression associated with quests, recruitment and dynasty standing. Failed obligations, theft and tax problems can damage it; it is not interchangeable with money or personal skill. [Community beginner reference](https://pindrop.gg/medieval-dynasty/guides/beginner-tips) |
+| Chapters and construction limits | Valley chapter objectives expand permitted settlement size. Oxbow's introductory permission and progression differ; importing Valley's chapter gates misdescribes its start. Custom settings can further alter limits. [May 2026 discussion with moderator clarification](https://steamcommunity.com/app/1129580/discussions/9/833871994253505663/) |
+
+Residents have their own work skills; assigning a suitable resident matters independently of the player's corresponding talent. Their labor also contributes to settlement technology. Character competence, assigned production and shared development therefore interact, while reputation and campaign permissions impose additional gates. This is a synthesis of separate systems, not a universal level controlling everything. [Community beginner reference](https://pindrop.gg/medieval-dynasty/guides/beginner-tips).
+
+## Construction, management and simulated labor
+
+Construction is spatial and component based. The player selects a blueprint, finds valid terrain and supplies framework, walls and roof. Obstructions and existing settlements restrict placement. Houses permit different wall materials, openings and insulation; shelters also provide domestic storage and sleeping facilities. Upgrading material standards creates a different investment from simply adding more houses. [Building reference](https://www.gamepressure.com/medieval-dynasty/building/zedac6).
+
+The network spans extraction sites, farms, animal buildings, hunting/fishing, workshops, food processing, storage and services. Smithies make tools/weapons; sewing facilities produce clothing/equipment; kitchens and taverns turn ingredients into food/drink. Resource and food storage have distinct roles, with shared capacity connecting buildings. A Market Stall sells selected goods through an assigned worker; the Builder's Hut repairs chosen structures. These are productive facilities, not evidence that every decorative station creates another profession. [Community building database, identifying its data as version 2.7.0.4](https://pindrop.gg/medieval-dynasty/buildings).
+
+Recruitment is followed by separate housing, workplace and production decisions. A resident with a job can produce nothing if task allocation, tool, ingredient or output-storage requirements are unmet. Food, water and fuel must remain available; persistent dissatisfaction can make residents leave. The management interface is therefore a diagnostic instrument rather than a passive villager list. [Community resident guide](https://medievaldynastydb.com/guides/villagers), [older settlement reference for needs and departure](https://www.gamepressure.com/medieval-dynasty/settlement/z4dfa9).
+
+The documented simulation distinguishes most production jobs, which can accrue output while a worker walks, from **farmers**, whose actual field operations and travel consume working time. A distant house does not impose the same physical throughput constraint on every profession. This is a specific worker-system distinction, not comprehensive individual economic autonomy. [Detailed community discussion, December 2023](https://steamcommunity.com/app/1129580/discussions/0/4030222834110711121/).
+
+June 2026's **Full Stock** update makes storage fullness visible, adds containers and decoration, and lets inhabitants use selected furniture in free time. Laundry, tanning, lumber and butter-churning decorations animate village activity. The announcement calls these decorative workstations: visual busyness alone cannot demonstrate that a new material transformation occurs. [Full Stock announcement and changelog](https://store.steampowered.com/news/posts/?appgroupname=Medieval+Dynasty&appids=1129580&enddate=1781542931&feed=steam_community_announcements).
+
+The June 2025 update added hammer **Move Mode** for structures and placed objects, plus tree planting. Extensive customization covers survival needs, durability, taxes, settlement demands, progression rates, build limits and season length. Remote-storage options make a claim that all construction always requires personally carried materials too broad. [Plant a Tree update](https://store.steampowered.com/news/posts/?appids=1129580&enddate=1751384000&feed=steam_community_announcements).
+
+## Material economy and time
+
+The inventory connects industries rather than providing only a loot ladder:
+
+| Resource group | Representative purpose |
+|---|---|
+| Wood, sticks, stone, clay and minerals | Construction, fuel, tools, pottery and stronger equipment. |
+| Crops and fibers | Food ingredients, seed reserves, straw, textiles and animal feed. |
+| Meat, fish, vegetables and prepared dishes | Personal consumption, preservation, settlement supply and sale. |
+| Leather, fur and textile products | Clothing, bags, saddles and equipment. |
+| Manure and rot | Fertilizer reconnects animals or spoiled food to cultivation. |
+| Herbs, water and containers | Medicinal/enhancement preparations, with vessels participating in recipes. |
+| Tools, weapons, clothes and household goods | Utility, combat, survival, decoration or market output rather than one universal equipment score. |
+
+These ingredient relationships come from the current community recipe catalog. Exact quantities and optimal profit rankings are omitted because they are patch sensitive. [Recipe catalog](https://pindrop.gg/medieval-dynasty/crafting).
+
+Wildlife supplies differing meat, hide and fur outputs; livestock supports products and breeding rather than serving solely as scenery. Poultry, pigs, sheep/goats, cattle and mounts have different facilities, feed and care requirements. Hunting includes traps, ranged/melee weapons and carcass processing. The older hunting guide supports those verbs, not a current damage table or a claim that passive-looking animals are safe. [Current animal reference](https://pindrop.gg/medieval-dynasty/animals), [dated hunting guide](https://www.gamepressure.com/medieval-dynasty/hunting/zfdac7).
+
+Coins come from selling gathered/manufactured goods, quests and later assigned market trade. They fund purchases, recipes, livestock and services. Merchants have limited funds, so a profitable product still needs a buyer and transport. Weight and travel constrain sales before theoretical production does. The community trading guide explains route planning and market automation, but its historical prices are not a 2026 optimization table. [jag_publ's guide, with later-version caveats](https://steamcommunity.com/sharedfiles/filedetails/?id=2657771734).
+
+Taxes recur in spring, with construction and cultivated land increasing exposure. Harvest income must cover reinvestment and the next bill. Default short seasons compress a year into twelve in-game days; custom settings change pacing. Reputation loss and eventual expulsion are risks of serious neglect. [Current community beginner reference](https://pindrop.gg/medieval-dynasty/guides/beginner-tips).
+
+Farming has ordered operations: establish and prepare a field, fertilize and plough, sow an eligible crop, then harvest appropriately. Vegetables and grain do not share every harvesting action. Calendars differ: flax/oats use spring sowing, rye uses autumn, while cabbage has a different seasonal opportunity. Orchards add further timing requirements. Players must reserve seeds and finish work within a planting window rather than treating every crop as continuously available. [Cultivation actions](https://www.gamepressure.com/medieval-dynasty/farm/zedb2f), [current planting calendar](https://pindrop.gg/medieval-dynasty/farming).
+
+Seasonal production/trade schedules arrived in June 2024; seasonal field management followed in the Autumn update. Scheduling reduces repeated reassignment without removing material prerequisites or crop calendars. Seasons alter appearance and exposure, advance ages and govern longer processes: planted trees require several seasons to mature. [June 2024 changelog](https://steamdb.info/patchnotes/14860278/), [Autumn 2024 changelog](https://store.steampowered.com/news/posts/?appids=1129580&enddate=1733504456&feed=steam_community_announcements), [tree update](https://store.steampowered.com/news/posts/?appids=1129580&enddate=1751384000&feed=steam_community_announcements).
+
+## Family, danger and multiplayer
+
+**Identity and relationship actions.** Valley begins with authored protagonist Racimir; Oxbow's creator lets players establish their own male or female character and appearance. Oxbow also adds romance with male NPCs, relevant gifts and a husband caring for an infant when the player is the mother. [Delivered Oxbow changelog](https://store.steampowered.com/news/posts/?appids=1129580&enddate=1702558967&feed=steam_community_announcements). For an NPC relationship, the player talks, selects flirting responses, develops affection, gives gifts and proposes. After marriage, a dialogue choice initiates trying for a child. Personality and affection make this an interaction sequence rather than an automatic result of recruiting someone. Exact age, probability and dialogue gates are omitted where the consulted guides contain obsolete values. [Courtship actions](https://www.gamepressure.com/medieval-dynasty/affection-and-flirting/z3dfa8), [current affection-related talents](https://pindrop.gg/medieval-dynasty/skills), [community child-dialogue account](https://steamcommunity.com/app/1129580/discussions/0/4521135313690275607/).
+
+Marriage and children connect present labor to future succession. The **Heir Update** delivered family conversations and quests, four son personalities, toys, an age-related haircut event and apprenticeship for teenagers. It also added irreversible dialogue-based transfer to an adult heir. Family quests affect reputation and relationships, making the descendant more than a replaceable production slot. These are documented 2022 additions; the later Oxbow implementation has its own update history. [Official Heir Update changelog](https://store.steampowered.com/news/posts/?appids=1129580&enddate=1660837724&feed=steam_community_announcements).
+
+December 2025's **Labour of Love** makes pregnancy visible and stops pregnant women working in their second pregnancy season. Men whose wives are pregnant or caring for infants receive a productivity benefit. The update adds task-related work-clothing benefits and a new quest line. Family changes therefore affect labor before a new generation can replace it. [Labour of Love release](https://steamdb.info/patchnotes/21019307/).
+
+Autumn 2024 delivered player-to-player marriage, family progression and voluntary heir handover through dialogue in Oxbow. Claims that Oxbow succession requires killing the parent are obsolete. Community reports distinguish the continuing village, technology and money from the heir's own personal skills; the successor does not automatically clone the founder's abilities. [Autumn update](https://store.steampowered.com/news/posts/?appids=1129580&enddate=1733504456&feed=steam_community_announcements), [multi-generation community account](https://steamcommunity.com/app/1129580/discussions/0/5635717345349140217/).
+
+Walking, running, mounted travel and paid Waggoner journeys serve different costs and carrying needs. Donkeys/horses and appropriate equipment ease travel without eliminating the need to plan selling or gathering trips. [Community travel/trade reference](https://steamcommunity.com/sharedfiles/filedetails/?id=2657771734).
+
+Danger comes from wildlife, hostile encounters, exposure and personal combat. Autumn 2024 expanded combat with armor, shields, swords, axes, maces, daggers and damage/resistance distinctions; it revised melee/projectile interactions and bandit-group behavior. Training targets support equipment experimentation. A launch-era description limited to primitive spear hunting is incomplete; these additions do not establish an army command layer. [Autumn changelog](https://store.steampowered.com/news/posts/?appids=1129580&enddate=1733504456&feed=steam_community_announcements).
+
+**Looting, theft and stealth.** Scavenging finds and bandit-camp loot offer acquisition outside production. Taking owned goods is theft: community accounts describe stolen-item flags, witness-related reputation loss and restrictions on selling them back in their originating village. That evidence does not establish every later detection edge case. [Community looting examples](https://steamcommunity.com/app/1129580/discussions/0/3416557748895988950/), [theft discussion](https://steamcommunity.com/app/1129580/discussions/0/4027970580228772198/). Sneaking is supported mechanically: Prowler reduces its noise and Predator increases its speed; Tracker reveals animals through Inspector Mode. These provide approach and hunting options without implying a separate lockpicking or pickpocketing minigame. [Current talents](https://pindrop.gg/medieval-dynasty/skills).
+
+The developer FAQ says bandits do not raid player villages and resident NPCs die from old age, distinct from the player's personal dangers. [Developer FAQ](https://steamcommunity.com/app/1129580/discussions/0/4027970229978377158/).
+
+Oxbow supports **four players total**, one village and host permissions. The host owns the save; leaving closes the session. Oxbow saves work offline/online, but the two maps are separate starts without travel between them. The described implementation has no dedicated servers, LAN or split-screen. [Developer FAQ](https://steamcommunity.com/app/1129580/discussions/0/4027970229978377158/).
+
+Delivered cross-play connects supported PC storefronts with PS5 and Xbox Series X|S; this should not be generalized to older-console editions. June 2024 also finished Oxbow's main quest and added bridges, piers and platforms. These are delivered additions, not surviving roadmap promises. [Cross-play release notes](https://steamdb.info/patchnotes/14860278/).
+
+## World, institutions and story — spoilers
+
+The setting is a fictionalized medieval European rural society with named settlements, local officials, merchants and families. The reviewed evidence does not establish a precise historical country/year sufficient to call it a simulation of one documented polity. Feudal obligations matter through taxes, reputation and royal tasks, while household continuity supplies a longer-term motive. This is a synthesis of the campaign and institutional evidence below.
+
+**Valley spoilers.** Racimir follows his uncle Iordan's legacy. The Uniegost narrative reconstructs the former companions known as the Pack, including Uniegost, Sambor, Wolrad and Kestrel. Their opposition to abusive power became compromised. Conflicting memories lead to Iordan's death: physician Dyter knew it was a killing despite the cover story. Uniegost admits responsibility, explaining that Iordan had become a brutal participant in exploitation and war profiteering. Racimir's judgment can condemn or banish Uniegost; village administration continues with a replacement official. The founder therefore confronts the cost of an inherited legend rather than a clean heroic ancestry. Other quest relationships include Alwin's movement from agricultural dissatisfaction toward archery/hunting and Dobroniega's missing-delivery problem. This is an attributed community reconstruction, not a claim of witnessing every branch. [Japanese community story guide](https://wikiwiki.jp/mid_dynasty/%E3%82%B9%E3%83%88%E3%83%BC%E3%83%AA%E3%83%BC).
+
+**Oxbow spoilers.** Its protagonist survives an attack on a convoy connected with a settlement project, then becomes involved with Piastovia, Klonica, Ostoya and Skauki. Their problems implicate local leadership, including young castellan Mirogod. Skauki's penal/mining history and resentment toward authority give its conflict stakes beyond collecting materials. The broader arc exposes wrongdoing and allows a decision concerning replacement leadership. A moderator's 2024 synopsis supports these relationships but is not an exhaustive branch guide; this dossier does not invent a canonical resolution for every family or regional dispute. [Moderator-led story discussion](https://steamcommunity.com/app/1129580/discussions/0/4433318180986467473/).
+
+Both maps place authored quests within a continuing settlement sandbox. Oxbow's finale shipped in June 2024, so reports of an unfinished main quest describe an earlier state. Updates add encounters and royal challenges without turning the game into a conquest campaign. Named characters provide authored context around production and needs simulation; the evidence does not establish political agents independently rewriting the world. [Finale release](https://steamdb.info/patchnotes/14860278/), [Autumn encounters/challenges](https://store.steampowered.com/news/posts/?appids=1129580&enddate=1733504456&feed=steam_community_announcements).
+
+## Saving, death, fresh starts and completion
+
+Named manual saves retain a particular campaign. A 2026 moderator clarification distinguishes them from auto/quick saves that are overwritten, including when another campaign starts. Save the intended slot before exiting; the evidence does not justify promising automatic saving on every exit or a particular cloud-storage arrangement. A fresh settlement is a separate campaign, not a transfer of the old village into another map. [Save-slot clarification](https://steamcommunity.com/app/1129580/discussions/7/803471531442260658/), [map boundary](https://steamcommunity.com/app/1129580/discussions/0/4027970229978377158/).
+
+For the Valley, a moderator describes death as requiring a reload unless an adult heir can continue; the discussed eligibility threshold is eighteen. The same 2026 thread contains different accounts of Oxbow accidents and old-age behavior, insufficient to establish one universal death penalty across modes. [Map-specific death discussion](https://steamcommunity.com/app/1129580/discussions/0/767437664460835932/). The developer separately confirms resurrection in cooperative play. [Developer FAQ](https://steamcommunity.com/app/1129580/discussions/0/4027970229978377158/).
+
+Voluntary succession continues a dynasty; a new game creates a new start. Finishing the main story does not end settlement play: building and generations can continue without a final all-systems victory condition. A self-sufficient village, decorated settlement or succession of heirs can be personal endgame goals, but these are not three formal victory modes. [Succession account](https://steamcommunity.com/app/1129580/discussions/0/5635717345349140217/), [moderator explanation of the sandbox](https://steamcommunity.com/app/1129580/discussions/0/4433318180986467473/).
+
+## Presentation, audio and interface character
+
+Gamepressure's 2021 review praises seasonal scenery and environmental audio for making home selection and routine work appealing, while criticizing unresponsive-looking inhabitants. This is a dated observation, not proof that the same NPC presentation persists after subsequent animation updates. [Giancarlo Saldana review](https://www.gamepressure.com/editorials/reviews/medieval-dynasty-review-to-heir-is-human/z84a3).
+
+The second official soundtrack credits **Jakub Michalewicz and Konrad Dłużniewski** and separates bard songs, location/special themes and exploration/combat music. Listed acoustic instruments and vocals support a folk-oriented palette. These credits establish authorship and categories, not an undocumented runtime audio architecture. [Official soundtrack listing](https://store.steampowered.com/app/3214760/Medieval_Dynasty__Original_Soundtrack_Vol_2/). Tavern musicians and more voiced chatter arrived with cross-play. [June 2024 release](https://steamdb.info/patchnotes/14860278/).
+
+Both first- and third-person views are documented. The Heir update also explicitly records cave/interior reverberation and sound occlusion, providing evidence for spatial sound treatment without identifying middleware. [Official perspective/audio notes](https://store.steampowered.com/news/posts/?appids=1129580&enddate=1660837724&feed=steam_community_announcements).
+
+Presentation alternates between landscape planning and close domestic work: seasonal fields, architectural materials, stored goods and decoration give settlements visible history. Management displays expose production/supply problems; personal status and tool feedback keep the avatar's needs legible. The 2025 tree update added armor/work sounds and equipment-breakage feedback. Atmospheric inhabitation and explicit management displays consequently serve different explanatory roles. [Interface reference](https://www.gamepressure.com/medieval-dynasty/interface/zddac5), [2025 audio changes](https://store.steampowered.com/news/posts/?appids=1129580&enddate=1751384000&feed=steam_community_announcements).
+
+## Six constructed rules-based situations
+
+These are analytic examples assembled from documented rules, not play-session reports, guaranteed optimal strategies or measured behavior on every platform.
+
+1. **A recruited wood worker produces nothing.** Housing and a job are assigned but output is absent. Check production allocation, tools and storage before adding labor. Correcting the missing dependency can restart the chain; a decorative lumber-station animation does not prove assigned production. Next decide whether output covers fuel and construction together. [Resident dependencies](https://medievaldynastydb.com/guides/villagers), [decorative activity](https://store.steampowered.com/news/posts/?appgroupname=Medieval+Dynasty&appids=1129580&enddate=1781542931&feed=steam_community_announcements).
+
+2. **Spring flax sowing falls behind.** Seeds, preparation, fertilizer, labor and season must align. Farmers traveling from distant housing lose field-work time; relocation or personal assistance can recover it. Missing the window changes the textile plan. This distance argument concerns physical farming, not an identical walking penalty for miners. [Crop calendar](https://pindrop.gg/medieval-dynasty/farming), [field-work distinction](https://steamcommunity.com/app/1129580/discussions/0/4030222834110711121/).
+
+3. **Family expansion interrupts a vital job.** A pregnant specialist stops working in her second pregnancy season. Prepare another worker or stock buffer first. Her husband's productivity benefit may help total output, but the notes promise neither automatic replacement in her profession nor equal compensation. Household timing therefore matters without necessarily creating a village emergency. [Labour of Love rules](https://steamdb.info/patchnotes/21019307/).
+
+4. **An experienced founder cannot expand.** High Extraction skill does not itself unlock building technology, buy a scheme, supply recruitment reputation or complete a Valley chapter. Identify the actual gate and pursue its activity, quest or purchase. Map and customization affect the answer; repeating a personal skill grind may leave the constraint untouched. [Skills](https://pindrop.gg/medieval-dynasty/skills), [technology](https://www.gamepressure.com/medieval-dynasty/developing-your-characters-skills/z1dfa6), [map progression](https://steamcommunity.com/app/1129580/discussions/9/833871994253505663/).
+
+5. **Merchandise exists but tax cash is short.** Plan buyer funds and route before committing a heavy load to travel. Preserve next-cycle inputs instead of assuming everything stored is surplus. Market labor automates eligible sales, but October's patch excludes certain Exquisite/Legendary goods. No precise profit ratio or unlimited-buyer claim is required to explain this bottleneck. [Trading guide](https://steamcommunity.com/sharedfiles/filedetails/?id=2657771734), [current exclusions](https://steamdb.info/patchnotes/25776186/).
+
+6. **Start fresh while retaining a mature dynasty.** Make an identifiable manual save before opening another campaign because auto/quick saves can replace recent checkpoints. The old village remains separate; taking over as its heir would continue it instead of starting a new map. Recovery depends on an intact save or applicable succession route, not account-wide settlement inheritance. [Save handling](https://steamcommunity.com/app/1129580/discussions/7/803471531442260658/), [succession continuity](https://steamcommunity.com/app/1129580/discussions/0/5635717345349140217/).
 
 ## R09 — Production history, resources and constraints
 
@@ -101,10 +228,6 @@ The inspected accounts do not establish a single all-in lifetime development-and
 
 The half-year report records **49 employees / 48.75 full-time equivalents at June 30, 2026** and a transition from B2B contracting toward employment beginning in December 2025. This is company staffing, not a claim that all employees worked exclusively on Medieval Dynasty. A historic interview's small starting team must not be presented as the current production organization. [H1 report, pp. 27 and 33](https://rendercube.pl/wp-content/uploads/2026/09/zal01_Render_Cube_SA_raport_okresowy_polroczny_2026.pdf).
 
-### Source access
-
-Read the issuer's financial-results table and relevant numerical, revenue-note, staffing, contract and risk sections of the two official 2026 PDFs. The ESPI 8/2026 body was read through Bankier's reproduction because the issuer-linked PAP page returned an empty text shell. The older 2021 information-document URL returned 404; its current issuer-linked PDF exceeded the browser retrieval size limit. Indexed passages were inspected as search leads, but no original-budget total is claimed from that inaccessible full document. Native-currency figures avoid an undocumented exchange-rate conversion.
-
 ## R15 — Conditional creation/modding gate: uncertain popular adoption; community tooling verified
 
 An official editor or SDK has not been established. A pinned Steam moderator explanation, updated September 2026, states that official mod support is absent and only a possibility after active development, whose roadmap extends into 2027. It attributes that decision to the original scope and to support/debugging work. The moderator also asks users reporting bugs to identify external editors and changed values. This is a current community-support explanation, not a binding promise that an SDK will arrive. [Steam, pinned moderator post originally dated 2025-08-07, full body read](https://steamcommunity.com/app/1129580/discussions/0/591778884098320977/).
@@ -177,14 +300,6 @@ Ekko_One describes companions transforming the same slow work into fun; VincentV
 
 The scenic world does not automatically create attachment to residents: the historical critics distinguish beautiful environments from thin social responses. Likewise, Onion Crust's objection is primarily tonal—the animals feel incompatible with the grounded setting—not simply a request for lower difficulty. These observations suggest evaluating whether routine interactions and hazards reinforce the intended daily-life fantasy. They do not establish that all current NPC dialogue, wildlife behavior, or combat is defective. [GamePressure](https://www.gamepressure.com/editorials/reviews/medieval-dynasty-review-to-heir-is-human/z84a3) · [MMORPG.com](https://www.mmorpg.com/reviews/not-so-mmo-medieval-dynasty-review-2000123384) · [Onion Crust](https://steamcommunity.com/id/OnionCrust/recommended/1129580/)
 
-## Source register and boundaries
-
-- A [GearsRealm article displaying 2026 publication/update dates](https://gearsrealm.com/medieval-dynasty-review/) was also read in full. It does not identify platform, build, hours, or a tested update, so its date alone cannot establish a current-build re-review; it is not used to certify current feature availability.
-- [Opium Pulses](https://www.opiumpulses.com/article/767/medieval-dynasty-review) displays a 2024 date but describes multiplayer as forthcoming in December. This timing mismatch makes it unsuitable as clear evidence of post-co-op reception; it is not counted among the five reviews.
-- Critic references to bandit behavior, sleep consequences, obsolete travel options, or historical production recipes are not used as authoritative current rules. The dossier's official mechanics and update record take precedence.
-- Steam individual bodies and metadata were retrieved from their public pages. Research captures are intermediate working evidence; comments and developer replies were not counted as extra independent player reviews. No aggregate review score is used to infer how common any theme is.
-- Limits: helpfulness ranking favors visible older accounts; English-only sampling misses other communities; unknown settings, maps, mods, platform paths, and review edits prevent controlled comparisons. Current total hours cannot verify continuous engagement, an heir transition, or absence of problems. The critics do not provide a current co-op benchmark, and recent Steam opinions do not establish current bug incidence.
-
 ## OpenLegend applications and boundaries
 
 The strongest research question is **when useful personal work becomes a life worth continuing**. Building a house, feeding others and establishing a workshop can give a gathering action a visible purpose. Maintaining a large settlement or waiting for an heir can also lengthen the interval between meaningful decisions. These are candidate lessons from the systems and contrasting reception above, not adopted OpenLegend requirements. The [playable-game priorities](../../../../docs/repertoires/gameplay-priorities.md) remain the project scope.
@@ -203,3 +318,61 @@ The strongest research question is **when useful personal work becomes a life wo
 
 **Treat inheritance as one form of continuity.** A player's craft, relationships, place and knowledge can outlast one immediate challenge without requiring the entire Medieval Dynasty family model. OpenLegend's [development-save policy](../../../../AGENTS.md#development-save-policy) remains distinct from any eventual fictional persistence or succession rules. This research creates no promise of save compatibility, demographic simulation or implementation work.
 
+## Coverage, preservation and viewing routes
+
+| Requirement | Substantive coverage |
+| --- | --- |
+| R01 | Native title identity; Valley/Oxbow, PC/console generation and VR boundaries; current patch, delivered additions and future Backwood scope. |
+| R02 | Personal gathering, crafting, hunting, travel, construction, farming, conversation/courtship, combat, stealth/theft, recruitment and management. |
+| R03 | Materials, foods, containers, tools, weapons, armor, clothing, livestock, storage and competing recipe uses. |
+| R04 | Skills, technology, schemes, reputation and chapters; money, taxes, seasons, production, inheritance, saves, death and new starts. |
+| R05 | Six worked situations spanning diagnostic labor, planting, family timing, progression gates, sales and campaign preservation. |
+| R06 | Residents, needs and work; family/personality/quests; map-specific multiplayer, host/save ownership, limits of simulated logistics and social autonomy. |
+| R07 | Landscape/material identity, close work, visible stores, feedback, music credits, bard performances and management UI. |
+| R08 | Spoiler-marked Valley and Oxbow histories, named people/places, feudal institutions and authored quests within a continuing sandbox. |
+| R09 | Outsourcing origins, developer/publisher relationship, engine/content methods, historical and current staffing, funding and maintenance. |
+| R10 | Early Access feedback, showcases, streamer/live presentation, supporter packaging, platform rollout and co-op relaunch; attribution limits. |
+| R11 | Historical unit/subscription statements, regulatory gross-sales milestone, actual developer/company revenues/profit, cumulative calculation and missing all-in title budget. |
+| R12 | Five full independently authored reviews and eleven individually read Steam accounts; contrasting pleasure, administrative friction, technical failure, social play and succession horizons. |
+| R13 | Specific questions about useful work, willing cooperation, inhabited places and long-term continuity, linked to existing OpenLegend owners. |
+| R14 | Adjacent exact source links, annotated roles/access limits, question-based navigation and preservation record. |
+| R15 | Uncertain sustained popular adoption; verified community tooling and examples, official-support distinction, catalog/use limits and compatibility/rights boundaries. No affirmative mature-ecosystem claim. |
+
+This is a new G189 dossier. The existing roster, prior chapters, original packet, other dossiers and separate whole-library gates remain preserved; this addition does not recertify unrelated subjects. The [scoped record](../research-progress-medieval-games-2026-11-09.md) owns actual completion and commits. [Requirements](../research-requirements.md) and the [economics/enjoyment/creation amendment](../research-economics-engagement-and-creation.md) own the standard.
+
+For visual orientation, use [official Steam media](https://store.steampowered.com/app/1129580/Medieval_Dynasty/) and the [publisher’s Gamescom presentation route](https://www.toplitz-productions.com/news-2388/medieval-dynasty-besieges-gamescom-with-an-exclusive-new-trailer-and-more.html). These are viewing routes, not footage represented as watched. A useful later play study would compare a personal provisioning trip, a blocked production job, a cooperative construction session and a family transition. No such execution is claimed here.
+
+## Annotated sources and evidence limits
+
+### Mechanics, narrative and presentation
+
+Links above were consulted during this research pass. Source roles differ:
+
+- **Developer/publisher primary:** Steam product/DLC pages; maintained developer FAQ; June 2024, Autumn 2024, Heir, Plant a Tree and Full Stock announcement bodies; Toplitz VR announcement. Later dated releases override older FAQ language. The Heir primary text was independently checked by the reception collaborator.
+- **Official text through SteamDB mirrors:** Current patch, Wild Game, Labour of Love and June 2024 notes. Full text was read; SteamDB is an intermediary, not the developer or an independent performance test.
+- **Pindrop community database:** Separate skills, recipes, buildings, animals, farming and beginner pages identify game-file data. Bodies were read; extraction was not independently reproduced. Raw damage fractions and precise tuning were not assumed to equal observed behavior.
+- **Community mechanics:** Resident guide, jag_publ's Steam guide and discussions support dependencies, commerce, field work and succession. Historical references require version caution; moderator clarifications are not a complete tested death/platform matrix.
+- **Narrative:** Japanese Valley story guide and a narrower Oxbow moderator synopsis. Spoiler-marked reconstruction does not establish every choice consequence or one canonical ending.
+- **Historical editorial/guides:** Gamepressure supplies stable action descriptions corroborated by newer sources. Obsolete approval thresholds, spouse benefits and economy recipes were excluded. Its 2021 review supplies only a dated presentation assessment.
+- **Audio primary:** Official soundtrack credits support composers, instruments and theme categories, not audio-engine architecture.
+- **Access/uncertainty:** Fandom and Neoseeker bodies were blocked; an oversized official guide preview could not be opened. None is treated as read evidence. Precise Oxbow old-age/death edge cases, every narrative branch and identical platform revisions remain unverified. No village raids, universal physical worker delivery simulation or imported VR mechanics are inferred.
+
+### Production, marketing and community creation
+
+Developer interviews were read as attributed testimony: Epic’s engine-vendor interview, SII’s expressly promotional investor interview, and MamBiznes’s founder retrospective. They explain decisions and claims without independently proving productivity or commercial causation. The initial-concept accounts are retained as different perspectives; the IP deal and completed payment remain separate dates.
+
+Toplitz’s 2020 Early Access, 2021 1.0 and 2022 console announcements were available as substantive indexed article text. The other cited launch, showcase, current-update and VR bodies were read directly or through the expressly identified release reproduction/official-note mirror. Linked trailers and broadcasts were not watched.
+
+Nexus catalog caches disagree and are not a live census. MDML’s author metadata was read from indexed text after direct access returned 403; its separate GitHub documentation was read directly. SW_Minimap’s description, changelog and permissions were retrieved, with installation text also available through the index. No source-code audit, installation, save test, executable or mod execution was performed. Available evidence proves tools exist; it does not measure a mature creator economy.
+
+### Financial disclosures and access
+
+Read the issuer's financial-results table and relevant numerical, revenue-note, staffing, contract and risk sections of the two official 2026 PDFs. The ESPI 8/2026 body was read through Bankier's reproduction because the issuer-linked PAP page returned an empty text shell. The older 2021 information-document URL returned 404; its current issuer-linked PDF exceeded the browser retrieval size limit. Indexed passages were inspected as search leads, but no original-budget total is claimed from that inaccessible full document. Native-currency figures avoid an undocumented exchange-rate conversion.
+
+### Reception provenance
+
+- A [GearsRealm article displaying 2026 publication/update dates](https://gearsrealm.com/medieval-dynasty-review/) was also read in full. It does not identify platform, build, hours, or a tested update, so its date alone cannot establish a current-build re-review; it is not used to certify current feature availability.
+- [Opium Pulses](https://www.opiumpulses.com/article/767/medieval-dynasty-review) displays a 2024 date but describes multiplayer as forthcoming in December. This timing mismatch makes it unsuitable as clear evidence of post-co-op reception; it is not counted among the five reviews.
+- Critic references to bandit behavior, sleep consequences, obsolete travel options, or historical production recipes are not used as authoritative current rules. The dossier's official mechanics and update record take precedence.
+- Steam individual bodies and metadata were retrieved from their public pages. Research captures are intermediate working evidence; comments and developer replies were not counted as extra independent player reviews. No aggregate review score is used to infer how common any theme is.
+- Limits: helpfulness ranking favors visible older accounts; English-only sampling misses other communities; unknown settings, maps, mods, platform paths, and review edits prevent controlled comparisons. Current total hours cannot verify continuous engagement, an heir transition, or absence of problems. The critics do not provide a current co-op benchmark, and recent Steam opinions do not establish current bug incidence.

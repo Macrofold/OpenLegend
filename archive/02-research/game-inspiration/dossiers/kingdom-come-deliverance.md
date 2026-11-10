@@ -4,6 +4,9 @@
 
 **Scope:** the original 2018 game, its expansions, later ports and documented updates. Source cutoff: **November 9, 2026**. This is source-based research; no current build or mod was played, measured or reproduced for the pass. Story and worked quest examples contain substantial spoilers.
 
+
+**Retrieval date:** November 10, 2026 UTC. Dynamic review hours, helpful votes and catalog observations refer to this research capture; individually stated source/cache dates still apply.
+
 ## Read by question
 
 - **What can the player do?** [Systems](#action-and-system-inventory), [progression and economy](#progression-money-time-and-failure), [DLC and mode boundaries](#content-and-edition-boundaries).

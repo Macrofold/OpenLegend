@@ -4,6 +4,9 @@
 
 **Scope:** the original PC Early Access settlement strategy game, distinguishing April 2024 launch, later default-branch updates and experimental releases. Source cutoff: **November 9, 2026**. Current stable Steam baseline: **0.8.117, October 31, 2026**, verified below; other store builds are not assumed identical. Research is source-based, with no firsthand play, mod execution or performance testing. Worked situations reconstruct documented rules.
 
+
+**Retrieval date:** November 10, 2026 UTC. Dynamic review hours, helpful votes and catalog observations refer to this research capture; individually stated source/cache dates still apply.
+
 ## Read by question
 
 - **What does a player actually do?** [Core loop](#core-loop-and-direct-actions), [families](#families-plots-and-labor), [supply chains](#supply-markets-and-material-chains), [currencies](#distinct-currencies), [agriculture](#agriculture-environment-and-the-calendar), [war](#war-territorial-power-and-ai) and [six situations](#six-constructed-situations).
