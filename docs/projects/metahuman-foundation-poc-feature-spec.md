@@ -1,14 +1,14 @@
 # MetaHuman foundation proof — feature specification
 
-| Status      | Current progress                                                                                                  | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Design prepared. Source export, visual quality, independent character creation and performance remain unverified. | 2026-11-07   |
+| Status      | Current progress                                                                                                            | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Native geometry export and private preservation work; attractive foundations and independent kit qualification remain open. | 2026-11-07   |
 
 ## Purpose
 
 Determine whether MetaHuman can supply attractive, anatomically believable **complete heads and bodies** for OpenLegend, and whether a small exported kit can create further characters without running MetaHuman. Quality in OpenLegend's browser presentation is the deciding result. An attractive Unreal screenshot, a moving mannequin or a functioning slider alone is insufficient.
 
-This is a standalone experiment, not adoption of MetaHuman into the art workflow. Implementation requires a subsequent go-ahead. The normal art workflow, selected game assets, world definitions and ongoing character pilot remain unchanged by this design.
+This is an authorized standalone private experiment, not adoption of MetaHuman into the art workflow. The normal art workflow, selected game assets, world definitions and existing character pilot retain their own selections and unfinished obligations. [Execution evidence](../verification/metahuman-foundation-poc.md) distinguishes capability checks from actual source/export qualification.
 
 ## Product decisions and relationship to the existing pilot
 
@@ -83,9 +83,8 @@ A failed proof is a useful completed experiment when its bounded investigation a
 | Question                                                                                                                | Resolution owner and effect                                                                                                                |
 | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | Can exported MetaHuman shapes, eyes, necks and joint placement fit the existing family contract without losing quality? | MHP02–MHP03. A failing answer blocks the independent-kit claim; do not disguise it as routine finishing.                                   |
-| Which installed Unreal/MetaHuman/exporter combination is usable on the available authoring machine?                     | MHP01 capability check; record exact versions and a working smoke export before batching. No required Windows purchase or new Mac assumed. |
 | Are the two foundations and their bounded variations attractive and sufficiently close to the intended characters?      | Mike at the body/head and final browser reviews. Source selection remains provisional until then.                                          |
-| Can the selected rights support private evaluation, a browser game and a redistributable customization kit?             | MHP01 records distinct answers. Production adoption requires an explicit source-license decision under current art policy.                 |
+| Do the selected rights support public browser delivery and a redistributable customization kit?                         | MHP01's private evaluation permission is resolved; public rights and an explicit source-license decision remain prerequisites to adoption. |
 | Does the result merit replacing the current source foundation?                                                          | Mike after MHP06. The recommendation is conditional; no workflow migration is authorized by a passing report.                              |
 
 These are the questions the experiment is designed to resolve, not instructions to improvise new product scope. No new gameplay, cognition, body-stat or gender rule is selected here.

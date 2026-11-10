@@ -2,7 +2,7 @@
 
 [Feature](../projects/metahuman-foundation-poc-feature-spec.md) · [Execution design](../projects/metahuman-foundation-poc-tech-design.md) · [Tasks](../maintainers/art/metahuman-poc.md)
 
-All POC choices below are **Proposed**, with no runtime qualification yet. Shared [A3D](3d-pixel-art.md) and [asset-storage](game-asset-storage.md) limits keep their owners; this inventory does not raise them.
+Private execution is authorized. Numerical POC choices below remain **Proposed** experiment targets, with no runtime qualification yet. Shared [A3D](3d-pixel-art.md) and [asset-storage](game-asset-storage.md) limits keep their owners; this inventory does not raise them.
 
 ## MHP-L01 — Finite authoring sample set
 

@@ -115,3 +115,9 @@ Keep stable IDs, a canonical policy link, the reason to revisit, a concrete trig
 ## RP11 — Automated-test pause
 
 [Verification](../../.agents/rules/verification.md#select-checks-for-the-task) owns Mike's temporary pause during early development. Revisit when Mike explicitly requests automated tests again; approaching release can prompt that discussion but does not resume suites automatically. Static checks, manual/native verification and authorized live experiments continue under that policy.
+
+## RP12 — Third-party art licenses
+
+**Current policy:** [Art-direction rights](../../art-direction/decisions.md#current-visual-requirements--october-31-2026) restrict third-party game art to CC0 or CC BY; generated art keeps its verified rights. This simplifies sharing the asset library and reuse by creators. Authorized private experiments retain their specific scope.
+
+**Review trigger:** Mike prioritizes high quality and easy generation, is willing to pay, and is considering commercially licensed assets as source/reference foundations. Restricting the catalogue can increase repair effort and exclude better candidates. The [licensing research](../../art-direction/research/3d-pixel-worlds/tool-and-license-notes.md#marketplace-and-metahuman-licensing) records the proposed preference-based policy and the separate game, raw-library, creator-export and AI-input permissions. **Decision owner: Mike.** No blanket relaxation or paid acquisition is approved by this review trigger. The existing [AD09 generation pilot](art-direction.md#ad09--follow-through-on-the-grounded-stylized-direction) owns any subsequently authorized reference-generation comparison.

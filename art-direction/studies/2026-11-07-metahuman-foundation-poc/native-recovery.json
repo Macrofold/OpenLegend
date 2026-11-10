@@ -1,0 +1,88 @@
+{
+  "scope": "Private completed native source/rig/texture/geometry-export/DCC tranche. Not independent kit qualification or complete catalog/world backup.",
+  "reference": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-native-20261107",
+    "revisionId": "native02-dcc31",
+    "manifestSha256": "03358167534490126210a8e5f732f920d79a0ad992e8acbf39052a1bb02c1eda"
+  },
+  "destination": {
+    "boundary": "art-library",
+    "accessDomain": "curated-private"
+  },
+  "operationId": "metahuman-poc-native02-publication",
+  "files": 274,
+  "fileBytes": 784241161,
+  "manifestArtifact": {
+    "boundary": "art-library",
+    "accessDomain": "curated-private",
+    "sha256": "03358167534490126210a8e5f732f920d79a0ad992e8acbf39052a1bb02c1eda",
+    "bytes": 66372,
+    "mediaType": "application/json"
+  },
+  "offlineRestore": "passed; all274 files independently hashed",
+  "supplementaryExactRecovery": {
+    "status": "passed",
+    "objectsIncludingManifest": 273,
+    "bytesIncludingManifest": 784233399,
+    "authorityGenerationBefore": 261,
+    "authorityGenerationAfter": 261,
+    "completedAtUtc": "2026-11-08T00:11:00.895Z",
+    "receiptLocalPath": "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/evidence/private-preservation-native02/recovery-receipt.json",
+    "receiptSha256": "a732f33e5b49d352658215b946532807655ab5034760f2a8892c9b95a41892aa",
+    "receipt": {
+      "reference": {
+        "boundary": "asset-recovery",
+        "accessDomain": "openlegend-assets",
+        "sha256": "a732f33e5b49d352658215b946532807655ab5034760f2a8892c9b95a41892aa",
+        "bytes": 439148,
+        "mediaType": "application/json"
+      },
+      "location": {
+        "accountId": "027677879749",
+        "region": "us-east-2",
+        "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+        "key": "domains/openlegend-assets/blobs/sha256/a7/a732f33e5b49d352658215b946532807655ab5034760f2a8892c9b95a41892aa",
+        "versionId": "t_QatEl17naGIlY.lOT.iqUeIWW3bLMl"
+      },
+      "readerHashVerified": true,
+      "authorityGeneration": 261,
+      "scope": "Immutable supplementary exact-native02 preservation receipt, not complete catalog/world checkpoint",
+      "completedAtUtc": "2026-11-08T00:11:40.077Z"
+    }
+  },
+  "sourcePins": {
+    "savedCharacter": {
+      "bytes": 140122456,
+      "sha256": "5c620c01ff885ed55b05e332bb44e5c19d0430c1db777f713dbc0d0c86578843"
+    },
+    "successfulDccZip": {
+      "bytes": 129181969,
+      "sha256": "d2593012fca3ae8de986a3e0f06b8b28483522616671cd74f81b1f5edcae7cd5",
+      "entries": 31
+    },
+    "exporterCode": {
+      "sha256": "b14ecb1edaa15598f9cc3cd82349f03abc2c9bf42c3b4f061930f9672f0d5db4",
+      "license": "AGPL-3.0-only"
+    }
+  },
+  "sanitization": "AndroidFileServer section and generated SecurityToken omitted; only three explicit True renderer flags retained. Five account-identity matches redacted in four native logs; original hashes and counts remain recorded.",
+  "rights": "Private source, study, offline and recovery only; no public/runtime/customization-kit approval.",
+  "cost": {
+    "newPaidProviderSoftwareUsd": 0,
+    "incrementalAwsBoundUsd": 2,
+    "boundIsActualSpend": false,
+    "actualAwsCharges": "Not separately measured. Under1GiB tranche, source+recovery copies, four full-data read/copy paths and existing database at configured max4ACU, completed withinone hour.",
+    "extraResourcesOrCapacity": "None"
+  },
+  "verificationLimits": [
+    "Native full rig and source texture acquisition, geometry exporter neutral and short-path31-entry DCC export succeeded; archival does not imply visual, body/head, motion, facial or independent-kit pass.",
+    "Earlier orlando-materials02 source-acquired wrapper status was a false positive; nativepath length errors and DNA-only ZIP remain preserved as failure. Raw20shader PNGs are not finished skin.",
+    "Face rig changes HeadLOD2 vertex count/index/UV ordering; zero859 morphs do not qualify facial animation.",
+    "Supplementary recovery uses exact source/destination versions and existing current permission checks; all273 recoveryreadbacks independently rehashed.",
+    "Active coverage-material01 and renders/pbr-preview01 excluded; no other project sweep or Engine/plugin code/binary copies."
+  ]
+}

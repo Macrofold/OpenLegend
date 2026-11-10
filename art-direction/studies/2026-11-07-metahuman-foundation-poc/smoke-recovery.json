@@ -1,0 +1,20 @@
+{
+  "reference": {
+    "boundary": "asset-recovery",
+    "accessDomain": "openlegend-assets",
+    "sha256": "3e43477817d148e09aa0cb68af738220d3bb5e17e0ac5396e2f6dd1292bd3dd1",
+    "bytes": 81309,
+    "mediaType": "application/json"
+  },
+  "location": {
+    "accountId": "027677879749",
+    "region": "us-east-2",
+    "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+    "key": "domains/openlegend-assets/blobs/sha256/3e/3e43477817d148e09aa0cb68af738220d3bb5e17e0ac5396e2f6dd1292bd3dd1",
+    "versionId": "OuUoJX9_oIneQ9ZVgWLe98SCJJgeU_mG"
+  },
+  "readerHashVerified": true,
+  "authorityGeneration": 259,
+  "scope": "Immutable supplementary exact-source preservation receipt, not complete catalog/world checkpoint",
+  "completedAtUtc": "2026-11-07T23:13:52.272Z"
+}

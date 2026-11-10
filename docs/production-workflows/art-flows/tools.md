@@ -398,6 +398,7 @@ Manual only: its terms forbid automated access. Mike runs it himself when he wan
 - **Approved for the current direction:** the sources the [production notes](../../../art-direction/decisions.md#how-the-current-look-changes-production) name.
 - **Already acquired:** sources with exact provenance in the [source study](../../../art-direction/assets/source-study/README.md).
 - **Rights:** record each source's license, attribution and whether it may be uploaded to a generator. Share-alike sources keep their license on derivatives, and a reference-only image is never a source.
+- **Fab and other commercial sources:** apply the selected source policy; a marketplace license allowing use in a game does not automatically clear generator uploads or raw-library distribution. Check the exact license and **Allows usage with AI** field, not **Generated with AI**; use the [licensing and NoAI guide](../../../art-direction/research/3d-pixel-worlds/tool-and-license-notes.md#ai-reference-permission) for ambiguous inputs. Prefer portable model/texture files for PlayCanvas; Unreal shaders, Blueprints and plugins are not directly portable, and purchased garments still need fitting. The [reference-expansion experiment](../../../art-direction/research/3d-pixel-worlds/generative-pipeline.md#expand-a-style-beyond-a-source-collection) reuses the existing concept/model/preparation stages; no marketplace route is automatically selected.
 
 ## Other platforms (opt-in)
 

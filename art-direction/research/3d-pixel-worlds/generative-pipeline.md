@@ -1,14 +1,14 @@
 # How this style fits generative art
 
-**Current art direction:** the [current visual requirements](../../decisions.md#superseded-pixel-art-requirements--october-16-2026) pair beautiful dimensional pixel art with believable proportions and explicitly reject visibly low-poly, blocky, cutesy and big-head/small-body styles. Technique evidence below remains useful; Bitgem is a rejected style reference, not a recommended source family.
+**Current art direction:** the [current visual requirements](../../decisions.md#current-visual-requirements--october-31-2026) call for grounded, stylized plain 3D with believable proportions and reject visibly low-poly, blocky, cutesy and big-head/small-body styles. The directory name retains the earlier research context; Bitgem is a rejected style reference, not a recommended source family.
 
-**Good fit as an assisted production process; unproven as fully automatic final art.** Generation can provide concepts, variations, draft geometry and texture candidates. The desired finish depends on consistent forms, scale, garment coverage, motion and a designed pixel renderer. The realtime references show that the renderer can supply the pixel shading; a generated asset does not need a hand-painted texture for every visible pixel. A generic downsampling filter alone still does not establish the quality.
+**Good fit as an assisted production process; unproven as fully automatic final art.** Generation can provide concepts, variations, draft geometry and texture candidates. The desired finish depends on consistent forms, scale, materials, garment coverage and motion in the actual game. Rendering cannot repair incompatible anatomy or construction, and the accepted direction does not rely on a pixel filter to make unrelated assets match.
 
 This document owns the art-production implications of the research. The existing [generation/publication design](../../../docs/projects/3d-pixel-art-asset-pipeline.md) owns durable work, admission, storage, spending, failure and publication. Its general pipeline remains proposed. No provider request, tool installation, account access or quality/cost benchmark was performed for this research.
 
 ## Concept-first assets for Open Legend — October 17, 2026
 
-**Recommendation: make approved original concepts followed by Meshy or Tripo a primary candidate route for distinctive people, clothing designs and setting-specific objects.** This is particularly useful where the [stock-source survey](asset-source-survey-2026-10-17.md) cannot supply the identity or culture we want. The extra artistic control comes from selecting and correcting the design before reconstruction, then retaining an editable master model. Exact geometry, reliable deformation and consistent equipment still require deliberate finishing. This recommendation does not select a provider or establish an accepted output.
+**Original concepts followed by Meshy or Tripo are candidate routes for distinctive objects and garment designs where the [stock-source survey](asset-source-survey-2026-10-17.md) cannot supply the identity or culture we want.** The extra artistic control comes from selecting and correcting the design before reconstruction, then retaining an editable master model. For people, the [current character contract](../../../docs/projects/people-from-parts-authoring-contract.md) requires reusable bodies, faces and fitted parts rather than independently generated whole people. The [MetaHuman proof](../../../docs/projects/metahuman-foundation-poc-feature-spec.md) evaluates a replacement foundation without selecting it for production. Exact geometry, reliable deformation and consistent equipment still require deliberate finishing; these recommendations establish neither a winning provider nor accepted output.
 
 The mercenary is relevant project evidence. The [source-study record](../../assets/source-study/README.md#earlier-sources-and-preparation-retained) credits Mike's concept and Meshy's anatomy/rig, together with OpenLegend's cape, body-contact work, clips and later face/material treatment. The [art-progress record](../../../docs/maintainers/art/mercenary.md) retains the original identity and its variants; the [verification history](../../../docs/verification/mercenary-default.md) records further coverage, appearance and rendering corrections. The result supports taking this route seriously. It does not establish the production effort for a population, interchangeable clothing, arbitrary creatures or every source image. This research did not recover or re-run the original private generation ledger.
 
@@ -18,16 +18,29 @@ The following division is a production judgment under the current brief, not a m
 
 | Asset family                                                   | Recommended starting route                                                                         | Why it fits the intended worlds                                                                                                                                                           |
 | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Distinctive named people and original cultures                 | Original concept, image-to-3D candidates, then an edited body/face/garment master                  | Preserve natural proportions and specific identity. Fantasy residents and future Teral/Nemei designs need their own visual language. Nonhuman rig suitability remains untested.           |
+| Distinctive named people and original cultures                 | Original concepts mapped onto the qualified family; generate compatible parts selectively       | Preserve natural proportions and specific identity. Fantasy residents and future Teral/Nemei designs need their own visual language. Nonhuman rig suitability remains untested.                             |
 | Ordinary medieval and fantasy clothing populations             | Design outfit families in concept art; build compatible garments around reviewed body/rig families | Coifs, aprons, wool/linen layers, boots and workwear need consistent fit. A separate generated whole person for every outfit would make reuse and equipment compatibility harder.         |
 | Unique props, carved objects and sci-fi utility equipment      | Concept-first generation for the visible design, with separate functional parts                    | A distinctive travel pack, craft-town kettle or ship tool can carry original cultural identity. Handles, openings, moving lids and attachment points must remain actual usable structure. |
 | Temperate vegetation, rocks and ordinary wildlife              | Start with the strongest specialist, scanned, procedural or animated sources from the survey       | Species structure, canopy gaps, biome variation and credible gaits matter more than inventing an ordinary oak or deer. Generate unusual fantasy specimens selectively.                    |
 | Enterable buildings and repeated structural modules            | Use concepts to design architecture; model or adapt a compatible modular system                    | Door sizes, interiors, wall thickness, working stairs, joints and repeated scale need precise control. Generated pieces can supply selected accents.                                      |
 | Repeated machines, modular equipment and interchangeable parts | Establish an authored dimensional system and use generation for bounded details                    | Common Measure's fittings and Hinge Port's infrastructure need parts that agree. A convincing image alone does not establish that agreement.                                              |
 
-This gives generation a substantial design role while keeping the concrete source survey useful. Stock sources can supply anatomical or structural foundations; their licenses must separately permit any proposed upload to an AI service. See [the current generator rights notes](tool-and-license-notes.md#generator-rights-and-plan-snapshot--october-17-2026).
+This gives generation a substantial design role while keeping the concrete source survey useful. Stock sources can supply anatomical or structural foundations; their licenses must separately permit any proposed upload to an AI service. See [AI-reference permission](tool-and-license-notes.md#ai-reference-permission) and the dated [provider-rights snapshot](tool-and-license-notes.md#generator-rights-and-plan-snapshot--october-17-2026).
 
-### Current tool controls and limits
+## Expand a style beyond a source collection
+
+The goal is to generate new assets consistently, not limit the game to a purchased pack's catalogue. A small, coherent, rights-cleared source collection can anchor proportions, silhouettes, palette, materials and detail density. The [October 17 survey](asset-source-survey-2026-10-17.md) included Fab; the [October 31 hands-on survey](../../studies/2026-10-31-world-asset-survey/README.md) deliberately compared free CC0/CC-BY sources. It did not establish that those assets outperform paid alternatives.
+
+Proposed use of the existing concept → model → preparation workflow:
+
+1. Clear the exact reference-upload operation under the [licensing guide](tool-and-license-notes.md#ai-reference-permission). Buying an asset for the game alone does not clear uploading it to a generator.
+2. Extract a concise style sheet and clean views that distinguish shape and surface design from lighting. Retain the original anchors as approved generated examples expand the set, so successive generations do not gradually redefine the style.
+3. Generate concepts for **new objects** in that language, select the design, then prepare consistent views of that same object for reconstruction. Style-reference inputs guide appearance; they do not preserve exact object identity. Meshy's geometry views must depict the same object, not a board of different props. See [Midjourney Style Reference](https://docs.midjourney.com/hc/en-us/articles/32180011136653-Style-Reference) and [Meshy multiview inputs](https://docs.meshy.ai/en/api/multi-image-to-3d).
+4. Finish through the existing scale, material, budget and motion owners; inspect beside the anchors in the actual game. A matching concept is not a matching production asset.
+
+Start with a few rigid props within the existing [AD09 generation pilot](../../../docs/maintainers/art-direction.md#ad09--follow-through-on-the-grounded-stylized-direction), then extend only on useful evidence. Compare acceptance rate, cleanup effort, visual consistency and total cost per usable asset, including rejects. This is a proposed comparison, not authorization for new purchases/uploads or a new pipeline. Including non-CC0/CC-BY source assets in the game/library needs a source-policy decision; using them only as generation references has its own permission check and does not automatically relicense the output.
+
+## Current tool controls and limits
 
 Checked against official documentation on October 17, 2026, with the Tripo Studio/API distinction corrected from its current model reference on October 31. Features listed here are published capabilities; no new generated model was inspected.
 
@@ -43,7 +56,7 @@ Meshy's [web rigging documentation](https://docs.meshy.ai/en/webapp/guides/3d-mo
 
 ### Turn a selected illustration into a reconstruction reference
 
-The [September 27 decision](../../decisions.md#concept-art-with-midjourney--september-27-2026) already distinguishes painted concept art from the eventual pixel finish. Keep that separation: natural anatomy and readable construction first, with the existing renderer interpreting them into deliberate pixel/color groups.
+The [concept-art decision](../../decisions.md#concept-art-with-midjourney--september-27-2026) distinguishes an illustration from its eventual game asset. For the current plain-3D direction, preserve natural anatomy and readable construction, then judge the materials and lighting in the actual renderer rather than copying painted shadows into the surface.
 
 Prepare a neutral reference from the approved design: one isolated full subject, restrained perspective, broad diffuse light, visible extremities, simple background and clear material boundaries. A dramatic sunset, deep painted shadow or tiny embroidered noise may look attractive in a concept but obscure the geometry and lighting we need. For people, expose enough limb separation for reconstruction and rigging; choose the pose around the garment's construction.
 
@@ -55,7 +68,7 @@ After choosing a mesh, preserve that model and rig through further poses. Meshy'
 
 For the character-production question, begin with one approved useful person, such as an explicitly hypothetical covered medieval worker, and the existing mercenary as a scoped quality reference. Use an appropriate authored/reused baseline alongside the Meshy and Tripo routes. A distinctive travel pack or handled craft object and an original sci-fi utility device remain separate probes when extending the comparison to those families; they do not all have to be produced before learning from the first character. None of these examples installs a new character or world canon.
 
-Feed the same approved, permitted references to the candidate routes. Preserve every meaningful candidate and judge untextured shape, material/face fidelity and final pixel appearance at the same world scale. Record selection/rejection, actual charges, authoring and cleanup time, export sizes, garment coverage, movement and one useful subsequent revision. The [matched comparison protocol](../../../docs/projects/3d-pixel-art-validation.md#matched-character-production-comparison) owns the small sample, stopping rules, acceptance path and complete cost record. The useful cost is the total effort per accepted asset, including discarded generations.
+Feed the same approved, permitted references to the candidate routes. Preserve every meaningful candidate and judge untextured shape, material/face fidelity and final in-game appearance at the same world scale. Record selection/rejection, actual charges, authoring and cleanup time, export sizes, garment coverage, movement and one useful subsequent revision. The [matched comparison protocol](../../../docs/projects/3d-pixel-art-validation.md#matched-character-production-comparison) owns the small sample, stopping rules, acceptance path and complete cost record. The useful cost is the total effort per accepted asset, including discarded generations. For the active character-foundation question, the MetaHuman proof owns the selected comparison and gates; this research does not authorize a parallel whole-person generation trial.
 
 A good result would preserve identity and construction with manageable correction, fit the shared renderer without a special exception, and remain readable during rotation, zoom and the needed actions. A beautiful still with a fused pack, drifting face or unusable cloth should not count as success. This research proposes that comparison; it does not run paid calls, change the renderer or close the existing [live-generation qualification](../../../docs/projects/3d-pixel-art-validation.md#6-live-generation-qualification).
 
@@ -69,9 +82,11 @@ These are reasoned production assessments, not measured success rates or claims 
 | ---------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | Mood, palette and composition alternatives                 | Strong candidate                      | Distill the selected qualities into an original brief; a beautiful image is not a runtime asset.        |
 | Single rigid props with familiar structure                 | Promising first production experiment | Correct scale, usable silhouette, complete hidden surfaces, clean geometry and material consistency.    |
-| Recoloring or bounded variation of approved materials      | Promising with strict inputs          | Pixel grid, seams, tiling, palette and detail density remain consistent.                                |
+| Complex tools, weapons and buildings                       | Moderate to difficult                 | Working openings, dimensions, structural joins and movable/separable parts need deliberate modeling.  |
+| Foliage and trees                                          | Difficult as finished generated models | Branch structure, leaf gaps, alpha, wind and overdraw often favor procedural assembly or specialist sources. |
+| Recoloring or bounded variation of approved materials      | Promising with strict inputs          | UV scale, seams, tiling, palette and detail density remain consistent.                                  |
 | Character concept and costume variants                     | Useful for exploration                | Maintain identity, anatomy, garment logic and intended equipment across views.                          |
-| Automatic UV-ready pixel textures                          | Unproven                              | Features must land on the right surfaces, join at seams and remain readable after mip reduction.        |
+| Automatic UV-ready textures                                | Unproven                              | Features must land on the right surfaces, join at seams and remain readable after mip reduction.        |
 | Multiple matching views or animation frames                | Difficult                             | Faces, clothing marks and proportions must not drift between views or frames.                           |
 | Finished skinned people and interacting garments           | Difficult                             | Topology, rig, weights, motion, face quality, attachment points and coverage all need inspection.       |
 | A universal shader that makes every generated object match | Poor assumption                       | Rendering cannot correct bad anatomy, missing surfaces, excessive baked shading or inconsistent design. |
@@ -88,21 +103,21 @@ For example, a **hypothetical character brief** might request a natural adult si
 
 Use the liked references to describe qualities—grouped foliage, restrained surface noise, warm focal light—rather than asking to reproduce a particular screenshot. The downloaded reference library is not automatically permitted input to an external generator.
 
-### 2. Establish the asset before pixel finishing
+### 2. Establish the asset before surface finishing
 
 Choose the appropriate route from the existing pipeline: reuse a permitted library asset, compose approved parts, author directly, generate a concept first, or generate a model directly. Do not force every object through an image-to-3D service.
 
 For a model, inspect its neutral untextured shape, full turntable and usable scale before celebrating its rendered appearance. Check the back, underarms, hands, garment interior, openings and contact with the ground. Correct shape while it is still inexpensive to change. A polished frontal preview can conceal unusable hidden geometry.
 
-For sprite parts, establish the rig, joints and directional coverage before creating many detailed frames. The production cost grows with the number of distinct parts, views, poses and costume alternatives. Mirroring is useful only where it preserves intentional asymmetry such as equipment placement.
+The earlier sprite-part route requires rig, joints and directional coverage before detailed frames; its cost grows with parts, views, poses and costumes. Mirroring preserves only symmetric designs. This remains historical technique guidance, not the current 3D-character route.
 
-### 3. Prepare deliberate materials and pixel rendering
+### 3. Prepare deliberate materials and in-game rendering
 
-For the leading renderer-driven candidate, provide clear material regions, sensible surface normals and restrained base colors. Use vertex colors, procedural materials or textures according to the selected asset. Generate geometry and material candidates, then use the shared renderer to produce consistent lighting bands, edges and effects. Semantic material masks can help keep skin, hair, metal and cloth distinct; they require inspection and do not grant gameplay meaning.
+Provide clear material regions, sensible surface normals and restrained base colors. Use vertex colors, procedural materials or textures according to the selected asset and qualify them under the shared renderer's selected lighting. Shading and outline choices remain with the art-direction owner, not a provider-specific workaround. Semantic material masks can help keep skin, hair, metal and cloth distinct; they require inspection and do not grant gameplay meaning.
 
-Reserve targeted authored detail for identity and places the renderer cannot infer, especially eyes, brows and distinctive garment marks. When using painted textures, create a usable UV layout and allocate detail by visible importance. A high-resolution generated image can guide this work; automatic shrinking and palette reduction are preparation steps, not proof of final quality.
+Reserve targeted authored detail for identity and places the renderer cannot infer, especially eyes, brows and distinctive garment marks. When using painted textures, create a usable UV layout and allocate detail by visible importance. A high-resolution generated image can guide this work; baking and resizing textures are preparation steps, not proof of final quality.
 
-Noio's [Pixel Unwrapper](https://github.com/noio/Pixel-Unwrapper) is a concrete tool to investigate for controlled UV layout. It has not been installed or qualified here. Aseprite or another pixel editor can support exact pixel edits; Blender can supply geometry, UV inspection and pose tests. The output matters more than mandating a particular editor.
+Blender can supply geometry, UV inspection and pose tests; the output matters more than mandating a particular editor. Historical pixel-rendering research also identified Noio's [Pixel Unwrapper](https://github.com/noio/Pixel-Unwrapper) for controlled UV layout and Aseprite for exact pixel edits. Those tools are not selected requirements of the current plain-3D pipeline, and Pixel Unwrapper was not installed or qualified by this research.
 
 For generated texture candidates, supply only rights-cleared references and a clear layout when the selected service supports it. Validate placement on the actual mesh. Do not ask an image generator to invent a correct UV layout from a prose description and assume its pretty flat result will wrap correctly.
 
@@ -126,7 +141,7 @@ The renderer should receive a chosen asset and render it consistently. It should
 
 For animation, retarget candidate clips to a reviewed rig and test held poses, contacts, attachment motion and interruptions through the [animation workflow](animation-tools-and-techniques.md).
 
-Prefer reusable authored structure: body families, compatible garments, approved material families and actual equipment attachment rules. Variation can alter bounded visual choices without regenerating the complete person. This remains a proposed production strategy; the existing mercenary pilot is one fixed outfit, not proof that interchangeable generated clothing already works.
+Prefer reusable authored structure: body families, compatible garments, approved material families and actual equipment attachment rules. Variation can alter bounded visual choices without regenerating the complete person. The [people-from-parts design](../../../docs/projects/people-from-parts-feature-spec.md) owns that accepted direction and its unfinished qualification; the mercenary's fixed outfit alone is not evidence of interchangeable generated clothing.
 
 ## A useful first generation experiment
 
@@ -138,9 +153,9 @@ The experiment should answer whether the output can join existing art without sp
 
 ## Meshy, Blender and access
 
-**No new access is needed to use this research.** A later authored prototype can use existing permitted modeling/painting tools and assets. Meshy or a similar service would be useful only if a chosen experiment actually needs model generation; it is not required for either renderer-driven pixel art or painted polygon surfaces.
+**No new access is needed to use this research.** A later authored prototype can use existing permitted modeling/painting tools and assets. Meshy or a similar service would be useful only if a chosen experiment actually needs model generation; it is not required to assemble, deform or finish existing 3D assets.
 
-Before selecting a service, check its then-current input/output capabilities, license terms, rig/texture exports, costs and account authorization. This document does not assume those facts or request credentials. Blender access alone also does not produce the art direction automatically; the key work is shape, rigging, controlled materials, selected surface detail, pixel rendering and visual correction.
+Before selecting a service, check its then-current input/output capabilities, license terms, rig/texture exports, costs and account authorization. This document does not assume those facts or request credentials. Blender access alone also does not produce the art direction automatically; the key work is shape, rigging, controlled materials, selected surface detail and visual correction in the game.
 
 ## What remains unproven
 
