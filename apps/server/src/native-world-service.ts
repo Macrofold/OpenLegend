@@ -33,7 +33,6 @@ import {
   experienceReading,
   selectedCreationProfileForWorld,
   selectedPlaytestMilestoneRules,
-  selectedTemporalPolicy,
   type ExperiencePrivacy,
   type AppraisalScope,
   type Outcome,
@@ -71,12 +70,7 @@ import {
 } from './authority.js';
 import type { AppConfig } from './config.js';
 import { DATABASE_SCHEMA, digest, type SqlGameRepository } from './store.js';
-import {
-  withAdmittedWorkingSources,
-  nativeSourceFlatStringFields,
-} from './native-current-sources.js';
-import { nativeDefinitionSources } from './native-definition-sources.js';
-import { nativeRecordLayouts, nativeStorageSettings } from './native-install-inputs.js';
+import { NativeCurrentOpening } from './native-current-opening.js';
 import { NativeDefinitionCapture } from './native-definition-capture.js';
 import { captureNativeReadCut, nativeScopedReadCut } from './native-read-cut.js';
 import {
@@ -156,7 +150,14 @@ import { HostWork } from './host-work.js';
 import { OverloadError, WorkLane } from './work-lane.js';
 import { NATIVE_IO_YIELD_MS, NATIVE_PUBLICATION_MS } from './native-advance-budget.js';
 import { LIVE_SAVE_INTERVAL_MS, LIVE_SAVE_MAX_AGE_MS } from './pending-world-save.js';
-import { WorldInputOwner } from './world-input.js';
+import type { WorldInputOwner } from './world-input.js';
+import {
+  NativeInputAllocation,
+  NativeInputResultAllocation,
+  nativeWorldInputs,
+  nativeInputScope,
+  nativeInputSnapshot,
+} from './native-world-input.js';
 import { permittedSourceHandle } from './entity-references.js';
 import { prepareNativeActivityLearning } from './native-activity-learning.js';
 import { driveNativeOperation, answerNativeProvider } from './native-providers.js';
@@ -168,7 +169,12 @@ import { NativeNavigation } from './native-navigation.js';
 import { beginNativeCommand } from './native-command.js';
 import { NativeInventoryReads } from './native-inventory-reads.js';
 import { worldSpeedRefusal, worldControlOutcome } from './world-control-outcome.js';
-import { withNativeSourcePreparation, prepareNativeSource } from './native-source-preparation.js';
+import {
+  withNativeSourcePreparation,
+  prepareNativeSource,
+  withNativeSqlPreparation,
+  withoutNativeSqlPreparation,
+} from './native-source-preparation.js';
 
 type Progress = NativePublication['progress'];
 export type OperationalSettings = {
@@ -225,7 +231,6 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   private readonly receipts = new Map<string, GameplayReceipt>();
   private readonly receiptReaders = new Map<string, number>();
   private readonly durableReceipts = new Set<string>();
-  private readonly inputLives = new Map<string, { life: number; alive: boolean }>();
   private readonly speechActors = new Map<string, string>();
   private actors: NativeActorRoster;
   private readonly navigation: NativeNavigation;
@@ -285,6 +290,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     retention: NativeRetention,
     inventoryReads: NativeInventoryReads,
     profiles: NativePlayerProfiles,
+    inputs: WorldInputOwner,
     private readonly now: () => number,
     private readonly installationRelease?: AssetRevisionReference,
   ) {
@@ -304,10 +310,10 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     this.retention = retention;
     this.inventoryReads = inventoryReads;
     this.profiles = profiles;
+    this.inputs = inputs;
     this.provider = definitions.geometry();
     this.lane = new WorkLane('native.mutation', config.capacity.requests);
     this.projection = new WorkLane('native.projection', config.capacity.requests);
-    this.inputs = new WorldInputOwner(config.capacity.presence);
     this.navigation = new NativeNavigation({
       world: () => this.world,
       geometry: () => this.geometry,
@@ -401,112 +407,60 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   }): Promise<NativeWorldService> {
     const { store, config } = options;
     await store.ready;
-    return withAdmittedWorkingSources(
-      store.records,
-      DATABASE_SCHEMA,
-      options.host,
-      async (source) => {
-        if (!source) throw new Error('Native opening requires an existing current-format world.');
-        // The proof has no world maintenance-window writer. A positive saved
-        // schedule must not be presented as an absent hold or resumed silently.
-        if (
-          (await store.maintenance.load(source.records.worldId)).some(
-            (window) => window.status === 'scheduled' || window.status === 'active',
-          )
-        )
-          throw new Error('Native opening cannot yet execute an operational maintenance schedule.');
-        const row = source.records.tables['data_world']?.find((value) => value.id === '[]');
-        const owner = source.records.tables['world_player_accounts']?.[0];
-        if (!row || !owner)
-          throw new Error('Native opening requires its actual host and player owner.');
-        const saved = JSON.parse(row.payload) as OperationalSettings;
-        const header = JSON.parse(source.records.tables['world_settings']![0]!.payload) as {
-          simTime: number;
-          sequence: number;
-          nextId: number;
-          paused: boolean;
-        };
-        const operational = {
-          speed: saved.speed,
-          manuallyPaused: saved.manuallyPaused,
-          ...(saved.presentationRelease ? { presentationRelease: saved.presentationRelease } : {}),
-          ...(saved.presentationReleaseRevision === undefined
-            ? {}
-            : { presentationReleaseRevision: saved.presentationReleaseRevision }),
-        };
-        const world = await withNativeJsonInput(
-          options.host,
-          {
-            ...source,
-            definitions: nativeDefinitionSources(source),
-            settings: nativeSetupSettings,
-            storage: nativeStorageSettings,
-            layouts: nativeRecordLayouts(),
-            acceptedCut: 0,
-          },
-          (bytes) => options.host.installWorld(bytes, DATABASE_SCHEMA),
-          { installationRoot: { flatStringFields: nativeSourceFlatStringFields } },
-        );
-
-        let definitions: NativeDefinitionCapture | undefined;
-        let service: NativeWorldService | undefined;
-        let admittedRoster: NativeActorRoster | undefined;
-        let admittedRetention: NativeRetention | undefined;
-        let admittedInventory: NativeInventoryReads | undefined;
-        let admittedProfiles: NativePlayerProfiles | undefined;
-        let admittedOperational: OperationalSettings | undefined;
-        let admittedPrivacy: ExperiencePrivacy | undefined;
-        let admittedEpoch: CommandEpoch | undefined;
-        let admittedMilestones:
-          | Readonly<Record<string, Readonly<Record<string, boolean>>>>
+    const opening = await NativeCurrentOpening.capture(options.host, store);
+    let world: NativeWorld;
+    try {
+      world = await opening.install();
+    } catch (error) {
+      opening.release();
+      throw error;
+    }
+    const header = opening.header;
+    const operational = opening.operational;
+    let definitions: NativeDefinitionCapture | undefined;
+    let service: NativeWorldService | undefined;
+    const admittedRoster = opening.actors;
+    const admittedRetention = opening.retention;
+    let admittedInventory: NativeInventoryReads | undefined;
+    let admittedProfiles: NativePlayerProfiles | undefined;
+    let admittedInputs: WorldInputOwner | undefined;
+    const admittedOperational = opening.operational;
+    const admittedPrivacy = opening.privacy;
+    let admittedEpoch: CommandEpoch | undefined;
+    let admittedProgress: Progress | undefined;
+    const admittedMilestones = opening.milestones;
+    let installationOwner: NativeCurrentWorldInstallation | undefined;
+    let retainedOwner: NativeRetainedValues | undefined;
+    try {
+      return await withNativeSqlPreparation(world, store.db, async () => {
+        const installation = (installationOwner =
+          decodeNativeProduct<NativeCurrentWorldInstallation>(await world.installation()));
+        definitions = await NativeDefinitionCapture.capture(world);
+        const retained = (retainedOwner = await captureNativeRetainedValues(world));
+        const storedTimeline = await store.getIntegration(`world-timeline:${installation.worldId}`);
+        if (storedTimeline !== undefined && (typeof storedTimeline !== 'string' || !storedTimeline))
+          throw new Error('The current world timeline is malformed.');
+        const timeline = storedTimeline ?? randomUUID();
+        if (storedTimeline === undefined)
+          await store.putIntegration(`world-timeline:${installation.worldId}`, timeline);
+        const priorEpoch = (await store.getIntegration(`command-epoch:${installation.worldId}`)) as
+          | CommandEpoch
           | undefined;
-        let installationOwner: NativeCurrentWorldInstallation | undefined;
-        let retainedOwner: NativeRetainedValues | undefined;
-        try {
-          const installation = (installationOwner =
-            decodeNativeProduct<NativeCurrentWorldInstallation>(await world.installation()));
-          definitions = await NativeDefinitionCapture.capture(world);
-          const retained = (retainedOwner = await captureNativeRetainedValues(world));
-          const storedTimeline = await store.getIntegration(
-            `world-timeline:${installation.worldId}`,
-          );
-          if (
-            storedTimeline !== undefined &&
-            (typeof storedTimeline !== 'string' || !storedTimeline)
-          )
-            throw new Error('The current world timeline is malformed.');
-          const timeline = storedTimeline ?? randomUUID();
-          if (storedTimeline === undefined)
-            await store.putIntegration(`world-timeline:${installation.worldId}`, timeline);
-          const priorEpoch = (await store.getIntegration(
-            `command-epoch:${installation.worldId}`,
-          )) as CommandEpoch | undefined;
-          const epoch = {
-            generation: (priorEpoch?.generation ?? 0) + 1,
-            openedAt: (options.now ?? Date.now)(),
-            token: randomUUID(),
-          };
-          if (!Number.isSafeInteger(epoch.generation)) throw new Error('Command epoch exhausted.');
-          await store.putIntegration(`command-epoch:${installation.worldId}`, epoch);
-          await store.commands.prune(installation.worldId, epoch.generation, epoch.openedAt);
-          const privacy: ExperiencePrivacy = { forgotten: {}, corrections: {} };
-          for (const table of ['mind_forgotten', 'mind_corrections'] as const) {
-            const columns = Object.keys(RECORD_NODES.get(table)!.columns!);
-            for (const row of source.records.tables[table] ?? []) {
-              const actor = String(row.extra[columns.indexOf('actor_id')]);
-              const id = String(row.extra[columns.indexOf('source_id')]);
-              if (table === 'mind_forgotten') (privacy.forgotten[actor] ??= []).push(id);
-              else
-                (privacy.corrections[actor] ??= {})[id] = String(
-                  row.extra[columns.indexOf('correction_id')],
-                );
-            }
-          }
-          const ledger = readPrivacyLedger(
-            await store.getIntegration(privacyLedgerKey(installation.worldId)),
-          );
-          if (ledger) assertPrivacyContinuation(privacy, ledger);
-          const progress: Progress = {
+        const epoch = {
+          generation: (priorEpoch?.generation ?? 0) + 1,
+          openedAt: (options.now ?? Date.now)(),
+          token: randomUUID(),
+        };
+        if (!Number.isSafeInteger(epoch.generation)) throw new Error('Command epoch exhausted.');
+        await store.putIntegration(`command-epoch:${installation.worldId}`, epoch);
+        await store.commands.prune(installation.worldId, epoch.generation, epoch.openedAt);
+        const privacy = opening.privacy;
+        const ledger = readPrivacyLedger(
+          await store.getIntegration(privacyLedgerKey(installation.worldId)),
+        );
+        if (ledger) assertPrivacyContinuation(privacy, ledger);
+        const progress = (admittedProgress = retainNativeProduct(
+          copyNativeProduct(world, {
             worldId: installation.worldId,
             generation: installation.generation,
             baseCut: installation.acceptedCut,
@@ -515,167 +469,146 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             at: header.simTime,
             sequence: header.sequence,
             paused: header.paused,
-          };
-          const milestones = Object.fromEntries(
-            (source.records.tables['actor_milestones'] ?? []).map((row) => [
-              row.slot,
-              JSON.parse(row.payload) as Record<string, boolean>,
-            ]),
-          );
-          admittedRoster = NativeActorRoster.capture(
-            world,
-            source.records.tables['sim_actors'] ?? [],
-            source.records.tables['sim_exit_exposures'] ?? [],
-            source.records.tables['sim_native_response_episodes'] ?? [],
-          );
-          admittedRetention = NativeRetention.capture(
-            world,
-            installation.worldId,
-            selectedTemporalPolicy(definitions.facts.definitions),
-            source.records.tables['mind_temporal_actors'] ?? [],
-          );
-          // The source scope owns construction/decoding. Only these finite
-          // metadata copies escape it; no source or publication is pinned.
-          admittedOperational = retainNativeProduct(copyNativeProduct(world, operational));
-          admittedPrivacy = retainNativeProduct(copyNativeProduct(world, privacy));
-          admittedEpoch = retainNativeProduct(copyNativeProduct(world, epoch));
-          admittedMilestones = retainNativeProduct(copyNativeProduct(world, milestones));
-          // Fallible cache admission precedes construction of the physical
-          // provider, so a refusal leaves every owner reachable by this catch.
-          admittedInventory = NativeInventoryReads.capture(
-            options.host,
-            config.capacity.connections,
-          );
-          admittedProfiles = NativePlayerProfiles.capture(
-            options.host,
-            config.capacity.connections,
-          );
-          service = new NativeWorldService(
-            store,
-            config,
-            options.host,
-            world,
-            definitions,
-            installation,
-            timeline,
-            admittedOperational,
-            retained,
-            progress,
-            admittedPrivacy,
-            admittedEpoch,
-            admittedMilestones,
-            admittedRoster,
-            admittedRetention,
-            admittedInventory,
-            admittedProfiles,
-            options.now ?? Date.now,
-            options.presentationRelease,
-          );
-          retainedOwner = undefined;
-          const allocation = service.work.reserveAllocation(installation.workAllocation);
-          const receipt = await store.adoptNativeCurrentWorld(installation, {
-            liveReadCuts: () =>
-              service!.memoryReads.getStore() ??
-              service!.reads.getStore()?.cut ??
-              service!.pending.liveReadCuts(),
-            retainedValues: (worldId) =>
-              worldId === installation.worldId ? (service!.retained?.ids ?? {}) : {},
-            backgroundSearchAdmission: () => !service!.closed && !service!.failure,
-          });
-          await world.activate(JSON.stringify(receipt));
-          allocation.commit();
-          const initial = await captureNativeReadCut(world, owner.slot);
-          try {
-            service.progress = retainNativeProduct(
-              copyNativeProduct(world, {
-                worldId: initial.worldId,
-                generation: initial.generation,
-                baseCut: initial.acceptedCut,
-                throughCut: initial.acceptedCut,
-                identityThrough: initial.identityThrough,
-                at: initial.at,
-                sequence: initial.sequence,
-                paused: initial.paused,
-              }),
-            );
-            service.durableProgress = service.progress;
-          } finally {
-            releaseNativeProduct(initial);
-          }
-          // This factory reopens existing canonical rows only. Prepared creation
-          // activation has already initialized its world and must not replay startup.
-          // Restore Source's paused startup boundary and reconcile installed hot
-          // events before disclosure, then complete the genuine SQL/ACK barrier.
-          const startup = await service.acceptOperation({
-            first: () => world.beginStartup(),
-            current: () => !service!.closed && !service!.failure,
-          });
-          try {
-            if (!startup) throw new ViewChangedError();
-          } finally {
-            if (startup) releaseNativeProduct(startup);
-          }
-          await service.flush();
-          for (const attempt of await store.authority.exitAttempts(installation.worldId))
-            service.exits.set(attempt.actorId, attempt);
-          if (service.progress.paused)
-            for (const actorId of service.actors.playerIds())
-              if (
-                !service.exits.has(actorId) &&
-                service.actors.get(actorId)?.participation?.phase !== 'exiting'
-              )
-                service.awaitingRestoredPresence.add(actorId);
-          service.unsubscribers.push(
-            store.authority.subscribe(() => {
-              service!.inputs.clear();
-              service!.inputLives.clear();
-              service!.notify(false);
+          }),
+        ));
+        admittedEpoch = retainNativeProduct(copyNativeProduct(world, epoch));
+        // Fallible cache admission precedes construction of the physical
+        // provider, so a refusal leaves every owner reachable by this catch.
+        admittedInventory = NativeInventoryReads.capture(options.host, config.capacity.connections);
+        admittedProfiles = NativePlayerProfiles.capture(options.host, config.capacity.connections);
+        admittedInputs = nativeWorldInputs(options.host, config.capacity.presence);
+        service = new NativeWorldService(
+          store,
+          config,
+          options.host,
+          world,
+          definitions,
+          installation,
+          timeline,
+          admittedOperational,
+          retained,
+          progress,
+          admittedPrivacy,
+          admittedEpoch,
+          admittedMilestones,
+          admittedRoster,
+          admittedRetention,
+          admittedInventory,
+          admittedProfiles,
+          admittedInputs,
+          options.now ?? Date.now,
+          options.presentationRelease,
+        );
+        opening.transfer();
+        retainedOwner = undefined;
+        const allocation = service.work.reserveAllocation(installation.workAllocation);
+        const receipt = await store.adoptNativeCurrentWorld(installation, {
+          liveReadCuts: () =>
+            service!.memoryReads.getStore() ??
+            service!.reads.getStore()?.cut ??
+            service!.pending.liveReadCuts(),
+          retainedValues: (worldId) =>
+            worldId === installation.worldId ? (service!.retained?.ids ?? {}) : {},
+          backgroundSearchAdmission: () => !service!.closed && !service!.failure,
+        });
+        await world.activate(JSON.stringify(receipt));
+        allocation.commit();
+        const initial = await captureNativeReadCut(world, header.playerActorId);
+        try {
+          const initialProgress = retainNativeProduct(
+            copyNativeProduct(world, {
+              worldId: initial.worldId,
+              generation: initial.generation,
+              baseCut: initial.acceptedCut,
+              throughCut: initial.acceptedCut,
+              identityThrough: initial.identityThrough,
+              at: initial.at,
+              sequence: initial.sequence,
+              paused: initial.paused,
             }),
           );
-          service.unsubscribers.push(store.assets.subscribeAuthority(() => service!.notify(false)));
-          service.unsubscribers.push(store.onProjection(() => service!.notify(false)));
-          if (config.authentication.mode === 'local') await service.signInLocal();
-          await service.withSaveBarrier(undefined, 'play', () =>
-            service!.lane.run(() => service!.reconcileParticipationInLane()),
-          );
-          service.scheduleRetention();
-          return service;
-        } catch (error) {
-          service?.closeAdmission();
-          service?.actors.release();
-          admittedRoster?.release();
-          admittedRetention?.release();
-          await service?.provider?.close().catch(() => undefined);
-          service?.unsubscribers.splice(0).forEach((unsubscribe) => unsubscribe());
-          service?.work.close();
-          service?.releaseMetadata();
-          service?.inventoryReads.release();
-          service?.profiles.release();
-          admittedInventory?.release();
-          admittedProfiles?.release();
-          if (service?.retained) {
-            // SQL's already captured lookup has its own independent child pin.
-            releaseNativeProduct(service.retained);
-            service.retained = undefined;
-          }
-          if (retainedOwner) {
-            // No service was constructed, so this lookup reached no SQL caller.
-            releaseNativeProduct(retainedOwner.ids);
-            releaseNativeProduct(retainedOwner);
-          }
-          if (admittedOperational) releaseNativeProduct(admittedOperational);
-          if (admittedPrivacy) releaseNativeProduct(admittedPrivacy);
-          if (admittedEpoch) releaseNativeProduct(admittedEpoch);
-          if (admittedMilestones) releaseNativeProduct(admittedMilestones);
-          definitions?.release();
-          world.closeAdmission();
-          await world.finishStop().catch(() => undefined);
-          throw error;
+          service.replaceProgress(initialProgress, initialProgress);
+          admittedProgress = undefined;
         } finally {
-          if (installationOwner) releaseNativeProduct(installationOwner);
+          releaseNativeProduct(initial);
         }
-      },
-    );
+        // This factory reopens existing canonical rows only. Prepared creation
+        // activation has already initialized its world and must not replay startup.
+        // Restore Source's paused startup boundary and reconcile installed hot
+        // events before disclosure, then complete the genuine SQL/ACK barrier.
+        const startup = await service.acceptOperation({
+          first: () => world.beginStartup(),
+          current: () => !service!.closed && !service!.failure,
+        });
+        try {
+          if (!startup) throw new ViewChangedError();
+        } finally {
+          if (startup) releaseNativeProduct(startup);
+        }
+        await service.flush();
+        for (const attempt of await store.authority.exitAttempts(installation.worldId))
+          service.exits.set(attempt.actorId, attempt);
+        if (service.progress.paused)
+          for (const actorId of service.actors.playerIds())
+            if (
+              !service.exits.has(actorId) &&
+              service.actors.get(actorId)?.participation?.phase !== 'exiting'
+            )
+              service.awaitingRestoredPresence.add(actorId);
+        service.unsubscribers.push(
+          store.authority.subscribe(() => {
+            service!.inputs.clear();
+            service!.notify(false);
+          }),
+        );
+        service.unsubscribers.push(store.assets.subscribeAuthority(() => service!.notify(false)));
+        service.unsubscribers.push(store.onProjection(() => service!.notify(false)));
+        if (config.authentication.mode === 'local') await service.signInLocal();
+        await service.withSaveBarrier(undefined, 'play', () =>
+          service!.lane.run(() => service!.reconcileParticipationInLane()),
+        );
+        service.scheduleRetention();
+        return service;
+      });
+    } catch (error) {
+      service?.closeAdmission();
+      service?.actors.release();
+      admittedRoster?.release();
+      admittedRetention?.release();
+      await service?.provider?.close().catch(() => undefined);
+      service?.unsubscribers.splice(0).forEach((unsubscribe) => unsubscribe());
+      service?.work.close();
+      service?.releaseMetadata();
+      if (service) service.replaceProgress({ ...service.progress }, { ...service.durableProgress });
+      if (admittedProgress) releaseNativeProduct(admittedProgress);
+      service?.inventoryReads.release();
+      service?.profiles.release();
+      admittedInventory?.release();
+      admittedProfiles?.release();
+      service?.inputs.release();
+      admittedInputs?.release();
+      if (service?.retained) {
+        // SQL's already captured lookup has its own independent child pin.
+        releaseNativeProduct(service.retained);
+        service.retained = undefined;
+      }
+      if (retainedOwner) {
+        // No service was constructed, so this lookup reached no SQL caller.
+        releaseNativeProduct(retainedOwner.ids);
+        releaseNativeProduct(retainedOwner);
+      }
+      if (admittedOperational) releaseNativeProduct(admittedOperational);
+      if (admittedPrivacy) releaseNativeProduct(admittedPrivacy);
+      if (admittedEpoch) releaseNativeProduct(admittedEpoch);
+      if (admittedMilestones) releaseNativeProduct(admittedMilestones);
+      definitions?.release();
+      world.closeAdmission();
+      await world.finishStop().catch(() => undefined);
+      throw error;
+    } finally {
+      if (installationOwner) releaseNativeProduct(installationOwner);
+      opening.release();
+    }
   }
 
   private get geometry() {
@@ -1027,7 +960,9 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         const selected = await this.withActorMemoryRead(actorId, () =>
           this.store.memories.browse(memoryScope, options),
         );
-        formatting = world.reserveConsumerBytes(16 * jsonByteLength(selected) + 20 * 512);
+        formatting = world.reserveConsumerBytes(
+          16 * jsonByteLength(selected, { cache: false }) + 20 * 512,
+        );
         const inventory = await this.publishRecall(async () => {
           this.assertAdmission();
           if (!permitted() || !capture.read.isCurrent())
@@ -1171,7 +1106,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         // page objects and encrypted cursor/reference strings simultaneously.
         // Fund from the actual selected shape before constructing those copies.
         formatting = world.reserveConsumerBytes(
-          16 * jsonByteLength(selected) +
+          16 * jsonByteLength(selected, { cache: false }) +
             128 * 256 +
             20 * 16 * (identity.worldId.length + identity.generation.length + actorId.length + 256),
         );
@@ -1268,7 +1203,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         while (turn.kind === 'provider') {
           signal.throwIfAborted();
           if (!turn.provider) throw new Error('Consolidation has no actual source question.');
-          const answer = await answerNativeProvider(turn.provider, this.geometry, {
+          const answer = await answerNativeProvider(this.world, turn.provider, this.geometry, {
             db: this.store.db,
             liveReadCuts: () => cut,
           });
@@ -2235,6 +2170,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                 prepared.accept();
                 retain();
                 actors();
+                this.inputs.prune();
                 accepted = true;
                 this.replaceProgress(prepared.value.publication.progress);
                 this.privacy = privacy;
@@ -2552,7 +2488,6 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                 this.actors.get(actorId)?.participation?.phase !== 'exiting'
               )
                 this.awaitingRestoredPresence.add(actorId);
-            this.inputLives.clear();
             this.inputs.clear();
             this.clearReceipts();
             this.durableReceipts.clear();
@@ -2752,24 +2687,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             );
             staged = pending;
             try {
-              const lives: [string, { life: number; alive: boolean } | undefined][] = [];
-              for (const row of publication.records.writes['sim_actors'] ?? []) {
-                const actorId = (JSON.parse(row.parent) as string[]).at(-1)!;
-                const actor = JSON.parse(row.payload) as {
-                  physicalLife?: number;
-                  alive: boolean;
-                  controller: 'player' | 'npc';
-                };
-                if (this.inputLives.has(actorId))
-                  lives.push([actorId, { life: actor.physicalLife ?? 0, alive: actor.alive }]);
-              }
-              for (const id of publication.records.deletes['sim_entities'] ?? []) {
-                const actorId = (JSON.parse(id) as string[]).at(-1)!;
-                if (this.inputLives.has(actorId)) lives.push([actorId, undefined]);
-              }
               return {
                 ...pending,
-                lives,
                 actors: (stagedActors = this.prepareActorRows(publication.records)),
                 retain: (stagedRetention = this.retention.prepare(publication.records)),
               };
@@ -2789,14 +2708,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             accepted.value.accept();
             accepted.value.retain();
             accepted.value.actors();
+            this.inputs.prune();
             this.replaceProgress(publication.progress);
-            for (const [id, after] of accepted.value.lives) {
-              const before = this.inputLives.get(id);
-              if (!after || after.life !== before?.life || after.alive !== before.alive)
-                this.inputs.clear(id);
-              if (after) this.inputLives.set(id, after);
-              else this.inputLives.delete(id);
-            }
           } catch (error) {
             this.failure = error instanceof Error ? error : new Error(String(error));
             throw error;
@@ -3537,13 +3450,19 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   ): Promise<NativePublication | undefined> {
     return this.lane.run(async () => {
       this.assertAdmission();
-      const inputs = this.inputs.inputs(performance.now());
-      return this.acceptInLane({
-        first: () =>
-          this.world.advance(seconds, maximumIntervals, Buffer.from(JSON.stringify(inputs))),
-        current: () => this.inputs.authorized(inputs, performance.now()),
-        signal,
-      });
+      const inputs = nativeInputSnapshot(this.host, this.inputs, performance.now());
+      try {
+        return await this.acceptInLane({
+          first: () =>
+            withNativeJsonInput(this.world, inputs, (bytes) =>
+              this.world.advance(seconds, maximumIntervals, bytes),
+            ),
+          current: () => this.inputs.authorized(inputs, performance.now()),
+          signal,
+        });
+      } finally {
+        releaseNativeProduct(inputs);
+      }
     });
   }
 
@@ -3641,7 +3560,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           const offered = Math.min(this.debtSeconds, 86400);
           if (offered < 1e-6) return false;
           const before = this.progress.at,
-            inputs = this.inputs.inputs(performance.now());
+            inputs = nativeInputSnapshot(this.host, this.inputs, performance.now());
           const world = this.world,
             startedAt = performance.now();
           // Node owns the deadline and waiting-work policy. The pool only sees a
@@ -3657,7 +3576,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           let publication: NativePublication | undefined;
           try {
             publication = await this.acceptInLane({
-              first: () => world.advance(offered, 4096, Buffer.from(JSON.stringify(inputs))),
+              first: () =>
+                withNativeJsonInput(world, inputs, (bytes) => world.advance(offered, 4096, bytes)),
               current: () => !this.paused && this.inputs.authorized(inputs, performance.now()),
               admitPublication: (value) =>
                 !(
@@ -3668,6 +3588,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             });
           } finally {
             clearInterval(publicationWake);
+            releaseNativeProduct(inputs);
           }
           if (!publication) return false;
           try {
@@ -3707,73 +3628,90 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   }
 
   private inputState(scope: RequestScope, self: NativePlayerRead['self']) {
-    const life = self.physicalLife ?? 0,
-      alive = self.alive,
-      generation = this.generation,
-      paused = this.paused;
-    const state = this.inputs.state(
-      scope.actorId,
-      digest({ scope, generation, life: self.physicalLife, alive, paused }),
-      () =>
-        this.currentScope(scope, 'play', true) &&
-        this.generation === generation &&
-        this.paused === paused &&
-        this.inputLives.get(scope.actorId)?.life === life &&
-        this.inputLives.get(scope.actorId)?.alive === alive,
+    const allocation = NativeInputAllocation.prepare(
+      this.host,
+      scope,
+      this.generation,
+      self.physicalLife,
+      self.alive,
+      this.paused,
     );
-    if (
-      !this.inputLives.has(scope.actorId) &&
-      this.inputLives.size >= this.config.capacity.presence
-    )
-      for (const id of this.inputLives.keys()) if (!this.inputs.has(id)) this.inputLives.delete(id);
-    this.inputLives.set(scope.actorId, { life, alive });
-    if (!self.player.canSteer && state.steering) this.inputs.invalidateMovement(scope.actorId);
-    return state;
+    let transferred = false;
+    try {
+      const context = allocation.context;
+      const state = this.inputs.state(
+        context.scope.actorId,
+        allocation.identity,
+        () => {
+          const context = allocation.currentContext;
+          if (!context) return false;
+          if (
+            !this.currentScope(context.scope, 'play', true) ||
+            this.generation !== context.generation ||
+            this.paused !== context.paused
+          )
+            return false;
+          const actor = this.actors.get(context.scope.actorId);
+          return actor?.physicalLife === (context.life ?? 0) && actor.alive === context.alive;
+        },
+        allocation,
+      );
+      transferred = true;
+      if (!self.player.canSteer && state.steering) this.inputs.invalidateMovement(scope.actorId);
+      return state;
+    } finally {
+      if (!transferred) allocation.release();
+    }
   }
   async updateWorldInput(input: WorldInputUpdate, scope: RequestScope): Promise<WorldInputResult> {
     return this.lane.run(async () => {
       this.assertAdmission();
       this.assertScope(scope, 'play', true);
-      const now = performance.now();
-      this.accountInputTime(now);
-      this.inputs.expire(now, scope.actorId);
-      const capture = await NativePlayerCapture.capture(
-        this.world,
-        scope,
-        PLAYER_EVENT_WINDOW,
-        this.geometry,
-      );
+      const output = NativeInputResultAllocation.prepare(this.host);
+      let capture: NativePlayerCapture | undefined;
       try {
+        const now = performance.now();
+        this.accountInputTime(now);
+        this.inputs.expire(now, scope.actorId);
+        capture = await NativePlayerCapture.capture(
+          this.world,
+          scope,
+          PLAYER_EVENT_WINDOW,
+          this.geometry,
+        );
         const self = capture.facts.self,
           state = this.inputState(scope, self);
         if (this.paused)
-          return {
+          return output.finish({
             ok: false,
             code: 'paused',
             message: 'Resume the world to move or release.',
             inputScope: { ...state.scope },
-          };
+          });
         if (!self.alive)
-          return {
+          return output.finish({
             ok: false,
             code: 'unavailable',
             message: 'This character cannot move now.',
             inputScope: { ...state.scope },
-          };
+          });
         if (
           input.kind === 'steer' &&
           (input.direction.x || input.direction.z) &&
           !self.player.canSteer
         )
-          return {
+          return output.finish({
             ok: false,
             code: 'busy',
             message: 'This character cannot steer during the current work or condition.',
             inputScope: { ...state.scope },
-          };
-        return this.inputs.update(state, input, now, this.progress.at + this.debtSeconds);
+          });
+        return output.finish(
+          this.inputs.update(state, input, now, this.progress.at + this.debtSeconds),
+        );
       } finally {
-        capture.release();
+        capture?.release();
+        output.release();
       }
     });
   }
@@ -3872,7 +3810,9 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       self = facts.self;
     const controlling = this.currentScope(scope, 'play', true);
     const lifecycle = this.lifecycle();
+    this.inputs.expire(performance.now(), scope.actorId);
     const input = this.inputState(scope, self);
+    const inputScope = nativeInputScope(this.host, input.scope);
     for (const account of facts.events.accounts)
       if (account.authoredBySelf) this.speechActors.set(account.original.id, scope.actorId);
     while (this.speechActors.size > PLAYER_EVENT_WINDOW * this.connectionLimit)
@@ -3962,7 +3902,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                   .filter((permission) => permission.actorId === scope.actorId)
                   .map(({ id, revision, revoked }) => [id, revision, revoked]),
               ]),
-        inputScope: { ...input.scope },
+        inputScope,
       },
       placesRevision: this.store.memories.knownPlacesRevision(scope.actorId),
       telemetryRevision: this.version,
@@ -4004,6 +3944,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           capture.release();
         } finally {
           releaseNativeProduct(inventory);
+          releaseNativeProduct(inputScope);
         }
       },
     };
@@ -4032,10 +3973,12 @@ export class NativeWorldService implements NativePlayerRequestOwner {
 
   private scheduleSave(): void {
     if (this.saveTimer || this.save || this.closed || this.failure) return;
-    this.saveTimer = setTimeout(() => {
-      this.saveTimer = undefined;
-      void this.flush().catch(() => this.notify(false));
-    }, LIVE_SAVE_INTERVAL_MS);
+    this.saveTimer = withoutNativeSqlPreparation(this.store.db, () =>
+      setTimeout(() => {
+        this.saveTimer = undefined;
+        void this.flush().catch(() => this.notify(false));
+      }, LIVE_SAVE_INTERVAL_MS),
+    );
     this.saveTimer.unref();
   }
 
@@ -4244,20 +4187,23 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       return;
     clearTimeout(this.retentionTimer);
     this.retentionWakeAt = wake;
-    this.retentionTimer = setTimeout(
-      () => {
-        this.retentionTimer = undefined;
-        this.retentionWakeAt = undefined;
-        this.retentionTask = this.nativeRetention()
-          .catch((error: unknown) => {
-            if (!(error instanceof OverloadError)) console.error('Native retention failed.', error);
-          })
-          .finally(() => {
-            this.retentionTask = undefined;
-            this.scheduleRetention();
-          });
-      },
-      Math.max(0, wake - performance.now()),
+    this.retentionTimer = withoutNativeSqlPreparation(this.store.db, () =>
+      setTimeout(
+        () => {
+          this.retentionTimer = undefined;
+          this.retentionWakeAt = undefined;
+          this.retentionTask = this.nativeRetention()
+            .catch((error: unknown) => {
+              if (!(error instanceof OverloadError))
+                console.error('Native retention failed.', error);
+            })
+            .finally(() => {
+              this.retentionTask = undefined;
+              this.scheduleRetention();
+            });
+        },
+        Math.max(0, wake - performance.now()),
+      ),
     );
     this.retentionTimer.unref();
   }
@@ -4373,7 +4319,6 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     clearTimeout(this.retentionTimer);
     this.saveTimer = this.retentionTimer = undefined;
     this.inputs.clear();
-    this.inputLives.clear();
     for (const unsubscribe of this.unsubscribers.splice(0)) unsubscribe();
     this.notify(false);
   }
@@ -4405,6 +4350,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       this.profiles.release();
       this.speechActors.clear();
       this.inventoryReads.release();
+      this.inputs.release();
       for (const release of this.sourceEdits.values()) release();
       this.sourceEdits.clear();
       this.work.close();

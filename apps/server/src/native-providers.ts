@@ -1,8 +1,3 @@
-import {
-  selectTypedNavigation,
-  type TypedNavigationSyntax,
-  type TypedNavigationRead,
-} from './typed-navigation.js';
 import type {
   NativeGeometryQueries,
   NativeWorld,
@@ -12,29 +7,24 @@ import type {
   NativeWorldNpcTurn,
   NativeChangedRows,
 } from '@open-legend/native-simulation';
-import {
-  baseActivityChoiceLabel,
-  type BaseActivityChoiceLabel,
-  type TemporalReadContext,
-} from '@open-legend/domain';
-import { nativeActivityDisplay } from './native-activity.js';
-import { nativeCanonicalCommand } from './native-command.js';
-import { worldControlOutcome } from './world-control-outcome.js';
+import type { TemporalReadContext } from '@open-legend/domain';
 import type { NativeGeometryProviders } from './native-geometry.js';
+import {
+  encodeNativeProviderAnswer,
+  type NativeProviderAnswer,
+  type NativeProviderCapacity,
+} from './native-provider-answer.js';
+import { formatNativeProvider } from './native-provider-format.js';
 import {
   decodeNativeProduct,
   releaseNativeProduct,
   retainNativeProduct,
-  retainNativeSources,
   withNativeConsumerScope,
   withNativeUtf8Input,
 } from './native-consumer.js';
+import { withNativeSqlPreparation } from './native-source-preparation.js';
 import type { SqlDatabase } from './store.js';
 import type { LiveReadCutsProvider } from './live-read-overlay.js';
-import {
-  formatNativeNpcCandidateDescriptions,
-  type NativeNpcDescriptionRead,
-} from './native-npc-candidates.js';
 import {
   readNativeHistoryEdit,
   type NativeHistoryEditReadRequest,
@@ -49,26 +39,6 @@ import {
   type NativeRestoreArchivesRequest,
 } from './native-restore-archives.js';
 import {
-  nativeAttemptNormalization,
-  nativeCollation,
-  nativeCanonicalJson,
-  nativeUtterance,
-  nativeWordSegments,
-} from './native-language.js';
-import { formatFreeTypedActionPreparation } from './typed-action-syntax.js';
-import {
-  nativeMaintenanceFormat,
-  type NativeMaintenanceFormatRequest,
-} from './native-maintenance-format.js';
-import {
-  nativeConsolidationReadings,
-  type NativeConsolidationFormatRequest,
-} from './native-consolidation-format.js';
-import {
-  nativeActivityLearningFormat,
-  type NativeActivityLearningFormatRequest,
-} from './native-activity-learning-format.js';
-import {
   readNativeActivityHistory,
   type NativeActivityHistoryRequest,
 } from './native-activity-history.js';
@@ -76,7 +46,6 @@ import {
   readNativeSupportMembership,
   type NativeSupportMembershipRequest,
 } from './native-support-retention.js';
-
 import {
   readNativeSourceVersions,
   type NativeSourceVersionsRequest,
@@ -87,11 +56,7 @@ import {
   type RetentionCapacity,
 } from './native-account-retention.js';
 
-type Binding = NativeGeometryQueries['binding'];
 type Question = { kind: string; value: unknown };
-export interface NativeProviderAnswer {
-  readonly json: string;
-}
 export interface NativeHistoryReadContext {
   readonly db: SqlDatabase;
   readonly liveReadCuts: LiveReadCutsProvider;
@@ -108,6 +73,7 @@ export interface NativeHistoryReadContext {
 /** Pure physical/language preparation for the real native cursor. The selected
  * question contains no world setter, grant, provider spending or model request. */
 export async function answerNativeProvider(
+  capacity: NativeProviderCapacity,
   provider: NativeWorldProvider,
   geometry: NativeGeometryProviders,
   history?: NativeHistoryReadContext,
@@ -115,15 +81,14 @@ export async function answerNativeProvider(
   return withNativeConsumerScope(async () => {
     const question = retainNativeProduct(decodeNativeProduct<Question>(provider.question()));
     try {
-      const result = await prepareProviderAnswer(question, geometry, history);
-      if (typeof result === 'string')
-        return retainNativeProduct(retainNativeSources({ json: result }, question));
-      try {
-        return retainNativeProduct(retainNativeSources(result, question, result));
-      } catch (error) {
-        releaseNativeProduct(result);
-        throw error;
-      }
+      const formatted = formatNativeProvider(question, capacity);
+      if (formatted) return retainNativeProduct(formatted);
+      const read = () => prepareProviderAnswer(capacity, question, geometry, history);
+      const result =
+        history && question.kind !== 'geometry' && question.kind !== 'restore-retention'
+          ? await withNativeSqlPreparation(capacity, history.db, read)
+          : await read();
+      return retainNativeProduct(result);
     } finally {
       // A cancelled caller cannot free a still-awaited handler's actual input.
       releaseNativeProduct(question);
@@ -132,10 +97,11 @@ export async function answerNativeProvider(
 }
 
 async function prepareProviderAnswer(
+  capacity: NativeProviderCapacity,
   question: Question,
   geometry: NativeGeometryProviders,
   history?: NativeHistoryReadContext,
-): Promise<string | NativeProviderAnswer> {
+): Promise<NativeProviderAnswer> {
   const value = question.value;
   switch (question.kind) {
     case 'restore-retention': {
@@ -164,7 +130,8 @@ async function prepareProviderAnswer(
       if (history.restoreView) {
         if (!request.restoreProjection || !request.archiveBaseline)
           throw new Error('Restore source versions require their exact private archive baseline.');
-        return JSON.stringify(
+        return encodeNativeProviderAnswer(
+          capacity,
           await history.restoreView(
             request.restoreProjection,
             () => readNativeSourceVersions(history.db, cut, request),
@@ -174,7 +141,10 @@ async function prepareProviderAnswer(
       }
       if (request.restoreProjection || request.archiveBaseline)
         throw new Error('Restore source versions have no inactive private SQL owner.');
-      return JSON.stringify(await readNativeSourceVersions(history.db, cut, request));
+      return encodeNativeProviderAnswer(
+        capacity,
+        await readNativeSourceVersions(history.db, cut, request),
+      );
     }
     case 'support-membership': {
       const request = value as NativeSupportMembershipRequest & {
@@ -186,81 +156,36 @@ async function prepareProviderAnswer(
         if (!history.restoreView)
           throw new Error('Restore support cleanup requires its actual private SQL view.');
         return history.restoreView(request.restoreProjection, async () =>
-          JSON.stringify(await readNativeSupportMembership(history.db, cut, request)),
+          encodeNativeProviderAnswer(
+            capacity,
+            await readNativeSupportMembership(history.db, cut, request),
+          ),
         );
       }
-      return JSON.stringify(await readNativeSupportMembership(history.db, cut, request));
-    }
-    case 'activity-learning-format':
-      return JSON.stringify(
-        nativeActivityLearningFormat(value as NativeActivityLearningFormatRequest),
+      return encodeNativeProviderAnswer(
+        capacity,
+        await readNativeSupportMembership(history.db, cut, request),
       );
+    }
     case 'activity-history': {
       const request = value as NativeActivityHistoryRequest;
       const cut = history?.liveReadCuts({ worldId: request.worldId, actorId: request.actorId });
       if (!history || !cut)
         throw new Error('Native activity history requires its scoped SQL provider.');
-      return JSON.stringify(await readNativeActivityHistory(history.db, request, cut));
-    }
-    case 'maintenance-format':
-      return JSON.stringify(nativeMaintenanceFormat(value as NativeMaintenanceFormatRequest));
-    case 'consolidation-format':
-      return JSON.stringify(nativeConsolidationReadings(value as NativeConsolidationFormatRequest));
-    case 'typed-actions': {
-      const request = value as {
-        readonly binding: Binding;
-        readonly phase: 'name' | 'format';
-        readonly input?: {
-          readonly syntax: TypedNavigationSyntax;
-          readonly read: TypedNavigationRead;
-        };
-        readonly limits: Parameters<typeof formatFreeTypedActionPreparation>[0]['limits'];
-        readonly requests: readonly Omit<
-          Parameters<typeof formatFreeTypedActionPreparation>[0],
-          'limits'
-        >[];
-      };
-      if (request.phase === 'name') {
-        if (!request.input) throw new Error('Native typed name selection has no captured roster.');
-        return JSON.stringify({
-          binding: request.binding,
-          output: {
-            kind: 'name',
-            selection: selectTypedNavigation(request.input.syntax, request.input.read),
-          },
-        });
-      }
-      if (request.phase !== 'format')
-        throw new Error('Native typed preparation has no valid phase.');
-      return JSON.stringify({
-        binding: request.binding,
-        output: {
-          kind: 'format',
-          results: request.requests.map((item) =>
-            formatFreeTypedActionPreparation({ ...item, limits: request.limits }),
-          ),
-        },
-      });
-    }
-    case 'choice-descriptions': {
-      const request = value as NativeNpcDescriptionRead & {
-        readonly binding: Binding;
-        readonly activityLabels: readonly BaseActivityChoiceLabel[];
-      };
-      return JSON.stringify({
-        binding: request.binding,
-        descriptions: formatNativeNpcCandidateDescriptions(request).map(
-          (offer) => offer.description,
-        ),
-        activityLabels: request.activityLabels.map(baseActivityChoiceLabel),
-      });
+      return encodeNativeProviderAnswer(
+        capacity,
+        await readNativeActivityHistory(history.db, request, cut),
+      );
     }
     case 'appraisal-outcomes': {
       const request = value as NativeAppraisalOutcomesRequest;
       const cut = history?.liveReadCuts({ worldId: request.worldId, actorId: request.actorId });
       if (!history || !cut)
         throw new Error('Native appraisal preparation has no accepted SQL read cut.');
-      return JSON.stringify(await readNativeAppraisalOutcomes(history.db, request, cut));
+      return encodeNativeProviderAnswer(
+        capacity,
+        await readNativeAppraisalOutcomes(history.db, request, cut),
+      );
     }
     case 'restore-archives': {
       const cut = history?.liveReadCuts();
@@ -269,18 +194,12 @@ async function prepareProviderAnswer(
       };
       if (!history?.restoreView || !cut || !request.restoreProjection)
         throw new Error('Restore archives require their actual protected SQL view.');
-      return JSON.stringify(
+      return encodeNativeProviderAnswer(
+        capacity,
         await history.restoreView(request.restoreProjection, () =>
           readNativeRestoreArchives(history.db, request, cut),
         ),
       );
-    }
-    case 'control': {
-      const request = value as { binding: Binding; paused: boolean; speed: number };
-      return JSON.stringify({
-        binding: request.binding,
-        message: worldControlOutcome(request.paused, request.speed).message,
-      });
     }
     case 'history': {
       const cut = history?.liveReadCuts();
@@ -293,11 +212,14 @@ async function prepareProviderAnswer(
       if (request.restoreProjection) {
         if (!history.restoreView)
           throw new Error('Private restore projection has no protected SQL view owner.');
-        return JSON.stringify(await history.restoreView(request.restoreProjection, read));
+        return encodeNativeProviderAnswer(
+          capacity,
+          await history.restoreView(request.restoreProjection, read),
+        );
       }
       if (history.restoreView)
         throw new Error('Restore history question omitted its actual private projection.');
-      return JSON.stringify(await read());
+      return encodeNativeProviderAnswer(capacity, await read());
     }
     case 'sources': {
       const request = value as NativeNpcSourcesRequest;
@@ -307,53 +229,19 @@ async function prepareProviderAnswer(
       });
       if (!history || !cut)
         throw new Error('Native source preparation has no accepted SQL read cut.');
-      return JSON.stringify(await readNativeNpcSources(history.db, request, cut));
+      return encodeNativeProviderAnswer(
+        capacity,
+        await readNativeNpcSources(history.db, request, cut),
+      );
     }
     case 'geometry': {
       const answer = await geometry.compute(value as NativeGeometryQueries);
       try {
-        return JSON.stringify(answer);
+        return encodeNativeProviderAnswer(capacity, answer);
       } finally {
         releaseNativeProduct(answer);
       }
     }
-    case 'utterance': {
-      const request = value as { binding: Binding; text: Parameters<typeof nativeUtterance>[0] };
-      return JSON.stringify({ binding: request.binding, ...nativeUtterance(request.text) });
-    }
-    case 'collation': {
-      const request = value as {
-        binding: Binding;
-        strings: Parameters<typeof nativeCollation>[0];
-      };
-      return JSON.stringify({ binding: request.binding, ...nativeCollation(request.strings) });
-    }
-    case 'words': {
-      const request = value as {
-        binding: Binding;
-        strings: Parameters<typeof nativeWordSegments>[0];
-      };
-      return JSON.stringify({
-        binding: request.binding,
-        words: nativeWordSegments(request.strings),
-      });
-    }
-    case 'display':
-      return JSON.stringify(
-        nativeActivityDisplay(value as Parameters<typeof nativeActivityDisplay>[0]),
-      );
-    case 'canonical':
-      return JSON.stringify(
-        nativeCanonicalCommand(value as Parameters<typeof nativeCanonicalCommand>[0]),
-      );
-    case 'normalization':
-      return JSON.stringify(
-        nativeAttemptNormalization(value as Parameters<typeof nativeAttemptNormalization>[0]),
-      );
-    case 'digest':
-      return JSON.stringify(
-        nativeCanonicalJson(value as Parameters<typeof nativeCanonicalJson>[0]),
-      );
     default:
       throw new Error('Native operation requested an uncompiled preparation family.');
   }
@@ -374,7 +262,7 @@ export async function driveNativeOperation(
     if (!turn.provider) throw new Error('Native provider continuation has no owned question.');
     try {
       if (signal?.aborted) throw signal.reason ?? new Error('Native request was canceled.');
-      const answer = await answerNativeProvider(turn.provider, geometry, history);
+      const answer = await answerNativeProvider(world, turn.provider, geometry, history);
       try {
         if (signal?.aborted) throw signal.reason ?? new Error('Native request was canceled.');
         const { key, provider } = turn;
@@ -428,7 +316,7 @@ async function driveNativeNpcPreparation(
     if (!turn.provider) throw new Error('Native NPC choices have no owned provider question.');
     try {
       signal?.throwIfAborted();
-      const answer = await answerNativeProvider(turn.provider, geometry, history);
+      const answer = await answerNativeProvider(world, turn.provider, geometry, history);
       try {
         signal?.throwIfAborted();
         const { key, provider } = turn;

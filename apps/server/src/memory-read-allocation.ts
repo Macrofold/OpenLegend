@@ -87,19 +87,27 @@ function narrationBytes(text: NativeText): { retained: number; workspace: number
   };
 }
 
-export function admitMemoryReading(
-  budget: MemoryHydrationBudget,
-  entry: ExperienceEntry,
-  read: () => MemoryRecord,
-): MemoryRecord {
-  if (entry.source === 'memory') return retainNativeSources(read(), entry);
+/** The finite formatter also consumes a reading only until its encoded reply.
+ * Share its actual narration expansion without manufacturing a retained source. */
+export function memoryReadingAllocation(entry: ExperienceEntry) {
+  if (entry.source === 'memory') return { retained: 0, workspace: 0 };
   // awarenessMemory has at most 20 fields. summaryMemory adds one fixed grammar
   // prefix of fewer than 64 UTF-16 units; other fields borrow the decoded body.
   const text =
     entry.source === 'awareness'
       ? narrationBytes(entry.value.text)
       : { retained: stringBytes(entry.value.text.length + 64), workspace: 0 };
-  const storage = budget.reserveBytes(objectBytes(20) + text.retained);
+  return { retained: objectBytes(20) + text.retained, workspace: text.workspace };
+}
+
+export function admitMemoryReading(
+  budget: MemoryHydrationBudget,
+  entry: ExperienceEntry,
+  read: () => MemoryRecord,
+): MemoryRecord {
+  if (entry.source === 'memory') return retainNativeSources(read(), entry);
+  const text = memoryReadingAllocation(entry);
+  const storage = budget.reserveBytes(text.retained);
   let workspace: NativeWorldConsumer | undefined;
   let memory: MemoryRecord;
   try {

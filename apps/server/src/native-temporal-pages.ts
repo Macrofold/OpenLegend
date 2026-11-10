@@ -1,3 +1,4 @@
+import { parseSourceJson } from './native-source-preparation.js';
 import type { LiveReadCuts } from './live-read-overlay.js';
 import { nativeCurrentRow } from './native-current-sources.js';
 import type { SqlDatabase } from './store.js';
@@ -116,7 +117,7 @@ export async function readNativeHistoryEdit(
         .get(cut.worldId, '["world"]');
       const world =
         root &&
-        (JSON.parse(String(root['payload'])) as {
+        (parseSourceJson(String(root['payload'])) as {
           id?: unknown;
           nextId?: unknown;
           simTime?: unknown;

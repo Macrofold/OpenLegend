@@ -1,3 +1,4 @@
+import { jsonByteLength } from '@open-legend/domain';
 import type { NativeGeometryQueries } from '@open-legend/native-simulation';
 import type { LiveReadCuts } from './live-read-overlay.js';
 import type { SqlDatabase } from './store.js';
@@ -41,16 +42,22 @@ export async function readNativeAppraisalOutcomes(
         'SELECT * FROM mind_appraisals WHERE world_id=? AND parent_id=? AND id=ANY(?::text[])';
       const parameters = [cut.worldId, parent, ids];
       const size = await db
-        .prepare(`SELECT COALESCE(sum(octet_length(row_to_json(t)::text)),0) AS bytes FROM (${sql}) t`)
+        .prepare(
+          `SELECT COALESCE(sum(octet_length(row_to_json(t)::text)),0) AS bytes FROM (${sql}) t`,
+        )
         .get(...parameters);
       const bytes = Number(size?.['bytes']);
-      if (!Number.isSafeInteger(bytes) || bytes < 0 || bytes * 6 + 1024 > request.maximumTransferBytes)
+      if (
+        !Number.isSafeInteger(bytes) ||
+        bytes < 0 ||
+        bytes * 6 + 1024 > request.maximumTransferBytes
+      )
         throw new Error('Native appraisal witnesses exceed their admitted transfer allowance.');
       const rows = (await db.prepare(sql + ' ORDER BY position,id').all(...parameters)).map((row) =>
         nativeCurrentRow('mind_appraisals', row),
       );
       const answer = { binding: request.binding, rows };
-      if (Buffer.byteLength(JSON.stringify(answer)) > request.maximumTransferBytes)
+      if (jsonByteLength(answer, { cache: false }) > request.maximumTransferBytes)
         throw new Error('Native appraisal witnesses exceed their admitted transfer allowance.');
       return answer;
     }),

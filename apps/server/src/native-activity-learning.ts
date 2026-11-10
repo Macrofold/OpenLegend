@@ -34,7 +34,7 @@ export async function prepareNativeActivityLearning(
     let turn = await world.stepActivityLearning(native);
     while (turn.kind === 'provider') {
       if (!turn.provider) throw new Error('Native learning has no provider question.');
-      const answer = await answerNativeProvider(turn.provider, geometry, history);
+      const answer = await answerNativeProvider(world, turn.provider, geometry, history);
       try {
         const provider = turn.provider;
         turn = await withNativeUtf8Input(world, answer.json, (bytes) =>

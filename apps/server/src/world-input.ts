@@ -26,25 +26,57 @@ export interface WorldInputState {
   steering?: Window & { direction: { x: number; z: number }; sequence: number };
   attack?: AttackGesture;
 }
+export interface WorldInputAllocation {
+  release(): void;
+}
+const allocation = Symbol('world-input-allocation');
+type StoredState = WorldInputState & { [allocation]?: WorldInputAllocation };
 /** Fixed transient controller state. Native actions and receipts remain elsewhere. */
 export class WorldInputOwner {
-  private states = new Map<string, WorldInputState>();
+  private states = new Map<string, StoredState>();
   private revision = 0;
+  private releasedOwner = false;
+  private allocatedStates = false;
   private nextRevision(): number {
     if (!Number.isSafeInteger(this.revision + 1)) throw new Error('Input revision exhausted.');
     return ++this.revision;
   }
-  constructor(private readonly maximum: number) {}
+  constructor(
+    private readonly maximum: number,
+    private storage?: WorldInputAllocation,
+  ) {}
   has(actorId: string): boolean {
     return this.states.has(actorId);
   }
-  state(actorId: string, identity: string, isCurrent: () => boolean = () => true): WorldInputState {
+  state(
+    actorId: string,
+    identity: string,
+    isCurrent: () => boolean = () => true,
+    resource?: WorldInputAllocation,
+  ): WorldInputState {
+    try {
+      return this.prepareState(actorId, identity, isCurrent, resource);
+    } catch (error) {
+      resource?.release();
+      throw error;
+    }
+  }
+  private prepareState(
+    actorId: string,
+    identity: string,
+    isCurrent: () => boolean,
+    resource?: WorldInputAllocation,
+  ): WorldInputState {
+    if (this.releasedOwner) throw new Error('These input controls are no longer available.');
     const current = this.states.get(actorId);
-    if (current?.identity === identity) return current;
+    if (current?.identity === identity) {
+      resource?.release();
+      return current;
+    }
     if (!current && this.states.size >= this.maximum) {
       const idle = [...this.states].find(([, state]) => !state.steering && !state.attack?.window);
       if (!idle) throw new Error('Active input capacity reached.');
-      this.states.delete(idle[0]);
+      this.remove(idle[1]);
     }
     const state: WorldInputState = {
       actorId,
@@ -60,12 +92,45 @@ export class WorldInputOwner {
       movementSequence: 0,
       gestureSequence: 0,
     };
+    if (resource) {
+      Object.defineProperty(state, allocation, { value: resource });
+      this.allocatedStates = true;
+    }
     this.states.set(actorId, state);
+    current?.[allocation]?.release();
     return state;
   }
+  private remove(state: StoredState): void {
+    this.states.delete(state.actorId);
+    state[allocation]?.release();
+  }
   clear(actorId?: string): void {
-    if (actorId === undefined) this.states.clear();
-    else this.states.delete(actorId);
+    if (actorId === undefined) {
+      if (this.allocatedStates)
+        for (const state of this.states.values()) state[allocation]?.release();
+      this.states.clear();
+      this.allocatedStates = false;
+    } else {
+      const state = this.states.get(actorId);
+      if (state) this.remove(state);
+    }
+  }
+  release(): void {
+    if (this.releasedOwner) return;
+    this.clear();
+    this.storage?.release();
+    this.storage = undefined;
+    this.releasedOwner = true;
+  }
+  /** Drop only authority already rejected by the existing predicate. A native
+   * roster replacement need not introduce another life/alive shadow index. */
+  prune(): void {
+    for (const state of this.states.values()) this.removeStale(state);
+  }
+  private removeStale(state: StoredState): boolean {
+    if (state.isCurrent()) return false;
+    this.remove(state);
+    return true;
   }
   released(actorId: string, actionId: string): boolean {
     const gesture = this.states.get(actorId)?.attack;
@@ -123,10 +188,7 @@ export class WorldInputOwner {
     const states = actorId === undefined ? this.states.values() : [this.states.get(actorId)];
     for (const state of states) {
       if (!state) continue;
-      if (!state.isCurrent()) {
-        this.states.delete(state.actorId);
-        continue;
-      }
+      if (this.removeStale(state)) continue;
       if (state.steering && state.steering.expiresAt <= now) {
         this.invalidateMovement(state.actorId);
       }
@@ -289,8 +351,23 @@ export class WorldInputOwner {
       renewalSequence: 0,
     };
   }
-  inputs(now: number): AdmittedWorldInput[] {
+  inputs(
+    now: number,
+    admit?: (states: number, active: number, stringUnits: number) => void,
+  ): AdmittedWorldInput[] {
     this.expire(now);
+    if (admit) {
+      let active = 0,
+        stringUnits = 0;
+      for (const state of this.states.values())
+        if (state.steering || state.attack?.window) {
+          active++;
+          stringUnits +=
+            state.actorId.length +
+            (state.attack?.window ? (state.attack.actionId?.length ?? 0) : 0);
+        }
+      admit(this.states.size, active, stringUnits);
+    }
     return [...this.states.values()].flatMap((state) => {
       const movement = state.steering,
         attack = state.attack;

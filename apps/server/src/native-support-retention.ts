@@ -1,3 +1,4 @@
+import { jsonByteLength } from '@open-legend/domain';
 import type { NativeGeometryQueries } from '@open-legend/native-simulation';
 import type { LiveReadCuts } from './live-read-overlay.js';
 import type { SqlDatabase } from './store.js';
@@ -35,7 +36,7 @@ export async function readNativeSupportMembership(
     throw new Error('Native support membership has no matching accepted SQL cut.');
   if (
     request.aliases.length > SUPPORT_MEMBERSHIP_PREPARATION.rows ||
-    Buffer.byteLength(JSON.stringify(request.aliases)) > SUPPORT_MEMBERSHIP_PREPARATION.bytes
+    jsonByteLength(request.aliases, { cache: false }) > SUPPORT_MEMBERSHIP_PREPARATION.bytes
   )
     throw new Error('Native support membership exceeds its bounded preparation.');
   let pending: RecordChanges = { writes: new Map(), deletes: new Map(), rows: 0 };

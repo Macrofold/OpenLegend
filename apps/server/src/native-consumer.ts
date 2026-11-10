@@ -331,6 +331,28 @@ export async function withNativeJsonInput<T>(
   }
 }
 
+/** Some existing consumers require JSON text rather than a Buffer. Its UTF-16
+ * backing and small envelope remain owned independently after encoding ends. */
+export function encodeNativeJsonText(
+  world: Pick<NativeWorld, 'reserveConsumerBytes'>,
+  value: unknown,
+): { readonly text: string; readonly bytes: number } {
+  const encoded = encodeNativeJson(world, value);
+  let allocation: NativeWorldConsumer | undefined;
+  try {
+    allocation = world.reserveConsumerBytes(2 * encoded.length + 512);
+    return attachNativeConsumer(
+      { text: encoded.toString('utf8'), bytes: encoded.length },
+      allocation,
+    );
+  } catch (error) {
+    allocation?.release();
+    throw error;
+  } finally {
+    releaseNativeProduct(encoded);
+  }
+}
+
 /** Already encoded provider/canonical text still needs its own UTF-8 carrier.
  * Keep that exact Buffer admitted until the borrowing native call settles. */
 export async function withNativeUtf8Input<T>(

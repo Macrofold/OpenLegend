@@ -1,3 +1,5 @@
+import { jsonByteLength } from '@open-legend/domain';
+import { parseSourceJson } from './native-source-preparation.js';
 import type { NativeChangedRows, NativeGeometryQueries } from '@open-legend/native-simulation';
 import { nativeRecordChanges } from './native-records.js';
 import type { LiveReadCuts } from './live-read-overlay.js';
@@ -58,7 +60,7 @@ export async function readNativeSourceVersions(
   if (
     !Number.isSafeInteger(request.maximumTransferBytes) ||
     request.maximumTransferBytes <= 0 ||
-    Buffer.byteLength(JSON.stringify(reply)) > request.maximumTransferBytes
+    jsonByteLength(reply, { cache: false }) > request.maximumTransferBytes
   )
     throw new Error('Native source-version reply exceeds its actual transfer allowance.');
   return reply;
@@ -113,7 +115,7 @@ export async function prepareNativeSourceVersionPlan(
     });
     let bodies = previous.get(row.table);
     if (!bodies) previous.set(row.table, (bodies = new Map()));
-    bodies.set(row.id, JSON.parse(row.payload) as unknown);
+    bodies.set(row.id, parseSourceJson(row.payload) as unknown);
   }
   const forgotten = new Map<string, ReadonlySet<string>>();
   for (const cut of input.cuts) {

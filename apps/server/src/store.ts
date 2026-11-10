@@ -1,3 +1,4 @@
+import { withoutNativeSqlPreparation } from './native-source-preparation.js';
 import { JOB_UPSERT_SQL, jobPayloadPrefix, jobSelection } from './job-storage.js';
 import { diagnosticStorage, diagnosticSelectionPattern } from './diagnostic-storage.js';
 import {
@@ -230,6 +231,7 @@ export interface SqlDatabase {
     admit: (bytes: number, rows: number) => void,
     operation: () => Promise<T>,
   ): Promise<T>;
+  withoutReadTransferAdmission?<T>(operation: () => T): T;
   /** A tentative SQL read projection inside an actual write transaction. All
    * rows and callback effects are rolled back before returning its result. */
   rollbackView?<T>(operation: () => Promise<T>): Promise<T>;
@@ -670,27 +672,29 @@ export class SqlGameRepository implements GameRepository {
   private scheduleValueCleanup(worldId: string, delay = 5000): void {
     this.cleanupWorld = worldId;
     if (this.closing || this.cleanupTimer || this.cleanupTask) return;
-    this.cleanupTimer = setTimeout(() => {
-      this.cleanupTimer = undefined;
-      const selected = this.cleanupWorld ?? worldId;
-      this.cleanupWorld = undefined;
-      let more = false;
-      this.cleanupTask = this.receivedOwnership
-        .collect(selected, () => this.captureValueProtection(selected))
-        .then((count) => {
-          more = count > 0;
-        })
-        .catch((error) => {
-          recordBackgroundFailure('world-commit', error);
-        })
-        .finally(() => {
-          this.cleanupTask = undefined;
-          const next = this.cleanupWorld ?? (more ? selected : undefined);
-          this.cleanupWorld = undefined;
-          // Yield after every bounded transaction; foreground saves use this same writer.
-          if (next) this.scheduleValueCleanup(next, more ? 250 : 5000);
-        });
-    }, delay);
+    this.cleanupTimer = withoutNativeSqlPreparation(this.db, () =>
+      setTimeout(() => {
+        this.cleanupTimer = undefined;
+        const selected = this.cleanupWorld ?? worldId;
+        this.cleanupWorld = undefined;
+        let more = false;
+        this.cleanupTask = this.receivedOwnership
+          .collect(selected, () => this.captureValueProtection(selected))
+          .then((count) => {
+            more = count > 0;
+          })
+          .catch((error) => {
+            recordBackgroundFailure('world-commit', error);
+          })
+          .finally(() => {
+            this.cleanupTask = undefined;
+            const next = this.cleanupWorld ?? (more ? selected : undefined);
+            this.cleanupWorld = undefined;
+            // Yield after every bounded transaction; foreground saves use this same writer.
+            if (next) this.scheduleValueCleanup(next, more ? 250 : 5000);
+          });
+      }, delay),
+    );
     this.cleanupTimer.unref();
   }
   setLiveReadCuts(provider: LiveReadCutsProvider): void {

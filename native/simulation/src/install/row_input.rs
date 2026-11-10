@@ -18,6 +18,8 @@ enum Field {
     Definitions,
     Layouts,
     Directories,
+    Entries,
+    Ids,
     Extra,
     PlainRow,
     AccountRows,
@@ -38,6 +40,11 @@ enum Role {
     Originals,
     Original,
     Directories,
+    DirectoryList,
+    Directory,
+    ChargeList,
+    Charge,
+    StringList,
     Plain,
     Cells,
     Other,
@@ -47,6 +54,8 @@ struct Frame {
     role: Role,
     field: Field,
     start: usize,
+    array: bool,
+    items: usize,
 }
 #[derive(Default)]
 struct Strings {
@@ -54,6 +63,8 @@ struct Strings {
     maximum: usize,
     cell_containers: usize,
     map_members: usize,
+    directory_items: usize,
+    directory_storage: usize,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum InputErrorKind {
@@ -140,6 +151,9 @@ fn field(token: &[u8]) -> Field {
         (b"definitions", Field::Definitions),
         (b"layouts", Field::Layouts),
         (b"coldDirectories", Field::Directories),
+        (b"entries", Field::Entries),
+        (b"individualIds", Field::Ids),
+        (b"sourceIds", Field::Ids),
         (b"extra", Field::Extra),
         (b"id", Field::PlainRow),
         (b"parent", Field::PlainRow),
@@ -184,7 +198,18 @@ fn child(parent: Frame) -> Role {
             Field::Extra => Role::Cells,
             _ => Role::Other,
         },
-        Role::Plain | Role::Original | Role::Directories => Role::Plain,
+        Role::Directories => Role::DirectoryList,
+        Role::DirectoryList => Role::Directory,
+        Role::Directory => match parent.field {
+            Field::Entries => Role::ChargeList,
+            _ => Role::Plain,
+        },
+        Role::ChargeList => Role::Charge,
+        Role::Charge => match parent.field {
+            Field::Ids => Role::StringList,
+            _ => Role::Plain,
+        },
+        Role::StringList | Role::Plain | Role::Original => Role::Plain,
         Role::Cells => Role::Cells,
         Role::Other => Role::Other,
     }
@@ -221,7 +246,15 @@ fn strings(text: &str, root: Role) -> Result<Strings, InputAllocationError> {
                     .and_then(|n| stack.get_mut(n))
                     .ok_or_else(capacity)?;
                 let plain = match frame.role {
-                    Role::Plain | Role::Original | Role::Tables | Role::Directories => true,
+                    Role::Plain
+                    | Role::Original
+                    | Role::Tables
+                    | Role::Directories
+                    | Role::DirectoryList
+                    | Role::Directory
+                    | Role::ChargeList
+                    | Role::Charge
+                    | Role::StringList => true,
                     Role::Records => {
                         key || !matches!(frame.field, Field::Normalized | Field::Tables)
                     }
@@ -250,6 +283,12 @@ fn strings(text: &str, root: Role) -> Result<Strings, InputAllocationError> {
                     role,
                     field: Field::Other,
                     start: at,
+                    array: bytes[at] == b'[',
+                    items: usize::from(
+                        bytes[at] == b'['
+                            && bytes[at + 1..].iter().find(|b| !b.is_ascii_whitespace())
+                                != Some(&b']'),
+                    ),
                 };
                 depth += 1;
                 at += 1;
@@ -260,6 +299,32 @@ fn strings(text: &str, root: Role) -> Result<Strings, InputAllocationError> {
                 if matches!(frame.role, Role::Cells) {
                     result.cell_containers = add(result.cell_containers, at - frame.start + 1)?;
                 }
+                if frame.array {
+                    let element = match frame.role {
+                        Role::DirectoryList => {
+                            size_of::<crate::received::ReceivedChargeDirectory>()
+                        }
+                        Role::ChargeList => size_of::<crate::received::ReceivedChargeEntry>(),
+                        Role::StringList => size_of::<String>(),
+                        _ => 0,
+                    };
+                    if element != 0 {
+                        result.directory_items = add(result.directory_items, frame.items)?;
+                        result.directory_storage = add(
+                            result.directory_storage,
+                            frame
+                                .items
+                                .checked_mul(4)
+                                .and_then(|n| n.checked_mul(element))
+                                .ok_or_else(capacity)?,
+                        )?;
+                    }
+                }
+                at += 1;
+            }
+            b',' if depth > 0 && stack[depth - 1].array => {
+                let frame = &mut stack[depth - 1];
+                frame.items = add(frame.items, 1)?;
                 at += 1;
             }
             _ => at += 1,
@@ -368,8 +433,14 @@ fn prepare_rows(
         .ok_or_else(capacity)?;
     let bound = shape
         .array_items
+        .checked_sub(strings.directory_items)
+        .ok_or_else(capacity)?
         .checked_mul(4)
         .and_then(|n| n.checked_mul(element))
+        // The cold directory's numeric structs and String vectors have fixed,
+        // distinct DTO carriers. Preserve the existing 4x Vec growth envelope
+        // without charging each ID as the largest installed row.
+        .and_then(|n| n.checked_add(strings.directory_storage))
         // Struct field identifiers borrow the input; only the actual dynamic
         // maps allocate one entry per key during this first typed decode.
         .and_then(|n| n.checked_add(strings.map_members.checked_mul(member)?))

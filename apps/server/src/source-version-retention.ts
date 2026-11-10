@@ -1,3 +1,4 @@
+import { parseSourceJson } from './native-source-preparation.js';
 import { sqlRowBatches } from './sql-rows.js';
 import {
   accountClass,
@@ -239,7 +240,7 @@ export async function prepareSourceVersions(
       ...(changes.deletes.get(table) ?? []),
       ...(changes.writes.get(table) ?? []).map((row) => row.id),
     ])
-      actors.add((JSON.parse(id) as string[])[kind === 'memory' ? 2 : 3]!);
+      actors.add((parseSourceJson(id) as string[])[kind === 'memory' ? 2 : 3]!);
   const forgotten = new Map(
     [...actors].map((actor) => [actor, new Set(state.world.experience?.forgotten[actor])]),
   );
@@ -286,14 +287,14 @@ export async function prepareSourceVersionPlan(
     const writes = new Map((changes.writes.get(table) ?? []).map((row) => [row.id, row]));
     const missing = new Map<string, Changed>();
     for (const recordId of new Set([...(changes.deletes.get(table) ?? []), ...writes.keys()])) {
-      const path = JSON.parse(recordId) as string[],
+      const path = parseSourceJson(recordId) as string[],
         actorId = path[kind === 'memory' ? 2 : 3]!;
       if (selected && !selected.has(actorId)) continue;
       if (!context.forgotten.has(actorId))
         throw new Error('Selected exact source privacy metadata is unavailable.');
       const row = writes.get(recordId);
       const next = row
-        ? ({ source: kind, value: JSON.parse(row.payload) } as ExperienceEntry)
+        ? ({ source: kind, value: parseSourceJson(row.payload) } as ExperienceEntry)
         : undefined;
       const item: Changed = {
         actorId,
@@ -442,7 +443,7 @@ export async function prepareSourceVersionPlan(
         : item.next.value.id
       : item.prior
         ? String(item.prior.columns['source_id'])
-        : (JSON.parse(item.recordId) as string[]).at(-1)!,
+        : (parseSourceJson(item.recordId) as string[]).at(-1)!,
   }));
   const currentRevisions = new Set(
     changed.flatMap((item) =>

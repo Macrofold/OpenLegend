@@ -1,5 +1,5 @@
 import { isConversationEvent } from '@open-legend/domain';
-import type { GameView } from '@open-legend/protocol';
+import type { GameView, WorldInputScope } from '@open-legend/protocol';
 import { scopeKey, type RequestScope } from './authority.js';
 import { retainNativeSources, releaseNativeProduct } from './native-consumer.js';
 import type { GameRepository } from './store.js';
@@ -69,7 +69,7 @@ export interface NativePlayerRead {
   readonly player: Pick<
     GameView['player'],
     'memoryRevision' | 'inventoryReadRevision' | 'constructionRevision' | 'inputScope'
-  >;
+  > & { readonly inputScope: WorldInputScope };
   readonly placesRevision: NonNullable<GameView['cartography']>['placesRevision'];
   readonly telemetryRevision: number;
   readonly controlling: boolean;
@@ -144,6 +144,7 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
     owner.assertScope(scope);
     read = await owner.capture(scope);
     const { self, perception, controls, clock, host } = read;
+    const inputScope = read.player.inputScope;
     if (
       host.access?.actorId !== scope.actorId ||
       host.access.scope !== scopeKey(scope) ||
@@ -276,7 +277,7 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
       (canUseInventory, encode) => {
         const finalView = { ...projected, player: { ...projected.player, canUseInventory } };
         const bytes = encode(finalView);
-        request.publish(bytes, retainNativeSources(finalView, bytes, profile));
+        request.publish(bytes, retainNativeSources(finalView, bytes, profile, inputScope));
         return bytes;
       },
       () => {

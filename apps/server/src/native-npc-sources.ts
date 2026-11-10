@@ -1,3 +1,4 @@
+import { jsonByteLength } from '@open-legend/domain';
 import type {
   ObserverSubject,
   PersonalSourceRef,
@@ -448,7 +449,7 @@ export async function readNativeNpcSources(
           ...(selection.consolidationJob === undefined ? {} : { duplicateSummary: duplicate }),
         },
       };
-      if (Buffer.byteLength(JSON.stringify(result)) > request.maximumTransferBytes)
+      if (jsonByteLength(result, { cache: false }) > request.maximumTransferBytes)
         throw new Error('Native source witnesses exceed their admitted transfer allowance.');
       return result;
     }),

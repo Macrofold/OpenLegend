@@ -75,7 +75,7 @@ export class NativePrivateHistoryCapture {
       );
       while (turn.kind === 'provider') {
         if (!turn.provider) throw new Error('Private history have no actual source question.');
-        const answer = await answerNativeProvider(turn.provider, geometry, history);
+        const answer = await answerNativeProvider(world, turn.provider, geometry, history);
         try {
           turn = await world.answerHistorySources(this.read, turn.key, turn.provider, answer.json);
         } finally {

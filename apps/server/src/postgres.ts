@@ -9,6 +9,7 @@ import {
 import pg from 'pg';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { SqlDatabase } from './store.js';
+import { nativeSourceColumnParsers } from './native-source-preparation.js';
 import {
   LiveReadOverlay,
   LiveReadRevisionError,
@@ -101,6 +102,9 @@ export class PostgresDatabase implements SqlDatabase {
     operation: () => Promise<T>,
   ): Promise<T> {
     return this.transferAdmission.run(admit, operation);
+  }
+  withoutReadTransferAdmission<T>(operation: () => T): T {
+    return this.transferAdmission.exit(operation);
   }
   readMetadataBaseline<T>(
     actorIds: readonly string[],
@@ -532,6 +536,25 @@ export class PostgresDatabase implements SqlDatabase {
         admit(bytes, rows);
       }
       const diagnostic = beginDatabaseQuery(template);
+      let columnRefusal: unknown;
+      const parsers = nativeSourceColumnParsers((error) => {
+        columnRefusal = error;
+      });
+      const types: pg.CustomTypesConfig | undefined = parsers
+        ? {
+            getTypeParser(oid, format = 'text') {
+              const parse = pg.types.getTypeParser(oid, format);
+              if (format !== 'text') return parse;
+              if (oid === pg.types.builtins.JSON || oid === pg.types.builtins.JSONB)
+                return (text: string) => parsers.json(text, () => parse(text));
+              // These are the actual text/numeric array OIDs used by current
+              // record columns, parsed by pg-types' unchanged array codecs.
+              if (Number(oid) === 1009 || Number(oid) === 1016 || Number(oid) === 1022)
+                return (text: string) => parsers.array(text, () => parse(text));
+              return parse;
+            },
+          }
+        : undefined;
       try {
         const result = await timed('postgres.statement', () => {
           onDispatch?.();
@@ -539,7 +562,11 @@ export class PostgresDatabase implements SqlDatabase {
             this.transactionContext.getStore()?.active
               ? this.transactionContext.getStore()!.client
               : this.client
-          ).query(translated, params);
+          ).query(
+            types
+              ? { text: translated, values: params, types }
+              : { text: translated, values: params },
+          );
         });
         const value = {
           rows: result.rows ?? [],
@@ -550,6 +577,10 @@ export class PostgresDatabase implements SqlDatabase {
         return value;
       } catch (error) {
         finishDatabaseQuery(diagnostic);
+        // A native admission refusal inside pg's row decoder is a host error,
+        // not a driver/SQL detail. Preserve it after the real query settles so
+        // the caller can refuse before Ready and explicitly retry unchanged.
+        if (columnRefusal !== undefined) throw columnRefusal;
         const reported = (error as { code?: unknown }).code;
         const code =
           typeof reported === 'string' && /^[A-Z0-9]{5}$/.test(reported) ? reported : undefined;

@@ -24,7 +24,7 @@ import { RECORD_NODES } from './world-record-schema.js';
 import { nativeCurrentRow } from './native-current-sources.js';
 import type { SqlDatabase } from './store.js';
 import { sqlRowBatches } from './sql-rows.js';
-import type { NativeProviderAnswer } from './native-providers.js';
+import type { NativeProviderAnswer } from './native-provider-answer.js';
 import {
   attachNativeConsumer,
   decodeNativeProduct,
@@ -392,7 +392,9 @@ export async function readNativeRestoreRetention(
     // The selected row admissions cover body/metadata formatting. The reply's
     // binding and fixed envelope also exist for an empty selection, and stay
     // owned until its actual UTF-8 answer Buffer has been consumed.
-    roots.push(capacity.reserveBytes(jsonByteLength(request.binding) * 6 + 16 * 64));
+    roots.push(
+      capacity.reserveBytes(jsonByteLength(request.binding, { cache: false }) * 6 + 16 * 64),
+    );
     const data = await db.readAtCut(cut, () =>
       db.readTransaction!(() =>
         db.readMetadataBaseline!([request.binding.actorId], async (baseline) => {
@@ -419,7 +421,7 @@ export async function readNativeRestoreRetention(
             );
             roots.push(
               capacity.reserveBytes(
-                jsonByteLength(selected) * 6 +
+                jsonByteLength(selected, { cache: false }) * 6 +
                   entries * 1024 +
                   (selected.aliases.length + selected.individualIds.length) * 256,
               ),

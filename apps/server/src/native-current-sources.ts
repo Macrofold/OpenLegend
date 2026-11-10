@@ -11,9 +11,9 @@ import { decodeCurrentContactRow } from './current-contact-codec.js';
 import { RECORD_NODES } from './world-record-schema.js';
 import { temporalDirectoriesFromRows, type WorldRecords } from './world-records.js';
 import type { CanonicalCheckpoint } from './checkpoint.js';
-import type { NativeHost, NativeWorldConsumer } from '@open-legend/native-simulation';
+import type { NativeHost } from '@open-legend/native-simulation';
 import {
-  withNativeSourcePreparation,
+  withNativeSqlPreparation,
   prepareNativeSource,
   prepareNativeSourceSync,
   parseSourceJson,
@@ -35,30 +35,10 @@ export async function withAdmittedWorkingSources<T>(
   budget: Pick<NativeHost, 'reserveConsumerBytes' | 'reserveConsumerJson'>,
   consume: (source: Awaited<ReturnType<typeof captureWorkingSources>>) => Promise<T>,
 ): Promise<T> {
-  const admitRead = records.db.withReadTransferAdmission?.bind(records.db);
-  if (!admitRead) throw new Error('Native bootstrap requires admitted PostgreSQL row transfer.');
-  const custody: NativeWorldConsumer[] = [];
-  try {
-    return await withNativeSourcePreparation(budget, async () => {
-      const source = await admitRead(
-        (bytes, rows) => {
-          // Three encoded bytes cover driver wire plus UTF-16 strings. Per-row
-          // space covers SQL/current-row objects, indexed-cell arrays, grouping
-          // and ordinal/reference metadata while both layouts are alive. The
-          // extra envelope owns this finite transfer's guard/list bookkeeping.
-          const bound = bytes * 3 + rows * 1536 + 512;
-          if (!Number.isSafeInteger(bound))
-            throw new Error('Native bootstrap transfer exceeds capacity.');
-          custody.push(budget.reserveConsumerBytes(bound));
-        },
-        () => prepareNativeSource(() => captureWorkingSources(records, databaseSchema)),
-      );
-      return await consume(source);
-    });
-  } finally {
-    for (const guard of custody) guard.release();
-    custody.length = 0;
-  }
+  return withNativeSqlPreparation(budget, records.db, async () => {
+    const source = await captureWorkingSources(records, databaseSchema);
+    return consume(source);
+  });
 }
 
 function integer(value: unknown): number {

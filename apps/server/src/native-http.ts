@@ -782,8 +782,14 @@ export async function createNativeGameServer(options: {
             const value = z.object({ jobId: requestIdSchema }).strict().parse(body);
             return send(200, await decisions.cancel(value.jobId, scope));
           }
-          case '/api/input':
-            return send(200, await current.updateWorldInput(worldInputSchema.parse(body), scope));
+          case '/api/input': {
+            const result = await current.updateWorldInput(worldInputSchema.parse(body), scope);
+            try {
+              return send(200, result);
+            } finally {
+              releaseNativeProduct(result);
+            }
+          }
           case '/api/embodiment': {
             const value = z
               .object({

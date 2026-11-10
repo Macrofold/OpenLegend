@@ -1,6 +1,10 @@
 import type { NativeWorld, NativeWorldConsumer } from '@open-legend/native-simulation';
 import { jsonByteLength } from '@open-legend/domain';
-import { attachNativeConsumer, nativeJsonEncodingWorkspace } from './native-consumer.js';
+import {
+  attachNativeConsumer,
+  encodeNativeJsonText,
+  nativeJsonEncodingWorkspace,
+} from './native-consumer.js';
 import { measureReadableDecisionContext, readableDecisionContext } from './response-context.js';
 
 type Budget = Pick<NativeWorld, 'reserveConsumerBytes'>;
@@ -15,7 +19,7 @@ function measureJson(world: Budget, value: unknown, workspace: number): number {
   // before measuring; no serialized JSON body is constructed by this pass.
   const temporary = world.reserveConsumerBytes(workspace + 256);
   try {
-    return jsonByteLength(value);
+    return jsonByteLength(value, { cache: false });
   } finally {
     temporary.release();
   }
@@ -108,18 +112,5 @@ export function joinNativeDecisionText(
 }
 
 export function nativeDecisionJsonText(world: Budget, value: unknown): NativeDecisionText {
-  const shape = nativeJsonEncodingWorkspace(value);
-  const bytes = measureJson(world, value, shape);
-  const output = world.reserveConsumerBytes(2 * bytes + 2 * 256);
-  let workspace: NativeWorldConsumer | undefined;
-  try {
-    workspace = world.reserveConsumerBytes(4 * bytes + shape);
-    const text = JSON.stringify(value);
-    return attachNativeConsumer({ text, bytes }, output);
-  } catch (error) {
-    output.release();
-    throw error;
-  } finally {
-    workspace?.release();
-  }
+  return encodeNativeJsonText(world, value);
 }

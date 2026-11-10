@@ -1,3 +1,4 @@
+import { parseSourceJson } from './native-source-preparation.js';
 import type { PersonalSourceRef } from '@open-legend/domain';
 import type { SqlDatabase } from './store.js';
 import type { LiveReadCuts } from './live-read-overlay.js';
@@ -117,7 +118,8 @@ export async function readNativeRestoreArchives(
     head['world_id'] !== cut.worldId ||
     head['generation'] !== cut.storageGeneration ||
     !header ||
-    (JSON.parse(String(header['payload'])) as { nextId: number }).nextId !== binding.identityThrough
+    (parseSourceJson(String(header['payload'])) as { nextId: number }).nextId !==
+      binding.identityThrough
   )
     throw new Error('Restore archive selection lost its bound canonical view.');
   const selected = (await selectNativeRestoreArchives(db, binding.worldId, request.archives)).map(

@@ -43,7 +43,7 @@ export function nativeTemporalPageEdits(
             // Four UTF-16 carriers cover canonical assembly + its retained map;
             // the shared traversal bound covers entry/sort/map array metadata.
             bytes +=
-              8 * jsonByteLength(entry.receipt) +
+              8 * jsonByteLength(entry.receipt, { cache: false }) +
               nativeJsonEncodingWorkspace(entry.receipt) +
               8 * (batch.epoch.length + 128) +
               512;
