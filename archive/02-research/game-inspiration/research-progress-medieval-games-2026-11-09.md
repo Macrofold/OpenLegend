@@ -8,7 +8,7 @@ Mike requested full dossiers for Kingdom Come: Deliverance, Manor Lords, Medieva
 
 Repository: `Macrofold/OpenLegend`, remote `https://github.com/Macrofold/OpenLegend.git`. Branch: `research/medieval-game-dossiers-20261109`, created from GitHub `refs/heads/main` at `00b96687b853ed7a2c5e9fc9b11542e10147ea0f`. Working source copies: `/workspace/scratch/0ed610f65b5e/OpenLegend`; no local Git checkout/worktree was created or switched. The branch receives documentation changes through the GitHub connector.
 
-Source cutoff: November 9, 2026. Publication dates, retrieval dates and edition boundaries are kept distinct. Research is conducted and committed one subject at a time; delegated work covers different dimensions of the same active game.
+Source publication cutoff: November 9, 2026. Public-source retrieval and final documentation review: November 10, 2026 UTC. Publication dates, retrieval dates and edition boundaries are kept distinct. Research is conducted and committed one subject at a time; delegated work covers different dimensions of the same active game.
 
 ## Existing coverage and title resolution
 
@@ -18,18 +18,29 @@ Source cutoff: November 9, 2026. Publication dates, retrieval dates and edition 
 
 ## Coverage and current progress
 
-| Subject | State | Evidence and remaining work |
+| Subject | State | Evidence and limits |
 | --- | --- | --- |
 | [G188 original Kingdom Come: Deliverance](dossiers/kingdom-come-deliverance.md) | Complete | `cd78db05b1f74bfd5bdded92f9b61a135d8168ef`: R01–R14 and affirmative PC R15; six critic bodies, twelve Steam reviews, six situations; content, source/edition and internal-link review complete. Financial/source-access limits remain explicit. |
 | [G162 Manor Lords](dossiers/manor-lords.md) | Complete | `8906fdc919a77d38bd9324da7eff2a13513ba6c7`: R01–R14 and affirmative sustained PC R15 with population-size limits; five critic bodies, ten Steam reviews, six situations; current-version, content, source and link review complete. No firsthand play or current total-loss test claimed. |
 | [G189 Medieval Dynasty](dossiers/medieval-dynasty.md) | Complete | `8b1b222802d7c75eef6f23f07176654e40fb5b1f`: R01–R14; R15 sustained popularity uncertain with verified community tools. Five critic bodies, eleven Steam accounts, six situations; financial arithmetic, source/version, full-content and internal-link review complete. Mode-specific death and creator-adoption limits remain explicit. |
-| G190 Bellwright | In progress | Full R01–R14 and R15 screen now active after G189 completion and commit. |
+| [G190 Bellwright](dossiers/bellwright.md) | Complete | `3716b1aae63e0c46897e3e78bd3ea015b081c653`: R01–R14 and affirmative sustained PC R15; five full critic bodies, twelve Steam accounts, six situations. Full-content, independent review, source/version, financial and internal-link checks complete. Stable/preview, platform, incomplete-story and mod-license limits remain explicit. |
 | Existing G114 and G115 | Retained | Identity, existing dossier paths and audited status verified against main; no redundant new full pass. |
 
-**Next action:** finish and commit Bellwright, then reconcile the four dossiers’ navigation and scoped diff. Current interpretation of Mount & Blade remains disclosed above.
+**Session result:** all four missing dossiers are complete; existing G114/G115 coverage is retained. The [dossier reading index](dossiers/README.md#medieval-lives-settlements-and-command--november-2026-research) connects the four studies and the two earlier references. No additional game, implementation task or whole-library audit is queued by this assignment. The only unresolved title question is the literal “Mount and Blade 3,” disclosed above.
+
+The table records each game’s substantive completion commit. Later commits also clarify retrieval dates, source boundaries and existing design-owner links; the branch contains the final integrated text.
 
 ## Evidence and completion rules
 
 Each new dossier maps R01–R14 and R15 applicability to substantive sections, includes five independent written reviews when available and genuine positive/negative Steam testimony, and distinguishes shipped mechanics from proposals. Commercial disclosures, estimates and unknown profitability remain separate. Worked interactions are constructed rules-based examples unless explicitly attributed to actual accounts. Videos are viewing routes unless footage/transcripts were inspected.
 
 Checks are documentation content, source attribution, requirement coverage, internal links and affected-diff review in the task workspace. No game execution, editor execution, automated tests or player study is claimed. Earlier original-game chapters, other dossiers, packet content, pending subjects and separate whole-library preservation gates remain outside this pass.
+
+## Final review and handoff
+
+- Roster numbering is preserved: **190 entries, 190 unique IDs, G01–G190**. G162 is the sole released hold within the earlier G150–G166 group; the other sixteen remain outside this authorization.
+- Each new dossier covers R01–R14 and a reasoned R15 gate. Together they contain **24 constructed situations** and **45 individually read Steam accounts**. Written-review coverage and access limits remain per-game, rather than being inferred from outlet scores.
+- Root content/source review and independent targeted reviews resolved identified findings, including current versus historical mechanics, revenue-versus-profit wording, actual creator adoption, source-access labeling and OpenLegend’s permitted-observation boundary. No unresolved task-blocking finding remains.
+- All **137 internal link occurrences** in the four new dossiers passed path checks and fragment checks where used. Added/changed navigation links were reviewed against the repository tree and actual headings. Untouched legacy links and separate whole-library preservation gates are not newly certified.
+- The affected diff contains the four new dossiers and seven research inventory, navigation, requirement-boundary and progress documents. No runtime change, game/mod execution, firsthand play, automated test suite or paid external work is claimed. Verification is documentary and source-based.
+- All work is on `research/medieval-game-dossiers-20261109`, based on `00b96687b853ed7a2c5e9fc9b11542e10147ea0f`. The branch was created for this assignment; no local checkout/worktree was created or switched. Final task-owned edits are committed through the GitHub connector. No merge or publication operation is part of this handoff.
