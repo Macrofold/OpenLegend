@@ -18,7 +18,7 @@ Open Legend's particular opportunity is to connect useful making, discoverable k
 
 ## 2. Separate a meaningful burden from repeated administration
 
-The useful design question is not how much friction players can tolerate. It is what decision a cost creates, what the player can learn about it, and whether that decision remains interesting on repetition.
+Judge effort by what it contributes to the intended experience: choices, mastery, anticipation, atmosphere or enjoyable routine. Ask whether that contribution remains worthwhile on repetition.
 
 | Candidate burden   | When it can be worthwhile                                                             | When it becomes avoidable administration                                       | Open Legend comparison                                                                                                 |
 | ------------------ | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
@@ -84,7 +84,7 @@ Use the existing [first-encounter and discovery owner](../../../../../docs/maint
 
 The production chapter treats music, light, silhouettes, geography and environmental identity as substantive design. An expedition can be worthwhile because the journey feels good, the landscape is memorable, or returning to town feels comforting. Those values should not be reduced to an explanation of why players endure inconvenience.
 
-Open Legend's [current art direction](../../../../../art-direction/decisions.md#current-direction-at-a-glance) is grounded stylized plain 3D. Outward supplies reference questions about recognizable places and atmosphere, not a replacement style, a license to use its assets or a reason to accept poor controls. The [audio research](../../../../../docs/research/audio/README.md) already owns sourcing and production questions; [ND38 / ASE](../../../../../docs/maintainers/needs-design.md#nd38--player-skill-during-action-execution) owns player input and the feel of action execution.
+Open Legend's [current art direction](../../../../../art-direction/decisions.md#current-direction-at-a-glance) is grounded stylized plain 3D. Outward supplies reference questions about recognizable places and atmosphere, not a replacement style, a license to use its assets or a reason to accept poor controls. The [audio research](../../../../../docs/research/audio/README.md) already owns sourcing and production questions; [ND38 / ASE](../../../../../docs/maintainers/needs-design.md#nd38--player-skill-during-action-execution) owns the selected combat execution and feedback work.
 
 The useful comparison is between the experience communicated and the resources required. Distinctive geography, readable actions and a coherent sound identity may carry more value than uniform detail. That is a production hypothesis; Outward's success does not prove visuals, animation, accessibility or performance are unimportant.
 
@@ -138,6 +138,6 @@ The supplied enthusiastic thread is a reason to investigate both the payoff and 
 
 ## 12. What would change these recommendations
 
-If ordinary sessions show that a burden produces little decision value, reduce or redesign that burden rather than defending it as realism. If players prefer familiar travel for its atmosphere and conversation, repetition alone is not a defect. If people understand a difficult commitment and value its consequences, lack of reversibility is not automatically a usability failure. If a simpler activity creates equally valued agency and stories, the more elaborate simulation needs an additional justification.
+If ordinary sessions show that a burden adds little to the experience players value, reduce or redesign it rather than defending it as realism. If players prefer familiar travel for its atmosphere and conversation, repetition alone is not a defect. If people understand a difficult commitment and value its consequences, lack of reversibility is not automatically a usability failure. If a simpler activity creates equally valued agency and stories, the more elaborate simulation needs an additional justification.
 
 Outward's strongest lesson for Open Legend is a relationship to test: preparation, capability, place, people and consequence should give one another meaning. Its weakest possible use as a reference would be copying the inconvenience while leaving that relationship unproven.
