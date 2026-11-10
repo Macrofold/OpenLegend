@@ -1,0 +1,34 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-integration-ready-final-proof",
+    "revisionId": "qualification01",
+    "manifestSha256": "dd44639b8206bc8c023ee289f37525b8aafee3d27084e4e360ef3f5bb982c69c"
+  },
+  "files": {
+    "proof/integration-ready01/final-qualification-proof.tar.xz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a246f5798f3806fb31d4726d5c3febf4271d7d417f99902327b2ef3eb2643ddd",
+      "bytes": 25045436,
+      "mediaType": "application/x-xz"
+    },
+    "proof/integration-ready01/inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "894965a017e6677e62baabea31c7cc887379fce1e80ebd5b1bc4a1d0ff7d678f",
+      "bytes": 66616,
+      "mediaType": "application/json"
+    },
+    "proof/integration-ready01/summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "08bedb95186a167b09f018cc1710d444b0cdb946a9d46732c1e87ad897135848",
+      "bytes": 1688,
+      "mediaType": "application/json"
+    }
+  }
+}

@@ -1,12 +1,12 @@
 # MetaHuman foundation proof — feature specification
 
-| Status      | Current progress                                                                                                                 | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Independent creation, rendering measurements and the elbow correction pass; full motion and finished-art acceptance remain open. | 2026-11-09   |
+| Status  | Current progress                                                                                            | Last updated |
+| ------- | ----------------------------------------------------------------------------------------------------------- | ------------ |
+| Blocked | Verified private kits and proof are preserved; final masculine wardrobe scope awaits the coverage decision. | 2026-11-10   |
 
 ## Purpose
 
-Determine whether MetaHuman can supply attractive, anatomically believable **complete heads and bodies** for OpenLegend, and whether a small exported kit can create further characters without running MetaHuman. Quality in OpenLegend's browser presentation is the deciding result. An attractive Unreal screenshot, a moving mannequin or a functioning slider alone is insufficient.
+Determine whether MetaHuman can supply anatomically believable **complete heads and bodies** for OpenLegend, and whether a small exported kit can create further characters without running MetaHuman. This is a bounded feasibility proof: make one adjustment toward the approved athletic references, correct elbows, qualify one premade garment across representative shapes, then test one existing natural-looking hair-card style in the actual renderer. Perfect production anatomy, hair polishing and hairstyle-library expansion are outside this proof. An Unreal screenshot or functioning slider alone is insufficient.
 
 This is an authorized standalone private experiment, not adoption of MetaHuman into the art workflow. The normal art workflow, selected game assets, world definitions and existing character pilot retain their own selections and unfinished obligations. [Execution evidence](../verification/metahuman-foundation-poc.md) distinguishes capability checks from actual source/export qualification.
 
@@ -44,24 +44,24 @@ MetaHuman and Reallusion Character Creator both cover heads **and bodies**. Meta
 ## Supported proof experience
 
 1. An artist starts from supplied MetaHuman presets, prepares one fit adult masculine and one fit adult feminine foundation, and compares them to the retained concept references. Men are shirtless in opaque fitted linen briefs/small fitted loincloth coverage; women wear an opaque fitted bra and briefs. These are separate garments over complete anatomy. Fuller construction-reference outfits are not the review presentation.
-2. Both foundations appear in OpenLegend's actual renderer, in clay and finished materials, close up and at the ordinary game camera. Visible anatomy, eyes, hair and necks must survive export and the game's lighting.
+2. Both foundations appear in OpenLegend's actual renderer, in clay and converted materials, close up and at the ordinary game camera. Visible anatomy, eyes and necks must survive export and lighting; production finish is a later task.
 3. After exporting the kit and closing MetaHuman, an operator creates three contrasting characters in one family and a petite fit character in the other. Smallest does not mean unfit. Family selection describes the proof's geometry, not a universal rule equating gender identity with physique.
 4. Four controls operate continuously: height, muscularity, nose width and jaw width. At least one newly entered intermediate combination was never separately authored/exported in MetaHuman. Both families support the controls. Three saved recipes per family demonstrate presets using the same mechanism.
-5. Hair can be removed or switched between two short styles, and eye colour can change without regenerating the face. These choices must remain correctly seated as the face changes.
-6. The same tunic design fits and moves on the contrasting bodies. One fitting/binding per family is allowed, not a hand-sculpted garment for every recipe. A separate rigid buckle or pendant proves attachment without rubber-like deformation. The underlying body and underwear remain available when the tunic is removed.
+5. One existing natural-looking premade hair-card style can be removed/restored without regenerating the face. After animation and clothing pass, inspect its hairline, silhouette, highlights and transparency from several angles in the actual renderer. Do not sculpt geometric hair, build a custom hair system or expand the hairstyle library. Retain existing eye-colour selection.
+6. Suitable premade clothing first survives export and moves correctly on one body, then fits and moves on the contrasting bodies. One fitting/binding per family is allowed, not a hand-sculpted garment for every recipe. A separate rigid buckle or pendant proves attachment without rubber-like deformation. The underlying body and underwear remain available when clothing is removed. Backward-elbow diagnosis precedes clothing checks; the single hair-card check follows them. Custom garment construction stays stopped unless a specific unmet need and Mike's agreement justify it.
 7. Idle, Walk and Run operate on all four review characters, including transitions and two differently shaped wearers visible together. A separate blink/jaw-opening export diagnostic measures the path to facial animation; the proof does not claim a complete expression or speech system.
-8. An archived kit and recipes reproduce the result without MetaHuman, Epic authentication, a generation provider or a commercial character editor. Authoring additional foundations can still require those tools and their licenses.
+8. An archived kit and recipes reproduce the result without MetaHuman, Epic authentication, a generation provider or a commercial character editor. Report which outputs are reusable and which later body changes require new source samples, bindings, masks, rigs or motion qualification. Authoring additional foundations can still require those tools and their licenses.
 
 ## Scope and deliberate exclusions
 
-| Included                                                                                     | Deferred to adoption or the existing character project                                                                                           |
-| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Two adult foundations, bounded deformations, preset recipes, independent slider evaluation   | Broad age/fullness/ancestry coverage, children, arbitrary species, unrestricted random faces, blending between the two body families             |
-| Complete anatomy with separate opaque underwear, one soft tunic design, one rigid attachment | Full Wayfarer wardrobe; separate torso/legs/gloves/inner armour/outer armour/helmet/hat/boots/accessory catalogue                                |
-| Two short hair choices plus bald, selectable eye colour                                      | Long-hair simulation, facial-hair catalogue, eye-shape/neck/limb-length/breast-specific sliders, full head library                               |
-| Locomotion and facial-export diagnostic                                                      | Combat/contact coverage, all hand gestures, lip sync, full FACS/ARKit, facial performance capture                                                |
-| Actual game renderer/actor in a developer study                                              | Installing the kit in the ordinary world, changing character authority/save formats, normal creator rollout, workflow/provider selection changes |
-| Static skin and normal-map preparation under current art direction                           | Recreating Unreal skin/eye shaders, cinematic fidelity at every distance, strand-groom runtime or cloth simulation                               |
+| Included                                                                                         | Deferred to adoption or the existing character project                                                                                           |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Two adult foundations, bounded deformations, preset recipes, independent slider evaluation       | Broad age/fullness/ancestry coverage, children, arbitrary species, unrestricted random faces, blending between the two body families             |
+| Complete anatomy with separate opaque underwear, a suitable premade outfit, one rigid attachment | Full Wayfarer wardrobe; separate torso/legs/gloves/inner armour/outer armour/helmet/hat/boots/accessory catalogue                                |
+| One existing natural-looking premade hair-card style plus bald, existing eye-colour selection    | Hair polishing/sculpting, a custom hair system, hairstyle-library expansion, facial-hair catalogue, broader body/face controls                   |
+| Locomotion and facial-export diagnostic                                                          | Combat/contact coverage, all hand gestures, lip sync, full FACS/ARKit, facial performance capture                                                |
+| Actual game renderer/actor in a developer study                                                  | Installing the kit in the ordinary world, changing character authority/save formats, normal creator rollout, workflow/provider selection changes |
+| Static skin and normal-map preparation under current art direction                               | Recreating Unreal skin/eye shaders, cinematic fidelity at every distance, strand-groom runtime or cloth simulation                               |
 
 The existing larger modular-character design remains the owner of those deferred requirements. This proof must expose a viable extension path, not implement them in advance. A measured facial-export failure is a material adoption risk, even when the neutral foundation passes.
 
@@ -69,9 +69,9 @@ The existing larger modular-character design remains the owner of those deferred
 
 The [execution guide](metahuman-foundation-poc-tech-design.md#4-execution-sequence) specifies the evidence and pass conditions. Distinguish four outcomes:
 
-- **Required pass:** visibly good covered anatomy and heads in the browser; portable bounded sliders on both families; correct independent wearers, tunic fitting and locomotion; asset budgets; no per-character vendor dependency; reproducible archived sources.
+- **Required pass:** complete plausible covered anatomy with one bounded athletic adjustment; portable sliders on both families; correct elbows and independent wearers, premade clothing fit and locomotion; one existing hair-card style checked in the renderer; asset budgets and reproducible sources without per-character vendor calls.
 - **Required measurement:** source-to-browser losses, basic facial-animation export, authoring effort, conversion time and before/after performance. A result must be reported even if poor; measurement alone does not approve it.
-- **Human acceptance:** Mike selects browser body/head appearance, or explicitly delegates that selection, and approves the final comparison. Without the relevant response, keep selection/acceptance pending; completed technical evidence is reported separately. Do not multiply wardrobe work before the body/head checkpoint.
+- **Human acceptance:** Mike's existing foundation-selection delegation permits this bounded proof to continue. Present the feasibility comparison and quality gaps candidly; production-body, finished-art and normal-workflow adoption approval remain separate. Do not expand body or hair polishing to obtain production acceptance within this proof.
 - **External decision:** lawful use of the selected assets, organization-specific licensing and eventual browser distribution. Private evaluation permission is not a blanket public redistribution grant.
 
 Fail the independent-kit hypothesis if new ordinary characters still need MetaHuman, if endpoint samples cannot retain reliable correspondence, or if good faces require ongoing manual vertex repair. Fail visual qualification if the result has alien eyes, collapsed lips, neck seams, hollow replacement torsos, cardboard underwear, obvious clipping or broken gait. Fail the current runtime profile if necessary fidelity cannot fit it. Do not silently weaken a requirement or substitute an Unreal video.

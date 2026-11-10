@@ -1,0 +1,45 @@
+{
+  "scope": "Exact stopped-work held-hair source unit only; source-only, accepted=false/HOLD",
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-held-hair-source",
+    "revisionId": "generated-hair-held-20261109",
+    "manifestSha256": "74681e05e07f8371148ca472aca86f3141f95b1edc94dfc14db6b81f9cb67659"
+  },
+  "publicationOperationId": "mhp-held-hair-source-20261109",
+  "fileClaims": 70,
+  "uniqueArtifactsVerified": 71,
+  "selectedArtifactBytes": 42547800,
+  "durableRecoveryReceipt": {
+    "reference": {
+      "boundary": "asset-recovery",
+      "accessDomain": "openlegend-assets",
+      "sha256": "b88bf00a57d712f733b6df198b79ac43c0626f8ec2f07a7cc2af5d1a55d01729",
+      "bytes": 115659,
+      "mediaType": "application/json"
+    },
+    "location": {
+      "accountId": "027677879749",
+      "region": "us-east-2",
+      "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+      "key": "domains/openlegend-assets/blobs/sha256/b8/b88bf00a57d712f733b6df198b79ac43c0626f8ec2f07a7cc2af5d1a55d01729",
+      "versionId": "A6_gps1DO1VqI2v5zfQp13iFTqBFgmc2"
+    },
+    "readerHashVerified": true,
+    "authorityGeneration": 304,
+    "scope": "Exact held hair source artifacts; durable selected-unit recovery receipt, not a whole-catalogue checkpoint",
+    "completedAtUtc": "2026-11-09T22:33:23.698Z"
+  },
+  "firstAuthorityAttemptUtc": "2026-11-09T21:40:03.677682+00:00",
+  "sameHardDeadlineUtc": "2026-11-09T22:40:03.677682+00:00",
+  "allOwnedClientsClosedAtUtc": "2026-11-09T22:33:23.931312+00:00",
+  "fullPauseTailNotBeforeUtc": "2026-11-09T22:38:23.931312+00:00",
+  "noCompressionNativeRefinementOrRuntimeSelection": true,
+  "providerCreditsConsumed": 67,
+  "providerCreditControlUsdOnly": 4.69,
+  "usdInvoiceAllocation": "unknown",
+  "cashPurchaseOrTopup": false
+}

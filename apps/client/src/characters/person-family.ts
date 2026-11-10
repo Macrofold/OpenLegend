@@ -1041,11 +1041,14 @@ function applyCorrectives(
 }
 
 type ControlBindings = readonly (readonly [string, PersonControlTargets])[];
+type SeamNormalVertex = readonly [meshId: string, vertex: number];
 interface FamilyPlan {
   meshControls: Map<string, ControlBindings>;
   faceControls: Map<PersonFacePreset, ControlBindings>;
   controlMeshes: Map<string, Set<string>>;
   ageYears: number[];
+  seamNormalGroups: SeamNormalVertex[][];
+  normalMeshDependencies: Map<string, Set<string>>;
 }
 // A compiled family is immutable and shared. Build its dependency lists once,
 // without retaining any wearer's float-valued recipe or evaluated buffers.
@@ -1057,6 +1060,8 @@ function familyPlan(family: CompiledPersonFamily): FamilyPlan {
     meshControls: new Map(),
     faceControls: new Map(),
     controlMeshes: new Map(),
+    seamNormalGroups: [],
+    normalMeshDependencies: new Map(),
     ageYears: Object.keys(family.ageSamples)
       .map(Number)
       .sort((a, b) => a - b),
@@ -1102,6 +1107,47 @@ function familyPlan(family: CompiledPersonFamily): FamilyPlan {
     if (face.ageSamples) depends(family.ageControl, face.meshId);
     corrections(face.meshId, face.correctives);
   }
+  const seamVertices = new Map<string, Map<number, Set<SeamNormalVertex>>>();
+  const vertexGroup = (meshId: string, vertex: number) => {
+    let vertices = seamVertices.get(meshId);
+    if (!vertices) {
+      vertices = new Map();
+      seamVertices.set(meshId, vertices);
+    }
+    let group = vertices.get(vertex);
+    if (!group) {
+      group = new Set<SeamNormalVertex>([[meshId, vertex]]);
+      vertices.set(vertex, group);
+    }
+    return group;
+  };
+  for (const seam of family.seams) {
+    let meshes = plan.normalMeshDependencies.get(seam.bodyMesh) ?? new Set([seam.bodyMesh]);
+    let otherMeshes = plan.normalMeshDependencies.get(seam.headMesh) ?? new Set([seam.headMesh]);
+    if (meshes.size < otherMeshes.size) [meshes, otherMeshes] = [otherMeshes, meshes];
+    for (const id of otherMeshes) meshes.add(id);
+    for (const id of meshes) plan.normalMeshDependencies.set(id, meshes);
+    for (let i = 0; i < seam.bodyVertices.length; i++) {
+      let group = vertexGroup(
+        seam.bodyMesh,
+        requiredPersonValue(seam.bodyVertices[i], 'body seam'),
+      );
+      let other = vertexGroup(
+        seam.headMesh,
+        requiredPersonValue(seam.headVertices[i], 'head seam'),
+      );
+      if (group === other) continue;
+      if (group.size < other.size) [group, other] = [other, group];
+      for (const member of other) {
+        group.add(member);
+        requiredPersonValue(seamVertices.get(member[0]), member[0]).set(member[1], group);
+      }
+    }
+  }
+  const groups = new Set<Set<SeamNormalVertex>>();
+  for (const vertices of seamVertices.values())
+    for (const group of vertices.values()) groups.add(group);
+  plan.seamNormalGroups = [...groups].map((group) => [...group]);
   familyPlans.set(family, plan);
   return plan;
 }
@@ -1757,11 +1803,11 @@ export function evaluatePerson(
   }
   const normals = new Map<string, Float32Array>();
   const changedNormals = new Set(changedMeshes);
-  for (const seam of family.seams)
-    if (changedMeshes.has(seam.bodyMesh) || changedMeshes.has(seam.headMesh)) {
-      changedNormals.add(seam.bodyMesh);
-      changedNormals.add(seam.headMesh);
-    }
+  // Recompute the whole connected mesh component before sharing seam normals;
+  // otherwise a write could mutate the previous evaluation's reused normal buffer.
+  for (const id of changedMeshes)
+    for (const dependency of plan.normalMeshDependencies.get(id) ?? [])
+      changedNormals.add(dependency);
   for (const [id, points] of positions)
     normals.set(
       id,
@@ -1769,24 +1815,25 @@ export function evaluatePerson(
         ? requiredPersonValue(previous.canonicalNormals.get(id), id)
         : meshNormals(points, requiredPersonValue(family.meshes[id], id).triangles),
     );
-  for (const seam of family.seams) {
-    if (!changedNormals.has(seam.bodyMesh) && !changedNormals.has(seam.headMesh)) continue;
-    const body = requiredPersonValue(normals.get(seam.bodyMesh), seam.bodyMesh),
-      head = requiredPersonValue(normals.get(seam.headMesh), seam.headMesh);
-    for (let i = 0; i < seam.bodyVertices.length; i++) {
-      const b = requiredPersonValue(seam.bodyVertices[i], 'body seam') * 3,
-        h = requiredPersonValue(seam.headVertices[i], 'head seam') * 3;
-      const x = requiredPersonValue(body[b], 'normal') + requiredPersonValue(head[h], 'normal');
-      const y =
-        requiredPersonValue(body[b + 1], 'normal') + requiredPersonValue(head[h + 1], 'normal');
-      const z =
-        requiredPersonValue(body[b + 2], 'normal') + requiredPersonValue(head[h + 2], 'normal');
-      const length = Math.hypot(x, y, z);
-      if (length > 1e-12) {
-        const value = [x / length, y / length, z / length];
-        body.set(value, b);
-        head.set(value, h);
-      }
+  // A canonical vertex can occur in several declared pairs. Average its original
+  // normal once across the connected group, before writing any member.
+  for (const group of plan.seamNormalGroups) {
+    if (!changedNormals.has(requiredPersonValue(group[0], 'seam normal group')[0])) continue;
+    let x = 0,
+      y = 0,
+      z = 0;
+    for (const [meshId, vertex] of group) {
+      const values = requiredPersonValue(normals.get(meshId), meshId),
+        offset = vertex * 3;
+      x += requiredPersonValue(values[offset], 'normal');
+      y += requiredPersonValue(values[offset + 1], 'normal');
+      z += requiredPersonValue(values[offset + 2], 'normal');
+    }
+    const length = Math.hypot(x, y, z);
+    if (length > 1e-12) {
+      const value = [x / length, y / length, z / length];
+      for (const [meshId, vertex] of group)
+        requiredPersonValue(normals.get(meshId), meshId).set(value, vertex * 3);
     }
   }
   const meshes = new Map<string, EvaluatedPersonMesh>();

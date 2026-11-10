@@ -14,7 +14,7 @@ Private execution is authorized. Numerical POC choices below remain **Proposed**
 
 ## MHP-L03 — Parts and motion coverage
 
-**Proposed · Restrictiveness: Very safe.** Separate underwear, one tunic design with one binding per family, two short hair styles plus bald, at least three eye colours and one rigid attachment. Idle/Walk/Run, transitions and two diagnostic bends; blink/jaw export is a separate required measurement. Full wardrobe, cloth simulation, long hair, fingers/expressive gameplay and broad pose coverage remain unqualified. This bounds the proof, not the larger character feature. Owner: design §§7–8, MHP04.
+**Accepted proof scope · Restrictiveness: Very safe.** Existing separate coverage, one premade garment design with one binding per family, one existing natural-looking premade hair-card style plus bald, existing eye colours and one rigid attachment. Make one bounded athletic adjustment; do not pursue production-body or hair polish. Idle/Walk/Run, transitions and two diagnostic bends remain; blink/jaw export is a separate measurement. Custom garment construction requires an agreed specific unmet need; no custom hair system or hairstyle-library expansion. Full wardrobe, cloth simulation, expressive gameplay and broad pose coverage remain unqualified. Owner: design §§7–8, MHP04.
 
 ## MHP-L04 — Bounded runtime work and study measurements
 

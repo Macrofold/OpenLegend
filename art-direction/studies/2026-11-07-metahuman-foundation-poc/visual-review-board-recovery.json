@@ -1,0 +1,101 @@
+{
+  "status": "Private board publication, current-permission readback, independent exact-version recovery and durable receipt verification passed.",
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-visual-review-board",
+    "revisionId": "self-contained-local01",
+    "manifestSha256": "f71d055032b928f2957b02d578a982f333fbc756b4f642981a682bc26fbba17c"
+  },
+  "publicationOperationId": "mhp-metahuman-visual-review-board-20261110",
+  "index": {
+    "file": "visual-review-board.index.json",
+    "bytes": 1454,
+    "sha256": "e0d6b7b35354235b07f7946789c4c2efe76defbe08a554eb136fcc1525aa6d06"
+  },
+  "board": {
+    "path": "studies/metahuman-foundation-poc/visual-review01/index.html",
+    "reference": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8e4d9dbab0a545db111b2362d8e0ac254d0ebe23eb14118f28dabdab9c7e8d14",
+      "bytes": 42669191,
+      "mediaType": "text/html; charset=utf-8"
+    },
+    "selfContained": true,
+    "embeddedOriginalMedia": 38,
+    "images": 33,
+    "videos": 5,
+    "actualMimeAndMagicMatched": true,
+    "networkRequired": false
+  },
+  "publishedUniqueObjects": 5,
+  "publishedPayloadBytesIncludingCanonical": 42758642,
+  "proofArchiveMembers": 9,
+  "sourcePermissions": {
+    "exactPriorReleaseArtifactPairs": 16,
+    "currentOfflineAndSourceRightsPassed": true,
+    "sourceHistoryPayloadDownloads": 0
+  },
+  "scope": "Requested existing visual results, including current clothing/body evidence, rejected and held hair, and reference-only concepts. The board changes no art, runtime or overall POC acceptance.",
+  "durableRecoveryReceipt": {
+    "reference": {
+      "boundary": "asset-recovery",
+      "accessDomain": "openlegend-assets",
+      "sha256": "fff2dbfe5f73f1db2a974588ed47439dd1363958323aa61f0ed16b2ee09943c5",
+      "bytes": 23496,
+      "mediaType": "application/json"
+    },
+    "location": {
+      "accountId": "027677879749",
+      "region": "us-east-2",
+      "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+      "key": "domains/openlegend-assets/blobs/sha256/ff/fff2dbfe5f73f1db2a974588ed47439dd1363958323aa61f0ed16b2ee09943c5",
+      "versionId": "oQurjf6wLZOIt0Q0OQbvxurEU7FK1iEJ"
+    },
+    "readerHashVerified": true,
+    "authorityGeneration": 323,
+    "scope": "Exact private local review-board proof; actual admission and sanitized preflight are embedded in this durable receipt",
+    "completedAtUtc": "2026-11-10T06:01:04.303Z"
+  },
+  "durableReceiptIncludesActualAdmissionAndSanitizedPreflight": true,
+  "localReceiptProof": {
+    "file": "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/evidence/visual-review-preservation01/publication01/recovery/receipt.json",
+    "bytes": 23496,
+    "sha256": "fff2dbfe5f73f1db2a974588ed47439dd1363958323aa61f0ed16b2ee09943c5"
+  },
+  "clock": {
+    "firstAuthorityAttemptUtc": "2026-11-10T05:55:57.769173+00:00",
+    "hardDeadlineUtc": "2026-11-10T06:05:57.769173+00:00",
+    "ownedClientsClosedAtUtc": "2026-11-10T06:01:04.638473+00:00",
+    "fullModeledPauseTailSeconds": 300,
+    "modeledPauseTailReservedThroughUtc": "2026-11-10T06:06:04.638473+00:00",
+    "capacityZeroObserved": false,
+    "noClockResetOrExtension": true
+  },
+  "cleanup": {
+    "allOwnedAuthorityClientsClosed": true,
+    "noNewViewerServerRenderer": true,
+    "noNativeGenerationProviderJobs": true,
+    "noFurtherAwsCallsPlanned": true
+  },
+  "accounting": {
+    "retainedPriorControlUsd": 26.99,
+    "newReservationUsd": 1,
+    "wholeConservativeControlUsd": 27.99,
+    "sharedTaskCeilingUsd": 100,
+    "actualAwsInvoiceSpend": "Unmeasured",
+    "newSoftwareProviderSpendUsd": 0,
+    "modeledSubtotalUsd": 0.66103352832,
+    "storageModel": "Two 60 MB copies for the first month only, not indefinite storage."
+  },
+  "localInvocationCorrection": {
+    "failedInvocation": "recover01 local module path error before client creation",
+    "correctedInvocation": "recover02 used the exact reviewed prepared owner",
+    "publicationOperationRightsPayloadAndClockUnchanged": true,
+    "recordEmbeddedInDurablePreflight": true
+  },
+  "priorStudyIndexesAndRecoveryRecordsUnchanged": true
+}

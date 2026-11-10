@@ -1,0 +1,41 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-finishing-preservation-proof",
+    "revisionId": "finish-art02-terminal-20261109",
+    "manifestSha256": "3ace5584d14f6ac68b3a8df7459e48e792bdf5633ef0d8ec82e8403257e30940"
+  },
+  "files": {
+    "source-proof/finish-art02/terminal-evidence.tar.gz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fee81581d4c93409323fe4582dd47f3b4adf2071738bddfcaf56b12d14d7ba53",
+      "bytes": 241363,
+      "mediaType": "application/gzip"
+    },
+    "source-proof/finish-art02/member-inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "21ed2537fb72c05041af81f7441c17382220e9a0fc684fa21e7fb3f489abe382",
+      "bytes": 29532,
+      "mediaType": "application/json"
+    },
+    "source-proof/finish-art02/summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5c6d9234b8eb39a623226d09605593738e1b4cf30d885143fee864623bd0142f",
+      "bytes": 2711,
+      "mediaType": "application/json"
+    },
+    "source-proof/finish-art02/cost-scope-annotation.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fff3d95ccb4e2021a00b124b662f3528018b4076720da1ee8c874650090950e0",
+      "bytes": 921,
+      "mediaType": "application/json"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-premade-fixed-hair-control",
+    "revisionId": "terminal-native01",
+    "manifestSha256": "2f847f87e27b432cae586fdf898ac04130b8ff19c2aa18dc5b2437aefe812204"
+  },
+  "files": {
+    "studies/metahuman-foundation-poc/premade01/fixed/clean-hair-control.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c4980d42a46d95f485138ee9ee5bfc0ada0cb8896bc25a5ef998f36c82460972",
+      "bytes": 9339592,
+      "mediaType": "model/gltf-binary"
+    }
+  }
+}

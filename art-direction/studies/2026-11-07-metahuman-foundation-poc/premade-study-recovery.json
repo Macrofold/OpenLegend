@@ -1,0 +1,322 @@
+{
+  "status": "All 16 selected releases passed publication, current-permission readback, independent exact-version recovery and durable receipt verification.",
+  "scope": "Current premade before/after families, fixed controls, complete sources and failures, and later actual actor and single fixed-hair proof. Private and unqualified; hair appearance failed; no timing pass or world acceptance.",
+  "indexes": [
+    {
+      "file": "premade-study.index.json",
+      "bytes": 9196,
+      "sha256": "668736daed3b532e93837ca9f7cf7cc5a8ec472acc175b9b023caf111126562c"
+    },
+    {
+      "file": "premade-source.index.json",
+      "bytes": 9510,
+      "sha256": "1463842e2ed5379f717ba7933233c8879927691421d56c8714eb15dc36f1f393"
+    },
+    {
+      "file": "premade-hair-control.index.json",
+      "bytes": 623,
+      "sha256": "8f25b3f15c7169f15e1313e57cd0699a133125a288ccc4f4e0f479a76351ab14"
+    },
+    {
+      "file": "premade-terminal-proof.index.json",
+      "bytes": 901,
+      "sha256": "e87a514fbfb373540aac8f4e12731bc934e1286c8b203a01e780d2e9ab9c06bd"
+    }
+  ],
+  "selectedReleases": [
+    {
+      "label": "before-orlando-descriptor",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-orlando-motion-right-witness-refinement-descriptor",
+        "revisionId": "poc-d8d78dfb7f3493c7fc90462c",
+        "manifestSha256": "b0cfda9ed2f0730f60bc19e9cd0c34790112cad32c0e7409cf5a0dbb4619ebca"
+      },
+      "publicationOperationId": "mhp-premade-feasibility-before-orlando-descriptor-20261110"
+    },
+    {
+      "label": "before-orlando-runtime",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-before-orlando-runtime",
+        "revisionId": "premade-feasibility01",
+        "manifestSha256": "81ee84dbeb188e594b18062ad0c908bec4365b3a0eef5753a65cdef358c65cb9"
+      },
+      "publicationOperationId": "mhp-premade-feasibility-before-orlando-runtime-20261110"
+    },
+    {
+      "label": "before-vivian-descriptor",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-vivian-motion-sole-witnesses-descriptor",
+        "revisionId": "poc-40f30610a23a4bfc10d79eb4",
+        "manifestSha256": "e53a8118e9f2a3cf49f52916dcb64443c4646b1bf48e5a353d5862d239f0d053"
+      },
+      "publicationOperationId": "mhp-premade-feasibility-before-vivian-descriptor-20261110"
+    },
+    {
+      "label": "before-vivian-runtime",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-before-vivian-runtime",
+        "revisionId": "premade-feasibility01",
+        "manifestSha256": "816ca4289b66de958dcc12b0dbdf7260b6857df1b25eb92c4603a89a3cd25181"
+      },
+      "publicationOperationId": "mhp-premade-feasibility-before-vivian-runtime-20261110"
+    },
+    {
+      "label": "after-orlando-descriptor",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-orlando-premade-descriptor",
+        "revisionId": "poc-50f3e6b47b44b2caaa6d10d8",
+        "manifestSha256": "9791a40760c2ca84ccbfcc16151345fd4f50fb816f9c7a74150bb731bd73af33"
+      },
+      "publicationOperationId": "mhp-premade-feasibility-after-orlando-descriptor-20261110"
+    },
+    {
+      "label": "after-orlando-runtime",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-after-orlando-runtime",
+        "revisionId": "premade-feasibility01",
+        "manifestSha256": "a2a7c1bda240d37993a4194710fda9e86f372dc9f51c4216c3ae5a72b0b6a589"
+      },
+      "publicationOperationId": "mhp-premade-feasibility-after-orlando-runtime-20261110"
+    },
+    {
+      "label": "after-vivian-descriptor",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-vivian-premade-descriptor",
+        "revisionId": "poc-5018ab88824bed8c22b25506",
+        "manifestSha256": "dcbca2496f3c9ad9700ef281dcb0d9f74b1a62eaf45b512eac877704b7feae1b"
+      },
+      "publicationOperationId": "mhp-premade-feasibility-after-vivian-descriptor-20261110"
+    },
+    {
+      "label": "after-vivian-runtime",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-after-vivian-runtime",
+        "revisionId": "premade-feasibility01",
+        "manifestSha256": "ef1e15f248ad7e7f4a652c8978063c5b9d4093f963c27a1b5848cfae844355e0"
+      },
+      "publicationOperationId": "mhp-premade-feasibility-after-vivian-runtime-20261110"
+    },
+    {
+      "label": "m-small-fit",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-premade-fixed-m-small-fit",
+        "revisionId": "native01",
+        "manifestSha256": "2df52e4fb0a2861bde6cf9909d84c33db4cc5533a2c14befde31b0731e8ab5c4"
+      },
+      "publicationOperationId": "mhp-premade-feasibility-m-small-fit-20261110"
+    },
+    {
+      "label": "m-intermediate",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-premade-fixed-m-intermediate",
+        "revisionId": "native01",
+        "manifestSha256": "afd4121b439801f9965b523cdc6d02e98a80c5a3efb8fd5358167e5466d533ec"
+      },
+      "publicationOperationId": "mhp-premade-feasibility-m-intermediate-20261110"
+    },
+    {
+      "label": "m-broad",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-premade-fixed-m-broad",
+        "revisionId": "native01",
+        "manifestSha256": "e699b1f83cbccecb404934658b1c41369196c91f824dbc0c555b2e5e3b10bd5f"
+      },
+      "publicationOperationId": "mhp-premade-feasibility-m-broad-20261110"
+    },
+    {
+      "label": "f-petite-fit",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-premade-fixed-f-petite-fit",
+        "revisionId": "native01",
+        "manifestSha256": "2bf5646ce392aba46e6ad5298a9a9600e417953c41073c65d3943663a033c551"
+      },
+      "publicationOperationId": "mhp-premade-feasibility-f-petite-fit-20261110"
+    },
+    {
+      "label": "viewer-root",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-premade-feasibility-viewer-root",
+        "revisionId": "current-motion-before-after01",
+        "manifestSha256": "ced3fc5f370b9758d5cd987976bfee30b867bb91617d0c369e20c451d8ad4fb7"
+      },
+      "publicationOperationId": "mhp-premade-feasibility-viewer-root-20261110"
+    },
+    {
+      "label": "final-source-proof",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-premade-source-proof",
+        "revisionId": "native-premade-completed01",
+        "manifestSha256": "e125b566389d1f2e494a5fef8fdc3a87bc0833aa7a37489e9f9c0ad45c759a1f"
+      },
+      "publicationOperationId": "mhp-premade-final-source-proof-20261110"
+    },
+    {
+      "label": "fixed-hair-control",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-premade-fixed-hair-control",
+        "revisionId": "terminal-native01",
+        "manifestSha256": "2f847f87e27b432cae586fdf898ac04130b8ff19c2aa18dc5b2437aefe812204"
+      },
+      "publicationOperationId": "mhp-premade-fixed-hair-control-20261110"
+    },
+    {
+      "label": "late-actor-hair-source-proof",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-premade-late-actor-hair-source-proof",
+        "revisionId": "terminal-native01",
+        "manifestSha256": "8dc0667630ebf428f8b4ab5ecdff928709ab300fd2adf0510a3317794dfa8984"
+      },
+      "publicationOperationId": "mhp-premade-late-actor-hair-source-proof-20261110"
+    }
+  ],
+  "sourceAndRuntimeRecovery": {
+    "objects": 44,
+    "bytes": 411083692,
+    "durableReceipt": {
+      "reference": {
+        "boundary": "asset-recovery",
+        "accessDomain": "openlegend-assets",
+        "sha256": "cf138878a9affdf37e9583f7a42be9a397c394544a26ec9e99977eb4690c6685",
+        "bytes": 75019,
+        "mediaType": "application/json"
+      },
+      "location": {
+        "accountId": "027677879749",
+        "region": "us-east-2",
+        "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+        "key": "domains/openlegend-assets/blobs/sha256/cf/cf138878a9affdf37e9583f7a42be9a397c394544a26ec9e99977eb4690c6685",
+        "versionId": "jBaZJO.4T60LNxaPBx5IzWGc_2sCcLyM"
+      },
+      "readerHashVerified": true,
+      "authorityGeneration": 319,
+      "scope": "Exact premade phase1 and phase2 artifacts; durable selected-unit receipt, not a catalogue checkpoint",
+      "completedAtUtc": "2026-11-10T03:21:32.025Z"
+    }
+  },
+  "terminalRecovery": {
+    "objects": 5,
+    "bytes": 32982924,
+    "durableReceipt": {
+      "reference": {
+        "boundary": "asset-recovery",
+        "accessDomain": "openlegend-assets",
+        "sha256": "4c7489bdccb45e3adaf568c0cce8fe8dcd17de0320c287e9bde00d57f6c80934",
+        "bytes": 9191,
+        "mediaType": "application/json"
+      },
+      "location": {
+        "accountId": "027677879749",
+        "region": "us-east-2",
+        "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+        "key": "domains/openlegend-assets/blobs/sha256/4c/4c7489bdccb45e3adaf568c0cce8fe8dcd17de0320c287e9bde00d57f6c80934",
+        "versionId": "GS2FkO61K7J5CNl8iI__lf0a6AQ0zOue"
+      },
+      "readerHashVerified": true,
+      "authorityGeneration": 321,
+      "scope": "Exact premade phase1 and phase2 artifacts; durable selected-unit receipt, not a catalogue checkpoint",
+      "completedAtUtc": "2026-11-10T03:28:13.210Z"
+    }
+  },
+  "allGraphBytes": 444066616,
+  "allGraphUniqueObjects": 49,
+  "clock": {
+    "firstAuthorityAttemptUtc": "2026-11-10T02:28:18.864708+00:00",
+    "hardDeadlineUtc": "2026-11-10T03:28:18.864708+00:00",
+    "terminalClientsClosedUtc": "2026-11-10T03:28:13.487678+00:00",
+    "viewerClosedUtc": "2026-11-10T03:27:45.363650+00:00",
+    "modeledFullPauseTailSeconds": 300,
+    "pauseTailReservedThroughUtc": "2026-11-10T03:33:13.487678+00:00",
+    "capacityZeroObserved": false,
+    "noCallsAfterDeadline": true
+  },
+  "accounting": {
+    "retainedPriorConservativeControlUsd": 23.99,
+    "incrementalReservedUsd": 2,
+    "wholeConservativeControlUsd": 25.99,
+    "sharedTaskCeilingUsd": 100,
+    "actualAwsInvoiceSpend": "Unmeasured",
+    "providerSoftwareUsdThisWindow": 0,
+    "pastProviderHairCreditsSeparate": 67
+  },
+  "cleanup": {
+    "viewerPort3228Absent": true,
+    "expiredOwnedOneUseTicketFilesDeleted": true,
+    "allPublicationRecoveryClientsClosed": true,
+    "noNativeHashOrPackingJobsActive": true
+  },
+  "sizeAmendment": {
+    "file": "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/evidence/premade-preservation01/root-size-amendment01.json",
+    "bytes": 1615,
+    "sha256": "a22b941a9843be44bc45f1496603b75b470310e4d6ee7853397ea9da5f59ee58"
+  },
+  "terminalActualSizeApproval": {
+    "file": "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/evidence/premade-preservation01/terminal03/actual-size-approval.json",
+    "bytes": 317,
+    "sha256": "a480e6cdfc04f74e9f3d63c8ca92ae2de0f7292f239e82aef7e3adc1f1f47f85"
+  },
+  "durableReceiptObjectsSeparate": 2
+}

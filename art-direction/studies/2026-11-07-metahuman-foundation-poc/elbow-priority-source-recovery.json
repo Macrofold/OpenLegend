@@ -1,0 +1,79 @@
+{
+  "status": "published-current-permission-readback-independent-exact-version-recovery-durable-receipt-passed",
+  "scope": "Source/proof only: actual elbow source/export/actor witnesses and FAILED moving-fit premade control. No wearable/runtime/public/world selection or variants. Both current4 and uncapped28 garment diagnostics failed.",
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-elbow-priority-source-proof",
+    "revisionId": "failed-premade-control01",
+    "manifestSha256": "84de89c0cbd4b29781e1ed5b1c6dd514ef6163ece79c4afbbad20861fbe94a00"
+  },
+  "publicationOperationId": "mhp-elbow-priority-failed-premade-source-proof-20261109",
+  "rightsOperationId": "mhp-elbow-priority-failed-premade-source-proof-20261109-rights",
+  "sourceIndex": {
+    "file": "elbow-priority-source.index.json",
+    "bytes": 27736,
+    "sha256": "08ec20fbafabad0c88b6c89c2ae6618f813595404a117b7926919396a5ae17ef"
+  },
+  "selectedFileClaims": 88,
+  "selectedUniqueArtifactsIncludingCanonical": 88,
+  "selectedBytesIncludingCanonical": 60867401,
+  "newArtifactCount": 81,
+  "newArtifactBytes": 53921156,
+  "alreadyAdmittedArtifactCount": 7,
+  "alreadyAdmittedArtifactBytes": 6946245,
+  "freshWorkspaceAll88HashesPassed": true,
+  "independentRecovery": {
+    "objects": 88,
+    "bytes": 60867401,
+    "authorityGeneration": 305,
+    "durableReceipt": {
+      "boundary": "asset-recovery",
+      "accessDomain": "openlegend-assets",
+      "sha256": "e513db6ed615a271b343f0f64c797a61e0202d981721cdf18fe55083f71d0e45",
+      "bytes": 144543,
+      "mediaType": "application/json"
+    },
+    "exactLocation": {
+      "accountId": "027677879749",
+      "region": "us-east-2",
+      "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+      "key": "domains/openlegend-assets/blobs/sha256/e5/e513db6ed615a271b343f0f64c797a61e0202d981721cdf18fe55083f71d0e45",
+      "versionId": "Wc.ISwVZwNwWYxzeFPumvoqYA.htwUlG"
+    },
+    "independentReaderHashVerified": true
+  },
+  "admission": {
+    "firstAuthorityWindowStartedAtUtc": "2026-11-09T22:45:43.558269+00:00",
+    "sourceProofFirstPreflightAtUtc": "2026-11-09T23:33:00.115310+00:00",
+    "hardDeadlineUtc": "2026-11-09T23:45:43.558269+00:00",
+    "sha256": "13c0812ece8205fb77ae28ab4032bba23c4d6ce32d59fd1de1d180fc1be06b0c",
+    "noClockReset": true
+  },
+  "cleanup": {
+    "ownedClientsClosedAtUtc": "2026-11-09T23:41:32.689801+00:00",
+    "ownedStepProcessesStillPresent": 0,
+    "fullPauseTailSecondsReserved": 300,
+    "pauseTailNotBeforeUtc": "2026-11-09T23:46:32.689801+00:00",
+    "zeroCapacityObserved": false,
+    "noFurtherCloudCallsPlanned": true
+  },
+  "accounting": {
+    "taskCeilingUsd": 100,
+    "wholeTaskConservativeControlUsd": 23.99,
+    "incrementalReserveUsdSharedWithViewer": 2,
+    "actualAwsInvoiceSpend": "Unmeasured; no reserve classified as actual spend",
+    "windowReadUpperBoundBytes": 1373395450,
+    "windowRequestUpperBound": 5719,
+    "newProviderSoftwareChargesForThisControl": 0,
+    "separateHeldHairCreditsUnchanged": 67,
+    "separateHairUsdInvoiceAllocation": "Unknown; credit control valuation is not cash billed"
+  },
+  "originalFailedControlGlb": {
+    "sha256": "3fa5afef810876c241cb9b69483aab7f6cdfe69f3b772ba9bf8f0ed9031cf437",
+    "bytes": 8607232
+  },
+  "noRepositoryEditsByThisPreservationTask": true
+}

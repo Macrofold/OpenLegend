@@ -1,0 +1,251 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-integration-ready-private-study",
+    "revisionId": "normal-code-head-alias01",
+    "manifestSha256": "f35128beab5ea5ffe254d007d7ffed50734413c68d963858b7319b7afb17deca"
+  },
+  "files": {
+    "studies/metahuman-foundation-poc/integration-ready01/orlando/noalias/compiled.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "039a48c36c523122c4044b092200540dc9cbdc41d2468473ef484a59f02b8564",
+      "bytes": 10482132,
+      "mediaType": "application/json"
+    },
+    "studies/metahuman-foundation-poc/integration-ready01/orlando/noalias/definition.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b2986710f672eececf4f624baae55ce5bb42f572d38ef0e6c8ac03ddfb361031",
+      "bytes": 4970,
+      "mediaType": "application/json"
+    },
+    "renders/pbr-preview02/textures/skin-color-atlas.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c6432f925f8c940afc21c433ddf3b651cab6130b8acd1e61026170d5e852aa7c",
+      "bytes": 2304965,
+      "mediaType": "image/png"
+    },
+    "renders/pbr-preview02/textures/eyes-color.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "19c0d16eed17d841cee0bbd5f4a2664ccabc813c149673cf18c68d19af7d8f0c",
+      "bytes": 338899,
+      "mediaType": "image/png"
+    },
+    "renders/pbr-preview02/textures/teeth-color.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f1637df8e3401f6d7d1c1d57663fbae21913eb863a9e9a7fa95178fa434853ce",
+      "bytes": 355116,
+      "mediaType": "image/png"
+    },
+    "renders/pbr-preview02/textures/teeth-normal-opengl.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4303044a6c7ff8bf60491f9a109a19a8da5022c37fca43b4458c93a0fd510217",
+      "bytes": 463958,
+      "mediaType": "image/png"
+    },
+    "renders/pbr-preview02/textures/eyelashes-color-alpha.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f485dcee6c772014352bcdd155bb5233124a27c748c7ccfba9c0ee6342f198c7",
+      "bytes": 66255,
+      "mediaType": "image/png"
+    },
+    "renders/pbr-preview02/textures/linen-color.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0ee0f0b31b035cf0c64a524a60f632fc9ad6986a264167472e0ccaacb79299de",
+      "bytes": 14835,
+      "mediaType": "image/png"
+    },
+    "renders/pbr-preview02/textures/linen-normal-opengl.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1ebed770f3955ee6b69441f60b20085e2c9736272ff335891a6e65e0db9f9af3",
+      "bytes": 6409,
+      "mediaType": "image/png"
+    },
+    "evidence/orlando-covered-input01/shading01/run01/normal-atlas-rebased.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e23b5f73ae98691f370eb39c72d91a3c5c629fe89251200ca10ccf13e784d865",
+      "bytes": 3416752,
+      "mediaType": "image/png"
+    },
+    "sources/quaternius-universal-base-characters/atlas1-color.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b00d696a08d8a3943a3a68ac6253ce4bd18da4659e90c57f7a577669bdce4924",
+      "bytes": 818760,
+      "mediaType": "image/png"
+    },
+    "sources/quaternius-universal-base-characters/atlas1-normal.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b2609a21614f886ae017f1f3c314e9d3dfb81b0eb30e0d0d0d560d78e30eec2f",
+      "bytes": 1512230,
+      "mediaType": "image/png"
+    },
+    "evidence/eye-palettes01/iris-tint-mask.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3e3d47d0908126ddeb18331209ed28d28e5a62825cffc496c4a7fe7d2d44c272",
+      "bytes": 22085,
+      "mediaType": "image/png"
+    },
+    "studies/metahuman-foundation-poc/integration-ready01/orlando/alias/compiled.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dba40848b47d17b8427eb43be0a6482230375400a0f56585e2783d772fa60ed1",
+      "bytes": 10482429,
+      "mediaType": "application/json"
+    },
+    "studies/metahuman-foundation-poc/integration-ready01/orlando/alias/definition.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c1956058a100f0a0baa0b4c100bcca4061febfffbfe386f3ef7e64b2e375bf03",
+      "bytes": 4960,
+      "mediaType": "application/json"
+    },
+    "studies/metahuman-foundation-poc/integration-ready01/vivian/noalias/compiled.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "88025e574544202be93702004cecadd12ad618bb08569a62e83af3613f30ca96",
+      "bytes": 11266587,
+      "mediaType": "application/json"
+    },
+    "studies/metahuman-foundation-poc/integration-ready01/vivian/noalias/definition.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e6d1079bfa4586cc2194a367335f04b10d2ec76f281f0b3cea02e0b6e1184cd1",
+      "bytes": 4923,
+      "mediaType": "application/json"
+    },
+    "renders/vivian-portable02/material-inputs/skin-color-atlas.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "58288434e60407482c779f86061461e67f626c3e35f8aa155da5d59f01378779",
+      "bytes": 2672640,
+      "mediaType": "image/png"
+    },
+    "renders/vivian-portable02/material-inputs/native-eyes-color.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "20d473d05fa051bae94646ddcfad4fcb55f385db7ea036a754f30430479f3949",
+      "bytes": 321730,
+      "mediaType": "image/png"
+    },
+    "renders/vivian-portable02/material-inputs/native-eyes-normal-opengl.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d389a5cb4d5fc4399aad701c98359de97da5ff8ff2aa3fb6fe61a180254cb8ad",
+      "bytes": 466677,
+      "mediaType": "image/png"
+    },
+    "renders/vivian-portable02/material-inputs/teeth-color.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f1637df8e3401f6d7d1c1d57663fbae21913eb863a9e9a7fa95178fa434853ce",
+      "bytes": 355116,
+      "mediaType": "image/png"
+    },
+    "renders/vivian-portable02/material-inputs/teeth-normal-opengl.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4303044a6c7ff8bf60491f9a109a19a8da5022c37fca43b4458c93a0fd510217",
+      "bytes": 463958,
+      "mediaType": "image/png"
+    },
+    "renders/vivian-portable02/material-inputs/native-lashes-color-alpha.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f485dcee6c772014352bcdd155bb5233124a27c748c7ccfba9c0ee6342f198c7",
+      "bytes": 66255,
+      "mediaType": "image/png"
+    },
+    "studies/metahuman-foundation-poc/vivian/skin-normal-rebased.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6d1fa28c458c7cf424e080369fd56507ce019929f06932679914a75435a96c59",
+      "bytes": 3322804,
+      "mediaType": "image/png"
+    },
+    "studies/metahuman-foundation-poc/integration-ready01/vivian/alias/compiled.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "231000ea5cccfdcaffb7edd75db22bda8068c1f29779f3d97480a57f4f1301df",
+      "bytes": 11266884,
+      "mediaType": "application/json"
+    },
+    "studies/metahuman-foundation-poc/integration-ready01/vivian/alias/definition.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "731f908201f72c831410efc2a9631c625ff37b412a4ffcf085ec026ea07bafd6",
+      "bytes": 4913,
+      "mediaType": "application/json"
+    },
+    "studies/metahuman-foundation-poc/integration-ready01/fixed/m-small-fit/compiled.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "04dec1bd62625d06058bef91d30208d7375fe0767b59c803ef35915839acc748",
+      "bytes": 6162666,
+      "mediaType": "application/json"
+    },
+    "studies/metahuman-foundation-poc/integration-ready01/fixed/m-small-fit/definition.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f4bb6fac984c48c8a92abae05e7bb1fefc03101168d78bad06d0fb205baba86a",
+      "bytes": 3448,
+      "mediaType": "application/json"
+    },
+    "studies/metahuman-foundation-poc/integration-ready01/fixed/m-intermediate/compiled.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "63dc2beb82e388163fc835ffdc73ecf82ef87b3f8f1771945b0a98f63095bf7a",
+      "bytes": 6160209,
+      "mediaType": "application/json"
+    },
+    "studies/metahuman-foundation-poc/integration-ready01/fixed/m-intermediate/definition.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3186b06458fc60fc7403e9cf797d80802c091cd9c72a95f2aabc1659ef6e8746",
+      "bytes": 3457,
+      "mediaType": "application/json"
+    },
+    "studies/metahuman-foundation-poc/integration-ready01/fixed/m-broad/compiled.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b300160db237d7da91502439e1d5a2c480d8bb40fe6249d51058d1e3afe34613",
+      "bytes": 6158442,
+      "mediaType": "application/json"
+    },
+    "studies/metahuman-foundation-poc/integration-ready01/fixed/m-broad/definition.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ce960ddedee40a5da3d2108c3e43e43ad421d51b2454511565ec3a806b55d904",
+      "bytes": 3433,
+      "mediaType": "application/json"
+    },
+    "studies/metahuman-foundation-poc/integration-ready01/fixed/f-petite-fit/compiled.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "db6b26b6cee4cb5272b2932b5c874d0f79f8787a2ae785ecc3a6efda790f6f1f",
+      "bytes": 6378465,
+      "mediaType": "application/json"
+    },
+    "studies/metahuman-foundation-poc/integration-ready01/fixed/f-petite-fit/definition.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0c2376d721acd9102ab01c95efddad6fb2949933ac0dace20527d8bad733019f",
+      "bytes": 3451,
+      "mediaType": "application/json"
+    }
+  }
+}

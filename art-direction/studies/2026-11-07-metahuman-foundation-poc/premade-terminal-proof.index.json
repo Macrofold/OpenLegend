@@ -1,0 +1,27 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-premade-late-actor-hair-source-proof",
+    "revisionId": "terminal-native01",
+    "manifestSha256": "8dc0667630ebf428f8b4ab5ecdff928709ab300fd2adf0510a3317794dfa8984"
+  },
+  "files": {
+    "source-proof/premade01/late-actor-hair-proof.tar.gz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "748cc858019fb5cbda7665f5885152f7a9f0bab83f9ea0ba459643167360ba20",
+      "bytes": 23609485,
+      "mediaType": "application/gzip"
+    },
+    "source-proof/premade01/late-actor-hair-inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "516dc535ae35847f0eff02577b5dd0b26f11b825f3f0e87befd897451785978d",
+      "bytes": 32117,
+      "mediaType": "application/json"
+    }
+  }
+}

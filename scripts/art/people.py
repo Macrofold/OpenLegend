@@ -384,11 +384,27 @@ def fit_parts(family, evaluated, parts=(), variants=None):
                 faces.update(required(mesh['regions'], region, 'part-fit'))
         fitted.append((part_id, part))
     normals = {key: mesh_normals(p, family['meshes'][key]['triangles']) for key, p in positions.items()}
+    seam_groups = {}
     for seam in family['seams']:
-        a, b = points(normals[seam['bodyMesh']]), points(normals[seam['headMesh']])
         for i, j in zip(seam['bodyVertices'], seam['headVertices']):
-            value = a[i].astype(float)+b[j].astype(float); length = np.linalg.norm(value)
-            if length > 1e-12: a[i] = b[j] = value/length
+            left, right = (seam['bodyMesh'], i), (seam['headMesh'], j)
+            group = seam_groups.setdefault(left, {left: None})
+            other = seam_groups.setdefault(right, {right: None})
+            if group is other: continue
+            if len(group) < len(other): group, other = other, group
+            for member in other:
+                group[member] = None
+                seam_groups[member] = group
+    # Shared pair vertices must contribute their original normal only once;
+    # sequential pair writes can break an earlier declared seam agreement.
+    seen_groups = set()
+    for group in seam_groups.values():
+        if id(group) in seen_groups: continue
+        seen_groups.add(id(group))
+        value = sum((points(normals[mesh])[vertex].astype(float) for mesh, vertex in group), np.zeros(3))
+        length = np.linalg.norm(value)
+        if length > 1e-12:
+            for mesh, vertex in group: points(normals[mesh])[vertex] = value/length
     evaluated.update(selectedParts=selected, partVariants=part_variants, activeMeshes=list(dict.fromkeys(active_meshes)), hiddenFaces=hidden, canonicalNormals=normals)
     return evaluated
 

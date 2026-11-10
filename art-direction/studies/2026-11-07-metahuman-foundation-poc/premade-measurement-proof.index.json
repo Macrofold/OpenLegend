@@ -1,0 +1,34 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-premade-measurement-proof",
+    "revisionId": "offline-timing-fresh-source01",
+    "manifestSha256": "1ea5464f3a49434c5f606259c0026c1bbdaa6a69544a5fa7c70d2bf56be34225"
+  },
+  "files": {
+    "proof/premade-measurement01/timing-and-restored-source.tar.gz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2adc2066b909d3356854406b4c6241e71cc47d87641340e33341619d7cd06f13",
+      "bytes": 34051444,
+      "mediaType": "application/gzip"
+    },
+    "proof/premade-measurement01/inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ad76dbccb934a76830320371d1c79f59ea971965f2b5446161d6dfedef5e6de0",
+      "bytes": 257948,
+      "mediaType": "application/json"
+    },
+    "proof/premade-measurement01/summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3b4d5b3cbe0d67062a1634ed6f36bbc6039f6157905874304e9a4537eca70c48",
+      "bytes": 1442,
+      "mediaType": "application/json"
+    }
+  }
+}
