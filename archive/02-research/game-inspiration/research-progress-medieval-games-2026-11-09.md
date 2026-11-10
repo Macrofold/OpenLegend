@@ -21,12 +21,12 @@ Source cutoff: November 9, 2026. Publication dates, retrieval dates and edition 
 | Subject | State | Evidence and remaining work |
 | --- | --- | --- |
 | [G188 original Kingdom Come: Deliverance](dossiers/kingdom-come-deliverance.md) | Complete | `cd78db05b1f74bfd5bdded92f9b61a135d8168ef`: R01–R14 and affirmative PC R15; six critic bodies, twelve Steam reviews, six situations; content, source/edition and internal-link review complete. Financial/source-access limits remain explicit. |
-| G162 Manor Lords | In progress | Full mechanics/version, reception, production/economics and R15 applicability research; assembly, review and commit remain. |
-| G189 Medieval Dynasty | Authorized; not started | Full R01–R14 and R15 screen after G162 commit. |
+| [G162 Manor Lords](dossiers/manor-lords.md) | Complete | `8906fdc919a77d38bd9324da7eff2a13513ba6c7`: R01–R14 and affirmative sustained PC R15 with population-size limits; five critic bodies, ten Steam reviews, six situations; current-version, content, source and link review complete. No firsthand play or current total-loss test claimed. |
+| G189 Medieval Dynasty | In progress | Full R01–R14 and R15 screen; mechanics, reception and production/economics research now active after G162 commit. |
 | G190 Bellwright | Authorized; not started | Full R01–R14 and R15 screen after G189 commit. |
 | Existing G114 and G115 | Retained | Identity, existing dossier paths and audited status verified against main; no redundant new full pass. |
 
-**Next action:** finish and commit Manor Lords before advancing to Medieval Dynasty. Finish all four requested missing dossiers, then reconcile navigation and the scoped diff. Current interpretation of Mount & Blade remains disclosed above.
+**Next action:** finish and commit Medieval Dynasty before advancing to Bellwright. Finish all four requested missing dossiers, then reconcile navigation and the scoped diff. Current interpretation of Mount & Blade remains disclosed above.
 
 ## Evidence and completion rules
 
