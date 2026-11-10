@@ -14,6 +14,7 @@ import {
   releaseNativeProduct,
   retainNativeSources,
   withNativeUtf8Input,
+  withNativeJsonInput,
 } from './native-consumer.js';
 
 const origins = new WeakMap<MaintenanceLearningBatch, NativeWorldActivityLearningBatch>();
@@ -26,7 +27,9 @@ export async function prepareNativeActivityLearning(
   geometry: NativeGeometryProviders,
   history: NativeHistoryReadContext,
 ): Promise<MaintenanceLearningBatch> {
-  const native = await world.prepareActivityLearning(Buffer.from(JSON.stringify({ actorId })));
+  const native = await withNativeJsonInput(world, { actorId }, (bytes) =>
+    world.prepareActivityLearning(bytes),
+  );
   try {
     let turn = await world.stepActivityLearning(native);
     while (turn.kind === 'provider') {
@@ -64,7 +67,9 @@ export function nativeActivityLearning(
     acquiredActivitySignatures: (actorId) =>
       service.publishRecall(async () => {
         const product = decodeNativeProduct<readonly string[]>(
-          await service.world.acquiredActivitySignatures(Buffer.from(JSON.stringify({ actorId }))),
+          await withNativeJsonInput(service.world, { actorId }, (bytes) =>
+            service.world.acquiredActivitySignatures(bytes),
+          ),
         );
         return retainNativeSources(new Set(product), product);
       }),
@@ -79,24 +84,22 @@ export function nativeActivityLearning(
           signal.throwIfAborted();
           if (admission && (!read?.current(admission) || service.paused))
             throw new Error('Maintenance admission changed before learning publication.');
-          return service.world.beginActivityLearningPublication(
-            native,
-            Buffer.from(
-              JSON.stringify({
-                judgments,
-                dispatched: validateOnly,
-                ...(admission
-                  ? {
-                      admission: {
-                        purpose: admission.purpose,
-                        requiresBody: admission.requiresBody,
-                        ...(admission.dreamEpisode ? { dreamEpisode: admission.dreamEpisode } : {}),
-                      },
-                    }
-                  : {}),
-              }),
-            ),
-            read?.native,
+          return withNativeJsonInput(
+            service.world,
+            {
+              judgments,
+              dispatched: validateOnly,
+              ...(admission
+                ? {
+                    admission: {
+                      purpose: admission.purpose,
+                      requiresBody: admission.requiresBody,
+                      ...(admission.dreamEpisode ? { dreamEpisode: admission.dreamEpisode } : {}),
+                    },
+                  }
+                : {}),
+            },
+            (bytes) => service.world.beginActivityLearningPublication(native, bytes, read?.native),
           );
         },
         signal,

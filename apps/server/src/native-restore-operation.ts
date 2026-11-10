@@ -72,6 +72,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
   private milestonesOwner?: NativeMilestones;
   private privacyOwner?: ExperiencePrivacy;
   private epochOwner?: CommandEpoch;
+  private progressOwner?: NativeRestorePublication['progress'];
   readonly actors: NativeActorRoster;
   readonly providers;
 
@@ -98,6 +99,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
     let temporal: ReturnType<typeof nativeTemporalPageEdits> | undefined;
     try {
       this.epochOwner = epoch;
+      this.progressOwner = retainNativeProduct(copyNativeProduct(world, publication.progress));
       this.privacyOwner = retainNativeProduct(
         copyNativeProduct(world, publication.restoreMetadata.privacy),
       );
@@ -157,15 +159,17 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
         },
         world,
       );
-      this.retainedOwner = retainNativeSources(
-        {
+      this.retainedOwner = retainNativeProduct(
+        copyNativeProduct(world, {
           worldId: restored.worldId,
           generation: restored.generation,
           acceptedCut: restored.acceptedCut,
-          ids: retainNativeSources(restored.retainedValues, publication),
-        },
-        publication,
+          ids: restored.retainedValues,
+        }),
       );
+      // The SQL collector can hold this bare lookup across awaits. Its small
+      // independent pin survives both publication cleanup and service refresh.
+      retainNativeProduct(retainNativeSources(this.retained.ids, this.retained));
       const pending = this.pending,
         worldId = restored.worldId;
       let prospective: NativeRetainedValues | undefined = this.retained;
@@ -287,8 +291,8 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
     return this.metadata(this.retainedOwner);
   }
 
-  /** Only a discarded, undisclosed preparation ends these independent pins.
-   * Successful adoption and an unknown SQL outcome keep their actual owners. */
+  /** End temporary installation products after confirmed rejection or the
+   * actual service handoff. Unknown SQL and incomplete adoption retain them. */
   private releaseProducts(): void {
     const publication = this.publicationOwner,
       installation = this.installationOwner,
@@ -326,20 +330,39 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
     return this.metadata(this.epochOwner);
   }
 
+  get progress(): NativeRestorePublication['progress'] {
+    return this.metadata(this.progressOwner);
+  }
+
   /** The service first adopts these exact prepared products synchronously. */
   transferMetadata(): void {
     this.operationalOwner = this.milestonesOwner = this.privacyOwner = this.epochOwner = undefined;
+    this.progressOwner = undefined;
+    this.retainedOwner = undefined;
+  }
+
+  /** SQL and native activation have finished. The service owns the independent
+   * report/metadata and refreshed value lookup before these large inputs end. */
+  completeAdoption(): void {
+    this.releaseProducts();
   }
   private releaseMetadata(): void {
     const operational = this.operationalOwner,
       milestones = this.milestonesOwner,
       privacy = this.privacyOwner,
-      epoch = this.epochOwner;
+      epoch = this.epochOwner,
+      progress = this.progressOwner,
+      retained = this.retainedOwner;
     this.transferMetadata();
     if (operational) releaseNativeProduct(operational);
     if (milestones) releaseNativeProduct(milestones);
     if (privacy) releaseNativeProduct(privacy);
     if (epoch) releaseNativeProduct(epoch);
+    if (progress) releaseNativeProduct(progress);
+    if (retained) {
+      releaseNativeProduct(retained.ids);
+      releaseNativeProduct(retained);
+    }
   }
 
   static async prepare(request: {

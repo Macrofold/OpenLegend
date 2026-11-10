@@ -83,6 +83,7 @@ import {
   retainNativeSources,
   withNativeConsumerScope,
   withoutNativeConsumerScope,
+  withNativeJsonInput,
 } from './native-consumer.js';
 import type { NativeFormattedNpcOffer } from './native-npc-candidates.js';
 import type { NativeNpcBindingSelection } from './native-npc-sources.js';
@@ -1155,19 +1156,18 @@ async function prepareOwnedDecision(
               throw new ContextBudgetError(
                 'Complete accepted inner world and required context exceed the input budget.',
               );
-            await service.world.rebindNpcResponse(
-              ticket,
-              Buffer.from(
-                JSON.stringify({
-                  decisionId: childId,
-                  actions: nextOffers.map(({ id: alias, ordinal }) => ({
-                    alias,
-                    ordinal,
-                    source: 'original',
-                  })),
-                  prototypeSource: 'original',
-                }),
-              ),
+            await withNativeJsonInput(
+              service.world,
+              {
+                decisionId: childId,
+                actions: nextOffers.map(({ id: alias, ordinal }) => ({
+                  alias,
+                  ordinal,
+                  source: 'original',
+                })),
+                prototypeSource: 'original',
+              },
+              (bytes) => service.world.rebindNpcResponse(ticket!, bytes),
             );
             decisionId = childId;
             actionSource = 'original';

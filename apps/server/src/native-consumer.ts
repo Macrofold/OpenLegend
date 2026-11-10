@@ -200,6 +200,34 @@ function jsonStringifierBodies(bytes: number): number {
   return Math.max(3 * capacity, 2 * capacity + 2 * bytes);
 }
 
+// Installation packets are trusted plain JSON records. Split their first
+// three object levels (packet, record set, table directory), leaving each
+// actual table/array to JSON.stringify. This preserves the existing codec and
+// member order without a whole-world intermediate string. The input owner
+// already funds these objects; shape below funds the live Object.keys ancestry.
+function installationChunks(
+  value: unknown,
+  objectLevels: number,
+  append: (value: unknown, literal?: string) => void,
+): void {
+  if (!objectLevels || value === null || typeof value !== 'object' || Array.isArray(value)) {
+    append(value);
+    return;
+  }
+  const record = value as Record<string, unknown>;
+  append(undefined, '{');
+  let fields = 0;
+  for (const key of Object.keys(record)) {
+    const child = record[key];
+    if (child === undefined || typeof child === 'function' || typeof child === 'symbol') continue;
+    if (fields++) append(undefined, ',');
+    append(key);
+    append(undefined, ':');
+    installationChunks(child, objectLevels - 1, append);
+  }
+  append(undefined, '}');
+}
+
 export interface NativeJsonEncodingOptions {
   readonly prefix?: string;
   readonly suffix?: string;
@@ -242,15 +270,15 @@ export function encodeNativeJson(
     bodyPeak = 0;
   try {
     if (installation) {
-      bytes = 2;
-      let fields = 0;
-      for (const key of Object.keys(root)) {
-        const size = jsonByteLength(root[key], { cache: false });
-        if (!size) continue;
-        const keySize = jsonByteLength(key, { cache: false });
-        bytes += (fields++ ? 1 : 0) + keySize + 1 + size;
-        bodyPeak = Math.max(bodyPeak, jsonStringifierBodies(keySize), jsonStringifierBodies(size));
-      }
+      bytes = 0;
+      installationChunks(root, 3, (chunk, literal) => {
+        if (literal !== undefined) bytes += literal.length;
+        else {
+          const size = jsonByteLength(chunk, { cache: false });
+          bytes += size;
+          bodyPeak = Math.max(bodyPeak, jsonStringifierBodies(size));
+        }
+      });
     } else {
       bytes = jsonByteLength(value, { cache: false });
       bodyPeak = jsonStringifierBodies(bytes);
@@ -262,26 +290,20 @@ export function encodeNativeJson(
   const output = world.reserveConsumerBytes(bytes + 32 * 8);
   let workspace: NativeWorldConsumer | undefined;
   try {
-    // Keep the existing four-wire floor, and cover actual V8 capacity growth
-    // instead of assuming two exact-sized UTF-16 carriers. Installation chunks
-    // avoid one world-sized builder; ordinary callers retain monolithic JSON.
-    workspace = world.reserveConsumerBytes(Math.max(4 * bytes, bodyPeak) + shape + flattening);
+    // The fixed output Buffer is admitted separately. Installation emits one
+    // child string at a time, so its temporary body bound is the largest actual
+    // chunk's V8 growth/result overlap, not four copies of the whole packet.
+    // Ordinary callers keep their existing monolithic floor.
+    workspace = world.reserveConsumerBytes(
+      (installation ? bodyPeak : Math.max(4 * bytes, bodyPeak)) + shape + flattening,
+    );
     // Avoid Node's pooled small-Buffer slab: this owner funds this exact body.
     const buffer = Buffer.allocUnsafeSlow(bytes);
     let at = buffer.write(prefix, 0, 'utf8');
     if (installation) {
-      at += buffer.write('{', at, 'utf8');
-      let fields = 0;
-      for (const key of Object.keys(root)) {
-        const child = root[key];
-        if (child === undefined || typeof child === 'function' || typeof child === 'symbol')
-          continue;
-        if (fields++) at += buffer.write(',', at, 'utf8');
-        at += buffer.write(JSON.stringify(key), at, 'utf8');
-        at += buffer.write(':', at, 'utf8');
-        at += buffer.write(JSON.stringify(child), at, 'utf8');
-      }
-      at += buffer.write('}', at, 'utf8');
+      installationChunks(root, 3, (chunk, literal) => {
+        at += buffer.write(literal ?? JSON.stringify(chunk), at, 'utf8');
+      });
     } else at += buffer.write(JSON.stringify(value), at, 'utf8');
     buffer.write(suffix, at, 'utf8');
     return attachNativeConsumer(buffer, output, ...(options.sources ?? []));

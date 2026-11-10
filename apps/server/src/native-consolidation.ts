@@ -66,23 +66,20 @@ export async function prepareNativeConsolidation(input: {
 }): Promise<PreparedMaintenanceConsolidation> {
   const { service, body, input: request } = input;
   const { actorId, batch, admission, signal } = request;
-  const ticket = await service.prepareConsolidation(
-    body.native,
-    actorId,
-    Buffer.from(
-      JSON.stringify({
-        jobId: request.job.id,
-        selection: {
-          receipts: [],
-          personal: batch.prepared.map(({ ref }) => ({ reference: ref })),
-        },
-        protectedImportance: EXPERIENCE_LIMITS.protectedImportance,
-        summaryBytes: EXPERIENCE_LIMITS.summaryBytes,
-        requiresBody: admission.requiresBody,
-        ...(admission.dreamEpisode === undefined ? {} : { dreamEpisode: admission.dreamEpisode }),
-      }),
-    ),
-    signal,
+  const ticket = await withNativeJsonInput(
+    service.world,
+    {
+      jobId: request.job.id,
+      selection: {
+        receipts: [],
+        personal: batch.prepared.map(({ ref }) => ({ reference: ref })),
+      },
+      protectedImportance: EXPERIENCE_LIMITS.protectedImportance,
+      summaryBytes: EXPERIENCE_LIMITS.summaryBytes,
+      requiresBody: admission.requiresBody,
+      ...(admission.dreamEpisode === undefined ? {} : { dreamEpisode: admission.dreamEpisode }),
+    },
+    (bytes) => service.prepareConsolidation(body.native, actorId, bytes, signal),
   );
   type Dream = Awaited<ReturnType<typeof service.world.bindConsolidationDream>>;
   const dreams = new Set<Dream>();
@@ -227,9 +224,10 @@ export async function prepareNativeConsolidation(input: {
                 throw new Error('Dream subject has no native interpretation witness.');
               },
             );
-            dream = await service.world.bindConsolidationDream(
-              ticket,
-              Buffer.from(JSON.stringify({ evidenceAliases, identities })),
+            dream = await withNativeJsonInput(
+              service.world,
+              { evidenceAliases, identities },
+              (bytes) => service.world.bindConsolidationDream(ticket, bytes),
             );
             dreams.add(dream);
           }

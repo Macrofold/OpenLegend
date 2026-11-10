@@ -30,6 +30,7 @@ import {
   decodeNativeProduct,
   releaseNativeProduct,
   retainNativeSources,
+  withNativeJsonInput,
 } from './native-consumer.js';
 
 type Kind = 'awareness' | 'memory' | 'summary';
@@ -113,6 +114,7 @@ export async function prepareNativeAccountRetention(
     throw new Error('Account aging requires its actual captured SQL cut.');
   const pending = pendingAt(cut, request.actorId),
     roots: NativeWorldConsumer[] = [];
+  const encoding = { reserveConsumerBytes: (bytes: number) => capacity.reserveBytes(bytes) };
   let selection: { selected: readonly Candidate[] } | undefined;
   try {
     // IDs/ranks/deadlines only; dependency metadata and opaque prose are not
@@ -123,7 +125,7 @@ export async function prepareNativeAccountRetention(
           const input = await accountMetadata(db, request, pending, capacity, roots, signal);
           signal?.throwIfAborted();
           selection = decodeNativeProduct<{ selected: readonly Candidate[] }>(
-            await read.select(Buffer.from(JSON.stringify(input))),
+            await withNativeJsonInput(encoding, input, (bytes) => read.select(bytes)),
           );
           const selected = selection.selected;
           const reply = await accountBodies(
@@ -136,7 +138,7 @@ export async function prepareNativeAccountRetention(
             signal,
           );
           signal?.throwIfAborted();
-          await read.load(Buffer.from(JSON.stringify(reply)));
+          await withNativeJsonInput(encoding, reply, (bytes) => read.load(bytes));
           return retainNativeSources(
             selected.flatMap((value) => [
               value.recordId,

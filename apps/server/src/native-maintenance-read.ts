@@ -6,21 +6,28 @@ import {
   decodeNativeProduct,
   freezeNativeProduct,
   retainNativeSources,
+  encodeNativeJson,
+  releaseNativeProduct,
+  withNativeJsonInput,
 } from './native-consumer.js';
 
 /** The Source host samples this resident warning before the advance. Canonical
  * SQL pressure is a separate maintenance decision and keeps its existing owner. */
 export async function readNativeResidentPressure(world: NativeWorld): Promise<boolean> {
-  const product = await world.maintenancePressure(
-    Buffer.from(
-      JSON.stringify({
-        awareness: EXPERIENCE_LIMITS.consolidationPressure,
-        memories: EXPERIENCE_LIMITS.consolidationPressure + 16,
-      }),
-    ),
+  const product = await withNativeJsonInput(
+    world,
+    {
+      awareness: EXPERIENCE_LIMITS.consolidationPressure,
+      memories: EXPERIENCE_LIMITS.consolidationPressure + 16,
+    },
+    (bytes) => world.maintenancePressure(bytes),
   );
   const read = decodeNativeProduct<{ readonly residentPressure: boolean }>(product);
-  return read.residentPressure;
+  try {
+    return read.residentPressure;
+  } finally {
+    releaseNativeProduct(read);
+  }
 }
 
 export interface NativeMaintenanceFacts extends MaintenanceActor {
@@ -35,14 +42,12 @@ export interface NativeMaintenanceFacts extends MaintenanceActor {
   readonly dependencyToken: string;
   readonly residentPressure?: boolean;
 }
-function admissionInput(admission: MaintenanceAdmission): Buffer {
-  return Buffer.from(
-    JSON.stringify({
-      purpose: admission.purpose,
-      requiresBody: admission.requiresBody,
-      ...(admission.dreamEpisode !== undefined ? { dreamEpisode: admission.dreamEpisode } : {}),
-    }),
-  );
+function admissionInput(admission: MaintenanceAdmission) {
+  return {
+    purpose: admission.purpose,
+    requiresBody: admission.requiresBody,
+    ...(admission.dreamEpisode !== undefined ? { dreamEpisode: admission.dreamEpisode } : {}),
+  };
 }
 
 /** One real native maintenance origin. JSON supplies advisory scheduling facts;
@@ -51,27 +56,29 @@ export class NativeMaintenanceRead {
   private constructor(
     private product: NativeMaintenanceFacts | undefined,
     readonly native: NativeWorldMaintenanceRead,
+    private worldOwner: NativeWorld | undefined,
   ) {}
   static async capture(world: NativeWorld, actorId: string, pressure = false) {
-    const read = await world.readMaintenance(
-      Buffer.from(
-        JSON.stringify({
-          actorId,
-          ...(pressure
-            ? {
-                residentPressure: {
-                  awareness: EXPERIENCE_LIMITS.consolidationPressure,
-                  memories: EXPERIENCE_LIMITS.consolidationPressure + 16,
-                },
-              }
-            : {}),
-        }),
-      ),
+    const read = await withNativeJsonInput(
+      world,
+      {
+        actorId,
+        ...(pressure
+          ? {
+              residentPressure: {
+                awareness: EXPERIENCE_LIMITS.consolidationPressure,
+                memories: EXPERIENCE_LIMITS.consolidationPressure + 16,
+              },
+            }
+          : {}),
+      },
+      (bytes) => world.readMaintenance(bytes),
     );
     try {
       return new NativeMaintenanceRead(
         freezeNativeProduct(decodeNativeProduct<NativeMaintenanceFacts>(await read.packet())),
         read,
+        world,
       );
     } catch (error) {
       read.release();
@@ -94,17 +101,28 @@ export class NativeMaintenanceRead {
   }
   current(admission: MaintenanceAdmission): boolean {
     const facts = this.product;
-    return (
-      !!facts &&
-      facts.actorId === admission.actorId &&
-      facts.generation === admission.generation &&
-      facts.bodyFence === admission.fence &&
-      this.native.isCurrent(admissionInput(admission))
-    );
+    if (
+      !(
+        facts &&
+        this.worldOwner &&
+        facts.actorId === admission.actorId &&
+        facts.generation === admission.generation &&
+        facts.bodyFence === admission.fence
+      )
+    )
+      return false;
+    const input = encodeNativeJson(this.worldOwner, admissionInput(admission));
+    try {
+      return this.native.isCurrent(input);
+    } finally {
+      releaseNativeProduct(input);
+    }
   }
   publication(world: NativeWorld, admission: MaintenanceAdmission) {
     this.facts;
-    return world.maintenancePublication(this.native, admissionInput(admission));
+    return withNativeJsonInput(world, admissionInput(admission), (bytes) =>
+      world.maintenancePublication(this.native, bytes),
+    );
   }
   async files(): Promise<MindFiles> {
     this.facts;
@@ -119,7 +137,9 @@ export class NativeMaintenanceRead {
     );
   }
   release(): void {
+    if (this.product) releaseNativeProduct(this.product);
     this.product = undefined;
+    this.worldOwner = undefined;
     this.native.release();
   }
 }

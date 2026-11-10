@@ -972,7 +972,9 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             this.pending.liveReadCuts(),
             tail,
           );
-          await this.world.resolveReceiptTail(Buffer.from(JSON.stringify(answer)));
+          await withNativeJsonInput(this.world, answer, (bytes) =>
+            this.world.resolveReceiptTail(bytes),
+          );
           capture.release();
           capture = await NativeNpcCapture.capture(
             this.world,
@@ -2528,10 +2530,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             oldRetention.release();
             this.provider = preparation.geometry;
             this.retained = preparation.retained;
-            this.replaceProgress(
-              preparation.publication.progress,
-              preparation.publication.progress,
-            );
+            this.replaceProgress(preparation.progress, preparation.progress);
             this.privacy = preparation.privacy;
             this.operational = preparation.operational;
             this.milestones = preparation.milestones;
@@ -2566,6 +2565,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             await oldProvider?.close();
             oldDefinitions.release();
             await this.refreshValues();
+            preparation.completeAdoption();
             // Resetting a paused transport does not itself make a restored
             // person depart. Existing operational exits still reconcile now.
             await this.reconcileParticipationInLane();
@@ -4052,14 +4052,14 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           [actorId],
           'accounts',
         );
-        const read = await world
-          .readAccountRetention(
-            Buffer.from(JSON.stringify({ actorId, preparation: ACCOUNT_RETENTION_PREPARATION })),
-          )
-          .catch((error: unknown) => {
-            sources.release();
-            throw error;
-          });
+        const read = await withNativeJsonInput(
+          world,
+          { actorId, preparation: ACCOUNT_RETENTION_PREPARATION },
+          (bytes) => world.readAccountRetention(bytes),
+        ).catch((error: unknown) => {
+          sources.release();
+          throw error;
+        });
         let request: NativeAccountRetentionRequest | undefined;
         try {
           request = decodeNativeProduct<NativeAccountRetentionRequest>(await read.packet());

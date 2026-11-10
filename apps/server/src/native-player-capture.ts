@@ -10,6 +10,7 @@ import {
   encodeNativeJson,
   freezeNativeProduct,
   releaseNativeProduct,
+  withNativeJsonInput,
 } from './native-consumer.js';
 
 type NativeInteractionFacts = Omit<
@@ -63,7 +64,7 @@ export class NativePlayerCapture {
           decodeNativeProduct<Parameters<NativeGeometryProviders['compute']>[0]>(question);
         const answers = await geometry.compute(query);
         try {
-          await read.finishControls(Buffer.from(JSON.stringify(answers)));
+          await withNativeJsonInput(world, answers, (bytes) => read.finishControls(bytes));
         } finally {
           releaseNativeProduct(answers);
         }
@@ -89,15 +90,14 @@ export class NativePlayerCapture {
     if (this.released) throw new ViewChangedError();
     const result = freezeNativeProduct(
       decodeNativeProduct<NativeInteractionFacts>(
-        await this.world.playerInteraction(
-          this.read,
-          Buffer.from(
-            JSON.stringify({
-              mode,
-              ...(targetId ? { targetId } : {}),
-              ...(utteranceEventId ? { utteranceEventId } : {}),
-            }),
-          ),
+        await withNativeJsonInput(
+          this.world,
+          {
+            mode,
+            ...(targetId ? { targetId } : {}),
+            ...(utteranceEventId ? { utteranceEventId } : {}),
+          },
+          (bytes) => this.world.playerInteraction(this.read, bytes),
         ),
       ),
     );

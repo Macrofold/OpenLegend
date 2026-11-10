@@ -53,16 +53,11 @@ export async function prepareNativeMaintenanceReflection(input: {
     disposePrepared = prepared.dispose;
     if (!prepared.reflection)
       throw new Error('Reflection has no native interpretation preparation.');
-    const ticket = await service.world.bindReflection(
-      body.native,
-      workspace.native,
-      prepared.ticket,
-      Buffer.from(
-        JSON.stringify({
-          expectedRevision: revision,
-          evidenceAliases: prepared.reflection.evidenceAliases,
-        }),
-      ),
+    const ticket = await withNativeJsonInput(
+      service.world,
+      { expectedRevision: revision, evidenceAliases: prepared.reflection.evidenceAliases },
+      (bytes) =>
+        service.world.bindReflection(body.native, workspace.native, prepared.ticket, bytes),
     );
     prepared.adoptReflectionTicket(ticket);
     return {

@@ -7,6 +7,7 @@ import {
   decodeNativeProduct,
   releaseNativeProduct,
   retainNativeSources,
+  withNativeJsonInput,
 } from './native-consumer.js';
 
 /** Actual accepted native metadata and the selected actor's unsaved physical
@@ -34,7 +35,7 @@ export interface NativeActorReadCut {
 
 export async function captureNativeReadCut(world: NativeWorld, actorId: string) {
   return decodeNativeProduct<NativeActorReadCut>(
-    await world.readCut(Buffer.from(JSON.stringify({ actorId }))),
+    await withNativeJsonInput(world, { actorId }, (bytes) => world.readCut(bytes)),
   );
 }
 

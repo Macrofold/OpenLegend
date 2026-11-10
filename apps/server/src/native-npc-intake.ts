@@ -28,6 +28,7 @@ import {
   decodeNativeProduct,
   freezeNativeProduct,
   retainNativeSources,
+  withNativeJsonInput,
 } from './native-consumer.js';
 import type { NativeActorSelf } from './native-perception.js';
 import type { NativeCurrentCaptureSeed } from './native-current-capture.js';
@@ -137,21 +138,19 @@ export interface NativeNpcQueueInputs {
   readonly facts: NativeNpcInputFacts;
   readonly input: IntakeInputs;
 }
-function intakeRequest(actorId: string, afterSequence: number, weighedThrough?: number): Buffer {
-  return Buffer.from(
-    JSON.stringify({
-      actorId,
-      afterSequence,
-      ...(weighedThrough !== undefined ? { weighedThrough } : {}),
-      selection: {
-        limit: 256,
-        protectedImportance: EXPERIENCE_LIMITS.protectedImportance,
-        preferredImportance: 6,
-        interruptionImportance: THOUGHT_RESPONSE_INTERRUPTION.importance,
-        interruptionUrgency: THOUGHT_RESPONSE_INTERRUPTION.urgency,
-      },
-    }),
-  );
+function intakeRequest(actorId: string, afterSequence: number, weighedThrough?: number) {
+  return {
+    actorId,
+    afterSequence,
+    ...(weighedThrough !== undefined ? { weighedThrough } : {}),
+    selection: {
+      limit: 256,
+      protectedImportance: EXPERIENCE_LIMITS.protectedImportance,
+      preferredImportance: 6,
+      interruptionImportance: THOUGHT_RESPONSE_INTERRUPTION.importance,
+      interruptionUrgency: THOUGHT_RESPONSE_INTERRUPTION.urgency,
+    },
+  };
 }
 async function queueInputs(read: NativeWorldNpcTrigger): Promise<NativeNpcQueueInputs> {
   const facts = freezeNativeProduct(decodeNativeProduct<NativeNpcInputFacts>(await read.inputs()));
@@ -188,7 +187,11 @@ export class NativeNpcIntake {
     afterSequence: number,
     weighedThrough?: number,
   ): Promise<NativeNpcIntake> {
-    const read = await world.readNpcTrigger(intakeRequest(actorId, afterSequence, weighedThrough));
+    const read = await withNativeJsonInput(
+      world,
+      intakeRequest(actorId, afterSequence, weighedThrough),
+      (bytes) => world.readNpcTrigger(bytes),
+    );
     try {
       return new NativeNpcIntake(
         freezeNativeProduct(decodeNativeProduct<NativeNpcIntakeFacts>(await read.packet())),
@@ -205,7 +208,11 @@ export class NativeNpcIntake {
     actorId: string,
     weighedThrough?: number,
   ): Promise<NativeNpcQueueInputs> {
-    const read = await world.readNpcTrigger(intakeRequest(actorId, 0, weighedThrough));
+    const read = await withNativeJsonInput(
+      world,
+      intakeRequest(actorId, 0, weighedThrough),
+      (bytes) => world.readNpcTrigger(bytes),
+    );
     try {
       return await queueInputs(read);
     } finally {
