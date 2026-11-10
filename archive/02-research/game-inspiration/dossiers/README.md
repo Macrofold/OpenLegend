@@ -1,10 +1,23 @@
-# Full-game dossier reading index — G61–G80 and D&D expansion
+# Full-game dossier reading index
 
 [Library](../README.md) · [Complete roster](../research-roster.md) · [Progress and resume ledger](../research-progress.md) · [Research requirements](../research-requirements.md)
 
-**Navigation and inspiration only.** This page connects the G61–G80 range to its full-game dossiers and provides entry points to the additive D&D research packet. The [numbered roster](../research-roster.md) remains the canonical inventory for its existing title/edition slots; **the progress ledger records their completion**. Other ranges and their existing chapters remain accessible through those owners. A link here is not a new implementation requirement, a whole-library audit, or a claim that different editions share identical rules.
+**Navigation and inspiration only.** This page connects selected roster ranges and later research additions to their full-game dossiers, including the additive D&D packet. The [numbered roster](../research-roster.md) remains the canonical inventory for title/edition slots; **the linked progress records own completion**. Other ranges and their existing chapters remain accessible through those owners. A link here is not a new implementation requirement, a whole-library audit, or a claim that different editions share identical rules.
 
 Each dossier owns its mechanics, worked interactions, source annotations, edition boundaries, review disagreements and access limitations. Read those qualifications before extracting a pattern.
+
+## Medieval lives, settlements and command — November 2026 research
+
+The [scoped record](../research-progress-medieval-games-2026-11-09.md) owns this pass's completion commits, source boundaries and title resolution. These are distinct games with different relationships between personal competence, social life, production and military commitments.
+
+| Dossier | Useful starting question |
+| --- | --- |
+| [Kingdom Come: Deliverance — G188](kingdom-come-deliverance.md) | How do practiced competence, equipment, appearance, reputation and local institutions make an ordinary action socially consequential? |
+| [Manor Lords — G162](manor-lords.md) | How do households, material transport, seasons, trade and military service make settlement growth a set of competing commitments? |
+| [Medieval Dynasty — G189](medieval-dynasty.md) | How do personal work, a useful home, cooperation and family succession create reasons to continue after basic survival is secure? |
+| [Bellwright — G190](bellwright.md) | When does moving from personal work to delegation, supply networks and army command produce rewarding new decisions, and when does it extend supervision? |
+
+Previously completed [Kingdom Come: Deliverance II — G114](kingdom-come-deliverance-ii.md) and [Mount & Blade II: Bannerlord — G115](mount-and-blade-ii-bannerlord.md), including its War Sails boundary, remain separate references. No official Mount & Blade III was located for the requested “Mount and Blade 3”; the scoped record preserves that uncertainty rather than inventing another title.
 
 ## Chrono Trigger and Expedition 33 — November 2026 research
 
@@ -71,3 +84,4 @@ Companions: [GM adjudication and simulation research](../mechanics/dungeons-and-
 **Does a convenience preserve the interesting decision?** Read the reviews and version histories beside the mechanics: saving, encounter controls, growth boosts, equipment information and timed-input support alter different costs. A launch complaint is not proof that every later version behaves the same way.
 
 For broader entry points, use the [interaction lookup](../mechanics/interaction-lookup.md), [comparative map](../essays/comparative-map.md) and [evidence interpretation](../essays/how-to-interpret-the-evidence.md). For completion status, commits and remaining whole-library gates, return to the [progress ledger](../research-progress.md). The separate [D&D packet status](../games/dungeons-and-dragons.md#evidence-and-completion-status) covers the additive tabletop expansion.
+
