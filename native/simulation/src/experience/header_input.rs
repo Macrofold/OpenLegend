@@ -52,6 +52,7 @@ const FACET: &[(&str, Field)] = &[
 const ORIGINAL: &[(&str, Field)] = &[
     ("id", Scalar),
     ("revision", Scalar),
+    ("observer", Scalar),
     (
         "context",
         Object(&[("subjects", Array(&[("track", Scalar)]))]),

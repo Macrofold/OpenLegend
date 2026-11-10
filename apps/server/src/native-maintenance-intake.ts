@@ -3,7 +3,12 @@ import type { MaintenanceAdmission, MaintenanceInspection } from './maintenance-
 import type { NativeWorldService } from './native-world-service.js';
 import { NativeMaintenanceRead } from './native-maintenance-read.js';
 import { nativePublicationActors, nativeRecordActor } from './native-publication-actors.js';
-import { decodeNativeProduct, retainNativeSources } from './native-consumer.js';
+import {
+  decodeNativeProduct,
+  releaseNativeProduct,
+  retainNativeProduct,
+  retainNativeSources,
+} from './native-consumer.js';
 
 /** One change-driven intake for the existing maintenance scheduler, including
  * player memory owners eligible for protected-only cleanup. No rich NPC body
@@ -48,25 +53,35 @@ export class NativeMaintenanceIntake {
     const generation = service.generation;
     if (this.generation !== generation || this.populationDirty) {
       const revision = this.populationRevision;
-      const population = decodeNativeProduct<{ thought: string[]; maintenance: string[] }>(
-        await service.world.maintenancePopulation(),
+      const population = await service.publishRecall(async () =>
+        decodeNativeProduct<{ thought: string[]; maintenance: string[] }>(
+          await service.world.maintenancePopulation(),
+        ),
       );
-      if (generation !== service.generation || revision !== this.populationRevision) return;
-      if (this.generation !== generation) {
-        work.clear();
-        this.dirty.clear();
+      try {
+        if (generation !== service.generation || revision !== this.populationRevision) return;
+        if (this.generation !== generation) {
+          work.clear();
+          this.dirty.clear();
+        }
+        const nextIds = new Set(population.maintenance);
+        for (const id of this.population) if (!nextIds.has(id)) work.retire(id);
+        const previous = this.population;
+        this.population = retainNativeProduct(
+          retainNativeSources(population.maintenance, population),
+        );
+        releaseNativeProduct(previous);
+        this.populationIds.clear();
+        this.mindOwners.clear();
+        for (const id of population.thought) this.mindOwners.add(id);
+        for (const id of this.population) this.populationIds.add(id);
+        for (const id of this.population) this.dirty.add(id);
+        this.generation = generation;
+        this.sourceRevision = undefined;
+        this.populationDirty = false;
+      } finally {
+        releaseNativeProduct(population);
       }
-      const nextIds = new Set(population.maintenance);
-      for (const id of this.population) if (!nextIds.has(id)) work.retire(id);
-      this.population = retainNativeSources(population.maintenance, population);
-      this.populationIds.clear();
-      this.mindOwners.clear();
-      for (const id of population.thought) this.mindOwners.add(id);
-      for (const id of this.population) this.populationIds.add(id);
-      for (const id of this.population) this.dirty.add(id);
-      this.generation = generation;
-      this.sourceRevision = undefined;
-      this.populationDirty = false;
     }
     const sourceChanges = service.store.memories.actorChangesSince(this.sourceRevision);
     this.sourceRevision = sourceChanges?.revision;
@@ -151,6 +166,7 @@ export class NativeMaintenanceIntake {
   }
   clear(): void {
     this.unsubscribe();
+    releaseNativeProduct(this.population);
     this.population = [];
     this.populationIds.clear();
     this.mindOwners.clear();
