@@ -1,0 +1,34 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-walk-elbow-derivation",
+    "revisionId": "source-native-complete01",
+    "manifestSha256": "539d700cec5b5e75b36add21eca87ab695f6d4d4d79717799d3bd9dbe76382df"
+  },
+  "files": {
+    "source-proof/motion-elbow01/derivation.tar.gz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "91b56ffe800f9cc4949fa672e6e71c3d769c1706b07b8b7af143729ce14e26d2",
+      "bytes": 41329790,
+      "mediaType": "application/gzip"
+    },
+    "source-proof/motion-elbow01/inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7fb521285df526fcabda176ad15ca216cba9f377614c11606db69025aea1a810",
+      "bytes": 43144,
+      "mediaType": "application/json"
+    },
+    "source-proof/motion-elbow01/actual-female-export-assessment01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "20739eeaf8651c8ec5c5d80edec77ab652973de07970995e01264b632c558f13",
+      "bytes": 7134,
+      "mediaType": "application/json"
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-browser-qualification-proof-20261109",
+    "revisionId": "compact-final-functional05",
+    "manifestSha256": "d55a39bbd461cb33ae5ceb41cb9e3747e7a63b429e50f5e4907970f94b26de45"
+  },
+  "files": {
+    "proof/final-combined05/all-frozen-browser-evidence.tar.gz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "46e889bb13fcf190b9c973c40c677969a12731d998a809dd4106807c70c430f3",
+      "bytes": 7194509,
+      "mediaType": "application/gzip"
+    },
+    "proof/final-combined05/inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fe12792c561ac2749f04ae7aa04b05c4d4112926caa2cdc290ddc3558b273cd4",
+      "bytes": 21959,
+      "mediaType": "application/json"
+    },
+    "proof/final-combined05/summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a53d31ac2fabf93b41eba298e6e347089be52c956a8f54edb0c9117f0295d0da",
+      "bytes": 1099,
+      "mediaType": "application/json"
+    }
+  }
+}

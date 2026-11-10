@@ -1,0 +1,64 @@
+{
+  "status": "passed",
+  "scope": "Only complete final combined browser proof; all previous proof indexes and recovery records unchanged",
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-browser-qualification-proof-20261109",
+    "revisionId": "compact-final-functional05",
+    "manifestSha256": "d55a39bbd461cb33ae5ceb41cb9e3747e7a63b429e50f5e4907970f94b26de45"
+  },
+  "publicationOperation": "mhp-browser-compact-final05-20261109",
+  "rightsOperation": "mhp-browser-compact-final05-20261109-rights",
+  "claims": 3,
+  "payloadBytes": 7217567,
+  "archiveMembers": 51,
+  "allOriginal10ClaimPayloadsAnd34Qualification05FilesRetained": true,
+  "freshCurrentPermissionWorkspaceAllHashesVerified": true,
+  "freshDownloadedStandardArchiveAll51MemberHashesVerified": true,
+  "recoveryObjects": 4,
+  "recoveryBytes": 7219167,
+  "independentReaderAllHashesVerified": true,
+  "authorityGenerationBefore": 291,
+  "authorityGenerationAfter": 291,
+  "durableRecoveryReceipt": {
+    "reference": {
+      "boundary": "asset-recovery",
+      "accessDomain": "openlegend-assets",
+      "sha256": "4079bcb0beac2731b5cc3e966792ab8325ac9bca2659df9f976882738dbb47b8",
+      "bytes": 7295,
+      "mediaType": "application/json"
+    },
+    "location": {
+      "accountId": "027677879749",
+      "region": "us-east-2",
+      "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+      "key": "domains/openlegend-assets/blobs/sha256/40/4079bcb0beac2731b5cc3e966792ab8325ac9bca2659df9f976882738dbb47b8",
+      "versionId": "K0rhWb4mPvoo9m1GWVDsjVyvcNEyFq.S"
+    },
+    "readerHashVerified": true,
+    "authorityGeneration": 291,
+    "scope": "Exact partial browser proof only; durable new-unit recovery receipt, not a whole-catalogue checkpoint",
+    "completedAtUtc": "2026-11-09T14:32:10.557Z"
+  },
+  "sourceReceipt": {
+    "file": "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/evidence/aws-task-cost01/resumed-verification05/compact-final-proof05/recovery/receipt.json",
+    "bytes": 7295,
+    "sha256": "4079bcb0beac2731b5cc3e966792ab8325ac9bca2659df9f976882738dbb47b8"
+  },
+  "admission": {
+    "file": "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/evidence/aws-task-cost01/resumed-verification05/proof-only-closure02/admission.json",
+    "bytes": 690,
+    "sha256": "95187703bdd60c749741ffef40df45781af3634687394dcee1777c705cb2a609"
+  },
+  "firstAuthorityAttemptAtUtc": "2026-11-09T14:31:15.472097+00:00",
+  "hardDeadlineUtc": "2026-11-09T14:34:15.472097+00:00",
+  "clientsClosedAtUtc": "2026-11-09T14:32:10.736436+00:00",
+  "wholeTaskConservativeControlUsd": 9.99,
+  "actualAwsInvoiceSpend": "Unmeasured",
+  "providerSoftwareUsd": 0,
+  "qualification": "Individual frozen assessments own scope. No overall POC, finished art, likeness or garment adoption pass is implied.",
+  "restoration": "Use the ordinary current-permission asset workspace with this exact index, then standard tar.gz extraction. Recovery can use the exact-version objects named by the independently verified durable receipt; no historical catalogue sweep."
+}

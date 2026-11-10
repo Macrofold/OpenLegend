@@ -1,0 +1,370 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-browser-qualification-proof-20261109",
+    "revisionId": "functional-captures02",
+    "manifestSha256": "2e3a3117d6b9fb256d035030f01c8e7f68438170b9a2562e329734e032c62752"
+  },
+  "files": {
+    "proof/browser-qualification02/all-nonmedia.tar.gz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4a7d44c478b3c29edaac2e340e11ce916af347ccf4905b7fcb7c59123d4e09bf",
+      "bytes": 131935,
+      "mediaType": "application/gzip"
+    },
+    "proof/browser-qualification02/inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4b4ba421572c97d65591c5a12454bbff7f48610d607f2a158999fa78459b0523",
+      "bytes": 51075,
+      "mediaType": "application/json"
+    },
+    "proof/browser-qualification02/summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d12753cac76e0543b07031c4b039d94a3eb428d5f72b9f5b4fa05ae2f03f5b7c",
+      "bytes": 1118,
+      "mediaType": "application/json"
+    },
+    "proof/browser-qualification02/female-clay-daylight-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9626147f95907f8e7b717e487699da33a41f01026933f7c36cc8ebc391319fc2",
+      "bytes": 111757,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/female-clay-daylight-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e9687a206606669a6ac637d7f3264d2f6a033a793b5ada7862aa3aca256e93ee",
+      "bytes": 111519,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/female-clay-overcast-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "97a0f1ba8c1ee9a97a86814b266fce37acebc8e69b8c14fb63ff07fb13fb8a87",
+      "bytes": 109963,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/female-corner-000.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8f24af03980bf38e13ef1a45e44cfc78ef7f2b79bc7672250a44d8177ef67cf9",
+      "bytes": 135490,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/female-corner-001.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "19988ad6c36cd3e4dc61976dd554f4ca70c0d09661b9b3a12cdaf38b170f214a",
+      "bytes": 135888,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/female-corner-010.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6dae8996b0251781ac1675b948b89983b090de05cf335a58103811475e5a98e0",
+      "bytes": 136159,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/female-corner-011.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b1c56a2fe9a3c16dbf09f2e5d05217b4b0952b59552120719f5228c3d4b774ce",
+      "bytes": 136671,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/female-corner-100.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "31bea0fcb19c83324bba2876d9f4af2210280b408226f68cf3c2d94d78159fcc",
+      "bytes": 136030,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/female-corner-101.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e8203c481339a5baf78e295cc43a4398d5b9ee040bd3a66bc569084b44caf2a0",
+      "bytes": 136432,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/female-corner-110.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "010f9bbf4081c52a5fcd3277a747ba79beecfbe778c039843ef3c675e14f08f6",
+      "bytes": 136595,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/female-corner-111.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "047a05fc46ce9ea03b5f48a502c3360b77825619d0d74f276f8f7e9beea72218",
+      "bytes": 137147,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/female-face-bald-brown.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "544ab01cc97d3884e059a7c98cf8384522a141dd3572ba6c3e866f800596de90",
+      "bytes": 102456,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/female-face-parted-brown.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b50e8aeadedd5592d3d6273a7cb6d93e37c42dfc509696140bf4581392b131df",
+      "bytes": 105964,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/female-face-parted-green.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d427cd4b071ad551e68134e355150d9ba84a17612755ce25db812944097b7a0f",
+      "bytes": 105789,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/female-face-short-parted-blue.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bf16a537797d160d5af26e2bb9f460ac7a04447c2602ff37f9bc58f398ee0173",
+      "bytes": 105469,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/female-finished-daylight-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "44f36a23b0dc805d707cd85e30a52c2400d0ca70b7a3a2e4199254fa693e9074",
+      "bytes": 112786,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/female-finished-overcast-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9aed7ff1fb1d4e20cada8a97aeff587ae86887fa5cb92fc970716f71d07cdeb9",
+      "bytes": 110882,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/female-finished-overcast-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f6e33893aca35cc520b197320a713896875b961c68e86125f62eab84ce2dbd5f",
+      "bytes": 110793,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/female-height-high.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "efe9a8bb87f32d9e62a20d014e33be5c74a152b8f22733ada511375dc45e5612",
+      "bytes": 137297,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/height-drag-after.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "836b9917bb784549b8ade230bd2d71a97153b54e802438c49974da0a151db4a3",
+      "bytes": 136970,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-clay-daylight-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d19e5258cef89a25624ae3db6c360f657efed084af8f61b36fd13cd383059576",
+      "bytes": 111341,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-clay-daylight-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5b8880a8450b071641e2f1adbe7a3db11e3758bcb6e03716bb945ef4d3e1c85f",
+      "bytes": 111485,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-clay-overcast-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "79c746eb72d53cf11734f864cdeff28838293d39ddaadaeb1d5cfd6c6c962aa1",
+      "bytes": 109566,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-corner-000.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bab9c6f592c060662ce517b5366bef64a981531f3f68407f6b02114b91527ee7",
+      "bytes": 135454,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-corner-001.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e0bab7b6357c30cb9f60ecbc51ee17a6564a7411a242b456436316da36124005",
+      "bytes": 135836,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-corner-010.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bc886b3a3e319aeffc1ff2b277ce4ee86b3cd8a35d30e989ad8d96837beae6db",
+      "bytes": 136094,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-corner-011.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a0562e55a1f10c4e83324e071a605485fb164f8c1fa6200b1cce08400378b8b4",
+      "bytes": 136570,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-corner-100.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "86467f89dac10db366275ac7109c446f9abc2c1eb5c3500ef0ab0f5f6ee5ae23",
+      "bytes": 135909,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-corner-101.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "08ce17967d467a30336c88c177ecfbf436f08a2d25d5724c390d3aa798f2bde3",
+      "bytes": 136381,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-corner-110.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6f899a2447a37a4fd97ded9fd1e0a90399bbd7870f46ebd3225303150653a307",
+      "bytes": 136563,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-corner-111.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aeaf1c5fc677e203fd46ff24d89e5ea01e2c3d893fed571ec5b38fb8d8c50a2a",
+      "bytes": 137043,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-face-bald-brown.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dbd36e044d4568953e15277a7770f78683d3b068075ea23a30793b61eb6f02c4",
+      "bytes": 82541,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-face-parted-brown.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "331c5dfab2e82bf51f3c47780092ea201e9029aea123e800b2db9cc7e3bd7c67",
+      "bytes": 104512,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-face-parted-green.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7509af5dbfc0eaa5e483f0cceb84d9cdb92b71f293a68781b1fbca188789c63c",
+      "bytes": 82705,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-face-short-parted-blue.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "08bd0ed03a505335e369413dd31f482da11fbf4275f1ec63abfe03be54824668",
+      "bytes": 82983,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-facial-complete-page.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0b754d8858680aec1e6ccae296793a7f5181c0f39c09480b381653a23e21972c",
+      "bytes": 109280,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-facial-full-view.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7570f5c85ff7310fb432e5c17863bd9aa292f246fb024f8a467c2efd345835ec",
+      "bytes": 59185,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-facial-initial-framing.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5db21becb12a48809ffdebd1059b9f9d4bde8f8220073809f37d17da5ca1d783",
+      "bytes": 124120,
+      "mediaType": "video/webm"
+    },
+    "proof/browser-qualification02/male-facial-playback.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "637538b405e0fca52e0042af7c376687ed8a02addb65e045d972254e0f49fbbc",
+      "bytes": 62137,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-facial-whole-head.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e0c7924af448a8d69476bd2ef424856213fe9709de400ce48049af96ef3b31aa",
+      "bytes": 63618,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-facial-whole-head.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ca49f6c6733d15675360cdb897c60c948d98264d9542e76b20197b756f526b33",
+      "bytes": 151736,
+      "mediaType": "video/webm"
+    },
+    "proof/browser-qualification02/male-finished-daylight-front-useful.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e6d4b42a7de550b1d56f5fea6656292517f7e567c20c80e908b3fd856db36819",
+      "bytes": 112142,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-finished-daylight-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "35705b1afe5fcbf9522de2f57e55973d4cd935b9fef4a5eb5781fc94beb925a2",
+      "bytes": 110629,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-finished-overcast-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "606ae0f91e08936c90808f3298bffb1fa552fc369ab87639167136a68d41cfba",
+      "bytes": 110180,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-finished-overcast-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cda386c9be1b986e266e94b399839ce6f9e36fb81c8578f9c5c404a09f28d16b",
+      "bytes": 110265,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-height-high.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c37571f4314f9ceb3e10b6326a093b5394318b593720442a2d5ea5d5b9e44b78",
+      "bytes": 132153,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/male-reset-after-corners.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "afc5b38a6a0674124f03551513ca685c007e3afdbbd8ecc5ae6f1dfc03ddd7fa",
+      "bytes": 133290,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification02/unseen-male-four-comparison.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8624d690dbb280c38feaeba412b36075df1fa9ee477406c765ceb195ee24f3da",
+      "bytes": 138627,
+      "mediaType": "image/png"
+    }
+  }
+}

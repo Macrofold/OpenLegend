@@ -1,8 +1,8 @@
 # MetaHuman foundation proof — feature specification
 
-| Status      | Current progress                                                                                    | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Both foundations export and compile; live creation, modular clothing and motion remain unqualified. | 2026-11-08   |
+| Status      | Current progress                                                                                                                 | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Independent creation, rendering measurements and the elbow correction pass; full motion and finished-art acceptance remain open. | 2026-11-09   |
 
 ## Purpose
 

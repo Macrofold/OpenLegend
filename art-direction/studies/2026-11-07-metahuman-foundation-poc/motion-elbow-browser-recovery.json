@@ -1,0 +1,58 @@
+{
+  "status": "passed",
+  "scope": "Final actual motion browser comparison raw evidence and terminal provenance only",
+  "releases": [
+    {
+      "owner": {
+        "kind": "collection",
+        "id": "art-studies"
+      },
+      "assetId": "metahuman-foundation-poc-walk-elbow-browser-proof",
+      "revisionId": "raw-comparison01",
+      "manifestSha256": "96e48b3d7d0b0adc9267e2e2d39aed141c818e8bd34e2119633432ecadcb64f4"
+    }
+  ],
+  "publicationOperations": [
+    "mhp-elbow01-final-ui-proof-20261109"
+  ],
+  "newObjectsIndependentlyVerified": 4,
+  "newBytesIndependentlyVerified": 1822969,
+  "priorVerifiedObjectsReused": 0,
+  "authorityGenerationBefore": 300,
+  "authorityGenerationAfter": 300,
+  "durableRecoveryReceipt": {
+    "reference": {
+      "boundary": "asset-recovery",
+      "accessDomain": "openlegend-assets",
+      "sha256": "9cbc1aeda85af64579a992fb7f385edb7012b9fea6a2e476ff8fdeafbb144aab",
+      "bytes": 7216,
+      "mediaType": "application/json"
+    },
+    "location": {
+      "accountId": "027677879749",
+      "region": "us-east-2",
+      "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+      "key": "domains/openlegend-assets/blobs/sha256/9c/9cbc1aeda85af64579a992fb7f385edb7012b9fea6a2e476ff8fdeafbb144aab",
+      "versionId": "2iPI7GMARB2wVu2wHOlfQRQjy5d5ntd8"
+    },
+    "readerHashVerified": true,
+    "authorityGeneration": 300,
+    "scope": "Exact motion elbow browser proof only; durable new-unit recovery receipt, not a whole-catalogue checkpoint",
+    "completedAtUtc": "2026-11-09T15:58:25.140Z"
+  },
+  "sourceReceipt": {
+    "file": "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/evidence/motion-elbow01/publication02/final-ui-proof02/recovery/receipt.json",
+    "bytes": 7216,
+    "sha256": "9cbc1aeda85af64579a992fb7f385edb7012b9fea6a2e476ff8fdeafbb144aab"
+  },
+  "firstAuthorityAttemptAtUtc": "2026-11-09T15:30:37.743403+00:00",
+  "hardDeadlineUtc": "2026-11-09T16:00:37.743403+00:00",
+  "wholeTaskConservativeControlUsd": 11.99,
+  "standingTaskCeilingUsd": 100,
+  "actualAwsInvoiceSpend": "Unmeasured",
+  "providerSoftwareUsd": 0,
+  "privateOnly": true,
+  "noPublicOrWorldSelectionChanges": true,
+  "qualification": "Individual frozen native/browser assessments own findings. No overall POC, finished art, likeness or garment adoption is implied.",
+  "scopeAnnotation": "Exact final proof only; no catalogue checkpoint."
+}

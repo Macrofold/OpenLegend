@@ -481,6 +481,16 @@ def compile_family(master, descriptor, output, reference):
     result['reference'] = copy.deepcopy(reference)
     result['meshes'] = {}
     joints = [j['id'] for j in result['rig']['joints']]
+    # The pinned engine linearly samples components before normalizing a quaternion.
+    # Continuous signs preserve the source bend plane between physically equivalent keys.
+    # docs/projects/people-from-parts-authoring-contract.md#geometry-evaluation
+    if 'motion' in result:
+        for clip in result['motion']['clips']:
+            rotations = np.asarray(clip['localRotations'], dtype=float).reshape(-1, len(joints), 4)
+            for frame in range(1, len(rotations)):
+                reverse = np.sum(rotations[frame-1] * rotations[frame], axis=1) < 0
+                rotations[frame, reverse] *= -1
+            clip['localRotations'] = rotations.reshape(-1).tolist()
     drawable = set(result['bodyMeshes'])
     for part in result['parts'].values():
         for variant in [part, *part.get('variants', {}).values()]:

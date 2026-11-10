@@ -1,8 +1,8 @@
 # MetaHuman foundation proof — technical design
 
-| Status      | Current progress                                                                                    | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Both foundations export and compile; live creation, modular clothing and motion remain unqualified. | 2026-11-08   |
+| Status      | Current progress                                                                                                                 | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Independent creation, rendering measurements and the elbow correction pass; full motion and finished-art acceptance remain open. | 2026-11-09   |
 
 ## 1. Experiment and dependency boundary
 
@@ -36,7 +36,7 @@ Use these narrow authoring/study seams; unfinished responsibilities remain targe
 
 A source adapter may contain MetaHuman bone/material names and export conventions. Engine consumers receive ordinary family data and part definitions. The study's physique ranges, names and recipes are authored study content; future base-world installation would place selections in the existing world owner. Geometry sliders do not change gameplay strength, cognition, identity or permissions in this POC.
 
-The shared appearance owner supports fixed controls consistently, as specified in §6: equal-bound validation, fraction zero, zero-width percentage consistency and fixed-axis envelope feasibility. The bounded TypeScript/native resolver comparison and actual prepared-family/fixed-reference admission pass; browser parity remains unqualified. [Execution evidence](../verification/metahuman-foundation-poc.md#fixed-controls--resolver-comparison). This reuses the existing owner, with no study-only bypass or new schema.
+The shared appearance owner supports fixed controls consistently, as specified in §6: equal-bound validation, fraction zero, zero-width percentage consistency and fixed-axis envelope feasibility. The bounded TypeScript/native resolver comparison and actual prepared-family/fixed-reference admission pass; the actual browser controls, presets and clean recipe reload are recorded in the execution evidence. [Execution evidence](../verification/metahuman-foundation-poc.md#fixed-controls--resolver-comparison). This reuses the existing owner, with no study-only bypass or new schema.
 
 ## 3. Inputs, deliverables and reproducibility
 
@@ -74,7 +74,7 @@ Each gate produces reviewable evidence before the next expensive step. An implem
 
 4. Record the applicable Unreal/MetaHuman terms and licenses for any hair, garment or exporter separately. Epic permits MetaHumans in other engines, but private use, redistribution and organization-specific licensing remain separate questions. Use the [pricing and license guide](../../art-direction/research/3d-pixel-worlds/tool-and-license-notes.md#price-thresholds) for corporate-group revenue, authoring seats and the distinction from Unreal-runtime royalties; zero game users does not itself establish an exemption. Keep proprietary assets/code separate from the AGPL repository; copying Engine/plugin code into it is not part of this plan.
 5. Record private-evaluation permission before asset use; resolve public browser distribution/customization-kit rights before publication/adoption. This requested POC selects a licensed candidate for private evaluation, not a permanent exception to the normal CC0/CC-BY source policy. If the applicable terms are unclear, keep the result private and ask the owner a specific licensing question; do not assert either blanket prohibition or blanket permission.
-6. Verify existing private asset authority and preservation access using the [shared authority procedure](../asset-workflow.md#shared-asset-authority). Do not alter cloud permissions or publish publicly as a shortcut. Account for settled and outstanding charges under the assigned task's $10 default ceiling; additional software/seats/compute need approval before exceeding it. Earlier main-thread spending approvals are not new POC allowances.
+6. Verify existing private asset authority and preservation access using the [shared authority procedure](../asset-workflow.md#shared-asset-authority). Do not alter cloud permissions or publish publicly as a shortcut. Account for settled and outstanding charges under Mike's task-specific $100 ceiling, including earlier work and unresolved commitments; additional software/seats/compute need approval before exceeding it. Earlier main-thread spending approvals are not new POC allowances.
 
 **Exit:** one supplied preset can be opened and saved, the selected versions and lawful evaluation path are recorded, and an export destination is ready. A hardware/auth/license blocker is an actual blocker, not permission to redesign the experiment around a different source.
 
@@ -118,6 +118,7 @@ Each gate produces reviewable evidence before the next expensive step. An implem
 2. Author one simple green Wayfarer tunic design with a real opening, coherent hem, visible fabric thickness where needed and plausible loose clearance. Reuse a suitable permitted garment if it passes; otherwise author it once in Blender. Create one rest fit and binding per family. That allowance is two family fits, not four character-specific outfits.
 3. Bind the tunic, underwear and rigid item through §8. Inspect all body/height extremes and intermediates before motion. Show the body alone in underwear, garment alone, and dressed views so hollow-body substitutions cannot pass unnoticed.
 4. Reuse exact accepted Idle/Walk/Run sources and the existing retargeter. Export stable in-place clips with the motion metadata expected by the actor. Do not generate motion just because the skeleton changed. Fix the source-to-target mapping, rest pose and joint orientation before altering the clip itself.
+   Different arm rest bends need the mapping's explicit `alignRest` arm-chain selection; copying turns from unlike rests can reverse elbow flexion. Compare the original source and transferred elbows, wrists and palms, including bends between keys. For a limited source-track repair, verify complete local rest frames, hierarchy and timeline before preserving unrelated channels. Exact export readback alone can retain a bad intermediate; a fixed world-axis sign is not an anatomical bend test when the shoulder rotates.
 5. Run all clips and Idle↔Walk↔Run transitions on the four review characters in the shared actor. Check front/side/back, feet near the ground, knees, hips, shoulders, neck and tunic hem. Include an arm raise and knee bend as native diagnostic poses even if they are not shipped clips. Record any contact correction's enabled state and measured effect; never assume it repairs a bad rig.
 6. Run the separate facial-export exploration in §7. Preserve results even if it fails; distinguish it from neutral-face and locomotion passes.
 

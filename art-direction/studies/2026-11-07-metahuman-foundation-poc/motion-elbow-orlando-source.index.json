@@ -1,0 +1,167 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-orlando-walk-elbow-source",
+    "revisionId": "poc-c1f7a60ff8188f3069f939f7",
+    "manifestSha256": "a8d644f8fef6943640e2ab791bf2cd489132d2c8b5d6432348fa505db8ea72dd"
+  },
+  "files": {
+    "build-inputs.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9302b5518121add7fadc1aad3f72b8aec910ef9edca0978345a36078d1df9140",
+      "bytes": 16537,
+      "mediaType": "application/json"
+    },
+    "descriptor.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f4dd57675bdba7dcfd45b39fe4767da52c3d9efdca242296bbede975a1bd824a",
+      "bytes": 1884876,
+      "mediaType": "application/json"
+    },
+    "family.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f5ee148d3124b5a9172de0b4699fcd7392bcfa85f5df8d14792e3cb75f21a0f2",
+      "bytes": 5860755,
+      "mediaType": "application/x-blender"
+    },
+    "forearm-splice.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "50713bc3e1895c46dcca04a9cc48900b308f7bada4634df16c54545e72e3f530",
+      "bytes": 345909,
+      "mediaType": "application/json"
+    },
+    "motion-change.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fe8567c80de45c6d063c853f897dd993db66ff8bed7b1deda0f1146302160266",
+      "bytes": 1249,
+      "mediaType": "application/json"
+    },
+    "motion.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6181521ae7d7718b7f23accef782ac690f8ff4b1496ce35d1d724a3a0cc5493a",
+      "bytes": 833882,
+      "mediaType": "application/json"
+    },
+    "prepare.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fde9de0ba3949f903c89b4039bcba84ae209108bdbfb955b1b93f43f7fcc2a48",
+      "bytes": 1520971,
+      "mediaType": "application/json"
+    },
+    "prepared-motion.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "04ca8f79014515d28534f901bfbb2646259770089f93a41e8d3fac9d67dfbe29",
+      "bytes": 141664,
+      "mediaType": "model/gltf-binary"
+    },
+    "previous-motion.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a84c95fecfad56ab0650624db740a232599e7c1d3c51dc7c2e3c367b7e593749",
+      "bytes": 833777,
+      "mediaType": "application/json"
+    },
+    "prior-motion-qualification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a79efe08d9fe152c6d4b1c8887f4505f140ece7b2ece5b8512dfb3625a3b1b55",
+      "bytes": 34362,
+      "mediaType": "application/json"
+    },
+    "profile.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7634e0cd9e440f0fd1494db323b3279d42afc919d3527856e9f4f17c86c56396",
+      "bytes": 3953,
+      "mediaType": "application/json"
+    },
+    "textures/0.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c6432f925f8c940afc21c433ddf3b651cab6130b8acd1e61026170d5e852aa7c",
+      "bytes": 2304965,
+      "mediaType": "image/png"
+    },
+    "textures/1.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "19c0d16eed17d841cee0bbd5f4a2664ccabc813c149673cf18c68d19af7d8f0c",
+      "bytes": 338899,
+      "mediaType": "image/png"
+    },
+    "textures/10.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3e3d47d0908126ddeb18331209ed28d28e5a62825cffc496c4a7fe7d2d44c272",
+      "bytes": 22085,
+      "mediaType": "image/png"
+    },
+    "textures/2.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f1637df8e3401f6d7d1c1d57663fbae21913eb863a9e9a7fa95178fa434853ce",
+      "bytes": 355116,
+      "mediaType": "image/png"
+    },
+    "textures/3.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4303044a6c7ff8bf60491f9a109a19a8da5022c37fca43b4458c93a0fd510217",
+      "bytes": 463958,
+      "mediaType": "image/png"
+    },
+    "textures/4.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f485dcee6c772014352bcdd155bb5233124a27c748c7ccfba9c0ee6342f198c7",
+      "bytes": 66255,
+      "mediaType": "image/png"
+    },
+    "textures/5.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0ee0f0b31b035cf0c64a524a60f632fc9ad6986a264167472e0ccaacb79299de",
+      "bytes": 14835,
+      "mediaType": "image/png"
+    },
+    "textures/6.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1ebed770f3955ee6b69441f60b20085e2c9736272ff335891a6e65e0db9f9af3",
+      "bytes": 6409,
+      "mediaType": "image/png"
+    },
+    "textures/7.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e23b5f73ae98691f370eb39c72d91a3c5c629fe89251200ca10ccf13e784d865",
+      "bytes": 3416752,
+      "mediaType": "image/png"
+    },
+    "textures/8.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b00d696a08d8a3943a3a68ac6253ce4bd18da4659e90c57f7a577669bdce4924",
+      "bytes": 818760,
+      "mediaType": "image/png"
+    },
+    "textures/9.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b2609a21614f886ae017f1f3c314e9d3dfb81b0eb30e0d0d0d560d78e30eec2f",
+      "bytes": 1512230,
+      "mediaType": "image/png"
+    }
+  }
+}

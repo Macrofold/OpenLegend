@@ -1,0 +1,77 @@
+{
+  "status": "published, fresh library readback, exact independent recovery and durable receipt passed",
+  "scope": "This exact qualification proof only; earlier unrelated proof records remain unchanged.",
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-browser-qualification-proof-20261109",
+    "revisionId": "foreground-captures03",
+    "manifestSha256": "4dcd688d0d57f4238a660c91caf8256dfefb49ca0a98bb69eff4a4be1aee337e"
+  },
+  "fileClaims": 3,
+  "filePayloadBytes": 171239,
+  "index": {
+    "file": "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/evidence/aws-task-cost01/proof-only-closure01/handoff01/resumed-browser-proof03.index.json",
+    "bytes": 1167,
+    "sha256": "7dfd0dce781835bad411bc51ab40622cb88b9f6c16681acc56fef4cdda541304"
+  },
+  "publicationOperationId": "mhp-resumed-browser-qualification-proof03-20261109",
+  "independentRecovery": {
+    "objectsIncludingCanonicalManifest": 4,
+    "bytes": 172892,
+    "authorityGenerationBefore": 290,
+    "authorityGenerationAfter": 290,
+    "durableReceipt": {
+      "reference": {
+        "boundary": "asset-recovery",
+        "accessDomain": "openlegend-assets",
+        "sha256": "e52819fde1cd69735ef6231c8925b0308e414431f6dd3345c18a49fe36d36ca3",
+        "bytes": 7285,
+        "mediaType": "application/json"
+      },
+      "location": {
+        "accountId": "027677879749",
+        "region": "us-east-2",
+        "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+        "key": "domains/openlegend-assets/blobs/sha256/e5/e52819fde1cd69735ef6231c8925b0308e414431f6dd3345c18a49fe36d36ca3",
+        "versionId": "6ylDHdN0cvj_abnOEbtliY.En45sLRZR"
+      },
+      "readerHashVerified": true,
+      "authorityGeneration": 290,
+      "scope": "Exact partial browser proof only; durable new-unit recovery receipt, not a whole-catalogue checkpoint",
+      "completedAtUtc": "2026-11-09T03:44:31.574Z"
+    }
+  },
+  "actualAwsInvoiceSpend": "Unmeasured",
+  "providerSoftwareSpendUsd": 0,
+  "wholeTaskConservativeControlUsd": 9.96,
+  "pauseAndCompute": "Reported separately through the explicitly authorized CloudWatch-only cleanup read; no database will be reopened.",
+  "losslessMetadata": {
+    "format": "Standard POSIX tar inside gzip; original names and raw bytes retained.",
+    "nonmediaFilesIndependentlyRestoredAndHashVerified": 24,
+    "archiveReference": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ecfa29669e0342b2a22f5482bc0a6a503424129d3d0c3eca99178704518b7b04",
+      "bytes": 161655,
+      "mediaType": "application/gzip"
+    },
+    "allEightFreshRawCapturesPreserved": true,
+    "unexecutedPlansAndOperatorLimitsRetained": true
+  },
+  "publicationClosure": {
+    "oldCaptureWindowExpiredBeforeAnyApprovalAttempt": true,
+    "newSeparateProofOnlyAdmission": {
+      "file": "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/evidence/aws-task-cost01/proof-only-closure01/admission.json",
+      "bytes": 561,
+      "sha256": "bdc419af57ec4b3c1228d0e5c4292b6081d62791976b8f131775252eddb42776"
+    },
+    "frozenFileClaims": 3,
+    "frozenPayloadBytes": 171239,
+    "noNewPayloadOrViewer": true,
+    "clientsClosedAtUtc": "2026-11-09T03:44:31.702261Z"
+  },
+  "qualification": "Included assessments control the passed, failed and unrun cases. One-wearer matrix and isolated UV execution remain incomplete; no overall POC or final-art acceptance."
+}

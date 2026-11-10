@@ -1,0 +1,118 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-browser-qualification-proof-20261109",
+    "revisionId": "partial-one-wearer-recording01",
+    "manifestSha256": "9b8960551846c9b9836b59cb39ee62681af8ddf8bf449a621cea6297bd18c435"
+  },
+  "files": {
+    "proof/browser-qualification01/raw-capture-json.tar.gz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "72346ff416fcd924067aab7f4056045744effbbf52a059bcdab442c0359fc972",
+      "bytes": 107724,
+      "mediaType": "application/gzip"
+    },
+    "proof/browser-qualification01/raw-capture-inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9e2dfaac125c71e5ef8b1d2c3008e42318d85c837d6874a1a1fc6b8254491766",
+      "bytes": 4527,
+      "mediaType": "application/json"
+    },
+    "proof/browser-qualification01/summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "986f1ccb354c4386590ebbba95ffd6b2ec95c0e7c604638f219b8527f932617a",
+      "bytes": 4758,
+      "mediaType": "application/json"
+    },
+    "proof/browser-qualification01/base-four-run-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1c9a44dfc55c785f3650951a84e167756e1303151bc450e9cad5f235ef942faa",
+      "bytes": 47250,
+      "mediaType": "image/png"
+    },
+    "proof/browser-qualification01/base-four-run-front.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ab95d3bf172d193ce8cb7cf9b74f2572895c4a9a11b79ee7e486419f34c4e54b",
+      "bytes": 2478236,
+      "mediaType": "video/webm"
+    },
+    "proof/browser-qualification01/one-wearer-interim-assessment01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dc0b847d1ac097fb0ea19f698ef57ab683118a31a030deeae2f619b4f08f8c81",
+      "bytes": 45137,
+      "mediaType": "application/json"
+    },
+    "proof/browser-qualification01/one-wearer-interim-cpu-limit01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "caa679ce3fe043928f2346ddf4b590a28ce967913ca49a7de5d1a15b289e3bdc",
+      "bytes": 2385,
+      "mediaType": "application/json"
+    },
+    "proof/browser-qualification01/visual-recording-assessment01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b28bc40b21877ae77c7cbb1c546079a5d8724d5795d0feacca3b51435155aef6",
+      "bytes": 3383,
+      "mediaType": "application/json"
+    },
+    "proof/admission/plan02.admitted.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a6bff46a1a20c7ead044a33ae8b6b104e44d81a2ede9f2e09cfcb9045b406c67",
+      "bytes": 9144,
+      "mediaType": "application/json"
+    },
+    "proof/admission/admission.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ed56312a96ba4c0d30f0ba8c421fe6f50bf4ce864704e1bac08fde1e075663df",
+      "bytes": 1037,
+      "mediaType": "application/json"
+    },
+    "proof/admission/permission-preflight.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "82f349ea523303fcd79836554d8958719a7c0a86721632485dfaa6734e16184d",
+      "bytes": 3640,
+      "mediaType": "application/json"
+    },
+    "proof/admission/aws-preflight.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8330007c7d465080e7e8878af1a1ab0dcfc9e64e6548d9299a0dca7efb547daa",
+      "bytes": 971,
+      "mediaType": "application/json"
+    },
+    "proof/admission/current-window-summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c52593d8e65dc8403531f9b2b35c86504e1089fb3178e2abfbffe80750820dbe",
+      "bytes": 2743,
+      "mediaType": "application/json"
+    },
+    "proof/admission/permission-preflight-clock-clarification.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "41e3cbe4a3e69e5ed8937ce78ceb381d56c8c0e24093ff15889a1d8f05ff82d8",
+      "bytes": 1009,
+      "mediaType": "application/json"
+    },
+    "proof/operator/run-bounded.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "95d195fd3bd53407f2310a3ec68ef31708b1f685d0ba9cdd08b6bf83a9c1a093",
+      "bytes": 2336,
+      "mediaType": "text/plain; charset=utf-8"
+    }
+  }
+}
