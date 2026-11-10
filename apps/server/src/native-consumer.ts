@@ -239,13 +239,11 @@ export interface NativeJsonEncodingOptions {
   readonly installationRoot?: { readonly flatStringFields: readonly string[] };
 }
 
-/** Admit the selected JSON output before its encoder or transport Buffer
- * allocates. Existing source pins do not fund newly serialized bytes. */
-export function encodeNativeJson(
+function measureNativeJson(
   world: Pick<NativeWorld, 'reserveConsumerBytes'>,
   value: unknown,
-  options: NativeJsonEncodingOptions = {},
-): Buffer {
+  options: NativeJsonEncodingOptions,
+) {
   const prefix = options.prefix ?? '',
     suffix = options.suffix ?? '',
     installation = options.installationRoot;
@@ -287,6 +285,35 @@ export function encodeNativeJson(
   } finally {
     measuring.release();
   }
+  return { bytes, bodyPeak, shape, flattening };
+}
+
+/** An existing textual hash or formatter owns its actual JSON workspace, but
+ * has no reason to allocate the encoder's separate output Buffer. */
+export function reserveNativeJsonTextWorkspace(
+  world: Pick<NativeWorld, 'reserveConsumerBytes'>,
+  value: unknown,
+  canonical = false,
+): NativeWorldConsumer {
+  const { bytes, bodyPeak, shape, flattening } = measureNativeJson(world, value, {});
+  const text = canonical
+    ? nativeCanonicalJsonWorkspace(value, bytes) + flattening
+    : Math.max(4 * bytes, bodyPeak) + shape + flattening;
+  // Node's hashing consumer can make a separate UTF-8 input from the string.
+  return world.reserveConsumerBytes(text + bytes + 512);
+}
+
+/** Admit the selected JSON output before its encoder or transport Buffer
+ * allocates. Existing source pins do not fund newly serialized bytes. */
+export function encodeNativeJson(
+  world: Pick<NativeWorld, 'reserveConsumerBytes'>,
+  value: unknown,
+  options: NativeJsonEncodingOptions = {},
+): Buffer {
+  const prefix = options.prefix ?? '',
+    suffix = options.suffix ?? '',
+    installation = options.installationRoot;
+  const { bytes, bodyPeak, shape, flattening } = measureNativeJson(world, value, options);
   const output = world.reserveConsumerBytes(bytes + 32 * 8);
   let workspace: NativeWorldConsumer | undefined;
   try {
@@ -301,7 +328,7 @@ export function encodeNativeJson(
     const buffer = Buffer.allocUnsafeSlow(bytes);
     let at = buffer.write(prefix, 0, 'utf8');
     if (installation) {
-      installationChunks(root, 3, (chunk, literal) => {
+      installationChunks(value, 3, (chunk, literal) => {
         at += buffer.write(literal ?? JSON.stringify(chunk), at, 'utf8');
       });
     } else at += buffer.write(JSON.stringify(value), at, 'utf8');

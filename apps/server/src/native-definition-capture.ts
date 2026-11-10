@@ -88,11 +88,18 @@ export class NativeDefinitionCapture {
 
   player(actorId: string) {
     const facts = this.facts;
-    return retainNativeSources(
-      nativePlayerViewDefinitions(this.worldId, actorId, facts.definitions),
-      facts,
-      this.identity!,
+    const view = nativePlayerViewDefinitions(
+      this.worldId,
+      actorId,
+      facts.definitions,
+      this.capacity!,
     );
+    try {
+      return retainNativeSources(view, facts, this.identity!);
+    } catch (error) {
+      releaseNativeProduct(view);
+      throw error;
+    }
   }
 
   geometry() {

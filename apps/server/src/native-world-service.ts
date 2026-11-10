@@ -3767,6 +3767,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             await this.reads.run(context, () =>
               projectNativePlayerView({
                 owner: this,
+                capacity: this.world,
                 scope,
                 definitions,
                 map: this.definitions.facts.geometry,

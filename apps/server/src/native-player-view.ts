@@ -1,7 +1,13 @@
 import { isConversationEvent } from '@open-legend/domain';
+import type { NativeWorld, NativeWorldConsumer } from '@open-legend/native-simulation';
 import type { GameView, WorldInputScope } from '@open-legend/protocol';
 import { scopeKey, type RequestScope } from './authority.js';
-import { retainNativeSources, releaseNativeProduct } from './native-consumer.js';
+import {
+  attachNativeConsumer,
+  retainNativeSources,
+  releaseNativeProduct,
+  reserveNativeJsonTextWorkspace,
+} from './native-consumer.js';
 import type { GameRepository } from './store.js';
 import type { PlayerPracticeLoader } from './player-self-view.js';
 import { playerHasWork } from './player-self-view.js';
@@ -10,9 +16,12 @@ import {
   nativePlayerControls,
   nativePlayerEntities,
   nativePlayerEvents,
+  nativePlayerEventSelectionBytes,
+  nativePlayerEventViewBytes,
   nativePlayerEventViews,
   nativePlayerOwnedView,
   nativePlayerWorldView,
+  nativePlayerProjectionBytes,
   type NativePlayerActorSelf,
   type NativePlayerActorPerception,
   type NativePlayerControlFacts,
@@ -101,6 +110,7 @@ export interface NativePlayerRequestOwner extends PlayerAsyncOwner {
 }
 export interface NativePlayerViewRequest {
   readonly owner: NativePlayerRequestOwner;
+  readonly capacity: Pick<NativeWorld, 'reserveConsumerBytes'>;
   readonly scope: RequestScope;
   readonly definitions: NativePlayerViewDefinitions;
   readonly map: Parameters<typeof nativePlayerWorldView>[4]['map'];
@@ -134,13 +144,25 @@ function scopedCache(owner: NativePlayerRequestOwner, scope: RequestScope): Play
  * or WorldState. The supported installation refuses positive unconverted item,
  * recipe and agreement families; this request explicitly refuses inspection. */
 export async function projectNativePlayerView(request: NativePlayerViewRequest): Promise<void> {
-  const { owner, scope, definitions, store } = request;
+  const { owner, capacity, scope, definitions, store } = request;
   owner.assertScope(scope);
   if (scope.audience !== 'embodied')
     throw new Error('Native authorized-inspection presentation is unavailable.');
   const profile = await owner.profileFor(scope);
   let read: NativePlayerRead | undefined;
+  let frame: NativeWorldConsumer | undefined;
+  let projection: NativeWorldConsumer | undefined;
+  let selection: NativeWorldConsumer | undefined;
+  let eventWorkspace: NativeWorldConsumer | undefined;
+  let scopeWorkspace: NativeWorldConsumer | undefined;
+  let viewOutput: NativeWorldConsumer | undefined;
+  let eventOutput: NativeWorldConsumer | undefined;
+  let jobOutput: NativeWorldConsumer | undefined;
   try {
+    // Small closures and scratch carriers remain live while the caller awaits
+    // the real prepared fields. The returned view has separate custody.
+    frame = capacity.reserveConsumerBytes(24 * 256);
+    scopeWorkspace = reserveNativeJsonTextWorkspace(capacity, scope);
     owner.assertScope(scope);
     read = await owner.capture(scope);
     const { self, perception, controls, clock, host } = read;
@@ -153,16 +175,32 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
       throw new ViewChangedError();
     if (self.player.knownRecipes.length !== 0)
       throw new Error('Native learned-method presentation is unavailable.');
+    const bound = nativePlayerProjectionBytes(
+      self,
+      perception,
+      definitions,
+      request.map,
+      read.withdrawals,
+    );
+    projection = capacity.reserveConsumerBytes(bound.workspace);
+    viewOutput = capacity.reserveConsumerBytes(bound.output);
     const cache = scopedCache(owner, scope),
       memo = memoizer(cache);
-    const owned = await nativePlayerOwnedView(self, perception, definitions, {
-      paused: clock.paused,
-      inputScope: read.player.inputScope,
-      // Authorized-inspection tools and its recovery-opening operation are an
-      // explicitly unconverted proof family, never a silent ordinary-player mode.
-      freshWorldReview: read.freshWorldReview,
-      practiceLoader: request.practiceLoader,
-    });
+    const owned = await nativePlayerOwnedView(
+      self,
+      perception,
+      definitions,
+      {
+        paused: clock.paused,
+        inputScope: read.player.inputScope,
+        // Authorized-inspection tools and its recovery-opening operation are an
+        // explicitly unconverted proof family, never a silent ordinary-player mode.
+        freshWorldReview: read.freshWorldReview,
+        practiceLoader: request.practiceLoader,
+      },
+      capacity,
+    );
+    selection = capacity.reserveConsumerBytes(nativePlayerEventSelectionBytes(read.events));
     const selectedEvents = nativePlayerEvents(self, perception, read.events, definitions);
     const conversation = selectedEvents.filter(isConversationEvent).slice(-30);
     const speechIds = playerSpeechJobIds(conversation, self.actorId);
@@ -173,17 +211,19 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
       memo('usage', [read.telemetryRevision], () => store.usage(request.budgetUsd, scope.actorId)),
       playerUsageFallback(request.budgetUsd),
     );
-    const jobs = projectPlayerJobs(
-      optional(
-        owner,
-        cache,
-        'jobs',
-        memo('jobs', [read.telemetryRevision], async () =>
-          permittedPlayerJobs(await store.recentJobs(), scope, (id) => owner.speechEventActor(id)),
-        ),
-        [],
+    const jobRows = optional(
+      owner,
+      cache,
+      'jobs',
+      memo('jobs', [read.telemetryRevision], async () =>
+        permittedPlayerJobs(await store.recentJobs(), scope, (id) => owner.speechEventActor(id)),
       ),
+      [],
     );
+    // The optional repository read may supply a cached positive result. Its
+    // projection creates one narrow row and at most one small label per job.
+    jobOutput = capacity.reserveConsumerBytes(256 + jobRows.length * (256 + 7 * 64 + 2 * 64));
+    const jobs = projectPlayerJobs(jobRows);
     const replies = optional(
       owner,
       cache,
@@ -211,6 +251,9 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
     if (narration.status === 'stale') throw new ViewChangedError();
     const assetAuthorityGeneration = owner.lifecycle().assetAuthorityGeneration;
     const presentationRelease = await owner.presentationReleaseFor(scope);
+    const eventBound = nativePlayerEventViewBytes(selectedEvents, conversation, definitions);
+    eventWorkspace = capacity.reserveConsumerBytes(eventBound.workspace);
+    eventOutput = capacity.reserveConsumerBytes(eventBound.output);
     const world = nativePlayerWorldView(self, perception, definitions, controls, {
       ...clock,
       map: request.map,
@@ -218,7 +261,8 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
     });
     const eventViews = nativePlayerEventViews(
       self,
-      perception,
+      selectedEvents,
+      conversation,
       read.events,
       definitions,
       scope,
@@ -254,7 +298,7 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
           withdrawals: read.withdrawals,
         }),
       },
-      entities: nativePlayerEntities(self, perception, definitions, scope).entities,
+      entities: nativePlayerEntities(self, perception, definitions, scope, capacity),
       communicationReferences: nativePlayerCommunicationReferences(self, scope),
       recipes: [],
       ai: projectPlayerAi(jobs, usage, request),
@@ -277,6 +321,12 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
       (canUseInventory, encode) => {
         const finalView = { ...projected, player: { ...projected.player, canUseInventory } };
         const bytes = encode(finalView);
+        attachNativeConsumer(finalView, viewOutput!);
+        viewOutput = undefined;
+        attachNativeConsumer(finalView, eventOutput!);
+        eventOutput = undefined;
+        attachNativeConsumer(finalView, jobOutput!);
+        jobOutput = undefined;
         request.publish(bytes, retainNativeSources(finalView, bytes, profile, inputScope));
         return bytes;
       },
@@ -298,5 +348,13 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
   } finally {
     read?.release();
     releaseNativeProduct(profile);
+    jobOutput?.release();
+    eventOutput?.release();
+    viewOutput?.release();
+    eventWorkspace?.release();
+    selection?.release();
+    projection?.release();
+    scopeWorkspace?.release();
+    frame?.release();
   }
 }

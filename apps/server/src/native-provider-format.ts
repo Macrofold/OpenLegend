@@ -142,7 +142,7 @@ function normalizationWork(units: number): number {
 // optional JSON fallbacks; a second required-only render may overlap its first
 // result. Every selected node contributes at most one rendered subtree per
 // ancestor. Count those actual ancestry levels rather than a world byte floor.
-function activityWork(value: unknown): number {
+export function nativeActivityDisplayWorkspace(value: unknown): number {
   const facts = shape(value);
   const units =
     jsonByteLength(value, { cache: false }) + facts.members * 80 + facts.containers * 128;
@@ -361,7 +361,9 @@ function preparationBytes(kind: string, value: unknown): number {
       );
     }
     case 'activity-learning-format':
-      return fixed + activityWork((value as NativeActivityLearningFormatRequest).input);
+      return (
+        fixed + nativeActivityDisplayWorkspace((value as NativeActivityLearningFormatRequest).input)
+      );
     case 'display': {
       const input = (value as Parameters<typeof nativeActivityDisplay>[0]).input;
       // ordinaryActivityView creates at most eight fixed facts plus one fact

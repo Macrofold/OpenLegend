@@ -15,10 +15,11 @@ import {
   selectedDailyRain,
   receivedEventEvidence,
   projectEventEvidence,
+  ACTIVITY_DISPLAY_BYTES,
+  nativeText,
   type EventOriginalMetadata,
   type EventEvidence,
   selectedEventPresentation,
-  isConversationEvent,
   definitionPin,
   typedRequestVocabulary,
   selectedTemporalPolicy,
@@ -32,6 +33,7 @@ import {
 } from '@open-legend/domain';
 import { namePhrase } from '@open-legend/language';
 import type { EntityView, GameView } from '@open-legend/protocol';
+import type { NativeWorld, NativeWorldConsumer } from '@open-legend/native-simulation';
 import { scopeKey, type RequestScope } from './authority.js';
 import {
   bodyReferenceFor,
@@ -86,8 +88,257 @@ import {
   projectRespawnControl,
   playerHasWork,
 } from './player-self-view.js';
+import {
+  attachNativeConsumer,
+  nativeJsonEncodingWorkspace,
+  nativeJsonFixedWorkspace,
+  reserveNativeJsonTextWorkspace,
+} from './native-consumer.js';
+import { nativeActivityDisplayWorkspace } from './native-provider-format.js';
 
 type PlayerActor = NonNullable<Entity['actor']>;
+type ViewCapacity = Pick<NativeWorld, 'reserveConsumerBytes'>;
+
+// The selected formatter creates closed JS records and arrays. Their existing
+// children remain borrowed from captures; only the new storage is counted here.
+const objectBytes = (fields: number) => 256 + 64 * fields;
+const arrayBytes = (items: number) => 256 + 64 * items;
+const textBytes = (units: number) => 64 + 2 * units;
+
+function fieldCount(value: object): number {
+  let count = 0;
+  for (const key in value) if (Object.hasOwn(value, key)) count++;
+  return count;
+}
+
+function speechUnits(speech: EventEvidence['speech']): number {
+  let units = 0;
+  for (const segment of speech?.segments ?? [])
+    units += (segment.kind === 'heard' ? segment.text.length : 3) + 1;
+  return units;
+}
+
+function narrationUnits(value: EventEvidence['text']): number {
+  if (typeof value === 'string') return value.length;
+  let units = 0;
+  for (const part of value.narration.parts) {
+    if (typeof part === 'string') units += part.length;
+    else if ('entityId' in part) units += (value.names[part.entityId]?.name.length ?? 0) + 32;
+    else units += part.verb.length + 32;
+  }
+  return units;
+}
+
+/** The shared conversation formatter uses String on a selected event value.
+ * Account the actual joined array elements without producing that string. */
+function conversationValueUnits(value: unknown): number {
+  if (typeof value === 'string') return value.length;
+  if (!Array.isArray(value)) return 32;
+  let units = value.length;
+  for (const child of value) if (child != null) units += conversationValueUnits(child);
+  return units;
+}
+
+export function nativePlayerProjectionBytes(
+  self: NativePlayerActorSelf,
+  perception: NativePlayerActorPerception,
+  definitions: NativePlayerViewDefinitions,
+  map: WorldState['map'],
+  withdrawals: readonly unknown[],
+): { readonly output: number; readonly workspace: number } {
+  // The top-level view/player and their fixed clock, guide, cartography, body,
+  // action, inventory, control and AI shells. The physical map is one shallow
+  // spread, so its already owned terrain and spatial children do not enter.
+  let output =
+    objectBytes(44) + objectBytes(51) + 16 * objectBytes(8) + objectBytes(fieldCount(map) + 1);
+  let workspace = 12 * objectBytes(16);
+  const traits = self.identity.traits?.length ?? 0;
+  const ports = self.player.body?.equipmentPorts?.length ?? 0;
+  const attempts = self.player.agency.attempts.length;
+  const communication = self.player.communicationSubjects;
+  const icons = definitions.presentation?.mapArt?.markerIcons.length ?? 0;
+  const scars = definitions.bodyPolicy?.reincarnation?.scars.length ?? 0;
+  output +=
+    arrayBytes(self.attributes.length) +
+    arrayBytes(traits) +
+    traits * objectBytes(3) +
+    arrayBytes(ports) +
+    ports * (objectBytes(8) + objectBytes(4)) +
+    arrayBytes(attempts) +
+    attempts * objectBytes(7) +
+    arrayBytes(communication.length) +
+    communication.length * (objectBytes(2) + textBytes(64)) +
+    arrayBytes(icons) +
+    icons * objectBytes(8) +
+    arrayBytes(scars) +
+    scars * objectBytes(4) +
+    arrayBytes(fieldCount(definitions.statusPolicy.namedTimes)) +
+    arrayBytes(withdrawals.length + 3) +
+    (withdrawals.length + 3) * (objectBytes(6) + objectBytes(4));
+  workspace += arrayBytes(scars) + arrayBytes(fieldCount(definitions.nativeStrikes ?? {}));
+  for (const { label, description } of communication)
+    if (label === undefined)
+      output += textBytes(
+        typeof description === 'string' ? description.length : (description?.name.length ?? 0),
+      );
+
+  const calendar = definitions.presentation?.calendar;
+  if (calendar?.historyTemplate) {
+    const template = calendar.historyTemplate;
+    const units =
+      template.length +
+      Math.floor(template.length / '{startDay}'.length) * ((calendar.dayLabel?.length ?? 0) + 32);
+    output += textBytes(units);
+    workspace += 3 * textBytes(units);
+  }
+  let practice = 0,
+    releases = 0;
+  for (const definition of definitions.attributeDefinitions) {
+    const progress = self.player.practice?.[definition.id];
+    if (!progress || !definition.practice) continue;
+    practice++;
+    releases += progress.releases.length;
+    const presentation = definition.practice.presentation;
+    const units = 4 * (presentation.effect.length + presentation.progress.length) + 128;
+    output += 2 * textBytes(units);
+    workspace += 3 * textBytes(units) + arrayBytes(progress.releases.length);
+  }
+  // Each successful activity caption is bounded by the shared display owner.
+  // Its actual render workspace is admitted separately at the loaded view.
+  output +=
+    arrayBytes(practice) +
+    practice * (objectBytes(20) + arrayBytes(0)) +
+    releases * (objectBytes(4) + 64 + textBytes(ACTIVITY_DISPLAY_BYTES));
+  workspace +=
+    arrayBytes(self.player.practiceRecords.length) * 4 +
+    self.player.practiceRecords.length * arrayBytes(2) +
+    arrayBytes(definitions.attributeDefinitions.length) +
+    arrayBytes(practice) +
+    practice * (2 * objectBytes(20) + 2 * arrayBytes(0)) +
+    releases * (objectBytes(4) + 4 * 64 + textBytes(ACTIVITY_DISPLAY_BYTES));
+
+  output += arrayBytes(perception.bodies.length);
+  let bodyWorkspace = 0;
+  for (const binding of perception.bodies) {
+    let statusUnits = 0;
+    for (let i = binding.first; i < binding.first + binding.count; i++) {
+      const value = perception.cut.current[i]?.value;
+      if (value?.kind !== 'body') continue;
+      for (const label of value.body.outward) statusUnits += label.length + 2;
+      // The shared immutable split memo lives with each originating read
+      // body, so its wrappers overlap across the whole selected body list.
+      workspace += 3 * objectBytes(12) + nativeJsonEncodingWorkspace(value.body);
+    }
+    // Entity record, observation/size/heat/animation/carried and optional
+    // communication/trade shells. Digests and composed status are new text.
+    output +=
+      objectBytes(49) +
+      9 * objectBytes(8) +
+      arrayBytes(0) +
+      10 * textBytes(72) +
+      textBytes(statusUnits);
+    bodyWorkspace = Math.max(
+      bodyWorkspace,
+      13 * objectBytes(16) +
+        3 * arrayBytes(binding.count) +
+        binding.count * objectBytes(11) +
+        textBytes(statusUnits) +
+        nativeJsonEncodingWorkspace(binding.player.context),
+    );
+  }
+  return { output, workspace: workspace + bodyWorkspace };
+}
+
+export function nativePlayerEventSelectionBytes(read: NativePlayerEventRead): number {
+  // Evidence/presentation wrappers, flatMap result, stable sort and filtered
+  // selected-address arrays. Their child facts are borrowed from this read.
+  let bytes =
+    14 * arrayBytes(read.accounts.length) +
+    read.accounts.length * (2 * objectBytes(25) + objectBytes(5) + arrayBytes(2));
+  for (const { evidence, values } of read.accounts) {
+    const fallback = evidence ? undefined : values?.find((value) => value.kind === 'event');
+    const text = evidence?.text ?? (fallback?.kind === 'event' ? fallback.text : undefined);
+    if (text !== undefined && typeof text !== 'string')
+      bytes += 3 * textBytes(narrationUnits(text)) + 2 * nativeJsonEncodingWorkspace(text);
+    if (evidence?.speech)
+      bytes +=
+        arrayBytes(evidence.speech.segments.length) + 2 * textBytes(speechUnits(evidence.speech));
+  }
+  return bytes;
+}
+
+export function nativePlayerEventViewBytes(
+  events: ReturnType<typeof nativePlayerEvents>,
+  conversation: ReturnType<typeof nativePlayerEvents>,
+  definitions: NativePlayerViewDefinitions,
+): { readonly output: number; readonly workspace: number } {
+  const rules = selectedPlayerViewRules({ profile: definitions.profile });
+  let output = 2 * arrayBytes(events.length) + objectBytes(2);
+  let workspace = 0;
+  let journal = 0;
+  for (let i = events.length - 1; i >= 0 && journal < 60; i--) {
+    const event = events[i]!;
+    if (!isPlayerJournalEvent(event, rules)) continue;
+    journal++;
+    const references = event.references?.length ?? 0;
+    const speech = event.speech;
+    const nameUnits =
+      (speech?.speaker?.nameAtTime.length ?? 0) + (speech?.addressee?.nameAtTime.length ?? 0);
+    const words = speechUnits(speech);
+    const attributeUnits =
+      (typeof event.data?.['attributeName'] === 'string' ? event.data['attributeName'].length : 0) +
+      (typeof event.data?.['causeLabel'] === 'string' ? event.data['causeLabel'].length : 0);
+    let labelUnits = 0;
+    for (const reference of event.references ?? [])
+      labelUnits = Math.max(labelUnits, reference.label.length);
+    const units = narrationUnits(event.text) + labelUnits + 3 * attributeUnits + 96;
+    output +=
+      objectBytes(17) +
+      objectBytes(12) +
+      arrayBytes(references) +
+      references * (objectBytes(7) + 3 * textBytes(72)) +
+      textBytes(units);
+    if (speech)
+      output +=
+        3 * objectBytes(10) +
+        arrayBytes(8) +
+        8 * objectBytes(5) +
+        5 * textBytes(words + 3 * nameUnits + 128) +
+        4 * textBytes(72);
+    if (event.sound) output += 4 * objectBytes(14) + 2 * textBytes(64);
+    workspace = Math.max(
+      workspace,
+      14 * objectBytes(10) +
+        2 * arrayBytes(references) +
+        3 * textBytes(units) +
+        3 * arrayBytes(speech?.segments.length ?? 0) +
+        4 * textBytes(words + 3 * nameUnits + 128),
+    );
+  }
+  for (const event of conversation) {
+    const units =
+      speechUnits(event.speech) +
+      narrationUnits(event.text) +
+      conversationValueUnits(event.data?.['text']);
+    output += objectBytes(13) + objectBytes(11) + textBytes(units);
+    workspace = Math.max(workspace, 3 * textBytes(units));
+  }
+  return { output, workspace };
+}
+
+function formatWithJsonWorkspace<T>(
+  capacity: ViewCapacity,
+  input: unknown,
+  format: () => T,
+  canonical = false,
+): T {
+  const workspace = reserveNativeJsonTextWorkspace(capacity, input, canonical);
+  try {
+    return format();
+  } finally {
+    workspace.release();
+  }
+}
 
 /** Read-only authored inputs transferred once with installation. These contain
  * no actor, history, clock, inventory or writable simulation object. */
@@ -141,58 +392,120 @@ export function nativePlayerViewDefinitions(
     | 'inventionPolicy'
   > &
     ActivityDefinitionScope,
+  capacity: ViewCapacity,
 ): NativePlayerViewDefinitions {
-  return {
-    profile: definitions.profile,
-    portraits: definitions.presentation?.portraits,
-    itemArt: definitions.presentation?.itemArt,
-    bodyEligibility: {
-      bodyPolicy: definitions.moduleManifest.bodyPolicyPin,
-      attributes: definitions.moduleManifest.pins,
-      status: definitions.statusEffectPolicy.revision,
-      cognition: definitions.cognitionPolicy,
-    },
-    tradeDefinitionsRevision: tradeDefinitionsRevisionFor(worldId, actorId, {
-      itemDefinitions: definitions.itemDefinitions,
-      itemArt: definitions.presentation?.itemArt,
-      itemHandling: definitions.itemHandling,
-      constructionProfile: definitions.constructionProfile,
-    }),
-    tradeTitle: selectedTradeViewTitle(definitions),
-    attributeDefinitions: definitions.moduleManifest.definitions,
-    practiceAttributeIds: new Set(
-      definitions.moduleManifest.definitions
-        .filter((definition) => definition.practice)
-        .map((definition) => definition.id),
-    ),
-    statusPolicy: definitions.statusEffectPolicy,
-    bodyPolicy: definitions.moduleManifest.bodyPolicy,
-    participationPolicy: definitions.participationPolicy,
-    itemDefinitions: definitions.itemDefinitions,
-    nativeStrikes: definitions.nativeStrikes,
-    strikeSupported: nativeCommandSupported(definitions, 'strike'),
-    presentation: definitions.presentation,
-    knowledgePolicy: definitions.knowledgePolicy,
-    dailyRain: selectedDailyRain(definitions),
-    acoustics: definitions.moduleManifest.acoustics,
-    eventPresentation: selectedEventPresentation(definitions),
-    workBatchRevision: definitions.workBatchPolicy
-      ? JSON.stringify([
-          definitionPin(definitions.workBatchPolicy),
-          definitions.moduleManifest.bodyPolicyPin,
-        ])
-      : undefined,
-    actionWording: {
-      examples: [...typedRequestVocabulary(definitions).examples],
-      placeholder: typedRequestVocabulary(definitions).placeholder,
-    },
-    inventionPolicy: {
-      revision: definitions.inventionPolicy.revision,
-      playerLocked: definitions.inventionPolicy.playerLocked,
-      agentLocked: definitions.inventionPolicy.agentLocked,
-    },
-    recentMaxAgeSeconds: selectedTemporalPolicy(definitions).recent.maxAgeSeconds,
-  };
+  const attributes = definitions.moduleManifest.definitions;
+  const vocabulary = typedRequestVocabulary(definitions);
+  // The returned object retains selected immutable definitions, a practice-ID
+  // set, copied example slots and the two small revision strings.
+  const output = capacity.reserveConsumerBytes(
+    objectBytes(21) +
+      objectBytes(4) +
+      objectBytes(2) +
+      objectBytes(3) +
+      arrayBytes(4 * attributes.length) +
+      arrayBytes(vocabulary.examples.length) +
+      textBytes(24),
+  );
+  let revision: string | undefined;
+  let revisionOwner: NativeWorldConsumer | undefined;
+  try {
+    if (definitions.workBatchPolicy) {
+      const policy = definitions.workBatchPolicy;
+      const pin = formatWithJsonWorkspace(
+        capacity,
+        policy,
+        () => definitionPin({ ...policy }),
+        true,
+      );
+      const body = definitions.moduleManifest.bodyPolicyPin;
+      const pins = [pin, body];
+      // This field is the existing JSON text itself and must outlive its encoder.
+      revisionOwner = capacity.reserveConsumerBytes(
+        textBytes(
+          128 +
+            6 *
+              (pin.id.length +
+                pin.digest.length +
+                (body ? body.id.length + body.digest.length : 0)),
+        ),
+      );
+      revision = formatWithJsonWorkspace(capacity, pins, () => JSON.stringify(pins));
+    }
+    const itemArt = definitions.presentation?.itemArt;
+    const tradeDefinitionsRevision = formatWithJsonWorkspace(
+      capacity,
+      [
+        'personal-source',
+        worldId,
+        actorId,
+        [
+          'trade-definitions',
+          definitions.itemDefinitions,
+          itemArt,
+          definitions.itemHandling,
+          definitions.constructionProfile,
+        ],
+      ],
+      () =>
+        tradeDefinitionsRevisionFor(worldId, actorId, {
+          itemDefinitions: definitions.itemDefinitions,
+          itemArt,
+          itemHandling: definitions.itemHandling,
+          constructionProfile: definitions.constructionProfile,
+        }),
+    );
+    const view = attachNativeConsumer(
+      {
+        profile: definitions.profile,
+        portraits: definitions.presentation?.portraits,
+        itemArt: definitions.presentation?.itemArt,
+        bodyEligibility: {
+          bodyPolicy: definitions.moduleManifest.bodyPolicyPin,
+          attributes: definitions.moduleManifest.pins,
+          status: definitions.statusEffectPolicy.revision,
+          cognition: definitions.cognitionPolicy,
+        },
+        tradeDefinitionsRevision,
+        tradeTitle: selectedTradeViewTitle(definitions),
+        attributeDefinitions: attributes,
+        practiceAttributeIds: new Set(
+          definitions.moduleManifest.definitions
+            .filter((definition) => definition.practice)
+            .map((definition) => definition.id),
+        ),
+        statusPolicy: definitions.statusEffectPolicy,
+        bodyPolicy: definitions.moduleManifest.bodyPolicy,
+        participationPolicy: definitions.participationPolicy,
+        itemDefinitions: definitions.itemDefinitions,
+        nativeStrikes: definitions.nativeStrikes,
+        strikeSupported: nativeCommandSupported(definitions, 'strike'),
+        presentation: definitions.presentation,
+        knowledgePolicy: definitions.knowledgePolicy,
+        dailyRain: selectedDailyRain(definitions),
+        acoustics: definitions.moduleManifest.acoustics,
+        eventPresentation: selectedEventPresentation(definitions),
+        workBatchRevision: revision,
+        actionWording: {
+          examples: [...vocabulary.examples],
+          placeholder: vocabulary.placeholder,
+        },
+        inventionPolicy: {
+          revision: definitions.inventionPolicy.revision,
+          playerLocked: definitions.inventionPolicy.playerLocked,
+          agentLocked: definitions.inventionPolicy.agentLocked,
+        },
+        recentMaxAgeSeconds: selectedTemporalPolicy(definitions).recent.maxAgeSeconds,
+      },
+      output,
+    );
+    if (revisionOwner) attachNativeConsumer(view, revisionOwner);
+    return view;
+  } catch (error) {
+    output.release();
+    revisionOwner?.release();
+    throw error;
+  }
 }
 export interface NativePlayerActorSelf extends NativeActorSelf {
   readonly physicalLife?: number;
@@ -273,18 +586,55 @@ export async function nativePlayerOwnedView(
     readonly freshWorldReview: boolean;
     readonly practiceLoader: PlayerPracticeLoader;
   },
+  capacity: ViewCapacity,
 ) {
   const rules = selectedPlayerViewRules({ profile: definitions.profile });
   const records = new Map(self.player.practiceRecords.map((record) => [record.key, record.view]));
-  const initial = ownPracticeFrom(definitions.attributeDefinitions, self.player.practice, (id) =>
-    records.get(id),
-  );
-  const missing = initial.flatMap((progress) =>
-    progress.evidence
-      .filter((evidence) => !records.has(evidence.occurrenceId))
-      .map((evidence) => evidence.occurrenceId),
-  );
-  const practice = await hydratePlayerPractice(initial, missing, operational.practiceLoader);
+  let activityWorkspace: NativeWorldConsumer | undefined;
+  let activityBytes = 0;
+  const measureActivity = (view: ActivityView) => {
+    const measuring = capacity.reserveConsumerBytes(
+      nativeJsonFixedWorkspace + nativeJsonEncodingWorkspace(view),
+    );
+    let bytes: number;
+    try {
+      bytes = nativeActivityDisplayWorkspace(view);
+    } finally {
+      measuring.release();
+    }
+    if (bytes <= activityBytes) return;
+    const next = capacity.reserveConsumerBytes(bytes);
+    activityWorkspace?.release();
+    activityWorkspace = next;
+    activityBytes = bytes;
+  };
+  let practice: Awaited<ReturnType<typeof hydratePlayerPractice>>;
+  try {
+    const initial = ownPracticeFrom(
+      definitions.attributeDefinitions,
+      self.player.practice,
+      (id) => {
+        const view = records.get(id);
+        if (view) measureActivity(view);
+        return view;
+      },
+    );
+    activityWorkspace?.release();
+    activityWorkspace = undefined;
+    activityBytes = 0;
+    const missing = initial.flatMap((progress) =>
+      progress.evidence
+        .filter((evidence) => !records.has(evidence.occurrenceId))
+        .map((evidence) => evidence.occurrenceId),
+    );
+    practice = await hydratePlayerPractice(initial, missing, async (ids) => {
+      const rows = await operational.practiceLoader(ids);
+      for (const { entry } of rows) if (!entry.revoked) measureActivity(entry.view);
+      return rows;
+    });
+  } finally {
+    activityWorkspace?.release();
+  }
   const hasWork = playerHasWork(!!self.action, self.player.agency);
   const strikes = Object.values(definitions.nativeStrikes ?? {}).filter((strike) =>
     supportsStrikeBody(
@@ -530,33 +880,30 @@ export interface NativePlayerEventRead {
 }
 export function nativePlayerEventViews(
   self: NativePlayerActorSelf,
-  perception: NativePlayerActorPerception,
+  events: ReturnType<typeof nativePlayerEvents>,
+  conversation: ReturnType<typeof nativePlayerEvents>,
   read: NativePlayerEventRead,
   definitions: NativePlayerViewDefinitions,
   scope: RequestScope,
   timelineId: string,
   replies: ReadonlyMap<string, Parameters<typeof projectConversationEvent>[2]>,
 ) {
-  const events = nativePlayerEvents(self, perception, read, definitions);
-  const roles = new Map(read.accounts.map((account) => [account.original.id, account.roles]));
+  const roles = new Map<string, PlayerEventRoleFacts>();
+  for (const account of read.accounts) roles.set(account.original.id, account.roles);
   const rules = selectedPlayerViewRules({ profile: definitions.profile });
+  const referenceScope = JSON.stringify([self.worldId, `${timelineId}:${scopeKey(scope)}`]);
   return {
     events: events
       .filter((event) => isPlayerJournalEvent(event, rules))
       .slice(-60)
       .map((event) =>
-        publicEvent(
-          event,
-          definitions.eventPresentation,
-          self.actorId,
-          JSON.stringify([self.worldId, `${timelineId}:${scopeKey(scope)}`]),
-          () => projectPlayerEventRoles(scope, event, roles.get(event.id)!),
+        publicEvent(event, definitions.eventPresentation, self.actorId, referenceScope, () =>
+          projectPlayerEventRoles(scope, event, roles.get(event.id)!),
         ),
       ),
-    conversation: events
-      .filter(isConversationEvent)
-      .slice(-30)
-      .map((event) => projectConversationEvent(event, self.actorId, replies.get(event.id))),
+    conversation: conversation.map((event) =>
+      projectConversationEvent(event, self.actorId, replies.get(event.id)),
+    ),
   };
 }
 export function nativePlayerEvents(
@@ -575,16 +922,26 @@ export function nativePlayerEvents(
     perception.cut.privacyRevision !== read.privacyRevision
   )
     throw new Error('The captured player event cut is unavailable.');
-  return boundPlayerEvents(
+  const selected = boundPlayerEvents(
     read.accounts.flatMap((account) => {
       const evidence =
         account.evidence !== undefined
           ? personalEventEvidence(account.evidence)
           : receivedEventEvidence(self.actorId, account.values ?? []);
-      return evidence ? [projectEventEvidence(account.original, evidence)] : [];
+      if (!evidence) return [];
+      const event = projectEventEvidence(account.original, evidence);
+      // A temporary text wrapper avoids retaining a rendered-text memo in
+      // the immutable native input when the journal selector checks movement.
+      if (typeof event.text !== 'string') event.text = { ...event.text };
+      return [event];
     }),
     selectedPlayerViewRules({ profile: definitions.profile }),
   );
+  // Only selected events need their presentation; journal and conversation
+  // share the same wording and captured names.
+  for (const event of selected)
+    if (typeof event.text !== 'string') event.text = nativeText(event.text);
+  return selected;
 }
 
 /** Sealed native preparation emits this only after the actual standing reply. */
@@ -695,15 +1052,15 @@ export function nativeCanUseInventory(
   );
 }
 
-/** Consume the same complete contact formatter as projectView. The returned
- * bindings remain private to the application and must be revalidated with the
- * request's accepted-cut/privacy fence before delivery or command resolution. */
+/** Consume the same complete contact formatter as projectView. Delivery still
+ * requires the request's accepted-cut/privacy fence. */
 export function nativePlayerEntities(
   self: NativePlayerActorSelf,
   perception: NativePlayerActorPerception,
   definitions: NativePlayerViewDefinitions,
   scope: RequestScope,
-): { entities: EntityView[]; bindings: ReadonlyMap<string, NativePlayerBodyBinding> } {
+  capacity: ViewCapacity,
+): EntityView[] {
   if (
     self.worldId !== perception.worldId ||
     self.actorId !== perception.actorId ||
@@ -714,24 +1071,52 @@ export function nativePlayerEntities(
   )
     throw new Error('Native player capture scope differs.');
   const referenceScope = { id: self.worldId };
+  const bodyScope = scopeKey(scope);
   const detailTime = (at: number) => (at === perception.sightConfirmedThrough ? undefined : at);
   const playerCanSpeak = self.speech && !self.speechBlocked;
-  const readerRevision = tradeReaderRevisionFor(self.worldId, self.actorId, {
-    inventoryRevision: self.player.inventoryRevision,
-    bodyRevision: bodyEligibilityRevisionFor({
-      manifest: self.player.moduleRevision,
-      ...definitions.bodyEligibility,
-      body: self.player.body,
-    }),
-    actionId: self.action?.id,
-    actionStage: self.action?.stage,
-    heldStock: self.player.heldStock,
-    moduleRevision: self.player.moduleRevision,
-    spatialRevision: self.player.spatialRevision,
-    definitionsRevision: definitions.tradeDefinitionsRevision,
-  });
-  const bindings = new Map<string, NativePlayerBodyBinding>();
-  const entities = perception.bodies.map((binding): EntityView => {
+  const bodyWitness = {
+    manifest: self.player.moduleRevision,
+    ...definitions.bodyEligibility,
+    body: self.player.body,
+  };
+  const readerRevision = formatWithJsonWorkspace(
+    capacity,
+    bodyWitness,
+    () => {
+      const input = {
+        inventoryRevision: self.player.inventoryRevision,
+        bodyRevision: bodyEligibilityRevisionFor(bodyWitness),
+        actionId: self.action?.id,
+        actionStage: self.action?.stage,
+        heldStock: self.player.heldStock,
+        moduleRevision: self.player.moduleRevision,
+        spatialRevision: self.player.spatialRevision,
+        definitionsRevision: definitions.tradeDefinitionsRevision,
+      };
+      return formatWithJsonWorkspace(
+        capacity,
+        [
+          'personal-source',
+          self.worldId,
+          self.actorId,
+          [
+            'trade-reader-owner',
+            input.inventoryRevision,
+            input.bodyRevision,
+            input.actionId,
+            input.actionStage,
+            input.heldStock,
+            input.moduleRevision,
+            input.spatialRevision,
+            input.definitionsRevision,
+          ],
+        ],
+        () => tradeReaderRevisionFor(self.worldId, self.actorId, input),
+      );
+    },
+    true,
+  );
+  return perception.bodies.map((binding): EntityView => {
     const captured = perception.cut.current.slice(binding.first, binding.first + binding.count);
     const current = captured.map(nativeCurrentValue);
     const received = current.find((facet) => facet.value.kind === 'body');
@@ -766,16 +1151,16 @@ export function nativePlayerEntities(
       binding.physicalLife ?? 0,
       binding.leaseId,
     );
-    bindings.set(contact, binding);
     return projectObservedEntity({
       references: {
         id: contact,
-        bodyReference: bodyReferenceFor(
-          scopeKey(scope),
-          binding.sourceId,
-          binding.physicalLife ?? 0,
+        bodyReference: bodyReferenceFor(bodyScope, binding.sourceId, binding.physicalLife ?? 0),
+        contextActionRevision: formatWithJsonWorkspace(
+          capacity,
+          binding.player.context,
+          () => contextActionRevisionFor(bodyScope, binding.player.context),
+          true,
         ),
-        contextActionRevision: contextActionRevisionFor(scopeKey(scope), binding.player.context),
       },
       ...(binding.player.attentionPreference !== undefined
         ? { attentionPreference: binding.player.attentionPreference }
@@ -851,5 +1236,4 @@ export function nativePlayerEntities(
         : {}),
     });
   });
-  return { entities, bindings };
 }
