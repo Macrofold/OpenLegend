@@ -46,7 +46,8 @@ export class NativePrivateHistoryCapture {
     }
   }
   get facts(): NativePrivateHistoryPacket {
-    if (!this.packetValue) throw new Error('Private history were released.');
+    if (!this.packetValue)
+      throw new Error('Private history query metadata is no longer available.');
     return this.packetValue;
   }
   tailRequest() {
@@ -86,6 +87,13 @@ export class NativePrivateHistoryCapture {
       this.inventory = freezeNativeProduct(
         decodeNativeProduct<NativeNpcSourceInventory>(await this.read.sources()),
       );
+      if (this.packetValue?.purpose === 'recent') {
+        // SQL selection has consumed this directory/eligibility projection.
+        // The opaque read still owns its scope and admitted receipt inventory;
+        // ending the Node query input does not end that held-source permission.
+        releaseNativeProduct(this.packetValue);
+        this.packetValue = undefined;
+      }
       return this.inventory;
     } catch (error) {
       // Await the sole private cursor's cancellation before the service lane

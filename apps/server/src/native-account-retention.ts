@@ -435,6 +435,7 @@ export async function readNativeRestoreRetention(
               );
             const metadata = new RetentionMetadata();
             metadata.initializeIndexed(baseline);
+            let pageRoots: NativeWorldConsumer[] | undefined;
             const [membership] = await metadata
               .view(request.binding.worldId, pending)
               .survivingMembershipBatch(
@@ -465,10 +466,23 @@ export async function readNativeRestoreRetention(
                     recognitionSupportSourceIds: supportSources,
                   },
                   reserveBytes: (bytes) => {
-                    roots.push(capacity.reserveBytes(bytes));
+                    (pageRoots ?? roots).push(capacity.reserveBytes(bytes));
                   },
                   reserveJson: (bytes) => {
-                    roots.push(capacity.reserveJson(bytes));
+                    (pageRoots ?? roots).push(capacity.reserveJson(bytes));
+                  },
+                  withPage: async (operation) => {
+                    pageRoots = [];
+                    try {
+                      return await operation();
+                    } finally {
+                      // Membership adds only request-supplied alias/individual
+                      // strings to the outer sets. Their counts/backing are
+                      // covered by the selected-input admission above; no
+                      // decoded page or shared-value body escapes this frame.
+                      for (const root of pageRoots) root.release();
+                      pageRoots = undefined;
+                    }
                   },
                 },
               );

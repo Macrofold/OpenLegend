@@ -164,6 +164,7 @@ impl RestoreReconcileCursor {
             return Err(ExecutionError::Invariant);
         }
         let storage = budget.reserve(std::mem::size_of::<Self>())?;
+        core.state.occurrences.materialize_empty_archive_count();
         let metadata = begin_restore_metadata(core, input.metadata, budget)?;
         let privacy = RestorePrivacyCursor::new(core, input.privacy, key, limits, budget)?;
         Ok(Self {

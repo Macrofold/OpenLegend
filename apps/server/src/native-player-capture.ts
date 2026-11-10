@@ -5,7 +5,12 @@ import type { NativeGeometryProviders } from './native-geometry.js';
 import type { NativePlayerRead } from './native-player-view.js';
 import { ViewChangedError } from './player-view-async.js';
 import type { PlayerInteractionFacts } from './player-interaction.js';
-import { decodeNativeProduct, encodeNativeJson, freezeNativeProduct } from './native-consumer.js';
+import {
+  decodeNativeProduct,
+  encodeNativeJson,
+  freezeNativeProduct,
+  releaseNativeProduct,
+} from './native-consumer.js';
 
 type NativeInteractionFacts = Omit<
   PlayerInteractionFacts,
@@ -57,7 +62,11 @@ export class NativePlayerCapture {
         const query =
           decodeNativeProduct<Parameters<NativeGeometryProviders['compute']>[0]>(question);
         const answers = await geometry.compute(query);
-        await read.finishControls(Buffer.from(JSON.stringify(answers)));
+        try {
+          await read.finishControls(Buffer.from(JSON.stringify(answers)));
+        } finally {
+          releaseNativeProduct(answers);
+        }
       }
       return new NativePlayerCapture(
         freezeNativeProduct(decodeNativeProduct<PlayerPacket>(await read.packet())),

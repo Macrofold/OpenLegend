@@ -18,6 +18,8 @@ import { nativeRecordLayouts, nativeStorageSettings } from './native-install-inp
 import { NativeDefinitionCapture } from './native-definition-capture.js';
 import {
   decodeNativeProduct,
+  copyNativeProduct,
+  retainNativeProduct,
   retainNativeSources,
   withNativeJsonInput,
   encodeNativeJson,
@@ -45,6 +47,9 @@ import {
 import { ACCOUNT_RETENTION_PREPARATION } from './account-retention.js';
 import { SUPPORT_MEMBERSHIP_PREPARATION } from './retention-cleanup.js';
 import { SOURCE_RETENTION_CLOSURE_ROUNDS } from './source-version-retention.js';
+import type { OperationalSettings } from './native-world-service.js';
+import type { CommandEpoch } from './command-receipts.js';
+import type { NativeMilestones } from './native-milestones.js';
 
 /** One inactive native preparation and its genuine Ready fence stay owned
  * through the outer SQL outcome. Neither rejection nor activation fabricates
@@ -53,16 +58,20 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
   private settled = false;
   private receipt?: NativeWorldAdoption;
   private temporalEdits?: ReturnType<typeof nativeTemporalPageEdits>;
-  readonly installation;
-  readonly inputs;
-  readonly archives;
-  readonly archiveBaseline;
+  private publicationOwner?: NativeRestorePublication;
+  private installationOwner?: NativeRestoreProjection['installation'];
+  private inputsOwner?: NativeRestoreProjection['inputs'];
+  private archivesOwner?: NativeRestoreProjection['archives'];
+  private archiveBaselineOwner?: NativeRestoreProjection['archiveBaseline'];
   readonly retentionCapacity;
   readonly pending: NativePendingSave;
   readonly retention: NativeRetention;
-  readonly retained: NativeRetainedValues;
-  readonly operational;
-  readonly milestones;
+  private retainedOwner?: NativeRetainedValues;
+  private clearProspective?: () => void;
+  private operationalOwner?: OperationalSettings;
+  private milestonesOwner?: NativeMilestones;
+  private privacyOwner?: ExperiencePrivacy;
+  private epochOwner?: CommandEpoch;
   readonly actors: NativeActorRoster;
   readonly providers;
 
@@ -72,20 +81,26 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
     readonly geometry: ReturnType<NativeDefinitionCapture['geometry']>,
     readonly turn: NativeWorldTurn,
     private readonly prepared: NativeWorldPrepared,
-    readonly publication: NativeRestorePublication,
+    publication: NativeRestorePublication,
     private readonly allocation: ReturnType<HostWork['reserveAllocation']>,
     stage: NativeRestoreStage,
     store: SqlGameRepository,
     timeline: string,
+    epoch: CommandEpoch,
     history: Awaited<ReturnType<typeof nativeRestoredHistory>>,
     backgroundSearchAdmission: () => boolean,
     currentRetained: (world: NativeWorld) => NativeRetainedValues | undefined,
   ) {
+    this.publicationOwner = publication;
     const restored = publication.restore;
-    this.installation = retainNativeSources(restored.installation, publication);
+    this.installationOwner = retainNativeSources(restored.installation, publication);
     const changes = retainNativeSources(nativeRecordChanges(restored.changes), publication);
     let temporal: ReturnType<typeof nativeTemporalPageEdits> | undefined;
     try {
+      this.epochOwner = epoch;
+      this.privacyOwner = retainNativeProduct(
+        copyNativeProduct(world, publication.restoreMetadata.privacy),
+      );
       // These are the inactive checkpoint journal's first-before/final-after
       // pages. SQL revokes their exact receipts after writing this same delta.
       temporal = nativeTemporalPageEdits(
@@ -97,8 +112,11 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
       this.temporalEdits = temporal;
       changes.temporalEdits = temporal;
       retainNativeSources(changes, publication, temporal);
-      this.archives = retainNativeSources(publication.restoreMetadata.keptArchives, publication);
-      this.archiveBaseline = retainNativeSources(
+      this.archivesOwner = retainNativeSources(
+        publication.restoreMetadata.keptArchives,
+        publication,
+      );
+      this.archiveBaselineOwner = retainNativeSources(
         publication.restoreMetadata.archiveBaseline,
         publication,
       );
@@ -106,7 +124,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
         reserveBytes: (bytes: number) => world.reserveConsumerBytes(bytes),
         reserveJson: (bytes: Buffer) => world.reserveConsumerJson(bytes),
       };
-      this.inputs = retainNativeSources(
+      this.inputsOwner = retainNativeSources(
         {
           worldId: restored.worldId,
           initial: false,
@@ -120,7 +138,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
             publication.sourceVersions,
           ),
           outcomes: [],
-          privacy: publication.restoreMetadata.privacy,
+          privacy: this.privacy,
           privacyChanged: true,
           invalidations: publication.invalidatedMemoryIds ?? {},
           hotEventIds: [],
@@ -139,7 +157,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
         },
         world,
       );
-      this.retained = retainNativeSources(
+      this.retainedOwner = retainNativeSources(
         {
           worldId: restored.worldId,
           generation: restored.generation,
@@ -151,6 +169,9 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
       const pending = this.pending,
         worldId = restored.worldId;
       let prospective: NativeRetainedValues | undefined = this.retained;
+      this.clearProspective = () => {
+        prospective = undefined;
+      };
       this.providers = {
         liveReadCuts: () => pending.liveReadCuts(),
         retainedValues: (id: string) => {
@@ -169,22 +190,25 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
       const host =
         restored.changes.writes['data_world']?.find((row) => row.id === '[]') ??
         stage.source.records.tables['data_world']!.find((row) => row.id === '[]')!;
-      this.operational = JSON.parse(host.payload) as {
-        speed: number;
-        manuallyPaused: boolean;
-        presentationRelease?: import('@open-legend/assets').AssetRevisionReference;
-        presentationReleaseRevision?: number;
-      };
-      this.milestones = nativeMilestoneUpdates(
-        world,
-        Object.fromEntries(
-          (stage.source.records.tables['actor_milestones'] ?? []).map((row) => [
-            row.slot,
-            JSON.parse(row.payload) as Record<string, boolean>,
-          ]),
-        ),
-        restored.changes,
+      this.operationalOwner = retainNativeProduct(
+        copyNativeProduct(world, JSON.parse(host.payload) as OperationalSettings),
       );
+      this.milestonesOwner = retainNativeProduct(
+        copyNativeProduct(
+          world,
+          Object.fromEntries(
+            (stage.source.records.tables['actor_milestones'] ?? []).map((row) => [
+              row.slot,
+              JSON.parse(row.payload) as Record<string, boolean>,
+            ]),
+          ),
+        ),
+      );
+      const updatedMilestones = nativeMilestoneUpdates(world, this.milestones, restored.changes);
+      if (updatedMilestones !== this.milestones) {
+        releaseNativeProduct(this.milestones);
+        this.milestonesOwner = updatedMilestones;
+      }
       this.actors = NativeActorRoster.capture(
         world,
         stage.source.records.tables['sim_actors'] ?? [],
@@ -222,6 +246,9 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
       releaseNativeProduct(changes);
       if (temporal) releaseNativeProduct(temporal);
       this.temporalEdits = undefined;
+      this.releaseMetadata();
+      releaseNativeProduct(history);
+      this.releaseProducts();
       throw error;
     }
   }
@@ -237,12 +264,91 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
     releaseNativeProduct(temporal);
   }
 
+  private metadata<T extends object>(value: T | undefined): T {
+    if (!value) throw new Error('Native restore metadata was released or transferred.');
+    return value;
+  }
+  get publication(): NativeRestorePublication {
+    return this.metadata(this.publicationOwner);
+  }
+  get installation(): NativeRestoreProjection['installation'] {
+    return this.metadata(this.installationOwner);
+  }
+  get inputs(): NativeRestoreProjection['inputs'] {
+    return this.metadata(this.inputsOwner);
+  }
+  get archives(): NativeRestoreProjection['archives'] {
+    return this.metadata(this.archivesOwner);
+  }
+  get archiveBaseline(): NativeRestoreProjection['archiveBaseline'] {
+    return this.metadata(this.archiveBaselineOwner);
+  }
+  get retained(): NativeRetainedValues {
+    return this.metadata(this.retainedOwner);
+  }
+
+  /** Only a discarded, undisclosed preparation ends these independent pins.
+   * Successful adoption and an unknown SQL outcome keep their actual owners. */
+  private releaseProducts(): void {
+    const publication = this.publicationOwner,
+      installation = this.installationOwner,
+      inputs = this.inputsOwner,
+      archives = this.archivesOwner,
+      baseline = this.archiveBaselineOwner,
+      retained = this.retainedOwner;
+    this.publicationOwner = this.installationOwner = this.inputsOwner = undefined;
+    this.archivesOwner = this.archiveBaselineOwner = this.retainedOwner = undefined;
+    this.clearProspective?.();
+    this.clearProspective = undefined;
+    if (inputs) {
+      releaseNativeProduct(inputs.history);
+      releaseNativeProduct(inputs);
+    }
+    if (retained) {
+      releaseNativeProduct(retained.ids);
+      releaseNativeProduct(retained);
+    }
+    if (archives) releaseNativeProduct(archives);
+    if (baseline) releaseNativeProduct(baseline);
+    if (installation) releaseNativeProduct(installation);
+    if (publication) releaseNativeProduct(publication);
+  }
+  get operational(): OperationalSettings {
+    return this.metadata(this.operationalOwner);
+  }
+  get milestones(): NativeMilestones {
+    return this.metadata(this.milestonesOwner);
+  }
+  get privacy(): ExperiencePrivacy {
+    return this.metadata(this.privacyOwner);
+  }
+  get epoch(): CommandEpoch {
+    return this.metadata(this.epochOwner);
+  }
+
+  /** The service first adopts these exact prepared products synchronously. */
+  transferMetadata(): void {
+    this.operationalOwner = this.milestonesOwner = this.privacyOwner = this.epochOwner = undefined;
+  }
+  private releaseMetadata(): void {
+    const operational = this.operationalOwner,
+      milestones = this.milestonesOwner,
+      privacy = this.privacyOwner,
+      epoch = this.epochOwner;
+    this.transferMetadata();
+    if (operational) releaseNativeProduct(operational);
+    if (milestones) releaseNativeProduct(milestones);
+    if (privacy) releaseNativeProduct(privacy);
+    if (epoch) releaseNativeProduct(epoch);
+  }
+
   static async prepare(request: {
     readonly host: NativeHost;
     readonly stage: NativeRestoreStage;
     readonly store: SqlGameRepository;
     readonly work: HostWork;
     readonly timeline: string;
+    readonly epoch: CommandEpoch;
     readonly privacy: ExperiencePrivacy;
     readonly checkpointPrivacy: ExperiencePrivacy;
     readonly current: () => void;
@@ -289,6 +395,8 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
     let turn: NativeWorldTurn | undefined;
     let allocation: ReturnType<HostWork['reserveAllocation']> | undefined;
     let result: NativeRestorePreparation | undefined;
+    let publication: NativeRestorePublication | undefined;
+    let history: Awaited<ReturnType<typeof nativeRestoredHistory>> | undefined;
     try {
       const initial = decodeNativeProduct<NativeRestoreProjection['installation']>(
         await world.installation(),
@@ -348,9 +456,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
       allocation = request.work.reserveAllocation(
         JSON.parse(turn.prepared.allocation()) as WorkVector,
       );
-      const publication = decodeNativeProduct<NativeRestorePublication>(
-        turn.prepared.takePublication(),
-      );
+      publication = decodeNativeProduct<NativeRestorePublication>(turn.prepared.takePublication());
       if (
         !publication.restore ||
         publication.restore.worldId !== initial.worldId ||
@@ -358,12 +464,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
         publication.restore.revision !== stage.revision
       )
         throw new Error('Native restore output does not bind the staged checkpoint.');
-      const history = await nativeRestoredHistory(
-        publication,
-        request.checkpointPrivacy,
-        store.db,
-        cut,
-      );
+      history = await nativeRestoredHistory(publication, request.checkpointPrivacy, store.db, cut);
       result = new NativeRestorePreparation(
         world,
         definitions,
@@ -375,6 +476,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
         stage,
         store,
         request.timeline,
+        request.epoch,
         history,
         request.backgroundSearchAdmission,
         request.currentRetained,
@@ -385,6 +487,10 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
       return result;
     } catch (error) {
       result?.releaseTemporalEdits();
+      result?.releaseProducts();
+      if (history) releaseNativeProduct(history);
+      if (publication) releaseNativeProduct(publication);
+      result?.releaseMetadata();
       result?.actors.release();
       result?.retention.release();
       if (turn?.kind === 'prepared') await world.cancel(turn.key);
@@ -401,6 +507,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
     if (this.settled) throw new Error('Native restore settlement was already decided.');
     this.settled = true;
     this.releaseTemporalEdits();
+    this.releaseMetadata();
     if (this.prepared.settle(false) || (await this.world.finishSettlement(this.turn.key)))
       throw new Error('Rejected native restore unexpectedly accepted its candidate.');
     this.allocation.rollback();
@@ -410,6 +517,8 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
     this.definitions.release();
     this.actors.release();
     this.retention.release();
+    this.pending.release();
+    this.releaseProducts();
   }
 
   retainReceipt(receipt: NativeWorldAdoption): void {

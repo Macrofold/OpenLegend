@@ -1687,9 +1687,6 @@ export class SqlGameRepository implements GameRepository {
         prepared.retentionCapacity,
       );
       await this.applyCommitInputs(inputs, revision, { deferSources: true });
-      const archives = await nativeRestoredArchives(this.db, owner.worldId, inputs.privacy);
-      assertNativeRestoredArchives(prepared.archives, archives.selected);
-      await applyNativeRestoredArchives(this.db, revision, archives);
       this.memories.configureAllowance(installation.memoryAllowance);
       for await (const sources of nativeRestoredSourceBatches(this.db, owner.worldId))
         await this.memories.writeSources(
@@ -1699,6 +1696,12 @@ export class SqlGameRepository implements GameRepository {
           this.memories.prepareSources(owner.worldId, sources, installation.memoryAllowance),
         );
       await this.memories.reconcile(owner.worldId, affected);
+      // Deferred projection removed the old derivation edges. Rebuild the
+      // actual current-source index before checking which archives it retains,
+      // just as each private provider view does before its indexed read.
+      const archives = await nativeRestoredArchives(this.db, owner.worldId, inputs.privacy);
+      assertNativeRestoredArchives(prepared.archives, archives.selected);
+      await applyNativeRestoredArchives(this.db, revision, archives);
       await this.receivedOwnership.project(owner.worldId, revision, inputs.changes, true);
       await this.receivedOwnership.validate(owner.worldId, 'retained');
       if ((await this.history.auditEventCount(owner.worldId)) !== installation.historyEventCount)

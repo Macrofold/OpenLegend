@@ -77,7 +77,7 @@ export function decodeSourceJson<T>(text: string, decode: () => T, copies = 1): 
 
 /** Generated DTO strings, pins and selected IDs outlive parser workspace.
  * Independent custody lasts through input encoding, without retaining a world. */
-export function retainPreparedSource<T extends object>(value: T): T {
+export function retainPreparedSource<T>(value: T): T {
   const section = preparation.getStore();
   if (!section) return value;
   // A row's selected IDs escape into the surrounding SQL selection, not the

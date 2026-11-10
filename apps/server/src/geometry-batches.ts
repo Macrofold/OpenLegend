@@ -138,5 +138,6 @@ export class GeometryBatches {
     this.closed = true;
     for (const slot of this.slots) this.retire(slot);
     await Promise.all(this.retirements);
+    this.failedMap = undefined;
   }
 }

@@ -754,6 +754,9 @@ export class WorldRecords {
   ): RecordChanges {
     const changes: RecordChanges = { writes: new Map(), deletes: new Map(), rows: 0 };
     const retirement = readOnlyMetadata ? undefined : this.retirements.get(after);
+    const absentRetirements = new Map(
+      [...(retirement?.rows ?? [])].map(([table, ids]) => [table, new Set(ids)]),
+    );
     const required = selectedTables ? new Set(selectedTables) : undefined;
     if (required)
       for (const table of selectedTables!) {
@@ -775,8 +778,13 @@ export class WorldRecords {
       knownAbsent = false,
     ) => {
       if (required && !required.has(node.table)) return;
-      if (old === next && oldPosition === position && !this.needsHotPrune) return;
+      const retired = absentRetirements.get(node.table);
+      if (old === next && oldPosition === position && !this.needsHotPrune) {
+        if (next !== undefined && retired?.size) retired.delete(recordId(path));
+        return;
+      }
       const id = recordId(path);
+      if (next !== undefined) retired?.delete(id);
       // A scoped cold edit supplies its exact canonical predecessor, not a new
       // logical owner. Segment descendants must diff that stored layout too.
       if (
@@ -1262,8 +1270,11 @@ export class WorldRecords {
         }
         const written = new Set((changes.writes.get(table) ?? []).map((row) => row.id));
         const deletes = new Set(changes.deletes.get(table) ?? []);
+        // A rewind can recreate the same impression already stored in the
+        // current timeline. An unchanged surviving row needs no upsert, but
+        // its source retirement must not turn that absence into a deletion.
         for (const id of ids)
-          if (!written.has(id)) {
+          if (!written.has(id) && absentRetirements.get(table)?.has(id)) {
             deletes.add(id);
             if (table === 'mind_temporal_pages') {
               const page = retirement?.previous.get(table)?.get(id) as

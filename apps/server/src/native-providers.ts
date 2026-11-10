@@ -27,6 +27,7 @@ import {
   retainNativeProduct,
   retainNativeSources,
   withNativeConsumerScope,
+  withNativeUtf8Input,
 } from './native-consumer.js';
 import type { SqlDatabase } from './store.js';
 import type { LiveReadCutsProvider } from './live-read-overlay.js';
@@ -308,8 +309,14 @@ async function prepareProviderAnswer(
         throw new Error('Native source preparation has no accepted SQL read cut.');
       return JSON.stringify(await readNativeNpcSources(history.db, request, cut));
     }
-    case 'geometry':
-      return JSON.stringify(await geometry.compute(value as NativeGeometryQueries));
+    case 'geometry': {
+      const answer = await geometry.compute(value as NativeGeometryQueries);
+      try {
+        return JSON.stringify(answer);
+      } finally {
+        releaseNativeProduct(answer);
+      }
+    }
     case 'utterance': {
       const request = value as { binding: Binding; text: Parameters<typeof nativeUtterance>[0] };
       return JSON.stringify({ binding: request.binding, ...nativeUtterance(request.text) });
@@ -370,7 +377,10 @@ export async function driveNativeOperation(
       const answer = await answerNativeProvider(turn.provider, geometry, history);
       try {
         if (signal?.aborted) throw signal.reason ?? new Error('Native request was canceled.');
-        turn = await world.answer(turn.key, turn.provider, Buffer.from(answer.json, 'utf8'));
+        const { key, provider } = turn;
+        turn = await withNativeUtf8Input(world, answer.json, (bytes) =>
+          world.answer(key, provider!, bytes),
+        );
       } finally {
         releaseNativeProduct(answer);
       }
@@ -421,11 +431,9 @@ async function driveNativeNpcPreparation(
       const answer = await answerNativeProvider(turn.provider, geometry, history);
       try {
         signal?.throwIfAborted();
-        turn = await world.answerNpcPreparation(
-          read,
-          turn.key,
-          turn.provider,
-          Buffer.from(answer.json),
+        const { key, provider } = turn;
+        turn = await withNativeUtf8Input(world, answer.json, (bytes) =>
+          world.answerNpcPreparation(read, key, provider!, bytes),
         );
       } finally {
         releaseNativeProduct(answer);

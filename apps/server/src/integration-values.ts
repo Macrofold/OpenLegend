@@ -1,4 +1,9 @@
 import type { SqlDatabase } from './store.js';
+import {
+  parseSourceJson,
+  prepareNativeSourceSync,
+  retainPreparedSource,
+} from './native-source-preparation.js';
 
 const MAX_ENTRIES = 512;
 const MAX_BYTES = 2 * 1024 * 1024;
@@ -68,7 +73,9 @@ export class IntegrationValues {
     }
     const value = await entry.value;
     // Consumers may edit their result; only encoded, immutable data is shared.
-    return value === undefined ? undefined : JSON.parse(value);
+    return value === undefined
+      ? undefined
+      : prepareNativeSourceSync(() => retainPreparedSource(parseSourceJson(value)));
   }
 
   private trim(): void {

@@ -104,7 +104,54 @@ export function nativeJsonEncodingWorkspace(value: unknown): number {
 // end before the next sibling starts. api/api.h keeps at most one spare block.
 // Account one active-block rounding margin + that spare (1,022 addresses each),
 // the inline 2,048-byte builder, 64-entry key cache and stringifier headers.
-const jsonFixedWorkspace = 2 * (1024 - 2) * 8 + 2048 + 64 * 8 + 32 * 8;
+export const nativeJsonFixedWorkspace = 2 * (1024 - 2) * 8 + 2048 + 64 * 8 + 32 * 8;
+// Source canonicalJson uses Object.entries pairs, filter/sort/map and join.
+// Add each pair's own array/backing beyond the shared aggregate slot bound.
+function pairWorkspace(value: unknown): number {
+  if (value === null || typeof value !== 'object') return 0;
+  let bytes = 0;
+  if (Array.isArray(value)) {
+    for (let index = 0; index < value.length; index++) bytes += pairWorkspace(value[index]);
+  } else {
+    for (const key in value)
+      if (Object.hasOwn(value, key))
+        bytes += 64 + pairWorkspace((value as Record<string, unknown>)[key]);
+  }
+  return bytes;
+}
+
+function objectDepth(value: unknown): number {
+  if (value === null || typeof value !== 'object') return 0;
+  let child = 0;
+  if (Array.isArray(value)) {
+    for (let index = 0; index < value.length; index++)
+      child = Math.max(child, objectDepth(value[index]));
+    return child;
+  }
+  for (const key in value)
+    if (Object.hasOwn(value, key))
+      child = Math.max(child, objectDepth((value as Record<string, unknown>)[key]));
+  return 1 + child;
+}
+
+// Node22.23.2 third_party/v8/builtins/array-sort.tq: each active object sort
+// owns 85 pending-run slots, at least 32 temporary slots, SortState and the
+// fixed entries/filter/map/work array headers. Dynamic slots are counted above.
+const sortFrame = (85 + 32 + 32 + 32) * 8;
+/** Source canonicalJson emits primitive leaves with JSON.stringify, then joins
+ * ordered child strings. This is temporary encoder work, not a retained graph.
+ * Eight wire bytes cover Unicode leaf builder growth, input flattening and
+ * parent-join overlap; callers admit any retained result independently. */
+export function nativeCanonicalJsonWorkspace(value: unknown, bytes: number): number {
+  return (
+    nativeJsonFixedWorkspace +
+    nativeJsonEncodingWorkspace(value) +
+    pairWorkspace(value) +
+    sortFrame * objectDepth(value) +
+    8 * bytes
+  );
+}
+
 function jsonAncestorWorkspace(value: unknown): number {
   if (value === null || typeof value !== 'object') return 0;
   let own = 32 * 8,
@@ -177,7 +224,7 @@ export function encodeNativeJson(
   if (installation && (value === null || typeof value !== 'object' || Array.isArray(value)))
     throw new Error('Native installation encoding requires its plain record root.');
   const root = value as Record<string, unknown>;
-  const shape = jsonFixedWorkspace + jsonAncestorWorkspace(value);
+  const shape = nativeJsonFixedWorkspace + jsonAncestorWorkspace(value);
   let flattenUnits = 0;
   if (installation) {
     for (const key in root)
@@ -259,6 +306,24 @@ export async function withNativeJsonInput<T>(
     return await consume(input);
   } finally {
     releaseNativeProduct(input);
+  }
+}
+
+/** Already encoded provider/canonical text still needs its own UTF-8 carrier.
+ * Keep that exact Buffer admitted until the borrowing native call settles. */
+export async function withNativeUtf8Input<T>(
+  world: Pick<NativeWorld, 'reserveConsumerBytes'>,
+  text: string,
+  consume: (bytes: Buffer) => Promise<T>,
+): Promise<T> {
+  const bytes = Buffer.byteLength(text);
+  const allocation = world.reserveConsumerBytes(bytes + 256);
+  try {
+    const buffer = Buffer.allocUnsafeSlow(bytes);
+    buffer.write(text, 0, 'utf8');
+    return await consume(buffer);
+  } finally {
+    allocation.release();
   }
 }
 

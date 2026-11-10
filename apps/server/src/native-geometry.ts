@@ -27,22 +27,29 @@ import {
 import { GeometryBatches } from './geometry-batches.js';
 import { NavigationPreparation } from './navigation/preparation.js';
 import { WorkLane } from './work-lane.js';
+import { releaseNativeProduct, retainNativeSources } from './native-consumer.js';
 
 /** Physical preparation retains one immutable provider map, never a WorldState.
  * Native owns the bodies, action, permission and acquiring observer. The caller
  * keeps the candidate private while awaiting and verifies the returned binding.
  */
 export class NativeGeometryProviders {
-  private readonly map: SpatialMap;
+  private mapValue?: SpatialMap;
   private readonly batches = new GeometryBatches();
   private readonly navigation = new NavigationPreparation();
   private readonly navigationLane = new WorkLane('native.navigation', 64, 20_000);
   private closed = false;
   private active = false;
+  private computing?: Promise<void>;
 
   constructor(map: SpatialMap) {
     validateSpatialMap(map);
-    this.map = immutableDataSnapshot(map);
+    this.mapValue = immutableDataSnapshot(map);
+  }
+
+  private get map(): SpatialMap {
+    if (!this.mapValue) throw new Error('Native physical provider is closed.');
+    return this.mapValue;
   }
 
   async compute(queries: NativeGeometryQueries): Promise<NativeGeometryAnswers> {
@@ -51,6 +58,11 @@ export class NativeGeometryProviders {
     if (queries.binding.geometryRevision !== this.map.spatial.revision)
       throw new Error('Native physical preparation names stale geometry.');
     this.active = true;
+    let finished!: () => void;
+    const computing = new Promise<void>((resolve) => {
+      finished = resolve;
+    });
+    this.computing = computing;
     try {
       const sight: boolean[] = [];
       const walking: boolean[] = [];
@@ -141,25 +153,30 @@ export class NativeGeometryProviders {
       const routes = this.routes(queries);
       const navigation = await this.navigationAnswers(queries);
       if (this.closed) throw new Error('Native physical provider closed during preparation.');
-      return {
-        binding: queries.binding,
-        sight,
-        walking,
-        support,
-        standing,
-        surfaceLines,
-        sightSweeps,
-        sound,
-        routes,
-        navigation,
-        features,
-        featureIds,
-        convexViews,
-        bodySweeps,
-        standingColumns,
-      };
+      return retainNativeSources(
+        {
+          binding: queries.binding,
+          sight,
+          walking,
+          support,
+          standing,
+          surfaceLines,
+          sightSweeps,
+          sound,
+          routes,
+          navigation,
+          features,
+          featureIds,
+          convexViews,
+          bodySweeps,
+          standingColumns,
+        },
+        this,
+      );
     } finally {
       this.active = false;
+      this.computing = undefined;
+      finished();
     }
   }
 
@@ -258,8 +275,14 @@ export class NativeGeometryProviders {
 
   async close(): Promise<void> {
     this.closed = true;
+    const computing = this.computing;
     await Promise.all([this.batches.close(), this.navigation.close()]);
     await this.navigationLane.idle();
+    await computing;
+    // Returned answers hold an independent pin through their real encoder.
+    // The closed provider no longer owns or exposes its complete map.
+    this.mapValue = undefined;
+    releaseNativeProduct(this);
   }
 }
 

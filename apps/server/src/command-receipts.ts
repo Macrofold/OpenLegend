@@ -3,6 +3,7 @@ import { commandRecoveryFields, type RequestScope } from './authority.js';
 import { digest } from './content-digest.js';
 import type { SqlDatabase } from './store.js';
 import { z } from 'zod';
+import { decodeSourceJson } from './native-source-preparation.js';
 
 export const COMMAND_TABLES = ['gameplay_receipts'] as const;
 export const COMMAND_RETRY_MS = 24 * 60 * 60 * 1000;
@@ -68,14 +69,20 @@ export class CommandReceipts {
     >
   >();
   private readScheduled = false;
-  async get(worldId: string, id: string): Promise<GameplayReceipt | undefined> {
+  async get(
+    worldId: string,
+    id: string,
+    options?: { readonly isolatedRead: true },
+  ): Promise<GameplayReceipt | undefined> {
     // Protected enclosing transactions keep their own exact snapshot. Ordinary
     // request preparation shares one bounded cold lookup outside native mutation.
-    if (this.db.transactionActive) {
+    // A native caller's finite transfer/parser owner cannot be shared with a
+    // different caller's asynchronous batching lifetime.
+    if (this.db.transactionActive || options?.isolatedRead) {
       const row = await this.db
         .prepare('SELECT payload FROM gameplay_receipts WHERE world_id=? AND id=?')
         .get(worldId, id);
-      return row ? receiptSchema.parse(JSON.parse(String(row['payload']))) : undefined;
+      return row ? this.decode(String(row['payload'])) : undefined;
     }
     const result = new Promise<GameplayReceipt | undefined>((resolve, reject) => {
       let world = this.reads.get(worldId);
@@ -92,6 +99,11 @@ export class CommandReceipts {
     }
     return result;
   }
+  private decode(payload: string): GameplayReceipt {
+    // Native callers fund both the parser and Zod's validated object copy.
+    // Source callers have no native preparation owner and keep this same codec.
+    return decodeSourceJson(payload, () => receiptSchema.parse(JSON.parse(payload)), 2);
+  }
   private async readBatch(): Promise<void> {
     this.readScheduled = false;
     const pending = [...this.reads];
@@ -107,10 +119,7 @@ export class CommandReceipts {
             )
             .all(worldId, selected);
           const values = new Map(
-            rows.map((row) => [
-              String(row['id']),
-              receiptSchema.parse(JSON.parse(String(row['payload']))),
-            ]),
+            rows.map((row) => [String(row['id']), this.decode(String(row['payload']))]),
           );
           for (const id of selected)
             for (const waiter of entries.get(id)!) waiter.resolve(values.get(id));

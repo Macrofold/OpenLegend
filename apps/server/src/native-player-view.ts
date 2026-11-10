@@ -1,7 +1,7 @@
 import { isConversationEvent } from '@open-legend/domain';
 import type { GameView } from '@open-legend/protocol';
 import { scopeKey, type RequestScope } from './authority.js';
-import { retainNativeSources } from './native-consumer.js';
+import { retainNativeSources, releaseNativeProduct } from './native-consumer.js';
 import type { GameRepository } from './store.js';
 import type { PlayerPracticeLoader } from './player-self-view.js';
 import { playerHasWork } from './player-self-view.js';
@@ -139,9 +139,10 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
   if (scope.audience !== 'embodied')
     throw new Error('Native authorized-inspection presentation is unavailable.');
   const profile = await owner.profileFor(scope);
-  owner.assertScope(scope);
-  const read = await owner.capture(scope);
+  let read: NativePlayerRead | undefined;
   try {
+    owner.assertScope(scope);
+    read = await owner.capture(scope);
     const { self, perception, controls, clock, host } = read;
     if (
       host.access?.actorId !== scope.actorId ||
@@ -275,7 +276,7 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
       (canUseInventory, encode) => {
         const finalView = { ...projected, player: { ...projected.player, canUseInventory } };
         const bytes = encode(finalView);
-        request.publish(bytes, retainNativeSources(finalView, bytes));
+        request.publish(bytes, retainNativeSources(finalView, bytes, profile));
         return bytes;
       },
       () => {
@@ -294,6 +295,7 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
       },
     );
   } finally {
-    read.release();
+    read?.release();
+    releaseNativeProduct(profile);
   }
 }

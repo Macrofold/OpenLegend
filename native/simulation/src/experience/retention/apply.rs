@@ -398,12 +398,15 @@ impl AccountRetentionRead {
                 } else {
                     None
                 };
+                // Complete checkpoint expiry removes then appends the recalled
+                // member, just like a cold selected account. Its logical slot
+                // advances while the retirement proof preserves SQL position.
                 let slot = if prior.is_some()
-                    && !self.complete_checkpoint
-                    && !self.resident.iter().any(|candidate| {
-                        candidate.kind == PersonalSourceKind::Memory
-                            && candidate.id == record.header.reference.id
-                    }) {
+                    && (self.complete_checkpoint
+                        || !self.resident.iter().any(|candidate| {
+                            candidate.kind == PersonalSourceKind::Memory
+                                && candidate.id == record.header.reference.id
+                        })) {
                     Some(
                         core.state
                             .experience

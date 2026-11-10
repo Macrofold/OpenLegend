@@ -47,6 +47,7 @@ export interface IndexedRecentMembershipRead {
   readonly disclosure: TemporalReadContext;
   readonly reserveBytes: (bytes: number) => void;
   readonly reserveJson: (bytes: Buffer) => void;
+  withPage<T>(operation: () => Promise<T>): Promise<T>;
 }
 interface RecentMembershipRead {
   readonly at: number;
@@ -1209,24 +1210,25 @@ export class RetentionMetadataView {
           [...pageSizes.values()].reduce((sum, bytes) => sum + bytes, 0) * 4 +
             pageSizes.size * 2048,
         );
-        const pages = new Map<string, TemporalPage>();
-        for (const row of await db
+        const pages = await db
           .prepare('SELECT * FROM mind_temporal_pages WHERE world_id=? AND id=ANY(?::text[])')
-          .all(worldId, [...pageSizes.keys()])) {
-          indexed?.reserveJson(Buffer.from(String(row['payload'])));
-          pages.set(String(row['id']), readTemporalPageRecord(row));
-        }
-        if (pages.size !== pageSizes.size)
+          .all(worldId, [...pageSizes.keys()]);
+        if (pages.length !== pageSizes.size)
           throw new Error('Recent membership block is unavailable.');
-        const sources: Record<string, ReceivedValueLookup[string]> = {};
-        const references = [
-          ...new Set([...pages.values()].flatMap((page) => [...temporalPageReferences(page)])),
-        ];
-        for (const id of references) {
-          const value = world?.receivedValues?.sources[id];
-          if (value) sources[id] = value;
+        const proofsByPage = new Map<string, typeof rows>();
+        for (const proof of rows) {
+          if (proof['page_id'] === null || proof['page_id'] === undefined) continue;
+          const id = String(proof['page_id']);
+          let selected = proofsByPage.get(id);
+          if (!selected) proofsByPage.set(id, (selected = []));
+          selected.push(proof);
         }
-        const missing = references.filter((id) => !sources[id]);
+        // These canonical reference columns preflight the same raw value
+        // closure without retaining every decoded page at once. The page
+        // reader still verifies each column against its actual encoded body.
+        const references = [...new Set(pages.flatMap((row) => row['value_refs'] as string[]))];
+        const missing = references.filter((id) => !world?.receivedValues?.sources[id]);
+        const encodedValues = new Map<string, string>();
         if (missing.length) {
           const size = await db
             .prepare(
@@ -1245,23 +1247,39 @@ export class RetentionMetadataView {
               'SELECT source_id,payload FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
             )
             .all(worldId, missing)) {
-            indexed?.reserveJson(Buffer.from(String(row['payload'])));
-            sources[String(row['source_id'])] = JSON.parse(
-              String(row['payload']),
-            ) as ReceivedValueLookup[string];
+            encodedValues.set(String(row['source_id']), String(row['payload']));
           }
-          if (missing.some((id) => !sources[id]))
+          if (missing.some((id) => !encodedValues.has(id)))
             throw new Error('Recent membership values are unavailable.');
         }
-        for (const row of rows)
-          if (row['page_id'] !== null && row['page_id'] !== undefined)
-            this.accumulateRecentMembership(
-              pages.get(String(row['page_id']))!,
-              recentRead(requests[Number(row['key'])]!.actorId)!,
-              sources,
-              requests[Number(row['key'])]!,
-              results[Number(row['key'])]!,
-            );
+        for (const row of pages) {
+          const consume = async () => {
+            indexed?.reserveJson(Buffer.from(String(row['payload'])));
+            const page = readTemporalPageRecord(row);
+            const sources: Record<string, ReceivedValueLookup[string]> = {};
+            for (const id of temporalPageReferences(page)) {
+              const resident = world?.receivedValues?.sources[id];
+              if (resident) sources[id] = resident;
+              else {
+                const encoded = encodedValues.get(id);
+                if (encoded === undefined)
+                  throw new Error('Recent membership values are unavailable.');
+                indexed?.reserveJson(Buffer.from(encoded));
+                sources[id] = JSON.parse(encoded) as ReceivedValueLookup[string];
+              }
+            }
+            for (const proof of proofsByPage.get(String(row['id'])) ?? [])
+              this.accumulateRecentMembership(
+                page,
+                recentRead(requests[Number(proof['key'])]!.actorId)!,
+                sources,
+                requests[Number(proof['key'])]!,
+                results[Number(proof['key'])]!,
+              );
+          };
+          if (indexed) await indexed.withPage(consume);
+          else await consume();
+        }
       }
     }
     return results;

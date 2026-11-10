@@ -10,7 +10,10 @@ import {
 } from '@open-legend/domain';
 import {
   decodeNativeProduct,
+  copyNativeProduct,
   freezeNativeProduct,
+  releaseNativeProduct,
+  retainNativeProduct,
   retainNativeSources,
 } from './native-consumer.js';
 import { NativeGeometryProviders } from './native-geometry.js';
@@ -45,7 +48,7 @@ export interface NativeInstalledDefinitions {
  * come from that handle; neither operation reads live actors or saved history. */
 export class NativeDefinitionCapture {
   private constructor(
-    readonly worldId: string,
+    private identity: { readonly worldId: string } | undefined,
     private product: NativeInstalledDefinitions | undefined,
   ) {}
 
@@ -53,10 +56,28 @@ export class NativeDefinitionCapture {
     const installation = decodeNativeProduct<NativeCurrentWorldInstallation>(
       await world.installation(),
     );
-    const product = freezeNativeProduct(
-      decodeNativeProduct<NativeInstalledDefinitions>(await world.definitions()),
-    );
-    return new NativeDefinitionCapture(installation.worldId, product);
+    let product: NativeInstalledDefinitions | undefined;
+    let identity: { readonly worldId: string } | undefined;
+    try {
+      product = retainNativeProduct(
+        freezeNativeProduct(
+          decodeNativeProduct<NativeInstalledDefinitions>(await world.definitions()),
+        ),
+      );
+      identity = retainNativeProduct(copyNativeProduct(world, { worldId: installation.worldId }));
+      return new NativeDefinitionCapture(identity, product);
+    } catch (error) {
+      if (product) releaseNativeProduct(product);
+      if (identity) releaseNativeProduct(identity);
+      throw error;
+    } finally {
+      releaseNativeProduct(installation);
+    }
+  }
+
+  get worldId(): string {
+    if (!this.identity) throw new Error('The native definition capture was released.');
+    return this.identity.worldId;
   }
 
   get facts(): NativeInstalledDefinitions {
@@ -69,6 +90,7 @@ export class NativeDefinitionCapture {
     return retainNativeSources(
       nativePlayerViewDefinitions(this.worldId, actorId, facts.definitions),
       facts,
+      this.identity!,
     );
   }
 
@@ -97,6 +119,9 @@ export class NativeDefinitionCapture {
   }
 
   release(): void {
+    if (this.product) releaseNativeProduct(this.product);
+    if (this.identity) releaseNativeProduct(this.identity);
     this.product = undefined;
+    this.identity = undefined;
   }
 }

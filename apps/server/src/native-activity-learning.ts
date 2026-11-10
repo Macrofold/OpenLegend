@@ -13,6 +13,7 @@ import {
   decodeNativeProduct,
   releaseNativeProduct,
   retainNativeSources,
+  withNativeUtf8Input,
 } from './native-consumer.js';
 
 const origins = new WeakMap<MaintenanceLearningBatch, NativeWorldActivityLearningBatch>();
@@ -32,7 +33,10 @@ export async function prepareNativeActivityLearning(
       if (!turn.provider) throw new Error('Native learning has no provider question.');
       const answer = await answerNativeProvider(turn.provider, geometry, history);
       try {
-        turn = await world.answerActivityLearning(native, turn.provider, Buffer.from(answer.json));
+        const provider = turn.provider;
+        turn = await withNativeUtf8Input(world, answer.json, (bytes) =>
+          world.answerActivityLearning(native, provider, bytes),
+        );
       } finally {
         releaseNativeProduct(answer);
       }

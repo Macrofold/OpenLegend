@@ -147,6 +147,7 @@ impl HotOccurrencePlacement {
 #[derive(Clone, Copy, Debug)]
 pub struct OccurrenceCheckpoint {
     operations: usize,
+    archived_count: Option<u64>,
 }
 
 #[derive(Debug)]
@@ -253,6 +254,11 @@ impl OccurrenceHistory {
     pub fn archived_count(&self) -> Option<u64> {
         self.archived_count
     }
+    /// Source restoration writes the empty archived header explicitly. This
+    /// changes presence only; nonempty cold-history accounting remains intact.
+    pub(crate) fn materialize_empty_archive_count(&mut self) {
+        self.archived_count.get_or_insert(0);
+    }
     pub fn complete_hot(&self) -> bool {
         self.complete_hot
     }
@@ -296,6 +302,7 @@ impl OccurrenceHistory {
     pub fn checkpoint(&self) -> OccurrenceCheckpoint {
         OccurrenceCheckpoint {
             operations: self.undo.len(),
+            archived_count: self.archived_count,
         }
     }
     /// The event emitter calls this only after original personal acquisition and
@@ -383,6 +390,7 @@ impl OccurrenceHistory {
         if checkpoint.operations > self.undo.len() {
             return Err(OccurrenceError("Stale occurrence rollback cursor."));
         }
+        self.archived_count = checkpoint.archived_count;
         while self.undo.len() > checkpoint.operations {
             match self.undo.pop().expect("Journal length checked") {
                 OccurrenceUndo::Append {
