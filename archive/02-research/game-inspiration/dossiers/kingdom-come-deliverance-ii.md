@@ -2,6 +2,8 @@
 
 **Full research pass — September 26, 2026; follow-up audit the same day, with Steam-body evidence recovered through qualified alternate routes.** [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Comparative reference, not an implementation specification. Five independent written reviews, primary publisher/creator accounts and specific observed-rule guides were read in the original pass. The follow-up read the entire dossier, checked all requirements, and researched the additions identified below; it does not imply that every original external source was read a second time. No gameplay execution, footage viewing or engine audit is claimed. **Quest and relationship spoilers follow.**
 
+**November 10, 2026 supplement:** the existing full dossier was checked against supplied video commentary. The additional interpretation and primary AI-production source below do not constitute another full research pass or recertification against later requirement amendments. The original review sample and its access limits remain intact.
+
 ## Identity, editions and central promise
 
 Warhorse's sequel launched February 4, 2025 for PC, PS5 and Xbox Series consoles. It continues Henry's story alongside Hans Capon rather than offering an anonymous race/class creator. Delivering a letter becomes entangled with the struggle between Wenceslas and Sigismund. Trosky and Kuttenberg provide distinct regions. This is a first-person, single-player historical RPG—not a documentary, medieval MMO or spellcasting fantasy. [PC Gamer](#r-pcg), [strategy index](#s-hub)
@@ -162,6 +164,8 @@ Wolens values people spending time eating, drinking and playing rather than mere
 
 In December 2025, executive producer/co-founder **Martin Klima** describes trusting players and accepting a distinctive game will not suit everyone. He connects design director **Viktor Bocan's** Souls interests to discovery and earned competence, contrasting this with risk-averse uniformity. These are creator interpretations, not proof that difficulty causes sales or that all audiences prefer less guidance. [Interview](#s-creator)
 
+**Primary AI-production context:** Petr Smrcek's GDC 2026 session abstract describes nearly 2,400 NPCs across the sequel's map, roughly half in one city, and AI level of detail used to manage frame time and memory. This is a described map population, not 2,400 actors running at full detail simultaneously. The abstract supports varying simulation detail; it supplies no measured benchmark, exact scheduling contract or OpenLegend capacity estimate. Only the abstract was read, not the recorded talk. [GDC abstract](#s-gdc-2026)
+
 The sequel retains identity while revising onboarding and readability. Publisher accounts identify specialized motion capture; reviews report improved launch reliability, not perfection. No budget audit, staff census, code inspection, present-day benchmark or comprehensive accessibility test was performed. Long sessions, motor demands and reduced Hardcore aids remain questions rather than assumed advantages.
 
 ## Distribution, discovery and commercial context
@@ -196,6 +200,8 @@ Narrower player testimony is available in quest comments: **GotrekAK** identifie
 
 **Connect preparation to a later situation.** Washing or changing clothes matters when it changes admission or treatment. Otherwise maintenance becomes a tax. The requirement is intelligible feedback about which state matters and how to alter it; hidden standards frustrate rather than deepen society.
 
+**Let ordinary life create reasons to engage.** Work, rest and leisure can make a place feel occupied by people with purposes beyond Henry. Arriving tired, poorly supplied or in need of repairs makes local services and relationships immediately relevant. This is an interpretive connection between the supplied commentary and the documented preparation, routines and maintenance above, not evidence that all social life is autonomously simulated. [Commentary provenance](#s-supplied-commentary)
+
 **Teach a profession through perception and action.** Heating and striking communicate competent work. Repeating the same procedure forever can destroy its value. Skill, tools or trusted services can offer shortcuts without erasing the first experience of learning.
 
 **Distinguish identity from conduct.** A known protagonist gives biography and relationships weight while choices express temperament. The contract fails when advertised authorship silently disappears. Fewer strongly recognized approaches may be more convincing than superficially unlimited choices.
@@ -212,7 +218,7 @@ These hypotheses do not authorize implementation, copy names or settings, or est
 
 ## Annotated sources and limits
 
-All accessed **September 26, 2026**, in the original pass or the expressly identified follow-up. Original review bodies were read through their conclusions; this audit preserves that provenance rather than claiming a second reading. Guides support the attributed rules/cases, not unseen linked pages. No video was watched. Product language is not an exhaustive simulation guarantee. The annual report was read as reproduced HTML narrative; garbled table extraction was not used.
+Unless separately dated below, sources were accessed **September 26, 2026**, in the original pass or its same-day follow-up. Original review bodies were read through their conclusions; this audit preserves that provenance rather than claiming a second reading. Guides support the attributed rules/cases, not unseen linked pages. No video was watched. Product language is not an exhaustive simulation guarantee. The annual report was read as reproduced HTML narrative; garbled table extraction was not used.
 
 <a id="s-publisher"></a>**Deep Silver, product/editions.** Current English and initially redirected Polish material. [Source](https://www.deepsilver.com/games/kingdom-come-deliverance-ii).
 
@@ -282,6 +288,12 @@ All accessed **September 26, 2026**, in the original pass or the expressly ident
 
 <a id="s-steam-negative"></a>**Steam app 1771300, indexed Most Helpful (All Time), Negative Only, English.** Complete visible AdventureGnome and CowboyPug bodies read through search retrieval; direct page remained age-gated. Underlying employment allegations not investigated or adopted. [Source](https://steamcommunity.com/app/1771300/negativereviews/?browsefilter=toprated&snr=1_5_100010_).
 
+### November 10, 2026 supplement sources
+
+<a id="s-gdc-2026"></a>**Petr Smrcek, Warhorse Studios, GDC 2026: Supporting Thousands of NPCs in Kingdom Come: Deliverance & Kingdom Come: Deliverance II.** Public session metadata and full abstract read November 10, 2026; recorded talk not viewed. Supports the attributed map-population and AI-detail statements, not a performance test or source-code audit. [Source](https://gdcvault.com/play/1035718/).
+
+<a id="s-supplied-commentary"></a>**User-supplied video transcript, received November 10, 2026.** The original game's [canonical provenance note](kingdom-come-deliverance.md#supplied-video-commentary--november-10-2026) records the missing video identity and separates editions, future Middle-earth speculation and sponsor-trainer functions. It was read as commentary, not counted as another independent review or a gameplay test. The sequel's documented punishment, appearance, routines and ordinary work already cover much of its relevant material; those sections are preserved rather than duplicated.
+
 ## Reading route
 
 Begin with [Tomcat's lesson](#s-counter) and [the smithing lesson](#s-smith) to compare two kinds of taught execution, then [Houndmaster](#s-hound) for care and delegated action. Compare [Wolens](#r-pcg), [Bardwell](#r-vg) and the qualified [negative Steam bodies](#s-steam-negative) on the point where meaningful routine becomes repetition. Read the [future-port announcement](#s-port) separately from launch reviews; its linked trailer was not watched. The rescue and relationship guides contain major quest spoilers.
@@ -299,3 +311,4 @@ Begin with [Tomcat's lesson](#s-counter) and [the smithing lesson](#s-smith) to 
 | R13–R14 | Transfer hypotheses, annotated evidence, actual reading route and preservation. |
 
 Checkpoint findings, all eight examples, five original review perspectives and substantive earlier sources are retained. This curated dossier does not overwrite earlier chapters, studies, notebooks or viewing recommendations. No dedicated G114 predecessor was found in the inspected inherited roster, library index and dossier tree. The audit adds missing mechanics and corrects the former total Steam-body gap without pretending its direct index/API failures disappeared. Positive all-time ranking, a representative player sample, exhaustive patch/recipe permutations, current performance/accessibility testing and private finances remain unestablished. Global seven-file preservation, all-130-subject coverage and **P01–P05 remain open**.
+
