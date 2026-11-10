@@ -2,6 +2,7 @@
 //! owners before one pure formatting batch. Returned words grant no commands.
 use super::*;
 use crate::language::FreeTypedActionSyntax;
+mod answer;
 mod names;
 
 #[derive(Clone, Serialize)]
@@ -105,8 +106,6 @@ pub(crate) struct TypedActionAnswer {
     pub binding: GeometryBinding,
     output: TypedActionOutput,
 }
-#[derive(Deserialize)]
-#[serde(tag = "kind", rename_all = "kebab-case", deny_unknown_fields)]
 enum TypedActionOutput {
     Name { selection: names::Selection },
     Format { results: Vec<Rendered> },

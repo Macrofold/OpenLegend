@@ -68,10 +68,12 @@ import {
   captureNativeRetainedValues,
   type NativeRetainedValues,
 } from './native-retained-values.js';
-import { decodeNativeProduct, retainNativeSources } from './native-consumer.js';
+import {
+  decodeNativeProduct,
+  retainNativeSources,
+  withNativeConsumerScope,
+} from './native-consumer.js';
 import { NativePendingSave, type NativePendingPrefix } from './native-pending-save.js';
-import { nativeRecordChanges } from './native-records.js';
-import { prepareNativeSourceVersionPlan } from './native-source-versions.js';
 import { acceptNativeOperation, type NativePublication } from './native-operation.js';
 import {
   acceptProtectedNativeOperation,
@@ -1597,14 +1599,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                 }
               : this.privacy;
             assertPrivacyContinuation(privacy, this.privacy);
-            const changes = nativeRecordChanges(publication.records);
-            const versions = await prepareNativeSourceVersionPlan(
-              this.store.db,
-              publication.history,
-              changes,
-              publication.personalPredecessors,
-              before,
-            );
+            const versions = publication.sourceVersions;
             const history = await nativePrivateHistory(
               publication,
               this.privacy,
@@ -2044,14 +2039,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       stage: async (publication) => {
         if (publication.privacyChange)
           throw new Error('A private edit requires its protected durable acceptance owner.');
-        const changes = nativeRecordChanges(publication.records);
-        const versions = await prepareNativeSourceVersionPlan(
-          this.store.db,
-          publication.history,
-          changes,
-          publication.personalPredecessors,
-          before,
-        );
+        const versions = publication.sourceVersions;
         const pending = this.pending.prepare(
           publication,
           versions,
@@ -2897,60 +2885,66 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     publish: NativePlayerViewRequest['publish'],
     execution: Pick<NativePlayerViewRequest, 'executionSource' | 'jevConfigured' | 'llmConfigured'>,
   ): Promise<void> {
-    await this.projection.run(async () => {
-      for (let attempt = 0; ; attempt++) {
-        const context = await this.lane.run(async () => {
-          if (this.restoring) throw new ViewChangedError();
-          this.assertScope(scope);
-          const captured = await NativePlayerCapture.capture(
-            this.world,
-            scope,
-            PLAYER_EVENT_WINDOW,
-            this.geometry,
-          );
-          try {
-            const cut = nativeScopedReadCut(
-              await captureNativeReadCut(this.world, scope.actorId),
-              this.pending.liveReadCuts(),
-            );
-            if (captured.facts.self.acceptedCut !== cut.sequence) throw new ViewChangedError();
-            return { scope: scopeKey(scope), captured, cut };
-          } catch (error) {
-            captured.release();
-            throw error;
-          }
-        });
-        try {
-          await this.reads.run(context, () =>
-            projectNativePlayerView({
-              owner: this,
+    await withNativeConsumerScope(() =>
+      this.projection.run(async () => {
+        for (let attempt = 0; ; attempt++) {
+          const context = await this.lane.run(async () => {
+            if (this.restoring) throw new ViewChangedError();
+            this.assertScope(scope);
+            const captured = await NativePlayerCapture.capture(
+              this.world,
               scope,
-              definitions: this.definitions.player(scope.actorId),
-              map: this.definitions.facts.geometry,
-              store: this.store,
-              practiceLoader: (ids) => {
-                if (!this.store.db.readAtCut || !this.store.db.readTransaction)
-                  throw new Error('Native practice reads require their actual accepted SQL cut.');
-                return this.store.db.readAtCut(context.cut, () =>
-                  this.store.db.readTransaction!(() =>
-                    this.store.records.activityPage(this.worldId, scope.actorId, -1, ids),
-                  ),
-                );
-              },
-              budgetUsd: this.config.budgetUsd,
-              ...execution,
-              publish,
-            }),
-          );
-          return;
-        } catch (error) {
-          if (!(error instanceof ViewChangedError) || attempt !== 0) throw error;
-          this.assertScope(scope);
-        } finally {
-          context.captured.release();
+              PLAYER_EVENT_WINDOW,
+              this.geometry,
+            );
+            try {
+              const cut = nativeScopedReadCut(
+                await captureNativeReadCut(this.world, scope.actorId),
+                this.pending.liveReadCuts(),
+              );
+              if (captured.facts.self.acceptedCut !== cut.sequence) throw new ViewChangedError();
+              return { scope: scopeKey(scope), captured, cut };
+            } catch (error) {
+              captured.release();
+              throw error;
+            }
+          });
+          try {
+            const definitions = this.definitions.player(scope.actorId);
+            await this.reads.run(context, () =>
+              projectNativePlayerView({
+                owner: this,
+                scope,
+                definitions,
+                map: this.definitions.facts.geometry,
+                store: this.store,
+                practiceLoader: (ids) => {
+                  if (!this.store.db.readAtCut || !this.store.db.readTransaction)
+                    throw new Error('Native practice reads require their actual accepted SQL cut.');
+                  return this.store.db.readAtCut(context.cut, () =>
+                    this.store.db.readTransaction!(() =>
+                      this.store.records.activityPage(this.worldId, scope.actorId, -1, ids),
+                    ),
+                  );
+                },
+                budgetUsd: this.config.budgetUsd,
+                ...execution,
+                // A retained stream view also borrows immutable map/policy
+                // children. Their old installation may retire after restore.
+                publish: (bytes, view) =>
+                  publish(bytes, retainNativeSources(view, view, definitions)),
+              }),
+            );
+            return;
+          } catch (error) {
+            if (!(error instanceof ViewChangedError) || attempt !== 0) throw error;
+            this.assertScope(scope);
+          } finally {
+            context.captured.release();
+          }
         }
-      }
-    });
+      }),
+    );
   }
 
   async capture(scope: RequestScope): Promise<NativePlayerRead> {

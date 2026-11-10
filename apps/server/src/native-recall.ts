@@ -79,7 +79,8 @@ export function nativeSourcePresentation(
     },
     facts,
     installed,
-    initial,
+    initial.presentation,
+    capture.sources(),
   );
 }
 
@@ -139,6 +140,7 @@ export function nativeMemoryCandidate(
     facts,
     installed,
     presentation,
+    capture.sources(),
   );
 }
 
@@ -214,5 +216,5 @@ export function nativeSummaryProjector(
     installed.definitions.presentation?.calendar?.dayLabel,
     subjects,
   );
-  return retainNativeSources(project, facts, installed, presentation);
+  return retainNativeSources(project, facts, installed, presentation, capture.sources());
 }

@@ -10,6 +10,8 @@ use crate::host::{AcceptedCandidate, ByteBudget, ByteReservation, CandidateKey};
 use crate::identity::MAX_SAFE_INTEGER;
 use std::{collections::BTreeMap, mem::size_of, sync::Arc};
 mod protected;
+mod source_versions;
+use source_versions::SourceVersionCustody;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum SaveError {
@@ -30,6 +32,7 @@ pub(crate) struct SavePrefix {
     rows: SaveRows,
     presence: BTreeMap<String, BTreeMap<String, bool>>,
     temporal_residency: Arc<crate::received::SavedTemporalResidency>,
+    _source_versions: Option<Arc<SourceVersionCustody>>,
     _reservation: ByteReservation,
 }
 impl SavePrefix {
@@ -78,6 +81,7 @@ struct PendingAppend {
     through_cut: u64,
     identity_through: u64,
     changes: ChangedRows,
+    source_versions: Arc<SourceVersionCustody>,
     schema: Arc<RecordSchema>,
     reservation: ByteReservation,
     _workspace: ByteReservation,
@@ -96,6 +100,7 @@ pub(crate) struct SaveJournal {
     identity_through: u64,
     durable_identity_through: u64,
     suffix: ChangedRows,
+    suffix_versions: Option<Arc<SourceVersionCustody>>,
     suffix_reservation: ByteReservation,
     in_flight: Option<Arc<SavePrefix>>,
     last_acknowledged: Option<AcknowledgedPrefix>,
@@ -165,6 +170,7 @@ impl SaveJournal {
             identity_through,
             durable_identity_through: identity_through,
             suffix: ChangedRows::default(),
+            suffix_versions: None,
             suffix_reservation,
             in_flight: None,
             last_acknowledged: None,
@@ -202,6 +208,7 @@ impl SaveJournal {
         candidate: CandidateKey,
         identity_through: u64,
         mut changes: ChangedRows,
+        source_versions: Arc<SourceVersionCustody>,
         schema: &Arc<RecordSchema>,
         scratch: &ByteBudget,
     ) -> Result<PreparedSaveAppend, SaveError> {
@@ -279,6 +286,7 @@ impl SaveJournal {
             through_cut,
             identity_through,
             changes,
+            source_versions,
             schema: Arc::clone(schema),
             reservation,
             _workspace: workspace,
@@ -346,6 +354,9 @@ impl SaveJournal {
             self.next_prefix += 1;
             self.in_flight = Some(prefix);
             return Ok(());
+        }
+        if !pending.source_versions.value.is_empty() {
+            self.suffix_versions = Some(Arc::clone(&pending.source_versions));
         }
         if pending.changes.writes.is_empty()
             && pending.changes.deletes.is_empty()
@@ -466,7 +477,14 @@ impl SaveJournal {
         drop(pages_guard);
         let reservation = std::mem::replace(&mut self.suffix_reservation, replacement);
         debug_assert!(reservation.bytes() >= peak);
-        let prefix = self.finish_prefix(&cut, changes, temporal_residency, reservation);
+        let source_versions = self.suffix_versions.take();
+        let prefix = self.finish_prefix(
+            &cut,
+            changes,
+            temporal_residency,
+            reservation,
+            source_versions,
+        );
         ledger
             .apply_temporal_pages(projection)
             .expect("validated same-cut temporal save placement metadata");

@@ -73,9 +73,12 @@ export class PendingWorldSave {
     string,
     { change: SourceVersionChange; bytes: number }
   >();
+  private sourceVersionsPrepared = false;
   private preparedVersions?: SourceVersionPlan;
   get versions(): SourceVersionPlan | undefined {
-    if (!this.versionChanges.size) return undefined;
+    // A real empty plan still proves closure when every referenced source
+    // remains current. Coalescing cannot turn that proof into no preparation.
+    if (!this.sourceVersionsPrepared) return undefined;
     return (this.preparedVersions ??= {
       changes: [...this.versionChanges.values()].map((value) => value.change),
     });
@@ -193,6 +196,7 @@ export class PendingWorldSave {
       }
     for (const [key, intent] of temporalChanges) this.temporal.set(key, intent);
     for (const [id, value] of versionChanges) this.versionChanges.set(id, value);
+    if (versions) this.sourceVersionsPrepared = true;
     if (versionChanges.size) this.preparedVersions = undefined;
     for (const [table, ids] of changes.expired ?? []) {
       let entries = this.expired.get(table);

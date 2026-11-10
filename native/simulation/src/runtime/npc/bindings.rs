@@ -7,6 +7,7 @@ use crate::capture::{
 };
 use crate::host::retained_size::{HeapBytes, heap_sum};
 use std::sync::atomic::AtomicU8;
+mod copies;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -411,16 +412,16 @@ impl NativeWorldSession {
                 original: Arc::clone(&ticket.original.read),
                 current: Arc::clone(&ticket.current.read),
             },
-            actions: maps.actions.clone(),
+            actions: copies::map(&maps.actions, copies::action),
             entity_ids: maps.entity_ids.clone(),
             expected_plan,
             attempt_bindings: Vec::new(),
-            expected_encounters: Some(maps.expected_encounters.clone()),
+            expected_encounters: Some(copies::map(&maps.expected_encounters, Clone::clone)),
             evidence_ids: maps.evidence_ids.clone(),
-            knowledge_references: maps.knowledge_references.clone(),
-            identity_references: maps.identity_references.clone(),
-            entity_leases: maps.entity_leases.clone(),
-            situation: Some(maps.situation.clone()),
+            knowledge_references: copies::map(&maps.knowledge_references, Clone::clone),
+            identity_references: copies::map(&maps.identity_references, Clone::clone),
+            entity_leases: copies::map(&maps.entity_leases, Clone::clone),
+            situation: Some(copies::situation(&maps.situation)),
             appraisal_bindings,
         };
         Ok(Arc::new(

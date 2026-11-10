@@ -10,6 +10,7 @@ import type { NativeInstalledDefinitions } from './native-definition-capture.js'
 import { nativeCurrentSources, nativeReceivedScene } from './native-current-capture.js';
 import { personalEntityHandle } from './entity-references.js';
 import { presentationSubjects, type CapturedExperienceContext } from './experience-context.js';
+import { retainNativeSources } from './native-consumer.js';
 import type { ModelSpatialFrame } from './perceived-context.js';
 import type { SituationRead } from './situation-context.js';
 
@@ -130,19 +131,24 @@ export function nativeExperiencePresentation(
   }
   const privacy = facts.history.cuts[0];
   if (!privacy) throw new Error('The native NPC read has no personal history cut.');
-  return {
-    kind: 'captured-experience',
-    id: self.worldId,
-    actorId: self.actorId,
-    frame,
-    ownerHandle: personalEntityHandle(
-      { id: self.worldId },
-      self.actorId,
-      self.actorId,
-      self.referenceAttribution,
-    ),
-    subjectLabel: selectedCapturedSubjectLabelReader(definitions.definitions, selected),
-    forgotten: new Set(privacy.forgotten),
-    corrected: new Set(privacy.corrected),
-  };
+  return retainNativeSources(
+    {
+      kind: 'captured-experience',
+      id: self.worldId,
+      actorId: self.actorId,
+      frame,
+      ownerHandle: personalEntityHandle(
+        { id: self.worldId },
+        self.actorId,
+        self.actorId,
+        self.referenceAttribution,
+      ),
+      subjectLabel: selectedCapturedSubjectLabelReader(definitions.definitions, selected),
+      forgotten: new Set(privacy.forgotten),
+      corrected: new Set(privacy.corrected),
+    },
+    facts,
+    definitions,
+    captured,
+  );
 }

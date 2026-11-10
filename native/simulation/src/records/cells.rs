@@ -172,6 +172,39 @@ impl PartialEq for SqlCell {
     }
 }
 impl SqlCell {
+    /// An admitted copy must not grow an IndexMap's dense backing to its hidden
+    /// hash capacity, as the ordinary IndexMap Clone implementation can do.
+    /// Keep each copied backing within the original HeapBytes allowance.
+    pub(crate) fn clone_within_heap_bound(&self) -> Self {
+        match self {
+            Self::Array(values) => {
+                let mut copied = Vec::with_capacity(values.len());
+                copied.extend(values.iter().map(Self::clone_within_heap_bound));
+                Self::Array(copied)
+            }
+            Self::Object(values) => {
+                let mut copied = IndexMap::with_capacity(values.capacity());
+                for (key, value) in values {
+                    copied.insert(key.clone(), value.clone_within_heap_bound());
+                }
+                Self::Object(copied)
+            }
+            Self::ExactObject(value) => {
+                let mut members = Vec::with_capacity(value.members.len());
+                members.extend(
+                    value
+                        .members
+                        .iter()
+                        .map(|(key, value)| (key.clone(), value.clone_within_heap_bound())),
+                );
+                Self::ExactObject(ExactObject {
+                    members,
+                    encoding: Arc::clone(&value.encoding),
+                })
+            }
+            _ => self.clone(),
+        }
+    }
     pub fn is_null(&self) -> bool {
         matches!(self, Self::Null)
     }

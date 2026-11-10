@@ -1,4 +1,5 @@
 import type { NativeWorldConsumer, NativeWorldJson } from '@open-legend/native-simulation';
+import { AsyncLocalStorage } from 'node:async_hooks';
 
 // A Buffer can disappear while its parsed strings/arrays still serve a request,
 // save or model context. Keep their separate native admission with the actual
@@ -9,20 +10,59 @@ type Entry = {
   /** This admission funds this object's own allocation, beyond borrowed pins. */
   readonly owned?: true;
 };
-type Holder = { readonly entries: readonly Entry[] };
-const decodedConsumers = new FinalizationRegistry<Holder>((holder) => {
+type Holder = { readonly entries: readonly Entry[]; scope?: Set<Holder>; released?: true };
+const scopes = new AsyncLocalStorage<Set<Holder>>();
+function release(holder: Holder): void {
+  if (holder.released) return;
+  holder.released = true;
+  holder.scope?.delete(holder);
   for (const entry of holder.entries) entry.consumer.release();
-});
+}
+const decodedConsumers = new FinalizationRegistry<Holder>(release);
 const holders = new WeakMap<object, Holder>();
+
+/** Temporary formatting products end with the real request. An output that
+ * leaves it must explicitly retain its holder through its actual consumer. */
+export async function withNativeConsumerScope<T>(operation: () => Promise<T>): Promise<T> {
+  const scope = new Set<Holder>();
+  return scopes.run(scope, async () => {
+    try {
+      return await operation();
+    } finally {
+      for (const holder of scope) {
+        decodedConsumers.unregister(holder);
+        release(holder);
+      }
+    }
+  });
+}
+
+export function retainNativeProduct<T extends object>(owner: T): T {
+  const holder = holders.get(owner);
+  if (!holder || holder.released) throw new Error('Native output has no live allocation owner.');
+  holder.scope?.delete(holder);
+  holder.scope = undefined;
+  return owner;
+}
+
+/** The real transport/stream owner calls this only after final consumption. */
+export function releaseNativeProduct(owner: object): void {
+  const holder = holders.get(owner);
+  if (!holder) return;
+  decodedConsumers.unregister(holder);
+  holders.delete(owner);
+  release(holder);
+}
 
 function attach(owner: object, entries: readonly Entry[]): void {
   const previous = holders.get(owner);
-  const holder = { entries };
+  const holder: Holder = { entries, scope: scopes.getStore() };
   holders.set(owner, holder);
+  holder.scope?.add(holder);
   decodedConsumers.register(owner, holder, holder);
   if (previous) {
     decodedConsumers.unregister(previous);
-    for (const entry of previous.entries) entry.consumer.release();
+    release(previous);
   }
 }
 

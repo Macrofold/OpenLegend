@@ -542,8 +542,8 @@ export class SqlGameRepository implements GameRepository {
     const read = () => snapshot(operation);
     return cut && this.db.readAtCut ? this.db.readAtCut(cut, read) : read();
   }
-  /** Explicit corrections only prepare exact archived support; ordinary pool
-   * eviction belongs to the due/pressure scheduler, not this privacy barrier. */
+  /** Corrections and changed derivations prepare exact archived support;
+   * ordinary pool eviction belongs to the separate due/pressure scheduler. */
   async prepareSourceEdit(
     state: SavedWorld,
     before: SavedWorld,

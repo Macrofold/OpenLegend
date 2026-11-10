@@ -222,10 +222,18 @@ impl Drop for NativeWorldNpcRead {
     }
 }
 
-#[napi]
 impl NativeWorldNpcRead {
-    #[napi(ts_return_type = "Promise<NativeWorldJson>")]
-    pub fn packet<'a>(&self, env: &'a Env) -> Result<Object<'a>> {
+    fn product<'a>(
+        &self,
+        env: &'a Env,
+        encode: fn(
+            &RuntimeNpcRead,
+            &ByteBudget,
+        ) -> std::result::Result<
+            RuntimeJson,
+            openlegend_simulation::runtime::RuntimeError,
+        >,
+    ) -> Result<Object<'a>> {
         let read = Arc::clone(&self.inner);
         let budget = self.host.bytes.clone();
         dispatch(env, &self.host, None, move |_cancel| {
@@ -237,10 +245,10 @@ impl NativeWorldNpcRead {
                 *owner = None;
                 return Err(failure("native NPC read was released"));
             }
-            let result = owner
+            let value = owner
                 .as_ref()
-                .ok_or_else(|| failure("native NPC read was released"))?
-                .packet(&budget)
+                .ok_or_else(|| failure("native NPC read was released"))?;
+            let result = encode(value, &budget)
                 .map(|value| NativeWorldJson::new(value, budget))
                 .map_err(operation_error);
             if read.released.load(Ordering::Acquire) {
@@ -248,6 +256,24 @@ impl NativeWorldNpcRead {
             }
             result
         })
+    }
+}
+
+#[napi]
+impl NativeWorldNpcRead {
+    #[napi(ts_return_type = "Promise<NativeWorldJson>")]
+    pub fn packet<'a>(&self, env: &'a Env) -> Result<Object<'a>> {
+        self.product(env, RuntimeNpcRead::packet)
+    }
+
+    #[napi(ts_return_type = "Promise<NativeWorldJson>")]
+    pub fn candidates<'a>(&self, env: &'a Env) -> Result<Object<'a>> {
+        self.product(env, RuntimeNpcRead::candidates_packet)
+    }
+
+    #[napi(ts_return_type = "Promise<NativeWorldJson>")]
+    pub fn latest_sources<'a>(&self, env: &'a Env) -> Result<Object<'a>> {
+        self.product(env, RuntimeNpcRead::latest_sources_packet)
     }
 
     #[napi]

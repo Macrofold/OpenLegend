@@ -1135,6 +1135,8 @@ export async function prepareNativeDecision(input: {
       original.facts,
       now.facts,
       service.definitions.facts,
+      original.sources(),
+      now.sources(),
     );
     completed = true;
     return prepared;

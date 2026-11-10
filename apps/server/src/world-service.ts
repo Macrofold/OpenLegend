@@ -1798,12 +1798,12 @@ export class WorldService {
         cleanup ??
         (restore
           ? await this.prepareRetention(saved, true)
-          : {
-              state: saved,
-              rows: new Map<string, string[]>(),
-              positions: undefined,
-              versions: undefined,
-            });
+          : sourceVersionPreparationNeeded(transitionBefore, saved.world)
+            ? await this.prepareChangedSourceVersions(saved, {
+                ...this.saved,
+                world: transitionBefore,
+              })
+            : { state: saved, rows: new Map<string, string[]>() });
       const prepared = this.prepareSnapshot(retention.state);
       this.store.records?.stageRetirements(
         prepared.snapshot,
@@ -2406,6 +2406,20 @@ export class WorldService {
     await this.store.eraseReceivedValues?.(this.world.id, [...ids]);
   }
 
+  /** Derivation publication preserves its exact previous sources before the
+   * current rows change. Pool aging stays with the separate due scheduler. */
+  private async prepareChangedSourceVersions(
+    saved: SavedWorld,
+    before: SavedWorld,
+  ): Promise<PreparedMemoryRetention> {
+    if (!this.store.prepareSourceEdit)
+      throw new Error('Exact retained source preparation is unavailable.');
+    const prepared = await this.store.prepareSourceEdit(saved, before);
+    freezeWorld(prepared.state.world);
+    inheritUnchangedExposure(saved.world, prepared.state.world);
+    return prepared;
+  }
+
   private async prepareRetention(
     saved: SavedWorld,
     complete = false,
@@ -2451,6 +2465,11 @@ export class WorldService {
     if (!emergencyPause && !this.pendingAdmissionOpen()) return false;
     let allocation: ReturnType<HostWork['reserve']> | undefined;
     try {
+      if (!retention && sourceVersionPreparationNeeded(this.world, saved.world)) {
+        retention = await this.prepareChangedSourceVersions(saved, this.saved);
+        saved = retention.state;
+        if (!emergencyPause && !this.pendingAdmissionOpen()) return false;
+      }
       freezeWorld(saved.world);
       allocation = this.hostWork.reserve(saved.world);
       const prepared = this.prepareSnapshot(saved);

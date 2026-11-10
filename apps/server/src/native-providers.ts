@@ -66,6 +66,11 @@ import {
   type NativeSupportMembershipRequest,
 } from './native-support-retention.js';
 
+import {
+  readNativeSourceVersions,
+  type NativeSourceVersionsRequest,
+} from './native-source-versions.js';
+
 type Binding = NativeGeometryQueries['binding'];
 type Question = { kind: string; value: unknown };
 export interface NativeProviderAnswer {
@@ -96,6 +101,13 @@ async function prepareProviderAnswer(
 ): Promise<string> {
   const value = question.value;
   switch (question.kind) {
+    case 'source-versions': {
+      const request = value as NativeSourceVersionsRequest;
+      const cut = history?.liveReadCuts();
+      if (!history || !cut)
+        throw new Error('Native source versions require their actual predecessor SQL cut.');
+      return JSON.stringify(await readNativeSourceVersions(history.db, cut, request));
+    }
     case 'support-membership': {
       const request = value as NativeSupportMembershipRequest;
       const cut = history?.liveReadCuts({ worldId: request.worldId, actorId: request.actorId });

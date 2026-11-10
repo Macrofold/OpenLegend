@@ -11,6 +11,7 @@ import type { NativeHistoryInput } from './native-history.js';
 import type { NativeHistoryReadContext } from './native-providers.js';
 import { driveNativeOperation } from './native-providers.js';
 import { decodeNativeProduct, retainNativeSources } from './native-consumer.js';
+import type { SourceVersionPlan } from './source-version-retention.js';
 import type { NativePersonalPredecessor } from './native-source-versions.js';
 
 /** A finite proposed publication, never an accepted authority or client view.
@@ -30,6 +31,7 @@ export interface NativePublication {
   };
   readonly records: NativeChangedRows;
   readonly personalPredecessors: readonly NativePersonalPredecessor[];
+  readonly sourceVersions: SourceVersionPlan;
   /** The complete private SQL prefix for a protected edit. SQL acknowledgement
    * becomes available only after the same prepared operation is accepted. */
   readonly protectedSave?: NativeSaveRows;

@@ -98,6 +98,7 @@ export async function retrieveNativeRecall(input: {
       actorId,
       query: `${input.stimulus}\nMy current goal: ${nativeProjectEntityMarkers(original.firstPersonContext().goal, original)}\n${acceptedMindDocumentText(original.facts.self.mind.documents) ?? ''}`,
       currentNoteIds: async (rows) => {
+        if (!rows.length) return [];
         // Notes can change during indexed/embedding work. This is a genuine
         // current capture, not a current-world facade or a global-cut veto.
         noteCapture = (await service.captureNpc(actorId, [])).capture;
@@ -141,16 +142,18 @@ export async function retrieveNativeRecall(input: {
         );
         for (const body of original.candidates().bodyOrdinals)
           involved.add(original.facts.perception.bodies[body]!.sourceId);
-        const currentNotes = noteCapture;
-        if (!currentNotes) throw new Error('Native recall has no current note capture.');
-        candidates.push(
-          ...nativeKnowledgeCandidates(currentNotes, service.definitions, involved, noteIds),
-        );
+        if (noteIds.length) {
+          if (!noteCapture) throw new Error('Native recall has no current note capture.');
+          candidates.push(
+            ...nativeKnowledgeCandidates(noteCapture, service.definitions, involved, noteIds),
+          );
+        }
         return retainNativeSources(
           candidates,
           original.facts,
-          currentNotes.facts,
+          original.sources(),
           service.definitions.facts,
+          ...(noteCapture ? [noteCapture.facts] : []),
         );
       },
     });

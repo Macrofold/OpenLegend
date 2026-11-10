@@ -34,6 +34,8 @@ use consolidation::{ConsolidationReply, poll_consolidation};
 mod reflection;
 use reflection::{ReflectionReply, poll_reflection};
 
+mod source_versions;
+use source_versions::{Finalizer as SourceVersionFinalizer, SourceVersionsAnswer};
 mod learning;
 use learning::LearningReply;
 
@@ -69,6 +71,8 @@ pub(crate) enum ProviderKind {
     RestoreArchives,
     #[serde(rename = "support-membership")]
     SupportMembership,
+    #[serde(rename = "source-versions")]
+    SourceVersions,
 }
 #[derive(Debug)]
 pub(crate) enum DriveError {
@@ -273,7 +277,8 @@ impl DecodeShape {
             | ProviderKind::ConsolidationFormat
             | ProviderKind::ActivityHistory
             | ProviderKind::ActivityLearningFormat
-            | ProviderKind::RestoreArchives => 0,
+            | ProviderKind::RestoreArchives
+            | ProviderKind::SourceVersions => 0,
             ProviderKind::Normalization => {
                 size_of::<JsText>().max(size_of::<Option<crate::language::FreeTypedActionSyntax>>())
             }
@@ -353,6 +358,7 @@ enum Answer {
     ChoiceDescriptions(crate::capture::NpcDescriptionsAnswer),
     RestoreArchives(crate::restore::RestoreArchivesAnswer),
     SupportMembership(crate::received::SupportMembershipAnswer),
+    SourceVersions(SourceVersionsAnswer),
 }
 impl Answer {
     fn decode(input: &ProviderResponse, budget: &ByteBudget) -> Result<Self, DriveError> {
@@ -361,6 +367,9 @@ impl Answer {
             DriveError::MalformedResponse
         };
         let value = match input.kind {
+            ProviderKind::SourceVersions => {
+                Self::SourceVersions(SourceVersionsAnswer::decode(&input.json, budget)?)
+            }
             ProviderKind::SupportMembership => {
                 Self::SupportMembership(serde_json::from_str(&input.json).map_err(parse)?)
             }
@@ -430,6 +439,7 @@ impl Answer {
     }
     fn binding(&self, geometry_revision: u64) -> GeometryBinding {
         match self {
+            Self::SourceVersions(v) => v.binding,
             Self::SupportMembership(v) => v.binding,
             Self::Geometry(v) => v.binding,
             Self::Utterance(v) => v.binding,
@@ -454,6 +464,7 @@ impl Answer {
     }
     fn kind(&self) -> ProviderKind {
         match self {
+            Self::SourceVersions(_) => ProviderKind::SourceVersions,
             Self::SupportMembership(_) => ProviderKind::SupportMembership,
             Self::Geometry(_) => ProviderKind::Geometry,
             Self::Utterance(_) => ProviderKind::Utterance,
@@ -672,6 +683,7 @@ enum OperationReply {
     HostControl,
     SupportRetention,
     NpcSources,
+    SourceVersions,
 }
 enum OperationCursor {
     Startup(super::startup::StartupCursor),
@@ -986,6 +998,9 @@ pub(crate) struct OperationDriver {
     base_cut: u64,
     generation: String,
     done: bool,
+    completed: Option<CompletedOperation>,
+    source_finalizer: Option<SourceVersionFinalizer>,
+    source_versions: Option<SourceVersionsAnswer>,
     _reservation: ByteReservation,
 }
 impl OperationDriver {
@@ -1136,17 +1151,31 @@ impl OperationDriver {
             base_cut: core.state.accepted_cut,
             generation: core.state.generation.clone(),
             done: false,
+            completed: None,
+            source_finalizer: None,
+            source_versions: None,
             _reservation: reservation,
         })
     }
     pub(crate) fn pending(&self) -> Option<&Arc<ProviderQuestion>> {
         self.pending.as_ref().map(|(question, _)| question)
     }
+    pub(crate) fn take_source_versions(
+        &mut self,
+    ) -> Option<(crate::received::SourceVersionPlan, ByteReservation)> {
+        self.source_versions
+            .take()
+            .map(SourceVersionsAnswer::into_parts)
+    }
     pub(crate) fn finished(&self) -> bool {
         self.done
     }
     pub(crate) fn abort(&mut self, core: &mut CoreMutation<'_>) -> Result<(), DriveError> {
-        self.cursor.abort(core)?;
+        if self.completed.is_none() {
+            self.cursor.abort(core)?;
+        }
+        self.completed = None;
+        self.source_finalizer = None;
         self.pending = None;
         self.done = true;
         Ok(())
@@ -1155,6 +1184,8 @@ impl OperationDriver {
         &mut self,
         core: &mut CoreMutation<'_>,
         input: Option<ProviderResponse>,
+        key: crate::host::CandidateKey,
+        finalize_sources: bool,
         budget: &ByteBudget,
     ) -> Result<DriveStep, DriveError> {
         if self.done
@@ -1188,7 +1219,10 @@ impl OperationDriver {
                 }
                 if matches!(
                     v.kind,
-                    ProviderKind::History | ProviderKind::Sources | ProviderKind::AppraisalOutcomes
+                    ProviderKind::History
+                        | ProviderKind::Sources
+                        | ProviderKind::AppraisalOutcomes
+                        | ProviderKind::SourceVersions
                 ) {
                     return Ok(None);
                 }
@@ -1206,7 +1240,27 @@ impl OperationDriver {
         let route = input
             .as_ref()
             .and_then(|_| self.pending.as_ref().map(|(_, route)| *route));
-        let result = self.cursor.poll(core, &mut answer, route, budget);
+        let result = if self.source_finalizer.is_some() {
+            (|| {
+                let Answer::SourceVersions(value) =
+                    direct(&mut answer, ProviderKind::SourceVersions)?
+                else {
+                    return Err(DriveError::StaleResponse);
+                };
+                self.source_versions = Some(
+                    self.source_finalizer
+                        .as_ref()
+                        .expect("pending source finalizer")
+                        .finish(core, value, budget)?,
+                );
+                self.source_finalizer = None;
+                Ok(Poll::Complete(DriverCompletion::Operation(
+                    self.completed.take().ok_or(ExecutionError::Invariant)?,
+                )))
+            })()
+        } else {
+            self.cursor.poll(core, &mut answer, route, budget)
+        };
         drop(answer);
         drop(decoded_guard);
         drop(input);
@@ -1221,6 +1275,32 @@ impl OperationDriver {
             }
             Ok(Poll::Complete(done)) => {
                 self.pending = None;
+                if finalize_sources && self.source_versions.is_none() {
+                    if let DriverCompletion::Operation(ref operation) = done {
+                        if !matches!(operation, CompletedOperation::Restore(_)) {
+                            match SourceVersionFinalizer::prepare(core, key, budget) {
+                                Ok(Some(finalizer)) => {
+                                    let question = Arc::clone(&finalizer.question);
+                                    let DriverCompletion::Operation(operation) = done else {
+                                        unreachable!()
+                                    };
+                                    self.completed = Some(operation);
+                                    self.source_finalizer = Some(finalizer);
+                                    self.pending = Some((
+                                        Arc::clone(&question),
+                                        OperationReply::SourceVersions,
+                                    ));
+                                    return Ok(DriveStep::Question(question));
+                                }
+                                Ok(None) => {}
+                                Err(error) => {
+                                    self.done = true;
+                                    return Err(error);
+                                }
+                            }
+                        }
+                    }
+                }
                 self.done = true;
                 Ok(match done {
                     DriverCompletion::Operation(done) => DriveStep::Complete(done),

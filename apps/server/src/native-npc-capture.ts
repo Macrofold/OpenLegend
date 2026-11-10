@@ -135,11 +135,21 @@ export class NativeNpcPerspectives {
  * semantic owners before a response ticket can be issued. */
 export class NativeNpcCapture {
   private publicationPerspectives: NativeNpcPerspectiveSelection = [];
+  private preparedCandidates: NativeNpcCandidates | undefined;
+  private sourceInventories: readonly NativeNpcSourceInventory[] | undefined;
   private constructor(
     private packet: NpcPacket | undefined,
     private read: NativeWorldNpcRead,
     readonly consumer: NativeNpcConsumer,
-  ) {}
+  ) {
+    this.adoptPacket(packet!);
+  }
+
+  private adoptPacket(packet: NpcPacket): void {
+    this.packet = packet;
+    this.preparedCandidates = packet.candidates && retainNativeSources(packet.candidates, packet);
+    this.sourceInventories = retainNativeSources(packet.sources, packet);
+  }
 
   static async capture(
     world: NativeWorld,
@@ -194,7 +204,7 @@ export class NativeNpcCapture {
       throw new Error('A situation query returned another native read owner.');
     this.read.release();
     this.read = read;
-    this.packet = after;
+    this.adoptPacket(after);
   }
 
   get facts(): NpcPacket {
@@ -250,14 +260,14 @@ export class NativeNpcCapture {
   }
 
   candidates(): NativeNpcCandidates {
-    const facts = this.facts;
-    if (!facts.candidates) throw new Error('The native NPC choices have not been prepared.');
-    return retainNativeSources(facts.candidates, facts);
+    this.facts;
+    if (!this.preparedCandidates) throw new Error('The native NPC choices have not been prepared.');
+    return this.preparedCandidates;
   }
 
   sources(): readonly NativeNpcSourceInventory[] {
-    const facts = this.facts;
-    return retainNativeSources(facts.sources, facts);
+    this.facts;
+    return this.sourceInventories!;
   }
 
   /** Mint only at the last dispatch turn. The caller releases this gate before
@@ -289,8 +299,9 @@ export class NativeNpcCapture {
       if (id === facts.self.actorId) return { kind: 'myself' as const };
       const body = facts.perception.bodies.findIndex((value) => value.sourceId === id);
       if (body >= 0) return { kind: 'body' as const, ordinal: body };
-      for (let inventory = facts.sources.length - 1; inventory >= 0; inventory--) {
-        const sources = facts.sources[inventory]!.personal;
+      const inventories = this.sources();
+      for (let inventory = inventories.length - 1; inventory >= 0; inventory--) {
+        const sources = inventories[inventory]!.personal;
         for (let ordinal = 0; ordinal < sources.length; ordinal++) {
           const entity = Object.keys(sources[ordinal]!.attribution.attributionIdentities).indexOf(
             id,
@@ -339,11 +350,19 @@ export class NativeNpcCapture {
     const prepared = { db: history.db, liveReadCuts: () => cut };
     const first = await world.npcSources(this.read, Buffer.from(JSON.stringify(selection)));
     await driveNativeNpcSources(world, this.read, first, geometry, prepared, signal);
-    this.packet = freezeNativeProduct(decodeNativeProduct<NpcPacket>(await this.read.packet()));
-    const sources = this.sources();
-    const latest = sources.at(-1);
-    if (!latest) throw new Error('Native source preparation produced no owned inventory.');
-    return retainNativeSources(latest, sources);
+    const product = freezeNativeProduct(
+      decodeNativeProduct<{ ordinal: number; inventory: NativeNpcSourceInventory }>(
+        await this.read.latestSources(),
+      ),
+    );
+    const previous = this.sources();
+    if (product.ordinal !== previous.length)
+      throw new Error('Native source preparation returned another inventory ordinal.');
+    const latest = retainNativeSources(product.inventory, product);
+    // Preserve native inventory ordinals without copying the immutable actor,
+    // perception and prior inventories into a new parsed generation each time.
+    this.sourceInventories = retainNativeSources([...previous, latest], previous, latest);
+    return latest;
   }
 
   /** The first read owns situation/history, while the refreshed read owns the
@@ -439,17 +458,12 @@ export class NativeNpcCapture {
         ),
       ),
     );
-    return retainNativeSources(
-      nativeExperiencePresentation(
-        facts,
-        installed,
-        nativeNpcSpatialFrame(facts.self),
-        labels,
-        values,
-      ),
+    return nativeExperiencePresentation(
       facts,
       installed,
+      nativeNpcSpatialFrame(facts.self),
       labels,
+      values,
     );
   }
 
@@ -475,7 +489,9 @@ export class NativeNpcCapture {
         ),
       );
       await driveNativeNpcCandidates(world, this.read, first, geometry, options.signal);
-      this.packet = freezeNativeProduct(decodeNativeProduct<NpcPacket>(await this.read.packet()));
+      this.preparedCandidates = freezeNativeProduct(
+        decodeNativeProduct<NativeNpcCandidates>(await this.read.candidates()),
+      );
     } catch (error) {
       this.release();
       throw error;
@@ -524,6 +540,8 @@ export class NativeNpcCapture {
 
   release(): void {
     this.packet = undefined;
+    this.preparedCandidates = undefined;
+    this.sourceInventories = undefined;
     this.read.release();
   }
 }

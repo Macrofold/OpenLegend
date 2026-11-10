@@ -58,6 +58,7 @@ impl PreparedPublication {
         key: CandidateKey,
         host: Option<super::save::HostSave<'_>>,
         protected: Option<crate::received::TemporalSaveLimits>,
+        source_versions: crate::received::SourceVersionPlan,
         budget: &ByteBudget,
     ) -> Result<Self, PublicationError> {
         let reservation = budget
@@ -66,6 +67,7 @@ impl PreparedPublication {
         fence.validate_phase(key, CandidatePhase::Preparing)?;
         let release = journal.prepare_release(state, key)?;
         let allocation = state.work_allocation().map_err(ExecutionError::from)?;
+        let source_versions = save.fund_source_versions(source_versions)?;
         let rows = encode_candidate_changes(state, journal, host, budget)?;
         let (changes, owners, rows_guard) = rows.into_parts();
         // The encoded rows keep their original custody until the accumulating
@@ -82,6 +84,7 @@ impl PreparedPublication {
                     temporal: &state.temporal,
                 },
                 changes,
+                source_versions,
                 &owners,
                 limits,
                 &state.installed.schema,
@@ -94,6 +97,7 @@ impl PreparedPublication {
                 key,
                 state.physical.identity.next_id(),
                 changes,
+                source_versions,
                 &state.installed.schema,
                 budget,
             )?;
@@ -121,6 +125,12 @@ impl PreparedPublication {
         save: &'a SaveJournal,
     ) -> Result<&'a crate::records::ChangedRows, PublicationError> {
         save.prepared_changes(&self.append).map_err(Into::into)
+    }
+    pub(crate) fn source_versions<'a>(
+        &self,
+        save: &'a SaveJournal,
+    ) -> Result<&'a crate::received::SourceVersionPlan, PublicationError> {
+        Ok(save.prepared_source_versions(&self.append)?)
     }
     pub(crate) fn read_protected_prefix<'a>(
         &self,

@@ -138,6 +138,13 @@ const judgmentMeter = (request: Pick<JudgeRequest, 'state' | 'questions'>): Deci
 /** Actual actor-owned NPC jobs over native reads. The shared queue, execution,
  * billing, escalation and SQL owners retain their ordinary Source semantics;
  * no TypeScript world or model-created binding map enters this composition. */
+/** Situation queries are host preparation metadata. Source removes them before
+ * parsing/publication of the canonical actor response, including a null query. */
+function responseEffects(value: ActorResponse & { queries?: unknown }): ActorResponse {
+  const { queries: _queries, ...response } = value;
+  return response;
+}
+
 export class NativeNpcDirector {
   readonly client: AiClient;
   readonly macrofold: MacrofoldBackend;
@@ -1101,7 +1108,7 @@ export class NativeNpcDirector {
       }
       if (bytes(value) > levelLimits(this.service.config)[level].visibleOutputBytes)
         throw new InvalidData('The response exceeds its visible output allowance.');
-      response = prepared.schema.parse(value) as ActorResponse;
+      response = responseEffects(prepared.schema.parse(value) as ActorResponse);
     }
     this.current(run);
     await this.awaitResume(run, true);
@@ -1314,7 +1321,7 @@ export class NativeNpcDirector {
               message: 'The character could not settle on a supported answer.',
             };
           const value = response
-            ? (source.schema.parse(selected.value) as ActorResponse)
+            ? responseEffects(source.schema.parse(selected.value) as ActorResponse)
             : this.knownResponse(source, 'choice' in selected.value ? selected.value.choice : '');
           claim.groups = {
             q0: {

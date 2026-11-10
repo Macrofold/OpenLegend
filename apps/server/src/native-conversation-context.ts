@@ -123,5 +123,7 @@ export async function buildNativeConversationContext(input: {
     definitions.facts,
     presentation,
     attribution,
+    original.sources(),
+    current.sources(),
   );
 }

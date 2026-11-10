@@ -521,6 +521,35 @@ impl RuntimeNpcRead {
     pub fn candidate_key(&self) -> Option<CandidateKey> {
         self.candidate_key
     }
+    /// Preparation adds a finite product to the same read. Re-encoding its
+    /// immutable base would make every retained formatter pin another copy.
+    pub fn candidates_packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
+        let candidates = self
+            .candidates
+            .as_ref()
+            .ok_or_else(|| failure("NPC choices are unavailable"))?;
+        let (encoded, _custody) = candidates.write_json(budget).map_err(failure)?;
+        RuntimeJson::join(&[encoded.as_bytes()], budget)
+    }
+    pub fn latest_sources_packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
+        #[derive(serde::Serialize)]
+        struct Selection<'a> {
+            ordinal: usize,
+            inventory: &'a crate::capture::PreparedNpcSources,
+        }
+        let ordinal = self
+            .sources
+            .len()
+            .checked_sub(1)
+            .ok_or_else(|| failure("NPC sources are unavailable"))?;
+        RuntimeJson::encode(
+            &Selection {
+                ordinal,
+                inventory: &self.sources[ordinal],
+            },
+            budget,
+        )
+    }
     pub fn packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
         let (perception, _perception_custody) =
             self.read.perception.write_json(budget).map_err(failure)?;

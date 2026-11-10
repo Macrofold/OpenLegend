@@ -1,7 +1,11 @@
 import type { ServerResponse } from 'node:http';
 import type { GameView } from '@open-legend/protocol';
 import { AuthorityError, scopeKey, type RequestScope } from './authority.js';
-import { retainNativeSources } from './native-consumer.js';
+import {
+  releaseNativeProduct,
+  retainNativeProduct,
+  retainNativeSources,
+} from './native-consumer.js';
 import type { NativeWorldService } from './native-world-service.js';
 import type { NativePlayerViewRequest } from './native-player-view.js';
 import { OverloadError, WorkLane } from './work-lane.js';
@@ -61,7 +65,9 @@ export class NativePlayerHttp {
           'Content-Type': 'application/json; charset=utf-8',
           'Cache-Control': 'no-store',
         });
-        response.end(bytes);
+        retainNativeProduct(bytes);
+        response.once('close', () => releaseNativeProduct(bytes));
+        response.end(bytes, () => releaseNativeProduct(bytes));
       },
       this.execution,
     );
@@ -103,6 +109,7 @@ export class NativePlayerHttp {
   private drop(stream: Stream): void {
     clearTimeout(stream.timeout);
     this.streams.delete(stream.response);
+    if (stream.view) releaseNativeProduct(stream.view);
     stream.view = undefined;
   }
 
@@ -112,7 +119,6 @@ export class NativePlayerHttp {
       return false;
     }
     if (!this.service.currentScope(stream.scope)) {
-      stream.view = undefined;
       if (stream.blocked) stream.response.destroy();
       else stream.response.end('event: access-changed\ndata: {}\n\n');
       this.drop(stream);
@@ -123,7 +129,7 @@ export class NativePlayerHttp {
 
   private write(stream: Stream, bytes: Buffer): void {
     if (stream.blocked || stream.response.destroyed) return;
-    if (!stream.response.write(bytes)) {
+    if (!stream.response.write(bytes, () => releaseNativeProduct(bytes))) {
       stream.blocked = true;
       stream.timeout = setTimeout(() => stream.response.destroy(), 30_000);
       stream.timeout.unref();
@@ -135,6 +141,7 @@ export class NativePlayerHttp {
     const current = this.service.refreshScope(stream.scope);
     if (scopeKey(current) !== scopeKey(stream.scope)) {
       stream.scope = current;
+      if (stream.view) releaseNativeProduct(stream.view);
       stream.view = undefined;
     }
     await this.service.publishPlayer(
@@ -162,8 +169,10 @@ export class NativePlayerHttp {
             : Buffer.concat([Buffer.from('event: reset\ndata: '), bytes, Buffer.from('\n\n')]),
           view,
         );
+        retainNativeProduct(message);
         this.write(stream, message);
-        stream.view = view;
+        if (stream.view) releaseNativeProduct(stream.view);
+        stream.view = retainNativeProduct(view);
       },
       this.execution,
     );
@@ -191,7 +200,6 @@ export class NativePlayerHttp {
                   this.again = true;
                   continue;
                 }
-                stream.view = undefined;
                 if (!(error instanceof AuthorityError))
                   console.error('Native player publication failed.', error);
                 stream.response.destroy();

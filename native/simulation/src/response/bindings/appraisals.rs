@@ -308,6 +308,15 @@ impl PreparedResponseAppraisals {
         subjects: impl Iterator<Item = &'a str> + Clone,
         budget: &ByteBudget,
     ) -> Result<(AppraisalBindings, ByteReservation), ExecutionError> {
+        let (subject_count, subject_bytes) = subjects
+            .clone()
+            .try_fold((0usize, 0usize), |(count, bytes), subject| {
+                Some((
+                    count.checked_add(1)?,
+                    bytes.checked_add(subject.len().checked_add(size_of::<String>())?)?,
+                ))
+            })
+            .ok_or(ExecutionError::Capacity)?;
         let bytes = self
             .sources
             .values()
@@ -319,17 +328,19 @@ impl PreparedResponseAppraisals {
                         .checked_mul(size_of::<PerceivedCause>())?,
                 )
             })
-            .and_then(|n| {
-                subjects.clone().try_fold(n, |n, subject| {
-                    n.checked_add(subject.len() + size_of::<String>())
-                })
-            })
+            .and_then(|n| n.checked_add(subject_bytes))
             .ok_or(ExecutionError::Capacity)?;
         let storage = budget.reserve(bytes)?;
+        // collect() can choose Vec's minimum capacity of four for a single
+        // member. These exact capacities keep both copies within preflight.
+        let mut sources = Vec::with_capacity(self.sources.len());
+        sources.extend(self.sources.values().cloned());
+        let mut copied_subjects = Vec::with_capacity(subject_count);
+        copied_subjects.extend(subjects.map(str::to_owned));
         Ok((
             AppraisalBindings {
-                sources: self.sources.values().cloned().collect(),
-                subjects: subjects.map(str::to_owned).collect(),
+                sources,
+                subjects: copied_subjects,
                 reflection: matches!(self.purpose, AppraisalPurpose::Reflection).then_some(true),
                 decision: matches!(self.purpose, AppraisalPurpose::Decision).then_some(true),
                 complete_creates: None,

@@ -5,12 +5,13 @@
 use super::*;
 use crate::attention::AttentionRetentionPolicy;
 use crate::host::ByteBudget;
+use crate::host::retained_size::{HeapBytes, heap_record};
 use crate::host::retained_size::{heap_sum, map_storage};
 use crate::values::deserialize_present_option;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::mem::size_of;
 
-#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "lowercase")]
 enum Category {
     Optional,
@@ -26,23 +27,27 @@ impl Category {
         }
     }
 }
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct Charge {
     category: Category,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     bytes: u64,
 }
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 struct Desired {
     category: Category,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     bytes: u64,
-    #[serde(default, deserialize_with = "deserialize_present_option")]
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
     payload: Option<String>,
 }
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Change {
     actor_id: String,
@@ -54,10 +59,84 @@ struct Change {
     #[serde(deserialize_with = "deserialize_nullable")]
     desired: Option<Desired>,
 }
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct SourceVersionPlan {
     changes: Vec<Change>,
+}
+
+impl HeapBytes for Category {
+    fn heap_bytes(&self) -> Option<usize> {
+        Some(0)
+    }
+}
+heap_record!(Charge { category, bytes });
+heap_record!(Desired {
+    category,
+    bytes,
+    payload
+});
+heap_record!(Change {
+    actor_id,
+    kind,
+    id,
+    revision,
+    expected_prior,
+    desired
+});
+heap_record!(SourceVersionPlan { changes });
+impl SourceVersionPlan {
+    pub(crate) fn empty() -> Self {
+        Self {
+            changes: Vec::new(),
+        }
+    }
+    pub(crate) fn is_empty(&self) -> bool {
+        self.changes.is_empty()
+    }
+    pub(crate) fn array_element_bytes() -> usize {
+        size_of::<Change>()
+    }
+    pub(crate) fn validate_actors(
+        &self,
+        actors: &indexmap::IndexSet<String>,
+        budget: &ByteBudget,
+    ) -> Result<(), crate::experience::HistoryPreparationError> {
+        use crate::experience::HistoryPreparationError as E;
+        let _storage = budget
+            .reserve(
+                map_storage::<(&str, &str, &str, &str), ()>(self.changes.len())
+                    .ok_or(E::Capacity)?,
+            )
+            .map_err(|_| E::Capacity)?;
+        let mut keys = indexmap::IndexSet::new();
+        keys.try_reserve(self.changes.len())
+            .map_err(|_| E::Capacity)?;
+        for change in &self.changes {
+            if !actors.contains(&change.actor_id)
+                || !matches!(change.kind.as_str(), "awareness" | "memory" | "summary")
+                || change.id.is_empty()
+                || change.revision.is_empty()
+                || !keys.insert((
+                    change.actor_id.as_str(),
+                    change.kind.as_str(),
+                    change.id.as_str(),
+                    change.revision.as_str(),
+                ))
+                || change
+                    .desired
+                    .as_ref()
+                    .and_then(|d| d.payload.as_ref().map(|p| (d, p)))
+                    .is_some_and(|(desired, payload)| {
+                        payload.len() as u64 != desired.bytes
+                            || crate::encoding::sha256_hex(payload.as_bytes()) != change.revision
+                    })
+            {
+                return Err(E::MalformedResponse);
+            }
+        }
+        Ok(())
+    }
 }
 
 fn invalid() -> ReceivedError {
@@ -85,7 +164,7 @@ fn adjust(charge: &mut AccountCharge, bytes: i128, count: i128) -> Result<(), Re
 /// before cut. This owner never queries SQL or reconstructs personal bodies.
 pub(crate) fn apply_source_version_plan(
     state: &mut TemporalState,
-    plan: SourceVersionPlan,
+    plan: &SourceVersionPlan,
     now: f64,
     policy: &AttentionRetentionPolicy,
     budget: &ByteBudget,
@@ -135,7 +214,7 @@ pub(crate) fn apply_source_version_plan(
     let mut pressure = IndexMap::<String, Vec<Category>>::new();
     headers.try_reserve(count).map_err(|_| invalid())?;
     pressure.try_reserve(count).map_err(|_| invalid())?;
-    for change in plan.changes {
+    for change in &plan.changes {
         if !matches!(change.kind.as_str(), "awareness" | "memory" | "summary")
             || change.id.is_empty()
             || change.revision.is_empty()

@@ -83,6 +83,7 @@ export function nativeTriggerContext(
     original.facts,
     installed,
     presentation,
+    original.sources(),
   );
 }
 
@@ -262,5 +263,6 @@ export function nativeResponseReferences(
     },
     facts,
     original.facts,
+    original.sources(),
   );
 }

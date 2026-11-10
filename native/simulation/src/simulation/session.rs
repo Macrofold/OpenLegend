@@ -835,7 +835,9 @@ impl Session {
                 state: &mut self.simulation.state,
                 journal: &mut preparing.journal,
             };
-            preparing.driver.step(&mut core, answer, &self.budget)
+            preparing
+                .driver
+                .step(&mut core, answer, key, !preparing.preview, &self.budget)
         };
         let step = match step {
             Ok(step) => step,
@@ -950,6 +952,11 @@ impl Session {
                                 | CompletedOperation::Participation(_)
                         )
                         || matches!(&result, CompletedOperation::Response(done) if done.protected());
+                    let source_versions = preparing.driver.take_source_versions();
+                    let (source_plan, _source_storage) = source_versions.map_or_else(
+                        || (crate::received::SourceVersionPlan::empty(), None),
+                        |(plan, storage)| (plan, Some(storage)),
+                    );
                     let publication = PreparedPublication::prepare(
                         &mut self.simulation.state,
                         &preparing.journal,
@@ -973,6 +980,7 @@ impl Session {
                             })
                         },
                         protected.then_some(self.temporal_save_limits),
+                        source_plan,
                         &self.budget,
                     )?;
                     Ok::<_, SessionError>((captured, predecessors, notices, publication))
@@ -1102,6 +1110,7 @@ impl Session {
             &crate::cognition::PreparedSemanticNotices,
             &crate::records::ChangedRows,
             &crate::experience::PersonalPredecessors,
+            &crate::received::SourceVersionPlan,
             Option<&crate::records::SaveRows>,
             PreparedReadProgress<'_>,
         ),
@@ -1120,6 +1129,7 @@ impl Session {
             &prepared.notices,
             prepared.publication.read_changes(&self.save)?,
             &prepared.predecessors,
+            prepared.publication.source_versions(&self.save)?,
             prepared.publication.read_protected_prefix(&self.save)?,
             PreparedReadProgress {
                 world_id: &state.physical.header.id,

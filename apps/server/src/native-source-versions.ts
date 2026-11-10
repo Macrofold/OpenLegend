@@ -1,4 +1,5 @@
-import type { NativeHistoryInput } from './native-history.js';
+import type { NativeChangedRows, NativeGeometryQueries } from '@open-legend/native-simulation';
+import { nativeRecordChanges } from './native-records.js';
 import type { LiveReadCuts } from './live-read-overlay.js';
 import { personalAccountRevision } from './personal-accounts.js';
 import type { RetentionRow } from './retention-metadata.js';
@@ -21,6 +22,45 @@ export interface NativePersonalPredecessor {
   readonly encodedBytes: number;
 }
 
+export interface NativeSourceVersionContext {
+  readonly worldId: string;
+  readonly generation: string;
+  readonly baseCut: number;
+  readonly cuts: readonly { readonly actorId: string; readonly forgotten: readonly string[] }[];
+}
+export interface NativeSourceVersionsRequest extends NativeSourceVersionContext {
+  readonly binding: NativeGeometryQueries['binding'];
+  readonly records: NativeChangedRows;
+  readonly personalPredecessors: readonly NativePersonalPredecessor[];
+  readonly maximumTransferBytes: number;
+}
+/** The native candidate asks once, before its temporal header and save rows are
+ * sealed. The ordinary application stage consumes this exact plan afterward. */
+export async function readNativeSourceVersions(
+  db: SqlDatabase,
+  beforeCut: LiveReadCuts,
+  request: NativeSourceVersionsRequest,
+): Promise<{
+  readonly binding: NativeGeometryQueries['binding'];
+  readonly plan: SourceVersionPlan;
+}> {
+  const plan = await prepareNativeSourceVersionPlan(
+    db,
+    request,
+    nativeRecordChanges(request.records),
+    request.personalPredecessors,
+    beforeCut,
+  );
+  const reply = { binding: request.binding, plan };
+  if (
+    !Number.isSafeInteger(request.maximumTransferBytes) ||
+    request.maximumTransferBytes <= 0 ||
+    Buffer.byteLength(JSON.stringify(reply)) > request.maximumTransferBytes
+  )
+    throw new Error('Native source-version reply exceeds its actual transfer allowance.');
+  return reply;
+}
+
 const accountTables = new Set(['mind_awareness', 'mind_memories', 'mind_summaries']);
 const key = (table: string, id: string) => JSON.stringify([table, id]);
 
@@ -30,7 +70,7 @@ const key = (table: string, id: string) => JSON.stringify([table, id]);
  * The host retains the candidate/cut fence across this asynchronous preparation. */
 export async function prepareNativeSourceVersionPlan(
   db: SqlDatabase,
-  input: Pick<NativeHistoryInput, 'worldId' | 'generation' | 'baseCut' | 'cuts'>,
+  input: NativeSourceVersionContext,
   changes: RecordChanges,
   predecessors: readonly NativePersonalPredecessor[],
   beforeCut: LiveReadCuts,

@@ -12,6 +12,7 @@ impl SaveJournal {
         candidate: CandidateKey,
         cut: TemporalSaveCut<'_>,
         changes: ChangedRows,
+        source_versions: Arc<SourceVersionCustody>,
         owners: &[OwnerCoverage],
         limits: TemporalSaveLimits,
         schema: &Arc<RecordSchema>,
@@ -123,7 +124,13 @@ impl SaveJournal {
         let (pages, page_owners, page_guard, residency) = packed.into_parts();
         let merged = merge_changes(changes, pages, schema)?;
         let prepared_ledger = ledger.prepare_accepted(candidate, &merged, &observed)?;
-        let prefix = self.finish_prefix(&cut, merged, residency, reservation);
+        let prefix = self.finish_prefix(
+            &cut,
+            merged,
+            residency,
+            reservation,
+            (!source_versions.value.is_empty()).then(|| Arc::clone(&source_versions)),
+        );
         drop(page_owners);
         drop(page_guard);
         self.next_admission = serial;
@@ -133,6 +140,7 @@ impl SaveJournal {
             through_cut,
             identity_through: cut.identity_through,
             changes: ChangedRows::default(),
+            source_versions,
             schema: Arc::clone(schema),
             reservation: empty_reservation,
             _workspace: empty_workspace,
@@ -202,6 +210,7 @@ impl SaveJournal {
         changes: ChangedRows,
         temporal_residency: Arc<crate::received::SavedTemporalResidency>,
         mut reservation: ByteReservation,
+        source_versions: Option<Arc<SourceVersionCustody>>,
     ) -> Arc<SavePrefix> {
         let actual = changes_heap(&changes)
             .and_then(|n| n.checked_add(size_of::<SavePrefix>() + 2 * size_of::<usize>()))
@@ -229,6 +238,7 @@ impl SaveJournal {
             },
             presence,
             temporal_residency,
+            _source_versions: source_versions,
             _reservation: reservation,
         })
     }

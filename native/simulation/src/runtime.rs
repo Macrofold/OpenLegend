@@ -518,6 +518,7 @@ impl NativeWorldSession {
                     notices,
                     records,
                     personal_predecessors,
+                    source_versions,
                     protected_save,
                     progress,
                 ) = self.session.prepared_products(key).map_err(failure)?;
@@ -531,6 +532,7 @@ impl NativeWorldSession {
                             notices,
                             records,
                             personal_predecessors,
+                            source_versions,
                             protected_save,
                             progress,
                             restore,
@@ -679,6 +681,7 @@ struct Products<'a> {
     notices: &'a crate::cognition::PreparedSemanticNotices,
     records: &'a crate::records::ChangedRows,
     personal_predecessors: &'a crate::experience::PersonalPredecessors,
+    source_versions: &'a crate::received::SourceVersionPlan,
     protected_save: Option<&'a crate::records::SaveRows>,
     progress: crate::simulation::session::PreparedReadProgress<'a>,
     restore: Option<crate::simulation::session::PreparedRestoreFacts<'a>>,
@@ -699,6 +702,7 @@ impl Serialize for Products<'_> {
             map.serialize_entry("records", self.records)?;
         }
         map.serialize_entry("personalPredecessors", &self.personal_predecessors.value())?;
+        map.serialize_entry("sourceVersions", self.source_versions)?;
         if let Some(prefix) = self.protected_save.filter(|_| self.restore.is_none()) {
             map.serialize_entry("protectedSave", prefix)?;
         }

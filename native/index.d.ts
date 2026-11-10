@@ -82,6 +82,7 @@ export declare class NativeWorld {
     read: NativeWorldMaintenanceRead,
     bytes: Buffer,
   ): Promise<NativeWorldMaintenancePublication | null>;
+  beginSupportRetention(bytes: Buffer): Promise<NativeWorldTurn>;
   beginRecentRetention(bytes: Buffer): Promise<NativeWorldTurn>;
   npcPerspectives(read: NativeWorldNpcRead, request: Buffer): Promise<NativeWorldJson>;
   /**
@@ -225,6 +226,8 @@ export declare class NativeWorldNpcPublication {
 
 export declare class NativeWorldNpcRead {
   packet(): Promise<NativeWorldJson>;
+  candidates(): Promise<NativeWorldJson>;
+  latestSources(): Promise<NativeWorldJson>;
   release(): void;
 }
 
