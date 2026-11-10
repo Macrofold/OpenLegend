@@ -206,7 +206,7 @@ export class NativeNpcDirector {
         },
         assertScope: (scope, capability, controlling) =>
           service.assertScope(scope, capability, controlling),
-        notify: () => service.notify(),
+        notify: () => service.notifyTelemetry(),
       },
       this.log,
     );
@@ -328,7 +328,7 @@ export class NativeNpcDirector {
       settleDiscovery: (actorId, id, generation) =>
         this.settleDiscovery(actorId, id, generation, true),
       subscribe: (listener) => service.subscribe(listener),
-      notify: () => service.notify(),
+      notify: () => service.notifyTelemetry(),
       storageFailed: (message) => service.fail(new Error(message)),
     };
     this.escalator = new DecisionEscalator(
@@ -425,7 +425,7 @@ export class NativeNpcDirector {
       };
       if (!spoken.heard) {
         await this.service.store.putJob(job);
-        this.service.notify();
+        this.service.notifyTelemetry();
         return { ok: true, code: 'spoken', message: job.message, jobId };
       }
       const read = await this.service.captureNpcIntake(spoken.actorId, 0);
@@ -1424,7 +1424,7 @@ export class NativeNpcDirector {
         output: { message, result },
         ...(terminal ? { completedAt: new Date(at).toISOString() } : {}),
       });
-    this.service.notify();
+    this.service.notifyTelemetry();
   }
 
   private async settleDiscovery(
@@ -1784,7 +1784,7 @@ export class NativeNpcDirector {
       run.job = saved;
       await recordDecisionTiming(this.log, saved, 'immediate', this.now());
     }
-    this.service.notify();
+    this.service.notifyTelemetry();
   }
   private async begin(
     job: JobRecord,
@@ -1993,7 +1993,7 @@ export class NativeNpcDirector {
           // intake until the higher/uncertain owner releases that preparation.
           if (this.runs.get(job.id) === run) this.runs.delete(job.id);
           if (!run.handedOff && this.names.get(actorId) === labels) this.names.delete(actorId);
-          this.service.notify();
+          this.service.notifyTelemetry();
         }
       }
     });

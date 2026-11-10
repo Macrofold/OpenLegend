@@ -92,6 +92,7 @@ import {
 } from './native-consumer.js';
 import { NativePendingSave, type NativePendingPrefix } from './native-pending-save.js';
 import { acceptNativeOperation, type NativePublication } from './native-operation.js';
+import { NativeSpeechActors } from './native-speech-actors.js';
 import {
   acceptProtectedNativeOperation,
   type NativeProtectedHold,
@@ -231,7 +232,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   private readonly receipts = new Map<string, GameplayReceipt>();
   private readonly receiptReaders = new Map<string, number>();
   private readonly durableReceipts = new Set<string>();
-  private readonly speechActors = new Map<string, string>();
+  private readonly speechActors: NativeSpeechActors;
   private actors: NativeActorRoster;
   private readonly navigation: NativeNavigation;
   private readonly connections = new Map<string, RequestScope>();
@@ -253,6 +254,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   private epochOwner?: CommandEpoch;
   private version = 0;
   private historyVersion = 0;
+  private telemetryRevision = 0;
   private privacyEpoch = 0;
   private closed = false;
   private save?: Promise<void>;
@@ -311,6 +313,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     this.inventoryReads = inventoryReads;
     this.profiles = profiles;
     this.inputs = inputs;
+    this.speechActors = new NativeSpeechActors(host, PLAYER_EVENT_WINDOW * this.connectionLimit);
     this.provider = definitions.geometry();
     this.lane = new WorkLane('native.mutation', config.capacity.requests);
     this.projection = new WorkLane('native.projection', config.capacity.requests);
@@ -583,6 +586,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       if (admittedProgress) releaseNativeProduct(admittedProgress);
       service?.inventoryReads.release();
       service?.profiles.release();
+      service?.speechActors.clear();
       admittedInventory?.release();
       admittedProfiles?.release();
       service?.inputs.release();
@@ -702,6 +706,12 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         /* A connection observer cannot refuse accepted gameplay. */
       }
     }
+  }
+  notifyTelemetry(): void {
+    // A completed asynchronous view section requests another view without
+    // invalidating the job/usage query that just supplied that section.
+    this.telemetryRevision++;
+    this.notify(false);
   }
   /** Fixed accepted prefix. Model waits join its scheduled save, never force an
    * early flush or retarget themselves to a later unrelated physical cut. */
@@ -2657,6 +2667,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       let staged: Awaited<ReturnType<NativePendingSave['prepare']>> | undefined;
       let stagedActors: PreparedNativeActorRoster | undefined;
       let stagedRetention: PreparedNativeRetention | undefined;
+      let stagedSpeech: ReturnType<NativeSpeechActors['prepare']>;
       try {
         const accepted = await acceptNativeOperation({
           world: this.world,
@@ -2671,6 +2682,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             staged?.cancel();
             stagedActors?.release();
             stagedRetention?.release();
+            stagedSpeech?.release();
           },
           stage: async (publication) => {
             await request.prepareOutcome?.(publication.outcome);
@@ -2691,6 +2703,11 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                 ...pending,
                 actors: (stagedActors = this.prepareActorRows(publication.records)),
                 retain: (stagedRetention = this.retention.prepare(publication.records)),
+                speech: (stagedSpeech = this.speechActors.prepare(
+                  publication.events,
+                  (event) => event.id,
+                  (event) => event.actorId,
+                )),
               };
             } catch (error) {
               stagedActors?.release();
@@ -2710,14 +2727,11 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             accepted.value.actors();
             this.inputs.prune();
             this.replaceProgress(publication.progress);
+            accepted.value.speech?.accept();
           } catch (error) {
             this.failure = error instanceof Error ? error : new Error(String(error));
             throw error;
           }
-          for (const event of publication.events)
-            if (event.actorId) this.speechActors.set(event.id, event.actorId);
-          while (this.speechActors.size > PLAYER_EVENT_WINDOW * this.connectionLimit)
-            this.speechActors.delete(this.speechActors.keys().next().value!);
           try {
             await this.refreshValues();
           } catch (error) {
@@ -2737,6 +2751,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       } finally {
         stagedActors?.release();
         stagedRetention?.release();
+        stagedSpeech?.release();
         releaseNativeProduct(before);
       }
     });
@@ -3813,10 +3828,16 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     this.inputs.expire(performance.now(), scope.actorId);
     const input = this.inputState(scope, self);
     const inputScope = nativeInputScope(this.host, input.scope);
-    for (const account of facts.events.accounts)
-      if (account.authoredBySelf) this.speechActors.set(account.original.id, scope.actorId);
-    while (this.speechActors.size > PLAYER_EVENT_WINDOW * this.connectionLimit)
-      this.speechActors.delete(this.speechActors.keys().next().value!);
+    this.speechActors
+      .prepare(
+        facts.events.accounts,
+        (account) => account.original.id,
+        (account) =>
+          account.authoredBySelf && this.speechActors.get(account.original.id) !== scope.actorId
+            ? scope.actorId
+            : undefined,
+      )
+      ?.accept();
     const inventory = this.inventoryReads.read(context.scope, self, this.paused);
     const definitions = this.definitions.player(scope.actorId);
     const installed = this.definitions.facts.definitions;
@@ -3905,7 +3926,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         inputScope,
       },
       placesRevision: this.store.memories.knownPlacesRevision(scope.actorId),
-      telemetryRevision: this.version,
+      telemetryRevision: this.telemetryRevision,
       controlling,
       freshWorldReview: !!(
         self.player.pendingDeath &&

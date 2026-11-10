@@ -125,7 +125,7 @@ function nativeMaintenanceHost(
     config: service.config,
     store: service.store,
     subscribe: (callback) => service.subscribe(callback),
-    notify: () => service.notify(),
+    notify: () => service.notifyTelemetry(),
     publishRecall: (work) => service.publishRecall(work),
     durabilityTicket: () => service.durabilityTicket(),
     isDurable: (ticket) => service.isDurable(ticket),
