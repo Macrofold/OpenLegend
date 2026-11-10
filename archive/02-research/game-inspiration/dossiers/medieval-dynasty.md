@@ -105,7 +105,7 @@ Danger comes from wildlife, hostile encounters, exposure and personal combat. Au
 
 The developer FAQ says bandits do not raid player villages and resident NPCs die from old age, distinct from the player's personal dangers. [Developer FAQ](https://steamcommunity.com/app/1129580/discussions/0/4027970229978377158/).
 
-Oxbow supports **four players total**, one village and host permissions. The host owns the save; leaving closes the session. Oxbow saves work offline/online, but the two maps are separate starts without travel between them. The described implementation has no dedicated servers, LAN or split-screen. [Developer FAQ](https://steamcommunity.com/app/1129580/discussions/0/4027970229978377158/).
+Oxbow supports **four players total**, one village and host permissions. The host owns the save; leaving closes the session. Oxbow saves work offline/online, but the two maps are separate starts without travel between them. The described implementation has no dedicated servers, LAN or split-screen. The FAQ describes shared quests with equal quest XP, while ordinary activity XP belongs to the acting character. Only one participant can use village management at a time. [Developer FAQ](https://steamcommunity.com/app/1129580/discussions/0/4027970229978377158/).
 
 Delivered cross-play connects supported PC storefronts with PS5 and Xbox Series X|S; this should not be generalized to older-console editions. June 2024 also finished Oxbow's main quest and added bridges, piers and platforms. These are delivered additions, not surviving roadmap promises. [Cross-play release notes](https://steamdb.info/patchnotes/14860278/).
 
