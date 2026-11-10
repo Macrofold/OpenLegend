@@ -50,6 +50,7 @@ export class NativeDefinitionCapture {
   private constructor(
     private identity: { readonly worldId: string } | undefined,
     private product: NativeInstalledDefinitions | undefined,
+    private capacity: Pick<NativeWorld, 'reserveConsumerBytes'> | undefined,
   ) {}
 
   static async capture(world: NativeWorld): Promise<NativeDefinitionCapture> {
@@ -65,7 +66,7 @@ export class NativeDefinitionCapture {
         ),
       );
       identity = retainNativeProduct(copyNativeProduct(world, { worldId: installation.worldId }));
-      return new NativeDefinitionCapture(identity, product);
+      return new NativeDefinitionCapture(identity, product, world);
     } catch (error) {
       if (product) releaseNativeProduct(product);
       if (identity) releaseNativeProduct(identity);
@@ -96,7 +97,7 @@ export class NativeDefinitionCapture {
 
   geometry() {
     const facts = this.facts;
-    return retainNativeSources(new NativeGeometryProviders(facts.geometry), facts);
+    return retainNativeSources(new NativeGeometryProviders(facts.geometry, this.capacity!), facts);
   }
 
   /** These are the selected world's authored request and slot meanings. They
@@ -123,5 +124,6 @@ export class NativeDefinitionCapture {
     if (this.identity) releaseNativeProduct(this.identity);
     this.product = undefined;
     this.identity = undefined;
+    this.capacity = undefined;
   }
 }

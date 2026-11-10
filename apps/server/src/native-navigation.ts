@@ -1,8 +1,4 @@
-import type {
-  NativeGeometryQueries,
-  NativeWorld,
-  NativeWorldConsumer,
-} from '@open-legend/native-simulation';
+import type { NativeGeometryQueries, NativeWorld } from '@open-legend/native-simulation';
 import type { NativeGeometryProviders } from './native-geometry.js';
 import { setTimeout as delay } from 'node:timers/promises';
 import { OverloadError } from './work-lane.js';
@@ -70,10 +66,11 @@ export class NativeNavigation {
           let more = true;
           while (more && !this.closed && this.owner.available() && this.owner.world() === world) {
             const queries = decodeNativeProduct<NativeGeometryQueries>(await read.packet());
-            let workspace: NativeWorldConsumer | undefined;
+            let answer:
+              | Awaited<ReturnType<NativeGeometryProviders['prepareEntityNavigation']>>
+              | undefined;
             try {
-              workspace = world.reserveConsumerBytes(geometry.entityNavigationWorkspace());
-              const answer = await geometry.prepareEntityNavigation(queries);
+              answer = await geometry.prepareEntityNavigation(queries);
               if (this.closed || !this.owner.available() || this.owner.world() !== world) break;
               more = await this.inLane(() =>
                 this.closed || !this.owner.available() || this.owner.world() !== world
@@ -83,7 +80,7 @@ export class NativeNavigation {
                     ),
               );
             } finally {
-              workspace?.release();
+              if (answer) releaseNativeProduct(answer);
               releaseNativeProduct(queries);
             }
           }

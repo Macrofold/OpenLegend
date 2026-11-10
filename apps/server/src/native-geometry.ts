@@ -1,6 +1,10 @@
 import { immutableDataSnapshot } from '@open-legend/domain';
 import { navigationResultProblem } from '@open-legend/domain/native-install';
-import type { NativeGeometryAnswers, NativeGeometryQueries } from '@open-legend/native-simulation';
+import type {
+  NativeGeometryAnswers,
+  NativeGeometryQueries,
+  NativeWorld,
+} from '@open-legend/native-simulation';
 import {
   canStand,
   bodySweepFraction,
@@ -19,7 +23,6 @@ import {
   traceSupportLine,
   validateSpatialMap,
   walkSurfaceLine,
-  SPATIAL_LIMITS,
   type NavigationRequest,
   type BoundsQueryCursor,
   type SpatialMap,
@@ -27,7 +30,8 @@ import {
 import { GeometryBatches } from './geometry-batches.js';
 import { NavigationPreparation } from './navigation/preparation.js';
 import { WorkLane } from './work-lane.js';
-import { releaseNativeProduct, retainNativeSources } from './native-consumer.js';
+import { releaseNativeProduct } from './native-consumer.js';
+import { NativeGeometryAllocation } from './native-geometry-allocation.js';
 
 /** Physical preparation retains one immutable provider map, never a WorldState.
  * Native owns the bodies, action, permission and acquiring observer. The caller
@@ -35,16 +39,27 @@ import { releaseNativeProduct, retainNativeSources } from './native-consumer.js'
  */
 export class NativeGeometryProviders {
   private mapValue?: SpatialMap;
-  private readonly batches = new GeometryBatches();
-  private readonly navigation = new NavigationPreparation();
-  private readonly navigationLane = new WorkLane('native.navigation', 64, 20_000);
+  private readonly batches: GeometryBatches;
+  private readonly navigation: NavigationPreparation;
+  private readonly navigationLane: WorkLane;
+  private readonly allocation: NativeGeometryAllocation;
   private closed = false;
   private active = false;
   private computing?: Promise<void>;
 
-  constructor(map: SpatialMap) {
-    validateSpatialMap(map);
-    this.mapValue = immutableDataSnapshot(map);
+  constructor(map: SpatialMap, capacity: Pick<NativeWorld, 'reserveConsumerBytes'>) {
+    const allocation = NativeGeometryAllocation.capture(capacity, map);
+    try {
+      validateSpatialMap(map);
+      this.mapValue = immutableDataSnapshot(map);
+      this.batches = new GeometryBatches(allocation);
+      this.navigation = new NavigationPreparation(allocation);
+      this.navigationLane = new WorkLane('native.navigation', 64, 20_000);
+      this.allocation = allocation;
+    } catch (error) {
+      allocation.release();
+      throw error;
+    }
   }
 
   private get map(): SpatialMap {
@@ -57,6 +72,8 @@ export class NativeGeometryProviders {
     if (this.active) throw new Error('Native physical provider already has a pending phase.');
     if (queries.binding.geometryRevision !== this.map.spatial.revision)
       throw new Error('Native physical preparation names stale geometry.');
+    const allocation = this.allocation.prepare(queries);
+    let transferred = false;
     this.active = true;
     let finished!: () => void;
     const computing = new Promise<void>((resolve) => {
@@ -153,7 +170,7 @@ export class NativeGeometryProviders {
       const routes = this.routes(queries);
       const navigation = await this.navigationAnswers(queries);
       if (this.closed) throw new Error('Native physical provider closed during preparation.');
-      return retainNativeSources(
+      const answer = this.allocation.finish(
         {
           binding: queries.binding,
           sight,
@@ -171,9 +188,13 @@ export class NativeGeometryProviders {
           bodySweeps,
           standingColumns,
         },
-        this,
+        allocation.output,
       );
+      transferred = true;
+      return answer;
     } finally {
+      if (!transferred) allocation.output.release();
+      allocation.scratch.release();
       this.active = false;
       this.computing = undefined;
       finished();
@@ -238,51 +259,62 @@ export class NativeGeometryProviders {
 
   /** Entity-local preparation shares the existing bounded Recast provider,
    * while unrelated synchronous physical phases continue on the accepted map. */
-  prepareEntityNavigation(queries: NativeGeometryQueries): Promise<NativeGeometryAnswers> {
+  async prepareEntityNavigation(queries: NativeGeometryQueries): Promise<NativeGeometryAnswers> {
     if (this.closed || queries.binding.geometryRevision !== this.map.spatial.revision)
       throw new Error('Native navigation preparation names unavailable geometry.');
     for (const key of Object.keys(queries) as (keyof NativeGeometryQueries)[]) {
       if (key !== 'binding' && key !== 'routes' && key !== 'navigation' && queries[key].length)
         throw new Error('Entity-local preparation contains another physical phase.');
     }
-    return this.navigationAnswers(queries).then((navigation) => ({
-      binding: queries.binding,
-      routes: this.routes(queries),
-      navigation,
-      sight: [],
-      walking: [],
-      support: [],
-      standing: [],
-      surfaceLines: [],
-      sightSweeps: [],
-      sound: [],
-      features: [],
-      featureIds: [],
-      convexViews: [],
-      bodySweeps: [],
-      standingColumns: [],
-    }));
-  }
-
-  entityNavigationWorkspace(): number {
-    let longest = 0;
-    for (const surface of this.map.spatial.surfaces) longest = Math.max(longest, surface.id.length);
-    // The physical provider already caps each route at maxPathPoints. Cover
-    // its result and bridge arrays/point objects/UTF-16 support identifiers
-    // before invoking that provider, including one finite problem envelope.
-    return SPATIAL_LIMITS.maxPathPoints * (512 + 4 * longest) + 16 * 1024;
+    const allocation = this.allocation.prepare(queries);
+    let transferred = false;
+    try {
+      const navigation = await this.navigationAnswers(queries);
+      if (this.closed) throw new Error('Native physical provider closed during preparation.');
+      const answer = this.allocation.finish(
+        {
+          binding: queries.binding,
+          routes: this.routes(queries),
+          navigation,
+          sight: [],
+          walking: [],
+          support: [],
+          standing: [],
+          surfaceLines: [],
+          sightSweeps: [],
+          sound: [],
+          features: [],
+          featureIds: [],
+          convexViews: [],
+          bodySweeps: [],
+          standingColumns: [],
+        },
+        allocation.output,
+      );
+      transferred = true;
+      return answer;
+    } finally {
+      if (!transferred) allocation.output.release();
+      allocation.scratch.release();
+    }
   }
 
   async close(): Promise<void> {
     this.closed = true;
     const computing = this.computing;
-    await Promise.all([this.batches.close(), this.navigation.close()]);
-    await this.navigationLane.idle();
-    await computing;
-    // Returned answers hold an independent pin through their real encoder.
-    // The closed provider no longer owns or exposes its complete map.
-    this.mapValue = undefined;
-    releaseNativeProduct(this);
+    const stopped = await Promise.allSettled([this.batches.close(), this.navigation.close()]);
+    try {
+      await this.navigationLane.idle();
+      await computing;
+    } finally {
+      // Returned answers retain only their independent allocation through the
+      // real encoder. Even a failed termination must end this closed owner.
+      this.mapValue = undefined;
+      this.allocation.release();
+      releaseNativeProduct(this);
+    }
+    const failed = stopped.find((value) => value.status === 'rejected');
+    if (failed?.status === 'rejected') throw failed.reason;
   }
 }
 
