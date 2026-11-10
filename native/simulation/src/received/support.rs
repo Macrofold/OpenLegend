@@ -262,6 +262,45 @@ pub struct TemporalSupportCollection {
     budget: ByteBudget,
 }
 impl TemporalSupportCollection {
+    /// A newly created history has no support rows. Creation needs no activity
+    /// formatter; decoding existing capsules retains that separate dependency.
+    pub(crate) fn new_empty(actor_id: &str, budget: &ByteBudget) -> Result<Self, ReceivedError> {
+        let path = ["world", "experience", "temporal", "actors", actor_id];
+        let error = || ReceivedError("Retained support owner exceeds native allowance.");
+        let length = crate::encoding::json_record_len(&path).map_err(|_| error())?;
+        let _encoding = budget
+            .reserve(length.checked_mul(2).ok_or_else(error)?)
+            .map_err(|_| error())?;
+        let mut backing = budget
+            .reserve_backing(
+                length
+                    .checked_mul(2)
+                    .and_then(|n| n.checked_add("mind_temporal_supports".len()))
+                    .ok_or_else(error)?,
+            )
+            .map_err(|_| error())?;
+        let owner = json_record(&path).map_err(|_| error())?;
+        backing
+            .resize(
+                owner
+                    .capacity()
+                    .checked_add("mind_temporal_supports".len())
+                    .ok_or_else(error)?,
+            )
+            .map_err(|_| error())?;
+        Ok(Self {
+            records: IndexMap::new(),
+            coverage: OwnerCoverage {
+                table: "mind_temporal_supports".to_owned(),
+                owner,
+                complete: true,
+                next_ordinal: 0,
+                parent_present: false,
+            },
+            backing,
+            budget: budget.clone(),
+        })
+    }
     pub fn install(
         actor_id: &str,
         rows: Vec<InstalledRow>,

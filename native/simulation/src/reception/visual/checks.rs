@@ -115,8 +115,12 @@ impl VisualReception {
             // inside this same sample transition. Deferring them until the phase
             // loop ends would allocate unrelated received-order IDs.
             if let Some(before) = self.current.before.as_ref() {
-                let tracks =
-                    before.active_tracks(&core.state.reception, &core.state.experience, source)?;
+                let tracks = before.active_tracks(
+                    &core.state.reception,
+                    &core.state.experience,
+                    source,
+                    budget,
+                )?;
                 repair_current_recordings(
                     core,
                     &self.observer.actor_id,
@@ -133,8 +137,12 @@ impl VisualReception {
         // decides complete marks and actual quota admission.
         if let Some(before) = self.current.before.as_ref().map(Arc::clone) {
             for source in &self.checked {
-                let tracks =
-                    before.active_tracks(&core.state.reception, &core.state.experience, source)?;
+                let tracks = before.active_tracks(
+                    &core.state.reception,
+                    &core.state.experience,
+                    source,
+                    budget,
+                )?;
                 repair_current_recordings(
                     core,
                     &self.observer.actor_id,

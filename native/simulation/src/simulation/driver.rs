@@ -34,7 +34,7 @@ use consolidation::{ConsolidationReply, poll_consolidation};
 mod reflection;
 use reflection::{ReflectionReply, poll_reflection};
 
-mod source_versions;
+pub(super) mod source_versions;
 use source_versions::{Finalizer as SourceVersionFinalizer, SourceVersionsAnswer};
 mod learning;
 use learning::LearningReply;
@@ -604,7 +604,7 @@ pub(crate) enum CompletedOperation {
     Advance(CompletedAdvance),
     Command(CompletedCommandOperation),
     Response(crate::response::CompletedResponse),
-    Forget(crate::experience::CompletedForgetExperience),
+    RecallEdit(crate::experience::CompletedRecallEdit),
     RecentRetention(crate::received::CompletedRecentRetention),
     KnowledgeRetention(crate::received::CompletedKnowledgeRetention),
     AccountRetention(crate::experience::CompletedAccountRetention),
@@ -624,7 +624,7 @@ impl CompletedOperation {
             Self::Advance(a) => &a.outcome,
             Self::Command(c) => c.command.outcome(),
             Self::Response(r) => &r.outcome,
-            Self::Forget(f) => f.outcome(),
+            Self::RecallEdit(f) => f.outcome(),
             Self::RecentRetention(r) => &r.outcome,
             Self::KnowledgeRetention(r) => &r.outcome,
             Self::AccountRetention(r) => &r.outcome,
@@ -644,7 +644,7 @@ impl CompletedOperation {
             | Self::Consolidation(_)
             | Self::ActivityLearning(_)
             | Self::Restore(_)
-            | Self::Forget(_)
+            | Self::RecallEdit(_)
             | Self::SupportRetention(_)
             | Self::AccountRetention(_)
             | Self::KnowledgeRetention(_)
@@ -681,7 +681,7 @@ impl CompletedOperation {
             | Self::Restore(_) => None,
             Self::Command(_)
             | Self::Response(_)
-            | Self::Forget(_)
+            | Self::RecallEdit(_)
             | Self::SupportRetention(_)
             | Self::AccountRetention(_)
             | Self::KnowledgeRetention(_)
@@ -721,7 +721,7 @@ enum OperationCursor {
     Advance(AdvanceCursor),
     Command(CommandOperation),
     Response(crate::response::ResponseCursor),
-    Forget(crate::experience::ForgetExperienceCursor),
+    RecallEdit(crate::experience::RecallEditCursor),
     NpcCandidates(crate::capture::NpcCandidateCursor),
     RecentRetention(crate::received::RecentRetentionCursor),
     KnowledgeRetention(crate::received::KnowledgeRetentionCursor),
@@ -749,7 +749,7 @@ impl OperationCursor {
             Self::Advance(a) => a.abort(core),
             Self::Command(c) => c.abort(core),
             Self::Response(r) => r.abort(core),
-            Self::Forget(f) => f.abort(core),
+            Self::RecallEdit(f) => f.abort(core),
             Self::NpcCandidates(cursor) => cursor.abort(core),
             Self::LearningPrepare(_)
             | Self::LearningPublish(_)
@@ -887,14 +887,14 @@ impl OperationCursor {
                     OperationReply::Response,
                 ))
             }
-            Self::Forget(cursor) => {
+            Self::RecallEdit(cursor) => {
                 let route = match route {
                     None => None,
                     Some(OperationReply::Forget(route)) => Some(route),
                     _ => return Err(DriveError::StaleResponse),
                 };
                 Ok(poll_forget(cursor, core, answer, route, budget)?.map(
-                    |value| DriverCompletion::Operation(CompletedOperation::Forget(value)),
+                    |value| DriverCompletion::Operation(CompletedOperation::RecallEdit(value)),
                     OperationReply::Forget,
                 ))
             }
@@ -1187,12 +1187,12 @@ impl OperationDriver {
     pub(crate) fn is_npc_sources(&self) -> bool {
         matches!(self.cursor, OperationCursor::NpcSources(_))
     }
-    pub(crate) fn forget(
+    pub(crate) fn recall_edit(
         core: &mut CoreMutation<'_>,
-        cursor: crate::experience::ForgetExperienceCursor,
+        cursor: crate::experience::RecallEditCursor,
         budget: &ByteBudget,
     ) -> Result<Self, DriveError> {
-        Self::new(core, OperationCursor::Forget(cursor), budget)
+        Self::new(core, OperationCursor::RecallEdit(cursor), budget)
     }
     fn new(
         core: &mut CoreMutation<'_>,
@@ -1340,12 +1340,17 @@ impl OperationDriver {
                 self.pending = Some((q.clone(), route));
                 Ok(DriveStep::Question(q))
             }
-            Ok(Poll::Complete(done)) => {
+            Ok(Poll::Complete(mut done)) => {
                 self.pending = None;
+                if let DriverCompletion::Operation(CompletedOperation::Restore(operation)) =
+                    &mut done
+                {
+                    self.source_versions = operation.source_versions.take();
+                }
                 if finalize_sources && self.source_versions.is_none() {
                     if let DriverCompletion::Operation(ref operation) = done {
                         if !matches!(operation, CompletedOperation::Restore(_)) {
-                            match SourceVersionFinalizer::prepare(core, key, budget) {
+                            match SourceVersionFinalizer::prepare(core, key, None, budget) {
                                 Ok(Some(finalizer)) => {
                                     let question = Arc::clone(&finalizer.question);
                                     let DriverCompletion::Operation(operation) = done else {
@@ -1512,13 +1517,13 @@ fn privacy_reply(
     })
 }
 fn poll_forget(
-    cursor: &mut crate::experience::ForgetExperienceCursor,
+    cursor: &mut crate::experience::RecallEditCursor,
     core: &mut CoreMutation<'_>,
     answer: &mut Option<Answer>,
     route: Option<ForgetReply>,
     budget: &ByteBudget,
-) -> Result<Poll<crate::experience::CompletedForgetExperience, ForgetReply>, DriveError> {
-    use crate::experience::ForgetExperienceStep as Step;
+) -> Result<Poll<crate::experience::CompletedRecallEdit, ForgetReply>, DriveError> {
+    use crate::experience::RecallEditStep as Step;
     let supplied = privacy_reply(answer, route)?;
     match cursor.step(core, supplied, budget)? {
         Step::Complete(done) => Ok(Poll::Complete(done)),

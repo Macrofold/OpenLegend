@@ -10,7 +10,7 @@ mod journal;
 pub(crate) use journal::{RecognitionCheckpoint, RecognitionJournal};
 #[path = "recognition/maintenance.rs"]
 mod maintenance;
-pub(crate) use maintenance::maintain_recognition;
+pub(crate) use maintenance::{bootstrap_recognition_account, maintain_recognition};
 #[path = "recognition/familiarity.rs"]
 mod familiarity;
 #[path = "recognition/voice.rs"]
@@ -35,7 +35,7 @@ pub(crate) use warning::ordinary_warning;
 mod prune;
 #[path = "recognition/support_retention.rs"]
 mod support_retention;
-pub(crate) use prune::{IndividualPruneMode, prune_observer_individuals};
+pub(crate) use prune::{IndividualPruneMode, PreparedIndividualRetirement, maintain_restore_recognition, prune_observer_individuals};
 pub(crate) use support_retention::held_support_aliases;
 #[path = "recognition/privacy.rs"]
 mod privacy;

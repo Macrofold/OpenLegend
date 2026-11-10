@@ -6,11 +6,15 @@ use crate::appraisals::AppraisalScope;
 use crate::host::PublicationLease;
 use crate::simulation::AcceptedActorRead;
 use std::mem::size_of;
+use std::sync::atomic::AtomicBool;
 
 mod bindings;
+mod held_sources;
 mod perspectives;
 pub(super) use bindings::ActiveNpcResponse;
 pub use bindings::RuntimeNpcResponseTicket;
+pub(super) use held_sources::HeldReceiptRegistry;
+pub(crate) use held_sources::HeldSourceProof;
 
 /// A brief dispatch gate, never retained while SQL or a provider is awaited.
 /// Historical disclosure and current response semantics are separate routes.
@@ -31,7 +35,13 @@ pub struct RuntimeNpcRead {
     perspectives: Arc<Vec<crate::capture::NpcPerspectiveSnapshot>>,
     candidate_key: Option<CandidateKey>,
     query_expanded: bool,
+    receipt_payload: Arc<AtomicBool>,
     _custody: Arc<ByteReservation>,
+}
+impl Drop for RuntimeNpcRead {
+    fn drop(&mut self) {
+        self.receipt_payload.store(false, Ordering::Release);
+    }
 }
 pub enum RuntimeNpcPreparationStep {
     Continue,
@@ -355,7 +365,8 @@ impl NativeWorldSession {
                         )
                     })
                     .and_then(|n| {
-                        n.checked_add(8 * size_of::<usize>() + 4 * std::mem::align_of::<usize>())
+                        n.checked_add(8 * size_of::<usize>() + 4 * std::mem::align_of::<usize>())?
+                            .checked_add(held_sources::marker_backing_bytes())
                     })
                     .ok_or_else(|| failure("capacity"))?,
             )
@@ -375,6 +386,7 @@ impl NativeWorldSession {
             perspectives: Arc::new(Vec::new()),
             candidate_key: None,
             query_expanded: false,
+            receipt_payload: Arc::new(AtomicBool::new(true)),
             _custody: Arc::new(custody),
         })
     }
@@ -450,6 +462,9 @@ impl NativeWorldSession {
                 sources
                     .validate_origin(&read.read, &self.budget)
                     .map_err(failure)?;
+                self.held_receipts
+                    .register(&sources, &read.receipt_payload, &self.budget)
+                    .map_err(failure)?;
                 Arc::get_mut(&mut read.sources)
                     .ok_or_else(|| failure("NPC sources are already issued"))?
                     .push(sources);
@@ -519,9 +534,47 @@ impl NativeWorldSession {
         read.candidate_key = Some(key);
         Ok(key)
     }
+    /// Only the live session can bind a withdrawal proof to the actor's actual
+    /// current physical life. Node cannot construct this retained-source grant.
+    pub(super) fn held_source_proof(
+        &mut self,
+        actor_id: &str,
+        source_id: &str,
+    ) -> Result<Option<HeldSourceProof>, RuntimeError> {
+        self.require_active()?;
+        let generation = self.session.operational_generation();
+        let simulation = self.session.accepted().map_err(failure)?;
+        let Some(actor) = simulation
+            .state
+            .physical
+            .entities
+            .get(actor_id)
+            .and_then(|entity| entity.actor.as_ref())
+        else {
+            return Ok(None);
+        };
+        self.held_receipts
+            .prove(
+                generation,
+                actor_id,
+                actor.physical_life.unwrap_or(0),
+                source_id,
+                &simulation.state.installed.account_law(),
+                &self.budget,
+            )
+            .map_err(failure)
+    }
 }
 
 impl RuntimeNpcRead {
+    pub fn receipt_liveness_backing_bytes() -> usize {
+        held_sources::marker_backing_bytes()
+    }
+    /// A wrapper may revoke its actual data payload while native cleanup is
+    /// queued. Moving that payload into a ticket does not revoke this marker.
+    pub fn receipt_liveness(&self) -> Weak<AtomicBool> {
+        Arc::downgrade(&self.receipt_payload)
+    }
     pub fn candidate_key(&self) -> Option<CandidateKey> {
         self.candidate_key
     }

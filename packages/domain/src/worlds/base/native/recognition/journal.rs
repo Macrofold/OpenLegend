@@ -350,6 +350,26 @@ impl RecognitionJournal {
         receiving: &mut ReceivingMutation<'_>,
     ) -> Result<bool, ExecutionError> {
         self.ensure_observer(state, observer)?;
+        // Source's accounting helper returns immediately for undefined ->
+        // undefined authored ownership; that case creates no history/account.
+        let charged = !next.authored
+            || state
+                .observer_identities
+                .as_ref()
+                .and_then(|root| root.get(observer))
+                .and_then(|records| records.get(key))
+                .is_some_and(|prior| prior.retained == Some(true) && !prior.authored);
+        if charged {
+            crate::received::bootstrap_personal_accounts(
+                physical,
+                state,
+                receiving.experience,
+                temporal,
+                installed,
+                observer,
+                receiving.budget,
+            )?;
+        }
         if !next.authored {
             next.retained = Some(true);
         }

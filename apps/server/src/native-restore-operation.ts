@@ -7,6 +7,7 @@ import type {
 } from '@open-legend/native-simulation';
 import {
   selectedTemporalPolicy,
+  selectedRecognitionSupportReader,
   type ExperiencePrivacy,
   type WorkVector,
 } from '@open-legend/domain';
@@ -31,6 +32,9 @@ import type {
   NativeRestoreStage,
 } from './native-restore.js';
 import { captureWorkingSources } from './native-current-sources.js';
+import { ACCOUNT_RETENTION_PREPARATION } from './account-retention.js';
+import { SUPPORT_MEMBERSHIP_PREPARATION } from './retention-cleanup.js';
+import { SOURCE_RETENTION_CLOSURE_ROUNDS } from './source-version-retention.js';
 
 /** One inactive native preparation and its genuine Ready fence stay owned
  * through the outer SQL outcome. Neither rejection nor activation fabricates
@@ -41,6 +45,8 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
   readonly installation;
   readonly inputs;
   readonly archives;
+  readonly archiveBaseline;
+  readonly retentionCapacity;
   readonly pending: NativePendingSave;
   readonly retention: NativeRetention;
   readonly retained: NativeRetainedValues;
@@ -68,6 +74,14 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
     this.installation = retainNativeSources(restored.installation, publication);
     const changes = retainNativeSources(nativeRecordChanges(restored.changes), publication);
     this.archives = retainNativeSources(publication.restoreMetadata.keptArchives, publication);
+    this.archiveBaseline = retainNativeSources(
+      publication.restoreMetadata.archiveBaseline,
+      publication,
+    );
+    this.retentionCapacity = {
+      reserveBytes: (bytes: number) => world.reserveConsumerBytes(bytes),
+      reserveJson: (bytes: Buffer) => world.reserveConsumerJson(bytes),
+    };
     this.inputs = retainNativeSources(
       {
         worldId: restored.worldId,
@@ -79,6 +93,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
           restored.worldId,
           changes,
           this.installation.memoryAllowance,
+          publication.sourceVersions,
         ),
         outcomes: [],
         privacy: publication.restoreMetadata.privacy,
@@ -89,13 +104,17 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
       },
       publication,
     );
-    this.pending = new NativePendingSave(store, {
-      worldId: restored.worldId,
-      generation: restored.generation,
-      revision: restored.revision,
-      acceptedCut: restored.acceptedCut,
-      timeline,
-    });
+    this.pending = new NativePendingSave(
+      store,
+      {
+        worldId: restored.worldId,
+        generation: restored.generation,
+        revision: restored.revision,
+        acceptedCut: restored.acceptedCut,
+        timeline,
+      },
+      world,
+    );
     this.retained = retainNativeSources(
       {
         worldId: restored.worldId,
@@ -199,7 +218,10 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
       );
       definitions = await NativeDefinitionCapture.capture(world);
       geometry = definitions.geometry();
-      const reads = await stage.prepareReads(initial);
+      const reads = await stage.prepareReads(initial, {
+        reserveBytes: (bytes) => world.reserveConsumerBytes(bytes),
+        reserveJson: (bytes) => world.reserveConsumerJson(bytes),
+      });
       // This is the actual private SQL installation at cut zero, inside its
       // still-open transaction. No ordinary live read can access this owner.
       const cut: LiveReadCuts = {
@@ -219,6 +241,11 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
             JSON.stringify({
               privacy: request.privacy,
               metadata: stage.metadata,
+              retentionPreparation: {
+                accounts: ACCOUNT_RETENTION_PREPARATION,
+                support: SUPPORT_MEMBERSHIP_PREPARATION,
+                rounds: SOURCE_RETENTION_CLOSURE_ROUNDS,
+              },
             }),
           ),
         ),
@@ -227,7 +254,14 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
         {
           db: store.db,
           liveReadCuts: () => cut,
-          restoreView: (projection, read) => reads.withPrivateView(projection, read),
+          restoreView: (projection, read, archives) =>
+            reads.withPrivateView(projection, read, archives),
+          retentionCapacity: {
+            reserveBytes: (bytes) => world.reserveConsumerBytes(bytes),
+            reserveJson: (bytes) => world.reserveConsumerJson(bytes),
+          },
+          retentionSignal: request.signal,
+          retentionSupportSourceIds: selectedRecognitionSupportReader(definitions.facts.definitions),
         },
       );
       if (turn.kind !== 'prepared' || !turn.prepared)

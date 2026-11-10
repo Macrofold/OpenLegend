@@ -40,6 +40,9 @@ pub(crate) struct PersonalPredecessors {
     _reservation: crate::host::ByteReservation,
 }
 impl PersonalPredecessors {
+    pub(crate) fn records(&self) -> &[Arc<PersonalSourceRecord>] {
+        &self.records
+    }
     pub(crate) fn value(&self) -> impl serde::Serialize + '_ {
         PredecessorRows(&self.records)
     }
@@ -74,8 +77,10 @@ impl serde::Serialize for Predecessor<'_> {
 }
 pub(crate) fn capture_personal_predecessors(
     journal: &ExperienceJournal,
+    since: Option<ExperienceCheckpoint>,
     budget: &ByteBudget,
 ) -> Result<PersonalPredecessors, RecordEncodingError> {
+    let journal = journal.personal_changes(since).map_err(|_| encoding())?;
     let count = journal
         .summary_collections()
         .try_fold(journal.undo.len(), |n, (_, before)| {
@@ -93,7 +98,7 @@ pub(crate) fn capture_personal_predecessors(
     let mut seen = IndexSet::new();
     new.try_reserve(count).map_err(|_| encoding())?;
     seen.try_reserve(count).map_err(|_| encoding())?;
-    for operation in &journal.undo {
+    for operation in journal.undo {
         if let super::mutation::ExperienceUndo::Append(append) = operation {
             new.insert(append.source_key());
         }
@@ -113,7 +118,7 @@ pub(crate) fn capture_personal_predecessors(
         }
     }
 
-    for operation in &journal.undo {
+    for operation in journal.undo {
         let before = match operation {
             super::mutation::ExperienceUndo::Replace { before, .. }
             | super::mutation::ExperienceUndo::Remove { before, .. } => before,
@@ -157,6 +162,19 @@ pub(crate) fn encode_personal_changes(
         )?;
     }
     encode_consolidation_clock(state, journal, ledger, output, budget)?;
+    encode_personal_source_changes(state, journal, None, ledger, output, budget)
+}
+/// Source-version planning can begin at a genuine post-privacy checkpoint while
+/// the final save still encodes the complete enclosing candidate.
+pub(crate) fn encode_personal_source_changes(
+    state: &ExperienceState,
+    journal: &ExperienceJournal,
+    since: Option<ExperienceCheckpoint>,
+    ledger: &RecordLedger,
+    output: &mut RowEncoder<'_>,
+    budget: &ByteBudget,
+) -> Result<(), RecordEncodingError> {
+    let journal = journal.personal_changes(since).map_err(|_| encoding())?;
     let maximum = journal
         .summary_collections()
         .try_fold(journal.undo.len(), |n, (actor, _)| {

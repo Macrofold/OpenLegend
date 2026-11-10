@@ -8,13 +8,15 @@ use crate::records::{ChangedRows, RowEncoder};
 const TABLES: [&str; 3] = ["mind_awareness", "mind_memories", "mind_summaries"];
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(super) struct SourceVersionsAnswer {
+pub(in crate::simulation) struct SourceVersionsAnswer {
     pub(super) binding: GeometryBinding,
     plan: SourceVersionPlan,
     #[serde(skip)]
     storage: Option<ByteReservation>,
     #[serde(skip)]
     wire_bytes: usize,
+    #[serde(skip)]
+    applied: bool,
 }
 impl SourceVersionsAnswer {
     pub(super) fn decode(text: &str, budget: &ByteBudget) -> Result<Self, DriveError> {
@@ -49,7 +51,7 @@ struct PrivacyCut<'a> {
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct Request<'a, P: Serialize> {
+struct Request<'a, P: Serialize, A: Serialize> {
     binding: GeometryBinding,
     world_id: &'a str,
     generation: &'a str,
@@ -58,9 +60,17 @@ struct Request<'a, P: Serialize> {
     records: &'a ChangedRows,
     personal_predecessors: P,
     maximum_transfer_bytes: usize,
+    #[serde(flatten)]
+    restore: Option<RestoreContext<'a, A>>,
 }
-pub(super) struct Finalizer {
-    pub(super) question: Arc<ProviderQuestion>,
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RestoreContext<'a, A: Serialize> {
+    restore_projection: &'a ChangedRows,
+    archive_baseline: A,
+}
+pub(in crate::simulation) struct Finalizer {
+    pub(in crate::simulation) question: Arc<ProviderQuestion>,
     actors: indexmap::IndexSet<String>,
     maximum_transfer_bytes: usize,
     _storage: ByteReservation,
@@ -69,13 +79,46 @@ impl Finalizer {
     pub(super) fn prepare(
         core: &CoreMutation<'_>,
         key: crate::host::CandidateKey,
+        since: Option<crate::experience::ExperienceCheckpoint>,
+        budget: &ByteBudget,
+    ) -> Result<Option<Self>, DriveError> {
+        Self::prepare_with::<()>(core, key, since, None, budget)
+    }
+    /// Restoration plans only edits after its genuine post-privacy baseline.
+    /// SQL replays that immutable before-view, including its first selected
+    /// archives, rather than the candidate's later retention effects.
+    pub(in crate::simulation) fn prepare_restore(
+        core: &CoreMutation<'_>,
+        key: crate::host::CandidateKey,
+        since: crate::experience::ExperienceCheckpoint,
+        projection: &ChangedRows,
+        baseline: &crate::restore::RestoreArchiveBaseline,
+        budget: &ByteBudget,
+    ) -> Result<Option<Self>, DriveError> {
+        Self::prepare_with(
+            core,
+            key,
+            Some(since),
+            Some(RestoreContext {
+                restore_projection: projection,
+                archive_baseline: baseline.archives(),
+            }),
+            budget,
+        )
+    }
+    fn prepare_with<A: Serialize>(
+        core: &CoreMutation<'_>,
+        key: crate::host::CandidateKey,
+        since: Option<crate::experience::ExperienceCheckpoint>,
+        restore: Option<RestoreContext<'_, A>>,
         budget: &ByteBudget,
     ) -> Result<Option<Self>, DriveError> {
         let mut output = RowEncoder::new(&core.state.installed.schema, budget)
             .map_err(|_| DriveError::Encoding)?;
-        crate::experience::encode_personal_changes(
+        crate::experience::encode_personal_source_changes(
             &core.state.experience,
             &core.journal.experience,
+            since,
             &core.state.records,
             &mut output,
             budget,
@@ -165,9 +208,12 @@ impl Finalizer {
                 forgotten: history.privacy.forgotten_ids(),
             });
         }
-        let predecessors =
-            crate::experience::capture_personal_predecessors(&core.journal.experience, budget)
-                .map_err(|_| DriveError::Encoding)?;
+        let predecessors = crate::experience::capture_personal_predecessors(
+            &core.journal.experience,
+            since,
+            budget,
+        )
+        .map_err(|_| DriveError::Encoding)?;
         let binding = GeometryBinding::new(key, core.state.installed.geometry.spatial.revision, 1);
         let maximum_transfer_bytes = budget.limit();
         let question = ProviderQuestion::prepare(
@@ -182,6 +228,7 @@ impl Finalizer {
                 records: &records,
                 personal_predecessors: predecessors.value(),
                 maximum_transfer_bytes,
+                restore,
             },
             budget,
         )?;
@@ -203,13 +250,71 @@ impl Finalizer {
     pub(super) fn finish(
         &self,
         core: &mut CoreMutation<'_>,
-        answer: SourceVersionsAnswer,
+        mut answer: SourceVersionsAnswer,
         budget: &ByteBudget,
     ) -> Result<SourceVersionsAnswer, DriveError> {
-        if answer.wire_bytes > self.maximum_transfer_bytes {
-            return Err(DriveError::MalformedResponse);
+        self.validate(&answer, budget)?;
+        Self::apply(core, &answer, budget)?;
+        answer.applied = true;
+        Ok(answer)
+    }
+    /// Validate the same actual plan before accounting changes. Invalid archive
+    /// before-images therefore leave the outstanding provider reply retryable.
+    pub(in crate::simulation) fn finish_restore(
+        &self,
+        core: &mut CoreMutation<'_>,
+        mut answer: SourceVersionsAnswer,
+        baseline: &crate::restore::RestoreArchiveBaseline,
+        budget: &ByteBudget,
+    ) -> Result<
+        (
+            SourceVersionsAnswer,
+            crate::restore::PreparedRestoreArchives,
+        ),
+        crate::experience::HistoryPreparationError,
+    > {
+        self.validate(&answer, budget)?;
+        let archives = baseline.prepare_versions(&answer.plan, budget)?;
+        Self::apply(core, &answer, budget)?;
+        answer.applied = true;
+        Ok((answer, archives))
+    }
+    pub(in crate::simulation) fn reset_restore(
+        core: &mut CoreMutation<'_>,
+        answer: &mut SourceVersionsAnswer,
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
+        if !answer.applied {
+            return Err(ExecutionError::InvalidCheckpoint);
         }
-        answer.plan.validate_actors(&self.actors, budget)?;
+        crate::received::reset_source_version_plan(
+            &mut core.state.temporal,
+            &answer.plan,
+            core.state.physical.header.sim_time,
+            &core.state.installed.attention.value().retention,
+            budget,
+        )?;
+        answer.applied = false;
+        Ok(())
+    }
+    fn validate(
+        &self,
+        answer: &SourceVersionsAnswer,
+        budget: &ByteBudget,
+    ) -> Result<(), crate::experience::HistoryPreparationError> {
+        if answer.applied {
+            return Err(crate::experience::HistoryPreparationError::StaleResponse);
+        }
+        if answer.wire_bytes > self.maximum_transfer_bytes {
+            return Err(crate::experience::HistoryPreparationError::MalformedResponse);
+        }
+        answer.plan.validate_actors(&self.actors, budget)
+    }
+    fn apply(
+        core: &mut CoreMutation<'_>,
+        answer: &SourceVersionsAnswer,
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
         crate::received::apply_source_version_plan(
             &mut core.state.temporal,
             &answer.plan,
@@ -217,7 +322,6 @@ impl Finalizer {
             &core.state.installed.attention.value().retention,
             budget,
         )
-        .map_err(ExecutionError::from)?;
-        Ok(answer)
+        .map_err(ExecutionError::from)
     }
 }

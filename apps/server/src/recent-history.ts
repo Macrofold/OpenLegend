@@ -4,6 +4,7 @@ import {
   soundDescription,
   type TemporalValue,
   type TemporalReceipt,
+  type TemporalReceiptLocator,
   type ObservedLocation,
   type SensoryFacet,
 } from '@open-legend/domain';
@@ -118,10 +119,35 @@ const editReferenceSchema = z
       .strict(),
   })
   .strict();
+export interface RecentObservationReferenceOwner {
+  readonly worldId: string;
+  readonly generation: string;
+}
+/** Only an already admitted receipt is passed by either real history reader.
+ * The token preserves its exact address without exposing internal traversal. */
+export function recentObservationReference(
+  owner: RecentObservationReferenceOwner,
+  scope: RequestScope,
+  receipt: TemporalReceiptLocator,
+): string {
+  return sealCursor({
+    purpose: 'recent-observation-edit',
+    scope: scopeKey(scope),
+    worldId: owner.worldId,
+    generation: owner.generation,
+    receipt: {
+      actorId: receipt.actorId,
+      physicalLife: receipt.physicalLife,
+      epoch: receipt.epoch,
+      batchOrder: receipt.batchOrder,
+      entryIndex: receipt.entryIndex,
+    },
+  });
+}
 /** A reader-issued address is opaque and scoped; editing still rechecks current
  * authority and retained receipt membership through the ordinary mutation owner. */
 export function resolveRecentObservationReference(
-  service: WorldService,
+  service: RecentObservationReferenceOwner,
   actorId: string,
   scope: RequestScope,
   token: string,
@@ -129,7 +155,7 @@ export function resolveRecentObservationReference(
   const value = editReferenceSchema.parse(openCursor(token));
   if (
     value.scope !== scopeKey(scope) ||
-    value.worldId !== service.world.id ||
+    value.worldId !== service.worldId ||
     value.generation !== service.generation ||
     value.receipt.actorId !== actorId
   )
@@ -230,19 +256,7 @@ export async function recentHistory(
       sourceKind: 'observation',
       fidelity: 'exact',
       time: receipt.at,
-      editReference: sealCursor({
-        purpose: 'recent-observation-edit',
-        scope: scopeKey(scope),
-        worldId,
-        generation,
-        receipt: {
-          actorId,
-          physicalLife: receipt.physicalLife,
-          epoch: receipt.epoch,
-          batchOrder: receipt.batchOrder,
-          entryIndex: receipt.entryIndex,
-        },
-      }),
+      editReference: recentObservationReference({ worldId, generation }, scope, receipt),
       text: !receipt.facets.length
         ? text
         : `${receipt.change === 'loss' ? 'Lost contact; last received' : receipt.change === 'attention-exit' ? 'Last noted' : 'Received'}: ${text}`,

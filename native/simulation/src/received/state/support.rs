@@ -44,6 +44,21 @@ fn known_place(capsule: &TemporalSupportCapsule) -> bool {
     })
 }
 impl TemporalState {
+    /// Borrow genuine before-capsules removed after the complete pass began.
+    /// A replaced or reinserted support remains owned and is not a retirement.
+    pub(crate) fn retired_supports_since(
+        &self,
+        checkpoint: TemporalCheckpoint,
+    ) -> Result<impl Iterator<Item = (&str, &Arc<TemporalSupportRecord>)>, ReceivedError> {
+        let undo = self.undo.get(checkpoint.operations..).ok_or_else(invalid)?;
+        Ok(undo.iter().filter_map(|operation| {
+            let TemporalUndo::Support { actor_id, id, before: Some((_, before)), .. } = operation
+                else { return None; };
+            let present = self.actors.get(actor_id).and_then(|actor| actor.supports.as_ref())
+                .is_some_and(|supports| supports.records.contains_key(id));
+            (!present).then_some((actor_id.as_str(), before))
+        }))
+    }
     fn change_support(
         &mut self,
         actor_id: &str,

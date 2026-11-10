@@ -163,6 +163,9 @@ pub(crate) fn prepare_awareness_admission(
         .get(actor_id)
         .ok_or(ExperienceError::ForeignOwner)?;
     let has_memory = actor.has_memory();
+    if has_memory {
+        crate::received::ensure_experience_accounting(core, actor_id, budget)?;
+    }
     // Source sensory placement still calls canAddExperience, whose actual
     // accounting owner is required even though sensory charges are zero.
     let has_accounts = core

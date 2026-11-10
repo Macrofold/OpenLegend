@@ -7,6 +7,7 @@ import { prepareSourceVersionPlan, type SourceVersionPlan } from './source-versi
 import type { SqlDatabase } from './store.js';
 import { RECORD_NODES } from './world-record-schema.js';
 import type { RecordChanges } from './world-records.js';
+import type { NativeRestoreArchive } from './native-restore.js';
 
 /** Selected immutable bodies immediately before a native personal replacement.
  * They keep their actual source revision and SQL placement; no world is rebuilt. */
@@ -33,6 +34,8 @@ export interface NativeSourceVersionsRequest extends NativeSourceVersionContext 
   readonly records: NativeChangedRows;
   readonly personalPredecessors: readonly NativePersonalPredecessor[];
   readonly maximumTransferBytes: number;
+  readonly restoreProjection?: NativeChangedRows;
+  readonly archiveBaseline?: readonly NativeRestoreArchive[];
 }
 /** The native candidate asks once, before its temporal header and save rows are
  * sealed. The ordinary application stage consumes this exact plan afterward. */

@@ -8,6 +8,194 @@ use crate::host::retained_size::HeapBytes;
 use crate::identity::MAX_SAFE_INTEGER;
 use crate::received::ReceivedError;
 
+/// Match the first real personal-account admission. Cold loading supplies its
+/// complete persisted totals; a new owner may bootstrap only from complete
+/// native collections, never treat an unselected historical tail as empty.
+pub(crate) fn ensure_experience_accounting(
+    core: &mut crate::execution::CoreMutation<'_>,
+    actor_id: &str,
+    budget: &crate::host::ByteBudget,
+) -> Result<(), crate::execution::ExecutionError> {
+    if !super::ensure_temporal_actor(core, actor_id, budget)? {
+        return Ok(());
+    }
+    bootstrap_personal_accounts(
+        &mut core.state.physical,
+        &core.state.reception,
+        &core.state.experience,
+        &mut core.state.temporal,
+        &core.state.installed,
+        actor_id,
+        budget,
+    )
+}
+
+/// Recognition can retain a first personal identity before any observation.
+/// Its actual semantic journal already owns these disjoint state parts.
+pub(crate) fn bootstrap_personal_accounts(
+    physical: &mut crate::simulation::PhysicalState,
+    reception: &crate::reception::ReceptionState,
+    experience: &crate::experience::ExperienceState,
+    temporal: &mut TemporalState,
+    installed: &crate::simulation::InstalledWorld,
+    actor_id: &str,
+    budget: &crate::host::ByteBudget,
+) -> Result<(), crate::execution::ExecutionError> {
+    use crate::encoding::json_record_len;
+    use crate::execution::ExecutionError;
+    use crate::experience::{AccountClass as PersonalClass, PersonalSourceKind};
+    let Some(actor) = physical
+        .entities
+        .get(actor_id)
+        .filter(|actor| actor.has_memory())
+    else {
+        return Ok(());
+    };
+    let life = actor.physical_life().ok_or(ExecutionError::MissingActor)?;
+    if let Some(history) = temporal.actor(actor_id) {
+        if history.header().physical_life != life {
+            return Err(ExecutionError::Received(ReceivedError(
+                "Personal accounting requires its actual receiving-life retirement.",
+            )));
+        }
+        if history.header().accounts.is_some() {
+            return Ok(());
+        }
+    } else {
+        super::actor::install_temporal_actor_life(
+            temporal, physical, actor_id, life, None, budget,
+        )?;
+    }
+    let mut accounts = TemporalAccounts {
+        next_due: None,
+        knowledge_due: None,
+        support_dirty_revision: 0,
+        support_settled_revision: 0,
+        optional: AccountCharge { bytes: 0, count: 0 },
+        required: AccountCharge { bytes: 0, count: 0 },
+        speech: AccountCharge { bytes: 0, count: 0 },
+        archives: None,
+    };
+    let add = |account: &mut AccountCharge, bytes: u64| -> Result<(), ExecutionError> {
+        account.bytes = account
+            .bytes
+            .checked_add(bytes)
+            .filter(|n| *n <= MAX_SAFE_INTEGER)
+            .ok_or(ExecutionError::Capacity)?;
+        account.count = account
+            .count
+            .checked_add(1)
+            .filter(|n| *n <= MAX_SAFE_INTEGER)
+            .ok_or(ExecutionError::Capacity)?;
+        Ok(())
+    };
+    let policy = &installed.attention.value().retention;
+    for kind in [
+        PersonalSourceKind::Awareness,
+        PersonalSourceKind::Memory,
+        PersonalSourceKind::Summary,
+    ] {
+        let Some(collection) = experience.optional_collection(actor_id, kind)? else {
+            continue;
+        };
+        // Installed ordinals are unique and below this exact high-water mark.
+        // Filling every slot also proves complete residency for a fresh owner
+        // whose working-set selection conservatively marks the list partial.
+        if !collection.coverage().complete
+            && collection.records().len() as u64 != collection.coverage().next_ordinal
+        {
+            return Err(ExecutionError::Received(ReceivedError(
+                "Personal account bootstrap requires complete source ownership.",
+            )));
+        }
+        for record in collection.records() {
+            let header = record.header();
+            if kind == PersonalSourceKind::Awareness && header.sensory {
+                continue;
+            }
+            let account = match header.class {
+                PersonalClass::Optional => &mut accounts.optional,
+                PersonalClass::Required => &mut accounts.required,
+                PersonalClass::Speech => &mut accounts.speech,
+                PersonalClass::Sensory => return Err(ExecutionError::Invariant),
+            };
+            add(account, record.payload().len() as u64)?;
+            if let Some(due) = crate::experience::experience_retention_due(header, policy) {
+                accounts.next_due = Some(accounts.next_due.map_or(due, |prior| prior.min(due)));
+            }
+        }
+    }
+    let history = temporal.actor(actor_id).ok_or(ExecutionError::Invariant)?;
+    if let Some(supports) = history.supports() {
+        if !supports.coverage().complete {
+            return Err(ExecutionError::Received(ReceivedError(
+                "Personal account bootstrap requires complete support ownership.",
+            )));
+        }
+        for record in supports.records() {
+            let capsule = record.capsule();
+            add(
+                if capsule.required {
+                    &mut accounts.required
+                } else {
+                    &mut accounts.optional
+                },
+                capsule.bytes,
+            )?;
+        }
+    } else if history.header().supports.is_some() {
+        return Err(ExecutionError::Invariant);
+    }
+    if let Some(documents) = reception
+        .actor_knowledge
+        .as_ref()
+        .and_then(|root| root.get(actor_id))
+    {
+        for document in documents
+            .values()
+            .filter(|document| document.origin == crate::reception::KnowledgeOrigin::ActorEdit)
+        {
+            add(
+                &mut accounts.optional,
+                json_record_len(document).map_err(|_| ExecutionError::Invariant)? as u64,
+            )?;
+        }
+    }
+    // Recognition retention and its deadline belong to the selected world.
+    let (recognition, due) = crate::worlds::base_recognition::bootstrap_recognition_account(
+        reception, installed, actor_id,
+    )?;
+    accounts.optional.bytes = accounts
+        .optional
+        .bytes
+        .checked_add(recognition.bytes)
+        .filter(|n| *n <= MAX_SAFE_INTEGER)
+        .ok_or(ExecutionError::Capacity)?;
+    accounts.optional.count = accounts
+        .optional
+        .count
+        .checked_add(recognition.count)
+        .filter(|n| *n <= MAX_SAFE_INTEGER)
+        .ok_or(ExecutionError::Capacity)?;
+    accounts.knowledge_due = due;
+    // This selected install rejects nonempty learned-capability collections;
+    // there are no nonauthored discovery records to charge at this boundary.
+    if accounts.required.bytes as f64
+        >= (policy.required.max_bytes as f64 * policy.required_pressure_start).floor()
+        || accounts.required.count as f64
+            >= (policy.required.max_records as f64 * policy.required_pressure_start).floor()
+    {
+        let now = physical.header.sim_time;
+        accounts.next_due = Some(accounts.next_due.map_or(now, |prior| prior.min(now)));
+    }
+    let header = history.header();
+    let _clone = budget.reserve(header.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+    let mut header = header.clone();
+    header.accounts = Some(accounts);
+    temporal.replace_header(actor_id, header)?;
+    Ok(())
+}
+
 #[derive(Clone)]
 pub(crate) struct AccountAdditionBudget {
     optional: AccountCharge,
@@ -171,6 +359,10 @@ impl TemporalState {
         now: f64,
         policy: &AttentionRetentionPolicy,
     ) -> Result<bool, ReceivedError> {
+        // Source skips accounting when both retained values are absent.
+        if change.before_bytes.is_none() && change.after_bytes.is_none() {
+            return Ok(true);
+        }
         let Some(actor) = self.actors.get(actor_id) else {
             return Ok(false);
         };

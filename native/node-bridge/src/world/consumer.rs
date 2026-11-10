@@ -12,9 +12,8 @@ impl NativeWorld {
             let bytes = usize::try_from(integer(bytes)?)
                 .map_err(|_| failure("native consumer allocation overflow"))?;
             Ok(NativeWorldConsumer {
-                value: Some(
-                    RuntimeConsumer::reserve(bytes, &self.host.bytes).map_err(operation_error)?,
-                ),
+                value: RuntimeConsumer::reserve(bytes, &self.host.bytes)
+                    .map_err(operation_error)?,
             })
         })
     }
@@ -26,9 +25,8 @@ impl NativeWorld {
                 return Err(failure("native consumer admission is closed"));
             }
             Ok(NativeWorldConsumer {
-                value: Some(
-                    RuntimeConsumer::for_json(&bytes, &self.host.bytes).map_err(operation_error)?,
-                ),
+                value: RuntimeConsumer::for_json(&bytes, &self.host.bytes)
+                    .map_err(operation_error)?,
             })
         })
     }

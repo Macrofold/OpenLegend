@@ -18,7 +18,6 @@ mod account_retention;
 mod control;
 pub use account_retention::RuntimeAccountRetention;
 mod handoff;
-mod input;
 mod learning;
 mod maintenance;
 pub use learning::{RuntimeActivityLearning, RuntimeActivityLearningStep};
@@ -40,6 +39,7 @@ mod retained_values;
 pub use handoff::RuntimeOutputHandoff;
 mod consumer;
 pub use consumer::RuntimeConsumer;
+pub(crate) use npc::HeldSourceProof;
 pub use npc::{
     RuntimeNpcPreparationStep, RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket,
 };
@@ -136,10 +136,10 @@ impl RuntimeJson {
             handoff: None,
         })
     }
-    /// Reserve decoded consumer custody before Node copies/parses these exact
-    /// selected bytes. Buffer finalization has a separate ownership lifetime.
+    /// Reserve decoded consumer custody before the actual JavaScript parser.
+    /// The result's finite value/consumer wrapper has its own carrier allowance.
     pub fn consumer(&self, budget: &ByteBudget) -> Result<RuntimeConsumer, RuntimeError> {
-        consumer::prepare(&self.bytes, budget)
+        consumer::prepare(&self.bytes, budget, 64 * std::mem::size_of::<u64>())
     }
     fn encode(
         value: &(impl Serialize + ?Sized),
@@ -272,6 +272,7 @@ pub struct NativeWorldSession {
     budget: ByteBudget,
     prepared_output: Option<CandidateKey>,
     active_response: Option<npc::ActiveNpcResponse>,
+    held_receipts: npc::HeldReceiptRegistry,
     history_policy_id: String,
     history_policy_revision: u64,
     _history_policy_custody: ResidentReservation,
@@ -332,7 +333,12 @@ impl NativeWorldSession {
         let budget = budget.for_world();
         // Parsed rows coexist with the caller's input and consuming installers.
         // This is transient preparation, not a canonical-world size policy.
-        let _decode = input::prepare_installation(bytes, &budget)?;
+        let _decode = crate::install::row_input::prepare_installation(
+            bytes,
+            &budget,
+            std::mem::size_of::<Installation>(),
+        )
+        .map_err(failure)?;
         let input: Installation = serde_json::from_slice(bytes).map_err(failure)?;
         let pending_save_budget = budget.pending_save(input.storage.pending_save_bytes);
         let temporal_save_limits = crate::received::TemporalSaveLimits {
@@ -384,6 +390,7 @@ impl NativeWorldSession {
                     .filter(|next| *next <= crate::identity::MAX_SAFE_INTEGER)
             })
             .map_err(failure)?;
+        let held_receipts = npc::HeldReceiptRegistry::new(generation, &budget).map_err(failure)?;
         Ok(Self {
             session: Session::new(
                 installed,
@@ -396,6 +403,7 @@ impl NativeWorldSession {
             budget,
             prepared_output: None,
             active_response: None,
+            held_receipts,
             history_policy_id,
             history_policy_revision,
             _history_policy_custody: history_policy_custody,

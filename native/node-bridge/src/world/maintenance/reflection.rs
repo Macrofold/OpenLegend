@@ -3,6 +3,7 @@ use crate::world::npc::NativeWorldNpcResponseTicket;
 use openlegend_simulation::runtime::RuntimeReflectionTicket;
 
 pub(super) struct ReflectionOwner {
+    payloads: [Weak<AtomicBool>; 2],
     ticket: Mutex<Option<RuntimeReflectionTicket>>,
     pub(super) released: AtomicBool,
     _storage: ByteReservation,
@@ -10,6 +11,7 @@ pub(super) struct ReflectionOwner {
 #[napi]
 pub struct NativeWorldReflectionTicket {
     inner: Arc<ReflectionOwner>,
+    host: Arc<HostRuntime>,
     world: Weak<WorldRuntime>,
 }
 #[napi]
@@ -43,9 +45,48 @@ impl NativeWorldReflectionTicket {
     }
     #[napi]
     pub fn release(&self) {
-        self.inner.released.store(true, Ordering::Release);
+        if self.inner.released.swap(true, Ordering::AcqRel) {
+            return;
+        }
+        for payload in &self.inner.payloads {
+            if let Some(payload) = payload.upgrade() {
+                payload.store(false, Ordering::Release);
+            }
+        }
         if let Ok(mut ticket) = self.inner.ticket.try_lock() {
             *ticket = None;
+            return;
+        }
+        let Some(world) = self.world.upgrade() else {
+            return;
+        };
+        let custody = self
+            .host
+            .bytes
+            .reserve(size_of::<Arc<ReflectionOwner>>() + 2 * size_of::<Arc<WorldRuntime>>());
+        let Ok(custody) = custody else {
+            world.fence.poison();
+            return;
+        };
+        let ticket = Arc::clone(&self.inner);
+        let failed = Arc::clone(&world);
+        let submitted = self.host.pool.submit(
+            move |_cancel| {
+                let _custody = custody;
+                let mut owner = ticket.ticket.lock().map_err(|_| {
+                    world.fence.poison();
+                    crate::pool::HostError::SynchronizationFailed
+                })?;
+                *owner = None;
+                Ok(())
+            },
+            move |_result| {},
+            move || failed.fence.poison(),
+        );
+        if submitted.is_err() {
+            if let Some(world) = self.world.upgrade() {
+                world.fence.poison();
+            }
         }
     }
 }
@@ -73,6 +114,7 @@ impl NativeWorld {
             return Err(failure("reflection scopes belong to another native writer"));
         }
         let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let host = Arc::clone(&self.host);
         let body_read = Arc::clone(&body_read.inner);
         let workspace_read = Arc::clone(&workspace_read.inner);
         let npc = Arc::clone(&npc.inner);
@@ -85,6 +127,11 @@ impl NativeWorld {
                         .and_then(|n| {
                             n.checked_add(
                                 size_of::<NativeWorldReflectionTicket>() + 2 * size_of::<usize>(),
+                            )
+                        })
+                        .and_then(|n| {
+                            n.checked_add(
+                                2 * openlegend_simulation::runtime::RuntimeNpcRead::receipt_liveness_backing_bytes(),
                             )
                         })
                         .ok_or_else(|| failure("capacity"))?,
@@ -133,10 +180,12 @@ impl NativeWorld {
             }
             Ok(NativeWorldReflectionTicket {
                 inner: Arc::new(ReflectionOwner {
+                    payloads: ticket.receipt_liveness(),
                     ticket: Mutex::new(Some(ticket)),
                     released: AtomicBool::new(false),
                     _storage: storage,
                 }),
+                host,
                 world,
             })
         })

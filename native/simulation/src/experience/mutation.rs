@@ -5,6 +5,8 @@ use super::*;
 use crate::host::retained_size::HeapBytes;
 use crate::host::{ByteBudget, ByteReservation};
 use std::mem::{align_of, size_of};
+mod changes;
+pub(in crate::experience) use changes::PersonalChanges;
 
 #[derive(Clone, Copy)]
 pub(crate) struct ExperienceCheckpoint {
@@ -553,15 +555,7 @@ impl ExperienceJournal {
     pub(crate) fn created_collections<'a>(
         &'a self,
     ) -> impl Iterator<Item = (PersonalSourceKind, &'a str, u64)> + 'a {
-        self.undo.iter().filter_map(|operation| match operation {
-            ExperienceUndo::Collection {
-                actor_id,
-                kind,
-                owner_next,
-                ..
-            } => Some((*kind, actor_id.as_str(), *owner_next)),
-            _ => None,
-        })
+        self.all_personal_changes().created_collections()
     }
     /// Account admission/counters and original reception are completed by the
     /// same enclosing semantic producer before this immutable placement.
@@ -815,10 +809,7 @@ impl ExperienceJournal {
         Ok(true)
     }
     pub(super) fn removed(&self) -> impl DoubleEndedIterator<Item = &Arc<PersonalSourceRecord>> {
-        self.undo.iter().filter_map(|operation| match operation {
-            ExperienceUndo::Remove { before, .. } => Some(before),
-            _ => None,
-        })
+        self.all_personal_changes().removed()
     }
     pub(super) fn header_changed(&self) -> bool {
         self.undo
@@ -900,41 +891,13 @@ impl ExperienceJournal {
         &'a self,
         state: &'a ExperienceState,
     ) -> impl Iterator<Item = &'a Arc<PersonalSourceRecord>> {
-        self.undo.iter().filter_map(|operation| {
-            let ExperienceUndo::Replace {
-                actor_id,
-                kind,
-                position,
-                ..
-            } = operation
-            else {
-                return None;
-            };
-            state
-                .actors
-                .get(actor_id)?
-                .sources
-                .get(kind)?
-                .by_ordinal
-                .get(position)
-        })
+        self.all_personal_changes().replaced(state)
     }
     pub(crate) fn appended<'a>(
         &'a self,
         state: &'a ExperienceState,
     ) -> impl Iterator<Item = &'a Arc<PersonalSourceRecord>> {
-        self.undo.iter().filter_map(|operation| {
-            let ExperienceUndo::Append(undo) = operation else {
-                return None;
-            };
-            state
-                .actors
-                .get(&undo.actor_id)?
-                .sources
-                .get(&undo.kind)?
-                .by_ordinal
-                .get(&undo.position)
-        })
+        self.all_personal_changes().appended(state)
     }
 }
 

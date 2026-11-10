@@ -51,6 +51,11 @@ export const BASE_ACCOUNT_RULES = {
   fallbackPriority: 0,
   focusAttribute: FOCUS.id,
   privacyOutcomes: {
+    source: {
+      ok: false,
+      code: 'source',
+      message: 'That source is not retained for this actor.',
+    },
     commitment: {
       ok: false,
       code: 'commitment',
@@ -60,6 +65,17 @@ export const BASE_ACCOUNT_RULES = {
       ok: true,
       code: 'forgotten',
       message: 'Recall and derived inner world invalidated.',
+    },
+    correctionRejected: {
+      ok: false,
+      code: 'correction-rejected',
+      message: 'Correction requires newly perceived evidence and a retained source.',
+    },
+    corrected: {
+      ok: true,
+      code: 'corrected',
+      message:
+        'Correction linked; affected summaries invalidated and beliefs flagged for reconsideration.',
     },
   },
 } as const;

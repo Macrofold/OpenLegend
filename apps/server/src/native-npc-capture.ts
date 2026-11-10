@@ -29,6 +29,7 @@ import {
   freezeNativeProduct,
   releaseNativeProduct,
   retainNativeSources,
+  withNativeJsonInput,
 } from './native-consumer.js';
 import type { NativeHistoryInput } from './native-history.js';
 import type { NativeDecisionValidityRead } from './native-decision-validity.js';
@@ -164,8 +165,10 @@ export class NativeNpcCapture {
     requiredAppraisals: readonly AppraisalScope[],
     consumer: NativeNpcConsumer = 'inspection',
   ): Promise<NativeNpcCapture> {
-    const read = await world.readNpc(
-      Buffer.from(JSON.stringify({ actorId, requiredAppraisals, consumer })),
+    const read = await withNativeJsonInput(
+      world,
+      { actorId, requiredAppraisals, consumer },
+      (bytes) => world.readNpc(bytes),
     );
     try {
       return new NativeNpcCapture(
@@ -281,15 +284,15 @@ export class NativeNpcCapture {
    * awaiting provider work; the originating history remains native-owned. */
   historyPublication(world: NativeWorld) {
     this.facts;
-    return world.npcHistoryPublication(
-      this.read,
-      Buffer.from(
-        JSON.stringify({
-          consumer: this.consumer,
-          perspectives: this.publicationPerspectives,
-        }),
-      ),
-    );
+    const input = encodeNativeJson(world, {
+      consumer: this.consumer,
+      perspectives: this.publicationPerspectives,
+    });
+    try {
+      return world.npcHistoryPublication(this.read, input);
+    } finally {
+      releaseNativeProduct(input);
+    }
   }
 
   guardPerspectives(selected: NativeNpcPerspectiveSelection): void {
@@ -322,7 +325,11 @@ export class NativeNpcCapture {
       decodeNativeProduct<{
         readonly snapshot: number;
         readonly attributionIdentities: Readonly<Record<string, readonly AttributionIdentity[]>>;
-      }>(await world.npcPerspectives(this.read, Buffer.from(JSON.stringify({ entities })))),
+      }>(
+        await withNativeJsonInput(world, { entities }, (bytes) =>
+          world.npcPerspectives(this.read, bytes),
+        ),
+      ),
     );
     const attribution = retainNativeSources(
       capturedAttributionReader(
@@ -355,7 +362,9 @@ export class NativeNpcCapture {
     if (!pending) throw new Error('Native source preparation has no accepted publication owner.');
     const cut = nativeScopedReadCut(current, pending);
     const prepared = { db: history.db, liveReadCuts: () => cut };
-    const first = await world.npcSources(this.read, Buffer.from(JSON.stringify(selection)));
+    const first = await withNativeJsonInput(world, selection, (bytes) =>
+      world.npcSources(this.read, bytes),
+    );
     await driveNativeNpcSources(world, this.read, first, geometry, prepared, signal);
     const product = freezeNativeProduct(
       decodeNativeProduct<{ ordinal: number; inventory: NativeNpcSourceInventory }>(
@@ -453,16 +462,15 @@ export class NativeNpcCapture {
       throw new Error('NPC presentation definitions belong to another native world.');
     const labels = freezeNativeProduct(
       decodeNativeProduct<NativePresentationLabels>(
-        await world.npcPresentationLabels(
-          this.read,
-          Buffer.from(
-            JSON.stringify({
-              subjects: [
-                { kind: 'entity', entityId: facts.self.actorId },
-                ...presentationSubjects(values),
-              ],
-            }),
-          ),
+        await withNativeJsonInput(
+          world,
+          {
+            subjects: [
+              { kind: 'entity', entityId: facts.self.actorId },
+              ...presentationSubjects(values),
+            ],
+          },
+          (bytes) => world.npcPresentationLabels(this.read, bytes),
         ),
       ),
     );
@@ -487,14 +495,13 @@ export class NativeNpcCapture {
     this.facts;
     try {
       options.signal?.throwIfAborted();
-      const first = await world.npcCandidates(
-        this.read,
-        Buffer.from(
-          JSON.stringify({
-            expandedBodyOrdinals: options.expandedBodyOrdinals ?? [],
-            coverage: options.coverage ?? 'suggestions',
-          }),
-        ),
+      const first = await withNativeJsonInput(
+        world,
+        {
+          expandedBodyOrdinals: options.expandedBodyOrdinals ?? [],
+          coverage: options.coverage ?? 'suggestions',
+        },
+        (bytes) => world.npcCandidates(this.read, bytes),
       );
       await driveNativeNpcCandidates(world, this.read, first, geometry, options.signal);
       this.preparedCandidates = freezeNativeProduct(
@@ -521,16 +528,15 @@ export class NativeNpcCapture {
     const values = situationPresentationValues(source, retainedHistory, representedObservations);
     const labels = freezeNativeProduct(
       decodeNativeProduct<NativePresentationLabels>(
-        await world.npcPresentationLabels(
-          this.read,
-          Buffer.from(
-            JSON.stringify({
-              subjects: [
-                { kind: 'entity', entityId: facts.self.actorId },
-                ...presentationSubjects(values),
-              ],
-            }),
-          ),
+        await withNativeJsonInput(
+          world,
+          {
+            subjects: [
+              { kind: 'entity', entityId: facts.self.actorId },
+              ...presentationSubjects(values),
+            ],
+          },
+          (bytes) => world.npcPresentationLabels(this.read, bytes),
         ),
       ),
     );

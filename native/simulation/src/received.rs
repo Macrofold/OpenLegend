@@ -24,6 +24,7 @@ pub(crate) use current::{
     TemporalCurrentGroupInput, current_group_recording_complete, plan_current_recording_revocation,
     terminal_member_bytes,
 };
+mod retained_source;
 mod save;
 mod selection;
 pub(crate) use save::encode_received_value_changes;

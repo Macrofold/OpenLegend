@@ -14,6 +14,17 @@ pub(crate) struct CompletedAccountRetention {
     _storage: ByteReservation,
 }
 impl AccountRetentionCursor {
+    pub(super) fn prepare_storage(budget: &ByteBudget) -> Result<ByteReservation, ExecutionError> {
+        Ok(budget.reserve(
+            size_of::<Self>() + size_of::<CompletedAccountRetention>() + "account-retention".len(),
+        )?)
+    }
+    pub(super) fn from_prepared(read: AccountRetentionRead, storage: ByteReservation) -> Self {
+        Self {
+            read: Some(read),
+            _storage: storage,
+        }
+    }
     pub(crate) fn new(
         read: AccountRetentionRead,
         budget: &ByteBudget,
@@ -25,13 +36,8 @@ impl AccountRetentionCursor {
         {
             return Err(ExecutionError::Invariant);
         }
-        let storage = budget.reserve(
-            size_of::<Self>() + size_of::<CompletedAccountRetention>() + "account-retention".len(),
-        )?;
-        Ok(Self {
-            read: Some(read),
-            _storage: storage,
-        })
+        let storage = Self::prepare_storage(budget)?;
+        Ok(Self::from_prepared(read, storage))
     }
     pub(crate) fn step(
         &mut self,
@@ -288,23 +294,41 @@ impl AccountRetentionRead {
             .ok_or(ExecutionError::Capacity)?,
         )?;
         let mut placements = BTreeMap::new();
+        // Existing working records already have accepted placement or an actual
+        // private append. Only newly fetched cold rows refine the accepted
+        // ledger; a new private collection cannot become accepted metadata.
         for kind in [
             PersonalSourceKind::Awareness,
             PersonalSourceKind::Memory,
             PersonalSourceKind::Summary,
         ] {
+            let source = core
+                .state
+                .experience
+                .optional_collection(&self.actor, kind)?;
             let count = records
                 .iter()
-                .filter(|record| record.header.reference.kind == kind)
+                .filter(|record| {
+                    record.header.reference.kind == kind
+                        && !source.is_some_and(|source| {
+                            source
+                                .resident_record(&record.header.reference.id)
+                                .is_some()
+                        })
+                })
                 .count();
             if count == 0 {
                 continue;
             }
             let mut rows = Vec::with_capacity(count);
-            for record in records
-                .iter()
-                .filter(|record| record.header.reference.kind == kind)
-            {
+            for record in records.iter().filter(|record| {
+                record.header.reference.kind == kind
+                    && !source.is_some_and(|source| {
+                        source
+                            .resident_record(&record.header.reference.id)
+                            .is_some()
+                    })
+            }) {
                 rows.push(RecordPlacement {
                     id: record.row_id().into(),
                     parent: record.parent().into(),
@@ -375,6 +399,7 @@ impl AccountRetentionRead {
                     None
                 };
                 let slot = if prior.is_some()
+                    && !self.complete_checkpoint
                     && !self.resident.iter().any(|candidate| {
                         candidate.kind == PersonalSourceKind::Memory
                             && candidate.id == record.header.reference.id

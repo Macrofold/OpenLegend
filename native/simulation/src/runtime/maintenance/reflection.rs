@@ -10,6 +10,7 @@ use crate::records::SqlCell;
 use crate::response::{ResponseAliases, ResponseBindings};
 use indexmap::IndexMap;
 use std::mem::size_of;
+use std::sync::atomic::AtomicBool;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -38,6 +39,11 @@ pub struct RuntimeReflectionTicket {
     evidence_aliases: IndexMap<String, String>,
     admission: MaintenanceAdmission,
     _storage: ByteReservation,
+}
+impl RuntimeReflectionTicket {
+    pub fn receipt_liveness(&self) -> [Weak<AtomicBool>; 2] {
+        self.npc.receipt_liveness()
+    }
 }
 impl NativeWorldSession {
     pub fn reflection_sources_current(

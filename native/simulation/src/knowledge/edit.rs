@@ -258,6 +258,7 @@ pub(crate) fn edit_knowledge(
     core.journal
         .knowledge
         .ensure_observer(&mut core.state.reception.actor_knowledge, actor_id)?;
+    crate::received::ensure_experience_accounting(core, actor_id, budget)?;
     // Existing cold totals and sparse supports remain the canonical account
     // owner. Unknown bootstrap/partial ownership cannot be guessed as zero.
     if !core.state.temporal.adjust_retained_knowledge(

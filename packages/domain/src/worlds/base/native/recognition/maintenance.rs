@@ -176,3 +176,45 @@ pub(crate) fn maintain_recognition(
     core.state.temporal.set_knowledge_due(observer, due)?;
     Ok(())
 }
+
+/// The same selected recognition data used by Source's first accounting pass.
+/// A voice seed has its actual expiry even before any sight history exists.
+pub(crate) fn bootstrap_recognition_account(
+    state: &ReceptionState,
+    installed: &InstalledWorld,
+    observer: &str,
+) -> Result<(crate::received::AccountCharge, Option<f64>), ExecutionError> {
+    let mut charge = crate::received::AccountCharge { bytes: 0, count: 0 };
+    let mut due: Option<f64> = None;
+    for identity in state
+        .observer_identities
+        .as_ref()
+        .and_then(|root| root.get(observer))
+        .into_iter()
+        .flat_map(|records| records.values())
+    {
+        if identity.retained == Some(true) && !identity.authored {
+            charge.bytes = charge
+                .bytes
+                .checked_add(
+                    crate::encoding::json_record_len(identity)
+                        .map_err(|_| ExecutionError::Invariant)? as u64,
+                )
+                .filter(|n| *n <= crate::identity::MAX_SAFE_INTEGER)
+                .ok_or(ExecutionError::Capacity)?;
+            charge.count = charge
+                .count
+                .checked_add(1)
+                .filter(|n| *n <= crate::identity::MAX_SAFE_INTEGER)
+                .ok_or(ExecutionError::Capacity)?;
+        }
+        if let Some(next) = super::journal::recognition_seed_deadline(
+            identity,
+            installed.recognition.value(),
+            installed.content.time_policy.normal_game_seconds_per_second,
+        ) {
+            due = Some(due.map_or(next, |prior| prior.min(next)));
+        }
+    }
+    Ok((charge, due))
+}

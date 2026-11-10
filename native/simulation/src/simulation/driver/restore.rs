@@ -84,43 +84,20 @@ fn projected_question<T: Serialize + ?Sized>(
     budget: &ByteBudget,
     route: RestoreReply,
 ) -> Result<Poll<CompletedRestore, RestoreReply>, DriveError> {
-    let rows = crate::simulation::encode_candidate_changes(core.state, core.journal, None, budget)
-        .map_err(|_| DriveError::Encoding)?;
-    let packed = crate::received::pack_temporal_save(
-        &crate::records::save::TemporalSaveCut {
-            world_id: &core.state.physical.header.id,
-            generation: &core.state.generation,
-            through_cut: binding
-                .base_cut
-                .checked_add(1)
-                .ok_or(DriveError::Capacity)?,
-            identity_through: core.state.physical.identity.next_id(),
-            temporal: &core.state.temporal,
-        },
-        rows.changes(),
-        Some(floor),
+    let projection = crate::simulation::restore::RestoreReadProjection::capture(
+        core,
+        crate::host::CandidateKey { id: binding.candidate_id, base_cut: binding.base_cut, generation: binding.generation },
         limits,
-        &core.state.installed.schema,
+        floor,
         budget,
-    )
-    .map_err(|_| DriveError::Encoding)?;
-    let _workspace = budget
-        .reserve(
-            crate::records::merge_workspace_bound(rows.changes(), packed.changes())
-                .ok_or(DriveError::Capacity)?,
-        )
-        .map_err(|_| DriveError::Capacity)?;
-    let (changes, _owners, _rows_guard) = rows.into_parts();
-    let (pages, _page_owners, _pages_guard, _residency) = packed.into_parts();
-    let projection = crate::records::merge_changes(changes, pages, &core.state.installed.schema)
-        .map_err(|_| DriveError::Encoding)?;
+    )?;
     question(
         answer,
         kind,
         binding,
         &RestoreReadRequest {
             request,
-            restore_projection: &projection,
+            restore_projection: &projection.changes,
         },
         budget,
         route,

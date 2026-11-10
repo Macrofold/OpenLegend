@@ -10,7 +10,11 @@ import type { NativeGeometryProviders } from './native-geometry.js';
 import type { NativeHistoryInput } from './native-history.js';
 import type { NativeHistoryReadContext } from './native-providers.js';
 import { driveNativeOperation } from './native-providers.js';
-import { decodeNativeProduct, retainNativeSources } from './native-consumer.js';
+import {
+  decodeNativeProduct,
+  releaseNativeProduct,
+  retainNativeSources,
+} from './native-consumer.js';
 import type { SourceVersionPlan } from './source-version-retention.js';
 import type { NativePersonalPredecessor } from './native-source-versions.js';
 import type { NativeTemporalPredecessor } from './native-temporal-edits.js';
@@ -70,6 +74,8 @@ export async function acceptNativeOperation<T extends object>(request: {
   readonly geometry: NativeGeometryProviders;
   readonly work: HostWork;
   readonly stage: (publication: NativePublication) => T | Promise<T>;
+  /** End only a genuinely rejected private stage, never accepted/uncertain work. */
+  readonly discard?: () => void;
   readonly current: () => boolean;
   /** Host elapsed integration can discard a genuine no-time navigation wait. */
   readonly admitPublication?: (publication: NativePublication) => boolean;
@@ -92,9 +98,11 @@ export async function acceptNativeOperation<T extends object>(request: {
   let settled = false;
   let accepted = false;
   let completed = false;
+  let publication: NativePublication | undefined;
+  let value: T | undefined;
   try {
     allocation = work.reserveAllocation(JSON.parse(prepared.allocation()) as WorkVector);
-    const publication = decodeNativeProduct<NativePublication>(prepared.takePublication());
+    publication = decodeNativeProduct<NativePublication>(prepared.takePublication());
     if (publication.protectedSave)
       throw new Error('Protected native edits require their database commit owner.');
     if (request.admitPublication && !request.admitPublication(publication)) {
@@ -105,7 +113,7 @@ export async function acceptNativeOperation<T extends object>(request: {
     }
     // A failure in history/source projection or consumer admission still rolls
     // back the genuine native checkpoint. No fallible staging follows accept.
-    const value = retainNativeSources(await request.stage(publication), publication);
+    value = retainNativeSources(await request.stage(publication), publication);
     prepared.ready();
     ready = true;
     accepted = !signal?.aborted && request.current();
@@ -133,5 +141,13 @@ export async function acceptNativeOperation<T extends object>(request: {
     // An accepted candidate whose undo destruction failed keeps the pending
     // maximum HostWork allocation. Its poisoned world must stop before release.
     throw error;
+  } finally {
+    if (!accepted && (!settled || completed)) {
+      if (value) {
+        request.discard?.();
+        releaseNativeProduct(value);
+      }
+      if (publication) releaseNativeProduct(publication);
+    }
   }
 }

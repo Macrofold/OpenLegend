@@ -1,6 +1,6 @@
 import type { SurfacePoint } from '@open-legend/spatial';
 import { reserveEntityId } from '../../data.js';
-import { entitySet, entityValues } from '../../entity-collection.js';
+import { entityGet, entitySet, entityValues } from '../../entity-collection.js';
 import type { WorldCreationAccounts } from '../../invention-attribution.js';
 import { nativeActor } from '../../living.js';
 import { isWalkable } from '../../spatial.js';
@@ -39,6 +39,7 @@ export function createBaseNativeProofWorld(
   accounts: WorldCreationAccounts,
   worldId: string,
   seed: number = BASE_NATIVE_PROOF.seed,
+  options: { readonly actorSenses?: Readonly<Record<string, readonly string[]>> } = {},
 ): WorldState {
   const world = createFreshBaseWorld(seed, accounts, {
     worldId,
@@ -117,6 +118,14 @@ export function createBaseNativeProofWorld(
         `The native proof has no supported clear starting position for ${entity.id}.`,
       );
   }
+  // Profiles belong to this authored opening and precede its first receiving
+  // cut. A hearing-only comparison must not inherit an earlier sight grant.
+  if (options.actorSenses)
+    for (const [id, senses] of Object.entries(options.actorSenses)) {
+      const actor = entityGet(world.entities, id)?.actor;
+      if (!actor) throw new Error('A native proof sense profile needs an existing actor.');
+      actor.senses = [...senses];
+    }
   prepareBaseInitialWorldState(world);
   return world;
 }

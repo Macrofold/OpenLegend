@@ -30,7 +30,7 @@ enum Progress {
 }
 enum Child {
     Correction(PrivacyEditCursor),
-    Forget(ForgetExperienceCursor),
+    Forget(RecallEditCursor),
 }
 pub(crate) struct RestorePrivacyCursor {
     input: RestorePrivacyInput,
@@ -151,11 +151,11 @@ impl RestorePrivacyCursor {
                         super::privacy_run::PrivacyEditProgress::Complete(_) => {}
                     },
                     Child::Forget(child) => match child.step(core, answer.take(), budget)? {
-                        ForgetExperienceStep::History(question) => {
+                        RecallEditStep::History(question) => {
                             return Ok(Progress::History(question));
                         }
-                        ForgetExperienceStep::Collation(_) => return Ok(Progress::Collation),
-                        ForgetExperienceStep::Complete(done) => {
+                        RecallEditStep::Collation(_) => return Ok(Progress::Collation),
+                        RecallEditStep::Complete(done) => {
                             if !done.outcome().ok {
                                 return Err(ExecutionError::from(ExperienceError::InvalidBody(
                                     "restored privacy protects an unresolved obligation",
@@ -220,10 +220,12 @@ impl RestorePrivacyCursor {
                         self.item += 1;
                         continue;
                     }
-                    self.child = Some(Child::Forget(ForgetExperienceCursor::new(
+                    self.child = Some(Child::Forget(RecallEditCursor::new(
                         core,
                         actor,
                         source,
+                        PrivacyEditMode::Forget,
+                        RecallAdmission::Replay,
                         self.key,
                         self.limits,
                         budget,

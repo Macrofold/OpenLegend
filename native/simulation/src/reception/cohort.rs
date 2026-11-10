@@ -4,12 +4,13 @@ use super::*;
 use crate::attention::AttentionEntry;
 use crate::execution::{CoreMutation, ExecutionError};
 use crate::experience::{AssociationEvidenceStatus, ExperienceState, association_evidence_status};
-use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
+use crate::host::retained_size::heap_record;
+mod allocation;
 use crate::host::{ByteBudget, ByteReservation};
 use crate::received::{CurrentRecordingContext, ReceivedError, TemporalCurrentGroupInput};
 use crate::simulation::{InstalledWorld, PhysicalState};
 use indexmap::IndexSet;
-use std::{mem::size_of, sync::Arc};
+use std::sync::Arc;
 
 fn invalid() -> ReceivedError {
     ReceivedError("Current recording cohort has changed or is unavailable.")
@@ -31,7 +32,29 @@ pub(super) struct SelectedTrack {
     exposure: String,
     channel: DefinitionPin,
 }
+heap_record!(TrackDescriptor {
+    source_id,
+    lease_id,
+    track,
+    exposure,
+    channel,
+    local_subject,
+    subject
+});
+heap_record!(SelectedTrack { exposure, channel });
 pub(super) type SelectedTracks = IndexMap<String, IndexMap<String, SelectedTrack>>;
+/// The returned map remains admitted through its last actual recording read.
+pub(super) struct OwnedSelectedTracks {
+    tracks: SelectedTracks,
+    _reservation: ByteReservation,
+}
+impl std::ops::Deref for OwnedSelectedTracks {
+    type Target = SelectedTracks;
+    fn deref(&self) -> &SelectedTracks {
+        &self.tracks
+    }
+}
+
 /// A real pre-mutation selection, not caller-supplied names or a history query.
 pub(crate) struct CurrentCohort {
     observer: ObserverLife,
@@ -59,12 +82,21 @@ impl CurrentCohort {
         reception: &ReceptionState,
         experience: &ExperienceState,
         source: &str,
-    ) -> Result<SelectedTracks, ReceivedError> {
+        budget: &ByteBudget,
+    ) -> Result<OwnedSelectedTracks, ReceivedError> {
         let owner = reception
             .perception_evidence
             .as_ref()
             .and_then(|owners| owners.get(&self.observer.actor_id))
             .ok_or_else(invalid)?;
+        let mut scratch = allocation::reserve(
+            reception,
+            owner,
+            &self.observer.actor_id,
+            &[source],
+            Some(self),
+            budget,
+        )?;
         let entries = owner
             .attention
             .as_ref()
@@ -74,17 +106,44 @@ impl CurrentCohort {
         let descriptors = descriptors(reception, experience, &self.observer.actor_id, &ids)?;
         let mut tracks = selected_tracks(entries, &descriptors)?;
         linked_tracks(&mut tracks, &self.subjects, &descriptors)?;
-        Ok(tracks)
+        drop(descriptors);
+        drop(ids);
+        // Only the returned map survives its construction; its guard remains
+        // beside that map through the final recording read.
+        let retained =
+            crate::host::retained_size::HeapBytes::heap_bytes(&tracks).ok_or_else(capacity)?;
+        if retained > scratch.bytes() {
+            return Err(capacity());
+        }
+        scratch.resize(retained).map_err(|_| capacity())?;
+        Ok(OwnedSelectedTracks {
+            tracks,
+            _reservation: scratch,
+        })
     }
     pub(super) fn correspondence_changed(
         &self,
         reception: &ReceptionState,
         experience: &ExperienceState,
         source: &str,
+        budget: &ByteBudget,
     ) -> Result<bool, ReceivedError> {
         if !self.entries.iter().any(|entry| entry.source_id == source) {
             return Ok(false);
         }
+        let owner = reception
+            .perception_evidence
+            .as_ref()
+            .and_then(|owners| owners.get(&self.observer.actor_id))
+            .ok_or_else(invalid)?;
+        let _scratch = allocation::reserve(
+            reception,
+            owner,
+            &self.observer.actor_id,
+            &[source],
+            Some(self),
+            budget,
+        )?;
         let mut ids = IndexSet::new();
         ids.insert(source.to_owned());
         let after = descriptors(reception, experience, &self.observer.actor_id, &ids)?;
@@ -120,7 +179,7 @@ impl CurrentCohort {
         // owner while a body is being retired. Physical-life eligibility is a
         // separate current-body read; it cannot replace the old history epoch.
         let life = owner.life;
-        let reservation = reserve(owner, observer, budget)?;
+        let reservation = allocation::reserve(reception, owner, observer, &[], None, budget)?;
         let entries = owner
             .attention
             .as_ref()
@@ -134,7 +193,7 @@ impl CurrentCohort {
         let tracks = selected_tracks(&entries, &descriptors)?;
         let subjects = selected_subjects(&entries, &descriptors)?;
         let _ = installed; // Immutable selected meaning is mounted below, never supplied by a caller.
-        Ok(Some(Arc::new(Self {
+        let mut cohort = Self {
             observer: ObserverLife {
                 actor_id: observer.to_owned(),
                 physical_life: life,
@@ -144,57 +203,24 @@ impl CurrentCohort {
             subjects,
             descriptors,
             _reservation: reservation,
-        })))
+        };
+        // All construction scratch is gone. Retain only actual copied metadata
+        // and the Arc backing; received bodies stay under their existing owners.
+        let retained = allocation::retained(&cohort)?;
+        if retained > cohort._reservation.bytes() {
+            return Err(capacity());
+        }
+        cohort
+            ._reservation
+            .resize(retained)
+            .map_err(|_| capacity())?;
+        Ok(Some(Arc::new(cohort)))
     }
-}
-fn reserve(
-    owner: &PerceptionEvidenceOwner,
-    observer: &str,
-    budget: &ByteBudget,
-) -> Result<ByteReservation, ReceivedError> {
-    let mut bytes = heap_sum([
-        size_of::<CurrentCohort>(),
-        observer.len(),
-        owner
-            .attention
-            .heap_bytes()
-            .ok_or_else(capacity)?
-            .checked_mul(4)
-            .ok_or_else(capacity)?,
-    ])
-    .ok_or_else(capacity)?;
-    let mut count = 0usize;
-    for (id, contact) in &owner.current {
-        count = count
-            .checked_add(contact.content.groups.len())
-            .ok_or_else(capacity)?;
-        bytes = heap_sum([
-            bytes,
-            id.len().checked_mul(8).ok_or_else(capacity)?,
-            contact
-                .content
-                .groups
-                .iter()
-                .try_fold(0usize, |sum, group| {
-                    heap_sum([sum, group.received.heap_bytes()?.checked_mul(8)?])
-                })
-                .ok_or_else(capacity)?,
-        ])
-        .ok_or_else(capacity)?;
-    }
-    bytes = heap_sum([
-        bytes,
-        count
-            .checked_mul(6 * size_of::<TrackDescriptor>())
-            .ok_or_else(capacity)?,
-        map_storage::<String, SelectedTrack>(count.checked_mul(4).ok_or_else(capacity)?)
-            .ok_or_else(capacity)?,
-    ])
-    .ok_or_else(capacity)?;
-    budget.reserve(bytes).map_err(|_| capacity())
 }
 fn candidate_ids(owner: &PerceptionEvidenceOwner, entries: &[AttentionEntry]) -> IndexSet<String> {
-    let mut ids = IndexSet::new();
+    let mut ids = IndexSet::with_capacity(
+        entries.len() + owner.attention.as_ref().map_or(0, |a| a.annotations.len()),
+    );
     if let Some(attention) = &owner.attention {
         let mut annotations: Vec<_> = attention.annotations.iter().collect();
         annotations.sort_by(|(a, _), (b, _)| crate::encoding::js_property_cmp(a, b));
@@ -218,7 +244,25 @@ pub(super) fn descriptors(
         .as_ref()
         .and_then(|owners| owners.get(observer))
         .ok_or_else(invalid)?;
-    let mut result = Vec::new();
+    let count = ids
+        .iter()
+        .filter_map(|id| owner.current.get(id))
+        .try_fold(0usize, |sum, contact| {
+            sum.checked_add(
+                contact
+                    .content
+                    .groups
+                    .iter()
+                    .filter(|group| {
+                        ["body", "contact", "detected"]
+                            .iter()
+                            .any(|kind| group.received.fields.contains_key(*kind))
+                    })
+                    .count(),
+            )
+        })
+        .ok_or_else(capacity)?;
+    let mut result = Vec::with_capacity(count);
     let values = &reception.received_values.as_ref();
     for id in ids {
         for source in received_attention_sources(owner, id)? {
@@ -303,7 +347,7 @@ fn selected_subjects(
     entries: &[AttentionEntry],
     descriptors: &[TrackDescriptor],
 ) -> Result<IndexSet<String>, ReceivedError> {
-    let mut subjects = IndexSet::new();
+    let mut subjects = IndexSet::with_capacity(descriptors.len() * 2);
     for entry in entries {
         if let Some(source) = descriptors
             .iter()
@@ -346,7 +390,7 @@ pub(super) fn selected_tracks(
     descriptors: &[TrackDescriptor],
 ) -> Result<SelectedTracks, ReceivedError> {
     let subjects = selected_subjects(entries, descriptors)?;
-    let mut tracks = SelectedTracks::new();
+    let mut tracks = SelectedTracks::with_capacity(descriptors.len());
     for entry in entries {
         if let Some(source) = descriptors
             .iter()
@@ -465,7 +509,8 @@ impl ReceivingMutation<'_> {
         if owner.life != before.observer.physical_life {
             return Err(ExecutionError::Invariant);
         }
-        let _scratch = reserve(owner, observer, budget).map_err(ExecutionError::Received)?;
+        let _scratch = allocation::reserve(reception, owner, observer, &[], Some(&before), budget)
+            .map_err(ExecutionError::Received)?;
         let entries = owner
             .attention
             .as_ref()
@@ -478,9 +523,26 @@ impl ReceivingMutation<'_> {
         )
         .map_err(ExecutionError::Received)?;
         let after = selected_tracks(entries, &descriptors).map_err(ExecutionError::Received)?;
-        let mut subjects: IndexSet<_> = before.tracks.keys().cloned().collect();
+        let union = before
+            .tracks
+            .len()
+            .checked_add(after.len())
+            .ok_or(ExecutionError::Capacity)?;
+        let mut subjects = IndexSet::with_capacity(union);
+        subjects.extend(before.tracks.keys().cloned());
         subjects.extend(after.keys().cloned());
-        let mut inputs = Vec::new();
+        let partitions = subjects
+            .iter()
+            .filter_map(|id| owner.current.get(id))
+            .try_fold(0usize, |sum, contact| {
+                contact
+                    .content
+                    .groups
+                    .iter()
+                    .try_fold(sum, |sum, group| sum.checked_add(group.metadata.len()))
+            })
+            .ok_or(ExecutionError::Capacity)?;
+        let mut inputs = Vec::with_capacity(partitions);
         for subject in subjects {
             let Some(contact) = owner.current.get(&subject) else {
                 continue;
@@ -632,22 +694,14 @@ pub(crate) fn attended_event_participants(
     if entries.is_empty() {
         return Ok(false);
     }
-    let _reservation = reserve(scope.state(), observer, budget)?;
-    let _ids_reservation = budget
-        .reserve(
-            heap_sum([
-                ids.iter()
-                    .try_fold(0usize, |sum, id| sum.checked_add(id.len()))
-                    .ok_or_else(capacity)?,
-                map_storage::<String, ()>(ids.len().checked_mul(2).ok_or_else(capacity)?)
-                    .ok_or_else(capacity)?,
-                ids.len()
-                    .checked_mul(size_of::<TrackDescriptor>())
-                    .ok_or_else(capacity)?,
-            ])
-            .ok_or_else(capacity)?,
-        )
-        .map_err(|_| capacity())?;
+    let _reservation = allocation::reserve(
+        &core.state.reception,
+        scope.state(),
+        observer,
+        ids,
+        None,
+        budget,
+    )?;
 
     let mut candidates = candidate_ids(scope.state(), entries);
     candidates.extend(ids.iter().map(|id| (*id).to_owned()));

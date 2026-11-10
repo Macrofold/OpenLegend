@@ -61,12 +61,29 @@ pub(crate) fn temporal_receipt_aliases_bound(
     if receipt.facets.len() != fragments.len() {
         return None;
     }
+    receipt_aliases_bound(receipt, meaning, |index, _| fragments.get(index))
+}
+pub(super) fn temporal_receipt_lookup_aliases_bound(
+    receipt: &TemporalReceipt,
+    values: &impl crate::reception::ReceivedValueLookup,
+    meaning: &dyn TemporalValueMeaning,
+) -> Option<usize> {
+    receipt_aliases_bound(receipt, meaning, |_, field| {
+        values.value_at(&field.value_ref)
+    })
+}
+fn receipt_aliases_bound<'a>(
+    receipt: &'a TemporalReceipt,
+    meaning: &dyn TemporalValueMeaning,
+    fragment: impl Fn(usize, &'a TemporalFacetReference) -> Option<&'a ReceivedValueFragment>,
+) -> Option<usize> {
     let mut total = DependencyAliasAllocation::empty();
     for id in &receipt.header.source_ids {
         total.text(id.len())?;
     }
     total.text(receipt.id.len())?;
-    for (field, fragment) in receipt.facets.iter().zip(fragments) {
+    for (index, field) in receipt.facets.iter().enumerate() {
+        let fragment = fragment(index, field)?;
         total.text(
             crate::encoding::json_record_len(&("perception-fact", &receipt.id, field.member_index))
                 .ok()?,

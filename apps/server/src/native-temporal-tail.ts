@@ -64,8 +64,7 @@ export async function readNativeTemporalTail(
       request,
       tail,
     },
-    captured,
-    pending,
+    cut,
     request,
   );
 }

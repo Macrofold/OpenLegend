@@ -216,6 +216,7 @@ impl CurrentReceptionLifetime {
                         &core.state.reception,
                         &core.state.experience,
                         source,
+                        budget,
                     )
                 })
                 .transpose()?
@@ -243,7 +244,12 @@ impl CurrentReceptionLifetime {
                 .as_ref()
                 .or(before)
                 .map(|before| {
-                    before.active_tracks(&core.state.reception, &core.state.experience, source)
+                    before.active_tracks(
+                        &core.state.reception,
+                        &core.state.experience,
+                        source,
+                        budget,
+                    )
                 })
                 .transpose()?;
             if let Some(selected) = selected {

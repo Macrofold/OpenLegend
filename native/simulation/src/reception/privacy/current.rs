@@ -280,6 +280,7 @@ pub(super) fn revoke_current(
                 &core.state.reception,
                 &core.state.experience,
                 source,
+                budget,
             )? {
                 reconcile_current_cohort(core, Arc::clone(before), None, budget)?;
                 lifetime.reconciled = true;

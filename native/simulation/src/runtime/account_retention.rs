@@ -37,7 +37,8 @@ impl RuntimeAccountRetention {
         RuntimeJson::encode(&value, budget)
     }
     pub fn load(&mut self, input: &[u8], budget: &ByteBudget) -> Result<(), RuntimeError> {
-        let _decode = super::input::prepare_account_bodies(input, budget)?;
+        let _decode =
+            crate::install::row_input::prepare_account_bodies(input, budget).map_err(failure)?;
         let reply: AccountBodiesReply = serde_json::from_slice(input).map_err(failure)?;
         self.read
             .as_mut()

@@ -140,10 +140,7 @@ impl ExperienceJournal {
     pub(in crate::experience) fn summary_collections(
         &self,
     ) -> impl Iterator<Item = (&str, &PersonalSourceCollection)> {
-        self.undo.iter().filter_map(|u| match u {
-            ExperienceUndo::SummaryCollection { actor, before } => Some((actor.as_str(), before)),
-            _ => None,
-        })
+        self.all_personal_changes().summary_collections()
     }
     pub(in crate::experience) fn consolidated_actors(&self) -> impl Iterator<Item = &str> {
         self.undo.iter().filter_map(|u| match u {

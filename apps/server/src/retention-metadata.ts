@@ -16,6 +16,9 @@ import {
   type ReceivedValueLookup,
   type ReceivedChargeDirectory,
   type WorldState,
+  type TemporalActorHistory,
+  type TemporalReadSource,
+  type TemporalReadContext,
 } from '@open-legend/domain';
 import {
   maximumTemporalPreparationRows,
@@ -31,6 +34,26 @@ import { receiptLookupBucket } from './temporal-page-storage.js';
 import type { MetadataBaseline } from './live-read-overlay.js';
 import { sqlRowBatches } from './sql-rows.js';
 import { ACCOUNT_RETENTION_PREPARATION } from './account-retention.js';
+
+/** Complete recent eligibility at one private native restore cut. Bodies still
+ * come only from the indexed SQL view, using the same membership algorithm. */
+export interface IndexedRecentMembershipRead {
+  readonly storage: 'indexed';
+  readonly worldId: string;
+  readonly actorId: string;
+  readonly at: number;
+  readonly maxAgeSeconds: number;
+  readonly actor: Pick<TemporalActorHistory, 'recent' | 'frontier'>;
+  readonly disclosure: TemporalReadContext;
+  readonly reserveBytes: (bytes: number) => void;
+  readonly reserveJson: (bytes: Buffer) => void;
+}
+interface RecentMembershipRead {
+  readonly at: number;
+  readonly maxAgeSeconds: number;
+  readonly actor: Pick<TemporalActorHistory, 'recent' | 'frontier'> | undefined;
+  readonly source: TemporalReadSource;
+}
 
 interface RetentionSelection {
   changes: RecordChanges;
@@ -893,7 +916,7 @@ export class RetentionMetadataView {
       individualIds: readonly string[];
       includeRecent: boolean;
     }[],
-    nativeCut?: WorldState,
+    nativeCut?: WorldState | IndexedRecentMembershipRead,
   ): Promise<Array<{ aliases: Set<string>; individuals: Set<string> }>> {
     const results = requests.map((request) => ({
       aliases: new Set(request.aliases.filter((id) => this.hasAlias(request.actorId, id))),
@@ -901,7 +924,14 @@ export class RetentionMetadataView {
         request.individualIds.filter((id) => this.hasIndividual(request.actorId, id)),
       ),
     }));
-    const world = nativeCut ?? this.owner.capturedWorld();
+    const indexed = nativeCut && 'storage' in nativeCut ? nativeCut as IndexedRecentMembershipRead : undefined;
+    const world = indexed ? undefined : nativeCut as WorldState | undefined ?? this.owner.capturedWorld();
+    const recentRead = (actorId: string): RecentMembershipRead | undefined => indexed
+      ? indexed.actorId === actorId ? { ...indexed, source: indexed.disclosure } : undefined
+      : world ? { at: world.simTime, maxAgeSeconds: selectedTemporalPolicy(world).recent.maxAgeSeconds,
+          actor: world.experience?.temporal?.actors[actorId], source: world } : undefined;
+    if (indexed && indexed.worldId !== worldId)
+      throw new Error('Personal retention native eligibility belongs to another world.');
     if (world && world.id !== worldId)
       throw new Error('Personal retention native cut belongs to another world.');
     for (const [key, request] of requests.entries())
@@ -910,6 +940,7 @@ export class RetentionMetadataView {
         (request.aliases.some((id) => !results[key]!.aliases.has(id)) ||
           request.individualIds.some((id) => !results[key]!.individuals.has(id)))
       ) {
+        if (indexed) continue;
         if (!world) throw new Error('Recent membership requires its captured native cut.');
         const pages = new Map(
           (world.experience?.temporal?.actors[request.actorId]?.pages ?? []).map((page) => [
@@ -942,7 +973,7 @@ export class RetentionMetadataView {
           )
             this.accumulateRecentMembership(
               page,
-              world,
+              recentRead(request.actorId)!,
               world.receivedValues?.sources ?? {},
               request,
               results[key]!,
@@ -1026,23 +1057,22 @@ export class RetentionMetadataView {
               ]
             : [],
           age_floor:
-            recent && world
+            recent && recentRead(actorId)
               ? Math.max(
-                  world.simTime - selectedTemporalPolicy(world).recent.maxAgeSeconds,
-                  world.experience?.temporal?.actors[actorId]?.frontier?.expiredThroughTime ??
-                    -Infinity,
+                  recentRead(actorId)!.at - recentRead(actorId)!.maxAgeSeconds,
+                  recentRead(actorId)!.actor?.frontier?.expiredThroughTime ?? -Infinity,
                 )
               : null,
           pressure_batch: recent
-            ? (world?.experience?.temporal?.actors[actorId]?.frontier?.pressureThrough?.address
+            ? (recentRead(actorId)?.actor?.frontier?.pressureThrough?.address
                 .batchOrder ?? null)
             : null,
           pressure_entry: recent
-            ? (world?.experience?.temporal?.actors[actorId]?.frontier?.pressureThrough?.address
+            ? (recentRead(actorId)?.actor?.frontier?.pressureThrough?.address
                 .entryIndex ?? null)
             : null,
           pressure_member: recent
-            ? (world?.experience?.temporal?.actors[actorId]?.frontier?.pressureThrough?.address
+            ? (recentRead(actorId)?.actor?.frontier?.pressureThrough?.address
                 .memberIndex ?? null)
             : null,
         },
@@ -1160,16 +1190,20 @@ export class RetentionMetadataView {
       );
       if (pageSizes.size) {
         if (
-          !world ||
+          (!world && !indexed) ||
           pageSizes.size > maximumTemporalPreparationRows ||
           [...pageSizes.values()].reduce((sum, bytes) => sum + bytes, 0) > 4 * 1024 * 1024
         )
           throw new Error('Recent membership exceeds bounded block preparation.');
+        // The SQL size projection precedes raw row hydration and parsing.
+        indexed?.reserveBytes([...pageSizes.values()].reduce((sum, bytes) => sum + bytes, 0) * 4 + pageSizes.size * 2048);
         const pages = new Map<string, TemporalPage>();
         for (const row of await db
           .prepare('SELECT * FROM mind_temporal_pages WHERE world_id=? AND id=ANY(?::text[])')
-          .all(worldId, [...pageSizes.keys()]))
+          .all(worldId, [...pageSizes.keys()])) {
+          indexed?.reserveJson(Buffer.from(String(row['payload'])));
           pages.set(String(row['id']), readTemporalPageRecord(row));
+        }
         if (pages.size !== pageSizes.size)
           throw new Error('Recent membership block is unavailable.');
         const sources: Record<string, ReceivedValueLookup[string]> = {};
@@ -1177,7 +1211,7 @@ export class RetentionMetadataView {
           ...new Set([...pages.values()].flatMap((page) => [...temporalPageReferences(page)])),
         ];
         for (const id of references) {
-          const value = world.receivedValues?.sources[id];
+          const value = world?.receivedValues?.sources[id];
           if (value) sources[id] = value;
         }
         const missing = references.filter((id) => !sources[id]);
@@ -1193,14 +1227,17 @@ export class RetentionMetadataView {
             4 * 1024 * 1024
           )
             throw new Error('Recent membership values exceed bounded preparation.');
+          indexed?.reserveBytes(Number(size?.['bytes'] ?? 0) * 4 + missing.length * 2048);
           for (const row of await db
             .prepare(
               'SELECT source_id,payload FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
             )
-            .all(worldId, missing))
+            .all(worldId, missing)) {
+            indexed?.reserveJson(Buffer.from(String(row['payload'])));
             sources[String(row['source_id'])] = JSON.parse(
               String(row['payload']),
             ) as ReceivedValueLookup[string];
+          }
           if (missing.some((id) => !sources[id]))
             throw new Error('Recent membership values are unavailable.');
         }
@@ -1208,7 +1245,7 @@ export class RetentionMetadataView {
           if (row['page_id'] !== null && row['page_id'] !== undefined)
             this.accumulateRecentMembership(
               pages.get(String(row['page_id']))!,
-              world,
+              recentRead(requests[Number(row['key'])]!.actorId)!,
               sources,
               requests[Number(row['key'])]!,
               results[Number(row['key'])]!,
@@ -1219,12 +1256,12 @@ export class RetentionMetadataView {
   }
   private accumulateRecentMembership(
     page: TemporalPage,
-    world: WorldState,
+    read: RecentMembershipRead,
     sources: ReceivedValueLookup,
     request: { actorId: string; aliases: readonly string[]; individualIds: readonly string[] },
     result: { aliases: Set<string>; individuals: Set<string> },
   ): void {
-    const actor = world.experience?.temporal?.actors[request.actorId];
+    const actor = read.actor;
     if (!actor || page.actorId !== request.actorId) return;
     const requestedAliases = request.aliases;
     for (const batch of page.batches)
@@ -1239,8 +1276,8 @@ export class RetentionMetadataView {
         if (
           !temporalRecentAt(
             entry.receivedAt,
-            world.simTime,
-            selectedTemporalPolicy(world).recent.maxAgeSeconds,
+            read.at,
+            read.maxAgeSeconds,
           ) ||
           !receivedDirectoryContains(actor.recent, locator)
         )
@@ -1256,7 +1293,7 @@ export class RetentionMetadataView {
         const receipt =
           facets.length === original.facets.length ? original : { ...original, facets };
         const aliases = new Set(
-          receivedRecordAliases(batch, { ...entry, receipt }, sources, world),
+          receivedRecordAliases(batch, { ...entry, receipt }, sources, read.source),
         );
         for (const alias of requestedAliases) {
           const direct = directReceiptAlias(alias);

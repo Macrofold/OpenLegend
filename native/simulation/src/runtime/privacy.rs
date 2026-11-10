@@ -9,6 +9,13 @@ struct ForgetInput {
     actor_id: String,
     source_id: String,
 }
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct CorrectInput {
+    actor_id: String,
+    source_id: String,
+    correction_event_id: String,
+}
 impl NativeWorldSession {
     /// Application authority and retained-source admission remain with the
     /// existing creator service. Native owns the actual protected-obligation
@@ -17,13 +24,37 @@ impl NativeWorldSession {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let input: ForgetInput = serde_json::from_slice(input).map_err(failure)?;
+        let held = self.held_source_proof(&input.actor_id, &input.source_id)?;
         self.session
-            .begin_forget(&input.actor_id, &input.source_id, self.history_edit_limits)
+            .begin_recall_edit(
+                &input.actor_id,
+                &input.source_id,
+                crate::experience::PrivacyEditMode::Forget,
+                held,
+                self.history_edit_limits,
+            )
+            .map_err(failure)
+    }
+    pub fn begin_correct(&mut self, input: &[u8]) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
+        let _decode = decode_preparation(input, &self.budget)?;
+        let input: CorrectInput = serde_json::from_slice(input).map_err(failure)?;
+        let held = self.held_source_proof(&input.actor_id, &input.source_id)?;
+        self.session
+            .begin_recall_edit(
+                &input.actor_id,
+                &input.source_id,
+                crate::experience::PrivacyEditMode::Correct {
+                    event_id: input.correction_event_id,
+                },
+                held,
+                self.history_edit_limits,
+            )
             .map_err(failure)
     }
 }
-struct Invalidated<'a>(&'a crate::experience::CompletedForgetExperience);
-struct Ids<'a>(&'a crate::experience::CompletedForgetExperience);
+struct Invalidated<'a>(&'a crate::experience::CompletedRecallEdit);
+struct Ids<'a>(&'a crate::experience::CompletedRecallEdit);
 impl Serialize for Invalidated<'_> {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(Some(1))?;
@@ -47,7 +78,7 @@ pub(super) fn serialize<M: SerializeMap>(
     operation: &CompletedOperation,
     map: &mut M,
 ) -> Result<(), M::Error> {
-    if let CompletedOperation::Forget(done) = operation {
+    if let CompletedOperation::RecallEdit(done) = operation {
         if let Some(change) = done.privacy_change() {
             map.serialize_entry("invalidatedMemoryIds", &Invalidated(done))?;
             map.serialize_entry("privacyChange", &change)?;

@@ -371,6 +371,7 @@ import {
   reapplyExperiencePrivacy,
   correctExperience,
   retainedExperienceSource,
+  selectedPrivacyOutcomes,
   experiences,
   EXPERIENCE_LIMITS,
   executeCommand,
@@ -1247,6 +1248,9 @@ export class WorldService {
 
   get world(): WorldState {
     return this.saved.world;
+  }
+  get worldId(): string {
+    return this.world.id;
   }
   get presentationRelease(): AssetRevisionReference | undefined {
     return this.saved.presentationRelease;
@@ -8640,11 +8644,7 @@ export class WorldService {
           !retainedExperienceSource(world, actorId, sourceId) &&
           !this.capturedExperienceSource(world, actorId, sourceId)
         )
-          return {
-            ok: false,
-            code: 'source',
-            message: 'That source is not retained for this actor.',
-          };
+          return { ...selectedPrivacyOutcomes(world).source };
         return { transition: forgetExperience(world, actorId, sourceId), eventMode: 'unchanged' };
       },
       { actorId, scope },

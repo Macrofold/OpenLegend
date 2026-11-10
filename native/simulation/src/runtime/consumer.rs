@@ -10,7 +10,7 @@ use std::{
 };
 
 pub struct RuntimeConsumer {
-    body: Arc<ByteReservation>,
+    body: Option<Arc<ByteReservation>>,
     budget: ByteBudget,
     _reference: ByteReservation,
 }
@@ -49,8 +49,17 @@ fn decoded_bound(bytes: &[u8]) -> Result<usize, RuntimeError> {
         .ok_or_else(|| failure("native consumer allocation overflow"))
 }
 
-pub(super) fn prepare(bytes: &[u8], budget: &ByteBudget) -> Result<RuntimeConsumer, RuntimeError> {
-    RuntimeConsumer::fund(decoded_bound(bytes)?, budget)
+pub(super) fn prepare(
+    bytes: &[u8],
+    budget: &ByteBudget,
+    carrier_bytes: usize,
+) -> Result<RuntimeConsumer, RuntimeError> {
+    RuntimeConsumer::fund(
+        decoded_bound(bytes)?
+            .checked_add(carrier_bytes)
+            .ok_or_else(|| failure("native consumer allocation overflow"))?,
+        budget,
+    )
 }
 
 impl RuntimeConsumer {
@@ -66,7 +75,7 @@ impl RuntimeConsumer {
     /// The host already holds the raw transfer's admission before supplying
     /// these borrowed bytes. This scan allocates no decoded JSON graph.
     pub fn for_json(bytes: &[u8], budget: &ByteBudget) -> Result<Self, RuntimeError> {
-        prepare(bytes, budget)
+        prepare(bytes, budget, 0)
     }
 
     fn fund(bytes: usize, budget: &ByteBudget) -> Result<Self, RuntimeError> {
@@ -75,7 +84,7 @@ impl RuntimeConsumer {
             .reserve(reference_bytes().ok_or_else(|| failure("capacity"))?)
             .map_err(failure)?;
         Ok(Self {
-            body: Arc::new(body),
+            body: Some(Arc::new(body)),
             budget: budget.clone(),
             _reference: reference,
         })
@@ -84,14 +93,25 @@ impl RuntimeConsumer {
     /// An optional async task/cache or detached result obtains its own real
     /// reference custody while sharing the already admitted decoded graph.
     pub fn retain(&self) -> Result<Self, RuntimeError> {
+        let body = self
+            .body
+            .as_ref()
+            .ok_or_else(|| failure("native consumer was released"))?;
         let reference = self
             .budget
             .reserve(reference_bytes().ok_or_else(|| failure("capacity"))?)
             .map_err(failure)?;
         Ok(Self {
-            body: Arc::clone(&self.body),
+            body: Some(Arc::clone(body)),
             budget: self.budget.clone(),
             _reference: reference,
         })
+    }
+
+    /// Completion releases this borrow of the graph, while its real native/JS
+    /// wrapper can remain alive. Keep the fixed header admission until that
+    /// wrapper is destroyed; a released wrapper cannot acquire another borrow.
+    pub fn release(&mut self) {
+        self.body = None;
     }
 }

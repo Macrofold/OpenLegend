@@ -194,7 +194,12 @@ export declare class NativeWorldConsumer {
 }
 
 export declare class NativeWorldJson {
-  consumer(): NativeWorldConsumer;
+  /**
+   * Internal decoding has no retained byte consumer. Keep the actual JSON
+   * parser, but do not attach temporary native bytes to a Buffer finalizer:
+   * a small JS heap need not collect before the native allowance is full.
+   */
+  decode(): NativeWorldDecoded;
   /**
    * Consume once. Both external-buffer and engine-copy implementations keep
    * the reservation on the actual Node Buffer until its finalizer runs.
@@ -609,6 +614,11 @@ export interface NativeWorldActivityLearningTurn {
   key: NativeCandidateKey;
   kind: string;
   provider?: NativeWorldProvider;
+}
+
+export interface NativeWorldDecoded {
+  value: unknown;
+  consumer: NativeWorldConsumer;
 }
 
 export interface NativeWorldNpcReads {

@@ -42,9 +42,15 @@ mod save;
 pub(crate) use residency::{PackedTemporalSave, PreparedTemporalResidency, SavedTemporalResidency};
 mod versions;
 pub(crate) use actor::ensure_temporal_actor;
-pub(crate) use versions::{SourceVersionPlan, apply_source_version_plan};
+pub(crate) use versions::{
+    SourceVersionArchiveChange, SourceVersionPlan, apply_source_version_plan,
+    reset_source_version_plan,
+};
 mod support;
-pub(crate) use accounts::{AccountAdditionBudget, KnowledgeAccountChange};
+pub(crate) use accounts::{
+    AccountAdditionBudget, KnowledgeAccountChange, bootstrap_personal_accounts,
+    ensure_experience_accounting,
+};
 pub(crate) use append::{ObservationCaptureOptions, TemporalAcquisitionCheckpoint};
 pub use append::{
     PendingTemporalPage, ReceivedTransition, TemporalAcquisition, TemporalAppendError,

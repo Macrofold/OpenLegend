@@ -45,6 +45,12 @@ pub struct RuntimeNpcResponseTicket {
 }
 
 impl RuntimeNpcResponseTicket {
+    pub fn receipt_liveness(&self) -> [Weak<AtomicBool>; 2] {
+        [
+            self.original.receipt_liveness(),
+            self.current.receipt_liveness(),
+        ]
+    }
     pub(super) fn publication_available(&self) -> bool {
         matches!(self.phase.load(Ordering::Acquire), FRESH | SETTLED)
     }

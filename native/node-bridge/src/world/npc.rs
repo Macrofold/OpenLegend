@@ -7,6 +7,7 @@ use openlegend_simulation::runtime::{
 use std::sync::Weak;
 
 struct NpcReadRuntime {
+    payload: Weak<AtomicBool>,
     read: Mutex<Option<RuntimeNpcRead>>,
     released: AtomicBool,
     _custody: openlegend_simulation::host::ByteReservation,
@@ -99,6 +100,7 @@ fn read_wrapper_custody(
                 .checked_sub(std::mem::size_of::<RuntimeNpcRead>())
                 .and_then(|n| n.checked_add(2 * std::mem::size_of::<usize>()))
                 .and_then(|n| n.checked_add(std::mem::size_of::<NativeWorldNpcRead>()))
+                .and_then(|n| n.checked_add(RuntimeNpcRead::receipt_liveness_backing_bytes()))
                 .ok_or_else(|| failure("capacity"))?,
         )
         .map_err(operation_error)
@@ -111,6 +113,7 @@ pub struct NativeWorldNpcReads {
 }
 
 pub(super) struct NpcResponseTicketRuntime {
+    payloads: [Weak<AtomicBool>; 2],
     pub(super) ticket: Mutex<Option<RuntimeNpcResponseTicket>>,
     pub(super) released: AtomicBool,
     _custody: openlegend_simulation::host::ByteReservation,
@@ -159,9 +162,50 @@ impl Drop for NativeWorldNpcResponseTicket {
 impl NativeWorldNpcResponseTicket {
     #[napi]
     pub fn release(&self) {
-        self.inner.released.store(true, Ordering::Release);
+        if self.inner.released.swap(true, Ordering::AcqRel) {
+            return;
+        }
+        for payload in &self.inner.payloads {
+            if let Some(payload) = payload.upgrade() {
+                payload.store(false, Ordering::Release);
+            }
+        }
         if let Ok(mut owner) = self.inner.ticket.try_lock() {
             *owner = None;
+            return;
+        }
+        let ticket = Arc::clone(&self.inner);
+        let Some(world) = self.world.upgrade() else {
+            return;
+        };
+        let custody = self.host.bytes.reserve(
+            std::mem::size_of::<Arc<NpcResponseTicketRuntime>>()
+                + 2 * std::mem::size_of::<Arc<WorldRuntime>>(),
+        );
+        let Ok(custody) = custody else {
+            world.fence.poison();
+            return;
+        };
+        let failed = Arc::clone(&world);
+        // Release can race a finite compute call holding this mutex. Drop the
+        // real payload after that call rather than retaining it until JS GC.
+        let submitted = self.host.pool.submit(
+            move |_cancel| {
+                let _custody = custody;
+                let mut owner = ticket.ticket.lock().map_err(|_| {
+                    world.fence.poison();
+                    crate::pool::HostError::SynchronizationFailed
+                })?;
+                *owner = None;
+                Ok(())
+            },
+            move |_result| {},
+            move || failed.fence.poison(),
+        );
+        if submitted.is_err() {
+            if let Some(world) = self.world.upgrade() {
+                world.fence.poison();
+            }
         }
     }
 }
@@ -280,6 +324,9 @@ impl NativeWorldNpcRead {
     pub fn release(&self) {
         if self.inner.released.swap(true, Ordering::AcqRel) {
             return;
+        }
+        if let Some(payload) = self.inner.payload.upgrade() {
+            payload.store(false, Ordering::Release);
         }
         let Some(world) = self.world.upgrade() else {
             if let Ok(mut read) = self.inner.read.try_lock() {
@@ -451,6 +498,7 @@ impl NativeWorld {
             Ok(NativeWorldNpcReads {
                 original: NativeWorldNpcRead {
                     inner: Arc::new(NpcReadRuntime {
+                        payload: original.receipt_liveness(),
                         read: Mutex::new(Some(original)),
                         released: AtomicBool::new(false),
                         _custody: original_custody,
@@ -460,6 +508,7 @@ impl NativeWorld {
                 },
                 current: NativeWorldNpcRead {
                     inner: Arc::new(NpcReadRuntime {
+                        payload: current.receipt_liveness(),
                         read: Mutex::new(Some(current)),
                         released: AtomicBool::new(false),
                         _custody: current_custody,
@@ -598,6 +647,9 @@ impl NativeWorld {
                         .and_then(|n| {
                             n.checked_add(std::mem::size_of::<NativeWorldNpcResponseTicket>())
                         })
+                        .and_then(|n| {
+                            n.checked_add(2 * RuntimeNpcRead::receipt_liveness_backing_bytes())
+                        })
                         .ok_or_else(|| failure("capacity"))?,
                 )
                 .map_err(operation_error)?;
@@ -627,8 +679,13 @@ impl NativeWorld {
             {
                 return Err(failure("NPC response capture was released"));
             }
+            // The actual read data has moved into the ticket. Old wrapper
+            // disposal must not revoke the moved payload's held-source grant.
+            first.released.store(true, Ordering::Release);
+            fresh.released.store(true, Ordering::Release);
             Ok(NativeWorldNpcResponseTicket {
                 inner: Arc::new(NpcResponseTicketRuntime {
+                    payloads: ticket.receipt_liveness(),
                     ticket: Mutex::new(Some(ticket)),
                     released: AtomicBool::new(false),
                     _custody: custody,
@@ -748,6 +805,7 @@ impl NativeWorld {
             let read = session.read_npc(&request).map_err(operation_error)?;
             Ok(NativeWorldNpcRead {
                 inner: Arc::new(NpcReadRuntime {
+                    payload: read.receipt_liveness(),
                     read: Mutex::new(Some(read)),
                     released: AtomicBool::new(false),
                     _custody: read_custody,

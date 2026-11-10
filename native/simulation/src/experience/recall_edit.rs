@@ -1,5 +1,6 @@
-//! Creator recall deletion includes Source's protected-obligation guard and
-//! complete transition boundary; a raw invalidation is not a public forget.
+//! Creator recall edits share one selected read, semantic checkpoint and
+//! finalization. Accepted restore constraints reuse this owner without
+//! inventing live correcting evidence that may no longer exist.
 use super::*;
 use crate::commands::Outcome;
 use crate::execution::{CandidateCheckpoint, CoreMutation, ExecutionError};
@@ -7,12 +8,12 @@ use crate::host::retained_size::{HeapBytes, heap_sum};
 use crate::host::{ByteBudget, ByteReservation, CandidateKey};
 use crate::language::CollationRequest;
 
-pub(crate) enum ForgetExperienceStep<'a> {
+pub(crate) enum RecallEditStep<'a> {
     History(Arc<HistoryEditQuestion>),
     Collation(&'a CollationRequest),
-    Complete(CompletedForgetExperience),
+    Complete(CompletedRecallEdit),
 }
-pub(crate) struct CompletedForgetExperience {
+pub(crate) struct CompletedRecallEdit {
     actor: String,
     source: String,
     outcome: Outcome,
@@ -20,7 +21,7 @@ pub(crate) struct CompletedForgetExperience {
     privacy: Option<PrivacyConstraintChange>,
     _storage: ByteReservation,
 }
-impl CompletedForgetExperience {
+impl CompletedRecallEdit {
     pub(crate) fn actor_id(&self) -> &str {
         &self.actor
     }
@@ -110,7 +111,7 @@ impl PrivacyConstraintChange {
         })
     }
 }
-pub(crate) struct ForgetExperienceCursor {
+pub(crate) struct RecallEditCursor {
     actor: String,
     source: String,
     preparation: Option<PrivacyPreparationCursor>,
@@ -118,12 +119,24 @@ pub(crate) struct ForgetExperienceCursor {
     candidate: CandidateKey,
     limits: HistoryEditLimits,
     memory_alias_added: bool,
+    mode: Option<PrivacyEditMode>,
+    admission: RecallAdmission,
     checkpoint: Option<CandidateCheckpoint>,
     outcomes: Option<(Outcome, Outcome)>,
+    unavailable: Option<Outcome>,
     storage: Option<ByteReservation>,
     done: bool,
 }
-impl ForgetExperienceCursor {
+pub(crate) enum RecallAdmission {
+    Live(Option<crate::runtime::HeldSourceProof>),
+    Replay,
+}
+enum Disposition {
+    Accepted,
+    Refused,
+    NotRetained,
+}
+impl RecallEditCursor {
     pub(super) fn pending_collation(
         &self,
     ) -> Result<&crate::language::CollationRequest, ExecutionError> {
@@ -136,38 +149,56 @@ impl ForgetExperienceCursor {
         core: &mut CoreMutation<'_>,
         actor: &str,
         source: &str,
+        mode: PrivacyEditMode,
+        admission: RecallAdmission,
         candidate: CandidateKey,
         limits: HistoryEditLimits,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         let rules = &core.state.installed.account_rules.value().privacy_outcomes;
+        let (refused, accepted, unavailable) = match &mode {
+            PrivacyEditMode::Forget => (&rules.commitment, &rules.forgotten, Some(&rules.source)),
+            PrivacyEditMode::Correct { .. } => (&rules.correction_rejected, &rules.corrected, None),
+        };
         let bytes = heap_sum([
             std::mem::size_of::<Self>(),
             actor.len(),
             source.len(),
-            rules
-                .commitment
-                .heap_bytes()
+            refused.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            accepted.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            unavailable
+                .map_or(Some(0), HeapBytes::heap_bytes)
                 .ok_or(ExecutionError::Capacity)?,
-            rules
-                .forgotten
-                .heap_bytes()
-                .ok_or(ExecutionError::Capacity)?,
+            match &mode {
+                PrivacyEditMode::Forget => 0,
+                PrivacyEditMode::Correct { event_id } => event_id.capacity(),
+            },
         ])
         .ok_or(ExecutionError::Capacity)?;
         let storage = budget.reserve(bytes)?;
-        let outcomes = (rules.commitment.clone(), rules.forgotten.clone());
+        let outcomes = (refused.clone(), accepted.clone());
+        let unavailable = unavailable.cloned();
         let roots_storage = budget.reserve(source.len() + std::mem::size_of::<String>())?;
         let roots = [source.to_owned()];
         let checkpoint = core.journal.checkpoint(core.state)?;
-        let preparation =
-            match PrivacyPreparationCursor::new(core, actor, &roots, candidate, limits, budget) {
-                Ok(preparation) => preparation,
-                Err(error) => {
-                    core.journal.rollback_to(core.state, checkpoint)?;
-                    return Err(error);
-                }
-            };
+        let preparation = match PrivacyPreparationCursor::new_with_witnesses(
+            core,
+            actor,
+            &roots,
+            match &mode {
+                PrivacyEditMode::Forget => &[],
+                PrivacyEditMode::Correct { event_id } => std::slice::from_ref(event_id),
+            },
+            candidate,
+            limits,
+            budget,
+        ) {
+            Ok(preparation) => preparation,
+            Err(error) => {
+                core.journal.rollback_to(core.state, checkpoint)?;
+                return Err(error);
+            }
+        };
         drop(roots_storage);
         Ok(Self {
             actor: actor.to_owned(),
@@ -177,8 +208,11 @@ impl ForgetExperienceCursor {
             candidate,
             limits,
             memory_alias_added: false,
+            mode: Some(mode),
+            admission,
             checkpoint: Some(checkpoint),
             outcomes: Some(outcomes),
+            unavailable,
             storage: Some(storage),
             done: false,
         })
@@ -198,16 +232,22 @@ impl ForgetExperienceCursor {
     }
     fn complete(
         &mut self,
-        accepted: bool,
+        disposition: Disposition,
         invalidated: Option<CompletedPrivacyEdit>,
         privacy: Option<PrivacyConstraintChange>,
-    ) -> Result<CompletedForgetExperience, ExecutionError> {
+    ) -> Result<CompletedRecallEdit, ExecutionError> {
         let (refused, success) = self.outcomes.take().ok_or(ExecutionError::Invariant)?;
         self.done = true;
-        Ok(CompletedForgetExperience {
+        Ok(CompletedRecallEdit {
             actor: std::mem::take(&mut self.actor),
             source: std::mem::take(&mut self.source),
-            outcome: if accepted { success } else { refused },
+            outcome: match disposition {
+                Disposition::Accepted => success,
+                Disposition::Refused => refused,
+                Disposition::NotRetained => {
+                    self.unavailable.take().ok_or(ExecutionError::Invariant)?
+                }
+            },
             invalidated,
             privacy,
             _storage: self.storage.take().ok_or(ExecutionError::Invariant)?,
@@ -218,7 +258,7 @@ impl ForgetExperienceCursor {
         core: &mut CoreMutation<'_>,
         answer: Option<PrivacyEditAnswer>,
         budget: &ByteBudget,
-    ) -> Result<ForgetExperienceStep<'a>, HistoryPreparationError> {
+    ) -> Result<RecallEditStep<'a>, HistoryPreparationError> {
         if self.done {
             return Err(HistoryPreparationError::StaleResponse);
         }
@@ -231,7 +271,7 @@ impl ForgetExperienceCursor {
             };
             let prepared = match preparation.step(core, received, budget) {
                 Ok(PrivacyPreparationStep::Read(question)) => {
-                    return Ok(ForgetExperienceStep::History(question));
+                    return Ok(RecallEditStep::History(question));
                 }
                 Ok(PrivacyPreparationStep::Complete(prepared)) => prepared,
                 Err(
@@ -245,15 +285,45 @@ impl ForgetExperienceCursor {
                 }
             };
             self.preparation = None;
-            let readiness = forget_readiness(core, &self.actor, &self.source, &prepared.selection);
+            let readiness = match self.mode.as_ref().ok_or(ExecutionError::Invariant)? {
+                PrivacyEditMode::Forget => forget_readiness(
+                    core,
+                    &self.actor,
+                    &self.source,
+                    &prepared.selection,
+                    &self.admission,
+                    self.candidate,
+                    budget,
+                ),
+                PrivacyEditMode::Correct { event_id } => correction_readiness(
+                    core,
+                    &self.actor,
+                    &self.source,
+                    event_id,
+                    &prepared.selection,
+                    &self.admission,
+                    self.candidate,
+                    budget,
+                ),
+            };
             let extra = match readiness {
-                Ok(ForgetReadiness::Refused) => {
+                Ok(RecallReadiness::Refused) => {
                     self.abort(core)?;
-                    return Ok(ForgetExperienceStep::Complete(
-                        self.complete(false, None, None)?,
-                    ));
+                    return Ok(RecallEditStep::Complete(self.complete(
+                        Disposition::Refused,
+                        None,
+                        None,
+                    )?));
                 }
-                Ok(ForgetReadiness::Ready(extra)) => extra,
+                Ok(RecallReadiness::NotRetained) => {
+                    self.abort(core)?;
+                    return Ok(RecallEditStep::Complete(self.complete(
+                        Disposition::NotRetained,
+                        None,
+                        None,
+                    )?));
+                }
+                Ok(RecallReadiness::Ready(extra)) => extra,
                 Err(error) => {
                     self.abort(core)?;
                     return Err(error.into());
@@ -297,16 +367,14 @@ impl ForgetExperienceCursor {
                     return Err(ExecutionError::Invariant.into());
                 };
                 return match preparation.step(core, None, budget)? {
-                    PrivacyPreparationStep::Read(question) => {
-                        Ok(ForgetExperienceStep::History(question))
-                    }
+                    PrivacyPreparationStep::Read(question) => Ok(RecallEditStep::History(question)),
                     PrivacyPreparationStep::Complete(_) => Err(ExecutionError::Invariant.into()),
                 };
             }
             match PrivacyEditCursor::from_prepared(
                 core,
                 prepared,
-                PrivacyEditMode::Forget,
+                self.mode.take().ok_or(ExecutionError::Invariant)?,
                 self.candidate,
                 budget,
             ) {
@@ -322,10 +390,10 @@ impl ForgetExperienceCursor {
         };
         let completed = match edit.advance(core, edit_answer, budget) {
             Ok(super::privacy_run::PrivacyEditProgress::History(question)) => {
-                return Ok(ForgetExperienceStep::History(question));
+                return Ok(RecallEditStep::History(question));
             }
             Ok(super::privacy_run::PrivacyEditProgress::Collation) => {
-                return Ok(ForgetExperienceStep::Collation(
+                return Ok(RecallEditStep::Collation(
                     self.edit
                         .as_ref()
                         .ok_or(ExecutionError::Invariant)?
@@ -377,15 +445,16 @@ impl ForgetExperienceCursor {
             .take()
             .ok_or(ExecutionError::InvalidCheckpoint)?;
         core.journal.keep(core.state, checkpoint)?;
-        Ok(ForgetExperienceStep::Complete(self.complete(
-            true,
+        Ok(RecallEditStep::Complete(self.complete(
+            Disposition::Accepted,
             Some(completed),
             Some(privacy),
         )?))
     }
 }
-enum ForgetReadiness {
+enum RecallReadiness {
     Refused,
+    NotRetained,
     Ready(Option<String>),
 }
 fn forget_readiness(
@@ -393,7 +462,10 @@ fn forget_readiness(
     actor: &str,
     source: &str,
     selection: &PrivacySelection,
-) -> Result<ForgetReadiness, ExecutionError> {
+    admission: &RecallAdmission,
+    candidate: CandidateKey,
+    budget: &ByteBudget,
+) -> Result<RecallReadiness, ExecutionError> {
     if !selection.scope.matches(core.state, actor) {
         return Err(ExecutionError::InvalidCheckpoint);
     }
@@ -434,7 +506,25 @@ fn forget_readiness(
                 .any(|id| roots.contains(id))
         })
     {
-        return Ok(ForgetReadiness::Refused);
+        return Ok(RecallReadiness::Refused);
+    }
+    if matches!(admission, RecallAdmission::Live(_)) {
+        let recorded_action = core
+            .state
+            .activity
+            .collections
+            .get(actor)
+            .is_some_and(|owner| {
+                owner
+                    .records
+                    .values()
+                    .any(|record| record.occurrence.id == source)
+            });
+        if !recorded_action
+            && !retained_source(core, actor, source, selection, admission, candidate, budget)?
+        {
+            return Ok(RecallReadiness::NotRetained);
+        }
     }
     let awareness = core
         .state
@@ -461,15 +551,109 @@ fn forget_readiness(
             .is_some_and(crate::state::Entity::has_memory)
             || record.header.class == AccountClass::Sensory
         {
-            return Ok(ForgetReadiness::Refused);
+            return Ok(RecallReadiness::Refused);
         }
         if record.header.reference.kind == PersonalSourceKind::Memory {
-            return Ok(ForgetReadiness::Ready(
+            return Ok(RecallReadiness::Ready(
                 record.header.event_id.clone().filter(|id| id != source),
             ));
         }
     }
-    // The sealed selection certifies the negative source lookup. No full owner
-    // is inferred merely from the small resident autobiographical tail.
-    Ok(ForgetReadiness::Ready(None))
+    Ok(RecallReadiness::Ready(None))
+}
+
+fn retained_source(
+    core: &CoreMutation<'_>,
+    actor: &str,
+    source: &str,
+    selection: &PrivacySelection,
+    admission: &RecallAdmission,
+    candidate: CandidateKey,
+    budget: &ByteBudget,
+) -> Result<bool, ExecutionError> {
+    if super::retained_source::retained_personal_source(core.state, actor, source, selection)?
+        || core.state.temporal.selected_source_retained(
+            actor,
+            source,
+            core.state.physical.header.sim_time,
+            core.state
+                .installed
+                .attention
+                .value()
+                .retention
+                .recent
+                .max_age_seconds,
+            &core.state.reception.received_values.as_ref(),
+            &core.state.installed.account_law(),
+            budget,
+        )?
+        || core
+            .state
+            .activity
+            .retains_source_evidence(actor, source, budget)?
+    {
+        return Ok(true);
+    }
+    let life = core
+        .state
+        .physical
+        .entities
+        .get(actor)
+        .and_then(|entity| entity.actor.as_ref())
+        .map(|actor| actor.physical_life.unwrap_or(0));
+    Ok(
+        matches!((admission, life), (RecallAdmission::Live(Some(proof)), Some(life))
+        if proof.permits(candidate.generation, actor, life, source)),
+    )
+}
+fn correction_readiness(
+    core: &CoreMutation<'_>,
+    actor: &str,
+    source: &str,
+    event: &str,
+    selection: &PrivacySelection,
+    admission: &RecallAdmission,
+    candidate: CandidateKey,
+    budget: &ByteBudget,
+) -> Result<RecallReadiness, ExecutionError> {
+    if !selection.scope.matches(core.state, actor) || !selection.scope.includes_source(event) {
+        return Err(ExecutionError::InvalidCheckpoint);
+    }
+    let awareness = core
+        .state
+        .experience
+        .optional_collection(actor, PersonalSourceKind::Awareness)?;
+    let Some(evidence) = awareness.and_then(|owner| owner.resident_record(event)) else {
+        return Ok(RecallReadiness::Refused);
+    };
+    if !retained_source(core, actor, source, selection, admission, candidate, budget)? {
+        return Ok(RecallReadiness::Refused);
+    }
+    let _roots = budget.reserve(
+        source
+            .len()
+            .checked_add(
+                crate::host::retained_size::map_storage::<String, ()>(1)
+                    .ok_or(ExecutionError::Capacity)?,
+            )
+            .ok_or(ExecutionError::Capacity)?,
+    )?;
+    let mut roots = IndexSet::from([source.to_owned()]);
+    let mut aliases = core.state.temporal.resident_account_alias_index(
+        actor,
+        &core.state.reception.received_values.as_ref(),
+        &core.state.installed.account_law(),
+        budget,
+    )?;
+    aliases.expand(&mut roots)?;
+    if roots.contains(&evidence.header.reference.id)
+        || evidence
+            .header
+            .owned_observations
+            .iter()
+            .any(|id| id == source)
+    {
+        return Ok(RecallReadiness::Refused);
+    }
+    Ok(RecallReadiness::Ready(None))
 }

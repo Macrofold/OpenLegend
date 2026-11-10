@@ -12,6 +12,10 @@ use std::{mem::size_of, sync::Arc};
 mod apply;
 pub(crate) use apply::{AccountRetentionCursor, CompletedAccountRetention};
 mod recollection;
+mod restore;
+pub(crate) use restore::{
+    RestoreRetentionAnswer, RestoreAccountCursor, RestoreRetentionQuestion, RestoreAccountStep,
+};
 
 #[derive(Clone, Copy, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -80,6 +84,9 @@ pub(crate) struct AccountRetentionRead {
     privacy: u64,
     accounts: TemporalAccounts,
     resident: Vec<AccountCandidate>,
+    /// The Source checkpoint reconstruction has complete logical lists even
+    /// while native purpose-selected bodies remain physically cold.
+    complete_checkpoint: bool,
     installed: Arc<InstalledWorld>,
     preparation: RetentionPreparation,
     selection: Option<Selection>,
@@ -275,11 +282,22 @@ impl AccountRetentionRead {
             privacy,
             accounts: accounts.clone(),
             resident,
+            complete_checkpoint: false,
             installed: Arc::clone(&state.installed),
             preparation,
             selection: None,
             _storage: storage,
         })
+    }
+    pub(crate) fn capture_restore(
+        state: &SimulationState,
+        actor: &str,
+        preparation: RetentionPreparation,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let mut read = Self::capture(state, actor, preparation, budget)?;
+        read.complete_checkpoint = true;
+        Ok(read)
     }
     pub(crate) fn packet(&self) -> Result<impl Serialize + '_, ExecutionError> {
         #[derive(Serialize)]
@@ -329,8 +347,30 @@ impl AccountRetentionRead {
         reply: AccountMetadataReply,
         budget: &ByteBudget,
     ) -> Result<impl Serialize + '_, ExecutionError> {
-        if self.selection.is_some()
-            || reply.metadata.len() > self.preparation.metadata_rows
+        if self.selection.is_some() {
+            return Err(ExecutionError::Invariant);
+        }
+        self.selection = Some(self.prepare_selection(reply, budget)?);
+        #[derive(Serialize)]
+        struct Selected<'a> {
+            selected: &'a [AccountCandidate],
+        }
+        Ok(Selected {
+            selected: &self
+                .selection
+                .as_ref()
+                .ok_or(ExecutionError::Invariant)?
+                .candidates,
+        })
+    }
+    // Restore must also allocate the next bound question before accepting this
+    // selection, so a capacity refusal leaves the original question retryable.
+    fn prepare_selection(
+        &self,
+        reply: AccountMetadataReply,
+        budget: &ByteBudget,
+    ) -> Result<Selection, ExecutionError> {
+        if reply.metadata.len() > self.preparation.metadata_rows
             || reply.next_due.is_some_and(|at| !at.is_finite())
         {
             return Err(ExecutionError::Invariant);
@@ -433,7 +473,7 @@ impl AccountRetentionRead {
         if more {
             next_due = Some(self.at);
         }
-        self.selection = Some(Selection {
+        Ok(Selection {
             candidates: selected,
             next_due,
             records: None,
@@ -441,17 +481,6 @@ impl AccountRetentionRead {
             summaries: Vec::new(),
             occupied_memory_ids: Vec::new(),
             _storage: storage,
-        });
-        #[derive(Serialize)]
-        struct Selected<'a> {
-            selected: &'a [AccountCandidate],
-        }
-        Ok(Selected {
-            selected: &self
-                .selection
-                .as_ref()
-                .ok_or(ExecutionError::Invariant)?
-                .candidates,
         })
     }
     pub(crate) fn load(
@@ -467,7 +496,6 @@ impl AccountRetentionRead {
             map_storage::<(PersonalSourceKind, String), AccountBodyRow>(reply.rows.len())
                 .ok_or(ExecutionError::Capacity)?;
         let mut retained_bytes = heap_sum([
-            selection._storage.bytes(),
             reply
                 .rows
                 .len()
@@ -495,7 +523,9 @@ impl AccountRetentionRead {
                 )
                 .ok_or(ExecutionError::Capacity)?;
         }
-        selection._storage.resize(retained_bytes)?;
+        // Hold imported products separately until every row validates. A
+        // rejected reply must not retain its allowance across a genuine retry.
+        let body_storage = budget.reserve(retained_bytes)?;
         let _index = budget.reserve(index_bytes)?;
         let mut rows = IndexMap::with_capacity(reply.rows.len());
         for value in reply.rows {
@@ -529,6 +559,7 @@ impl AccountRetentionRead {
             pins.push(record.capture_pin(budget)?);
             records.push(record);
         }
+        selection._storage.merge(body_storage)?;
         selection.records = Some(records);
         selection.pins = pins;
         selection.summaries = summaries;

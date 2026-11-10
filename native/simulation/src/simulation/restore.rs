@@ -10,10 +10,63 @@ use crate::host::{ByteBudget, ByteReservation, CandidateKey};
 use crate::restore::{
     RestoreArchivesAnswer, RestoreArchivesCursor, RestoreArchivesQuestion, RestoreArchivesStep,
     RestoreMetadataInput, RestoreMetadataPreparation, RestoreMetadataResult,
-    begin_restore_metadata, finish_restore_metadata,
+    apply_restore_archive_baseline, begin_restore_metadata, finish_restore_metadata,
 };
 use crate::text::JsText;
 use serde::Deserialize;
+
+/// This is the actual packed private SQL view held through restore's bounded
+/// rounds. Row bodies and merge backing remain funded with the detached view.
+pub(super) struct RestoreReadProjection {
+    pub(super) changes: crate::records::ChangedRows,
+    _owners: Vec<crate::records::OwnerCoverage>,
+    _page_owners: Vec<crate::records::OwnerCoverage>,
+    _residency: std::sync::Arc<crate::received::SavedTemporalResidency>,
+    _rows: ByteReservation,
+    _pages: ByteReservation,
+    _merge: ByteReservation,
+    _storage: ByteReservation,
+}
+impl RestoreReadProjection {
+    pub(super) fn capture(
+        core: &CoreMutation<'_>,
+        key: CandidateKey,
+        limits: crate::received::TemporalSaveLimits,
+        floor: u64,
+        budget: &ByteBudget,
+    ) -> Result<Self, super::driver::DriveError> {
+        use super::driver::DriveError;
+        let storage = budget.reserve(std::mem::size_of::<Self>())
+            .map_err(|_| DriveError::Capacity)?;
+        let rows = crate::simulation::encode_candidate_changes(core.state, core.journal, None, budget)
+            .map_err(|_| DriveError::Encoding)?;
+        let packed = crate::received::pack_temporal_save(
+            &crate::records::save::TemporalSaveCut {
+                world_id: &core.state.physical.header.id,
+                generation: &core.state.generation,
+                through_cut: key.base_cut.checked_add(1).ok_or(DriveError::Capacity)?,
+                identity_through: core.state.physical.identity.next_id(),
+                temporal: &core.state.temporal,
+            },
+            rows.changes(),
+            Some(floor),
+            limits,
+            &core.state.installed.schema,
+            budget,
+        ).map_err(|_| DriveError::Encoding)?;
+        let merge = budget.reserve(
+            crate::records::merge_workspace_bound(rows.changes(), packed.changes())
+                .ok_or(DriveError::Capacity)?,
+        ).map_err(|_| DriveError::Capacity)?;
+        let (changes, owners, rows_guard) = rows.into_parts();
+        let (pages, page_owners, pages_guard, residency) = packed.into_parts();
+        let changes = crate::records::merge_changes(changes, pages, &core.state.installed.schema)
+            .map_err(|_| DriveError::Encoding)?;
+        Ok(Self { changes, _owners: owners, _page_owners: page_owners,
+            _residency: residency, _rows: rows_guard, _pages: pages_guard,
+            _merge: merge, _storage: storage })
+    }
+}
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -24,6 +77,7 @@ pub(crate) struct RestoreInput {
 pub(crate) struct CompletedRestore {
     pub outcome: Outcome,
     pub metadata: RestoreMetadataResult,
+    pub source_versions: Option<super::driver::source_versions::SourceVersionsAnswer>,
     _storage: ByteReservation,
 }
 pub(crate) struct RestoreReconcileCursor {
@@ -130,7 +184,10 @@ impl RestoreReconcileCursor {
         let storage = budget
             .reserve(std::mem::size_of::<CompletedRestore>() + 128)
             .map_err(ExecutionError::from)?;
-        let metadata = finish_restore_metadata(core, metadata, budget)?;
+        let baseline = apply_restore_archive_baseline(core, metadata, budget)?;
+        let archives =
+            baseline.prepare_versions(&crate::received::SourceVersionPlan::empty(), budget)?;
+        let metadata = finish_restore_metadata(core, baseline, archives, budget)?;
         self.done = true;
         Ok(RestoreStep::Complete(CompletedRestore {
             // Internal preparation status; only the existing application save
@@ -149,6 +206,7 @@ impl RestoreReconcileCursor {
                 action_id: None,
             },
             metadata,
+            source_versions: None,
             _storage: storage,
         }))
     }

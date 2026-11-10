@@ -18,6 +18,8 @@ import type { SavedWorld, SqlDatabase } from './store.js';
 import type { RecordChanges, RowChange } from './world-records.js';
 import { type RetentionMetadataView } from './retention-metadata.js';
 
+export const SOURCE_RETENTION_CLOSURE_ROUNDS = 4;
+
 type Category = 'optional' | 'required' | 'speech';
 export interface VersionKey {
   actorId: string;

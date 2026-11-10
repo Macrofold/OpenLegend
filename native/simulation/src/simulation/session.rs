@@ -506,10 +506,12 @@ impl Session {
     pub(crate) fn is_npc_sources(&self, key: CandidateKey) -> bool {
         matches!(&self.candidate, Some(Candidate::Preparing(preparing)) if preparing.key == key && preparing.driver.is_npc_sources())
     }
-    pub(crate) fn begin_forget(
+    pub(crate) fn begin_recall_edit(
         &mut self,
         actor: &str,
         source: &str,
+        mode: crate::experience::PrivacyEditMode,
+        held: Option<crate::runtime::HeldSourceProof>,
         limits: crate::experience::HistoryEditLimits,
     ) -> Result<CandidateKey, SessionError> {
         // This protected edit commits its proposed prefix before acceptance.
@@ -523,15 +525,17 @@ impl Session {
                 state: &mut self.simulation.state,
                 journal: &mut journal,
             };
-            let cursor = crate::experience::ForgetExperienceCursor::new(
+            let cursor = crate::experience::RecallEditCursor::new(
                 &mut core,
                 actor,
                 source,
+                mode,
+                crate::experience::RecallAdmission::Live(held),
                 key,
                 limits,
                 &self.budget,
             )?;
-            OperationDriver::forget(&mut core, cursor, &self.budget)
+            OperationDriver::recall_edit(&mut core, cursor, &self.budget)
         })();
         self.install_driver(key, journal, driver, false)
     }
@@ -974,6 +978,7 @@ impl Session {
                     )?;
                     let predecessors = crate::experience::capture_personal_predecessors(
                         &preparing.journal.experience,
+                        None,
                         &self.budget,
                     )
                     .map_err(PublicationError::from)?;
@@ -983,7 +988,7 @@ impl Session {
                         &self.budget,
                     )
                     .map_err(PublicationError::from)?;
-                    let protected = matches!(&result, CompletedOperation::Forget(done)
+                    let protected = matches!(&result, CompletedOperation::RecallEdit(done)
                         if done.privacy_change().is_some())
                         || matches!(
                             &result,

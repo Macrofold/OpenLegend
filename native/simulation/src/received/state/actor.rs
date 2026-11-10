@@ -39,7 +39,26 @@ pub(crate) fn ensure_temporal_actor(
             crate::reception::retire_perception_life(core, actor_id, old_life, budget)?;
         }
     }
-    let temporal = &mut core.state.temporal;
+    install_temporal_actor_life(
+        &mut core.state.temporal,
+        &mut core.state.physical,
+        actor_id,
+        life,
+        previous_life,
+        budget,
+    )
+}
+
+// The CoreMutation wrapper above performs old-life retirement. A first personal
+// knowledge admission uses this same factory only when no history owner exists.
+pub(super) fn install_temporal_actor_life(
+    temporal: &mut TemporalState,
+    physical: &mut crate::simulation::PhysicalState,
+    actor_id: &str,
+    life: u64,
+    previous_life: Option<u64>,
+    budget: &ByteBudget,
+) -> Result<bool, ExecutionError> {
     let old_capacity = temporal.actors.capacity();
     let new_capacity = if previous_life.is_none() && temporal.actors.len() == old_capacity {
         old_capacity
@@ -72,7 +91,7 @@ pub(crate) fn ensure_temporal_actor(
         temporal.reserve_actor_capacity(new_capacity)?;
     }
     // All capacity admission precedes the source's one receipt-epoch allocation.
-    let issued = core.state.physical.identity.allocate("receipt-epoch")?;
+    let issued = physical.identity.allocate("receipt-epoch")?;
     let epoch = format!("{}-{}", temporal.header.namespace, issued.id);
     temporal.undo.push(TemporalUndo::Reservation(reservation));
     if previous_life.is_some() {
@@ -110,23 +129,7 @@ pub(crate) fn ensure_temporal_actor(
                 .and_then(|n| n.checked_add(payload.len() + 2 * std::mem::size_of::<usize>()))
                 .ok_or(ExecutionError::Capacity)?,
         )?;
-        let owner = json_record(&["world", "experience", "temporal", "actors", actor_id])
-            .map_err(|_| ExecutionError::Invariant)?;
-        let supports = super::super::TemporalSupportCollection::install(
-            actor_id,
-            Vec::new(),
-            OwnerCoverage {
-                table: "mind_temporal_supports".to_owned(),
-                owner,
-                complete: true,
-                next_ordinal: 0,
-                parent_present: false,
-            },
-            core.state.physical.header.sim_time,
-            None,
-            budget,
-            &core.state.activity.display,
-        )?;
+        let supports = super::super::TemporalSupportCollection::new_empty(actor_id, budget)?;
         let next = temporal
             .actor_coverage
             .next_ordinal
@@ -151,7 +154,7 @@ pub(crate) fn ensure_temporal_actor(
                 header_storage,
                 pages: BTreeMap::new(),
                 complete_pages: true,
-                page_order_upper_bound: core.state.physical.identity.next_id(),
+                page_order_upper_bound: physical.identity.next_id(),
                 tail: ReceiptTailState::empty(),
                 recent: ReceivedRecentDirectory::new(budget)?,
                 pending_pages: Vec::new(),

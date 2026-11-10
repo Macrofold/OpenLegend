@@ -127,6 +127,21 @@ export function encodeNativeJson(
   }
 }
 
+/** A bridge call borrows the actual encoded input until its native result (or
+ * refusal) completes. The encoder admits its Buffer and workspace beforehand. */
+export async function withNativeJsonInput<T>(
+  world: Pick<NativeWorld, 'reserveConsumerBytes'>,
+  value: unknown,
+  consume: (bytes: Buffer) => Promise<T>,
+): Promise<T> {
+  const input = encodeNativeJson(world, value);
+  try {
+    return await consume(input);
+  } finally {
+    releaseNativeProduct(input);
+  }
+}
+
 export function retainNativeProduct<T extends object>(owner: T): T {
   const holder = holders.get(owner);
   if (!holder || holder.released) throw new Error('Native output has no live allocation owner.');
@@ -160,9 +175,8 @@ function attach(owner: object, entries: readonly Entry[]): void {
 /** Decode one already scoped native product. Its semantic owner supplies the
  * concrete type; this function grants neither world access nor mutation. */
 export function decodeNativeProduct<T extends object>(encoded: NativeWorldJson): T {
-  const consumer = encoded.consumer();
+  const { value, consumer } = encoded.decode();
   try {
-    const value: unknown = JSON.parse(encoded.consume().toString('utf8'));
     if (value === null || typeof value !== 'object')
       throw new Error('A scoped native product requires an owned object root.');
     attach(value, [{ origin: Symbol(), consumer, owned: true }]);

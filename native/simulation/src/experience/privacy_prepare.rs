@@ -204,6 +204,9 @@ pub(crate) struct ClosedPrivacyScope {
     _storage: ByteReservation,
 }
 impl ClosedPrivacyScope {
+    pub(super) fn includes_source(&self, id: &str) -> bool {
+        self.selected.contains(id)
+    }
     pub(crate) fn permits_actor(&self, actor: &str) -> bool {
         self.actor_id == actor
     }
@@ -399,6 +402,20 @@ impl PrivacyPreparationCursor {
         limits: HistoryEditLimits,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
+        Self::new_with_witnesses(core, actor, roots, &[], candidate, limits, budget)
+    }
+    /// Correction reads its independently perceived evidence at the same cut.
+    /// That lookup joins the existing indexed preparation, but its source is
+    /// never promoted into the actual roots being corrected or forgotten.
+    pub(crate) fn new_with_witnesses(
+        core: &mut CoreMutation<'_>,
+        actor: &str,
+        roots: &[String],
+        witnesses: &[String],
+        candidate: CandidateKey,
+        limits: HistoryEditLimits,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
         let history = core.state.experience.actor(actor).ok_or_else(invalid)?;
         if candidate.base_cut != core.state.accepted_cut
             || [
@@ -411,28 +428,40 @@ impl PrivacyPreparationCursor {
         {
             return Err(invalid());
         }
+        let sources = roots
+            .len()
+            .checked_add(witnesses.len())
+            .ok_or(ExecutionError::Capacity)?;
         let bytes = heap_sum([
             size_of::<Self>(),
             actor.len(),
             core.state.generation.len(),
             roots
                 .len()
-                .checked_mul(size_of::<String>() * 2)
+                .checked_add(sources)
+                .and_then(|n| n.checked_mul(size_of::<String>()))
                 .ok_or(ExecutionError::Capacity)?,
             roots
                 .iter()
                 .try_fold(0usize, |n, id| n.checked_add(id.len().checked_mul(2)?))
+                .and_then(|n| {
+                    witnesses
+                        .iter()
+                        .try_fold(n, |n, id| n.checked_add(id.len()))
+                })
                 .ok_or(ExecutionError::Capacity)?,
-            map_storage::<String, ()>(roots.len()).ok_or(ExecutionError::Capacity)?,
+            map_storage::<String, ()>(sources).ok_or(ExecutionError::Capacity)?,
         ])
         .ok_or(ExecutionError::Capacity)?;
         let storage = budget.reserve(bytes)?;
+        let mut sources = IndexSet::with_capacity(sources);
+        sources.extend(roots.iter().chain(witnesses).cloned());
         let privacy_revision = history.privacy.revision();
         let checkpoint = core.journal.checkpoint(core.state)?;
         Ok(Self {
             actor: actor.to_owned(),
             roots: roots.to_vec(),
-            sources: roots.iter().cloned().collect(),
+            sources,
             candidate,
             limits,
             at: core.state.physical.header.sim_time,

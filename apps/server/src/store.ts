@@ -1,6 +1,7 @@
 import { JOB_UPSERT_SQL, jobPayloadPrefix, jobSelection } from './job-storage.js';
 import { diagnosticStorage, diagnosticSelectionPattern } from './diagnostic-storage.js';
 import {
+  SOURCE_RETENTION_CLOSURE_ROUNDS,
   resetPreparedSourceVersionAccounting,
   sourceVersionPreparationNeeded,
   type SourceVersionPlan,
@@ -69,6 +70,7 @@ import {
   nativeRestoreArchiveMetadata,
   assertNativeRestoredArchives,
   applyNativeRestoredArchives,
+  applyNativeRestoreArchiveBaseline,
   type NativeRestoreProjection,
   type NativeRestoreRequest,
   type NativeRestoreStage,
@@ -572,7 +574,7 @@ export class SqlGameRepository implements GameRepository {
         positions = new Map<string, Map<string, number>>(),
         previous = new Map<string, Map<string, unknown>>();
       let preparedVersions: SourceVersionPlan | undefined;
-      for (let round = 0; round < 4; round++) {
+      for (let round = 0; round < SOURCE_RETENTION_CLOSURE_ROUNDS; round++) {
         if (preparedVersions) {
           const world = resetPreparedSourceVersionAccounting(state.world, preparedVersions);
           if (world !== state.world) state = { ...state, world };
@@ -1572,7 +1574,7 @@ export class SqlGameRepository implements GameRepository {
         revision,
         generation: head.generation,
         metadata,
-        prepareReads: async (installation) => {
+        prepareReads: async (installation, installationCapacity) => {
           if (
             readsPrepared ||
             installation.worldId !== owner.worldId ||
@@ -1594,7 +1596,7 @@ export class SqlGameRepository implements GameRepository {
           await this.memories.reconcile(owner.worldId, affected);
           readsInitialized = true;
           return {
-            withPrivateView: async (projection, read) => {
+            withPrivateView: async (projection, read, archives) => {
               if (!this.db.transactionActive)
                 throw new Error('Native restore history lost its protected SQL transaction.');
               return this.db.rollbackView!(async () => {
@@ -1612,6 +1614,14 @@ export class SqlGameRepository implements GameRepository {
                   ),
                 );
                 await this.memories.reconcile(owner.worldId, changed);
+                if (archives)
+                  await applyNativeRestoreArchiveBaseline(
+                    this.db,
+                    owner.worldId,
+                    revision,
+                    archives,
+                    installationCapacity,
+                  );
                 return read();
               });
             },
@@ -1641,6 +1651,13 @@ export class SqlGameRepository implements GameRepository {
         for (const actor of initial.keys()) affected.set(actor, null);
       }
       await this.applyCommitPrivacy(inputs);
+      await applyNativeRestoreArchiveBaseline(
+        this.db,
+        owner.worldId,
+        revision,
+        prepared.archiveBaseline,
+        prepared.retentionCapacity,
+      );
       await this.applyCommitInputs(inputs, revision, { deferSources: true });
       const archives = await nativeRestoredArchives(this.db, owner.worldId, inputs.privacy);
       assertNativeRestoredArchives(prepared.archives, archives.selected);

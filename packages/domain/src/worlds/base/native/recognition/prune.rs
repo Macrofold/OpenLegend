@@ -95,17 +95,43 @@ pub(crate) enum IndividualPruneMode {
     CurrentLoss,
     RecentRetirement,
 }
-/// Both actual callers supply a finite candidate set and no new revoked source
-/// IDs. Recent retirement additionally releases obsolete personal ownership.
-pub(crate) fn prune_observer_individuals(
+/// Complete checkpoint retention also expires seeds for actors that have not
+/// yet opened accounting. Source creates their first totals only afterward.
+pub(crate) fn maintain_restore_recognition(
+    core: &mut CoreMutation<'_>,
+    observer: &str,
+    budget: &ByteBudget,
+) -> Result<(), ExecutionError> {
+    if core.state.temporal.actor(observer)
+        .is_some_and(|actor| actor.header().accounts.is_some()) {
+        return super::maintain_recognition(core, observer, budget);
+    }
+    let installed = core.state.installed.clone();
+    let mut receiving = crate::reception::ReceivingMutation {
+        experience: &core.state.experience,
+        cognition: &mut core.journal.cognition,
+        current: &mut core.journal.current,
+        acquisitions: &mut core.journal.acquisitions,
+        meters: &mut core.journal.meters,
+        budget,
+    };
+    super::maintenance::expire_seeds(
+        &mut core.state.physical, &mut core.state.reception, &installed,
+        &mut core.state.temporal, &mut core.journal.recognition, &mut receiving, observer,
+    )
+}
+struct IndividualPruning {
+    pinned: IndexSet<String>,
+    _storage: crate::host::ByteReservation,
+}
+fn prepare_pruning(
     core: &mut CoreMutation<'_>,
     observer: &str,
     candidates: &IndexSet<String>,
-    mode: IndividualPruneMode,
     budget: &ByteBudget,
-) -> Result<usize, ExecutionError> {
+) -> Result<Option<IndividualPruning>, ExecutionError> {
     if candidates.is_empty() {
-        return Ok(0);
+        return Ok(None);
     }
     let Some(identities) = core
         .state
@@ -114,7 +140,7 @@ pub(crate) fn prune_observer_individuals(
         .as_ref()
         .and_then(|owners| owners.get(observer))
     else {
-        return Ok(0);
+        return Ok(None);
     };
     let mut bytes = heap_sum([
         size_of::<IndexSet<String>>() * 3,
@@ -227,7 +253,7 @@ pub(crate) fn prune_observer_individuals(
                 .ok_or_else(capacity)?;
         }
     }
-    let _reservation = budget.reserve(bytes)?;
+    let reservation = budget.reserve(bytes)?;
     let mut pinned = IndexSet::new();
     if let Some(documents) = core
         .state
@@ -335,6 +361,19 @@ pub(crate) fn prune_observer_individuals(
             .temporal
             .mark_support_dirty(observer, Some(&sources))?;
     }
+    Ok(Some(IndividualPruning { pinned, _storage: reservation }))
+}
+fn finish_pruning(
+    core: &mut CoreMutation<'_>,
+    observer: &str,
+    candidates: &IndexSet<String>,
+    mode: IndividualPruneMode,
+    mut prepared: IndividualPruning,
+    retained: Option<&IndexSet<String>>,
+    budget: &ByteBudget,
+) -> Result<usize, ExecutionError> {
+    let now = core.state.physical.header.sim_time;
+    let pinned = &mut prepared.pinned;
     if let Some(supports) = core
         .state
         .temporal
@@ -368,6 +407,9 @@ pub(crate) fn prune_observer_individuals(
                 }
             }
         }
+    }
+    if let Some(retained) = retained {
+        pinned.extend(retained.iter().filter(|id| candidates.contains(*id)).cloned());
     }
     let _retained_pins = budget.reserve(pinned.heap_bytes().ok_or_else(capacity)?)?;
     let retained_pins = pinned.clone();
@@ -481,6 +523,99 @@ pub(crate) fn prune_observer_individuals(
         removed += 1;
     }
     Ok(removed)
+}
+
+/// Physical loss and recent expiry do not revoke independent source proof.
+pub(crate) fn prune_observer_individuals(
+    core: &mut CoreMutation<'_>,
+    observer: &str,
+    candidates: &IndexSet<String>,
+    mode: IndividualPruneMode,
+    budget: &ByteBudget,
+) -> Result<usize, ExecutionError> {
+    let Some(prepared) = prepare_pruning(core, observer, candidates, budget)? else {
+        return Ok(0);
+    };
+    finish_pruning(core, observer, candidates, mode, prepared, None, budget)
+}
+
+/// Exceptional lasting-account retirement has real SQL membership proof.
+/// Familiarity fades before released source evidence, and only then may an
+/// empty personal identity return to current-only ownership or disappear.
+pub(crate) struct PreparedIndividualRetirement {
+    observer: String,
+    candidates: IndexSet<String>,
+    retained: IndexSet<String>,
+    prepared: Option<IndividualPruning>,
+    privacy: Option<super::RecognitionPrivacyPreparation>,
+    _storage: crate::host::ByteReservation,
+}
+impl PreparedIndividualRetirement {
+    pub(crate) fn prepare(
+        core: &mut CoreMutation<'_>,
+        observer: &str,
+        released: &IndexSet<String>,
+        retained: &IndexSet<String>,
+        binding: crate::geometry::GeometryBinding,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let identities = core.state.reception.observer_identities.as_ref()
+            .and_then(|owners| owners.get(observer));
+        let count = identities.map_or(0, IndexMap::len);
+        let strings = identities.into_iter().flat_map(|records| records.keys())
+            .try_fold(0usize, |n, key| n.checked_add(key.len().checked_mul(2)?))
+            .ok_or_else(capacity)?;
+        let storage = budget.reserve(heap_sum([
+            size_of::<Self>(), observer.len(), strings,
+            map_storage::<String, ()>(count.checked_mul(4).ok_or_else(capacity)?)
+                .ok_or_else(capacity)?,
+        ]).ok_or_else(capacity)?)?;
+        let mut candidates = IndexSet::with_capacity(count);
+        let mut selected_retained = IndexSet::with_capacity(count);
+        for key in identities.into_iter().flat_map(|records| records.keys()) {
+            candidates.insert(key.clone());
+            if retained.contains(key) { selected_retained.insert(key.clone()); }
+        }
+        // Comparison allocation precedes the familiarity writer; its selected
+        // sample keys are unchanged by familiarity's independent roots.
+        let privacy = if released.is_empty() { None } else {
+            super::RecognitionPrivacyPreparation::prepare(core, observer, released, binding, budget)?
+        };
+        let prepared = prepare_pruning(core, observer, &candidates, budget)?;
+        Ok(Self { observer: observer.to_owned(), candidates,
+            retained: selected_retained, prepared, privacy, _storage: storage })
+    }
+    pub(crate) fn comparisons(&self) -> Option<&crate::language::CollationRequest> {
+        self.privacy.as_ref().map(|privacy| privacy.comparisons())
+    }
+    pub(crate) fn validate_answer(
+        &self,
+        answer: Option<&crate::language::CollationAnswer>,
+    ) -> Result<(), ExecutionError> {
+        match (&self.privacy, answer) {
+            (Some(privacy), Some(answer)) => {
+                privacy.comparisons().finish(answer).map_err(|_| ExecutionError::Invariant)?;
+                Ok(())
+            }
+            (None, None) => Ok(()),
+            _ => Err(ExecutionError::Invariant),
+        }
+    }
+    pub(crate) fn finish(
+        self,
+        core: &mut CoreMutation<'_>,
+        answer: Option<&crate::language::CollationAnswer>,
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
+        if let Some(privacy) = self.privacy {
+            privacy.finish(core, answer.ok_or(ExecutionError::Invariant)?, budget)?;
+        }
+        if let Some(prepared) = self.prepared {
+            finish_pruning(core, &self.observer, &self.candidates,
+                IndividualPruneMode::RecentRetirement, prepared, Some(&self.retained), budget)?;
+        }
+        Ok(())
+    }
 }
 
 /// Source retainedIdentityEvidenceKeys is shared by retirement and support

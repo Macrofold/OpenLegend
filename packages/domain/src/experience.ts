@@ -2748,11 +2748,7 @@ export function correctExperience(
     return {
       world: input,
       events: [],
-      outcome: outcome(
-        false,
-        'correction-rejected',
-        'Correction requires newly perceived evidence and a retained source.',
-      ),
+      outcome: { ...selectedPrivacyOutcomes(input).correctionRejected },
     };
   const world = draftWorld(input);
   const invalidated = mutateExperience(world, actorId, {
@@ -2761,15 +2757,7 @@ export function correctExperience(
     correctionEventId,
   })!;
   return {
-    ...finish(
-      world,
-      [],
-      outcome(
-        true,
-        'corrected',
-        'Correction linked; affected summaries invalidated and beliefs flagged for reconsideration.',
-      ),
-    ),
+    ...finish(world, [], { ...selectedPrivacyOutcomes(input).corrected }),
     invalidatedMemoryIds: { [actorId]: invalidated },
   };
 }

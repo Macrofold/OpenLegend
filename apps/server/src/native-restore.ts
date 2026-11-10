@@ -7,7 +7,11 @@ import type { AuthorityFence } from './authority.js';
 import { MEMORY_SOURCE_TABLES } from './memory-repository.js';
 import { nativeCurrentRow } from './native-current-sources.js';
 import { tableRows } from './record-pages.js';
-import { applySourceVersions, type SourceVersionPlan } from './source-version-retention.js';
+import {
+  applySourceVersions,
+  sourceVersionKey,
+  type SourceVersionPlan,
+} from './source-version-retention.js';
 import { selectNativeRestoreArchives } from './native-restore-archives.js';
 import { sqlRowBatches } from './sql-rows.js';
 import type {
@@ -18,6 +22,7 @@ import type {
 } from './store.js';
 import type { RecordChanges, RowChange } from './world-records.js';
 import type { NativePublication } from './native-operation.js';
+import type { RetentionCapacity } from './native-account-retention.js';
 
 export interface NativeRestoreArchive {
   readonly actorId: string;
@@ -48,6 +53,7 @@ export interface NativeRestorePublication
     readonly retainedValues: Readonly<Record<string, true>>;
   };
   readonly restoreMetadata: {
+    readonly archiveBaseline: readonly NativeRestoreArchive[];
     readonly keptArchives: readonly NativeRestoreArchive[];
     readonly privacy: ExperiencePrivacy;
   };
@@ -65,10 +71,17 @@ export interface NativeRestoreStage {
   readonly revision: number;
   readonly generation: string;
   readonly metadata: NativeRestoreMetadata;
-  prepareReads(installation: NativeCurrentWorldInstallation): Promise<NativeRestoreReadView>;
+  prepareReads(
+    installation: NativeCurrentWorldInstallation,
+    capacity: RetentionCapacity,
+  ): Promise<NativeRestoreReadView>;
 }
 export interface NativeRestoreReadView {
-  withPrivateView<T>(projection: NativeChangedRows, read: () => Promise<T>): Promise<T>;
+  withPrivateView<T>(
+    projection: NativeChangedRows,
+    read: () => Promise<T>,
+    archiveBaseline?: readonly NativeRestoreArchive[],
+  ): Promise<T>;
 }
 /** The application retains the actual sealed native preparation while this
  * finite projection is applied. These rows are prospective and undisclosed
@@ -78,6 +91,8 @@ export interface NativeRestoreProjection {
   readonly inputs: CommitInputs;
   readonly providers: NativeWorldProviders;
   readonly archives: readonly NativeRestoreArchive[];
+  readonly archiveBaseline: readonly NativeRestoreArchive[];
+  readonly retentionCapacity: RetentionCapacity;
   retainReceipt(receipt: NativeWorldAdoption): void;
 }
 
@@ -276,4 +291,83 @@ export async function applyNativeRestoredArchives(
         AND a.source_id=q.source_id AND a.source_revision=q.source_revision AND a.namespace=q.namespace`,
       )
       .run(JSON.stringify(batch.map(([row]) => row)), selection.worldId);
+}
+
+/** Replay the native owner's first selected archive set before planning later
+ * retention edits. This changes only actual archived rows through the same
+ * version writer; native temporal headers remain the accounting authority. */
+export async function applyNativeRestoreArchiveBaseline(
+  db: SqlDatabase,
+  worldId: string,
+  revision: number,
+  baseline: readonly NativeRestoreArchive[],
+  capacity: RetentionCapacity,
+): Promise<void> {
+  // Actual fixed metadata carriers coexist with the version writer's row and
+  // parameter staging. These use the same conservative Node property/header
+  // escrow as native JSON consumers; source payload prose is never copied.
+  const names = baseline.reduce(
+    (sum, row) => sum + row.actorId.length + row.kind.length + row.id.length + row.revision.length,
+    0,
+  );
+  const selectionStorage = capacity.reserveBytes(2048 + baseline.length * 2048 + names * 32);
+  let rowsStorage: ReturnType<RetentionCapacity['reserveBytes']> | undefined;
+  try {
+    const count = await db
+      .prepare(
+        `SELECT count(*) AS rows,COALESCE(sum(octet_length(actor_id)+octet_length(source_kind)
+        +octet_length(source_id)+octet_length(revision)+octet_length(retention_class)),0) AS names
+        FROM mind_source_versions WHERE world_id=?`,
+      )
+      .get(worldId);
+    const rows = Number(count?.['rows']),
+      names = Number(count?.['names']);
+    if (!Number.isSafeInteger(rows) || rows < 0 || !Number.isSafeInteger(names) || names < 0)
+      throw new Error('Restore archive metadata preparation is not finite.');
+    const fixedRowBytes = (7 + 4 + 10 + 9) * 64 * 8 + 12 * 32 * 8 + 16 * 8 * 8;
+    rowsStorage = capacity.reserveBytes(2048 + rows * fixedRowBytes + names * 32);
+    const selected = new Map<string, NativeRestoreArchive>();
+    for (const row of baseline) {
+      const key = sourceVersionKey(row);
+      if (selected.has(key)) throw new Error('Duplicate native restore archive baseline.');
+      selected.set(key, row);
+    }
+    const plan: SourceVersionPlan = { changes: [] };
+    for (const row of await db
+      .prepare(
+        `SELECT actor_id,source_kind,source_id,revision,retention_class,logical_bytes,
+      octet_length(payload) AS payload_bytes FROM mind_source_versions
+      WHERE world_id=? ORDER BY actor_id,source_kind,source_id,revision`,
+      )
+      .all(worldId)) {
+      const identity = {
+          actorId: String(row['actor_id']),
+          kind: String(row['source_kind']),
+          id: String(row['source_id']),
+          revision: String(row['revision']),
+        },
+        key = sourceVersionKey(identity),
+        kept = selected.get(key),
+        category = row['retention_class'] as NativeRestoreArchive['category'],
+        bytes = Number(row['logical_bytes']);
+      if (kept && kept.bytes !== Number(row['payload_bytes']))
+        throw new Error('Native restore archive baseline differs from its actual payload bytes.');
+      if (kept) selected.delete(key);
+      if (
+        !kept ||
+        (identity.kind !== 'perspective' && (kept.category !== category || kept.bytes !== bytes))
+      )
+        plan.changes.push({
+          ...identity,
+          expectedPrior: { category, bytes },
+          desired: kept ? { category: kept.category, bytes: kept.bytes } : null,
+        });
+    }
+    if (selected.size)
+      throw new Error('Native restore archive baseline names an absent checkpoint version.');
+    await applySourceVersions(db, worldId, revision, plan);
+  } finally {
+    rowsStorage?.release();
+    selectionStorage.release();
+  }
 }

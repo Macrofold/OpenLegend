@@ -275,6 +275,7 @@ pub(crate) fn prepare_memory_admission(
     let payload = body.encoded()?;
     let projected = body.projection()?;
     let header = source_header(&projected, actor_id, &payload, &law)?;
+    crate::received::ensure_experience_accounting(core, actor_id, budget)?;
     let policy = &core.state.installed.attention.value().retention;
     let mut quota = core.state.temporal.account_addition_budget(actor_id)?;
     if !quota.reserve(header.class, payload.len() as u64, policy)? {

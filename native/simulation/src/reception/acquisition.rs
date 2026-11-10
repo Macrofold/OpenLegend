@@ -172,6 +172,10 @@ impl PendingAwarenessObservation {
                     .as_ref()
                     .is_some_and(|context| context.attended))
         {
+            // Hearing can record a first receipt without any earlier sight
+            // history. Source's temporal builder creates that owner here;
+            // acquiring the received original alone does not create it.
+            crate::received::ensure_temporal_actor(core, &self.observer.actor_id, budget)?;
             let context_bytes = observation
                 .observation()
                 .context

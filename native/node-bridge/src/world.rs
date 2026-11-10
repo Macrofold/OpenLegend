@@ -3,8 +3,10 @@
 //! slices and settles through a separate constant-size control fence.
 use super::{HostRuntime, NativeHost, boundary, failure, host_error};
 use crate::pool::Cancellation;
-use napi::bindgen_prelude::{BufferSlice, JsObjectValue, Object, ToNapiValue};
-use napi::{Env, Result};
+use napi::bindgen_prelude::{
+    BufferSlice, Function, JavaScriptClassExt, JsObjectValue, Object, ToNapiValue, Unknown,
+};
+use napi::{Env, JsString, Result};
 use napi_derive::napi;
 use openlegend_simulation::host::{ByteBudget, ByteReservation, CandidateFence, CandidateKey};
 use openlegend_simulation::runtime::{
@@ -113,7 +115,27 @@ impl NativeWorldJson {
 /// Native ownership is shared explicitly across optional tasks and caches.
 #[napi]
 pub struct NativeWorldConsumer {
-    value: Option<RuntimeConsumer>,
+    value: RuntimeConsumer,
+}
+#[napi(object, object_from_js = false)]
+pub struct NativeWorldDecoded<'env> {
+    pub value: Unknown<'env>,
+    pub consumer: NativeWorldConsumer,
+}
+impl<'env> NativeWorldDecoded<'env> {
+    fn into_object(self, env: &'env Env) -> Result<Object<'env>> {
+        let mut consumer = self.consumer.into_instance(env)?;
+        let result = (|| {
+            let mut result = Object::new(env)?;
+            result.set_named_property("value", self.value)?;
+            result.set_named_property("consumer", consumer.as_object(env))?;
+            Ok(result)
+        })();
+        if result.is_err() {
+            consumer.release();
+        }
+        result
+    }
 }
 #[napi]
 impl NativeWorldConsumer {
@@ -121,33 +143,54 @@ impl NativeWorldConsumer {
     pub fn retain(&self) -> Result<Self> {
         boundary(|| {
             Ok(Self {
-                value: Some(
-                    self.value
-                        .as_ref()
-                        .ok_or_else(|| failure("native consumer was released"))?
-                        .retain()
-                        .map_err(operation_error)?,
-                ),
+                value: self.value.retain().map_err(operation_error)?,
             })
         })
     }
     #[napi]
     pub fn release(&mut self) {
-        self.value = None;
+        self.value.release();
     }
 }
 #[napi]
 impl NativeWorldJson {
-    #[napi]
-    pub fn consumer(&self) -> Result<NativeWorldConsumer> {
+    /// Internal decoding has no retained byte consumer. Keep the actual JSON
+    /// parser, but do not attach temporary native bytes to a Buffer finalizer:
+    /// a small JS heap need not collect before the native allowance is full.
+    #[napi(ts_return_type = "NativeWorldDecoded")]
+    pub fn decode<'env>(&mut self, env: &'env Env) -> Result<Object<'env>> {
         boundary(|| {
             let value = self
                 .value
                 .as_ref()
                 .ok_or_else(|| failure("native output was already consumed"))?;
-            Ok(NativeWorldConsumer {
-                value: Some(value.consumer(&self.budget).map_err(operation_error)?),
-            })
+            // This same admission already covers source/flattening/decoded
+            // UTF16 carriers and parser workspace, before any JS allocation.
+            let consumer = value.consumer(&self.budget).map_err(operation_error)?;
+            let bytes = value.bytes();
+            let text = std::str::from_utf8(bytes)
+                .map_err(|_| failure("native JSON output has invalid text encoding"))?;
+            let json: Object<'env> = env.get_global()?.get_named_property("JSON")?;
+            let parse: Function<'env, JsString<'env>, Unknown<'env>> =
+                json.get_named_property("parse")?;
+            let input = env.create_string(text)?;
+            let result = parse.call(input)?;
+            // Finish every fallible JS class/property conversion before the
+            // output can authorize Ready. Returning Object only transfers the
+            // already-created handle; generated struct conversion would run
+            // after this method, outside the handoff's failure boundary.
+            let result = NativeWorldDecoded {
+                value: result,
+                consumer: NativeWorldConsumer { value: consumer },
+            }
+            .into_object(env)?;
+            let (bytes, custody, handoff) = self.value.take().expect("checked output").into_parts();
+            drop(bytes);
+            drop(custody);
+            if let Some(handoff) = handoff {
+                handoff.complete();
+            }
+            Ok(result)
         })
     }
     /// Consume once. Both external-buffer and engine-copy implementations keep

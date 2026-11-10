@@ -12,7 +12,7 @@ import type {
   NativeWorldNpcTurn,
   NativeChangedRows,
 } from '@open-legend/native-simulation';
-import { baseActivityChoiceLabel, type BaseActivityChoiceLabel } from '@open-legend/domain';
+import { baseActivityChoiceLabel, type BaseActivityChoiceLabel, type TemporalReadContext } from '@open-legend/domain';
 import { nativeActivityDisplay } from './native-activity.js';
 import { nativeCanonicalCommand } from './native-command.js';
 import { worldControlOutcome } from './world-control-outcome.js';
@@ -22,6 +22,7 @@ import {
   releaseNativeProduct,
   retainNativeProduct,
   retainNativeSources,
+  withNativeConsumerScope,
 } from './native-consumer.js';
 import type { SqlDatabase } from './store.js';
 import type { LiveReadCutsProvider } from './live-read-overlay.js';
@@ -75,6 +76,11 @@ import {
   readNativeSourceVersions,
   type NativeSourceVersionsRequest,
 } from './native-source-versions.js';
+import {
+  readNativeRestoreRetention,
+  type NativeRestoreRetentionRequest,
+  type RetentionCapacity,
+} from './native-account-retention.js';
 
 type Binding = NativeGeometryQueries['binding'];
 type Question = { kind: string; value: unknown };
@@ -84,7 +90,14 @@ export interface NativeProviderAnswer {
 export interface NativeHistoryReadContext {
   readonly db: SqlDatabase;
   readonly liveReadCuts: LiveReadCutsProvider;
-  readonly restoreView?: <T>(projection: NativeChangedRows, read: () => Promise<T>) => Promise<T>;
+  readonly restoreView?: <T>(
+    projection: NativeChangedRows,
+    read: () => Promise<T>,
+    archiveBaseline?: readonly import('./native-restore.js').NativeRestoreArchive[],
+  ) => Promise<T>;
+  readonly retentionCapacity?: RetentionCapacity;
+  readonly retentionSignal?: AbortSignal;
+  readonly retentionSupportSourceIds?: TemporalReadContext['recognitionSupportSourceIds'];
 }
 
 /** Pure physical/language preparation for the real native cursor. The selected
@@ -94,28 +107,68 @@ export async function answerNativeProvider(
   geometry: NativeGeometryProviders,
   history?: NativeHistoryReadContext,
 ): Promise<NativeProviderAnswer> {
-  const question = retainNativeProduct(decodeNativeProduct<Question>(provider.question()));
-  try {
-    const json = await prepareProviderAnswer(question, geometry, history);
-    return retainNativeSources({ json }, question);
-  } finally {
-    // A cancelled caller cannot free a still-awaited handler's actual input.
-    releaseNativeProduct(question);
-  }
+  return withNativeConsumerScope(async () => {
+    const question = retainNativeProduct(decodeNativeProduct<Question>(provider.question()));
+    try {
+      const result = await prepareProviderAnswer(question, geometry, history);
+      if (typeof result === 'string')
+        return retainNativeProduct(retainNativeSources({ json: result }, question));
+      try {
+        return retainNativeProduct(retainNativeSources(result, question, result));
+      } catch (error) {
+        releaseNativeProduct(result);
+        throw error;
+      }
+    } finally {
+      // A cancelled caller cannot free a still-awaited handler's actual input.
+      releaseNativeProduct(question);
+    }
+  });
 }
 
 async function prepareProviderAnswer(
   question: Question,
   geometry: NativeGeometryProviders,
   history?: NativeHistoryReadContext,
-): Promise<string> {
+): Promise<string | NativeProviderAnswer> {
   const value = question.value;
   switch (question.kind) {
+    case 'restore-retention': {
+      const request = value as NativeRestoreRetentionRequest & {
+        readonly restoreProjection: NativeChangedRows;
+      };
+      const cut = history?.liveReadCuts();
+      if (!history?.restoreView || !history.retentionCapacity || !cut || !request.restoreProjection)
+        throw new Error('Restore retention requires its actual private SQL view and admission.');
+      return history.restoreView(request.restoreProjection, () =>
+        readNativeRestoreRetention(
+          history.db,
+          cut,
+          request,
+          history.retentionCapacity!,
+          history.retentionSignal,
+          history.retentionSupportSourceIds,
+        ),
+      );
+    }
     case 'source-versions': {
       const request = value as NativeSourceVersionsRequest;
       const cut = history?.liveReadCuts();
       if (!history || !cut)
         throw new Error('Native source versions require their actual predecessor SQL cut.');
+      if (history.restoreView) {
+        if (!request.restoreProjection || !request.archiveBaseline)
+          throw new Error('Restore source versions require their exact private archive baseline.');
+        return JSON.stringify(
+          await history.restoreView(
+            request.restoreProjection,
+            () => readNativeSourceVersions(history.db, cut, request),
+            request.archiveBaseline,
+          ),
+        );
+      }
+      if (request.restoreProjection || request.archiveBaseline)
+        throw new Error('Restore source versions have no inactive private SQL owner.');
       return JSON.stringify(await readNativeSourceVersions(history.db, cut, request));
     }
     case 'support-membership': {

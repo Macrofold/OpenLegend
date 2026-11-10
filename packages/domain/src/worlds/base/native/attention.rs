@@ -41,10 +41,13 @@ pub struct AccountRules {
     pub privacy_outcomes: PrivacyOutcomes,
 }
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PrivacyOutcomes {
+    pub source: crate::commands::Outcome,
     pub commitment: crate::commands::Outcome,
     pub forgotten: crate::commands::Outcome,
+    pub correction_rejected: crate::commands::Outcome,
+    pub corrected: crate::commands::Outcome,
 }
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

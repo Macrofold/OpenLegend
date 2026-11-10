@@ -3,8 +3,8 @@
 //! materializations have separate funding obligations at their owning installers.
 //! Count this actual first decode, rather than charging every byte
 //! and numeric array element as a command with nested exact-text fields.
-use super::*;
 use crate::host::retained_size::{map_storage, tree_node_bound};
+use crate::host::{ByteBudget, ByteReservation};
 use std::mem::size_of;
 
 #[derive(Clone, Copy, Default)]
@@ -55,10 +55,36 @@ struct Strings {
     cell_containers: usize,
     map_members: usize,
 }
-fn capacity() -> RuntimeError {
-    failure("installation decode capacity")
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum InputErrorKind {
+    Format,
+    Capacity,
 }
-fn add(left: usize, right: usize) -> Result<usize, RuntimeError> {
+#[derive(Debug)]
+pub(crate) enum InputAllocationError {
+    Format,
+    Capacity {
+        requested: Option<usize>,
+        used: Option<usize>,
+        limit: Option<usize>,
+    },
+}
+impl InputAllocationError {
+    pub(crate) fn kind(&self) -> InputErrorKind {
+        match self {
+            Self::Format => InputErrorKind::Format,
+            Self::Capacity { .. } => InputErrorKind::Capacity,
+        }
+    }
+}
+fn capacity() -> InputAllocationError {
+    InputAllocationError::Capacity {
+        requested: None,
+        used: None,
+        limit: None,
+    }
+}
+fn add(left: usize, right: usize) -> Result<usize, InputAllocationError> {
     left.checked_add(right).ok_or_else(capacity)
 }
 
@@ -163,7 +189,7 @@ fn child(parent: Frame) -> Role {
         Role::Other => Role::Other,
     }
 }
-fn strings(text: &str, root: Role) -> Result<Strings, RuntimeError> {
+fn strings(text: &str, root: Role) -> Result<Strings, InputAllocationError> {
     let bytes = text.as_bytes();
     let mut stack = [Frame::default(); 128];
     let mut depth: usize = 0;
@@ -241,22 +267,17 @@ fn strings(text: &str, root: Role) -> Result<Strings, RuntimeError> {
     }
     Ok(result)
 }
-pub(super) fn prepare_installation(
+pub(crate) fn prepare_installation(
     bytes: &[u8],
     budget: &ByteBudget,
-) -> Result<ByteReservation, RuntimeError> {
-    prepare_rows(
-        bytes,
-        budget,
-        Role::Root,
-        size_of::<super::Installation>(),
-        0,
-    )
+    inline_bytes: usize,
+) -> Result<ByteReservation, InputAllocationError> {
+    prepare_rows(bytes, budget, Role::Root, inline_bytes, 0)
 }
-pub(super) fn prepare_account_bodies(
+pub(crate) fn prepare_account_bodies(
     bytes: &[u8],
     budget: &ByteBudget,
-) -> Result<ByteReservation, RuntimeError> {
+) -> Result<ByteReservation, InputAllocationError> {
     prepare_rows(
         bytes,
         budget,
@@ -271,9 +292,10 @@ fn prepare_rows(
     root: Role,
     inline_bytes: usize,
     extra_element: usize,
-) -> Result<ByteReservation, RuntimeError> {
-    let text = std::str::from_utf8(bytes).map_err(failure)?;
-    let shape = crate::encoding::JsonAllocationShape::read(text).map_err(failure)?;
+) -> Result<ByteReservation, InputAllocationError> {
+    let text = std::str::from_utf8(bytes).map_err(|_| InputAllocationError::Format)?;
+    let shape = crate::encoding::JsonAllocationShape::read(text)
+        .map_err(|_| InputAllocationError::Format)?;
     let strings = strings(text, root)?;
     let element = [
         extra_element,
@@ -335,12 +357,11 @@ fn prepare_rows(
         .and_then(|n| n.checked_add(exact))
         .and_then(|n| n.checked_add(inline_bytes + 64))
         .ok_or_else(capacity)?;
-    budget.reserve(bound).map_err(|_| {
-        failure((
-            "immutable row DTO decode admission",
-            bound,
-            budget.used(),
-            budget.limit(),
-        ))
-    })
+    budget
+        .reserve(bound)
+        .map_err(|_| InputAllocationError::Capacity {
+            requested: Some(bound),
+            used: Some(budget.used()),
+            limit: Some(budget.limit()),
+        })
 }

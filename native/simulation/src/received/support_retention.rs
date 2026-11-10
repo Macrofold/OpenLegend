@@ -51,6 +51,7 @@ pub(crate) struct SupportRetentionCursor {
     next: usize,
     current: Option<Selection>,
     preparation: SupportPreparation,
+    restore: bool,
     _storage: ByteReservation,
 }
 pub(crate) struct CompletedSupportRetention {
@@ -97,8 +98,21 @@ impl SupportRetentionCursor {
             next: 0,
             current: None,
             preparation,
+            restore: false,
             _storage: storage,
         })
+    }
+    /// Complete checkpoint retention checks the whole sparse set and releases
+    /// unused proof, without claiming an ordinary dirty-generation settlement.
+    pub(crate) fn new_restore(
+        key: crate::host::CandidateKey,
+        actors: Vec<String>,
+        preparation: SupportPreparation,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let mut cursor = Self::new(key, actors, preparation, budget)?;
+        cursor.restore = true;
+        Ok(cursor)
     }
     fn prepare_actor(
         &self,
@@ -112,7 +126,7 @@ impl SupportRetentionCursor {
         let Some(accounts) = actor.header().accounts.as_ref() else {
             return Ok(None);
         };
-        if accounts.support_dirty_revision == accounts.support_settled_revision {
+        if !self.restore && accounts.support_dirty_revision == accounts.support_settled_revision {
             return Ok(None);
         }
         let supports = actor.supports();
@@ -381,9 +395,11 @@ impl SupportRetentionCursor {
                 None,
             )?;
         }
-        core.state
-            .temporal
-            .settle_support_cleanup(actor_id, selection.revision)?;
+        if !self.restore {
+            core.state
+                .temporal
+                .settle_support_cleanup(actor_id, selection.revision)?;
+        }
         self.current = None;
         self.next += 1;
         Ok(SupportRetentionStep::Continue)

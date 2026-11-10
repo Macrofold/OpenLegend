@@ -87,11 +87,21 @@ pub(crate) struct RestoreMetadataPreparation {
     storage: ByteReservation,
     selection: Option<archives::Selection>,
 }
+/// The first selected archive state has entered the real temporal journal.
+/// Retention may change it, but finalization cannot reset it to this baseline.
+pub(crate) struct RestoreArchiveBaseline {
+    prepared: RestoreMetadataPreparation,
+}
+pub(crate) struct PreparedRestoreArchives {
+    rows: Vec<RestoreArchive>,
+    storage: ByteReservation,
+}
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct RestoreMetadataResult {
     pub kept_archives: Vec<RestoreArchive>,
     pub privacy: RestorePrivacy,
+    pub archive_baseline: Vec<RestoreArchive>,
     #[serde(skip)]
     _storage: ByteReservation,
 }
@@ -335,17 +345,16 @@ pub(crate) fn begin_restore_metadata(
         selection: None,
     })
 }
-pub(crate) fn finish_restore_metadata(
+pub(crate) fn apply_restore_archive_baseline(
     core: &mut CoreMutation<'_>,
     prepared: RestoreMetadataPreparation,
     budget: &ByteBudget,
-) -> Result<RestoreMetadataResult, ExecutionError> {
-    let RestoreMetadataPreparation {
-        input,
-        mut storage,
-        selection,
-    } = prepared;
-    let kept_archives = selection.ok_or(ExecutionError::InvalidCheckpoint)?;
+) -> Result<RestoreArchiveBaseline, ExecutionError> {
+    let input = &prepared.input;
+    let kept_archives = prepared
+        .selection
+        .as_ref()
+        .ok_or(ExecutionError::InvalidCheckpoint)?;
     core.state.temporal.restore_archive_totals(
         input
             .archives
@@ -365,8 +374,237 @@ pub(crate) fn finish_restore_metadata(
             *revision,
         )?;
     }
-    // These are actual current owner constraints after alias expansion and all
-    // correction/forget children, not the incoming historical privacy ledger.
+    crate::reception::clear_restore_recordings(core, budget)?;
+    core.state.temporal.begin_restore_epoch(
+        &input.namespace,
+        &mut core.state.physical.identity,
+        budget,
+    )?;
+    core.state.physical.header.paused = true;
+    Ok(RestoreArchiveBaseline { prepared })
+}
+
+impl RestoreArchiveBaseline {
+    pub(crate) fn archives(&self) -> impl Serialize + '_ {
+        struct Rows<'a>(&'a RestoreMetadataPreparation);
+        impl Serialize for Rows<'_> {
+            fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                use serde::ser::SerializeSeq;
+                let selected = self
+                    .0
+                    .selection
+                    .as_ref()
+                    .expect("validated archive baseline");
+                let mut rows = serializer.serialize_seq(Some(
+                    selected.kept.iter().filter(|value| value.is_some()).count(),
+                ))?;
+                #[derive(Serialize)]
+                #[serde(rename_all = "camelCase")]
+                struct Row<'a> {
+                    actor_id: &'a str,
+                    kind: &'a str,
+                    id: &'a str,
+                    revision: &'a str,
+                    bytes: u64,
+                    category: ArchiveCategory,
+                }
+                for (row, category) in self.0.input.archives.iter().zip(&selected.kept) {
+                    if let Some(category) = category {
+                        rows.serialize_element(&Row {
+                            actor_id: &row.actor_id,
+                            kind: &row.kind,
+                            id: &row.id,
+                            revision: &row.revision,
+                            bytes: row.bytes,
+                            category: *category,
+                        })?;
+                    }
+                }
+                rows.end()
+            }
+        }
+        Rows(&self.prepared)
+    }
+
+    /// Prepare exact final metadata before applying the provider's journal
+    /// effects. A malformed prior leaves the same archive question retryable.
+    pub(crate) fn prepare_versions(
+        &self,
+        plan: &crate::received::SourceVersionPlan,
+        budget: &ByteBudget,
+    ) -> Result<PreparedRestoreArchives, crate::experience::HistoryPreparationError> {
+        use crate::experience::HistoryPreparationError as E;
+        use crate::host::retained_size::heap_sum;
+        use crate::received::AccountClass;
+        type Key<'a> = (&'a str, &'a str, &'a str, &'a str);
+        let selected = self
+            .prepared
+            .selection
+            .as_ref()
+            .ok_or(E::MalformedResponse)?;
+        let count = selected.kept.iter().filter(|value| value.is_some()).count();
+        let changes = plan.archive_changes().len();
+        let maximum = count.checked_add(changes).ok_or(E::Capacity)?;
+        let names = self
+            .prepared
+            .input
+            .archives
+            .iter()
+            .zip(&selected.kept)
+            .filter(|(_, category)| category.is_some())
+            .try_fold(0usize, |n, (row, _)| n.checked_add(row.heap_bytes()?))
+            .and_then(|n| {
+                plan.archive_changes().try_fold(n, |n, row| {
+                    n.checked_add(row.actor_id.len())?
+                        .checked_add(row.kind.len())?
+                        .checked_add(row.id.len())?
+                        .checked_add(row.revision.len())
+                })
+            })
+            .ok_or(E::Capacity)?;
+        let bytes = heap_sum([
+            size_of::<PreparedRestoreArchives>(),
+            names,
+            maximum
+                .checked_mul(size_of::<RestoreArchive>())
+                .ok_or(E::Capacity)?,
+            map_storage::<Key<'_>, Option<crate::received::SourceVersionArchiveChange<'_>>>(
+                changes,
+            )
+            .ok_or(E::Capacity)?,
+        ])
+        .ok_or(E::Capacity)?;
+        let mut storage = budget.reserve(bytes).map_err(|_| E::Capacity)?;
+        let mut updates = IndexMap::new();
+        updates
+            .try_reserve_exact(changes)
+            .map_err(|_| E::Capacity)?;
+        for change in plan.archive_changes() {
+            let key = (change.actor_id, change.kind, change.id, change.revision);
+            if updates.insert(key, Some(change)).is_some() {
+                return Err(E::MalformedResponse);
+            }
+        }
+        let category = |class| match class {
+            AccountClass::Optional => ArchiveCategory::Optional,
+            AccountClass::Required => ArchiveCategory::Required,
+            AccountClass::Speech => ArchiveCategory::Speech,
+        };
+        let class = |value| match value {
+            ArchiveCategory::Optional => AccountClass::Optional,
+            ArchiveCategory::Required => AccountClass::Required,
+            ArchiveCategory::Speech => AccountClass::Speech,
+        };
+        let mut rows = Vec::new();
+        rows.try_reserve_exact(maximum).map_err(|_| E::Capacity)?;
+        for (row, before) in self.prepared.input.archives.iter().zip(&selected.kept) {
+            let Some(before) = before else {
+                continue;
+            };
+            let key = (
+                row.actor_id.as_str(),
+                row.kind.as_str(),
+                row.id.as_str(),
+                row.revision.as_str(),
+            );
+            let after = if let Some(change) = updates.get_mut(&key) {
+                let change = change.take().ok_or(E::MalformedResponse)?;
+                if change.expected_prior != Some((class(*before), row.bytes)) {
+                    return Err(E::MalformedResponse);
+                }
+                let Some((next, bytes)) = change.desired else {
+                    continue;
+                };
+                if bytes != row.bytes {
+                    return Err(E::MalformedResponse);
+                }
+                category(next)
+            } else {
+                *before
+            };
+            rows.push(RestoreArchive {
+                category: after,
+                ..row.clone()
+            });
+        }
+        for (_, change) in updates {
+            let Some(change) = change else {
+                continue;
+            };
+            if change.expected_prior.is_some() {
+                return Err(E::MalformedResponse);
+            }
+            if let Some((next, bytes)) = change.desired {
+                if !change.has_payload {
+                    return Err(E::MalformedResponse);
+                }
+                rows.push(RestoreArchive {
+                    actor_id: change.actor_id.to_owned(),
+                    kind: change.kind.to_owned(),
+                    id: change.id.to_owned(),
+                    revision: change.revision.to_owned(),
+                    bytes,
+                    category: category(next),
+                });
+            }
+        }
+        // The selection map and its carrier have now been dropped. Only this
+        // actual final metadata vector survives the provider phase.
+        storage
+            .resize(
+                rows.heap_bytes()
+                    .and_then(|n| n.checked_add(size_of::<PreparedRestoreArchives>()))
+                    .ok_or(E::Capacity)?,
+            )
+            .map_err(|_| E::Capacity)?;
+        Ok(PreparedRestoreArchives { rows, storage })
+    }
+}
+pub(crate) fn finish_restore_metadata(
+    core: &mut CoreMutation<'_>,
+    baseline: RestoreArchiveBaseline,
+    final_archives: PreparedRestoreArchives,
+    budget: &ByteBudget,
+) -> Result<RestoreMetadataResult, ExecutionError> {
+    let RestoreMetadataPreparation {
+        input,
+        mut storage,
+        selection,
+    } = baseline.prepared;
+    let kept = selection.ok_or(ExecutionError::InvalidCheckpoint)?;
+    let count = kept.kept.iter().filter(|value| value.is_some()).count();
+    storage.merge(
+        budget.reserve(
+            count
+                .checked_mul(size_of::<RestoreArchive>())
+                .ok_or(ExecutionError::Capacity)?,
+        )?,
+    )?;
+    let mut before = Vec::new();
+    before
+        .try_reserve_exact(count)
+        .map_err(|_| ExecutionError::Capacity)?;
+    let RestoreMetadataInput {
+        archives,
+        actor_owners,
+        world_grants,
+        privacy_revisions,
+        namespace,
+        ..
+    } = input;
+    for (row, category) in archives.into_iter().zip(kept.kept) {
+        if let Some(category) = category {
+            before.push(RestoreArchive { category, ..row });
+        }
+    }
+    drop((actor_owners, world_grants, privacy_revisions, namespace));
+    let PreparedRestoreArchives {
+        rows,
+        storage: final_storage,
+    } = final_archives;
+    storage.merge(final_storage)?;
+    // Alias expansion and retention have finished. Capture the actual current
+    // constraints; no operational epoch or archive total is reset here.
     let bytes = core
         .state
         .experience
@@ -379,36 +617,18 @@ pub(crate) fn finish_restore_metadata(
             .ok_or(ExecutionError::Capacity)?,
     )?;
     let privacy = core.state.experience.restore_privacy_metadata();
-    crate::reception::clear_restore_recordings(core, budget)?;
-    core.state.temporal.begin_restore_epoch(
-        &input.namespace,
-        &mut core.state.physical.identity,
-        budget,
-    )?;
-    core.state.physical.header.paused = true;
-    // The input iterator retains its carrier while surviving rows move into
-    // the result. Fund that second carrier before allocating it.
-    storage.merge(
-        budget.reserve(
-            input
-                .archives
-                .len()
-                .checked_mul(size_of::<RestoreArchive>())
-                .ok_or(ExecutionError::Capacity)?,
-        )?,
-    )?;
-    let mut selected = Vec::with_capacity(input.archives.len());
-    for (i, row) in input.archives.into_iter().enumerate() {
-        if let Some(category) = kept_archives.kept.get(i).copied().flatten().as_ref() {
-            selected.push(RestoreArchive {
-                category: *category,
-                ..row
-            })
-        }
-    }
+    let bytes = crate::host::retained_size::heap_sum([
+        size_of::<RestoreMetadataResult>(),
+        before.heap_bytes().ok_or(ExecutionError::Capacity)?,
+        rows.heap_bytes().ok_or(ExecutionError::Capacity)?,
+        privacy.heap_bytes().ok_or(ExecutionError::Capacity)?,
+    ])
+    .ok_or(ExecutionError::Capacity)?;
+    storage.resize(bytes)?;
     Ok(RestoreMetadataResult {
-        kept_archives: selected,
+        kept_archives: rows,
         privacy,
+        archive_baseline: before,
         _storage: storage,
     })
 }

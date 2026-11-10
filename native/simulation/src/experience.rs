@@ -72,14 +72,18 @@ pub(crate) use memory::{
 mod save;
 pub(crate) use save::{
     PersonalPredecessors, capture_personal_predecessors, encode_personal_changes,
+    encode_personal_source_changes,
 };
 mod privacy_prepare;
 mod privacy_run;
 pub(crate) use privacy_run::{
     CompletedPrivacyEdit, PrivacyEditAnswer, PrivacyEditCursor, PrivacyEditMode, PrivacyEditStep,
 };
-mod forget;
-pub(crate) use forget::{CompletedForgetExperience, ForgetExperienceCursor, ForgetExperienceStep};
+mod recall_edit;
+mod retained_source;
+pub(crate) use recall_edit::{
+    CompletedRecallEdit, RecallAdmission, RecallEditCursor, RecallEditStep,
+};
 mod restore;
 mod restore_metadata;
 pub(crate) use privacy_prepare::{

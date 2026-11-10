@@ -49,6 +49,7 @@ pub(crate) use core::{
 pub(crate) use scope::{SelectedInstallation, finish_selected_installation};
 
 mod physical;
+pub(crate) mod row_input;
 pub(crate) mod rows;
 mod typed_parse;
 pub(crate) use physical::*;

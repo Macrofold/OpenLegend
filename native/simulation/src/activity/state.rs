@@ -694,6 +694,70 @@ pub(crate) struct ActivityState {
     pub(super) budget: crate::host::ByteBudget,
 }
 impl ActivityState {
+    /// A learned method retains its causal withdrawal address, without making
+    /// an expired result replayable. The acquisition remains the sole owner.
+    pub(crate) fn retains_source_evidence(
+        &self,
+        actor: &str,
+        source: &str,
+        budget: &crate::host::ByteBudget,
+    ) -> Result<bool, ActivityError> {
+        let mut occurrence_id = source;
+        if let Some(owner) = self.collections.get(actor) {
+            for record in owner.records.values() {
+                let Some(result) = &record.occurrence.result_evidence else {
+                    continue;
+                };
+                let _id = budget
+                    .reserve(
+                        result
+                            .id_len()
+                            .and_then(|n| n.checked_mul(2))
+                            .ok_or(ActivityError::Capacity)?,
+                    )
+                    .map_err(|_| ActivityError::Capacity)?;
+                if result.id() == source {
+                    occurrence_id = &record.occurrence.id;
+                    break;
+                }
+            }
+        }
+        let Some(acquisitions) = self.library.acquisitions.get(actor) else {
+            return Ok(false);
+        };
+        for acquisition in acquisitions.values() {
+            let supports = acquisition
+                .body()
+                .get("supports")
+                .and_then(crate::records::SqlCell::as_array)
+                .ok_or(ActivityError::InvalidStructure)?;
+            for support in supports {
+                if support
+                    .get("revoked")
+                    .and_then(crate::records::SqlCell::as_bool)
+                    != Some(false)
+                {
+                    continue;
+                }
+                let occurrences = support
+                    .get("occurrenceIds")
+                    .and_then(crate::records::SqlCell::as_array)
+                    .ok_or(ActivityError::InvalidStructure)?;
+                let evidence = support
+                    .get("evidenceIds")
+                    .and_then(crate::records::SqlCell::as_array)
+                    .ok_or(ActivityError::InvalidStructure)?;
+                if occurrences
+                    .iter()
+                    .any(|id| id.as_str() == Some(occurrence_id))
+                    || evidence.iter().any(|id| id.as_str() == Some(source))
+                {
+                    return Ok(true);
+                }
+            }
+        }
+        Ok(false)
+    }
     pub(crate) fn occurrence_for(
         &self,
         actor_id: &str,

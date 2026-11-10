@@ -281,13 +281,17 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     this.lane = new WorkLane('native.mutation', config.capacity.requests);
     this.projection = new WorkLane('native.projection', config.capacity.requests);
     this.inputs = new WorldInputOwner(config.capacity.presence);
-    this.pending = new NativePendingSave(store, {
-      worldId: installation.worldId,
-      generation: installation.generation,
-      revision: installation.revision,
-      acceptedCut: installation.acceptedCut,
-      timeline: timelineId,
-    });
+    this.pending = new NativePendingSave(
+      store,
+      {
+        worldId: installation.worldId,
+        generation: installation.generation,
+        revision: installation.revision,
+        acceptedCut: installation.acceptedCut,
+        timeline: timelineId,
+      },
+      world,
+    );
   }
 
   get generation(): string {
@@ -976,15 +980,19 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       ? capture()
       : this.lane.run(capture));
     const world = this.world;
-    return this.withMemoryRead(cut, () =>
-      this.store.memories.withHydrationBudget(
-        {
-          reserveBytes: (bytes) => world.reserveConsumerBytes(bytes),
-          reserveJson: (bytes) => world.reserveConsumerJson(bytes),
-        },
-        () => operation(cut),
-      ),
-    );
+    try {
+      return await this.withMemoryRead(cut, () =>
+        this.store.memories.withHydrationBudget(
+          {
+            reserveBytes: (bytes) => world.reserveConsumerBytes(bytes),
+            reserveJson: (bytes) => world.reserveConsumerJson(bytes),
+          },
+          () => operation(cut),
+        ),
+      );
+    } finally {
+      releaseNativeProduct(cut);
+    }
   }
 
   /** SQL admission precedes this final short turn when the callback needs SQL.
@@ -1603,109 +1611,119 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           const before = request.actorId
             ? nativeScopedReadCut(await captureNativeReadCut(this.world, request.actorId), live)
             : live;
-          const result = await acceptProtectedNativeOperation({
-            world: this.world,
-            first: await request.first(),
-            geometry: this.geometry,
-            work: this.work,
-            current: () => !this.closed && request.current(),
-            signal: request.signal,
-            requireSuccess: request.requireSuccess,
-            history: { db: this.store.db, liveReadCuts: () => before },
-            stage: async (publication) => {
-              const change = publication.privacyChange;
-              const privacy: ExperiencePrivacy = change
-                ? {
-                    forgotten: {
-                      ...this.privacy.forgotten,
-                      [change.actorId]: [...change.forgotten],
-                    },
-                    corrections: {
-                      ...this.privacy.corrections,
-                      [change.actorId]: { ...change.corrections },
-                    },
-                  }
-                : this.privacy;
-              assertPrivacyContinuation(privacy, this.privacy);
-              const versions = publication.sourceVersions;
-              const history = await nativePrivateHistory(
-                publication,
-                this.privacy,
-                privacy,
-                this.store.db,
-                before,
-              );
-              const prepared = this.pending.prepareProtected(
-                this.world,
-                publication,
-                versions,
-                history,
-                privacy,
-              );
-              return {
-                prepared,
-                privacy,
-                retain: this.retention.prepare(publication.records),
-                actors: this.prepareActorRows(publication.records),
-              };
-            },
-            commit: async ({ prepared }) => {
-              const prefix = prepared.prefix;
-              try {
-                const saved = await this.store.commitCaptured(
-                  prefix.cut.baseRevision,
-                  prefix.inputs,
-                  {
-                    generation: prefix.cut.generation,
-                    through: prefix.cut.throughCut,
-                    ...(request.scope
-                      ? {
-                          authority: {
-                            scope: request.scope,
-                            capability: request.capability,
-                            controlling: request.controlling ?? false,
-                            now: this.now,
-                          },
-                        }
-                      : {}),
-                    operationalChange: request.operationalChange
-                      ? () => request.operationalChange!(prepared.value.publication)
-                      : undefined,
-                  },
+          let staged: Awaited<ReturnType<NativePendingSave['prepareProtected']>> | undefined;
+          let stagedOutput: object | undefined;
+          try {
+            const result = await acceptProtectedNativeOperation({
+              world: this.world,
+              first: await request.first(),
+              geometry: this.geometry,
+              work: this.work,
+              current: () => !this.closed && request.current(),
+              signal: request.signal,
+              requireSuccess: request.requireSuccess,
+              history: { db: this.store.db, liveReadCuts: () => before },
+              stage: async (publication) => {
+                const change = publication.privacyChange;
+                const privacy: ExperiencePrivacy = change
+                  ? {
+                      forgotten: {
+                        ...this.privacy.forgotten,
+                        [change.actorId]: [...change.forgotten],
+                      },
+                      corrections: {
+                        ...this.privacy.corrections,
+                        [change.actorId]: { ...change.corrections },
+                      },
+                    }
+                  : this.privacy;
+                assertPrivacyContinuation(privacy, this.privacy);
+                const versions = publication.sourceVersions;
+                const history = await nativePrivateHistory(
+                  publication,
+                  this.privacy,
+                  privacy,
+                  this.store.db,
+                  before,
                 );
-                this.committedPrefix = { prefix, revision: saved.revision };
-              } catch (error) {
-                if (postgresTransactionOutcome(error) === 'committed')
-                  this.committedPrefix = { prefix, revision: prefix.cut.baseRevision + 1 };
-                throw error;
-              }
-            },
-            accept: ({ prepared, privacy, retain, actors }) => {
-              prepared.accept();
-              retain();
-              actors();
-              accepted = true;
-              this.progress = prepared.value.publication.progress;
-              this.privacy = privacy;
-              request.accepted?.();
-            },
-            park: (hold, error) => {
-              this.protectedHold = hold;
-              this.failure = error instanceof Error ? error : new Error(String(error));
-            },
-          });
-          if (result.staged) {
-            await this.acknowledgeCommitted();
-            if (result.publication.privacyChange) this.privacyEpoch++;
-            this.publishAccepted(result.publication);
-            this.notify(result.publication.events.length !== 0);
-            this.scheduleRetention();
-          } else if (
-            result.publication.protectedSave &&
-            !(request.requireSuccess && !result.publication.outcome.ok)
-          )
-            throw new AuthorityError('stale-scope');
-          return result.publication;
+                const prepared = await this.pending.prepareProtected(
+                  this.world,
+                  publication,
+                  versions,
+                  history,
+                  privacy,
+                );
+                staged = prepared;
+                return {
+                  prepared,
+                  privacy,
+                  retain: this.retention.prepare(publication.records),
+                  actors: this.prepareActorRows(publication.records),
+                };
+              },
+              commit: async ({ prepared }) => {
+                const prefix = prepared.prefix;
+                try {
+                  const saved = await this.store.commitCaptured(
+                    prefix.cut.baseRevision,
+                    prefix.inputs,
+                    {
+                      generation: prefix.cut.generation,
+                      through: prefix.cut.throughCut,
+                      ...(request.scope
+                        ? {
+                            authority: {
+                              scope: request.scope,
+                              capability: request.capability,
+                              controlling: request.controlling ?? false,
+                              now: this.now,
+                            },
+                          }
+                        : {}),
+                      operationalChange: request.operationalChange
+                        ? () => request.operationalChange!(prepared.value.publication)
+                        : undefined,
+                    },
+                  );
+                  this.committedPrefix = { prefix, revision: saved.revision };
+                } catch (error) {
+                  if (postgresTransactionOutcome(error) === 'committed')
+                    this.committedPrefix = { prefix, revision: prefix.cut.baseRevision + 1 };
+                  throw error;
+                }
+              },
+              accept: ({ prepared, privacy, retain, actors }) => {
+                prepared.accept();
+                retain();
+                actors();
+                accepted = true;
+                this.replaceProgress(prepared.value.publication.progress);
+                this.privacy = privacy;
+                request.accepted?.();
+              },
+              park: (hold, error) => {
+                this.protectedHold = hold;
+                this.failure = error instanceof Error ? error : new Error(String(error));
+              },
+            });
+            stagedOutput = result.staged;
+            if (result.staged) {
+              await this.acknowledgeCommitted();
+              if (result.publication.privacyChange) this.privacyEpoch++;
+              this.publishAccepted(result.publication);
+              this.notify(result.publication.events.length !== 0);
+              this.scheduleRetention();
+            } else if (
+              result.publication.protectedSave &&
+              !(request.requireSuccess && !result.publication.outcome.ok)
+            )
+              throw new AuthorityError('stale-scope');
+            return result.publication;
+          } finally {
+            releaseNativeProduct(before);
+            if (!accepted && !this.protectedHold) staged?.cancel();
+            if (stagedOutput) releaseNativeProduct(stagedOutput);
+          }
         };
         return request.inLane
           ? await operation()
@@ -1924,7 +1942,10 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             this.retention = preparation.retention;
             this.provider = preparation.geometry;
             this.retained = preparation.retained;
-            this.progress = this.durableProgress = preparation.publication.progress;
+            this.replaceProgress(
+              preparation.publication.progress,
+              preparation.publication.progress,
+            );
             this.privacy = preparation.publication.restoreMetadata.privacy;
             this.operational = preparation.operational;
             this.milestones = preparation.milestones;
@@ -2063,83 +2084,99 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       const before = request.actorId
         ? nativeScopedReadCut(await captureNativeReadCut(this.world, request.actorId), live)
         : live;
-      const accepted = await acceptNativeOperation({
-        world: this.world,
-        first: await request.first(),
-        geometry: this.geometry,
-        work: this.work,
-        current: () => !this.closed && !this.failure && request.current(),
-        signal: request.signal,
-        admitPublication: request.admitPublication,
-        history: { db: this.store.db, liveReadCuts: () => before },
-        stage: async (publication) => {
-          if (publication.privacyChange)
-            throw new Error('A private edit requires its protected durable acceptance owner.');
-          const versions = publication.sourceVersions;
-          const pending = this.pending.prepare(
-            publication,
-            versions,
-            request.receipts?.(publication.outcome),
-            typeof request.outcomes === 'function'
-              ? request.outcomes(publication)
-              : request.outcomes,
-          );
-          const lives: [string, { life: number; alive: boolean } | undefined][] = [];
-          for (const row of publication.records.writes['sim_actors'] ?? []) {
-            const actorId = (JSON.parse(row.parent) as string[]).at(-1)!;
-            const actor = JSON.parse(row.payload) as {
-              physicalLife?: number;
-              alive: boolean;
-              controller: 'player' | 'npc';
-            };
-            if (this.inputLives.has(actorId))
-              lives.push([actorId, { life: actor.physicalLife ?? 0, alive: actor.alive }]);
-          }
-          for (const id of publication.records.deletes['sim_entities'] ?? []) {
-            const actorId = (JSON.parse(id) as string[]).at(-1)!;
-            if (this.inputLives.has(actorId)) lives.push([actorId, undefined]);
-          }
-          return {
-            ...pending,
-            lives,
-            actors: this.prepareActorRows(publication.records),
-            retain: this.retention.prepare(publication.records),
-          };
-        },
-      });
-      if (!accepted.accepted) return undefined;
-      const publication = accepted.value.value.publication;
+      let staged: Awaited<ReturnType<NativePendingSave['prepare']>> | undefined;
       try {
-        accepted.value.accept();
-        accepted.value.retain();
-        accepted.value.actors();
-        this.progress = publication.progress;
-        for (const [id, after] of accepted.value.lives) {
-          const before = this.inputLives.get(id);
-          if (!after || after.life !== before?.life || after.alive !== before.alive)
-            this.inputs.clear(id);
-          if (after) this.inputLives.set(id, after);
-          else this.inputLives.delete(id);
+        const accepted = await acceptNativeOperation({
+          world: this.world,
+          first: await request.first(),
+          geometry: this.geometry,
+          work: this.work,
+          current: () => !this.closed && !this.failure && request.current(),
+          signal: request.signal,
+          admitPublication: request.admitPublication,
+          history: { db: this.store.db, liveReadCuts: () => before },
+          discard: () => staged?.cancel(),
+          stage: async (publication) => {
+            if (publication.privacyChange)
+              throw new Error('A private edit requires its protected durable acceptance owner.');
+            const versions = publication.sourceVersions;
+            const pending = await this.pending.prepare(
+              publication,
+              versions,
+              request.receipts?.(publication.outcome),
+              typeof request.outcomes === 'function'
+                ? request.outcomes(publication)
+                : request.outcomes,
+            );
+            staged = pending;
+            try {
+              const lives: [string, { life: number; alive: boolean } | undefined][] = [];
+              for (const row of publication.records.writes['sim_actors'] ?? []) {
+                const actorId = (JSON.parse(row.parent) as string[]).at(-1)!;
+                const actor = JSON.parse(row.payload) as {
+                  physicalLife?: number;
+                  alive: boolean;
+                  controller: 'player' | 'npc';
+                };
+                if (this.inputLives.has(actorId))
+                  lives.push([actorId, { life: actor.physicalLife ?? 0, alive: actor.alive }]);
+              }
+              for (const id of publication.records.deletes['sim_entities'] ?? []) {
+                const actorId = (JSON.parse(id) as string[]).at(-1)!;
+                if (this.inputLives.has(actorId)) lives.push([actorId, undefined]);
+              }
+              return {
+                ...pending,
+                lives,
+                actors: this.prepareActorRows(publication.records),
+                retain: this.retention.prepare(publication.records),
+              };
+            } catch (error) {
+              pending.cancel();
+              throw error;
+            }
+          },
+        });
+        if (!accepted.accepted) return undefined;
+        const publication = accepted.value.value.publication;
+        try {
+          try {
+            accepted.value.accept();
+            accepted.value.retain();
+            accepted.value.actors();
+            this.replaceProgress(publication.progress);
+            for (const [id, after] of accepted.value.lives) {
+              const before = this.inputLives.get(id);
+              if (!after || after.life !== before?.life || after.alive !== before.alive)
+                this.inputs.clear(id);
+              if (after) this.inputLives.set(id, after);
+              else this.inputLives.delete(id);
+            }
+          } catch (error) {
+            this.failure = error instanceof Error ? error : new Error(String(error));
+            throw error;
+          }
+          for (const event of publication.events)
+            if (event.actorId) this.speechActors.set(event.id, event.actorId);
+          while (this.speechActors.size > PLAYER_EVENT_WINDOW * this.connectionLimit)
+            this.speechActors.delete(this.speechActors.keys().next().value!);
+          try {
+            await this.refreshValues();
+          } catch (error) {
+            this.failure = error instanceof Error ? error : new Error(String(error));
+            throw error;
+          }
+          this.publishAccepted(publication);
+          this.notify(publication.events.length !== 0);
+          this.scheduleSave();
+          this.scheduleRetention();
+          return publication;
+        } finally {
+          releaseNativeProduct(accepted.value);
         }
-      } catch (error) {
-        this.failure = error instanceof Error ? error : new Error(String(error));
-        throw error;
+      } finally {
+        releaseNativeProduct(before);
       }
-      for (const event of publication.events)
-        if (event.actorId) this.speechActors.set(event.id, event.actorId);
-      while (this.speechActors.size > PLAYER_EVENT_WINDOW * this.connectionLimit)
-        this.speechActors.delete(this.speechActors.keys().next().value!);
-      try {
-        await this.refreshValues();
-      } catch (error) {
-        this.failure = error instanceof Error ? error : new Error(String(error));
-        throw error;
-      }
-      this.publishAccepted(publication);
-      this.notify(publication.events.length !== 0);
-      this.scheduleSave();
-      this.scheduleRetention();
-      return publication;
     });
   }
 
@@ -2282,10 +2319,43 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     scope: RequestScope,
     signal?: AbortSignal,
   ): Promise<ApiResult> {
+    return this.recallEdit(actorId, sourceId, { kind: 'forget' }, scope, signal);
+  }
+
+  async correctMemory(
+    actorId: string,
+    sourceId: string,
+    correctionEventId: string,
+    scope: RequestScope,
+    signal?: AbortSignal,
+  ): Promise<ApiResult> {
+    return this.recallEdit(
+      actorId,
+      sourceId,
+      { kind: 'correct', eventId: correctionEventId },
+      scope,
+      signal,
+    );
+  }
+
+  private async recallEdit(
+    actorId: string,
+    sourceId: string,
+    edit: { readonly kind: 'forget' } | { readonly kind: 'correct'; readonly eventId: string },
+    scope: RequestScope,
+    signal?: AbortSignal,
+  ): Promise<ApiResult> {
     if (!this.config.godMode || !this.mayInspectPrivate(actorId, scope))
       throw new AuthorityError('forbidden');
     this.assertScope(scope, 'create');
-    const key = JSON.stringify([this.worldId, this.generation, actorId, sourceId]);
+    const key = JSON.stringify([
+      this.worldId,
+      this.generation,
+      edit.kind,
+      actorId,
+      sourceId,
+      edit.kind === 'correct' ? edit.eventId : null,
+    ]);
     let release = this.sourceEdits.get(key);
     const previousDenial = !!release;
     if (!release) {
@@ -2299,7 +2369,20 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         capability: 'create',
         actorId,
         current: () => this.currentScope(scope, 'create') && this.mayInspectPrivate(actorId, scope),
-        first: () => this.world.forget(Buffer.from(JSON.stringify({ actorId, sourceId }))),
+        first: async () => {
+          const input = encodeNativeJson(this.world, {
+            actorId,
+            sourceId,
+            ...(edit.kind === 'correct' ? { correctionEventId: edit.eventId } : {}),
+          });
+          try {
+            return await (edit.kind === 'correct'
+              ? this.world.correct(input)
+              : this.world.forget(input));
+          } finally {
+            releaseNativeProduct(input);
+          }
+        },
         signal,
       });
       if (publication.outcome.ok || !previousDenial) {
@@ -2836,22 +2919,26 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             clearInterval(publicationWake);
           }
           if (!publication) return false;
-          if (!publication.outcome.ok) {
-            this.fail(
-              new Error(
-                `Required native work stopped before advancing time: ${publication.outcome.message}`,
-              ),
+          try {
+            if (!publication.outcome.ok) {
+              this.fail(
+                new Error(
+                  `Required native work stopped before advancing time: ${publication.outcome.message}`,
+                ),
+              );
+              return false;
+            }
+            const advanced = publication.progress.at - before;
+            this.debtSeconds = Math.max(0, this.debtSeconds - advanced);
+            return (
+              !this.paused &&
+              this.debtSeconds >= 1e-6 &&
+              advanced > 0 &&
+              publication.outcome.code !== 'navigation-pending'
             );
-            return false;
+          } finally {
+            releaseNativeProduct(publication);
           }
-          const advanced = publication.progress.at - before;
-          this.debtSeconds = Math.max(0, this.debtSeconds - advanced);
-          return (
-            !this.paused &&
-            this.debtSeconds >= 1e-6 &&
-            advanced > 0 &&
-            publication.outcome.code !== 'navigation-pending'
-          );
         },
         this.lane.waitMs,
         false,
@@ -3281,7 +3368,10 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         captured.cut,
         captured.request,
         captured.read,
-        { reserveBytes: (bytes) => captured.world.reserveConsumerBytes(bytes) },
+        {
+          reserveBytes: (bytes) => captured.world.reserveConsumerBytes(bytes),
+          reserveJson: (bytes) => captured.world.reserveConsumerJson(bytes),
+        },
         this.retentionAbort.signal,
       );
       const expected = new Set(selected);
@@ -3509,10 +3599,21 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     this.pending.acknowledge(prefix, revision);
     this.store.memories.acceptedSettled(this.worldId, prefix.cut.throughCut);
     this.committedPrefix = undefined;
-    this.durableProgress = prefix.progress;
+    this.replaceProgress(this.progress, prefix.progress);
     for (const receipt of prefix.receipts) this.durableReceipts.add(receipt.id);
     this.pruneReceipts();
     await this.refreshValues();
+  }
+
+  /** Only current and durable reports retain their own publication pins. Older
+   * SQL readers own independent pins, so replacing a report cannot unpin them. */
+  private replaceProgress(current: Progress, durable = this.durableProgress): void {
+    const before = this.progress,
+      saved = this.durableProgress;
+    this.progress = current;
+    this.durableProgress = durable;
+    if (before !== current && before !== durable) releaseNativeProduct(before);
+    if (saved !== before && saved !== current && saved !== durable) releaseNativeProduct(saved);
   }
 
   /** Stop intake first; accepted saves keep their original owner and are still
@@ -3548,8 +3649,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       this.retained = undefined;
       // Keep only the confirmed scalar report. Owned native products used by
       // another real consumer retain their own admission until its last drop.
-      this.progress = { ...this.progress };
-      this.durableProgress = { ...this.durableProgress };
+      this.replaceProgress({ ...this.progress }, { ...this.durableProgress });
       this.pending.release();
       this.profiles.clear();
       this.speechActors.clear();

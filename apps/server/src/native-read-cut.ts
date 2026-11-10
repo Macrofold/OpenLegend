@@ -3,7 +3,11 @@ import type { NativeHistoryInput } from './native-history.js';
 import { nativeHistoryAccountCuts } from './native-history.js';
 import type { LiveReadCuts } from './live-read-overlay.js';
 import { nativeRecordChanges } from './native-records.js';
-import { decodeNativeProduct, retainNativeSources } from './native-consumer.js';
+import {
+  decodeNativeProduct,
+  releaseNativeProduct,
+  retainNativeSources,
+} from './native-consumer.js';
 
 /** Actual accepted native metadata and the selected actor's unsaved physical
  * page representation. Other pending rows/history remain with their existing
@@ -41,43 +45,51 @@ export function nativeScopedReadCut(
   captured: NativeActorReadCut,
   pending: LiveReadCuts,
 ): LiveReadCuts {
-  if (
-    pending.worldId !== captured.worldId ||
-    pending.generation !== captured.generation ||
-    pending.revision !== captured.save.durableRevision ||
-    pending.sequence !== captured.acceptedCut ||
-    pending.durableSequence !== captured.save.durableCut ||
-    pending.inFlightThrough !== captured.save.inFlightThrough ||
-    captured.save.throughCut !== captured.acceptedCut ||
-    captured.history.worldId !== captured.worldId ||
-    captured.history.generation !== captured.generation ||
-    captured.history.baseCut !== captured.acceptedCut ||
-    captured.history.cuts.length !== 1 ||
-    captured.history.cuts[0]?.actorId !== captured.actorId
-  )
-    throw new Error('Native indexed read no longer matches its accepted publication owner.');
+  try {
+    if (
+      pending.worldId !== captured.worldId ||
+      pending.generation !== captured.generation ||
+      pending.revision !== captured.save.durableRevision ||
+      pending.sequence !== captured.acceptedCut ||
+      pending.durableSequence !== captured.save.durableCut ||
+      pending.inFlightThrough !== captured.save.inFlightThrough ||
+      captured.save.throughCut !== captured.acceptedCut ||
+      captured.history.worldId !== captured.worldId ||
+      captured.history.generation !== captured.generation ||
+      captured.history.baseCut !== captured.acceptedCut ||
+      captured.history.cuts.length !== 1 ||
+      captured.history.cuts[0]?.actorId !== captured.actorId
+    )
+      throw new Error('Native indexed read no longer matches its accepted publication owner.');
 
-  let through = pending.durableSequence;
-  for (const cut of pending.cuts) {
-    // A closed immutable SQL prefix can combine multiple accepted cuts. Each
-    // subsequent still-unsaved publication must remain present in order.
-    const prefix = through === pending.durableSequence && cut.through === pending.inFlightThrough;
-    if (!prefix && cut.through !== through + 1)
-      throw new Error('Native indexed read is missing an accepted pending cut.');
-    through = cut.through;
+    let through = pending.durableSequence;
+    for (const cut of pending.cuts) {
+      // A closed immutable SQL prefix can combine multiple accepted cuts. Each
+      // subsequent still-unsaved publication must remain present in order.
+      const prefix = through === pending.durableSequence && cut.through === pending.inFlightThrough;
+      if (!prefix && cut.through !== through + 1)
+        throw new Error('Native indexed read is missing an accepted pending cut.');
+      through = cut.through;
+    }
+    if (through !== captured.acceptedCut)
+      throw new Error('Native indexed read is missing its complete accepted suffix.');
+
+    return retainNativeSources(
+      {
+        ...pending,
+        cuts: [
+          ...pending.cuts,
+          { through: captured.acceptedCut, changes: nativeRecordChanges(captured.temporal) },
+        ],
+        historyEligibility: nativeHistoryAccountCuts(captured.history.cuts),
+      },
+      captured,
+      pending,
+    );
+  } finally {
+    // Adopt both input snapshots. Their joined OUT product owns independent
+    // pins, including pending history that may be acknowledged during SQL I/O.
+    releaseNativeProduct(captured);
+    releaseNativeProduct(pending);
   }
-  if (through !== captured.acceptedCut)
-    throw new Error('Native indexed read is missing its complete accepted suffix.');
-
-  return retainNativeSources(
-    {
-      ...pending,
-      cuts: [
-        ...pending.cuts,
-        { through: captured.acceptedCut, changes: nativeRecordChanges(captured.temporal) },
-      ],
-      historyEligibility: nativeHistoryAccountCuts(captured.history.cuts),
-    },
-    captured,
-  );
 }

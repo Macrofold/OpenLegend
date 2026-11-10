@@ -65,6 +65,19 @@ pub(crate) struct SourceVersionPlan {
     changes: Vec<Change>,
 }
 
+/// Borrow only the archive metadata needed by whole-install reconciliation.
+/// The plan retains the actual immutable payload and its admission separately.
+#[derive(Clone, Copy)]
+pub(crate) struct SourceVersionArchiveChange<'a> {
+    pub actor_id: &'a str,
+    pub kind: &'a str,
+    pub id: &'a str,
+    pub revision: &'a str,
+    pub expected_prior: Option<(AccountClass, u64)>,
+    pub desired: Option<(AccountClass, u64)>,
+    pub has_payload: bool,
+}
+
 impl HeapBytes for Category {
     fn heap_bytes(&self) -> Option<usize> {
         Some(0)
@@ -86,6 +99,30 @@ heap_record!(Change {
 });
 heap_record!(SourceVersionPlan { changes });
 impl SourceVersionPlan {
+    pub(crate) fn archive_changes(
+        &self,
+    ) -> impl ExactSizeIterator<Item = SourceVersionArchiveChange<'_>> {
+        self.changes
+            .iter()
+            .map(|change| SourceVersionArchiveChange {
+                actor_id: &change.actor_id,
+                kind: &change.kind,
+                id: &change.id,
+                revision: &change.revision,
+                expected_prior: change
+                    .expected_prior
+                    .as_ref()
+                    .map(|value| (value.category.class(), value.bytes)),
+                desired: change
+                    .desired
+                    .as_ref()
+                    .map(|value| (value.category.class(), value.bytes)),
+                has_payload: change
+                    .desired
+                    .as_ref()
+                    .is_some_and(|value| value.payload.is_some()),
+            })
+    }
     pub(crate) fn empty() -> Self {
         Self {
             changes: Vec::new(),
@@ -169,6 +206,27 @@ pub(crate) fn apply_source_version_plan(
     policy: &AttentionRetentionPolicy,
     budget: &ByteBudget,
 ) -> Result<(), ReceivedError> {
+    apply_accounting(state, plan, false, now, policy, budget)
+}
+/// The private restore closure replans against one unchanged archive baseline.
+/// Reverse only its genuinely applied plan; other retention effects survive.
+pub(crate) fn reset_source_version_plan(
+    state: &mut TemporalState,
+    plan: &SourceVersionPlan,
+    now: f64,
+    policy: &AttentionRetentionPolicy,
+    budget: &ByteBudget,
+) -> Result<(), ReceivedError> {
+    apply_accounting(state, plan, true, now, policy, budget)
+}
+fn apply_accounting(
+    state: &mut TemporalState,
+    plan: &SourceVersionPlan,
+    reset: bool,
+    now: f64,
+    policy: &AttentionRetentionPolicy,
+    budget: &ByteBudget,
+) -> Result<(), ReceivedError> {
     if plan.changes.is_empty() {
         return Ok(());
     }
@@ -221,7 +279,7 @@ pub(crate) fn apply_source_version_plan(
         {
             return Err(invalid());
         }
-        if let Some(desired) = &change.desired {
+        if !reset && let Some(desired) = &change.desired {
             if let Some(payload) = &desired.payload {
                 if payload.len() as u64 != desired.bytes
                     || crate::encoding::sha256_hex(payload.as_bytes()) != change.revision
@@ -248,22 +306,18 @@ pub(crate) fn apply_source_version_plan(
                 (AccountClass::Speech, AccountCharge { bytes: 0, count: 0 }),
             ]));
         }
-        for (value, direction) in [
-            (
-                change
-                    .expected_prior
-                    .as_ref()
-                    .map(|charge| (charge.category, charge.bytes)),
-                -1i128,
-            ),
-            (
-                change
-                    .desired
-                    .as_ref()
-                    .map(|charge| (charge.category, charge.bytes)),
-                1i128,
-            ),
-        ] {
+        let mut prior = change
+            .expected_prior
+            .as_ref()
+            .map(|charge| (charge.category, charge.bytes));
+        let mut desired = change
+            .desired
+            .as_ref()
+            .map(|charge| (charge.category, charge.bytes));
+        if reset {
+            std::mem::swap(&mut prior, &mut desired);
+        }
+        for (value, direction) in [(prior, -1i128), (desired, 1i128)] {
             if let Some((category, bytes)) = value {
                 let class = category.class();
                 adjust(
@@ -282,13 +336,13 @@ pub(crate) fn apply_source_version_plan(
                 )?;
             }
         }
-        if let Some(desired) = &change.desired {
-            if change.expected_prior.as_ref().is_none_or(|prior| {
-                prior.category != desired.category || desired.bytes > prior.bytes
+        if let Some((category, bytes)) = desired {
+            if prior.is_none_or(|(prior_category, prior_bytes)| {
+                prior_category != category || bytes > prior_bytes
             }) {
                 let values = pressure.entry(change.actor_id.clone()).or_default();
-                if !values.contains(&desired.category) {
-                    values.push(desired.category);
+                if !values.contains(&category) {
+                    values.push(category);
                 }
             }
         }

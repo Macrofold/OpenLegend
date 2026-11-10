@@ -21,8 +21,11 @@ heap_record!(AccountRules {
     privacy_outcomes
 });
 heap_record!(PrivacyOutcomes {
+    source,
     commitment,
-    forgotten
+    forgotten,
+    correction_rejected,
+    corrected
 });
 heap_record!(AccountPriority {
     deliberate,
