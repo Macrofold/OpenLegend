@@ -93,15 +93,17 @@ pub(crate) struct PlanStep {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub target_episodes: Option<IndexMap<String, Option<String>>>,
+    pub activity_key: Option<String>,
+    pub id: String,
+    pub command: NativeCommand,
+    // Source's ordinary plan constructors write these bindings after command.
+    // The decision signature consumes the ordered plan without reformatting it.
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub activity_key: Option<String>,
-    pub id: String,
-    pub command: NativeCommand,
+    pub target_episodes: Option<IndexMap<String, Option<String>>>,
     pub status: StepStatus,
     #[serde(
         default,
