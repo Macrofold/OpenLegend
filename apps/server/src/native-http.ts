@@ -710,7 +710,11 @@ export async function createNativeGameServer(options: {
               drained = false;
             try {
               const paused = await current.control({ paused: true }, scope);
-              if (!paused.ok) throw new GameSaveError(paused.message);
+              try {
+                if (!paused.ok) throw new GameSaveError(paused.message);
+              } finally {
+                releaseNativeProduct(paused);
+              }
               draining = true;
               decisions.macrofold.stop();
               await decisions.close();
@@ -795,10 +799,20 @@ export async function createNativeGameServer(options: {
             )
               throw new AuthorityError('stale-scope');
             const result = await current.changeEmbodiment(scope, value);
-            return send(result.ok ? 200 : 409, result);
+            try {
+              return send(result.ok ? 200 : 409, result);
+            } finally {
+              releaseNativeProduct(result);
+            }
           }
-          case '/api/control':
-            return send(200, await current.control(controlRequest.parse(body), scope));
+          case '/api/control': {
+            const result = await current.control(controlRequest.parse(body), scope);
+            try {
+              return send(200, result);
+            } finally {
+              releaseNativeProduct(result);
+            }
+          }
           case '/api/presence': {
             const value = presenceRequest.parse(body);
             await current.reportPresence(value.clientId, value.visible, value.sequence, scope);
@@ -827,22 +841,31 @@ export async function createNativeGameServer(options: {
           }
           case '/api/command': {
             const value = commandRequest.parse(body);
-            return send(
-              200,
-              await current.command(value.commandId, value.command, value.commandEpoch, scope),
+            const result = await current.command(
+              value.commandId,
+              value.command,
+              value.commandEpoch,
+              scope,
             );
+            try {
+              return send(200, result);
+            } finally {
+              releaseNativeProduct(result);
+            }
           }
           case '/api/command/receipt': {
             const value = commandRequest.parse(body);
-            return send(
-              200,
-              await current.commandReceipt(
-                value.commandId,
-                value.command,
-                value.commandEpoch,
-                scope,
-              ),
+            const result = await current.commandReceipt(
+              value.commandId,
+              value.command,
+              value.commandEpoch,
+              scope,
             );
+            try {
+              return send(200, result);
+            } finally {
+              releaseNativeProduct(result);
+            }
           }
           case '/api/memories':
           case '/api/god/memories': {

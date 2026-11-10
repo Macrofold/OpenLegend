@@ -141,6 +141,7 @@ export class NativePendingSave {
             outcomes,
           },
           publication,
+          ...receipts,
         );
         const entry: Entry = { value, acceptedAt: 0, dispose: () => owner.dispose() };
         const before = this.tail;
@@ -405,6 +406,8 @@ export class NativePendingSave {
           },
           rows,
           history,
+          privacy,
+          ...receipts.values(),
           ...(temporalEdits ? [temporalEdits] : []),
         );
         this.prefixOwners.set(prefix, () => owner.dispose());

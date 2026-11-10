@@ -79,8 +79,9 @@ export function withoutNativeConsumerScope<T>(operation: () => T): T {
   return scopes.exit(operation);
 }
 
-// JSON.stringify keeps container/key traversal state, rather than a second
-// decoded graph. Count only the actual selected shape, without serializing it.
+// Canonical receipt/prompt owners also use this conservative aggregate for
+// their entries/filter/sort/map arrays. The plain encoder below has a narrower
+// live-ancestor bound; changing this shared meaning would underfund those owners.
 export function nativeJsonEncodingWorkspace(value: unknown): number {
   if (value === null || typeof value !== 'object') return 0;
   let bytes = 32 * 8;
@@ -98,39 +99,143 @@ export function nativeJsonEncodingWorkspace(value: unknown): number {
   return bytes;
 }
 
+// Node22.23.2: json/json-stringifier.cc uses a HandleScope for each active
+// object/object-element array, and a depth-sized cycle stack. Sibling scopes
+// end before the next sibling starts. api/api.h keeps at most one spare block.
+// Account one active-block rounding margin + that spare (1,022 addresses each),
+// the inline 2,048-byte builder, 64-entry key cache and stringifier headers.
+const jsonFixedWorkspace = 2 * (1024 - 2) * 8 + 2048 + 64 * 8 + 32 * 8;
+function jsonAncestorWorkspace(value: unknown): number {
+  if (value === null || typeof value !== 'object') return 0;
+  let own = 32 * 8,
+    child = 0;
+  if (Array.isArray(value)) {
+    own += value.length * 8 * 8;
+    for (let index = 0; index < value.length; index++)
+      child = Math.max(child, jsonAncestorWorkspace(value[index]));
+  } else {
+    for (const key in value)
+      if (Object.hasOwn(value, key)) {
+        // Object.keys and V8's handles include an undefined property's key too.
+        own += 8 * 8;
+        child = Math.max(child, jsonAncestorWorkspace((value as Record<string, unknown>)[key]));
+      }
+  }
+  return own + child;
+}
+
+/** A selected string's UTF-16 backing is already funded by its input owner.
+ * This extra overlap covers Flatten copying a rope while its old parts live.
+ * After encoding, any resulting flat backing remains that same input's body. */
+function jsonInputStringUnits(value: unknown): number {
+  if (typeof value === 'string') return value.length;
+  if (value === null || typeof value !== 'object') return 0;
+  let units = 0;
+  if (Array.isArray(value)) {
+    for (let index = 0; index < value.length; index++) units += jsonInputStringUnits(value[index]);
+  } else {
+    for (const key in value)
+      if (Object.hasOwn(value, key))
+        units += key.length + jsonInputStringUnits((value as Record<string, unknown>)[key]);
+  }
+  return units;
+}
+
+/** V8 doubles one contiguous builder and copies it into the final string.
+ * Either may be UTF-16 even for mostly ASCII JSON. Appending exactly at a
+ * capacity boundary also extends, hence strictly greater than the wire bound.
+ * The new+old growth/encoding buffers and builder+result are distinct peaks. */
+function jsonStringifierBodies(bytes: number): number {
+  if (!Number.isSafeInteger(bytes) || bytes < 0)
+    throw new Error('Native JSON encoding exceeds its finite allocation bound.');
+  let capacity = 2048;
+  while (capacity <= bytes) capacity *= 2;
+  return Math.max(3 * capacity, 2 * capacity + 2 * bytes);
+}
+
+export interface NativeJsonEncodingOptions {
+  readonly prefix?: string;
+  readonly suffix?: string;
+  readonly sources?: readonly object[];
+  /** Trusted plain own-data installation root only: no getters or toJSON.
+   * Children still use the existing JSON.stringify codec. Only the actual
+   * PostgreSQL/JSON-decoded producer may identify fields with flat strings;
+   * authored definitions/settings/layouts retain their flattening allowance. */
+  readonly installationRoot?: { readonly flatStringFields: readonly string[] };
+}
+
 /** Admit the selected JSON output before its encoder or transport Buffer
  * allocates. Existing source pins do not fund newly serialized bytes. */
 export function encodeNativeJson(
   world: Pick<NativeWorld, 'reserveConsumerBytes'>,
   value: unknown,
-  options: {
-    readonly prefix?: string;
-    readonly suffix?: string;
-    readonly sources?: readonly object[];
-  } = {},
+  options: NativeJsonEncodingOptions = {},
 ): Buffer {
   const prefix = options.prefix ?? '',
-    suffix = options.suffix ?? '';
-  const shape = nativeJsonEncodingWorkspace(value);
-  // The size reader creates Object.keys work arrays too. Admit that traversal
-  // before it runs, then reuse its known shape for the actual encoder.
-  const measuring = world.reserveConsumerBytes(shape + 256);
-  let bytes: number;
+    suffix = options.suffix ?? '',
+    installation = options.installationRoot;
+  if (installation && (value === null || typeof value !== 'object' || Array.isArray(value)))
+    throw new Error('Native installation encoding requires its plain record root.');
+  const root = value as Record<string, unknown>;
+  const shape = jsonFixedWorkspace + jsonAncestorWorkspace(value);
+  let flattenUnits = 0;
+  if (installation) {
+    for (const key in root)
+      if (Object.hasOwn(root, key)) {
+        flattenUnits += key.length;
+        if (!installation.flatStringFields.includes(key))
+          flattenUnits += jsonInputStringUnits(root[key]);
+      }
+  } else flattenUnits = jsonInputStringUnits(value);
+  const flattening = 2 * flattenUnits;
+  // Measuring uses the same live Object.keys ancestry. Disable Native cache
+  // writes: persistent WeakMap/proof entries cannot borrow a temporary guard.
+  const measuring = world.reserveConsumerBytes(shape + flattening + 256);
+  let bytes: number,
+    bodyPeak = 0;
   try {
-    bytes = jsonByteLength(value) + Buffer.byteLength(prefix) + Buffer.byteLength(suffix);
+    if (installation) {
+      bytes = 2;
+      let fields = 0;
+      for (const key of Object.keys(root)) {
+        const size = jsonByteLength(root[key], { cache: false });
+        if (!size) continue;
+        const keySize = jsonByteLength(key, { cache: false });
+        bytes += (fields++ ? 1 : 0) + keySize + 1 + size;
+        bodyPeak = Math.max(bodyPeak, jsonStringifierBodies(keySize), jsonStringifierBodies(size));
+      }
+    } else {
+      bytes = jsonByteLength(value, { cache: false });
+      bodyPeak = jsonStringifierBodies(bytes);
+    }
+    bytes += Buffer.byteLength(prefix) + Buffer.byteLength(suffix);
   } finally {
     measuring.release();
   }
   const output = world.reserveConsumerBytes(bytes + 32 * 8);
   let workspace: NativeWorldConsumer | undefined;
   try {
-    // Each UTF-8 byte bounds one UTF-16 unit. Two complete two-byte carriers
-    // cover the encoder builder/result or the source/framed flattening pair.
-    workspace = world.reserveConsumerBytes(4 * bytes + shape);
+    // Keep the existing four-wire floor, and cover actual V8 capacity growth
+    // instead of assuming two exact-sized UTF-16 carriers. Installation chunks
+    // avoid one world-sized builder; ordinary callers retain monolithic JSON.
+    workspace = world.reserveConsumerBytes(Math.max(4 * bytes, bodyPeak) + shape + flattening);
     // Avoid Node's pooled small-Buffer slab: this owner funds this exact body.
     const buffer = Buffer.allocUnsafeSlow(bytes);
     let at = buffer.write(prefix, 0, 'utf8');
-    at += buffer.write(JSON.stringify(value), at, 'utf8');
+    if (installation) {
+      at += buffer.write('{', at, 'utf8');
+      let fields = 0;
+      for (const key of Object.keys(root)) {
+        const child = root[key];
+        if (child === undefined || typeof child === 'function' || typeof child === 'symbol')
+          continue;
+        if (fields++) at += buffer.write(',', at, 'utf8');
+        at += buffer.write(JSON.stringify(key), at, 'utf8');
+        at += buffer.write(':', at, 'utf8');
+        at += buffer.write(JSON.stringify(child), at, 'utf8');
+      }
+      at += buffer.write('}', at, 'utf8');
+    } else at += buffer.write(JSON.stringify(value), at, 'utf8');
     buffer.write(suffix, at, 'utf8');
     return attachNativeConsumer(buffer, output, ...(options.sources ?? []));
   } catch (error) {
@@ -147,12 +252,32 @@ export async function withNativeJsonInput<T>(
   world: Pick<NativeWorld, 'reserveConsumerBytes'>,
   value: unknown,
   consume: (bytes: Buffer) => Promise<T>,
+  options: NativeJsonEncodingOptions = {},
 ): Promise<T> {
-  const input = encodeNativeJson(world, value);
+  const input = encodeNativeJson(world, value, options);
   try {
     return await consume(input);
   } finally {
     releaseNativeProduct(input);
+  }
+}
+
+/** A small retained report/cache entry owns its copied JSON graph, rather than
+ * pinning the publication or request whose scalar fields it was built from. */
+export function copyNativeProduct<T extends object>(
+  world: Pick<NativeWorld, 'reserveConsumerBytes' | 'reserveConsumerJson'>,
+  value: T,
+): T {
+  const encoded = encodeNativeJson(world, value);
+  let allocation: NativeWorldConsumer | undefined;
+  try {
+    allocation = world.reserveConsumerJson(encoded);
+    return attachNativeConsumer(JSON.parse(encoded.toString('utf8')) as T, allocation);
+  } catch (error) {
+    allocation?.release();
+    throw error;
+  } finally {
+    releaseNativeProduct(encoded);
   }
 }
 

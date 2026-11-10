@@ -24,6 +24,7 @@ import {
   releaseNativeProduct,
 } from './native-consumer.js';
 import { nativeRecordChanges } from './native-records.js';
+import { nativeTemporalPageEdits } from './native-temporal-edits.js';
 import { nativeRestoredHistory } from './native-private-history.js';
 import { driveNativeOperation } from './native-providers.js';
 import { NativePendingSave } from './native-pending-save.js';
@@ -37,7 +38,10 @@ import type {
   NativeRestorePublication,
   NativeRestoreStage,
 } from './native-restore.js';
-import { withAdmittedWorkingSources } from './native-current-sources.js';
+import {
+  withAdmittedWorkingSources,
+  nativeSourceFlatStringFields,
+} from './native-current-sources.js';
 import { ACCOUNT_RETENTION_PREPARATION } from './account-retention.js';
 import { SUPPORT_MEMBERSHIP_PREPARATION } from './retention-cleanup.js';
 import { SOURCE_RETENTION_CLOSURE_ROUNDS } from './source-version-retention.js';
@@ -48,6 +52,7 @@ import { SOURCE_RETENTION_CLOSURE_ROUNDS } from './source-version-retention.js';
 export class NativeRestorePreparation implements NativeRestoreProjection {
   private settled = false;
   private receipt?: NativeWorldAdoption;
+  private temporalEdits?: ReturnType<typeof nativeTemporalPageEdits>;
   readonly installation;
   readonly inputs;
   readonly archives;
@@ -79,125 +84,157 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
     const restored = publication.restore;
     this.installation = retainNativeSources(restored.installation, publication);
     const changes = retainNativeSources(nativeRecordChanges(restored.changes), publication);
-    this.archives = retainNativeSources(publication.restoreMetadata.keptArchives, publication);
-    this.archiveBaseline = retainNativeSources(
-      publication.restoreMetadata.archiveBaseline,
-      publication,
-    );
-    this.retentionCapacity = {
-      reserveBytes: (bytes: number) => world.reserveConsumerBytes(bytes),
-      reserveJson: (bytes: Buffer) => world.reserveConsumerJson(bytes),
-    };
-    this.inputs = retainNativeSources(
-      {
-        worldId: restored.worldId,
-        initial: false,
-        restore: true,
-        changes,
-        history,
-        sources: store.memories.prepareSources(
-          restored.worldId,
-          changes,
-          this.installation.memoryAllowance,
-          publication.sourceVersions,
-        ),
-        outcomes: [],
-        privacy: publication.restoreMetadata.privacy,
-        privacyChanged: true,
-        invalidations: publication.invalidatedMemoryIds ?? {},
-        hotEventIds: [],
-        collectReceivedValues: true,
-      },
-      publication,
-    );
-    this.pending = new NativePendingSave(
-      store,
-      {
-        worldId: restored.worldId,
-        generation: restored.generation,
-        revision: restored.revision,
-        acceptedCut: restored.acceptedCut,
-        timeline,
-      },
-      world,
-    );
-    this.retained = retainNativeSources(
-      {
-        worldId: restored.worldId,
-        generation: restored.generation,
-        acceptedCut: restored.acceptedCut,
-        ids: retainNativeSources(restored.retainedValues, publication),
-      },
-      publication,
-    );
-    const pending = this.pending,
-      worldId = restored.worldId;
-    let prospective: NativeRetainedValues | undefined = this.retained;
-    this.providers = {
-      liveReadCuts: () => pending.liveReadCuts(),
-      retainedValues: (id: string) => {
-        if (id !== worldId) return {};
-        const current = currentRetained(world);
-        if (current) {
-          // The activated service now owns its regular IDs-only product. Do
-          // not retain the entire prepared publication's admission forever.
-          prospective = undefined;
-          return current.ids;
-        }
-        return prospective?.ids ?? {};
-      },
-      backgroundSearchAdmission,
-    };
-    const host =
-      restored.changes.writes['data_world']?.find((row) => row.id === '[]') ??
-      stage.source.records.tables['data_world']!.find((row) => row.id === '[]')!;
-    this.operational = JSON.parse(host.payload) as {
-      speed: number;
-      manuallyPaused: boolean;
-      presentationRelease?: import('@open-legend/assets').AssetRevisionReference;
-      presentationReleaseRevision?: number;
-    };
-    this.milestones = nativeMilestoneUpdates(
-      Object.fromEntries(
-        (stage.source.records.tables['actor_milestones'] ?? []).map((row) => [
-          row.slot,
-          JSON.parse(row.payload) as Record<string, boolean>,
-        ]),
-      ),
-      restored.changes,
-    );
-    this.actors = NativeActorRoster.capture(
-      world,
-      stage.source.records.tables['sim_actors'] ?? [],
-      stage.source.records.tables['sim_exit_exposures'] ?? [],
-      stage.source.records.tables['sim_native_response_episodes'] ?? [],
-    );
-    let admittedRetention: NativeRetention | undefined;
+    let temporal: ReturnType<typeof nativeTemporalPageEdits> | undefined;
     try {
-      const staged = this.actors.prepare(restored.changes);
-      try {
-        staged();
-      } finally {
-        staged.release();
-      }
-      admittedRetention = NativeRetention.capture(
+      // These are the inactive checkpoint journal's first-before/final-after
+      // pages. SQL revokes their exact receipts after writing this same delta.
+      temporal = nativeTemporalPageEdits(
         world,
-        restored.worldId,
-        selectedTemporalPolicy(definitions.facts.definitions),
-        stage.source.records.tables['mind_temporal_actors'] ?? [],
+        changes,
+        publication.temporalPredecessors,
+        publication,
       );
-      this.retention = admittedRetention;
-      const retained = this.retention.prepare(restored.changes);
+      this.temporalEdits = temporal;
+      changes.temporalEdits = temporal;
+      retainNativeSources(changes, publication, temporal);
+      this.archives = retainNativeSources(publication.restoreMetadata.keptArchives, publication);
+      this.archiveBaseline = retainNativeSources(
+        publication.restoreMetadata.archiveBaseline,
+        publication,
+      );
+      this.retentionCapacity = {
+        reserveBytes: (bytes: number) => world.reserveConsumerBytes(bytes),
+        reserveJson: (bytes: Buffer) => world.reserveConsumerJson(bytes),
+      };
+      this.inputs = retainNativeSources(
+        {
+          worldId: restored.worldId,
+          initial: false,
+          restore: true,
+          changes,
+          history,
+          sources: store.memories.prepareSources(
+            restored.worldId,
+            changes,
+            this.installation.memoryAllowance,
+            publication.sourceVersions,
+          ),
+          outcomes: [],
+          privacy: publication.restoreMetadata.privacy,
+          privacyChanged: true,
+          invalidations: publication.invalidatedMemoryIds ?? {},
+          hotEventIds: [],
+          collectReceivedValues: true,
+        },
+        publication,
+      );
+      this.pending = new NativePendingSave(
+        store,
+        {
+          worldId: restored.worldId,
+          generation: restored.generation,
+          revision: restored.revision,
+          acceptedCut: restored.acceptedCut,
+          timeline,
+        },
+        world,
+      );
+      this.retained = retainNativeSources(
+        {
+          worldId: restored.worldId,
+          generation: restored.generation,
+          acceptedCut: restored.acceptedCut,
+          ids: retainNativeSources(restored.retainedValues, publication),
+        },
+        publication,
+      );
+      const pending = this.pending,
+        worldId = restored.worldId;
+      let prospective: NativeRetainedValues | undefined = this.retained;
+      this.providers = {
+        liveReadCuts: () => pending.liveReadCuts(),
+        retainedValues: (id: string) => {
+          if (id !== worldId) return {};
+          const current = currentRetained(world);
+          if (current) {
+            // The activated service now owns its regular IDs-only product. Do
+            // not retain the entire prepared publication's admission forever.
+            prospective = undefined;
+            return current.ids;
+          }
+          return prospective?.ids ?? {};
+        },
+        backgroundSearchAdmission,
+      };
+      const host =
+        restored.changes.writes['data_world']?.find((row) => row.id === '[]') ??
+        stage.source.records.tables['data_world']!.find((row) => row.id === '[]')!;
+      this.operational = JSON.parse(host.payload) as {
+        speed: number;
+        manuallyPaused: boolean;
+        presentationRelease?: import('@open-legend/assets').AssetRevisionReference;
+        presentationReleaseRevision?: number;
+      };
+      this.milestones = nativeMilestoneUpdates(
+        world,
+        Object.fromEntries(
+          (stage.source.records.tables['actor_milestones'] ?? []).map((row) => [
+            row.slot,
+            JSON.parse(row.payload) as Record<string, boolean>,
+          ]),
+        ),
+        restored.changes,
+      );
+      this.actors = NativeActorRoster.capture(
+        world,
+        stage.source.records.tables['sim_actors'] ?? [],
+        stage.source.records.tables['sim_exit_exposures'] ?? [],
+        stage.source.records.tables['sim_native_response_episodes'] ?? [],
+      );
+      let admittedRetention: NativeRetention | undefined;
       try {
-        retained();
-      } finally {
-        retained.release();
+        const staged = this.actors.prepare(restored.changes);
+        try {
+          staged();
+        } finally {
+          staged.release();
+        }
+        admittedRetention = NativeRetention.capture(
+          world,
+          restored.worldId,
+          selectedTemporalPolicy(definitions.facts.definitions),
+          stage.source.records.tables['mind_temporal_actors'] ?? [],
+        );
+        this.retention = admittedRetention;
+        const retained = this.retention.prepare(restored.changes);
+        try {
+          retained();
+        } finally {
+          retained.release();
+        }
+      } catch (error) {
+        this.actors.release();
+        admittedRetention?.release();
+        throw error;
       }
     } catch (error) {
-      this.actors.release();
-      admittedRetention?.release();
+      // A failed constructor has no returned owner to perform later cleanup.
+      releaseNativeProduct(changes);
+      if (temporal) releaseNativeProduct(temporal);
+      this.temporalEdits = undefined;
       throw error;
     }
+  }
+
+  private releaseTemporalEdits(): void {
+    const temporal = this.temporalEdits;
+    if (!temporal) return;
+    this.temporalEdits = undefined;
+    // Failed preparation or a known SQL outcome ends these revocation inputs.
+    // Adoption providers retain their independent raw
+    // publication/IDs owners, rather than this converted change map.
+    releaseNativeProduct(this.inputs.changes);
+    releaseNativeProduct(temporal);
   }
 
   static async prepare(request: {
@@ -226,14 +263,18 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
           working.records.durableRevision !== stage.revision
         )
           throw new Error('Restore working selection differs from its protected SQL installation.');
-        return encodeNativeJson(request.host, {
-          ...working,
-          definitions: nativeDefinitionSources(working),
-          settings: nativeSetupSettings,
-          storage: nativeStorageSettings,
-          layouts: nativeRecordLayouts(),
-          acceptedCut: 0,
-        });
+        return encodeNativeJson(
+          request.host,
+          {
+            ...working,
+            definitions: nativeDefinitionSources(working),
+            settings: nativeSetupSettings,
+            storage: nativeStorageSettings,
+            layouts: nativeRecordLayouts(),
+            acceptedCut: 0,
+          },
+          { installationRoot: { flatStringFields: nativeSourceFlatStringFields } },
+        );
       },
     );
     let world: NativeWorld;
@@ -343,6 +384,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
       turn.prepared.ready();
       return result;
     } catch (error) {
+      result?.releaseTemporalEdits();
       result?.actors.release();
       result?.retention.release();
       if (turn?.kind === 'prepared') await world.cancel(turn.key);
@@ -358,6 +400,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
   async reject(): Promise<void> {
     if (this.settled) throw new Error('Native restore settlement was already decided.');
     this.settled = true;
+    this.releaseTemporalEdits();
     if (this.prepared.settle(false) || (await this.world.finishSettlement(this.turn.key)))
       throw new Error('Rejected native restore unexpectedly accepted its candidate.');
     this.allocation.rollback();
@@ -382,6 +425,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
   async activate(receipt: NativeWorldAdoption, old: NativeWorld): Promise<void> {
     if (this.settled) throw new Error('Native restore settlement was already decided.');
     this.settled = true;
+    this.releaseTemporalEdits();
     if (!this.prepared.settle(true))
       throw new Error('Committed native restore refused its accepted candidate.');
     old.closeAdmission();

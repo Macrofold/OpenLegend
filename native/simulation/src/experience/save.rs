@@ -287,6 +287,30 @@ pub(crate) fn encode_personal_source_changes(
             RowEffects::default(),
         )?;
         output.observe_owner(&state.owner_maps.get(&kind).ok_or_else(encoding)?.coverage)?;
+        // A genuine new empty collection has no child write to report its
+        // coverage. Keep that accepted ledger fact with the parent row, so a
+        // later scoped SQL read can verify this owner without inventing it.
+        let coverage = &state
+            .actor(actor)
+            .ok_or_else(encoding)?
+            .collection(kind)
+            .map_err(|_| encoding())?
+            .coverage;
+        let _coverage = budget
+            .reserve(
+                kind.table()
+                    .len()
+                    .checked_add(placement.id.len())
+                    .ok_or_else(encoding)?,
+            )
+            .map_err(|_| encoding())?;
+        output.observe_owner(&OwnerCoverage {
+            table: kind.table().to_owned(),
+            owner: placement.id.clone(),
+            complete: coverage.complete,
+            next_ordinal: coverage.next_ordinal,
+            parent_present: coverage.parent_present,
+        })?;
     }
     for (record, new) in records {
         let _placement = budget

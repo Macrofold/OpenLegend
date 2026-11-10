@@ -81,7 +81,7 @@ pub(super) fn poll_restore(
             answer,
             ProviderKind::RestoreRetention,
             request.provider_binding(core.state.installed.geometry.spatial.revision),
-            request.value(),
+            &request.value(),
             settings,
             budget,
             RestoreReply::Retention,

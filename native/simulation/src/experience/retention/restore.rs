@@ -41,13 +41,20 @@ struct Request<'a, T: Serialize + ?Sized> {
 pub(crate) struct RestoreRetentionQuestion {
     binding: Binding,
     phase: Phase,
-    request: Box<RawValue>,
+    data: Box<RawValue>,
     maximum_transfer_bytes: usize,
     _storage: ByteReservation,
 }
 impl RestoreRetentionQuestion {
-    pub(crate) fn value(&self) -> &RawValue {
-        &self.request
+    pub(crate) fn value(&self) -> impl Serialize + '_ {
+        // The projection wrapper flattens this typed envelope. Flattening a
+        // whole RawValue instead would expose serde's private raw-value key.
+        Request {
+            binding: &self.binding,
+            phase: self.phase,
+            data: self.data.as_ref(),
+            maximum_transfer_bytes: self.maximum_transfer_bytes,
+        }
     }
     pub(crate) fn provider_binding(&self, revision: u64) -> GeometryBinding {
         GeometryBinding::new(
@@ -110,13 +117,12 @@ impl RestoreRetentionQuestion {
         let encoded =
             crate::encoding::json_record_len(&request).map_err(|_| ExecutionError::Invariant)?;
         storage.merge(budget.reserve(encoded.checked_mul(2).ok_or(ExecutionError::Capacity)?)?)?;
-        let request =
-            RawValue::from_string(json_record(&request).map_err(|_| ExecutionError::Invariant)?)
-                .map_err(|_| ExecutionError::Invariant)?;
+        let data = RawValue::from_string(json_record(data).map_err(|_| ExecutionError::Invariant)?)
+            .map_err(|_| ExecutionError::Invariant)?;
         Ok(Arc::new(Self {
             binding,
             phase,
-            request,
+            data,
             maximum_transfer_bytes,
             _storage: storage,
         }))

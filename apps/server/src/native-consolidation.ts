@@ -24,6 +24,8 @@ import {
   decodeNativeProduct,
   freezeNativeProduct,
   retainNativeSources,
+  releaseNativeProduct,
+  withNativeJsonInput,
 } from './native-consumer.js';
 import { consolidationRequestsFromRead } from './memory-consolidation.js';
 import { personalEntityHandle } from './entity-references.js';
@@ -85,6 +87,7 @@ export async function prepareNativeConsolidation(input: {
   type Dream = Awaited<ReturnType<typeof service.world.bindConsolidationDream>>;
   const dreams = new Set<Dream>();
   const interpretations = new Map<object, { owner: Dream; value: MaintenanceInterpretation }>();
+  const reports = new Set<Awaited<ReturnType<NativeWorldService['publishMaintenance']>>>();
   try {
     const packet = freezeNativeProduct(
       decodeNativeProduct<ConsolidationPacket>(await ticket.packet()),
@@ -260,7 +263,7 @@ export async function prepareNativeConsolidation(input: {
           };
         });
       },
-      publish(groups, token) {
+      async publish(groups, token) {
         const interpretation =
           token === undefined
             ? undefined
@@ -275,23 +278,28 @@ export async function prepareNativeConsolidation(input: {
               text: experienceReading(entry, actorId).summary,
             }))
           : groups;
-        return service.publishMaintenance(
+        const result = await service.publishMaintenance(
           'consolidation',
           actorId,
           () =>
-            service.world.beginConsolidation(
-              ticket,
-              Buffer.from(JSON.stringify({ groups: submitted })),
-              interpretation?.owner,
-              interpretation ? Buffer.from(JSON.stringify(interpretation.value)) : undefined,
+            withNativeJsonInput(service.world, { groups: submitted }, (bytes) =>
+              interpretation
+                ? withNativeJsonInput(service.world, interpretation.value, (value) =>
+                    service.world.beginConsolidation(ticket, bytes, interpretation.owner, value),
+                  )
+                : service.world.beginConsolidation(ticket, bytes),
             ),
           signal,
           async () => {
             if (!ticket.isCurrent()) throw new Error('Consolidation sources changed.');
           },
         );
+        reports.add(result);
+        return result;
       },
       dispose() {
+        for (const report of reports) releaseNativeProduct(report);
+        reports.clear();
         interpretations.clear();
         for (const dream of dreams) dream.release();
         dreams.clear();

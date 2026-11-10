@@ -157,8 +157,11 @@ export function immutableDataSnapshot<T>(
 
 const jsonSizes = new WeakMap<object, number>();
 /** Exact JSON UTF-8 charge without allocating the serialized payload. Only
- * proved immutable graphs share their size; mutable drafts are measured live. */
-export function jsonByteLength(value: unknown): number {
+ * proved immutable graphs share their size; mutable drafts are measured live.
+ * Temporary Native encoders disable caching so their measurement cannot add
+ * persistent size/immutability metadata after its workspace owner ends. */
+export function jsonByteLength(value: unknown, options?: { readonly cache?: boolean }): number {
+  const cache = options?.cache !== false;
   const stringBytes = (text: string) => {
     let bytes = 2;
     for (let index = 0; index < text.length; index++) {
@@ -193,7 +196,7 @@ export function jsonByteLength(value: unknown): number {
     if (typeof input === 'number') return Number.isFinite(input) ? String(input).length : 4;
     if (typeof input === 'boolean') return input ? 4 : 5;
     if (typeof input !== 'object') return 0;
-    const cached = jsonSizes.get(input);
+    const cached = cache ? jsonSizes.get(input) : undefined;
     if (cached !== undefined) return cached;
     let bytes = 2,
       count = 0;
@@ -208,7 +211,7 @@ export function jsonByteLength(value: unknown): number {
         if (size === 0) continue;
         bytes += (count++ ? 1 : 0) + stringBytes(key) + 1 + size;
       }
-    if (isImmutableData(input)) jsonSizes.set(input, bytes);
+    if (cache && isImmutableData(input)) jsonSizes.set(input, bytes);
     return bytes;
   };
   return measure(value);

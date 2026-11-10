@@ -97,7 +97,11 @@ export function nativeActivityLearning(
         },
         signal,
       );
-      return result.ok;
+      try {
+        return result.ok;
+      } finally {
+        releaseNativeProduct(result);
+      }
     },
   };
 }

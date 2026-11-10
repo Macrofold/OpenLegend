@@ -151,7 +151,8 @@ class DecisionContextText {
 
   constructor(
     render: boolean,
-    private readonly jsonLength: (value: unknown, workspace: number) => number = jsonByteLength,
+    private readonly jsonLength: (value: unknown, workspace: number) => number = (value) =>
+      jsonByteLength(value),
   ) {
     this.parts = render ? [] : undefined;
   }

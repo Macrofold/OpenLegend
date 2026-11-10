@@ -8,7 +8,11 @@ import type { HostWork } from './host-work.js';
 import type { NativeGeometryProviders } from './native-geometry.js';
 import type { NativeHistoryReadContext } from './native-providers.js';
 import { driveNativeOperation } from './native-providers.js';
-import { decodeNativeProduct, retainNativeSources } from './native-consumer.js';
+import {
+  decodeNativeProduct,
+  retainNativeSources,
+  releaseNativeProduct,
+} from './native-consumer.js';
 import type { NativePublication } from './native-operation.js';
 import { postgresTransactionOutcome } from './postgres.js';
 
@@ -57,6 +61,8 @@ export async function acceptProtectedNativeOperation<T extends object>(request: 
   let committed = false;
   let parked = false;
   let commitFailure: unknown;
+  let publication: NativePublication | undefined;
+  let returned = false;
   const reject = async () => {
     if (ready) {
       if (prepared.settle(false)) throw new Error('Protected native rejection accepted state.');
@@ -68,11 +74,12 @@ export async function acceptProtectedNativeOperation<T extends object>(request: 
   };
   try {
     allocation = request.work.reserveAllocation(JSON.parse(prepared.allocation()) as WorkVector);
-    const publication = decodeNativeProduct<NativePublication>(prepared.takePublication());
+    publication = decodeNativeProduct<NativePublication>(prepared.takePublication());
     // Refused/no-change operations have no protected SQL prefix. Their actual
     // semantic result is returned after exact rollback, without a fake save.
     if (!publication.protectedSave || (request.requireSuccess && !publication.outcome.ok)) {
       await reject();
+      returned = true;
       return { publication };
     }
     staged = retainNativeSources(await request.stage(publication), publication);
@@ -80,6 +87,7 @@ export async function acceptProtectedNativeOperation<T extends object>(request: 
     ready = true;
     if (request.signal?.aborted || !request.current()) {
       await reject();
+      returned = true;
       return { publication };
     }
     try {
@@ -106,6 +114,7 @@ export async function acceptProtectedNativeOperation<T extends object>(request: 
     allocation.commit();
     request.accept(staged);
     if (commitFailure) throw commitFailure;
+    returned = true;
     return { publication, staged };
   } catch (error) {
     if (committed) {
@@ -117,5 +126,9 @@ export async function acceptProtectedNativeOperation<T extends object>(request: 
       }
     } else if (!settled && !parked) await reject();
     throw error;
+  } finally {
+    // A parked stage owns its independent publication pin. A failed caller
+    // receives no output, so end the original decoded root on every throw.
+    if (!returned && publication) releaseNativeProduct(publication);
   }
 }

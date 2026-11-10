@@ -99,19 +99,36 @@ impl HeldReceiptRegistry {
         payload: &Arc<AtomicBool>,
         budget: &ByteBudget,
     ) -> Result<(), ExecutionError> {
+        self.register_inventory(
+            &sources.scope.actor_id,
+            sources.scope.physical_life,
+            sources.receipts.iter().map(|receipt| &receipt.capture),
+            payload,
+            budget,
+        )
+    }
+    // Registration receives only the inventory already admitted by Sources.
+    // Keep binding independent of that inventory's container; it never admits
+    // a receipt, constructs a historical scope, or grants recall permission.
+    fn register_inventory<'a>(
+        &mut self,
+        actor_id: &str,
+        observer_life: u64,
+        receipts: impl Iterator<Item = &'a Arc<CapturedTemporalReceipt>> + Clone,
+        payload: &Arc<AtomicBool>,
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
         self.prune();
-        if sources.receipts.is_empty() || !payload.load(Ordering::Acquire) {
+        if !payload.load(Ordering::Acquire) {
             return Ok(());
         }
-        let actor_id = sources.scope.actor_id.as_str();
         let payload = Arc::downgrade(payload);
-        let count = sources
-            .receipts
-            .iter()
+        let count = receipts
+            .clone()
             .filter(|receipt| {
                 self.actors.get(actor_id).is_none_or(|actor| {
                     !actor.entries.iter().any(|entry| {
-                        Weak::ptr_eq(&entry.receipt, &Arc::downgrade(&receipt.capture))
+                        Weak::ptr_eq(&entry.receipt, &Arc::downgrade(receipt))
                             && Weak::ptr_eq(&entry.payload, &payload)
                     })
                 })
@@ -166,15 +183,15 @@ impl HeldReceiptRegistry {
                     .map_err(|_| ExecutionError::Capacity)?;
                 actor.storage = storage;
             }
-            for receipt in &sources.receipts {
-                let capture = Arc::downgrade(&receipt.capture);
+            for receipt in receipts {
+                let capture = Arc::downgrade(receipt);
                 if actor.entries.iter().any(|entry| {
                     Weak::ptr_eq(&entry.receipt, &capture) && Weak::ptr_eq(&entry.payload, &payload)
                 }) {
                     continue;
                 }
                 actor.entries.push(Entry {
-                    observer_life: sources.scope.physical_life,
+                    observer_life,
                     receipt: capture,
                     payload: payload.clone(),
                     _backing: backing.split_off(backing_bytes)?,
