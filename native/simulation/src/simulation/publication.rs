@@ -2,7 +2,6 @@
 //! release. Host input/permission and live-work reservations remain independent
 //! gates: preparing this private product alone never exposes a Ready candidate.
 use super::{SimulationState, encode_candidate_changes};
-use crate::administration::InstalledHostSettings;
 use crate::execution::{CandidateJournal, ExecutionError, PreparedJournalRelease};
 use crate::host::{
     AcceptedCandidate, ByteBudget, ByteReservation, CandidateFence, CandidateKey, CandidatePhase,
@@ -57,8 +56,7 @@ impl PreparedPublication {
         save: &mut SaveJournal,
         fence: &Arc<CandidateFence>,
         key: CandidateKey,
-        host: &InstalledHostSettings,
-        write_host: bool,
+        host: Option<super::save::HostSave<'_>>,
         protected: Option<crate::received::TemporalSaveLimits>,
         budget: &ByteBudget,
     ) -> Result<Self, PublicationError> {
@@ -68,7 +66,7 @@ impl PreparedPublication {
         fence.validate_phase(key, CandidatePhase::Preparing)?;
         let release = journal.prepare_release(state, key)?;
         let allocation = state.work_allocation().map_err(ExecutionError::from)?;
-        let rows = encode_candidate_changes(state, journal, write_host.then_some(host), budget)?;
+        let rows = encode_candidate_changes(state, journal, host, budget)?;
         let (changes, owners, rows_guard) = rows.into_parts();
         // The encoded rows keep their original custody until the accumulating
         // save has funded and taken the actual bodies. This is the last

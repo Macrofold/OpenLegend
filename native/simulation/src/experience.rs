@@ -25,8 +25,8 @@ pub(crate) use admission::{
     AwarenessAcquisitionError, AwarenessAdmission, PlacedAwarenessAccounts,
     acquire_awareness_accounts, prepare_awareness_admission,
 };
-pub(crate) mod intake;
 mod awareness;
+pub(crate) mod intake;
 pub use awareness::*;
 mod awareness_encoding;
 pub(crate) use awareness_encoding::{AwarenessEncoding, AwarenessFactory, AwarenessInput};
@@ -39,7 +39,9 @@ pub(crate) use history::{
     capture_history_input,
 };
 pub(crate) use player_events::{CapturedPlayerEvents, capture_player_events};
+pub(crate) mod consolidation;
 mod header_input;
+mod manifest_dependencies;
 mod originals;
 pub(crate) use originals::CapturedPersonalOriginals;
 mod archive_source;
@@ -304,6 +306,7 @@ pub struct PersonalSourceHeader {
     pub event_id: Option<String>,
     pub evidence_source_id: Option<String>,
     pub evidence_target_id: Option<String>,
+    pub heard_addressed_speech: bool,
     pub activity_id: Option<String>,
     pub source_receipt: Option<TemporalReceiptLocator>,
     pub record_kind: Option<String>,
@@ -319,6 +322,7 @@ pub struct PersonalSourceHeader {
     /// Every unresolved commitment counts, including forgotten records and a
     /// commitment that has no native obligation. This is not protection.
     pub unresolved_commitment: bool,
+    pub own_speech_promise: bool,
     /// The ordinary trade reader interprets only these acquired agreements.
     /// Positive social terms still require their own native semantic owner.
     pub personal_agreement: bool,
@@ -911,11 +915,28 @@ fn header(
         at,
         sequence,
         importance: number(body, "importance")?,
-        urgency: if kind == PersonalSourceKind::Awareness {optional_number(body,"urgency")?} else {None},
-        sensory: kind == PersonalSourceKind::Awareness && body.get("retentionClass").and_then(Value::as_str) == Some("sensory"),
+        urgency: if kind == PersonalSourceKind::Awareness {
+            optional_number(body, "urgency")?
+        } else {
+            None
+        },
+        sensory: kind == PersonalSourceKind::Awareness
+            && body.get("retentionClass").and_then(Value::as_str) == Some("sensory"),
         summary_coverage: if kind == PersonalSourceKind::Summary {
-            source_references(object(body.get("manifest").ok_or(ExperienceError::InvalidBody("manifest"))?)?.get("coverage").ok_or(ExperienceError::InvalidBody("manifest.coverage"))?)?.into_iter().map(|reference| reference.id).collect()
-        } else { Vec::new() },
+            source_references(
+                object(
+                    body.get("manifest")
+                        .ok_or(ExperienceError::InvalidBody("manifest"))?,
+                )?
+                .get("coverage")
+                .ok_or(ExperienceError::InvalidBody("manifest.coverage"))?,
+            )?
+            .into_iter()
+            .map(|reference| reference.id)
+            .collect()
+        } else {
+            Vec::new()
+        },
         event_id: optional_text(body, "eventId")?,
         evidence_source_id: if kind == PersonalSourceKind::Awareness {
             optional_text(body, "sourceId")?
@@ -927,6 +948,15 @@ fn header(
         } else {
             None
         },
+        heard_addressed_speech: kind == PersonalSourceKind::Awareness
+            && speech.is_some_and(|speech| {
+                speech.get("perception").and_then(Value::as_str) == Some("heard")
+                    && speech.get("addressing").and_then(Value::as_str) != Some("ambient")
+            })
+            && evidence
+                .and_then(|evidence| evidence.get("targetId"))
+                .and_then(Value::as_str)
+                == Some(actor_id),
         activity_id: optional_text(body, "activityId")?,
         source_receipt,
         record_kind,
@@ -937,10 +967,17 @@ fn header(
         retention,
         impression,
         unresolved_commitment,
+        own_speech_promise: unresolved_commitment
+            && body.get("speakerId").and_then(Value::as_str) == Some(actor_id)
+            && body.get("eventType").and_then(Value::as_str) == Some("speech"),
         personal_agreement,
         agreement_body,
         event_type: optional_text(body, "eventType")?,
-        outward_change: if kind == PersonalSourceKind::Awareness {optional_text(body,"change")?} else {None},
+        outward_change: if kind == PersonalSourceKind::Awareness {
+            optional_text(body, "change")?
+        } else {
+            None
+        },
         unresolved_obligation,
         obligation_due_at,
         obligation_evidence_id: body
@@ -1167,8 +1204,15 @@ impl PersonalSourceCollection {
     }
     pub fn records(
         &self,
-    ) -> impl DoubleEndedIterator<Item = &Arc<PersonalSourceRecord>> + ExactSizeIterator {
+    ) -> impl DoubleEndedIterator<Item = &Arc<PersonalSourceRecord>> + ExactSizeIterator + Clone
+    {
         self.by_ordinal.values()
+    }
+    /// Resident presence only: absence here makes no claim about cold history.
+    pub(crate) fn resident_record(&self, id: &str) -> Option<&Arc<PersonalSourceRecord>> {
+        self.lookup
+            .get(id)
+            .and_then(|position| self.by_ordinal.get(position))
     }
     pub fn get(&self, id: &str) -> Result<Option<&Arc<PersonalSourceRecord>>, ExperienceError> {
         if let Some(position) = self.lookup.get(id) {

@@ -419,22 +419,13 @@ export class CognitionMaintenance {
               );
               return;
             }
-            if (!this.activeAdmission) {
-              const admission: MaintenanceAdmission = {
-                actorId,
-                generation,
-                fence: actor.bodyFence,
-                purpose: 'maintenance',
-                requiresBody: true,
-              };
-              await this.host.publishActivityLearning(
-                batch,
-                [],
-                false,
-                admission,
-                new AbortController().signal,
-              );
-            }
+            await this.host.publishActivityLearning(
+              batch,
+              [],
+              false,
+              undefined,
+              new AbortController().signal,
+            );
           }
           if (this.host.config.jevOnly) continue;
           const future = [
@@ -663,24 +654,14 @@ export class CognitionMaintenance {
     generation: string,
     execute: (controller: AbortController) => Promise<void>,
   ) {
-    const actor = await this.host.actor(actorId);
-    if (
-      this.stopped ||
-      generation !== this.host.generation ||
-      this.host.paused ||
-      !actor ||
-      (reason !== 'consolidation' && !actor.available)
-    )
-      return;
-    const admission: MaintenanceAdmission = {
+    if (this.stopped || generation !== this.host.generation || this.host.paused) return;
+    const admission = await this.host.admission(
       actorId,
       generation,
-      fence: actor.bodyFence,
-      purpose: ['consolidation', 'activity-learning'].includes(reason)
-        ? ('maintenance' as const)
-        : ('reflection' as const),
-      requiresBody: reason !== 'consolidation',
-    };
+      ['consolidation', 'activity-learning'].includes(reason) ? 'maintenance' : 'reflection',
+      reason !== 'consolidation',
+    );
+    if (!admission) return;
     const controller = new AbortController();
     this.active = controller;
     this.activeAdmission = admission;
@@ -703,6 +684,7 @@ export class CognitionMaintenance {
         !this.host.paused;
     } finally {
       if (!admitted) {
+        this.host.releaseAdmission(admission);
         this.active = null;
         this.activeAdmission = null;
       }
@@ -715,6 +697,7 @@ export class CognitionMaintenance {
         /* Job receipt records failure; no paid retry. */
       })
       .finally(() => {
+        this.host.releaseAdmission(admission);
         this.active = null;
         this.activeAdmission = null;
         this.pending = null;
@@ -773,7 +756,7 @@ export class CognitionMaintenance {
     try {
       await this.log.withTrigger(id, () =>
         this.executionLease
-          ? this.host.withExecution(id, this.executionLease, () => execute(job))
+          ? this.host.withExecution(actorId, id, this.executionLease, () => execute(job))
           : execute(job),
       );
       job.status = 'completed';
@@ -1240,8 +1223,8 @@ export class CognitionMaintenance {
           request.requestId,
           'openai',
           (publication) =>
-            this.log.run('Reflection harness', request, () =>
-              this.macrofold.reflect({ ...request, publication }, prepared.files),
+            this.log.run('Reflection harness', request, async () =>
+              this.macrofold.reflect({ ...request, publication }, await prepared.files()),
             ),
           undefined,
           undefined,

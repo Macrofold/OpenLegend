@@ -1,4 +1,6 @@
 import { INVOCATION_LIMITS } from './action-capabilities.js';
+import { activityLearningLanguage } from './native-command-contracts.js';
+import { ACTIVITY_LEARNING_PREPARATION, ACTIVITY_LEARNING_FAILURE_CODES } from './activity-learning.js';
 import { MOVEMENT, SPATIAL_LIMITS } from '@open-legend/spatial';
 import { ACTIVITY_DISPLAY_BYTES, ACTIVITY_LIMITS } from './action-experience.js';
 import { MAX_CHANGE_SCOPES } from './dependencies.js';
@@ -70,6 +72,11 @@ export const nativeSetupSettings = immutableDataSnapshot({
   movement: MOVEMENT,
   timeEpsilon: TIME_EPSILON,
   activity: ACTIVITY_LIMITS,
+  activityLearning: {
+    ...activityLearningLanguage(),
+    preparation: ACTIVITY_LEARNING_PREPARATION,
+    failureCodes: ACTIVITY_LEARNING_FAILURE_CODES,
+  },
   activityDisplayBytes: ACTIVITY_DISPLAY_BYTES,
   nativeResponse: NATIVE_RESPONSE_LIMITS,
   personalEvidencePreparation: PERSONAL_EVIDENCE_PREPARATION,

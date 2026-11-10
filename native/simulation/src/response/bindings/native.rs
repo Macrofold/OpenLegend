@@ -9,15 +9,36 @@ use crate::execution::CoreMutation;
 use crate::host::CandidateKey;
 use std::sync::Arc;
 
+#[derive(Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub(crate) enum ResponseConsumer {
+    Inspection,
+    Chat,
+    Thought,
+    Reflection,
+}
+impl ResponseConsumer {
+    pub(crate) fn as_str(self) -> &'static str {
+        match self {
+            Self::Inspection => "inspection",
+            Self::Chat => "chat",
+            Self::Thought => "thought",
+            Self::Reflection => "reflection",
+        }
+    }
+}
+
 /// Chosen by the admitted director route at issuance, never by model output.
 #[derive(Clone, Copy, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) enum ResponseValidityRoute {
     Decision,
     PreparedResponse,
+    Source,
 }
 
 pub(crate) struct ResponseNativeGuard {
+    pub(crate) consumer: ResponseConsumer,
     pub(crate) route: ResponseValidityRoute,
     pub(crate) scope: Arc<NpcHistoricalScope>,
     pub(crate) sources: Arc<Vec<PreparedNpcSources>>,
@@ -25,6 +46,7 @@ pub(crate) struct ResponseNativeGuard {
     /// actual evidence/appraisal/trigger selections participate in this guard.
     pub(crate) selected_personal: Vec<(usize, usize)>,
     pub(crate) perspectives: Vec<crate::capture::NpcPerspectiveOrdinal>,
+    pub(crate) perspective_snapshots: Arc<Vec<crate::capture::NpcPerspectiveSnapshot>>,
     pub(crate) appraisals: Option<Arc<PreparedResponseAppraisals>>,
     pub(crate) attempt_candidates: Arc<Vec<ResponseAttemptCandidate>>,
     pub(crate) _original_custody: Arc<ByteReservation>,
@@ -36,17 +58,24 @@ impl ResponseNativeGuard {
     pub(crate) fn current(
         &self,
         state: &SimulationState,
+        original: &AcceptedActorRead,
         read: &AcceptedActorRead,
         actor: &str,
         budget: &ByteBudget,
     ) -> Result<bool, ExecutionError> {
-        Ok(crate::capture::npc_perspectives_current(
-            state,
-            actor,
-            &self.sources,
-            &self.perspectives,
-            budget,
-        )? && self.scope.still_permitted(state)
+        Ok(original
+            .native_validity
+            .as_ref()
+            .ok_or(ExecutionError::InvalidCheckpoint)?
+            .required_outcomes_current(state, actor, budget)?
+            && crate::capture::npc_perspectives_current(
+                state,
+                actor,
+                &self.perspective_snapshots,
+                &self.perspectives,
+                budget,
+            )?
+            && self.scope.still_permitted(state)
             && self
                 .sources
                 .iter()
@@ -115,6 +144,7 @@ impl ResponseNativeGuard {
             core,
             Arc::clone(&self.scope),
             NpcSourceSelection {
+                consolidation_job: None,
                 personal,
                 receipts: Vec::new(),
             },

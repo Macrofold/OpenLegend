@@ -24,6 +24,12 @@ pub(crate) enum NpcCatalogueSource {
     Original,
     Current,
 }
+#[derive(Clone, Copy, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub(crate) enum NpcBindingPurpose {
+    Decision,
+    Reflection,
+}
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct NpcActionOrdinal {
@@ -126,8 +132,7 @@ pub(crate) struct NpcPersonalEvidence {
 #[derive(Clone, Copy, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct NpcPerspectiveOrdinal {
-    pub inventory: usize,
-    pub ordinal: usize,
+    pub snapshot: usize,
     pub entity: usize,
 }
 #[derive(Deserialize)]
@@ -151,6 +156,8 @@ pub(crate) enum NpcObservationOrdinal {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct NpcBindingSelection {
+    pub consumer: crate::response::ResponseConsumer,
+    pub purpose: NpcBindingPurpose,
     pub validity: crate::response::ResponseValidityRoute,
     pub actions: Vec<NpcActionOrdinal>,
     pub prototype_source: NpcCatalogueSource,
@@ -171,6 +178,8 @@ pub(crate) struct NpcBindingSelection {
 }
 
 pub(crate) struct NpcBindingMaps {
+    pub consumer: crate::response::ResponseConsumer,
+    pub purpose: NpcBindingPurpose,
     pub validity: crate::response::ResponseValidityRoute,
     pub actions: IndexMap<String, ResponseActionChoice>,
     pub ordinary_aliases: Vec<String>,
@@ -198,21 +207,17 @@ fn invalid() -> ExecutionError {
 pub(crate) fn npc_perspectives_current(
     state: &SimulationState,
     actor: &str,
-    sources: &[PreparedNpcSources],
+    snapshots: &[super::NpcPerspectiveSnapshot],
     selected: &[NpcPerspectiveOrdinal],
     budget: &ByteBudget,
 ) -> Result<bool, ExecutionError> {
     if selected.is_empty() {
         return Ok(true);
     }
-    let source = |selected: &NpcPerspectiveOrdinal| {
-        sources
-            .get(selected.inventory)
-            .and_then(|inventory| inventory.personal.get(selected.ordinal))
-    };
-    let ids = selected.iter().map(|selected| {
-        source(selected).and_then(|source| source.attribution.perspective_entity(selected.entity))
-    });
+    let snapshot = |selected: &NpcPerspectiveOrdinal| snapshots.get(selected.snapshot);
+    let ids = selected
+        .iter()
+        .map(|selected| snapshot(selected).and_then(|snapshot| snapshot.entity(selected.entity)));
     if ids.clone().any(|id| id.is_none()) {
         return Err(invalid());
     }
@@ -225,11 +230,7 @@ pub(crate) fn npc_perspectives_current(
     )?;
     let current = names.capture_attribution_identities(ids.flatten(), budget)?;
     Ok(selected.iter().all(|selected| {
-        source(selected).is_some_and(|source| {
-            source
-                .attribution
-                .perspective_matches(selected.entity, &current)
-        })
+        snapshot(selected).is_some_and(|snapshot| snapshot.matches(selected.entity, &current))
     }))
 }
 fn reserve(storage: &mut ByteReservation, bytes: usize) -> Result<(), ExecutionError> {
@@ -259,8 +260,9 @@ pub(crate) struct NpcBindingRead<'a> {
     pub references: &'a NpcReferenceFacts,
     pub original_references: &'a NpcReferenceFacts,
     pub sources: &'a [PreparedNpcSources],
-    pub candidates: &'a PreparedNpcCandidates,
-    pub original_candidates: &'a PreparedNpcCandidates,
+    pub perspectives: &'a [super::NpcPerspectiveSnapshot],
+    pub candidates: Option<&'a PreparedNpcCandidates>,
+    pub original_candidates: Option<&'a PreparedNpcCandidates>,
     pub intent_ids: &'a [String],
     pub invocation_id: &'a str,
 }
@@ -268,6 +270,7 @@ impl NpcBindingRead<'_> {
     fn body(&self, ordinal: usize) -> Result<&super::CapturedBodyBinding, ExecutionError> {
         if !self
             .candidates
+            .ok_or_else(invalid)?
             .selection()
             .body_ordinals()
             .contains(&ordinal)
@@ -344,11 +347,34 @@ impl NpcBindingMaps {
         if !crate::response::ResponseReads::compatible(read.original, read.current)
             || state.generation != read.current.perception.evidence.generation()
             || state.physical.header.id != read.current.perception.world_id
-            || !read.candidates.work.current(state, actor)
             || read
                 .sources
                 .iter()
                 .any(|source| !source.scope.still_permitted(state))
+        {
+            return Err(invalid());
+        }
+        if !read
+            .original
+            .native_validity
+            .as_ref()
+            .ok_or_else(invalid)?
+            .required_outcomes_current(state, actor, budget)?
+        {
+            return Err(invalid());
+        }
+        if selection.consumer == crate::response::ResponseConsumer::Inspection
+            || matches!(
+                selection.validity,
+                crate::response::ResponseValidityRoute::Source
+            ) != (selection.purpose == NpcBindingPurpose::Reflection)
+            || (selection.consumer == crate::response::ResponseConsumer::Reflection)
+                != (selection.purpose == NpcBindingPurpose::Reflection)
+            || selection.purpose == NpcBindingPurpose::Decision
+                && (read.candidates.is_none() || read.original_candidates.is_none())
+            || selection.appraisals.as_ref().is_some_and(|appraisals| {
+                appraisals.reflection() != (selection.purpose == NpcBindingPurpose::Reflection)
+            })
         {
             return Err(invalid());
         }
@@ -358,14 +384,16 @@ impl NpcBindingMaps {
             .checked_add(1)
             .ok_or(ExecutionError::Capacity)?;
         let encounter_count = count
-            .checked_add(read.candidates.selection().body_ordinals().len())
+            .checked_add(
+                read.candidates
+                    .map_or(0, |candidates| candidates.selection().body_ordinals().len()),
+            )
             .ok_or(ExecutionError::Capacity)?;
         for selected in &selection.perspectives {
             if read
-                .sources
-                .get(selected.inventory)
-                .and_then(|inventory| inventory.personal.get(selected.ordinal))
-                .and_then(|source| source.attribution.perspective_entity(selected.entity))
+                .perspectives
+                .get(selected.snapshot)
+                .and_then(|snapshot| snapshot.entity(selected.entity))
                 .is_none()
             {
                 return Err(invalid());
@@ -504,23 +532,32 @@ impl NpcBindingMaps {
                 selected_personal.push(source);
             }
         }
-        let (mut actions, ordinary_aliases, action_storage) = prepare_ordinary_actions(
-            read.original_candidates,
-            read.candidates,
-            &selection.actions,
-            actor,
-            read.invocation_id,
-            selection.intents.len(),
-            budget,
-        )?;
+        let (mut actions, ordinary_aliases, action_storage) =
+            if let (Some(original), Some(current)) = (read.original_candidates, read.candidates) {
+                prepare_ordinary_actions(
+                    original,
+                    current,
+                    &selection.actions,
+                    actor,
+                    read.invocation_id,
+                    selection.intents.len(),
+                    budget,
+                )?
+            } else {
+                if !selection.actions.is_empty() || !selection.intents.is_empty() {
+                    return Err(invalid());
+                }
+                (IndexMap::new(), Vec::new(), budget.reserve(0)?)
+            };
         storage.merge(action_storage)?;
         for selected in &selection.intents {
+            let candidates = read.candidates.ok_or_else(invalid)?;
             let intent = read.intent_ids.get(selected.ordinal).ok_or_else(invalid)?;
             reserve(
                 &mut storage,
                 heap_sum([
                     selected.alias.len(),
-                    read.candidates
+                    candidates
                         .work
                         .heap_bytes()
                         .ok_or(ExecutionError::Capacity)?,
@@ -542,7 +579,7 @@ impl NpcBindingMaps {
                         invocation: Some(SqlCell::Object(command)),
                         purpose: None,
                         transition: crate::commands::WorkTransitionMode::Continue,
-                        expected_work: read.candidates.work.clone(),
+                        expected_work: candidates.work.clone(),
                     },
                 )
                 .is_some()
@@ -556,7 +593,10 @@ impl NpcBindingMaps {
         let mut intention_references = IndexMap::with_capacity(count);
         let mut entity_leases = IndexMap::with_capacity(count);
         let mut expected_encounters = IndexMap::with_capacity(encounter_count);
-        for &ordinal in read.candidates.selection().body_ordinals() {
+        for &ordinal in read
+            .candidates
+            .map_or(&[][..], |candidates| candidates.selection().body_ordinals())
+        {
             let body = read.body(ordinal)?;
             if let Some(episode) = &body.episode {
                 reserve(&mut storage, body.source_id.len() + episode.len())?;
@@ -895,6 +935,8 @@ impl NpcBindingMaps {
             .ok_or(ExecutionError::Capacity)?,
         )?;
         Ok(Self {
+            consumer: selection.consumer,
+            purpose: selection.purpose,
             validity: selection.validity,
             actions,
             ordinary_aliases,

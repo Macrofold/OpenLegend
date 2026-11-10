@@ -42,6 +42,7 @@ pub(crate) fn install_activity(
     present: bool,
     limits: Arc<ActivityLimits>,
     display: Arc<ActivityDisplayLimits>,
+    language: Arc<super::learning::InstalledLearningLanguage>,
     budget: &crate::host::ByteBudget,
 ) -> Result<ActivityState, InstallError> {
     let (row, header) = take_one::<ActivityHeader>(
@@ -86,29 +87,7 @@ pub(crate) fn install_activity(
             return Err(InstallError::DuplicateRow);
         }
     }
-    // These are genuine unsupported installed owners, not empty replacements.
-    // Their empty root maps are consumed; any actual member refuses closure.
-    if !take_collection(
-        import,
-        "activity_methods",
-        "[\"world\",\"actionExperience\"]",
-        true,
-        true,
-    )?
-    .rows
-    .is_empty()
-        || !take_collection(
-            import,
-            "activity_acquisitions_owners",
-            "[\"world\",\"actionExperience\"]",
-            true,
-            true,
-        )?
-        .rows
-        .is_empty()
-    {
-        return Err(InstallError::CurrentFormat);
-    }
+    let library = super::learning::install_library(import, &language, &limits, budget)?;
     let learning = map(import, "activity_learning", "learning")?;
     let current = map(import, "activity_current", "current")?;
     let active = map(import, "activity_active", "active")?;
@@ -124,6 +103,8 @@ pub(crate) fn install_activity(
         changes,
         limits,
         display,
+        language,
+        library,
         budget,
     )
     .map_err(|_| InstallError::CurrentFormat)

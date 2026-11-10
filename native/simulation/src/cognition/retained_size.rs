@@ -49,17 +49,10 @@ pub(super) fn mind_parent_bytes(
 ) -> Option<usize> {
     let minds = minds.iter().try_fold(
         map_storage::<String, ActorMind>(minds.capacity())?,
-        |sum, (key, mind)| heap_sum([sum, key.capacity(), mind.last_dream_episode.heap_bytes()?]),
+        |sum, (key, _mind)| heap_sum([sum, key.capacity()]),
     )?;
     inner.iter().try_fold(
         minds.checked_add(map_storage::<String, InnerWorld>(inner.capacity())?)?,
-        |sum, (key, value)| {
-            heap_sum([
-                sum,
-                key.capacity(),
-                value.source_snapshot.capacity(),
-                value.publication_job_id.capacity(),
-            ])
-        },
+        |sum, (key, _value)| heap_sum([sum, key.capacity()]),
     )
 }

@@ -116,7 +116,10 @@ impl ActivityJournal {
                 ActivityUndo::Learning { key, before } => {
                     learning.entry(key.as_str()).or_insert(before.is_some());
                 }
-                ActivityUndo::Pending { .. } | ActivityUndo::Loaded { .. } => {}
+                ActivityUndo::Pending { .. }
+                | ActivityUndo::Loaded { .. }
+                | ActivityUndo::MethodInsert { .. }
+                | ActivityUndo::Acquisition { .. } => {}
             }
         }
         if header {
@@ -269,6 +272,7 @@ impl ActivityJournal {
             output,
             budget,
         )?;
+        self.encode_learning_changes(state, ledger, output, budget)?;
         encode_map(
             &state.learning,
             "learning",

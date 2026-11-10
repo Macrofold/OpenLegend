@@ -23,6 +23,7 @@ mod privacy;
 mod read_cut;
 mod restore;
 mod retained_values;
+mod startup;
 
 fn activation_available(world: &Arc<WorldRuntime>, worlds: &[Arc<WorldRuntime>]) -> Result<()> {
     if world.active.load(Ordering::Acquire)

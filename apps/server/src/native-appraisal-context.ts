@@ -63,7 +63,7 @@ export async function nativeAppraisals(input: {
       ...input.evidenceIds,
     ]),
   ].slice(0, APPRAISAL_SOURCE_BINDINGS);
-  const selected = await service.withNpcMemoryRead(scope.actorId, () =>
+  const selected = await service.withActorMemoryRead(scope.actorId, () =>
     service.store.memories.appraisalSources(scope, requested),
   );
   const refs: PersonalSourceRef[] = selected.map((source) => ({
@@ -162,7 +162,7 @@ export async function nativeAppraisals(input: {
   };
   const proof = selected.map(memorySourceProof);
   const sourceCurrent = () =>
-    service.withNpcMemoryRead(scope.actorId, () => service.store.memories.current(scope, proof));
+    service.withActorMemoryRead(scope.actorId, () => service.store.memories.current(scope, proof));
   await service.publishNpcHistory(original, () => true);
   if (!(await sourceCurrent())) throw new ViewChangedError();
   return retainNativeSources(

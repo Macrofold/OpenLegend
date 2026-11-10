@@ -6,6 +6,42 @@ import { describeAttack, type StrikeDefinition } from '../../strikes.js';
 import { FOLLOW_RULES } from './navigation.js';
 
 type DisplayPurpose = { purpose?: string; chosenPurpose?: string };
+export type OrdinaryActivityNameInput = {
+  command: DisplayPurpose & {
+    type: 'move' | 'say' | 'status-effect' | 'follow' | 'strike';
+    operation?: 'activate' | 'deactivate';
+  };
+  effect?: { label: string; activate?: string; deactivate?: string };
+};
+/** The name is independent of target sight and result facts. Keep the same
+ * authored name factory for ordinary displays and shared learned templates. */
+export function ordinaryActivityName({ command, effect }: OrdinaryActivityNameInput): string {
+  if (command.type === 'status-effect' && effect)
+    return command.operation === 'activate'
+      ? (effect.activate ?? `Begin ${effect.label}`)
+      : (effect.deactivate ?? `End ${effect.label}`);
+  return (
+    command.purpose ??
+    (command.type === 'move'
+      ? 'Move'
+      : command.type === 'say'
+        ? 'Speak'
+        : command.type === 'follow'
+          ? 'Follow'
+          : command.type === 'strike'
+            ? 'Attack once'
+            : 'Act')
+  );
+}
+export function sharedOrdinaryActivityName(input: OrdinaryActivityNameInput): string {
+  return ordinaryActivityName({
+    ...input,
+    command: {
+      ...input.command,
+      purpose: input.command.purpose === 'Hunt once' ? 'Hunt once' : undefined,
+    },
+  });
+}
 export type OrdinaryActivityViewInput = {
   command: DisplayPurpose &
     (
@@ -29,17 +65,7 @@ export type OrdinaryActivityViewInput = {
 export function ordinaryActivityView(input: OrdinaryActivityViewInput): ActivityView {
   const { command, actor, target, effect, strike } = input;
   const view: ActivityView = {
-    name:
-      command.purpose ??
-      (command.type === 'move'
-        ? 'Move'
-        : command.type === 'say'
-          ? 'Speak'
-          : command.type === 'follow'
-            ? 'Follow'
-            : command.type === 'strike'
-              ? 'Attack once'
-              : 'Act'),
+    name: ordinaryActivityName(input),
     facts: [],
   };
   if (command.chosenPurpose !== undefined)
@@ -83,11 +109,6 @@ export function ordinaryActivityView(input: OrdinaryActivityViewInput): Activity
     });
   }
   if (command.type === 'status-effect') {
-    if (effect)
-      view.name =
-        command.operation === 'activate'
-          ? (effect.activate ?? `Begin ${effect.label}`)
-          : (effect.deactivate ?? `End ${effect.label}`);
     view.facts.push({
       name: 'result',
       value: 'An attempt; the actual applied or resisted change is recorded when it happens',

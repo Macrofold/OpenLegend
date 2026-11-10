@@ -159,6 +159,7 @@ pub(crate) struct NativeSetupSettings {
     pub movement: MovementSettings,
     pub time_epsilon: f64,
     pub activity: ActivityLimits,
+    pub activity_learning: crate::activity::LearningLanguage,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub activity_display_bytes: u64,
     pub native_response: ResponseSettings,

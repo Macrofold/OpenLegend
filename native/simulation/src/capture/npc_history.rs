@@ -52,7 +52,15 @@ pub(crate) struct NpcHistoricalScope {
     pub frontier: Option<ReceivedFrontier>,
     pub receipt_prefix: NpcHistoryPrefix,
     #[serde(skip)]
+    permission: HistoricalPermission,
+    #[serde(skip)]
     _storage: ByteReservation,
+}
+enum HistoricalPermission {
+    ReceivingLife,
+    /// Maintenance of already owned personal accounts does not require a live
+    /// body. This private constructor never grants temporal receipt selection.
+    PersonalOwner,
 }
 
 impl NpcHistoricalScope {
@@ -62,18 +70,63 @@ impl NpcHistoricalScope {
         serial: u64,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
-        let cut = read.perception.evidence.cut();
         if state.accepted_cut != read.accepted_cut
             || state.generation != read.perception.evidence.generation()
             || state.physical.header.id != read.perception.world_id
         {
             return Err(ExecutionError::InvalidCheckpoint);
         }
-        let actor = &read.perception.actor_id;
+        Self::capture_owner(
+            state,
+            &read.perception.actor_id,
+            serial,
+            read.perception.evidence.cut().observer.physical_life,
+            read.perception.evidence.cut().privacy_revision,
+            HistoricalPermission::ReceivingLife,
+            budget,
+        )
+    }
+
+    pub(crate) fn capture_personal(
+        state: &SimulationState,
+        actor: &str,
+        serial: u64,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let history = state
+            .experience
+            .actor(actor)
+            .ok_or(ExecutionError::InvalidCheckpoint)?;
+        let physical = state
+            .physical
+            .entities
+            .get(actor)
+            .and_then(|entity| entity.actor.as_ref())
+            .ok_or(ExecutionError::InvalidCheckpoint)?;
+        Self::capture_owner(
+            state,
+            actor,
+            serial,
+            physical.physical_life.unwrap_or(0),
+            history.privacy.revision(),
+            HistoricalPermission::PersonalOwner,
+            budget,
+        )
+    }
+
+    fn capture_owner(
+        state: &SimulationState,
+        actor: &str,
+        serial: u64,
+        physical_life: u64,
+        privacy_revision: u64,
+        permission: HistoricalPermission,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
         let temporal = state.temporal.actor(actor);
         let epoch = temporal.map_or(0, |history| history.header().epoch.len());
         let bytes = (size_of::<Self>() + 2 * size_of::<usize>())
-            .checked_add(read.perception.world_id.len())
+            .checked_add(state.physical.header.id.len())
             .and_then(|n| n.checked_add(state.generation.len()))
             .and_then(|n| n.checked_add(actor.len()))
             .and_then(|n| n.checked_add(epoch))
@@ -97,16 +150,16 @@ impl NpcHistoricalScope {
             },
         };
         Ok(Self {
-            world_id: read.perception.world_id.clone(),
+            world_id: state.physical.header.id.clone(),
             generation: state.generation.clone(),
-            actor_id: actor.clone(),
+            actor_id: actor.to_owned(),
             read_serial: serial,
-            accepted_cut: read.accepted_cut,
+            accepted_cut: state.accepted_cut,
             identity_through,
             sequence: state.physical.header.sequence,
-            at: read.perception.at,
-            physical_life: cut.observer.physical_life,
-            privacy_revision: cut.privacy_revision,
+            at: state.physical.header.sim_time,
+            physical_life,
+            privacy_revision,
             max_age_seconds: state
                 .installed
                 .attention
@@ -117,6 +170,7 @@ impl NpcHistoricalScope {
             released_through: temporal.and_then(|history| history.header().released_through),
             frontier: temporal.and_then(|history| history.header().frontier.clone()),
             receipt_prefix,
+            permission,
             _storage: storage,
         })
     }
@@ -127,12 +181,13 @@ impl NpcHistoricalScope {
         state.generation == self.generation
             && state.physical.header.id == self.world_id
             && state.physical.header.sim_time >= self.at
-            && state
-                .physical
-                .entities
-                .get(&self.actor_id)
-                .and_then(|entity| entity.actor.as_ref())
-                .is_some_and(|actor| actor.physical_life.unwrap_or(0) == self.physical_life)
+            && (matches!(self.permission, HistoricalPermission::PersonalOwner)
+                || state
+                    .physical
+                    .entities
+                    .get(&self.actor_id)
+                    .and_then(|entity| entity.actor.as_ref())
+                    .is_some_and(|actor| actor.physical_life.unwrap_or(0) == self.physical_life))
             && state
                 .experience
                 .actor(&self.actor_id)
@@ -140,7 +195,22 @@ impl NpcHistoricalScope {
                 == self.privacy_revision
     }
 
+    pub(super) fn allows_selection(&self, receipts_empty: bool) -> bool {
+        match self.permission {
+            HistoricalPermission::PersonalOwner => receipts_empty,
+            HistoricalPermission::ReceivingLife => {
+                matches!(self.receipt_prefix, NpcHistoryPrefix::Known { .. })
+            }
+        }
+    }
+
+    pub(super) fn allows_consolidation(&self) -> bool {
+        matches!(self.permission, HistoricalPermission::PersonalOwner)
+    }
     pub(crate) fn includes_receipt(&self, receipt: &TemporalReceipt) -> bool {
+        if matches!(self.permission, HistoricalPermission::PersonalOwner) {
+            return false;
+        }
         let NpcHistoryPrefix::Known { prefix } = &self.receipt_prefix else {
             return false;
         };

@@ -16,15 +16,13 @@ pub(crate) use state::{ResponseCheckpoint, ResponseJournal, ResponseState};
 mod envelope;
 mod save;
 pub(crate) use envelope::{ActorResponse, ResponseKind, ResponseOperation};
-mod digest;
-pub(crate) use digest::{ResponseDigestAnswer, ResponseDigestRequest};
 mod bindings;
 pub(crate) use bindings::{
     AppraisalCreatesAnswer, AppraisalCreatesRequest, AppraisalSelection,
     PreparedResponseAppraisals, ResponseActionChoice, ResponseAttemptBinding,
-    ResponseAttemptCandidate, ResponseBindingInput, ResponseBindings, ResponseNativeGuard,
-    ResponseObservation, ResponseReads, ResponseSemanticCause, ResponseSituation,
-    ResponseValidityRoute, ResponseWorkIdentity, capture_attempt_candidates,
+    ResponseAttemptCandidate, ResponseBindingInput, ResponseBindings, ResponseConsumer,
+    ResponseNativeGuard, ResponseObservation, ResponseReads, ResponseSemanticCause,
+    ResponseSituation, ResponseValidityRoute, ResponseWorkIdentity, capture_attempt_candidates,
 };
 mod aliases;
 pub(crate) use aliases::ResponseAliases;

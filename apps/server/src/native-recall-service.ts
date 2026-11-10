@@ -76,7 +76,7 @@ export async function retrieveNativeRecall(input: {
   const repository = service.store.memories;
   if (!repository) throw new Error('Native recall requires the actor-scoped memory repository.');
   const actorId = scope.actorId;
-  const sql = <T>(operation: () => Promise<T>) => service.withNpcMemoryRead(actorId, operation);
+  const sql = <T>(operation: () => Promise<T>) => service.withActorMemoryRead(actorId, operation);
   let noteCapture: NativeNpcCapture | undefined;
   try {
     const recalled = await retrieveRecall({

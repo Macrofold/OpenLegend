@@ -51,12 +51,28 @@ impl ActionMessage {
 }
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct AudienceMilestone {
+    pub id: String,
+    pub event_type: String,
+}
+impl AudienceMilestone {
+    pub(crate) fn earned_by_audience_member(
+        &self,
+        event: &crate::events::WorldEvent,
+        actor: &str,
+    ) -> bool {
+        event.event_type == self.event_type && event.actor_id.as_deref() != Some(actor)
+    }
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct OrdinaryActionRules {
     pub id: String,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub version: u64,
     pub plan: plan_rules::PlanRules,
     pub participation: ParticipationRules,
+    pub audience_milestone: AudienceMilestone,
     pub invalid_command: ActionMessage,
     pub unknown_actor: ActionMessage,
     pub inactive: ActionMessage,

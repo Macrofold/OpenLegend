@@ -53,5 +53,18 @@ pub(super) fn serialize<M: SerializeMap>(
             map.serialize_entry("privacyChange", &change)?;
         }
     }
+    if let CompletedOperation::Consolidation(done) = operation {
+        if done.outcome.ok {
+            struct Retired<'a>(&'a str, &'a [String]);
+            impl Serialize for Retired<'_> {
+                fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+                    let mut m = s.serialize_map(Some(1))?;
+                    m.serialize_entry(self.0, self.1)?;
+                    m.end()
+                }
+            }
+            map.serialize_entry("invalidatedMemoryIds", &Retired(&done.actor, &done.retired))?;
+        }
+    }
     Ok(())
 }

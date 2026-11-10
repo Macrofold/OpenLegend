@@ -24,6 +24,7 @@ import { endOwnOffense } from './combat-encounters.js';
 import { validExactInventorySources } from './native-command-contracts.js';
 import {
   activityInvocationFields,
+  activitySelfBinding,
   commandEntityFields,
   nativeBindingKind,
   nativeOutputBinding,
@@ -1490,7 +1491,7 @@ export function validateActionExperience(world: WorldState): void {
         (rule.kind === 'text' &&
           rule.commandFields.some((field) => nativeBindingKind(field) !== 'text')) ||
         (rule.kind === 'self' &&
-          (rule.commandFields.some((field) => !['sourceId', 'destinationId'].includes(field)) ||
+          (rule.commandFields.some((field) => !activitySelfBinding(field)) ||
             rule.definitionId !== undefined ||
             rule.entityKind !== undefined ||
             rule.maximumHealth !== undefined ||

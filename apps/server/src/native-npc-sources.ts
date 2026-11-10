@@ -40,6 +40,7 @@ export interface NativeNpcHistoricalScope {
       };
 }
 export interface NativeNpcSourceSelection {
+  readonly consolidationJob?: string;
   readonly receipts: readonly {
     readonly locator: TemporalReceiptLocator;
     readonly memberIndices?: readonly number[];
@@ -139,8 +140,10 @@ export type NativeNpcSubjectOrdinal =
       readonly subject: number;
     };
 export interface NativeNpcBindingSelection {
+  readonly consumer: 'chat' | 'thought' | 'reflection';
+  readonly purpose: 'decision' | 'reflection';
   /** The admitted director route; never selected from model response JSON. */
-  readonly validity: 'decision' | 'prepared-response';
+  readonly validity: 'decision' | 'prepared-response' | 'source';
   readonly actions: readonly (NativeNpcAliasOrdinal & {
     readonly source: 'original' | 'current';
   })[];
@@ -148,11 +151,7 @@ export interface NativeNpcBindingSelection {
   /** Ordinals in the admitted trigger's native unresolved-cause roster. */
   readonly semanticCauses: readonly number[];
   /** Exact selected conversation perspective dependencies, including empty identities. */
-  readonly perspectives: readonly {
-    readonly inventory: number;
-    readonly ordinal: number;
-    readonly entity: number;
-  }[];
+  readonly perspectives: readonly { readonly snapshot:number; readonly entity:number }[];
   /** Ordinals address the refreshed native read's actual pending intent list. */
   readonly intents: readonly NativeNpcAliasOrdinal[];
   /** Sources actually included in the compact request, in presentation order. */
@@ -226,7 +225,7 @@ export async function readNativeNpcSources(
     origin.worldId !== cut.worldId ||
     origin.generation !== cut.generation ||
     binding.baseCut !== cut.sequence ||
-    origin.receiptPrefix.state !== 'known'
+    (selection.receipts.length > 0 && origin.receiptPrefix.state !== 'known')
   )
     throw new Error('Native source preparation has no matching accepted SQL overlay.');
   return db.readAtCut(cut, () =>
@@ -412,10 +411,19 @@ export async function readNativeNpcSources(
           }
         }
       }
+      const duplicate = selection.consolidationJob === undefined ? undefined : (
+        await db.prepare(
+          'SELECT EXISTS(SELECT 1 FROM mind_summaries WHERE world_id=? AND actor_id=? AND left(source_id,length(?))=?) AS present',
+        ).get(cut.worldId, origin.actorId, `${selection.consolidationJob}:`, `${selection.consolidationJob}:`)
+      )?.['present'];
+      if (selection.consolidationJob !== undefined && typeof duplicate !== 'boolean')
+        throw new Error('Consolidation has no exact current summary witness.');
       const result = {
         binding,
         readSerial: origin.readSerial,
-        rows: { pages, values, personal, parents },
+        rows: { pages, values, personal, parents,
+          ...(selection.consolidationJob === undefined ? {} : { duplicateSummary: duplicate }),
+        },
       };
       if (Buffer.byteLength(JSON.stringify(result)) > request.maximumTransferBytes)
         throw new Error('Native source witnesses exceed their admitted transfer allowance.');

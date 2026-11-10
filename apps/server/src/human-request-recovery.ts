@@ -3,12 +3,15 @@ import { scopeKey, type RequestScope } from './authority.js';
 import { humanRequestId } from './human-request-id.js';
 import type { WorldService } from './world-service.js';
 
+/** Only the actual authority, timeline and durable job owner are needed. */
+export type HumanRequestRecoveryOwner = Pick<WorldService, 'assertScope' | 'store' | 'timelineId'>;
+
 /** Inspect one original admission without repeating generation or changing its funding.
  * A missing record can still race the original submission and remains unconfirmed.
  * docs/world-agent-runtime.md#ordinary-invention-request-recovery
  * docs/narration-and-conversations.md#explicit-failed-response-retry */
 export async function recoverHumanRequest(
-  service: WorldService,
+  service: HumanRequestRecoveryOwner,
   authority: RequestScope,
   request: { requestId: string; timeline: string },
   kind: 'chat' | 'invention',

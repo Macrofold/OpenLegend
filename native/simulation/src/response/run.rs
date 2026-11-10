@@ -2,7 +2,6 @@
 //! final receipt. Provider replies are finite preparation, never completion of
 //! a command, occurrence, personal account or private knowledge mutation.
 use super::actions::{self, ActionIntent};
-use super::digest::ResponseDigest;
 use super::*;
 use crate::appraisals::{AppraisalChangeCursor, AppraisalChangeStep, AppraisalPublication};
 use crate::commands::{
@@ -20,6 +19,7 @@ use crate::host::CandidateKey;
 use crate::language::{
     AttemptNormalizationAnswer, AttemptNormalizationRequest, NormalizedAttemptFacts,
 };
+use crate::language::{CanonicalJsonAnswer, CanonicalJsonRequest, PreparedCanonicalJson};
 use crate::plans::{
     PlanControlCursor, PlanControlKind, PlanControlStep, PlanEditCursor, PlanEditInput,
     PlanEditStep,
@@ -35,7 +35,7 @@ use typed::{TypedAnswer, TypedGroundingCursor, TypedStep};
 pub(crate) enum ResponseAnswer {
     AppraisalCreates(AppraisalCreatesAnswer),
     Sources(crate::capture::NpcSourcesAnswer),
-    Digest(ResponseDigestAnswer),
+    Digest(CanonicalJsonAnswer),
     Normalization(AttemptNormalizationAnswer),
     Typed(TypedActionAnswer),
     Geometry(GeometryAnswers),
@@ -46,7 +46,7 @@ pub(crate) enum ResponseAnswer {
 pub(crate) enum ResponseStep<'a> {
     AppraisalCreates(&'a AppraisalCreatesRequest),
     Sources(&'a crate::capture::NpcSourcesRequest),
-    Digest(&'a ResponseDigestRequest),
+    Digest(&'a CanonicalJsonRequest),
     Normalization(&'a AttemptNormalizationRequest),
     Typed(&'a TypedActionRequest),
     Geometry(&'a GeometryQueries),
@@ -125,14 +125,14 @@ pub(crate) struct ResponseCursor {
     candidate: CandidateKey,
     protected: bool,
     checkpoint: Option<CandidateCheckpoint>,
-    canonical: Option<ResponseDigestRequest>,
+    canonical: Option<CanonicalJsonRequest>,
     source_check: Option<crate::capture::NpcSourcesCursor>,
     appraisal_creates: Option<AppraisalCreatesRequest>,
     appraisal_bindings: Option<crate::appraisals::AppraisalBindings>,
     attempt_bindings: Vec<ResponseAttemptBinding>,
     preparing_grounding: bool,
     canonical_purpose: CanonicalPurpose,
-    digest: Option<ResponseDigest>,
+    digest: Option<PreparedCanonicalJson>,
     normalization: Option<AttemptNormalizationRequest>,
     normalized: Option<NormalizedAttemptFacts>,
     typed_grounding: Option<TypedGroundingCursor>,
@@ -215,7 +215,7 @@ impl ResponseCursor {
             None
         };
         let canonical = if appraisal_creates.is_none() && !preparing_grounding {
-            Some(ResponseDigestRequest::prepare(
+            Some(CanonicalJsonRequest::prepare(
                 binding,
                 &bindings.digest_view(&response, appraisal_bindings.as_ref(), &attempt_bindings),
                 budget,
@@ -501,6 +501,15 @@ impl ResponseCursor {
                 ResponseValidityRoute::PreparedResponse => {
                     witness.prepared_current(core.state, actor_id, &self.budget)?
                 }
+                ResponseValidityRoute::Source => self
+                    .bindings
+                    .input
+                    .reads
+                    .original
+                    .native_validity
+                    .as_ref()
+                    .ok_or(ExecutionError::InvalidCheckpoint)?
+                    .required_outcomes_current(core.state, actor_id, &self.budget)?,
             }
         } else {
             false
@@ -585,6 +594,7 @@ impl ResponseCursor {
                 .map(|guard| {
                     guard.current(
                         core.state,
+                        &self.bindings.input.reads.original,
                         &self.bindings.input.reads.current,
                         actor_id,
                         &self.budget,
@@ -626,7 +636,7 @@ impl ResponseCursor {
         core: &mut CoreMutation<'_>,
         command: NativeCommand,
     ) -> Result<(), ExecutionError> {
-        self.canonical = Some(ResponseDigestRequest::prepare(
+        self.canonical = Some(CanonicalJsonRequest::prepare(
             Self::binding(core, self.candidate)?,
             &command,
             &self.budget,
@@ -1101,7 +1111,7 @@ impl ResponseCursor {
                 )?;
             self.merge(custody)?;
             if !self.preparing_grounding {
-                self.canonical = Some(ResponseDigestRequest::prepare(
+                self.canonical = Some(CanonicalJsonRequest::prepare(
                     Self::binding(core, self.candidate)?,
                     &self.bindings.digest_view(
                         &self.response,
@@ -1179,7 +1189,7 @@ impl ResponseCursor {
                 }
             }
             self.preparing_grounding = false;
-            self.canonical = Some(ResponseDigestRequest::prepare(
+            self.canonical = Some(CanonicalJsonRequest::prepare(
                 Self::binding(core, self.candidate)?,
                 &self.bindings.digest_view(
                     &self.response,
@@ -1692,7 +1702,7 @@ impl ResponseCursor {
                         )?;
                         self.store(core, result)?;
                     } else {
-                        self.canonical = Some(ResponseDigestRequest::prepare(
+                        self.canonical = Some(CanonicalJsonRequest::prepare(
                             Self::binding(core, self.candidate)?,
                             op.data,
                             &self.budget,

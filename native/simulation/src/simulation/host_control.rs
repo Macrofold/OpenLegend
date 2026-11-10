@@ -32,6 +32,11 @@ pub(crate) struct CompletedHostControl {
     pub(crate) outcome: Outcome,
     _storage: ByteReservation,
 }
+/// Live controls and current-world startup use the same journaled host scalar.
+/// CandidateJournal's clock snapshot restores it on every refusal.
+pub(super) fn set_paused(core: &mut CoreMutation<'_>, paused: bool) {
+    core.state.physical.header.paused = paused;
+}
 impl HostControlCursor {
     pub(super) fn new(
         binding: GeometryBinding,
@@ -63,8 +68,7 @@ impl HostControlCursor {
         if self.started {
             return Err(DriveError::StaleResponse);
         }
-        // CandidateJournal's clock snapshot restores this on every refusal.
-        core.state.physical.header.paused = self.request.paused;
+        set_paused(core, self.request.paused);
         self.started = true;
         Ok(&self.request)
     }

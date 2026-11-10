@@ -19,6 +19,7 @@ const sourceFiles = [
   'pnpm-lock.yaml',
   'pnpm-workspace.yaml',
   'scripts/native-build.mjs',
+  'scripts/native-build-info.mjs',
   'native/Cargo.toml',
   'native/Cargo.lock',
   'native/rust-toolchain.toml',
@@ -53,17 +54,26 @@ function sourceIdentity() {
   return hash.digest('hex');
 }
 const sourceSha256 = sourceIdentity();
-const compiler = spawnSync('rustc', ['-vV'], { cwd: native, encoding: 'utf8' });
+// Dependency/toolchain acquisition is a separate setup operation. This local
+// compiler owner must never initiate a download while generating the addon.
+// https://rust-lang.github.io/rustup/environment-variables.html
+const compilerEnvironment = { ...process.env, RUSTUP_AUTO_INSTALL: '0', CARGO_NET_OFFLINE: 'true' };
+const compiler = spawnSync('rustc', ['-vV'], {
+  cwd: native,
+  encoding: 'utf8',
+  env: compilerEnvironment,
+});
 if (compiler.error || compiler.status !== 0)
   throw new Error('Native compiler identity is unavailable.');
 const target = process.env.CARGO_BUILD_TARGET ?? compiler.stdout.match(/^host: (.+)$/m)?.[1];
 if (!target) throw new Error('Native target identity is unavailable.');
 const metadata = spawnSync(
   'cargo',
-  ['metadata', '--locked', '--format-version', '1', '--filter-platform', target],
+  ['metadata', '--offline', '--locked', '--format-version', '1', '--filter-platform', target],
   {
     cwd: native,
     encoding: 'utf8',
+    env: compilerEnvironment,
   },
 );
 if (metadata.error || metadata.status !== 0)
@@ -84,7 +94,7 @@ const argumentsNapi = [
   'napi',
   'build',
   '--cwd',
-  native,
+  'native',
   '--manifest-path',
   'node-bridge/Cargo.toml',
   '--package-json-path',
@@ -99,13 +109,14 @@ const argumentsNapi = [
   'index.d.ts',
   ...(!arguments_.includes('--debug') ? ['--release'] : []),
   '--',
+  '--offline',
   '--locked',
 ];
 const built = spawnSync('pnpm', argumentsNapi, {
   cwd: repository,
   stdio: 'inherit',
   env: {
-    ...process.env,
+    ...compilerEnvironment,
     OPENLEGEND_NATIVE_SOURCE_SHA256: sourceSha256,
     OPENLEGEND_NATIVE_FEATURES: JSON.stringify(features),
   },
@@ -128,11 +139,7 @@ if (previous)
 
 const observed = spawnSync(
   process.execPath,
-  [
-    '--input-type=module',
-    '-e',
-    'import { nativeBuildInfo } from "./index.mjs"; console.log(JSON.stringify(nativeBuildInfo()));',
-  ],
+  [fileURLToPath(new URL('./native-build-info.mjs', import.meta.url))],
   { cwd: native, encoding: 'utf8' },
 );
 if (observed.error || observed.status !== 0)

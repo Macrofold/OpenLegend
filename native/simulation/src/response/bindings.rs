@@ -13,7 +13,7 @@ use serde::ser::SerializeStruct;
 mod appraisals;
 pub(crate) use appraisals::{AppraisalSelection, PreparedResponseAppraisals};
 mod native;
-pub(crate) use native::{ResponseNativeGuard, ResponseValidityRoute};
+pub(crate) use native::{ResponseConsumer, ResponseNativeGuard, ResponseValidityRoute};
 mod creates;
 pub(crate) use creates::{AppraisalCreatesAnswer, AppraisalCreatesRequest};
 mod offers;
@@ -234,6 +234,80 @@ pub(crate) struct ResponseBindings {
     _reservation: ByteReservation,
 }
 impl ResponseBindings {
+    pub(crate) fn native_guard(&self) -> Option<&ResponseNativeGuard> {
+        self.input.native.as_ref()
+    }
+    pub(crate) fn current_read(&self) -> &AcceptedActorRead {
+        &self.input.reads.current
+    }
+    pub(crate) fn evidence_ids(&self) -> &[String] {
+        &self.input.evidence_ids
+    }
+    pub(crate) fn appraisal_bindings(&self) -> Option<&AppraisalBindings> {
+        self.input.appraisal_bindings.as_ref()
+    }
+    pub(crate) fn remembered_note_subject(
+        &self,
+        subject: &crate::reception::ObserverSubject,
+    ) -> bool {
+        self.input
+            .knowledge_references
+            .values()
+            .any(|known| known == subject)
+    }
+    pub(crate) fn reflection_encounter_current(
+        &self,
+        state: &SimulationState,
+        subject: &crate::reception::ObserverSubject,
+        note: bool,
+    ) -> bool {
+        let crate::reception::ObserverSubject::Entity { entity_id } = subject else {
+            return true;
+        };
+        (note && self.remembered_note_subject(subject))
+            || self
+                .input
+                .expected_encounters
+                .as_ref()
+                .is_none_or(|expected| {
+                    expected.get(entity_id)
+                        == state
+                            .reception
+                            .perception_episodes
+                            .as_ref()
+                            .and_then(|owners| owners.get(self.actor_id()))
+                            .and_then(|episodes| episodes.get(entity_id))
+                })
+    }
+    pub(crate) fn reflection_sources_current(
+        &self,
+        state: &SimulationState,
+        budget: &ByteBudget,
+    ) -> Result<bool, ExecutionError> {
+        let read = &self.input.reads.current;
+        Ok(self.input.situation.as_ref().is_none_or(|s| {
+            s.privacy_revision
+                == state
+                    .experience
+                    .actor(self.actor_id())
+                    .map_or(0, |a| a.privacy.revision())
+        }) && super::sources::receipt_details_current_state(state, self)?
+            && self
+                .input
+                .native
+                .as_ref()
+                .map(|g| {
+                    g.current(
+                        state,
+                        &self.input.reads.original,
+                        read,
+                        self.actor_id(),
+                        budget,
+                    )
+                })
+                .transpose()?
+                .unwrap_or(false))
+    }
     /// The caller funds allocation before constructing these maps, then moves
     /// their custody here. Existing read/source guards stay with their records.
     pub(crate) fn new(

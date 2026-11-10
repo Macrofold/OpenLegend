@@ -19,7 +19,15 @@ mod journal;
 pub(crate) use journal::*;
 mod fields;
 mod install;
+mod learning;
 mod residency;
+pub(crate) use learning::LearningLanguage;
+pub(crate) use learning::{
+    CompletedActivityLearning, LearningFormatAnswer, LearningFormatRequest, LearningHistoryAnswer,
+    LearningHistoryRequest, LearningPreparationAnswer, LearningPreparationCursor,
+    LearningPreparationStep, LearningPublicationAnswer, LearningPublicationCursor,
+    LearningPublicationRequest, LearningPublicationStep, PreparedActivityLearning,
+};
 mod retained_size;
 pub use fields::ActivityFields;
 pub(crate) use install::install_activity;
@@ -186,6 +194,40 @@ pub enum ResultEvidence {
     },
 }
 impl ResultEvidence {
+    /// Execution history requests its personally received result. This read
+    /// uses only the actual recent directory and never hydrates or renews it.
+    pub(crate) fn recent_eligible(
+        &self,
+        state: &crate::simulation::SimulationState,
+        actor_id: &str,
+        budget: &crate::host::ByteBudget,
+    ) -> Result<bool, crate::execution::ExecutionError> {
+        let Self::Recent { subject, receipt } = self else {
+            return Ok(true);
+        };
+        let _id = budget.reserve(
+            self.id_len()
+                .and_then(|n| n.checked_mul(2))
+                .ok_or(crate::execution::ExecutionError::Capacity)?,
+        )?;
+        let privacy = state.experience.actor(actor_id).map(|actor| &actor.privacy);
+        Ok(receipt.actor_id == actor_id
+            && privacy
+                .is_none_or(|privacy| !privacy.revoked(subject) && !privacy.revoked(&self.id()))
+            && state.temporal.actor(actor_id).is_some_and(|actor| {
+                actor.recent().contains(
+                    receipt,
+                    state.physical.header.sim_time
+                        - state
+                            .installed
+                            .attention
+                            .value()
+                            .retention
+                            .recent
+                            .max_age_seconds,
+                )
+            }))
+    }
     pub fn validate(&self, actor_id: &str) -> Result<(), ActivityError> {
         match self {
             Self::Account { id, .. } if is_safe_record_id(id) => Ok(()),

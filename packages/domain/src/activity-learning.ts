@@ -2,7 +2,12 @@ import { recentResultEligible, resultEvidenceId } from './result-evidence.js';
 import { isNativeInputField } from './native-inputs.js';
 import { activityCommandFields, isManufactureToolField } from './native-command-contracts.js';
 import { entityGet } from './entity-collection.js';
-import { commandEntityFields, nativeOutputBinding } from './native-command-contracts.js';
+import {
+  commandEntityFields,
+  nativeOutputBinding,
+  activitySelfBinding,
+  ACTIVITY_BINDING_TEXT_CHARACTERS,
+} from './native-command-contracts.js';
 import { preparationDefinition } from './food-preparation.js';
 import { canonicalJson, contentLabel } from './events.js';
 import { cloneValue } from './draft.js';
@@ -46,6 +51,45 @@ export interface ActivityCandidate {
   matchingDeferred?: boolean;
 }
 
+/** The same bounded history preparation is used by the SQL-backed Source
+ * service and the native learner. These are operational read limits, not
+ * authored limits on a character's retained knowledge. */
+export const ACTIVITY_LEARNING_PREPARATION = Object.freeze({
+  page: 128,
+  rows: 512,
+  bytes: 4 * 1024 * 1024,
+  linkPasses: 12,
+});
+export const ACTIVITY_LEARNING_FAILURE_CODES: readonly string[] = Object.freeze(['miss']);
+
+/** Only already selected personal attempt views enter this formatter. It
+ * creates no candidate, binding or evidence permission. */
+export function activityLearningDescription(
+  name: string,
+  entries: readonly Pick<ActivityOccurrence, 'parentId' | 'parentName' | 'view'>[],
+  incomplete: boolean,
+): string {
+  const purpose = entries[0]?.parentName;
+  const commonPurpose =
+    purpose &&
+    entries.every(
+      (entry) => entry.parentId === entries[0]!.parentId && entry.parentName === purpose,
+    );
+  const children = entries.map((entry) =>
+    !commonPurpose && entry.parentName && entry.parentName !== entry.view.name
+      ? { name: entry.parentName, facts: [], children: [entry.view] }
+      : entry.view,
+  );
+  return `${renderActivity({ name: commonPurpose ? purpose : name, facts: [], children }, 'What happened')}. These attempts are evidence, not a guarantee of future success.${incomplete ? ' Some required supporting history is unavailable; this idea cannot be executed.' : ''}`;
+}
+export function activityLearningFailureDescription(
+  views: readonly ActivityOccurrence['view'][],
+): string {
+  return views.length
+    ? ` Other observed attempts, not required steps: ${views.map((view) => renderActivity(view)).join('; ')}.`
+    : '';
+}
+
 /** One current binding check shared by the native chooser and prepared offers.
  * Seeing a basket does not disclose its contents or authorize fresh stock selection.
  * docs/projects/parallel-batch-01-playable-week/camp-activities.md#actual-outputs-and-learning */
@@ -58,7 +102,11 @@ export function activityRoleCompatible(
   if (requirement.kind === 'self')
     return value === actorId && !!entityGet(world.entities, actorId)?.actor;
   if (requirement.kind === 'text')
-    return typeof value === 'string' && !!value.trim() && value.length <= 1500;
+    return (
+      typeof value === 'string' &&
+      !!value.trim() &&
+      value.length <= ACTIVITY_BINDING_TEXT_CHARACTERS
+    );
   if (requirement.kind === 'place')
     return (
       !!value && typeof value === 'object' && finitePoint(value) && isSafeRecordId(value.surfaceId)
@@ -254,7 +302,7 @@ export function normalizeActivity(
           args[field] = { output: produced.step, port: produced.port, quantity: required };
           continue;
         }
-        const self = ['sourceId', 'destinationId'].includes(field) && value === actorId;
+        const self = activitySelfBinding(field) && value === actorId;
         const identity = self ? `self:${value}` : value;
         let role = identities.get(identity);
         if (!role) {
@@ -376,20 +424,7 @@ export function normalizeActivity(
   const signature = canonicalJson({ root, roles, manifest, executable });
   let description: string;
   try {
-    // A chosen purpose helps assess non-material methods such as social actions.
-    // It belongs only to this actor's evidence, never the shared definition/key.
-    const purpose = entries[0]?.parentName;
-    const commonPurpose =
-      purpose &&
-      entries.every(
-        (entry) => entry.parentId === entries[0]!.parentId && entry.parentName === purpose,
-      );
-    const children = entries.map((entry) =>
-      !commonPurpose && entry.parentName && entry.parentName !== entry.view.name
-        ? { name: entry.parentName, facts: [], children: [entry.view] }
-        : entry.view,
-    );
-    description = `${renderActivity({ name: commonPurpose ? purpose : name, facts: [], children }, 'What happened')}. These attempts are evidence, not a guarantee of future success.${incomplete ? ' Some required supporting history is unavailable; this idea cannot be executed.' : ''}`;
+    description = activityLearningDescription(name, entries, incomplete);
   } catch {
     return;
   } // Optional derived work cannot pause physical simulation on overflow.
@@ -483,14 +518,17 @@ export function discoverActivities(
           !entry.revoked &&
           entry.actorId === actorId &&
           !ids.has(entry.id) &&
-          (entry.outcome?.ok === false || entry.outcome?.code === 'miss') &&
+          (entry.outcome?.ok === false ||
+            (!!entry.outcome?.code && ACTIVITY_LEARNING_FAILURE_CODES.includes(entry.outcome.code))) &&
           'targetId' in entry.command &&
           targets.has(entry.command.targetId),
       )
       .slice(-8);
     if (failures.length) {
       candidate.otherEvidence = failures.map((entry) => entry.id);
-      candidate.description += ` Other observed attempts, not required steps: ${failures.map((entry) => renderActivity(entry.view)).join('; ')}.`;
+      candidate.description += activityLearningFailureDescription(
+        failures.map((entry) => entry.view),
+      );
     }
     candidates.push(candidate);
   };

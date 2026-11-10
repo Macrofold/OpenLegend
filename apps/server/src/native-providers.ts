@@ -35,11 +35,16 @@ import {
 import {
   nativeAttemptNormalization,
   nativeCollation,
-  nativeResponseDigest,
+  nativeCanonicalJson,
   nativeUtterance,
   nativeWordSegments,
 } from './native-language.js';
 import { formatFreeTypedActionPreparation } from './typed-action-syntax.js';
+import {
+  nativeMaintenanceFormat,
+  type NativeMaintenanceFormatRequest,
+} from './native-maintenance-format.js';
+import { nativeConsolidationReadings, type NativeConsolidationFormatRequest } from './native-consolidation-format.js';
 
 type Binding = NativeGeometryQueries['binding'];
 type Question = { kind: string; value: unknown };
@@ -71,9 +76,25 @@ async function prepareProviderAnswer(
 ): Promise<string> {
   const value = question.value;
   switch (question.kind) {
+    case 'maintenance-format':
+      return JSON.stringify(nativeMaintenanceFormat(value as NativeMaintenanceFormatRequest));
+    case 'consolidation-format':
+      return JSON.stringify(nativeConsolidationReadings(value as NativeConsolidationFormatRequest));
     case 'typed-actions': {
-      const request = value as { readonly binding: Binding; readonly limits: Parameters<typeof formatFreeTypedActionPreparation>[0]['limits']; readonly requests: readonly Omit<Parameters<typeof formatFreeTypedActionPreparation>[0], 'limits'>[] };
-      return JSON.stringify({ binding: request.binding, results: request.requests.map((item) => formatFreeTypedActionPreparation({ ...item, limits: request.limits })) });
+      const request = value as {
+        readonly binding: Binding;
+        readonly limits: Parameters<typeof formatFreeTypedActionPreparation>[0]['limits'];
+        readonly requests: readonly Omit<
+          Parameters<typeof formatFreeTypedActionPreparation>[0],
+          'limits'
+        >[];
+      };
+      return JSON.stringify({
+        binding: request.binding,
+        results: request.requests.map((item) =>
+          formatFreeTypedActionPreparation({ ...item, limits: request.limits }),
+        ),
+      });
     }
     case 'choice-descriptions': {
       const request = value as NativeNpcDescriptionRead & {
@@ -179,7 +200,7 @@ async function prepareProviderAnswer(
       );
     case 'digest':
       return JSON.stringify(
-        nativeResponseDigest(value as Parameters<typeof nativeResponseDigest>[0]),
+        nativeCanonicalJson(value as Parameters<typeof nativeCanonicalJson>[0]),
       );
     default:
       throw new Error('Native operation requested an uncompiled preparation family.');

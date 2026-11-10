@@ -21,27 +21,6 @@ import {
 } from './perceived-context.js';
 import { digest } from './content-digest.js';
 import { retainNativeSources } from './native-consumer.js';
-import { capturedAttributionReader } from './entity-references.js';
-
-/** The current native read supplies current naming facts after selected-source
- * preparation. These tuples are presentation dependencies, never grants. */
-export function nativePersonalAttributionReader(
-  current: NativeNpcCapture,
-  sourceOwner: NativeNpcCapture,
-  sources: readonly NativePersonalSource[],
-) {
-  const identities = new Map(
-    sources.flatMap((source) => Object.entries(source.attribution.attributionIdentities)),
-  );
-  for (const [id, values] of Object.entries(current.facts.referenceFacts.attributionIdentities))
-    identities.set(id, values);
-  return retainNativeSources(
-    capturedAttributionReader(current.facts.self.worldId, current.facts.self.actorId, identities),
-    current.facts,
-    sourceOwner.facts,
-  );
-}
-
 /** A selected native record keeps its actual payload and observer attribution.
  * These formatter inputs cannot become a response permission map. */
 export interface NativePersonalSource {

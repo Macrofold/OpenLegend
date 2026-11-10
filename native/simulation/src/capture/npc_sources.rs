@@ -1,6 +1,6 @@
 //! Selected historical bodies remain detached from current canonical residency.
 //! SQL supplies record witnesses, never a receipt, permission map or alias grant.
-use super::npc_history::{NpcHistoricalScope, NpcHistoryPrefix};
+use super::npc_history::NpcHistoricalScope;
 use crate::execution::ExecutionError;
 use crate::experience::{PersonalSourceKind, PersonalSourceRecord, PersonalSourceRef};
 use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
@@ -53,6 +53,8 @@ pub(crate) struct NpcReceiptSelection {
 pub(crate) struct NpcSourceSelection {
     pub receipts: Vec<NpcReceiptSelection>,
     pub personal: Vec<NpcPersonalSelection>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub consolidation_job: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -85,6 +87,7 @@ pub(crate) struct NpcSourceRows {
     pub values: Vec<InstalledRow>,
     pub personal: Vec<NpcPersonalSourceRow>,
     pub parents: Vec<InstalledRow>,
+    pub duplicate_summary: Option<bool>,
 }
 
 pub(crate) struct CapturedNpcPersonalSource {
@@ -94,6 +97,14 @@ pub(crate) struct CapturedNpcPersonalSource {
     pub attribution: NpcSourceAttribution,
     pub originals: crate::experience::CapturedPersonalOriginals,
     _pin: Arc<SharedMemoryPin>,
+}
+impl CapturedNpcPersonalSource {
+    pub(crate) fn current_record(&self) -> Option<&Arc<PersonalSourceRecord>> {
+        match &self.record {
+            personal::CapturedPersonalRecord::Current(record) => Some(record),
+            personal::CapturedPersonalRecord::Archive(_) => None,
+        }
+    }
 }
 impl Serialize for CapturedNpcPersonalSource {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -168,6 +179,8 @@ pub(crate) struct PreparedNpcSources {
     pub receipts: Vec<CapturedNpcReceipt>,
     pub unavailable_personal: Vec<usize>,
     pub unavailable_receipts: Vec<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub duplicate_summary: Option<bool>,
     #[serde(skip)]
     _storage: ByteReservation,
 }
@@ -182,7 +195,9 @@ impl PreparedNpcSources {
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         if !scope.still_permitted(state)
-            || matches!(scope.receipt_prefix, NpcHistoryPrefix::Pending { .. })
+            || !scope.allows_selection(selection.receipts.is_empty())
+            || selection.consolidation_job.is_some() != rows.duplicate_summary.is_some()
+            || selection.consolidation_job.is_some() && !scope.allows_consolidation()
         {
             return Err(ExecutionError::InvalidCheckpoint);
         }
@@ -646,6 +661,7 @@ impl PreparedNpcSources {
             receipts,
             unavailable_personal,
             unavailable_receipts,
+            duplicate_summary: rows.duplicate_summary,
             _storage: storage,
         })
     }

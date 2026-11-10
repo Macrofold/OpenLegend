@@ -55,8 +55,6 @@ pub(crate) struct AdministrationState {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct InstalledHostSettings {
-    #[serde(skip)]
-    _storage: Option<crate::host::ResidentReservation>,
     pub world: crate::experience::EmptyChildOwner,
     // Exact immutable asset reference, interpreted/authorized by the existing
     // server asset owner. Native gameplay never uses it as a body permission.
@@ -80,6 +78,9 @@ pub(crate) struct InstalledHostSettings {
         skip_serializing_if = "Option::is_none"
     )]
     pub actor_milestones: Option<IndexMap<String, IndexMap<String, bool>>>,
+    // Drop owned strings/maps before releasing their canonical allocation.
+    #[serde(skip)]
+    _storage: Option<crate::host::ResidentReservation>,
 }
 
 pub(crate) fn read_host_settings(
@@ -99,6 +100,12 @@ pub(crate) fn read_host_settings(
     {
         return Err(InstallError::RowPlacement);
     }
+    let mut decoded = crate::install::reserve_typed_parse::<InstalledHostSettings>(
+        &row.payload,
+        0,
+        Some(std::mem::size_of::<(usize, String, IndexMap<String, bool>)>()),
+        budget,
+    )?;
     let mut settings: InstalledHostSettings =
         serde_json::from_str(&row.payload).map_err(|_| InstallError::CurrentFormat)?;
     if !settings.speed.is_finite()
@@ -109,6 +116,23 @@ pub(crate) fn read_host_settings(
     {
         return Err(InstallError::CurrentFormat);
     }
+    let bytes = heap_sum([
+        settings
+            .presentation_release
+            .as_ref()
+            .map_or(0, |raw| raw.get().len()),
+        settings
+            .actor_milestones
+            .heap_bytes()
+            .ok_or(InstallError::Capacity)?,
+    ])
+    .ok_or(InstallError::Capacity)?;
+    decoded.resize(bytes).map_err(|_| InstallError::Capacity)?;
+    settings._storage = Some(
+        budget
+            .adopt_backing(decoded)
+            .map_err(|_| InstallError::Capacity)?,
+    );
     let milestones = take_collection(
         import,
         "actor_milestones",
@@ -127,35 +151,132 @@ pub(crate) fn read_host_settings(
         if !row.extra.is_empty() {
             return Err(InstallError::CurrentFormat);
         }
-        let values: IndexMap<String, bool> =
-            serde_json::from_str(&row.payload).map_err(|_| InstallError::CurrentFormat)?;
-        if settings
+        let target = settings
             .actor_milestones
-            .as_mut()
-            .ok_or(InstallError::ParentPresence)?
-            .insert(row.slot, values)
-            .is_some()
-        {
+            .as_ref()
+            .ok_or(InstallError::ParentPresence)?;
+        if target.contains_key(&row.slot) {
             return Err(InstallError::DuplicateRow);
         }
-    }
-    let bytes = heap_sum([
-        settings
-            .presentation_release
-            .as_ref()
-            .map_or(0, |raw| raw.get().len()),
-        settings
-            .actor_milestones
+        let before = crate::host::retained_size::map_storage::<String, IndexMap<String, bool>>(
+            target.capacity(),
+        )
+        .ok_or(InstallError::Capacity)?;
+        let maximum_capacity = if target.len() == target.capacity() {
+            target
+                .len()
+                .checked_add(1)
+                .and_then(|n| n.checked_mul(2))
+                .and_then(|n| n.checked_add(4))
+                .ok_or(InstallError::Capacity)?
+        } else {
+            target.capacity()
+        };
+        let maximum = crate::host::retained_size::map_storage::<String, IndexMap<String, bool>>(
+            maximum_capacity,
+        )
+        .ok_or(InstallError::Capacity)?;
+        let mut decoded = crate::install::reserve_typed_parse::<IndexMap<String, bool>>(
+            &row.payload,
+            0,
+            Some(std::mem::size_of::<(usize, String, bool)>()),
+            budget,
+        )?;
+        let values: IndexMap<String, bool> =
+            serde_json::from_str(&row.payload).map_err(|_| InstallError::CurrentFormat)?;
+        let incoming = values
             .heap_bytes()
-            .ok_or(InstallError::Capacity)?,
-    ])
-    .ok_or(InstallError::Capacity)?;
-    settings._storage = Some(
+            .and_then(|n| n.checked_add(row.slot.capacity()))
+            .and_then(|n| n.checked_add(maximum.checked_sub(before)?))
+            .ok_or(InstallError::Capacity)?;
+        // The decoder already funds this actual flags body. Transfer it and
+        // admit root backing growth before moving the row into canonical state.
+        decoded
+            .resize(incoming)
+            .map_err(|_| InstallError::Capacity)?;
         budget
-            .reserve_record(bytes)
-            .map_err(|_| InstallError::Capacity)?,
-    );
+            .fund_backing(
+                settings
+                    ._storage
+                    .as_mut()
+                    .ok_or(InstallError::CurrentFormat)?,
+                decoded,
+            )
+            .map_err(|_| InstallError::Capacity)?;
+        let target = settings
+            .actor_milestones
+            .as_mut()
+            .ok_or(InstallError::ParentPresence)?;
+        target.try_reserve(1).map_err(|_| InstallError::Capacity)?;
+        let actual = crate::host::retained_size::map_storage::<String, IndexMap<String, bool>>(
+            target.capacity(),
+        )
+        .ok_or(InstallError::Capacity)?;
+        let unused = maximum.checked_sub(actual).ok_or(InstallError::Capacity)?;
+        target.insert(row.slot, values);
+        settings
+            .release_milestone_allocation(unused)
+            .map_err(|_| InstallError::Capacity)?;
+    }
     Ok(settings)
+}
+
+impl InstalledHostSettings {
+    pub(crate) fn storage_bytes(&self) -> usize {
+        self._storage
+            .as_ref()
+            .map_or(0, crate::host::ResidentReservation::bytes)
+    }
+    pub(crate) fn fund_milestone_allocation(
+        &mut self,
+        bytes: usize,
+        budget: &crate::host::ByteBudget,
+    ) -> Result<(), crate::execution::ExecutionError> {
+        if bytes == 0 {
+            return Ok(());
+        }
+        let storage = self
+            ._storage
+            .as_mut()
+            .ok_or(crate::execution::ExecutionError::Invariant)?;
+        let incoming = budget
+            .reserve(bytes)
+            .map_err(|_| crate::execution::ExecutionError::Capacity)?;
+        budget
+            .fund_backing(storage, incoming)
+            .map_err(|_| crate::execution::ExecutionError::Capacity)
+    }
+    pub(crate) fn release_milestone_allocation(
+        &mut self,
+        bytes: usize,
+    ) -> Result<(), crate::execution::ExecutionError> {
+        let storage = self
+            ._storage
+            .as_mut()
+            .ok_or(crate::execution::ExecutionError::Invariant)?;
+        let next = storage
+            .bytes()
+            .checked_sub(bytes)
+            .ok_or(crate::execution::ExecutionError::Invariant)?;
+        storage
+            .resize(next)
+            .map_err(|_| crate::execution::ExecutionError::Capacity)
+    }
+    pub(crate) fn restore_milestone_storage(
+        &mut self,
+        bytes: usize,
+    ) -> Result<(), crate::execution::ExecutionError> {
+        let storage = self
+            ._storage
+            .as_mut()
+            .ok_or(crate::execution::ExecutionError::Invariant)?;
+        if bytes > storage.bytes() {
+            return Err(crate::execution::ExecutionError::Invariant);
+        }
+        storage
+            .resize(bytes)
+            .map_err(|_| crate::execution::ExecutionError::Capacity)
+    }
 }
 
 pub(crate) fn install_administration(
@@ -265,12 +386,22 @@ pub(crate) fn install_administration(
             .reserve_record(
                 heap_sum([
                     control.heap_bytes().ok_or(InstallError::Capacity)?,
-                    authorship.creator_account_ids.heap_bytes().ok_or(InstallError::Capacity)?,
+                    authorship
+                        .creator_account_ids
+                        .heap_bytes()
+                        .ok_or(InstallError::Capacity)?,
                 ])
                 .ok_or(InstallError::Capacity)?,
             )
             .map_err(|_| InstallError::Capacity)?,
-        player_storage: budget.reserve_record(authorship.player_account_ids.heap_bytes().ok_or(InstallError::Capacity)?).map_err(|_|InstallError::Capacity)?,
+        player_storage: budget
+            .reserve_record(
+                authorship
+                    .player_account_ids
+                    .heap_bytes()
+                    .ok_or(InstallError::Capacity)?,
+            )
+            .map_err(|_| InstallError::Capacity)?,
         control,
         authorship,
         object_membership,

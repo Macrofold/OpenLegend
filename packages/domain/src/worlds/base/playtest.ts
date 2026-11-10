@@ -1,9 +1,10 @@
+import { BASE_PLAYTEST_AUDIENCE_MILESTONE } from './playtest-event-rule.js';
 import { equippedItem } from '../../equipment.js';
 import { nativeText } from '../../narration.js';
 import type { WorldEvent, WorldState } from '../../types.js';
 
 export const BASE_PLAYTEST_MILESTONES = [
-  { id: 'talk', label: 'Talk with Ada' },
+  { id: BASE_PLAYTEST_AUDIENCE_MILESTONE.id, label: 'Talk with Ada' },
   { id: 'invent', label: 'Invent a sling with live AI' },
   { id: 'craft', label: 'Craft and equip a ranged weapon' },
   { id: 'hunt', label: 'Hunt and harvest' },
@@ -26,10 +27,12 @@ export function basePlaytestMilestones(
   const rangedWeapon = equipped && world.itemDefinitions[equipped.definitionId]?.rangedWeapon;
   return [
     {
-      id: 'talk',
+      id: BASE_PLAYTEST_AUDIENCE_MILESTONE.id,
       done: events.some(
         (event) =>
-          event.type === 'speech' && event.actorId !== actorId && event.audience.includes(actorId),
+          event.type === BASE_PLAYTEST_AUDIENCE_MILESTONE.eventType &&
+          event.actorId !== actorId &&
+          event.audience.includes(actorId),
       ),
     },
     {

@@ -1,7 +1,11 @@
 import { gateUseLabel } from '../../gate-operations.js';
 import { entityGet } from '../../entity-collection.js';
 import { observedBodyHealthValue } from './hunting.js';
-import { ordinaryActivityView, appendObservedActivityFacts } from './ordinary-activity-view.js';
+import {
+  ordinaryActivityView,
+  appendObservedActivityFacts,
+  sharedOrdinaryActivityName,
+} from './ordinary-activity-view.js';
 import { equippedItem } from '../../equipment.js';
 import { bodyPolicy } from '../../body-policy.js';
 import { BASE_RANGED_TEXT } from './ranged-counterplay.js';
@@ -568,6 +572,34 @@ function activityView(
 /** Shared method names admit authored public purposes only. Personal prose stays
  * in the actor's own occurrence, never the world-wide structural catalogue. */
 export function sharedNativeActivityName(world: WorldState, command: Command): string {
+  if (
+    command.type === 'move' ||
+    command.type === 'say' ||
+    command.type === 'status-effect' ||
+    command.type === 'follow' ||
+    (command.type === 'strike' && !command.weaponItemId && !command.manualExecution)
+  ) {
+    const effect =
+      command.type === 'status-effect'
+        ? world.statusEffectPolicy.definitions.find((effect) => effect.id === command.definitionId)
+        : undefined;
+    return sharedOrdinaryActivityName({
+      command: {
+        type: command.type,
+        purpose: command.purpose,
+        ...(command.type === 'status-effect' ? { operation: command.operation } : {}),
+      },
+      ...(effect
+        ? {
+            effect: {
+              label: effect.label,
+              activate: effect.actions?.activate,
+              deactivate: effect.actions?.deactivate,
+            },
+          }
+        : {}),
+    });
+  }
   return nativeActivityView(world, {
     ...command,
     purpose: command.purpose === 'Hunt once' ? 'Hunt once' : undefined,

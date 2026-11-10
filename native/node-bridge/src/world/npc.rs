@@ -14,6 +14,41 @@ struct NpcReadRuntime {
 
 #[napi]
 impl NativeWorld {
+    #[napi(ts_return_type = "Promise<NativeWorldJson>")]
+    pub fn npc_perspectives<'a>(
+        &self,
+        env: &'a Env,
+        read: &NativeWorldNpcRead,
+        request: BufferSlice<'_>,
+    ) -> Result<Object<'a>> {
+        if !Weak::ptr_eq(&read.world, &Arc::downgrade(&self.world)) {
+            return Err(failure("NPC naming read belongs to another native writer"));
+        }
+        let read = Arc::clone(&read.inner);
+        let (request, custody) = input(&request, &self.host.bytes)?;
+        self.compute(env, move |session, cancel, budget| {
+            let _custody = custody;
+            let mut owner = read
+                .read
+                .try_lock()
+                .map_err(|_| failure("NPC naming read is busy"))?;
+            if read.released.load(Ordering::Acquire) || cancel.requested() {
+                return Err(failure("NPC naming read was released"));
+            }
+            let output = session
+                .npc_perspectives(
+                    owner
+                        .as_mut()
+                        .ok_or_else(|| failure("NPC naming read was released"))?,
+                    &request,
+                )
+                .map_err(operation_error)?;
+            if read.released.load(Ordering::Acquire) || cancel.requested() {
+                return Err(failure("NPC naming read was released"));
+            }
+            Ok(NativeWorldJson::new(output, budget.clone()))
+        })
+    }
     /// Trusted operational protection chooses the actual SQL-before-acceptance
     /// route. Model JSON contains no persistence or permission selector.
     #[napi(ts_return_type = "Promise<NativeWorldTurn>")]
@@ -75,9 +110,9 @@ pub struct NativeWorldNpcReads {
     pub current: NativeWorldNpcRead,
 }
 
-struct NpcResponseTicketRuntime {
-    ticket: Mutex<Option<RuntimeNpcResponseTicket>>,
-    released: AtomicBool,
+pub(super) struct NpcResponseTicketRuntime {
+    pub(super) ticket: Mutex<Option<RuntimeNpcResponseTicket>>,
+    pub(super) released: AtomicBool,
     _custody: openlegend_simulation::host::ByteReservation,
 }
 
@@ -111,9 +146,9 @@ impl NativeWorldNpcPublication {
 /// issues it only by consuming the two originating accepted read handles.
 #[napi]
 pub struct NativeWorldNpcResponseTicket {
-    inner: Arc<NpcResponseTicketRuntime>,
+    pub(super) inner: Arc<NpcResponseTicketRuntime>,
     host: Arc<HostRuntime>,
-    world: Weak<WorldRuntime>,
+    pub(super) world: Weak<WorldRuntime>,
 }
 impl Drop for NativeWorldNpcResponseTicket {
     fn drop(&mut self) {
@@ -415,12 +450,15 @@ impl NativeWorld {
         &self,
         env: &'a Env,
         read: &NativeWorldNpcRead,
+        request: BufferSlice<'_>,
     ) -> Result<Object<'a>> {
         if !Weak::ptr_eq(&read.world, &Arc::downgrade(&self.world)) {
             return Err(failure("NPC read belongs to another native writer"));
         }
         let read = Arc::clone(&read.inner);
+        let (request, input_custody) = input(&request, &self.host.bytes)?;
         self.compute(env, move |session, _cancel, budget| {
+            let _input_custody = input_custody;
             let owner = read
                 .read
                 .try_lock()
@@ -436,6 +474,7 @@ impl NativeWorld {
                     owner
                         .as_ref()
                         .ok_or_else(|| failure("native NPC read was released"))?,
+                    &request,
                 )
                 .map_err(operation_error)?;
             drop(owner);

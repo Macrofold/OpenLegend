@@ -1,4 +1,4 @@
-import { nativeNormalizedIntents } from './native-language.js';
+import { nativeActivityMethodSignatures, nativeNormalizedIntents } from './native-language.js';
 import { coldEntityOrdering, temporalPageReferences } from '@open-legend/domain';
 import { HISTORY_TABLES, HISTORY_MAP_TABLES, HOT_TEMPORAL_BYTES } from './history-residency.js';
 import { hotEventRecordDependencies, HOT_EVENT_RECENT_ROWS } from './hot-events.js';
@@ -260,6 +260,7 @@ function currentRecordMetadata(
     durableRevision: ordinal(head.revision),
     entityOrdering: coldEntityOrdering(entityIds),
     normalizedIntents: nativeNormalizedIntents(tables['sim_intentions'] ?? []),
+    activityMethodSignatures: nativeActivityMethodSignatures(tables['activity_methods'] ?? []),
     tables,
     coverage,
   };

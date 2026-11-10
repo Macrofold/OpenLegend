@@ -10,6 +10,7 @@ import type { JudgeRequest, JudgeValue } from '@open-legend/ai';
 import type {
   NativeWorldNpcResponseTicket,
   NativeWorldNpcTrigger,
+  NativeWorldReflectionTicket,
 } from '@open-legend/native-simulation';
 import type { NativeWorldService } from './native-world-service.js';
 import type { NativeNpcCapture } from './native-npc-capture.js';
@@ -37,7 +38,6 @@ import { nativeResponseReferences, nativeTriggerContext } from './native-respons
 import { nativeResponseSelection } from './native-response-bindings.js';
 import { offerNativeInterpretationRecords } from './native-interpretation-context.js';
 import { nativeKnowledgeCandidates } from './native-knowledge-context.js';
-import { nativePersonalAttributionReader, nativeSourcePresentation } from './native-recall.js';
 import {
   retrieveNativeRecall,
   selectNativeRecall,
@@ -106,6 +106,7 @@ export async function prepareNativeDecision(input: {
   triggerEvidenceId?: string;
   compact?: ConversationGenerate;
   mode: 'ordinary' | 'native-only' | 'reflection';
+  consumer: 'chat' | 'thought' | 'reflection';
   requiredAppraisals: readonly AppraisalScope[];
   validity: NativeNpcBindingSelection['validity'];
   semanticCauses: readonly number[];
@@ -126,11 +127,15 @@ export async function prepareNativeDecision(input: {
   const generation = service.generation;
   const repository = service.store.memories;
   if (!repository) throw new Error('Native decisions require indexed personal storage.');
-  const start = await service.captureNpc(actorId, input.requiredAppraisals, { signal });
+  const start = await service.captureNpc(actorId, input.requiredAppraisals, {
+    signal,
+    consumer: input.consumer,
+  });
   const original = start.capture;
   let current: NativeNpcCapture | undefined;
   let conversationCurrent: NativeNpcCapture | undefined;
   let ticket: NativeWorldNpcResponseTicket | undefined;
+  let reflectionTicket: NativeWorldReflectionTicket | undefined;
   let completed = false;
   const scope: MemoryScope = {
     worldId: service.worldId,
@@ -139,7 +144,7 @@ export async function prepareNativeDecision(input: {
   };
   const fence = repository.captureTemporalSourceFence(scope, signal);
   const bodies = new MemoryReadCache();
-  const sql = <T>(operation: () => Promise<T>) => service.withNpcMemoryRead(actorId, operation);
+  const sql = <T>(operation: () => Promise<T>) => service.withActorMemoryRead(actorId, operation);
   const assertCurrent = () => {
     signal.throwIfAborted();
     if (generation !== service.generation || !fence.current())
@@ -149,7 +154,7 @@ export async function prepareNativeDecision(input: {
     assertCurrent();
     // Issuance moves the actual reads into the ticket. Checks after that move
     // must use its owner, rather than a consumed read handle.
-    if (ticket) return currentTicket();
+    if (ticket || reflectionTicket) return currentTicket();
     const { result } = await service.publishNpcHistory(original, () => true);
     assertCurrent();
     return result;
@@ -163,6 +168,7 @@ export async function prepareNativeDecision(input: {
     input.judge(request, publishHistory);
   const currentTicket = async () => {
     assertCurrent();
+    if (reflectionTicket) return reflectionTicket.sourcesCurrent();
     if (!ticket) throw new Error('Native decision has no issued response ticket.');
     return service.publishRecall(async () => {
       const publication = await service.world.npcResponsePublication(ticket!);
@@ -220,7 +226,7 @@ export async function prepareNativeDecision(input: {
       ) && speechEvidenceIds.size === evidenceIds.length;
     const historySubjects = original.attention().entries.map((entry) => entry.exposure.track);
     const readHistory = (query: Parameters<typeof repository.temporalHistory>[1]) =>
-      service.withNpcMemoryRead(actorId, (cut) =>
+      service.withActorMemoryRead(actorId, (cut) =>
         repository.temporalHistory(
           scope,
           query,
@@ -303,7 +309,7 @@ export async function prepareNativeDecision(input: {
       situationQueries: input.mode !== 'native-only',
       receivedSituation: situation.packet,
       ...(recentWorkResults ? { recentWorkResults } : {}),
-      ...nativeDecisionFields(original, service.definitions),
+      ...nativeDecisionFields(original, service.definitions, 'initial'),
       ...decisionActivityFactsFromRead({
         simTime: original.facts.self.at,
         requests: service.definitions.requestDescriptors(),
@@ -340,6 +346,15 @@ export async function prepareNativeDecision(input: {
       current: historyCurrent,
     });
     const candidates = recalled.candidates;
+    const recallPerspectives = await service.publishRecall(() =>
+      original.capturePerspectives(
+        service.world,
+        candidates
+          .filter((candidate) => candidate.kind === 'memory' || candidate.kind === 'conversation')
+          .flatMap((candidate) => candidate.entityIds),
+      ),
+    );
+    let rememberedPerspectives: NativeNpcBindingSelection['perspectives'] = [];
     // A derived conversation can retain retired exact versions. Its cache is
     // first checked by the SQL coverage owner; the native source owner then
     // admits those actual bodies and keeps their original witnesses private.
@@ -373,15 +388,32 @@ export async function prepareNativeDecision(input: {
     );
     if (speech.unavailablePersonal.length)
       throw new Error('Selected native speech or cached source changed during preparation.');
-    const speechPresentation = await service.prepareNpcExperiencePresentation(
-      original,
-      speech.personal.map((source) => source.value),
-    );
-    const presentation = nativeSourcePresentation(speech.personal, original, service.definitions, {
-      presentation: speechPresentation,
+    conversationCurrent = (
+      await service.captureNpc(actorId, input.requiredAppraisals, {
+        signal,
+        consumer: input.consumer,
+      })
+    ).capture;
+    // The labels and their identity cut share one accepted service turn, like
+    // Source's synchronous conversation projection after its SQL admission.
+    const { presentation, conversationPerspectives } = await service.publishRecall(async () => {
+      const presentation = await conversationCurrent!.prepareExperiencePresentation(
+        service.world,
+        service.definitions,
+        speech.personal.map((source) => source.value),
+      );
+      const conversationPerspectives = await original.capturePerspectives(service.world, [
+        ...(cachedReferences.length ? cachedCandidate!.value.entityIds : []),
+        ...speech.personal.flatMap(
+          (source) => (source.value as { entityIds: readonly string[] }).entityIds,
+        ),
+      ]);
+      return { presentation, conversationPerspectives };
     });
-    conversationCurrent = (await service.captureNpc(actorId, input.requiredAppraisals, { signal }))
-      .capture;
+    const selectedPerspectives = () => [
+      ...rememberedPerspectives,
+      ...conversationPerspectives.select(validity.boundEntities),
+    ];
     const commitments = original
       .sources()
       .flatMap((source) => source.personal)
@@ -429,6 +461,7 @@ export async function prepareNativeDecision(input: {
       _flush = true,
       additionalSources: CurrentMemorySource[] = [],
     ) => {
+      original.guardPerspectives(selectedPerspectives());
       await historyCurrent();
       const valid = await sql(() =>
         repository.validatePreparation(
@@ -458,6 +491,7 @@ export async function prepareNativeDecision(input: {
       scope,
       sources: speech.personal,
       presentation,
+      attribution: conversationPerspectives.attribution,
       snapshot,
       saved,
       requiredIds: recallIds,
@@ -547,8 +581,18 @@ export async function prepareNativeDecision(input: {
       ...recalled.selectedSources(selection.selected),
       ...retainedEvidence.map(memorySourceProof),
     ];
+    rememberedPerspectives = recallPerspectives.select(
+      selection.selected
+        .filter((candidate) => candidate.kind === 'memory' || candidate.kind === 'conversation')
+        .flatMap((candidate) => candidate.entityIds),
+    );
     await conversationCheck(false, selectedProofs);
-    current = (await service.captureNpc(actorId, input.requiredAppraisals, { signal })).capture;
+    current = (
+      await service.captureNpc(actorId, input.requiredAppraisals, {
+        signal,
+        consumer: input.consumer,
+      })
+    ).capture;
     const now = current;
     const currentFacts = [
       ...now.recallEntities(),
@@ -612,7 +656,7 @@ export async function prepareNativeDecision(input: {
             ...candidates.flatMap((candidate) => candidate.sourceIds ?? [candidate.id]),
           ]).has(id),
       ).length;
-    const fields = nativeDecisionFields(now, service.definitions);
+    const fields = nativeDecisionFields(now, service.definitions, 'current');
     const intentActions = now.facts.self.agency.attempts.map((attempt, ordinal) => ({
       id: `w${ordinal}`,
       ordinal,
@@ -685,12 +729,6 @@ export async function prepareNativeDecision(input: {
         revision: value.revision,
         experience: value.experience,
       });
-    const attribution = nativePersonalAttributionReader(now, original, personal);
-    if (
-      validity.expectedPerspective &&
-      attribution(validity.boundEntities) !== validity.expectedPerspective
-    )
-      throw new Error('Selected speech perspective changed during native attention.');
     for (const key of Object.keys(context)) {
       const value = context[key];
       if (typeof value === 'string') context[key] = nativeProjectEntityMarkers(value, now);
@@ -792,7 +830,7 @@ export async function prepareNativeDecision(input: {
           currentTicket,
         })
       : undefined;
-    const reflection =
+    const interpretationRecords =
       input.mode === 'reflection'
         ? await offerNativeInterpretationRecords({
             service,
@@ -806,6 +844,9 @@ export async function prepareNativeDecision(input: {
             ),
           })
         : undefined;
+    const reflection = interpretationRecords
+      ? { ...interpretationRecords, identityHandles: Object.keys(references.identityReferences) }
+      : undefined;
     if (input.mode === 'reflection' && appraisal) context['feelings'] = appraisal.context;
     const additionalContext = invention
       ? `\n${invention.context}${appraisal ? '\nPermitted feeling proposals: ' + JSON.stringify(appraisal.context) : ''}`
@@ -839,6 +880,8 @@ export async function prepareNativeDecision(input: {
       original,
       current: now,
       validity: input.validity,
+      purpose: input.mode === 'reflection' ? 'reflection' : 'decision',
+      consumer: input.consumer,
       references,
       knowledge,
       situation,
@@ -846,7 +889,7 @@ export async function prepareNativeDecision(input: {
       actions: offered,
       actionSource,
       prototypeSource: actionSource,
-      perspectiveEntities: validity.boundEntities,
+      perspectives: selectedPerspectives(),
       semanticCauses: input.semanticCauses,
       intents: intentActions,
       appraisals: appraisal?.selection ?? null,
@@ -951,15 +994,18 @@ export async function prepareNativeDecision(input: {
         preparedValidity: nativePreparedResponseValidity(now),
         awarenessSequence: conversation.awarenessSequence,
         async current() {
-          if (!ticket) return false;
+          if (!ticket && !reflectionTicket) return false;
           await conversationCheck(false, selectedProofs);
           return (!appraisal || (await appraisal.current())) && (await currentTicket());
         },
         async publish<T>(start: () => T): Promise<{ result: T }> {
           await conversationCheck(false, selectedProofs);
           return service.publishRecall(async () => {
-            if (!ticket) throw new Error('Native decision has no issued response ticket.');
-            const publication = await service.world.npcResponsePublication(ticket);
+            if (!ticket && !reflectionTicket)
+              throw new Error('Native decision has no issued response ticket.');
+            const publication = reflectionTicket
+              ? await service.world.reflectionPublication(reflectionTicket)
+              : await service.world.npcResponsePublication(ticket!);
             try {
               assertCurrent();
               if (!publication?.isCurrent())
@@ -992,12 +1038,14 @@ export async function prepareNativeDecision(input: {
             offered,
             actionSource,
             prototypeSource: actionSource,
-            perspectiveEntities: validity.boundEntities,
+            perspectives: selectedPerspectives(),
             semanticCauses: input.semanticCauses,
             ...(input.semanticTrigger ? { semanticTrigger: input.semanticTrigger } : {}),
             intents: intentActions,
             appraisals: appraisal?.selection ?? null,
             validity: input.validity,
+            purpose: input.mode === 'reflection' ? 'reflection' : 'decision',
+            consumer: input.consumer,
             context,
             additionalContext,
             instructions,
@@ -1050,9 +1098,20 @@ export async function prepareNativeDecision(input: {
           queryUsed = false;
           schema = withSituationQueries(schemaFor(), situation.policy.maximumQueries);
         },
+        adoptReflectionTicket(owner: NativeWorldReflectionTicket): void {
+          if (input.mode !== 'reflection' || !ticket || reflectionTicket)
+            throw new Error('Reflection requires its originating prepared native request.');
+          // bindReflection consumed the actual NPC ticket into this stronger
+          // owner. Its source-only guards keep the same SQL/history validation
+          // without imposing a decision self-signature on reflection.
+          reflectionTicket = owner;
+          ticket = undefined;
+        },
         dispose() {
           ticket?.release();
+          reflectionTicket?.release();
           ticket = undefined;
+          reflectionTicket = undefined;
           fence.release();
           original.release();
           now.release();
@@ -1082,6 +1141,7 @@ export async function prepareNativeDecision(input: {
   } finally {
     if (!completed) {
       ticket?.release();
+      reflectionTicket?.release();
       fence.release();
       conversationCurrent?.release();
       current?.release();

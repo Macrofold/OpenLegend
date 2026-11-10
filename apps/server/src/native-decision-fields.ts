@@ -12,6 +12,7 @@ import type { NativeDefinitionCapture } from './native-definition-capture.js';
 import { nativeNpcWorkContext } from './native-npc-candidates.js';
 import { gameTime } from './recall.js';
 import { retainNativeSources } from './native-consumer.js';
+import { ACTIVITY_COVERAGE } from './decision-activity-facts.js';
 
 /** Common request fields read only one actor's actual first-person cut and the
  * installed immutable definitions. Historical evidence/references keep their
@@ -19,6 +20,7 @@ import { retainNativeSources } from './native-consumer.js';
 export function nativeDecisionFields(
   capture: NativeNpcCapture,
   definitions: NativeDefinitionCapture,
+  phase: 'initial' | 'current',
 ) {
   const facts = capture.facts,
     installed = definitions.facts,
@@ -84,14 +86,15 @@ export function nativeDecisionFields(
         (contact) => contact.text,
       ),
       goal: own.goal,
+      activityCoverage: ACTIVITY_COVERAGE,
       agency: {
         goals: self.agency.goals,
         plan: work.plan,
         paused: work.paused,
         planRevision: self.agency.plan?.revision ?? 0,
         attempts: self.agency.attempts,
+        ...(phase === 'initial' ? { choicesForCurrentWork: work.choicesForCurrentWork } : {}),
       },
-      workChoices: work.choicesForCurrentWork,
       ...(carryingConcern ? { carryingConcern } : {}),
       ...(self.innerWorld?.reconsiderationRequired
         ? {

@@ -320,3 +320,149 @@ impl ActorResponse {
         Ok(())
     }
 }
+
+fn reflection_subject_cell(
+    subject: &crate::reception::ObserverSubject,
+    storage: &mut ByteReservation,
+) -> Result<SqlCell, ExecutionError> {
+    let length = crate::encoding::json_record_len(subject).map_err(|_| invalid())?;
+    reserve(
+        storage,
+        length
+            .checked_mul(2)
+            .map(|n| n.max(8))
+            .ok_or(ExecutionError::Capacity)?,
+    )?;
+    let json = crate::encoding::json_record(subject).map_err(|_| invalid())?;
+    reserve(storage, crate::experience::encoded_body_bound(&json)?)?;
+    serde_json::from_str(&json).map_err(|_| invalid())
+}
+impl ResponseAliases<'_> {
+    /// Reflection uses the same offered handles and marker grammar as ordinary
+    /// response edits. Only the native ticket supplies these maps.
+    pub(crate) fn resolve_reflection_proposal(
+        &self,
+        publication: &mut SqlCell,
+        evidence: &IndexMap<String, String>,
+        appraisals: Option<&PreparedResponseAppraisals>,
+        state: &crate::simulation::SimulationState,
+        budget: &ByteBudget,
+        storage: &mut ByteReservation,
+    ) -> Result<(), ExecutionError> {
+        for field in ["nameChanges", "knowledgeChanges"] {
+            let SqlCell::Array(changes) =
+                object(publication)?.get_mut(field).ok_or_else(invalid)?
+            else {
+                return Err(invalid());
+            };
+            for change in changes {
+                let change = object(change)?;
+                let subject = change.get_mut("subjectId").ok_or_else(invalid)?;
+                if !subject.is_null() {
+                    if !subject.as_str().is_some_and(|key| {
+                        self.identities.contains_key(key)
+                            || (field == "knowledgeChanges" && self.knowledge.contains_key(key))
+                    }) {
+                        scalar(subject, self.entities, storage)?;
+                    }
+                    let key = subject.as_str().ok_or_else(invalid)?;
+                    let selected = self.knowledge.get(key).or_else(|| self.identities.get(key));
+                    let owned;
+                    let selected = if let Some(selected) = selected {
+                        selected
+                    } else {
+                        if !self.entities.values().any(|id| id == key) {
+                            return Err(invalid());
+                        }
+                        reserve(storage, key.len())?;
+                        owned = crate::reception::ObserverSubject::Entity {
+                            entity_id: key.into(),
+                        };
+                        &owned
+                    };
+                    *subject = reflection_subject_cell(selected, storage)?;
+                } else if field == "nameChanges" {
+                    return Err(invalid());
+                }
+                if field == "knowledgeChanges" {
+                    prose(
+                        change.get_mut("text").ok_or_else(invalid)?,
+                        self,
+                        true,
+                        budget,
+                        storage,
+                    )?;
+                }
+            }
+        }
+        let SqlCell::Array(goals) = object(publication)?
+            .get_mut("goalChanges")
+            .ok_or_else(invalid)?
+        else {
+            return Err(invalid());
+        };
+        for goal in goals {
+            prose(
+                object(goal)?.get_mut("objective").ok_or_else(invalid)?,
+                self,
+                true,
+                budget,
+                storage,
+            )?;
+        }
+        let SqlCell::Array(thoughts) = object(publication)?
+            .get_mut("thoughts")
+            .ok_or_else(invalid)?
+        else {
+            return Err(invalid());
+        };
+        for thought in thoughts {
+            prose(thought, self, true, budget, storage)?;
+        }
+        let SqlCell::Array(records) = object(publication)?
+            .get_mut("recordChanges")
+            .ok_or_else(invalid)?
+        else {
+            return Err(invalid());
+        };
+        for record in records {
+            let record = object(record)?;
+            if record.get("operation").and_then(SqlCell::as_str) == Some("remove") {
+                continue;
+            }
+            let subject = record.get_mut("subjectId").ok_or_else(invalid)?;
+            if !subject.is_null() {
+                let selected = subject
+                    .as_str()
+                    .and_then(|key| self.identities.get(key))
+                    .ok_or_else(invalid)?;
+                *subject = reflection_subject_cell(selected, storage)?;
+            }
+            let SqlCell::Array(links) = record.get_mut("evidence").ok_or_else(invalid)? else {
+                return Err(invalid());
+            };
+            for link in links {
+                scalar(
+                    object(link)?.get_mut("id").ok_or_else(invalid)?,
+                    evidence,
+                    storage,
+                )?;
+            }
+        }
+        let SqlCell::Array(changes) = object(publication)?
+            .get_mut("appraisalChanges")
+            .ok_or_else(invalid)?
+        else {
+            return Err(invalid());
+        };
+        for change in changes {
+            let (resolved, custody) =
+                appraisals
+                    .ok_or_else(invalid)?
+                    .resolve(state, change, self.entities, budget)?;
+            storage.merge(custody)?;
+            *change = resolved;
+        }
+        Ok(())
+    }
+}

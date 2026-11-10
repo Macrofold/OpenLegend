@@ -19,19 +19,21 @@ pub(super) fn receipt_details_current(
     core: &CoreMutation<'_>,
     bindings: &ResponseBindings,
 ) -> Result<bool, ExecutionError> {
+    receipt_details_current_state(core.state, bindings)
+}
+pub(super) fn receipt_details_current_state(
+    state: &crate::simulation::SimulationState,
+    bindings: &ResponseBindings,
+) -> Result<bool, ExecutionError> {
     let Some(situation) = &bindings.input.situation else {
         return Ok(true);
     };
     let actor = bindings.actor_id();
-    let privacy = core
-        .state
-        .experience
-        .actor(actor)
-        .map(|actor| &actor.privacy);
-    let law = core.state.installed.account_law();
+    let privacy = state.experience.actor(actor).map(|actor| &actor.privacy);
+    let law = state.installed.account_law();
     for capture in situation.receipt_details.values() {
         let receipt = capture.receipt();
-        if receipt.at > core.state.physical.header.sim_time
+        if receipt.at > state.physical.header.sim_time
             || receipt.facets.len() != capture.fragments().len()
             || privacy.is_some_and(|privacy| {
                 privacy.revoked(&receipt.id)
@@ -46,7 +48,7 @@ pub(super) fn receipt_details_current(
         }
         for (field, value) in receipt.facets.iter().zip(capture.fragments()) {
             if !temporal_facet_eligible(
-                &core.state.experience,
+                &state.experience,
                 &receipt.locator.actor_id,
                 field,
                 value,
@@ -60,15 +62,15 @@ pub(super) fn receipt_details_current(
     for selected in situation.observation_references.values() {
         let eligible = match selected {
             ResponseObservation::Acquired(index) => evidence_cut_member_eligible(
-                &core.state.experience,
-                &core.state.physical.entities,
+                &state.experience,
+                &state.physical.entities,
                 cut,
                 EvidenceCutMember::Acquired(*index),
                 &law,
             ),
             ResponseObservation::Personal(original) => {
                 crate::experience::retained_observation_eligible(
-                    &core.state.experience,
+                    &state.experience,
                     actor,
                     original,
                     &law,

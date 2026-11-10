@@ -138,7 +138,7 @@ fn retention_metadata(
     body: &Map<String, Value>,
     law: &impl AccountRecordingLaw,
 ) -> Result<Value, MemoryAcquisitionError> {
-    if text(body, "kind")? == "impression" {
+    if body.get("kind").and_then(Value::as_str) == Some("impression") {
         return Ok(serde_json::json!({"aliases":[],"versions":[],"learning":[]}));
     }
     let originals = originals(body, false)?;
@@ -166,8 +166,17 @@ fn retention_metadata(
             }
         }
     }
-    for original in &originals {
-        aliases.insert(text(object(original)?, "id")?.to_owned());
+    if body.contains_key("sources") {
+        for source in array(body, "sources")? {
+            add(source)?;
+        }
+        aliases.extend(super::super::manifest_dependencies::observation_aliases(
+            &originals,
+        )?);
+    } else {
+        for original in &originals {
+            aliases.insert(text(object(original)?, "id")?.to_owned());
+        }
     }
     let mut learning = if let Some(recognition) = child(body, "evidence")?
         .map(|evidence| child(evidence, "recognition"))
@@ -263,7 +272,7 @@ pub(super) fn context_subjects(body: &Map<String, Value>) -> Result<Vec<String>,
     }
     Ok(subjects.into_iter().collect())
 }
-pub(super) fn known_place_capsules(
+pub(in crate::experience) fn known_place_capsules(
     body: &Map<String, Value>,
     inputs: Vec<ObservationContribution>,
     actor_id: &str,
@@ -313,7 +322,7 @@ pub(in super::super) fn memory_columns(
     let mut individuals = Some(individual_ids(body)?);
     let mut retention = Some(retention_metadata(body, law)?);
     schema
-        .layout("mind_memories")
+        .layout(header.reference.kind.table())
         .map_err(|_| MemoryAcquisitionError::Encoding)?
         .columns
         .iter()
@@ -331,7 +340,7 @@ pub(in super::super) fn memory_columns(
                     .activity_id
                     .as_ref()
                     .map_or(Value::Null, |id| Value::from(id.clone())),
-                "kind" => Value::from(text(body, "kind")?),
+                "kind" => body.get("kind").cloned().unwrap_or(Value::Null),
                 "sequence" => header.sequence.map_or(Value::Null, Value::from),
                 "individual_ids" => Value::from(individuals.take().expect("unique schema column")),
                 "retention_metadata" => retention.take().expect("unique schema column"),

@@ -59,12 +59,14 @@ export async function expandNativeDecisionSituation(input: {
   offered: readonly NativeFormattedNpcOffer[];
   actionSource: 'original' | 'current';
   prototypeSource: 'original' | 'current';
-  perspectiveEntities: readonly string[];
+  perspectives: NativeNpcBindingSelection['perspectives'];
   semanticCauses: readonly number[];
   semanticTrigger?: NativeWorldNpcTrigger;
   intents: readonly { id: string; ordinal: number }[];
   appraisals: NativeNpcBindingSelection['appraisals'];
   validity: NativeNpcBindingSelection['validity'];
+  purpose: 'decision' | 'reflection';
+  consumer: 'chat' | 'thought' | 'reflection';
   context: Record<string, unknown>;
   additionalContext: string;
   instructions: string;
@@ -79,7 +81,7 @@ export async function expandNativeDecisionSituation(input: {
   const repository = service.store.memories;
   const expansion = await expandSituation(situation, input.queries, async (query) => {
     await input.check();
-    const result = await service.withNpcMemoryRead(scope.actorId, (cut) =>
+    const result = await service.withActorMemoryRead(scope.actorId, (cut) =>
       repository.temporalHistory(
         scope,
         query,
@@ -134,6 +136,8 @@ export async function expandNativeDecisionSituation(input: {
     original,
     current,
     validity: input.validity,
+    purpose: input.purpose,
+    consumer: input.consumer,
     references: input.references,
     knowledge: input.knowledge,
     situation,
@@ -141,7 +145,7 @@ export async function expandNativeDecisionSituation(input: {
     actions: offered,
     actionSource: input.actionSource,
     prototypeSource: input.prototypeSource,
-    perspectiveEntities: input.perspectiveEntities,
+    perspectives: input.perspectives,
     semanticCauses: input.semanticCauses,
     intents: input.intents,
     appraisals: input.appraisals,

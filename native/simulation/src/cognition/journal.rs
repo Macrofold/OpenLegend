@@ -9,6 +9,11 @@ use crate::identity::MAX_SAFE_INTEGER;
 use std::mem::size_of;
 
 enum Undo {
+    Publication {
+        actor: String,
+        mind: super::ActorMind,
+        inner: super::InnerWorld,
+    },
     SemanticNotice(super::SemanticNotice),
     Reconsideration {
         actor: String,
@@ -51,6 +56,7 @@ pub(crate) struct CognitionCheckpoint {
     retained_bytes: usize,
 }
 pub(crate) enum CognitionChange<'a> {
+    Publication(&'a str),
     InnerWorld(&'a str),
     MindRevision(&'a str),
     MindRecord { actor: &'a str, index: usize },
@@ -116,6 +122,7 @@ impl CognitionJournal {
     pub(crate) fn changes(&self) -> impl Iterator<Item = CognitionChange<'_>> {
         self.undo.iter().filter_map(|undo| {
             Some(match undo {
+                Undo::Publication { actor, .. } => CognitionChange::Publication(actor),
                 Undo::SemanticNotice(_) => return None,
                 Undo::Reconsideration { actor, .. } | Undo::InnerRevision { actor, .. } => {
                     CognitionChange::InnerWorld(actor)
@@ -141,6 +148,12 @@ impl CognitionJournal {
         ),
     > {
         self.undo.iter().filter_map(|undo| match undo {
+            Undo::Publication { actor, mind, .. } => Some((
+                actor.as_str(),
+                mind.documents.as_slice(),
+                mind.records.as_slice(),
+                mind.thoughts.as_slice(),
+            )),
             Undo::ResetMind {
                 actor,
                 documents,
@@ -177,6 +190,55 @@ impl CognitionJournal {
             .try_reserve_exact(needed.saturating_sub(self.undo.len()))
             .map_err(|_| ExecutionError::Capacity)?;
         self.retained_bytes = retained;
+        Ok(())
+    }
+    pub(super) fn publish(
+        &mut self,
+        state: &mut MindState,
+        actor: &str,
+        publication: super::reflection::PreparedMindPublication,
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
+        let mind = state
+            .minds
+            .as_ref()
+            .and_then(|m| m.get(actor))
+            .ok_or(ExecutionError::MissingActor)?;
+        let inner = state
+            .inner_worlds
+            .as_ref()
+            .and_then(|m| m.get(actor))
+            .ok_or(ExecutionError::UnsupportedFamily)?;
+        for guard in [
+            mind.contents_storage.as_ref(),
+            mind.metadata_storage.as_ref(),
+            inner.contents_storage.as_ref(),
+            inner.metadata_storage.as_ref(),
+        ] {
+            budget.retain_record(guard.ok_or(ExecutionError::Invariant)?)?;
+        }
+        self.reserve(1, actor.len())?;
+        let before_mind = std::mem::replace(
+            state
+                .minds
+                .as_mut()
+                .and_then(|m| m.get_mut(actor))
+                .ok_or(ExecutionError::Invariant)?,
+            publication.mind,
+        );
+        let before_inner = std::mem::replace(
+            state
+                .inner_worlds
+                .as_mut()
+                .and_then(|m| m.get_mut(actor))
+                .ok_or(ExecutionError::Invariant)?,
+            publication.inner,
+        );
+        self.undo.push(Undo::Publication {
+            actor: actor.to_owned(),
+            mind: before_mind,
+            inner: before_inner,
+        });
         Ok(())
     }
     /// Body reconciliation asks an existing private mind to reconsider. This
@@ -447,6 +509,18 @@ impl CognitionJournal {
         }
         while self.undo.len() > checkpoint.undo {
             match self.undo.pop().ok_or(ExecutionError::Invariant)? {
+                Undo::Publication { actor, mind, inner } => {
+                    *state
+                        .minds
+                        .as_mut()
+                        .and_then(|m| m.get_mut(&actor))
+                        .ok_or(ExecutionError::Invariant)? = mind;
+                    *state
+                        .inner_worlds
+                        .as_mut()
+                        .and_then(|m| m.get_mut(&actor))
+                        .ok_or(ExecutionError::Invariant)? = inner;
+                }
                 Undo::SemanticNotice(_) => {}
                 Undo::Reconsideration { actor, before } => {
                     state

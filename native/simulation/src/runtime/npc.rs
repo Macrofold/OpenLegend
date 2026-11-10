@@ -8,6 +8,7 @@ use crate::simulation::AcceptedActorRead;
 use std::mem::size_of;
 
 mod bindings;
+mod perspectives;
 pub(super) use bindings::ActiveNpcResponse;
 pub use bindings::RuntimeNpcResponseTicket;
 
@@ -25,7 +26,9 @@ pub struct RuntimeNpcRead {
     reference_facts: crate::capture::NpcReferenceFacts,
     candidates: Option<crate::capture::PreparedNpcCandidates>,
     intent_ids: Vec<String>,
+    pub(super) work_generation: u64,
     sources: Arc<Vec<crate::capture::PreparedNpcSources>>,
+    perspectives: Arc<Vec<crate::capture::NpcPerspectiveSnapshot>>,
     candidate_key: Option<CandidateKey>,
     query_expanded: bool,
     _custody: Arc<ByteReservation>,
@@ -47,7 +50,72 @@ struct CandidateRequest {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct NpcReadRequest {
     actor_id: String,
+    consumer: String,
     required_appraisals: Vec<AppraisalScope>,
+}
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct NpcPublicationRequest {
+    consumer: String,
+    perspectives: Vec<crate::capture::NpcPerspectiveOrdinal>,
+}
+
+/// The installed capability owner supplies the current body predicates. Job
+/// purpose is trusted server admission, never a model-selected permission.
+fn npc_consumer_current(
+    state: &crate::simulation::SimulationState,
+    actor_id: &str,
+    consumer: &str,
+    response_id: Option<&str>,
+) -> Result<bool, crate::execution::ExecutionError> {
+    use crate::execution::ExecutionError;
+    let Some(entity) = state.physical.entities.get(actor_id) else {
+        return Ok(false);
+    };
+    let Some(actor) = entity.actor.as_ref() else {
+        return Ok(false);
+    };
+    if !entity.has_memory() || actor.controller != "npc" {
+        return Ok(false);
+    }
+    match consumer {
+        "inspection" | "reflection" => Ok(true),
+        "chat" => {
+            if !actor.alive {
+                return Ok(false);
+            }
+            // Source's pending-reply watch stops incapacity or simultaneous
+            // action/speech blocking. A reply may itself install that state;
+            // its genuine committed receipt ends this pending-work check.
+            if response_id.is_some_and(|id| state.responses.get(id).is_some()) {
+                return Ok(true);
+            }
+            Ok(!actor.incapacitated
+                && !(state
+                    .installed
+                    .capabilities
+                    .capability_blocked(Some(entity), "speech")?
+                    && state
+                        .installed
+                        .capabilities
+                        .capability_blocked(Some(entity), "actions")?))
+        }
+        "thought" => {
+            // nativeProtectionReason is present exactly when actions are
+            // blocked (its empty-label branch still supplies a reason).
+            Ok(actor.alive
+                && !actor.incapacitated
+                && actor
+                    .capabilities
+                    .as_ref()
+                    .is_none_or(|capabilities| capabilities.cognition)
+                && !state
+                    .installed
+                    .capabilities
+                    .capability_blocked(Some(entity), "actions")?)
+        }
+        _ => Err(ExecutionError::InvalidCheckpoint),
+    }
 }
 
 impl NativeWorldSession {
@@ -80,23 +148,29 @@ impl NativeWorldSession {
     pub fn npc_history_publication(
         &self,
         read: &RuntimeNpcRead,
+        input: &[u8],
     ) -> Result<Option<RuntimeNpcPublication>, RuntimeError> {
         self.require_active()?;
+        let _decode = decode_preparation(input, &self.budget)?;
+        let request: NpcPublicationRequest = serde_json::from_slice(input).map_err(failure)?;
         let simulation = self.session.accepted().map_err(failure)?;
         if read.candidate_key.is_some()
             || !read.historical_scope.still_permitted(&simulation.state)
-            || !simulation
-                .state
-                .physical
-                .entities
-                .get(&read.read.perception.actor_id)
-                .is_some_and(|entity| {
-                    entity.has_memory()
-                        && entity
-                            .actor
-                            .as_ref()
-                            .is_some_and(|actor| actor.controller == "npc")
-                })
+            || !crate::capture::npc_perspectives_current(
+                &simulation.state,
+                &read.read.perception.actor_id,
+                &read.perspectives,
+                &request.perspectives,
+                &self.budget,
+            )
+            .map_err(failure)?
+            || !npc_consumer_current(
+                &simulation.state,
+                &read.read.perception.actor_id,
+                &request.consumer,
+                None,
+            )
+            .map_err(failure)?
         {
             return Ok(None);
         }
@@ -116,23 +190,35 @@ impl NativeWorldSession {
         }
         let state = &self.session.accepted().map_err(failure)?.state;
         let actor_id = &ticket.current.read.perception.actor_id;
-        let Some(entity) = state.physical.entities.get(actor_id) else {
-            return Ok(None);
-        };
-        let Some(actor) = entity.actor.as_ref() else {
-            return Ok(None);
-        };
-        if state.physical.header.paused
-            || !entity.actively_participates()
-            || !actor.alive
-            || actor.incapacitated
-            || !ticket.original.historical_scope.still_permitted(state)
+        // Paid source disclosure follows the admitted consumer's Source gate.
+        // Paused/participating/response-body checks belong to the actual
+        // response effect owner; source-only reflection has its own native
+        // maintenance admission and must not inherit a chat/action gate here.
+        if !ticket.original.historical_scope.still_permitted(state)
             || !ticket.current.historical_scope.still_permitted(state)
             || ticket
                 .original
                 .sources
                 .iter()
                 .any(|source| !source.scope.still_permitted(state))
+            || !npc_consumer_current(
+                state,
+                actor_id,
+                ticket.bindings.consumer.as_str(),
+                Some(&ticket.decision_id),
+            )
+            .map_err(failure)?
+        {
+            return Ok(None);
+        }
+        if !ticket
+            .original
+            .read
+            .native_validity
+            .as_ref()
+            .ok_or_else(|| failure("NPC initial outcome witness unavailable"))?
+            .required_outcomes_current(state, actor_id, &self.budget)
+            .map_err(failure)?
         {
             return Ok(None);
         }
@@ -147,13 +233,20 @@ impl NativeWorldSession {
             ResponseValidityRoute::PreparedResponse => {
                 witness.prepared_current(state, actor_id, &self.budget)
             }
+            ResponseValidityRoute::Source => ticket
+                .original
+                .read
+                .native_validity
+                .as_ref()
+                .ok_or_else(|| failure("NPC initial outcome witness unavailable"))?
+                .required_outcomes_current(state, actor_id, &self.budget),
         }
         .map_err(failure)?;
         if !current
             || !crate::capture::npc_perspectives_current(
                 state,
                 actor_id,
-                &ticket.original.sources,
+                &ticket.original.perspectives,
                 &ticket.bindings.perspectives,
                 &self.budget,
             )
@@ -186,6 +279,16 @@ impl NativeWorldSession {
             .filter(|serial| *serial <= crate::identity::MAX_SAFE_INTEGER)
             .ok_or_else(|| failure("read identity exhausted"))?;
         let simulation = self.session.accepted().map_err(failure)?;
+        if !npc_consumer_current(
+            &simulation.state,
+            &request.actor_id,
+            &request.consumer,
+            None,
+        )
+        .map_err(failure)?
+        {
+            return Err(failure("NPC consumer is no longer eligible"));
+        }
         let read = simulation
             .read_npc(
                 &request.actor_id,
@@ -230,6 +333,14 @@ impl NativeWorldSession {
                     .ok_or_else(|| failure("capacity"))
             },
         )?;
+        let work_generation = simulation
+            .state
+            .physical
+            .entities
+            .get(&request.actor_id)
+            .and_then(|entity| entity.actor.as_ref())
+            .ok_or_else(|| failure("NPC actor disappeared"))?
+            .plan_generation;
         let custody = self
             .budget
             .reserve(
@@ -239,11 +350,12 @@ impl NativeWorldSession {
                         n.checked_add(
                             size_of::<AcceptedActorRead>()
                                 + size_of::<Vec<crate::capture::PreparedNpcSources>>()
-                                + size_of::<ByteReservation>(),
+                                + size_of::<ByteReservation>()
+                                + size_of::<Vec<crate::capture::NpcPerspectiveSnapshot>>(),
                         )
                     })
                     .and_then(|n| {
-                        n.checked_add(6 * size_of::<usize>() + 3 * std::mem::align_of::<usize>())
+                        n.checked_add(8 * size_of::<usize>() + 4 * std::mem::align_of::<usize>())
                     })
                     .ok_or_else(|| failure("capacity"))?,
             )
@@ -258,7 +370,9 @@ impl NativeWorldSession {
             reference_facts,
             candidates: None,
             intent_ids,
+            work_generation,
             sources: Arc::new(Vec::new()),
+            perspectives: Arc::new(Vec::new()),
             candidate_key: None,
             query_expanded: false,
             _custody: Arc::new(custody),

@@ -68,15 +68,28 @@ impl AppraisalCreatesRequest {
         binding: GeometryBinding,
         budget: &ByteBudget,
     ) -> Result<Option<Self>, ExecutionError> {
-        let count = (0..response.len())
-            .filter_map(|index| response.operation(index))
-            .filter(|op| {
-                op.kind == ResponseKind::Appraise
-                    && op
-                        .data
-                        .get("kind")
-                        .and_then(crate::records::SqlCell::as_str)
-                        == Some("create")
+        Self::prepare_changes(
+            state,
+            actor,
+            (0..response.len())
+                .filter_map(|index| response.operation(index))
+                .filter(|op| op.kind == ResponseKind::Appraise)
+                .map(|op| op.data),
+            binding,
+            budget,
+        )
+    }
+    pub(crate) fn prepare_changes<'a>(
+        state: &SimulationState,
+        actor: &str,
+        changes: impl Iterator<Item = &'a crate::records::SqlCell> + Clone,
+        binding: GeometryBinding,
+        budget: &ByteBudget,
+    ) -> Result<Option<Self>, ExecutionError> {
+        let count = changes
+            .clone()
+            .filter(|change| {
+                change.get("kind").and_then(crate::records::SqlCell::as_str) == Some("create")
             })
             .count();
         if count == 0 {
@@ -96,30 +109,24 @@ impl AppraisalCreatesRequest {
                 .ok_or(ExecutionError::Capacity)?,
         )?;
         let mut ids = Vec::with_capacity(count);
-        for op in (0..response.len()).filter_map(|index| response.operation(index)) {
-            if op.kind != ResponseKind::Appraise
-                || op
-                    .data
-                    .get("kind")
-                    .and_then(crate::records::SqlCell::as_str)
-                    != Some("create")
-            {
+        for change in changes {
+            if change.get("kind").and_then(crate::records::SqlCell::as_str) != Some("create") {
                 continue;
             }
             let _decode = budget.reserve(
-                op.data
+                change
                     .heap_bytes()
                     .and_then(|n| n.checked_mul(12))
                     .and_then(|n| n.checked_add(1024))
                     .ok_or(ExecutionError::Capacity)?,
             )?;
             let pin: crate::values::DefinitionPin = super::super::actions::decode(
-                op.data
+                change
                     .get("definitionPin")
                     .ok_or(ExecutionError::InvalidCheckpoint)?,
             )?;
             let source: crate::appraisals::PerceivedCause = super::super::actions::decode(
-                op.data
+                change
                     .get("source")
                     .ok_or(ExecutionError::InvalidCheckpoint)?,
             )?;
@@ -129,8 +136,7 @@ impl AppraisalCreatesRequest {
                 .get(&pin.id)
                 .filter(|definition| definition.pin == pin)
                 .ok_or(ExecutionError::InvalidCheckpoint)?;
-            let target = op
-                .data
+            let target = change
                 .get("targetId")
                 .filter(|target| !target.is_null())
                 .and_then(crate::records::SqlCell::as_str);

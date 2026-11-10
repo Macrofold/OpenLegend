@@ -1388,11 +1388,14 @@ export function acceptedMindDocumentText(
   if (Object.isFrozen(documents)) acceptedTexts.set(documents, text);
   return text;
 }
+export function validMindFilePath(path: string): boolean {
+  return /^[\p{L}\p{N}_ -]{1,64}\.md$/u.test(path);
+}
 export function flattenFiles(files: MindFiles): string {
   const paths = new Set<string>();
   if (!files.length || files.length > 10) throw new Error('The inner world requires 1–10 files.');
   for (const file of files) {
-    if (!/^[\p{L}\p{N}_ -]{1,64}\.md$/u.test(file.path) || paths.has(file.path))
+    if (!validMindFilePath(file.path) || paths.has(file.path))
       throw new Error('Invalid or duplicate inner-world filename.');
     if (
       wordCount(file.path + ' ' + file.text) > 500 ||

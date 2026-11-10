@@ -17,6 +17,7 @@ pub(crate) struct DecisionValidityWitness {
     installed: Arc<InstalledWorld>,
     decision: String,
     prepared: String,
+    outcomes: String,
     _storage: ByteReservation,
 }
 #[derive(Serialize)]
@@ -363,6 +364,8 @@ impl DecisionValidityWitness {
         let lengths = crate::encoding::json_record_len(&decision)
             .and_then(|a| crate::encoding::json_record_len(&prepared).map(|b| (a, b)))
             .map_err(|_| ExecutionError::Invariant)?;
+        let outcome_bytes = crate::encoding::json_record_len(&Outcomes(&outcomes))
+            .map_err(|_| ExecutionError::Invariant)?;
         let names = heap_sum([
             actor_id.len(),
             state.physical.header.id.len(),
@@ -389,6 +392,7 @@ impl DecisionValidityWitness {
             .and_then(|n| n.checked_add(names))
             .and_then(|n| n.checked_add(scopes))
             .and_then(|n| n.checked_add(size_of::<Self>()))
+            .and_then(|n| n.checked_add(outcome_bytes.checked_mul(2)?.max(8)))
             .ok_or(ExecutionError::Capacity)?;
         let storage = budget.reserve(bytes)?;
         Ok(Self {
@@ -401,11 +405,40 @@ impl DecisionValidityWitness {
                 .map_err(|_| ExecutionError::Invariant)?,
             prepared: crate::encoding::json_record(&prepared)
                 .map_err(|_| ExecutionError::Invariant)?,
+            outcomes: crate::encoding::json_record(&Outcomes(&outcomes))
+                .map_err(|_| ExecutionError::Invariant)?,
             _storage: storage,
         })
     }
     pub(crate) fn decision_json(&self) -> &str {
         &self.decision
+    }
+    /// Reflection source validation observes the existing result addresses;
+    /// unrelated self meter/goal/agency changes belong to other consumers.
+    pub(crate) fn required_outcomes_current(
+        &self,
+        state: &SimulationState,
+        actor: &str,
+        budget: &ByteBudget,
+    ) -> Result<bool, ExecutionError> {
+        if self.actor != actor
+            || self.world != state.physical.header.id
+            || self.generation != state.generation
+        {
+            return Ok(false);
+        }
+        let Some(agency) = state
+            .physical
+            .entities
+            .get(actor)
+            .and_then(|e| e.actor.as_ref())
+            .map(|a| &a.agency)
+        else {
+            return Ok(false);
+        };
+        let values = outcomes::capture(state, actor, agency, budget)?;
+        crate::encoding::json_record_eq(&Outcomes(&values), &self.outcomes)
+            .map_err(|_| ExecutionError::Invariant)
     }
     pub(crate) fn prepared_json(&self) -> &str {
         &self.prepared

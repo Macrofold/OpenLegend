@@ -110,7 +110,7 @@ import {
 import { captureExperienceContext } from './experience-context.js';
 import { decisionFeelings } from './appraisal-context.js';
 import { formatDecisionSelfContext } from './decision-self-context.js';
-import { decisionActivityFactsFromRead } from './decision-activity-facts.js';
+import { decisionActivityFactsFromRead, ACTIVITY_COVERAGE } from './decision-activity-facts.js';
 
 import {
   captureTemporalHistoryReadContext,
@@ -796,8 +796,7 @@ export async function prepareDecision(
           (memory) =>
             `${memory.summary}${memory.obligation?.dueAt !== undefined ? ` Due in ${Math.max(0, memory.obligation.dueAt - readWorld().simTime)} game seconds.` : ''}`,
         ),
-      activityCoverage:
-        'At most four compatible personally learned activities are offered at once. Other activities can be inspected. An available first step does not promise that later steps can finish.',
+      activityCoverage: ACTIVITY_COVERAGE,
       agency: {
         outcomeCoverage: '',
         goals: snapshotActor.agency.goals,

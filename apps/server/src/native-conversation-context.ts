@@ -16,7 +16,6 @@ import {
 import {
   nativeExperienceEntry,
   nativeMemoryCandidate,
-  nativePersonalAttributionReader,
   nativeSummaryProjector,
   type NativePersonalSource,
 } from './native-recall.js';
@@ -32,6 +31,7 @@ export async function buildNativeConversationContext(input: {
   scope: MemoryScope;
   sources: readonly NativePersonalSource[];
   presentation: CapturedExperienceContext;
+  attribution(ids: Iterable<string>): string;
   snapshot: { sequence: number; sources: ConversationSource[]; more: boolean };
   saved: unknown;
   requiredIds: string[];
@@ -52,7 +52,7 @@ export async function buildNativeConversationContext(input: {
     self.generation !== scope.generation
   )
     throw new Error('Native conversation belongs to a different actor/source scope.');
-  const attribution = nativePersonalAttributionReader(current, original, sources);
+  const attribution = input.attribution;
   const cached = await readConversationCompaction(
     input.saved,
     self.actorId,
@@ -79,7 +79,7 @@ export async function buildNativeConversationContext(input: {
       throw new Error('Native conversation has no admitted awareness body.');
     const candidate = nativeMemoryCandidate(
       record,
-      original,
+      current,
       definitions,
       presentation,
       none,
@@ -104,7 +104,7 @@ export async function buildNativeConversationContext(input: {
     cached,
     saved: input.saved,
     scope,
-    projectSummary: nativeSummaryProjector(sources, original, definitions, presentation),
+    projectSummary: nativeSummaryProjector(sources, current, definitions, presentation),
     attribution,
     validity: input.validity,
     check: input.check,

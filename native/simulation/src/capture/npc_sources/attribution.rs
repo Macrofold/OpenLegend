@@ -123,13 +123,6 @@ impl NpcSourceAttribution {
     pub(crate) fn perspective_entity(&self, ordinal: usize) -> Option<&str> {
         self.identities.key(ordinal)
     }
-    pub(crate) fn perspective_matches(
-        &self,
-        ordinal: usize,
-        current: &crate::worlds::CapturedAttributionIdentities,
-    ) -> bool {
-        self.identities.matches_entry(ordinal, current)
-    }
     pub(crate) fn appraisal_source(
         &self,
         record: &super::CapturedPersonalRecord,

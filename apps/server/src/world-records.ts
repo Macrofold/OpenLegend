@@ -1,4 +1,4 @@
-import { nativeNormalizedIntents } from './native-language.js';
+import { nativeActivityMethodSignatures, nativeNormalizedIntents } from './native-language.js';
 import {
   currentContactPayload,
   currentContactMetadata,
@@ -40,6 +40,7 @@ import {
 import { randomUUID, createHash } from 'node:crypto';
 import {
   EXPERIENCE_LIMITS,
+  ACTIVITY_LEARNING_PREPARATION,
   RESPONSE_LIMITS,
   orderedRecordEntries,
   orderedRecordGet,
@@ -696,6 +697,7 @@ export class WorldRecords {
           })),
         },
         normalizedIntents: nativeNormalizedIntents(tables['sim_intentions'] ?? []),
+        activityMethodSignatures: nativeActivityMethodSignatures(tables['activity_methods'] ?? []),
         tables,
         coverage,
       },
@@ -1986,30 +1988,52 @@ export class WorldRecords {
     actorId: string,
     after = -1,
     ids?: string[],
-    limit = 128,
-    maxBytes = 4194304,
+    limit: number = ACTIVITY_LEARNING_PREPARATION.page,
+    maxBytes: number = ACTIVITY_LEARNING_PREPARATION.bytes,
   ) {
-    if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > 4194304)
-      throw new Error('Invalid activity hydration allowance.');
-    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 128)
-      throw new Error('Invalid activity page size.');
-    if (!Number.isSafeInteger(after) || after < -1 || (ids && ids.length > 512))
-      throw new Error('Invalid activity history scope.');
-    if (ids && !ids.length) return [];
-    // Count bytes inside PostgreSQL before transferring or decoding row bodies.
-    // A contiguous prefix preserves a usable position cursor under byte pressure.
-    const rows = await this.db
-      .prepare(
-        `WITH page AS (
-      SELECT position,payload FROM activity_occurrences WHERE world_id=? AND actor_id=?${ids ? ` AND source_id IN (${ids.map(() => '?').join(',')})` : ' AND position>?'} ORDER BY position LIMIT ${ids ? 512 : limit}
-    ), bounded AS (SELECT position,payload,SUM(octet_length(payload)) OVER (ORDER BY position) AS bytes FROM page)
-    SELECT position,payload FROM bounded WHERE bytes<=? ORDER BY position`,
-      )
-      .all(worldId, actorId, ...(ids ?? [after]), maxBytes);
+    const rows = await this.activityRows(worldId, actorId, after, ids, limit, maxBytes);
     return rows.map((row) => ({
       position: Number(row['position']),
       entry: JSON.parse(String(row['payload'])) as import('@open-legend/domain').ActivityOccurrence,
     }));
+  }
+
+  /** Original canonical columns, shared with native dependency hydration. The
+   * caller retains its fixed SQL/pending cut; this read creates no row identity. */
+  async activityRows(
+    worldId: string,
+    actorId: string,
+    after = -1,
+    ids?: readonly string[],
+    limit: number = ACTIVITY_LEARNING_PREPARATION.page,
+    maxBytes: number = ACTIVITY_LEARNING_PREPARATION.bytes,
+  ) {
+    const limits = ACTIVITY_LEARNING_PREPARATION;
+    if (!Number.isSafeInteger(maxBytes) || maxBytes < 1 || maxBytes > limits.bytes)
+      throw new Error('Invalid activity hydration allowance.');
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > limits.page)
+      throw new Error('Invalid activity page size.');
+    if (!Number.isSafeInteger(after) || after < -1 || (ids && ids.length > limits.rows))
+      throw new Error('Invalid activity history scope.');
+    if (ids && !ids.length) return [];
+    // Count bytes inside PostgreSQL before transferring or decoding row bodies.
+    // A contiguous prefix preserves a usable position cursor under byte pressure.
+    const columns = [
+      'id',
+      'parent_id',
+      'slot',
+      'position',
+      'payload',
+      ...Object.keys(RECORD_NODES.get('activity_occurrences')!.columns!),
+    ].join(',');
+    return this.db
+      .prepare(
+        `WITH page AS (
+      SELECT ${columns} FROM activity_occurrences WHERE world_id=? AND actor_id=?${ids ? ` AND source_id IN (${ids.map(() => '?').join(',')})` : ' AND position>?'} ORDER BY position LIMIT ${ids ? limits.rows : limit}
+    ), bounded AS (SELECT ${columns},SUM(octet_length(payload)) OVER (ORDER BY position) AS bytes FROM page)
+    SELECT ${columns} FROM bounded WHERE bytes<=? ORDER BY position`,
+      )
+      .all(worldId, actorId, ...(ids ?? [after]), maxBytes);
   }
 
   withActivityPage(

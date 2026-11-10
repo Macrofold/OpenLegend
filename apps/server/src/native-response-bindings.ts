@@ -17,6 +17,8 @@ export function nativeResponseSelection(input: {
   original: NativeNpcCapture;
   current: NativeNpcCapture;
   validity: NativeNpcBindingSelection['validity'];
+  purpose: 'decision' | 'reflection';
+  consumer: 'chat' | 'thought' | 'reflection';
   references: ReturnType<typeof nativeResponseReferences>;
   knowledge: Readonly<Record<string, ObserverSubject>>;
   situation: CapturedSituation;
@@ -24,7 +26,7 @@ export function nativeResponseSelection(input: {
   actions: readonly Pick<NativeFormattedNpcOffer, 'id' | 'ordinal'>[];
   actionSource: 'original' | 'current';
   prototypeSource: 'original' | 'current';
-  perspectiveEntities: readonly string[];
+  perspectives: NativeNpcBindingSelection['perspectives'];
   semanticCauses: readonly number[];
   intents: readonly { id: string; ordinal: number }[];
   appraisals: NativeNpcBindingSelection['appraisals'];
@@ -37,16 +39,6 @@ export function nativeResponseSelection(input: {
     .flatMap((source, inventory) =>
       source.personal.map((record, ordinal) => ({ inventory, ordinal, record })),
     );
-  const perspectives = input.perspectiveEntities.map((id) => {
-    // Later acquisition supplies current attribution for the same retained
-    // personal version. Its actual roster includes empty identity tuples.
-    for (let index = personal.length - 1; index >= 0; index--) {
-      const source = personal[index]!;
-      const entity = Object.keys(source.record.attribution.attributionIdentities).indexOf(id);
-      if (entity >= 0) return { inventory: source.inventory, ordinal: source.ordinal, entity };
-    }
-    throw new Error('Selected conversation perspective has no native source witness.');
-  });
   const entity = (id: string, alias: string): NativeNpcEntityOrdinal => {
     if (input.receivedBodies?.has(alias)) {
       const ordinal = original.facts.perception.bodies.findIndex((body) => body.sourceId === id);
@@ -195,8 +187,10 @@ export function nativeResponseSelection(input: {
       source: input.actionSource,
     })),
     prototypeSource: input.prototypeSource,
-    perspectives,
+    perspectives: input.perspectives,
     semanticCauses: input.semanticCauses,
+    purpose: input.purpose,
+    consumer: input.consumer,
     intents: input.intents.map(({ id: alias, ordinal }) => ({ alias, ordinal })),
     evidence,
     entities: Object.entries(input.references.entityReferences).map(([alias, id]) => ({

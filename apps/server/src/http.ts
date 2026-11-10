@@ -1,3 +1,5 @@
+import { SHUTDOWN_DEADLINE_MS, type ShutdownReport } from './server-shutdown.js';
+import { playerInteractionRequest as interaction } from './player-interaction-request.js';
 import { setPlayerAttention } from './attention-intent.js';
 import { resolveRecentObservationReference } from './recent-history.js';
 import {
@@ -104,12 +106,7 @@ import {
   profilingEnabled,
   recordBackgroundFailure,
 } from './performance.js';
-import {
-  ACTIVITY_LIMITS,
-  SPEECH_VOLUMES,
-  amendCommitment,
-  stateOwnerCapabilities,
-} from '@open-legend/domain';
+import { ACTIVITY_LIMITS, amendCommitment, stateOwnerCapabilities } from '@open-legend/domain';
 import { traceHistory, traceDetails } from './cognition-inspection.js';
 import { admitStatusEffectPolicy, admitCognitionPolicy } from '@open-legend/domain';
 import { inspectGodMind } from './god-mind.js';
@@ -166,15 +163,6 @@ const command = z
     commandId: requestIdSchema,
     commandEpoch: z.string().uuid().optional(),
     command: commandInputSchema,
-  })
-  .strict();
-const interaction = z
-  .object({
-    volume: z.enum(SPEECH_VOLUMES).default('normal'),
-    candidate: z.unknown().optional(),
-    requestId: requestIdSchema,
-    text: z.string().trim().min(1).max(1000),
-    npcId: requestIdSchema.optional(),
   })
   .strict();
 const worldAgentMessage = z
@@ -511,16 +499,6 @@ const godWorldEvent = z
   .strict();
 
 /** Whole-shutdown budget: stages share it, then resource close is attempted regardless (PF06). */
-export const SHUTDOWN_DEADLINE_MS = 30_000;
-export interface ShutdownReport {
-  /** The final world save completed in this process. When false, a commit abandoned at its
-   * deadline may still have reached the database; `durableRevision` is the last one confirmed. */
-  saved: boolean;
-  durableRevision: number;
-  durableSimTime?: number;
-  problems: string[];
-}
-
 /** One serialized world host with explicit local or verified OIDC account authority. */
 interface GameServerOptions {
   config?: AppConfig;

@@ -89,7 +89,15 @@ interface RemovalScope {
 }
 const rowKey = (keys: readonly string[], row: Record<string, unknown>) =>
   JSON.stringify(keys.map((key) => row[key]));
-const eventColumns = ['world_id', 'id', 'position', 'payload', 'response_id', 'data_references'];
+const eventColumns = [
+  'world_id',
+  'id',
+  'position',
+  'payload',
+  'response_id',
+  'data_references',
+  'utterance_id',
+];
 const perspectiveColumns = [
   'world_id',
   'event_id',

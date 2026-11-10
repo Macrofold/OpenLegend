@@ -245,6 +245,7 @@ struct Product<'a> {
     attention: &'a RawValue,
     protection_labels: &'a [&'a str],
     actions_blocked: bool,
+    speech_blocked: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     semantic: Option<&'a crate::state::SemanticContinuation>,
     opportunity: Opportunity<'a>,
@@ -277,6 +278,12 @@ impl Serialize for InputProduct<'_> {
         out.serialize_entry("physicalLife", &value.physical_life)?;
         out.serialize_entry("eligible", &value.eligible)?;
         out.serialize_entry("enrolled", &value.enrolled)?;
+        out.serialize_entry("controller", value.controller)?;
+        out.serialize_entry("alive", &value.alive)?;
+        out.serialize_entry("incapacitated", &value.incapacitated)?;
+        out.serialize_entry("cognition", &value.cognition)?;
+        out.serialize_entry("actionsBlocked", &value.actions_blocked)?;
+        out.serialize_entry("speechBlocked", &value.speech_blocked)?;
         out.serialize_entry("values", value.values)?;
         out.serialize_entry("dependencyToken", value.dependency_token)?;
         out.serialize_entry("awarenessThrough", &value.awareness_through)?;
@@ -834,6 +841,10 @@ pub(crate) fn capture(
         attention: raw(&attention.json)?,
         protection_labels: &protection_labels,
         actions_blocked,
+        speech_blocked: state
+            .installed
+            .capabilities
+            .capability_blocked(Some(entity), "speech")?,
         semantic: actor.agency.semantic.as_ref(),
         opportunity: Opportunity {
             body_inputs: &director_inputs,

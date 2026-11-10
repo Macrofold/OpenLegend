@@ -6,6 +6,24 @@ use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
 use std::mem::size_of;
 
+impl ExperienceState {
+    pub(crate) fn resident_maintenance_pressure(&self, awareness: u64, memories: u64) -> bool {
+        self.actors.values().any(|actor| {
+            [
+                (PersonalSourceKind::Awareness, awareness),
+                (PersonalSourceKind::Memory, memories),
+            ]
+            .into_iter()
+            .any(|(kind, limit)| {
+                actor
+                    .sources
+                    .get(&kind)
+                    .is_some_and(|collection| collection.records().len() as u64 >= limit)
+            })
+        })
+    }
+}
+
 #[derive(Clone, Copy, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct IntakeSelection {

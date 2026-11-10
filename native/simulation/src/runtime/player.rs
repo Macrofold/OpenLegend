@@ -16,6 +16,11 @@ struct PlayerInteractionInput {
         deserialize_with = "crate::values::deserialize_present_option"
     )]
     target_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_option"
+    )]
+    utterance_event_id: Option<String>,
 }
 
 pub struct RuntimePlayerRead {
@@ -49,6 +54,10 @@ impl NativeWorldSession {
             .target_id
             .as_deref()
             .is_some_and(|id| !crate::values::is_safe_record_id(id))
+            || input
+                .utterance_event_id
+                .as_deref()
+                .is_some_and(|id| !crate::values::is_safe_record_id(id))
         {
             return Err(failure("invalid selected interaction recipient"));
         }
@@ -60,6 +69,7 @@ impl NativeWorldSession {
                 input.mode,
                 input.target_id.as_deref(),
                 &self.budget,
+                input.utterance_event_id.as_deref(),
             )
             .map_err(failure)?;
         RuntimeJson::encode(&facts, &self.budget)

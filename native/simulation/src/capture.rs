@@ -16,16 +16,19 @@ mod controls;
 mod definitions;
 pub(crate) use definitions::write_installed_definitions;
 mod metadata;
+pub(crate) mod maintenance;
 mod validity;
 pub(crate) use validity::DecisionValidityWitness;
 mod navigation;
 mod npc_bindings;
+mod npc_perspectives;
+pub(crate) use npc_perspectives::{NpcPerspectiveEntity,NpcPerspectiveSnapshot};
 mod npc_current;
 pub(crate) mod npc_intake;
 mod npc_references;
 mod npc_subject;
 pub(crate) use npc_bindings::{
-    NpcAliasOrdinal, NpcActionOrdinal, NpcCatalogueSource, NpcPerspectiveOrdinal, NpcBindingMaps, NpcBindingRead, NpcBindingSelection, prepare_ordinary_actions, npc_perspectives_current,
+    NpcAliasOrdinal, NpcActionOrdinal, NpcCatalogueSource, NpcPerspectiveOrdinal, NpcBindingMaps, NpcBindingPurpose, NpcBindingRead, NpcBindingSelection, prepare_ordinary_actions, npc_perspectives_current,
 };
 pub(crate) use npc_references::NpcReferenceFacts;
 mod npc_history;

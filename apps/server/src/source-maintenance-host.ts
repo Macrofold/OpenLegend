@@ -89,6 +89,11 @@ export function sourceMaintenanceHost(
 ): MaintenanceHost {
   const intake = new MaintenanceIntakeInputs();
   let sourceRevision: number | undefined;
+  const admissions = new Set<MaintenanceAdmission>();
+  const assertCurrentAdmission = (admission: MaintenanceAdmission, world = service.world) => {
+    if (!admissions.has(admission)) throw new Error('Maintenance admission was released.');
+    assertAdmission(service, admission, world);
+  };
   return {
     get worldId() {
       return service.world.id;
@@ -121,6 +126,7 @@ export function sourceMaintenanceHost(
     whenDurable: (ticket) => service.whenDurable(ticket),
     clearIntake() {
       intake.clear();
+      admissions.clear();
     },
     async refresh(work) {
       timedSync('cognition.maintenanceRefresh', () => {
@@ -170,8 +176,25 @@ export function sourceMaintenanceHost(
         ...(service.world.memories[actorId] ?? []),
       ].map((entry) => entry.at + EXPERIENCE_LIMITS.rawHours * 3600);
     },
+    async admission(actorId, generation, purpose, requiresBody) {
+      const actor = actorRead(service.world, actorId);
+      if (!actor || generation !== service.generation || (requiresBody && !actor.available))
+        return undefined;
+      const admission: MaintenanceAdmission = {
+        actorId,
+        generation,
+        purpose,
+        requiresBody,
+        fence: actor.bodyFence,
+      };
+      admissions.add(admission);
+      return admission;
+    },
+    releaseAdmission(admission) {
+      admissions.delete(admission);
+    },
     async assertAdmission(admission) {
-      assertAdmission(service, admission);
+      assertCurrentAdmission(admission);
     },
     memoryMaintenanceStatus: (actorId) => service.memoryMaintenanceStatus(actorId),
     maintenanceBatch: (actorId, mode, review) => service.maintenanceBatch(actorId, mode, review),
@@ -180,17 +203,20 @@ export function sourceMaintenanceHost(
       return new Set(acquiredActivities(service.world, actorId).map((method) => method.signature));
     },
     publishActivityLearning(batch, judgments, validateOnly, admission, signal) {
-      return service.publishActivityLearning(batch, [...judgments], validateOnly, (world) => {
-        signal.throwIfAborted();
-        if (service.paused) throw new Error('Learning canceled before publication.');
-        // Publication owns its actual candidate, rather than validating a copy.
-        const current = actorRead(world, admission.actorId);
-        if (!current || current.bodyFence !== admission.fence)
-          throw new Error('Learning body changed before publication.');
-        assertAdmission(service, admission, world);
-      });
+      return service.publishActivityLearning(
+        batch,
+        [...judgments],
+        validateOnly,
+        admission
+          ? (world) => {
+              signal.throwIfAborted();
+              if (service.paused) throw new Error('Learning canceled before publication.');
+              assertCurrentAdmission(admission, world);
+            }
+          : undefined,
+      );
     },
-    withExecution: (id, lease, work) => recall.withExecution(id, lease, work),
+    withExecution: (_actorId, id, lease, work) => recall.withExecution(id, lease, work),
     async prepareReflection(input) {
       const { actorId, job, signal, admission } = input;
       const generation = service.generation;
@@ -245,7 +271,7 @@ export function sourceMaintenanceHost(
             Object.keys(prepared.binding.identityReferences ?? {}),
             Object.keys(prepared.binding.evidenceReferences ?? {}),
           ),
-          get files() {
+          async files() {
             return acceptedMindFiles(service.world, actorId);
           },
           validate: () => prepared.validateConversation(),
@@ -261,7 +287,7 @@ export function sourceMaintenanceHost(
             return service.transition(
               (world) => {
                 signal.throwIfAborted();
-                assertAdmission(service, admission, world);
+                assertCurrentAdmission(admission, world);
                 if (!prepared.temporalSourcesCurrent() || !prepared.situation.valid(world))
                   throw new Error(
                     'Selected personal evidence changed before reflection publication.',
@@ -369,7 +395,7 @@ export function sourceMaintenanceHost(
             signal.throwIfAborted();
             if (service.paused) throw new Error('Consolidation canceled before publication.');
             return service.transition((world) => {
-              assertAdmission(service, admission, world);
+              assertCurrentAdmission(admission, world);
               let candidate = world;
               if (interpretation) {
                 if (revision === undefined || !episode)
@@ -418,7 +444,7 @@ export function sourceMaintenanceHost(
       const publish = async <T>(begin: () => T): Promise<{ result: T }> => {
         await validate();
         const checked = () => {
-          assertAdmission(service, admission);
+          assertCurrentAdmission(admission);
           beforeStart();
           return begin();
         };

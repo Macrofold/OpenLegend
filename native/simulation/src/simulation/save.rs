@@ -8,13 +8,20 @@ use crate::records::SqlCell;
 use crate::records::{RecordEncodingError, RowEncoder};
 use indexmap::IndexMap;
 
+#[derive(Clone, Copy)]
+pub(crate) struct HostSave<'a> {
+    pub settings: &'a InstalledHostSettings,
+    pub milestones: &'a super::milestones::MilestoneJournal,
+    pub controls: bool,
+}
+
 /// One complete gameplay delta for the existing SQL writer. Each semantic
 /// journal selects its own rows and columns; this composition does not diff a
 /// world or let a caller omit receiving, cognition or chronological recording.
 pub(crate) fn encode_candidate_changes(
     state: &SimulationState,
     journal: &crate::execution::CandidateJournal,
-    host: Option<&InstalledHostSettings>,
+    host: Option<HostSave<'_>>,
     budget: &ByteBudget,
 ) -> Result<crate::records::EncodedRows, RecordEncodingError> {
     // Encoding is also useful inside a private rollback checkpoint. It grants
@@ -66,6 +73,10 @@ pub(crate) fn encode_candidate_changes(
         state.physical.identity.next_id(),
     )?;
     encode_root_changes(state, host, &mut output, budget)?;
+    if let Some(host) = host {
+        host.milestones
+            .encode(host.settings, state, &mut output, budget)?;
+    }
     output.finish()
 }
 fn error() -> RecordEncodingError {
@@ -101,7 +112,7 @@ fn marker(map: &mut IndexMap<String, SqlCell>, key: &str, present: bool) {
 }
 pub(crate) fn encode_root_changes(
     state: &SimulationState,
-    host: Option<&InstalledHostSettings>,
+    host: Option<HostSave<'_>>,
     output: &mut RowEncoder<'_>,
     budget: &ByteBudget,
 ) -> Result<(), RecordEncodingError> {
@@ -248,14 +259,23 @@ pub(crate) fn encode_root_changes(
         let SqlCell::Object(mut body) = serde_json::from_str(template).map_err(|_| error())? else {
             return Err(error());
         };
-        set(&mut body, "speed", SqlCell::from(host.speed));
-        set(
-            &mut body,
-            "manuallyPaused",
-            SqlCell::Bool(host.manually_paused),
-        );
-        // Presentation references and milestone bodies keep their operational
-        // owner. This gameplay prefix changes only these admitted controls.
+        if host.controls {
+            set(&mut body, "speed", SqlCell::from(host.settings.speed));
+            set(
+                &mut body,
+                "manuallyPaused",
+                SqlCell::Bool(host.settings.manually_paused),
+            );
+        }
+        if host.milestones.changed() {
+            marker(
+                &mut body,
+                "actorMilestones",
+                host.settings.actor_milestones.is_some(),
+            );
+        }
+        // Presentation stays with its operational owner. Only actual changed
+        // controls and the journaled milestone-presence marker enter this root.
         let placement = state
             .records
             .placement("data_world", "[]")

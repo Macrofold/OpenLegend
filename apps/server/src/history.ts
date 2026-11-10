@@ -146,6 +146,13 @@ export function validateHistoryEvidenceRows(
   resolve: (row: Record<string, unknown>) => StorySource,
   perspectives: Iterable<Record<string, unknown>> = history.history_perspectives,
 ): void {
+  for (const row of history.history_events) {
+    const event = JSON.parse(String(row['payload'])) as WorldEvent;
+    const utterance =
+      typeof event.data?.['utteranceId'] === 'string' ? event.data['utteranceId'] : null;
+    if (row['world_id'] !== worldId || row['id'] !== event.id || row['utterance_id'] !== utterance)
+      throw new Error('Historical utterance projection disagrees with its original event.');
+  }
   for (const row of perspectives) {
     const source = resolve(row);
     if (
@@ -434,6 +441,21 @@ export class HistoryRepository {
       .get(worldId, id);
     return row ? (JSON.parse(String(row['payload'])) as WorldEvent) : undefined;
   }
+  /** Exact operational recovery of an already accepted utterance. The safe ID
+   * projection avoids parsing unrelated quoted UTF-16 text inside PostgreSQL. */
+  async utteranceEvent(worldId: string, utteranceId: string): Promise<WorldEvent | undefined> {
+    const rows = await this.db
+      .prepare(
+        'SELECT payload FROM history_events WHERE world_id=? AND utterance_id=? ORDER BY position,id LIMIT 2',
+      )
+      .all(worldId, utteranceId);
+    if (rows.length > 1) throw new Error('Utterance identity has more than one original event.');
+    if (!rows.length) return;
+    const event = JSON.parse(String(rows[0]!['payload'])) as WorldEvent;
+    if (event.data?.['utteranceId'] !== utteranceId)
+      throw new Error('Utterance projection disagrees with its original event.');
+    return event;
+  }
   async eventCount(worldId: string): Promise<number> {
     const row = await this.db
       .prepare('SELECT COUNT(*) AS count FROM history_events WHERE world_id=?')
@@ -460,7 +482,7 @@ export class HistoryRepository {
          ON p.world_id=e.world_id AND p.event_id=e.id
          WHERE e.world_id=? AND e.response_id=? AND p.actor_id=?
          AND p.event_type='speech' AND p.source_id=? AND p.target_id=p.actor_id
-         AND e.payload::jsonb #>> '{data,utteranceId}'=? AND ${storyAccountAvailableSql()} ORDER BY e.position,e.id LIMIT 16`,
+         AND e.utterance_id=? AND ${storyAccountAvailableSql()} ORDER BY e.position,e.id LIMIT 16`,
         )
         .all(worldId, responseId, actorId, npcId, `${responseId}:${localId}`);
       return rows
@@ -529,9 +551,10 @@ export class HistoryRepository {
         PRIMARY KEY(world_id,owner_id,milestone));
       CREATE TABLE IF NOT EXISTS history_events (
         world_id TEXT NOT NULL, id TEXT NOT NULL, position BIGINT NOT NULL,
-        payload TEXT NOT NULL,response_id TEXT,data_references TEXT[] NOT NULL,
+        payload TEXT NOT NULL,response_id TEXT,data_references TEXT[] NOT NULL,utterance_id TEXT,
         PRIMARY KEY(world_id,id));
       CREATE INDEX IF NOT EXISTS history_events_response ON history_events(world_id,response_id) WHERE response_id IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS history_events_utterance ON history_events(world_id,utterance_id) WHERE utterance_id IS NOT NULL;
       CREATE INDEX IF NOT EXISTS history_events_references ON history_events USING GIN(data_references);
       CREATE INDEX IF NOT EXISTS history_events_order ON history_events(world_id,position,id);
       CREATE TABLE IF NOT EXISTS story_narrations (

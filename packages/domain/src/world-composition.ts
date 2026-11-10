@@ -1,5 +1,6 @@
 import {
   ordinaryActivityView,
+  sharedOrdinaryActivityName,
   type OrdinaryActivityViewInput,
 } from './worlds/base/ordinary-activity-view.js';
 import { BASE_HANDOVER } from './worlds/base/handover.js';
@@ -714,6 +715,14 @@ export function formatOrdinaryActivityView(
   return ordinaryActivityView(input);
 }
 export type { OrdinaryActivityViewInput } from './worlds/base/ordinary-activity-view.js';
+export type { OrdinaryActivityNameInput } from './worlds/base/ordinary-activity-view.js';
+export function formatSharedNativeActivityName(
+  profile: WorldState['profile'],
+  input: import('./worlds/base/ordinary-activity-view.js').OrdinaryActivityNameInput,
+) {
+  selectedCreationProfileForWorld({ profile });
+  return sharedOrdinaryActivityName(input);
+}
 
 export function nativeActivityView(world: WorldState, command: Command) {
   selectedCreationProfileForWorld(world);

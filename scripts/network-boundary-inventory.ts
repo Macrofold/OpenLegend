@@ -38,6 +38,8 @@ export const localProcessOwners: Readonly<Record<string, string>> = {
   'scripts/check-agent-guidance.mjs': 'Local Git inventory only.',
   'scripts/check-assets.ts': 'Local Git inventory only.',
   'scripts/stress-native.ts': 'Local native workload child with its existing workload lifecycle.',
+  'scripts/native-build.mjs':
+    'Closed offline Rust/NAPI compiler commands and checked-in artifact identity reader; no dependency acquisition.',
   'scripts/assets/migration.ts': 'Local Git object inspection; no fetch/clone/pull.',
   'scripts/assets/inventory.ts': 'Local Git index inspection; no remote operation.',
   'scripts/decision-benchmark/escalation-load.ts':
@@ -70,11 +72,67 @@ export const localGitCommands: Readonly<Record<string, readonly string[]>> = {
 };
 
 /** The only local Node children execute these checked-in files, never strings. */
-export const localNodeEntries: Readonly<Record<string, { kind: 'spawn' | 'fork'; entry: string }>> =
-  {
-    'scripts/stress-native.ts': { kind: 'spawn', entry: './profile-native.ts' },
-    'scripts/performance/profile-server.mjs': { kind: 'fork', entry: 'self' },
-  };
+export const localNodeEntries: Readonly<
+  Record<string, { kind: 'spawn' | 'fork' | 'spawnSync'; entry: string }>
+> = {
+  'scripts/stress-native.ts': { kind: 'spawn', entry: './profile-native.ts' },
+  'scripts/performance/profile-server.mjs': { kind: 'fork', entry: 'self' },
+  'scripts/native-build.mjs': { kind: 'spawnSync', entry: './native-build-info.mjs' },
+};
+
+/** Complete argv, including the offline flags, is closed. The one data slot is
+ * Cargo's target after --filter-platform; it cannot introduce command flags. */
+export const localCompilerCommands: Readonly<
+  Record<
+    string,
+    readonly {
+      readonly program: string;
+      readonly args: readonly (string | null)[];
+    }[]
+  >
+> = {
+  'scripts/native-build.mjs': [
+    { program: 'rustc', args: ['-vV'] },
+    {
+      program: 'cargo',
+      args: [
+        'metadata',
+        '--offline',
+        '--locked',
+        '--format-version',
+        '1',
+        '--filter-platform',
+        null,
+      ],
+    },
+    ...[[], ['--release']].map((release) => ({
+      program: 'pnpm',
+      args: [
+        'exec',
+        'napi',
+        'build',
+        '--cwd',
+        'native',
+        '--manifest-path',
+        'node-bridge/Cargo.toml',
+        '--package-json-path',
+        'package.json',
+        '--output-dir',
+        '.',
+        '--platform',
+        '--esm',
+        '--js',
+        'index.mjs',
+        '--dts',
+        'index.d.ts',
+        ...release,
+        '--',
+        '--offline',
+        '--locked',
+      ],
+    })),
+  ],
+};
 
 export const acquisitionObservers: Readonly<Record<string, string>> = {
   'scripts/decision-benchmark/escalation-load.ts':
@@ -83,6 +141,8 @@ export const acquisitionObservers: Readonly<Record<string, string>> = {
 
 export const inboundOwners: Readonly<Record<string, string>> = {
   'apps/server/src/http.ts': 'Incoming game HTTP/SSE, bounded receive and blocked-write ownership.',
+  'apps/server/src/native-http.ts':
+    'Incoming selected-native game HTTP/SSE; same bounded receive, scoped publication and blocked-write owners.',
   'apps/server/src/creation-host.ts': 'Incoming prepared-world HTTP, bounded receive ownership.',
   'apps/server/src/world-mcp.ts': 'Incoming MCP HTTP transport.',
   'scripts/assets/serve.ts': 'Incoming local exact-asset HTTP.',
@@ -108,6 +168,8 @@ export const networkDependencies: Readonly<Record<string, string>> = {
 /** Every direct dependency needs a reviewed role. A new HTTP SDK cannot avoid
  * classification merely because its package name is absent from a denylist. */
 export const localDependencies: Readonly<Record<string, string>> = {
+  '@napi-rs/cli':
+    'Local installed Rust/NAPI build and interface generator; subprocess invocations retain their separate reviewed boundary.',
   '@dimforge/rapier3d-compat': 'Local collision geometry.',
   '@noble/hashes': 'Local deterministic hashing and byte conversion; no network transport.',
   '@streamparser/json': 'Local incremental JSON parsing.',

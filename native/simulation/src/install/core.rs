@@ -56,7 +56,10 @@ impl From<crate::execution::ExecutionError> for CoreInstallError {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum InstallPurpose { Current, Restore }
+pub(crate) enum InstallPurpose {
+    Current,
+    Restore,
+}
 
 pub(crate) struct CoreInstallInput {
     pub purpose: InstallPurpose,
@@ -188,6 +191,7 @@ fn assemble_selected_core(
         movement,
         time_epsilon,
         activity,
+        activity_learning,
         activity_display_bytes,
         native_response,
         personal_evidence_preparation,
@@ -288,7 +292,9 @@ fn assemble_selected_core(
     physical.entities.fund_installed_intents(budget)?;
     content.fund(budget)?;
     let retained = install_retained(&mut import, &mut children, retained, &schema, budget)?;
-    physical.participation.validate_policy(retained.participation_read.as_ref(), &physical.entities)?;
+    physical
+        .participation
+        .validate_policy(retained.participation_read.as_ref(), &physical.entities)?;
     crate::worlds::base_decision_offers::validate_strike_reads(
         &retained.native_strike_read,
         &meanings.response_profiles,
@@ -374,6 +380,7 @@ fn assemble_selected_core(
     let display_bytes =
         usize::try_from(activity_display_bytes).map_err(|_| InstallError::CurrentFormat)?;
     let display = Arc::new(activity.display(display_bytes)?);
+    let activity_learning = Arc::new(activity_learning.install(budget)?);
     let received = install_received_values(
         &mut import,
         personal.received_values,
@@ -410,6 +417,7 @@ fn assemble_selected_core(
         child(&mut children, "actionExperience", true)?,
         Arc::new(activity),
         display,
+        activity_learning,
         budget,
     )?;
     let commands = crate::commands::CommandState::install(

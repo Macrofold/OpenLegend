@@ -1,7 +1,7 @@
 //! Exact selected history imports do not begin/end an activity or reindex its
 //! original SQL list. The enclosing privacy preparation owns their purpose.
 use super::*;
-use crate::records::{InstalledRow, OwnerCoverage};
+use crate::records::InstalledRow;
 impl ActivityJournal {
     pub(crate) fn load_selected_occurrences(
         &mut self,
@@ -28,26 +28,27 @@ impl ActivityJournal {
                 .collections
                 .get(&actor)
                 .ok_or(ActivityError::Unavailable)?;
-            let coverage = OwnerCoverage {
-                table: "activity_occurrences".to_owned(),
-                owner: row.parent.clone(),
-                complete: false,
-                next_ordinal: owner.next_ordinal,
-                parent_present: owner.parent_present,
-            };
-            let selected = ActivityCollection::install(
-                actor.clone(),
-                vec![row],
-                coverage,
+            let parent = crate::encoding::json_record(&[
+                "world",
+                "actionExperience",
+                "occurrences",
+                actor.as_str(),
+            ])
+            .map_err(|_| ActivityError::InvalidStructure)?;
+            let occurrence: ActivityOccurrence =
+                serde_json::from_str(&row.payload).map_err(|_| ActivityError::UnsupportedFamily)?;
+            super::super::state::validate_activity_row(
+                &row,
+                &occurrence,
+                &actor,
+                &parent,
+                owner.next_ordinal,
                 &state.limits,
                 &state.display,
                 budget,
             )?;
-            let (id, record) = selected
-                .records
-                .into_iter()
-                .next()
-                .ok_or(ActivityError::InvalidStructure)?;
+            let id = occurrence.id.clone();
+            let record = ActivityRecord::installed(occurrence, row.position, row.slot, budget)?;
             if let Some(known) = owner.records.get(&id) {
                 if known.position != record.position
                     || known.slot != record.slot

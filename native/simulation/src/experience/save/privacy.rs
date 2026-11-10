@@ -7,7 +7,7 @@ use crate::experience::privacy_mutation::PrivacyUndo;
 
 const PARENT: &str = "[\"world\",\"experience\"]";
 
-fn ordered_actors<'a>(
+pub(super) fn ordered_actors<'a>(
     table: &str,
     changed: &IndexSet<&'a str>,
     ledger: &'a RecordLedger,
@@ -137,7 +137,7 @@ pub(super) fn encode_privacy_changes(
     for operation in &journal.undo {
         if let super::super::mutation::ExperienceUndo::Privacy(operation) = operation {
             match operation {
-                PrivacyUndo::CreatedActor { .. } => {},
+                PrivacyUndo::CreatedActor { .. } => {}
                 PrivacyUndo::Revision { actor, .. } => {
                     revisions.insert(actor.as_str());
                 }

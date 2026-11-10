@@ -35,6 +35,11 @@ enum AppraisalPurpose {
     Decision,
     Reflection,
 }
+impl AppraisalSelection {
+    pub(crate) fn reflection(&self) -> bool {
+        matches!(self.purpose, AppraisalPurpose::Reflection)
+    }
+}
 impl AppraisalPurpose {
     fn permits(self, definition: &crate::appraisals::Definition) -> bool {
         match self {

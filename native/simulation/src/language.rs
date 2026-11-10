@@ -9,6 +9,8 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::mem::size_of;
 
+mod canonical;
+pub(crate) use canonical::{CanonicalJsonAnswer, CanonicalJsonRequest, PreparedCanonicalJson};
 mod attempts;
 pub(crate) use attempts::{
     AttemptNormalizationAnswer, AttemptNormalizationRequest, FreeTypedActionSyntax,
@@ -221,7 +223,7 @@ impl CollationRequest {
         &self.strings
     }
 
-    pub(crate) fn finish(self, answer: &CollationAnswer) -> Result<CollationRanks, CollationError> {
+    pub(crate) fn validate(&mut self, answer: &CollationAnswer) -> Result<(), CollationError> {
         if self.binding != answer.binding {
             return Err(CollationError::Binding);
         }
@@ -243,6 +245,27 @@ impl CollationRequest {
             }
             last_group = Some(group);
         }
+        let mut ranks = IndexMap::with_capacity(count);
+        for (&index, &group) in answer.order.iter().zip(&answer.groups) {
+            let string = self.strings[index as usize].as_str();
+            if ranks
+                .insert(string, group)
+                .is_some_and(|prior| prior != group)
+            {
+                return Err(CollationError::Groups);
+            }
+        }
+        Ok(())
+    }
+    pub(crate) fn finish(
+        mut self,
+        answer: &CollationAnswer,
+    ) -> Result<CollationRanks, CollationError> {
+        // The exclusive question owns this same prefunded permutation/index
+        // workspace during validation and transfer; callers can validate first
+        // while retaining the question after a malformed provider reply.
+        self.validate(answer)?;
+        let count = self.strings.len();
         let Self {
             binding: _,
             strings,
@@ -260,7 +283,6 @@ impl CollationRequest {
                 return Err(CollationError::Groups);
             }
         }
-        drop(seen);
         reservation
             .resize(
                 size_of::<CollationRanks>() + ranks.heap_bytes().ok_or(CollationError::Capacity)?,

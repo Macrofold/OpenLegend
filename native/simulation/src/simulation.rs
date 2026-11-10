@@ -26,11 +26,13 @@ mod save;
 pub(crate) use save::{encode_candidate_changes, encode_root_changes};
 mod publication;
 pub(crate) use publication::{PreparedPublication, PublicationError};
+mod driver;
 mod host_control;
+mod milestones;
 pub(crate) mod npc_intake;
 pub(crate) mod restore;
-mod driver;
 pub(crate) mod session;
+mod startup;
 pub(crate) use driver::{
     CompletedOperation, DriveError, DriveStep, OperationDriver, ProviderKind, ProviderQuestion,
     ProviderResponse,

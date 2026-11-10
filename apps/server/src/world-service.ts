@@ -218,6 +218,7 @@ import { basePlaytestMilestones, BASE_GUARD_TEXT } from '@open-legend/domain';
 import { activityChoiceView } from './activity-context.js';
 import {
   ACTIVITY_LIMITS,
+  ACTIVITY_LEARNING_PREPARATION,
   discoverActivities,
   retainActivity,
   renderActivity,
@@ -3436,29 +3437,40 @@ export class WorldService {
       : (original.world.actionExperience.occurrences[actorId] ?? [])
           .map((entry, position) => ({ entry, position }))
           .filter((row) => row.position > after)
-          .slice(0, 512);
+          .slice(0, ACTIVITY_LEARNING_PREPARATION.rows);
     const through = rows.at(-1)?.position ?? after;
     const seen = new Set(rows.map((row) => row.entry.id));
-    for (let pass = 0; pass < 12 && rows.length < 512 && this.store.records; pass++) {
+    for (
+      let pass = 0;
+      pass < ACTIVITY_LEARNING_PREPARATION.linkPasses &&
+      rows.length < ACTIVITY_LEARNING_PREPARATION.rows &&
+      this.store.records;
+      pass++
+    ) {
       const missing = [
         ...new Set(rows.flatMap((row) => row.entry.connections.map((link) => link.from))),
       ]
         .filter((id) => !seen.has(id))
-        .slice(0, 512 - rows.length);
+        .slice(0, ACTIVITY_LEARNING_PREPARATION.rows - rows.length);
       if (!missing.length) break;
-      const remainingBytes = 4 * 1024 * 1024 - Buffer.byteLength(JSON.stringify(rows));
+      const remainingBytes =
+        ACTIVITY_LEARNING_PREPARATION.bytes - Buffer.byteLength(JSON.stringify(rows));
       if (remainingBytes < 1) break;
       const linked = await this.store.records.activityPage(
         original.world.id,
         actorId,
         -1,
         missing,
-        128,
+        ACTIVITY_LEARNING_PREPARATION.page,
         remainingBytes,
       );
       if (!linked.length) break;
       for (const row of linked) seen.add(row.entry.id);
-      if (Buffer.byteLength(JSON.stringify([...rows, ...linked])) > 4 * 1024 * 1024) break;
+      if (
+        Buffer.byteLength(JSON.stringify([...rows, ...linked])) >
+        ACTIVITY_LEARNING_PREPARATION.bytes
+      )
+        break;
       rows.push(...linked);
     }
     rows.sort((a, b) => a.position - b.position);

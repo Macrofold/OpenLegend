@@ -1,3 +1,4 @@
+import { nativeMilestoneUpdates } from './native-milestones.js';
 import type {
   NativeHost,
   NativeWorld,
@@ -137,11 +138,14 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
       presentationRelease?: import('@open-legend/assets').AssetRevisionReference;
       presentationReleaseRevision?: number;
     };
-    this.milestones = Object.fromEntries(
-      (stage.source.records.tables['actor_milestones'] ?? []).map((row) => [
-        row.slot,
-        JSON.parse(row.payload) as Record<string, boolean>,
-      ]),
+    this.milestones = nativeMilestoneUpdates(
+      Object.fromEntries(
+        (stage.source.records.tables['actor_milestones'] ?? []).map((row) => [
+          row.slot,
+          JSON.parse(row.payload) as Record<string, boolean>,
+        ]),
+      ),
+      restored.changes,
     );
     this.actors = new NativeActorRoster(
       stage.source.records.tables['sim_actors'] ?? [],

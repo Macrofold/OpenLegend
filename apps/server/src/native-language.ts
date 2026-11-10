@@ -1,5 +1,24 @@
 import { canonicalJson, normalizeAttempt, prepareSpeechWords } from '@open-legend/domain';
 import { parseFreeTypedActionSyntax } from './typed-action-syntax.js';
+import { createHash } from 'node:crypto';
+
+/** Installed method signatures use Source canonicalJson once per actual row.
+ * Exact row bytes bind this pure preparation; it supplies no method authority. */
+export function nativeActivityMethodSignatures(rows: readonly { id: string; payload: string }[]) {
+  return rows.map((row) => {
+    const method = JSON.parse(row.payload) as Record<string, unknown>;
+    return {
+      rowId: row.id,
+      payloadSha256: createHash('sha256').update(row.payload).digest('hex'),
+      signature: canonicalJson({
+        root: method['root'],
+        roles: method['roles'],
+        manifest: method['manifest'],
+        executable: method['executable'],
+      }),
+    };
+  });
+}
 
 /** ICU word boundaries are prepared once per utterance by the existing language
  * owner. No listener, identity, evidence or world state participates here.
@@ -36,10 +55,10 @@ export function nativeWordSegments(values: readonly string[]): string[][] {
   return values.map((value) => prepareSpeechWords(value).map(({ segment }) => segment));
 }
 
-/** One supplied response's exact replay digest. Native code constructs these
+/** Exact Source canonical JSON for finite native-selected data. Native code constructs these
  * finite cells, checks the returned binding and compares their meaning before
  * any component can run. This formatter has no world or policy access. */
-export function nativeResponseDigest(request: {
+export function nativeCanonicalJson(request: {
   binding: {
     candidateId: number;
     baseCut: number;

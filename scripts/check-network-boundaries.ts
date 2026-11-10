@@ -12,6 +12,7 @@ import {
   generatedNetworkArtifacts,
   inboundOwners,
   localDependencies,
+  localCompilerCommands,
   localGitCommands,
   localNodeEntries,
   localProcessOwners,
@@ -360,6 +361,7 @@ export function inspectNetworkSource(
   };
   // Resolve only constant argv and direct local forwarding functions. Unknown
   // data after a proven command is harmless; an unknown command is never local.
+  const incompleteArgv = new WeakSet<readonly (ts.Expression | undefined)[]>();
   const argv = (
     expression: ts.Expression,
     seen = new Set<ts.Node>(),
@@ -368,14 +370,32 @@ export function inspectNetworkSource(
     if (seen.has(expression)) return undefined;
     seen = new Set(seen).add(expression);
     if (ts.isArrayLiteralExpression(expression)) {
-      let values: (ts.Expression | undefined)[] = [];
+      let values: (ts.Expression | undefined)[][] = [[]];
       for (const element of expression.elements) {
         if (ts.isSpreadElement(element)) {
           const spread = argv(element.expression, seen);
-          values = [...values, ...(spread?.length === 1 ? spread[0]! : [undefined])];
-        } else values.push(ts.isOmittedExpression(element) ? undefined : element);
+          if (spread && values.length * spread.length > 256) return undefined;
+          values = values.flatMap((prefix) =>
+            (spread ?? [[undefined]]).map((suffix) => {
+              const joined = [...prefix, ...suffix];
+              if (!spread || incompleteArgv.has(prefix) || incompleteArgv.has(suffix))
+                incompleteArgv.add(joined);
+              return joined;
+            }),
+          );
+        } else
+          values = values.map((prefix) => {
+            const joined = [...prefix, ts.isOmittedExpression(element) ? undefined : element];
+            if (incompleteArgv.has(prefix)) incompleteArgv.add(joined);
+            return joined;
+          });
       }
-      return [values];
+      return values;
+    }
+    if (ts.isConditionalExpression(expression)) {
+      const yes = argv(expression.whenTrue, seen),
+        no = argv(expression.whenFalse, seen);
+      return yes && no && yes.length + no.length <= 256 ? [...yes, ...no] : undefined;
     }
     if (!ts.isIdentifier(expression)) return undefined;
     const declaration = declarationOf(expression);
@@ -679,7 +699,33 @@ export function inspectNetworkSource(
             globalReference(program.expression) &&
             program.name.text === 'execPath';
           let allowed = false;
-          if (git && command !== 'fork') {
+          const compilerProfiles = localCompilerCommands[path];
+          const programs = program && stringAt(program);
+          if (compilerProfiles && command === 'spawnSync' && programs?.length && values?.length) {
+            allowed = programs.every((program) =>
+              values.every(
+                (args) =>
+                  !incompleteArgv.has(args) &&
+                  compilerProfiles.some(
+                    (profile) =>
+                      profile.program === program &&
+                      profile.args.length === args.length &&
+                      profile.args.every((expected, index) =>
+                        expected === null
+                          ? args[index] !== undefined
+                          : exactLiteral(args[index], expected),
+                      ),
+                  ),
+              ),
+            );
+          } else if (
+            nodePolicy?.kind === 'spawnSync' &&
+            command === 'spawnSync' &&
+            nodeProgram &&
+            values?.length === 1
+          ) {
+            allowed = values[0]?.length === 1 && localEntry(values[0][0], nodePolicy.entry);
+          } else if (git && command !== 'fork') {
             const commands = localGitCommands[path] ?? [];
             allowed =
               !!values?.length &&
@@ -769,7 +815,7 @@ export function inspectNetworkSource(
           if (!allowed)
             report(
               node,
-              'Local subprocesses require a proven reviewed Git command or exact local Node entry; remote or unresolved work uses the bounded adapter.',
+              'Local subprocesses require a proven reviewed Git command, closed offline compiler invocation or exact local Node entry; remote or unresolved work uses the bounded adapter.',
             );
         }
       }

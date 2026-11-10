@@ -20,7 +20,7 @@ use crate::records::RecordSchema;
 use std::mem::size_of;
 
 mod body;
-mod columns;
+pub(super) mod columns;
 pub(super) use body::MemoryBody;
 pub(super) use columns::memory_columns;
 

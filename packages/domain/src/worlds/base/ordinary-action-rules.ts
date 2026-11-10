@@ -1,3 +1,4 @@
+import { BASE_PLAYTEST_AUDIENCE_MILESTONE } from './playtest-event-rule.js';
 import { BASE_PLAN_RULES } from './plan-rules.js';
 import { BASE_PARTICIPATION_PRESENTATION } from './participation.js';
 
@@ -8,6 +9,7 @@ export const BASE_ORDINARY_ACTION_RULES = {
   version: 1,
   plan: BASE_PLAN_RULES,
   participation: BASE_PARTICIPATION_PRESENTATION,
+  audienceMilestone: BASE_PLAYTEST_AUDIENCE_MILESTONE,
   invalidCommand: {
     code: 'invalid-command',
     message: 'A command needs bounded actor and command IDs.',

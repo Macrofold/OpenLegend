@@ -453,35 +453,18 @@ impl ActivityCollection {
         for row in rows {
             let occurrence: ActivityOccurrence =
                 serde_json::from_str(&row.payload).map_err(|_| ActivityError::UnsupportedFamily)?;
-            occurrence.validate(&actor_id, limits, display)?;
-            let id = crate::encoding::json_record(&[
-                "world",
-                "actionExperience",
-                "occurrences",
-                actor_id.as_str(),
-                occurrence.id.as_str(),
-            ])
-            .map_err(|_| ActivityError::InvalidStructure)?;
-            if row.id != id
-                || row.parent != parent
-                || row.position >= coverage.next_ordinal
-                || records.contains_key(&occurrence.id)
+            validate_activity_row(
+                &row,
+                &occurrence,
+                &actor_id,
+                &parent,
+                coverage.next_ordinal,
+                limits,
+                display,
+                budget,
+            )?;
+            if records.contains_key(&occurrence.id)
                 || order.insert(row.position, occurrence.id.clone()).is_some()
-            {
-                return Err(ActivityError::InvalidStructure);
-            }
-            let extra = serde_json::json!([
-                actor_id,
-                occurrence.id,
-                occurrence.at,
-                occurrence.status,
-                occurrence.parent_id,
-                occurrence.result_evidence.as_ref().map(ResultEvidence::id)
-            ]);
-            if crate::encoding::json_record(&row.extra)
-                .map_err(|_| ActivityError::InvalidStructure)?
-                != crate::encoding::json_record(&extra)
-                    .map_err(|_| ActivityError::InvalidStructure)?
             {
                 return Err(ActivityError::InvalidStructure);
             }
@@ -551,6 +534,62 @@ impl ActivityCollection {
     ) {
         index_action_map(&mut self.actions, id, position, old, new);
     }
+}
+
+/// Shared by the consuming installer and the learner's detached, scoped SQL
+/// read. Validation creates no resident collection or mutable-history cache.
+pub(super) fn validate_activity_row(
+    row: &InstalledRow,
+    occurrence: &ActivityOccurrence,
+    actor: &str,
+    parent: &str,
+    next_ordinal: u64,
+    limits: &ActivityLimits,
+    display: &ActivityDisplayLimits,
+    budget: &crate::host::ByteBudget,
+) -> Result<(), ActivityError> {
+    occurrence.validate(actor, limits, display)?;
+    let evidence_bytes = occurrence
+        .result_evidence
+        .as_ref()
+        .map_or(Some(0), ResultEvidence::id_len)
+        .and_then(|n| n.checked_mul(2))
+        .ok_or(ActivityError::Capacity)?;
+    let _evidence = budget
+        .reserve(evidence_bytes)
+        .map_err(|_| ActivityError::Capacity)?;
+    let evidence = occurrence.result_evidence.as_ref().map(ResultEvidence::id);
+    let path = [
+        "world",
+        "actionExperience",
+        "occurrences",
+        actor,
+        occurrence.id.as_str(),
+    ];
+    let extra = (
+        actor,
+        occurrence.id.as_str(),
+        occurrence.at,
+        occurrence.status,
+        occurrence.parent_id.as_deref(),
+        evidence.as_deref(),
+    );
+    let bytes = crate::encoding::json_record_len(&path)
+        .ok()
+        .and_then(|n| n.checked_add(crate::encoding::json_record_len(&extra).ok()?))
+        .and_then(|n| n.checked_add(crate::encoding::json_record_len(&row.extra).ok()?))
+        .and_then(|n| n.checked_mul(2))
+        .ok_or(ActivityError::Capacity)?;
+    let _compare = budget.reserve(bytes).map_err(|_| ActivityError::Capacity)?;
+    if row.id != crate::encoding::json_record(&path).map_err(|_| ActivityError::InvalidStructure)?
+        || row.parent != parent
+        || row.position >= next_ordinal
+        || crate::encoding::json_record(&row.extra).map_err(|_| ActivityError::InvalidStructure)?
+            != crate::encoding::json_record(&extra).map_err(|_| ActivityError::InvalidStructure)?
+    {
+        return Err(ActivityError::InvalidStructure);
+    }
+    Ok(())
 }
 
 pub(super) fn index_action_map(
@@ -646,6 +685,8 @@ pub(crate) struct ActivityState {
     pub changes: IndexMap<String, Vec<ActivityReference>>,
     pub limits: Arc<ActivityLimits>,
     pub display: Arc<ActivityDisplayLimits>,
+    pub(super) library: super::learning::LearningLibrary,
+    pub(super) language: Arc<super::learning::InstalledLearningLanguage>,
     pub(super) metadata_bytes: usize,
     pub(super) metadata_storage: crate::host::ResidentReservation,
     pub(super) budget: crate::host::ByteBudget,
@@ -663,8 +704,6 @@ impl ActivityState {
             .action_record(action_id)
             .map(|record| record.map(|record| &record.occurrence))
     }
-    /// Methods/acquisitions have no selected producer/consumer yet: their real
-    /// nonempty input remains unclaimed/refused by the complete installer.
     pub(crate) fn install(
         header: ActivityHeader,
         collections: IndexMap<String, ActivityCollection>,
@@ -675,6 +714,8 @@ impl ActivityState {
         changes: IndexMap<String, Vec<ActivityReference>>,
         limits: Arc<ActivityLimits>,
         display: Arc<ActivityDisplayLimits>,
+        language: Arc<super::learning::InstalledLearningLanguage>,
+        library: super::learning::LearningLibrary,
         budget: &crate::host::ByteBudget,
     ) -> Result<Self, ActivityError> {
         if header.version != 1 || header.admitted > limits.retained_records {
@@ -765,6 +806,8 @@ impl ActivityState {
             changes,
             limits,
             display,
+            language,
+            library,
             metadata_bytes: 0,
             metadata_storage: budget
                 .reserve_backing(0)

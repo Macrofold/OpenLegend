@@ -2,7 +2,8 @@
 //! displayed aliases and ordinals, never commands or permission-bearing maps.
 use super::*;
 use crate::capture::{
-    NpcActionOrdinal, NpcBindingMaps, NpcBindingRead, NpcBindingSelection, NpcCatalogueSource,
+    NpcActionOrdinal, NpcBindingMaps, NpcBindingPurpose, NpcBindingRead, NpcBindingSelection,
+    NpcCatalogueSource,
 };
 use crate::host::retained_size::{HeapBytes, heap_sum};
 use std::sync::atomic::AtomicU8;
@@ -33,10 +34,10 @@ pub(in crate::runtime) struct ActiveNpcResponse {
 }
 
 pub struct RuntimeNpcResponseTicket {
-    pub(super) original: RuntimeNpcRead,
-    pub(super) current: RuntimeNpcRead,
-    pub(super) decision_id: String,
-    pub(super) bindings: NpcBindingMaps,
+    pub(in crate::runtime) original: RuntimeNpcRead,
+    pub(in crate::runtime) current: RuntimeNpcRead,
+    pub(in crate::runtime) decision_id: String,
+    pub(in crate::runtime) bindings: NpcBindingMaps,
     attempt_candidates: Arc<Vec<crate::response::ResponseAttemptCandidate>>,
     phase: Arc<AtomicU8>,
     _custody: Arc<ByteReservation>,
@@ -77,6 +78,11 @@ impl NativeWorldSession {
         request: &[u8],
     ) -> Result<(), RuntimeError> {
         self.require_active()?;
+        if ticket.bindings.purpose != NpcBindingPurpose::Decision {
+            return Err(failure(
+                "private reflection cannot become a decision response",
+            ));
+        }
         let phase = ticket.phase.load(Ordering::Acquire);
         if phase != FRESH && phase != SETTLED {
             return Err(failure("NPC response continuation is not available"));
@@ -239,7 +245,35 @@ impl NativeWorldSession {
             .as_ref()
             .ok_or_else(|| failure("NPC response ticket was released"))?;
         ticket.require_prepared()?;
+        if ticket.bindings.purpose != NpcBindingPurpose::Decision {
+            return Err(failure("private reflection requires its publication owner"));
+        }
         let simulation = self.session.accepted().map_err(failure)?;
+        if !ticket
+            .original
+            .read
+            .native_validity
+            .as_ref()
+            .ok_or_else(|| failure("NPC initial outcome witness unavailable"))?
+            .required_outcomes_current(
+                &simulation.state,
+                &ticket.current.read.perception.actor_id,
+                &self.budget,
+            )
+            .map_err(failure)?
+        {
+            return Err(failure("NPC initial outcome context changed"));
+        }
+        if !super::npc_consumer_current(
+            &simulation.state,
+            &ticket.current.read.perception.actor_id,
+            ticket.bindings.consumer.as_str(),
+            Some(&ticket.decision_id),
+        )
+        .map_err(failure)?
+        {
+            return Err(failure("NPC response consumer is no longer available"));
+        }
         let mut response = ActorResponse::decode(
             response,
             &simulation.state.installed.actor_response_limits,
@@ -266,13 +300,28 @@ impl NativeWorldSession {
                 &self.budget,
             )
             .map_err(failure)?;
-        let expected_plan = ticket
-            .current
-            .candidates
-            .as_ref()
-            .ok_or_else(|| failure("NPC choices unavailable"))?
-            .work
-            .generation;
+        let bindings = self.npc_response_bindings(ticket)?;
+        let key = self
+            .session
+            .begin_response(&ticket.decision_id, response, bindings, protected)
+            .map_err(failure)?;
+        ticket.phase.store(APPLYING, Ordering::Release);
+        self.active_response = Some(ActiveNpcResponse {
+            key,
+            phase: Arc::clone(&ticket.phase),
+            _custody: Arc::clone(&ticket._custody),
+        });
+        Ok(key)
+    }
+    pub(crate) fn npc_response_bindings(
+        &self,
+        ticket: &RuntimeNpcResponseTicket,
+    ) -> Result<Arc<crate::response::ResponseBindings>, RuntimeError> {
+        use crate::response::{
+            ResponseBindingInput, ResponseBindings, ResponseNativeGuard, ResponseReads,
+        };
+        ticket.require_prepared()?;
+        let expected_plan = ticket.current.work_generation;
         let (appraisal_bindings, appraisal_storage) =
             if let Some(appraisals) = &ticket.bindings.appraisals {
                 let (bindings, storage) = appraisals
@@ -344,11 +393,13 @@ impl NativeWorldSession {
         let native_storage = self.budget.reserve(native_bytes).map_err(failure)?;
         let input = ResponseBindingInput {
             native: Some(ResponseNativeGuard {
+                consumer: maps.consumer,
                 route: maps.validity,
                 scope: Arc::clone(&ticket.original.historical_scope),
                 sources: Arc::clone(&ticket.original.sources),
                 selected_personal: maps.selected_personal.clone(),
                 perspectives: maps.perspectives.clone(),
+                perspective_snapshots: Arc::clone(&ticket.original.perspectives),
                 appraisals: maps.appraisals.clone(),
                 attempt_candidates: Arc::clone(&ticket.attempt_candidates),
                 _original_custody: Arc::clone(&ticket.original._custody),
@@ -372,18 +423,9 @@ impl NativeWorldSession {
             situation: Some(maps.situation.clone()),
             appraisal_bindings,
         };
-        let bindings = Arc::new(ResponseBindings::new(input, storage).map_err(failure)?);
-        let key = self
-            .session
-            .begin_response(&ticket.decision_id, response, bindings, protected)
-            .map_err(failure)?;
-        ticket.phase.store(APPLYING, Ordering::Release);
-        self.active_response = Some(ActiveNpcResponse {
-            key,
-            phase: Arc::clone(&ticket.phase),
-            _custody: Arc::clone(&ticket._custody),
-        });
-        Ok(key)
+        Ok(Arc::new(
+            ResponseBindings::new(input, storage).map_err(failure)?,
+        ))
     }
     /// An unsuccessful selection leaves both handles available. Captures move
     /// only after the whole finite binding has been checked and funded.
@@ -420,10 +462,7 @@ impl NativeWorldSession {
         {
             return Err(failure("NPC response capture was revoked"));
         }
-        let candidates = fresh
-            .candidates
-            .as_ref()
-            .ok_or_else(|| failure("current NPC choices are not prepared"))?;
+        let candidates = fresh.candidates.as_ref();
         let mut bindings = NpcBindingMaps::prepare(
             &simulation.state,
             NpcBindingRead {
@@ -432,11 +471,9 @@ impl NativeWorldSession {
                 references: &fresh.reference_facts,
                 original_references: &first.reference_facts,
                 sources: &first.sources,
+                perspectives: &first.perspectives,
                 candidates,
-                original_candidates: first
-                    .candidates
-                    .as_ref()
-                    .ok_or_else(|| failure("original NPC choices are not prepared"))?,
+                original_candidates: first.candidates.as_ref(),
                 intent_ids: &fresh.intent_ids,
                 invocation_id: &request.decision_id,
             },
@@ -479,19 +516,21 @@ impl NativeWorldSession {
             bindings.storage.merge(storage).map_err(failure)?;
             bindings.situation.semantic_causes = Some(selected);
         }
-        let (attempt_candidates, attempt_storage) = crate::response::capture_attempt_candidates(
-            match request.selection.prototype_source {
-                NpcCatalogueSource::Original => first
-                    .candidates
-                    .as_ref()
-                    .ok_or_else(|| failure("original NPC choices are not prepared"))?,
-                NpcCatalogueSource::Current => candidates,
-            },
-            &fresh.read.perception.actor_id,
-            &request.decision_id,
-            &self.budget,
-        )
-        .map_err(failure)?;
+        let catalogue = match request.selection.prototype_source {
+            NpcCatalogueSource::Original => first.candidates.as_ref(),
+            NpcCatalogueSource::Current => candidates,
+        };
+        let (attempt_candidates, attempt_storage) = if let Some(catalogue) = catalogue {
+            crate::response::capture_attempt_candidates(
+                catalogue,
+                &fresh.read.perception.actor_id,
+                &request.decision_id,
+                &self.budget,
+            )
+            .map_err(failure)?
+        } else {
+            (Vec::new(), self.budget.reserve(0).map_err(failure)?)
+        };
         let mut custody = self
             .budget
             .reserve(

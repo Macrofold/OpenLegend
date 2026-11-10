@@ -18,9 +18,13 @@ mod control;
 mod handoff;
 mod input;
 mod maintenance;
+mod startup;
+pub use maintenance::{
+    RuntimeMaintenancePublication, RuntimeMaintenanceRead, RuntimeReflectionTicket,
+};
 mod npc;
 mod npc_intake;
-pub use npc_intake::{RuntimeNpcTrigger,RuntimeNpcInspection};
+pub use npc_intake::{RuntimeNpcInspection, RuntimeNpcTrigger};
 mod npc_labels;
 mod participation;
 mod player;
@@ -31,7 +35,9 @@ mod retained_values;
 pub use handoff::RuntimeOutputHandoff;
 mod consumer;
 pub use consumer::RuntimeConsumer;
-pub use npc::{RuntimeNpcPreparationStep, RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket};
+pub use npc::{
+    RuntimeNpcPreparationStep, RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket,
+};
 pub use player::{RuntimePlayerPublication, RuntimePlayerRead};
 
 #[derive(Debug)]

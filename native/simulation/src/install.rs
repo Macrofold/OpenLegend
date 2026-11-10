@@ -26,7 +26,8 @@ mod knowledge;
 mod retained;
 pub(crate) use knowledge::{LearnedCapabilities, install_learned_capabilities};
 pub(crate) use retained::{
-    ParticipationReadPolicy, RetainedDefinitionInputs, RetainedDefinitions, RetainedMap, RetainedOne, install_retained,
+    ParticipationReadPolicy, RetainedDefinitionInputs, RetainedDefinitions, RetainedMap,
+    RetainedOne, install_retained,
 };
 mod social;
 pub(crate) use social::{SocialSettings, install_social};
@@ -42,7 +43,8 @@ mod working_set;
 pub(crate) use working_set::{InstalledWorkingSet, WorkingSetSelection};
 mod scope;
 pub(crate) use core::{
-    CoreInstallError, CoreInstallInput, CoreInstallation, InstallPurpose, assemble_core, assemble_working_core,
+    CoreInstallError, CoreInstallInput, CoreInstallation, InstallPurpose, assemble_core,
+    assemble_working_core,
 };
 pub(crate) use scope::{SelectedInstallation, finish_selected_installation};
 
@@ -280,6 +282,7 @@ pub struct RowImport {
     coverage: IndexMap<(String, String), OwnerCoverage>,
     entity_ordering: Option<EntityOrdering>,
     normalized_intents: IndexMap<String, crate::records::NormalizedIntent>,
+    activity_method_signatures: IndexMap<String, crate::records::ActivityMethodSignature>,
     failed: bool,
 }
 
@@ -370,6 +373,15 @@ impl RowImport {
                 return Err(InstallError::DuplicateRow);
             }
         }
+        let mut activity_method_signatures = IndexMap::new();
+        for result in input.activity_method_signatures {
+            if activity_method_signatures
+                .insert(result.row_id.clone(), result)
+                .is_some()
+            {
+                return Err(InstallError::DuplicateRow);
+            }
+        }
         Ok(Self {
             working_set: None,
             world_id: input.world_id,
@@ -380,6 +392,7 @@ impl RowImport {
             coverage,
             entity_ordering: Some(input.entity_ordering),
             normalized_intents,
+            activity_method_signatures,
             failed: false,
         })
     }
@@ -422,6 +435,22 @@ impl RowImport {
             .shift_remove(row)
             .ok_or(InstallError::CurrentFormat)?;
         if &result.description != description || &result.normalized != normalized {
+            return Err(InstallError::CurrentFormat);
+        }
+        Ok(())
+    }
+    pub(crate) fn validate_activity_method_signature(
+        &mut self,
+        row: &crate::records::InstalledRow,
+        signature: &str,
+    ) -> Result<(), InstallError> {
+        let prepared = self
+            .activity_method_signatures
+            .shift_remove(&row.id)
+            .ok_or(InstallError::CurrentFormat)?;
+        if prepared.payload_sha256 != crate::encoding::sha256_hex(row.payload.as_bytes())
+            || prepared.signature != signature
+        {
             return Err(InstallError::CurrentFormat);
         }
         Ok(())
@@ -490,7 +519,7 @@ impl RowImport {
         if !self.coverage.is_empty() {
             return Err(InstallError::UnclaimedCoverage);
         }
-        if !self.normalized_intents.is_empty() {
+        if !self.normalized_intents.is_empty() || !self.activity_method_signatures.is_empty() {
             return Err(InstallError::UnclaimedCoverage);
         }
         if self.entity_ordering.is_some() {

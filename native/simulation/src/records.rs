@@ -110,6 +110,7 @@ pub struct CurrentRecords {
     pub generation: String,
     pub entity_ordering: EntityOrdering,
     pub normalized_intents: Vec<NormalizedIntent>,
+    pub activity_method_signatures: Vec<ActivityMethodSignature>,
     pub tables: BTreeMap<String, Vec<InstalledRow>>,
     pub coverage: Vec<OwnerCoverage>,
 }
@@ -122,6 +123,15 @@ pub struct NormalizedIntent {
     pub row_id: String,
     pub description: crate::text::JsText,
     pub normalized: crate::text::JsText,
+}
+/// Canonical formatting is prepared from one exact SQL row by the same Source
+/// owner. The consuming method validator still owns all template semantics.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ActivityMethodSignature {
+    pub row_id: String,
+    pub payload_sha256: String,
+    pub signature: String,
 }
 
 #[derive(Debug, Deserialize)]

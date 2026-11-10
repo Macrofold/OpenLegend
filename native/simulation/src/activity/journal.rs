@@ -4,6 +4,8 @@
 use super::*;
 mod event;
 mod hydration;
+mod learning;
+mod learning_save;
 mod save;
 use crate::commands::{NativeCommand, Outcome};
 use crate::experience::AcquiredActivityResult;
@@ -103,6 +105,15 @@ impl MutableRecord {
     }
 }
 enum ActivityUndo {
+    MethodInsert {
+        id: String,
+    },
+    Acquisition {
+        actor: String,
+        id: String,
+        before: Option<(usize, std::sync::Arc<super::learning::LearningAcquisition>)>,
+        new_owner: bool,
+    },
     Loaded {
         actor: String,
         id: String,
@@ -156,6 +167,7 @@ impl ActivityJournal {
         if !scope.permits_actor(actor) {
             return Err(ActivityError::InvalidStructure);
         }
+        self.revoke_learning_supports(state, actor, selected)?;
         let Some(collection) = state.collections.get(actor) else {
             return Ok(());
         };
@@ -186,8 +198,6 @@ impl ActivityJournal {
                 .occurrence
                 .revoked = Some(true);
         }
-        // Acquisition families have no admitted nonempty native producer yet;
-        // their canonical rows remain an explicit installer refusal.
         Ok(())
     }
     /// The committing family supplies actual clamped values and its current
@@ -554,6 +564,52 @@ impl ActivityJournal {
         }
         while self.undo.len() > checkpoint.at {
             match self.undo.pop().ok_or(ActivityError::InvalidStructure)? {
+                ActivityUndo::MethodInsert { id } => {
+                    let before = state.library.before(None, Some(&id))?;
+                    state
+                        .library
+                        .methods
+                        .shift_remove(&id)
+                        .ok_or(ActivityError::InvalidStructure)?;
+                    state
+                        .library
+                        .settle(before, None, Some(&id), &mut self.reservation)?;
+                }
+                ActivityUndo::Acquisition {
+                    actor,
+                    id,
+                    before,
+                    new_owner,
+                } => {
+                    let metadata = state.library.before(Some(&actor), Some(&id))?;
+                    let owner = state
+                        .library
+                        .acquisitions
+                        .get_mut(&actor)
+                        .ok_or(ActivityError::InvalidStructure)?;
+                    owner
+                        .shift_remove(&id)
+                        .ok_or(ActivityError::InvalidStructure)?;
+                    if let Some((at, record)) = before {
+                        owner.shift_insert(at, id.clone(), record);
+                    }
+                    if new_owner {
+                        if !owner.is_empty() {
+                            return Err(ActivityError::InvalidStructure);
+                        }
+                        state
+                            .library
+                            .acquisitions
+                            .shift_remove(&actor)
+                            .ok_or(ActivityError::InvalidStructure)?;
+                    }
+                    state.library.settle(
+                        metadata,
+                        Some(&actor),
+                        Some(&id),
+                        &mut self.reservation,
+                    )?;
+                }
                 ActivityUndo::Loaded {
                     actor,
                     id,

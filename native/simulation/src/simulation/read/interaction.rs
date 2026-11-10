@@ -19,6 +19,10 @@ pub(crate) struct PlayerInteractionFacts<'a> {
     funding_actor_id: &'a str,
     reply: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
+    recipient_can_respond: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    heard_utterance: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     recipient_name: Option<&'a crate::text::JsText>,
     #[serde(skip_serializing_if = "Option::is_none")]
     recipient_description: Option<crate::worlds::base_knowledge::OwnedPersonalName>,
@@ -32,6 +36,7 @@ impl Simulation {
         mode: InteractionMode,
         target_id: Option<&'a str>,
         budget: &crate::host::ByteBudget,
+        utterance_event_id: Option<&str>,
     ) -> Result<PlayerInteractionFacts<'a>, ActorReadError> {
         self.require_player_read(account, actor_id)?;
         let entity = self
@@ -56,8 +61,10 @@ impl Simulation {
                 .capabilities
                 .capability_blocked(Some(entity), if speaking { "speech" } else { "actions" })
                 .map_err(|error| ActorReadError::Capture(error.into()))?;
+        let mut heard_utterance = None;
         let mut recipient_available = true;
         let mut reply = false;
+        let mut recipient_can_respond = None;
         let mut recipient_name = None;
         let mut recipient_description = None;
         if let Some(target_id) = target_id.filter(|_| speaking) {
@@ -82,6 +89,50 @@ impl Simulation {
                 && target
                     .and_then(|target| target.actor.as_ref())
                     .is_some_and(|target| target.controller == "npc");
+            recipient_can_respond = if !recipient_available {
+                None
+            } else {
+                Some(if let Some(target) = target {
+                    target
+                        .actor
+                        .as_ref()
+                        .is_some_and(|actor| actor.alive && !actor.incapacitated)
+                        && !(self
+                            .state
+                            .installed
+                            .capabilities
+                            .capability_blocked(Some(target), "speech")
+                            .map_err(|error| ActorReadError::Capture(error.into()))?
+                            && self
+                                .state
+                                .installed
+                                .capabilities
+                                .capability_blocked(Some(target), "actions")
+                                .map_err(|error| ActorReadError::Capture(error.into()))?)
+                } else {
+                    false
+                })
+            };
+            if let Some(event_id) = utterance_event_id.filter(|_| recipient_available) {
+                // Source's immediate reply gate consults its actual resident
+                // awareness array; cold history is not another hearing grant.
+                let awareness = self
+                    .state
+                    .experience
+                    .optional_collection(
+                        target_id,
+                        crate::experience::PersonalSourceKind::Awareness,
+                    )
+                    .map_err(|error| ActorReadError::Capture(error.into()))?;
+                heard_utterance = Some(
+                    awareness
+                        .and_then(|collection| collection.resident_record(event_id))
+                        .is_some_and(|record| {
+                            record.header().heard_addressed_speech
+                                && record.header().evidence_source_id.as_deref() == Some(actor_id)
+                        }),
+                );
+            }
             recipient_description = Some(
                 names
                     .capture_observer_name(target_id, budget)
@@ -113,6 +164,8 @@ impl Simulation {
                 actor_id
             },
             reply,
+            recipient_can_respond,
+            heard_utterance,
             recipient_name,
             recipient_description,
         })

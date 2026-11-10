@@ -29,6 +29,10 @@ mod participation;
 use participation::{ParticipationReply, poll_participation};
 mod restore;
 use restore::poll_restore;
+mod consolidation;
+use consolidation::{ConsolidationReply, poll_consolidation};
+mod reflection;
+use reflection::{ReflectionReply, poll_reflection};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -50,6 +54,10 @@ pub(crate) enum ProviderKind {
     ChoiceDescriptions,
     #[serde(rename = "typed-actions")]
     TypedActions,
+    #[serde(rename = "maintenance-format")]
+    MaintenanceFormat,
+    #[serde(rename = "consolidation-format")]
+    ConsolidationFormat,
     #[serde(rename = "restore-archives")]
     RestoreArchives,
 }
@@ -251,8 +259,12 @@ impl DecodeShape {
             | ProviderKind::Control
             | ProviderKind::Sources
             | ProviderKind::AppraisalOutcomes
+            | ProviderKind::MaintenanceFormat
+            | ProviderKind::ConsolidationFormat
             | ProviderKind::RestoreArchives => 0,
-            ProviderKind::Normalization => size_of::<JsText>().max(size_of::<Option<crate::language::FreeTypedActionSyntax>>()),
+            ProviderKind::Normalization => {
+                size_of::<JsText>().max(size_of::<Option<crate::language::FreeTypedActionSyntax>>())
+            }
             ProviderKind::ChoiceDescriptions => size_of::<JsText>(),
             ProviderKind::TypedActions => crate::response::TypedActionAnswer::array_element_bytes(),
         };
@@ -317,7 +329,9 @@ enum Answer {
     Canonical(Canonical),
     Normalization(crate::language::AttemptNormalizationAnswer),
     TypedActions(crate::response::TypedActionAnswer),
-    Digest(crate::response::ResponseDigestAnswer),
+    MaintenanceFormat(crate::cognition::format::MaintenanceFormatAnswer),
+    ConsolidationFormat(crate::experience::consolidation::ConsolidationFormatAnswer),
+    Digest(crate::language::CanonicalJsonAnswer),
     History(crate::experience::HistoryEditAnswer),
     Control(super::host_control::ControlAnswer),
     Sources(crate::capture::NpcSourcesAnswer),
@@ -359,9 +373,24 @@ impl Answer {
                 &input.json,
                 budget,
             )?),
-            ProviderKind::AppraisalOutcomes => Self::AppraisalOutcomes(crate::response::AppraisalCreatesAnswer::decode(&input.json, budget)?),
-            ProviderKind::ChoiceDescriptions => Self::ChoiceDescriptions(serde_json::from_str(&input.json).map_err(parse)?),
-            ProviderKind::TypedActions => Self::TypedActions(serde_json::from_str(&input.json).map_err(parse)?),
+            ProviderKind::AppraisalOutcomes => Self::AppraisalOutcomes(
+                crate::response::AppraisalCreatesAnswer::decode(&input.json, budget)?,
+            ),
+            ProviderKind::ChoiceDescriptions => {
+                Self::ChoiceDescriptions(serde_json::from_str(&input.json).map_err(parse)?)
+            }
+            ProviderKind::TypedActions => {
+                Self::TypedActions(serde_json::from_str(&input.json).map_err(parse)?)
+            }
+            ProviderKind::MaintenanceFormat => Self::MaintenanceFormat(
+                crate::cognition::format::MaintenanceFormatAnswer::decode(&input.json, budget)?,
+            ),
+            ProviderKind::ConsolidationFormat => Self::ConsolidationFormat(
+                crate::experience::consolidation::ConsolidationFormatAnswer::decode(
+                    &input.json,
+                    budget,
+                )?,
+            ),
             ProviderKind::History => Self::History(crate::experience::HistoryEditAnswer::decode(
                 &input.json,
                 budget,
@@ -391,6 +420,8 @@ impl Answer {
             Self::AppraisalOutcomes(v) => v.binding,
             Self::ChoiceDescriptions(v) => v.binding,
             Self::TypedActions(v) => v.binding,
+            Self::MaintenanceFormat(v) => v.binding,
+            Self::ConsolidationFormat(v) => v.binding,
             Self::RestoreArchives(v) => v.provider_binding(geometry_revision),
         }
     }
@@ -410,6 +441,8 @@ impl Answer {
             Self::AppraisalOutcomes(_) => ProviderKind::AppraisalOutcomes,
             Self::ChoiceDescriptions(_) => ProviderKind::ChoiceDescriptions,
             Self::TypedActions(_) => ProviderKind::TypedActions,
+            Self::MaintenanceFormat(_) => ProviderKind::MaintenanceFormat,
+            Self::ConsolidationFormat(_) => ProviderKind::ConsolidationFormat,
             Self::RestoreArchives(_) => ProviderKind::RestoreArchives,
         }
     }
@@ -504,6 +537,9 @@ fn direct(answer: &mut Option<Answer>, kind: ProviderKind) -> Result<Answer, Dri
 /// Complete semantic owners share the external preparation boundary. Their
 /// sealed completions remain distinct; there is no synthetic completion input.
 pub(crate) enum CompletedOperation {
+    Startup(super::startup::CompletedStartup),
+    Reflection(crate::cognition::publication::CompletedReflection),
+    Consolidation(crate::cognition::consolidation::CompletedConsolidation),
     Restore(super::restore::CompletedRestore),
     Participation(crate::participation::CompletedParticipation),
     Advance(CompletedAdvance),
@@ -517,6 +553,9 @@ pub(crate) enum CompletedOperation {
 impl CompletedOperation {
     pub(crate) fn outcome(&self) -> &crate::commands::Outcome {
         match self {
+            Self::Startup(value) => &value.outcome,
+            Self::Reflection(value) => &value.outcome,
+            Self::Consolidation(value) => &value.outcome,
             Self::Restore(value) => &value.outcome,
             Self::Participation(value) => &value.outcome,
             Self::Advance(a) => &a.outcome,
@@ -534,10 +573,14 @@ impl CompletedOperation {
             Self::Command(c) => (None, Some(c), None, None),
             Self::Response(r) => (None, None, Some(r), None),
             Self::Participation(value) => (None, None, None, Some(value)),
-            Self::Restore(_)
+            Self::Startup(_)
+            | Self::Reflection(_)
+            | Self::Consolidation(_)
+            | Self::Restore(_)
             | Self::Forget(_)
             | Self::RecentRetention(_)
-            | Self::HostControl(_) | Self::NpcIntake(_) => (None, None, None, None),
+            | Self::HostControl(_)
+            | Self::NpcIntake(_) => (None, None, None, None),
         };
         advance
             .into_iter()
@@ -549,22 +592,35 @@ impl CompletedOperation {
                     .into_iter()
                     .flat_map(|value| value.events.iter()),
             )
+            .chain(
+                match self {
+                    Self::Reflection(value) => Some(value.events.iter()),
+                    _ => None,
+                }
+                .into_iter()
+                .flatten(),
+            )
     }
     pub(crate) fn take_continuation(&mut self) -> Option<crate::time::AdvanceContinuation> {
         match self {
             Self::Advance(a) => a.continuation.take(),
-            Self::Restore(_) => None,
+            Self::Startup(_) | Self::Reflection(_) | Self::Consolidation(_) | Self::Restore(_) => {
+                None
+            }
             Self::Command(_)
             | Self::Response(_)
             | Self::Forget(_)
             | Self::RecentRetention(_)
-            | Self::HostControl(_) | Self::NpcIntake(_) => None,
+            | Self::HostControl(_)
+            | Self::NpcIntake(_) => None,
             Self::Participation(_) => None,
         }
     }
 }
 #[derive(Clone, Copy)]
 enum OperationReply {
+    Reflection(ReflectionReply),
+    Consolidation(ConsolidationReply),
     Restore(restore::RestoreReply),
     Participation(ParticipationReply),
     Advance(AdvanceReply),
@@ -576,6 +632,9 @@ enum OperationReply {
     NpcSources,
 }
 enum OperationCursor {
+    Startup(super::startup::StartupCursor),
+    Reflection(crate::cognition::publication::ReflectionCursor),
+    Consolidation(crate::cognition::consolidation::ConsolidationCursor),
     Restore(super::restore::RestoreReconcileCursor),
     Participation(crate::participation::ParticipationCursor),
     Advance(AdvanceCursor),
@@ -600,13 +659,19 @@ impl<T, R> Poll<T, R> {
 impl OperationCursor {
     fn abort(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
         match self {
+            Self::Reflection(cursor) => cursor.abort(core),
+            Self::Consolidation(cursor) => cursor.abort(core),
             Self::Restore(cursor) => cursor.abort(core),
             Self::Advance(a) => a.abort(core),
             Self::Command(c) => c.abort(core),
             Self::Response(r) => r.abort(core),
             Self::Forget(f) => f.abort(core),
             Self::NpcCandidates(cursor) => cursor.abort(core),
-            Self::RecentRetention(_) | Self::HostControl(_) | Self::NpcIntake(_) | Self::NpcSources(_) => Ok(()),
+            Self::Startup(_)
+            | Self::RecentRetention(_)
+            | Self::HostControl(_)
+            | Self::NpcIntake(_)
+            | Self::NpcSources(_) => Ok(()),
             Self::Participation(_) => Ok(()),
         }
     }
@@ -618,6 +683,40 @@ impl OperationCursor {
         budget: &ByteBudget,
     ) -> Result<Poll<DriverCompletion, OperationReply>, DriveError> {
         match self {
+            Self::Startup(cursor) => {
+                if route.is_some() || answer.is_some() {
+                    return Err(DriveError::StaleResponse);
+                }
+                Ok(Poll::Complete(DriverCompletion::Operation(
+                    CompletedOperation::Startup(cursor.complete(core)?),
+                )))
+            }
+            Self::Consolidation(cursor) => {
+                let route = match route {
+                    None => None,
+                    Some(OperationReply::Consolidation(route)) => Some(route),
+                    _ => return Err(DriveError::StaleResponse),
+                };
+                Ok(
+                    poll_consolidation(cursor, core, answer, route, budget)?.map(
+                        |value| {
+                            DriverCompletion::Operation(CompletedOperation::Consolidation(value))
+                        },
+                        OperationReply::Consolidation,
+                    ),
+                )
+            }
+            Self::Reflection(cursor) => {
+                let route = match route {
+                    None => None,
+                    Some(OperationReply::Reflection(route)) => Some(route),
+                    _ => return Err(DriveError::StaleResponse),
+                };
+                Ok(poll_reflection(cursor, core, answer, route, budget)?.map(
+                    |value| DriverCompletion::Operation(CompletedOperation::Reflection(value)),
+                    OperationReply::Reflection,
+                ))
+            }
             Self::Restore(cursor) => {
                 let route = match route {
                     None => None,
@@ -747,8 +846,12 @@ impl OperationCursor {
                 _ => Err(DriveError::StaleResponse),
             },
             Self::NpcIntake(cursor) => {
-                if route.is_some() || answer.is_some() { return Err(DriveError::StaleResponse); }
-                Ok(Poll::Complete(DriverCompletion::Operation(CompletedOperation::NpcIntake(cursor.complete(core, budget)?))))
+                if route.is_some() || answer.is_some() {
+                    return Err(DriveError::StaleResponse);
+                }
+                Ok(Poll::Complete(DriverCompletion::Operation(
+                    CompletedOperation::NpcIntake(cursor.complete(core, budget)?),
+                )))
             }
             Self::RecentRetention(cursor) => {
                 if route.is_some() || answer.is_some() {
@@ -786,6 +889,27 @@ pub(crate) struct OperationDriver {
     _reservation: ByteReservation,
 }
 impl OperationDriver {
+    pub(crate) fn startup(
+        core: &mut CoreMutation<'_>,
+        budget: &ByteBudget,
+    ) -> Result<Self, DriveError> {
+        let cursor = super::startup::StartupCursor::new(budget)?;
+        Self::new(core, OperationCursor::Startup(cursor), budget)
+    }
+    pub(crate) fn consolidation(
+        core: &mut CoreMutation<'_>,
+        cursor: crate::cognition::consolidation::ConsolidationCursor,
+        budget: &ByteBudget,
+    ) -> Result<Self, DriveError> {
+        Self::new(core, OperationCursor::Consolidation(cursor), budget)
+    }
+    pub(crate) fn reflection(
+        core: &mut CoreMutation<'_>,
+        cursor: crate::cognition::publication::ReflectionCursor,
+        budget: &ByteBudget,
+    ) -> Result<Self, DriveError> {
+        Self::new(core, OperationCursor::Reflection(cursor), budget)
+    }
     pub(crate) fn restore(
         core: &mut CoreMutation<'_>,
         cursor: super::restore::RestoreReconcileCursor,
@@ -800,7 +924,11 @@ impl OperationDriver {
     ) -> Result<Self, DriveError> {
         Self::new(core, OperationCursor::Participation(cursor), budget)
     }
-    pub(crate) fn npc_intake(core: &mut CoreMutation<'_>, cursor: super::npc_intake::NpcIntakeCursor, budget: &ByteBudget) -> Result<Self, DriveError> {
+    pub(crate) fn npc_intake(
+        core: &mut CoreMutation<'_>,
+        cursor: super::npc_intake::NpcIntakeCursor,
+        budget: &ByteBudget,
+    ) -> Result<Self, DriveError> {
         Self::new(core, OperationCursor::NpcIntake(cursor), budget)
     }
     pub(crate) fn host_control(
@@ -934,7 +1062,10 @@ impl OperationDriver {
                 if !v._reservation.shares_owner(&self._reservation) {
                     return Err(DriveError::StaleResponse);
                 }
-                if matches!(v.kind, ProviderKind::History | ProviderKind::Sources | ProviderKind::AppraisalOutcomes) {
+                if matches!(
+                    v.kind,
+                    ProviderKind::History | ProviderKind::Sources | ProviderKind::AppraisalOutcomes
+                ) {
                     return Ok(None);
                 }
                 let bytes = DecodeShape::read(&v.json)?.bound(v.kind, v.json.len())?;
@@ -1668,7 +1799,8 @@ fn poll_response(
     let mut supplied = match route {
         Some(ResponseReply::AppraisalCreates) => {
             route = None;
-            let Answer::AppraisalOutcomes(value) = direct(answer, ProviderKind::AppraisalOutcomes)? else {
+            let Answer::AppraisalOutcomes(value) = direct(answer, ProviderKind::AppraisalOutcomes)?
+            else {
                 return Err(DriveError::StaleResponse);
             };
             Some(ResponseAnswer::AppraisalCreates(value))
@@ -1696,7 +1828,9 @@ fn poll_response(
         }
         Some(ResponseReply::TypedActions) => {
             route = None;
-            let Answer::TypedActions(value) = direct(answer, ProviderKind::TypedActions)? else { return Err(DriveError::StaleResponse); };
+            let Answer::TypedActions(value) = direct(answer, ProviderKind::TypedActions)? else {
+                return Err(DriveError::StaleResponse);
+            };
             Some(ResponseAnswer::Typed(value))
         }
         Some(ResponseReply::Geometry) => {
@@ -1711,13 +1845,36 @@ fn poll_response(
     loop {
         match cursor.step(core, supplied.take())? {
             ResponseStep::AppraisalCreates(q) => {
-                return question(answer, ProviderKind::AppraisalOutcomes, q.binding, q, budget, ResponseReply::AppraisalCreates);
+                return question(
+                    answer,
+                    ProviderKind::AppraisalOutcomes,
+                    q.binding,
+                    q,
+                    budget,
+                    ResponseReply::AppraisalCreates,
+                );
             }
             ResponseStep::Sources(q) => {
-                return question(answer, ProviderKind::Sources, q.binding, q, budget, ResponseReply::Sources);
+                return question(
+                    answer,
+                    ProviderKind::Sources,
+                    q.binding,
+                    q,
+                    budget,
+                    ResponseReply::Sources,
+                );
             }
             ResponseStep::Complete(value) => return Ok(Poll::Complete(value)),
-            ResponseStep::Typed(q) => return question(answer, ProviderKind::TypedActions, q.binding, q, budget, ResponseReply::TypedActions),
+            ResponseStep::Typed(q) => {
+                return question(
+                    answer,
+                    ProviderKind::TypedActions,
+                    q.binding,
+                    q,
+                    budget,
+                    ResponseReply::TypedActions,
+                );
+            }
             ResponseStep::Digest(q) => {
                 return question(
                     answer,
@@ -1809,7 +1966,10 @@ fn poll_npc_candidates(
     let mut supplied = None;
     if matches!(route, Some(NpcCandidateReply::Descriptions)) {
         route = None;
-        let Answer::ChoiceDescriptions(value) = direct(answer, ProviderKind::ChoiceDescriptions)? else { return Err(DriveError::StaleResponse); };
+        let Answer::ChoiceDescriptions(value) = direct(answer, ProviderKind::ChoiceDescriptions)?
+        else {
+            return Err(DriveError::StaleResponse);
+        };
         supplied = Some(Reply::Descriptions(value));
     }
     if matches!(route, Some(NpcCandidateReply::Geometry)) {
@@ -1822,7 +1982,14 @@ fn poll_npc_candidates(
     loop {
         match cursor.step(core, supplied.take())? {
             Step::Descriptions(request) => {
-                return question(answer, ProviderKind::ChoiceDescriptions, request.binding, request, budget, NpcCandidateReply::Descriptions);
+                return question(
+                    answer,
+                    ProviderKind::ChoiceDescriptions,
+                    request.binding,
+                    request,
+                    budget,
+                    NpcCandidateReply::Descriptions,
+                );
             }
             Step::Complete(done) => return Ok(Poll::Complete(done)),
             Step::Geometry(request) => {

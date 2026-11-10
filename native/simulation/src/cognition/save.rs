@@ -98,6 +98,11 @@ pub(crate) fn encode_cognition_changes(
     let mut full = IndexSet::new();
     for change in journal.changes() {
         match change {
+            CognitionChange::Publication(actor) => {
+                minds.insert(actor);
+                full.insert(actor);
+                inner.insert(actor);
+            }
             CognitionChange::InnerWorld(actor) => {
                 inner.insert(actor);
             }
@@ -203,6 +208,19 @@ pub(crate) fn encode_cognition_changes(
                 budget,
             )?;
         }
+        for (at, thought) in mind.thoughts.iter().enumerate() {
+            write(
+                ledger,
+                output,
+                "mind_thoughts",
+                &["world", "minds", actor, "thoughts", &at.to_string()],
+                &["world", "minds", actor],
+                &at.to_string(),
+                Some(at as u64),
+                thought,
+                budget,
+            )?;
+        }
     }
     let record_count = journal
         .changes()
@@ -272,7 +290,7 @@ pub(crate) fn encode_cognition_changes(
             )?;
             output.delete("mind_facets", &address.placement.id, false)?;
         }
-        for at in 0..thoughts.len() {
+        for at in mind.thoughts.len()..thoughts.len() {
             let address = address(
                 ledger,
                 "mind_thoughts",

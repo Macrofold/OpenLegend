@@ -42,6 +42,7 @@ export function historyEventRow(worldId: string, event: WorldEvent, encoded: str
         ),
       ),
     ],
+    typeof event.data?.['utteranceId'] === 'string' ? event.data['utteranceId'] : null,
   ];
 }
 export function historyPerspectiveRow(

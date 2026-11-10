@@ -1,4 +1,4 @@
-import { namePhrase } from '@open-legend/domain';
+import { namePhrase } from '@open-legend/language';
 import type { NativeWorld, NativeWorldPlayerRead } from '@open-legend/native-simulation';
 import type { RequestScope } from './authority.js';
 import type { NativeGeometryProviders } from './native-geometry.js';
@@ -14,7 +14,11 @@ import {
 type NativeInteractionFacts = Omit<
   PlayerInteractionFacts,
   'controlling' | 'paused' | 'pauseReason'
-> & { readonly recipientDescription?: Parameters<typeof namePhrase>[0] };
+> & {
+  readonly recipientDescription?: Parameters<typeof namePhrase>[0];
+  readonly heardUtterance?: boolean;
+  readonly recipientCanRespond?: boolean;
+};
 
 type PlayerPacket = Pick<NativePlayerRead, 'self' | 'perception' | 'events' | 'controls'>;
 
@@ -62,13 +66,23 @@ export class NativePlayerCapture {
 
   /** The purpose-bound native reader checks current speech/action permission;
    * the captured visible body alone cannot authorize a chosen recipient. */
-  async interaction(mode: 'speak' | 'act', targetId?: string): Promise<NativeInteractionFacts> {
+  async interaction(
+    mode: 'speak' | 'act',
+    targetId?: string,
+    utteranceEventId?: string,
+  ): Promise<NativeInteractionFacts> {
     if (this.released) throw new ViewChangedError();
     const result = freezeNativeProduct(
       decodeNativeProduct<NativeInteractionFacts>(
         await this.world.playerInteraction(
           this.read,
-          Buffer.from(JSON.stringify({ mode, ...(targetId ? { targetId } : {}) })),
+          Buffer.from(
+            JSON.stringify({
+              mode,
+              ...(targetId ? { targetId } : {}),
+              ...(utteranceEventId ? { utteranceEventId } : {}),
+            }),
+          ),
         ),
       ),
     );

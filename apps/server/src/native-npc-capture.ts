@@ -62,6 +62,7 @@ import {
   nativeReceivedScene,
   type NativeCurrentCaptureSeed,
 } from './native-current-capture.js';
+import { capturedAttributionReader, type AttributionIdentity } from './entity-references.js';
 
 /** The NPC purpose supplies the actual selected first-person mental records.
  * These private facts are formatter input; model output cannot edit this graph
@@ -102,26 +103,58 @@ interface NpcPacket {
   readonly sources: readonly NativeNpcSourceInventory[];
   readonly validity: NativeDecisionValidityRead;
 }
+export type NativeNpcConsumer = 'inspection' | 'chat' | 'thought' | 'reflection';
+export type NativeNpcPerspectiveSelection = NativeNpcBindingSelection['perspectives'];
+
+/** A native naming cut owns the actual identity tuples. Only its ordinals go
+ * back to the native validity owner; these tuples grant no entity access. */
+export class NativeNpcPerspectives {
+  constructor(
+    private readonly product: {
+      readonly snapshot: number;
+      readonly attributionIdentities: Readonly<Record<string, readonly AttributionIdentity[]>>;
+    },
+    readonly attribution: (ids: Iterable<string>) => string,
+  ) {}
+
+  select(ids: Iterable<string>): NativeNpcPerspectiveSelection {
+    const keys = Object.keys(this.product.attributionIdentities);
+    return retainNativeSources(
+      [...new Set(ids)].map((id) => {
+        const entity = keys.indexOf(id);
+        if (entity < 0) throw new Error('Selected personal attribution was not captured.');
+        return { snapshot: this.product.snapshot, entity };
+      }),
+      this.product,
+    );
+  }
+}
 
 /** One actual native read owner across asynchronous context preparation. Source
  * receipts, scene validity and executable choices must be bound by their own
  * semantic owners before a response ticket can be issued. */
 export class NativeNpcCapture {
+  private publicationPerspectives: NativeNpcPerspectiveSelection = [];
   private constructor(
     private packet: NpcPacket | undefined,
     private read: NativeWorldNpcRead,
+    readonly consumer: NativeNpcConsumer,
   ) {}
 
   static async capture(
     world: NativeWorld,
     actorId: string,
     requiredAppraisals: readonly AppraisalScope[],
+    consumer: NativeNpcConsumer = 'inspection',
   ): Promise<NativeNpcCapture> {
-    const read = await world.readNpc(Buffer.from(JSON.stringify({ actorId, requiredAppraisals })));
+    const read = await world.readNpc(
+      Buffer.from(JSON.stringify({ actorId, requiredAppraisals, consumer })),
+    );
     try {
       return new NativeNpcCapture(
         freezeNativeProduct(decodeNativeProduct<NpcPacket>(await read.packet())),
         read,
+        consumer,
       );
     } catch (error) {
       read.release();
@@ -231,7 +264,57 @@ export class NativeNpcCapture {
    * awaiting provider work; the originating history remains native-owned. */
   historyPublication(world: NativeWorld) {
     this.facts;
-    return world.npcHistoryPublication(this.read);
+    return world.npcHistoryPublication(
+      this.read,
+      Buffer.from(
+        JSON.stringify({
+          consumer: this.consumer,
+          perspectives: this.publicationPerspectives,
+        }),
+      ),
+    );
+  }
+
+  guardPerspectives(selected: NativeNpcPerspectiveSelection): void {
+    this.facts;
+    this.publicationPerspectives = selected;
+  }
+
+  async capturePerspectives(
+    world: NativeWorld,
+    ids: Iterable<string>,
+  ): Promise<NativeNpcPerspectives> {
+    const facts = this.facts;
+    const entities = [...new Set(ids)].map((id) => {
+      if (id === facts.self.actorId) return { kind: 'myself' as const };
+      const body = facts.perception.bodies.findIndex((value) => value.sourceId === id);
+      if (body >= 0) return { kind: 'body' as const, ordinal: body };
+      for (let inventory = facts.sources.length - 1; inventory >= 0; inventory--) {
+        const sources = facts.sources[inventory]!.personal;
+        for (let ordinal = 0; ordinal < sources.length; ordinal++) {
+          const entity = Object.keys(sources[ordinal]!.attribution.attributionIdentities).indexOf(
+            id,
+          );
+          if (entity >= 0) return { kind: 'personal' as const, inventory, ordinal, entity };
+        }
+      }
+      throw new Error('Personal naming has no admitted participant witness.');
+    });
+    const product = freezeNativeProduct(
+      decodeNativeProduct<{
+        readonly snapshot: number;
+        readonly attributionIdentities: Readonly<Record<string, readonly AttributionIdentity[]>>;
+      }>(await world.npcPerspectives(this.read, Buffer.from(JSON.stringify({ entities })))),
+    );
+    const attribution = retainNativeSources(
+      capturedAttributionReader(
+        facts.self.worldId,
+        facts.self.actorId,
+        new Map(Object.entries(product.attributionIdentities)),
+      ),
+      product,
+    );
+    return new NativeNpcPerspectives(product, attribution);
   }
 
   /** A later expansion keeps the original evidence window while reading the

@@ -54,7 +54,7 @@ export interface PreparedMaintenanceReflection {
   readonly context: Record<string, unknown>;
   readonly diagnostics: unknown;
   readonly schema: GenerateRequest['schema'];
-  readonly files: MindFiles;
+  files(): Promise<MindFiles>;
   readonly publication?: HttpPublication;
   validate(): Promise<void>;
   publish(value: MaintenanceReflectionValue): Promise<{ ok: boolean; message: string }>;
@@ -108,6 +108,13 @@ export interface MaintenanceHost {
   inspection(work: ActorWork, actorId: string): Promise<MaintenanceInspection>;
   actor(actorId: string): Promise<MaintenanceActor | undefined>;
   rawDeadlines(actorId: string): Promise<readonly number[]>;
+  admission(
+    actorId: string,
+    generation: string,
+    purpose: MaintenanceAdmission['purpose'],
+    requiresBody: boolean,
+  ): Promise<MaintenanceAdmission | undefined>;
+  releaseAdmission(admission: MaintenanceAdmission): void;
   assertAdmission(admission: MaintenanceAdmission): Promise<void>;
   memoryMaintenanceStatus(actorId: string): Promise<{
     hasMemories: boolean;
@@ -129,10 +136,15 @@ export interface MaintenanceHost {
     batch: MaintenanceLearningBatch,
     judgments: readonly ('retain' | 'decline' | 'uncertain')[],
     validateOnly: boolean,
-    admission: MaintenanceAdmission,
+    admission: MaintenanceAdmission | undefined,
     signal: AbortSignal,
   ): Promise<boolean>;
-  withExecution<T>(id: string, lease: ExecutionLease, work: () => Promise<T>): Promise<T>;
+  withExecution<T>(
+    actorId: string,
+    id: string,
+    lease: ExecutionLease,
+    work: () => Promise<T>,
+  ): Promise<T>;
   prepareReflection(input: {
     actorId: string;
     job: JobRecord;

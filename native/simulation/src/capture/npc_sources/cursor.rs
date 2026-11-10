@@ -119,11 +119,21 @@ impl NpcSourcesCursor {
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         if !scope.still_permitted(core.state)
-            || matches!(scope.receipt_prefix, NpcHistoryPrefix::Pending { .. })
+            || !scope.allows_selection(selection.receipts.is_empty())
+            || selection.consolidation_job.as_ref().is_some_and(|job| {
+                !scope.allows_consolidation() || !crate::values::is_safe_record_id(job)
+            })
         {
             return Err(ExecutionError::InvalidCheckpoint);
         }
         let mut bytes = size_of::<Self>()
+            .checked_add(
+                selection
+                    .consolidation_job
+                    .as_ref()
+                    .map_or(0, String::capacity),
+            )
+            .ok_or(ExecutionError::Capacity)?
             .checked_add(
                 selection
                     .receipts

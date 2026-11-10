@@ -61,6 +61,7 @@ const ORIGINAL: &[(&str, Field)] = &[
 ];
 const SPEECH: &[(&str, Field)] = &[
     ("perception", Scalar),
+    ("addressing", Scalar),
     ("segments", Array(&[("kind", Scalar)])),
 ];
 const ROOT: &[(&str, Field)] = &[
@@ -91,6 +92,7 @@ const ROOT: &[(&str, Field)] = &[
     ),
     ("expiresAt", Scalar),
     ("resolved", Scalar),
+    ("speakerId", Scalar),
     ("retention", Scalar),
     (
         "obligation",

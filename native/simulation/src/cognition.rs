@@ -12,8 +12,13 @@ use crate::values::{
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
+pub(crate) mod consolidation;
+pub(crate) mod format;
 mod journal;
 mod notices;
+pub(crate) mod publication;
+pub(crate) mod reflection;
+mod reflection_edits;
 pub(crate) use journal::{CognitionChange, CognitionCheckpoint, CognitionJournal};
 pub(crate) use notices::{PreparedSemanticNotices, SemanticNotice};
 mod retained_size;
@@ -105,25 +110,25 @@ pub(crate) struct InnerRecord {
     pub status: InnerStatus,
     pub evidence: Vec<EvidenceLink>,
 }
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum ThoughtKind {
     Thought,
     Reflection,
     Dream,
 }
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum ThoughtSource {
     Inferred,
     Imagined,
 }
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct PrivateThought {
     pub decision_id: String,
     pub at: f64,
-    pub text: String,
+    pub text: crate::text::JsText,
     pub kind: ThoughtKind,
     pub source: ThoughtSource,
 }
@@ -132,6 +137,8 @@ pub(crate) struct PrivateThought {
 pub(crate) struct ActorMind {
     #[serde(skip)]
     contents_storage: Option<crate::host::ResidentReservation>,
+    #[serde(skip)]
+    metadata_storage: Option<crate::host::ResidentReservation>,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub revision: u64,
     pub documents: Vec<MindDocument>,
@@ -146,6 +153,8 @@ pub(crate) struct ActorMind {
 pub(crate) struct InnerWorld {
     #[serde(skip)]
     contents_storage: Option<crate::host::ResidentReservation>,
+    #[serde(skip)]
+    metadata_storage: Option<crate::host::ResidentReservation>,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub revision: u64,
     pub source_snapshot: String,
@@ -309,6 +318,11 @@ pub(crate) fn install_minds(
                 .reserve_record(mind_contents_bytes(&mind).ok_or(InstallError::Capacity)?)
                 .map_err(|_| InstallError::Capacity)?,
         );
+        mind.metadata_storage = Some(
+            budget
+                .reserve_record(mind.last_dream_episode.as_ref().map_or(0, String::capacity))
+                .map_err(|_| InstallError::Capacity)?,
+        );
         if minds.insert(row.slot, mind).is_some() {
             return Err(InstallError::DuplicateRow);
         }
@@ -341,6 +355,17 @@ pub(crate) fn install_minds(
         value.contents_storage = Some(
             budget
                 .reserve_record(inner_contents_bytes(&value).ok_or(InstallError::Capacity)?)
+                .map_err(|_| InstallError::Capacity)?,
+        );
+        value.metadata_storage = Some(
+            budget
+                .reserve_record(
+                    value
+                        .source_snapshot
+                        .capacity()
+                        .checked_add(value.publication_job_id.capacity())
+                        .ok_or(InstallError::Capacity)?,
+                )
                 .map_err(|_| InstallError::Capacity)?,
         );
         if inner.insert(row.slot, value).is_some() {

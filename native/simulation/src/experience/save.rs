@@ -76,7 +76,12 @@ pub(crate) fn capture_personal_predecessors(
     journal: &ExperienceJournal,
     budget: &ByteBudget,
 ) -> Result<PersonalPredecessors, RecordEncodingError> {
-    let count = journal.undo.len();
+    let count = journal
+        .summary_collections()
+        .try_fold(journal.undo.len(), |n, (_, before)| {
+            n.checked_add(before.records().len())
+        })
+        .ok_or_else(encoding)?;
     let bytes = map_storage::<(&str, PersonalSourceKind, &str), ()>(count)
         .and_then(|bytes| bytes.checked_mul(2))
         .and_then(|bytes| {
@@ -95,6 +100,19 @@ pub(crate) fn capture_personal_predecessors(
     }
     let mut records = Vec::new();
     records.try_reserve_exact(count).map_err(|_| encoding())?;
+    for (_, before) in journal.summary_collections() {
+        for before in before.records() {
+            let key = (
+                before.header.actor_id.as_str(),
+                before.header.reference.kind,
+                before.header.reference.id.as_str(),
+            );
+            if !new.contains(&key) && seen.insert(key) {
+                records.push(Arc::clone(before));
+            }
+        }
+    }
+
     for operation in &journal.undo {
         let before = match operation {
             super::mutation::ExperienceUndo::Replace { before, .. }
@@ -138,7 +156,20 @@ pub(crate) fn encode_personal_changes(
             RowEffects::default(),
         )?;
     }
-    let maximum = journal.undo.len();
+    encode_consolidation_clock(state, journal, ledger, output, budget)?;
+    let maximum = journal
+        .summary_collections()
+        .try_fold(journal.undo.len(), |n, (actor, _)| {
+            n.checked_add(
+                state
+                    .actor(actor)?
+                    .collection(PersonalSourceKind::Summary)
+                    .ok()?
+                    .records()
+                    .len(),
+            )
+        })
+        .ok_or_else(encoding)?;
     let bytes = map_storage::<&str, ()>(maximum)
         .and_then(|bytes| {
             bytes.checked_add(maximum.checked_mul(size_of::<(&Arc<PersonalSourceRecord>, bool)>())?)
@@ -157,6 +188,27 @@ pub(crate) fn encode_personal_changes(
     for record in journal.replaced(state) {
         if seen.insert(record.row_id()) {
             records.push((record, false));
+        }
+    }
+    for (actor, before) in journal.summary_collections() {
+        let after = state
+            .actor(actor)
+            .ok_or_else(encoding)?
+            .collection(PersonalSourceKind::Summary)
+            .map_err(|_| encoding())?;
+        for record in after.records() {
+            let prior = before.resident_record(&record.header.reference.id);
+            if prior.is_some_and(|old| {
+                old.position == record.position
+                    && old.slot == record.slot
+                    && old.payload == record.payload
+                    && old.columns == record.columns
+            }) {
+                continue;
+            }
+            if seen.insert(record.row_id()) {
+                records.push((record, prior.is_none()));
+            }
         }
     }
     // The existing preparation groups a table by its actual actor collection,
@@ -286,5 +338,79 @@ pub(crate) fn encode_personal_changes(
             parent_present: coverage.parent_present,
         })?;
     }
+    for (actor, before) in journal.summary_collections() {
+        let after = state
+            .actor(actor)
+            .ok_or_else(encoding)?
+            .collection(PersonalSourceKind::Summary)
+            .map_err(|_| encoding())?;
+        for record in before.records() {
+            if after.resident_record(&record.header.reference.id).is_none() {
+                output.delete("mind_summaries", record.row_id(), false)?;
+            }
+        }
+        output.observe_owner(&OwnerCoverage {
+            table: "mind_summaries".into(),
+            owner: collection_owner(PersonalSourceKind::Summary, actor).map_err(|_| encoding())?,
+            complete: true,
+            next_ordinal: after.coverage.next_ordinal,
+            parent_present: true,
+        })?;
+    }
     Ok(())
+}
+fn encode_consolidation_clock(
+    state: &ExperienceState,
+    journal: &ExperienceJournal,
+    ledger: &RecordLedger,
+    output: &mut RowEncoder<'_>,
+    budget: &ByteBudget,
+) -> Result<(), RecordEncodingError> {
+    let count = journal.consolidated_actors().count();
+    if count == 0 {
+        return Ok(());
+    }
+    let _selection = budget
+        .reserve(map_storage::<&str, ()>(count).ok_or_else(encoding)?)
+        .map_err(|_| encoding())?;
+    let changed: IndexSet<_> = journal.consolidated_actors().collect();
+    let (actors, _custody) =
+        privacy::ordered_actors("mind_consolidation", &changed, ledger, budget)?;
+    for (position, actor) in actors.iter().enumerate() {
+        let _row = budget
+            .reserve(actor.len() * 12 + 512)
+            .map_err(|_| encoding())?;
+        let id = json_record(&["world", "experience", "consolidatedAt", actor])
+            .map_err(|_| encoding())?;
+        let prior = ledger.placement("mind_consolidation", &id);
+        if !changed.contains(actor) && prior.is_none_or(|prior| prior.position == position as u64) {
+            continue;
+        }
+        let placement = RecordPlacement {
+            id,
+            parent: "[\"world\",\"experience\"]".into(),
+            slot: (*actor).into(),
+            position: position as u64,
+        };
+        let at = state
+            .actor(actor)
+            .and_then(|history| history.consolidated_at)
+            .ok_or_else(encoding)?;
+        let payload = json_record(&at).map_err(|_| encoding())?;
+        output.write_encoded(
+            "mind_consolidation",
+            &placement,
+            &payload,
+            &[],
+            prior.is_none(),
+            RowEffects::default(),
+        )?;
+    }
+    output.observe_owner(&OwnerCoverage {
+        table: "mind_consolidation".into(),
+        owner: "[\"world\",\"experience\"]".into(),
+        complete: true,
+        next_ordinal: actors.len() as u64,
+        parent_present: true,
+    })
 }

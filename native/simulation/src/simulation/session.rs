@@ -223,6 +223,7 @@ enum Candidate {
 struct HostControlSnapshot {
     speed: f64,
     manually_paused: bool,
+    milestones: super::milestones::MilestoneJournal,
 }
 
 pub(crate) struct Session {
@@ -428,7 +429,9 @@ impl Session {
         bindings: Arc<crate::response::ResponseBindings>,
         protected: bool,
     ) -> Result<CandidateKey, SessionError> {
-        if protected && !self.save_barrier_complete() { return Err(FenceError::Busy.into()); }
+        if protected && !self.save_barrier_complete() {
+            return Err(FenceError::Busy.into());
+        }
         let (key, mut journal) = self.begin()?;
         let driver = (|| {
             let mut core = CoreMutation {
@@ -561,13 +564,36 @@ impl Session {
         self.host.manually_paused = manually_paused;
         Ok(key)
     }
-    pub(crate) fn begin_npc_intake(&mut self, request: super::npc_intake::NpcIntakeRequest) -> Result<CandidateKey, SessionError> {
+    pub(crate) fn begin_npc_intake(
+        &mut self,
+        request: super::npc_intake::NpcIntakeRequest,
+    ) -> Result<CandidateKey, SessionError> {
         let (key, mut journal) = self.begin()?;
         let driver = (|| {
             let cursor = super::npc_intake::NpcIntakeCursor::new(request, &self.budget)?;
-            let mut core = CoreMutation { state: &mut self.simulation.state, journal: &mut journal };
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
             OperationDriver::npc_intake(&mut core, cursor, &self.budget)
         })();
+        self.install_driver(key, journal, driver, false)
+    }
+    /// Existing current-format openings reconcile imported hot events before
+    /// disclosure. A prepared creation is already initialized and never uses
+    /// this path; subsequent live operations use only their new emitted events.
+    pub(crate) fn begin_startup(&mut self) -> Result<CandidateKey, SessionError> {
+        if self.accepted()?.state.accepted_cut != 0 {
+            return Err(ExecutionError::InvalidCheckpoint.into());
+        }
+        let (key, mut journal) = self.begin()?;
+        let driver = {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            OperationDriver::startup(&mut core, &self.budget)
+        };
         self.install_driver(key, journal, driver, false)
     }
     pub(crate) fn begin_recent_retention(
@@ -585,14 +611,64 @@ impl Session {
         })();
         self.install_driver(key, journal, driver, false)
     }
-    /// Operational control and the exact domain participation effects commit
-    /// together. No prior accepted suffix may be omitted from that SQL barrier.
-    pub(crate) fn begin_participation(&mut self, request: crate::participation::ParticipationRequest) -> Result<CandidateKey, SessionError> {
-        if !self.save_barrier_complete() { return Err(FenceError::Busy.into()); }
+    pub(crate) fn begin_consolidation(
+        &mut self,
+        input: crate::cognition::consolidation::ConsolidationInput,
+    ) -> Result<CandidateKey, SessionError> {
         let (key, mut journal) = self.begin()?;
         let driver = (|| {
-            let cursor = crate::participation::ParticipationCursor::new(request, key, &self.budget)?;
-            let mut core = CoreMutation {state: &mut self.simulation.state, journal: &mut journal};
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::cognition::consolidation::ConsolidationCursor::new(
+                &mut core,
+                input,
+                key,
+                &self.budget,
+            )?;
+            OperationDriver::consolidation(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+    pub(crate) fn begin_reflection(
+        &mut self,
+        input: crate::cognition::publication::ReflectionInput,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::cognition::publication::ReflectionCursor::new(
+                &mut core,
+                input,
+                key,
+                &self.budget,
+            )?;
+            OperationDriver::reflection(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
+
+    /// Operational control and the exact domain participation effects commit
+    /// together. No prior accepted suffix may be omitted from that SQL barrier.
+    pub(crate) fn begin_participation(
+        &mut self,
+        request: crate::participation::ParticipationRequest,
+    ) -> Result<CandidateKey, SessionError> {
+        if !self.save_barrier_complete() {
+            return Err(FenceError::Busy.into());
+        }
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let cursor =
+                crate::participation::ParticipationCursor::new(request, key, &self.budget)?;
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
             OperationDriver::participation(&mut core, cursor, &self.budget)
         })();
         self.install_driver(key, journal, driver, false)
@@ -635,6 +711,7 @@ impl Session {
         self.host_before = Some(HostControlSnapshot {
             speed: self.host.speed,
             manually_paused: self.host.manually_paused,
+            milestones: super::milestones::MilestoneJournal::new(&self.host),
         });
         Ok((key, journal))
     }
@@ -744,6 +821,28 @@ impl Session {
                 // No candidate is exposed Ready if recording or accumulating
                 // save admission fails after semantic execution has completed.
                 let products = (|| {
+                    let host_journal = &mut self
+                        .host_before
+                        .as_mut()
+                        .ok_or(ExecutionError::Invariant)?
+                        .milestones;
+                    if matches!(
+                        &result,
+                        CompletedOperation::Restore(_) | CompletedOperation::Startup(_)
+                    ) {
+                        host_journal.apply_hot(
+                            &mut self.host,
+                            &self.simulation.state,
+                            &self.budget,
+                        )?;
+                    } else {
+                        host_journal.apply(
+                            &mut self.host,
+                            &self.simulation.state,
+                            result.events(),
+                            &self.budget,
+                        )?;
+                    }
                     let notices = preparing.journal.cognition.prepare_semantic_notices(
                         self.simulation.state.installed.maximum_change_scopes,
                         &self.budget,
@@ -762,7 +861,12 @@ impl Session {
                     .map_err(PublicationError::from)?;
                     let protected = matches!(&result, CompletedOperation::Forget(done)
                         if done.privacy_change().is_some())
-                        || matches!(&result, CompletedOperation::Restore(_) | CompletedOperation::HostControl(_) | CompletedOperation::Participation(_))
+                        || matches!(
+                            &result,
+                            CompletedOperation::Restore(_)
+                                | CompletedOperation::HostControl(_)
+                                | CompletedOperation::Participation(_)
+                        )
                         || matches!(&result, CompletedOperation::Response(done) if done.protected());
                     let publication = PreparedPublication::prepare(
                         &mut self.simulation.state,
@@ -770,8 +874,22 @@ impl Session {
                         &mut self.save,
                         &self.simulation.fence,
                         key,
-                        &self.host,
-                        matches!(&result, CompletedOperation::Restore(_) | CompletedOperation::HostControl(_)),
+                        {
+                            let controls = matches!(
+                                &result,
+                                CompletedOperation::Restore(_) | CompletedOperation::HostControl(_)
+                            );
+                            let milestones = &self
+                                .host_before
+                                .as_ref()
+                                .ok_or(ExecutionError::Invariant)?
+                                .milestones;
+                            (controls || milestones.changed()).then_some(super::save::HostSave {
+                                settings: &self.host,
+                                milestones,
+                                controls,
+                            })
+                        },
                         protected.then_some(self.temporal_save_limits),
                         &self.budget,
                     )?;
@@ -975,9 +1093,14 @@ impl Session {
             self.simulation.fence.poison();
             return Err(error.into());
         }
-        if let Some(before) = self.host_before.take() {
+        if let Some(mut before) = self.host_before.take() {
             self.host.speed = before.speed;
             self.host.manually_paused = before.manually_paused;
+            if let Err(error) = before.milestones.rollback(&mut self.host) {
+                self.host_before = Some(before);
+                self.simulation.fence.poison();
+                return Err(error.into());
+            }
         }
         self.simulation.fence.rollback_complete(key)?;
         self.apply_pending_residency()?;
@@ -1043,6 +1166,20 @@ impl Session {
     }
     pub(crate) fn accepted(&self) -> Result<&Simulation, SessionError> {
         if self.simulation.fence.phase() != CandidatePhase::Idle {
+            return Err(FenceError::Busy.into());
+        }
+        Ok(&self.simulation)
+    }
+    /// A synchronous owner check may run inside the already-held disclosure
+    /// lease. It must never inspect a candidate or mint a nested publication.
+    pub(crate) fn publication_read(&self) -> Result<&Simulation, SessionError> {
+        if self.candidate.is_some()
+            || !matches!(
+                self.simulation.fence.phase(),
+                CandidatePhase::Idle | CandidatePhase::Publishing
+            )
+            || self.simulation.fence.stop_requested()
+        {
             return Err(FenceError::Busy.into());
         }
         Ok(&self.simulation)

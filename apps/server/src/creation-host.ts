@@ -7,7 +7,7 @@ import type { SqlGameRepository } from './store.js';
 import type { WorldService } from './world-service.js';
 import type { AiDirector } from './ai-director.js';
 import type { Autosaves } from './autosaves.js';
-import type { ShutdownReport } from './http.js';
+import type { ShutdownReport } from './server-shutdown.js';
 import {
   creationActivationRequestSchema,
   creationCheckRequestSchema,

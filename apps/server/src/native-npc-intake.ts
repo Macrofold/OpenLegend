@@ -85,6 +85,7 @@ export interface NativeNpcIntakeFacts {
   readonly attention: NativeCurrentCaptureSeed['attention'];
   readonly protectionLabels: readonly string[];
   readonly actionsBlocked: boolean;
+  readonly speechBlocked: boolean;
   readonly semantic?: SemanticContinuation;
   readonly opportunity: {
     readonly bodyInputs: readonly { readonly key: string; readonly value: boolean }[];
@@ -116,6 +117,12 @@ export type NativeNpcInputFacts = Pick<
   | 'physicalLife'
   | 'eligible'
   | 'enrolled'
+  | 'controller'
+  | 'alive'
+  | 'incapacitated'
+  | 'cognition'
+  | 'actionsBlocked'
+  | 'speechBlocked'
   | 'values'
   | 'dependencyToken'
   | 'awarenessThrough'

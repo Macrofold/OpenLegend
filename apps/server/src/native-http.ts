@@ -1,3 +1,9 @@
+import type { AiClient } from '@open-legend/ai';
+import { CognitionExecution } from './cognition-execution.js';
+import { NativeNpcDirector } from './native-npc-director.js';
+import { createNativeCognitionMaintenance } from './native-maintenance-host.js';
+import { playerInteractionRequest } from './player-interaction-request.js';
+import { recoverHumanRequest } from './human-request-recovery.js';
 import { createServer, type ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { NativeHost } from '@open-legend/native-simulation';
@@ -21,7 +27,7 @@ import { readAssetIndex } from './asset-configuration.js';
 import { readHttpJson } from './http-json.js';
 import { gameCookie, gameHttpLocation, readGameCookie, writeJson } from './http-boundary.js';
 import { OverloadError } from './work-lane.js';
-import { SHUTDOWN_DEADLINE_MS, type ShutdownReport } from './http.js';
+import { SHUTDOWN_DEADLINE_MS, type ShutdownReport } from './server-shutdown.js';
 import { worldInputSchema } from './world-input-schema.js';
 import { Autosaves } from './autosaves.js';
 import { GameSaveError } from './game-saves.js';
@@ -62,6 +68,7 @@ export async function createNativeGameServer(options: {
   readonly clientAssets?: ClientAssets;
   readonly now?: () => number;
   readonly tick?: boolean;
+  readonly aiClient?: AiClient;
 }) {
   const { config } = options;
   const now = options.now ?? Date.now;
@@ -73,6 +80,8 @@ export async function createNativeGameServer(options: {
       new PostgresDatabase(config.databaseUrl, false, config.sqlWriteGroups),
     );
   let service: NativeWorldService | undefined;
+  let director: NativeNpcDirector | undefined;
+  let cognitionExecution: CognitionExecution | undefined;
   let player: NativePlayerHttp | undefined;
   let assets: ClientAssets | undefined;
   try {
@@ -85,6 +94,18 @@ export async function createNativeGameServer(options: {
       presentationRelease: assetIndex.release,
     });
     const current = service;
+    cognitionExecution = new CognitionExecution(store, now);
+    const execution = cognitionExecution;
+    const makeDirector = () =>
+      new NativeNpcDirector(
+        current,
+        (ports) => createNativeCognitionMaintenance(current, ports, now),
+        options.aiClient,
+        now,
+        execution,
+      );
+    director = makeDirector();
+    let decisions = director;
     const autosaves = new Autosaves(current);
     await autosaves.initialize();
     player = new NativePlayerHttp(current, {
@@ -92,7 +113,7 @@ export async function createNativeGameServer(options: {
       jevConfigured: !!(config.macrofoldKey || config.jevKey),
       llmConfigured: !!(config.macrofoldKey || config.llmKey),
     });
-    const views = player;
+    let views = player;
     assets =
       options.clientAssets ??
       (await createClientAssets(options.production, {
@@ -119,6 +140,9 @@ export async function createNativeGameServer(options: {
         ? new OpenIdAuthentication(config.authentication, now)
         : undefined;
     let stopping = false;
+    let loadingSave = false;
+    let activeWrites = 0;
+    let thinking: Promise<void> | undefined;
     let requests = 0;
     let retainedBodyBytes = 0;
     let pendingStreams = 0;
@@ -130,7 +154,7 @@ export async function createNativeGameServer(options: {
     let activeTick: Promise<void> | undefined,
       clockContinuation: ReturnType<typeof setImmediate> | undefined;
     const wakeClock = () => {
-      if (stopping || activeTick) return;
+      if (stopping || loadingSave || activeTick) return;
       if (clockContinuation) clearImmediate(clockContinuation);
       clockContinuation = undefined;
       const offeredUntil = performance.now(),
@@ -148,6 +172,16 @@ export async function createNativeGameServer(options: {
             Math.max(0, (offeredUntil - current.clockStartedAt) / 1000),
           );
           autosaves.advance(Math.max(0, admittedElapsed - suspended));
+          // Optional inference admission never blocks the clock's next turn.
+          if (!thinking)
+            thinking = decisions
+              .considerThought()
+              .catch((error: unknown) => {
+                if (!(error instanceof OverloadError)) current.fail(error);
+              })
+              .finally(() => {
+                thinking = undefined;
+              });
         })
         .catch((error: unknown) => {
           if (error instanceof OverloadError) return;
@@ -221,6 +255,7 @@ export async function createNativeGameServer(options: {
         });
       requests++;
       let requestBytes = 0;
+      let writing = false;
       try {
         if (request.method === 'GET' && url.pathname.startsWith('/auth/')) {
           const cookie = (name: string, value: string, maxAge?: number) =>
@@ -374,6 +409,8 @@ export async function createNativeGameServer(options: {
           request.headers['x-ol-scope'] !== scopeKey(scope)
         )
           throw new AuthorityError('stale-scope');
+        if (loadingSave)
+          return send(409, { ok: false, code: 'loading', message: 'A saved world is loading.' });
         if (request.method === 'GET' && url.pathname === '/api/state') {
           await views.state(scope, response);
           return;
@@ -465,6 +502,10 @@ export async function createNativeGameServer(options: {
           (url.pathname === '/api/presence' ? url.searchParams.get('scope') : undefined);
         if (url.pathname !== '/api/embodiment' && submittedScope !== scopeKey(scope))
           throw new AuthorityError('stale-scope');
+        if (loadingSave)
+          return send(409, { ok: false, code: 'loading', message: 'A saved world is loading.' });
+        writing = true;
+        activeWrites++;
         const generation = request.headers['x-ol-generation'];
         if (generation && generation !== current.generation && url.pathname !== '/api/saves/load')
           return send(409, {
@@ -633,6 +674,107 @@ export async function createNativeGameServer(options: {
                 : {}),
             });
           }
+          case '/api/saves/load': {
+            capability = 'save';
+            current.assertScope(scope, 'save');
+            const value = z
+              .object({ id: requestIdSchema, requestId: z.string().uuid() })
+              .strict()
+              .parse(body);
+            if (activeWrites > 1)
+              return send(409, {
+                ok: false,
+                message: 'Another request is finishing. Try loading again shortly.',
+              });
+            const prior = (await store.getIntegration(`load-request:${value.requestId}`)) as
+              | { saveId: string }
+              | undefined;
+            if (prior)
+              return send(prior.saveId === value.id ? 200 : 409, {
+                ok: prior.saveId === value.id,
+                message:
+                  prior.saveId === value.id
+                    ? 'This load already completed.'
+                    : 'Load request conflicts.',
+              });
+            if (generation !== current.generation)
+              return send(409, {
+                ok: false,
+                message: 'The world changed. Reload this tab before loading.',
+              });
+            loadingSave = true;
+            let draining = false,
+              drained = false;
+            try {
+              const paused = await current.control({ paused: true }, scope);
+              if (!paused.ok) throw new GameSaveError(paused.message);
+              draining = true;
+              decisions.macrofold.stop();
+              await decisions.close();
+              drained = true;
+              await thinking;
+              await current.restoreSave(value.id, value.requestId, scope);
+              await views.close();
+              player = views = new NativePlayerHttp(current, {
+                executionSource: 'live-model',
+                jevConfigured: !!(config.macrofoldKey || config.jevKey),
+                llmConfigured: !!(config.macrofoldKey || config.llmKey),
+              });
+              // The committed new timeline invalidates the submitted old scope.
+              scope = undefined;
+              return send(200, { ok: true, message: 'Saved world loaded and paused.' });
+            } finally {
+              if (drained) director = decisions = makeDirector();
+              else if (draining)
+                current.fail(
+                  new Error(
+                    'Loading stopped before background work drained. Restart before continuing.',
+                  ),
+                );
+              loadingSave = false;
+            }
+          }
+          case '/api/chat': {
+            const value = playerInteractionRequest.parse(body);
+            if (value.candidate !== undefined)
+              return send(200, {
+                ok: false,
+                code: 'invalid-declaration',
+                message:
+                  'Supply a proposal of at most 12,000 characters for authoring, separately from reuse or search.',
+              });
+            return send(
+              202,
+              await decisions.submitInteractive(
+                value.requestId,
+                value.text,
+                value.npcId,
+                scope,
+                value.volume,
+              ),
+            );
+          }
+          case '/api/chat/receipt': {
+            const value = z
+              .object({ requestId: requestIdSchema, timeline: requestIdSchema })
+              .strict()
+              .parse(body);
+            return send(200, await recoverHumanRequest(current, scope, value, 'chat'));
+          }
+          case '/api/chat/retry': {
+            const value = z
+              .object({ requestId: requestIdSchema, originalRequestId: requestIdSchema })
+              .strict()
+              .parse(body);
+            return send(
+              200,
+              await decisions.retryInteractive(value.requestId, value.originalRequestId, scope),
+            );
+          }
+          case '/api/ai/cancel': {
+            const value = z.object({ jobId: requestIdSchema }).strict().parse(body);
+            return send(200, await decisions.cancel(value.jobId, scope));
+          }
           case '/api/input':
             return send(200, await current.updateWorldInput(worldInputSchema.parse(body), scope));
           case '/api/embodiment': {
@@ -752,6 +894,7 @@ export async function createNativeGameServer(options: {
           },
         );
       } finally {
+        if (writing) activeWrites--;
         requests--;
         retainedBodyBytes -= requestBytes;
       }
@@ -763,7 +906,9 @@ export async function createNativeGameServer(options: {
         stopping = true;
         clearInterval(clock);
         if (clockContinuation) clearImmediate(clockContinuation);
-        current.closeAdmission();
+        decisions.macrofold.stop();
+        const decisionsClosed = decisions.close();
+        void decisionsClosed.catch(() => undefined);
         const problems: string[] = [];
         const until = performance.now() + deadlineMs;
         const stage = async (name: string, operation: () => Promise<unknown>) => {
@@ -790,6 +935,9 @@ export async function createNativeGameServer(options: {
         await stage('Admitted requests', async () => {
           while (requests) await new Promise((resolve) => setTimeout(resolve, 20));
         });
+        await stage('NPC decision admission', () => thinking ?? Promise.resolve());
+        await stage('NPC decisions and maintenance', () => decisionsClosed);
+        execution.close();
         await stage('Automatic checkpoints', () => autosaves.close());
         let saved = false;
         await stage('Native world save and stop', async () => {
@@ -831,11 +979,17 @@ export async function createNativeGameServer(options: {
       server,
       service: current,
       config,
+      get director() {
+        return decisions;
+      },
       isWorldRunning: true as const,
       shutdown: stop,
       close: () => stop().then(() => undefined),
     };
   } catch (error) {
+    director?.macrofold.stop();
+    await director?.close().catch(() => undefined);
+    cognitionExecution?.close();
     await player?.close().catch(() => undefined);
     await service?.close().catch(() => undefined);
     if (!options.clientAssets) await assets?.close().catch(() => undefined);

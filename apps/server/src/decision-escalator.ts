@@ -44,6 +44,8 @@ export interface PreparedReconsideration {
   dispose(): void;
   current(): Promise<boolean>;
   dispatch: HttpPublication;
+  /** A genuine refreshed preparation may retain its original cause witness. */
+  refresh?(job: JobRecord, signal: AbortSignal): Promise<PreparedReconsideration>;
   /** One explicit evidence query may request a separately funded continuation. */
   expand?(answers: Record<string, DecisionAnswer>): Promise<boolean>;
   publish(answers: Record<string, DecisionAnswer>, claim: DecisionPublication): Promise<ApiResult>;
@@ -555,9 +557,10 @@ export class DecisionEscalator {
           return { ...current, decision: { ...live, refreshUsed: true } };
         });
         if (refreshed) {
+          const refresh = prepared.refresh ?? this.prepare;
           prepared.dispose();
           prepared = undefined;
-          prepared = await this.prepare(refreshed, controller.signal);
+          prepared = await refresh(refreshed, controller.signal);
         }
       }
       if (controller.signal.aborted || !(await prepared.current())) {

@@ -1,3 +1,8 @@
+import { ContextBudgetError } from './context.js';
+import { AsyncLocalStorage } from 'node:async_hooks';
+import { dispatchEmbedding } from './embedding-dispatch.js';
+import { nativeMemoryIndex } from './native-memory-index.js';
+import type { MemoryIndex } from './memory-index.js';
 import type { HttpPublication } from '@open-legend/network';
 import { humanRequestId } from './human-request-id.js';
 import type { RequestScope } from './authority.js';
@@ -81,7 +86,7 @@ import { prepareNativeDecision } from './native-decision.js';
 import type { NativeRecallRuntime } from './native-recall-service.js';
 import type { NativeWorldService } from './native-world-service.js';
 import type { NativePublication } from './native-operation.js';
-import { RECORD_ACTOR_PATHS } from './world-record-schema.js';
+import { nativePublicationActors } from './native-publication-actors.js';
 import { OverloadError } from './work-lane.js';
 import {
   readSituationQueryResponse,
@@ -102,6 +107,8 @@ export interface NativeNpcMaintenancePorts {
   readonly log: IntelligenceLog;
   readonly execution: CognitionExecution;
   readonly embeddings: ReturnType<typeof createEmbeddingClient>;
+  readonly indexFailure: string | undefined;
+  withActorName<T>(actorId: string, name: string, work: () => Promise<T>): Promise<T>;
 }
 type Preparation = Awaited<ReturnType<typeof prepareNativeDecision>>;
 interface Run extends DispatchRun {
@@ -135,6 +142,7 @@ export class NativeNpcDirector {
   readonly client: AiClient;
   readonly macrofold: MacrofoldBackend;
   private readonly log: IntelligenceLog;
+  private readonly memoryIndex: MemoryIndex;
   private readonly execution: CognitionExecution;
   private readonly ownsExecution: boolean;
   private readonly escalator: DecisionEscalator;
@@ -147,9 +155,15 @@ export class NativeNpcDirector {
   private readonly work: ActorWork;
   private generation?: string;
   private stopped = false;
+  private closing?: Promise<void>;
   private admissionTail: Promise<unknown> = Promise.resolve();
   private readonly unsubscribe: () => void;
   private readonly releaseAdmission: () => void;
+  private readonly actorNameScope = new AsyncLocalStorage<{
+    actorId: string;
+    name: string;
+    generation: string;
+  }>();
   private readonly embeddings;
   private readonly maintenance: NativeNpcMaintenance;
 
@@ -173,7 +187,15 @@ export class NativeNpcDirector {
         },
         config,
         store: service.store,
-        actorName: (id) => director.names.get(id)?.name ?? id,
+        actorName: (id) => {
+          const active = director.actorNameScope.getStore(),
+            retained = director.names.get(id);
+          return active?.actorId === id && active.generation === service.generation
+            ? active.name
+            : retained?.worldId === service.worldId && retained.generation === service.generation
+              ? retained.name
+              : id;
+        },
         assertScope: (scope, capability, controlling) =>
           service.assertScope(scope, capability, controlling),
         notify: () => service.notify(),
@@ -210,12 +232,22 @@ export class NativeNpcDirector {
     });
     this.ownsExecution = !execution;
     this.execution = execution ?? new CognitionExecution(service.store, now);
+    this.memoryIndex = nativeMemoryIndex(
+      service,
+      { embeddings: this.embeddings, log: this.log, execution: this.execution },
+      now,
+    );
     this.maintenance = createMaintenance({
       client: this.client,
       macrofold: this.macrofold,
       log: this.log,
       execution: this.execution,
       embeddings: this.embeddings,
+      get indexFailure() {
+        return director.memoryIndex.failure;
+      },
+      withActorName: (actorId, name, work) =>
+        this.actorNameScope.run({ actorId, name, generation: service.generation }, work),
     });
     this.work = new ActorWork('thought', now, {
       capture: () => service.durabilityTicket(),
@@ -400,37 +432,105 @@ export class NativeNpcDirector {
       return { ok: true, code: 'queued', message: job.message, jobId };
     });
   }
-  async receipt(id: string, scope: RequestScope): Promise<ApiResult | undefined> {
-    this.service.assertScope(scope);
-    const job = await this.service.store.getJob(humanRequestId(scope, id));
-    this.service.assertScope(scope);
-    if (
-      !job ||
-      job.authority?.accountId !== scope.accountId ||
-      job.authority.worldId !== scope.worldId
-    )
-      return;
-    return {
-      ok: !['failed', 'cancelled', 'stale'].includes(job.status),
-      code: job.status,
-      message: job.message,
-      jobId: job.id,
-      jobStatus: job.status,
-    };
+  /** A deliberate retry reuses authored speech and buys only a new reply. */
+  retryInteractive(id: string, originalId: string, scope: RequestScope): Promise<ApiResult> {
+    return this.admission(async () => {
+      this.service.assertScope(scope, 'play', true);
+      const original = await this.service.store.getJob(originalId);
+      if (
+        !original ||
+        original.kind !== 'chat' ||
+        !original.playerSpeechEventId ||
+        !original.request.npcId
+      )
+        return {
+          ok: false,
+          code: 'retry-unavailable',
+          message: 'The original conversation request is unavailable.',
+        };
+      const speech = await this.service.withActorMemoryRead(scope.actorId, () =>
+        this.service.store.history.event(this.service.worldId, original.playerSpeechEventId!),
+      );
+      this.service.assertScope(scope, 'play', true);
+      if (!speech || speech.actorId !== scope.actorId || speech.targetId !== original.request.npcId)
+        return {
+          ok: false,
+          code: 'retry-unavailable',
+          message: 'The original speech is not available to this player.',
+        };
+      const jobId = humanRequestId(scope, id),
+        target = original.request.npcId,
+        text = original.request.text,
+        volume = original.request.volume ?? 'normal',
+        fingerprint = digest({
+          kind: 'chat',
+          volume,
+          text,
+          targetId: target,
+          worldId: this.service.worldId,
+          actorId: scope.actorId,
+          authority: scope,
+          conversationId: undefined,
+          retryOf: originalId,
+        });
+      const prior = await this.service.store.getJob(jobId);
+      if (prior)
+        return prior.fingerprint === fingerprint
+          ? {
+              ok: !['failed', 'cancelled', 'stale'].includes(prior.status),
+              code: prior.status,
+              message: prior.message,
+              jobId,
+              jobStatus: prior.status,
+            }
+          : {
+              ok: false,
+              code: 'idempotency-conflict',
+              message: 'That request ID was already used for different input.',
+            };
+      if (!this.canAdmit(target))
+        return {
+          ok: false,
+          code: 'busy',
+          message: 'Another request is already in progress. You can keep gathering and surviving.',
+        };
+      const available = await this.service.retryNpcInteraction(target, scope);
+      if (!available.ok) return available.outcome;
+      this.maintenance.cancel();
+      const job: JobRecord = {
+        authority: scope,
+        id: jobId,
+        kind: 'chat',
+        fingerprint,
+        status: 'queued',
+        playerSpeechEventId: original.playerSpeechEventId,
+        retryOf: original.id,
+        message: `${available.recipientName} is considering your words.`,
+        request: { text, volume, npcId: target },
+        createdAt: Math.max(this.now(), original.createdAt + 1),
+      };
+      const read = await this.service.captureNpcIntake(target, 0);
+      let transferred = false;
+      try {
+        this.work.wake(target, { reason: 'directed-speech' });
+        await this.begin(job, read);
+        transferred = true;
+      } finally {
+        if (!transferred) read.release();
+      }
+      return { ok: true, code: 'queued', message: job.message, jobId };
+    });
   }
   async cancel(jobId: string, scope: RequestScope): Promise<ApiResult> {
-    this.service.assertScope(scope, 'play', true);
-    const job = await this.service.store.getJob(jobId);
-    this.service.assertScope(scope, 'play', true);
-    if (
-      !job ||
-      job.authority?.accountId !== scope.accountId ||
-      job.authority.worldId !== scope.worldId
-    )
-      return { ok: false, code: 'job', message: 'This request is unavailable.' };
+    this.service.assertScope(scope);
     const run = this.runs.get(jobId);
-    if (run) run.controller.abort();
-    if (job.decision) await this.escalator.end(job.id, 'cancelled');
+    if (!run || run.job.authority?.accountId !== scope.accountId)
+      return { ok: false, code: 'not-running', message: 'That request is no longer running.' };
+    if (!run.controller.signal.aborted) {
+      run.cancelReason = 'Request cancelled.';
+      await this.update(run, run.job.status, 'Cancelling request…');
+      run.controller.abort();
+    }
     return { ok: true, code: 'cancelling', message: 'Cancellation requested.', jobId };
   }
   private admission<T>(operation: () => Promise<T>): Promise<T> {
@@ -459,9 +559,12 @@ export class NativeNpcDirector {
     )
       throw new StopJob(
         run.invalidated ? 'stale' : 'cancelled',
-        this.service.paused
-          ? 'This request was cancelled when the game paused.'
-          : 'This request was cancelled before completion.',
+        run.cancelReason ??
+          (this.stopped
+            ? 'This request was cancelled when the server closed.'
+            : this.service.paused
+              ? 'This request was cancelled when the game paused.'
+              : 'This request was cancelled before completion.'),
       );
     const state = run.job.decision,
       actor = this.service.npcActor(run.actorId);
@@ -485,6 +588,8 @@ export class NativeNpcDirector {
       (run.job.authority && !this.service.currentScope(run.job.authority, 'play', true))
     )
       throw new StopJob('stale', 'The actor or world changed; the result was not applied.');
+    if (run.job.kind === 'thought' && (actor.incapacitated || !actor.cognition))
+      throw new StopJob('stale', 'Native urgent needs superseded semantic work.');
     return run.actorId;
   }
   private async awaitResume(run: Run, responseReady = false): Promise<void> {
@@ -648,10 +753,14 @@ export class NativeNpcDirector {
     );
   }
   private runtime(run: Run): NativeRecallRuntime {
+    const index = this.memoryIndex;
     return {
       config: this.service.config,
       store: this.service.store,
       log: this.log,
+      get indexFailure() {
+        return index.failure;
+      },
       publish: (operation) => this.service.publishRecall(operation),
       attemptLink: (stage) => ({
         rootJobId: run.job.id,
@@ -679,63 +788,28 @@ export class NativeNpcDirector {
               completionUncertain: false,
             },
           };
-        let dispatchIntent = false,
-          admissionConfirmed = false,
-          invoked = false,
-          completed = false;
-        const cancelled = (): AiResult<number[][]> => ({
-          outcome: 'cancelled',
-          reason: 'Embedding context changed before dispatch.',
-          receipt: {
-            requestId: request.requestId,
-            provider: 'openai',
-            requestedModel: this.service.config.embeddingModel,
-            model: this.service.config.embeddingModel,
-            modelVersionStatus: 'unavailable',
-            contextDigest: digest(request.texts),
-            startedAt: new Date(this.now()).toISOString(),
-            completedAt: new Date(this.now()).toISOString(),
-            latencyMs: 0,
-            dispatched: false,
-            completionUncertain: false,
-          },
-        });
         try {
-          this.current(run);
-          if (!(await current()) || request.signal?.aborted || this.service.paused)
-            return cancelled();
-          dispatchIntent = true;
-          if (!(await this.service.store.markDecisionDispatch(request.requestId)))
-            throw new StopJob(
-              'failed',
-              'This model request already has dispatch intent.',
-              'uncertain',
-            );
-          admissionConfirmed = true;
-          const result = await this.embeddings.embed({
-            ...request,
-            publication: (start) =>
-              publish(() => {
-                this.current(run);
-                invoked = true;
-                return start();
-              }),
+          return await dispatchEmbedding({
+            service: this.service,
+            embeddings: this.embeddings,
+            request,
+            lease,
+            current,
+            assertCurrent: () => {
+              this.current(run);
+            },
+            publication: publish,
+            now: this.now,
           });
-          completed = true;
-          if (result.receipt.completionUncertain) lease.uncertain(request.requestId);
-          return result;
-        } catch (error) {
-          // The actual publication callback was never invoked. This is positive
-          // local non-dispatch proof after our acknowledged reservation claim.
-          if (admissionConfirmed && !invoked) return cancelled();
-          throw error;
         } finally {
-          if (dispatchIntent && !completed && (!admissionConfirmed || invoked))
-            lease.uncertain(request.requestId);
           lease.release();
         }
       },
     };
+  }
+  private consumer(run: Run): 'chat' | 'thought' {
+    if (run.job.kind === 'chat' || run.job.kind === 'thought') return run.job.kind;
+    throw new StopJob('failed', 'This NPC job kind is unavailable in this build.', 'unsupported');
   }
   private async prepare(
     run: Run,
@@ -750,6 +824,7 @@ export class NativeNpcDirector {
       service: this.service,
       runtime: this.runtime(run),
       actorId: run.actorId,
+      consumer: this.consumer(run),
       jobId,
       stimulus: run.job.request.text,
       requiredIds: run.job.playerSpeechEventId
@@ -1123,7 +1198,8 @@ export class NativeNpcDirector {
 
   private retainRunPreparation(run: Run) {
     const retained = run.preparation,
-      intake = run.intake;
+      intake = run.intake,
+      label = this.names.get(run.actorId);
     let released = false;
     return {
       prepare: (job: JobRecord, signal: AbortSignal) =>
@@ -1131,8 +1207,15 @@ export class NativeNpcDirector {
       release: () => {
         if (released) return;
         released = true;
-        retained?.dispose();
-        intake?.release();
+        try {
+          retained?.dispose();
+        } finally {
+          try {
+            intake?.release();
+          } finally {
+            if (this.names.get(run.actorId) === label) this.names.delete(run.actorId);
+          }
+        }
       },
     };
   }
@@ -1205,6 +1288,8 @@ export class NativeNpcDirector {
         sourceTime: source.diagnostics.sourceTime,
         current: () => source.current(),
         dispatch: (start) => source.publish(start),
+        refresh: (job, refreshSignal) =>
+          this.prepareHigher(job, refreshSignal, undefined, intake, semanticCauseOrdinals),
         dispose: () => {
           signal.removeEventListener('abort', abort);
           source.dispose();
@@ -1412,24 +1497,8 @@ export class NativeNpcDirector {
   }
 
   private changed(publication: NativePublication): void {
-    for (const [table, rows] of Object.entries(publication.records.writes)) {
-      const owner = RECORD_ACTOR_PATHS.get(table);
-      for (const row of rows) {
-        const path = JSON.parse(row.id) as string[];
-        const id = owner !== undefined ? path[owner] : path[1] === 'entities' ? path[2] : undefined;
-        if (id) this.dirty.add(id);
-      }
-      if (owner === undefined && table.startsWith('config_'))
-        for (const id of this.service.npcActorIds()) this.dirty.add(id);
-    }
-    for (const [table, ids] of Object.entries(publication.records.deletes)) {
-      const owner = RECORD_ACTOR_PATHS.get(table);
-      for (const identity of ids) {
-        const path = JSON.parse(identity) as string[],
-          id = owner !== undefined ? path[owner] : path[1] === 'entities' ? path[2] : undefined;
-        if (id) this.dirty.add(id);
-      }
-    }
+    for (const id of nativePublicationActors(publication, this.service.npcActorIds()))
+      this.dirty.add(id);
   }
 
   async considerThought(): Promise<void> {
@@ -1869,17 +1938,29 @@ export class NativeNpcDirector {
           run.handedOff = true;
           return;
         }
+        const cancelled = run.controller.signal.aborted;
+        await this.log.record(`${run.job.id}:failure`, 'Workflow failure', {
+          reason: error instanceof Error ? error.message : 'Unknown failure',
+        });
         await this.update(
           run,
-          error instanceof StopJob ? error.status : 'failed',
-          error instanceof Error ? error.message : 'The request could not complete.',
+          error instanceof StopJob ? error.status : cancelled ? 'cancelled' : 'failed',
+          error instanceof StopJob || error instanceof ContextBudgetError
+            ? error.message
+            : cancelled
+              ? (run.cancelReason ?? 'The request was cancelled before completion.')
+              : 'The workflow failed safely. No automatic paid retry was sent.',
           {
             disposition:
               error instanceof StopJob
                 ? (error.outcome ?? error.status)
-                : error instanceof InvalidData
-                  ? 'invalid'
-                  : 'failed',
+                : error instanceof ContextBudgetError
+                  ? 'context-exceeded'
+                  : error instanceof InvalidData
+                    ? 'invalid'
+                    : cancelled
+                      ? 'cancelled'
+                      : 'failed',
           },
         );
       } finally {
@@ -1889,13 +1970,17 @@ export class NativeNpcDirector {
         run.intake = undefined;
         if (run.immediateTimer) clearTimeout(run.immediateTimer);
         if (run.expiryTimer) clearTimeout(run.expiryTimer);
-        if (!run.handedOff) {
-          if (discovery && !run.discovery?.spent)
+        try {
+          if (!run.handedOff && discovery && !run.discovery?.spent)
             await this.settleDiscovery(actorId, discovery.reservation, run.generation, false);
+        } finally {
+          // A failed operational reservation cleanup must not leave the actor
+          // permanently busy. A handed-off label stays with its real retained
+          // intake until the higher/uncertain owner releases that preparation.
+          if (this.runs.get(job.id) === run) this.runs.delete(job.id);
+          if (!run.handedOff && this.names.get(actorId) === labels) this.names.delete(actorId);
+          this.service.notify();
         }
-        if (this.runs.get(job.id) === run) this.runs.delete(job.id);
-        this.names.delete(actorId);
-        this.service.notify();
       }
     });
     this.pending.add(task);
@@ -1905,20 +1990,27 @@ export class NativeNpcDirector {
     while (this.pending.size) await Promise.allSettled([...this.pending]);
     await this.execution.idle();
   }
-  async close(): Promise<void> {
-    this.stopped = true;
-    this.releaseAdmission();
-    this.unsubscribe();
-    for (const run of this.runs.values()) run.controller.abort();
-    await this.escalator.close();
-    await this.admissionTail;
-    await Promise.allSettled([...this.pending]);
-    this.work.clear();
-    this.dirty.clear();
-    this.discoveryRecovery.clear();
-    this.names.clear();
-    await this.maintenance.close();
-    await this.log.close();
-    if (this.ownsExecution) this.execution.close();
+  close(): Promise<void> {
+    return (this.closing ??= (async () => {
+      this.stopped = true;
+      this.releaseAdmission();
+      this.unsubscribe();
+      for (const run of this.runs.values()) run.controller.abort();
+      // Stop the real background index's admission immediately, while other
+      // execution/source owners drain. Its failure is still awaited below.
+      const indexing = this.memoryIndex.close();
+      void indexing.catch(() => undefined);
+      await this.escalator.close();
+      await this.admissionTail;
+      await Promise.allSettled([...this.pending]);
+      this.work.clear();
+      this.dirty.clear();
+      this.discoveryRecovery.clear();
+      this.names.clear();
+      await this.maintenance.close();
+      await indexing;
+      await this.log.close();
+      if (this.ownsExecution) this.execution.close();
+    })());
   }
 }

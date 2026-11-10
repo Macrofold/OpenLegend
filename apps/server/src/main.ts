@@ -1,10 +1,13 @@
-import { createGameServer, SHUTDOWN_DEADLINE_MS } from './http.js';
+import { SHUTDOWN_DEADLINE_MS } from './server-shutdown.js';
 import { readConfig } from './config.js';
 import { startPerformanceCapture } from './performance.js';
 
 const config = readConfig();
 const capture = config.profiling ? startPerformanceCapture({ runtimeMonitoring: true }) : undefined;
-const game = await createGameServer({
+const create = process.argv.includes('--native-proof')
+  ? (await import('./native-http.js')).createNativeGameServer
+  : (await import('./http.js')).createGameServer;
+const game = await create({
   config,
   production: process.argv.includes('--production'),
 }).catch((error: unknown) => {

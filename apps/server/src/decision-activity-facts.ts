@@ -1,5 +1,8 @@
 import type { ActivityRequestChoice, ActivityRequestDescriptor } from '@open-legend/domain';
 
+export const ACTIVITY_COVERAGE =
+  'At most four compatible personally learned activities are offered at once. Other activities can be inspected. An available first step does not promise that later steps can finish.';
+
 export interface DecisionActivityRead {
   readonly simTime: number;
   readonly outing: string;

@@ -4,16 +4,28 @@ use super::*;
 use crate::host::retained_size::heap_record;
 heap_record!(ActionMessage { code, message });
 heap_record!(ParticipationRules {
-    changed_refresh, invalid_attempt, stale_attempt, changed,
-    already_pending, already_participating, unsafe_return,
-    active, exiting, inactive, departed_event, departed_clause,
-    returned_event, returned_clause
+    changed_refresh,
+    invalid_attempt,
+    stale_attempt,
+    changed,
+    already_pending,
+    already_participating,
+    unsafe_return,
+    active,
+    exiting,
+    inactive,
+    departed_event,
+    departed_clause,
+    returned_event,
+    returned_clause
 });
+heap_record!(AudienceMilestone { id, event_type });
 heap_record!(OrdinaryActionRules {
     id,
     version,
     plan,
     participation,
+    audience_milestone,
     invalid_command,
     unknown_actor,
     inactive,

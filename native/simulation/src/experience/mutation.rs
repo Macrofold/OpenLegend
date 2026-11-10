@@ -23,6 +23,14 @@ impl AppendUndo {
     }
 }
 pub(super) enum ExperienceUndo {
+    SummaryCollection {
+        actor: String,
+        before: PersonalSourceCollection,
+    },
+    ConsolidatedAt {
+        actor: String,
+        before: Option<f64>,
+    },
     Append(AppendUndo),
     Loaded(AppendUndo),
     Remove {
@@ -118,6 +126,22 @@ impl ExperienceJournal {
         while self.undo.len() > checkpoint.operations {
             let operation = self.undo.pop().expect("journal cursor checked");
             let undo = match operation {
+                ExperienceUndo::SummaryCollection { actor, before } => {
+                    *state
+                        .actors
+                        .get_mut(&actor)
+                        .and_then(|a| a.sources.get_mut(&PersonalSourceKind::Summary))
+                        .ok_or(ExperienceError::UnknownCoverage)? = before;
+                    continue;
+                }
+                ExperienceUndo::ConsolidatedAt { actor, before } => {
+                    state
+                        .actors
+                        .get_mut(&actor)
+                        .ok_or(ExperienceError::ForeignOwner)?
+                        .consolidated_at = before;
+                    continue;
+                }
                 ExperienceUndo::Append(undo) | ExperienceUndo::Loaded(undo) => undo,
                 ExperienceUndo::Header {
                     before,
