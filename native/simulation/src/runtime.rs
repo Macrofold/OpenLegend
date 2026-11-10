@@ -20,7 +20,7 @@ mod input;
 mod maintenance;
 mod npc;
 mod npc_intake;
-pub use npc_intake::RuntimeNpcTrigger;
+pub use npc_intake::{RuntimeNpcTrigger,RuntimeNpcInspection};
 mod npc_labels;
 mod participation;
 mod player;
@@ -238,6 +238,7 @@ pub struct NativeWorldSession {
     session: Session,
     budget: ByteBudget,
     prepared_output: Option<CandidateKey>,
+    active_response: Option<npc::ActiveNpcResponse>,
     history_policy_id: String,
     history_policy_revision: u64,
     _history_policy_custody: ResidentReservation,
@@ -346,6 +347,7 @@ impl NativeWorldSession {
             .map_err(failure)?,
             budget,
             prepared_output: None,
+            active_response: None,
             history_policy_id,
             history_policy_revision,
             _history_policy_custody: history_policy_custody,
@@ -559,6 +561,7 @@ impl NativeWorldSession {
             return Err(failure(FenceError::NotReady));
         }
         let accepted = self.session.finish_settlement(key).map_err(failure)?;
+        self.finish_response_continuation(key, accepted.is_some());
         self.prepared_output = None;
         if self.restoring == Some(key) {
             self.restoring = None;
@@ -575,6 +578,7 @@ impl NativeWorldSession {
             .validate_phase(key, crate::host::CandidatePhase::Idle)
             .is_ok()
         {
+            self.finish_response_continuation(key, false);
             self.prepared_output = None;
             if self.restoring == Some(key) {
                 self.restoring = None;
@@ -582,6 +586,7 @@ impl NativeWorldSession {
             return Ok(());
         }
         self.session.cancel(key).map_err(failure)?;
+        self.finish_response_continuation(key, false);
         self.prepared_output = None;
         if self.restoring == Some(key) {
             self.restoring = None;

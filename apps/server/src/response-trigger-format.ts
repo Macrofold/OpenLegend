@@ -1,10 +1,23 @@
 import { nativeText, speechDescription, type Awareness } from '@open-legend/domain';
 import type { experienceForModel } from './perceived-context.js';
 
+export type ResponseTriggerRead = Pick<
+  Awareness,
+  | 'eventId'
+  | 'at'
+  | 'eventType'
+  | 'text'
+  | 'content'
+  | 'modality'
+  | 'triggerKind'
+  | 'speech'
+  | 'targetId'
+>;
+
 /** Event-time awareness supplies the words and roles. Formatting cannot infer
  * a speaker or intended recipient from nearby bodies or quoted names. */
 export function formatResponseTrigger(
-  aware: Awareness | undefined,
+  aware: ResponseTriggerRead | undefined,
   actorId: string,
   fallback: string,
   eventTime: string | undefined,

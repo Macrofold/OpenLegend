@@ -28,12 +28,16 @@ use crate::records::SqlCell;
 use crate::text::JsText;
 use std::sync::Arc;
 mod grounding;
+mod typed;
+pub(crate) use typed::{TypedActionAnswer, TypedActionRequest};
+use typed::{TypedAnswer, TypedGroundingCursor, TypedStep};
 
 pub(crate) enum ResponseAnswer {
     AppraisalCreates(AppraisalCreatesAnswer),
     Sources(crate::capture::NpcSourcesAnswer),
     Digest(ResponseDigestAnswer),
     Normalization(AttemptNormalizationAnswer),
+    Typed(TypedActionAnswer),
     Geometry(GeometryAnswers),
     Display(CompletedActivityDisplay),
     Command(CompletedCommandOperation),
@@ -44,6 +48,7 @@ pub(crate) enum ResponseStep<'a> {
     Sources(&'a crate::capture::NpcSourcesRequest),
     Digest(&'a ResponseDigestRequest),
     Normalization(&'a AttemptNormalizationRequest),
+    Typed(&'a TypedActionRequest),
     Geometry(&'a GeometryQueries),
     Display(&'a mut crate::commands::ActivityDisplayCursor),
     Command(&'a mut CommandOperation),
@@ -55,9 +60,13 @@ pub(crate) struct CompletedResponse {
     pub components: IndexMap<String, Outcome>,
     pub events: Vec<WorldEvent>,
     pub replayed: bool,
+    protected: bool,
     reservation: ByteReservation,
 }
 impl CompletedResponse {
+    pub(crate) fn protected(&self) -> bool {
+        self.protected
+    }
     pub(crate) fn into_parts(
         self,
     ) -> (
@@ -102,6 +111,7 @@ enum Progress {
     Sources,
     Digest,
     Normalization,
+    Typed,
     Geometry,
     Display,
     Command,
@@ -113,6 +123,7 @@ pub(crate) struct ResponseCursor {
     response: ActorResponse,
     bindings: Arc<ResponseBindings>,
     candidate: CandidateKey,
+    protected: bool,
     checkpoint: Option<CandidateCheckpoint>,
     canonical: Option<ResponseDigestRequest>,
     source_check: Option<crate::capture::NpcSourcesCursor>,
@@ -124,6 +135,7 @@ pub(crate) struct ResponseCursor {
     digest: Option<ResponseDigest>,
     normalization: Option<AttemptNormalizationRequest>,
     normalized: Option<NormalizedAttemptFacts>,
+    typed_grounding: Option<TypedGroundingCursor>,
     active: Option<Active>,
     command: Option<NativeCommand>,
     event: Option<EventCursor>,
@@ -145,6 +157,7 @@ impl ResponseCursor {
         response: ActorResponse,
         bindings: Arc<ResponseBindings>,
         candidate: CandidateKey,
+        protected: bool,
         budget: &ByteBudget,
     ) -> Result<Self, CommandOperationError> {
         if !is_safe_record_id(id)
@@ -223,6 +236,7 @@ impl ResponseCursor {
             response,
             bindings,
             candidate,
+            protected,
             checkpoint: Some(checkpoint),
             canonical,
             source_check,
@@ -234,6 +248,7 @@ impl ResponseCursor {
             digest: None,
             normalization,
             normalized: None,
+            typed_grounding: None,
             active: None,
             command: None,
             event: None,
@@ -280,6 +295,10 @@ impl ResponseCursor {
         Ok(())
     }
     pub(crate) fn abort(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
+        if let Some(cursor) = self.typed_grounding.as_mut() {
+            cursor.abort(core)?;
+        }
+        self.typed_grounding = None;
         if let Some(active) = self.active.as_mut() {
             match active {
                 Active::Command(cursor) => cursor.abort(core)?,
@@ -412,6 +431,7 @@ impl ResponseCursor {
             components: std::mem::take(&mut self.components),
             events: std::mem::take(&mut self.events),
             replayed,
+            protected: self.protected,
             reservation: self.reservation.take().ok_or(ExecutionError::Invariant)?,
         }))
     }
@@ -993,21 +1013,36 @@ impl ResponseCursor {
                     .as_ref()
                     .ok_or(ExecutionError::Invariant)?,
             ),
-            Progress::Geometry => ResponseStep::Geometry(
-                match self.active.as_ref().ok_or(ExecutionError::Invariant)? {
-                    Active::Choice { cursor, .. } => cursor.geometry_request(),
-                    Active::Invocation(cursor) => cursor.geometry_request(),
-                    Active::Expression(cursor) => cursor.geometry_request(),
-                    _ => None,
-                }
-                .ok_or(ExecutionError::Invariant)?,
+            Progress::Typed => ResponseStep::Typed(
+                self.typed_grounding
+                    .as_ref()
+                    .and_then(TypedGroundingCursor::request)
+                    .ok_or(ExecutionError::Invariant)?,
             ),
-            Progress::Display => ResponseStep::Display(match self.active.as_mut() {
-                Some(Active::Choice { cursor, .. }) => {
+            Progress::Geometry => ResponseStep::Geometry(
+                self.typed_grounding
+                    .as_ref()
+                    .and_then(TypedGroundingCursor::geometry_request)
+                    .or_else(|| match self.active.as_ref()? {
+                        Active::Choice { cursor, .. } => cursor.geometry_request(),
+                        Active::Invocation(cursor) => cursor.geometry_request(),
+                        Active::Expression(cursor) => cursor.geometry_request(),
+                        _ => None,
+                    })
+                    .ok_or(ExecutionError::Invariant)?,
+            ),
+            Progress::Display => {
+                ResponseStep::Display(if let Some(cursor) = self.typed_grounding.as_mut() {
                     cursor.display_cursor().ok_or(ExecutionError::Invariant)?
-                }
-                _ => return Err(ExecutionError::Invariant.into()),
-            }),
+                } else {
+                    match self.active.as_mut() {
+                        Some(Active::Choice { cursor, .. }) => {
+                            cursor.display_cursor().ok_or(ExecutionError::Invariant)?
+                        }
+                        _ => return Err(ExecutionError::Invariant.into()),
+                    }
+                })
+            }
             Progress::Command => ResponseStep::Command(match self.active.as_mut() {
                 Some(Active::Command(cursor)) => cursor,
                 _ => return Err(ExecutionError::Invariant.into()),
@@ -1078,18 +1113,71 @@ impl ResponseCursor {
             }
         }
         if self.preparing_grounding {
-            let supplied = match answer.take() {
-                Some(ResponseAnswer::Normalization(value)) => value,
-                Some(_) => return Err(ExecutionError::InvalidCheckpoint.into()),
-                None => return Ok(Progress::Normalization),
-            };
-            self.normalized = Some(
-                self.normalization
-                    .take()
-                    .ok_or(ExecutionError::Invariant)?
-                    .finish(supplied)?,
-            );
-            self.ground_offered(core)?;
+            if self.normalization.is_some() {
+                let supplied = match answer.take() {
+                    Some(ResponseAnswer::Normalization(value)) => value,
+                    Some(_) => return Err(ExecutionError::InvalidCheckpoint.into()),
+                    None => return Ok(Progress::Normalization),
+                };
+                self.normalized = Some(
+                    self.normalization
+                        .take()
+                        .ok_or(ExecutionError::Invariant)?
+                        .finish(supplied)?,
+                );
+                let operations = self.ground_offered(core)?;
+                self.typed_grounding = TypedGroundingCursor::prepare(
+                    &self.response,
+                    self.normalized.as_ref().ok_or(ExecutionError::Invariant)?,
+                    &self.bindings,
+                    &self.attempt_bindings,
+                    &operations,
+                    self.candidate,
+                    &self.budget,
+                )?;
+            }
+            if let Some(cursor) = self.typed_grounding.as_mut() {
+                let supplied = match answer.take() {
+                    Some(ResponseAnswer::Typed(value)) => Some(TypedAnswer::Render(value)),
+                    Some(ResponseAnswer::Geometry(value)) => Some(TypedAnswer::Geometry(value)),
+                    Some(ResponseAnswer::Display(value)) => Some(TypedAnswer::Display(value)),
+                    Some(_) => return Err(ExecutionError::InvalidCheckpoint.into()),
+                    None => None,
+                };
+                let completed = match cursor.step(core, supplied)? {
+                    TypedStep::Geometry(_) => return Ok(Progress::Geometry),
+                    TypedStep::Display(_) => return Ok(Progress::Display),
+                    TypedStep::Render(_) => return Ok(Progress::Typed),
+                    TypedStep::Complete(bindings, storage) => Some((bindings, storage)),
+                };
+                if let Some((bindings, storage)) = completed {
+                    self.merge(storage)?;
+                    if self.attempt_bindings.len() + bindings.len()
+                        > self.attempt_bindings.capacity()
+                    {
+                        let missing = self.attempt_bindings.len() + bindings.len()
+                            - self.attempt_bindings.capacity();
+                        self.reserve(
+                            missing
+                                .checked_mul(size_of::<ResponseAttemptBinding>())
+                                .ok_or(ExecutionError::Capacity)?,
+                        )?;
+                        self.attempt_bindings.reserve_exact(missing);
+                    }
+                    self.attempt_bindings.extend(bindings);
+                    let response = &self.response;
+                    self.attempt_bindings.sort_unstable_by_key(|binding| {
+                        (0..response.len())
+                            .position(|index| {
+                                response.operation(index).is_some_and(|op| {
+                                    Some(op.local_id) == binding.operation_id.as_deref()
+                                })
+                            })
+                            .unwrap_or(usize::MAX)
+                    });
+                    self.typed_grounding = None;
+                }
+            }
             self.preparing_grounding = false;
             self.canonical = Some(ResponseDigestRequest::prepare(
                 Self::binding(core, self.candidate)?,

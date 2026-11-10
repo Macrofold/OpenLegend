@@ -29,6 +29,8 @@ export function sourceDecisionHost(service: WorldService): DecisionEscalationHos
     get simTime() {
       return service.world.simTime;
     },
+    mutateDecision: (rootId, operation) => service.store.mutateDecision(rootId, operation),
+    observe: (read) => read(),
     scopeCurrent(state, authority, validity, eligibility = false) {
       const actor = entityGet(service.world.entities, state.actorId)?.actor;
       return (

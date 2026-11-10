@@ -1,8 +1,11 @@
 import type { NativeChangedRows } from '@open-legend/native-simulation';
 
 export interface NativeActorPresence {
-  readonly controller: 'player' | 'npc';
+  readonly controller: 'player' | 'npc' | 'native';
   readonly alive: boolean;
+  readonly incapacitated?: boolean;
+  readonly cognition?: boolean;
+  readonly memory: boolean;
   readonly physicalLife: number;
   readonly participation?: {
     readonly phase: 'active' | 'exiting' | 'inactive';
@@ -27,10 +30,15 @@ export class NativeActorRoster {
     for (const row of exposures) this.exposures.add(row.slot);
   }
   private read(payload: string): NativeActorPresence {
-    const actor = JSON.parse(payload) as NativeActorPresence;
+    const actor = JSON.parse(payload) as NativeActorPresence & {
+      capabilities?: { cognition?: boolean; memory?: boolean };
+    };
     return {
       controller: actor.controller,
       alive: actor.alive,
+      incapacitated: actor.incapacitated === true,
+      cognition: actor.capabilities?.cognition !== false,
+      memory: actor.capabilities?.memory ?? actor.controller !== 'native',
       physicalLife: actor.physicalLife ?? 0,
       ...(actor.participation
         ? {

@@ -256,6 +256,11 @@ export async function prepareReconsideration(
       bindingDigest: digest({ binding: prepared.binding, validity }),
       sourceTime,
       current,
+      dispatch: (start) =>
+        service.publishRecall(async () => {
+          if (!(await current())) throw new Error('Decision evidence changed before transport.');
+          return { result: start() };
+        }),
       async expand(answers) {
         const answer = answers['q0'];
         if (!response || queryUsed || !answer || answer.status !== 'answered') return false;

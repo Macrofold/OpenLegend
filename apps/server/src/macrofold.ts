@@ -1,7 +1,7 @@
 type ReflectionChanges = import('zod').infer<
   typeof import('./cognition-contracts.js').reflectionSchema
 >;
-import { NetworkError, type NetworkOperation } from '@open-legend/network';
+import { NetworkError, type NetworkOperation, type HttpPublication } from '@open-legend/network';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { foundationCapabilities } from './foundation-capabilities.js';
 import type { WorldAgentReply } from '@open-legend/protocol';
@@ -354,7 +354,10 @@ export class MacrofoldBackend implements AiClient {
   private api: MacrofoldTransport;
   private privateApi: Pick<MacrofoldTransport, 'request' | 'retryAfterMs'>;
   private readonly deploymentPreparation: ModelTargetPreparation;
-  private readonly dispatchSource = new AsyncLocalStorage<() => Promise<void>>();
+  private readonly dispatchSource = new AsyncLocalStorage<{
+    validate: () => Promise<void>;
+    publication?: HttpPublication;
+  }>();
   private readonly deploymentSchemas = new WeakMap<
     GenerateRequest['schema'],
     { schema: PreparedSchema; expiresAt: number; validateSource?: () => Promise<void> }
@@ -425,8 +428,12 @@ export class MacrofoldBackend implements AiClient {
   }
   /** Keep the calling gameplay owner's exact source check through metadata/journal waits.
    * This scope grants no new request or publication authority and retains no caller history. */
-  withSourceValidation<T>(validate: () => Promise<void>, work: () => Promise<T>): Promise<T> {
-    return this.dispatchSource.run(validate, work);
+  withSourceValidation<T>(
+    validate: () => Promise<void>,
+    work: () => Promise<T>,
+    publication?: HttpPublication,
+  ): Promise<T> {
+    return this.dispatchSource.run({ validate, publication }, work);
   }
   private receipt(
     id: string,
@@ -538,6 +545,8 @@ export class MacrofoldBackend implements AiClient {
     // sent, keep observing acceptance so closure can cancel the returned Run ID.
     try {
       await beforeDispatch?.();
+      const scoped = this.dispatchSource.getStore();
+      if (scoped && scoped.validate !== beforeDispatch) await scoped.validate();
       // Journal writes and source validation may outlive the caller's operation.
       // Refuse before dispatch evidence can mutate an already-returned receipt.
       this.api.currentOperation()?.throwIfStopped();
@@ -558,7 +567,6 @@ export class MacrofoldBackend implements AiClient {
     }
     try {
       const observe = async () => {
-        onDispatch?.();
         const result = object(
           await (privateContent ? this.privateApi : this.api).request(
             path,
@@ -572,6 +580,9 @@ export class MacrofoldBackend implements AiClient {
                   accepted: saveResponse,
                 }
               : undefined,
+            undefined,
+            this.dispatchSource.getStore()?.publication,
+            onDispatch,
           ),
         );
         await saveResponse(result);
@@ -1920,7 +1931,7 @@ export class MacrofoldBackend implements AiClient {
    * original probabilities, and one durable receipt for the whole bounded batch. */
   async judge(request: JudgeRequest): Promise<AiResult<JudgeValue>> {
     const config = this.service.config;
-    const validateSource = this.dispatchSource.getStore();
+    const validateSource = this.dispatchSource.getStore()?.validate;
     const target = judgmentDeploymentTarget(config.modelTargets);
     const receipt = this.receipt(request.requestId, 'jev', macrofoldJudgmentModel(config), {
       state: request.state,

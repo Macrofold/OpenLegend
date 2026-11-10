@@ -9,6 +9,7 @@ use crate::experience::{
 use crate::status::{AttributeAudience, EffectBindings, project_attributes};
 use serde::{Deserialize, ser::SerializeSeq};
 use serde_json::value::RawValue;
+mod result;
 
 #[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -30,12 +31,36 @@ pub(crate) struct NpcIntakeCapture {
     life: Option<u64>,
     tokens: Vec<String>,
     dependencies: String,
+    inspection: String,
+    semantic_causes: crate::reception::CapturedSemanticCauses,
     json: String,
+    inputs_json: String,
     _storage: ByteReservation,
 }
 impl NpcIntakeCapture {
     pub(crate) fn json(&self) -> &str {
         &self.json
+    }
+    pub(crate) fn inputs_json(&self) -> &str {
+        &self.inputs_json
+    }
+    pub(crate) fn copy_semantic_causes_for(
+        &self,
+        world: &str,
+        generation: &str,
+        actor: &str,
+        life: u64,
+        budget: &ByteBudget,
+    ) -> Result<(Vec<crate::response::ResponseSemanticCause>, ByteReservation), ExecutionError>
+    {
+        if self.world != world
+            || self.generation != generation
+            || self.request.actor_id != actor
+            || self.life.unwrap_or(0) != life
+        {
+            return Err(ExecutionError::InvalidCheckpoint);
+        }
+        self.semantic_causes.copy_all(budget)
     }
     pub(crate) fn current(
         &self,
@@ -61,7 +86,9 @@ impl NpcIntakeCapture {
         }
         let _copy = budget.reserve(self.request.actor_id.len())?;
         let current = capture(state, self.request.clone(), budget)?;
-        Ok(self.tokens == current.tokens && self.dependencies == current.dependencies)
+        Ok(self.tokens == current.tokens
+            && self.dependencies == current.dependencies
+            && self.inspection == current.inspection)
     }
 }
 struct Headers<'a>(Option<&'a crate::experience::PersonalSourceCollection>);
@@ -89,6 +116,7 @@ struct Stimulus<'a> {
     source_id: &'a str,
     states: [&'a str; 4],
     since: f64,
+    label: crate::worlds::base_knowledge::PersonalName<'a>,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -132,6 +160,63 @@ struct Opportunity<'a> {
     semantic_purpose: Option<&'a str>,
 }
 #[derive(Serialize)]
+struct OwnRead<'a> {
+    agency: AgencyRead<'a>,
+    attributes: &'a [crate::reception::AttributeView],
+}
+struct AgencyRead<'a>(&'a crate::state::ActorAgency);
+impl Serialize for AgencyRead<'_> {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeMap;
+        #[derive(Serialize)]
+        struct Outcome<'a> {
+            code: &'a str,
+        }
+        #[derive(Serialize)]
+        struct Step<'a> {
+            id: &'a str,
+            status: crate::plans::StepStatus,
+            outcome: Option<Outcome<'a>>,
+        }
+        struct Steps<'a>(&'a [crate::plans::PlanStep]);
+        impl Serialize for Steps<'_> {
+            fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+                let mut out = s.serialize_seq(Some(self.0.len()))?;
+                for step in self.0 {
+                    out.serialize_element(&Step {
+                        id: &step.id,
+                        status: step.status,
+                        outcome: step.outcome.as_ref().map(|outcome| Outcome {
+                            code: &outcome.code,
+                        }),
+                    })?;
+                }
+                out.end()
+            }
+        }
+        #[derive(Serialize)]
+        struct Plan<'a> {
+            id: &'a str,
+            status: crate::plans::PlanStatus,
+            steps: Steps<'a>,
+        }
+        let mut out = s.serialize_map(None)?;
+        out.serialize_entry("goals", &self.0.goals)?;
+        out.serialize_entry(
+            "plan",
+            &self.0.plan.as_ref().map(|plan| Plan {
+                id: &plan.id,
+                status: plan.status,
+                steps: Steps(&plan.steps),
+            }),
+        )?;
+        if let Some(reference) = &self.0.last_result_evidence {
+            out.serialize_entry("lastResultEvidence", reference)?;
+        }
+        out.end()
+    }
+}
+#[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct Product<'a> {
     world_id: &'a str,
@@ -141,6 +226,7 @@ struct Product<'a> {
     actor_id: &'a str,
     name: &'a crate::text::JsText,
     eligible: bool,
+    enrolled: bool,
     physical_life: Option<u64>,
     identity_through: u64,
     controller: &'a str,
@@ -155,7 +241,7 @@ struct Product<'a> {
     awareness_through: u64,
     urgency: f64,
     unseen: Unseen<'a>,
-    own: &'a RawValue,
+    own: OwnRead<'a>,
     attention: &'a RawValue,
     protection_labels: &'a [&'a str],
     actions_blocked: bool,
@@ -164,12 +250,55 @@ struct Product<'a> {
     opportunity: Opportunity<'a>,
     stimuli: &'a [Stimulus<'a>],
     events: &'a [EventMetadata<'a>],
+    prepared_result: result::PreparedResult<'a>,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct Unseen<'a> {
     records: &'a [crate::experience::intake::IntakeSource<'a>],
     max_sequence: u64,
+    interruptions: &'a [crate::experience::intake::IntakeSource<'a>],
+    trigger_awareness: &'a [crate::experience::intake::TriggerAwareness<'a>],
+}
+// The persistent wake queue owns only these tiny facts. It must not retain the
+// consumer allowance for rich personal records that were never kept by it.
+struct InputProduct<'a>(&'a Product<'a>);
+impl Serialize for InputProduct<'_> {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeMap;
+        let value = self.0;
+        let mut out = s.serialize_map(None)?;
+        out.serialize_entry("worldId", value.world_id)?;
+        out.serialize_entry("generation", value.generation)?;
+        out.serialize_entry("acceptedCut", &value.accepted_cut)?;
+        out.serialize_entry("at", &value.at)?;
+        out.serialize_entry("actorId", value.actor_id)?;
+        out.serialize_entry("name", value.name)?;
+        out.serialize_entry("physicalLife", &value.physical_life)?;
+        out.serialize_entry("eligible", &value.eligible)?;
+        out.serialize_entry("enrolled", &value.enrolled)?;
+        out.serialize_entry("values", value.values)?;
+        out.serialize_entry("dependencyToken", value.dependency_token)?;
+        out.serialize_entry("awarenessThrough", &value.awareness_through)?;
+        out.serialize_entry("urgency", &value.urgency)?;
+        #[derive(Serialize)]
+        struct Discovery<'a> {
+            state: &'a str,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            reservation: Option<&'a str>,
+        }
+        if let Some(semantic) = value.semantic {
+            out.serialize_entry(
+                "discovery",
+                &Discovery {
+                    state: &semantic.discovery,
+                    reservation: semantic.reservation.as_deref(),
+                },
+            )?;
+        }
+
+        out.end()
+    }
 }
 fn raw(text: &str) -> Result<&RawValue, ExecutionError> {
     serde_json::from_str(text).map_err(|_| ExecutionError::Invariant)
@@ -187,6 +316,7 @@ fn token(
     )?;
     let text = json_record(value).map_err(|_| ExecutionError::Invariant)?;
     let digest = sha256_hex(text.as_bytes());
+    drop(text);
     storage.resize(digest.capacity())?;
     Ok((digest, storage))
 }
@@ -221,7 +351,6 @@ pub(crate) fn capture(
         AttributeAudience::Owner,
         budget,
     )?;
-    let own = write_actor_self(state, id, ActorReadPurpose::NpcDecision, budget)?;
     let attention = crate::reception::capture_attention_read(state, id, budget)?;
     let policy = state
         .installed
@@ -301,43 +430,75 @@ pub(crate) fn capture(
         .installed
         .capabilities
         .capability_blocked(Some(entity), "actions")?;
-    let protection_labels = state
-        .installed
-        .status_policy
-        .definitions
-        .iter()
-        .filter(|definition| {
-            entity
-                .status_effects
-                .as_ref()
-                .and_then(|states| states.get(&definition.id))
-                .is_some_and(|status| status.active)
-        })
-        .map(|definition| definition.label.as_str())
-        .collect::<Vec<_>>();
-    let concerns = attributes
-        .rows()
-        .iter()
-        .filter(|attribute| {
-            state
-                .installed
-                .attributes
-                .get(&attribute.id)
-                .is_some_and(|definition| {
-                    definition
-                        .value()
-                        .concern
-                        .as_ref()
-                        .is_some_and(|concern| concern.reconsider)
-                })
-        })
-        .filter_map(|attribute| {
-            attribute
-                .concern
-                .as_ref()
-                .map(|text| (attribute.id.as_str(), text))
-        })
-        .collect::<Vec<_>>();
+    let mut protection_labels = Vec::with_capacity(state.installed.status_policy.definitions.len());
+    for definition in &state.installed.status_policy.definitions {
+        if entity
+            .status_effects
+            .as_ref()
+            .and_then(|states| states.get(&definition.id))
+            .is_some_and(|state| state.active)
+        {
+            protection_labels.push(definition.label.as_str());
+        }
+    }
+    let _concern_ids_storage = budget.reserve(
+        state
+            .installed
+            .attributes
+            .len()
+            .checked_mul(size_of::<&str>())
+            .ok_or(ExecutionError::Capacity)?,
+    )?;
+    // read.value may briefly clone a category sample; only one sample lives
+    // at a time, and its actual canonical capacity bounds that temporary.
+    let _concern_value_storage = budget.reserve(
+        entity
+            .stored_attributes()
+            .into_iter()
+            .flat_map(|values| values.values())
+            .try_fold(0usize, |maximum, state| {
+                state
+                    .value
+                    .heap_bytes()
+                    .map(|bytes| maximum.max(bytes))
+                    .ok_or(ExecutionError::Capacity)
+            })?,
+    )?;
+    let mut concern_ids = Vec::with_capacity(state.installed.attributes.len());
+    for definition in state.installed.attributes.values() {
+        let definition = definition.value();
+        if !definition
+            .concern
+            .as_ref()
+            .is_some_and(|concern| concern.reconsider)
+        {
+            continue;
+        }
+        if let Some(value) = read.value(id, &definition.id)? {
+            if crate::status::attribute_concern_active(entity, definition, &value)? {
+                concern_ids.push(definition.id.as_str());
+            }
+        }
+    }
+    let mut concerns = Vec::with_capacity(attributes.rows().len());
+    for attribute in attributes.rows() {
+        if state
+            .installed
+            .attributes
+            .get(&attribute.id)
+            .is_some_and(|definition| {
+                definition
+                    .value()
+                    .concern
+                    .as_ref()
+                    .is_some_and(|concern| concern.reconsider)
+            })
+        {
+            if let Some(text) = &attribute.concern {
+                concerns.push((attribute.id.as_str(), text));
+            }
+        }
+    }
     let scope = CurrentBodyReadScope::prepare(
         &state.reception,
         &state.physical.entities,
@@ -349,10 +510,21 @@ pub(crate) fn capture(
     let mut classifications = Vec::with_capacity(current_count);
     if let Some(scope) = &scope {
         for source in scope.state().current.keys() {
-            if source == id { continue; }
+            if source == id {
+                continue;
+            }
             if let Some(body) = scope.native_body(source)? {
                 if let Some(crate::received::ReceivedValueFragment::Body(value)) =
-                    match &body.field.value.reference { crate::received::ReceivedValueReference::Inline(value) => Some(value.as_ref()), crate::received::ReceivedValueReference::Shared(id) => state.reception.received_values.as_ref().and_then(|values|values.shared_value(id)) }
+                    match &body.field.value.reference {
+                        crate::received::ReceivedValueReference::Inline(value) => {
+                            Some(value.as_ref())
+                        }
+                        crate::received::ReceivedValueReference::Shared(id) => state
+                            .reception
+                            .received_values
+                            .as_ref()
+                            .and_then(|values| values.shared_value(id)),
+                    }
                 {
                     classifications.push((
                         source.as_str(),
@@ -363,7 +535,57 @@ pub(crate) fn capture(
             }
         }
     }
-    classifications.sort_by(|a, b| crate::encoding::js_property_cmp(a.0, b.0));
+    classifications.sort_unstable_by(|a, b| crate::encoding::js_property_cmp(a.0, b.0));
+    let names = InstalledPersonalNameReader::prepare(
+        &state.physical,
+        &state.reception,
+        &state.installed,
+        &state.experience,
+        id,
+    )?;
+    let _stimulus_index_storage = budget.reserve(
+        crate::host::retained_size::tree_node_bound::<&str, f64>()
+            .and_then(|n| {
+                crate::host::retained_size::tree_node_bound::<&str, ()>()
+                    .and_then(|wanted| n.checked_add(wanted))
+            })
+            .and_then(|n| n.checked_mul(visible_count))
+            .ok_or(ExecutionError::Capacity)?,
+    )?;
+    let wanted = [
+        &state.reception.visible_people,
+        &state.reception.visible_objects,
+    ]
+    .into_iter()
+    .filter_map(|root| root.as_ref().and_then(|root| root.get(id)))
+    .flatten()
+    .map(String::as_str)
+    .collect::<std::collections::BTreeSet<_>>();
+    let mut changed_at = std::collections::BTreeMap::new();
+    for record in state
+        .experience
+        .optional_collection(id, PersonalSourceKind::Awareness)?
+        .into_iter()
+        .flat_map(|collection| collection.records())
+        .rev()
+    {
+        let header = record.header();
+        if header.event_type.as_deref() != Some("encounter")
+            || header.outward_change.as_deref() != Some("detail")
+        {
+            continue;
+        }
+        if let Some(target) = header
+            .evidence_target_id
+            .as_deref()
+            .filter(|id| wanted.contains(id))
+        {
+            changed_at.entry(target).or_insert(header.at);
+        }
+        if changed_at.len() == wanted.len() {
+            break;
+        }
+    }
     let mut stimuli = Vec::with_capacity(visible_count);
     for source in [
         &state.reception.visible_people,
@@ -386,21 +608,8 @@ pub(crate) fn capture(
             .and_then(|at| at.parse::<f64>().ok())
             .filter(|at| at.is_finite())
             .unwrap_or(state.physical.header.sim_time);
-        // Source uses the latest resident detail notice, never hidden target clocks.
-        let changed = state
-            .experience
-            .optional_collection(id, PersonalSourceKind::Awareness)?
-            .into_iter()
-            .flat_map(|c| c.records())
-            .rev()
-            .take_while(|record| record.header().at >= seen)
-            .find(|record| {
-                record.header().event_type.as_deref() == Some("encounter")
-                    && record.header().evidence_target_id.as_deref() == Some(source)
-                    && serde_json::from_str::<Detail>(record.payload())
-                        .is_ok_and(|detail| detail.change == Some("detail"))
-            })
-            .map_or(seen, |record| record.header().at);
+        // Source uses the latest resident detail notice, never hidden clocks.
+        let changed = changed_at.get(source.as_str()).copied().unwrap_or(seen);
         stimuli.push(Stimulus {
             source_id: source,
             states: state
@@ -409,24 +618,12 @@ pub(crate) fn capture(
                 .value()
                 .outward_states(subject),
             since: seen.max(changed),
+            label: names.observer_name(source)?,
         });
-    }
-    #[derive(Deserialize)]
-    struct Detail<'a> {
-        #[serde(borrow)]
-        change: Option<&'a str>,
     }
     let mut events = Vec::with_capacity(unseen.records.len());
     for source in &unseen.records {
-        #[derive(Deserialize)]
-        #[serde(rename_all = "camelCase")]
-        struct EventId<'a> {
-            #[serde(borrow)]
-            event_id: Option<&'a str>,
-        }
-        let event: EventId =
-            serde_json::from_str(source.value.get()).map_err(|_| ExecutionError::Invariant)?;
-        if let Some(original) = event.event_id.and_then(|event| {
+        if let Some(original) = source.event_id.and_then(|event| {
             state
                 .occurrences
                 .hot()
@@ -490,6 +687,21 @@ pub(crate) fn capture(
     add!(actor.conditions);
     add!(entity.inventory_revision);
     add!(reconsideration);
+    struct AttributePins<'a>(
+        &'a indexmap::IndexMap<
+            String,
+            crate::install::VerifiedDefinition<crate::status::AttributeDefinition>,
+        >,
+    );
+    impl Serialize for AttributePins<'_> {
+        fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+            let mut out = s.serialize_seq(Some(self.0.len()))?;
+            for definition in self.0.values() {
+                out.serialize_element(definition.pin())?;
+            }
+            out.end()
+        }
+    }
     add!((
         state.installed.manifest.revision,
         state
@@ -497,20 +709,23 @@ pub(crate) fn capture(
             .body_policy
             .as_ref()
             .map(|policy| policy.pin()),
-        &state.installed.manifest.revision
+        AttributePins(&state.installed.attributes)
     ));
     add!(actions_blocked);
-    add!(concerns.iter().map(|(id, _)| id).collect::<Vec<_>>());
+    add!(concern_ids);
     add!(Classifications(&classifications, false));
     add!(Classifications(&classifications, true));
-    add!(
-        state
-            .installed
-            .retained
-            .recipes
-            .entries()
-            .collect::<Vec<_>>()
-    );
+    struct Recipes<'a>(&'a crate::install::RetainedMap);
+    impl Serialize for Recipes<'_> {
+        fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+            let mut out = s.serialize_seq(Some(self.0.len()))?;
+            for row in self.0.entries() {
+                out.serialize_element(&row)?;
+            }
+            out.end()
+        }
+    }
+    add!(Recipes(&state.installed.retained.recipes));
     for kind in [
         PersonalSourceKind::Memory,
         PersonalSourceKind::Awareness,
@@ -525,41 +740,9 @@ pub(crate) fn capture(
         .and_then(|owners| owners.get(id));
     add!(inner);
     add!(&*state.installed.cognition);
-    #[derive(Deserialize)]
-    struct Cue<'a> {
-        #[serde(borrow)]
-        id: &'a RawValue,
-        #[serde(rename = "descriptionRevision", borrow)]
-        description_revision: &'a RawValue,
-    }
-    #[derive(Deserialize)]
-    struct Cues<'a> {
-        #[serde(borrow)]
-        cues: Vec<Cue<'a>>,
-    }
-    let _cue_parse = crate::install::reserve_typed_parse::<Cues<'_>>(
-        &attention.json,
-        size_of::<Cue<'_>>(),
-        None,
-        budget,
-    )
-    .map_err(|error| match error {
-        crate::install::InstallError::Capacity => ExecutionError::Capacity,
-        _ => ExecutionError::Invariant,
-    })?;
-    let cues: Cues =
-        serde_json::from_str(&attention.json).map_err(|_| ExecutionError::Invariant)?;
-    struct CueInputs<'a>(&'a [Cue<'a>]);
-    impl Serialize for CueInputs<'_> {
-        fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-            let mut out = s.serialize_seq(Some(self.0.len()))?;
-            for cue in self.0 {
-                out.serialize_element(&(cue.id, cue.description_revision))?;
-            }
-            out.end()
-        }
-    }
-    add!(CueInputs(&cues.cues));
+    let cue_token_storage = budget.reserve(attention.cue_inputs_token.len())?;
+    tokens.push(attention.cue_inputs_token.clone());
+    token_storage.merge(cue_token_storage)?;
     add!(actor.agency.semantic.as_ref().map(|semantic| (
         semantic.interval,
         &semantic.discovery,
@@ -576,10 +759,30 @@ pub(crate) fn capture(
             state.appraisals.content_witness(id),
             state.minds.minds.as_ref().and_then(|owners| owners.get(id)),
             &state.installed.status_policy.revision,
+            state.experience.actor(id).map(|history| {
+                (
+                    history.privacy.forgotten_ids(),
+                    history.privacy.corrections(),
+                    history.privacy.revision(),
+                )
+            }),
         ),
         budget,
     )?;
     token_storage.merge(dependency_storage)?;
+    // Queue wake inputs intentionally omit semantic bookkeeping. The later
+    // inspection also protects the actual resolved causes and receipt metadata
+    // used by this read, so it cannot acknowledge an obsolete opportunity.
+    let (inspection, inspection_storage) = token(
+        &(
+            actor.agency.semantic.as_ref().map(|state| &state.resolved),
+            &events,
+        ),
+        budget,
+    )?;
+    token_storage.merge(inspection_storage)?;
+
+    let (prepared_result, _result_storage) = result::capture(state, actor, id, budget)?;
     let product = Product {
         world_id: &state.physical.header.id,
         generation: &state.generation,
@@ -587,7 +790,19 @@ pub(crate) fn capture(
         at: state.physical.header.sim_time,
         actor_id: id,
         name: &entity.name,
-        eligible: actor.alive && !actor.incapacitated,
+        eligible: actor.alive
+            && !actor.incapacitated
+            && state
+                .minds
+                .minds
+                .as_ref()
+                .is_some_and(|minds| minds.contains_key(id)),
+        enrolled: actor.alive
+            && state
+                .minds
+                .minds
+                .as_ref()
+                .is_some_and(|minds| minds.contains_key(id)),
         physical_life: actor.physical_life,
         identity_through: state.physical.identity.next_id(),
         controller: &actor.controller,
@@ -595,7 +810,12 @@ pub(crate) fn capture(
         incapacitated: actor.incapacitated,
         participating: entity.actively_participates(),
         has_memory: entity.has_memory(),
-        cognition: actor.capabilities.as_ref().map_or(actor.controller != "native", |capabilities| capabilities.cognition),
+        cognition: actor
+            .capabilities
+            .as_ref()
+            .map_or(actor.controller != "native", |capabilities| {
+                capabilities.cognition
+            }),
         conditions: &actor.conditions,
         values: &tokens,
         dependency_token: &dependencies,
@@ -604,8 +824,13 @@ pub(crate) fn capture(
         unseen: Unseen {
             records: &unseen.records,
             max_sequence: unseen.max_sequence,
+            interruptions: &unseen.interruptions,
+            trigger_awareness: &unseen.trigger_awareness,
         },
-        own: raw(&own.0)?,
+        own: OwnRead {
+            agency: AgencyRead(&actor.agency),
+            attributes: attributes.rows(),
+        },
         attention: raw(&attention.json)?,
         protection_labels: &protection_labels,
         actions_blocked,
@@ -626,7 +851,18 @@ pub(crate) fn capture(
         },
         stimuli: &stimuli,
         events: &events,
+        prepared_result,
     };
+    let inputs_length =
+        json_record_len(&InputProduct(&product)).map_err(|_| ExecutionError::Invariant)?;
+    let mut inputs_storage = budget.reserve(
+        inputs_length
+            .checked_mul(2)
+            .ok_or(ExecutionError::Capacity)?,
+    )?;
+    let inputs_json =
+        json_record(&InputProduct(&product)).map_err(|_| ExecutionError::Invariant)?;
+    inputs_storage.resize(inputs_json.capacity())?;
     let length = json_record_len(&product).map_err(|_| ExecutionError::Invariant)?;
     let mut storage = budget.reserve(
         length
@@ -650,6 +886,7 @@ pub(crate) fn capture(
             + size_of::<NpcIntakeCapture>(),
     )?;
     storage.merge(token_storage)?;
+    storage.merge(inputs_storage)?;
     Ok(NpcIntakeCapture {
         world: state.physical.header.id.clone(),
         generation: state.generation.clone(),
@@ -657,7 +894,10 @@ pub(crate) fn capture(
         request,
         tokens,
         dependencies,
+        inspection,
+        semantic_causes: attention.semantic_causes,
         json,
+        inputs_json,
         _storage: storage,
     })
 }

@@ -48,6 +48,8 @@ pub(crate) enum ProviderKind {
     AppraisalOutcomes,
     #[serde(rename = "choice-descriptions")]
     ChoiceDescriptions,
+    #[serde(rename = "typed-actions")]
+    TypedActions,
     #[serde(rename = "restore-archives")]
     RestoreArchives,
 }
@@ -252,6 +254,7 @@ impl DecodeShape {
             | ProviderKind::RestoreArchives => 0,
             ProviderKind::Normalization => size_of::<JsText>().max(size_of::<Option<crate::language::FreeTypedActionSyntax>>()),
             ProviderKind::ChoiceDescriptions => size_of::<JsText>(),
+            ProviderKind::TypedActions => crate::response::TypedActionAnswer::array_element_bytes(),
         };
         let arrays = self
             .array_items
@@ -313,6 +316,7 @@ enum Answer {
     Display(Formatted),
     Canonical(Canonical),
     Normalization(crate::language::AttemptNormalizationAnswer),
+    TypedActions(crate::response::TypedActionAnswer),
     Digest(crate::response::ResponseDigestAnswer),
     History(crate::experience::HistoryEditAnswer),
     Control(super::host_control::ControlAnswer),
@@ -357,6 +361,7 @@ impl Answer {
             )?),
             ProviderKind::AppraisalOutcomes => Self::AppraisalOutcomes(crate::response::AppraisalCreatesAnswer::decode(&input.json, budget)?),
             ProviderKind::ChoiceDescriptions => Self::ChoiceDescriptions(serde_json::from_str(&input.json).map_err(parse)?),
+            ProviderKind::TypedActions => Self::TypedActions(serde_json::from_str(&input.json).map_err(parse)?),
             ProviderKind::History => Self::History(crate::experience::HistoryEditAnswer::decode(
                 &input.json,
                 budget,
@@ -385,6 +390,7 @@ impl Answer {
             Self::Sources(v) => v.binding(),
             Self::AppraisalOutcomes(v) => v.binding,
             Self::ChoiceDescriptions(v) => v.binding,
+            Self::TypedActions(v) => v.binding,
             Self::RestoreArchives(v) => v.provider_binding(geometry_revision),
         }
     }
@@ -403,6 +409,7 @@ impl Answer {
             Self::Sources(_) => ProviderKind::Sources,
             Self::AppraisalOutcomes(_) => ProviderKind::AppraisalOutcomes,
             Self::ChoiceDescriptions(_) => ProviderKind::ChoiceDescriptions,
+            Self::TypedActions(_) => ProviderKind::TypedActions,
             Self::RestoreArchives(_) => ProviderKind::RestoreArchives,
         }
     }
@@ -1644,6 +1651,7 @@ enum ResponseReply {
     Sources,
     Digest,
     Normalization,
+    TypedActions,
     Geometry,
     Display(DisplayReply),
     Command(CommandReply),
@@ -1686,6 +1694,11 @@ fn poll_response(
             };
             Some(ResponseAnswer::Normalization(value))
         }
+        Some(ResponseReply::TypedActions) => {
+            route = None;
+            let Answer::TypedActions(value) = direct(answer, ProviderKind::TypedActions)? else { return Err(DriveError::StaleResponse); };
+            Some(ResponseAnswer::Typed(value))
+        }
         Some(ResponseReply::Geometry) => {
             route = None;
             let Answer::Geometry(value) = direct(answer, ProviderKind::Geometry)? else {
@@ -1704,6 +1717,7 @@ fn poll_response(
                 return question(answer, ProviderKind::Sources, q.binding, q, budget, ResponseReply::Sources);
             }
             ResponseStep::Complete(value) => return Ok(Poll::Complete(value)),
+            ResponseStep::Typed(q) => return question(answer, ProviderKind::TypedActions, q.binding, q, budget, ResponseReply::TypedActions),
             ResponseStep::Digest(q) => {
                 return question(
                     answer,

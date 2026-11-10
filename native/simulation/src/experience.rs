@@ -42,6 +42,8 @@ pub(crate) use player_events::{CapturedPlayerEvents, capture_player_events};
 mod header_input;
 mod originals;
 pub(crate) use originals::CapturedPersonalOriginals;
+mod archive_source;
+pub(crate) use archive_source::ArchivedPersonalSourceRecord;
 mod install;
 pub use install::*;
 mod policy;
@@ -296,6 +298,7 @@ pub struct PersonalSourceHeader {
     pub at: f64,
     pub sequence: Option<u64>,
     pub importance: f64,
+    pub urgency: Option<f64>,
     pub sensory: bool,
     pub summary_coverage: Vec<String>,
     pub event_id: Option<String>,
@@ -321,6 +324,7 @@ pub struct PersonalSourceHeader {
     pub personal_agreement: bool,
     pub agreement_body: bool,
     pub event_type: Option<String>,
+    pub outward_change: Option<String>,
     pub unresolved_obligation: bool,
     pub obligation_due_at: Option<f64>,
     pub obligation_evidence_id: Option<String>,
@@ -907,6 +911,7 @@ fn header(
         at,
         sequence,
         importance: number(body, "importance")?,
+        urgency: if kind == PersonalSourceKind::Awareness {optional_number(body,"urgency")?} else {None},
         sensory: kind == PersonalSourceKind::Awareness && body.get("retentionClass").and_then(Value::as_str) == Some("sensory"),
         summary_coverage: if kind == PersonalSourceKind::Summary {
             source_references(object(body.get("manifest").ok_or(ExperienceError::InvalidBody("manifest"))?)?.get("coverage").ok_or(ExperienceError::InvalidBody("manifest.coverage"))?)?.into_iter().map(|reference| reference.id).collect()
@@ -935,6 +940,7 @@ fn header(
         personal_agreement,
         agreement_body,
         event_type: optional_text(body, "eventType")?,
+        outward_change: if kind == PersonalSourceKind::Awareness {optional_text(body,"change")?} else {None},
         unresolved_obligation,
         obligation_due_at,
         obligation_evidence_id: body

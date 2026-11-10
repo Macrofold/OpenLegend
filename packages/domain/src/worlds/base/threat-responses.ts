@@ -62,6 +62,51 @@ export function baseThreatObservation(
 /** A completed selected response is a new choice boundary even when it produces
  * private action memory instead of public awareness. It is priority, not new harm
  * or a reason to interrupt another already-running decision. */
+export interface PreparedThreatResultRead {
+  readonly reference?: import('../../result-evidence.js').ResultEvidence | null;
+  readonly forgotten: boolean;
+  readonly planReference?: import('../../result-evidence.js').ResultEvidence | null;
+  readonly planPurpose?: import('../../world-modules.js').DefinitionPin | null;
+  readonly internalMemory: boolean;
+  readonly occurrence?: {
+    readonly id: string;
+    readonly commandType: string;
+    readonly status: string;
+    readonly revoked: boolean;
+    readonly forgotten: boolean;
+    readonly purpose?: import('../../world-modules.js').DefinitionPin | null;
+  } | null;
+}
+export function basePreparedThreatResultFromRead(
+  profile: PreparedResponseProfile,
+  read: PreparedThreatResultRead,
+  causeIds: readonly string[],
+): boolean {
+  const resultId = resultEvidenceId(read.reference ?? undefined);
+  if (
+    !resultId ||
+    !causeIds.includes(resultId) ||
+    read.occurrence?.commandType === 'say' ||
+    read.forgotten
+  )
+    return false;
+  if (
+    sameResultEvidence(read.planReference ?? undefined, read.reference ?? undefined) &&
+    read.planPurpose &&
+    sameDefinitionPin(read.planPurpose, definitionPin(profile)) &&
+    read.internalMemory
+  )
+    return true;
+  const entry = read.occurrence;
+  return !!(
+    entry &&
+    entry.status !== 'running' &&
+    !entry.revoked &&
+    !entry.forgotten &&
+    entry.purpose &&
+    sameDefinitionPin(entry.purpose, definitionPin(profile))
+  );
+}
 export function basePreparedThreatResult(
   world: WorldState,
   profile: PreparedResponseProfile,
@@ -69,34 +114,46 @@ export function basePreparedThreatResult(
   causeIds: readonly string[],
 ): boolean {
   const agency = entityGet(world.entities, actorId)?.actor?.agency;
-  const resultSource = agency?.lastResultEvidence;
-  const resultId = resultEvidenceId(resultSource);
+  const reference = agency?.lastResultEvidence;
+  const resultId = resultEvidenceId(reference);
   if (!resultId || !causeIds.includes(resultId)) return false;
   const entry = world.actionExperience.occurrences[actorId]?.find((record) =>
-    sameResultEvidence(record.resultEvidence, resultSource),
+    sameResultEvidence(record.resultEvidence, reference),
   );
   if (entry?.command.type === 'say') return false;
   const forgotten = world.experience?.forgotten[actorId] ?? [];
   if (forgotten.includes(resultId)) return false;
-  const plan = agency?.plan;
-  if (
-    plan &&
-    sameResultEvidence(plan.resultEvidence, resultSource) &&
-    plan.activity?.request?.chosenPurpose &&
-    sameDefinitionPin(plan.activity.request.chosenPurpose.definition, definitionPin(profile)) &&
-    world.memories[actorId]?.some(
-      (memory) =>
-        memory.id === resultId && memory.actorId === actorId && memory.source === 'internal',
-    )
-  )
-    return true;
-  return !!(
-    entry &&
-    entry.status !== 'running' &&
-    !entry.revoked &&
-    !forgotten.includes(entry.id) &&
-    entry.command.chosenPurpose &&
-    sameDefinitionPin(entry.command.chosenPurpose.definition, definitionPin(profile))
+  const plan = agency?.plan,
+    planPurpose = plan?.activity?.request?.chosenPurpose?.definition;
+  return basePreparedThreatResultFromRead(
+    profile,
+    {
+      reference,
+      forgotten: false,
+      planReference: plan?.resultEvidence,
+      planPurpose,
+      internalMemory: !!(
+        plan &&
+        sameResultEvidence(plan.resultEvidence, reference) &&
+        planPurpose &&
+        sameDefinitionPin(planPurpose, definitionPin(profile)) &&
+        world.memories[actorId]?.some(
+          (memory) =>
+            memory.id === resultId && memory.actorId === actorId && memory.source === 'internal',
+        )
+      ),
+      occurrence: entry
+        ? {
+            id: entry.id,
+            commandType: entry.command.type,
+            status: entry.status,
+            revoked: !!entry.revoked,
+            forgotten: forgotten.includes(entry.id),
+            purpose: entry.command.chosenPurpose?.definition,
+          }
+        : undefined,
+    },
+    causeIds,
   );
 }
 

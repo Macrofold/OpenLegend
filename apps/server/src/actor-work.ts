@@ -259,7 +259,7 @@ export class ActorWork {
         this.retire(id);
   }
 
-  private retire(id: string): void {
+  retire(id: string): void {
     this.tickets.delete(id);
     this.readyIds.delete(id);
     this.wallDeadlines.delete(id);

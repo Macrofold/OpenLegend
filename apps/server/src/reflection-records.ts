@@ -3,14 +3,15 @@ import {
   subjectLabel,
   entityGet,
   type CognitionBinding,
+  type ActorMind,
   type InnerRecordChange,
   type ObserverSubject,
   type WorldState,
 } from '@open-legend/domain';
-import { subjectHandle } from './entity-references.js';
+import { subjectHandle, type PersonalReferenceScope } from './entity-references.js';
 import type { ReflectionRecordChange } from './cognition-contracts.js';
 
-type RecordBindings = Pick<
+export type RecordBindings = Pick<
   CognitionBinding,
   'evidenceReferences' | 'identityReferences' | 'physicalEntityReferences'
 >;
@@ -23,20 +24,52 @@ export function offerInterpretationRecords(
   bindings: RecordBindings,
   subjects: readonly ObserverSubject[] = [],
 ): void {
-  const records = world.minds?.[actorId]?.records ?? [];
-  const references = (bindings.identityReferences ??= {});
+  const physicalSubjects: Record<string, ObserverSubject> = {};
   // Self and accessible things have stable subjects. A person's physical route
   // must retain its received local/recognized identity, already bound by perception.
   for (const [handle, id] of Object.entries(bindings.physicalEntityReferences ?? {})) {
     const entity = entityGet(world.entities, id);
     if (entity && (id === actorId || !entity.actor))
-      references[handle] = { kind: 'entity', entityId: id };
+      physicalSubjects[handle] = { kind: 'entity', entityId: id };
   }
+  return offerInterpretationRecordsFromRead(
+    {
+      scope: world,
+      actorId,
+      records: world.minds?.[actorId]?.records ?? [],
+      documents: world.minds?.[actorId]?.documents ?? [],
+      physicalSubjects,
+      subjects,
+      label: (subject) => subjectLabel(world, actorId, subject),
+    },
+    context,
+    bindings,
+  );
+}
+/** Formatting uses only this actor's private records and already admitted
+ * subject labels. The binding owner must separately select their real native
+ * ordinals before generated record edits can execute. */
+export function offerInterpretationRecordsFromRead(
+  input: {
+    readonly scope: PersonalReferenceScope;
+    readonly actorId: string;
+    readonly records: readonly ActorMind['records'][number][];
+    readonly documents: readonly Pick<ActorMind['documents'][number], 'id' | 'revision'>[];
+    readonly physicalSubjects: Readonly<Record<string, ObserverSubject>>;
+    readonly subjects: readonly ObserverSubject[];
+    label(subject: ObserverSubject): string;
+  },
+  context: Record<string, unknown>,
+  bindings: RecordBindings,
+): void {
+  const { records } = input;
+  const references = (bindings.identityReferences ??= {});
+  Object.assign(references, input.physicalSubjects);
   for (const subject of [
-    ...subjects,
+    ...input.subjects,
     ...records.flatMap((record) => (record.subjectId ? [record.subjectId] : [])),
   ]) {
-    const handle = subjectHandle(world, actorId, subject);
+    const handle = subjectHandle(input.scope, input.actorId, subject);
     if (references[handle] && subjectKey(references[handle]) !== subjectKey(subject))
       throw new Error('Interpretation subject handle collision.');
     references[handle] = subject;
@@ -51,15 +84,19 @@ export function offerInterpretationRecords(
     });
     return {
       ...record,
-      subjectId: record.subjectId ? subjectHandle(world, actorId, record.subjectId) : null,
+      subjectId: record.subjectId
+        ? subjectHandle(input.scope, input.actorId, record.subjectId)
+        : null,
       evidence,
       supportComplete: evidence.length === record.evidence.length,
     };
   });
-  context['interpretationDocuments'] =
-    world.minds?.[actorId]?.documents.map(({ id, revision }) => ({ id, revision })) ?? [];
+  context['interpretationDocuments'] = input.documents.map(({ id, revision }) => ({
+    id,
+    revision,
+  }));
   context['interpretationSubjects'] = Object.entries(bindings.identityReferences ?? {}).map(
-    ([handle, subject]) => ({ handle, label: subjectLabel(world, actorId, subject) }),
+    ([handle, subject]) => ({ handle, label: input.label(subject) }),
   );
 }
 /** Resolve only the finite offered interpretation/evidence cut. Native publication

@@ -426,7 +426,9 @@ impl Session {
         id: &str,
         response: crate::response::ActorResponse,
         bindings: Arc<crate::response::ResponseBindings>,
+        protected: bool,
     ) -> Result<CandidateKey, SessionError> {
+        if protected && !self.save_barrier_complete() { return Err(FenceError::Busy.into()); }
         let (key, mut journal) = self.begin()?;
         let driver = (|| {
             let mut core = CoreMutation {
@@ -439,6 +441,7 @@ impl Session {
                 response,
                 bindings,
                 key,
+                protected,
                 &self.budget,
             )
             .map_err(DriveError::from)?;
@@ -759,7 +762,8 @@ impl Session {
                     .map_err(PublicationError::from)?;
                     let protected = matches!(&result, CompletedOperation::Forget(done)
                         if done.privacy_change().is_some())
-                        || matches!(&result, CompletedOperation::Restore(_) | CompletedOperation::HostControl(_) | CompletedOperation::Participation(_));
+                        || matches!(&result, CompletedOperation::Restore(_) | CompletedOperation::HostControl(_) | CompletedOperation::Participation(_))
+                        || matches!(&result, CompletedOperation::Response(done) if done.protected());
                     let publication = PreparedPublication::prepare(
                         &mut self.simulation.state,
                         &preparing.journal,

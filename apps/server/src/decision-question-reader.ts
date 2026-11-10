@@ -43,6 +43,11 @@ export function prepareQuestionRead(
     bindingDigest: digest({ questions: read.questions, revisions: expected }),
     sourceTime: read.sourceTime,
     current,
+    dispatch: (start) =>
+      service.publishRecall(async () => {
+        if (!(await current())) throw new Error('Judgment evidence changed before transport.');
+        return { result: start() };
+      }),
     publish: (answers, claim) => publishQuestionAnswers(service, claim, answers, current),
   };
 }

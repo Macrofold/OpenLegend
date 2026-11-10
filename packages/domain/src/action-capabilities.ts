@@ -179,7 +179,7 @@ export const INTENT_LIMITS = { quantity: 999, method: 200 } as const;
 export function namedClockTimes(world: Pick<WorldState, 'statusEffectPolicy'>): string[] {
   return Object.keys(world.statusEffectPolicy.namedTimes);
 }
-const namedTime = (world: WorldState, name: unknown) =>
+const namedTime = (world: Pick<WorldState, 'statusEffectPolicy'>, name: unknown) =>
   typeof name === 'string' && Object.hasOwn(world.statusEffectPolicy.namedTimes, name);
 const SLOT_KEYS = [
   'itemId',
@@ -333,7 +333,10 @@ export function validActionResolution(raw: unknown): raw is ActionResolution {
 }
 
 /** Next simulation time at a world-named clock hour; the current instant means tomorrow. */
-export function clockDeadline(world: WorldState, name: string): number | undefined {
+export function clockDeadline(
+  world: Pick<WorldState, 'simTime' | 'statusEffectPolicy'>,
+  name: string,
+): number | undefined {
   if (!namedTime(world, name)) return;
   const day = 86400;
   const now =

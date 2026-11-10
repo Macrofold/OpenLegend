@@ -21,12 +21,27 @@ pub(crate) struct AppraisalSourceAlias {
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct AppraisalSelection {
+    purpose: AppraisalPurpose,
     guard: AppraisalGuard,
     pub policies: Vec<NpcAliasOrdinal>,
     pub records: Vec<NpcAliasOrdinal>,
     pub sources: Vec<AppraisalSourceAlias>,
     #[serde(deserialize_with = "crate::values::deserialize_nullable")]
     pub trigger: Option<PersonalOrdinal>,
+}
+#[derive(Clone, Copy, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+enum AppraisalPurpose {
+    Decision,
+    Reflection,
+}
+impl AppraisalPurpose {
+    fn permits(self, definition: &crate::appraisals::Definition) -> bool {
+        match self {
+            Self::Decision => definition.decision,
+            Self::Reflection => definition.reflection,
+        }
+    }
 }
 #[derive(Clone, Copy, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -41,6 +56,7 @@ struct Record {
 }
 pub(crate) struct PreparedResponseAppraisals {
     actor: String,
+    purpose: AppraisalPurpose,
     guard: AppraisalGuard,
     policies: IndexMap<String, crate::values::DefinitionPin>,
     records: IndexMap<String, Record>,
@@ -51,6 +67,61 @@ pub(crate) struct PreparedResponseAppraisals {
     _storage: ByteReservation,
 }
 impl PreparedResponseAppraisals {
+    pub(crate) fn into_shared(mut self) -> Result<std::sync::Arc<Self>, ExecutionError> {
+        self._storage.resize(
+            self._storage
+                .bytes()
+                .checked_add(2 * size_of::<usize>() + std::mem::align_of::<Self>() - 1)
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        Ok(std::sync::Arc::new(self))
+    }
+    /// A funded higher execution reuses the same admitted facts. Only the
+    /// transient recall episode belongs to the newly issued decision identity.
+    pub(crate) fn rebind_decision(&mut self, decision: &str) -> Result<(), ExecutionError> {
+        let count = self
+            .sources
+            .values()
+            .filter(|source| source.recall_episode_id.is_some())
+            .count();
+        let old_bytes = self
+            .sources
+            .values()
+            .filter_map(|source| source.recall_episode_id.as_ref())
+            .try_fold(0usize, |bytes, id| bytes.checked_add(id.capacity()))
+            .ok_or(ExecutionError::Capacity)?;
+        let before = self._storage.bytes();
+        let new_bytes = decision
+            .len()
+            .checked_mul(count)
+            .ok_or(ExecutionError::Capacity)?;
+        self._storage.resize(
+            before
+                .checked_add(new_bytes)
+                .and_then(|bytes| bytes.checked_add(count.checked_mul(size_of::<String>())?))
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let mut replacements = Vec::with_capacity(count);
+        for _ in 0..count {
+            replacements.push(decision.to_owned());
+        }
+        let mut replacements = replacements.into_iter();
+        for source in self
+            .sources
+            .values_mut()
+            .filter(|source| source.recall_episode_id.is_some())
+        {
+            source.recall_episode_id = replacements.next();
+        }
+        drop(replacements);
+        self._storage.resize(
+            before
+                .checked_sub(old_bytes)
+                .and_then(|bytes| bytes.checked_add(new_bytes))
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        Ok(())
+    }
     pub(crate) fn prepare(
         state: &SimulationState,
         read: &AcceptedActorRead,
@@ -59,6 +130,10 @@ impl PreparedResponseAppraisals {
         decision: &str,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
+        if matches!(selected.purpose, AppraisalPurpose::Reflection) && selected.trigger.is_some() {
+            return Err(ExecutionError::InvalidCheckpoint);
+        }
+        let purpose = selected.purpose;
         let captured = read
             .appraisal_read()
             .ok_or(ExecutionError::InvalidCheckpoint)?;
@@ -92,7 +167,7 @@ impl PreparedResponseAppraisals {
                 .definitions
                 .get_index(selected.ordinal)
                 .map(|(_, definition)| definition)
-                .filter(|definition| definition.value.decision)
+                .filter(|definition| purpose.permits(&definition.value))
                 .ok_or(ExecutionError::InvalidCheckpoint)?;
             storage.resize(
                 storage
@@ -118,7 +193,7 @@ impl PreparedResponseAppraisals {
                 .definitions
                 .get(&record.definition_pin.id)
                 .filter(|definition| {
-                    definition.pin == record.definition_pin && definition.value.decision
+                    definition.pin == record.definition_pin && purpose.permits(&definition.value)
                 })
                 .ok_or(ExecutionError::InvalidCheckpoint)?;
             storage.resize(
@@ -173,6 +248,7 @@ impl PreparedResponseAppraisals {
         }
         Ok(Self {
             actor: read.perception.actor_id.clone(),
+            purpose: selected.purpose,
             guard: selected.guard,
             policies,
             records,
@@ -217,7 +293,9 @@ impl PreparedResponseAppraisals {
                     .appraisals
                     .definitions
                     .get(&pin.id)
-                    .is_some_and(|definition| definition.pin == *pin && definition.value.decision)
+                    .is_some_and(|definition| {
+                        definition.pin == *pin && self.purpose.permits(&definition.value)
+                    })
             }))
     }
     pub(crate) fn bindings<'a>(
@@ -247,8 +325,8 @@ impl PreparedResponseAppraisals {
             AppraisalBindings {
                 sources: self.sources.values().cloned().collect(),
                 subjects: subjects.map(str::to_owned).collect(),
-                reflection: None,
-                decision: Some(true),
+                reflection: matches!(self.purpose, AppraisalPurpose::Reflection).then_some(true),
+                decision: matches!(self.purpose, AppraisalPurpose::Decision).then_some(true),
                 complete_creates: None,
                 prior_outcomes: None,
                 publication: None,
@@ -332,7 +410,7 @@ impl PreparedResponseAppraisals {
             .appraisals
             .definitions
             .get(&pin.id)
-            .filter(|definition| definition.pin == *pin && definition.value.decision)
+            .filter(|definition| definition.pin == *pin && self.purpose.permits(&definition.value))
             .ok_or_else(invalid)?;
         let supplied_value = input.get("value").ok_or_else(invalid)?;
         let value = match (

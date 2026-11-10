@@ -20,6 +20,8 @@ pub(crate) struct PlayerInteractionFacts<'a> {
     reply: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     recipient_name: Option<&'a crate::text::JsText>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    recipient_description: Option<crate::worlds::base_knowledge::OwnedPersonalName>,
 }
 
 impl Simulation {
@@ -29,6 +31,7 @@ impl Simulation {
         actor_id: &'a str,
         mode: InteractionMode,
         target_id: Option<&'a str>,
+        budget: &crate::host::ByteBudget,
     ) -> Result<PlayerInteractionFacts<'a>, ActorReadError> {
         self.require_player_read(account, actor_id)?;
         let entity = self
@@ -56,6 +59,7 @@ impl Simulation {
         let mut recipient_available = true;
         let mut reply = false;
         let mut recipient_name = None;
+        let mut recipient_description = None;
         if let Some(target_id) = target_id.filter(|_| speaking) {
             let names = InstalledPersonalNameReader::prepare(
                 &self.state.physical,
@@ -78,6 +82,11 @@ impl Simulation {
                 && target
                     .and_then(|target| target.actor.as_ref())
                     .is_some_and(|target| target.controller == "npc");
+            recipient_description = Some(
+                names
+                    .capture_observer_name(target_id, budget)
+                    .map_err(|error| ActorReadError::Capture(error.into()))?,
+            );
             recipient_name = if target_id == actor_id {
                 Some(&entity.name)
             } else {
@@ -105,6 +114,7 @@ impl Simulation {
             },
             reply,
             recipient_name,
+            recipient_description,
         })
     }
 }

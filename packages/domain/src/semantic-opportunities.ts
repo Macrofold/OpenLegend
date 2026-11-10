@@ -155,7 +155,16 @@ export function semanticCauseResolved(
   severity: number,
 ): boolean {
   const actor = entityGet(world.entities, actorId);
-  return !!actor && semanticCauseResolvedFromRead(actor.actor?.agency.semantic, occupiedPurpose(actor), key, qualitativeRevision, severity);
+  return (
+    !!actor &&
+    semanticCauseResolvedFromRead(
+      actor.actor?.agency.semantic,
+      occupiedPurpose(actor),
+      key,
+      qualitativeRevision,
+      severity,
+    )
+  );
 }
 
 /** No semantic state is reconstructed from Node data: the native read supplies
@@ -168,7 +177,14 @@ export function semanticCauseResolvedFromRead(
   severity: number,
 ): boolean {
   const resolved = state?.resolved[key];
-  return !!state && !!resolved && resolved.interval === state.interval && resolved.purpose === purpose && resolved.qualitativeRevision === qualitativeRevision && resolved.severity >= severity;
+  return (
+    !!state &&
+    !!resolved &&
+    resolved.interval === state.interval &&
+    resolved.purpose === purpose &&
+    resolved.qualitativeRevision === qualitativeRevision &&
+    resolved.severity >= severity
+  );
 }
 
 export function validateSemanticContinuation(

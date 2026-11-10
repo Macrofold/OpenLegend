@@ -57,6 +57,25 @@ const cacheSchema = z
   .strict();
 export type ConversationCompaction = z.infer<typeof cacheSchema>;
 type Compaction = ConversationCompaction;
+/** Parsing a derived cache establishes its shape, never its source permission
+ * or current perspective. Native readers use this same first step before
+ * admitting the exact referenced archive bodies through their source owner. */
+export function conversationCompactionCandidate(
+  saved: unknown,
+  actorId: string,
+  generation: string | undefined,
+): ConversationCompaction | undefined {
+  const parsed = cacheSchema.safeParse(saved);
+  const cached = parsed.success ? parsed.data : undefined;
+  return cached &&
+    cached.version === CONVERSATION_COMPACTOR_VERSION &&
+    cached.generation === generation &&
+    validExperienceSummary(cached.value, actorId) &&
+    cached.sourceDigest === digest(cached.value.sources) &&
+    Buffer.byteLength(cached.value.text) <= SUMMARY_BYTES
+    ? cached
+    : undefined;
+}
 /** Validate one derived cache against its actual actor/source and attribution
  * owners. A parsed cache never grants a source or a remembered identity. */
 export async function readConversationCompaction(
@@ -66,18 +85,12 @@ export async function readConversationCompaction(
   attribution: (ids: Iterable<string>) => string,
   currentSources: ((sources: ExperienceSummary['sources']) => Promise<boolean>) | undefined,
 ): Promise<ConversationCompaction | undefined> {
-  const parsed = cacheSchema.safeParse(saved);
-  const cached = parsed.success ? parsed.data : undefined;
+  const cached = conversationCompactionCandidate(saved, actorId, generation);
   if (
     cached &&
-    cached.version === CONVERSATION_COMPACTOR_VERSION &&
-    cached.generation === generation &&
-    validExperienceSummary(cached.value, actorId) &&
-    cached.sourceDigest === digest(cached.value.sources) &&
-    attribution(cached.value.entityIds) === cached.perspective &&
-    Buffer.byteLength(cached.value.text) <= SUMMARY_BYTES &&
     currentSources &&
-    (await currentSources(cached.value.sources))
+    (await currentSources(cached.value.sources)) &&
+    attribution(cached.value.entityIds) === cached.perspective
   )
     return cached;
   return undefined;

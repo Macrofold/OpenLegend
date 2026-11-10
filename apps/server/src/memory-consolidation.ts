@@ -2,6 +2,7 @@ import { experienceForModel, experienceModelBindings } from './perceived-context
 import { gameTime } from './recall.js';
 import type { MemoryScope, CurrentMemorySource } from './memory-repository.js';
 import { retainedSpeechIds } from './speech-recall.js';
+import type { ExperiencePresentation } from './experience-context.js';
 import {
   experiences,
   experienceEntries,
@@ -118,6 +119,20 @@ export function consolidationRequests(
   world: WorldState,
   actorId: string,
 ) {
+  return consolidationRequestsFromRead(batch, actorId, world, {
+    clockOffsetHours: world.statusEffectPolicy.clockOffsetHours,
+    dayLabel: world.presentation?.calendar?.dayLabel,
+  });
+}
+
+/** The same chronological partitioning and complete model projection consume
+ * either Source or a native actor's admitted personal presentation. */
+export function consolidationRequestsFromRead(
+  batch: ConsolidationBatch,
+  actorId: string,
+  presentation: ExperiencePresentation,
+  clock: { readonly clockOffsetHours: number; readonly dayLabel: string | undefined },
+) {
   const positions = new Map(
     batch.sources.map((source, index) => [experienceEntryKey(source), index]),
   );
@@ -145,13 +160,9 @@ export function consolidationRequests(
     const value = {
       experience: experienceForModel(
         source,
-        experienceModelBindings(world, actorId, source, handle),
+        experienceModelBindings(presentation, actorId, source, handle),
       ),
-      at: gameTime(
-        reading.at,
-        world.statusEffectPolicy.clockOffsetHours,
-        world.presentation?.calendar?.dayLabel,
-      ),
+      at: gameTime(reading.at, clock.clockOffsetHours, clock.dayLabel),
       chronologicalPosition: positions.get(experienceEntryKey(source)),
       existingSummary: source.source === 'summary',
     };

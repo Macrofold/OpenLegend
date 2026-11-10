@@ -1,14 +1,34 @@
+import { NativeNpcIntake } from './native-npc-intake.js';
+import {
+  decisionClaimCurrentFromRead,
+  finishDecisionPublicationFromRead,
+  type DecisionPublication,
+  type DecisionClaimFacts,
+} from './decision-publication.js';
+import { decisionPolicyDigest } from './decision-task.js';
+import { DecisionClaimLost } from './decision-state.js';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
-import type { NativeHost, NativeWorld, NativeWorldTurn } from '@open-legend/native-simulation';
+import type {
+  NativeHost,
+  NativeWorld,
+  NativeWorldTurn,
+  NativeWorldNpcResponseTicket,
+} from '@open-legend/native-simulation';
 import {
   canonicalJson,
+  namePhrase,
   selectedCreationProfileForWorld,
   selectedPlaytestMilestoneRules,
   selectedTemporalPolicy,
   type ExperiencePrivacy,
   type AppraisalScope,
   type Outcome,
+  type ActorResponse,
+  type WorldState,
+  type SpeechVolume,
+  type Awareness,
+  heardAddressedSpeech,
 } from '@open-legend/domain';
 import { nativeSetupSettings } from '@open-legend/domain/native-install';
 import type {
@@ -115,7 +135,9 @@ type NativeOperationRequest = {
   first: () => Promise<NativeWorldTurn>;
   current: () => boolean;
   receipts?: (outcome: Outcome) => readonly GameplayReceipt[];
-  outcomes?: CommitInputs['outcomes'];
+  outcomes?:
+    | CommitInputs['outcomes']
+    | ((publication: NativePublication) => CommitInputs['outcomes']);
   signal?: AbortSignal;
   admitPublication?: (publication: NativePublication) => boolean;
 };
@@ -137,6 +159,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   private readonly reads = new AsyncLocalStorage<PlayerContext>();
   private readonly memoryReads = new AsyncLocalStorage<LiveReadCuts>();
   private readonly listeners = new Set<() => void>();
+  private readonly publicationContext = new AsyncLocalStorage<{ active: boolean }>();
   private readonly publicationListeners = new Set<(publication: NativePublication) => void>();
   private pending: NativePendingSave;
   private recent: NativeRecentRetention;
@@ -710,6 +733,49 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     });
   }
 
+  captureNpcIntake(
+    actorId: string,
+    afterSequence: number,
+    weighedThrough?: number,
+  ): Promise<NativeNpcIntake> {
+    return this.lane.run(() => {
+      this.assertAdmission();
+      return NativeNpcIntake.capture(this.world, actorId, afterSequence, weighedThrough);
+    });
+  }
+  /** Inspections acknowledge the exact native witness while the mutation lane
+   * is held. No provider or model wait may occur inside the synchronous callback. */
+  inspectNpcIntake<T>(
+    read: NativeNpcIntake,
+    inspected: (current: () => boolean) => T,
+  ): Promise<{ result: T } | undefined> {
+    return this.lane.run(async () => {
+      this.assertAdmission();
+      const publication = await read.inspection(this.world);
+      if (!publication) return;
+      try {
+        return { result: inspected(() => publication.isCurrent()) };
+      } finally {
+        publication.release();
+      }
+    });
+  }
+
+  async changeNpcIntake(
+    actorId: string,
+    generation: string,
+    operation:
+      | { type: 'reserve-discovery'; interval: number; reservation: string }
+      | { type: 'settle-discovery'; reservation: string; dispatched: boolean },
+  ): Promise<boolean> {
+    const publication = await this.acceptOperation({
+      actorId,
+      first: () => this.world.beginNpcIntake(Buffer.from(JSON.stringify({ actorId, operation }))),
+      admitPublication: (publication) => publication.outcome.ok,
+      current: () => generation === this.generation,
+    });
+    return publication?.outcome.ok === true;
+  }
   prepareNpcSituation(
     capture: NativeNpcCapture,
     jobId: string,
@@ -772,9 +838,15 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   /** SQL admission precedes this final short turn when the callback needs SQL.
    * Only server-owned recall/ticket publication runs here, never paid work. */
   publishRecall<T>(operation: () => Promise<T>): Promise<T> {
-    return this.lane.run(() => {
+    if (this.publicationContext.getStore()?.active) return operation();
+    return this.lane.run(async () => {
       this.assertAdmission();
-      return operation();
+      const owner = { active: true };
+      try {
+        return await this.publicationContext.run(owner, operation);
+      } finally {
+        owner.active = false;
+      }
     });
   }
 
@@ -1361,7 +1433,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     readonly actorId?: string;
     readonly first: () => Promise<NativeWorldTurn>;
     readonly current: () => boolean;
-    readonly operationalChange?: () => Promise<void>;
+    readonly operationalChange?: (publication: NativePublication) => Promise<void>;
     readonly accepted?: () => void;
     readonly signal?: AbortSignal;
     /** Only internal host reconciliation already inside the barrier/lane. */
@@ -1443,7 +1515,9 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                         },
                       }
                     : {}),
-                  operationalChange: request.operationalChange,
+                  operationalChange: request.operationalChange
+                    ? () => request.operationalChange!(prepared.value.publication)
+                    : undefined,
                 },
               );
               this.committedPrefix = { prefix, revision: saved.revision };
@@ -1831,7 +1905,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           publication,
           versions,
           request.receipts?.(publication.outcome),
-          request.outcomes,
+          typeof request.outcomes === 'function' ? request.outcomes(publication) : request.outcomes,
         );
         const lives: [string, { life: number; alive: boolean } | undefined][] = [];
         for (const row of publication.records.writes['sim_actors'] ?? []) {
@@ -1891,6 +1965,138 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     return publication;
   }
 
+  /** The ticket owns real native bindings; the response supplies intentions
+   * only. A durable decision claim shares the exact response SQL transaction. */
+  async applyNpcResponse(input: {
+    readonly actorId: string;
+    readonly responseId: string;
+    readonly ticket: NativeWorldNpcResponseTicket;
+    readonly response: ActorResponse;
+    readonly generation: string;
+    readonly current: () => boolean;
+    readonly signal: AbortSignal;
+    readonly claim?: DecisionPublication;
+  }): Promise<ApiResult> {
+    const actorId = input.actorId;
+    if (input.claim && input.claim.receiptId !== input.responseId)
+      throw new Error('Decision publication and native response identities differ.');
+    let authority: RequestScope | undefined;
+    let admission: DecisionClaimFacts | undefined;
+    const current = () =>
+      input.generation === this.generation &&
+      !input.signal.aborted &&
+      !this.paused &&
+      input.current() &&
+      (!authority || this.currentScope(authority, 'play', true));
+    const first = async () => {
+      const job = await this.store.getJob(input.claim?.rootJobId ?? input.responseId);
+      if (
+        !job ||
+        job.request.npcId !== actorId ||
+        (job.authority && !this.currentScope(job.authority, 'play', true))
+      )
+        throw new DecisionClaimLost();
+      authority = job.authority;
+      if (input.claim) {
+        const capture = await NativeNpcCapture.capture(this.world, actorId, []);
+        try {
+          const own = capture.facts.self,
+            actor = this.actors.get(actorId);
+          admission = {
+            worldId: this.worldId,
+            timelineId: this.timelineId,
+            generation: this.generation,
+            policyDigest: decisionPolicyDigest(this.config),
+            at: own.at,
+            physicalLife: own.physicalLife ?? 0,
+            actorEligible:
+              !!actor?.alive &&
+              !actor.incapacitated &&
+              actor.controller === 'npc' &&
+              actor.cognition !== false &&
+              !own.actionsBlocked,
+          };
+          if (!decisionClaimCurrentFromRead(job, input.claim, admission))
+            throw new DecisionClaimLost();
+        } finally {
+          capture.release();
+        }
+      } else if (!['generating', 'queued', 'judging'].includes(job.status) && !job.responseReady) {
+        throw new DecisionClaimLost();
+      }
+      if (!current()) throw new DecisionClaimLost();
+      return this.world.beginNpcResponse(
+        input.ticket,
+        Buffer.from(JSON.stringify(input.response)),
+        !!input.claim,
+      );
+    };
+    try {
+      if (input.claim) {
+        const claim = input.claim;
+        const publication = await this.protectedOperation({
+          get scope() {
+            return authority;
+          },
+          controlling: true,
+          actorId,
+          capability: 'play',
+          first,
+          current,
+          signal: input.signal,
+          operationalChange: async (publication) => {
+            const receiptRow = (publication.records.writes['response_receipts'] ?? []).find(
+              (row) => row.slot === input.responseId,
+            );
+            if (!receiptRow || !admission)
+              throw new Error('Native response did not emit its bound canonical receipt.');
+            const receipt = JSON.parse(receiptRow.payload) as NonNullable<
+              WorldState['responseReceipts']
+            >[string];
+            await finishDecisionPublicationFromRead(
+              this.store,
+              claim,
+              publication.outcome,
+              receipt,
+              (job, proposed) =>
+                decisionClaimCurrentFromRead(job, proposed, {
+                  ...admission!,
+                  policyDigest: decisionPolicyDigest(this.config),
+                }),
+            );
+          },
+        });
+        if (claim.startedMonotonic !== undefined) {
+          claim.deliveredAt = claim.now();
+          claim.deliveredElapsedMs = Math.max(0, performance.now() - claim.startedMonotonic);
+        }
+        return retainNativeSources(publication.outcome, publication);
+      }
+      const publication = await this.acceptOperation({
+        actorId,
+        first,
+        current,
+        signal: input.signal,
+        outcomes: (publication) => [{ id: input.responseId, outcome: publication.outcome }],
+      });
+      return (
+        (publication && retainNativeSources(publication.outcome, publication)) ?? {
+          ok: false,
+          code: 'stale-publication',
+          message: 'This response is no longer current.',
+        }
+      );
+    } catch (error) {
+      if (error instanceof DecisionClaimLost)
+        return {
+          ok: false,
+          code: 'stale-publication',
+          message: 'This decision is no longer pending.',
+        };
+      throw error;
+    }
+  }
+
   async forgetMemory(
     actorId: string,
     sourceId: string,
@@ -1927,6 +2133,120 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       // A new explicit retry of this identity reuses the same denial handle.
       throw error;
     }
+  }
+
+  /** Speak through the same command owner used by the player. Only the actual
+   * resulting personal account can admit a paid reply for the chosen NPC. */
+  async speakToNpc(
+    jobId: string,
+    text: string,
+    reference: string,
+    volume: SpeechVolume,
+    scope: RequestScope,
+  ): Promise<
+    | { readonly ok: false; readonly outcome: ApiResult }
+    | {
+        readonly ok: true;
+        readonly actorId: string;
+        readonly eventId: string;
+        readonly heard: boolean;
+        readonly recipientName: string;
+      }
+  > {
+    return this.lane.run(async () => {
+      this.assertAdmission();
+      this.assertScope(scope, 'play', true);
+      const capture = await NativePlayerCapture.capture(
+        this.world,
+        scope,
+        PLAYER_EVENT_WINDOW,
+        this.geometry,
+      );
+      try {
+        const resolved = nativePlayerCommandReferences(
+          scope,
+          { type: 'say', targetId: reference, text, volume },
+          capture.facts,
+        );
+        const available = await playerInteractionAvailability({
+          mode: 'speak',
+          config: this.config,
+          read: () => this.interactionFacts('speak', resolved.targetId, scope, capture),
+          budgetAvailable: (actor, allowance, ceiling) =>
+            this.store.budgetAvailable(actor, allowance, ceiling),
+          admit: (actor) => this.playerInteractionAdmission?.(actor) ?? true,
+        });
+        if (!available.available)
+          return {
+            ok: false,
+            outcome: { ok: false, code: available.code, message: available.reason! },
+          };
+        const target = resolved.targetId;
+        if (!target || !available.reply || this.actors.get(target)?.controller !== 'npc')
+          return {
+            ok: false,
+            outcome: {
+              ok: false,
+              code: 'resident-unavailable',
+              message: 'Select an available resident for this conversation.',
+            },
+          };
+        const recipient = await capture.interaction('speak', target);
+        if (!recipient.recipientDescription) throw new ViewChangedError();
+        const recipientName = namePhrase(recipient.recipientDescription, 'definite', {
+          capitalize: true,
+        });
+        const utteranceId = `${jobId}:player`;
+        const command = ordinaryPlayerCommand(resolved, {
+          id: utteranceId,
+          actorId: scope.actorId,
+        });
+        if (!command) throw new Error('Speech command factory returned no command.');
+        if ('ok' in command) return { ok: false, outcome: command };
+        const publication = await this.acceptInLane({
+          actorId: scope.actorId,
+          first: () =>
+            this.world.command(
+              Buffer.from(JSON.stringify(command)),
+              Buffer.from(canonicalJson(command)),
+              false,
+            ),
+          current: () => this.currentScope(scope, 'play', true),
+        });
+        if (!publication) throw new AuthorityError('stale-scope');
+        if (!publication.outcome.ok)
+          return { ok: false, outcome: retainNativeSources(publication.outcome, publication) };
+        const event = [...publication.events]
+          .reverse()
+          .find(
+            (event) =>
+              event.actorId === scope.actorId && event.data?.['utteranceId'] === utteranceId,
+          );
+        if (!event)
+          throw new Error(
+            'The utterance was already accepted without an available initiating event proof. Check its request status before retrying.',
+          );
+        const heard = publication.history.accounts.some(
+          (account) =>
+            account.eventId === event.id &&
+            account.actorId === target &&
+            account.awarenessPayload !== undefined &&
+            heardAddressedSpeech(JSON.parse(account.awarenessPayload) as Awareness),
+        );
+        return retainNativeSources(
+          {
+            ok: true,
+            actorId: target,
+            eventId: event.id,
+            heard,
+            recipientName,
+          },
+          publication,
+        );
+      } finally {
+        capture.release();
+      }
+    });
   }
 
   /** Recovery precedes target preparation: a lost body lease cannot turn an

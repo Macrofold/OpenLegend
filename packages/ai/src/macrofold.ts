@@ -148,6 +148,8 @@ export class MacrofoldTransport {
       accepted: (value: Record<string, unknown>) => Promise<void>;
     },
     matchVersion?: string,
+    publication?: import('@open-legend/network').HttpPublication,
+    onDispatch?: () => void,
   ): Promise<unknown> {
     if (
       !Number.isSafeInteger(maxResponseBytes) ||
@@ -264,6 +266,8 @@ export class MacrofoldTransport {
           operation,
           {
             url,
+            publication,
+            onDispatch,
             diagnostics: this.diagnostics ? undefined : 'omit',
             init: {
               method: body === undefined ? 'GET' : 'POST',

@@ -57,23 +57,52 @@ export function decisionClaimCurrent(
 ): job is JobRecord & { decision: DecisionState } {
   const state = job?.decision;
   const actor = state && entityGet(world.entities, state.actorId)?.actor;
+  return decisionClaimCurrentFromRead(job, claim, {
+    worldId: world.id,
+    timelineId: timeline,
+    generation,
+    policyDigest,
+    at: world.simTime,
+    actorEligible:
+      !!actor?.alive &&
+      !actor.incapacitated &&
+      actor.controller === 'npc' &&
+      actor.capabilities?.cognition !== false &&
+      !nativeProtectionReason(world, state!.actorId),
+    physicalLife: actor?.physicalLife ?? 0,
+  });
+}
+
+/** The current character read supplies these finite facts. Operational claims,
+ * group ownership and deadlines have one implementation for both engines. */
+export interface DecisionClaimFacts {
+  readonly worldId: string;
+  readonly timelineId: string;
+  readonly generation: string;
+  readonly policyDigest: string;
+  readonly at: number;
+  readonly actorEligible: boolean;
+  readonly physicalLife: number;
+}
+export function decisionClaimCurrentFromRead(
+  job: JobRecord | undefined,
+  claim: DecisionPublication,
+  facts: DecisionClaimFacts,
+): job is JobRecord & { decision: DecisionState } {
+  const state = job?.decision;
   if (
     !state ||
     state.revision !== claim.expectedRevision ||
     state.phase === 'closed' ||
-    state.policyDigest !== policyDigest ||
-    !actor?.alive ||
-    actor.incapacitated ||
-    actor.controller !== 'npc' ||
-    actor.capabilities?.cognition === false ||
-    (actor.physicalLife ?? 0) !== state.physicalLife ||
-    nativeProtectionReason(world, state.actorId) ||
-    state.worldId !== world.id ||
-    state.timelineId !== timeline ||
-    state.generation !== generation ||
+    state.policyDigest !== facts.policyDigest ||
+    !facts.actorEligible ||
+    facts.physicalLife !== state.physicalLife ||
+    state.worldId !== facts.worldId ||
+    state.timelineId !== facts.timelineId ||
+    state.generation !== facts.generation ||
     claim.now() >= (state.higher?.publishBy ?? state.usefulUntilWall) ||
     performance.now() >= (state.higher?.publishByMonotonic ?? state.usefulUntilMonotonic) ||
-    (state.usefulUntilSim !== undefined && world.simTime >= state.usefulUntilSim)
+    (state.usefulUntilSim !== undefined && facts.at >= state.usefulUntilSim)
   )
     return false;
   return (
@@ -84,6 +113,7 @@ export function decisionClaimCurrent(
     })
   );
 }
+
 /** Called only from the world commit's operationalChange transaction. */
 export async function finishDecisionPublication(
   store: GameRepository,
@@ -95,14 +125,39 @@ export async function finishDecisionPublication(
   outcome: Outcome,
   currentPolicyDigest: () => string,
 ): Promise<void> {
+  return finishDecisionPublicationFromRead(
+    store,
+    claim,
+    outcome,
+    world.responseReceipts?.[claim.receiptId],
+    (job, proposed): job is JobRecord & { decision: DecisionState } =>
+      decisionClaimCurrent(
+        job,
+        proposed,
+        admissionWorld,
+        timeline,
+        generation,
+        currentPolicyDigest(),
+      ),
+  );
+}
+
+/** Called only inside the actual response row transaction. The receipt is the
+ * canonical receipt emitted by that response owner, never provider output. */
+export async function finishDecisionPublicationFromRead(
+  store: GameRepository,
+  claim: DecisionPublication,
+  outcome: Outcome,
+  receipt: NonNullable<WorldState['responseReceipts']>[string] | undefined,
+  current: (
+    job: JobRecord | undefined,
+    claim: DecisionPublication,
+  ) => job is JobRecord & { decision: DecisionState },
+): Promise<void> {
   const written = await store.mutateDecision(claim.rootJobId, async (job) => {
     // The proposal may itself start sleep or otherwise change eligibility. Validate
     // its pre-effect admission snapshot, while reading receipts from the committed result.
-    if (
-      !decisionClaimCurrent(job, claim, admissionWorld, timeline, generation, currentPolicyDigest())
-    )
-      throw new DecisionClaimLost();
-    const receipt = world.responseReceipts?.[claim.receiptId];
+    if (!current(job, claim)) throw new DecisionClaimLost();
     const state = job.decision;
     let accepted = false;
     const groups = { ...state.groups };

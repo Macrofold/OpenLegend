@@ -1,3 +1,4 @@
+import { namePhrase } from '@open-legend/domain';
 import type { NativeWorld, NativeWorldPlayerRead } from '@open-legend/native-simulation';
 import type { RequestScope } from './authority.js';
 import type { NativeGeometryProviders } from './native-geometry.js';
@@ -9,6 +10,11 @@ import {
   freezeNativeProduct,
   retainNativeSources,
 } from './native-consumer.js';
+
+type NativeInteractionFacts = Omit<
+  PlayerInteractionFacts,
+  'controlling' | 'paused' | 'pauseReason'
+> & { readonly recipientDescription?: Parameters<typeof namePhrase>[0] };
 
 type PlayerPacket = Pick<NativePlayerRead, 'self' | 'perception' | 'events' | 'controls'>;
 
@@ -56,13 +62,10 @@ export class NativePlayerCapture {
 
   /** The purpose-bound native reader checks current speech/action permission;
    * the captured visible body alone cannot authorize a chosen recipient. */
-  async interaction(
-    mode: 'speak' | 'act',
-    targetId?: string,
-  ): Promise<Omit<PlayerInteractionFacts, 'controlling' | 'paused' | 'pauseReason'>> {
+  async interaction(mode: 'speak' | 'act', targetId?: string): Promise<NativeInteractionFacts> {
     if (this.released) throw new ViewChangedError();
     const result = freezeNativeProduct(
-      decodeNativeProduct<Omit<PlayerInteractionFacts, 'controlling' | 'paused' | 'pauseReason'>>(
+      decodeNativeProduct<NativeInteractionFacts>(
         await this.world.playerInteraction(
           this.read,
           Buffer.from(JSON.stringify({ mode, ...(targetId ? { targetId } : {}) })),

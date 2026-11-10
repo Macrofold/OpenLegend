@@ -95,9 +95,15 @@ export function activeStimuli(
         changedAt.set(entry.targetId, entry.at);
     }
   }
-  return activeStimuliFromRead(world.simTime, salient.map(({ sourceId, states, seen }) => ({
-    sourceId, states, since: Math.max(seen, changedAt.get(sourceId) ?? seen),
-  })), policy);
+  return activeStimuliFromRead(
+    world.simTime,
+    salient.map(({ sourceId, states, seen }) => ({
+      sourceId,
+      states,
+      since: Math.max(seen, changedAt.get(sourceId) ?? seen),
+    })),
+    policy,
+  );
 }
 
 /** A scoped native read supplies only the same visible states and actual private

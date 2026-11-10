@@ -8,6 +8,7 @@ use crate::simulation::AcceptedActorRead;
 use std::mem::size_of;
 
 mod bindings;
+pub(super) use bindings::ActiveNpcResponse;
 pub use bindings::RuntimeNpcResponseTicket;
 
 /// A brief dispatch gate, never retained while SQL or a provider is awaited.
@@ -17,17 +18,17 @@ pub struct RuntimeNpcPublication {
 }
 
 pub struct RuntimeNpcRead {
-    pub(super) read: AcceptedActorRead,
+    pub(super) read: Arc<AcceptedActorRead>,
     pub(super) serial: u64,
     history: crate::experience::CapturedHistoryCuts,
     pub(super) historical_scope: Arc<crate::capture::NpcHistoricalScope>,
     reference_facts: crate::capture::NpcReferenceFacts,
     candidates: Option<crate::capture::PreparedNpcCandidates>,
     intent_ids: Vec<String>,
-    sources: Vec<crate::capture::PreparedNpcSources>,
+    sources: Arc<Vec<crate::capture::PreparedNpcSources>>,
     candidate_key: Option<CandidateKey>,
     query_expanded: bool,
-    _custody: ByteReservation,
+    _custody: Arc<ByteReservation>,
 }
 pub enum RuntimeNpcPreparationStep {
     Continue,
@@ -60,6 +61,7 @@ impl NativeWorldSession {
         let checked = ticket
             .as_ref()
             .ok_or_else(|| failure("NPC response was released"))?;
+        checked.require_prepared()?;
         if checked.original.query_expanded
             || checked.original.candidate_key.is_some()
             || checked.current.candidate_key.is_some()
@@ -109,6 +111,9 @@ impl NativeWorldSession {
     ) -> Result<Option<RuntimeNpcPublication>, RuntimeError> {
         use crate::response::ResponseValidityRoute;
         self.require_active()?;
+        if !ticket.publication_available() {
+            return Ok(None);
+        }
         let state = &self.session.accepted().map_err(failure)?.state;
         let actor_id = &ticket.current.read.perception.actor_id;
         let Some(entity) = state.physical.entities.get(actor_id) else {
@@ -145,6 +150,14 @@ impl NativeWorldSession {
         }
         .map_err(failure)?;
         if !current
+            || !crate::capture::npc_perspectives_current(
+                state,
+                actor_id,
+                &ticket.original.sources,
+                &ticket.bindings.perspectives,
+                &self.budget,
+            )
+            .map_err(failure)?
             || !ticket
                 .bindings
                 .appraisals
@@ -222,23 +235,33 @@ impl NativeWorldSession {
             .reserve(
                 size_of::<RuntimeNpcRead>()
                     .checked_add(intent_bytes)
+                    .and_then(|n| {
+                        n.checked_add(
+                            size_of::<AcceptedActorRead>()
+                                + size_of::<Vec<crate::capture::PreparedNpcSources>>()
+                                + size_of::<ByteReservation>(),
+                        )
+                    })
+                    .and_then(|n| {
+                        n.checked_add(6 * size_of::<usize>() + 3 * std::mem::align_of::<usize>())
+                    })
                     .ok_or_else(|| failure("capacity"))?,
             )
             .map_err(failure)?;
         let intent_ids = attempts.iter().map(|attempt| attempt.id.clone()).collect();
         self.next_read_serial = serial;
         Ok(RuntimeNpcRead {
-            read,
+            read: Arc::new(read),
             serial,
             history,
             historical_scope,
             reference_facts,
             candidates: None,
             intent_ids,
-            sources: Vec::new(),
+            sources: Arc::new(Vec::new()),
             candidate_key: None,
             query_expanded: false,
-            _custody: custody,
+            _custody: Arc::new(custody),
         })
     }
     pub fn begin_npc_candidates(
@@ -309,7 +332,9 @@ impl NativeWorldSession {
                 sources
                     .validate_origin(&read.read, &self.budget)
                     .map_err(failure)?;
-                read.sources.push(sources);
+                Arc::get_mut(&mut read.sources)
+                    .ok_or_else(|| failure("NPC sources are already issued"))?
+                    .push(sources);
                 RuntimeNpcPreparationStep::Complete
             }
             _ => return Err(failure("NPC discovery produced an executable completion")),
@@ -333,6 +358,11 @@ impl NativeWorldSession {
         if read.candidate_key.is_some() {
             return Err(failure("NPC read preparation is active"));
         }
+        if Arc::strong_count(&read.sources) != 1 || Arc::strong_count(&read._custody) != 1 {
+            return Err(failure(
+                "NPC source preparation is still retained by an execution",
+            ));
+        }
         let _decode = decode_preparation(request, &self.budget)?;
         let request: crate::capture::NpcSourceSelection =
             serde_json::from_slice(request).map_err(failure)?;
@@ -343,10 +373,11 @@ impl NativeWorldSession {
                 .checked_add(1)
                 .and_then(|n| n.max(4).checked_next_power_of_two())
                 .ok_or_else(|| failure("capacity"))?;
-            read._custody
+            let bytes = read._custody.bytes();
+            Arc::get_mut(&mut read._custody)
+                .ok_or_else(|| failure("NPC source custody is already issued"))?
                 .resize(
-                    read._custody
-                        .bytes()
+                    bytes
                         .checked_add(
                             capacity
                                 .checked_sub(read.sources.capacity())
@@ -357,8 +388,10 @@ impl NativeWorldSession {
                         .ok_or_else(|| failure("capacity"))?,
                 )
                 .map_err(failure)?;
-            read.sources
-                .try_reserve_exact(capacity - read.sources.len())
+            let additional = capacity - read.sources.len();
+            Arc::get_mut(&mut read.sources)
+                .ok_or_else(|| failure("NPC sources are already issued"))?
+                .try_reserve_exact(additional)
                 .map_err(failure)?;
         }
         let key = self

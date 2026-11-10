@@ -117,7 +117,7 @@ impl ResponseWorkIdentity {
 /// The trusted typed binder retains unsupported command families as immutable
 /// offered data. The executor refuses that action component; deserializing a
 /// response must never discard independent legitimate speech or interpretation.
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct ResponseActionChoice {
     pub invocation: Option<crate::records::SqlCell>,
@@ -144,7 +144,7 @@ pub(crate) struct ResponseAttemptBinding {
     pub description: JsText,
     pub commands: Vec<crate::records::SqlCell>,
 }
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ResponseSemanticCause {
     pub key: String,
@@ -152,6 +152,7 @@ pub(crate) struct ResponseSemanticCause {
     pub severity: f64,
     pub generation: u64,
 }
+#[derive(Clone)]
 pub(crate) struct ResponseSituation {
     pub privacy_revision: u64,
     pub attention_references: IndexMap<String, String>,
@@ -164,7 +165,7 @@ pub(crate) struct ResponseSituation {
     pub presented: Vec<AttentionPresentation>,
     pub semantic_causes: Option<Vec<ResponseSemanticCause>>,
 }
-#[derive(PartialEq)]
+#[derive(Clone, PartialEq)]
 pub(crate) enum ResponseObservation {
     Acquired(usize),
     Personal(std::sync::Arc<crate::reception::ObservationContribution>),
@@ -188,8 +189,8 @@ impl HeapBytes for ResponseObservation {
 /// The original situation/history and refreshed current menu are separate real
 /// reads in Source prepareDecision. Later unrelated cuts do not revoke either.
 pub(crate) struct ResponseReads {
-    pub original: AcceptedActorRead,
-    pub current: AcceptedActorRead,
+    pub original: std::sync::Arc<AcceptedActorRead>,
+    pub current: std::sync::Arc<AcceptedActorRead>,
 }
 impl ResponseReads {
     pub(crate) fn validate(&self) -> bool {
@@ -462,7 +463,10 @@ impl HeapBytes for ResponseSituation {
 impl HeapBytes for ResponseBindingInput {
     fn heap_bytes(&self) -> Option<usize> {
         heap_sum([
-            size_of::<ResponseBindings>(),
+            size_of::<ResponseBindings>()
+                + 2 * size_of::<usize>()
+                + std::mem::align_of::<ResponseBindings>()
+                - 1,
             self.actions.heap_bytes()?,
             self.entity_ids.heap_bytes()?,
             self.attempt_bindings.heap_bytes()?,

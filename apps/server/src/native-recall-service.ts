@@ -1,9 +1,5 @@
-import {
-  acceptedMindDocumentText,
-  experienceEntryKey,
-  experienceSourceReference,
-} from '@open-legend/domain';
-import type { JudgeRequest, JudgeValue } from '@open-legend/ai';
+import { acceptedMindDocumentText, experienceEntryKey } from '@open-legend/domain';
+import type { JudgeRequest, JudgeValue, EmbeddingRequest, AiResult } from '@open-legend/ai';
 import type { NativeWorldService } from './native-world-service.js';
 import type { NativeNpcCapture } from './native-npc-capture.js';
 import type { MemoryScope, MemoryReadCache } from './memory-repository.js';
@@ -16,6 +12,7 @@ import { nativeKnowledgeCandidates } from './native-knowledge-context.js';
 import type { AttentionCandidate } from './recall.js';
 import { retainNativeSources } from './native-consumer.js';
 import { projectEntityMarkersFromRead, personalEntityHandle } from './entity-references.js';
+import { nativeNpcPersonalSelection } from './native-npc-sources.js';
 
 /** Projection uses acquired associations, never an ID found in prose. */
 export function nativeProjectEntityMarkers(text: string, capture: NativeNpcCapture): string {
@@ -46,8 +43,14 @@ export function nativeProjectEntityMarkers(text: string, capture: NativeNpcCaptu
 
 export type NativeRecallRuntime = Omit<
   RecallSelectionRuntime,
-  'current' | 'retrieval' | 'noteCoverage'
->;
+  'current' | 'retrieval' | 'noteCoverage' | 'embed'
+> & {
+  embed(
+    request: EmbeddingRequest,
+    current: () => boolean | Promise<boolean>,
+    publish: <T>(start: () => T) => Promise<{ result: T }>,
+  ): Promise<AiResult<number[][]>>;
+};
 
 /** The ordinary indexed retrieval and attention algorithms run on admitted
  * native facts. Each repository operation acquires its own actual SQL/pending
@@ -78,7 +81,13 @@ export async function retrieveNativeRecall(input: {
   try {
     const recalled = await retrieveRecall({
       ...input,
-      runtime: { ...runtime, store: service.store, current: input.current },
+      runtime: {
+        ...runtime,
+        store: service.store,
+        current: input.current,
+        embed: (request, current) =>
+          runtime.embed(request, current, (start) => service.publishNpcHistory(original, start)),
+      },
       repository: {
         coverage: (...args) => sql(() => repository.coverage(...args)),
         required: (...args) => sql(() => repository.required(...args)),
@@ -100,7 +109,7 @@ export async function retrieveNativeRecall(input: {
           original,
           {
             receipts: [],
-            personal: records.map((record) => experienceSourceReference(record.entry)),
+            personal: records.map(nativeNpcPersonalSelection),
           },
           input.signal,
         );
@@ -173,8 +182,10 @@ export async function retrieveNativeRecall(input: {
 }
 
 export function selectNativeRecall(input: {
+  service: NativeWorldService;
   original: NativeNpcCapture;
-  runtime: RecallSelectionRuntime;
+  runtime: NativeRecallRuntime &
+    Pick<RecallSelectionRuntime, 'current' | 'retrieval' | 'noteCoverage'>;
   stimulus: string;
   jobId: string;
   candidates: AttentionCandidate[];
@@ -188,7 +199,13 @@ export function selectNativeRecall(input: {
   const { original } = input;
   const { self, perception } = original.facts;
   return selectRecall(
-    input.runtime,
+    {
+      ...input.runtime,
+      embed: (request, current) =>
+        input.runtime.embed(request, current, (start) =>
+          input.service.publishNpcHistory(original, start),
+        ),
+    },
     {
       worldId: self.worldId,
       inner: self.innerWorld

@@ -75,6 +75,8 @@ import {
   basePreparedThreatResponses,
   basePreparedThreatOpportunity,
   basePreparedThreatResult,
+  basePreparedThreatResultFromRead,
+  type PreparedThreatResultRead,
   baseThreatObservation,
 } from './worlds/base/threat-responses.js';
 import type { Awareness } from './experience.js';
@@ -187,10 +189,15 @@ export function selectedOccurrenceRules(world: Pick<WorldState, 'profile'>) {
   selectedCreationProfileForWorld(world);
   return BASE_OCCURRENCE_RULES;
 }
-export function selectedResponseExpressions(world: Pick<WorldState, 'profile'>, supported: boolean) {
+export function selectedResponseExpressions(
+  world: Pick<WorldState, 'profile'>,
+  supported: boolean,
+) {
   const rules = selectedOccurrenceRules(world).response.expression;
-  return { expressionVerbs: supported ? Object.keys(rules.verbs) : [],
-    expressionGuidance: supported ? rules.guidance : rules.unsupportedGuidance };
+  return {
+    expressionVerbs: supported ? Object.keys(rules.verbs) : [],
+    expressionGuidance: supported ? rules.guidance : rules.unsupportedGuidance,
+  };
 }
 export function selectedSightingNarration(
   world: WorldState,
@@ -446,6 +453,18 @@ export function preparedResponseResult(
   if (profile === undefined) throw new Error('The selected response profile is unavailable.');
   return !!profile && basePreparedThreatResult(world, profile, actorId, causeIds);
 }
+
+/** The selected profile reads these actual owner facts without a world adapter. */
+export function preparedResponseResultFromRead(
+  selected: DefinitionPin | null,
+  read: PreparedThreatResultRead,
+  causeIds: readonly string[],
+): boolean {
+  const profile = preparedResponseProfile(selected);
+  if (profile === undefined) throw new Error('The selected response profile is unavailable.');
+  return !!profile && basePreparedThreatResultFromRead(profile, read, causeIds);
+}
+export type { PreparedThreatResultRead };
 
 /** Explicit application composition: trusted implementations are linked here, never
  * loaded from world data. The installed manifest remains the only capability selector.

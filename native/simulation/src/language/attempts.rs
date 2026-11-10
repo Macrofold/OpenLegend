@@ -19,14 +19,36 @@ pub(crate) struct AttemptNormalizationAnswer {
     pub syntax: Vec<Option<FreeTypedActionSyntax>>,
 }
 #[derive(Clone, Deserialize)]
-#[serde(tag = "kind", rename_all = "kebab-case", rename_all_fields = "camelCase", deny_unknown_fields)]
+#[serde(
+    tag = "kind",
+    rename_all = "kebab-case",
+    rename_all_fields = "camelCase",
+    deny_unknown_fields
+)]
 pub(crate) enum FreeTypedActionSyntax {
-    Stop { activity: Option<String> },
-    Point { x: Option<f64>, z: Option<f64>, surface_id: Option<String> },
-    Offset { x: Option<f64>, z: Option<f64> },
+    Stop {
+        activity: Option<String>,
+    },
+    Point {
+        x: Option<f64>,
+        z: Option<f64>,
+        surface_id: Option<String>,
+    },
+    Offset {
+        x: Option<f64>,
+        z: Option<f64>,
+    },
     DistanceNeeded,
 }
-impl HeapBytes for FreeTypedActionSyntax { fn heap_bytes(&self) -> Option<usize> { match self { Self::Stop { activity } => activity.heap_bytes(), Self::Point { surface_id, .. } => surface_id.heap_bytes(), _ => Some(0) } } }
+impl HeapBytes for FreeTypedActionSyntax {
+    fn heap_bytes(&self) -> Option<usize> {
+        match self {
+            Self::Stop { activity } => activity.heap_bytes(),
+            Self::Point { surface_id, .. } => surface_id.heap_bytes(),
+            _ => Some(0),
+        }
+    }
+}
 pub(crate) struct NormalizedAttemptFacts {
     descriptions: Vec<JsText>,
     normalized: Vec<JsText>,
@@ -45,7 +67,9 @@ impl NormalizedAttempt<'_> {
     pub(crate) fn normalized(&self) -> &JsText {
         self.normalized
     }
-    pub(crate) fn syntax(&self) -> Option<&FreeTypedActionSyntax> { self.syntax }
+    pub(crate) fn syntax(&self) -> Option<&FreeTypedActionSyntax> {
+        self.syntax
+    }
 }
 impl NormalizedAttemptFacts {
     pub(crate) fn get(&self, index: usize) -> Option<NormalizedAttempt<'_>> {
@@ -96,7 +120,10 @@ impl AttemptNormalizationRequest {
         self,
         answer: AttemptNormalizationAnswer,
     ) -> Result<NormalizedAttemptFacts, ExecutionError> {
-        if answer.binding != self.binding || answer.normalized.len() != self.descriptions.len() || answer.syntax.len() != self.descriptions.len() {
+        if answer.binding != self.binding
+            || answer.normalized.len() != self.descriptions.len()
+            || answer.syntax.len() != self.descriptions.len()
+        {
             return Err(ExecutionError::InvalidCheckpoint);
         }
         let Self {

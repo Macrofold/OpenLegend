@@ -225,11 +225,14 @@ export function createOpenAiDecisionClient(configuration: {
           },
           async (operation) => {
             operation.throwIfStopped();
-            receipt.dispatched = true;
-            receipt.completionUncertain = true;
             const raw = await providerText(
               operation,
               {
+                publication: request.publication,
+                onDispatch: () => {
+                  receipt.dispatched = true;
+                  receipt.completionUncertain = true;
+                },
                 url: 'https://api.openai.com/v1/decisions',
                 init: {
                   method: 'POST',

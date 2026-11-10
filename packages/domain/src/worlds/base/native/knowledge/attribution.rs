@@ -12,7 +12,21 @@ type Identity = (
 );
 pub(crate) struct CapturedAttributionIdentities {
     values: IndexMap<String, Vec<Identity>>,
+    enumeration: Vec<usize>,
     _storage: ByteReservation,
+}
+impl CapturedAttributionIdentities {
+    pub(crate) fn key(&self, ordinal: usize) -> Option<&str> {
+        self.values
+            .get_index(*self.enumeration.get(ordinal)?)
+            .map(|(key, _)| key.as_str())
+    }
+    pub(crate) fn matches_entry(&self, ordinal: usize, current: &Self) -> bool {
+        self.enumeration
+            .get(ordinal)
+            .and_then(|index| self.values.get_index(*index))
+            .is_some_and(|(key, expected)| current.values.get(key) == Some(expected))
+    }
 }
 impl Serialize for CapturedAttributionIdentities {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -120,8 +134,19 @@ impl PersonalNameReader<'_> {
                 identity.authored,
             ));
         }
+        // Reuse the funded lengths vector for Object.keys order. Numeric
+        // authored IDs enumerate before other keys in the Node formatter.
+        for (index, entry) in lengths.iter_mut().enumerate() {
+            *entry = index;
+        }
+        lengths.sort_unstable_by_key(|index| {
+            let key = values.get_index(*index).expect("captured identity key").0;
+            crate::encoding::array_index(key)
+                .map_or((1u8, *index as u64), |index| (0, u64::from(index)))
+        });
         Ok(CapturedAttributionIdentities {
             values,
+            enumeration: lengths,
             _storage: storage,
         })
     }

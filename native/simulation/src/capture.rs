@@ -25,23 +25,22 @@ pub(crate) mod npc_intake;
 mod npc_references;
 mod npc_subject;
 pub(crate) use npc_bindings::{
-    NpcAliasOrdinal, NpcBindingMaps, NpcBindingRead, NpcBindingSelection,
+    NpcAliasOrdinal, NpcActionOrdinal, NpcCatalogueSource, NpcPerspectiveOrdinal, NpcBindingMaps, NpcBindingRead, NpcBindingSelection, prepare_ordinary_actions, npc_perspectives_current,
 };
 pub(crate) use npc_references::NpcReferenceFacts;
 mod npc_history;
 pub(crate) use npc_history::{NpcHistoricalScope, NpcHistoryPrefix};
 mod npc_sources;
 pub(crate) use npc_sources::{
-    NpcSourceRows, NpcSourceSelection, NpcSourcesAnswer, NpcSourcesCursor, NpcSourcesRequest,
+    NpcSourceRows, NpcSourceSelection, NpcPersonalSelection, NpcSourcesAnswer, NpcSourcesCursor, NpcSourcesRequest,
     PreparedNpcSources,
 };
 mod npc_selection;
 pub(crate) use npc_selection::NpcObservationSelection;
 mod npc_candidates;
 pub(crate) use npc_candidates::{
-    NpcCandidateAnswer, NpcCandidateCursor, NpcCandidateStep, NpcOfferCoverage,
-    PreparedNpcCandidates,
-    NpcDescriptionsRequest, NpcDescriptionsAnswer,
+    NpcCandidateAnswer, NpcCandidateCursor, NpcCandidateStep, NpcDescriptionsAnswer,
+    NpcDescriptionsRequest, NpcOfferCoverage, PreparedNpcCandidates,
 };
 mod outcomes;
 mod player;
@@ -233,7 +232,17 @@ pub(crate) fn capture_actor_perception(
                     .heap_bytes()
                     .and_then(|n| n.checked_add(body.field.id.len()))
                     .and_then(|n| n.checked_add(id.len()))
-                    .and_then(|n| n.checked_add(state.reception.perception_episodes.as_ref().and_then(|owners| owners.get(actor_id)).and_then(|episodes| episodes.get(id)).map_or(0, String::len)))
+                    .and_then(|n| {
+                        n.checked_add(
+                            state
+                                .reception
+                                .perception_episodes
+                                .as_ref()
+                                .and_then(|owners| owners.get(actor_id))
+                                .and_then(|episodes| episodes.get(id))
+                                .map_or(0, String::len),
+                        )
+                    })
                     .and_then(|n| {
                         n.checked_add(
                             individual
@@ -354,7 +363,13 @@ pub(crate) fn capture_actor_perception(
                 source_id: id.to_owned(),
                 physical_life: body.grant.subject_physical_life,
                 lease_id: body.field.id.clone(),
-                episode: state.reception.perception_episodes.as_ref().and_then(|owners| owners.get(actor_id)).and_then(|episodes| episodes.get(id)).cloned(),
+                episode: state
+                    .reception
+                    .perception_episodes
+                    .as_ref()
+                    .and_then(|owners| owners.get(actor_id))
+                    .and_then(|episodes| episodes.get(id))
+                    .cloned(),
                 subject,
                 name: names.capture_intended_name(id, SpeechTargetRole::Body, budget)?,
                 identity,

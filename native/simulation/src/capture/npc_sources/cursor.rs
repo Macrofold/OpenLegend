@@ -136,7 +136,7 @@ impl NpcSourcesCursor {
                     selection
                         .personal
                         .capacity()
-                        .checked_mul(size_of::<PersonalSourceRef>())?,
+                        .checked_mul(size_of::<super::NpcPersonalSelection>())?,
                 )
             })
             .ok_or(ExecutionError::Capacity)?;
@@ -154,10 +154,23 @@ impl NpcSourcesCursor {
                 .ok_or(ExecutionError::Capacity)?;
         }
         for source in &selection.personal {
+            if !source.reference.validate()
+                || source.through.as_ref().is_some_and(|parent| {
+                    parent.kind != PersonalSourceKind::Summary || !parent.validate()
+                })
+            {
+                return Err(ExecutionError::InvalidCheckpoint);
+            }
             bytes = bytes
                 .checked_add(source.id.capacity())
                 .and_then(|n| n.checked_add(source.revision.capacity()))
                 .ok_or(ExecutionError::Capacity)?;
+            if let Some(parent) = &source.through {
+                bytes = bytes
+                    .checked_add(parent.id.capacity())
+                    .and_then(|n| n.checked_add(parent.revision.capacity()))
+                    .ok_or(ExecutionError::Capacity)?;
+            }
         }
         let storage = budget.reserve(bytes)?;
         let binding = GeometryBinding::new(

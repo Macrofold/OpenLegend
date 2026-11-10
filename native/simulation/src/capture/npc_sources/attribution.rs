@@ -120,9 +120,19 @@ impl Serialize for NpcSourceAttribution {
     }
 }
 impl NpcSourceAttribution {
+    pub(crate) fn perspective_entity(&self, ordinal: usize) -> Option<&str> {
+        self.identities.key(ordinal)
+    }
+    pub(crate) fn perspective_matches(
+        &self,
+        ordinal: usize,
+        current: &crate::worlds::CapturedAttributionIdentities,
+    ) -> bool {
+        self.identities.matches_entry(ordinal, current)
+    }
     pub(crate) fn appraisal_source(
         &self,
-        record: &PersonalSourceRecord,
+        record: &super::CapturedPersonalRecord,
         decision: &str,
         trigger: bool,
         budget: &ByteBudget,
@@ -191,7 +201,7 @@ impl NpcSourceAttribution {
     pub(super) fn capture(
         state: &SimulationState,
         actor: &str,
-        source: &PersonalSourceRecord,
+        source: &super::CapturedPersonalRecord,
         names: &InstalledPersonalNameReader<'_>,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
@@ -422,7 +432,15 @@ impl NpcSourceAttribution {
         for (index, role) in occurrence_roles.iter().enumerate() {
             role_ids[index] = &role.entity_id;
         }
-        let identities = names.capture_attribution_identities(permitted.iter().copied(), budget)?;
+        // Conversation perspective also depends on empty identity lists for
+        // source participants. These naming facts confer no entity permission.
+        let identities = names.capture_attribution_identities(
+            permitted
+                .iter()
+                .copied()
+                .chain(body.entity_ids.iter().map(String::as_str)),
+            budget,
+        )?;
         let names_for_subjects = names;
         let names = names.capture_names(&role_ids[..occurrence_roles.len()], budget)?;
         let permitted_bytes = permitted

@@ -1,4 +1,4 @@
-import type { NetworkOwner } from '@open-legend/network';
+import type { NetworkOwner, HttpPublication } from '@open-legend/network';
 import type {
   MacrofoldDeploymentTarget,
   MacrofoldOutputMode,
@@ -52,6 +52,8 @@ export interface RequestControl {
   signal?: AbortSignal;
   /** Absolute Unix time in milliseconds. The client also enforces its configured timeout. */
   deadlineMs?: number;
+  /** The caller's real final disclosure lease, after all provider preparation. */
+  publication?: HttpPublication;
 }
 
 export interface JudgeRequest extends RequestControl {

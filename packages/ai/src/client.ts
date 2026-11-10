@@ -170,10 +170,13 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
         },
         async (operation): Promise<T> => {
           operation.throwIfStopped();
-          receipt.dispatched = true;
           const raw = await providerText(
             operation,
             {
+              publication: request.publication,
+              onDispatch: () => {
+                receipt.dispatched = true;
+              },
               url: endpoint,
               init: {
                 method: 'POST',

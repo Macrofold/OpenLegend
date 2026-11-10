@@ -59,6 +59,7 @@ impl NativeWorldSession {
                 &read.actor,
                 input.mode,
                 input.target_id.as_deref(),
+                &self.budget,
             )
             .map_err(failure)?;
         RuntimeJson::encode(&facts, &self.budget)
@@ -137,8 +138,8 @@ impl NativeWorldSession {
             return Err(failure("player control preparation is unfinished"));
         }
         if !simulation
-                .player_read_still_permitted(&read.account, &read.actor, &read.read)
-                .map_err(failure)?
+            .player_read_still_permitted(&read.account, &read.actor, &read.read)
+            .map_err(failure)?
             || !simulation
                 .player_events_still_permitted(
                     &read.account,

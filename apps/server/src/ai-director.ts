@@ -1,3 +1,13 @@
+import type { HttpPublication } from '@open-legend/network';
+import { sourceMaintenanceHost } from './source-maintenance-host.js';
+import {
+  THOUGHT_RESPONSE_INTERRUPTION as RESPONSE_INTERRUPTION,
+  thoughtEvidenceFromRead,
+  thoughtMeaningFromRead,
+  thoughtNativeCausesFromRead,
+  thoughtOpportunityFromRead,
+  priorityThoughtEvidence,
+} from './thought-trigger.js';
 import { sourceDecisionHost } from './source-decision-host.js';
 import { dispatchDecision, StopJob } from './decision-dispatch.js';
 import { sourceMacrofoldHost } from './source-macrofold-host.js';
@@ -180,7 +190,6 @@ import { CONTEXT_BYTE_LIMIT, ContextBudgetError } from './context.js';
 import { digest, type JobRecord } from './store.js';
 import type { WorldService } from './world-service.js';
 
-const RESPONSE_INTERRUPTION = { importance: 8, urgency: 8 } as const;
 interface ResponseInterruption {
   eventId: string;
   sequence: number;
@@ -374,11 +383,10 @@ export class AiDirector {
       now,
     );
     this.maintenance = new CognitionMaintenance(
-      service,
+      sourceMaintenanceHost(service, this.recall, this.macrofold),
       this.client,
       this.macrofold,
       log,
-      this.recall,
       now,
       this.execution,
     );
@@ -686,8 +694,13 @@ export class AiDirector {
             run,
             'jev',
             `${operation}:classify:${serial++}`,
-            (requestId) =>
-              this.client.judge({ ...request, requestId, signal: run.controller.signal }),
+            (requestId, publication) =>
+              this.client.judge({
+                ...request,
+                publication,
+                requestId,
+                signal: run.controller.signal,
+              }),
             judgeMeter('grounding', request),
           ),
         generate: (request) =>
@@ -2042,7 +2055,7 @@ export class AiDirector {
     run: Running,
     provider: 'jev' | 'openai',
     suffix: string,
-    dispatch: (requestId: string) => Promise<AiResult<T>>,
+    dispatch: (requestId: string, publication: HttpPublication) => Promise<AiResult<T>>,
     meter?: Meter,
   ): Promise<T> {
     const director = this;
@@ -2070,6 +2083,11 @@ export class AiDirector {
         privateReadFence: (actorId, permitted) => this.service.privateReadFence(actorId, permitted),
         awaitResume: (active, ready) => this.awaitResume(active, ready),
         update: (active, status, message) => this.update(active, status, message),
+        publication: (active, start) =>
+          this.service.publishRecall(async () => {
+            this.current(active);
+            return { result: start() };
+          }),
         attemptBudget: (active) =>
           inventionAttemptBudget(this.service, active.job.request.invention),
         settleDiscovery: (active, discovery) =>
@@ -2207,8 +2225,13 @@ export class AiDirector {
       run,
       'jev',
       `attempt:${attempt}:threat-relevance`,
-      (requestId) =>
-        this.client.judge({ ...relevanceRequest, requestId, signal: run.controller.signal }),
+      (requestId, publication) =>
+        this.client.judge({
+          ...relevanceRequest,
+          publication,
+          requestId,
+          signal: run.controller.signal,
+        }),
       judgeMeter('level', relevanceRequest),
     );
     await current();
@@ -2316,8 +2339,13 @@ export class AiDirector {
       run,
       'jev',
       `attempt:${attempt}:threat-choice`,
-      (requestId) =>
-        this.client.judge({ ...choice.request, requestId, signal: run.controller.signal }),
+      (requestId, publication) =>
+        this.client.judge({
+          ...choice.request,
+          publication,
+          requestId,
+          signal: run.controller.signal,
+        }),
       judgeMeter('level', choice.request),
     );
     const level1 = resolveLevel1({
@@ -2462,9 +2490,10 @@ export class AiDirector {
       run,
       'openai',
       operation,
-      async (id) =>
+      async (id, publication) =>
         await this.client.generate<T>({
           ...request,
+          publication,
           requestId: id,
           signal: run.controller.signal,
           maxOutputTokens:
@@ -2769,8 +2798,13 @@ export class AiDirector {
           run,
           'jev',
           `attempt:${attempt}:attention:${attentionCall++}`,
-          async (id) =>
-            await this.client.judge({ ...request, requestId: id, signal: run.controller.signal }),
+          async (id, publication) =>
+            await this.client.judge({
+              ...request,
+              publication,
+              requestId: id,
+              signal: run.controller.signal,
+            }),
           judgeMeter('level', request),
         ),
       run.controller.signal,
@@ -2851,8 +2885,13 @@ export class AiDirector {
           run,
           'jev',
           `attempt:${attempt}:${suffix}`,
-          async (id) =>
-            await this.client.judge({ ...request, requestId: id, signal: run.controller.signal }),
+          async (id, publication) =>
+            await this.client.judge({
+              ...request,
+              publication,
+              requestId: id,
+              signal: run.controller.signal,
+            }),
           judgeMeter('level', request),
         );
     // Refresh cheap feasibility after earlier provider latency, then bound candidates.
@@ -3818,8 +3857,13 @@ export class AiDirector {
       source: this.executionSource,
       model: () => run.generatedBy ?? this.service.config.llmModel,
       judge: (request) =>
-        this.call(run, 'jev', 'route', (id) =>
-          this.client.judge({ ...request, requestId: id, signal: run.controller.signal }),
+        this.call(run, 'jev', 'route', (id, publication) =>
+          this.client.judge({
+            ...request,
+            publication,
+            requestId: id,
+            signal: run.controller.signal,
+          }),
         ),
       generate: (request) =>
         this.generate(
@@ -3984,61 +4028,40 @@ export class AiDirector {
         const entity = entityGet(readWorld().entities, actorId);
         if (!entity?.actor?.alive || entity.actor.incapacitated) continue;
         const actor = entity.actor;
-        const unseen = all
-          .filter((memory) => {
-            // Spoken output and its native completion stay in memory. Neither is
-            // a new external cause for its own speaker to purchase another turn.
-            if (
-              memory.speakerId === entity.id &&
-              (memory.eventType === 'speech' || memory.eventType === 'speech-result')
-            )
-              return false;
-            const event = this.service.worldEvent(memory.eventId ?? '');
-            const speechJob = speechJobs.get(memory.eventId ?? memory.id);
-            const handledByChat = !!speechJob && speechJob.request.npcId === entity.id;
-            // Retain history but retract an obsolete bodily urgency before buying cognition.
-            const attributeId = event?.type === 'body-condition' && event.data?.['attributeId'];
-            // A notice from a replaced condition policy is superseded by its own 'initial'.
-            if (
-              typeof attributeId === 'string' &&
-              ((typeof event?.data?.['severity'] === 'number' &&
-                (actor.conditions?.[attributeId]?.severity ?? 0) < event.data['severity']) ||
-                (typeof event?.data?.['definitionVersion'] === 'number' &&
-                  actor.conditions?.[attributeId]?.version !== event.data['definitionVersion']))
-            )
-              return false;
-            const consumedInterpretation =
-              event?.actorId === entity.id &&
-              event.type === 'appraisal-changed' &&
-              event.data?.['appraisalPipeline'] === 'prepared-response' &&
-              typeof event.data['responseId'] === 'string' &&
-              typeof event.data['appraisalInputSequence'] === 'number' &&
-              typeof event.data['appraisalCauseIds'] === 'string' &&
-              !!readWorld().responseReceipts?.[event.data['responseId']];
-            // Only this pipeline's admitted interpretation receipts were consumed
-            // internally. Its later physical results remain new personal evidence.
-            return (
-              !consumedInterpretation &&
-              !handledByChat &&
-              (memory.importance >= 6 ||
-                policy.significantEventTypes.includes(event?.type ?? '')) &&
-              (memory.sequence ?? 0) > (last?.watermark ?? 0)
-            );
-          })
-          .sort((a, b) => (b.sequence ?? 0) - (a.sequence ?? 0));
+        const unseen = thoughtEvidenceFromRead(
+          entity.id,
+          last?.watermark ?? 0,
+          all,
+          actor.conditions,
+          (id) => {
+            const event = this.service.worldEvent(id);
+            return event
+              ? {
+                  type: event.type,
+                  actorId: event.actorId,
+                  data: event.data,
+                  responseRecorded:
+                    typeof event.data?.['responseId'] === 'string' &&
+                    !!readWorld().responseReceipts?.[event.data['responseId']],
+                }
+              : undefined;
+          },
+          new Set(
+            [...speechJobs].filter(([, job]) => job.request.npcId === entity.id).map(([id]) => id),
+          ),
+          policy.significantEventTypes,
+        );
         const unseenIds = new Set(unseen.map((entry) => entry.eventId ?? entry.id));
         const interruptions = this.responseInterruptions(entity.id, last?.watermark ?? 0).filter(
           (entry) => unseenIds.has(entry.eventId),
         );
         const preparedResult = preparedResponseResult(readWorld(), entity.id, [...unseenIds]);
-        const nativeCauses = currentAttentionCues(readWorld(), entity.id).flatMap((cue) => {
-          const key = JSON.stringify([cue.anchorKey, cue.family]),
-            qualitativeRevision = cue.descriptionRevision,
-            severity = selectedAttentionPolicy(readWorld()).urgentCue;
-          return semanticCauseResolved(readWorld(), entity.id, key, qualitativeRevision, severity)
-            ? []
-            : [{ key, qualitativeRevision, severity, generation: cue.generation }];
-        });
+        const nativeCauses = thoughtNativeCausesFromRead(
+          currentAttentionCues(readWorld(), entity.id),
+          selectedAttentionPolicy(readWorld()).urgentCue,
+          (key, revision, severity) =>
+            semanticCauseResolved(readWorld(), entity.id, key, revision, severity),
+        );
         const urgent =
           (this.thoughtWork.pending(entity.id)?.urgency ?? 0) >= INTAKE_LIMITS.urgent ||
           preparedResult ||
@@ -4057,13 +4080,7 @@ export class AiDirector {
         const resultId = preparedResult
           ? resultEvidenceId(actor.agency.lastResultEvidence)
           : undefined;
-        const priority = unseen.find((memory) => {
-          const id = memory.eventId ?? memory.id;
-          return id === urgentId || id === resultId;
-        });
-        const latest = priority
-          ? [priority, ...unseen.filter((memory) => memory !== priority)].slice(0, 8)
-          : unseen.slice(0, 8);
+        const latest = priorityThoughtEvidence(unseen, urgentId, resultId);
         // This is a wakeup snapshot, not a queue of memories owed future model calls.
         // docs/memory-architecture.md#every-semantic-decision-uses-an-event-or-intent-sentence
         // Awareness and personal-memory sequences share the native allocation counter,
@@ -4087,56 +4104,26 @@ export class AiDirector {
         // These descriptions share the same permitted world and character. No
         // await or mutation separates comparison from the initiating sentence.
         const attributes = projectAttributes(readWorld(), entity, 'owner');
-        const fingerprint = digest({
+        const concerns = attributes
+          .filter(
+            (value) =>
+              value.concern &&
+              readWorld().moduleManifest.definitions.find(
+                (definition) => definition.id === value.id,
+              )?.concern?.reconsider,
+          )
+          .map((value) => [value.id, value.concern!] as const);
+        const { fingerprint, semanticRevision } = thoughtMeaningFromRead({
           nativeProtection,
-          // Relevant intent/knowledge changes create an ordinary opportunity, not mandatory generation.
-          // docs/architecture.md#change-driven-exposure-and-reaction-intake
-          goal: currentGoal(actor),
-          techniques: (readWorld().knowledge[entity.id] ?? []).map((record) => record.recipeId),
+          agency: actor.agency,
+          techniques: readWorld().knowledge[entity.id] ?? [],
           bodyInputs: bodyReconsiderationInputs(readWorld(), entity, 'director'),
           bodyPolicyPin: readWorld().moduleManifest.bodyPolicyPin,
-          concerns: attributes
-            .filter(
-              (v) =>
-                v.concern &&
-                readWorld().moduleManifest.definitions.find((d) => d.id === v.id)?.concern
-                  ?.reconsider,
-            )
-            .map((v) => [v.id, v.concern]),
+          concerns,
           mind: readWorld().innerWorlds?.[entity.id]?.revision,
           knowledge: readWorld().knowledgeRevisions?.[entity.id] ?? 0,
           policy: policy.revision,
-          // A due review of an ongoing salient stimulus is a fresh opportunity (EPR06).
           reviews: review.key,
-        });
-        // Only explicit meaningful dependencies grant semantic reconsideration. Routine
-        // identity/profile reinforcement and coordinates remain native invalidations.
-        const semanticRevision = digest({
-          goals: actor.agency.goals
-            .filter((goal) => goal.author !== 'actor')
-            .map((goal) => [goal.id, goal.revision, goal.status]),
-          techniques: (readWorld().knowledge[entity.id] ?? []).map((record) => [
-            record.recipeId,
-            record.evidenceId,
-          ]),
-          blocked:
-            actor.agency.plan?.status === 'blocked'
-              ? [
-                  actor.agency.plan.id,
-                  actor.agency.plan.steps
-                    .filter((step) => step.status === 'blocked')
-                    .map((step) => [step.id, step.outcome?.code]),
-                ]
-              : null,
-          concerns: attributes
-            .filter(
-              (value) =>
-                value.concern &&
-                readWorld().moduleManifest.definitions.find(
-                  (definition) => definition.id === value.id,
-                )?.concern?.reconsider,
-            )
-            .map((value) => [value.id, value.concern]),
         });
         const meaningfulChange =
           !!last?.semanticRevision && last.semanticRevision !== semanticRevision;
@@ -4152,7 +4139,7 @@ export class AiDirector {
           )
             ? discoveryInterval(readWorld(), entity.id)
             : undefined;
-        const opportunity = digest({
+        const opportunity = thoughtOpportunityFromRead({
           semanticRevision,
           evidence: latest.map((memory) => memory.id),
           nativeCauses,

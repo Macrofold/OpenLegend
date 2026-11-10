@@ -142,7 +142,7 @@ export function formatFreeTypedActionPreparation(request: {
   else if (value.kind === 'distance-needed') resolution = { category: 'needs_clarification', reason: 'Say how far, for example "move 3 m left".' };
   else if (value.kind === 'invocation-refused') resolution = typedInvocationRefusal(value.outcome, request.limits);
   else if (value.kind === 'preview-refused') resolution = { category: ['unsupported-body', 'unsupported', 'unsupported-capability'].includes(value.outcome.code) ? 'unsupported_capability' : 'blocked', reason: value.outcome.message };
-  if (resolution) return { fulfillment: null, resolution };
+  if (resolution) return { fulfillment: null, resolution: { ...resolution, reason: resolution.reason.slice(0, 500) } };
   const description = value.kind === 'stop' || value.kind === 'point' || value.kind === 'offset'
     ? freeTypedActionDescription(value) : undefined;
   if (description === undefined) throw new Error('The typed native preparation has no rendered result.');

@@ -12,6 +12,49 @@ struct NpcReadRuntime {
     _custody: openlegend_simulation::host::ByteReservation,
 }
 
+#[napi]
+impl NativeWorld {
+    /// Trusted operational protection chooses the actual SQL-before-acceptance
+    /// route. Model JSON contains no persistence or permission selector.
+    #[napi(ts_return_type = "Promise<NativeWorldTurn>")]
+    pub fn begin_npc_response<'a>(
+        &self,
+        env: &'a Env,
+        ticket: &NativeWorldNpcResponseTicket,
+        response: BufferSlice<'_>,
+        protected: bool,
+    ) -> Result<Object<'a>> {
+        if !Weak::ptr_eq(&ticket.world, &Arc::downgrade(&self.world)) {
+            return Err(failure("NPC response belongs to another native writer"));
+        }
+        let ticket = Arc::clone(&ticket.inner);
+        let (response, custody) = input(&response, &self.host.bytes)?;
+        self.compute(env, move |session, cancel, budget| {
+            let _custody = custody;
+            let response = String::from_utf8(response)
+                .map_err(|_| failure("native response must be UTF-8 JSON"))?;
+            let mut owner = ticket
+                .ticket
+                .try_lock()
+                .map_err(|_| failure("native NPC response is busy or unavailable"))?;
+            if ticket.released.load(Ordering::Acquire) {
+                return Err(failure("native NPC response was released"));
+            }
+            let result = session.begin_npc_response(&mut owner, &response, protected);
+            let released = ticket.released.load(Ordering::Acquire);
+            if owner.is_none() {
+                ticket.released.store(true, Ordering::Release);
+            }
+            let key = result.map_err(operation_error)?;
+            if released {
+                session.cancel(key).map_err(operation_error)?;
+                return Err(failure("native NPC response was released"));
+            }
+            turn(session, key, None, cancel, budget)
+        })
+    }
+}
+
 fn read_wrapper_custody(
     budget: &ByteBudget,
 ) -> Result<openlegend_simulation::host::ByteReservation> {
@@ -284,6 +327,38 @@ fn begin_preparation<'a>(
 
 #[napi]
 impl NativeWorld {
+    #[napi(ts_return_type = "Promise<void>")]
+    pub fn rebind_npc_response<'a>(
+        &self,
+        env: &'a Env,
+        ticket: &NativeWorldNpcResponseTicket,
+        request: BufferSlice<'_>,
+    ) -> Result<Object<'a>> {
+        if !Weak::ptr_eq(&ticket.world, &Arc::downgrade(&self.world)) {
+            return Err(failure("NPC response belongs to another native writer"));
+        }
+        let ticket = Arc::clone(&ticket.inner);
+        let (request, custody) = input(&request, &self.host.bytes)?;
+        self.compute(env, move |session, cancel, _budget| {
+            let _custody = custody;
+            let mut owner = ticket
+                .ticket
+                .try_lock()
+                .map_err(|_| failure("native NPC response is busy or unavailable"))?;
+            if ticket.released.load(Ordering::Acquire) || cancel.requested() {
+                return Err(failure("native NPC response was released"));
+            }
+            session
+                .rebind_npc_response(
+                    owner
+                        .as_mut()
+                        .ok_or_else(|| failure("native NPC response was released"))?,
+                    &request,
+                )
+                .map_err(operation_error)
+        })
+    }
+
     #[napi(ts_return_type = "Promise<NativeWorldNpcReads>")]
     pub fn open_npc_response<'a>(
         &self,
@@ -416,6 +491,7 @@ impl NativeWorld {
         original: &NativeWorldNpcRead,
         current: &NativeWorldNpcRead,
         request: BufferSlice<'_>,
+        trigger: Option<&super::npc_intake::NativeWorldNpcTrigger>,
     ) -> Result<Object<'a>> {
         let world = Arc::downgrade(&self.world);
         if !Weak::ptr_eq(&original.world, &world) || !Weak::ptr_eq(&current.world, &world) {
@@ -428,6 +504,7 @@ impl NativeWorld {
         }
         let first = Arc::clone(&original.inner);
         let fresh = Arc::clone(&current.inner);
+        let trigger = trigger.map(|trigger| Arc::clone(&trigger.inner));
         let host = Arc::clone(&self.host);
         let (request, input_custody) = input(&request, &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
@@ -459,8 +536,25 @@ impl NativeWorld {
                         .ok_or_else(|| failure("capacity"))?,
                 )
                 .map_err(operation_error)?;
+            let trigger_read = trigger
+                .as_ref()
+                .map(|trigger| {
+                    if trigger.released.load(Ordering::Acquire) {
+                        return Err(failure("native NPC intake was released"));
+                    }
+                    trigger
+                        .read
+                        .try_lock()
+                        .map_err(|_| failure("native NPC intake is busy"))
+                })
+                .transpose()?;
             let ticket = session
-                .bind_npc_response(&mut original, &mut current, &request)
+                .bind_npc_response(
+                    &mut original,
+                    &mut current,
+                    &request,
+                    trigger_read.as_ref().and_then(|owner| owner.as_ref()),
+                )
                 .map_err(operation_error)?;
             if first.released.load(Ordering::Acquire)
                 || fresh.released.load(Ordering::Acquire)

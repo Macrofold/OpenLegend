@@ -22,6 +22,10 @@ export function nativeResponseSelection(input: {
   situation: CapturedSituation;
   sources: readonly CurrentMemorySource[];
   actions: readonly Pick<NativeFormattedNpcOffer, 'id' | 'ordinal'>[];
+  actionSource: 'original' | 'current';
+  prototypeSource: 'original' | 'current';
+  perspectiveEntities: readonly string[];
+  semanticCauses: readonly number[];
   intents: readonly { id: string; ordinal: number }[];
   appraisals: NativeNpcBindingSelection['appraisals'];
   receivedBodies?: ReadonlySet<string>;
@@ -33,6 +37,16 @@ export function nativeResponseSelection(input: {
     .flatMap((source, inventory) =>
       source.personal.map((record, ordinal) => ({ inventory, ordinal, record })),
     );
+  const perspectives = input.perspectiveEntities.map((id) => {
+    // Later acquisition supplies current attribution for the same retained
+    // personal version. Its actual roster includes empty identity tuples.
+    for (let index = personal.length - 1; index >= 0; index--) {
+      const source = personal[index]!;
+      const entity = Object.keys(source.record.attribution.attributionIdentities).indexOf(id);
+      if (entity >= 0) return { inventory: source.inventory, ordinal: source.ordinal, entity };
+    }
+    throw new Error('Selected conversation perspective has no native source witness.');
+  });
   const entity = (id: string, alias: string): NativeNpcEntityOrdinal => {
     if (input.receivedBodies?.has(alias)) {
       const ordinal = original.facts.perception.bodies.findIndex((body) => body.sourceId === id);
@@ -88,6 +102,10 @@ export function nativeResponseSelection(input: {
       const ordinal = metadata[kind].findIndex((fact) => subjectKey(fact.subject) === key);
       if (ordinal >= 0) return { kind, ordinal };
     }
+    const record = current.facts.self.mind.records.findIndex(
+      (record) => record.subjectId && subjectKey(record.subjectId) === key,
+    );
+    if (record >= 0) return { kind: 'mind-record', ordinal: record };
     for (const source of personal) {
       const index = source.record.attribution.subjects.findIndex(
         (fact) => subjectKey(fact.subject) === key,
@@ -171,7 +189,14 @@ export function nativeResponseSelection(input: {
   };
   return {
     validity: input.validity,
-    actions: input.actions.map(({ id: alias, ordinal }) => ({ alias, ordinal })),
+    actions: input.actions.map(({ id: alias, ordinal }) => ({
+      alias,
+      ordinal,
+      source: input.actionSource,
+    })),
+    prototypeSource: input.prototypeSource,
+    perspectives,
+    semanticCauses: input.semanticCauses,
     intents: input.intents.map(({ id: alias, ordinal }) => ({ alias, ordinal })),
     evidence,
     entities: Object.entries(input.references.entityReferences).map(([alias, id]) => ({

@@ -80,10 +80,13 @@ export function createEmbeddingClient(config: {
           },
           async (operation) => {
             operation.throwIfStopped();
-            receipt.dispatched = true;
             const raw = await providerText(
               operation,
               {
+                publication: request.publication,
+                onDispatch: () => {
+                  receipt.dispatched = true;
+                },
                 url: 'https://api.openai.com/v1/embeddings',
                 init: {
                   method: 'POST',

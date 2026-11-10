@@ -1,4 +1,7 @@
-import type { NativeWorldNpcResponseTicket } from '@open-legend/native-simulation';
+import type {
+  NativeWorldNpcResponseTicket,
+  NativeWorldNpcTrigger,
+} from '@open-legend/native-simulation';
 import type { ObserverSubject } from '@open-legend/domain';
 import type { NativeWorldService } from './native-world-service.js';
 import { NativeNpcCapture } from './native-npc-capture.js';
@@ -54,6 +57,11 @@ export async function expandNativeDecisionSituation(input: {
   knowledge: Readonly<Record<string, ObserverSubject>>;
   sources: readonly CurrentMemorySource[];
   offered: readonly NativeFormattedNpcOffer[];
+  actionSource: 'original' | 'current';
+  prototypeSource: 'original' | 'current';
+  perspectiveEntities: readonly string[];
+  semanticCauses: readonly number[];
+  semanticTrigger?: NativeWorldNpcTrigger;
   intents: readonly { id: string; ordinal: number }[];
   appraisals: NativeNpcBindingSelection['appraisals'];
   validity: NativeNpcBindingSelection['validity'];
@@ -131,6 +139,10 @@ export async function expandNativeDecisionSituation(input: {
     situation,
     sources: input.sources,
     actions: offered,
+    actionSource: input.actionSource,
+    prototypeSource: input.prototypeSource,
+    perspectiveEntities: input.perspectiveEntities,
+    semanticCauses: input.semanticCauses,
     intents: input.intents,
     appraisals: input.appraisals,
     receivedBodies,
@@ -141,6 +153,7 @@ export async function expandNativeDecisionSituation(input: {
     input.jobId,
     selection,
     signal,
+    input.semanticTrigger,
   );
   return { disclosed, ticket, prompt, context, offered };
 }

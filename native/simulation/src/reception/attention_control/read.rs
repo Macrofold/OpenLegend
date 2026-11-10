@@ -2,6 +2,7 @@
 //! selection. Presentation never acknowledges those candidates or renews them.
 
 use super::*;
+use crate::encoding::json_record_len;
 use crate::host::{ByteBudget, ByteReservation};
 use serde::Serialize;
 
@@ -13,8 +14,39 @@ pub(crate) struct CapturedAttentionPresentations {
 }
 pub(crate) struct CapturedAttentionRead {
     pub(crate) json: String,
+    pub(crate) cue_inputs_token: String,
+    pub(crate) semantic_causes: CapturedSemanticCauses,
     pub(crate) presentations: CapturedAttentionPresentations,
     pub(crate) _storage: ByteReservation,
+}
+/// Native-origin scheduling causes retain their actual source roster. Model
+/// output and copied JSON cannot create one for a response acknowledgment.
+pub(crate) struct CapturedSemanticCauses {
+    values: Vec<crate::response::ResponseSemanticCause>,
+    _storage: ByteReservation,
+}
+impl CapturedSemanticCauses {
+    pub(crate) fn copy_all(
+        &self,
+        budget: &ByteBudget,
+    ) -> Result<
+        (Vec<crate::response::ResponseSemanticCause>, ByteReservation),
+        crate::execution::ExecutionError,
+    > {
+        let bytes = self.values.iter().try_fold(
+            self.values
+                .len()
+                .checked_mul(size_of::<crate::response::ResponseSemanticCause>())
+                .ok_or(crate::execution::ExecutionError::Capacity)?,
+            |n, value| {
+                n.checked_add(value.key.len())
+                    .and_then(|n| n.checked_add(value.qualitative_revision.len()))
+                    .ok_or(crate::execution::ExecutionError::Capacity)
+            },
+        )?;
+        let storage = budget.reserve(bytes)?;
+        Ok((self.values.clone(), storage))
+    }
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -181,6 +213,79 @@ pub(crate) fn capture_attention_read(
             });
         }
     }
+    struct CueInputs<'a>(&'a [Cue<'a>]);
+    impl serde::Serialize for CueInputs<'_> {
+        fn serialize<S: serde::Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+            use serde::ser::SerializeSeq;
+            let mut out = s.serialize_seq(Some(self.0.len()))?;
+            for cue in self.0 {
+                out.serialize_element(&(&cue.id, cue.description_revision))?;
+            }
+            out.end()
+        }
+    }
+    let cue_length = json_record_len(&CueInputs(&cues)).map_err(|_| invalid())?;
+    scratch.reserve_growth(cue_length.checked_mul(2).ok_or_else(capacity)?)?;
+    let cue_json = json_record(&CueInputs(&cues)).map_err(|_| invalid())?;
+    let cue_storage = budget.reserve(64).map_err(|_| capacity())?;
+    let cue_inputs_token = crate::encoding::sha256_hex(cue_json.as_bytes());
+    drop(cue_json);
+    let actor = state
+        .physical
+        .entities
+        .get(observer)
+        .and_then(|entity| entity.actor.as_ref())
+        .ok_or(crate::execution::ExecutionError::MissingActor)?;
+    let purpose_bytes = actor
+        .agency
+        .plan
+        .as_ref()
+        .map_or(0, |plan| plan.id.len())
+        .max(actor.action.as_ref().map_or(0, |action| action.id.len()))
+        .checked_mul(6)
+        .and_then(|n| n.checked_add(64))
+        .ok_or_else(capacity)?;
+    let _purpose = budget.reserve(purpose_bytes).map_err(|_| capacity())?;
+    let purpose = crate::execution::occupied_purpose(actor)?;
+    let cause_bytes = cues.iter().try_fold(
+        cues.len()
+            .checked_mul(size_of::<crate::response::ResponseSemanticCause>())
+            .ok_or_else(capacity)?,
+        |n, cue| {
+            heap_sum([
+                n,
+                cue.anchor_key.len().checked_mul(12).ok_or_else(capacity)?,
+                128,
+                cue.description_revision.len(),
+            ])
+            .ok_or_else(capacity)
+        },
+    )?;
+    let mut cause_storage = budget.reserve(cause_bytes).map_err(|_| capacity())?;
+    let mut causes = Vec::with_capacity(cues.len());
+    let severity = state.installed.attention.value().urgent_cue;
+    for cue in &cues {
+        let key = json_record(&(cue.anchor_key, cue.family)).map_err(|_| invalid())?;
+        let resolved = actor.agency.semantic.as_ref().is_some_and(|state| {
+            state.resolved.get(&key).is_some_and(|resolved| {
+                resolved.interval == state.interval
+                    && resolved.purpose == purpose
+                    && resolved.qualitative_revision == cue.description_revision
+                    && resolved.severity >= severity
+            })
+        });
+        if !resolved {
+            causes.push(crate::response::ResponseSemanticCause {
+                key,
+                qualitative_revision: cue.description_revision.to_owned(),
+                severity,
+                generation: cue.generation,
+            });
+        }
+    }
+    cause_storage
+        .resize(causes.heap_bytes().ok_or_else(capacity)?)
+        .map_err(|_| capacity())?;
     let product = Product {
         entries: attention.map_or(&[], |attention| attention.entries.as_slice()),
         candidates: &candidates,
@@ -197,8 +302,14 @@ pub(crate) fn capture_attention_read(
     let json = crate::encoding::json_record(&product)
         .map_err(|_| crate::execution::ExecutionError::Invariant)?;
     storage.resize(json.capacity())?;
+    storage.merge(cue_storage)?;
     Ok(CapturedAttentionRead {
         json,
+        cue_inputs_token,
+        semantic_causes: CapturedSemanticCauses {
+            values: causes,
+            _storage: cause_storage,
+        },
         _storage: storage,
         presentations: CapturedAttentionPresentations {
             entries: presentations,

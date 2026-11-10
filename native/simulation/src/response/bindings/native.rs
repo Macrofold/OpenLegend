@@ -20,12 +20,16 @@ pub(crate) enum ResponseValidityRoute {
 pub(crate) struct ResponseNativeGuard {
     pub(crate) route: ResponseValidityRoute,
     pub(crate) scope: Arc<NpcHistoricalScope>,
-    pub(crate) sources: Vec<PreparedNpcSources>,
+    pub(crate) sources: Arc<Vec<PreparedNpcSources>>,
     /// Optional recall bodies are not proofs of the emitted request. Only its
     /// actual evidence/appraisal/trigger selections participate in this guard.
     pub(crate) selected_personal: Vec<(usize, usize)>,
-    pub(crate) appraisals: Option<PreparedResponseAppraisals>,
-    pub(crate) attempt_candidates: Vec<ResponseAttemptCandidate>,
+    pub(crate) perspectives: Vec<crate::capture::NpcPerspectiveOrdinal>,
+    pub(crate) appraisals: Option<Arc<PreparedResponseAppraisals>>,
+    pub(crate) attempt_candidates: Arc<Vec<ResponseAttemptCandidate>>,
+    pub(crate) _original_custody: Arc<ByteReservation>,
+    pub(crate) _current_custody: Arc<ByteReservation>,
+    pub(crate) _ticket_custody: Arc<ByteReservation>,
     pub(crate) _custody: ByteReservation,
 }
 impl ResponseNativeGuard {
@@ -36,7 +40,13 @@ impl ResponseNativeGuard {
         actor: &str,
         budget: &ByteBudget,
     ) -> Result<bool, ExecutionError> {
-        Ok(self.scope.still_permitted(state)
+        Ok(crate::capture::npc_perspectives_current(
+            state,
+            actor,
+            &self.sources,
+            &self.perspectives,
+            budget,
+        )? && self.scope.still_permitted(state)
             && self
                 .sources
                 .iter()
@@ -58,21 +68,28 @@ impl ResponseNativeGuard {
         if count == 0 {
             return Ok(None);
         }
-        let bytes = self
-            .selected_personal
-            .iter()
-            .map(|&(inventory, ordinal)| &self.sources[inventory].personal[ordinal])
-            .try_fold(0usize, |n, source| {
-                n.checked_add(size_of::<crate::experience::PersonalSourceRef>())?
-                    .checked_add(source.record.header().reference.heap_bytes()?)
-            })
-            .and_then(|n| {
-                n.checked_add(map_storage::<
-                    (crate::experience::PersonalSourceKind, &str, &str),
-                    (),
-                >(count)?)
-            })
-            .ok_or(ExecutionError::Capacity)?;
+        let bytes =
+            self.selected_personal
+                .iter()
+                .map(|&(inventory, ordinal)| &self.sources[inventory].personal[ordinal])
+                .try_fold(0usize, |n, source| {
+                    n.checked_add(size_of::<crate::capture::NpcPersonalSelection>())?
+                        .checked_add(source.record.header().reference.heap_bytes()?)
+                        .and_then(|n| {
+                            n.checked_add(
+                                source.through.as_ref().map_or(Some(0), |parent| {
+                                    parent.header().reference.heap_bytes()
+                                })?,
+                            )
+                        })
+                })
+                .and_then(|n| {
+                    n.checked_add(map_storage::<
+                        (crate::experience::PersonalSourceKind, &str, &str),
+                        (),
+                    >(count)?)
+                })
+                .ok_or(ExecutionError::Capacity)?;
         if bytes == 0 {
             return Ok(None);
         }
@@ -82,11 +99,17 @@ impl ResponseNativeGuard {
             .selected_personal
             .iter()
             .map(|&(inventory, ordinal)| &self.sources[inventory].personal[ordinal])
-            .map(|source| &source.record.header().reference)
             .filter(|source| {
+                let source = &source.record.header().reference;
                 selected.insert((source.kind, source.id.as_str(), source.revision.as_str()))
             })
-            .cloned()
+            .map(|source| crate::capture::NpcPersonalSelection {
+                reference: source.record.header().reference.clone(),
+                through: source
+                    .through
+                    .as_ref()
+                    .map(|parent| parent.header().reference.clone()),
+            })
             .collect();
         Ok(Some(NpcSourcesCursor::new(
             core,

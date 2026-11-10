@@ -9,6 +9,7 @@ import {
 import type { NativeWorldService } from './native-world-service.js';
 import type { NativeNpcCapture } from './native-npc-capture.js';
 import type { NativeNpcBindingSelection } from './native-npc-sources.js';
+import { nativeNpcPersonalSelection } from './native-npc-sources.js';
 import type { NativeDefinitionCapture } from './native-definition-capture.js';
 import {
   APPRAISAL_SOURCE_BINDINGS,
@@ -28,7 +29,8 @@ import { ViewChangedError } from './player-view-async.js';
 /** SQL chooses the exact same personal sources/order as Source. Native then
  * owns their historical eligibility, appraisal records and response ordinals;
  * this formatter cannot supply a policy, cause body or permission map. */
-export async function nativeDecisionAppraisals(input: {
+export async function nativeAppraisals(input: {
+  readonly purpose: 'decision' | 'reflection';
   readonly service: NativeWorldService;
   readonly original: NativeNpcCapture;
   readonly current: NativeNpcCapture;
@@ -69,7 +71,10 @@ export async function nativeDecisionAppraisals(input: {
     id: source.memory.id,
     revision: source.revision,
   }));
-  const inventory = await service.prepareNpcSources(original, { receipts: [], personal: refs });
+  const inventory = await service.prepareNpcSources(original, {
+    receipts: [],
+    personal: selected.map(nativeNpcPersonalSelection),
+  });
   const inventoryIndex = original.sources().indexOf(inventory);
   if (inventoryIndex < 0)
     throw new Error('Appraisal preparation lost its native source inventory.');
@@ -90,7 +95,7 @@ export async function nativeDecisionAppraisals(input: {
   const policies = new Map<string, AppraisalDefinition>(),
     policyOrdinals: { alias: string; ordinal: number }[] = [];
   for (const [ordinal, definition] of installed.entries())
-    if (definition.decision) {
+    if (input.purpose === 'decision' ? definition.decision : definition.reflection) {
       const alias = `policy${policies.size + 1}`;
       policies.set(alias, definition);
       policyOrdinals.push({ alias, ordinal });
@@ -126,7 +131,7 @@ export async function nativeDecisionAppraisals(input: {
         sources,
         selected: entries.map((entry, index) => ({ entry, revision: refs[index]!.revision })),
         presentation,
-        purpose: 'decision',
+        purpose: input.purpose,
       },
       frame,
       shared,
@@ -135,9 +140,13 @@ export async function nativeDecisionAppraisals(input: {
   const valueSchema = (handle: string) =>
     appraisalValueSchema(policies.get(handle) ?? recordDefinitions.get(handle));
   const triggerIndex = selected.findIndex(
-    (source) => !!source.awareness && source.memory.eventId === input.triggerEvidenceId,
+    (source) =>
+      input.purpose === 'decision' &&
+      !!source.awareness &&
+      source.memory.eventId === input.triggerEvidenceId,
   );
   const selection: NonNullable<NativeNpcBindingSelection['appraisals']> = {
+    purpose: input.purpose,
     guard: input.guard ?? 'all',
     policies: policyOrdinals,
     records: context.feelings.flatMap((feeling, ordinal) =>

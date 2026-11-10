@@ -2,6 +2,7 @@ import type {
   NativeWorld,
   NativeWorldNpcRead,
   NativeWorldNpcResponseTicket,
+  NativeWorldNpcTrigger,
 } from '@open-legend/native-simulation';
 import type {
   ActorAgency,
@@ -271,6 +272,7 @@ export class NativeNpcCapture {
     decisionId: string,
     selection: NativeNpcBindingSelection,
     signal?: AbortSignal,
+    trigger?: NativeWorldNpcTrigger,
   ): Promise<NativeWorldNpcResponseTicket> {
     const originalFacts = this.facts,
       currentFacts = current.facts;
@@ -279,6 +281,7 @@ export class NativeNpcCapture {
       this.read,
       current.read,
       Buffer.from(JSON.stringify({ decisionId, selection })),
+      trigger,
     );
     if (signal?.aborted) {
       ticket.release();

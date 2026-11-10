@@ -14,6 +14,9 @@ import {
   type NetworkOperation,
 } from './operation.js';
 
+/** Application disclosure/spending owners may lease the final synchronous
+ * transport start. The result wrapper releases that lease before I/O waits. */
+export type HttpPublication = <T>(start: () => T) => Promise<{ result: T }>;
 export interface HttpRequest {
   url: string | URL;
   init?: Omit<RequestInit, 'body'> & { body?: Exclude<BodyInit, ReadableStream> | null };
@@ -21,6 +24,9 @@ export interface HttpRequest {
   requestTimeoutMs?: number;
   /** Private semantic adapters omit optional exchange recording entirely. */
   diagnostics?: 'omit';
+  publication?: HttpPublication;
+  /** Observation only, called immediately before the actual transport. */
+  onDispatch?: () => void;
 }
 
 export interface HttpBytes {
@@ -96,7 +102,6 @@ export async function openHttp(
     throw new TypeError('Streaming uploads require the owned Node adapter');
   }
   const scope = scopeOf(operation);
-  scope.markStarted('connect');
   scope.observeStatus(undefined);
   const activity = scope.httpActivity();
   const controller = new AbortController();
@@ -119,9 +124,14 @@ export async function openHttp(
   };
   let raw: Promise<Response>;
   try {
-    operation.throwIfStopped();
-    if (requestSignal?.aborted) throw new NetworkError('cancelled', 'connect', 'not_started');
-    raw = scope.transport(String(request.url), { ...request.init, signal: controller.signal });
+    const start = () => {
+      operation.throwIfStopped();
+      if (requestSignal?.aborted) throw new NetworkError('cancelled', 'connect', 'not_started');
+      scope.markStarted('connect');
+      request.onDispatch?.();
+      return scope.transport(String(request.url), { ...request.init, signal: controller.signal });
+    };
+    raw = request.publication ? (await request.publication(start)).result : start();
   } catch (error) {
     detach();
     activity.finish();

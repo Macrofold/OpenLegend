@@ -21,6 +21,8 @@ pub(crate) struct NpcReferenceFacts {
     pub(crate) bodies: Vec<BodySubject>,
     pub(crate) knowledge: Vec<NpcSubjectFact>,
     pub(crate) social: Vec<NpcSubjectFact>,
+    #[serde(skip)]
+    pub(crate) mind_subjects: Vec<Option<NpcSubjectFact>>,
     #[serde(rename = "attributionIdentities")]
     attribution_identities: crate::worlds::CapturedAttributionIdentities,
     #[serde(skip)]
@@ -157,6 +159,40 @@ impl NpcReferenceFacts {
                 budget,
             )?);
         }
+        let records = state
+            .minds
+            .minds
+            .as_ref()
+            .and_then(|minds| minds.get(actor))
+            .map(|mind| mind.records.as_slice())
+            .unwrap_or(&[]);
+        storage.resize(
+            storage
+                .bytes()
+                .checked_add(
+                    records
+                        .len()
+                        .checked_mul(size_of::<Option<NpcSubjectFact>>())
+                        .ok_or(ExecutionError::Capacity)?,
+                )
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let mut mind_subjects = Vec::with_capacity(records.len());
+        for record in records {
+            let _copy = budget.reserve(
+                record
+                    .subject_id
+                    .heap_bytes()
+                    .ok_or(ExecutionError::Capacity)?,
+            )?;
+            mind_subjects.push(
+                record
+                    .subject_id
+                    .clone()
+                    .map(|subject| subject_fact(state, actor, &names, subject, budget))
+                    .transpose()?,
+            );
+        }
         let attribution_identities = names.capture_attribution_identities(
             read.perception
                 .bodies
@@ -175,6 +211,7 @@ impl NpcReferenceFacts {
             bodies,
             knowledge,
             social,
+            mind_subjects,
             attribution_identities,
             _storage: storage,
         })

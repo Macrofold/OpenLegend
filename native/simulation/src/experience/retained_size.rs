@@ -37,6 +37,7 @@ heap_record!(PersonalSourceHeader {
     actor_id,
     event_id,
     event_type,
+    outward_change,
     evidence_source_id,
     evidence_target_id,
     activity_id,

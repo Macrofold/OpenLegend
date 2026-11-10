@@ -1,3 +1,4 @@
+import type { HttpPublication } from '@open-legend/network';
 import { undispatchedReceipt } from './decision-state.js';
 import {
   createAiClient,
@@ -42,6 +43,7 @@ export interface PreparedReconsideration {
   sourceTime: number;
   dispose(): void;
   current(): Promise<boolean>;
+  dispatch: HttpPublication;
   /** One explicit evidence query may request a separately funded continuation. */
   expand?(answers: Record<string, DecisionAnswer>): Promise<boolean>;
   publish(answers: Record<string, DecisionAnswer>, claim: DecisionPublication): Promise<ApiResult>;
@@ -68,6 +70,8 @@ export interface DecisionEscalationHost {
   readonly store: GameRepository;
   readonly paused: boolean;
   readonly simTime: number;
+  mutateDecision: GameRepository['mutateDecision'];
+  observe<T>(read: () => Promise<T>): Promise<T>;
   scopeCurrent(
     state: DecisionScope,
     authority: JobRecord['authority'],
@@ -101,6 +105,7 @@ export class DecisionEscalator {
       authority: JobRecord['authority'];
       validity?: string;
       releasePreparation?: () => void;
+      prepare?: Prepare;
     }
   >();
   private readonly ending = new Set<string>();
@@ -144,10 +149,12 @@ export class DecisionEscalator {
         this.scopesDirty = false;
         const policy = this.scopes.size ? decisionPolicyDigest(this.service.config) : undefined;
         for (const [id, scope] of this.scopes) {
-          const current =
-            !this.service.paused &&
-            scope.state.policyDigest === policy &&
-            (await this.service.scopeCurrent(scope.state, scope.authority, scope.validity));
+          const current = await this.service.observe(
+            async () =>
+              !this.service.paused &&
+              scope.state.policyDigest === policy &&
+              (await this.service.scopeCurrent(scope.state, scope.authority, scope.validity)),
+          );
           // An asynchronous native read cannot retire a replacement scope.
           if (this.scopes.get(id) !== scope || current) continue;
           this.active.get(id)?.abort();
@@ -181,9 +188,15 @@ export class DecisionEscalator {
     return [...this.scopes.values()].some((scope) => scope.state.actorId === actorId);
   }
   /** Observe the original receipt only. There is no redispatch, paid poll or renewed deadline. */
-  async awaitPrimary(rootId: string, attemptId: string, validity?: string): Promise<boolean> {
+  async awaitPrimary(
+    rootId: string,
+    attemptId: string,
+    validity?: string,
+    prepare?: Prepare,
+    releasePreparation?: () => void,
+  ): Promise<boolean> {
     let immediateChanged = false;
-    const written = await this.service.store.mutateDecision(rootId, async (job) => {
+    const written = await this.service.mutateDecision(rootId, async (job) => {
       const state = job.decision!;
       if (!(await this.eligible(job, state)) || state.higherEntitlement !== 'available')
         return undefined;
@@ -219,6 +232,8 @@ export class DecisionEscalator {
       },
       authority: written.authority,
       ...(validity ? { validity } : {}),
+      ...(prepare ? { prepare } : {}),
+      ...(releasePreparation ? { releasePreparation } : {}),
     });
     const timer = setTimeout(
       () => {
@@ -255,7 +270,17 @@ export class DecisionEscalator {
         return;
       }
       const reason = decisionFailureReason('invalid', 'completed_without_usable_answer', receipt);
-      if (!reason || !(await this.enqueue(rootId, reason, job.kind === 'chat')))
+      const retained = this.scopes.get(rootId);
+      if (
+        !reason ||
+        !(await this.enqueue(
+          rootId,
+          reason,
+          job.kind === 'chat',
+          retained?.prepare,
+          retained?.releasePreparation,
+        ))
+      )
         await this.end(rootId, 'provider-failed');
     } finally {
       this.reconciling.delete(rootId);
@@ -271,7 +296,7 @@ export class DecisionEscalator {
     if (!permitsEscalation(this.service.config, reason)) return false;
     let queued: JobRecord | undefined;
     let immediateChanged = false;
-    queued = await this.service.store.mutateDecision(rootId, async (job) => {
+    queued = await this.service.mutateDecision(rootId, async (job) => {
       const state = job.decision!;
       if (
         !(await this.eligible(job, state)) ||
@@ -388,7 +413,7 @@ export class DecisionEscalator {
       await this.execution.cancel(new Set([rootId]));
       this.active.get(rootId)?.abort();
       let immediateChanged = false;
-      const written = await this.service.store.mutateDecision(rootId, async (job) => {
+      const written = await this.service.mutateDecision(rootId, async (job) => {
         const state = job.decision!;
         if (state.phase === 'closed') return undefined;
         immediateChanged = state.immediate.kind === 'pending';
@@ -474,7 +499,7 @@ export class DecisionEscalator {
         await this.end(rootId, 'resource-unavailable');
         return;
       }
-      let job = await this.service.store.mutateDecision(rootId, async (current) => {
+      let job = await this.service.mutateDecision(rootId, async (current) => {
         const state = current.decision!;
         if (
           !(await this.eligible(current, state)) ||
@@ -517,7 +542,7 @@ export class DecisionEscalator {
       timer.unref();
       prepared = await initialPreparation(job, controller.signal);
       if (!controller.signal.aborted && !(await prepared.current())) {
-        const refreshed = await this.service.store.mutateDecision(rootId, async (current) => {
+        const refreshed = await this.service.mutateDecision(rootId, async (current) => {
           const live = current.decision!;
           if (
             !(await this.eligible(current, live)) ||
@@ -596,7 +621,7 @@ export class DecisionEscalator {
               ? 'cancelled'
               : 'stale';
         let reservationFailure: DecisionEnd = 'budget-exhausted';
-        job = await this.service.store.mutateDecision(rootId, async (current) => {
+        job = await this.service.mutateDecision(rootId, async (current) => {
           const live = current.decision!;
           if (
             !(await this.eligible(current, live)) ||
@@ -682,7 +707,7 @@ export class DecisionEscalator {
           await this.end(rootId, 'resource-unavailable');
           return;
         }
-        const dispatched = await this.service.store.mutateDecision(rootId, async (current) => {
+        const dispatched = await this.service.mutateDecision(rootId, async (current) => {
           const live = current.decision!;
           if (
             !(await this.eligible(current, live)) ||
@@ -759,6 +784,18 @@ export class DecisionEscalator {
                 maxOutputTokens: DECISION_LIMITS.outputTokens,
                 signal: controller.signal,
                 actorScope: state.actorId,
+                publication: (start) =>
+                  preparation.dispatch(() => {
+                    if (
+                      controller.signal.aborted ||
+                      this.stopped ||
+                      this.service.paused ||
+                      this.now() >= dispatchBy ||
+                      performance.now() >= dispatchByMonotonic
+                    )
+                      throw new Error('The decision expired or was cancelled before transport.');
+                    return start();
+                  }),
               });
             },
           );
@@ -768,7 +805,7 @@ export class DecisionEscalator {
           ledger.settle(attemptId, receipt);
           this.rate.release(attemptId);
           completed = true;
-          await this.service.store.mutateDecision(rootId, async (current) =>
+          await this.service.mutateDecision(rootId, async (current) =>
             current.decision?.higher
               ? {
                   ...current,
@@ -806,7 +843,7 @@ export class DecisionEscalator {
             return;
           }
           if (c.decisionEscalation.mode === 'observe') {
-            await this.service.store.mutateDecision(rootId, async (current) => ({
+            await this.service.mutateDecision(rootId, async (current) => ({
               ...current,
               result: { disposition: 'diagnostic-only', answers, receipt },
             }));
@@ -822,7 +859,7 @@ export class DecisionEscalator {
               await this.end(rootId, 'invalid-output');
               return;
             }
-            const continued = await this.service.store.mutateDecision(rootId, async (latest) => {
+            const continued = await this.service.mutateDecision(rootId, async (latest) => {
               const live = latest.decision;
               if (
                 !live ||
@@ -848,7 +885,7 @@ export class DecisionEscalator {
             await this.end(rootId, 'stale');
             return;
           }
-          const ready = await this.service.store.mutateDecision(rootId, async (latest) =>
+          const ready = await this.service.mutateDecision(rootId, async (latest) =>
             latest.decision?.phase === 'higher' && latest.decision.higher
               ? {
                   ...latest,

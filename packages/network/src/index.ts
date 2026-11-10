@@ -15,6 +15,7 @@ export type {
   HttpBytes,
   HttpText,
   HttpRequest,
+  HttpPublication,
   HttpConsumer,
   ConsumeStep,
   NetworkExchange,

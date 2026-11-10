@@ -2,7 +2,6 @@
 //! the same candidate journal as chosen work. Scheduling hints grant no effects.
 use crate::commands::Outcome;
 use crate::execution::{CoreMutation, ExecutionError};
-use crate::host::retained_size::HeapBytes;
 use crate::host::{ByteBudget, ByteReservation};
 use serde::Deserialize;
 use std::mem::size_of;

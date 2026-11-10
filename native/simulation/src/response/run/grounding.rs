@@ -13,7 +13,7 @@ fn without_sentence_end(text: &JsText) -> crate::text::TextSlice<'_> {
         .slice(0..end)
         .expect("Prefix stays inside the same text")
 }
-fn same_slots(left: &SqlCell, right: &SqlCell) -> bool {
+pub(super) fn same_slots(left: &SqlCell, right: &SqlCell) -> bool {
     [
         "itemId",
         "instrumentId",
@@ -62,7 +62,10 @@ impl ResponseCursor {
             })
             .filter_map(|op| op.text("description"))
     }
-    pub(super) fn ground_offered(&mut self, core: &CoreMutation<'_>) -> Result<(), ExecutionError> {
+    pub(super) fn ground_offered(
+        &mut self,
+        core: &CoreMutation<'_>,
+    ) -> Result<Vec<(usize, usize)>, ExecutionError> {
         let native = self
             .bindings
             .input
@@ -100,11 +103,14 @@ impl ResponseCursor {
             1024,
         ])
         .and_then(|n| n.checked_mul(count.min(4)))
-        .and_then(|n| n.checked_add(4 * size_of::<(usize, usize, usize)>()))
+        .and_then(|n| {
+            n.checked_add(4 * (size_of::<(usize, usize, usize)>() + size_of::<(usize, usize)>()))
+        })
         .ok_or(ExecutionError::Capacity)?;
         let mut storage = self.budget.reserve(bound)?;
         let mut additions: Vec<ResponseAttemptBinding> = Vec::with_capacity(count.min(4));
         let mut seen: Vec<(usize, usize, usize)> = Vec::with_capacity(4);
+        let mut operations = Vec::with_capacity(count.min(4));
         let scope = crate::reception::CurrentBodyReadScope::prepare(
             &core.state.reception,
             &core.state.physical.entities,
@@ -188,6 +194,7 @@ impl ResponseCursor {
             if eligible > 4 {
                 break;
             }
+            operations.push((index, position));
             let language = normalized.get(position).ok_or(ExecutionError::Invariant)?;
             if let Some((_, _, bound)) = seen.iter().find(|(prior, prior_position, _)| {
                 let prior_op = self
@@ -256,12 +263,17 @@ impl ResponseCursor {
         }
         drop(scope);
         drop(seen);
-        storage.resize(additions.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+        storage.resize(
+            additions
+                .heap_bytes()
+                .and_then(|n| n.checked_add(operations.heap_bytes()?))
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
         if !self.attempt_bindings.is_empty() {
             return Err(ExecutionError::InvalidCheckpoint);
         }
         self.attempt_bindings = additions;
         self.merge(storage)?;
-        Ok(())
+        Ok(operations)
     }
 }

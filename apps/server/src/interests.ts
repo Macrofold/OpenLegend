@@ -410,10 +410,21 @@ export function installedThinkingToken(world: WorldState): string {
 }
 
 /** Pure review formatting shared by actual Source and finite native intake. */
-export function stimulusReviewFromRead(stimuli: readonly ActiveStimulus[]): { key?: string; due: string[]; nextAt: number } {
+export function stimulusReviewFromRead(stimuli: readonly ActiveStimulus[]): {
+  key?: string;
+  due: string[];
+  nextAt: number;
+} {
   const due = stimuli.filter((stimulus) => stimulus.reviews > 0);
   return {
-    ...(due.length ? { key: due.map((stimulus) => `${stimulus.sourceId}:${stimulus.reviews}`).sort().join('|') } : {}),
+    ...(due.length
+      ? {
+          key: due
+            .map((stimulus) => `${stimulus.sourceId}:${stimulus.reviews}`)
+            .sort()
+            .join('|'),
+        }
+      : {}),
     due: due.map((stimulus) => stimulus.sourceId),
     nextAt: Math.min(Infinity, ...stimuli.map((stimulus) => stimulus.reviewAt ?? Infinity)),
   };

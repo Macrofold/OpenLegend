@@ -1,3 +1,4 @@
+import type { HttpPublication } from '@open-legend/network';
 import { normalizeReceiptCost, type AiResult, type AiReceipt } from '@open-legend/ai';
 import type { AppConfig } from './config.js';
 import type { GameRepository, JobRecord } from './store.js';
@@ -60,6 +61,7 @@ export interface DecisionDispatchHost<R extends DispatchRun> {
   update(run: R, status: JobRecord['status'], message: string): Promise<void>;
   attemptBudget(run: R): Parameters<GameRepository['reserve']>[6];
   settleDiscovery(run: R, discovery: NonNullable<DispatchRun['discovery']>): Promise<boolean>;
+  publication<T>(run: R, start: () => T): Promise<{ result: T }>;
 }
 
 /** Sole immediate paid-request boundary for Source and native execution: fixed-cut
@@ -70,7 +72,7 @@ export async function dispatchDecision<R extends DispatchRun, T>(
   run: R,
   provider: 'jev' | 'openai',
   suffix: string,
-  dispatch: (requestId: string) => Promise<AiResult<T>>,
+  dispatch: (requestId: string, publication: HttpPublication) => Promise<AiResult<T>>,
   meter?: DecisionMeter,
 ): Promise<T> {
   const evidenceActor = host.current(run);
@@ -213,11 +215,29 @@ export async function dispatchDecision<R extends DispatchRun, T>(
       throw new StopJob('failed', 'This model request already has dispatch intent.', 'uncertain');
     }
     let sourceFailure: unknown;
-    const result = await host.macrofold.withSourceValidation(
-      async () => {
-        try {
-          host.current(run);
-          await run.validateJudgmentSource?.();
+    const validate = async () => {
+      try {
+        host.current(run);
+        await run.validateJudgmentSource?.();
+        host.current(run);
+        if (!sourceCurrent())
+          throw new StopJob('stale', 'The character’s evidence changed before dispatch.');
+        if (
+          run.job.decision &&
+          !run.preparedResponse &&
+          (host.now() >= run.job.decision.fastPublishBy ||
+            performance.now() >= run.job.decision.fastPublishByMonotonic)
+        )
+          throw new StopJob('failed', 'The immediate dispatch deadline passed.', 'expired');
+      } catch (error) {
+        sourceFailure = error;
+        throw error;
+      }
+    };
+    const publication: HttpPublication = async (start) => {
+      try {
+        await validate();
+        return await host.publication(run, () => {
           host.current(run);
           if (!sourceCurrent())
             throw new StopJob('stale', 'The character’s evidence changed before dispatch.');
@@ -228,11 +248,15 @@ export async function dispatchDecision<R extends DispatchRun, T>(
               performance.now() >= run.job.decision.fastPublishByMonotonic)
           )
             throw new StopJob('failed', 'The immediate dispatch deadline passed.', 'expired');
-        } catch (error) {
-          sourceFailure = error;
-          throw error;
-        }
-      },
+          return start();
+        });
+      } catch (error) {
+        sourceFailure = error;
+        throw error;
+      }
+    };
+    const result = await host.macrofold.withSourceValidation(
+      validate,
       async () => {
         if (run.discovery && !run.discovery.spent) {
           const discovery = run.discovery;
@@ -240,8 +264,9 @@ export async function dispatchDecision<R extends DispatchRun, T>(
             throw new StopJob('stale', 'The attention opportunity is no longer available.');
           discovery.spent = true;
         }
-        return dispatch(id);
+        return dispatch(id, publication);
       },
+      publication,
     );
     const accountingStartedAt = new Date().toISOString();
     result.receipt = normalizeReceiptCost(result.receipt);

@@ -36,7 +36,10 @@ mod sources;
 pub(crate) use expression::{
     CompletedExpression, ExpressionAnswer, ExpressionCursor, ExpressionStep,
 };
-pub(crate) use run::{CompletedResponse, ResponseAnswer, ResponseCursor, ResponseStep};
+pub(crate) use run::{
+    CompletedResponse, ResponseAnswer, ResponseCursor, ResponseStep, TypedActionAnswer,
+    TypedActionRequest,
+};
 mod think;
 pub(crate) use think::{CompletedThought, Thought, remember_thought};
 

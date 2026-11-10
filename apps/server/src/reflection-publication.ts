@@ -152,10 +152,25 @@ export function reflectionTimeDue(
 ): boolean {
   const mind = world.minds?.[actorId];
   const at = mind?.lastReflectionAt ?? -86400;
+  return reflectionTimeDueFromRead(
+    world.simTime,
+    at,
+    !!entityGet(world.entities, actorId)?.actor?.action,
+    hasMemories,
+  );
+}
+export function reflectionTimeDueFromRead(
+  simTime: number,
+  lastReflectionAt: number,
+  hasAction: boolean,
+  hasMemories: boolean,
+): boolean {
   return (
     hasMemories &&
-    !entityGet(world.entities, actorId)?.actor?.action &&
-    !(at > 0 && Math.floor(at / 86400) === Math.floor(world.simTime / 86400)) &&
-    world.simTime - at >= 3600
+    !hasAction &&
+    !(
+      lastReflectionAt > 0 && Math.floor(lastReflectionAt / 86400) === Math.floor(simTime / 86400)
+    ) &&
+    simTime - lastReflectionAt >= 3600
   );
 }

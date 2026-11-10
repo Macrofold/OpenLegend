@@ -12,6 +12,9 @@ import type { LiveReadCuts } from './live-read-overlay.js';
 import type { SqlDatabase } from './store.js';
 import { nativeCurrentRow } from './native-current-sources.js';
 import type { NativePersonalSource } from './native-recall.js';
+import type { RetrievedMemory } from './memory-repository.js';
+import { experienceSourceReference } from '@open-legend/domain';
+import { personalAccountRevision } from './personal-accounts.js';
 
 export interface NativeNpcHistoricalScope {
   readonly worldId: string;
@@ -41,7 +44,19 @@ export interface NativeNpcSourceSelection {
     readonly locator: TemporalReceiptLocator;
     readonly memberIndices?: readonly number[];
   }[];
-  readonly personal: readonly PersonalSourceRef[];
+  readonly personal: readonly {
+    readonly reference: PersonalSourceRef;
+    /** A real current summary's exact coverage, never a model parent claim. */
+    readonly through?: PersonalSourceRef;
+  }[];
+}
+export function nativeNpcPersonalSelection(
+  source: RetrievedMemory,
+): NativeNpcSourceSelection['personal'][number] {
+  return {
+    reference: experienceSourceReference(source.entry),
+    ...(source.through ? { through: { kind: 'summary' as const, ...source.through } } : {}),
+  };
 }
 export interface NativeNpcSourcesRequest {
   readonly binding: NativeGeometryQueries['binding'];
@@ -108,7 +123,10 @@ export type NativeNpcEntityOrdinal =
     };
 export type NativeNpcSubjectOrdinal =
   | { readonly kind: 'myself' }
-  | { readonly kind: 'body' | 'received-body' | 'knowledge' | 'social'; readonly ordinal: number }
+  | {
+      readonly kind: 'body' | 'received-body' | 'knowledge' | 'social' | 'mind-record';
+      readonly ordinal: number;
+    }
   | {
       readonly kind: 'body-subject' | 'received-body-subject';
       readonly ordinal: number;
@@ -123,7 +141,18 @@ export type NativeNpcSubjectOrdinal =
 export interface NativeNpcBindingSelection {
   /** The admitted director route; never selected from model response JSON. */
   readonly validity: 'decision' | 'prepared-response';
-  readonly actions: readonly NativeNpcAliasOrdinal[];
+  readonly actions: readonly (NativeNpcAliasOrdinal & {
+    readonly source: 'original' | 'current';
+  })[];
+  readonly prototypeSource: 'original' | 'current';
+  /** Ordinals in the admitted trigger's native unresolved-cause roster. */
+  readonly semanticCauses: readonly number[];
+  /** Exact selected conversation perspective dependencies, including empty identities. */
+  readonly perspectives: readonly {
+    readonly inventory: number;
+    readonly ordinal: number;
+    readonly entity: number;
+  }[];
   /** Ordinals address the refreshed native read's actual pending intent list. */
   readonly intents: readonly NativeNpcAliasOrdinal[];
   /** Sources actually included in the compact request, in presentation order. */
@@ -160,6 +189,7 @@ export interface NativeNpcBindingSelection {
   readonly attention: readonly NativeNpcAliasOrdinal[];
   readonly presented: readonly number[];
   readonly appraisals: {
+    readonly purpose: 'decision' | 'reflection';
     readonly guard: 'all' | 'required';
     /** Ordinals address the full installed appraisal definition order. Native
      * verifies each selected policy actually permits decision writes. */
@@ -208,7 +238,7 @@ export async function readNativeNpcSources(
         JSON.stringify({
           binding,
           readSerial: origin.readSerial,
-          rows: { pages: [], values: [], personal: [] },
+          rows: { pages: [], values: [], personal: [], parents: [] },
         }),
       );
       async function admit(sql: string, parameters: readonly unknown[]) {
@@ -287,25 +317,106 @@ export async function readNativeNpcSources(
             (row) => nativeCurrentRow('mind_perception_values', row),
           )
         : [];
-      const personal: {
-        kind: PersonalSourceRef['kind'];
-        row: ReturnType<typeof nativeCurrentRow>;
-      }[] = [];
+      type CurrentRow = ReturnType<typeof nativeCurrentRow>;
+      const personal: (
+        | { storage: 'current'; kind: PersonalSourceRef['kind']; row: CurrentRow }
+        | {
+            storage: 'archive';
+            archive: {
+              worldId: string;
+              actorId: string;
+              sourceKind: PersonalSourceRef['kind'];
+              sourceId: string;
+              revision: string;
+              payload: string;
+            };
+            current: CurrentRow | null;
+          }
+      )[] = [];
+      const parents: CurrentRow[] = [];
+      const parentIds = [
+        ...new Set(
+          selection.personal.flatMap(({ through }) =>
+            through
+              ? [JSON.stringify(['world', 'experience', 'summaries', origin.actorId, through.id])]
+              : [],
+          ),
+        ),
+      ];
+      if (parentIds.length) {
+        const sql =
+          'SELECT * FROM mind_summaries WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])';
+        const parameters = [cut.worldId, origin.actorId, parentIds];
+        await admit(sql, parameters);
+        for (const row of await db.prepare(sql + ' ORDER BY position,id').all(...parameters))
+          parents.push(nativeCurrentRow('mind_summaries', row));
+      }
       for (const [kind, table, owner] of [
         ['awareness', 'mind_awareness', ['world', 'experience', 'awareness', origin.actorId]],
         ['memory', 'mind_memories', ['world', 'memories', origin.actorId]],
         ['summary', 'mind_summaries', ['world', 'experience', 'summaries', origin.actorId]],
       ] as const) {
-        const selected = selection.personal.filter((source) => source.kind === kind);
+        const selected = selection.personal.filter((source) => source.reference.kind === kind);
         if (!selected.length) continue;
-        const sourceIds = selected.map((source) => JSON.stringify([...owner, source.id]));
+        const sourceIds = selected.map((source) => JSON.stringify([...owner, source.reference.id]));
         const sql = `SELECT * FROM ${table} WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])`;
         const parameters = [cut.worldId, origin.actorId, sourceIds];
         await admit(sql, parameters);
-        for (const row of await db.prepare(sql + ' ORDER BY position,id').all(...parameters))
-          personal.push({ kind, row: nativeCurrentRow(table, row) });
+        const current = new Map(
+          (await db.prepare(sql + ' ORDER BY position,id').all(...parameters)).map((row) => [
+            String(row['id']),
+            row,
+          ]),
+        );
+        const missing = selected.filter(({ reference }) => {
+          const row = current.get(JSON.stringify([...owner, reference.id]));
+          return !row || personalAccountRevision(String(row['payload'])) !== reference.revision;
+        });
+        const archiveSql = `SELECT v.* FROM mind_source_versions v
+          JOIN jsonb_to_recordset(?::jsonb) AS q(id text,revision text)
+          ON v.source_id=q.id AND v.revision=q.revision
+          WHERE v.world_id=? AND v.actor_id=? AND v.source_kind=?`;
+        const archiveParameters = [
+          JSON.stringify(
+            missing.map(({ reference }) => ({ id: reference.id, revision: reference.revision })),
+          ),
+          cut.worldId,
+          origin.actorId,
+          kind,
+        ];
+        const archives = new Map<string, Record<string, unknown>>();
+        if (missing.length) {
+          await admit(archiveSql, archiveParameters);
+          for (const row of await db.prepare(archiveSql).all(...archiveParameters))
+            archives.set(JSON.stringify([row['source_id'], row['revision']]), row);
+        }
+        for (const { reference } of selected) {
+          const row = current.get(JSON.stringify([...owner, reference.id]));
+          if (row && personalAccountRevision(String(row['payload'])) === reference.revision)
+            personal.push({ storage: 'current', kind, row: nativeCurrentRow(table, row) });
+          else {
+            const archived = archives.get(JSON.stringify([reference.id, reference.revision]));
+            if (!archived) continue;
+            personal.push({
+              storage: 'archive',
+              archive: {
+                worldId: String(archived['world_id']),
+                actorId: String(archived['actor_id']),
+                sourceKind: kind,
+                sourceId: String(archived['source_id']),
+                revision: String(archived['revision']),
+                payload: String(archived['payload']),
+              },
+              current: row ? nativeCurrentRow(table, row) : null,
+            });
+          }
+        }
       }
-      const result = { binding, readSerial: origin.readSerial, rows: { pages, values, personal } };
+      const result = {
+        binding,
+        readSerial: origin.readSerial,
+        rows: { pages, values, personal, parents },
+      };
       if (Buffer.byteLength(JSON.stringify(result)) > request.maximumTransferBytes)
         throw new Error('Native source witnesses exceed their admitted transfer allowance.');
       return result;
