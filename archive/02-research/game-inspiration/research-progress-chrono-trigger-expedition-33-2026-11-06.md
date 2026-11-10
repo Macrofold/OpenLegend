@@ -1,5 +1,17 @@
 # Chrono Trigger and Clair Obscur: Expedition 33 — full research
 
+## Chrono Trigger transcript expansion — November 9, 2026
+
+Mike requested additional Chrono Trigger research using a supplied YouTube transcript. The full G187 dossier already exists; this scoped expansion preserves its R01–R15 coverage and the completed November 6–7 assignment below. Base: `https://github.com/Macrofold/OpenLegend.git`, published `main` at `00b96687b853ed7a2c5e9fc9b11542e10147ea0f`. New branch: `docs/chrono-trigger-video-research-20261109`. Research only.
+
+**Completed:** the dossier incorporates the supplied SNES completionist perspective, contrasting DS/Steam accounts, a fourteen-row story/mechanics/attribution audit, two worked boss situations and later creator interviews. All 104 earlier source references remain; 15 entries were added. STORY/PACING and their source assessments are reconciled, with existing dispositions and design owners preserved. The substantive expansion is committed at `531a5f33d8fec0bc15d9e47bcd126da35a6ff3a5` on the branch above.
+
+**Verification:** the full five-file affected diff and source support were reviewed. Independent narrative/mechanics and production reviews identified wording that overstated the narrator's claims; those labels were corrected, and the final reception/synthesis review found no actionable issues. Source-label checks and all 13 new relative links passed. The repository's formatter excludes `archive`; no formatting churn, runtime tests, playthrough, video viewing or CI run was required or claimed. The transcript's video identity remains unverified, with the supplied attachment and its hash recorded as provenance. No other game, accepted feature, implementation task or runtime work was opened. No work remains in this scoped expansion.
+
+**Follow-up review disposition:** compared the complete dossier and prior branch changes with the narrative/gameplay owners and their work entries. Corrected mandatory-novelty wording and reframed favored-companion viability around willing, distinct contributions. Clarified that FPV06–FPV07 own current pacing observations; ND28 remains conditional. ND01/DG34 and PS07.4/PS07.7 already carry narrative design and aftermath work; ND38/ASE12 retain combat acceptance. No new specification, needs-design entry, task, priority or acceptance gate is justified. The prior handoff's substantive lessons are already recorded. Source definitions, headings and link destinations are unchanged; this review adds no runtime evidence.
+
+## Original full-dossier assignment
+
 **Assigned November 6, 2026.** Scope: a full new Chrono Trigger dossier and a complete expansion/audit of G77 Expedition 33 across R01–R14, the economics/enjoyment/lore amendment, and the conditional R15 creator-tools investigation. Research only; no gameplay implementation or new engine task list.
 
 Base: `Macrofold/OpenLegend`, published `main` at `e1df4d4d5866190b580aedc34dff2d6a1c67f089`. Branch: `docs/chrono-trigger-expedition-33-research`.
