@@ -169,6 +169,19 @@ pub(crate) struct NativeSetupSettings {
     pub actor_response: crate::response::ResponseLimits,
 }
 
+impl crate::host::retained_size::HeapBytes for NativeSetupSettings {
+    fn heap_bytes(&self) -> Option<usize> {
+        use crate::host::retained_size::{HeapBytes, heap_sum};
+        // The remaining setup fields are scalar compiled limits. These are the
+        // decoded settings' dynamic owners, before their consuming installers.
+        heap_sum([
+            self.work.version.heap_bytes()?,
+            self.activity_learning.heap_bytes()?,
+            self.actor_response.heap_bytes()?,
+        ])
+    }
+}
+
 /// Presence is consumed only during installation by the actual child owners.
 /// A null child differs from an omitted child; its owner must retain that exact
 /// current-format meaning. This metadata is not a runtime world field store.

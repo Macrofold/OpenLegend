@@ -20,6 +20,8 @@ import {
   decodeNativeProduct,
   retainNativeSources,
   withNativeJsonInput,
+  encodeNativeJson,
+  releaseNativeProduct,
 } from './native-consumer.js';
 import { nativeRecordChanges } from './native-records.js';
 import { nativeRestoredHistory } from './native-private-history.js';
@@ -35,7 +37,7 @@ import type {
   NativeRestorePublication,
   NativeRestoreStage,
 } from './native-restore.js';
-import { captureWorkingSources } from './native-current-sources.js';
+import { withAdmittedWorkingSources } from './native-current-sources.js';
 import { ACCOUNT_RETENTION_PREPARATION } from './account-retention.js';
 import { SUPPORT_MEMBERSHIP_PREPARATION } from './retention-cleanup.js';
 import { SOURCE_RETENTION_CLOSURE_ROUNDS } from './source-version-retention.js';
@@ -146,12 +148,6 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
       },
       backgroundSearchAdmission,
     };
-    this.retention = new NativeRetention(
-      restored.worldId,
-      selectedTemporalPolicy(definitions.facts.definitions),
-      stage.source.records.tables['mind_temporal_actors'] ?? [],
-    );
-    this.retention.prepare(restored.changes)();
     const host =
       restored.changes.writes['data_world']?.find((row) => row.id === '[]') ??
       stage.source.records.tables['data_world']!.find((row) => row.id === '[]')!;
@@ -170,12 +166,38 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
       ),
       restored.changes,
     );
-    this.actors = new NativeActorRoster(
+    this.actors = NativeActorRoster.capture(
+      world,
       stage.source.records.tables['sim_actors'] ?? [],
       stage.source.records.tables['sim_exit_exposures'] ?? [],
       stage.source.records.tables['sim_native_response_episodes'] ?? [],
     );
-    this.actors.prepare(restored.changes)();
+    let admittedRetention: NativeRetention | undefined;
+    try {
+      const staged = this.actors.prepare(restored.changes);
+      try {
+        staged();
+      } finally {
+        staged.release();
+      }
+      admittedRetention = NativeRetention.capture(
+        world,
+        restored.worldId,
+        selectedTemporalPolicy(definitions.facts.definitions),
+        stage.source.records.tables['mind_temporal_actors'] ?? [],
+      );
+      this.retention = admittedRetention;
+      const retained = this.retention.prepare(restored.changes);
+      try {
+        retained();
+      } finally {
+        retained.release();
+      }
+    } catch (error) {
+      this.actors.release();
+      admittedRetention?.release();
+      throw error;
+    }
   }
 
   static async prepare(request: {
@@ -193,29 +215,39 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
   }): Promise<NativeRestorePreparation> {
     const { stage, store } = request;
     request.signal?.throwIfAborted();
-    const working = await captureWorkingSources(store.records, DATABASE_SCHEMA);
-    if (
-      !working ||
-      working.records.generation !== stage.generation ||
-      working.records.durableRevision !== stage.revision
-    )
-      throw new Error('Restore working selection differs from its protected SQL installation.');
-    const world = await withNativeJsonInput(
+    let packet: Buffer | undefined = await withAdmittedWorkingSources(
+      store.records,
+      DATABASE_SCHEMA,
       request.host,
-      {
-        ...working,
-        definitions: nativeDefinitionSources(working),
-        settings: nativeSetupSettings,
-        storage: nativeStorageSettings,
-        layouts: nativeRecordLayouts(),
-        acceptedCut: 0,
+      async (working) => {
+        if (
+          !working ||
+          working.records.generation !== stage.generation ||
+          working.records.durableRevision !== stage.revision
+        )
+          throw new Error('Restore working selection differs from its protected SQL installation.');
+        return encodeNativeJson(request.host, {
+          ...working,
+          definitions: nativeDefinitionSources(working),
+          settings: nativeSetupSettings,
+          storage: nativeStorageSettings,
+          layouts: nativeRecordLayouts(),
+          acceptedCut: 0,
+        });
       },
-      (bytes) => request.host.installRestoringWorld(bytes, DATABASE_SCHEMA),
     );
+    let world: NativeWorld;
+    try {
+      world = await request.host.installRestoringWorld(packet, DATABASE_SCHEMA);
+    } finally {
+      releaseNativeProduct(packet);
+      packet = undefined;
+    }
     let definitions: NativeDefinitionCapture | undefined;
     let geometry: ReturnType<NativeDefinitionCapture['geometry']> | undefined;
     let turn: NativeWorldTurn | undefined;
     let allocation: ReturnType<HostWork['reserveAllocation']> | undefined;
+    let result: NativeRestorePreparation | undefined;
     try {
       const initial = decodeNativeProduct<NativeRestoreProjection['installation']>(
         await world.installation(),
@@ -291,7 +323,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
         store.db,
         cut,
       );
-      const result = new NativeRestorePreparation(
+      result = new NativeRestorePreparation(
         world,
         definitions,
         geometry,
@@ -311,6 +343,8 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
       turn.prepared.ready();
       return result;
     } catch (error) {
+      result?.actors.release();
+      result?.retention.release();
       if (turn?.kind === 'prepared') await world.cancel(turn.key);
       allocation?.rollback();
       world.closeAdmission();
@@ -331,6 +365,8 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
     await this.world.finishStop();
     await this.geometry.close();
     this.definitions.release();
+    this.actors.release();
+    this.retention.release();
   }
 
   retainReceipt(receipt: NativeWorldAdoption): void {

@@ -11,6 +11,50 @@ import { decodeCurrentContactRow } from './current-contact-codec.js';
 import { RECORD_NODES } from './world-record-schema.js';
 import { temporalDirectoriesFromRows, type WorldRecords } from './world-records.js';
 import type { CanonicalCheckpoint } from './checkpoint.js';
+import type { NativeHost, NativeWorldConsumer } from '@open-legend/native-simulation';
+import {
+  withNativeSourcePreparation,
+  prepareNativeSource,
+  prepareNativeSourceSync,
+  parseSourceJson,
+  decodeSourceJson,
+  retainPreparedSource,
+} from './native-source-preparation.js';
+
+/** Bootstrap keeps the real selected SQL strings and row layouts within
+ * one transfer owner. Parsed metadata and packet encoders have separate owners. This never assembles a Source world.
+ * Persistent small scheduling facts need their own owner before this returns. */
+export async function withAdmittedWorkingSources<T>(
+  records: WorldRecords,
+  databaseSchema: string,
+  budget: Pick<NativeHost, 'reserveConsumerBytes' | 'reserveConsumerJson'>,
+  consume: (source: Awaited<ReturnType<typeof captureWorkingSources>>) => Promise<T>,
+): Promise<T> {
+  const admitRead = records.db.withReadTransferAdmission?.bind(records.db);
+  if (!admitRead) throw new Error('Native bootstrap requires admitted PostgreSQL row transfer.');
+  const custody: NativeWorldConsumer[] = [];
+  try {
+    return await withNativeSourcePreparation(budget, async () => {
+      const source = await admitRead(
+        (bytes, rows) => {
+          // Three encoded bytes cover driver wire plus UTF-16 strings. Per-row
+          // space covers SQL/current-row objects, indexed-cell arrays, grouping
+          // and ordinal/reference metadata while both layouts are alive. The
+          // extra envelope owns this finite transfer's guard/list bookkeeping.
+          const bound = bytes * 3 + rows * 1536 + 512;
+          if (!Number.isSafeInteger(bound))
+            throw new Error('Native bootstrap transfer exceeds capacity.');
+          custody.push(budget.reserveConsumerBytes(bound));
+        },
+        () => prepareNativeSource(() => captureWorkingSources(records, databaseSchema)),
+      );
+      return await consume(source);
+    });
+  } finally {
+    for (const guard of custody) guard.release();
+    custody.length = 0;
+  }
+}
 
 function integer(value: unknown): number {
   const number =
@@ -107,7 +151,7 @@ export async function captureCurrentSources(records: WorldRecords, databaseSchem
       new Map(),
     );
     const wanted = (tables['world_hot_events'] ?? []).map((row) => {
-      const pointer = JSON.parse(row.payload) as { id: string };
+      const pointer = parseSourceJson(row.payload) as { id: string };
       if (typeof pointer.id !== 'string')
         throw new Error('Native cold occurrence lacks its original identity.');
       return pointer.id;
@@ -164,7 +208,7 @@ export function checkpointCurrentSources(
   }
   const headerRow = tables['world_settings']?.find((row) => row.id === '["world"]');
   if (!headerRow) throw new Error('Checkpoint has no canonical world header.');
-  const header = JSON.parse(headerRow.payload) as Record<string, unknown>;
+  const header = parseSourceJson(headerRow.payload) as Record<string, unknown>;
   const floor = ordinal(binding.identityFloor);
   if (floor > ordinal(header['nextId'])) {
     header['nextId'] = floor;
@@ -172,7 +216,7 @@ export function checkpointCurrentSources(
   }
   const byId = new Map(checkpoint.history.history_events.map((row) => [row['id'], row['payload']]));
   const originals = (tables['world_hot_events'] ?? []).map((row) => {
-    const pointer = JSON.parse(row.payload) as { id: string };
+    const pointer = parseSourceJson(row.payload) as { id: string };
     const payload = byId.get(pointer.id);
     if (typeof payload !== 'string')
       throw new Error('Checkpoint is missing a referenced original occurrence.');
@@ -207,7 +251,7 @@ function currentRecordMetadata(
 ) {
   const settings = tables['world_settings']?.find((row) => row.id === '["world"]');
   if (!settings) throw new Error('Native cold installation has no current world header.');
-  const header = JSON.parse(settings.payload) as Record<string, unknown>;
+  const header = parseSourceJson(settings.payload) as Record<string, unknown>;
   if (header['id'] !== head.worldId)
     throw new Error('Native cold head and canonical world identity disagree.');
   const nextId = ordinal(header['nextId']);
@@ -224,25 +268,27 @@ function currentRecordMetadata(
     for (const row of tables[table] ?? []) {
       // Only these finite parent rows are decoded, solely for direct child
       // markers. Child bodies stay in their independently owned SQL rows.
-      const body: unknown = JSON.parse(row.payload);
-      for (const [field, child] of children) {
-        const value = member(body, field);
-        const present = value !== undefined && value !== null;
-        const nextOrdinal = child.orderKey
-          ? nextId
-          : (nextPositions.get(`${child.node.table}:${row.id}`) ??
-            highwaters.get(child.node.table)?.get(row.id) ??
-            0);
-        if (!present && (highwaters.get(child.node.table)?.get(row.id) ?? 0) > 0)
-          throw new Error('Native cold installation has orphaned current child rows.');
-        coverage.push({
-          table: child.node.table,
-          owner: row.id,
-          complete: !present || complete(child.node.table),
-          nextOrdinal,
-          parentPresent: present,
-        });
-      }
+      prepareNativeSourceSync(() => {
+        const body: unknown = parseSourceJson(row.payload);
+        for (const [field, child] of children) {
+          const value = member(body, field);
+          const present = value !== undefined && value !== null;
+          const nextOrdinal = child.orderKey
+            ? nextId
+            : (nextPositions.get(`${child.node.table}:${row.id}`) ??
+              highwaters.get(child.node.table)?.get(row.id) ??
+              0);
+          if (!present && (highwaters.get(child.node.table)?.get(row.id) ?? 0) > 0)
+            throw new Error('Native cold installation has orphaned current child rows.');
+          coverage.push({
+            table: child.node.table,
+            owner: row.id,
+            complete: !present || complete(child.node.table),
+            nextOrdinal,
+            parentPresent: present,
+          });
+        }
+      });
     }
   }
   const entityIds = (tables['sim_entities'] ?? []).map((row) => {
@@ -290,14 +336,21 @@ export async function captureWorkingSources(records: WorldRecords, databaseSchem
         throw new Error(`Native proof has no compiled saved-family owner for ${table}.`);
     const references = new Set<string>();
     for (const table of receivedCurrentOwnerTables)
-      for (const row of rows(table))
-        for (const id of receivedRecordReferences(
-          table,
-          table === 'mind_perception_current'
-            ? (decodeCurrentContactRow(row) as unknown as Record<string, unknown>)
-            : JSON.parse(String(row['payload'])),
-        ))
-          references.add(id);
+      for (const row of rows(table)) {
+        const ids = prepareNativeSourceSync(() =>
+          retainPreparedSource(
+            receivedRecordReferences(
+              table,
+              table === 'mind_perception_current'
+                ? (decodeSourceJson(String(row['metadata']), () =>
+                    decodeSourceJson(String(row['payload']), () => decodeCurrentContactRow(row), 2),
+                  ) as unknown as Record<string, unknown>)
+                : parseSourceJson(String(row['payload'])),
+            ),
+          ),
+        );
+        for (const id of ids) references.add(id);
+      }
     const temporalActors = rows('mind_temporal_actors').map((row) => String(row['slot']));
     const coldDirectories = temporalDirectoriesFromRows(
       temporalActors,
@@ -313,7 +366,16 @@ export async function captureWorkingSources(records: WorldRecords, databaseSchem
         const siblings = parents.get(parent) ?? [];
         siblings.push(row);
         parents.set(parent, siblings);
-        for (const id of temporalPageReferences(readTemporalPageRecord(row))) references.add(id);
+        const ids = prepareNativeSourceSync(() =>
+          retainPreparedSource([
+            ...decodeSourceJson(
+              String(row['payload']),
+              () => temporalPageReferences(readTemporalPageRecord(row)),
+              2,
+            ),
+          ]),
+        );
+        for (const id of ids) references.add(id);
       }
       groups.set('mind_temporal_pages', parents);
       const values = new Map<string, typeof pages>();
@@ -345,9 +407,14 @@ export async function captureWorkingSources(records: WorldRecords, databaseSchem
     }
     const dependencies = new Set<string>();
     for (const table of ['mind_awareness', 'mind_memories', 'mind_learned_capabilities'] as const)
-      for (const row of rows(table))
-        for (const id of hotEventRecordDependencies(table, JSON.parse(String(row['payload']))))
-          dependencies.add(id);
+      for (const row of rows(table)) {
+        const ids = prepareNativeSourceSync(() =>
+          retainPreparedSource([
+            ...hotEventRecordDependencies(table, parseSourceJson(String(row['payload']))),
+          ]),
+        );
+        for (const id of ids) dependencies.add(id);
+      }
     const hot = await records.readActiveHotEvents(head.worldId, [...dependencies]);
     const pointers = new Map<string, typeof hot.rows>();
     const originals: { eventId: string; payload: string }[] = [];
@@ -357,7 +424,7 @@ export async function captureWorkingSources(records: WorldRecords, databaseSchem
       const siblings = pointers.get(parent) ?? [];
       siblings.push(pointer);
       pointers.set(parent, siblings);
-      const id = (JSON.parse(String(row['pointer_payload'])) as { id: string }).id;
+      const id = (parseSourceJson(String(row['pointer_payload'])) as { id: string }).id;
       originals.push({ eventId: id, payload: String(row['payload']) });
     }
     groups.set('world_hot_events', pointers);

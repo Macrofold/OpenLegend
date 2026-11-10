@@ -104,7 +104,7 @@ export function nextSupportRetentionAt(world: WorldState): number | null {
  * service order only; they retain neither a world snapshot nor personal content,
  * and need no persistence. A failed/still-due slice cannot starve later actors. */
 export class RetentionActorSelection {
-  private static readonly maximumActors = 32;
+  static readonly maximumActors = 32;
   private worldId?: string;
   private after: Partial<Record<RetentionWorkKind, string>> = {};
   select(world: WorldState, kind: RetentionWorkKind): string[] {

@@ -54,11 +54,17 @@ export class NativeNavigation {
       // world or scan all entities on every simulation interval.
       for (const actor of this.owner.pending()) {
         if (this.closed || !this.owner.available() || this.owner.world() !== world) break;
-        const read = await this.inLane(() =>
-          this.closed || !this.owner.available() || this.owner.world() !== world
-            ? Promise.resolve(null)
-            : world.readNavigation(actor),
-        );
+        const read = await this.inLane(async () => {
+          if (this.closed || !this.owner.available() || this.owner.world() !== world) return null;
+          // NAPI creates a separate UTF-8 String before the native read owns
+          // its actor identifier. The roster's Node string cannot fund it.
+          const input = world.reserveConsumerBytes(Buffer.byteLength(actor) + 1 + 3 * 8);
+          try {
+            return await world.readNavigation(actor);
+          } finally {
+            input.release();
+          }
+        });
         if (!read) continue;
         try {
           let more = true;

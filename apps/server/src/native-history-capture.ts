@@ -1,4 +1,4 @@
-import type { NativeWorld, NativeWorldRecentHistoryRead } from '@open-legend/native-simulation';
+import type { NativeWorld, NativeWorldPrivateHistoryRead } from '@open-legend/native-simulation';
 import type {
   NativeNpcHistoricalScope,
   NativeNpcSourceInventory,
@@ -15,38 +15,42 @@ import {
   withNativeJsonInput,
 } from './native-consumer.js';
 
-export interface NativeRecentHistoryPacket {
-  readonly scope: NativeNpcHistoricalScope;
-  readonly history: Pick<NativeHistoryInput, 'worldId' | 'generation' | 'baseCut' | 'cuts'>;
-  readonly recordingGap?: { readonly from: number; readonly through: number };
-}
+export type NativePrivateHistoryPacket =
+  | { readonly purpose: 'personal'; readonly scope: NativeNpcHistoricalScope }
+  | {
+      readonly purpose: 'recent';
+      readonly scope: NativeNpcHistoricalScope;
+      readonly history: Pick<NativeHistoryInput, 'worldId' | 'generation' | 'baseCut' | 'cuts'>;
+      readonly recordingGap?: { readonly from: number; readonly through: number };
+    };
 
 /** A private reader owns only its actual actor history scope and the selected
  * receipt inventory. No NPC context or writable world is manufactured for UI. */
-export class NativeRecentHistoryCapture {
+export class NativePrivateHistoryCapture {
   private inventory: NativeNpcSourceInventory | undefined;
   private constructor(
-    readonly read: NativeWorldRecentHistoryRead,
-    private packetValue: NativeRecentHistoryPacket | undefined,
+    readonly read: NativeWorldPrivateHistoryRead,
+    private packetValue: NativePrivateHistoryPacket | undefined,
   ) {}
 
-  static async capture(world: NativeWorld, actorId: string) {
-    const read = await world.readRecentHistory(actorId);
+  static async capture(world: NativeWorld, actorId: string, purpose: 'recent' | 'personal') {
+    const read = await world.readHistory(actorId, purpose);
     try {
-      return new NativeRecentHistoryCapture(
+      return new NativePrivateHistoryCapture(
         read,
-        freezeNativeProduct(decodeNativeProduct<NativeRecentHistoryPacket>(await read.packet())),
+        freezeNativeProduct(decodeNativeProduct<NativePrivateHistoryPacket>(await read.packet())),
       );
     } catch (error) {
       read.release();
       throw error;
     }
   }
-  get facts(): NativeRecentHistoryPacket {
-    if (!this.packetValue) throw new Error('Recent observations were released.');
+  get facts(): NativePrivateHistoryPacket {
+    if (!this.packetValue) throw new Error('Private history were released.');
     return this.packetValue;
   }
   tailRequest() {
+    if (this.facts.purpose === 'personal') return;
     const { scope } = this.facts;
     return scope.receiptPrefix.state === 'pending'
       ? {
@@ -66,24 +70,19 @@ export class NativeRecentHistoryCapture {
     this.facts;
     try {
       let turn = await withNativeJsonInput(world, selection, (bytes) =>
-        world.recentHistorySources(this.read, bytes),
+        world.historySources(this.read, bytes),
       );
       while (turn.kind === 'provider') {
-        if (!turn.provider) throw new Error('Recent observations have no actual source question.');
+        if (!turn.provider) throw new Error('Private history have no actual source question.');
         const answer = await answerNativeProvider(turn.provider, geometry, history);
         try {
-          turn = await world.answerRecentHistorySources(
-            this.read,
-            turn.key,
-            turn.provider,
-            answer.json,
-          );
+          turn = await world.answerHistorySources(this.read, turn.key, turn.provider, answer.json);
         } finally {
           releaseNativeProduct(answer);
         }
       }
       if (turn.kind !== 'complete')
-        throw new Error('Recent observations did not close their read-only source preparation.');
+        throw new Error('Private history did not close their read-only source preparation.');
       this.inventory = freezeNativeProduct(
         decodeNativeProduct<NativeNpcSourceInventory>(await this.read.sources()),
       );
@@ -91,7 +90,7 @@ export class NativeRecentHistoryCapture {
     } catch (error) {
       // Await the sole private cursor's cancellation before the service lane
       // admits another writer, including an initial provider admission refusal.
-      await world.cancelRecentHistorySources(this.read);
+      await world.cancelHistorySources(this.read);
       throw error;
     }
   }

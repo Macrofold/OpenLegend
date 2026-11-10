@@ -224,6 +224,12 @@ export interface SqlDatabase {
   setLiveReadCuts?(provider: LiveReadCutsProvider): void;
   maintenanceTransaction?<T>(operation: () => Promise<T>): Promise<T>;
   readTransaction?<T>(operation: () => Promise<T>): Promise<T>;
+  /** Native bootstrap owns each selected SQL transfer before the driver
+   * allocates rows. The caller retains that custody through consumption. */
+  withReadTransferAdmission?<T>(
+    admit: (bytes: number, rows: number) => void,
+    operation: () => Promise<T>,
+  ): Promise<T>;
   /** A tentative SQL read projection inside an actual write transaction. All
    * rows and callback effects are rolled back before returning its result. */
   rollbackView?<T>(operation: () => Promise<T>): Promise<T>;

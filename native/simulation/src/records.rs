@@ -124,6 +124,12 @@ pub struct NormalizedIntent {
     pub description: crate::text::JsText,
     pub normalized: crate::text::JsText,
 }
+crate::host::retained_size::heap_record!(NormalizedIntent {
+    row_id,
+    description,
+    normalized
+});
+
 /// Canonical formatting is prepared from one exact SQL row by the same Source
 /// owner. The consuming method validator still owns all template semantics.
 #[derive(Debug, Deserialize)]
@@ -133,6 +139,12 @@ pub struct ActivityMethodSignature {
     pub payload_sha256: String,
     pub signature: String,
 }
+
+crate::host::retained_size::heap_record!(ActivityMethodSignature {
+    row_id,
+    payload_sha256,
+    signature
+});
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

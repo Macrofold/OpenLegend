@@ -70,6 +70,37 @@ impl NpcHistoricalScope {
         serial: u64,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
+        Self::capture_history(
+            state,
+            actor,
+            serial,
+            HistoricalPermission::ReceivingLife,
+            budget,
+        )
+    }
+    /// Deliberate personal history inspection permits a real actor with no
+    /// acquired accounts yet; absent privacy ownership is the actual empty cut.
+    pub(crate) fn capture_history_personal(
+        state: &SimulationState,
+        actor: &str,
+        serial: u64,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        Self::capture_history(
+            state,
+            actor,
+            serial,
+            HistoricalPermission::PersonalOwner,
+            budget,
+        )
+    }
+    fn capture_history(
+        state: &SimulationState,
+        actor: &str,
+        serial: u64,
+        permission: HistoricalPermission,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
         let physical = state
             .physical
             .entities
@@ -85,7 +116,7 @@ impl NpcHistoricalScope {
                 .experience
                 .actor(actor)
                 .map_or(0, |actor| actor.privacy.revision()),
-            HistoricalPermission::ReceivingLife,
+            permission,
             budget,
         )
     }

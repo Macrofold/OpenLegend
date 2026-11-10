@@ -9,6 +9,11 @@ impl NativeWorldConsumer {
             value: RuntimeConsumer::reserve(bytes, budget).map_err(operation_error)?,
         })
     }
+    pub(crate) fn reserve_json(bytes: &[u8], budget: &ByteBudget) -> Result<Self> {
+        Ok(Self {
+            value: RuntimeConsumer::for_json(bytes, budget).map_err(operation_error)?,
+        })
+    }
 }
 
 #[napi]
@@ -29,10 +34,7 @@ impl NativeWorld {
             if self.world.stopped() || self.host.pool.is_closing() {
                 return Err(failure("native consumer admission is closed"));
             }
-            Ok(NativeWorldConsumer {
-                value: RuntimeConsumer::for_json(&bytes, &self.host.bytes)
-                    .map_err(operation_error)?,
-            })
+            NativeWorldConsumer::reserve_json(&bytes, &self.host.bytes)
         })
     }
 }

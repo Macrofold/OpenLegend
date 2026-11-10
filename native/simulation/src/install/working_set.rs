@@ -27,6 +27,18 @@ pub(crate) struct WorkingSetSelection {
     running_activities: Vec<String>,
     current_contributions: Vec<String>,
 }
+crate::host::retained_size::heap_record!(WorkingSetSelection {
+    world_id,
+    generation,
+    temporal_tail_actors,
+    active_appraisals,
+    open_agreement_heads,
+    sensory_awareness,
+    unresolved_memories,
+    running_activities,
+    current_contributions
+});
+
 pub(crate) struct InstalledWorkingSet {
     pub removed_hot_events: u64,
     pub received_value_closure: bool,

@@ -7,7 +7,7 @@ import type { NativeNpcCapture } from './native-npc-capture.js';
 import type { NativeInstalledDefinitions } from './native-definition-capture.js';
 import type { LiveReadCuts } from './live-read-overlay.js';
 import type { IndexedTemporalHistoryReadContext } from './temporal-storage.js';
-import type { NativeRecentHistoryPacket } from './native-recent-history.js';
+import type { NativePrivateHistoryPacket } from './native-history-capture.js';
 
 export function nativeReceiptLocator(receipt: TemporalReceiptLocator): TemporalReceiptLocator {
   return {
@@ -40,10 +40,12 @@ export function nativeTemporalHistoryContext(
 }
 
 export function nativeRecentHistoryContext(
-  facts: NativeRecentHistoryPacket,
+  facts: NativePrivateHistoryPacket,
   captured: LiveReadCuts,
   definitions: NativeInstalledDefinitions,
 ): IndexedTemporalHistoryReadContext {
+  if (facts.purpose !== 'recent')
+    throw new Error('Personal history cannot supply receipt chronology.');
   const { scope } = facts;
   return indexedNativeHistoryContext(
     scope,
@@ -63,7 +65,7 @@ function indexedNativeHistoryContext(
     readonly acceptedCut: number;
     readonly at: number;
   },
-  history: NativeRecentHistoryPacket['history'],
+  history: Extract<NativePrivateHistoryPacket, { purpose: 'recent' }>['history'],
   window: {
     readonly releasedThrough?: number;
     readonly recordingGap?: { readonly from: number; readonly through: number };

@@ -18,6 +18,7 @@ export declare class NativeHost {
    * This grants capacity only, with the same lifetime as world consumers.
    */
   reserveConsumerBytes(bytes: number): NativeWorldConsumer;
+  reserveConsumerJson(bytes: Buffer): NativeWorldConsumer;
   /** This status reads control metadata only, never tentative gameplay state. */
   status(): HostStatus;
   /**
@@ -146,21 +147,21 @@ export declare class NativeWorld {
   correct(bytes: Buffer): Promise<NativeWorldTurn>;
   resolveReceiptTail(reply: Buffer): Promise<void>;
   readCut(request: Buffer): Promise<NativeWorldJson>;
-  readRecentHistory(actorId: string): Promise<NativeWorldRecentHistoryRead>;
-  recentHistorySources(
-    read: NativeWorldRecentHistoryRead,
+  readHistory(actorId: string, purpose: string): Promise<NativeWorldPrivateHistoryRead>;
+  historySources(
+    read: NativeWorldPrivateHistoryRead,
     inputBytes: Buffer,
   ): Promise<NativeWorldNpcTurn>;
-  answerRecentHistorySources(
-    read: NativeWorldRecentHistoryRead,
+  answerHistorySources(
+    read: NativeWorldPrivateHistoryRead,
     key: NativeCandidateKey,
     provider: NativeWorldProvider,
     answer: string,
   ): Promise<NativeWorldNpcTurn>;
-  cancelRecentHistorySources(read: NativeWorldRecentHistoryRead): Promise<void>;
-  recentHistoryPublication(
-    read: NativeWorldRecentHistoryRead,
-  ): Promise<NativeWorldRecentHistoryPublication | null>;
+  cancelHistorySources(read: NativeWorldPrivateHistoryRead): Promise<void>;
+  historyPublication(
+    read: NativeWorldPrivateHistoryRead,
+  ): Promise<NativeWorldPrivateHistoryPublication | null>;
   beginRestore(bytes: Buffer): Promise<NativeWorldTurn>;
   activateRestored(key: NativeCandidateKey, receipt: string): Promise<void>;
   retainedValues(): Promise<NativeWorldJson>;
@@ -308,20 +309,20 @@ export declare class NativeWorldPrepared {
   settle(accept: boolean): boolean;
 }
 
-export declare class NativeWorldProvider {
-  question(): NativeWorldJson;
-}
-
-export declare class NativeWorldRecentHistoryPublication {
+export declare class NativeWorldPrivateHistoryPublication {
   isCurrent(): boolean;
   release(): void;
 }
 
-export declare class NativeWorldRecentHistoryRead {
+export declare class NativeWorldPrivateHistoryRead {
   packet(): Promise<NativeWorldJson>;
   sources(): Promise<NativeWorldJson>;
   isCurrent(): boolean;
   release(): void;
+}
+
+export declare class NativeWorldProvider {
+  question(): NativeWorldJson;
 }
 
 export declare class NativeWorldReflectionTicket {

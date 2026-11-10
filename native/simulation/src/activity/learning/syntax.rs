@@ -64,15 +64,20 @@ impl HeapBytes for CommandFields {
         ])
     }
 }
+impl HeapBytes for LearningLanguage {
+    fn heap_bytes(&self) -> Option<usize> {
+        self.commands
+            .heap_bytes()?
+            .checked_add(self.failure_codes.heap_bytes()?)
+    }
+}
 impl LearningLanguage {
     pub(crate) fn install(
         self,
         budget: &ByteBudget,
     ) -> Result<InstalledLearningLanguage, crate::install::InstallError> {
         let bytes = self
-            .commands
             .heap_bytes()
-            .and_then(|n| n.checked_add(self.failure_codes.heap_bytes()?))
             .and_then(|n| {
                 n.checked_add(size_of::<InstalledLearningLanguage>() + 2 * size_of::<usize>())
             })

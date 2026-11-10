@@ -111,13 +111,22 @@ export function encodeNativeJson(
 ): Buffer {
   const prefix = options.prefix ?? '',
     suffix = options.suffix ?? '';
-  const bytes = jsonByteLength(value) + Buffer.byteLength(prefix) + Buffer.byteLength(suffix);
+  const shape = nativeJsonEncodingWorkspace(value);
+  // The size reader creates Object.keys work arrays too. Admit that traversal
+  // before it runs, then reuse its known shape for the actual encoder.
+  const measuring = world.reserveConsumerBytes(shape + 256);
+  let bytes: number;
+  try {
+    bytes = jsonByteLength(value) + Buffer.byteLength(prefix) + Buffer.byteLength(suffix);
+  } finally {
+    measuring.release();
+  }
   const output = world.reserveConsumerBytes(bytes + 32 * 8);
   let workspace: NativeWorldConsumer | undefined;
   try {
     // Each UTF-8 byte bounds one UTF-16 unit. Two complete two-byte carriers
     // cover the encoder builder/result or the source/framed flattening pair.
-    workspace = world.reserveConsumerBytes(4 * bytes + nativeJsonEncodingWorkspace(value));
+    workspace = world.reserveConsumerBytes(4 * bytes + shape);
     // Avoid Node's pooled small-Buffer slab: this owner funds this exact body.
     const buffer = Buffer.allocUnsafeSlow(bytes);
     let at = buffer.write(prefix, 0, 'utf8');

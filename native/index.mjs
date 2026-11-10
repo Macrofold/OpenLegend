@@ -990,9 +990,9 @@ const {
   NativeWorldPlayerPublication,
   NativeWorldPlayerRead,
   NativeWorldPrepared,
+  NativeWorldPrivateHistoryPublication,
+  NativeWorldPrivateHistoryRead,
   NativeWorldProvider,
-  NativeWorldRecentHistoryPublication,
-  NativeWorldRecentHistoryRead,
   NativeWorldReflectionTicket,
   NativeWorldSave,
   HostPhase,
@@ -1018,9 +1018,9 @@ export { NativeWorldNpcTrigger };
 export { NativeWorldPlayerPublication };
 export { NativeWorldPlayerRead };
 export { NativeWorldPrepared };
+export { NativeWorldPrivateHistoryPublication };
+export { NativeWorldPrivateHistoryRead };
 export { NativeWorldProvider };
-export { NativeWorldRecentHistoryPublication };
-export { NativeWorldRecentHistoryRead };
 export { NativeWorldReflectionTicket };
 export { NativeWorldSave };
 export { HostPhase };

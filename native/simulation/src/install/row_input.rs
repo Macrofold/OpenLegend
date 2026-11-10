@@ -267,11 +267,34 @@ fn strings(text: &str, root: Role) -> Result<Strings, InputAllocationError> {
     }
     Ok(result)
 }
+/// The typed row DTO keeps its real carriers through consuming installation.
+/// After decoding, replace completed text/raw-container preparation with the
+/// actual typed heaps. Ordinary Strings and array/map carriers stay admitted.
+pub(crate) struct PreparedRowDecode {
+    storage: ByteReservation,
+    decoder_scratch: usize,
+}
+impl PreparedRowDecode {
+    pub(crate) fn finish_installation(
+        mut self,
+        retained_text: usize,
+    ) -> Result<ByteReservation, InputAllocationError> {
+        let bytes = self
+            .storage
+            .bytes()
+            .checked_sub(self.decoder_scratch)
+            .and_then(|bytes| bytes.checked_add(retained_text))
+            .ok_or_else(capacity)?;
+        self.storage.resize(bytes).map_err(|_| capacity())?;
+        Ok(self.storage)
+    }
+}
+
 pub(crate) fn prepare_installation(
     bytes: &[u8],
     budget: &ByteBudget,
     inline_bytes: usize,
-) -> Result<ByteReservation, InputAllocationError> {
+) -> Result<PreparedRowDecode, InputAllocationError> {
     prepare_rows(bytes, budget, Role::Root, inline_bytes, 0)
 }
 pub(crate) fn prepare_account_bodies(
@@ -285,6 +308,7 @@ pub(crate) fn prepare_account_bodies(
         size_of::<crate::experience::AccountBodiesReply>(),
         size_of::<crate::experience::retention::AccountBodyRow>(),
     )
+    .map(|prepared| prepared.storage)
 }
 fn prepare_rows(
     bytes: &[u8],
@@ -292,7 +316,7 @@ fn prepare_rows(
     root: Role,
     inline_bytes: usize,
     extra_element: usize,
-) -> Result<ByteReservation, InputAllocationError> {
+) -> Result<PreparedRowDecode, InputAllocationError> {
     let text = std::str::from_utf8(bytes).map_err(|_| InputAllocationError::Format)?;
     let shape = crate::encoding::JsonAllocationShape::read(text)
         .map_err(|_| InputAllocationError::Format)?;
@@ -323,10 +347,8 @@ fn prepare_rows(
     // Owned String copies need at most their quoted wire bytes. Serde reuses
     // one growing unescape scratch Vec, whose capacity is <=2x the largest such
     // token (including the small allocator minimum), not 12x every row body.
-    let ordinary = add(
-        strings.plain,
-        strings.maximum.checked_mul(2).ok_or_else(capacity)?,
-    )?;
+    let unescape_scratch = strings.maximum.checked_mul(2).ok_or_else(capacity)?;
+    let ordinary = add(strings.plain, unescape_scratch)?;
     let remaining = bytes
         .len()
         .checked_sub(strings.plain)
@@ -334,7 +356,12 @@ fn prepare_rows(
     // Only indexed cells/normalized-intent text can construct JsText or exact
     // property-name codecs in this DTO. Preserve their prior text admission;
     // additionally fund nested exact-object encodings by their actual spans.
-    let text = add(ordinary, remaining.checked_mul(12).ok_or_else(capacity)?)?;
+    let exact_text = remaining.checked_mul(12).ok_or_else(capacity)?;
+    let text = add(ordinary, exact_text)?;
+    let text_metadata = shape
+        .strings
+        .checked_mul(8 * size_of::<u16>() + 2 * size_of::<usize>())
+        .ok_or_else(capacity)?;
     let exact = strings
         .cell_containers
         .checked_mul(6)
@@ -346,19 +373,22 @@ fn prepare_rows(
         // Struct field identifiers borrow the input; only the actual dynamic
         // maps allocate one entry per key during this first typed decode.
         .and_then(|n| n.checked_add(strings.map_members.checked_mul(member)?))
-        .and_then(|n| {
-            n.checked_add(
-                shape
-                    .strings
-                    .checked_mul(8 * size_of::<u16>() + 2 * size_of::<usize>())?,
-            )
-        })
+        .and_then(|n| n.checked_add(text_metadata))
         .and_then(|n| n.checked_add(text))
         .and_then(|n| n.checked_add(exact))
         .and_then(|n| n.checked_add(inline_bytes + 64))
         .ok_or_else(capacity)?;
+    let decoder_scratch = unescape_scratch
+        .checked_add(exact)
+        .and_then(|bytes| bytes.checked_add(exact_text))
+        .and_then(|bytes| bytes.checked_add(text_metadata))
+        .ok_or_else(capacity)?;
     budget
         .reserve(bound)
+        .map(|storage| PreparedRowDecode {
+            storage,
+            decoder_scratch,
+        })
         .map_err(|_| InputAllocationError::Capacity {
             requested: Some(bound),
             used: Some(budget.used()),

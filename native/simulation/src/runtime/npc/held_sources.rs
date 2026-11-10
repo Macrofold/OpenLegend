@@ -20,6 +20,8 @@ fn receipt_backing_bytes() -> Option<usize> {
         .checked_add(marker_backing_bytes())
 }
 struct Entry {
+    // Bind the receiving read's body life, independently of an older receipt.
+    observer_life: u64,
     receipt: Weak<CapturedTemporalReceipt>,
     payload: Weak<AtomicBool>,
     // A Weak retains the Arc's inline allocation after its body guard drops.
@@ -48,6 +50,7 @@ pub(in crate::runtime) struct HeldReceiptRegistry {
 /// This proof keeps the selected immutable capture, but not its permission
 /// alive. Actual read/ticket release clears the independent payload marker.
 pub(crate) struct HeldSourceProof {
+    observer_life: u64,
     receipt: Arc<CapturedTemporalReceipt>,
     payload: Weak<AtomicBool>,
     generation: u64,
@@ -65,7 +68,7 @@ impl HeldSourceProof {
         self.generation == generation
             && self.source_id == source_id
             && self.receipt.receipt().locator.actor_id == actor_id
-            && self.receipt.receipt().locator.physical_life == physical_life
+            && self.observer_life == physical_life
             && self
                 .payload
                 .upgrade()
@@ -171,6 +174,7 @@ impl HeldReceiptRegistry {
                     continue;
                 }
                 actor.entries.push(Entry {
+                    observer_life: sources.scope.physical_life,
                     receipt: capture,
                     payload: payload.clone(),
                     _backing: backing.split_off(backing_bytes)?,
@@ -204,7 +208,7 @@ impl HeldReceiptRegistry {
                 continue;
             };
             if receipt.receipt().locator.actor_id != actor_id
-                || receipt.receipt().locator.physical_life != physical_life
+                || entry.observer_life != physical_life
             {
                 continue;
             }
@@ -232,6 +236,7 @@ impl HeldReceiptRegistry {
                     .ok_or(ExecutionError::Capacity)?,
             )?;
             return Ok(Some(HeldSourceProof {
+                observer_life: entry.observer_life,
                 receipt,
                 payload: entry.payload.clone(),
                 generation,

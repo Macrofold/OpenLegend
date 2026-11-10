@@ -93,6 +93,15 @@ export class PostgresDatabase implements SqlDatabase {
   private readonly writeLane = new WorkLane('postgres', 512);
   private transactionContext = new AsyncLocalStorage<TransactionScope>();
   private readonly metadataBaselineRead = new AsyncLocalStorage<boolean>();
+  private readonly transferAdmission = new AsyncLocalStorage<
+    (bytes: number, rows: number) => void
+  >();
+  withReadTransferAdmission<T>(
+    admit: (bytes: number, rows: number) => void,
+    operation: () => Promise<T>,
+  ): Promise<T> {
+    return this.transferAdmission.run(admit, operation);
+  }
   readMetadataBaseline<T>(
     actorIds: readonly string[],
     operation: (baseline: MetadataBaseline) => Promise<T>,
@@ -493,6 +502,35 @@ export class PostgresDatabase implements SqlDatabase {
       }
       let index = 0;
       const translated = sql.replace(/\?/g, () => `$${++index}`);
+      const admit = this.transferAdmission.getStore();
+      if (admit && /^\s*(SELECT|WITH)\b/i.test(sql) && !/\b(?:INSERT|UPDATE|DELETE)\b/i.test(sql)) {
+        if (!scope?.active)
+          throw new Error('SQL transfer admission requires its fixed read transaction.');
+        // Use this exact rewritten selection and snapshot. The preflight is
+        // real measured SQL; it must finish before the body query dispatches.
+        const statement = `SELECT count(*) AS rows,COALESCE(sum(octet_length(row_to_json(t)::text)),0) AS bytes FROM (${translated}) t`;
+        const preflight = beginDatabaseQuery(statement);
+        let size: pg.QueryResult;
+        try {
+          size = await timed('postgres.statement', () => scope.client.query(statement, params));
+          finishDatabaseQuery(preflight, {
+            rows: size.rows,
+            changes: size.rowCount ?? 0,
+          });
+        } catch (error) {
+          finishDatabaseQuery(preflight);
+          const code = (error as { code?: unknown }).code;
+          throw Object.assign(
+            new Error('PostgreSQL transfer preflight failed. No automatic retry.'),
+            typeof code === 'string' && /^[A-Z0-9]{5}$/.test(code) ? { code } : {},
+          );
+        }
+        const bytes = Number(size.rows[0]?.['bytes']),
+          rows = Number(size.rows[0]?.['rows']);
+        if (!Number.isSafeInteger(bytes) || bytes < 0 || !Number.isSafeInteger(rows) || rows < 0)
+          throw new Error('SQL transfer preflight returned an invalid allocation shape.');
+        admit(bytes, rows);
+      }
       const diagnostic = beginDatabaseQuery(template);
       try {
         const result = await timed('postgres.statement', () => {

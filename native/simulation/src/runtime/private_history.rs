@@ -5,24 +5,32 @@ use crate::host::PublicationLease;
 use std::mem::size_of;
 use std::sync::atomic::AtomicBool;
 
-pub struct RuntimeRecentHistoryRead {
+#[derive(Clone, Copy, Serialize)]
+#[serde(rename_all = "kebab-case")]
+enum HistoryPurpose {
+    Recent,
+    Personal,
+}
+
+pub struct RuntimePrivateHistoryRead {
+    purpose: HistoryPurpose,
     scope: Arc<crate::capture::NpcHistoricalScope>,
-    history: crate::experience::CapturedHistoryCuts,
+    history: Option<crate::experience::CapturedHistoryCuts>,
     recording_gap: Option<crate::received::CoverageGap>,
     sources: Option<crate::capture::PreparedNpcSources>,
     candidate: Option<CandidateKey>,
     receipt_payload: Arc<AtomicBool>,
     _storage: ByteReservation,
 }
-impl Drop for RuntimeRecentHistoryRead {
+impl Drop for RuntimePrivateHistoryRead {
     fn drop(&mut self) {
         self.receipt_payload.store(false, Ordering::Release);
     }
 }
-pub struct RuntimeRecentHistoryPublication {
+pub struct RuntimePrivateHistoryPublication {
     _lease: PublicationLease,
 }
-impl RuntimeRecentHistoryRead {
+impl RuntimePrivateHistoryRead {
     pub fn receipt_liveness(&self) -> Weak<AtomicBool> {
         Arc::downgrade(&self.receipt_payload)
     }
@@ -33,15 +41,18 @@ impl RuntimeRecentHistoryRead {
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
         struct Packet<'a, H: Serialize> {
+            purpose: HistoryPurpose,
             scope: &'a crate::capture::NpcHistoricalScope,
-            history: H,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            history: Option<H>,
             #[serde(skip_serializing_if = "Option::is_none")]
             recording_gap: &'a Option<crate::received::CoverageGap>,
         }
         RuntimeJson::encode(
             &Packet {
+                purpose: self.purpose,
                 scope: &self.scope,
-                history: self.history.value(),
+                history: self.history.as_ref().map(|history| history.value()),
                 recording_gap: &self.recording_gap,
             },
             budget,
@@ -57,11 +68,17 @@ impl RuntimeRecentHistoryRead {
     }
 }
 impl NativeWorldSession {
-    pub fn read_recent_history(
+    pub fn read_history(
         &mut self,
         actor: &str,
-    ) -> Result<RuntimeRecentHistoryRead, RuntimeError> {
+        purpose: &str,
+    ) -> Result<RuntimePrivateHistoryRead, RuntimeError> {
         self.require_active()?;
+        let purpose = match purpose {
+            "recent" => HistoryPurpose::Recent,
+            "personal" => HistoryPurpose::Personal,
+            _ => return Err(failure("unknown history purpose")),
+        };
         let serial = self
             .next_read_serial
             .checked_add(1)
@@ -69,12 +86,37 @@ impl NativeWorldSession {
             .ok_or_else(|| failure("read identity exhausted"))?;
         let state = &self.session.accepted().map_err(failure)?.state;
         let scope = Arc::new(
-            crate::capture::NpcHistoricalScope::capture_recent(state, actor, serial, &self.budget)
-                .map_err(failure)?,
+            match purpose {
+                HistoryPurpose::Recent => crate::capture::NpcHistoricalScope::capture_recent(
+                    state,
+                    actor,
+                    serial,
+                    &self.budget,
+                ),
+                HistoryPurpose::Personal => {
+                    crate::capture::NpcHistoricalScope::capture_history_personal(
+                        state,
+                        actor,
+                        serial,
+                        &self.budget,
+                    )
+                }
+            }
+            .map_err(failure)?,
         );
-        let history =
-            crate::experience::capture_history_cuts(state, std::iter::once(actor), &self.budget)
-                .map_err(failure)?;
+        // Personal browsing never selects receipt chronology. Keep its read
+        // free of the recent directory copies used only by the recent route.
+        let history = match purpose {
+            HistoryPurpose::Recent => Some(
+                crate::experience::capture_history_cuts(
+                    state,
+                    std::iter::once(actor),
+                    &self.budget,
+                )
+                .map_err(failure)?,
+            ),
+            HistoryPurpose::Personal => None,
+        };
         let recording_gap = state
             .temporal
             .actor(actor)
@@ -82,13 +124,14 @@ impl NativeWorldSession {
         let storage = self
             .budget
             .reserve(
-                size_of::<RuntimeRecentHistoryRead>()
+                size_of::<RuntimePrivateHistoryRead>()
                     .checked_add(RuntimeNpcRead::receipt_liveness_backing_bytes())
                     .ok_or_else(|| failure("capacity"))?,
             )
             .map_err(failure)?;
         self.next_read_serial = serial;
-        Ok(RuntimeRecentHistoryRead {
+        Ok(RuntimePrivateHistoryRead {
+            purpose,
             scope,
             history,
             recording_gap,
@@ -98,17 +141,14 @@ impl NativeWorldSession {
             _storage: storage,
         })
     }
-    pub fn recent_history_current(
-        &self,
-        read: &RuntimeRecentHistoryRead,
-    ) -> Result<bool, RuntimeError> {
+    pub fn history_current(&self, read: &RuntimePrivateHistoryRead) -> Result<bool, RuntimeError> {
         self.require_active()?;
         let state = &self.session.publication_read().map_err(failure)?.state;
         Ok(read.scope.still_permitted(state))
     }
-    pub fn begin_recent_history_sources(
+    pub fn begin_history_sources(
         &mut self,
-        read: &mut RuntimeRecentHistoryRead,
+        read: &mut RuntimePrivateHistoryRead,
         input: &[u8],
     ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
@@ -118,10 +158,13 @@ impl NativeWorldSession {
         let _decode = decode_preparation(input, &self.budget)?;
         let selection: crate::capture::NpcSourceSelection =
             serde_json::from_slice(input).map_err(failure)?;
-        if !selection.personal.is_empty() || selection.consolidation_job.is_some() {
-            return Err(failure(
-                "recent history accepts only actual receipt selections",
-            ));
+        if selection.consolidation_job.is_some()
+            || match read.purpose {
+                HistoryPurpose::Recent => !selection.personal.is_empty(),
+                HistoryPurpose::Personal => !selection.receipts.is_empty(),
+            }
+        {
+            return Err(failure("history sources do not match the captured purpose"));
         }
         let key = self
             .session
@@ -130,9 +173,9 @@ impl NativeWorldSession {
         read.candidate = Some(key);
         Ok(key)
     }
-    pub fn step_recent_history_sources(
+    pub fn step_history_sources(
         &mut self,
-        read: &mut RuntimeRecentHistoryRead,
+        read: &mut RuntimePrivateHistoryRead,
         key: CandidateKey,
         answer: Option<(&RuntimeProvider, String)>,
     ) -> Result<RuntimeNpcPreparationStep, RuntimeError> {
@@ -177,9 +220,9 @@ impl NativeWorldSession {
             _ => return Err(failure("history read produced executable effects")),
         })
     }
-    pub fn cancel_recent_history_sources(
+    pub fn cancel_history_sources(
         &mut self,
-        read: &RuntimeRecentHistoryRead,
+        read: &RuntimePrivateHistoryRead,
     ) -> Result<(), RuntimeError> {
         if let Some(key) = read
             .candidate
@@ -189,17 +232,17 @@ impl NativeWorldSession {
         }
         Ok(())
     }
-    pub fn recent_history_publication(
+    pub fn history_publication(
         &self,
-        read: &RuntimeRecentHistoryRead,
-    ) -> Result<Option<RuntimeRecentHistoryPublication>, RuntimeError> {
+        read: &RuntimePrivateHistoryRead,
+    ) -> Result<Option<RuntimePrivateHistoryPublication>, RuntimeError> {
         self.session.accepted().map_err(failure)?;
-        if read.sources.is_none() || !self.recent_history_current(read)? {
+        if read.sources.is_none() || !self.history_current(read)? {
             return Ok(None);
         }
         // Source capture custody remains with the retained read/header. This
         // object owns only the real final synchronous disclosure fence.
-        Ok(Some(RuntimeRecentHistoryPublication {
+        Ok(Some(RuntimePrivateHistoryPublication {
             _lease: self.session.fence().begin_publication().map_err(failure)?,
         }))
     }

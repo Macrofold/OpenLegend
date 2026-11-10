@@ -3,31 +3,31 @@
 use super::*;
 use crate::world::npc::NativeWorldNpcTurn;
 use openlegend_simulation::runtime::{
-    RuntimeNpcPreparationStep, RuntimeRecentHistoryPublication, RuntimeRecentHistoryRead,
+    RuntimeNpcPreparationStep, RuntimePrivateHistoryPublication, RuntimePrivateHistoryRead,
 };
 use std::mem::size_of;
 use std::sync::Weak;
 
-struct RecentOwner {
+struct HistoryOwner {
     payload: Weak<AtomicBool>,
-    read: Mutex<Option<RuntimeRecentHistoryRead>>,
+    read: Mutex<Option<RuntimePrivateHistoryRead>>,
     released: AtomicBool,
     _storage: ByteReservation,
 }
 #[napi]
-pub struct NativeWorldRecentHistoryRead {
-    inner: Arc<RecentOwner>,
+pub struct NativeWorldPrivateHistoryRead {
+    inner: Arc<HistoryOwner>,
     host: Arc<HostRuntime>,
     world: Weak<WorldRuntime>,
 }
 #[napi]
-pub struct NativeWorldRecentHistoryPublication {
-    inner: Option<RuntimeRecentHistoryPublication>,
-    owner: Arc<RecentOwner>,
+pub struct NativeWorldPrivateHistoryPublication {
+    inner: Option<RuntimePrivateHistoryPublication>,
+    owner: Arc<HistoryOwner>,
     _storage: ByteReservation,
 }
 #[napi]
-impl NativeWorldRecentHistoryPublication {
+impl NativeWorldPrivateHistoryPublication {
     #[napi]
     pub fn is_current(&self) -> bool {
         self.inner.is_some() && !self.owner.released.load(Ordering::Acquire)
@@ -37,12 +37,12 @@ impl NativeWorldRecentHistoryPublication {
         self.inner = None;
     }
 }
-impl NativeWorldRecentHistoryRead {
+impl NativeWorldPrivateHistoryRead {
     fn product<'a>(
         &self,
         env: &'a Env,
         encode: fn(
-            &RuntimeRecentHistoryRead,
+            &RuntimePrivateHistoryRead,
             &ByteBudget,
         ) -> std::result::Result<
             RuntimeJson,
@@ -76,20 +76,20 @@ impl NativeWorldRecentHistoryRead {
         })
     }
 }
-impl Drop for NativeWorldRecentHistoryRead {
+impl Drop for NativeWorldPrivateHistoryRead {
     fn drop(&mut self) {
         self.release();
     }
 }
 #[napi]
-impl NativeWorldRecentHistoryRead {
+impl NativeWorldPrivateHistoryRead {
     #[napi(ts_return_type = "Promise<NativeWorldJson>")]
     pub fn packet<'a>(&self, env: &'a Env) -> Result<Object<'a>> {
-        self.product(env, RuntimeRecentHistoryRead::packet)
+        self.product(env, RuntimePrivateHistoryRead::packet)
     }
     #[napi(ts_return_type = "Promise<NativeWorldJson>")]
     pub fn sources<'a>(&self, env: &'a Env) -> Result<Object<'a>> {
-        self.product(env, RuntimeRecentHistoryRead::sources)
+        self.product(env, RuntimePrivateHistoryRead::sources)
     }
     #[napi]
     pub fn is_current(&self) -> bool {
@@ -113,7 +113,7 @@ impl NativeWorldRecentHistoryRead {
         };
         owner
             .as_ref()
-            .is_some_and(|read| session.recent_history_current(read).unwrap_or(false))
+            .is_some_and(|read| session.history_current(read).unwrap_or(false))
             && !self.inner.released.load(Ordering::Acquire)
     }
     #[napi]
@@ -133,7 +133,7 @@ impl NativeWorldRecentHistoryRead {
         if let Ok(mut session) = world.session.try_lock() {
             if let Ok(mut owner) = self.inner.read.try_lock() {
                 if let (Some(session), Some(read)) = (session.as_mut(), owner.as_ref()) {
-                    if session.cancel_recent_history_sources(read).is_err() {
+                    if session.cancel_history_sources(read).is_err() {
                         world.fence.poison();
                     }
                 }
@@ -144,7 +144,7 @@ impl NativeWorldRecentHistoryRead {
         let storage = self
             .host
             .bytes
-            .reserve(size_of::<Arc<RecentOwner>>() + 2 * size_of::<Arc<WorldRuntime>>());
+            .reserve(size_of::<Arc<HistoryOwner>>() + 2 * size_of::<Arc<WorldRuntime>>());
         let Ok(storage) = storage else {
             world.fence.poison();
             return;
@@ -163,7 +163,7 @@ impl NativeWorldRecentHistoryRead {
                     crate::pool::HostError::SynchronizationFailed
                 })?;
                 if let (Some(session), Some(read)) = (session.as_mut(), owner.as_ref()) {
-                    if session.cancel_recent_history_sources(read).is_err() {
+                    if session.cancel_history_sources(read).is_err() {
                         world.fence.poison();
                         return Err(crate::pool::HostError::Poisoned);
                     }
@@ -183,7 +183,7 @@ impl NativeWorldRecentHistoryRead {
 }
 fn turn_sources(
     session: &mut NativeWorldSession,
-    read: &mut RuntimeRecentHistoryRead,
+    read: &mut RuntimePrivateHistoryRead,
     key: CandidateKey,
     answer: Option<(&RuntimeProvider, String)>,
     cancel: &Cancellation,
@@ -195,7 +195,7 @@ fn turn_sources(
             session.fence().request_stop();
         }
         match session
-            .step_recent_history_sources(read, key, answer.take())
+            .step_history_sources(read, key, answer.take())
             .map_err(operation_error)?
         {
             RuntimeNpcPreparationStep::Continue => continue,
@@ -221,35 +221,45 @@ fn turn_sources(
 }
 #[napi]
 impl NativeWorld {
-    #[napi(ts_return_type = "Promise<NativeWorldRecentHistoryRead>")]
-    pub fn read_recent_history<'a>(&self, env: &'a Env, actor_id: String) -> Result<Object<'a>> {
+    #[napi(ts_return_type = "Promise<NativeWorldPrivateHistoryRead>")]
+    pub fn read_history<'a>(
+        &self,
+        env: &'a Env,
+        actor_id: String,
+        purpose: String,
+    ) -> Result<Object<'a>> {
         let host = Arc::clone(&self.host);
         let world = Arc::downgrade(&self.world);
         let input_storage = self
             .host
             .bytes
-            .reserve(actor_id.capacity())
+            .reserve(
+                actor_id
+                    .capacity()
+                    .checked_add(purpose.capacity())
+                    .ok_or_else(|| failure("capacity"))?,
+            )
             .map_err(operation_error)?;
         self.compute(env, move |session, _cancel, budget| {
             let _input_storage = input_storage;
             let storage = budget.reserve(
-                size_of::<RecentOwner>().checked_sub(size_of::<RuntimeRecentHistoryRead>())
-                    .and_then(|n| n.checked_add(size_of::<NativeWorldRecentHistoryRead>() + 2 * size_of::<usize>()))
+                size_of::<HistoryOwner>().checked_sub(size_of::<RuntimePrivateHistoryRead>())
+                    .and_then(|n| n.checked_add(size_of::<NativeWorldPrivateHistoryRead>() + 2 * size_of::<usize>()))
                     .and_then(|n| n.checked_add(openlegend_simulation::runtime::RuntimeNpcRead::receipt_liveness_backing_bytes()))
                     .ok_or_else(|| failure("capacity"))?,
             ).map_err(operation_error)?;
-            let read = session.read_recent_history(&actor_id).map_err(operation_error)?;
-            Ok(NativeWorldRecentHistoryRead {
-                inner: Arc::new(RecentOwner { payload: read.receipt_liveness(), read: Mutex::new(Some(read)),
+            let read = session.read_history(&actor_id, &purpose).map_err(operation_error)?;
+            Ok(NativeWorldPrivateHistoryRead {
+                inner: Arc::new(HistoryOwner { payload: read.receipt_liveness(), read: Mutex::new(Some(read)),
                     released: AtomicBool::new(false), _storage: storage }), host, world,
             })
         })
     }
     #[napi(ts_return_type = "Promise<NativeWorldNpcTurn>")]
-    pub fn recent_history_sources<'a>(
+    pub fn history_sources<'a>(
         &self,
         env: &'a Env,
-        read: &NativeWorldRecentHistoryRead,
+        read: &NativeWorldPrivateHistoryRead,
         input_bytes: BufferSlice<'_>,
     ) -> Result<Object<'a>> {
         if !Weak::ptr_eq(&read.world, &Arc::downgrade(&self.world)) {
@@ -270,12 +280,12 @@ impl NativeWorld {
                 .as_mut()
                 .ok_or_else(|| failure("recent history read was released"))?;
             let key = session
-                .begin_recent_history_sources(value, &input)
+                .begin_history_sources(value, &input)
                 .map_err(operation_error)?;
             let result = turn_sources(session, value, key, None, cancel, budget);
             if read.released.load(Ordering::Acquire) {
                 session
-                    .cancel_recent_history_sources(value)
+                    .cancel_history_sources(value)
                     .map_err(operation_error)?;
                 *owner = None;
                 return Err(failure("recent history read was released"));
@@ -284,10 +294,10 @@ impl NativeWorld {
         })
     }
     #[napi(ts_return_type = "Promise<NativeWorldNpcTurn>")]
-    pub fn answer_recent_history_sources<'a>(
+    pub fn answer_history_sources<'a>(
         &self,
         env: &'a Env,
-        read: &NativeWorldRecentHistoryRead,
+        read: &NativeWorldPrivateHistoryRead,
         key: NativeCandidateKey,
         provider: &NativeWorldProvider,
         answer: String,
@@ -325,7 +335,7 @@ impl NativeWorld {
             );
             if read.released.load(Ordering::Acquire) {
                 session
-                    .cancel_recent_history_sources(value)
+                    .cancel_history_sources(value)
                     .map_err(operation_error)?;
                 *owner = None;
                 return Err(failure("recent history read was released"));
@@ -334,10 +344,10 @@ impl NativeWorld {
         })
     }
     #[napi(ts_return_type = "Promise<void>")]
-    pub fn cancel_recent_history_sources<'a>(
+    pub fn cancel_history_sources<'a>(
         &self,
         env: &'a Env,
-        read: &NativeWorldRecentHistoryRead,
+        read: &NativeWorldPrivateHistoryRead,
     ) -> Result<Object<'a>> {
         if !Weak::ptr_eq(&read.world, &Arc::downgrade(&self.world)) {
             return Err(failure("history read belongs to another native writer"));
@@ -350,17 +360,17 @@ impl NativeWorld {
                 .map_err(|_| failure("recent history owner synchronization failed"))?;
             if let Some(value) = owner.as_ref() {
                 session
-                    .cancel_recent_history_sources(value)
+                    .cancel_history_sources(value)
                     .map_err(operation_error)?;
             }
             Ok(())
         })
     }
-    #[napi(ts_return_type = "Promise<NativeWorldRecentHistoryPublication | null>")]
-    pub fn recent_history_publication<'a>(
+    #[napi(ts_return_type = "Promise<NativeWorldPrivateHistoryPublication | null>")]
+    pub fn history_publication<'a>(
         &self,
         env: &'a Env,
-        read: &NativeWorldRecentHistoryRead,
+        read: &NativeWorldPrivateHistoryRead,
     ) -> Result<Object<'a>> {
         if !Weak::ptr_eq(&read.world, &Arc::downgrade(&self.world)) {
             return Err(failure("history read belongs to another native writer"));
@@ -375,10 +385,10 @@ impl NativeWorld {
                 return Ok(None);
             }
             let storage = budget
-                .reserve(size_of::<NativeWorldRecentHistoryPublication>())
+                .reserve(size_of::<NativeWorldPrivateHistoryPublication>())
                 .map_err(operation_error)?;
             let publication = session
-                .recent_history_publication(
+                .history_publication(
                     owner
                         .as_ref()
                         .ok_or_else(|| failure("recent history read was released"))?,
@@ -389,7 +399,7 @@ impl NativeWorld {
                 return Ok(None);
             }
             Ok(
-                publication.map(|inner| NativeWorldRecentHistoryPublication {
+                publication.map(|inner| NativeWorldPrivateHistoryPublication {
                     inner: Some(inner),
                     owner: read,
                     _storage: storage,

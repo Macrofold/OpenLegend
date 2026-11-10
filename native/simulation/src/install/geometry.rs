@@ -2,6 +2,7 @@
 //! immutable physical map is validated by the existing provider before install
 //! acceptance, and shared by all native geometry phases thereafter.
 
+use super::typed_parse::finish_json_parse;
 use super::{InstallError, RowImport, reserve_typed_parse, rows};
 use crate::geometry::{
     GeometryMap, OwnedGeometry, SceneryInstance, SpatialBlocker, SpatialLevel, TerrainDefinition,
@@ -113,16 +114,34 @@ fn list(
         // Split rows contain fixed DTOs, not another terrain dictionary or
         // whole map. Their intermediate JSON still owns real object buckets;
         // nested typed arrays (blocker boxes, tile strings) use their own layout.
+        let shape = crate::encoding::JsonAllocationShape::read(&row.payload)
+            .map_err(|_| InstallError::DefinitionBody)?;
+        let typed_arrays = shape
+            .array_items
+            .checked_mul(4)
+            .and_then(|bytes| bytes.checked_mul(nested_item_bytes))
+            .ok_or(InstallError::Capacity)?;
         construction
-            .merge(reserve_typed_parse::<Value>(
-                &row.payload,
-                nested_item_bytes.max(size_of::<Value>()),
-                Some(size_of::<(usize, String, Value)>()),
-                budget,
-            )?)
+            .merge(
+                budget
+                    .reserve(typed_arrays)
+                    .map_err(|_| InstallError::Capacity)?,
+            )
             .map_err(|_| InstallError::Capacity)?;
+        let body_storage = reserve_typed_parse::<Value>(
+            &row.payload,
+            size_of::<Value>(),
+            Some(size_of::<(usize, String, Value)>()),
+            budget,
+        )?;
         let value: Value =
             serde_json::from_str(&row.payload).map_err(|_| InstallError::CurrentFormat)?;
+        // Both assembled JSON and typed nested arrays remain funded while
+        // from_value consumes the complete map below. Only this row's finished
+        // decoder scratch can be released before the next row is parsed.
+        construction
+            .merge(finish_json_parse(body_storage, &row.payload, &value)?)
+            .map_err(|_| InstallError::Capacity)?;
         let key = match member_id {
             Some(field) => value
                 .get(field)

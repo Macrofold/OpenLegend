@@ -26,7 +26,7 @@ mod participation;
 mod player;
 mod privacy;
 mod read_cut;
-mod recent_history;
+mod private_history;
 mod restore;
 mod retained_values;
 mod startup;

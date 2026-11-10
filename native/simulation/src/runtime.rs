@@ -33,8 +33,8 @@ mod npc_labels;
 mod participation;
 mod player;
 mod privacy;
-mod recent_history;
-pub use recent_history::{RuntimeRecentHistoryPublication, RuntimeRecentHistoryRead};
+mod private_history;
+pub use private_history::{RuntimePrivateHistoryPublication, RuntimePrivateHistoryRead};
 mod navigation;
 mod read_cut;
 pub use navigation::RuntimeNavigationRead;
@@ -187,6 +187,28 @@ struct Installation {
         Option<indexmap::IndexMap<String, Vec<crate::received::ReceivedChargeDirectory>>>,
     working_set: Option<crate::install::WorkingSetSelection>,
     accepted_cut: u64,
+}
+
+impl Installation {
+    fn decoded_text_heap(&self) -> Option<usize> {
+        use crate::host::retained_size::{HeapBytes, heap_sum};
+        // Definitions, layouts, originals and cold directories use the input
+        // preflight's ordinary String path. These are all remaining dynamic
+        // owners. Keep their actual heaps, including exact UTF16 encodings.
+        heap_sum([
+            self.records.normalized_intents.heap_bytes()?,
+            self.records.activity_method_signatures.heap_bytes()?,
+            self.records
+                .tables
+                .values()
+                .flatten()
+                .try_fold(0usize, |bytes, row| {
+                    bytes.checked_add(row.extra.heap_bytes()?)
+                })?,
+            self.working_set.heap_bytes()?,
+            self.settings.heap_bytes()?,
+        ])
+    }
 }
 
 pub struct RuntimeProvider {
@@ -352,6 +374,12 @@ impl NativeWorldSession {
         )
         .map_err(failure)?;
         let input: Installation = serde_json::from_slice(bytes).map_err(failure)?;
+        let retained_text = input
+            .decoded_text_heap()
+            .ok_or_else(|| failure("capacity"))?;
+        let _decode = _decode
+            .finish_installation(retained_text)
+            .map_err(failure)?;
         let pending_save_budget = budget.pending_save(input.storage.pending_save_bytes);
         let temporal_save_limits = crate::received::TemporalSaveLimits {
             target_bytes: input.storage.temporal_save.target_bytes,

@@ -3,6 +3,7 @@
 use super::InstallError;
 use crate::host::retained_size::{heap_sum, map_storage_layout};
 use crate::host::{ByteBudget, ByteReservation, ResidentReservation};
+use serde_json::Value;
 use std::mem::{align_of, size_of};
 
 pub(crate) fn reserve_typed_parse<T>(
@@ -42,10 +43,52 @@ pub(crate) fn reserve_typed_parse<T>(
         maps,
         // Includes owned strings, shared serde unescape storage and the exact
         // UTF16 scalar codec's raw/units/derived encoding where present.
-        source.len().checked_mul(12).ok_or(InstallError::Capacity)?,
+        text_parse_bytes(source.len())?,
     ])
     .ok_or(InstallError::Capacity)?;
     budget.reserve(bytes).map_err(|_| InstallError::Capacity)
+}
+
+fn text_parse_bytes(source_bytes: usize) -> Result<usize, InstallError> {
+    source_bytes.checked_mul(12).ok_or(InstallError::Capacity)
+}
+
+/// Complete only a serde_json::Value parse after its decoder has returned.
+/// Keep the original collection allowance and actual surviving text; the
+/// decoder's unescape workspace no longer lives through later row assembly.
+/// Typed conversion storage is separate and must remain admitted by its owner.
+pub(super) fn finish_json_parse(
+    mut storage: ByteReservation,
+    source: &str,
+    value: &serde_json::Value,
+) -> Result<ByteReservation, InstallError> {
+    let retained = storage
+        .bytes()
+        .checked_sub(text_parse_bytes(source.len())?)
+        .and_then(|bytes| bytes.checked_add(json_owned_string_bytes(value)?))
+        .ok_or(InstallError::Capacity)?;
+    storage
+        .resize(retained)
+        .map_err(|_| InstallError::Capacity)?;
+    Ok(storage)
+}
+
+// A completed serde JSON parse leaves its owned keys and string values alive,
+// while the decoder's unescape buffer is gone. Collection backing keeps the
+// original preflight allowance until the later consuming typed conversion.
+fn json_owned_string_bytes(value: &Value) -> Option<usize> {
+    match value {
+        Value::String(text) => Some(text.capacity()),
+        Value::Array(values) => values.iter().try_fold(0usize, |bytes, value| {
+            bytes.checked_add(json_owned_string_bytes(value)?)
+        }),
+        Value::Object(values) => values.iter().try_fold(0usize, |bytes, (key, value)| {
+            bytes
+                .checked_add(key.capacity())?
+                .checked_add(json_owned_string_bytes(value)?)
+        }),
+        _ => Some(0),
+    }
 }
 
 /// A compiled immutable family declares its actual collection layouts. This is

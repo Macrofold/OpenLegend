@@ -861,13 +861,7 @@ export async function createNativeGameServer(options: {
               (url.pathname === '/api/god/memories' && !config.godMode)
             )
               throw new AuthorityError('forbidden');
-            if (!value.recent)
-              return send(503, {
-                ok: false,
-                code: 'unavailable',
-                message: 'This action is unavailable in this build.',
-              });
-            await current.publishRecentHistory(actorId, scope, value, (bytes) => {
+            await current.publishMemoryHistory(actorId, scope, value, (bytes) => {
               if (response.destroyed) return;
               response.writeHead(200, {
                 'Content-Type': 'application/json; charset=utf-8',
@@ -928,8 +922,14 @@ export async function createNativeGameServer(options: {
                       scope,
                     )
                   : await current.forgetMemory(value.actorId, value.sourceId, scope);
-            if (!correction && outcome.ok) await store.db.exec('DELETE FROM intelligence_calls');
-            return send(200, outcome);
+            try {
+              if (!correction && outcome.ok) await store.db.exec('DELETE FROM intelligence_calls');
+              // writeJson consumes the report synchronously; the response owns
+              // its serialized body before this independent native copy ends.
+              return send(200, outcome);
+            } finally {
+              releaseNativeProduct(outcome);
+            }
           }
           default:
             return send(503, {

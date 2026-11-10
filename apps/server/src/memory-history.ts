@@ -23,13 +23,71 @@ const cursorSchema = z
   .strict();
 
 /** The presentation of an eligible history record for its owner or permitted inspector. */
-export function memoryEntryView({ memory, sourceKind }: RetrievedMemory): MemoryEntryView {
+export function memoryEntryView({
+  memory,
+  sourceKind,
+}: Pick<RetrievedMemory, 'memory' | 'sourceKind'>): MemoryEntryView {
   return {
     id: memory.id,
     sourceKind,
     text: `[${memory.kind === 'impression' ? 'remembered impression; ' : ''}${memory.source}] ${memory.summary}`,
     fidelity: memory.kind === 'impression' ? 'impression' : 'exact',
     time: memory.at,
+  };
+}
+
+/** The same cursor, search and page limits serve both canonical history readers. */
+export function memoryHistoryQuery(
+  scope: RequestScope,
+  storageGeneration: string,
+  actorId: string,
+  request: { cursor?: string; query?: string; thoughts?: boolean },
+) {
+  const terms = searchTerms(request.query);
+  const fence = digest([
+    scopeKey(scope),
+    storageGeneration,
+    actorId,
+    terms ?? [],
+    !!request.thoughts,
+  ]);
+  let before: { at: number; id: string; kind: string } | undefined;
+  if (request.cursor) {
+    let cursor: z.infer<typeof cursorSchema>;
+    try {
+      cursor = cursorSchema.parse(JSON.parse(Buffer.from(request.cursor, 'base64url').toString()));
+    } catch {
+      throw new HistoryCursorError('This memory page expired. Browse or search again.');
+    }
+    if (cursor.fence !== fence)
+      throw new HistoryCursorError('Memories changed. Browse or search again.');
+    before = { at: cursor.at, id: cursor.id, kind: cursor.kind };
+  }
+  return {
+    fence,
+    options: {
+      before,
+      terms,
+      thoughts: !!request.thoughts,
+      limit: MEMORY_PAGE,
+      scan: SEARCH_SCAN_ROWS,
+    },
+  };
+}
+export function projectMemoryHistoryPage(
+  owner: { worldId: string; generation: string },
+  result: { resume?: { at: number; id: string; kind: string }; scanLimited: boolean },
+  entries: readonly MemoryEntryView[],
+  fence: string,
+): MemoryHistoryPage {
+  return {
+    ok: true,
+    ...owner,
+    entries: [...entries].reverse(),
+    next: result.resume
+      ? Buffer.from(JSON.stringify({ v: 1, fence, ...result.resume })).toString('base64url')
+      : null,
+    scanLimited: result.scanLimited,
   };
 }
 
@@ -48,7 +106,6 @@ export async function memoryHistory(
     service.mayInspectPrivate(actorId, scope) &&
     !!entityGet(service.world.entities, actorId)?.actor;
   if (!permitted()) throw new AuthorityError('forbidden');
-  const terms = searchTerms(request.query);
   const memories = service.store.memories,
     records = service.store.records;
   if (!memories || !records) throw new Error('Memory history requires the history database.');
@@ -60,25 +117,7 @@ export async function memoryHistory(
     generation = service.generation;
   const forgotten = service.world.experience?.forgotten[actorId],
     corrections = service.world.experience?.corrections?.[actorId];
-  const fence = digest([
-    scopeKey(scope),
-    head.generation,
-    actorId,
-    terms ?? [],
-    !!request.thoughts,
-  ]);
-  let before: { at: number; id: string; kind: string } | undefined;
-  if (request.cursor) {
-    let cursor: z.infer<typeof cursorSchema>;
-    try {
-      cursor = cursorSchema.parse(JSON.parse(Buffer.from(request.cursor, 'base64url').toString()));
-    } catch {
-      throw new HistoryCursorError('This memory page expired. Browse or search again.');
-    }
-    if (cursor.fence !== fence)
-      throw new HistoryCursorError('Memories changed. Browse or search again.');
-    before = { at: cursor.at, id: cursor.id, kind: cursor.kind };
-  }
+  const { fence, options } = memoryHistoryQuery(scope, head.generation, actorId, request);
   const sourceOwners = (snapshot: import('@open-legend/domain').WorldState) => [
     snapshot.memories[actorId],
     snapshot.experience?.awareness[actorId],
@@ -99,13 +138,7 @@ export async function memoryHistory(
       throw new HistoryCursorError('Memories changed. Browse or search again.');
   };
   assertPermitted();
-  const result = await memories.browse(memoryScope, {
-    before,
-    terms,
-    thoughts: !!request.thoughts,
-    limit: MEMORY_PAGE,
-    scan: SEARCH_SCAN_ROWS,
-  });
+  const result = await memories.browse(memoryScope, options);
   assertPermitted();
   // Ordinary expiry can remove a cold row without a creator edit. Revalidate only
   // this actor's bounded selected page when its owning sources changed during SQL.
@@ -133,14 +166,10 @@ export async function memoryHistory(
       throw new HistoryCursorError('Memories changed. Browse or search again.');
   }
   assertPermitted();
-  return {
-    ok: true,
-    worldId,
-    generation,
-    entries: result.entries.map(memoryEntryView).reverse(),
-    next: result.resume
-      ? Buffer.from(JSON.stringify({ v: 1, fence, ...result.resume })).toString('base64url')
-      : null,
-    scanLimited: result.scanLimited,
-  };
+  return projectMemoryHistoryPage(
+    { worldId, generation },
+    result,
+    result.entries.map(memoryEntryView),
+    fence,
+  );
 }

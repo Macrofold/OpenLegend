@@ -6,6 +6,7 @@ pub mod pool;
 pub mod records;
 mod world;
 
+use napi::bindgen_prelude::BufferSlice;
 use napi::{Error, Result, Status};
 use napi_derive::napi;
 use pool::{ByteBudget, HostError, HostPool};
@@ -244,6 +245,18 @@ impl NativeHost {
                 return Err(failure("native consumer admission is closed"));
             }
             world::NativeWorldConsumer::reserve_bytes(bytes, &self.runtime.bytes)
+        })
+    }
+    #[napi]
+    pub fn reserve_consumer_json(
+        &self,
+        bytes: BufferSlice<'_>,
+    ) -> Result<world::NativeWorldConsumer> {
+        boundary(|| {
+            if self.runtime.pool.is_closing() {
+                return Err(failure("native consumer admission is closed"));
+            }
+            world::NativeWorldConsumer::reserve_json(&bytes, &self.runtime.bytes)
         })
     }
 

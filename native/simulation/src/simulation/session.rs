@@ -310,11 +310,13 @@ impl Session {
         budget: &ByteBudget,
     ) -> Result<CapturedActorReadCut<'a>, SessionError> {
         let state = &self.accepted()?.state;
+        // This is metadata for the actual scoped SQL reader, not a memory
+        // capability grant. Source permits an empty history for any real actor.
         if !state
             .physical
             .entities
             .get(actor)
-            .is_some_and(|entity| entity.has_memory())
+            .is_some_and(|entity| entity.actor.is_some())
             && state.temporal.actor(actor).is_none()
             && state.experience.actor(actor).is_none()
         {
