@@ -22,12 +22,41 @@ pub struct VisualConfirmation {
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
+        serialize_with = "serialize_complete_sight",
         skip_serializing_if = "Option::is_none"
     )]
     pub complete: Option<CurrentSightStamp>,
     pub frame_ref: ReceivedValueReference,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub frame_revision: u64,
+}
+
+fn serialize_complete_sight<S: serde::Serializer>(
+    value: &Option<CurrentSightStamp>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    // The Source acquisition completion and current-contact stamp factories
+    // place frame/order differently. Preserve each actual TEXT representation
+    // rather than changing the shared current-contact metadata serializer.
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Complete<'a> {
+        through: f64,
+        revision: u64,
+        input_revision: u64,
+        frame_ref: &'a ReceivedValueReference,
+        received_order: u64,
+    }
+    value
+        .as_ref()
+        .map(|value| Complete {
+            through: value.through,
+            revision: value.revision,
+            input_revision: value.input_revision,
+            frame_ref: &value.frame_ref,
+            received_order: value.received_order,
+        })
+        .serialize(serializer)
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -88,12 +117,50 @@ pub struct ReceptionGap {
 pub struct PerceptionEvidenceOwner {
     #[serde(skip)]
     pub(super) metadata_storage: Option<super::current_residency::CurrentOwnerStorage>,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub life: u64,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub observer: Option<ObserverLife>,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub received_at_sequence: u64,
+    pub received: Vec<Arc<ReceivedObservation>>,
+    #[serde(skip)]
+    pub(super) original_storage: Option<super::originals::OriginalMetadata>,
+    #[serde(
+        deserialize_with = "crate::values::deserialize_safe_integer_map",
+        serialize_with = "crate::encoding::serialize_js_map"
+    )]
+    pub receipts: IndexMap<String, u64>,
+    // Kept in JavaScript exact-key order, matching the Source balanced tree.
+    // SQL's unordered row positions do not establish this runtime iteration.
+    #[serde(serialize_with = "crate::encoding::serialize_js_map")]
+    pub current: IndexMap<String, CurrentContact>,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub next_contact: u64,
+    #[serde(serialize_with = "crate::encoding::serialize_js_map")]
+    pub gaps: IndexMap<String, ReceptionGap>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
     pub visual_confirmation: Option<VisualConfirmation>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub attention: Option<AttentionState>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub geometry: Option<ReceivedGeometryState>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -107,44 +174,6 @@ pub struct PerceptionEvidenceOwner {
         skip_serializing_if = "Option::is_none"
     )]
     pub motion_expires_at: Option<f64>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub geometry: Option<ReceivedGeometryState>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub attention: Option<AttentionState>,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
-    pub life: u64,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
-    pub received_at_sequence: u64,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub observer: Option<ObserverLife>,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
-    pub next_contact: u64,
-    pub received: Vec<Arc<ReceivedObservation>>,
-    #[serde(skip)]
-    pub(super) original_storage: Option<super::originals::OriginalMetadata>,
-    #[serde(
-        deserialize_with = "crate::values::deserialize_safe_integer_map",
-        serialize_with = "crate::encoding::serialize_js_map"
-    )]
-    pub receipts: IndexMap<String, u64>,
-    // Kept in JavaScript exact-key order, matching the Source balanced tree.
-    // SQL's unordered row positions do not establish this runtime iteration.
-    #[serde(serialize_with = "crate::encoding::serialize_js_map")]
-    pub current: IndexMap<String, CurrentContact>,
-    #[serde(serialize_with = "crate::encoding::serialize_js_map")]
-    pub gaps: IndexMap<String, ReceptionGap>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",

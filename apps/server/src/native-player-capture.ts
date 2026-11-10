@@ -5,11 +5,7 @@ import type { NativeGeometryProviders } from './native-geometry.js';
 import type { NativePlayerRead } from './native-player-view.js';
 import { ViewChangedError } from './player-view-async.js';
 import type { PlayerInteractionFacts } from './player-interaction.js';
-import {
-  decodeNativeProduct,
-  freezeNativeProduct,
-  retainNativeSources,
-} from './native-consumer.js';
+import { decodeNativeProduct, encodeNativeJson, freezeNativeProduct } from './native-consumer.js';
 
 type NativeInteractionFacts = Omit<
   PlayerInteractionFacts,
@@ -95,7 +91,7 @@ export class NativePlayerCapture {
    * neither a captured pause value nor a global world cut replaces that check. */
   async publishIfPermitted(
     selectedEventIds: readonly string[],
-    complete: (canUseInventory: boolean, own: (bytes: Buffer) => Buffer) => Buffer,
+    complete: (canUseInventory: boolean, encode: (value: object) => Buffer) => Buffer,
     operational: () => { paused: boolean; controlling: boolean },
     operationalStillCurrent: () => boolean,
   ): Promise<Buffer> {
@@ -117,8 +113,8 @@ export class NativePlayerCapture {
         !operationalStillCurrent()
       )
         throw new ViewChangedError();
-      return complete(publication.canUseInventory(), (bytes) =>
-        retainNativeSources(bytes, this.facts),
+      return complete(publication.canUseInventory(), (value) =>
+        encodeNativeJson(this.world, value, { sources: [this.facts] }),
       );
     } finally {
       publication.release();

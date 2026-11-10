@@ -13,6 +13,7 @@ use openlegend_simulation::runtime::{
 };
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
+mod account_retention;
 mod consumer;
 mod control;
 mod maintenance;

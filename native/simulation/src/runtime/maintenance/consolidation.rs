@@ -202,9 +202,13 @@ impl NativeWorldSession {
         };
         Ok(match step {
             SessionStep::Continue => RuntimeNpcPreparationStep::Continue,
-            SessionStep::Question(question) => {
-                RuntimeNpcPreparationStep::Provider(RuntimeProvider { question })
-            }
+            SessionStep::Question(question) => match self.prepare_provider(key, question) {
+                Ok(provider) => RuntimeNpcPreparationStep::Provider(provider),
+                Err(error) => {
+                    ticket.candidate = None;
+                    return Err(error);
+                }
+            },
             SessionStep::NpcSources(sources) => {
                 ticket.candidate = None;
                 ticket.sources = Some(sources);

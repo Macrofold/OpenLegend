@@ -2,29 +2,38 @@
 //! of an existing proof joins that proof's original insertion position.
 use super::*;
 
-pub(super) fn observation_aliases(originals: &[&Value]) -> Result<Vec<String>, ExperienceError> {
-    let mut dependencies: IndexMap<String, (String, IndexSet<String>)> = IndexMap::new();
+#[derive(Serialize)]
+pub(super) struct ManifestDependency {
+    source: Value,
+    ordinal: Option<u64>,
+    aliases: Vec<String>,
+}
+pub(super) fn observation_dependencies(
+    originals: &[&Value],
+) -> Result<Vec<ManifestDependency>, ExperienceError> {
+    let mut dependencies: IndexMap<String, (Value, Option<u64>, IndexSet<String>)> =
+        IndexMap::new();
     fn add(
-        deps: &mut IndexMap<String, (String, IndexSet<String>)>,
+        deps: &mut IndexMap<String, (Value, Option<u64>, IndexSet<String>)>,
         source: &Value,
         ordinal: Option<u64>,
         aliases: Vec<String>,
     ) -> Result<(), ExperienceError> {
-        let source: EvidenceSource = serde_json::from_value(source.clone())
+        let decoded: EvidenceSource = serde_json::from_value(source.clone())
             .map_err(|_| ExperienceError::InvalidBody("manifest dependency"))?;
-        source
+        decoded
             .validate()
             .map_err(|_| ExperienceError::InvalidBody("manifest dependency"))?;
-        let key = json_record(&(&source, ordinal))
+        let key = json_record(&(&decoded, ordinal))
             .map_err(|_| ExperienceError::InvalidBody("manifest dependency encoding"))?;
         let entry = deps
             .entry(key)
-            .or_insert_with(|| (source.id, IndexSet::new()));
-        entry.1.extend(aliases);
+            .or_insert_with(|| (source.clone(), ordinal, IndexSet::new()));
+        entry.2.extend(aliases);
         Ok(())
     }
     fn fact(
-        deps: &mut IndexMap<String, (String, IndexSet<String>)>,
+        deps: &mut IndexMap<String, (Value, Option<u64>, IndexSet<String>)>,
         value: &Value,
         aliases: Vec<String>,
     ) -> Result<(), ExperienceError> {
@@ -166,10 +175,20 @@ pub(super) fn observation_aliases(originals: &[&Value]) -> Result<Vec<String>, E
             }
         }
     }
+    Ok(dependencies
+        .into_values()
+        .map(|(source, ordinal, aliases)| ManifestDependency {
+            source,
+            ordinal,
+            aliases: aliases.into_iter().collect(),
+        })
+        .collect())
+}
+pub(super) fn observation_aliases(originals: &[&Value]) -> Result<Vec<String>, ExperienceError> {
     let mut aliases = IndexSet::new();
-    for (source, values) in dependencies.into_values() {
-        aliases.insert(source);
-        aliases.extend(values);
+    for dependency in observation_dependencies(originals)? {
+        aliases.insert(text(object(&dependency.source)?, "id")?.to_owned());
+        aliases.extend(dependency.aliases);
     }
     Ok(aliases.into_iter().collect())
 }

@@ -315,8 +315,13 @@ impl TemporalState {
 impl RecentRetirementUndo {
     pub(super) fn restore(self, actor: &mut TemporalActorHistory) -> Result<(), ReceivedError> {
         if self.page_restore.bytes() != 0 {
-            actor.recent.budget.restore_backing(&mut actor.page_storage, self.page_restore)
-                .map_err(|_| ReceivedError("Temporal inverse page-index custody is unavailable."))?;
+            actor
+                .recent
+                .budget
+                .restore_backing(&mut actor.page_storage, self.page_restore)
+                .map_err(|_| {
+                    ReceivedError("Temporal inverse page-index custody is unavailable.")
+                })?;
         }
         for block in self.blocks {
             actor.recent.restore_block(block)?;

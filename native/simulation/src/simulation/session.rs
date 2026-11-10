@@ -213,6 +213,7 @@ struct Prepared {
     result: CompletedOperation,
     history: CapturedHistoryInput,
     predecessors: crate::experience::PersonalPredecessors,
+    temporal_predecessors: crate::received::TemporalPredecessors,
     notices: crate::cognition::PreparedSemanticNotices,
     key: CandidateKey,
 }
@@ -618,6 +619,21 @@ impl Session {
         })();
         self.install_driver(key, journal, driver, false)
     }
+    pub(crate) fn begin_account_retention(
+        &mut self,
+        read: crate::experience::AccountRetentionRead,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            let cursor = crate::experience::AccountRetentionCursor::new(read, &self.budget)?;
+            OperationDriver::account_retention(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
     pub(crate) fn begin_knowledge_retention(
         &mut self,
         actors: Vec<String>,
@@ -961,6 +977,12 @@ impl Session {
                         &self.budget,
                     )
                     .map_err(PublicationError::from)?;
+                    let temporal_predecessors = crate::received::capture_temporal_predecessors(
+                        &self.simulation.state.temporal,
+                        &self.simulation.state.installed.schema,
+                        &self.budget,
+                    )
+                    .map_err(PublicationError::from)?;
                     let protected = matches!(&result, CompletedOperation::Forget(done)
                         if done.privacy_change().is_some())
                         || matches!(
@@ -1001,13 +1023,19 @@ impl Session {
                         source_plan,
                         &self.budget,
                     )?;
-                    Ok::<_, SessionError>((captured, predecessors, notices, publication))
+                    Ok::<_, SessionError>((
+                        captured,
+                        predecessors,
+                        temporal_predecessors,
+                        notices,
+                        publication,
+                    ))
                 })();
                 let Some(Candidate::Preparing(mut preparing)) = self.candidate.take() else {
                     unreachable!()
                 };
                 match products {
-                    Ok((history, predecessors, notices, publication)) => {
+                    Ok((history, predecessors, temporal_predecessors, notices, publication)) => {
                         let allocation = publication.allocation();
                         self.candidate = Some(Candidate::Prepared(Prepared {
                             journal: preparing.journal,
@@ -1015,6 +1043,7 @@ impl Session {
                             result,
                             history,
                             predecessors,
+                            temporal_predecessors,
                             notices,
                             key,
                         }));
@@ -1128,6 +1157,7 @@ impl Session {
             &crate::cognition::PreparedSemanticNotices,
             &crate::records::ChangedRows,
             &crate::experience::PersonalPredecessors,
+            &crate::received::TemporalPredecessors,
             &crate::received::SourceVersionPlan,
             Option<&crate::records::SaveRows>,
             PreparedReadProgress<'_>,
@@ -1147,6 +1177,7 @@ impl Session {
             &prepared.notices,
             prepared.publication.read_changes(&self.save)?,
             &prepared.predecessors,
+            &prepared.temporal_predecessors,
             prepared.publication.source_versions(&self.save)?,
             prepared.publication.read_protected_prefix(&self.save)?,
             PreparedReadProgress {

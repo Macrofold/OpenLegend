@@ -1,4 +1,9 @@
-import type { NativeWorldConsumer, NativeWorldJson } from '@open-legend/native-simulation';
+import type {
+  NativeWorld,
+  NativeWorldConsumer,
+  NativeWorldJson,
+} from '@open-legend/native-simulation';
+import { jsonByteLength } from '@open-legend/domain';
 import { AsyncLocalStorage } from 'node:async_hooks';
 
 // A Buffer can disappear while its parsed strings/arrays still serve a request,
@@ -67,6 +72,59 @@ export async function withNativeConsumerScope<T>(operation: () => Promise<T>): P
  * caller's temporary preparation lifetime through async context propagation. */
 export function withoutNativeConsumerScope<T>(operation: () => T): T {
   return scopes.exit(operation);
+}
+
+// JSON.stringify keeps container/key traversal state, rather than a second
+// decoded graph. Count only the actual selected shape, without serializing it.
+export function nativeJsonEncodingWorkspace(value: unknown): number {
+  if (value === null || typeof value !== 'object') return 0;
+  let bytes = 32 * 8;
+  if (Array.isArray(value)) {
+    bytes += value.length * 8 * 8;
+    for (let index = 0; index < value.length; index++)
+      bytes += nativeJsonEncodingWorkspace(value[index]);
+  } else {
+    for (const key in value)
+      if (Object.hasOwn(value, key)) {
+        const field = (value as Record<string, unknown>)[key];
+        if (field !== undefined) bytes += 8 * 8 + nativeJsonEncodingWorkspace(field);
+      }
+  }
+  return bytes;
+}
+
+/** Admit the selected JSON output before its encoder or transport Buffer
+ * allocates. Existing source pins do not fund newly serialized bytes. */
+export function encodeNativeJson(
+  world: Pick<NativeWorld, 'reserveConsumerBytes'>,
+  value: unknown,
+  options: {
+    readonly prefix?: string;
+    readonly suffix?: string;
+    readonly sources?: readonly object[];
+  } = {},
+): Buffer {
+  const prefix = options.prefix ?? '',
+    suffix = options.suffix ?? '';
+  const bytes = jsonByteLength(value) + Buffer.byteLength(prefix) + Buffer.byteLength(suffix);
+  const output = world.reserveConsumerBytes(bytes + 32 * 8);
+  let workspace: NativeWorldConsumer | undefined;
+  try {
+    // Each UTF-8 byte bounds one UTF-16 unit. Two complete two-byte carriers
+    // cover the encoder builder/result or the source/framed flattening pair.
+    workspace = world.reserveConsumerBytes(4 * bytes + nativeJsonEncodingWorkspace(value));
+    // Avoid Node's pooled small-Buffer slab: this owner funds this exact body.
+    const buffer = Buffer.allocUnsafeSlow(bytes);
+    let at = buffer.write(prefix, 0, 'utf8');
+    at += buffer.write(JSON.stringify(value), at, 'utf8');
+    buffer.write(suffix, at, 'utf8');
+    return attachNativeConsumer(buffer, output, ...(options.sources ?? []));
+  } catch (error) {
+    output.release();
+    throw error;
+  } finally {
+    workspace?.release();
+  }
 }
 
 export function retainNativeProduct<T extends object>(owner: T): T {

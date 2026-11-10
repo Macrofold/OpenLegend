@@ -295,7 +295,8 @@ impl TemporalState {
                 return Err(invalid());
             }
             page.retain_for_candidate(budget)?;
-            let page_restore = budget.reserve(restored_page_bytes(usize::from(after.is_none()))?)
+            let page_restore = budget
+                .reserve(restored_page_bytes(usize::from(after.is_none()))?)
                 .map_err(|_| capacity())?;
             self.reserve_undo_slots(3, budget)?;
             self.undo.push(TemporalUndo::Reservation(retained));

@@ -61,13 +61,13 @@ pub struct NativeResponseState {
         skip_serializing_if = "Option::is_none"
     )]
     pub aerial_route_id: Option<String>,
+    pub wander: WanderClock,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
     pub episode: Option<NativeResponseEpisode>,
-    pub wander: WanderClock,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -111,18 +111,6 @@ pub struct NativeAcousticCue {
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct NativeResponseEpisode {
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub acoustic_cue: Option<NativeAcousticCue>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub acoustic_leg_required: Option<bool>,
     pub id: String,
     pub started_at: f64,
     pub latest_cause: ResponseCause,
@@ -149,14 +137,26 @@ pub struct NativeResponseEpisode {
     pub mode: ResponseMode,
     pub dangers: IndexMap<String, NativeDanger>,
     pub review_at: f64,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub proposal_generation: u64,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub clear_since: Option<f64>,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
-    pub proposal_generation: u64,
+    pub acoustic_cue: Option<NativeAcousticCue>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub acoustic_leg_required: Option<bool>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub refuge: Option<NativeRefuge>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -168,7 +168,7 @@ pub struct NativeResponseEpisode {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub refuge: Option<NativeRefuge>,
+    pub clear_since: Option<f64>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -576,13 +576,13 @@ pub struct NativeRefugeProposal {
         skip_serializing_if = "Option::is_none"
     )]
     pub wait: Option<NavigationWait>,
+    pub body: NavigationBody,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
     pub search: Option<RefugeSearch>,
-    pub body: NavigationBody,
     pub candidates: Vec<RefugeCandidate>,
 }
 
@@ -623,8 +623,8 @@ pub struct RefugeCandidate {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RefugeSearch {
-    pub distance: f64,
     pub bearing: f64,
+    pub distance: f64,
     pub side: f64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub attempted: u64,

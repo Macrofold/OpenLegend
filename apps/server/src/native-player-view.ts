@@ -81,7 +81,7 @@ export interface NativePlayerRead {
    * canUseInventory; captured own fields cannot supply that post-await check. */
   publishIfPermitted(
     ids: readonly string[],
-    complete: (canUseInventory: boolean, own: (bytes: Buffer) => Buffer) => Buffer,
+    complete: (canUseInventory: boolean, encode: (value: object) => Buffer) => Buffer,
     operationalStillCurrent: () => boolean,
   ): Promise<Buffer>;
   release(): void;
@@ -272,9 +272,9 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
     owner.assertScope(scope);
     await read.publishIfPermitted(
       selectedEvents.map((event) => event.id),
-      (canUseInventory, own) => {
+      (canUseInventory, encode) => {
         const finalView = { ...projected, player: { ...projected.player, canUseInventory } };
-        const bytes = own(Buffer.from(JSON.stringify(finalView), 'utf8'));
+        const bytes = encode(finalView);
         request.publish(bytes, retainNativeSources(finalView, bytes));
         return bytes;
       },

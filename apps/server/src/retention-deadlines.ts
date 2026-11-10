@@ -29,6 +29,19 @@ export function supportRetentionDeadline(actor: Pick<TemporalActorHistory, 'acco
 export function knowledgeRetentionDeadline(actor: Pick<TemporalActorHistory, 'accounts'>): number {
   return actor.accounts?.knowledgeDue ?? Infinity;
 }
+export function accountRetentionDeadline(
+  actor: Pick<TemporalActorHistory, 'accounts'>,
+  policy: Policy,
+): number {
+  return !actor.accounts ||
+    (['optional', 'required', 'speech'] as const).some(
+      (pool) =>
+        actor.accounts![pool].bytes > policy[pool].maxBytes ||
+        actor.accounts![pool].count > policy[pool].maxRecords,
+    )
+    ? 0
+    : (actor.accounts.nextDue ?? Infinity);
+}
 export type RetentionWorkKind = 'recent' | 'accounts' | 'knowledge' | 'support';
 const emptyActors: Record<string, TemporalActorHistory> = Object.freeze({});
 const byPolicy = new WeakMap<
@@ -59,16 +72,7 @@ function indexes(world: WorldState) {
       recent: make((actor) => recentRetentionDeadline(actor, policy.recent)),
       // Required admission already marks nextDue at its early maintenance target.
       // Protected grants above that target must not schedule empty SQL forever.
-      accounts: make((actor) =>
-        !actor.accounts ||
-        (['optional', 'required', 'speech'] as const).some(
-          (pool) =>
-            actor.accounts![pool].bytes > policy[pool].maxBytes ||
-            actor.accounts![pool].count > policy[pool].maxRecords,
-        )
-          ? 0
-          : (actor.accounts.nextDue ?? Infinity),
-      ),
+      accounts: make((actor) => accountRetentionDeadline(actor, policy)),
       knowledge: make(knowledgeRetentionDeadline),
       support: make(supportRetentionDeadline),
     };

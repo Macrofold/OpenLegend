@@ -79,9 +79,10 @@ pub(crate) use batch::{
 };
 mod current_journal;
 pub(crate) use attention_control::{
-    AttentionSelection, AttentionUpdate, CapturedAttentionPresentations, CapturedSemanticCauses, acknowledge_attention,
-    acknowledge_semantic_cause, capture_attention_read, evaluate_attention_relations,
-    next_attention_work_at, prune_withdrawn_attention, set_attention_focus, update_attention,
+    AttentionSelection, AttentionUpdate, CapturedAttentionPresentations, CapturedSemanticCauses,
+    acknowledge_attention, acknowledge_semantic_cause, capture_attention_read,
+    evaluate_attention_relations, next_attention_work_at, prune_withdrawn_attention,
+    set_attention_focus, update_attention,
 };
 mod cohort;
 pub(crate) use cohort::{
@@ -95,11 +96,11 @@ mod current_recording;
 use current_recording::*;
 mod participation;
 mod privacy;
-mod retirement;
 mod restore;
-pub(crate) use restore::clear_restore_recordings;
+mod retirement;
 pub(crate) use participation::depart_receiving;
 pub(crate) use privacy::{revoke_attention_evidence, revoke_current_evidence};
+pub(crate) use restore::clear_restore_recordings;
 pub(crate) use retirement::{
     EndedCurrentEvidence, RetiredPerceptionLife, end_current_evidence, end_current_subject,
     retire_perception_life,
@@ -1206,6 +1207,12 @@ pub(crate) fn original_fact_view(fact: &ObservationFactKey) -> OriginalFact<'_> 
         ordinal: fact.ordinal,
     }
 }
+pub(crate) fn serialize_original_fact_option<S: serde::Serializer>(
+    fact: &Option<ObservationFactKey>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    fact.as_ref().map(original_fact_view).serialize(serializer)
+}
 pub(crate) fn original_fact_json(
     fact: &ObservationFactKey,
 ) -> Result<String, crate::received::ReceivedError> {
@@ -1943,11 +1950,11 @@ pub struct ContactEpisode {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SampleProgress {
     pub definitions: String,
-    pub epoch_at: f64,
-    pub next_at: f64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub life: u64,
     pub suspended: bool,
+    pub epoch_at: f64,
+    pub next_at: f64,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]

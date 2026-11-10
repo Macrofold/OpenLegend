@@ -45,18 +45,6 @@ fn retained_flag<'de, D: serde::Deserializer<'de>>(
 pub struct ObserverIdentity {
     #[serde(
         default,
-        deserialize_with = "retained_flag",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub retained: Option<bool>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub familiarity: Option<FamiliarityState>,
-    #[serde(
-        default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
@@ -67,6 +55,18 @@ pub struct ObserverIdentity {
         skip_serializing_if = "Option::is_none"
     )]
     pub canonical_id: Option<String>,
+    pub given_name: crate::text::JsText,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub nickname: Option<crate::text::JsText>,
+    #[serde(deserialize_with = "deserialize_safe_integer")]
+    pub revision: u64,
+    #[serde(deserialize_with = "deserialize_nullable")]
+    pub encounter_id: Option<String>,
+    pub authored: bool,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -91,18 +91,18 @@ pub struct ObserverIdentity {
         skip_serializing_if = "Option::is_none"
     )]
     pub name_evidence_ids: Option<Vec<String>>,
-    pub given_name: crate::text::JsText,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub nickname: Option<crate::text::JsText>,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
-    pub revision: u64,
-    #[serde(deserialize_with = "deserialize_nullable")]
-    pub encounter_id: Option<String>,
-    pub authored: bool,
+    pub familiarity: Option<FamiliarityState>,
+    #[serde(
+        default,
+        deserialize_with = "retained_flag",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub retained: Option<bool>,
 }
 
 use crate::commands::SpeechTargetRole;

@@ -11,34 +11,76 @@ import { nativeMemoryCandidates, nativeSourcePresentation } from './native-recal
 import { nativeKnowledgeCandidates } from './native-knowledge-context.js';
 import type { AttentionCandidate } from './recall.js';
 import { retainNativeSources } from './native-consumer.js';
-import { projectEntityMarkersFromRead, personalEntityHandle } from './entity-references.js';
+import {
+  projectEntityMarkersFromRead,
+  personalEntityHandle,
+  personalEntityHandleInputBytes,
+} from './entity-references.js';
 import { nativeNpcPersonalSelection } from './native-npc-sources.js';
+import type { NativeNpcSubjectFact } from './native-npc-sources.js';
+
+export function nativeEntityMarkerFactCount(capture: NativeNpcCapture): number {
+  const metadata = capture.facts.referenceFacts;
+  let count = 1 + metadata.knowledge.length + metadata.social.length;
+  for (const body of metadata.bodies) count += body.subjects.length + 1;
+  for (const source of capture.sources())
+    for (const record of source.personal)
+      count += record.attribution.entitySubjects.length + record.attribution.subjects.length;
+  return count;
+}
+
+/** The existing presentation reader, in the same first-match fact order.
+ * Its caller admits the actual fact vector before constructing it. */
+export function nativeEntityMarkerReader(capture: NativeNpcCapture) {
+  const { self, referenceFacts } = capture.facts;
+  const facts = new Array<NativeNpcSubjectFact>(nativeEntityMarkerFactCount(capture));
+  let at = 0;
+  facts[at++] = referenceFacts.myself;
+  for (const fact of referenceFacts.knowledge) facts[at++] = fact;
+  for (const fact of referenceFacts.social) facts[at++] = fact;
+  for (const body of referenceFacts.bodies) {
+    for (const fact of body.subjects) facts[at++] = fact;
+    facts[at++] = body.entity;
+  }
+  for (const source of capture.sources())
+    for (const record of source.personal) {
+      for (const fact of record.attribution.entitySubjects) facts[at++] = fact;
+      for (const fact of record.attribution.subjects) facts[at++] = fact;
+    }
+  return {
+    hashInputBytes() {
+      let bytes = 0;
+      for (const fact of facts)
+        if (
+          fact.subject.kind === 'entity' &&
+          fact.canAddressRemembered &&
+          fact.referenceAttribution !== undefined
+        )
+          bytes = Math.max(
+            bytes,
+            personalEntityHandleInputBytes(
+              { id: self.worldId },
+              self.actorId,
+              fact.subject.entityId,
+              fact.referenceAttribution,
+            ),
+          );
+      return bytes;
+    },
+    reference(id: string) {
+      const fact = facts.find(
+        (fact) => fact.subject.kind === 'entity' && fact.subject.entityId === id,
+      );
+      return fact?.canAddressRemembered && fact.referenceAttribution !== undefined
+        ? personalEntityHandle({ id: self.worldId }, self.actorId, id, fact.referenceAttribution)
+        : undefined;
+    },
+  };
+}
 
 /** Projection uses acquired associations, never an ID found in prose. */
 export function nativeProjectEntityMarkers(text: string, capture: NativeNpcCapture): string {
-  const { self, referenceFacts } = capture.facts;
-  const facts = [
-    referenceFacts.myself,
-    ...referenceFacts.knowledge,
-    ...referenceFacts.social,
-    ...referenceFacts.bodies.flatMap((body) => [...body.subjects, body.entity]),
-    ...capture
-      .sources()
-      .flatMap((source) =>
-        source.personal.flatMap((record) => [
-          ...record.attribution.entitySubjects,
-          ...record.attribution.subjects,
-        ]),
-      ),
-  ];
-  return projectEntityMarkersFromRead(text, (id) => {
-    const fact = facts.find(
-      (fact) => fact.subject.kind === 'entity' && fact.subject.entityId === id,
-    );
-    return fact?.canAddressRemembered && fact.referenceAttribution !== undefined
-      ? personalEntityHandle({ id: self.worldId }, self.actorId, id, fact.referenceAttribution)
-      : undefined;
-  });
+  return projectEntityMarkersFromRead(text, nativeEntityMarkerReader(capture).reference);
 }
 
 export type NativeRecallRuntime = Omit<

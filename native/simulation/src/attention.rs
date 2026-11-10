@@ -83,9 +83,12 @@ pub struct AttentionAnnotation {
         skip_serializing_if = "Option::is_none"
     )]
     pub urgency_through: Option<f64>,
+    // Source stores the actual observation-fact factory's property order in
+    // these proof fields; the generic evidence-source DTO has a different order.
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
+        serialize_with = "crate::reception::serialize_original_fact_option",
         skip_serializing_if = "Option::is_none"
     )]
     pub urgency_source: Option<ObservationFactKey>,
@@ -99,6 +102,7 @@ pub struct AttentionAnnotation {
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
+        serialize_with = "crate::reception::serialize_original_fact_option",
         skip_serializing_if = "Option::is_none"
     )]
     pub direct_source: Option<ObservationFactKey>,

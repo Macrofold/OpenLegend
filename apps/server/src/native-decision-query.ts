@@ -151,13 +151,15 @@ export async function expandNativeDecisionSituation(input: {
     appraisals: input.appraisals,
     receivedBodies,
   });
-  const ticket = await original.bindResponse(
-    service.world,
-    current,
-    input.jobId,
-    selection,
-    signal,
-    input.semanticTrigger,
+  const ticket = await service.publishRecall(() =>
+    original.bindResponse(
+      service.world,
+      current,
+      input.jobId,
+      selection,
+      signal,
+      input.semanticTrigger,
+    ),
   );
   return { disclosed, ticket, prompt, context, offered };
 }

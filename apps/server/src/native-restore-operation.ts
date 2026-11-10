@@ -125,7 +125,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
     };
     this.retention = new NativeRetention(
       restored.worldId,
-      selectedTemporalPolicy(definitions.facts.definitions).recent,
+      selectedTemporalPolicy(definitions.facts.definitions),
       stage.source.records.tables['mind_temporal_actors'] ?? [],
     );
     this.retention.prepare(restored.changes)();

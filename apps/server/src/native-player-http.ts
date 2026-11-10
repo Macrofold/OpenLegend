@@ -2,9 +2,10 @@ import type { ServerResponse } from 'node:http';
 import type { GameView } from '@open-legend/protocol';
 import { AuthorityError, scopeKey, type RequestScope } from './authority.js';
 import {
+  attachNativeConsumer,
+  encodeNativeJson,
   releaseNativeProduct,
   retainNativeProduct,
-  retainNativeSources,
 } from './native-consumer.js';
 import type { NativeWorldService } from './native-world-service.js';
 import type { NativePlayerViewRequest } from './native-player-view.js';
@@ -163,12 +164,13 @@ export class NativePlayerHttp {
         if (prior?.revision === view.revision && scopeKey(stream.scope) === view.access?.scope)
           return;
         const patch = prior ? projectPatch(prior, view) : null;
-        const message = retainNativeSources(
-          patch
-            ? Buffer.from(`event: patch\ndata: ${JSON.stringify(patch)}\n\n`)
-            : Buffer.concat([Buffer.from('event: reset\ndata: '), bytes, Buffer.from('\n\n')]),
-          view,
-        );
+        const message = patch
+          ? encodeNativeJson(this.service.world, patch, {
+              prefix: 'event: patch\ndata: ',
+              suffix: '\n\n',
+              sources: [view],
+            })
+          : this.resetBytes(bytes, view);
         retainNativeProduct(message);
         this.write(stream, message);
         if (stream.view) releaseNativeProduct(stream.view);
@@ -176,6 +178,23 @@ export class NativePlayerHttp {
       },
       this.execution,
     );
+  }
+
+  private resetBytes(bytes: Buffer, view: GameView): Buffer {
+    const prefix = 'event: reset\ndata: ',
+      suffix = '\n\n';
+    const length = Buffer.byteLength(prefix) + bytes.length + Buffer.byteLength(suffix);
+    const storage = this.service.world.reserveConsumerBytes(length + 32 * 8);
+    try {
+      const message = Buffer.allocUnsafeSlow(length);
+      const at = message.write(prefix, 0, 'utf8');
+      bytes.copy(message, at);
+      message.write(suffix, at + bytes.length, 'utf8');
+      return attachNativeConsumer(message, storage, view);
+    } catch (error) {
+      storage.release();
+      throw error;
+    }
   }
 
   private schedule(): void {

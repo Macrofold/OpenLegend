@@ -79,6 +79,7 @@ import {
 import type { NativeFormattedNpcOffer } from './native-npc-candidates.js';
 import type { NativeNpcBindingSelection } from './native-npc-sources.js';
 import { nativeNpcPersonalSelection } from './native-npc-sources.js';
+import { projectNativeDecisionContext } from './native-context-projection.js';
 import type { z } from 'zod';
 import type { DecisionAppraisalProposal } from './cognition-contracts.js';
 
@@ -754,20 +755,7 @@ async function prepareOwnedDecision(
         revision: value.revision,
         experience: value.experience,
       });
-    for (const key of Object.keys(context)) {
-      const value = context[key];
-      if (typeof value === 'string') context[key] = nativeProjectEntityMarkers(value, now);
-      else if (value != null)
-        context[key] = JSON.parse(
-          nativeProjectEntityMarkers(JSON.stringify(value), now),
-          (field, entry) =>
-            typeof entry === 'string' &&
-            /^(entityId|actorId|targetId|sourceId|targetEntityId|addresseeEntityId)$/.test(field)
-              ? (Object.entries(references.entityReferences).find(([, id]) => id === entry)?.[0] ??
-                entry)
-              : entry,
-        );
-    }
+    projectNativeDecisionContext(service.world, context, now, references.entityReferences);
     const allOffers = fitActionCandidates(context, [
       ...now.choiceDescriptions(service.definitions),
     ]);
@@ -919,13 +907,8 @@ async function prepareOwnedDecision(
       intents: intentActions,
       appraisals: appraisal?.selection ?? null,
     });
-    ticket = await original.bindResponse(
-      service.world,
-      now,
-      jobId,
-      binding,
-      signal,
-      input.semanticTrigger,
+    ticket = await service.publishRecall(() =>
+      original.bindResponse(service.world, now, jobId, binding, signal, input.semanticTrigger),
     );
     const schemaFor = () =>
       boundResponseSchema(

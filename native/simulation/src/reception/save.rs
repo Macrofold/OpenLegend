@@ -26,27 +26,27 @@ impl Serialize for ChildMarker {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(super) struct OwnerHeader<'a> {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub visual_confirmation: Option<VisualConfirmation>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub motion_samples: Option<ChildMarker>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub motion_expires_at: Option<f64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub geometry: Option<ChildMarker>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub attention: Option<ChildMarker>,
     pub life: u64,
-    pub received_at_sequence: u64,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub observer: Option<ObserverLife>,
-    pub next_contact: u64,
+    pub received_at_sequence: u64,
     pub received: Vec<Arc<ReceivedObservation>>,
     #[serde(serialize_with = "crate::encoding::serialize_js_map")]
     pub receipts: IndexMap<String, u64>,
     pub current: ChildMarker,
+    pub next_contact: u64,
     #[serde(serialize_with = "crate::encoding::serialize_js_map")]
     pub gaps: IndexMap<String, ReceptionGap>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub visual_confirmation: Option<VisualConfirmation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub attention: Option<ChildMarker>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub geometry: Option<ChildMarker>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub motion_samples: Option<ChildMarker>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub motion_expires_at: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub support: Option<&'a DetectionSupportState>,
 }

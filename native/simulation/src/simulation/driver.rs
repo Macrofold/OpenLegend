@@ -119,13 +119,15 @@ impl From<crate::experience::HistoryPreparationError> for DriveError {
     }
 }
 
-/// The pending driver and every detached provider job share this same guard.
-/// Cancelling the cursor cannot free bytes still held by a late provider job.
+/// The pending driver owns the question body. Detached provider jobs receive
+/// independently funded encoded/decoded copies, rather than keeping this body
+/// alive after consumption. Weak tickets retain only its fixed Arc backing.
 pub(crate) struct ProviderQuestion {
     kind: ProviderKind,
     binding: GeometryBinding,
     json: String,
     _reservation: ByteReservation,
+    backing: Arc<ByteReservation>,
 }
 impl ProviderQuestion {
     pub(crate) fn kind(&self) -> ProviderKind {
@@ -136,6 +138,9 @@ impl ProviderQuestion {
     }
     pub(crate) fn json(&self) -> &str {
         &self.json
+    }
+    pub(crate) fn backing(&self) -> &Arc<ByteReservation> {
+        &self.backing
     }
     fn prepare<T: Serialize + ?Sized>(
         kind: ProviderKind,
@@ -160,18 +165,30 @@ impl ProviderQuestion {
         // This is allocation admission; measured resident costs remain separate.
         let bound = bytes
             .checked_mul(4)
-            .and_then(|n| n.checked_add(size_of::<Self>() + 2 * size_of::<usize>() + 64))
+            .and_then(|n| n.checked_add(64))
             .ok_or(DriveError::Capacity)?;
         let mut reservation = budget.reserve(bound).map_err(|_| DriveError::Capacity)?;
+        // Arc keeps its whole fixed slot until the last Weak drops, even after
+        // the String/body owner ends. The shared guard also funds its own Arc.
+        let backing_bytes = size_of::<Self>()
+            .checked_add(2 * size_of::<usize>())
+            .and_then(|n| n.checked_add(size_of::<ByteReservation>() + 2 * size_of::<usize>()))
+            .ok_or(DriveError::Capacity)?;
+        let backing = Arc::new(
+            budget
+                .reserve(backing_bytes)
+                .map_err(|_| DriveError::Capacity)?,
+        );
         let json = crate::encoding::json_record(&envelope).map_err(|_| DriveError::Encoding)?;
         reservation
-            .resize(json.capacity() + size_of::<Self>() + 2 * size_of::<usize>())
+            .resize(json.capacity())
             .map_err(|_| DriveError::Capacity)?;
         Ok(Arc::new(Self {
             kind,
             binding,
             json,
             _reservation: reservation,
+            backing,
         }))
     }
 }
@@ -590,6 +607,7 @@ pub(crate) enum CompletedOperation {
     Forget(crate::experience::CompletedForgetExperience),
     RecentRetention(crate::received::CompletedRecentRetention),
     KnowledgeRetention(crate::received::CompletedKnowledgeRetention),
+    AccountRetention(crate::experience::CompletedAccountRetention),
     SupportRetention(crate::received::CompletedSupportRetention),
     HostControl(super::host_control::CompletedHostControl),
     NpcIntake(super::npc_intake::CompletedNpcIntake),
@@ -609,6 +627,7 @@ impl CompletedOperation {
             Self::Forget(f) => f.outcome(),
             Self::RecentRetention(r) => &r.outcome,
             Self::KnowledgeRetention(r) => &r.outcome,
+            Self::AccountRetention(r) => &r.outcome,
             Self::SupportRetention(r) => &r.outcome,
             Self::HostControl(r) => &r.outcome,
             Self::NpcIntake(r) => &r.outcome,
@@ -627,6 +646,7 @@ impl CompletedOperation {
             | Self::Restore(_)
             | Self::Forget(_)
             | Self::SupportRetention(_)
+            | Self::AccountRetention(_)
             | Self::KnowledgeRetention(_)
             | Self::RecentRetention(_)
             | Self::HostControl(_)
@@ -663,6 +683,7 @@ impl CompletedOperation {
             | Self::Response(_)
             | Self::Forget(_)
             | Self::SupportRetention(_)
+            | Self::AccountRetention(_)
             | Self::KnowledgeRetention(_)
             | Self::RecentRetention(_)
             | Self::HostControl(_)
@@ -704,6 +725,7 @@ enum OperationCursor {
     NpcCandidates(crate::capture::NpcCandidateCursor),
     RecentRetention(crate::received::RecentRetentionCursor),
     KnowledgeRetention(crate::received::KnowledgeRetentionCursor),
+    AccountRetention(crate::experience::AccountRetentionCursor),
     SupportRetention(crate::received::SupportRetentionCursor),
     HostControl(super::host_control::HostControlCursor),
     NpcIntake(super::npc_intake::NpcIntakeCursor),
@@ -733,6 +755,7 @@ impl OperationCursor {
             | Self::LearningPublish(_)
             | Self::Startup(_)
             | Self::SupportRetention(_)
+            | Self::AccountRetention(_)
             | Self::KnowledgeRetention(_)
             | Self::RecentRetention(_)
             | Self::HostControl(_)
@@ -969,6 +992,14 @@ impl OperationCursor {
                     )),
                 }
             }
+            Self::AccountRetention(cursor) => {
+                if route.is_some() || answer.is_some() {
+                    return Err(DriveError::StaleResponse);
+                }
+                Ok(Poll::Complete(DriverCompletion::Operation(
+                    CompletedOperation::AccountRetention(cursor.step(core, budget)?),
+                )))
+            }
             Self::KnowledgeRetention(cursor) => {
                 if route.is_some() || answer.is_some() {
                     return Err(DriveError::StaleResponse);
@@ -1093,6 +1124,13 @@ impl OperationDriver {
         budget: &ByteBudget,
     ) -> Result<Self, DriveError> {
         Self::new(core, OperationCursor::SupportRetention(cursor), budget)
+    }
+    pub(crate) fn account_retention(
+        core: &mut CoreMutation<'_>,
+        cursor: crate::experience::AccountRetentionCursor,
+        budget: &ByteBudget,
+    ) -> Result<Self, DriveError> {
+        Self::new(core, OperationCursor::AccountRetention(cursor), budget)
     }
     pub(crate) fn knowledge_retention(
         core: &mut CoreMutation<'_>,

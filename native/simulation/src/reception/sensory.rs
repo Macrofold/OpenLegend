@@ -67,25 +67,25 @@ pub struct SightProgress {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub broad: Option<SightMark>,
+    pub detail: Option<SightMark>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub detail: Option<SightMark>,
+    pub broad: Option<SightMark>,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SensoryContinuation {
     pub epoch_at: f64,
+    #[serde(serialize_with = "crate::encoding::serialize_js_map")]
+    pub scopes: IndexMap<String, PendingSightScope>,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub revision: u64,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub scope_count: u64,
-    #[serde(serialize_with = "crate::encoding::serialize_js_map")]
-    pub scopes: IndexMap<String, PendingSightScope>,
     #[serde(serialize_with = "crate::encoding::serialize_js_map")]
     pub processed: IndexMap<String, SightProgress>,
     #[serde(

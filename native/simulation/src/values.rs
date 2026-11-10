@@ -317,8 +317,8 @@ pub struct WorkInvocation {
     pub module_id: String,
     pub definition_pin: DefinitionPin,
     pub limit: WorkVector,
-    pub used: WorkVector,
     pub allocation: WorkVector,
+    pub used: WorkVector,
     pub started_at: f64,
     pub interval_at: f64,
     #[serde(deserialize_with = "deserialize_safe_integer")]

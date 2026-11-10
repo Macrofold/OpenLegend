@@ -127,7 +127,13 @@ export type NativeNpcEntityOrdinal =
 export type NativeNpcSubjectOrdinal =
   | { readonly kind: 'myself' }
   | {
-      readonly kind: 'body' | 'received-body' | 'knowledge' | 'social' | 'mind-record';
+      readonly kind:
+        | 'body'
+        | 'body-entity'
+        | 'received-body'
+        | 'knowledge'
+        | 'social'
+        | 'mind-record';
       readonly ordinal: number;
     }
   | {
@@ -153,7 +159,7 @@ export interface NativeNpcBindingSelection {
   /** Ordinals in the admitted trigger's native unresolved-cause roster. */
   readonly semanticCauses: readonly number[];
   /** Exact selected conversation perspective dependencies, including empty identities. */
-  readonly perspectives: readonly { readonly snapshot:number; readonly entity:number }[];
+  readonly perspectives: readonly { readonly snapshot: number; readonly entity: number }[];
   /** Ordinals address the refreshed native read's actual pending intent list. */
   readonly intents: readonly NativeNpcAliasOrdinal[];
   /** Sources actually included in the compact request, in presentation order. */
@@ -413,17 +419,31 @@ export async function readNativeNpcSources(
           }
         }
       }
-      const duplicate = selection.consolidationJob === undefined ? undefined : (
-        await db.prepare(
-          'SELECT EXISTS(SELECT 1 FROM mind_summaries WHERE world_id=? AND actor_id=? AND left(source_id,length(?))=?) AS present',
-        ).get(cut.worldId, origin.actorId, `${selection.consolidationJob}:`, `${selection.consolidationJob}:`)
-      )?.['present'];
+      const duplicate =
+        selection.consolidationJob === undefined
+          ? undefined
+          : (
+              await db
+                .prepare(
+                  'SELECT EXISTS(SELECT 1 FROM mind_summaries WHERE world_id=? AND actor_id=? AND left(source_id,length(?))=?) AS present',
+                )
+                .get(
+                  cut.worldId,
+                  origin.actorId,
+                  `${selection.consolidationJob}:`,
+                  `${selection.consolidationJob}:`,
+                )
+            )?.['present'];
       if (selection.consolidationJob !== undefined && typeof duplicate !== 'boolean')
         throw new Error('Consolidation has no exact current summary witness.');
       const result = {
         binding,
         readSerial: origin.readSerial,
-        rows: { pages, values, personal, parents,
+        rows: {
+          pages,
+          values,
+          personal,
+          parents,
           ...(selection.consolidationJob === undefined ? {} : { duplicateSummary: duplicate }),
         },
       };

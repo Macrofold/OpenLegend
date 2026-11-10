@@ -8,6 +8,20 @@ use crate::reception::{ReceivingMutation, ReceptionState};
 use crate::simulation::{InstalledWorld, PhysicalState};
 use std::mem::size_of;
 
+fn expired_seed(
+    identity: &crate::worlds::base_knowledge::ObserverIdentity,
+    now: f64,
+    duration: f64,
+) -> bool {
+    identity.seed_only == Some(true)
+        && identity.voice.as_ref().is_some_and(|voice| {
+            voice
+                .samples
+                .iter()
+                .all(|sample| sample.at + duration <= now)
+        })
+}
+
 pub(super) fn expire_seeds(
     physical: &mut PhysicalState,
     state: &mut ReceptionState,
@@ -21,13 +35,7 @@ pub(super) fn expire_seeds(
         * installed.content.time_policy.normal_game_seconds_per_second;
     let now = physical.header.sim_time;
     let expired = |identity: &crate::worlds::base_knowledge::ObserverIdentity| {
-        identity.seed_only == Some(true)
-            && identity.voice.as_ref().is_some_and(|voice| {
-                voice
-                    .samples
-                    .iter()
-                    .all(|sample| sample.at + duration <= now)
-            })
+        expired_seed(identity, now, duration)
     };
     let records = state
         .observer_identities
@@ -38,7 +46,7 @@ pub(super) fn expire_seeds(
     if let Some(records) = records {
         for (key, _) in records.iter().filter(|(_, identity)| expired(identity)) {
             count = count.checked_add(1).ok_or(ExecutionError::Capacity)?;
-            bytes = heap_sum([bytes, size_of::<String>(), key.len()])
+            bytes = heap_sum([bytes, size_of::<(usize, String)>(), key.len()])
                 .ok_or(ExecutionError::Capacity)?;
         }
     }
@@ -49,14 +57,17 @@ pub(super) fn expire_seeds(
             records
                 .iter()
                 .filter(|(_, identity)| expired(identity))
-                .map(|(key, _)| key.clone()),
+                .enumerate()
+                .map(|(order, (key, _))| (order, key.clone())),
         );
     }
     // Source Object.entries visits integer keys first, then insertion order.
     // Native's guarded owner stores keys in insertion order, so apply its same
     // existing JavaScript property-order comparator before deleting them.
-    keys.sort_by(|a, b| super::journal::property_order(a, b));
-    for key in keys {
+    keys.sort_unstable_by(|(a_order, a), (b_order, b)| {
+        super::journal::property_order(a, b).then(a_order.cmp(b_order))
+    });
+    for (_, key) in keys {
         journal.retire(
             state,
             temporal,
@@ -89,6 +100,46 @@ pub(crate) fn maintain_recognition(
         return Ok(());
     }
     let installed = core.state.installed.clone();
+    let duration = installed.recognition.value().seed_seconds
+        * installed.content.time_policy.normal_game_seconds_per_second;
+    let correspondence = core
+        .state
+        .reception
+        .observer_identities
+        .as_ref()
+        .and_then(|root| root.get(observer))
+        .is_some_and(|records| {
+            records
+                .values()
+                .any(|identity| expired_seed(identity, now, duration))
+        });
+    if correspondence
+        && core
+            .state
+            .physical
+            .entities
+            .get(observer)
+            .is_some_and(|actor| actor.has_memory())
+        && core
+            .state
+            .reception
+            .perception_evidence
+            .as_ref()
+            .and_then(|owners| owners.get(observer))
+            .is_some_and(|owner| owner.attention.is_some())
+    {
+        // Source's correspondence lifetime first opens the current sequence's
+        // received prefix. Reuse that owner before capturing old/new cohorts.
+        core.journal.originals.ensure_owner(
+            &mut core.state.reception,
+            core.state
+                .physical
+                .entities
+                .get(observer)
+                .ok_or(ExecutionError::MissingActor)?,
+            core.state.physical.header.sequence,
+        )?;
+    }
     let mut receiving = ReceivingMutation {
         experience: &core.state.experience,
         cognition: &mut core.journal.cognition,

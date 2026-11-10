@@ -207,6 +207,9 @@ pub struct ReceivedObservation {
     pub id: String,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub revision: u64,
+    // The current Source acquisition factory stores its header before origin;
+    // these records are also embedded verbatim in current-detail TEXT rows.
+    pub header_ref: ReceivedValueReference,
     pub origin: ObservationOrigin,
     #[serde(
         default,
@@ -220,7 +223,6 @@ pub struct ReceivedObservation {
         skip_serializing_if = "Option::is_none"
     )]
     pub context: Option<ObservationContext>,
-    pub header_ref: ReceivedValueReference,
     pub facets: Vec<ReceivedObservationFacet>,
     #[serde(skip)]
     pub(super) storage: Option<crate::host::ResidentReservation>,
@@ -371,12 +373,6 @@ pub struct CurrentStoredField {
     pub body_lease_id: Option<String>,
     #[serde(
         default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub local_subject: Option<ObserverSubject>,
-    #[serde(
-        default,
         deserialize_with = "crate::values::deserialize_present_safe_integer",
         skip_serializing_if = "Option::is_none"
     )]
@@ -387,11 +383,18 @@ pub struct CurrentStoredField {
         skip_serializing_if = "Option::is_none"
     )]
     pub source_placement_revision: Option<u64>,
-    pub value: ReceivedFacetValue,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub original_ordinal: u64,
+    pub value: ReceivedFacetValue,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub semantic_revision: u64,
+    // Source appends the personally acquired body subject after compaction.
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub local_subject: Option<ObserverSubject>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]

@@ -19,9 +19,9 @@ use serde_json::Value;
 use std::{collections::BTreeMap, sync::Arc};
 
 mod accounts;
-mod restore;
 mod actor;
 mod materialize;
+mod restore;
 pub(crate) use materialize::hydrate_selected_temporal_pages;
 mod privacy;
 pub(crate) use privacy::TemporalAccountAliases;
@@ -51,7 +51,8 @@ pub use append::{
     TemporalCaptureFacet, TemporalCaptureInput,
 };
 pub(crate) use save::{
-    TemporalSaveLimits, encode_temporal_changes, pack_temporal_save, preview_temporal_rows,
+    TemporalPredecessors, TemporalSaveLimits, capture_temporal_predecessors,
+    encode_temporal_changes, pack_temporal_save, preview_temporal_rows,
 };
 pub(super) use support::encoding::SupportEncoding;
 pub(crate) use support::{
@@ -129,6 +130,18 @@ pub struct TemporalActorHeader {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
+    pub accounts: Option<TemporalAccounts>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub supports: Option<EmptyChildOwner>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
     pub released_through: Option<f64>,
     #[serde(
         default,
@@ -142,18 +155,6 @@ pub struct TemporalActorHeader {
         skip_serializing_if = "Option::is_none"
     )]
     pub recording_gap: Option<CoverageGap>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub accounts: Option<TemporalAccounts>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub supports: Option<EmptyChildOwner>,
 }
 
 #[derive(Debug)]
@@ -305,7 +306,8 @@ impl TemporalActorHistory {
             Some((header.bytes, header.count)),
             budget,
         )?;
-        let page_storage = budget.reserve(fresh_page_map_bytes(pages.len())?)
+        let page_storage = budget
+            .reserve(fresh_page_map_bytes(pages.len())?)
             .map_err(|_| ReceivedError("Temporal page-index exceeds native allowance."))?;
         let mut installed = BTreeMap::new();
         for page in pages {
@@ -349,7 +351,8 @@ impl TemporalActorHistory {
                 ReceivedError("Temporal pending placement exceeds native allowance.")
             })?,
             supports: None,
-            page_storage: budget.adopt_backing(page_storage)
+            page_storage: budget
+                .adopt_backing(page_storage)
                 .map_err(|_| ReceivedError("Temporal page-index custody is unavailable."))?,
         })
     }
@@ -445,7 +448,10 @@ pub struct TemporalCheckpoint {
 #[derive(Debug)]
 enum TemporalUndo {
     Reservation(crate::host::ByteReservation),
-    Namespace { before:String, storage:crate::host::ByteReservation },
+    Namespace {
+        before: String,
+        storage: crate::host::ByteReservation,
+    },
     CreatedActor {
         actor_id: String,
         before_next: u64,
@@ -599,10 +605,28 @@ impl TemporalState {
         while self.undo.len() > checkpoint.operations {
             match self.undo.pop().expect("Journal length checked") {
                 TemporalUndo::Reservation(_) => {}
-                TemporalUndo::Namespace{before,mut storage} => {
-                    let bytes=self.root_storage.bytes().checked_sub(self.header.namespace.capacity()).and_then(|n|n.checked_add(before.capacity())).ok_or(ReceivedError("Restore namespace allocation overflow."))?;
-                    if bytes>self.root_storage.bytes(){let growth=storage.split_off(bytes-self.root_storage.bytes()).map_err(|_|ReceivedError("Restore namespace rollback capacity."))?;self.budget.restore_backing(&mut self.root_storage,growth).map_err(|_|ReceivedError("Restore namespace rollback capacity."))?;}
-                    self.header.namespace=before;self.root_storage.resize(bytes).map_err(|_|ReceivedError("Restore namespace rollback capacity."))?;
+                TemporalUndo::Namespace {
+                    before,
+                    mut storage,
+                } => {
+                    let bytes = self
+                        .root_storage
+                        .bytes()
+                        .checked_sub(self.header.namespace.capacity())
+                        .and_then(|n| n.checked_add(before.capacity()))
+                        .ok_or(ReceivedError("Restore namespace allocation overflow."))?;
+                    if bytes > self.root_storage.bytes() {
+                        let growth = storage
+                            .split_off(bytes - self.root_storage.bytes())
+                            .map_err(|_| ReceivedError("Restore namespace rollback capacity."))?;
+                        self.budget
+                            .restore_backing(&mut self.root_storage, growth)
+                            .map_err(|_| ReceivedError("Restore namespace rollback capacity."))?;
+                    }
+                    self.header.namespace = before;
+                    self.root_storage
+                        .resize(bytes)
+                        .map_err(|_| ReceivedError("Restore namespace rollback capacity."))?;
                 }
                 TemporalUndo::CreatedActor {
                     actor_id,
@@ -689,8 +713,11 @@ impl TemporalState {
                         actor.pages.remove(&position);
                     }
                     if page_restore.bytes() != 0 {
-                        self.budget.restore_backing(&mut actor.page_storage, page_restore)
-                            .map_err(|_| ReceivedError("Temporal inverse page-index custody is unavailable."))?;
+                        self.budget
+                            .restore_backing(&mut actor.page_storage, page_restore)
+                            .map_err(|_| {
+                                ReceivedError("Temporal inverse page-index custody is unavailable.")
+                            })?;
                     }
                     actor.pages.insert(before.position(), before);
                     actor.settle_page_entries()?;
@@ -718,8 +745,9 @@ impl TemporalState {
                     actor.settle_page_entries()?;
                 }
                 TemporalUndo::RecentRetirement { actor_id, before } => {
-                    let actor = self.actors.get_mut(&actor_id)
-                        .ok_or(ReceivedError("Temporal retirement rollback actor is absent."))?;
+                    let actor = self.actors.get_mut(&actor_id).ok_or(ReceivedError(
+                        "Temporal retirement rollback actor is absent.",
+                    ))?;
                     before.restore(actor)?;
                 }
             }

@@ -10,11 +10,13 @@ use crate::simulation::{
 };
 use serde::ser::{SerializeMap, SerializeSeq};
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Arc, Weak};
 
 static NEXT_GENERATION: AtomicU64 = AtomicU64::new(1);
+mod account_retention;
 mod control;
+pub use account_retention::RuntimeAccountRetention;
 mod handoff;
 mod input;
 mod learning;
@@ -98,14 +100,10 @@ fn provider_response(
 ) -> Result<Option<ProviderResponse>, RuntimeError> {
     answer
         .map(|(ticket, json)| {
+            let question = ticket.question()?;
             let custody = budget.reserve(json.capacity()).map_err(failure)?;
-            ProviderResponse::new(
-                ticket.question.kind(),
-                ticket.question.binding(),
-                json,
-                custody,
-            )
-            .map_err(failure)
+            ProviderResponse::new(question.kind(), question.binding(), json, custody)
+                .map_err(failure)
         })
         .transpose()
 }
@@ -188,16 +186,42 @@ struct Installation {
 }
 
 pub struct RuntimeProvider {
-    question: Arc<ProviderQuestion>,
+    // Field order matters: the final Weak releases its fixed question slot
+    // before the shared backing guard can return that allocation admission.
+    question: Weak<ProviderQuestion>,
+    _question_backing: Arc<ByteReservation>,
+    _wrapper: ByteReservation,
 }
 impl RuntimeProvider {
+    fn prepare(
+        question: &Arc<ProviderQuestion>,
+        budget: &ByteBudget,
+    ) -> Result<Self, RuntimeError> {
+        // Actual RuntimeProvider/Arc plus the same supported opaque Node class
+        // carrier allowance as RuntimeConsumer. This is per wrapper, not per
+        // question body or a claim about total V8/RSS memory.
+        let bytes = std::mem::size_of::<Self>()
+            .checked_add(2 * std::mem::size_of::<usize>() + 32 * std::mem::size_of::<u64>())
+            .and_then(|n| n.checked_add(std::mem::align_of::<Self>() - 1))
+            .ok_or_else(|| failure("native provider allocation overflow"))?;
+        let wrapper = budget.reserve(bytes).map_err(failure)?;
+        Ok(Self {
+            question: Arc::downgrade(question),
+            _question_backing: Arc::clone(question.backing()),
+            _wrapper: wrapper,
+        })
+    }
+    fn question(&self) -> Result<Arc<ProviderQuestion>, RuntimeError> {
+        self.question
+            .upgrade()
+            .ok_or_else(|| failure("native provider question is no longer pending"))
+    }
     pub fn json(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
+        let question = self.question()?;
         // The question is already encoded by its semantic owner. Copy only this
         // selected output; JavaScript buffers can never alias canonical bytes.
-        let mut custody = budget
-            .reserve(self.question.json().len())
-            .map_err(failure)?;
-        let bytes = self.question.json().as_bytes().to_vec();
+        let mut custody = budget.reserve(question.json().len()).map_err(failure)?;
+        let bytes = question.json().as_bytes().to_vec();
         custody.resize(bytes.capacity()).map_err(failure)?;
         Ok(RuntimeJson {
             bytes,
@@ -259,6 +283,21 @@ pub struct NativeWorldSession {
     history_edit_limits: crate::experience::HistoryEditLimits,
 }
 impl NativeWorldSession {
+    fn prepare_provider(
+        &mut self,
+        key: CandidateKey,
+        question: Arc<ProviderQuestion>,
+    ) -> Result<RuntimeProvider, RuntimeError> {
+        match RuntimeProvider::prepare(&question, &self.budget) {
+            Ok(provider) => Ok(provider),
+            Err(error) => {
+                // No handle/key has reached Node yet. A wrapper refusal must
+                // close this private checkpoint instead of stranding it.
+                self.cancel(key)?;
+                Err(error)
+            }
+        }
+    }
     pub fn install(
         bytes: &[u8],
         database_schema: &str,
@@ -494,7 +533,9 @@ impl NativeWorldSession {
             .map_err(failure)?;
         Ok(match step {
             SessionStep::Continue => RuntimeStep::Continue,
-            SessionStep::Question(question) => RuntimeStep::Provider(RuntimeProvider { question }),
+            SessionStep::Question(question) => {
+                RuntimeStep::Provider(self.prepare_provider(key, question)?)
+            }
             SessionStep::Preview(preview) => {
                 RuntimeStep::Preview(RuntimeJson::encode(preview.outcome(), &self.budget)?)
             }
@@ -518,6 +559,7 @@ impl NativeWorldSession {
                     notices,
                     records,
                     personal_predecessors,
+                    temporal_predecessors,
                     source_versions,
                     protected_save,
                     progress,
@@ -532,6 +574,7 @@ impl NativeWorldSession {
                             notices,
                             records,
                             personal_predecessors,
+                            temporal_predecessors,
                             source_versions,
                             protected_save,
                             progress,
@@ -681,6 +724,7 @@ struct Products<'a> {
     notices: &'a crate::cognition::PreparedSemanticNotices,
     records: &'a crate::records::ChangedRows,
     personal_predecessors: &'a crate::experience::PersonalPredecessors,
+    temporal_predecessors: &'a crate::received::TemporalPredecessors,
     source_versions: &'a crate::received::SourceVersionPlan,
     protected_save: Option<&'a crate::records::SaveRows>,
     progress: crate::simulation::session::PreparedReadProgress<'a>,
@@ -702,6 +746,7 @@ impl Serialize for Products<'_> {
             map.serialize_entry("records", self.records)?;
         }
         map.serialize_entry("personalPredecessors", &self.personal_predecessors.value())?;
+        map.serialize_entry("temporalPredecessors", &self.temporal_predecessors.value())?;
         map.serialize_entry("sourceVersions", self.source_versions)?;
         if let Some(prefix) = self.protected_save.filter(|_| self.restore.is_none()) {
             map.serialize_entry("protectedSave", prefix)?;

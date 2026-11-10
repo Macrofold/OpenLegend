@@ -245,7 +245,7 @@ function parseRetentionRow(row: Record<string, unknown>): RetentionRow {
   };
 }
 
-function retentionProjection(table: Table) {
+function retentionProjection(table: Table, selectionOnly = false) {
   const encoded =
     table === 'mind_temporal_pages'
       ? 't.encoded_bytes'
@@ -253,7 +253,7 @@ function retentionProjection(table: Table) {
         ? 't.logical_bytes'
         : 'octet_length(t.payload)';
   return `SELECT '${table}' AS table_name,t.id,t.parent_id,t.position,t.actor_id,
-        jsonb_build_object(${selectedColumns[table].flatMap((name) => [`'${name}'`, `t.${name}`]).join(',')}) AS columns,
+        jsonb_build_object(${(selectionOnly ? ['actor_id', 'source_id', 'at', 'logical_bytes', 'retention_class', 'policy_priority', 'active_or_protected', 'next_due_at', 'account_revision'] : selectedColumns[table]).flatMap((name) => [`'${name}'`, `t.${name}`]).join(',')}) AS columns,
         ${encoded} AS encoded_bytes`;
 }
 
@@ -272,6 +272,8 @@ export async function readAccountRetentionCandidates(
   worldId: string,
   table: (typeof accountTables)[number],
   requests: readonly AccountRetentionQuery[],
+  selectionOnly = false,
+  admit?: (rows: number, encodedBytes: number) => void,
 ): Promise<Record<string, unknown>[]> {
   const result: Record<string, unknown>[] = [];
   const worldBindings = [worldId, worldId, worldId, worldId];
@@ -284,26 +286,24 @@ export async function readAccountRetentionCandidates(
     request.changed,
   ]);
   for (const batch of sqlRowBatches(requestRows, worldBindings)) {
-    const selected = await db
-      .prepare(
-        `WITH requested(actor_id,at,due,pressured,overridden,changed) AS MATERIALIZED (
+    const statement = `WITH requested(actor_id,at,due,pressured,overridden,changed) AS MATERIALIZED (
           VALUES ${batch.map(() => '(?::text,?::double precision,?::boolean,?::text[],?::text[],?::text[])').join(',')}
         ), scoped AS (
-          ${retentionProjection(table)},'due'::text AS criterion FROM requested q CROSS JOIN LATERAL (
+          ${retentionProjection(table, selectionOnly)},'due'::text AS criterion FROM requested q CROSS JOIN LATERAL (
             SELECT t.* FROM ${table} t WHERE q.due AND t.world_id=? AND t.actor_id=q.actor_id
               AND t.retention_class<>'sensory' AND t.active_or_protected=0 AND t.next_due_at<=q.at
               AND NOT(t.id=ANY(q.overridden))
             ORDER BY t.policy_priority,t.at,t.source_id COLLATE "C" LIMIT ${ACCOUNT_RETENTION_PREPARATION.rows + 1}
           ) t
           UNION ALL
-          ${retentionProjection(table)},'pressure'::text AS criterion FROM requested q
+          ${retentionProjection(table, selectionOnly)},'pressure'::text AS criterion FROM requested q
           CROSS JOIN LATERAL unnest(q.pressured) pool(kind) CROSS JOIN LATERAL (
             SELECT t.* FROM ${table} t WHERE t.world_id=? AND t.actor_id=q.actor_id
               AND t.retention_class=pool.kind AND t.active_or_protected=0 AND NOT(t.id=ANY(q.overridden))
             ORDER BY t.policy_priority,t.at,t.source_id COLLATE "C" LIMIT ${ACCOUNT_RETENTION_PREPARATION.rows + 1}
           ) t
           UNION ALL
-          ${retentionProjection(table)},'changed'::text AS criterion FROM requested q JOIN ${table} t
+          ${retentionProjection(table, selectionOnly)},'changed'::text AS criterion FROM requested q JOIN ${table} t
             ON t.world_id=? AND t.actor_id=q.actor_id AND t.id=ANY(q.changed)
           UNION ALL
           SELECT '${table}',NULL::text,NULL::text,NULL::bigint,q.actor_id,
@@ -313,9 +313,16 @@ export async function readAccountRetentionCandidates(
             WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.retention_class<>'sensory'
               AND t.active_or_protected=0 AND t.next_due_at>q.at AND NOT(t.id=ANY(q.overridden))
           ) next
-        ) SELECT * FROM scoped`,
-      )
-      .all(...batch.flat(), ...worldBindings);
+        ) SELECT * FROM scoped`;
+    if (admit) {
+      const stats = await db
+        .prepare(
+          `SELECT count(*)::integer AS rows,COALESCE(sum(octet_length(row_to_json(selected)::text)),0)::bigint AS bytes FROM (${statement}) selected`,
+        )
+        .get(...batch.flat(), ...worldBindings);
+      admit(Number(stats?.['rows']), Number(stats?.['bytes']));
+    }
+    const selected = await db.prepare(statement).all(...batch.flat(), ...worldBindings);
     result.push(...selected);
   }
   return result;

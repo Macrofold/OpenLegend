@@ -23,6 +23,8 @@ export declare class NativeHost {
 }
 
 export declare class NativeWorld {
+  readAccountRetention(bytes: Buffer): Promise<NativeWorldAccountRetention>;
+  beginAccountRetention(read: NativeWorldAccountRetention): Promise<NativeWorldTurn>;
   reserveConsumerBytes(bytes: number): NativeWorldConsumer;
   reserveConsumerJson(bytes: Buffer): NativeWorldConsumer;
   beginControl(bytes: Buffer): Promise<NativeWorldTurn>;
@@ -157,6 +159,13 @@ export declare class NativeWorld {
   captureSave(): Promise<NativeWorldSave>;
   acknowledge(ack: string): Promise<void>;
   finishStop(): Promise<void>;
+}
+
+export declare class NativeWorldAccountRetention {
+  packet(): Promise<NativeWorldJson>;
+  select(bytes: Buffer): Promise<NativeWorldJson>;
+  load(bytes: Buffer): Promise<void>;
+  release(): void;
 }
 
 export declare class NativeWorldActivityLearningBatch {

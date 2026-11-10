@@ -254,7 +254,7 @@ pub(crate) fn remember_interpretation(
     }
     let _encoding_guard = budget.reserve(bytes.checked_mul(2).ok_or(ExecutionError::Capacity)?)?;
     let payload = crate::encoding::json_record(&record).map_err(|_| ExecutionError::Invariant)?;
-    let record = install_record(core, actor, id, payload, None, budget)?;
+    let record = install_record(core, actor, id, payload, None, None, budget)?;
     core.journal.experience.ensure_collection(
         &mut core.state.experience,
         PersonalSourceKind::Memory,
@@ -277,12 +277,13 @@ pub(crate) fn remember_interpretation(
     Ok(true)
 }
 
-fn install_record(
+pub(super) fn install_record(
     core: &CoreMutation<'_>,
     actor: &str,
     id: &str,
     payload: String,
     prior: Option<&PersonalSourceRecord>,
+    slot: Option<u64>,
     budget: &ByteBudget,
 ) -> Result<PersonalSourceRecord, ExecutionError> {
     let _decoding = budget.reserve(encoded_body_bound(&payload)?)?;
@@ -323,7 +324,7 @@ fn install_record(
             Some(prior) => prior.parent().into(),
             None => collection_owner(PersonalSourceKind::Memory, actor)?,
         },
-        slot: position.to_string(),
+        slot: slot.unwrap_or(position).to_string(),
         position,
         payload,
         extra,
@@ -450,6 +451,7 @@ pub(crate) fn reinforce_experience(
             &prior.header.reference.id,
             payload,
             Some(&prior),
+            None,
             budget,
         )?;
         core.state.temporal.adjust_account(

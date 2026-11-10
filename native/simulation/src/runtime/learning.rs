@@ -94,9 +94,13 @@ impl NativeWorldSession {
         };
         Ok(match step {
             SessionStep::Continue => RuntimeActivityLearningStep::Continue,
-            SessionStep::Question(question) => {
-                RuntimeActivityLearningStep::Provider(RuntimeProvider { question })
-            }
+            SessionStep::Question(question) => match self.prepare_provider(key, question) {
+                Ok(provider) => RuntimeActivityLearningStep::Provider(provider),
+                Err(error) => {
+                    read.key = None;
+                    return Err(error);
+                }
+            },
             SessionStep::LearningBatch(batch) => {
                 read.key = None;
                 read.batch = Some(batch);

@@ -973,6 +973,7 @@ if (__napiLoadedBindingTarget === 'native' && nativeBinding !== __napiRequiredNa
 const {
   NativeHost,
   NativeWorld,
+  NativeWorldAccountRetention,
   NativeWorldActivityLearningBatch,
   NativeWorldConsolidationDream,
   NativeWorldConsolidationTicket,
@@ -997,6 +998,7 @@ const {
 } = nativeBinding;
 export { NativeHost };
 export { NativeWorld };
+export { NativeWorldAccountRetention };
 export { NativeWorldActivityLearningBatch };
 export { NativeWorldConsolidationDream };
 export { NativeWorldConsolidationTicket };

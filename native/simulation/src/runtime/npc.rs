@@ -433,9 +433,13 @@ impl NativeWorldSession {
         };
         Ok(match step {
             SessionStep::Continue => RuntimeNpcPreparationStep::Continue,
-            SessionStep::Question(question) => {
-                RuntimeNpcPreparationStep::Provider(RuntimeProvider { question })
-            }
+            SessionStep::Question(question) => match self.prepare_provider(key, question) {
+                Ok(provider) => RuntimeNpcPreparationStep::Provider(provider),
+                Err(error) => {
+                    read.candidate_key = None;
+                    return Err(error);
+                }
+            },
             SessionStep::NpcCandidates(candidates) => {
                 read.candidates = Some(candidates);
                 read.candidate_key = None;

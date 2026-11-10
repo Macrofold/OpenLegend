@@ -89,6 +89,13 @@ export function nativeResponseSelection(input: {
         return { kind: 'body', ordinal: body.ordinal };
       const index = body.subjects.findIndex((fact) => subjectKey(fact.subject) === key);
       if (index >= 0) return { kind: 'body-subject', ordinal: body.ordinal, subject: index };
+      if (
+        body.entity.identityPresent &&
+        !body.entity.seedOnly &&
+        body.entity.canAddressRemembered &&
+        subjectKey(body.entity.subject) === key
+      )
+        return { kind: 'body-entity', ordinal: body.ordinal };
     }
     for (const kind of ['knowledge', 'social'] as const) {
       const ordinal = metadata[kind].findIndex((fact) => subjectKey(fact.subject) === key);

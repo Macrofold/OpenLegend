@@ -55,7 +55,9 @@ export async function readNativeSupportMembership(
   const membership = await db.readAtCut(cut, () =>
     db.readTransaction!(() =>
       db.readMetadataBaseline!([request.actorId], (baseline) => {
-        if (baseline.worldId !== request.worldId || baseline.revision !== cut.revision)
+        // readAtCut already verifies the actual captured prefix. Its in-flight
+        // save may now be durable; that permitted SQL head is not a source edit.
+        if (baseline.worldId !== request.worldId)
           throw new Error('Native support membership no longer matches its SQL baseline.');
         const metadata = new RetentionMetadata();
         metadata.initializeIndexed(baseline);

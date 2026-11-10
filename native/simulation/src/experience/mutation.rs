@@ -49,6 +49,7 @@ pub(super) enum ExperienceUndo {
         kind: PersonalSourceKind,
         id: String,
         position: u64,
+        next_ordinal: u64,
         before: Arc<PersonalSourceRecord>,
     },
     KnownPlaces {
@@ -195,6 +196,7 @@ impl ExperienceJournal {
                     kind,
                     id,
                     position,
+                    next_ordinal,
                     before,
                 } => {
                     let actor = state
@@ -222,6 +224,7 @@ impl ExperienceJournal {
                         .get_mut(&kind)
                         .ok_or(ExperienceError::UnknownCoverage)?;
                     adjust_agreements(source, current_agreement, before.header.agreement_body)?;
+                    source.coverage.next_ordinal = next_ordinal;
                     source.by_ordinal.insert(position, before);
                     continue;
                 }
@@ -663,11 +666,30 @@ impl ExperienceJournal {
             || record.header.reference.id != expected.id
             || record.row_id != before.row_id
             || record.parent != before.parent
-            || record.slot != before.slot
             || record.position != before.position
         {
             return Err(ExperienceError::StaleHydration);
         }
+        // Cold expiry reintroduces a missing list member at the captured append
+        // slot, while the retirement proof preserves its original SQL ordinal.
+        // A later ordinary replacement may use that original ordinal again.
+        let slot = record
+            .slot
+            .parse::<u64>()
+            .map_err(|_| ExperienceError::InvalidOrdinal)?;
+        if record.slot != before.slot
+            && slot != record.position
+            && slot != source.coverage.next_ordinal
+        {
+            return Err(ExperienceError::InvalidOrdinal);
+        }
+        let next_ordinal = if slot == source.coverage.next_ordinal {
+            slot.checked_add(1)
+                .filter(|next| *next <= MAX_SAFE_INTEGER)
+                .ok_or(ExperienceError::InvalidOrdinal)?
+        } else {
+            source.coverage.next_ordinal
+        };
         self.budget
             .retain_record(&before._storage)
             .map_err(|_| ExperienceError::Capacity)?;
@@ -696,6 +718,7 @@ impl ExperienceJournal {
             kind: expected.kind,
             id: expected.id.clone(),
             position: record.position,
+            next_ordinal: source.coverage.next_ordinal,
             before: Arc::clone(before),
         };
         let old_agreement = before.header.agreement_body;
@@ -720,6 +743,7 @@ impl ExperienceJournal {
             .get_mut(&expected.kind)
             .ok_or(ExperienceError::UnknownCoverage)?;
         adjust_agreements(source, old_agreement, record.header.agreement_body)?;
+        source.coverage.next_ordinal = next_ordinal;
         source.by_ordinal.insert(record.position, record);
         self.undo.push(undo);
         Ok(())

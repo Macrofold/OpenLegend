@@ -6,6 +6,7 @@ import {
   identitiesForEntity,
   canAddressRememberedSubject,
   canonicalJson,
+  jsonByteLength,
   coachingFor,
 } from '@open-legend/domain';
 import type { DefinitionPin, EncounterPreferenceBinding } from '@open-legend/domain';
@@ -213,8 +214,27 @@ export function personalEntityHandle(
   attribution: string | number,
 ): string {
   return createHmac('sha256', bodyReferenceKey)
-    .update(JSON.stringify(['personal-reference', scope.id, observerId, id, attribution]))
+    .update(JSON.stringify(personalReferenceInput(scope, observerId, id, attribution)))
     .digest('hex');
+}
+
+function personalReferenceInput(
+  scope: PersonalReferenceScope,
+  observerId: string,
+  id: string,
+  attribution: string | number,
+) {
+  return ['personal-reference', scope.id, observerId, id, attribution];
+}
+
+/** The formatter's real HMAC preparation tuple, without encoding its body. */
+export function personalEntityHandleInputBytes(
+  scope: PersonalReferenceScope,
+  observerId: string,
+  id: string,
+  attribution: string | number,
+): number {
+  return jsonByteLength(personalReferenceInput(scope, observerId, id, attribution));
 }
 
 export function entityLabel(
@@ -356,10 +376,30 @@ export function projectEntityMarkersFromRead(
   text: string,
   reference: (id: string) => string | undefined,
 ): string {
-  return text.replace(/\(ID:([^()\s]+)\)/g, (_original, id: string) => {
-    const handle = reference(id);
-    return handle === undefined ? '(unrecognized identity)' : `(ID:${handle})`;
-  });
+  return text.replace(/\(ID:([^()\s]+)\)/g, (_original, id: string) =>
+    entityMarkerReplacement(reference(id)),
+  );
+}
+
+function entityMarkerReplacement(handle: string | undefined): string {
+  return handle === undefined ? '(unrecognized identity)' : `(ID:${handle})`;
+}
+
+/** Measure the same replacement grammar at its actual string/JSON boundary,
+ * without constructing another whole projected payload. */
+export function measureEntityMarkerProjection(
+  text: string,
+  reference: (id: string) => string | undefined,
+): { bytes: number; replacements: number } {
+  let bytes = Buffer.byteLength(text),
+    replacements = 0;
+  for (const match of text.matchAll(/\(ID:([^()\s]+)\)/g)) {
+    replacements++;
+    bytes +=
+      Buffer.byteLength(entityMarkerReplacement(reference(match[1]!))) -
+      Buffer.byteLength(match[0]);
+  }
+  return { bytes, replacements };
 }
 
 /** Only associations acquired when this request was prepared may become lasting

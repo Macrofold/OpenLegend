@@ -20,11 +20,17 @@ enum Field {
     Directories,
     Extra,
     PlainRow,
+    AccountRows,
+    AccountRow,
+    Occupied,
 }
 #[derive(Clone, Copy, Default)]
 enum Role {
     #[default]
     Root,
+    AccountRoot,
+    AccountRows,
+    AccountBody,
     Records,
     Tables,
     Rows,
@@ -97,6 +103,10 @@ fn key_is(token: &[u8], expected: &[u8]) -> bool {
 fn field(token: &[u8]) -> Field {
     for (name, value) in [
         (b"records".as_slice(), Field::Records),
+        (b"rows", Field::AccountRows),
+        (b"row", Field::AccountRow),
+        (b"occupiedMemoryIds", Field::Occupied),
+        (b"kind", Field::PlainRow),
         (b"tables", Field::Tables),
         (b"normalizedIntents", Field::Normalized),
         (b"activityMethodSignatures", Field::Normalized),
@@ -119,6 +129,16 @@ fn field(token: &[u8]) -> Field {
 }
 fn child(parent: Frame) -> Role {
     match parent.role {
+        Role::AccountRoot => match parent.field {
+            Field::AccountRows => Role::AccountRows,
+            Field::Occupied => Role::Plain,
+            _ => Role::Other,
+        },
+        Role::AccountRows => Role::AccountBody,
+        Role::AccountBody => match parent.field {
+            Field::AccountRow => Role::Row,
+            _ => Role::Other,
+        },
         Role::Root => match parent.field {
             Field::Records => Role::Records,
             Field::Originals => Role::Originals,
@@ -143,7 +163,7 @@ fn child(parent: Frame) -> Role {
         Role::Other => Role::Other,
     }
 }
-fn strings(text: &str) -> Result<Strings, RuntimeError> {
+fn strings(text: &str, root: Role) -> Result<Strings, RuntimeError> {
     let bytes = text.as_bytes();
     let mut stack = [Frame::default(); 128];
     let mut depth: usize = 0;
@@ -179,7 +199,7 @@ fn strings(text: &str) -> Result<Strings, RuntimeError> {
                     Role::Records => {
                         key || !matches!(frame.field, Field::Normalized | Field::Tables)
                     }
-                    Role::Row => key || matches!(frame.field, Field::PlainRow),
+                    Role::Row | Role::AccountBody => key || matches!(frame.field, Field::PlainRow),
                     _ => false,
                 };
                 if plain {
@@ -196,7 +216,7 @@ fn strings(text: &str) -> Result<Strings, RuntimeError> {
             }
             b'[' | b'{' => {
                 let role = if depth == 0 {
-                    Role::Root
+                    root
                 } else {
                     child(stack[depth - 1])
                 };
@@ -225,10 +245,38 @@ pub(super) fn prepare_installation(
     bytes: &[u8],
     budget: &ByteBudget,
 ) -> Result<ByteReservation, RuntimeError> {
+    prepare_rows(
+        bytes,
+        budget,
+        Role::Root,
+        size_of::<super::Installation>(),
+        0,
+    )
+}
+pub(super) fn prepare_account_bodies(
+    bytes: &[u8],
+    budget: &ByteBudget,
+) -> Result<ByteReservation, RuntimeError> {
+    prepare_rows(
+        bytes,
+        budget,
+        Role::AccountRoot,
+        size_of::<crate::experience::AccountBodiesReply>(),
+        size_of::<crate::experience::retention::AccountBodyRow>(),
+    )
+}
+fn prepare_rows(
+    bytes: &[u8],
+    budget: &ByteBudget,
+    root: Role,
+    inline_bytes: usize,
+    extra_element: usize,
+) -> Result<ByteReservation, RuntimeError> {
     let text = std::str::from_utf8(bytes).map_err(failure)?;
     let shape = crate::encoding::JsonAllocationShape::read(text).map_err(failure)?;
-    let strings = strings(text)?;
+    let strings = strings(text, root)?;
     let element = [
+        extra_element,
         size_of::<crate::records::InstalledRow>(),
         size_of::<crate::records::OwnerCoverage>(),
         size_of::<crate::records::RecordLayout>(),
@@ -285,11 +333,11 @@ pub(super) fn prepare_installation(
         })
         .and_then(|n| n.checked_add(text))
         .and_then(|n| n.checked_add(exact))
-        .and_then(|n| n.checked_add(size_of::<super::Installation>() + 64))
+        .and_then(|n| n.checked_add(inline_bytes + 64))
         .ok_or_else(capacity)?;
     budget.reserve(bound).map_err(|_| {
         failure((
-            "installation decode admission",
+            "immutable row DTO decode admission",
             bound,
             budget.used(),
             budget.limit(),

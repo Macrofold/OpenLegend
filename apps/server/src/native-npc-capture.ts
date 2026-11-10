@@ -25,7 +25,9 @@ import { nativeBodyContext, nativePerceivedEntities } from './native-perception.
 import { formatEntityRecallCandidate } from './recall-entity.js';
 import {
   decodeNativeProduct,
+  encodeNativeJson,
   freezeNativeProduct,
+  releaseNativeProduct,
   retainNativeSources,
 } from './native-consumer.js';
 import type { NativeHistoryInput } from './native-history.js';
@@ -384,12 +386,13 @@ export class NativeNpcCapture {
     const originalFacts = this.facts,
       currentFacts = current.facts;
     signal?.throwIfAborted();
-    const ticket = await world.bindNpcResponse(
-      this.read,
-      current.read,
-      Buffer.from(JSON.stringify({ decisionId, selection })),
-      trigger,
-    );
+    const input = encodeNativeJson(world, { decisionId, selection });
+    let ticket: NativeWorldNpcResponseTicket;
+    try {
+      ticket = await world.bindNpcResponse(this.read, current.read, input, trigger);
+    } finally {
+      releaseNativeProduct(input);
+    }
     if (signal?.aborted) {
       ticket.release();
       signal.throwIfAborted();

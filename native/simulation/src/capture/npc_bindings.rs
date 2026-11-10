@@ -87,6 +87,11 @@ pub(crate) enum NpcSubjectOrdinal {
     Body {
         ordinal: usize,
     },
+    /// An acquired entity identity already present in this body's metadata;
+    /// it grants no current physical action or anonymous canonical identity.
+    BodyEntity {
+        ordinal: usize,
+    },
     BodySubject {
         ordinal: usize,
         subject: usize,
@@ -293,6 +298,11 @@ impl NpcBindingRead<'_> {
                 .body(ordinal)
                 .ok()
                 .and_then(|_| self.references.bodies.get(ordinal)?.subject.as_ref()),
+            NpcSubjectOrdinal::BodyEntity { ordinal } => {
+                let fact = &self.references.bodies.get(ordinal)?.entity;
+                (fact.identity_present && !fact.seed_only && fact.can_address_remembered)
+                    .then_some(fact)
+            }
             NpcSubjectOrdinal::BodySubject { ordinal, subject } => self
                 .body(ordinal)
                 .ok()

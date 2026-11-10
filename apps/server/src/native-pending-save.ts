@@ -1,3 +1,6 @@
+import type { NativeWorld } from '@open-legend/native-simulation';
+import { nativeTemporalPageEdits } from './native-temporal-edits.js';
+import type { PendingTemporalPage } from './temporal-page-storage.js';
 import type { NativeSaveRows, NativeWorldSave } from '@open-legend/native-simulation';
 import type { ExperiencePrivacy } from '@open-legend/domain';
 import type { CommitInputs } from './commit-inputs.js';
@@ -143,6 +146,7 @@ export class NativePendingSave {
    * and SQL projection are already owned by that exact private native cut;
    * accepting only installs the prepared node and the same prefix pointer. */
   prepareProtected(
+    budget: Pick<NativeWorld, 'reserveConsumerBytes'>,
     publication: NativePublication,
     versions: SourceVersionPlan,
     history: HistoryProjection,
@@ -154,12 +158,25 @@ export class NativePendingSave {
     if (!publication.protectedSave)
       throw new Error('Protected native publication has no held complete SQL prefix.');
     const prepared = this.prepare(publication, versions, [], outcomes, history);
+    const temporal = publication.privacyChange
+      ? nativeTemporalPageEdits(
+          budget,
+          nativeRecordChanges(publication.protectedSave.changes),
+          publication.temporalPredecessors,
+          publication,
+        )
+      : undefined;
+    if (temporal) {
+      prepared.value.changes.temporalEdits = temporal;
+      retainNativeSources(prepared.value.changes, publication, temporal);
+    }
     const prefix = this.projectPrefix(
       undefined,
       retainNativeSources(publication.protectedSave, publication),
       [prepared.value],
       privacy,
       publication.progress.throughCut,
+      temporal,
     );
     return {
       value: prepared.value,
@@ -231,10 +248,16 @@ export class NativePendingSave {
     pending: Iterable<NativePendingPublication>,
     privacy: ExperiencePrivacy,
     through: number,
+    temporalEdits?: readonly PendingTemporalPage[],
   ): NativePendingPrefix {
     if (this.store.records.needsHotPrune)
       throw new Error('Native save requires its installed hot-history projection.');
     const cut = retainNativeSources(nativeSaveCut(rows), rows);
+    if (temporalEdits) {
+      cut.changes.temporalEdits = temporalEdits;
+      retainNativeSources(cut.changes, rows, temporalEdits);
+      retainNativeSources(cut, rows, cut.changes);
+    }
     if (
       cut.worldId !== this.binding.worldId ||
       cut.generation !== this.binding.generation ||
@@ -303,6 +326,7 @@ export class NativePendingSave {
         getSources: this.store.memories.captureSources(cut.worldId, cut.changes, plan),
       },
       rows,
+      ...(temporalEdits ? [temporalEdits] : []),
     );
   }
 

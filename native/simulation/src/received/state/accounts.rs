@@ -291,6 +291,43 @@ impl TemporalState {
     }
 }
 impl TemporalState {
+    pub(crate) fn set_account_due(
+        &mut self,
+        actor_id: &str,
+        mut due: Option<f64>,
+        required_changed: bool,
+        now: f64,
+        policy: &AttentionRetentionPolicy,
+    ) -> Result<(), ReceivedError> {
+        let actor = self
+            .actors
+            .get(actor_id)
+            .ok_or(ReceivedError("Temporal actor is absent."))?;
+        let accounts = actor
+            .header
+            .accounts
+            .as_ref()
+            .ok_or(ReceivedError("Personal accounts vanished."))?;
+        if required_changed
+            && (accounts.required.bytes as f64
+                >= (policy.required.max_bytes as f64 * policy.required_pressure_start).floor()
+                || accounts.required.count as f64
+                    >= (policy.required.max_records as f64 * policy.required_pressure_start)
+                        .floor())
+        {
+            due = Some(due.map_or(now, |prior| prior.min(now)));
+        }
+        if accounts.next_due == due {
+            return Ok(());
+        }
+        let mut header = actor.header.clone();
+        header
+            .accounts
+            .as_mut()
+            .ok_or(ReceivedError("Personal accounts vanished."))?
+            .next_due = due;
+        self.replace_header(actor_id, header)
+    }
     /// The due native pass recomputes this marker after the selected world's
     /// actual identity retirements. A removed last seed clears the wake.
     pub(crate) fn set_knowledge_due(

@@ -429,6 +429,8 @@ pub struct AuthoredFamiliarity {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct FamiliarityState {
     pub roots: Vec<FamiliarityRoot>,
+    #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
+    pub fast_credits: u64,
     #[serde(
         default,
         deserialize_with = "crate::values::deserialize_present_option",
@@ -447,8 +449,6 @@ pub struct FamiliarityState {
         skip_serializing_if = "Option::is_none"
     )]
     pub next_credit_at: Option<f64>,
-    #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
-    pub fast_credits: u64,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

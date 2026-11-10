@@ -58,6 +58,11 @@ mod commitments;
 mod receipt;
 pub(crate) use commitments::{advance_commitments, next_commitment_deadline};
 mod impression;
+pub(crate) mod retention;
+pub(crate) use retention::{
+    AccountBodiesReply, AccountMetadataReply, AccountRetentionCursor, AccountRetentionRead,
+    CompletedAccountRetention, RetentionPreparation,
+};
 mod memory;
 pub(crate) use impression::{reinforce_experience, remember_interpretation};
 pub(crate) use memory::{
