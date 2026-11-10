@@ -54,3 +54,15 @@ Mike supplied a video transcript about Warhorse's announced Middle-earth project
 - **Review and completion:** affected content and source attribution were reviewed, with independent review of both dossier additions. New internal links and fragments were checked against actual headings and repository paths; sparse local source copies were not treated as the complete repository tree. No task-blocking finding remains. No implementation, gameplay execution or automated test suite is part of this follow-up.
 
 The follow-up request is complete. Work remains on `research/medieval-game-dossiers-20261109`, with GitHub connector commits and no new local checkout/worktree or merge.
+
+## Critical review and design integration — November 10, 2026
+
+Review base: `61e305a061949f9c838edab2e33bd26da707d63d`. The six dossiers, original branch changes and relevant existing design/work owners were reviewed; earlier source reading was reused, with targeted primary-source rechecks. This is not a fresh full pass, current-build test or whole-library recertification.
+
+Corrections at `e881796c2ea8ed534ce70ef7fdfbb48d46d9b991` preserve undisclosed character knowledge and motives, distinguish cooperation from command authority, avoid prescribing extra reputation meters, and connect Medieval Dynasty's historical economic/scheduling complaints to dated developer responses. Its worker-simulation comparison now cites the developer FAQ. The creation amendment explicitly routes external modding through the existing R15 gate. Manor Lords required no substantive correction.
+
+The [existing reading index](dossiers/README.md#medieval-lives-settlements-and-command--november-2026-research) now connects each case to designs and PC06, SV10, SH12, CP03/CP10 or FPV06/FPV07 as applicable. Scoped comparisons enrich P10/P13 in the [canonical fun synthesis](essays/fun-and-sustainable-engagement.md); the [player-learning plan](../../../docs/projects/first-playable-playtest-plan.md#step-4--observe-distinct-player-journeys) asks what useful help enables, whether supervision consumes the benefit and which work the player wants to retain.
+
+Existing ND/DG owners already cover the preparation, home, competence, cooperation and conditional institutional questions. No new specification, design need, task, priority change or acceptance gate was justified. Useful conversation conclusions are captured in those owners: small homes, chosen manual work and satisfied stopping remain valid; visible busyness and population counts do not prove independent lives or authorize simulation shortcuts.
+
+Affected diffs, new internal links and source/edition boundaries passed review, including independent review of the corrections and integration. All additions remain research or observation guidance; runtime delivery and human evidence retain their existing status.

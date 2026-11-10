@@ -1,6 +1,6 @@
 # What makes games fun — and worth returning to
 
-**Canonical research synthesis · Critically reviewed and expanded October 14, 2026**
+**Canonical research synthesis · Critically reviewed and expanded October 14, 2026; scoped medieval comparison added November 10, 2026**
 
 This is the game-inspiration library's core research document on **fun, meaningful experience, sustained engagement and pressure to keep playing**. It synthesizes the **original 148 roster subjects plus the additional Dragon Age series dossier**, incorporates Mike's supplied Roblox video transcript, and now extends beyond that corpus through design theory, human studies, mobile play and additional 2025–2026 games. It replaces neither the individual dossiers nor the [earlier fun essay](what-actually-makes-these-worlds-fun.md), which remains a preserved precursor. Canonical here means the owner of this research synthesis—not an approved architecture, product specification or implementation backlog.
 
@@ -135,6 +135,8 @@ RimWorld, Dwarf Fortress and Project Zomboid show how care and specific history 
 
 **Counterweight:** a supply bonus does not automatically create affection, and remembered history must be correct. Nor does a large simulated biography guarantee an experienced relationship. A small reliable callback may serve the activity better than extensive inaccessible state. Attachment can also cause avoidance when a player fears losing what they value, as the Steal a Brainrot counterexample illustrates. [G06, G26](../references/fun-and-engagement-dossier-evidence.md)
 
+The [original Kingdom Come](../dossiers/kingdom-come-deliverance.md) makes particular teachers useful to practical training; the [sequel's forge](../dossiers/kingdom-come-deliverance-ii.md#legacy-of-the-forge) connects a working place to family history. [Medieval Dynasty](../dossiers/medieval-dynasty.md) connects personal work to an inhabited home. These support asking what this particular person or place makes possible or meaningful. They do not establish that maintenance creates affection, that family succession suits every player, or that a successful small home must become a larger settlement.
+
 ### P11 — Make social dependence serve wanted participation
 
 Complementary abilities, unequal information and opportunities to help can make someone matter to a group. But people must want compatible activities and have a fair chance to participate. Matching a tank and healer does not establish that both want a fast completion, an exploratory run or the same risk.
@@ -158,6 +160,8 @@ Automation can replace repeated input with configuration, supervision, organizat
 Factorio and Satisfactory relocate work into production design. Final Fantasy XII's Gambits make priorities inspectable policies; Final Fantasy XIII concentrates control on changing team roles. Vampire Survivors automates attacks while preserving movement and build choices. Kelvin and Raft's collection systems remove ordinary labor while leaving plans to their players. [G27–G28, G44](../references/fun-and-engagement-dossier-evidence.md) · [G89–G90, G138, G141](../references/fun-and-engagement-dossier-evidence-g81-g148.md)
 
 **Counterweight:** imported blueprints can bypass valued discovery or another player's authorship. A helper that chooses every goal may turn an intended adventure into spectatorship. Spectatorship and co-authoring can themselves be legitimate choices, as AI Dungeon suggests, but they have a different authority contract from acting inside a persistent world. [G27, G40](../references/fun-and-engagement-dossier-evidence.md)
+
+[Manor Lords](../dossiers/manor-lords.md), [Medieval Dynasty](../dossiers/medieval-dynasty.md), [Bellwright](../dossiers/bellwright.md) and [Bannerlord](../dossiers/mount-and-blade-ii-bannerlord.md) make the change of responsibility concrete: organizing supplies or help can open a wanted project or expedition, but repeated supervision can consume that benefit. Medieval Dynasty's player accounts also contrast pleasure in delegation with pleasure in doing the work personally. Ask what someone chooses with the freed time or capacity, and which work they want to retain. These games' assigned-worker and command structures are comparative evidence; OpenLegend's existing voluntary-cooperation contract governs independent people. The [design/work routes](../dossiers/README.md#medieval-lives-settlements-and-command--november-2026-research) keep larger institutions conditional.
 
 ### P14 — Renew the problem, not merely the amount of content
 
@@ -301,6 +305,7 @@ All 148 subject records contributed a positive possibility, a counterexample, a 
 | Theory expansion | Explanatory mechanisms, action feel, suspense, satisfaction/frustration and measurement limitations. |
 | Mobile and recent-game expansion | Interaction context, accessibility, meaningful small activities, purposeful friction and learnable variation. |
 | AI-era expansion | Human experience comparisons, prompt burden, useful generation, creator control and the distinction between demonstrated capability and good play. |
+| November 2026 medieval comparison | Scoped additions to P10/P13 from the six linked dossiers; existing full-pass dates and source limits remain per-game. No fresh whole-corpus assessment is implied. |
 
 The strongest conclusion is not an effect-size ranking. It is a set of distinctions that recur across unlike cases: action versus reward; knowledge versus stats; ownership versus usable capability; preparation versus maintenance; authored purpose versus free method; consequence versus error; repeated context versus repeated content; social contribution versus social gate; desired return versus costly departure; and expressive freedom versus the effort required to use it.
 
@@ -309,3 +314,4 @@ The strongest conclusion is not an effect-size ranking. It is a set of distincti
 When new evidence changes a principle, update this canonical document and its case records together. Keep basic terminology and the original five studies in the [foundations reference](../references/fun-engagement-and-compulsion-research.md); expanded source findings in the [theory](../references/fun-research-expansion-theory.md), [mobile/recent](../references/fun-research-expansion-mobile-and-recent.md) and [AI](../references/fun-research-expansion-ai.md) papers; detailed rostered-game facts in their dossiers; and supplied-source interpretation in the [Roblox transcript study](../references/roblox-addictiveness-video.md). Preserve disagreements and version boundaries rather than revising every case to fit a preferred thesis.
 
 **Bottom line:** make playing worth the player's attention, make progress preserve reasons to participate, and make both returning and stopping legitimate outcomes. Explain and test the interaction that might produce that value; neither more features nor more AI is an explanation by itself.
+
