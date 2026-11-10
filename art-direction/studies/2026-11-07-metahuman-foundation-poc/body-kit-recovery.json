@@ -1,0 +1,462 @@
+{
+  "status": "published-verified-independent-recovery-and-heldout-reconstruction-passed",
+  "recordedAtUtc": "2026-11-08T23:18:09.393206+00:00",
+  "indices": {
+    "metahuman-foundation-body-study.index.json": {
+      "file": "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/evidence/private-body-kit01/final-pack01/publication-prepared02/handoff01/metahuman-foundation-body-study.index.json",
+      "bytes": 11934,
+      "sha256": "4af5acaf85e0f7639667e06262d1a055ee2795912c0af429cc93b357a68e7cab",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-private-body-study-root-20261108",
+        "revisionId": "body-kits-fixed-clay01",
+        "manifestSha256": "7bf665424bb6d6692851983eff68388bddaf3af28455cc25bf4e163f8bdc5cfb"
+      },
+      "fileClaims": 39,
+      "logicalBytes": 107981799
+    },
+    "metahuman-foundation-browser-startup-proof.index.json": {
+      "file": "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/evidence/private-body-kit01/final-pack01/publication-prepared02/handoff01/metahuman-foundation-browser-startup-proof.index.json",
+      "bytes": 4298,
+      "sha256": "b2bf869cee4fc8ce19578af364b70c0080e3319624c5e29dc572c8f025b63eac",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-browser-startup-proof-20261108",
+        "revisionId": "mapped-actors-startup-fixes01",
+        "manifestSha256": "2a8d49ae5afff303cc9ff8456e3f0bea2505c7e10cc2360de21386890e7b9987"
+      },
+      "fileClaims": 13,
+      "logicalBytes": 378022
+    },
+    "metahuman-foundation-native-proof.index.json": {
+      "file": "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/evidence/private-body-kit01/final-pack01/publication-prepared02/handoff01/metahuman-foundation-native-proof.index.json",
+      "bytes": 26908,
+      "sha256": "f96b1321435402c23bce01d19b6a73b9561428890c73684bcbed9a14e81f2dd3",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-restored-terminal-proof-20261108",
+        "revisionId": "two-heldout-recipes-proof01",
+        "manifestSha256": "341513fc46c9ea33a4577836eb18ca6732fba6dcf8450710668b21f26eb56c76"
+      },
+      "fileClaims": 92,
+      "logicalBytes": 45004274
+    },
+    "metahuman-foundation-source-preservation.index.json": {
+      "file": "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/evidence/private-body-kit01/final-pack01/publication-prepared02/handoff01/metahuman-foundation-source-preservation.index.json",
+      "bytes": 23417,
+      "sha256": "53d462924172d2089f0a4955ebb09592945909be93d39a0359fcb58766f731ab",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-final-source-20261108",
+        "revisionId": "completed-source-flat01",
+        "manifestSha256": "c9b6daa3653cfc640230a7496b10a72b77b994a44fdcf3193ca78d64781e2a12"
+      },
+      "fileClaims": 75,
+      "logicalBytes": 754362868
+    }
+  },
+  "operations": [
+    {
+      "label": "selected-male-descriptor",
+      "operationId": "mhp-final-selected-male-descriptor-20261108",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-orlando-base-kit-descriptor",
+        "revisionId": "poc-7588ef153defe61c25ba953a",
+        "manifestSha256": "49cc03bc3baa2a4f91c909048e2cce5c9add1cb9932ccb031fbfb80f8a245630"
+      }
+    },
+    {
+      "label": "selected-male-runtime",
+      "operationId": "mhp-final-selected-male-runtime-20261108",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-orlando-base-kit-runtime",
+        "revisionId": "poc-7588ef153defe61c25ba953a",
+        "manifestSha256": "5391eae0edd772bb9d5da8d4b2249c7ac73a42c0e20e650e8ee2ca9a2a3ffc0f"
+      }
+    },
+    {
+      "label": "selected-female-descriptor",
+      "operationId": "mhp-final-selected-female-descriptor-20261108",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-vivian-selected-body-kit-descriptor",
+        "revisionId": "poc-77eb34496afbe8a833dff122",
+        "manifestSha256": "2e7cb035381ab9da12463ed75e12b87f6bf24e9810bcdb077bcf952837eb1285"
+      }
+    },
+    {
+      "label": "selected-female-runtime",
+      "operationId": "mhp-final-selected-female-runtime-20261108",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-vivian-selected-body-kit-runtime",
+        "revisionId": "poc-77eb34496afbe8a833dff122",
+        "manifestSha256": "4d64d947d185f9c28c6660983be07152b380362b10631681f6c25bede80c551d"
+      }
+    },
+    {
+      "label": "m-small-fit-descriptor",
+      "operationId": "mhp-final-m-small-fit-descriptor-20261108",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-fixed-m-small-fit",
+        "revisionId": "poc-62126df4b5c071b14e84b79a",
+        "manifestSha256": "bb540ce50640b6ea2b9f248b756e5c6f8e4f346f9d009d5962e7bd654b5b58e4"
+      }
+    },
+    {
+      "label": "m-small-fit-runtime",
+      "operationId": "mhp-final-m-small-fit-runtime-20261108",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-fixed-m-small-fit-runtime",
+        "revisionId": "poc-62126df4b5c071b14e84b79a",
+        "manifestSha256": "961b0512fae9aa5d5f89f07f958043af37d1035c4f2c39416e9cf3474ca1bb6f"
+      }
+    },
+    {
+      "label": "m-intermediate-descriptor",
+      "operationId": "mhp-final-m-intermediate-descriptor-20261108",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-fixed-m-intermediate",
+        "revisionId": "poc-803139a548d03db604adfcca",
+        "manifestSha256": "61d75a6c0a1d3f1597aeb6208d82b30a84a3bd492afe6df6216d1d910fee9ccc"
+      }
+    },
+    {
+      "label": "m-intermediate-runtime",
+      "operationId": "mhp-final-m-intermediate-runtime-20261108",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-fixed-m-intermediate-runtime",
+        "revisionId": "poc-803139a548d03db604adfcca",
+        "manifestSha256": "7851fb06da8c6d38df19a2ace7b2a4b2e0db23c66f3d0a7f503716d56b72bd5c"
+      }
+    },
+    {
+      "label": "m-broad-descriptor",
+      "operationId": "mhp-final-m-broad-descriptor-20261108",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-fixed-m-broad",
+        "revisionId": "poc-2ed57d54eed914dc1565a268",
+        "manifestSha256": "62c52d52b19a68d254d2e869c6bc939aa66b4bec8b7b9ce1c262aacb5eaf1fc1"
+      }
+    },
+    {
+      "label": "m-broad-runtime",
+      "operationId": "mhp-final-m-broad-runtime-20261108",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-fixed-m-broad-runtime",
+        "revisionId": "poc-2ed57d54eed914dc1565a268",
+        "manifestSha256": "49cb964eabbe7b2686a1c5337b79f6bad87bb4821536b1cfa26a616822bf97bb"
+      }
+    },
+    {
+      "label": "f-petite-fit-descriptor",
+      "operationId": "mhp-final-f-petite-fit-descriptor-20261108",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-fixed-f-petite-fit",
+        "revisionId": "poc-1222c0d0b7f409178906787a",
+        "manifestSha256": "5bf1c2ee960cb7248b7baeee886a2c3511cda8f13bcdcf48467153996a3f1f29"
+      }
+    },
+    {
+      "label": "f-petite-fit-runtime",
+      "operationId": "mhp-final-f-petite-fit-runtime-20261108",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-fixed-f-petite-fit-runtime",
+        "revisionId": "poc-1222c0d0b7f409178906787a",
+        "manifestSha256": "65ef149437d22ad9e31bcc1eb6b79102d40ca1227c545a934b5e9da9bc7e1abf"
+      }
+    },
+    {
+      "label": "failed-cloth-orlando-descriptor",
+      "operationId": "mhp-final-failed-cloth-orlando-descriptor-20261108",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-failed-tunic-motion-orlando-descriptor",
+        "revisionId": "poc-af7f9d4a80dfb1424b6356d8",
+        "manifestSha256": "f27f709af8a8a30b7752829dba011c71c11dcf88bbcc79a7d3f43a16378159f0"
+      }
+    },
+    {
+      "label": "failed-cloth-orlando-runtime",
+      "operationId": "mhp-final-failed-cloth-orlando-runtime-20261108",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-failed-tunic-motion-orlando-runtime",
+        "revisionId": "poc-af7f9d4a80dfb1424b6356d8",
+        "manifestSha256": "4cb017c5df587e09aa42b63b42d112c5df7558ac2704f2a7ca0940091ab2860d"
+      }
+    },
+    {
+      "label": "failed-cloth-vivian-descriptor",
+      "operationId": "mhp-final-failed-cloth-vivian-descriptor-20261108",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-failed-tunic-motion-vivian-descriptor",
+        "revisionId": "poc-c5013288bb8a552bedbdb68f",
+        "manifestSha256": "29d0d810e675ecd230fe8b05ab80eb99b5a8274993d43abf64614bd58801bb3d"
+      }
+    },
+    {
+      "label": "failed-cloth-vivian-runtime",
+      "operationId": "mhp-final-failed-cloth-vivian-runtime-20261108",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-failed-tunic-motion-vivian-runtime",
+        "revisionId": "poc-c5013288bb8a552bedbdb68f",
+        "manifestSha256": "adbb11008f124db6888c8ce89e71384a1f047678ddfa2d87aa92955b58bcbe9a"
+      }
+    },
+    {
+      "label": "complete-private-source",
+      "operationId": "mhp-final-completed-source-flat-20261108",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-final-source-20261108",
+        "revisionId": "completed-source-flat01",
+        "manifestSha256": "c9b6daa3653cfc640230a7496b10a72b77b994a44fdcf3193ca78d64781e2a12"
+      }
+    },
+    {
+      "label": "neutral-material-diagnostics",
+      "operationId": "mhp-final-neutral-material-diagnostic-20261108",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-neutral-material-diagnostic-20261108",
+        "revisionId": "covered-finished-and-clay01",
+        "manifestSha256": "1295f1a46c064ec3629bfbd58188cdcc7ce603d848d19dcc7c0b7199d0a52f0b"
+      }
+    },
+    {
+      "label": "source-free-composite-study",
+      "operationId": "mhp-final-private-body-study-root-20261108",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-private-body-study-root-20261108",
+        "revisionId": "body-kits-fixed-clay01",
+        "manifestSha256": "7bf665424bb6d6692851983eff68388bddaf3af28455cc25bf4e163f8bdc5cfb"
+      }
+    },
+    {
+      "label": "native-terminal-proof",
+      "operationId": "mhp-final-restored-terminal-proof-20261108",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-restored-terminal-proof-20261108",
+        "revisionId": "two-heldout-recipes-proof01",
+        "manifestSha256": "341513fc46c9ea33a4577836eb18ca6732fba6dcf8450710668b21f26eb56c76"
+      }
+    },
+    {
+      "label": "browser-startup-proof",
+      "operationId": "mhp-final-browser-startup-proof-20261108",
+      "release": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-browser-startup-proof-20261108",
+        "revisionId": "mapped-actors-startup-fixes01",
+        "manifestSha256": "2a8d49ae5afff303cc9ff8456e3f0bea2505c7e10cc2360de21386890e7b9987"
+      }
+    }
+  ],
+  "recovery": {
+    "selectedRevisions": 21,
+    "uniqueSelectedArtifacts": 200,
+    "newObjectsThisFinalPass": 89,
+    "newBytesThisFinalPass": 45297311,
+    "exactPriorReaderProofsReused": 111,
+    "currentAuthorityGeneration": 287,
+    "finalDurableReceipt": {
+      "reference": {
+        "boundary": "asset-recovery",
+        "accessDomain": "openlegend-assets",
+        "sha256": "2c17d6bccaea0e3707625a23bd300aeac7d1a291b6f06c5a67cab5155bff4cc6",
+        "bytes": 345198,
+        "mediaType": "application/json"
+      },
+      "location": {
+        "accountId": "027677879749",
+        "region": "us-east-2",
+        "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+        "key": "domains/openlegend-assets/blobs/sha256/2c/2c17d6bccaea0e3707625a23bd300aeac7d1a291b6f06c5a67cab5155bff4cc6",
+        "versionId": "dGPBd9jiM1sK2Gh45dzAY7vexCozIBan"
+      },
+      "readerHashVerified": true,
+      "authorityGeneration": 287,
+      "scope": "Exact21publishedrevisionsincludingflatcompletesourceandterminalproofs/new-onlyreceipt, notsourcearchive orcompletecataloguecheckpoint",
+      "completedAtUtc": "2026-11-08T23:17:48.477Z"
+    },
+    "previousDurableReceipts": [
+      {
+        "reference": {
+          "boundary": "asset-recovery",
+          "accessDomain": "openlegend-assets",
+          "sha256": "d7ed3994c29a60c44fb6f64c428d4a52c0efe144998493ad3573cea025f563ad",
+          "bytes": 118898,
+          "mediaType": "application/json"
+        },
+        "location": {
+          "accountId": "027677879749",
+          "region": "us-east-2",
+          "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+          "key": "domains/openlegend-assets/blobs/sha256/d7/d7ed3994c29a60c44fb6f64c428d4a52c0efe144998493ad3573cea025f563ad",
+          "versionId": "AnwKPXhS0viUWvogYmigRg2pzujHs7.H"
+        },
+        "readerHashVerified": true,
+        "authorityGeneration": 285,
+        "scope": "Exact18publishedprefixrevisions/new-onlyreceipt, notsourcearchive orcompletecataloguecheckpoint",
+        "completedAtUtc": "2026-11-08T22:33:19.835Z"
+      },
+      {
+        "reference": {
+          "boundary": "asset-recovery",
+          "accessDomain": "openlegend-assets",
+          "sha256": "70e9846f8cbce7534b3c450b198096c264cd77bdd42c832ac28ccea9ce3f9e48",
+          "bytes": 197925,
+          "mediaType": "application/json"
+        },
+        "location": {
+          "accountId": "027677879749",
+          "region": "us-east-2",
+          "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+          "key": "domains/openlegend-assets/blobs/sha256/70/70e9846f8cbce7534b3c450b198096c264cd77bdd42c832ac28ccea9ce3f9e48",
+          "versionId": "pXfREdUtZJlnsdHfw2Mobt7r_M3xCyOM"
+        },
+        "readerHashVerified": true,
+        "authorityGeneration": 285,
+        "scope": "Exact19publishedrevisionsincludingflatcompletesource/new-onlyreceipt, notsourcearchive orcompletecataloguecheckpoint",
+        "completedAtUtc": "2026-11-08T22:55:57.099Z"
+      }
+    ],
+    "scope": "Exact selected-version new-only recovery; no wholecatalogue checkpoint. Current permissions checked; prior exact hashes/versions reused without historical redownload."
+  },
+  "sourceReconstruction": {
+    "archiveBytes": 572585832,
+    "archiveSha256": "a7b6b4caaab33bb01e27412a34851b07337cca10757535c8b5261b38a411ef05",
+    "ordinaryTarMembersVerified": 2104,
+    "logicalAliasesVerified": 3226,
+    "heldoutRecipes": 2,
+    "compileAndAssembleCommandsPassed": 4,
+    "actualHeldoutGlbsByteExact": 4,
+    "unrealClosed": true,
+    "assessment": {
+      "file": "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/evidence/heldout-source-restore01/restored-replay02/assessment.json",
+      "bytes": 16518,
+      "sha256": "375d20c0e2f57a28353f6af499f9555be899ebcc59e034b4856a3782aceb77c9"
+    }
+  },
+  "clocks": {
+    "phase1FirstAuthorityAtUtc": "2026-11-08T21:41:21.314Z",
+    "phase1HardEndUtc": "2026-11-08T22:11:21.314Z",
+    "phase1OwnedGroupsStoppedAtUtc": "2026-11-08T22:11:16.435691Z",
+    "phase2ActualStartUtc": "2026-11-08T22:13:28.491233Z",
+    "originalPhase2EndUtc": "2026-11-08T23:11:21.314Z",
+    "explicitOneExtensionHardEndUtc": "2026-11-08T23:41:21.314Z",
+    "lastOwnedAuthorityCommandEndedAtUtc": "2026-11-08T23:17:48.578347+00:00",
+    "noDeadlineReset": true
+  },
+  "cost": {
+    "wholeTaskConservativeControlUsd": 9.8929568755,
+    "standingCeilingUsd": 10,
+    "actualAwsInvoiceSpend": "Unmeasured",
+    "actualProviderSoftwareSpendUsd": 0,
+    "remainingControlHeadroomUsd": 0.1070431245,
+    "cumulativeReadCapBytes": 10737418240,
+    "notAnInvoice": true
+  },
+  "limits": [
+    "Private experimental study only; no final body/art/wardrobe/animation/game-performance acceptance.",
+    "Original masculine Intermediate microscopic briefs face remains failed art gate. Rejected tunic/cleanup studies are retained as source or explicitly failed private diagnostics.",
+    "Actual mapped four-actor front/Run-quarter browser screenshots and startup fixes are preserved; recording,frame,edit,lifetime checks remain unrun because Mac locked.",
+    "Known-proof frozen input carries inherited unused count36; actual files111 and computed final receipt111 are authoritative. Frozen bytes unchanged.",
+    "Original source ancestry publication and overlapping early verify failures are preserved; flat75 direct claims retained all bytes and provenance without permission or owner bypass."
+  ],
+  "cleanup": {
+    "file": "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/evidence/private-body-kit01/final-pack01/publication-prepared02/handoff01/owned-process-cleanup.json",
+    "bytes": 41507,
+    "sha256": "759a3ef92ca4b31088f89134cab08c6f7fb851c17e60db5e6553e6f3a5d6f5ff"
+  }
+}

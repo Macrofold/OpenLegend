@@ -243,6 +243,7 @@ export function clientViteConfiguration(
         study: `${root}art-study.html`,
         worldStudy: `${root}scene-study.html`,
         survey: `${root}asset-survey.html`,
+        people: `${root}people-study.html`,
       }
     : { game: `${root}index.html`, 'network-tools': `${root}src/network-tools.ts` };
   return {

@@ -1,8 +1,8 @@
 # MetaHuman foundation proof — feature specification
 
-| Status      | Current progress                                                                                                    | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Both neutral foundations export; browser appearance, human selection and independent-kit qualification remain open. | 2026-11-07   |
+| Status      | Current progress                                                                                    | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Both foundations export and compile; live creation, modular clothing and motion remain unqualified. | 2026-11-08   |
 
 ## Purpose
 

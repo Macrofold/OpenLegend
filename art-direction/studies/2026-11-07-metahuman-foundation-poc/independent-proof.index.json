@@ -1,0 +1,657 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-restored-terminal-proof-20261108",
+    "revisionId": "two-heldout-recipes-proof01",
+    "manifestSha256": "341513fc46c9ea33a4577836eb18ca6732fba6dcf8450710668b21f26eb56c76"
+  },
+  "files": {
+    "heldout/original-baseline01/masculine/heldout/covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8a55de358185b13ac53eba6d8c5f1536315414472eabb519141e96c85908220d",
+      "bytes": 10500500,
+      "mediaType": "model/gltf-binary"
+    },
+    "heldout/original-baseline01/masculine/heldout/dressed.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bc75746318fdcbd789e628fa9deee11c83452f2f34b6204932d877ce842fdc98",
+      "bytes": 10500544,
+      "mediaType": "model/gltf-binary"
+    },
+    "heldout/original-baseline01/feminine/heldout/covered.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e979e8bbe85e177802d972aefd85eb3ca98eaa895d388ac9de0f25fc17b476e5",
+      "bytes": 11258968,
+      "mediaType": "model/gltf-binary"
+    },
+    "heldout/original-baseline01/feminine/heldout/dressed.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3e9c00576de5f872167f3bd19d46ba0274217aae6b5e2bccdae60f0613256575",
+      "bytes": 11259016,
+      "mediaType": "model/gltf-binary"
+    },
+    "heldout/operator-plan.prepared.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bb35210f09b01c498bc0af794f5f6e9508b945a64baf672fad87f949ddb706fe",
+      "bytes": 12138,
+      "mediaType": "application/json"
+    },
+    "heldout/masculine-heldout.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "16791f4ea60c4ebb0c3800506064f55646bb5d01532895c28da113e0a59cac2e",
+      "bytes": 587,
+      "mediaType": "application/json"
+    },
+    "heldout/feminine-heldout.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cf75fffc4979872321ad740b169f17083fa5c4b13fab640d2d26720edf67437f",
+      "bytes": 591,
+      "mediaType": "application/json"
+    },
+    "heldout/restore-and-replay.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b05127ad2104a83cdca02e987120355e8be3a2b22ca2faacc5006ece434f7a60",
+      "bytes": 8924,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "heldout/restore-and-replay-phase2.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7784af0935fbcb9bd5638ee4a43a28e3185852b3cfceffbee7290d4e6e783ab2",
+      "bytes": 9615,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "heldout/original-baseline01/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "372a08f6c8c791cf7e5f8f542a92740d03d9ff2af17b1db43392c48bee73333f",
+      "bytes": 6042,
+      "mediaType": "application/json"
+    },
+    "heldout/original-baseline01/assessment.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d44f3803613e93481e1425e166767b1134f5f8fe8b1232219341687b8a9ed455",
+      "bytes": 13655,
+      "mediaType": "application/json"
+    },
+    "heldout/original-baseline01/masculine/compile.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e112ee6070386aca930364c4c6431a6b9a7499855cbde91fe9e186f139c655fa",
+      "bytes": 297,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "heldout/original-baseline01/masculine/assemble.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "590e06b6e0dac6408eef441551ea8718fe97811804de2cc055f51f83c709da69",
+      "bytes": 4873,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "heldout/original-baseline01/masculine/recompiled/compile.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2f0398ea2411aa1addfbf682e7c4391b74a07a1af706c63cb0d3e204b5394643",
+      "bytes": 55884,
+      "mediaType": "application/json"
+    },
+    "heldout/original-baseline01/masculine/heldout/resolved-recipe.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bc5a6f265b3aac93fc0957fc0922b7746fa263a1087b6474ab1b172c7246426a",
+      "bytes": 597,
+      "mediaType": "application/json"
+    },
+    "heldout/original-baseline01/masculine/heldout/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "edc599b2c9cb470aa8f7fb2dea48f376296ef2be5c9f5ba3639c24a33b80a82c",
+      "bytes": 8567,
+      "mediaType": "application/json"
+    },
+    "heldout/original-baseline01/masculine/heldout/input-recipe.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "16791f4ea60c4ebb0c3800506064f55646bb5d01532895c28da113e0a59cac2e",
+      "bytes": 587,
+      "mediaType": "application/json"
+    },
+    "heldout/original-baseline01/masculine/heldout/measurements.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "31b7b7bfd227daa5cc580170ed64461d1209ef02d6ee2c19623a2878bfffb285",
+      "bytes": 4831,
+      "mediaType": "application/json"
+    },
+    "heldout/original-baseline01/masculine/heldout/export-motion.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0af3cc72ee95b3aa774aa6923ba8ca585732226d27cea3e88eadcd8929858bae",
+      "bytes": 1075,
+      "mediaType": "application/json"
+    },
+    "heldout/original-baseline01/masculine/heldout/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "96dd6e7d96e44fb1d4ef1b17844bfb82d993d7ec81da2779b77ae39449d64642",
+      "bytes": 9077,
+      "mediaType": "application/json"
+    },
+    "heldout/original-baseline01/feminine/compile.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cc68f23a41e0022209a44277065da5be3437a22de0e515e56394365b822e1945",
+      "bytes": 296,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "heldout/original-baseline01/feminine/assemble.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7b77da0e43cf36ff77e7b5d3478bf5d97dc39a69df09a85cee6a3231d4bcb0f5",
+      "bytes": 5148,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "heldout/original-baseline01/feminine/recompiled/compile.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e02a0c81911cc260d1799c09e0a4f4353a3079a914b10cc3a0a5c3988e2e2d58",
+      "bytes": 56666,
+      "mediaType": "application/json"
+    },
+    "heldout/original-baseline01/feminine/heldout/resolved-recipe.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "20be8e363625c00e163b49ce5d99ad14b2d187d6c3b7ee54ce258c4de6a0f3ea",
+      "bytes": 601,
+      "mediaType": "application/json"
+    },
+    "heldout/original-baseline01/feminine/heldout/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "25586032d5a807311b7e8e3006cfe65c9a8affe8be6da93b59c7f938d169b594",
+      "bytes": 8899,
+      "mediaType": "application/json"
+    },
+    "heldout/original-baseline01/feminine/heldout/input-recipe.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cf75fffc4979872321ad740b169f17083fa5c4b13fab640d2d26720edf67437f",
+      "bytes": 591,
+      "mediaType": "application/json"
+    },
+    "heldout/original-baseline01/feminine/heldout/measurements.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "43d5ddc2cc22de8f41f0811c0e4e8e8ae110d21a9fe73fd28f374a9b23604611",
+      "bytes": 4858,
+      "mediaType": "application/json"
+    },
+    "heldout/original-baseline01/feminine/heldout/export-motion.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "de2e3d9321f1abf87e4543f5cfc67fc7b994db14281b042aae8c6a12da501bd8",
+      "bytes": 1075,
+      "mediaType": "application/json"
+    },
+    "heldout/original-baseline01/feminine/heldout/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "588c41a2c52c7ed2b3cd2de3e2925af956ac6d0c0dbab9b65bd574c03c7fc759",
+      "bytes": 9708,
+      "mediaType": "application/json"
+    },
+    "heldout/original-baseline.inline.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8a9828d6d795b77b86caea3f3f8882ae5a1c8817e0c2410f603c9ad6c97a7331",
+      "bytes": 3013,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "heldout/restored-replay02/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "649d81e485870292f6b45800e190ee8cf04543769d99214a53c9e3f0ffdb8409",
+      "bytes": 13668,
+      "mediaType": "application/json"
+    },
+    "heldout/restored-replay02/logical-alias-proof.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c01c130c33f6f281f9f59f646ab76446884a09fcc13440b3fccce38f0a417625",
+      "bytes": 545732,
+      "mediaType": "application/json"
+    },
+    "heldout/restored-replay02/assessment.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "375d20c0e2f57a28353f6af499f9555be899ebcc59e034b4856a3782aceb77c9",
+      "bytes": 16518,
+      "mediaType": "application/json"
+    },
+    "heldout/restored-replay02/current-workspace-proof/fresh-workspace-hash-receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d81ad532231d64ab4ef05d6f741688cc7243023984869ed15e5b5be3167daf0e",
+      "bytes": 30371,
+      "mediaType": "application/json"
+    },
+    "heldout/restored-replay02/current-workspace-proof/admission-at-replay.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1ce8178a4dc72bda97aa6ea8b4ed9118e7f8cc17af6a2fdba53e7770e6b718a5",
+      "bytes": 725,
+      "mediaType": "application/json"
+    },
+    "heldout/restored-replay02/current-workspace-proof/fresh-source-workspace.execution.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e23843998c9a70dd738fc87f30264d157d010ec4be029a2ad13f7e2ca1d907ed",
+      "bytes": 941,
+      "mediaType": "application/json"
+    },
+    "heldout/restored-replay02/current-workspace-proof/fresh-source-workspace.stdout": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "021f4bd19373dc165a7fc2ac5c9d5fd7fd000662f27fb297d26a300dde21da56",
+      "bytes": 251,
+      "mediaType": "application/json"
+    },
+    "heldout/restored-replay02/current-workspace-proof/source-preservation.index.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "53d462924172d2089f0a4955ebb09592945909be93d39a0359fcb58766f731ab",
+      "bytes": 23417,
+      "mediaType": "application/json"
+    },
+    "heldout/restored-replay02/masculine/compile.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b52368e455c792c9ffe551965c9af1122f917e0319ed1adcd54397c2fc464f96",
+      "bytes": 295,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "heldout/restored-replay02/masculine/assemble.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "eb9eed6acb078495d7a121f25c98464bdff507acfbb4e2a02ad1a1c3afae540c",
+      "bytes": 4871,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "heldout/restored-replay02/masculine/recompiled/compile.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4c0cb109cf1e40483500a1ee7618ae37177997fec4c20647dba5fce4a5630d87",
+      "bytes": 56092,
+      "mediaType": "application/json"
+    },
+    "heldout/restored-replay02/masculine/heldout/resolved-recipe.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bc5a6f265b3aac93fc0957fc0922b7746fa263a1087b6474ab1b172c7246426a",
+      "bytes": 597,
+      "mediaType": "application/json"
+    },
+    "heldout/restored-replay02/masculine/heldout/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7f59c0dc2af1b9a7c4fc814e5fe633af17275a7c8691d09b81c7007fecd69a0c",
+      "bytes": 8567,
+      "mediaType": "application/json"
+    },
+    "heldout/restored-replay02/masculine/heldout/input-recipe.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "16791f4ea60c4ebb0c3800506064f55646bb5d01532895c28da113e0a59cac2e",
+      "bytes": 587,
+      "mediaType": "application/json"
+    },
+    "heldout/restored-replay02/masculine/heldout/measurements.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "31b7b7bfd227daa5cc580170ed64461d1209ef02d6ee2c19623a2878bfffb285",
+      "bytes": 4831,
+      "mediaType": "application/json"
+    },
+    "heldout/restored-replay02/masculine/heldout/export-motion.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0af3cc72ee95b3aa774aa6923ba8ca585732226d27cea3e88eadcd8929858bae",
+      "bytes": 1075,
+      "mediaType": "application/json"
+    },
+    "heldout/restored-replay02/masculine/heldout/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6d479978ab9fb17a6605ee322ff2695a3c00569f24af27561657a0f6d81fd53c",
+      "bytes": 9081,
+      "mediaType": "application/json"
+    },
+    "heldout/restored-replay02/feminine/compile.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "72379798a21746748e3cfd6dc2842a22ecd89c1cb6364732777a64295c65272d",
+      "bytes": 294,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "heldout/restored-replay02/feminine/assemble.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8dd4c8fd53d9bc25c3ea300e72a3a3051aee25a3f23978479a822df8988834b5",
+      "bytes": 5145,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "heldout/restored-replay02/feminine/recompiled/compile.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "16f7562ce90d24a6182258986a7767c8f0dd8a241aa9584d34ed2bca907e2ed3",
+      "bytes": 56874,
+      "mediaType": "application/json"
+    },
+    "heldout/restored-replay02/feminine/heldout/resolved-recipe.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "20be8e363625c00e163b49ce5d99ad14b2d187d6c3b7ee54ce258c4de6a0f3ea",
+      "bytes": 601,
+      "mediaType": "application/json"
+    },
+    "heldout/restored-replay02/feminine/heldout/report.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2af6b480bc196cc4d9e4918911a97ab8013cb8ba66b3ebeea31890c8d02acd4c",
+      "bytes": 8899,
+      "mediaType": "application/json"
+    },
+    "heldout/restored-replay02/feminine/heldout/input-recipe.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cf75fffc4979872321ad740b169f17083fa5c4b13fab640d2d26720edf67437f",
+      "bytes": 591,
+      "mediaType": "application/json"
+    },
+    "heldout/restored-replay02/feminine/heldout/measurements.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "43d5ddc2cc22de8f41f0811c0e4e8e8ae110d21a9fe73fd28f374a9b23604611",
+      "bytes": 4858,
+      "mediaType": "application/json"
+    },
+    "heldout/restored-replay02/feminine/heldout/export-motion.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "de2e3d9321f1abf87e4543f5cfc67fc7b994db14281b042aae8c6a12da501bd8",
+      "bytes": 1075,
+      "mediaType": "application/json"
+    },
+    "heldout/restored-replay02/feminine/heldout/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d15b73fc5f9ee4efb0d1eb31e133c5d6d4bafa3f9b0dd5a098b1abd715ddf1a9",
+      "bytes": 9711,
+      "mediaType": "application/json"
+    },
+    "heldout/terminal-proof-selection.closed.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5d635e49f59f1e4980bf43776f9426b776168d760f69433e03e248130423bd81",
+      "bytes": 56189,
+      "mediaType": "application/json"
+    },
+    "operator/phase1/aws-preflight.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0153a6f106ce466721fb894b99353e3f804c4a6fa8f30960168d0ade5ab0c5ee",
+      "bytes": 889,
+      "mediaType": "application/json"
+    },
+    "operator/phase1/permission-preflight.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1c8c140636b2384ac11400fc0d20d6a4bf8835f7ef8e0cdd33f30f94e59a8da0",
+      "bytes": 33108,
+      "mediaType": "application/json"
+    },
+    "operator/phase1/terminal-state.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5e4be03be89dea850311d990c67f0f7dee9be0e1f91e5865fc46c1e49287a1f9",
+      "bytes": 14242,
+      "mediaType": "application/json"
+    },
+    "operator/phase1/source-status.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "71668792a8abb8a7bbe7316ad1bb0e2b0ea9eaee6957e28f022e42ac83c20135",
+      "bytes": 1514,
+      "mediaType": "application/json"
+    },
+    "operator/phase1/publication-progress.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d5150673f303e8857e929fc51bca78e622bbe8fa4446ee8d5c64325b8e43b836",
+      "bytes": 23788,
+      "mediaType": "application/json"
+    },
+    "operator/phase1/independent-publication-progress.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ce0c285e861e90481798e41a1a43eefb5621df8b350e8a62c11e5b4f72268676",
+      "bytes": 2259,
+      "mediaType": "application/json"
+    },
+    "operator/phase1/steps/17-complete-private-source-publish.stderr": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2199f0d0091609e549a76b1bd12797854ada5c6572cf29304dabb03481b260a3",
+      "bytes": 95,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "operator/phase1/steps/17-complete-private-source-publish.execution.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "965a44aeaf0e3df8b13d766baedb3d65832d612a5b5563b3973bb329c997ec8f",
+      "bytes": 1041,
+      "mediaType": "application/json"
+    },
+    "operator/phase1/steps/19-source-free-composite-study-publish.stderr": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2199f0d0091609e549a76b1bd12797854ada5c6572cf29304dabb03481b260a3",
+      "bytes": 95,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "operator/phase1/steps/19-source-free-composite-study-publish.execution.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5f9b7331e178a889341a3193a9fefebb677ecdf9ee04840525613c944fe6bb00",
+      "bytes": 1060,
+      "mediaType": "application/json"
+    },
+    "operator/phase1/steps/composite-serial-resume.execution.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1ba8c0dccaa250cc9d19d8fd95f8682abf9b4b376c9a01706b1f0bb2b046b325",
+      "bytes": 655,
+      "mediaType": "application/json"
+    },
+    "operator/phase2/admission.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1ce8178a4dc72bda97aa6ea8b4ed9118e7f8cc17af6a2fdba53e7770e6b718a5",
+      "bytes": 725,
+      "mediaType": "application/json"
+    },
+    "operator/phase2/admission-extended.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1d514df373ca6fe89d3b25b7953ac67040993c1724e64e405eb2d82c1294c4bd",
+      "bytes": 1495,
+      "mediaType": "application/json"
+    },
+    "operator/phase2/thirty-minute-extension.proposed.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "25b923c49f73a9ba922951f8305f96ed5cf8d8d02b8903639d8e12b698f9a3f2",
+      "bytes": 1575,
+      "mediaType": "application/json"
+    },
+    "operator/phase2/composite-current-access.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "da17aae9f581366c58167ee25a955b76dda23b1b8eec3060fd6a5ff84c95dc5f",
+      "bytes": 266,
+      "mediaType": "application/json"
+    },
+    "operator/phase2/composite-serial-before.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "057d9f2a37c45f371ba73dbb894f801868a111c9b6d270856feda04b8eedb2fd",
+      "bytes": 300,
+      "mediaType": "application/json"
+    },
+    "operator/phase2/composite-serial-publication.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "982aa7f6c4d6108bcbc90058bf4e6ba35d6c7212f649ae65bd8e27957a594716",
+      "bytes": 610,
+      "mediaType": "application/json"
+    },
+    "operator/phase2/steps/composite-serial-explicit-resume.execution.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0df7913db0306994b23550868661e44b4e44d13b8725d125bc4b8bfd6bb8f722",
+      "bytes": 641,
+      "mediaType": "application/json"
+    },
+    "operator/phase2/steps/composite-ordinary-verify.execution.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3c53d01a2930dba0904ca47822e00793ecad301fd9a332c372aca3f844607bde",
+      "bytes": 733,
+      "mediaType": "application/json"
+    },
+    "operator/phase2/steps/composite-ordinary-verify.stderr": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "45e5de6e3a163f9e3bc7ee29ad07e182b9f28bb7bda32dcc3721711ca94ed826",
+      "bytes": 46,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "operator/phase2/steps/composite-clean-ordinary-verify.execution.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e534ccf3996bcb225fd5d9f3ccedf2320c1d3f663dc6cf8a2efe211da9ca34db",
+      "bytes": 740,
+      "mediaType": "application/json"
+    },
+    "operator/phase2/steps/composite-clean-ordinary-verify.stdout": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "74f36bd5985a3f588c55cce33e60b846083ba6adf232a83fcac4824f3e06558a",
+      "bytes": 52,
+      "mediaType": "application/json"
+    },
+    "operator/phase2/prior-authorization-refresh.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4e267c6cf0cd9a3a9db67b248ed4a1604df4a49258e8843b5c7479dada97f7d8",
+      "bytes": 32752,
+      "mediaType": "application/json"
+    },
+    "operator/phase2/flat-source-serial-before.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "773b3d6950031be09892bbcf8e60382399cb78d390387f0597eb64bb28cce442",
+      "bytes": 295,
+      "mediaType": "application/json"
+    },
+    "operator/phase2/flat-source-serial-publication.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "47fc7502d575bcbabaaab04aa9ce34820434fc22117e61eb066c087b1c41f626",
+      "bytes": 598,
+      "mediaType": "application/json"
+    },
+    "operator/phase2/steps/flat-source-serial-publish.execution.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "70e19384f74544cc3bec388b82baaed31422f16ebfb5dae24cc0ae3d02921cdc",
+      "bytes": 637,
+      "mediaType": "application/json"
+    },
+    "operator/phase2/fresh-workspace-hash-receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d81ad532231d64ab4ef05d6f741688cc7243023984869ed15e5b5be3167daf0e",
+      "bytes": 30371,
+      "mediaType": "application/json"
+    },
+    "operator/phase2/source-preservation.index.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "53d462924172d2089f0a4955ebb09592945909be93d39a0359fcb58766f731ab",
+      "bytes": 23417,
+      "mediaType": "application/json"
+    },
+    "operator/phase1/composite-viewer.index.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4af5acaf85e0f7639667e06262d1a055ee2795912c0af429cc93b357a68e7cab",
+      "bytes": 11934,
+      "mediaType": "application/json"
+    },
+    "operator/phase2/recovery-initial/receipt-locator.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "06e60578b32e08f1b91ee72ea490a44aadac2a58f012b3a227c0b4a3eb9ebecd",
+      "bytes": 774,
+      "mediaType": "application/json"
+    },
+    "operator/phase2/recovery-source/receipt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "70e9846f8cbce7534b3c450b198096c264cd77bdd42c832ac28ccea9ce3f9e48",
+      "bytes": 197925,
+      "mediaType": "application/json"
+    },
+    "operator/phase2/run-bounded.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c16d5e9e3d623843ecbee12752a51e2ff8e3d9bb5340c54dad969c81c3cfbb6b",
+      "bytes": 2057,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "operator/phase2/run-extended.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2145c77b7d9616e57daf7a733be2a17a080d4409f896fc2b4da967b283872d91",
+      "bytes": 2066,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "operator/phase2/publish-one-serial.mts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1b5cb04d7be463f7b0d2648a3216a97a05ba9127230302a0546629752e1750e4",
+      "bytes": 4612,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "operator/phase2/refresh-prior.mts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9280ecbac256eae2beac9b5c7e900683b8ad9fee13a66b10d35ea46c827efb24",
+      "bytes": 1828,
+      "mediaType": "text/plain; charset=utf-8"
+    }
+  }
+}

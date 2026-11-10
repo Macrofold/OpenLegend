@@ -1,0 +1,104 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-browser-startup-proof-20261108",
+    "revisionId": "mapped-actors-startup-fixes01",
+    "manifestSha256": "2a8d49ae5afff303cc9ff8456e3f0bea2505c7e10cc2360de21386890e7b9987"
+  },
+  "files": {
+    "browser-proof/evidence/browser-startup01/assessment.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ff402df05393e5bd9cf7b0826958a9f9a9940faa976ff7f05a602c7f0ca25741",
+      "bytes": 4133,
+      "mediaType": "application/json"
+    },
+    "browser-proof/evidence/browser-startup01/code/apps/client/src/characters/person-actor.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f48f5febfd1fecc78e7689a68b2c03ea02ebb74048ff60bc47efa195ec8028e7",
+      "bytes": 29458,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "browser-proof/evidence/browser-startup01/code/apps/client/src/people-study.tsx": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "de240d1d1c2013ac904b63cbd1a7c157fe02b2da990f0141c338054b15662ba0",
+      "bytes": 17481,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "browser-proof/evidence/browser-startup01/code/scripts/assets/serve.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "64c1bd40fc405f5f70c71ce0cd591598ab94521ebb4c7d56cf845b70a51b5a21",
+      "bytes": 14095,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "browser-proof/evidence/browser-startup01/person-actor-after.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f48f5febfd1fecc78e7689a68b2c03ea02ebb74048ff60bc47efa195ec8028e7",
+      "bytes": 29458,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "browser-proof/evidence/browser-startup01/person-actor-before.ts": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a35a2467da2a4c8092c84f2213cb944f0a3e46595a4e634dc5edcb543b1a46aa",
+      "bytes": 29317,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "browser-proof/evidence/browser-startup01/task-changes.patch": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "75354bd8f34a1d862af68e1f497d3c0c8ab14b6e07f19d05d8c61c26ffc18be9",
+      "bytes": 27013,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "browser-proof/evidence/browser-startup01/unauthenticated-module.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "947f824d382f4a8215e15dba1b9f9c7ecaa7281f0daf51591df67a7c9143d872",
+      "bytes": 309,
+      "mediaType": "application/json"
+    },
+    "browser-proof/renders/browser-live-kit01/adjustable-four-front-full.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2a845df83970f9038b7ba5f02f623f746a8f58cc2d249a5adf44b7e53f01617b",
+      "bytes": 51696,
+      "mediaType": "image/png"
+    },
+    "browser-proof/renders/browser-live-kit01/adjustable-four-front-uv-fixed.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2f07c769d8b15d8431598a65748b39af27d6ed5e96598c03a954db50c0af4b88",
+      "bytes": 61043,
+      "mediaType": "image/png"
+    },
+    "browser-proof/renders/browser-live-kit01/adjustable-four-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0999f971ffd3a52702e091710fb55ac487337d65bc448a1447024f99c94875a6",
+      "bytes": 58978,
+      "mediaType": "image/png"
+    },
+    "browser-proof/renders/browser-live-kit01/adjustable-four-run-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "426fd36653cd3136cedf9f6c3cad663a5d67f6f1aeab6bd071360a7d390746a2",
+      "bytes": 50148,
+      "mediaType": "image/png"
+    },
+    "browser-proof/evidence/browser-startup01/terminal-selection.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0d892574827b40250a778e9aa2a6698509fa81b22475ec2905bcdb0e015d61a5",
+      "bytes": 4893,
+      "mediaType": "application/json"
+    }
+  }
+}

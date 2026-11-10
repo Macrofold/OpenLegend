@@ -1,0 +1,158 @@
+{
+  "scope": "Private completed native identity/portable-source tranche; no complete catalog/world checkpoint, final kit or native project dependency-closure qualification.",
+  "reference": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-native-20261107",
+    "revisionId": "native05-identity-portable-sources",
+    "manifestSha256": "e5d1896552386b6544e075b15816eba4db72552869ff4c1ac6f021ce9d6ea68f"
+  },
+  "destination": {
+    "boundary": "art-library",
+    "accessDomain": "curated-private"
+  },
+  "operationId": "metahuman-poc-native05-source-publication",
+  "files": 339,
+  "fileBytes": 1226802582,
+  "manifestArtifact": {
+    "boundary": "art-library",
+    "accessDomain": "curated-private",
+    "sha256": "e5d1896552386b6544e075b15816eba4db72552869ff4c1ac6f021ce9d6ea68f",
+    "bytes": 83633,
+    "mediaType": "application/json"
+  },
+  "dependencies": [
+    {
+      "owner": {
+        "kind": "collection",
+        "id": "art-studies"
+      },
+      "assetId": "metahuman-foundation-poc-native-20261107",
+      "revisionId": "native04-clean-fit-browser-source",
+      "manifestSha256": "4edde23ce8d65929cc31ec180f91bd6e6bc1a19a780ff22238dfd29b48479da4"
+    }
+  ],
+  "exactDependencyClosure": {
+    "direct": {
+      "owner": {
+        "kind": "collection",
+        "id": "art-studies"
+      },
+      "assetId": "metahuman-foundation-poc-native-20261107",
+      "revisionId": "native04-clean-fit-browser-source",
+      "manifestSha256": "4edde23ce8d65929cc31ec180f91bd6e6bc1a19a780ff22238dfd29b48479da4"
+    },
+    "transitive": [
+      {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-native-20261107",
+        "revisionId": "native03-pbr-hair-facial-vivian",
+        "manifestSha256": "48f9c98ebc404847a47ade3734328b6c59f52184a47c7596e66266b1bdcb6a9f"
+      },
+      {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-native-20261107",
+        "revisionId": "native02-dcc31",
+        "manifestSha256": "03358167534490126210a8e5f732f920d79a0ad992e8acbf39052a1bb02c1eda"
+      },
+      {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-smoke-20261107",
+        "revisionId": "native-smoke02",
+        "manifestSha256": "f10b6485f627eb9986fd8c09b1301d47ad6dbfdc7907aea9eb1094cff12b6f9a"
+      }
+    ]
+  },
+  "offlineRestore": {
+    "status": "passed",
+    "independentlyHashedFiles": 339,
+    "bytes": 1226802582
+  },
+  "supplementaryExactRecovery": {
+    "status": "passed",
+    "uniqueObjectsIncludingManifest": 301,
+    "independentlyHashedFiles": 301,
+    "bytes": 1165034058,
+    "generationBefore": 265,
+    "generationAfter": 265,
+    "receipt": {
+      "reference": {
+        "boundary": "asset-recovery",
+        "accessDomain": "openlegend-assets",
+        "sha256": "95f15b452b31f5d8cfb06ed11566bfa3d1346a51bd6b6597d8d9c764f51f4e1d",
+        "bytes": 485744,
+        "mediaType": "application/json"
+      },
+      "location": {
+        "accountId": "027677879749",
+        "region": "us-east-2",
+        "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+        "key": "domains/openlegend-assets/blobs/sha256/95/95f15b452b31f5d8cfb06ed11566bfa3d1346a51bd6b6597d8d9c764f51f4e1d",
+        "versionId": "sssbIkHN3O3M8ng_5jVN56f4dFxsUoKj"
+      },
+      "readerHashVerified": true,
+      "authorityGeneration": 265,
+      "scope": "Immutable supplementary exact-native05 preservation receipt, not complete catalog/world checkpoint",
+      "completedAtUtc": "2026-11-08T18:12:12.114Z"
+    }
+  },
+  "verificationLimits": [
+    "Native Unreal Engine/groom/material/actor package closure remains incomplete; portable all-LOD FBX/PNG/DCC and explicit selected saved source states are retained.",
+    "Only exact admitted frozen339files and committedfcde7c06bd5b99a9b727a465e0c9a44cac516d94 code snapshot are included; laterbody/coverage/hair/normal/motion/tunic/actor results are outside this tranche.",
+    "Failed gates remain failures; prepared male inputs are plans, not later execution. No final anatomy/head/appearance, animation, all-slider/interpolation family, performance, public/runtime or independent-kit approval inferred."
+  ],
+  "rights": "Owner attests applicable indie exception. Epic source/derivatives private source, private-study, offline and recovery only. MIT converter licenses and AGPL-3.0-only first-party code retain their own scope. No public/runtime/independent-kit rights inferred.",
+  "costAdmission": {
+    "additionalConservativeAwsReserveUsd": 2.5,
+    "sharedConservativeAllocatedUsd": 8.5,
+    "sharedTaskCeilingUsd": 10,
+    "isActualSpend": false,
+    "actualAwsCharges": "Unmeasured; reservation is not actual spend.",
+    "newPaidProviderSoftwareUsd": 0,
+    "bounds": {
+      "frozenBytesAtMost": 1342177280,
+      "sourcePlusRecoveryBytesAtMost": 2684354560,
+      "totalTransferReadbackBytesAtMost": 5368709120,
+      "s3RequestsAtMost": 10000,
+      "existingDatabaseActiveHoursAtMost": 1,
+      "configuredMaxAcuAtMost": 4,
+      "noNewResourcesOrAccess": true
+    },
+    "existingDatabaseScaling": {
+      "minAcu": 0,
+      "maxAcu": 4,
+      "secondsUntilAutoPause": 300
+    },
+    "originalDatabaseWindowStart": "2026-11-08T17:36:24.920Z",
+    "databaseWindowHoursMaximum": 1
+  },
+  "currentPlanEvidence": {
+    "method": "Documented inference of upgraded paid/advanced state from current AWS Settings completedactivation and matching read-only Organizationsmetadata; not a PAID API response.",
+    "freeTierApi": "ResourceNotFoundException retained; no FREE/PAID status fabricated.",
+    "primarySources": [
+      "https://docs.aws.amazon.com/accounts/latest/reference/activate-advanced-features.html",
+      "https://aws.amazon.com/resources/create-account/"
+    ]
+  },
+  "credentialScan": {
+    "redactedFileCount": 3,
+    "originalSourceHashesRetained": true,
+    "rendererConfig": "Only the three intended renderer flags projected; original raw config hash retained."
+  },
+  "sourceCodeCommit": "fcde7c06bd5b99a9b727a465e0c9a44cac516d94",
+  "selectedSavedIdentityStates": 14,
+  "selectedNativeCardAssets": 4,
+  "newResourcesOrAccessGrants": 0,
+  "publicOrRuntimeSelectionChanges": 0
+}

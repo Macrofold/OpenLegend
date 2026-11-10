@@ -1,0 +1,538 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-final-source-20261108",
+    "revisionId": "completed-source-flat01",
+    "manifestSha256": "c9b6daa3653cfc640230a7496b10a72b77b994a44fdcf3193ca78d64781e2a12"
+  },
+  "files": {
+    "source-references/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source-references/038455ba6f4f081cbc2b8be4de9c02ae8e314aa143c9421214df7e276486ee0f": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "038455ba6f4f081cbc2b8be4de9c02ae8e314aa143c9421214df7e276486ee0f",
+      "bytes": 4918713,
+      "mediaType": "application/json"
+    },
+    "source-references/7f6d36177fbf1e554402861b3cb55966b66462f4909ad385ccc250cad9d1c8b5": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7f6d36177fbf1e554402861b3cb55966b66462f4909ad385ccc250cad9d1c8b5",
+      "bytes": 3185,
+      "mediaType": "application/json"
+    },
+    "source-references/472495cdf7522fad12a580676ed4391b72de3d2c6864427491a83abeecad84e5": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "472495cdf7522fad12a580676ed4391b72de3d2c6864427491a83abeecad84e5",
+      "bytes": 4920068,
+      "mediaType": "application/json"
+    },
+    "source-references/86af9ec2b8f5991e9457579490ac87d3881f1d7d2f66f3240241a1de17ee0a4f": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "86af9ec2b8f5991e9457579490ac87d3881f1d7d2f66f3240241a1de17ee0a4f",
+      "bytes": 3209,
+      "mediaType": "application/json"
+    },
+    "source-references/a2a5cc87df258d241fb82bae79a4bfeeafd0c3d980f44033962965960e0d0f50": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a2a5cc87df258d241fb82bae79a4bfeeafd0c3d980f44033962965960e0d0f50",
+      "bytes": 4922560,
+      "mediaType": "application/json"
+    },
+    "source-references/9cca83e96f309705ff1c38998275da7b145787bc5fd066750ac3bdbf3aeef6bd": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9cca83e96f309705ff1c38998275da7b145787bc5fd066750ac3bdbf3aeef6bd",
+      "bytes": 3200,
+      "mediaType": "application/json"
+    },
+    "source-references/f485dcee6c772014352bcdd155bb5233124a27c748c7ccfba9c0ee6342f198c7": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f485dcee6c772014352bcdd155bb5233124a27c748c7ccfba9c0ee6342f198c7",
+      "bytes": 66255,
+      "mediaType": "image/png"
+    },
+    "source-references/0ee0f0b31b035cf0c64a524a60f632fc9ad6986a264167472e0ccaacb79299de": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0ee0f0b31b035cf0c64a524a60f632fc9ad6986a264167472e0ccaacb79299de",
+      "bytes": 14835,
+      "mediaType": "image/png"
+    },
+    "source-references/1ebed770f3955ee6b69441f60b20085e2c9736272ff335891a6e65e0db9f9af3": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1ebed770f3955ee6b69441f60b20085e2c9736272ff335891a6e65e0db9f9af3",
+      "bytes": 6409,
+      "mediaType": "image/png"
+    },
+    "source-references/c6432f925f8c940afc21c433ddf3b651cab6130b8acd1e61026170d5e852aa7c": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c6432f925f8c940afc21c433ddf3b651cab6130b8acd1e61026170d5e852aa7c",
+      "bytes": 2304965,
+      "mediaType": "image/png"
+    },
+    "source-references/e23b5f73ae98691f370eb39c72d91a3c5c629fe89251200ca10ccf13e784d865": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e23b5f73ae98691f370eb39c72d91a3c5c629fe89251200ca10ccf13e784d865",
+      "bytes": 3416752,
+      "mediaType": "image/png"
+    },
+    "source-references/f1637df8e3401f6d7d1c1d57663fbae21913eb863a9e9a7fa95178fa434853ce": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f1637df8e3401f6d7d1c1d57663fbae21913eb863a9e9a7fa95178fa434853ce",
+      "bytes": 355116,
+      "mediaType": "image/png"
+    },
+    "source-references/4303044a6c7ff8bf60491f9a109a19a8da5022c37fca43b4458c93a0fd510217": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4303044a6c7ff8bf60491f9a109a19a8da5022c37fca43b4458c93a0fd510217",
+      "bytes": 463958,
+      "mediaType": "image/png"
+    },
+    "source-references/d389a5cb4d5fc4399aad701c98359de97da5ff8ff2aa3fb6fe61a180254cb8ad": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d389a5cb4d5fc4399aad701c98359de97da5ff8ff2aa3fb6fe61a180254cb8ad",
+      "bytes": 466677,
+      "mediaType": "image/png"
+    },
+    "source-references/58288434e60407482c779f86061461e67f626c3e35f8aa155da5d59f01378779": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "58288434e60407482c779f86061461e67f626c3e35f8aa155da5d59f01378779",
+      "bytes": 2672640,
+      "mediaType": "image/png"
+    },
+    "source-references/d7116c36248fd606ddad09f220276872043708abf4ff58e08d02d96405773966": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d7116c36248fd606ddad09f220276872043708abf4ff58e08d02d96405773966",
+      "bytes": 3491447,
+      "mediaType": "image/png"
+    },
+    "source-references/19c0d16eed17d841cee0bbd5f4a2664ccabc813c149673cf18c68d19af7d8f0c": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "19c0d16eed17d841cee0bbd5f4a2664ccabc813c149673cf18c68d19af7d8f0c",
+      "bytes": 338899,
+      "mediaType": "image/png"
+    },
+    "source-references/3e3d47d0908126ddeb18331209ed28d28e5a62825cffc496c4a7fe7d2d44c272": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3e3d47d0908126ddeb18331209ed28d28e5a62825cffc496c4a7fe7d2d44c272",
+      "bytes": 22085,
+      "mediaType": "image/png"
+    },
+    "source-references/b00d696a08d8a3943a3a68ac6253ce4bd18da4659e90c57f7a577669bdce4924": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b00d696a08d8a3943a3a68ac6253ce4bd18da4659e90c57f7a577669bdce4924",
+      "bytes": 818760,
+      "mediaType": "image/png"
+    },
+    "source-references/b2609a21614f886ae017f1f3c314e9d3dfb81b0eb30e0d0d0d560d78e30eec2f": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b2609a21614f886ae017f1f3c314e9d3dfb81b0eb30e0d0d0d560d78e30eec2f",
+      "bytes": 1512230,
+      "mediaType": "image/png"
+    },
+    "source-references/3d83dbd92baf1b44c22561e8e0a0b694776ba3c03ad2a39d0e955f90c5b1f534": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3d83dbd92baf1b44c22561e8e0a0b694776ba3c03ad2a39d0e955f90c5b1f534",
+      "bytes": 8516293,
+      "mediaType": "application/json"
+    },
+    "source-references/ab269d4adc5f555809b3a61fed8af697475b191e970cffebfb5273de84788e2f": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ab269d4adc5f555809b3a61fed8af697475b191e970cffebfb5273de84788e2f",
+      "bytes": 4572,
+      "mediaType": "application/json"
+    },
+    "source-references/20d473d05fa051bae94646ddcfad4fcb55f385db7ea036a754f30430479f3949": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "20d473d05fa051bae94646ddcfad4fcb55f385db7ea036a754f30430479f3949",
+      "bytes": 321730,
+      "mediaType": "image/png"
+    },
+    "source-references/9d6554bfc291b90bafa45c8b209f1c7dcb87366f8932f7653736e78555755ab3": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9d6554bfc291b90bafa45c8b209f1c7dcb87366f8932f7653736e78555755ab3",
+      "bytes": 9004215,
+      "mediaType": "application/json"
+    },
+    "source-references/8680058fae31bce7ddbf2b510e7b5cf29d9782ed216341c457ef8b862734b0ca": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8680058fae31bce7ddbf2b510e7b5cf29d9782ed216341c457ef8b862734b0ca",
+      "bytes": 4594,
+      "mediaType": "application/json"
+    },
+    "source-references/0c8a93fb83dad64e53f52d2607953e4b112f0f4bb53201d60310a7bd953743d5": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0c8a93fb83dad64e53f52d2607953e4b112f0f4bb53201d60310a7bd953743d5",
+      "bytes": 9765935,
+      "mediaType": "application/json"
+    },
+    "source-references/afa3a5181e9a32fc213b2bd0f127bf39927b0116516f7fd52f3c0ac7011edc7b": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "afa3a5181e9a32fc213b2bd0f127bf39927b0116516f7fd52f3c0ac7011edc7b",
+      "bytes": 4559,
+      "mediaType": "application/json"
+    },
+    "source-references/af6accfa9bebb6b3df45d6476a66fee95e98aa3d5322335654e03ac52ed99f68": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "af6accfa9bebb6b3df45d6476a66fee95e98aa3d5322335654e03ac52ed99f68",
+      "bytes": 9228306,
+      "mediaType": "application/json"
+    },
+    "source-references/6d1fa28c458c7cf424e080369fd56507ce019929f06932679914a75435a96c59": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6d1fa28c458c7cf424e080369fd56507ce019929f06932679914a75435a96c59",
+      "bytes": 3322804,
+      "mediaType": "image/png"
+    },
+    "source-references/85fda6fe2d13a432c431414a0a1c38308338587356ef7f0d6bc4075ec46565f4": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "85fda6fe2d13a432c431414a0a1c38308338587356ef7f0d6bc4075ec46565f4",
+      "bytes": 4546,
+      "mediaType": "application/json"
+    },
+    "source-references/fcd129acff3472374e166a841543480824bda76cb9185f57859aa4e2d9ad9f18": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fcd129acff3472374e166a841543480824bda76cb9185f57859aa4e2d9ad9f18",
+      "bytes": 5311477,
+      "mediaType": "application/json"
+    },
+    "source-references/d18bb5a453cbd40d2c419217ca85f7bd0eaf2366d10a7df49918d2b083f2ed1b": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d18bb5a453cbd40d2c419217ca85f7bd0eaf2366d10a7df49918d2b083f2ed1b",
+      "bytes": 3212,
+      "mediaType": "application/json"
+    },
+    "source-references/b2431d1f231b5b34123a30d2e47409356e1e004562809daac31d336d5ad6a7d5": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b2431d1f231b5b34123a30d2e47409356e1e004562809daac31d336d5ad6a7d5",
+      "bytes": 3568266,
+      "mediaType": "image/png"
+    },
+    "source-references/f5951d2f73bbe1b80e6ef471f0fc76feccc6fdebb3974b7ce139e5d722cb9706": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f5951d2f73bbe1b80e6ef471f0fc76feccc6fdebb3974b7ce139e5d722cb9706",
+      "bytes": 19415,
+      "mediaType": "application/json"
+    },
+    "source-references/3325514e0fb37b48ad28a2bba42d351d649d1f61d4fe3d0640cdde81077d4bc1": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3325514e0fb37b48ad28a2bba42d351d649d1f61d4fe3d0640cdde81077d4bc1",
+      "bytes": 8798,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source-references/98d21d3ffada640bf14453ebd5e83d30dc702729c49e2dd9ccc75a524aa1defa": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "98d21d3ffada640bf14453ebd5e83d30dc702729c49e2dd9ccc75a524aa1defa",
+      "bytes": 1023,
+      "mediaType": "application/json"
+    },
+    "source-references/04496ba10f93ad4cf855bda229f447c6d4fe2ec2bd1513bbd480e39ef97a2e98": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "04496ba10f93ad4cf855bda229f447c6d4fe2ec2bd1513bbd480e39ef97a2e98",
+      "bytes": 4209,
+      "mediaType": "application/json"
+    },
+    "source-references/5046cdaa79299f0d500dfcf5cc8699c80bd593e22d983ec2d599a784d054f2ea": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5046cdaa79299f0d500dfcf5cc8699c80bd593e22d983ec2d599a784d054f2ea",
+      "bytes": 2991089,
+      "mediaType": "application/json"
+    },
+    "source-references/d1c01bd22db19350512d0c100da3216f2f80f315e94e771d164323419c62f5e6": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d1c01bd22db19350512d0c100da3216f2f80f315e94e771d164323419c62f5e6",
+      "bytes": 1919,
+      "mediaType": "application/json"
+    },
+    "source-references/c81fb4efeb3a872186239bd2a4d653489bf1f7e42b8ef17545d4480650cf4043": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c81fb4efeb3a872186239bd2a4d653489bf1f7e42b8ef17545d4480650cf4043",
+      "bytes": 984,
+      "mediaType": "application/json"
+    },
+    "source-references/ddcb7de9e8b3dc183c461231a5d12d92a88fc2362f47aea02e4f24f63e5e4cb3": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ddcb7de9e8b3dc183c461231a5d12d92a88fc2362f47aea02e4f24f63e5e4cb3",
+      "bytes": 4154,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source-references/f1608c9376901cfe23cdc3f3a8dd51dabbe7e17431f60fd7a708bafea874aede": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f1608c9376901cfe23cdc3f3a8dd51dabbe7e17431f60fd7a708bafea874aede",
+      "bytes": 16643,
+      "mediaType": "application/json"
+    },
+    "source-references/29addc59f995fcb92b232e1dc114bb31da4f5299d6fe0185e8cf1a33043e011d": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "29addc59f995fcb92b232e1dc114bb31da4f5299d6fe0185e8cf1a33043e011d",
+      "bytes": 5765,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source-references/f2ea029dbedb862d70f1d2c99a880d79ca073436650cf5b665cd7879a2e44908": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f2ea029dbedb862d70f1d2c99a880d79ca073436650cf5b665cd7879a2e44908",
+      "bytes": 3680,
+      "mediaType": "application/json"
+    },
+    "source-references/f6017b6acb5999fc02f8b36e9a50987a346001cfcc59c449b9427ee1962856bf": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f6017b6acb5999fc02f8b36e9a50987a346001cfcc59c449b9427ee1962856bf",
+      "bytes": 4434,
+      "mediaType": "application/json"
+    },
+    "source-references/b361c4fc02f8bc185ce77e5e7550533bf5377fb3a2aa9dace25a6955f23eedd8": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b361c4fc02f8bc185ce77e5e7550533bf5377fb3a2aa9dace25a6955f23eedd8",
+      "bytes": 23191436,
+      "mediaType": "model/gltf-binary"
+    },
+    "source-references/1c274d7bd5910cfee603b006da0fd8fbac14dd472347d9ec0a416628bbf35811": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1c274d7bd5910cfee603b006da0fd8fbac14dd472347d9ec0a416628bbf35811",
+      "bytes": 33991,
+      "mediaType": "application/json"
+    },
+    "source-references/938f0c20ca78141d99a28b696efffce6c6c3e0645345da1e8b779a564b2d0515": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "938f0c20ca78141d99a28b696efffce6c6c3e0645345da1e8b779a564b2d0515",
+      "bytes": 1669,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source-references/74cf920d61f220f5d5000bc3ef1adb17c1bc6ee2c25035611bc0b4206b98fbc7": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "74cf920d61f220f5d5000bc3ef1adb17c1bc6ee2c25035611bc0b4206b98fbc7",
+      "bytes": 4660,
+      "mediaType": "application/json"
+    },
+    "source-references/13b273d2fa2ad5d1746789bec83b3cbac0c8eb6d299af12577ba538e38422521": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "13b273d2fa2ad5d1746789bec83b3cbac0c8eb6d299af12577ba538e38422521",
+      "bytes": 10593,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source-references/a18c7d50002ee2bcb4fa8357d04f13d9fffb9539a658d6aced3ec06bb108f9b8": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a18c7d50002ee2bcb4fa8357d04f13d9fffb9539a658d6aced3ec06bb108f9b8",
+      "bytes": 46721333,
+      "mediaType": "application/octet-stream"
+    },
+    "source-references/c5af40e413559a48aec8ec4bec0a8672f785bd00b5a9ef07b1f57a36aba9d891": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c5af40e413559a48aec8ec4bec0a8672f785bd00b5a9ef07b1f57a36aba9d891",
+      "bytes": 2204146,
+      "mediaType": "image/png"
+    },
+    "source-references/b2920e27c4cca14061ca4273e21357d2a6b287a03b91b9a3d7f169b210789b33": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b2920e27c4cca14061ca4273e21357d2a6b287a03b91b9a3d7f169b210789b33",
+      "bytes": 111527,
+      "mediaType": "image/jpeg"
+    },
+    "source-references/e7df7d67aeedb5c444c686e284eff84bdeb0349297901b9de9bf2c6de9890641": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e7df7d67aeedb5c444c686e284eff84bdeb0349297901b9de9bf2c6de9890641",
+      "bytes": 6495772,
+      "mediaType": "image/png"
+    },
+    "source-references/d352622479f0ad0339366cdde889b8cf2b1006755dadc4f49d7a962c5e8bf004": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d352622479f0ad0339366cdde889b8cf2b1006755dadc4f49d7a962c5e8bf004",
+      "bytes": 6357312,
+      "mediaType": "image/png"
+    },
+    "source-references/c634a84c192c08407581aa8a6330587de10fe85e430a7020745ad63ad1c144b9": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c634a84c192c08407581aa8a6330587de10fe85e430a7020745ad63ad1c144b9",
+      "bytes": 3174387,
+      "mediaType": "image/png"
+    },
+    "source-references/02ccf01277f8bbf59d10b073239aafa60bcdabdab7b8e4765107022947bf17ff": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "02ccf01277f8bbf59d10b073239aafa60bcdabdab7b8e4765107022947bf17ff",
+      "bytes": 3295990,
+      "mediaType": "image/png"
+    },
+    "source-references/206a80bc8af2b432a261c05fb0c069d4567b8d5cd57924cafeb1486a4eef2730": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "206a80bc8af2b432a261c05fb0c069d4567b8d5cd57924cafeb1486a4eef2730",
+      "bytes": 352139,
+      "mediaType": "image/png"
+    },
+    "source-references/29b75300ad44676c1e16602f0bacbba198a9d85fd1f44bf9070ad91ab535bbdf": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "29b75300ad44676c1e16602f0bacbba198a9d85fd1f44bf9070ad91ab535bbdf",
+      "bytes": 4890163,
+      "mediaType": "image/png"
+    },
+    "source-references/419d93e5d7b7de8efd84800724ebef5f26569b197a27c111eeccfb9c9b1665b8": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "419d93e5d7b7de8efd84800724ebef5f26569b197a27c111eeccfb9c9b1665b8",
+      "bytes": 29334,
+      "mediaType": "image/png"
+    },
+    "source-archive/completed-source-union.tar.xz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a7b6b4caaab33bb01e27412a34851b07337cca10757535c8b5261b38a411ef05",
+      "bytes": 572585832,
+      "mediaType": "application/x-xz"
+    },
+    "preservation/compact-source-locator.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3cef01e1728c34e52bdee73ae58e1fdd37f8cc30d2db4e570f8a73e0cb134541",
+      "bytes": 1362805,
+      "mediaType": "application/json"
+    },
+    "preservation/selected-runtime-graph.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "27722a6f445428af4a838af7460a1be4c639dac48248451b8fce1d3c4b4b414f",
+      "bytes": 124175,
+      "mediaType": "application/json"
+    },
+    "preservation/fresh-member-hash-proof.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a95d6afa1afc13fe2c91344be296d7d3bc130afb4af6d36bf3f06dd8b17760fa",
+      "bytes": 530636,
+      "mediaType": "application/json"
+    },
+    "preservation/readback-result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "40b3468beb664b67c910809df982ef6da5064f556b3bb01ba2b3875781b319f1",
+      "bytes": 2067,
+      "mediaType": "application/json"
+    },
+    "preservation/first-memory-failure.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "367218363edb7add73c03bffcd8b6ca4900ce28ba65a89c96479ae6dc94f985b",
+      "bytes": 3071,
+      "mediaType": "application/json"
+    },
+    "preservation/credential-scan.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "290375165051d4b6fad69d520fe4bae574d517d65ca65fab741ca0dce196814e",
+      "bytes": 258,
+      "mediaType": "application/json"
+    },
+    "preservation/code-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fe6a9a24b6c9b8efd4609ed12a557907595b2f9b00e6fe72dd82717f432588f6",
+      "bytes": 1532,
+      "mediaType": "application/json"
+    },
+    "preservation/heldout-operator-plan.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bb35210f09b01c498bc0af794f5f6e9508b945a64baf672fad87f949ddb706fe",
+      "bytes": 12138,
+      "mediaType": "application/json"
+    },
+    "preservation/heldout-masculine.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "16791f4ea60c4ebb0c3800506064f55646bb5d01532895c28da113e0a59cac2e",
+      "bytes": 587,
+      "mediaType": "application/json"
+    },
+    "preservation/heldout-feminine.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cf75fffc4979872321ad740b169f17083fa5c4b13fab640d2d26720edf67437f",
+      "bytes": 591,
+      "mediaType": "application/json"
+    },
+    "preservation/normalize-locator.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "635407fc59dea014a2d4b5ac0984eff9d1f56cd2c57fd1282e2e7279b73f8e0a",
+      "bytes": 4701,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "preservation/reverify-standard-archive.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2254bbcc1ff0db446e2d4ad83aa437696532bff43d8ecdef8dba22c376e08bbf",
+      "bytes": 4366,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "preservation/prepare-publication-graph02.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b17223e01597597cab4b6ccb3b8d5bcb17fa60071232c15d645193d2c02184e9",
+      "bytes": 11072,
+      "mediaType": "text/x-python; charset=utf-8"
+    }
+  }
+}
