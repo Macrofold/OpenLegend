@@ -342,7 +342,6 @@ No current build was played, captured or instrumented. Original rules were recon
 | [Money](https://www.gamepressure.com/kingdom-come-deliverance/how-to-quickly-gain-money/z5a9d7), [haggling](https://www.gamerguides.com/kingdom-come-deliverance/guide/introduction/useful-gameplay-tips/haggling), [alchemy economy](https://www.gamepressure.com/kingdom-come-deliverance/alchemy/zcaa7c) | Detailed original-game guides; income, finite merchant funds, bargaining and potion sales. Bodies read; advertised optimal strategies are not treated as measured balance. |
 | [Mutt guide](https://playerassist.com/kingdom-come-get-dog/) | Kenneth Mitchell, PlayerAssist; original A Woman's Lot recruitment, care and commands. Full body read; no sequel rules used. |
 | [Official March 2018 patch archive](https://store.steampowered.com/news/posts/?appids=379430&enddate=1522366016&feed=steam_community_announcements) | Primary 1.3.1–1.3.4 notes; Save-and-Exit and saving-bed feedback. |
-
 | [Platform patch notes](https://www.deepsilver.com/games/kingdom-come-deliverance/kingdom-come-deliverance-patch-notes) | Primary, retrieved November 9, 2026; new-game item carry-over correction and platform-specific updates. No publication day inferred from the undated page. |
 
 ### Production, commerce and creator evidence
