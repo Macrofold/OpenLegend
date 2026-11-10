@@ -222,6 +222,7 @@ export interface NativePlayerActorSelf extends NativeActorSelf {
     readonly attributeId?: string;
   } | null;
   readonly player: {
+    readonly canSteer: boolean;
     readonly seed: number;
     readonly moduleRevision: number;
     readonly spatialRevision: number;

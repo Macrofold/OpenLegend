@@ -13,7 +13,10 @@ import {
 } from './worlds/base/promises.js';
 import { BASE_WORK_ACTIVITY_HOST } from './worlds/base/work-activity.js';
 import { BASE_MEAL_ACTIVITY_HOST } from './worlds/base/meal-activity.js';
-import { RESERVOIR_ACTIVITY_HOST } from './worlds/reservoir-demo/activity.js';
+import {
+  RESERVOIR_ACTIVITY_HOST,
+  RESERVOIR_CHOICE_VISIBLE_WARNING,
+} from './worlds/reservoir-demo/activity.js';
 import {
   BASE_EVENT_DISCLOSURE,
   BASE_EVENT_DISCLOSURE_DATA,
@@ -41,7 +44,15 @@ import {
   sharedNativeActivityName as baseActivityName,
 } from './worlds/base/action-views.js';
 import type { Command } from './types.js';
-import type { ActivityHostDescriptor } from './activity-hosts.js';
+import {
+  activityHostRequests,
+  activityRequestDescriptors,
+  trustedActivityHost,
+  type ActivityHostDescriptor,
+  type ActivityRequestDefinitionScope,
+} from './activity-hosts.js';
+import { BASE_CAMP_CHOICE_READ } from './worlds/base/activity-choice-format.js';
+import { BASE_OUTING, BASE_COMBAT_HELP } from './worlds/base/outing-policy.js';
 import type { RecipeFamilyDescriptor } from './invention-families.js';
 import { BASE_CANOPY_ACTIVITY_HOST } from './worlds/base/canopies.js';
 import { BASE_FIRE_ACTIVITY_HOST } from './worlds/base/fire-activity.js';
@@ -172,9 +183,14 @@ export function selectedEventSalience(world: WorldState, type: string, data: Wor
   selectedCreationProfileForWorld(world);
   return baseEventSalience(type, data);
 }
-export function selectedOccurrenceRules(world: WorldState) {
+export function selectedOccurrenceRules(world: Pick<WorldState, 'profile'>) {
   selectedCreationProfileForWorld(world);
   return BASE_OCCURRENCE_RULES;
+}
+export function selectedResponseExpressions(world: Pick<WorldState, 'profile'>, supported: boolean) {
+  const rules = selectedOccurrenceRules(world).response.expression;
+  return { expressionVerbs: supported ? Object.keys(rules.verbs) : [],
+    expressionGuidance: supported ? rules.guidance : rules.unsupportedGuidance };
 }
 export function selectedSightingNarration(
   world: WorldState,
@@ -486,7 +502,8 @@ export function selectedCreationProfileForWorld(world: {
  * never executable TypeScript policy functions or a reconstructed world.
  */
 export function selectedNativeLawDefinitions(
-  world: Pick<WorldState, 'profile' | 'timePolicy' | 'itemDefinitions'>,
+  world: Pick<WorldState, 'profile' | 'timePolicy' | 'itemDefinitions'> &
+    ActivityRequestDefinitionScope,
 ) {
   selectedCreationProfileForWorld(world);
   return {
@@ -494,7 +511,16 @@ export function selectedNativeLawDefinitions(
     accountRules: BASE_ACCOUNT_RULES,
     nameRules: BASE_PERSONAL_NAME_RULES,
     recognition: { ...BASE_PERCEPTION_POLICY, voiceFeatureFamily: BASE_VOICE_FEATURE_FAMILY },
-    occurrenceRules: BASE_OCCURRENCE_RULES,
+    occurrenceRules: {
+      ...BASE_OCCURRENCE_RULES,
+      response: {
+        ...BASE_OCCURRENCE_RULES.response,
+        offers: {
+          ...BASE_OCCURRENCE_RULES.response.offers,
+          activityChoices: nativeActivityChoiceHosts(world),
+        },
+      },
+    },
     socialDefaults: BASE_SOCIAL_POLICY,
     speechAction: BASE_SPEECH_ACTION,
     ordinaryActions: BASE_ORDINARY_ACTION_RULES,
@@ -507,6 +533,79 @@ export function selectedNativeLawDefinitions(
     movement: selectedMovementRules(world),
     timeRules: selectedTimeRules(world),
   };
+}
+
+/** A finite projection of the actual selected host/request catalogue. This is
+ * immutable installed world data, never a per-response permission callback. */
+interface NativeActivityChoiceHost {
+  pin: DefinitionPin;
+  kind: 'camp' | 'outings' | 'work' | 'reservoir';
+  ownSupplyRequest: string | null;
+  travelRequest: string | null;
+  combatRequest: string | null;
+  hands: { requestId: string; label: string } | null;
+  maximumVisible: number;
+  visibleWarning: string | null;
+  ownLabel: string | null;
+}
+function nativeActivityChoiceHosts(world: ActivityRequestDefinitionScope) {
+  const supported = new Set(activityRequestDescriptors(world).map(({ id }) => id));
+  return world.moduleManifest.activityHosts.flatMap<NativeActivityChoiceHost>((pin) => {
+    const host = trustedActivityHost(pin);
+    if (!host) throw new Error('The selected native activity host is unavailable.');
+    if (
+      !host.requestChoices ||
+      !activityHostRequests(world, host).some(({ id }) => supported.has(id))
+    )
+      return [];
+    const common = {
+      pin,
+      ownSupplyRequest: null,
+      travelRequest: null,
+      combatRequest: null,
+      hands: null,
+      maximumVisible: 32,
+      visibleWarning: null,
+      ownLabel: null,
+    };
+    if (host === BASE_CAMP_ACTIVITY_HOST) {
+      const id = host.definition.requests?.[1]?.id;
+      if (!id) throw new Error('The selected camp supply request is unavailable.');
+      return [
+        {
+          ...common,
+          kind: 'camp' as const,
+          ownSupplyRequest: supported.has(id) ? id : null,
+          ...BASE_CAMP_CHOICE_READ,
+        },
+      ];
+    }
+    if (host === BASE_OUTING_HOST)
+      return [
+        {
+          ...common,
+          kind: 'outings' as const,
+          travelRequest: supported.has(BASE_OUTING.family) ? BASE_OUTING.family : null,
+          combatRequest: supported.has(BASE_COMBAT_HELP.family) ? BASE_COMBAT_HELP.family : null,
+        },
+      ];
+    if (host === BASE_WORK_ACTIVITY_HOST) {
+      const work = world.workBatchPolicy,
+        id = work?.presentation?.gather.id;
+      return [
+        {
+          ...common,
+          kind: 'work' as const,
+          hands: work && id && supported.has(id) ? { requestId: id, label: work.handsLabel } : null,
+        },
+      ];
+    }
+    if (host === RESERVOIR_ACTIVITY_HOST)
+      return [
+        { ...common, kind: 'reservoir' as const, visibleWarning: RESERVOIR_CHOICE_VISIBLE_WARNING },
+      ];
+    throw new Error('The selected native activity choice family is not implemented.');
+  });
 }
 
 /** Creator recall controls use the selected world's account vocabulary. */

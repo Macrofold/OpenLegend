@@ -40,6 +40,7 @@ mod rates;
 mod routes;
 mod save;
 mod semantic;
+pub(crate) use semantic::occupied_purpose;
 mod sensing;
 mod status;
 mod temporal;

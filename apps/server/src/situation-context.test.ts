@@ -1,4 +1,5 @@
 import { attentionCandidates } from '@open-legend/domain';
+import { BASE_RESPONSE_RULES } from '../../../packages/domain/src/worlds/base/response-rules.js';
 import { routineSensePolicy } from '../../../packages/domain/src/perception.js';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -78,7 +79,7 @@ describe('bounded received situation', () => {
     const shape = boundResponseSchema(
       ['self'],
       [],
-      { speech: false, expressions: false },
+      { speech: false, expressions: false, expressionVerbs: [] },
       [],
       [],
       [],
@@ -152,7 +153,11 @@ describe('bounded received situation', () => {
       envelope({ ...choice, invocation: { ...invocation, frame: 'actor' } }),
     );
     expect(current.operations[0]!.act!.invocation!.frame).toBe('actor');
-    const unsupported = boundResponseSchema(['self'], [], { speech: false, expressions: false });
+    const unsupported = boundResponseSchema(['self'], [], {
+      speech: false,
+      expressions: false,
+      expressionVerbs: [],
+    });
     expect(unsupported.safeParse(envelope(choice)).success).toBe(false);
     const speech = {
       kind: 'speech' as const,
@@ -237,6 +242,7 @@ describe('bounded received situation', () => {
     const memory = 'Earlier I reached a hearth. A lit fire can cook food.';
     const context = {
       receivedSituation: captured.packet,
+      expressionGuidance: BASE_RESPONSE_RULES.expression.guidance,
       recall: [memory],
       surroundings: [],
       contacts: [],
@@ -543,7 +549,11 @@ describe('bounded received situation', () => {
   });
   it('uses supported anyOf branches in the strict provider query envelope', () => {
     const schema = z.toJSONSchema(
-      boundResponseSchema(['actor'], [], { speech: true, expressions: true }).extend({
+      boundResponseSchema(['actor'], [], {
+        speech: true,
+        expressions: true,
+        expressionVerbs: Object.keys(BASE_RESPONSE_RULES.expression.verbs),
+      }).extend({
         queries: z.array(situationQuerySchema).max(4).nullable(),
       }),
       { target: 'draft-7' },

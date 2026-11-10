@@ -462,6 +462,21 @@ fn acquired_member_eligible(
     if observation.facets.iter().any(|facet|!facet_dependencies_unrevoked(privacy,&facet.value,facet.support.as_ref())||!association_unrevoked(privacy,&facet.value,&observation.id,facet.ordinal,meaning)||matches!(&facet.value,SensoryFacet::Claim {support_aliases,..} if support_aliases.iter().flatten().any(|alias|!unrevoked(privacy,&alias.id)))) {return false;}
     true
 }
+/// Retained accounts own their originals independently of current contacts.
+/// Explicit proof and association revocations still fence that exact original.
+pub(crate) fn retained_observation_eligible(
+    experience: &ExperienceState,
+    actor: &str,
+    original: &ObservationContribution,
+    meaning: &dyn TemporalValueMeaning,
+) -> bool {
+    original.observer.actor_id == actor
+        && acquired_member_eligible(
+            original,
+            experience.actor(actor).map(|actor| &actor.privacy),
+            meaning,
+        )
+}
 fn current_member_eligible(
     facet: &CapturedCurrentFacet,
     privacy: Option<&ActorPrivacy>,

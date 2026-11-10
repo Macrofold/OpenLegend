@@ -56,6 +56,29 @@ pub(super) fn receipt_details_current(
             }
         }
     }
+    let cut = &bindings.input.reads.original.perception.evidence;
+    for selected in situation.observation_references.values() {
+        let eligible = match selected {
+            ResponseObservation::Acquired(index) => evidence_cut_member_eligible(
+                &core.state.experience,
+                &core.state.physical.entities,
+                cut,
+                EvidenceCutMember::Acquired(*index),
+                &law,
+            ),
+            ResponseObservation::Personal(original) => {
+                crate::experience::retained_observation_eligible(
+                    &core.state.experience,
+                    actor,
+                    original,
+                    &law,
+                )
+            }
+        };
+        if !eligible {
+            return Ok(false);
+        }
+    }
     Ok(true)
 }
 fn retained(
@@ -258,17 +281,30 @@ pub(super) fn remember(
                     return Ok(false);
                 };
                 retained(core, &record.capsule().receipt.locator, budget)?
-            } else if let Some(index) = situation.observation_references.get(reference) {
-                if !evidence_cut_member_eligible(
-                    &core.state.experience,
-                    &core.state.physical.entities,
-                    cut,
-                    EvidenceCutMember::Acquired(*index),
-                    &law,
-                ) {
+            } else if let Some(selected) = situation.observation_references.get(reference) {
+                let eligible = match selected {
+                    ResponseObservation::Acquired(index) => evidence_cut_member_eligible(
+                        &core.state.experience,
+                        &core.state.physical.entities,
+                        cut,
+                        EvidenceCutMember::Acquired(*index),
+                        &law,
+                    ),
+                    ResponseObservation::Personal(original) => {
+                        crate::experience::retained_observation_eligible(
+                            &core.state.experience,
+                            actor,
+                            original,
+                            &law,
+                        )
+                    }
+                };
+                if !eligible {
                     return Ok(false);
                 }
-                let original = &cut.cut().acquired[*index];
+                let original = selected
+                    .observation(cut.cut())
+                    .ok_or(ExecutionError::Invariant)?;
                 if original.observer.actor_id != actor {
                     return Ok(false);
                 }

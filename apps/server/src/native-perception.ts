@@ -22,6 +22,7 @@ export interface NativeBodyBinding {
   readonly sourceId: string;
   readonly physicalLife: number | null;
   readonly leaseId: string;
+  readonly episode?: string;
   readonly name: Named;
   readonly actor: boolean;
   readonly talkRequiresAi: boolean;

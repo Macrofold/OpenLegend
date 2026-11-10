@@ -1,10 +1,19 @@
-import { memorySourceProof, type MemoryRepository, type MemoryScope } from './memory-repository.js';
+import {
+  appraisalContextFromRead,
+  appraisalDecisionSchema,
+  appraisalValueSchema,
+} from './appraisal-context-view.js';
+import {
+  APPRAISAL_SOURCE_BINDINGS,
+  memorySourceProof,
+  type MemoryRepository,
+  type MemoryScope,
+} from './memory-repository.js';
 import { captureExperienceContext } from './experience-context.js';
 import { entityGet } from '@open-legend/domain';
 import {
   activeAppraisals,
   canonicalJson,
-  experienceEntryKey,
   scopedAppraisals,
   appraisalById,
   appraisalDefinition,
@@ -19,15 +28,8 @@ import {
 } from '@open-legend/domain';
 import type { WorldService } from './world-service.js';
 import type { DecisionAppraisalProposal, AppraisalProposal } from './cognition-contracts.js';
-import { decisionAppraisalSchema } from './cognition-contracts.js';
-import { z } from 'zod';
 import { formatDecisionFeelings } from './decision-feelings.js';
-import {
-  experienceForModel,
-  experienceModelBindings,
-  type SharedModelExperience,
-  type ModelSpatialFrame,
-} from './perceived-context.js';
+import { type SharedModelExperience, type ModelSpatialFrame } from './perceived-context.js';
 
 interface AppraisalPreparation {
   requiredFeelings?: readonly AppraisalScope[];
@@ -99,13 +101,13 @@ async function bindAppraisals(
   const scope = head && { worldId: state.worldId, actorId, generation: head.generation };
   const repository = service.store.memories;
   const requested = [...new Set(evidenceIds)];
-  if (completeSources && requested.length > 48)
+  if (completeSources && requested.length > APPRAISAL_SOURCE_BINDINGS)
     throw new Error('The complete appraisal source set exceeds its admitted work limit.');
   const selected =
     scope && repository
       ? await repository.appraisalSources(
           scope,
-          completeSources ? requested : requested.slice(0, 48),
+          completeSources ? requested : requested.slice(0, APPRAISAL_SOURCE_BINDINGS),
         )
       : [];
   if (
@@ -274,8 +276,6 @@ async function finishAppraisalBindings(
     (await sourceCurrent());
   if (!(await sourcesCurrent()))
     throw new Error('Appraisal sources changed during context preparation.');
-  const subjectRef = (id: string | null) =>
-    id === null ? null : (Object.keys(subjects).find((key) => subjects[key] === id) ?? null);
   const bindings: AppraisalBindings = {
     sources: [...sources.values()],
     subjects: Object.values(subjects),
@@ -300,52 +300,22 @@ async function finishAppraisalBindings(
   const contextForFrame = (
     frame = preparation.frame,
     sharedExperiences = preparation.sharedExperiences,
-  ) => ({
-    ...(sharedExperiences?.size
-      ? {
-          sourceReferences:
-            'An experience.reference is the handle of an exact complete experience record in this same request. Read that record for the cause; each cause handle keeps its own native binding.',
-        }
-      : {}),
-    feelings: [...records].map(([handle, record]) => ({
-      handle,
-      revision: record.revision,
-      label: record.feeling,
-      subject: subjectRef(record.targetId),
-      value: record.value,
-      lifetime: record.lifetime,
-      coverage: record.coverage,
-      editable: (() => {
-        const definition = recordDefinitions.get(handle);
-        return !!definition && permitted(definition);
-      })(),
-    })),
-    policies: [...definitions].map(([handle, definition]) => ({
-      handle,
-      label: definition.label,
-      value: definition.value,
-      lifetime: definition.lifetime.kind,
-    })),
-    sources: [...sources].map(([handle, source], index) => {
-      const entry = selected[index]!,
-        shared = sharedExperiences?.get(experienceEntryKey(entry.entry));
-      // This request-owned pool already captured the observer's permitted
-      // meaning and frame. A later label/pose must not rebuild that old cut.
-      // Source/privacy guards still validate the exact native proof at dispatch.
-      const same = shared?.revision === entry.revision;
-      return {
-        handle,
-        experience: same
-          ? { reference: shared.experience.handle }
-          : experienceForModel(
-              entry.entry,
-              experienceModelBindings(presentation, actorId, entry.entry, handle, frame),
-            ),
-        coverage: source.coverage,
-        subjects: source.subjectIds.flatMap((id) => (subjectRef(id) ? [subjectRef(id)] : [])),
-      };
-    }),
-  });
+  ) =>
+    appraisalContextFromRead(
+      {
+        actorId,
+        subjects,
+        records,
+        recordDefinitions,
+        definitions,
+        sources,
+        selected,
+        presentation,
+        purpose,
+      },
+      frame,
+      sharedExperiences,
+    );
   return {
     current,
     sourceCurrent,
@@ -354,16 +324,7 @@ async function finishAppraisalBindings(
     records,
     bindings,
     valueSchema(handle: string) {
-      const definition = definitions.get(handle) ?? recordDefinitions.get(handle);
-      if (!definition) throw new Error('The supplied appraisal definition is unavailable.');
-      const variants = decisionAppraisalSchema.options[0].shape.value.options;
-      // Match each installed feeling's kind and scale before asking the model.
-      // Native admission still owns whether the proposal is warranted and current.
-      return definition.value.kind === 'scaled'
-        ? variants[1].extend({
-            value: z.number().finite().min(definition.value.min).max(definition.value.max),
-          })
-        : variants[0];
+      return appraisalValueSchema(definitions.get(handle) ?? recordDefinitions.get(handle));
     },
     context: contextForFrame(),
     contextForFrame,
@@ -480,36 +441,7 @@ export async function bindDecisionAppraisals(
   );
   return {
     ...bound,
-    schema: (() => {
-      const policies = bound.context.policies.map((policy) => policy.handle);
-      const causes = bound.context.sources.map((source) => source.handle);
-      const feelings = bound.context.feelings
-        .filter((feeling) => feeling.editable)
-        .map((feeling) => feeling.handle);
-      const variants: z.ZodType<DecisionAppraisalProposal>[] = [];
-      if (causes.length) {
-        for (const policy of policies)
-          variants.push(
-            decisionAppraisalSchema.options[0].extend({
-              definition: z.literal(policy),
-              source: z.enum(causes),
-              target: z.enum(Object.keys(subjects)).nullable(),
-              value: bound.valueSchema(policy),
-            }),
-          );
-        for (const feeling of feelings)
-          variants.push(
-            decisionAppraisalSchema.options[1].extend({
-              appraisal: z.literal(feeling),
-              source: z.enum(causes),
-              value: bound.valueSchema(feeling),
-            }),
-          );
-      }
-      if (feelings.length)
-        variants.push(decisionAppraisalSchema.options[2].extend({ appraisal: z.enum(feelings) }));
-      return variants.length ? z.union(variants) : undefined;
-    })(),
+    schema: appraisalDecisionSchema(bound.context, subjects, bound.valueSchema),
     resolveDecision(proposals: DecisionAppraisalProposal[]) {
       return bound.resolve(
         proposals.map((proposal) => {

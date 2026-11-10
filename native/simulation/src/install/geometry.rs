@@ -8,6 +8,7 @@ use crate::geometry::{
     WalkableSurface,
 };
 use crate::host::{ByteBudget, ByteReservation};
+use crate::state::Bounds;
 use serde_json::{Map, Value};
 use std::{mem::size_of, sync::Arc};
 
@@ -67,6 +68,8 @@ fn list(
     field: &str,
     present: bool,
     member_id: Option<&str>,
+    typed_item_bytes: usize,
+    nested_item_bytes: usize,
     construction: &mut ByteReservation,
     budget: &ByteBudget,
 ) -> Result<Vec<Value>, InstallError> {
@@ -77,7 +80,14 @@ fn list(
                 .reserve(
                     rows.rows
                         .len()
-                        .checked_mul(size_of::<Value>())
+                        // The JSON vector survives as an IntoIter while the
+                        // actual typed vector grows during final conversion.
+                        .checked_mul(
+                            typed_item_bytes
+                                .checked_mul(4)
+                                .and_then(|n| n.checked_add(size_of::<Value>()))
+                                .ok_or(InstallError::Capacity)?,
+                        )
                         .ok_or(InstallError::Capacity)?,
                 )
                 .map_err(|_| InstallError::Capacity)?,
@@ -100,7 +110,17 @@ fn list(
         if row.position != at as u64 || row.slot != at.to_string() || !row.extra.is_empty() {
             return Err(InstallError::RowPlacement);
         }
-        fund_body(&row.payload, construction, budget)?;
+        // Split rows contain fixed DTOs, not another terrain dictionary or
+        // whole map. Their intermediate JSON still owns real object buckets;
+        // nested typed arrays (blocker boxes, tile strings) use their own layout.
+        construction
+            .merge(reserve_typed_parse::<Value>(
+                &row.payload,
+                nested_item_bytes.max(size_of::<Value>()),
+                Some(size_of::<(usize, String, Value)>()),
+                budget,
+            )?)
+            .map_err(|_| InstallError::Capacity)?;
         let value: Value =
             serde_json::from_str(&row.payload).map_err(|_| InstallError::CurrentFormat)?;
         let key = match member_id {
@@ -155,6 +175,8 @@ pub(crate) fn install_geometry(
             "tiles",
             true,
             None,
+            size_of::<Vec<String>>(),
+            size_of::<String>(),
             &mut construction,
             budget,
         )?),
@@ -168,11 +190,29 @@ pub(crate) fn install_geometry(
     let mut spatial = object(
         serde_json::from_str(&spatial_row.payload).map_err(|_| InstallError::CurrentFormat)?,
     )?;
-    for (field, table, optional) in [
-        ("surfaces", "sim_surfaces", false),
-        ("blockers", "sim_blockers", false),
-        ("levels", "sim_levels", false),
-        ("scenery", "sim_scenery", true),
+    for (field, table, optional, item_bytes, nested_bytes) in [
+        (
+            "surfaces",
+            "sim_surfaces",
+            false,
+            size_of::<WalkableSurface>(),
+            0,
+        ),
+        (
+            "blockers",
+            "sim_blockers",
+            false,
+            size_of::<SpatialBlocker>(),
+            size_of::<Bounds>(),
+        ),
+        ("levels", "sim_levels", false, size_of::<SpatialLevel>(), 0),
+        (
+            "scenery",
+            "sim_scenery",
+            true,
+            size_of::<SceneryInstance>(),
+            0,
+        ),
     ] {
         let present = array_marker(&mut spatial, field, optional)?;
         let values = list(
@@ -182,6 +222,8 @@ pub(crate) fn install_geometry(
             field,
             present,
             Some("id"),
+            item_bytes,
+            nested_bytes,
             &mut construction,
             budget,
         )?;

@@ -629,7 +629,17 @@ async function initializeGameServer(
     presentationRelease: assetIndex.release,
   });
   onFailure(() => service.releaseHostWork());
-  const autosaves = new Autosaves(service);
+  const autosaves = new Autosaves({
+    get worldId() {
+      return service.world.id;
+    },
+    get paused() {
+      return service.paused;
+    },
+    store: service.store,
+    createAutosave: () => service.createAutosave(),
+    notify: () => service.notify(),
+  });
   onFailure(() => autosaves.close());
   await service.ready;
   await autosaves.initialize();

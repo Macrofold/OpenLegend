@@ -1,4 +1,12 @@
-import { entityGet, entityHas } from '@open-legend/domain';
+import {
+  cleanTypedActionText as clean,
+  parseFreeTypedActionClause,
+  type FreeTypedActionSyntax,
+  typedActionFulfillment,
+  typedInvocationRefusal,
+  freeTypedActionDescription,
+} from './typed-action-syntax.js';
+import { entityGet, entityHas, INVOCATION_LIMITS } from '@open-legend/domain';
 import { resolveContactTarget, ContactReferenceError } from './public-contact-references.js';
 import {
   activityCommandFields,
@@ -115,14 +123,6 @@ const NUMBERS: Record<string, number> = {
   nine: 9,
   ten: 10,
 };
-const clean = (text: string) =>
-  text
-    .normalize('NFKC')
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/gu, ' ')
-    .replace(/[.!]+$/u, '')
-    .trim();
 const bare = (name: string) =>
   canonicalName(clean(name)).replace(/^(?:my|this|that|these|those|some|your)\s+/u, '');
 /** Tolerate simple English plurals; this is matching, not semantic interpretation. */
@@ -405,17 +405,9 @@ function bind(scope: Scope, fields: Partial<ActionInvocation>, depends: string[]
     invocation(fields),
     [scope.actorId, ...scope.visible.map((e) => e.id)],
   );
-  return 'ok' in bound
-    ? refuse(
-        ['ambiguous-destination', 'invalid-invocation'].includes(bound.code)
-          ? 'needs_clarification'
-          : 'blocked',
-        bound.code === 'invalid-invocation'
-          ? `That request is outside what moving or following allows (distance ${FOLLOW_RULES.minimumDistance}–${FOLLOW_RULES.maximumDistance} m, offsets up to 50 m).`
-          : bound.message,
-        depends,
-      )
-    : bound;
+  if (!('ok' in bound)) return bound;
+  const rejected = typedInvocationRefusal(bound, { minimumDistance: FOLLOW_RULES.minimumDistance, maximumDistance: FOLLOW_RULES.maximumDistance, offset: INVOCATION_LIMITS.offset });
+  return refuse(rejected.category, rejected.reason, depends);
 }
 const at = (point: { x: number; z: number }) =>
   `x=${Number(point.x.toFixed(1))}, z=${Number(point.z.toFixed(1))}`;
@@ -508,45 +500,20 @@ function follow(scope: Scope, rest: string): Outcome | undefined {
   };
 }
 
-const DIRECTIONS: Record<string, { x: number; z: number }> = {
-  forward: { x: 0, z: 1 },
-  forwards: { x: 0, z: 1 },
-  ahead: { x: 0, z: 1 },
-  back: { x: 0, z: -1 },
-  backward: { x: 0, z: -1 },
-  backwards: { x: 0, z: -1 },
-  left: { x: -1, z: 0 },
-  right: { x: 1, z: 0 },
-};
-/** "move 3 m left and 2 forward": offsets in the actor's own facing, never the camera's. */
-function offset(scope: Scope, text: string): Outcome | undefined {
-  const part =
-    '(?:(\\d+(?:\\.\\d+)?) ?(?:m|metres|meters|steps|units)? )?(forwards?|ahead|backwards?|back|left|right)';
-  const match = new RegExp(
-    `^(?:go|move|walk|step|run) ${part}(?: (?:and|then) ${part})?$`,
-    'u',
-  ).exec(text);
-  if (!match) return undefined;
-  const stepping = text.startsWith('step');
-  let x = 0,
-    z = 0;
-  for (const [amount, direction] of [
-    [match[1], match[2]],
-    [match[3], match[4]],
-  ] as const) {
-    if (!direction) continue;
-    if (amount === undefined && !stepping)
-      return refuse('needs_clarification', 'Say how far, for example "move 3 m left".');
-    const metres = amount === undefined ? 1 : Number(amount);
-    x += DIRECTIONS[direction]!.x * metres;
-    z += DIRECTIONS[direction]!.z * metres;
-  }
+/** An actor-frame offset is bound by the real movement owner. */
+function offset(
+  scope: Scope,
+  syntax: Extract<FreeTypedActionSyntax, { kind: 'offset' | 'distance-needed' }>,
+): Outcome {
+  if (syntax.kind === 'distance-needed')
+    return refuse('needs_clarification', 'Say how far, for example "move 3 m left".');
+  const { x, z } = syntax;
   const bound = bind(scope, { family: 'move', frame: 'actor', x, z });
   if ('refuse' in bound) return bound;
   const destination = (bound as Extract<Command, { type: 'move' }>).destination;
   return {
     commands: [bound as Command],
-    description: `Walk ${[x ? `${Math.abs(x)} m ${x > 0 ? 'right' : 'left'}` : '', z ? `${Math.abs(z)} m ${z > 0 ? 'forward' : 'back'}` : ''].filter(Boolean).join(' and ')} of your current facing, to ${at(destination)}.`,
+    description: freeTypedActionDescription({ kind: 'offset', x, z, destination }),
   };
 }
 
@@ -1120,11 +1087,8 @@ function notAnAction(text: string): string | undefined {
 /** One step of a typed request; sequences reuse it per clause with a shared builder. */
 function parseOne(scope: Scope, text: string): Outcome | undefined {
   const slots = scope.request.slots;
-  const stopping =
-    /^(?:stop|cancel|halt)(?: (?:it|that|now|everything|what (?:i'?m|i am|you'?re) doing|working|(following|gathering|moving|walking)))?$/u.exec(
-      text,
-    );
-  if (stopping) {
+  const syntax = parseFreeTypedActionClause(text);
+  if (syntax?.kind === 'stop') {
     // A named activity must be the current one; "stop following" never ends a craft.
     const named = {
       following: ['follow'],
@@ -1133,37 +1097,31 @@ function parseOne(scope: Scope, text: string): Outcome | undefined {
       walking: ['move'],
     };
     const current = entityGet(scope.world.entities, scope.actorId)?.actor?.action?.type;
-    if (stopping[1] && !named[stopping[1] as keyof typeof named].includes(current ?? ''))
+    if (syntax.activity && !named[syntax.activity].includes(current ?? ''))
       return refuse(
         'needs_clarification',
-        `You are not ${stopping[1]} right now; nothing was stopped.`,
+        `You are not ${syntax.activity} right now; nothing was stopped.`,
       );
     return {
       commands: [{ id: scope.localId, actorId: scope.actorId, type: 'cancel' }],
-      description: 'Stop current work; materials already used stay spent.',
+      description: freeTypedActionDescription({ kind: 'stop' }),
     };
   }
-  const number = '(-?\\d+(?:\\.\\d+)?)';
-  const point = new RegExp(
-    `^(?:go|move|walk|run)(?: to)?\\s+(?:x\\s*=\\s*)?${number}\\s*,\\s*(?:z\\s*=\\s*)?${number}(?:\\s+(?:on|surface)\\s+([a-z0-9_:-]+))?$`,
-    'u',
-  ).exec(text);
-  if (point) {
+  if (syntax?.kind === 'point') {
     const bound = bind(scope, {
       family: 'move',
-      x: Number(point[1]),
-      z: Number(point[2]),
-      surfaceId: point[3] ?? null,
+      x: syntax.x,
+      z: syntax.z,
+      surfaceId: syntax.surfaceId,
     });
     if ('refuse' in bound) return bound;
     const destination = (bound as Extract<Command, { type: 'move' }>).destination;
     return {
       commands: [bound as Command],
-      description: `Walk to ${at(destination)} on ${destination.surfaceId}.`,
+      description: freeTypedActionDescription({ kind: 'point', destination }),
     };
   }
-  const moved = offset(scope, text);
-  if (moved) return moved;
+  if (syntax?.kind === 'offset' || syntax?.kind === 'distance-needed') return offset(scope, syntax);
   // Near-substitutes the world offers for requests it has no action for (tending a fire).
   for (const revision of scope.vocabulary.revisions) {
     const words = (list: readonly string[]) =>
@@ -1507,24 +1465,7 @@ export function typedAction(
       };
   }
   const unmet = unmetSlots(world, commands, request.slots);
-  const omitted = [
-    ...(result.omitted ?? []),
-    ...unmet.map((requirement) => ({
-      requirement,
-      reason: 'The typed native action cannot keep this requested detail.',
-    })),
-  ];
-  const confirm = unmet.length > 0 || !!result.confirm;
-  const fulfillment: ActionFulfillment = {
-    requested: request.text,
-    executableDescription: result.description.slice(0, 1000),
-    verdict: confirm ? 'confirm' : omitted.length ? 'partial' : 'exact',
-    supported: [result.description.slice(0, 500)],
-    omitted: omitted.slice(0, 8),
-    reason: confirm
-      ? 'Accept only the shown native action; it does not keep every requested detail.'
-      : 'Complete typed form bound without inference.',
-  };
+  const fulfillment = typedActionFulfillment(request.text, result.description, unmet, result.omitted, result.confirm);
   return { ...base, commands, fulfillment };
 }
 

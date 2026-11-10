@@ -1,3 +1,4 @@
+import { sourceMacrofoldHost } from './source-macrofold-host.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { testRepository, readConfig } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld } from '../../../tests/fixtures/service.js';
@@ -95,7 +96,7 @@ describe('protected authoring admission through the actual server and PostgreSQL
       await putIntegration(key, value);
     });
     await enterLocalWorld(service);
-    const backend = new MacrofoldBackend(service);
+    const backend = new MacrofoldBackend(sourceMacrofoldHost(service));
     const beginRun = vi.fn(async () => {}),
       progress = vi.fn(async () => {});
     try {

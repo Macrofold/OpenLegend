@@ -1,8 +1,18 @@
-import { selectedRecognitionSupportReader } from '@open-legend/domain';
+import { selectedRecognitionSupportReader, type TemporalReceiptLocator } from '@open-legend/domain';
 import type { NativeNpcCapture } from './native-npc-capture.js';
 import type { NativeInstalledDefinitions } from './native-definition-capture.js';
 import type { LiveReadCuts } from './live-read-overlay.js';
 import type { IndexedTemporalHistoryReadContext } from './temporal-storage.js';
+
+export function nativeReceiptLocator(receipt: TemporalReceiptLocator): TemporalReceiptLocator {
+  return {
+    actorId: receipt.actorId,
+    physicalLife: receipt.physicalLife,
+    epoch: receipt.epoch,
+    batchOrder: receipt.batchOrder,
+    entryIndex: receipt.entryIndex,
+  };
+}
 
 /** Exact actor-private query input for the existing indexed history consumer.
  * Call under nativeScopedReadCut's real accepted overlay, including its temporal

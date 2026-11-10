@@ -42,6 +42,8 @@ heap_record!(ThoughtRule {
     importance
 });
 heap_record!(ExpressionRules {
+    guidance,
+    unsupported_guidance,
     event_type,
     body_plans,
     unsupported_body,

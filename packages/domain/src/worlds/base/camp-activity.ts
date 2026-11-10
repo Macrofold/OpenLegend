@@ -24,6 +24,7 @@ import { worldPosition } from '../../spatial-state.js';
 import { observerDescription } from './knowledge.js';
 import type { Command, WorldState, Outcome } from '../../types.js';
 import { isSafeRecordId, getOwn } from '../../records.js';
+import { BASE_CAMP_CHOICE_READ, baseCampOwnSupplyChoice } from './activity-choice-format.js';
 
 const entity = (label: string, source: 'spatial' | 'storage') => ({
   type: 'entity' as const,
@@ -536,17 +537,7 @@ export const BASE_CAMP_ACTIVITY_HOST: ActivityHostDescriptor = {
   requestChoices(world, actorId, prepared) {
     const observed = prepared ?? observeActor(world, actorId, { includeMemories: false });
     if (!observed) return { choices: [], warnings: ['Your character is unavailable.'] };
-    const choices: ActivityRequestChoice[] = [
-      {
-        id: actorId,
-        label: 'My accessible possessions',
-        kind: 'entity',
-        roles: ['sourceId'],
-        requestIds: [requests[1]!.id],
-        distance: 0,
-        accessible: true,
-      },
-    ];
+    const choices: ActivityRequestChoice[] = [baseCampOwnSupplyChoice(actorId, requests[1]!.id)];
     const definitions = new Set<string>(),
       warnings: string[] = [];
     const addDefinition = (definitionId: string) => {
@@ -562,7 +553,7 @@ export const BASE_CAMP_ACTIVITY_HOST: ActivityHostDescriptor = {
       });
     };
     const position = worldPosition(observed.actor);
-    for (const target of observed.visibleEntities.slice(0, 32)) {
+    for (const target of observed.visibleEntities.slice(0, BASE_CAMP_CHOICE_READ.maximumVisible)) {
       const roles =
         target.resource && isFuel(world.itemDefinitions[target.resource.definitionId]!)
           ? ['sourceId']
@@ -629,8 +620,8 @@ export const BASE_CAMP_ACTIVITY_HOST: ActivityHostDescriptor = {
           'The selected cache has further inspection pages; this page is not a complete stock count.',
         );
     }
-    if (observed.visibleEntities.length > 32)
-      warnings.push('Some visible choices are omitted. Select or inspect a narrower target.');
+    if (observed.visibleEntities.length > BASE_CAMP_CHOICE_READ.maximumVisible)
+      warnings.push(BASE_CAMP_CHOICE_READ.visibleWarning);
     return { choices, warnings };
   },
 };

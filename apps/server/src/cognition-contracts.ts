@@ -86,7 +86,7 @@ export const operationSchema = z
         slots: intentSlotsSchema.nullable().optional(),
         mode: z.enum(['enqueue', 'replace', 'interrupt']),
         actionId: z.string().min(1).max(120).nullable(),
-        verb: z.enum(['nod', 'smile', 'frown', 'wave', 'shrug', 'shake_head', 'slap']).nullable(),
+        verb: z.string().min(1).max(120).nullable(),
         targetEntityId: z.string().min(1).max(120).nullable(),
         description: z.string().trim().min(1).max(500).nullable(),
       })
@@ -299,7 +299,12 @@ export const LEVEL_LIMITS = {
 export function boundResponseSchema(
   entityIds: string[],
   actionIds: string[],
-  capabilities: { speech: boolean; expressions: boolean; proposals?: boolean },
+  capabilities: {
+    speech: boolean;
+    expressions: boolean;
+    expressionVerbs: readonly string[];
+    proposals?: boolean;
+  },
   knowledgeReferences: string[] = [],
   /** This world's stopping-time names; the model may choose only these. */
   namedTimes: string[] = [],
@@ -419,7 +424,10 @@ export function boundResponseSchema(
             : capabilities.expressions
               ? operationSchema.shape.act.unwrap().shape.kind
               : z.enum(['known', 'proposal', 'invoke']),
-        verb: capabilities.expressions ? operationSchema.shape.act.unwrap().shape.verb : z.null(),
+        verb:
+          capabilities.expressions && capabilities.expressionVerbs.length
+            ? z.enum([...capabilities.expressionVerbs] as [string, ...string[]]).nullable()
+            : z.null(),
       })
       .nullable(),
     think: operationSchema.shape.think

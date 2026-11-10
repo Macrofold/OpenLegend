@@ -2,7 +2,13 @@ import { createServer, type ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { NativeHost } from '@open-legend/native-simulation';
 import { z } from 'zod';
-import { AuthorityError, isCharacterless, scopeKey, type RequestScope } from './authority.js';
+import {
+  AuthorityError,
+  isCharacterless,
+  scopeKey,
+  type RequestScope,
+  type Capability,
+} from './authority.js';
 import { OpenIdAuthentication, browserLoginToken } from './authentication.js';
 import type { AppConfig } from './config.js';
 import { PostgresDatabase } from './postgres.js';
@@ -16,6 +22,9 @@ import { readHttpJson } from './http-json.js';
 import { gameCookie, gameHttpLocation, readGameCookie, writeJson } from './http-boundary.js';
 import { OverloadError } from './work-lane.js';
 import { SHUTDOWN_DEADLINE_MS, type ShutdownReport } from './http.js';
+import { worldInputSchema } from './world-input-schema.js';
+import { Autosaves } from './autosaves.js';
+import { GameSaveError } from './game-saves.js';
 
 const clientId = z
   .string()
@@ -52,6 +61,7 @@ export async function createNativeGameServer(options: {
   readonly store?: SqlGameRepository;
   readonly clientAssets?: ClientAssets;
   readonly now?: () => number;
+  readonly tick?: boolean;
 }) {
   const { config } = options;
   const now = options.now ?? Date.now;
@@ -66,15 +76,23 @@ export async function createNativeGameServer(options: {
   let player: NativePlayerHttp | undefined;
   let assets: ClientAssets | undefined;
   try {
-    service = await NativeWorldService.open({ host, store, config, now });
+    const assetIndex = await readAssetIndex();
+    service = await NativeWorldService.open({
+      host,
+      store,
+      config,
+      now,
+      presentationRelease: assetIndex.release,
+    });
     const current = service;
+    const autosaves = new Autosaves(current);
+    await autosaves.initialize();
     player = new NativePlayerHttp(current, {
       executionSource: 'live-model',
       jevConfigured: !!(config.macrofoldKey || config.jevKey),
       llmConfigured: !!(config.macrofoldKey || config.llmKey),
     });
     const views = player;
-    const assetIndex = await readAssetIndex();
     assets =
       options.clientAssets ??
       (await createClientAssets(options.production, {
@@ -106,6 +124,58 @@ export async function createNativeGameServer(options: {
     let pendingStreams = 0;
     const disconnects = new Set<Promise<void>>();
     let shutdown: Promise<ShutdownReport> | undefined;
+    let previous = performance.now(),
+      previousCallback = previous,
+      suspendedSeconds = 0;
+    let activeTick: Promise<void> | undefined,
+      clockContinuation: ReturnType<typeof setImmediate> | undefined;
+    const wakeClock = () => {
+      if (stopping || activeTick) return;
+      if (clockContinuation) clearImmediate(clockContinuation);
+      clockContinuation = undefined;
+      const offeredUntil = performance.now(),
+        elapsed = (offeredUntil - Math.max(previous, current.clockStartedAt)) / 1000;
+      previous = offeredUntil;
+      const suspended = suspendedSeconds;
+      suspendedSeconds = 0;
+      let more = false;
+      activeTick = current
+        .tick(elapsed, suspended, { drain: false, offeredUntil })
+        .then((value) => {
+          more = value;
+          const admittedElapsed = Math.min(
+            elapsed,
+            Math.max(0, (offeredUntil - current.clockStartedAt) / 1000),
+          );
+          autosaves.advance(Math.max(0, admittedElapsed - suspended));
+        })
+        .catch((error: unknown) => {
+          if (error instanceof OverloadError) return;
+          console.error('Native automatic simulation failed.', error);
+          current.fail(error);
+        })
+        .finally(() => {
+          activeTick = undefined;
+          if (more && !stopping && !clockContinuation)
+            clockContinuation = setImmediate(() => {
+              clockContinuation = undefined;
+              wakeClock();
+            });
+        });
+    };
+    if (options.tick !== false) current.useMonotonicClock();
+    const clock =
+      options.tick === false
+        ? undefined
+        : setInterval(() => {
+            if (stopping) return;
+            const at = performance.now(),
+              gap = (at - previousCallback) / 1000;
+            previousCallback = at;
+            if (gap > 2) suspendedSeconds += gap;
+            wakeClock();
+          }, 50);
+    clock?.unref();
     const server = createServer(async (request, response) => {
       response.setHeader('X-Content-Type-Options', 'nosniff');
       response.setHeader('Referrer-Policy', 'same-origin');
@@ -129,7 +199,7 @@ export async function createNativeGameServer(options: {
         });
       const { url, ownOrigin } = location;
       let scope: RequestScope | undefined;
-      let capability: 'play' | 'create' = 'play';
+      let capability: Capability = 'play';
       const send = (status: number, value: unknown) => {
         if (scope && !current.currentScope(scope, capability))
           return writeJson(response, 403, {
@@ -403,6 +473,168 @@ export async function createNativeGameServer(options: {
             message: 'The world changed. Reload this tab.',
           });
         switch (url.pathname) {
+          case '/api/saves/list': {
+            capability = 'save';
+            current.assertScope(scope, capability);
+            const page = z
+              .object({
+                before: z
+                  .object({
+                    createdAt: z.string().datetime(),
+                    id: requestIdSchema,
+                    sequence: sequence.optional(),
+                  })
+                  .strict()
+                  .optional(),
+              })
+              .strict()
+              .parse(body);
+            const candidates = await store.saves.list(current.worldId, {
+              limit: 101,
+              before: page.before,
+            });
+            const saves = candidates.slice(0, 100),
+              last = saves.at(-1);
+            autosaves.observeCatalog(saves, await store.saves.storageBytes(), !page.before);
+            return send(200, {
+              ok: true,
+              saves,
+              autosaves: await autosaves.status(),
+              next:
+                candidates.length > 100 && last
+                  ? { id: last.id, createdAt: last.createdAt, sequence: last.sequence }
+                  : undefined,
+            });
+          }
+          case '/api/saves/settings': {
+            capability = 'save';
+            current.assertScope(scope, capability);
+            const value = z
+              .object({
+                enabled: z.boolean(),
+                intervalMinutes: z.number(),
+                retain: z.number(),
+                revision: sequence,
+              })
+              .strict()
+              .parse(body);
+            await current.authenticationMutation(() =>
+              store.db.transaction(async () => {
+                await store.authority.assertFence({
+                  scope: scope!,
+                  capability: 'save',
+                  controlling: false,
+                  now,
+                });
+                const { revision, ...settings } = value;
+                await autosaves.updateSettings(settings, revision);
+              }),
+            );
+            return send(200, {
+              ok: true,
+              message: 'Autosave settings saved.',
+              autosaves: await autosaves.status(),
+            });
+          }
+          case '/api/saves/acknowledge': {
+            capability = 'save';
+            current.assertScope(scope, capability);
+            const value = z.object({ id: z.string().uuid() }).strict().parse(body);
+            const acknowledged = await current.authenticationMutation(() =>
+              store.db.transaction(async () => {
+                await store.authority.assertFence({
+                  scope: scope!,
+                  capability: 'save',
+                  controlling: false,
+                  now,
+                });
+                return store.saves.acknowledgeFailure(current.worldId, value.id);
+              }),
+            );
+            return send(200, {
+              ok: true,
+              message: acknowledged
+                ? 'Checkpoint failure acknowledged.'
+                : 'That failure was already acknowledged or replaced by a newer one.',
+              autosaves: await autosaves.status(),
+            });
+          }
+          case '/api/saves/receipt': {
+            capability = 'save';
+            current.assertScope(scope, capability);
+            const value = z
+              .discriminatedUnion('operation', [
+                z
+                  .object({
+                    operation: z.literal('create'),
+                    requestId: z.string().uuid(),
+                    label: z.string().trim().min(1).max(80),
+                    timeline: requestIdSchema,
+                  })
+                  .strict(),
+                z
+                  .object({
+                    operation: z.literal('load'),
+                    requestId: z.string().uuid(),
+                    saveId: requestIdSchema,
+                    label: z.string().min(1).max(80),
+                    timeline: requestIdSchema,
+                  })
+                  .strict(),
+              ])
+              .parse(body);
+            if (value.operation === 'create') {
+              const status = await store.saves.creationResult(
+                current.worldId,
+                value.requestId,
+                value.label,
+              );
+              const message =
+                status === 'resolved'
+                  ? 'The original checkpoint was created.'
+                  : status === 'pending'
+                    ? 'The original checkpoint is still being created. Nothing was resubmitted.'
+                    : 'The original checkpoint has no confirmed published result. Nothing was resubmitted.';
+              return send(200, {
+                ok: true,
+                scope: scopeKey(scope),
+                status,
+                message,
+                ...(status === 'resolved' ? { result: { ok: true, code: 'saved', message } } : {}),
+              });
+            }
+            const prior = (await store.getIntegration(`load-request:${value.requestId}`)) as
+              | { saveId: string }
+              | undefined;
+            if (prior && prior.saveId !== value.saveId)
+              return send(409, {
+                ok: false,
+                code: 'idempotency-conflict',
+                message: 'The saved checkpoint does not match the original load request.',
+              });
+            const message = prior
+              ? current.storageError
+                ? `The original load was installed, but saving still needs attention: ${current.storageError}`
+                : 'The original load was installed. No checkpoint was loaded again and its protection was not replaced.'
+              : 'The original load has no confirmed installation record. Nothing was loaded again.';
+            return send(200, {
+              ok: true,
+              scope: scopeKey(scope),
+              status: prior ? 'resolved' : 'unknown',
+              message,
+              ...(prior
+                ? {
+                    result: {
+                      ok: !current.storageError,
+                      code: current.storageError ? 'storage' : 'loaded',
+                      message,
+                    },
+                  }
+                : {}),
+            });
+          }
+          case '/api/input':
+            return send(200, await current.updateWorldInput(worldInputSchema.parse(body), scope));
           case '/api/embodiment': {
             const value = z
               .object({
@@ -432,6 +664,7 @@ export async function createNativeGameServer(options: {
             });
           }
           case '/api/saves/create': {
+            capability = 'save';
             current.assertScope(scope, 'save');
             const value = z
               .object({ id: z.string().uuid(), label: z.string().trim().min(1).max(80) })
@@ -441,6 +674,7 @@ export async function createNativeGameServer(options: {
             return send(200, { ok: true, message: 'Game saved.' });
           }
           case '/api/saves/delete': {
+            capability = 'save';
             current.assertScope(scope, 'save');
             const value = z.object({ id: requestIdSchema }).strict().parse(body);
             await current.deleteSave(value.id, scope);
@@ -493,12 +727,24 @@ export async function createNativeGameServer(options: {
         const invalid = error instanceof z.ZodError || error instanceof SyntaxError;
         return writeJson(
           response,
-          authority ? 403 : invalid ? 400 : error instanceof OverloadError ? 503 : 500,
+          authority
+            ? 403
+            : invalid || error instanceof GameSaveError
+              ? 400
+              : error instanceof OverloadError
+                ? 503
+                : 500,
           {
             ok: false,
-            code: authority ? error.code : invalid ? 'invalid-input' : 'server',
+            code: authority
+              ? error.code
+              : error instanceof GameSaveError
+                ? 'save'
+                : invalid
+                  ? 'invalid-input'
+                  : 'server',
             message:
-              authority || error instanceof OverloadError
+              authority || error instanceof OverloadError || error instanceof GameSaveError
                 ? error.message
                 : invalid
                   ? 'Invalid input.'
@@ -515,6 +761,8 @@ export async function createNativeGameServer(options: {
     const stop = (deadlineMs = SHUTDOWN_DEADLINE_MS): Promise<ShutdownReport> => {
       shutdown ??= (async () => {
         stopping = true;
+        clearInterval(clock);
+        if (clockContinuation) clearImmediate(clockContinuation);
         current.closeAdmission();
         const problems: string[] = [];
         const until = performance.now() + deadlineMs;
@@ -537,10 +785,12 @@ export async function createNativeGameServer(options: {
           }
         };
         await stage('Player publication', () => views.close());
+        await stage('Admitted clock batch', () => activeTick ?? Promise.resolve());
         await stage('Connection cleanup', () => Promise.all(disconnects));
         await stage('Admitted requests', async () => {
           while (requests) await new Promise((resolve) => setTimeout(resolve, 20));
         });
+        await stage('Automatic checkpoints', () => autosaves.close());
         let saved = false;
         await stage('Native world save and stop', async () => {
           await current.close();

@@ -67,6 +67,8 @@ export async function acceptNativeOperation<T extends object>(request: {
   readonly work: HostWork;
   readonly stage: (publication: NativePublication) => T | Promise<T>;
   readonly current: () => boolean;
+  /** Host elapsed integration can discard a genuine no-time navigation wait. */
+  readonly admitPublication?: (publication: NativePublication) => boolean;
   readonly signal?: AbortSignal;
   readonly history?: NativeHistoryReadContext;
 }): Promise<NativeAcceptance<T>> {
@@ -91,6 +93,12 @@ export async function acceptNativeOperation<T extends object>(request: {
     const publication = decodeNativeProduct<NativePublication>(prepared.takePublication());
     if (publication.protectedSave)
       throw new Error('Protected native edits require their database commit owner.');
+    if (request.admitPublication && !request.admitPublication(publication)) {
+      await world.cancel(turn.key);
+      settled = completed = true;
+      allocation.rollback();
+      return { accepted: false };
+    }
     // A failure in history/source projection or consumer admission still rolls
     // back the genuine native checkpoint. No fallible staging follows accept.
     const value = retainNativeSources(await request.stage(publication), publication);

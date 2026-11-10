@@ -25,6 +25,7 @@ pub(crate) use admission::{
     AwarenessAcquisitionError, AwarenessAdmission, PlacedAwarenessAccounts,
     acquire_awareness_accounts, prepare_awareness_admission,
 };
+pub(crate) mod intake;
 mod awareness;
 pub use awareness::*;
 mod awareness_encoding;
@@ -39,6 +40,8 @@ pub(crate) use history::{
 };
 pub(crate) use player_events::{CapturedPlayerEvents, capture_player_events};
 mod header_input;
+mod originals;
+pub(crate) use originals::CapturedPersonalOriginals;
 mod install;
 pub use install::*;
 mod policy;
@@ -292,6 +295,9 @@ pub struct PersonalSourceHeader {
     pub actor_id: String,
     pub at: f64,
     pub sequence: Option<u64>,
+    pub importance: f64,
+    pub sensory: bool,
+    pub summary_coverage: Vec<String>,
     pub event_id: Option<String>,
     pub evidence_source_id: Option<String>,
     pub evidence_target_id: Option<String>,
@@ -900,6 +906,11 @@ fn header(
         actor_id: actor_id.to_owned(),
         at,
         sequence,
+        importance: number(body, "importance")?,
+        sensory: kind == PersonalSourceKind::Awareness && body.get("retentionClass").and_then(Value::as_str) == Some("sensory"),
+        summary_coverage: if kind == PersonalSourceKind::Summary {
+            source_references(object(body.get("manifest").ok_or(ExperienceError::InvalidBody("manifest"))?)?.get("coverage").ok_or(ExperienceError::InvalidBody("manifest.coverage"))?)?.into_iter().map(|reference| reference.id).collect()
+        } else { Vec::new() },
         event_id: optional_text(body, "eventId")?,
         evidence_source_id: if kind == PersonalSourceKind::Awareness {
             optional_text(body, "sourceId")?
@@ -954,82 +965,6 @@ pub struct PersonalSourceRecord {
 }
 
 impl PersonalSourceRecord {
-    pub(crate) fn validate_originals(
-        &self,
-        registry: &mut crate::reception::OriginalRevisionRegistry,
-        through: f64,
-    ) -> Result<(), crate::received::ReceivedError> {
-        #[derive(Deserialize)]
-        struct Inputs {
-            #[serde(
-                default,
-                rename = "actorId",
-                deserialize_with = "deserialize_present_option"
-            )]
-            actor_id: Option<String>,
-            #[serde(default, deserialize_with = "deserialize_present_option")]
-            observation: Option<Arc<crate::reception::ObservationContribution>>,
-            #[serde(default, deserialize_with = "deserialize_present_option")]
-            observations: Option<Vec<Arc<crate::reception::ObservationContribution>>>,
-        }
-        #[derive(Deserialize)]
-        struct Manifest {
-            observations: Vec<Arc<crate::reception::ObservationContribution>>,
-        }
-        #[derive(Deserialize)]
-        struct Body {
-            // Decode each selected original directly from its JSON bytes.
-            // Flatten would route nested JsText through Serde's value buffer.
-            #[serde(default, deserialize_with = "deserialize_present_option")]
-            observation: Option<Arc<crate::reception::ObservationContribution>>,
-            #[serde(default, deserialize_with = "deserialize_present_option")]
-            observations: Option<Vec<Arc<crate::reception::ObservationContribution>>>,
-            #[serde(default, deserialize_with = "deserialize_present_option")]
-            evidence: Option<Inputs>,
-            #[serde(default, deserialize_with = "deserialize_present_option")]
-            manifest: Option<Manifest>,
-        }
-        let body: Body = serde_json::from_str(&self.payload).map_err(|_| {
-            crate::received::ReceivedError("Invalid personal source original evidence.")
-        })?;
-        if body.evidence.as_ref().is_some_and(|evidence| {
-            evidence.actor_id.as_deref() != Some(self.header.actor_id.as_str())
-        }) {
-            return Err(crate::received::ReceivedError(
-                "Foreign personal evidence owner.",
-            ));
-        }
-        for (single, multiple) in std::iter::once((&body.observation, &body.observations)).chain(
-            body.evidence
-                .iter()
-                .map(|input| (&input.observation, &input.observations)),
-        ) {
-            for observation in single.iter().chain(multiple.iter().flatten()) {
-                if observation.observer.actor_id != self.header.actor_id
-                    || observation.acquired_at > through
-                {
-                    return Err(crate::received::ReceivedError(
-                        "Foreign or future personal original.",
-                    ));
-                }
-                registry.validate(observation)?;
-            }
-        }
-        if let Some(manifest) = &body.manifest {
-            for observation in &manifest.observations {
-                if observation.observer.actor_id != self.header.actor_id
-                    || observation.acquired_at > through
-                {
-                    return Err(crate::received::ReceivedError(
-                        "Foreign or future remembered original.",
-                    ));
-                }
-                registry.validate(observation)?;
-            }
-        }
-        Ok(())
-    }
-
     pub fn install(
         kind: PersonalSourceKind,
         actor_id: &str,

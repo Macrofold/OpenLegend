@@ -33,6 +33,7 @@ impl HeapBytes for PersonalImpressionHeader {
 }
 heap_record!(PersonalSourceHeader {
     reference,
+    summary_coverage,
     actor_id,
     event_id,
     event_type,

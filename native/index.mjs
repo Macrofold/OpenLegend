@@ -975,6 +975,7 @@ const {
   NativeWorld,
   NativeWorldConsumer,
   NativeWorldJson,
+  NativeWorldNpcPublication,
   NativeWorldNpcRead,
   NativeWorldNpcResponseTicket,
   NativeWorldPlayerPublication,
@@ -990,6 +991,7 @@ export { NativeHost };
 export { NativeWorld };
 export { NativeWorldConsumer };
 export { NativeWorldJson };
+export { NativeWorldNpcPublication };
 export { NativeWorldNpcRead };
 export { NativeWorldNpcResponseTicket };
 export { NativeWorldPlayerPublication };

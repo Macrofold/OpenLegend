@@ -95,6 +95,7 @@ pub(crate) struct RetainedDefinitions {
     pub gathering_policy: Option<RetainedOne>,
     pub work_batch_policy: Option<RetainedOne>,
     pub social_offer_policy: Option<RetainedOne>,
+    pub social_offer_read: Option<SocialOfferReadPolicy>,
     pub hearth_definitions: Option<RetainedMap>,
     pub assembly_families: Option<RetainedMap>,
     pub construction_profile: Option<RetainedOne>,
@@ -123,6 +124,13 @@ pub(crate) struct RetainedDefinitions {
 pub(crate) struct ItemHandlingReadPolicy {
     enabled: bool,
     actor_body_profiles: Vec<String>,
+    pub reach: f64,
+}
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct SocialOfferReadPolicy {
+    pub incoming: u64,
+    pub outgoing: u64,
 }
 impl ItemHandlingReadPolicy {
     pub(crate) fn can_handle(&self, profile: &str) -> bool {
@@ -136,7 +144,10 @@ impl ItemHandlingReadPolicy {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ParticipationReadPolicy {
-    #[serde(default, deserialize_with = "crate::values::deserialize_present_option")]
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_option"
+    )]
     pub exit_exposure_seconds: Option<f64>,
     #[serde(
         default,
@@ -326,6 +337,36 @@ pub(crate) fn install_retained(
         }
         native_strike_read.insert(key.to_owned(), read);
     }
+    let social_offer_policy = r.one(
+        "socialOfferPolicy",
+        "config_social_offers",
+        input.social_offer_policy,
+    )?;
+    let social_offer_read = social_offer_policy
+        .as_ref()
+        .map(|policy| {
+            serde_json::from_str::<Option<SocialOfferReadPolicy>>(policy.payload())
+                .map_err(|_| InstallError::CurrentFormat)
+        })
+        .transpose()?
+        .flatten();
+    let invention_policy = r
+        .one(
+            "inventionPolicy",
+            "config_invention",
+            Some(input.invention_policy),
+        )?
+        .ok_or(InstallError::ParentPresence)?;
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct InventionRead {
+        agent_locked: bool,
+    }
+    let invention: InventionRead = serde_json::from_str(invention_policy.payload())
+        .map_err(|_| InstallError::CurrentFormat)?;
+    if !invention.agent_locked {
+        return Err(InstallError::UnsupportedFamily("autonomous-invention"));
+    }
     let mut installed = RetainedDefinitions {
         _storage: None,
         knowledge_policy,
@@ -342,11 +383,8 @@ pub(crate) fn install_retained(
             "config_work_batches",
             input.work_batch_policy,
         )?,
-        social_offer_policy: r.one(
-            "socialOfferPolicy",
-            "config_social_offers",
-            input.social_offer_policy,
-        )?,
+        social_offer_policy,
+        social_offer_read,
         hearth_definitions: r.map(
             "hearthDefinitions",
             "config_hearth_definitions",
@@ -400,13 +438,7 @@ pub(crate) fn install_retained(
                 Some(input.cast_definitions),
             )?
             .ok_or(InstallError::ParentPresence)?,
-        invention_policy: r
-            .one(
-                "inventionPolicy",
-                "config_invention",
-                Some(input.invention_policy),
-            )?
-            .ok_or(InstallError::ParentPresence)?,
+        invention_policy,
         story_policy: r.one("storyPolicy", "config_story", input.story_policy)?,
         item_definitions: r
             .map(

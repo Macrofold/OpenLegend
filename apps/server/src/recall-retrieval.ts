@@ -15,7 +15,7 @@ export interface RecallRetrievalRuntime extends RecallSelectionRuntime {
  * consumer supplies source formatting and current-note permission, not a world. */
 export async function retrieveRecall(input: {
   runtime: RecallRetrievalRuntime;
-  repository: MemoryRepository;
+  repository: Pick<MemoryRepository, 'coverage' | 'required' | 'select' | 'knowledgeCandidates'>;
   scope: MemoryScope;
   worldId: string;
   actorId: string;

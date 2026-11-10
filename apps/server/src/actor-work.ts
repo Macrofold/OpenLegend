@@ -44,13 +44,15 @@ export interface IntakeSignal {
   urgency?: number;
 }
 
-export interface WorkCapture {
+export interface WorkRead {
   generation: number;
   scope: string;
-  dependencies: readonly Dependency[];
   inputs: readonly unknown[];
-  /** Reasons pending when the read began; acknowledgement clears only these. */
   reasons: ReadonlySet<IntakeReason>;
+}
+
+export interface WorkCapture extends WorkRead {
+  dependencies: readonly Dependency[];
   /** Identity shortcut only; an optional inspection must not retain an old world. */
   world: WeakRef<WorldState>;
 }
@@ -163,19 +165,41 @@ export class ActorWork {
     /** Changed-character reads never retire characters omitted from that subset. */
     completePopulation = true,
   ): void {
-    if (this.worldId !== world.id || this.scope !== scope) {
+    const samples = function* (owner: ActorWork) {
+      for (const id of actorIds ?? Object.keys(world.minds ?? {})) {
+        const entity = entityGet(world.entities, id);
+        if (!entity?.actor?.alive || !hasMemory(entity)) continue;
+        const dependencies = owner.tickets.get(id)?.dependencies;
+        yield {
+          id,
+          input: intakeInputs(inputs(id, world)),
+          dependenciesCurrent: !dependencies || dependenciesCurrent(world, dependencies, scope),
+        };
+      }
+    };
+    this.refreshCaptured(world.id, scope, samples(this), completePopulation);
+    this.inputs = inputs;
+  }
+
+  /** Share enrollment/change coalescing with finite native reads. Each supplied
+   * value comes from its real semantic read owner; this queue grants no authority.
+   * Partial updates never retire characters omitted from that update. */
+  refreshCaptured(
+    worldId: string,
+    scope: string,
+    samples: Iterable<{ id: string; input: IntakeInputs; dependenciesCurrent?: boolean }>,
+    completePopulation = true,
+  ): void {
+    if (this.worldId !== worldId || this.scope !== scope) {
       this.clear();
-      this.worldId = world.id;
+      this.worldId = worldId;
       this.scope = scope;
     }
-    this.inputs = inputs;
     const present = new Set<string>();
     const now = this.clock();
-    for (const id of actorIds ?? Object.keys(world.minds ?? {})) {
-      const entity = entityGet(world.entities, id);
-      if (!entity?.actor?.alive || !hasMemory(entity)) continue;
+    for (const sample of samples) {
+      const { id, input: next } = sample;
       present.add(id);
-      const next = intakeInputs(inputs(id, world));
       const ticket = this.tickets.get(id);
       if (!ticket) {
         this.tickets.set(id, {
@@ -200,7 +224,7 @@ export class ActorWork {
           changed = true;
           this.note(ticket, next.reasons[i] ?? 'state');
         }
-      if (ticket.dependencies && !dependenciesCurrent(world, ticket.dependencies, scope)) {
+      if (sample.dependenciesCurrent === false) {
         changed = true;
         this.note(ticket, 'state');
       }
@@ -326,6 +350,17 @@ export class ActorWork {
   generation(id: string): number | undefined {
     return this.tickets.get(id)?.generation;
   }
+  captureRead(id: string): WorkRead | undefined {
+    const ticket = this.tickets.get(id);
+    return ticket && this.scope
+      ? {
+          generation: ticket.generation,
+          scope: this.scope,
+          inputs: ticket.inputs,
+          reasons: new Set(ticket.reasons),
+        }
+      : undefined;
+  }
   capture(world: WorldState, id: string): WorkCapture | undefined {
     const ticket = this.tickets.get(id);
     return ticket && this.scope
@@ -356,9 +391,32 @@ export class ActorWork {
     current: WorldState,
     scope: string,
   ): boolean {
+    const accepted = this.inspectedRead(
+      id,
+      simAt,
+      capture,
+      scope,
+      () =>
+        !!capture &&
+        dependenciesCurrent(current, capture.dependencies, scope) &&
+        !!entityGet(current.entities, id)?.actor?.alive &&
+        hasMemory(entityGet(current.entities, id)) &&
+        (current === capture.world.deref() || this.sameInputs(id, capture.inputs, current)),
+    );
+    if (accepted) this.tickets.get(id)!.dependencies = capture!.dependencies;
+    return accepted;
+  }
+
+  /** The caller holds its real short publication lease while checking `current`.
+   * A stale read cannot acknowledge a newer queued generation or pending reason. */
+  inspectedRead(
+    id: string,
+    simAt: number,
+    capture: WorkRead | undefined,
+    scope: string,
+    current: () => boolean,
+  ): boolean {
     const ticket = this.tickets.get(id);
-    // No await between checking sources and swapping subscriptions. Old subscriptions
-    // survive failed installation; a newer generation is never acknowledged here.
     if (
       ticket &&
       capture &&
@@ -366,12 +424,8 @@ export class ActorWork {
       this.isDurable(ticket) &&
       this.scope === scope &&
       capture.scope === scope &&
-      dependenciesCurrent(current, capture.dependencies, scope) &&
-      !!entityGet(current.entities, id)?.actor?.alive &&
-      hasMemory(entityGet(current.entities, id)) &&
-      (current === capture.world.deref() || this.sameInputs(id, capture.inputs, current))
+      current()
     ) {
-      ticket.dependencies = capture.dependencies;
       ticket.dirty = false;
       ticket.dirtySince = undefined;
       for (const reason of capture.reasons) ticket.reasons.delete(reason);

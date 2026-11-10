@@ -555,6 +555,7 @@ export interface ConversationSource {
 }
 export const conversationCompactionKey = (worldId: string, actorId: string) =>
   `conversation-compaction:${JSON.stringify([worldId, actorId])}`;
+export const APPRAISAL_SOURCE_BINDINGS = 48;
 export interface RetrievedMemory {
   /** Read proof for an event retained in recent chronology, not a recall_sources row. */
   receipt?: TemporalReceiptLocator;
@@ -4321,7 +4322,8 @@ export class MemoryRepository {
    * No required-history union or whole actor hydration is needed for this binding. */
   async appraisalSources(scope: MemoryScope, ids: string[]): Promise<RetrievedMemory[]> {
     const unique = [...new Set(ids)];
-    if (unique.length > 48) throw new Error('Too many appraisal source bindings.');
+    if (unique.length > APPRAISAL_SOURCE_BINDINGS)
+      throw new Error('Too many appraisal source bindings.');
     if (!unique.length) return [];
     return this.snapshot(scope, async () => {
       const selected = await this.hydrate(

@@ -1,3 +1,4 @@
+import { sourceMacrofoldHost } from './source-macrofold-host.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { GenerateRequest } from '@open-legend/ai';
 import { testRepository, readConfig } from '../../../tests/fixtures/database.js';
@@ -102,7 +103,7 @@ describe('chat inference recovery through the PostgreSQL journal', () => {
           : {}),
       };
       try {
-        const first = await new MacrofoldBackend(service).generate(request);
+        const first = await new MacrofoldBackend(sourceMacrofoldHost(service)).generate(request);
         expect(first.outcome, JSON.stringify(first)).toBe('value');
         expect(first).toMatchObject({
           outcome: 'value',
@@ -110,12 +111,14 @@ describe('chat inference recovery through the PostgreSQL journal', () => {
         });
         expect(bodies[0]).toMatchObject({ limits: { timeout_seconds: 30 } });
         wallNow += 1200;
-        expect(await new MacrofoldBackend(service).generate(request)).toMatchObject({
+        expect(
+          await new MacrofoldBackend(sourceMacrofoldHost(service)).generate(request),
+        ).toMatchObject({
           outcome: 'value',
           value: { text: 'Hello.' },
         });
         expect(
-          await new MacrofoldBackend(service).generate({
+          await new MacrofoldBackend(sourceMacrofoldHost(service)).generate({
             ...request,
             context: { greeting: 'Changed input' },
           }),

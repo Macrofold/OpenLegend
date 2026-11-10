@@ -154,18 +154,21 @@ export function semanticCauseResolved(
   qualitativeRevision: string,
   severity: number,
 ): boolean {
-  const actor = entityGet(world.entities, actorId),
-    state = actor?.actor?.agency.semantic,
-    resolved = state?.resolved[key];
-  return (
-    !!actor &&
-    !!state &&
-    !!resolved &&
-    resolved.interval === state.interval &&
-    resolved.purpose === occupiedPurpose(actor) &&
-    resolved.qualitativeRevision === qualitativeRevision &&
-    resolved.severity >= severity
-  );
+  const actor = entityGet(world.entities, actorId);
+  return !!actor && semanticCauseResolvedFromRead(actor.actor?.agency.semantic, occupiedPurpose(actor), key, qualitativeRevision, severity);
+}
+
+/** No semantic state is reconstructed from Node data: the native read supplies
+ * its actual saved continuation and the same canonical occupied-purpose value. */
+export function semanticCauseResolvedFromRead(
+  state: SemanticContinuation | undefined,
+  purpose: string | null,
+  key: string,
+  qualitativeRevision: string,
+  severity: number,
+): boolean {
+  const resolved = state?.resolved[key];
+  return !!state && !!resolved && resolved.interval === state.interval && resolved.purpose === purpose && resolved.qualitativeRevision === qualitativeRevision && resolved.severity >= severity;
 }
 
 export function validateSemanticContinuation(

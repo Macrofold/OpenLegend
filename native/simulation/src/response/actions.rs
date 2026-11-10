@@ -374,6 +374,7 @@ pub(super) fn prepare(
     op: &ResponseOperation<'_>,
     initial_generation: u64,
     language: Option<NormalizedAttempt<'_>>,
+    attempt_bindings: &[ResponseAttemptBinding],
     budget: &ByteBudget,
 ) -> Result<ActionIntent, ExecutionError> {
     let actor = bindings.actor_id();
@@ -494,7 +495,10 @@ pub(super) fn prepare(
                     Ok(command) => command,
                     Err(result) => return Ok(result),
                 };
-                if matches!(selected, NativeCommand::Cancel { .. } | NativeCommand::WithdrawAttempt { .. }) {
+                if matches!(
+                    selected,
+                    NativeCommand::Cancel { .. } | NativeCommand::WithdrawAttempt { .. }
+                ) {
                     Ok(ActionIntent::Command(selected))
                 } else {
                     plan(core, actor, &id, vec![selected], mode, None, None)
@@ -541,7 +545,7 @@ pub(super) fn prepare(
                 .map(decode::<IntentSlots>)
                 .transpose()?;
             let matches = || {
-                input.attempt_bindings.iter().filter(|b| {
+                attempt_bindings.iter().filter(|b| {
                     b.operation_id.as_deref() == Some(op.local_id) && &b.description == description
                 })
             };
@@ -702,42 +706,18 @@ pub(super) fn prepare(
                 .as_ref()
                 .filter(|_| fulfillment.get("verdict").and_then(SqlCell::as_str) == Some("exact"))
             {
-                let slots = slots.value();
-                let mut unmet = Vec::<JsText>::new();
-                if let Some(recipient) = slots.get("recipientId").and_then(SqlCell::as_str) {
-                    if !binding
-                        .commands
-                        .iter()
-                        .any(|c| c.get("targetId").and_then(SqlCell::as_str) == Some(recipient))
-                    {
-                        unmet.push("the requested recipient".into());
-                    }
-                }
-                if slots.get("quantity").is_some_and(|v| !v.is_null()) {
-                    unmet.push("the requested amount".into())
-                }
-                for (key, prefix) in [
-                    ("until", "the requested stopping time ("),
-                    ("method", "the requested method ("),
-                ] {
-                    if let Some(text) = slots
-                        .get(key)
-                        .and_then(SqlCell::as_text)
-                        .filter(|v| !v.is_empty())
-                    {
-                        let mut text0: JsText = prefix.into();
-                        text0.push_text(text);
-                        text0.push_str(")");
-                        unmet.push(text0);
-                    }
-                }
-                if !unmet.is_empty() {
+                let unmet = super::slots::unmet_slots(
+                    &core.state.installed,
+                    &binding.commands,
+                    Some(slots.value()),
+                );
+                if unmet.iter().any(Option::is_some) {
                     let mut message: JsText = "The resolved action does not keep ".into();
-                    for (i, part) in unmet.iter().enumerate() {
+                    for (i, part) in unmet.iter().flatten().enumerate() {
                         if i != 0 {
                             message.push_str(", ");
                         }
-                        message.push_text(part)
+                        part.append_to(&mut message)
                     }
                     message.push_str(".");
                     return Ok(ActionIntent::Complete(ComponentResult::prepare(

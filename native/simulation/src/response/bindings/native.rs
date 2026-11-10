@@ -21,7 +21,11 @@ pub(crate) struct ResponseNativeGuard {
     pub(crate) route: ResponseValidityRoute,
     pub(crate) scope: Arc<NpcHistoricalScope>,
     pub(crate) sources: Vec<PreparedNpcSources>,
+    /// Optional recall bodies are not proofs of the emitted request. Only its
+    /// actual evidence/appraisal/trigger selections participate in this guard.
+    pub(crate) selected_personal: Vec<(usize, usize)>,
     pub(crate) appraisals: Option<PreparedResponseAppraisals>,
+    pub(crate) attempt_candidates: Vec<ResponseAttemptCandidate>,
     pub(crate) _custody: ByteReservation,
 }
 impl ResponseNativeGuard {
@@ -50,18 +54,14 @@ impl ResponseNativeGuard {
         candidate: CandidateKey,
         budget: &ByteBudget,
     ) -> Result<Option<NpcSourcesCursor>, ExecutionError> {
-        let count = self
-            .sources
-            .iter()
-            .try_fold(0usize, |n, source| n.checked_add(source.personal.len()))
-            .ok_or(ExecutionError::Capacity)?;
+        let count = self.selected_personal.len();
         if count == 0 {
             return Ok(None);
         }
         let bytes = self
-            .sources
+            .selected_personal
             .iter()
-            .flat_map(|source| &source.personal)
+            .map(|&(inventory, ordinal)| &self.sources[inventory].personal[ordinal])
             .try_fold(0usize, |n, source| {
                 n.checked_add(size_of::<crate::experience::PersonalSourceRef>())?
                     .checked_add(source.record.header().reference.heap_bytes()?)
@@ -79,9 +79,9 @@ impl ResponseNativeGuard {
         let _copy = budget.reserve(bytes)?;
         let mut selected = indexmap::IndexSet::with_capacity(count);
         let personal = self
-            .sources
+            .selected_personal
             .iter()
-            .flat_map(|source| &source.personal)
+            .map(|&(inventory, ordinal)| &self.sources[inventory].personal[ordinal])
             .map(|source| &source.record.header().reference)
             .filter(|source| {
                 selected.insert((source.kind, source.id.as_str(), source.revision.as_str()))

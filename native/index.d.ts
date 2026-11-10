@@ -25,6 +25,10 @@ export declare class NativeHost {
 export declare class NativeWorld {
   beginControl(bytes: Buffer): Promise<NativeWorldTurn>;
   beginRecentRetention(bytes: Buffer): Promise<NativeWorldTurn>;
+  npcHistoryPublication(read: NativeWorldNpcRead): Promise<NativeWorldNpcPublication | null>;
+  npcResponsePublication(
+    ticket: NativeWorldNpcResponseTicket,
+  ): Promise<NativeWorldNpcPublication | null>;
   bindNpcResponse(
     original: NativeWorldNpcRead,
     current: NativeWorldNpcRead,
@@ -90,6 +94,11 @@ export declare class NativeWorldJson {
    * the reservation on the actual Node Buffer until its finalizer runs.
    */
   consume(): Buffer;
+}
+
+export declare class NativeWorldNpcPublication {
+  isCurrent(): boolean;
+  release(): void;
 }
 
 export declare class NativeWorldNpcRead {

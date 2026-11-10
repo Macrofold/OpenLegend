@@ -2668,7 +2668,7 @@ export function invalidateTemporalFacets(
   const actor = world.experience?.temporal?.actors[actorId];
   if (!actor) return;
   touchNativeEvidence(world, 'temporal', actorId);
-  const removedAddresses = new Set<string>(),
+  const removedBlocks = new Set<string>(),
     replacements: ReceivedChargeDirectory[] = [],
     individualCandidates = new Set<string>();
   for (const page of actor.pages) {
@@ -2689,26 +2689,20 @@ export function invalidateTemporalFacets(
     if (pageChanged) {
       for (const id of page.individualIds) individualCandidates.add(id);
       for (const batch of page.batches)
-        for (const entry of batch.entries)
-          removedAddresses.add(JSON.stringify([batch.batchOrder, entry.entryIndex]));
+        if (batch.entries.length)
+          // Restore starts a new actor epoch while retained pages keep their
+          // original address. Release the exact block that is being rewritten.
+          removedBlocks.add(recentBlockKey(batch, batch.batchOrder));
       replaceTemporalPageReceipts(page, retained, world);
       refreshTemporalPage(page, world);
       const directory = temporalPageMetadata(page, { world }).chargeDirectory;
       if (directory.entries.length) replacements.push(directory);
     }
   }
-  if (removedAddresses.size) {
-    const affected = new Map<number, Set<number>>();
-    for (const address of removedAddresses) {
-      const [batchOrder, entryIndex] = JSON.parse(address) as [number, number];
-      let entries = affected.get(batchOrder);
-      if (!entries) affected.set(batchOrder, (entries = new Set()));
-      entries.add(entryIndex);
-    }
+  if (removedBlocks.size) {
     const released = new Set<string>();
-    for (const [batchOrder] of affected) {
-      const key = recentBlockKey(actor, batchOrder),
-        directory = orderedRecordGet(actor.recent.blocks, key);
+    for (const key of removedBlocks) {
+      const directory = orderedRecordGet(actor.recent.blocks, key);
       if (directory) releaseDirectory(actor, key, directory, released);
     }
     for (const directory of eligibleReceivedChargeDirectories(replacements, actor.frontier))

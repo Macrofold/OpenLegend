@@ -138,6 +138,8 @@ impl Serialize for NpcDescriptionsRequest {
 pub(crate) struct NpcDescriptionsAnswer {
     pub binding: GeometryBinding,
     pub descriptions: Vec<JsText>,
+    #[serde(rename = "activityLabels")]
+    pub activity_labels: Vec<JsText>,
 }
 impl NpcDescriptionsRequest {
     pub(super) fn prepare(
@@ -145,6 +147,7 @@ impl NpcDescriptionsRequest {
         mut context: DescriptionContext,
         targets: &[Target],
         offers: &[PreparedNpcOffer],
+        activity: &NpcActivityRead,
         candidate: CandidateKey,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
@@ -191,6 +194,8 @@ impl NpcDescriptionsRequest {
             myself: &'a Myself,
             bodies: &'a [Body],
             offers: Offers<'a>,
+            #[serde(rename = "activityLabels")]
+            activity_labels: &'a [activity::ActivityLabel],
             definitions: D,
         }
         let binding = GeometryBinding::new(
@@ -203,6 +208,7 @@ impl NpcDescriptionsRequest {
             myself: &context.myself,
             bodies: &context.bodies,
             offers: Offers(offers),
+            activity_labels: &activity.labels,
             definitions: super::super::definitions::choice_description_definitions(
                 &core.state.installed,
             ),

@@ -4,7 +4,7 @@
 
 use super::*;
 
-fn occupied_purpose(actor: &crate::state::ActorState) -> Result<Option<String>, ExecutionError> {
+pub(crate) fn occupied_purpose(actor: &crate::state::ActorState) -> Result<Option<String>, ExecutionError> {
     if actor
         .capabilities
         .as_ref()

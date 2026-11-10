@@ -67,6 +67,17 @@ impl NativeWorldSession {
             .ok_or_else(|| failure("NPC choices unavailable"))?
             .work
             .generation;
+        let (attempt_candidates, attempt_storage) = crate::response::capture_attempt_candidates(
+            ticket
+                .current
+                .candidates
+                .as_ref()
+                .ok_or_else(|| failure("NPC choices unavailable"))?,
+            &ticket.current.read.perception.actor_id,
+            &ticket.decision_id,
+            &self.budget,
+        )
+        .map_err(failure)?;
         let (appraisal_bindings, appraisal_storage) =
             if let Some(appraisals) = &ticket.bindings.appraisals {
                 let (bindings, storage) = appraisals
@@ -95,6 +106,7 @@ impl NativeWorldSession {
             actions,
             entity_ids,
             evidence_ids,
+            selected_personal,
             knowledge_references,
             identity_references,
             entity_leases,
@@ -105,6 +117,12 @@ impl NativeWorldSession {
             ..
         } = bindings;
         storage.merge(_custody).map_err(failure)?;
+        drop(current.intent_ids);
+        drop(current.candidates);
+        drop(current.reference_facts);
+        drop(current.history);
+        drop(current.sources);
+        drop(current.historical_scope);
         storage.merge(current._custody).map_err(failure)?;
         if let Some(appraisal_storage) = appraisal_storage {
             storage.merge(appraisal_storage).map_err(failure)?;
@@ -117,6 +135,10 @@ impl NativeWorldSession {
                     .ok_or_else(|| failure("capacity"))?,
             )
             .map_err(failure)?;
+        drop(original.intent_ids);
+        drop(original.candidates);
+        drop(original.reference_facts);
+        drop(original.history);
         let mut original_storage = original._custody;
         original_storage
             .resize(
@@ -131,12 +153,15 @@ impl NativeWorldSession {
                     .ok_or_else(|| failure("capacity"))?,
             )
             .map_err(failure)?;
+        original_storage.merge(attempt_storage).map_err(failure)?;
         let input = ResponseBindingInput {
             native: Some(ResponseNativeGuard {
                 route: validity,
                 scope: original.historical_scope,
                 sources: original.sources,
+                selected_personal,
                 appraisals,
+                attempt_candidates,
                 _custody: original_storage,
             }),
             reads: ResponseReads {
@@ -211,6 +236,7 @@ impl NativeWorldSession {
                 original: &first.read,
                 current: &fresh.read,
                 references: &fresh.reference_facts,
+                original_references: &first.reference_facts,
                 sources: &first.sources,
                 candidates,
                 intent_ids: &fresh.intent_ids,

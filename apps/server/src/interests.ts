@@ -5,6 +5,7 @@ import {
   activeStimuli,
   STIMULUS_POLICY,
   type StimulusPolicy,
+  type ActiveStimulus,
   capabilityBlocked,
   currentObservedBodyClassifications,
   bodyReconsiderationInputs,
@@ -19,7 +20,7 @@ import type { IntakeInputs, IntakeReason } from './actor-work.js';
 import { nativeProtectionReason } from './native-protection.js';
 
 /** The reason each autonomous-thought wake input represents, in input order. */
-const THOUGHT_INPUT_REASONS: readonly IntakeReason[] = [
+export const THOUGHT_INPUT_REASONS: readonly IntakeReason[] = [
   'state', // controller
   'state', // incapacitation
   'state', // goal
@@ -204,19 +205,7 @@ export class ThoughtIntakeInputs {
     // Deadlines cover every salient source; the cue limit bounds context, not reviews, and a
     // cut or reordering must not change the key.
     const { stimuli } = activeStimuli(world, id, { ...this.stimulusPolicy, limit: Infinity });
-    const due = stimuli.filter((stimulus) => stimulus.reviews > 0);
-    return {
-      ...(due.length
-        ? {
-            key: due
-              .map((stimulus) => `${stimulus.sourceId}:${stimulus.reviews}`)
-              .sort()
-              .join('|'),
-          }
-        : {}),
-      due: due.map((stimulus) => stimulus.sourceId),
-      nextAt: Math.min(Infinity, ...stimuli.map((stimulus) => stimulus.reviewAt ?? Infinity)),
-    };
+    return stimulusReviewFromRead(stimuli);
   }
 
   reset(scope?: string): void {
@@ -418,4 +407,14 @@ export function installedThinkingToken(world: WorldState): string {
       installedTokens.set(manifest, token);
   }
   return token;
+}
+
+/** Pure review formatting shared by actual Source and finite native intake. */
+export function stimulusReviewFromRead(stimuli: readonly ActiveStimulus[]): { key?: string; due: string[]; nextAt: number } {
+  const due = stimuli.filter((stimulus) => stimulus.reviews > 0);
+  return {
+    ...(due.length ? { key: due.map((stimulus) => `${stimulus.sourceId}:${stimulus.reviews}`).sort().join('|') } : {}),
+    due: due.map((stimulus) => stimulus.sourceId),
+    nextAt: Math.min(Infinity, ...stimuli.map((stimulus) => stimulus.reviewAt ?? Infinity)),
+  };
 }

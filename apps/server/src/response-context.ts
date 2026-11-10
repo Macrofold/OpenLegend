@@ -145,9 +145,9 @@ export function readableDecisionContext(
   const outputs = Array.isArray(context['outputFamilies'])
     ? (context['outputFamilies'] as string[]).join(', ')
     : 'none supplied';
-  const expressionGuidance = capabilities?.expressions
-    ? 'Supported gestures: nod, smile, frown, wave, shrug, shake_head, slap. Expressions have no mechanical effects; a slap requires contact range.'
-    : 'This body has no supported gesture expressions. Do not use act.kind=expression or describe human gestures as performed.';
+  const expressionGuidance = context['expressionGuidance'];
+  if (typeof expressionGuidance !== 'string')
+    throw new Error('The decision has no installed expression presentation.');
   const list = (value: unknown) =>
     Array.isArray(value) && value.length
       ? value.map((line) => `- ${String(line).replace(/\n/g, '\n  ')}`).join('\n')

@@ -1,4 +1,5 @@
 import { canonicalJson, normalizeAttempt, prepareSpeechWords } from '@open-legend/domain';
+import { parseFreeTypedActionSyntax } from './typed-action-syntax.js';
 
 /** ICU word boundaries are prepared once per utterance by the existing language
  * owner. No listener, identity, evidence or world state participates here.
@@ -59,7 +60,11 @@ export function nativeAttemptNormalization<Binding>(request: {
   readonly binding: Binding;
   readonly descriptions: readonly string[];
 }) {
-  return { binding: request.binding, normalized: request.descriptions.map(normalizeAttempt) };
+  return {
+    binding: request.binding,
+    normalized: request.descriptions.map(normalizeAttempt),
+    syntax: request.descriptions.map(parseFreeTypedActionSyntax),
+  };
 }
 
 /** Cold and first-creation inputs bind each pure result to its actual canonical

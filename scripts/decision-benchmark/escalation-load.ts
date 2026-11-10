@@ -1,3 +1,4 @@
+import { sourceDecisionHost } from '../../apps/server/src/source-decision-host.js';
 import { undispatchedReceipt } from '../../apps/server/src/decision-state.js';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve, join, relative } from 'node:path';
@@ -202,7 +203,7 @@ try {
               currentRevisions: async () => ({ evidence: 'fixed' }),
             });
           const escalator = new DecisionEscalator(
-            service,
+            sourceDecisionHost(service),
             pool,
             log,
             async () => {

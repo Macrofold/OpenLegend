@@ -14,6 +14,7 @@ import type { NativeActorPerception, NativeActorSelf } from './native-perception
 import { formatCandidateDetails, formatCandidateTemporary } from './candidate-description.js';
 import { retainNativeSources } from './native-consumer.js';
 import type { NativeDefinitionCapture } from './native-definition-capture.js';
+import type { DecisionActivityRead } from './decision-activity-facts.js';
 import {
   formatRemainingActivity,
   formatPausedWork,
@@ -51,6 +52,7 @@ export type NativeNpcOfferMeaning =
 /** Native origin owns these commands. The formatter's output exposes only
  * descriptions and ordinals; a selected ordinal is rebound inside that owner. */
 export interface NativeNpcCandidates {
+  readonly activity: Omit<DecisionActivityRead, 'simTime' | 'requests'>;
   readonly offers: readonly {
     readonly description: string;
     readonly id: string;

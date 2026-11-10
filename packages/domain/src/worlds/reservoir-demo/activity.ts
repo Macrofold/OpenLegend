@@ -130,10 +130,7 @@ export const RESERVOIR_ACTIVITY_HOST: ActivityHostDescriptor = {
     });
     return {
       choices,
-      warnings:
-        observed.visibleEntities.length > 32
-          ? ['Some visible task supplies are omitted. Select an object to inspect its task.']
-          : [],
+      warnings: observed.visibleEntities.length > 32 ? [RESERVOIR_CHOICE_VISIBLE_WARNING] : [],
     };
   },
   reviewRequest(world, _actorId, request) {
@@ -149,3 +146,6 @@ export const RESERVOIR_ACTIVITY_HOST: ActivityHostDescriptor = {
       : [];
   },
 };
+
+export const RESERVOIR_CHOICE_VISIBLE_WARNING =
+  'Some visible task supplies are omitted. Select an object to inspect its task.';

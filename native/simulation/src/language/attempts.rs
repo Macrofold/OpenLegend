@@ -16,15 +16,27 @@ pub(crate) struct AttemptNormalizationRequest {
 pub(crate) struct AttemptNormalizationAnswer {
     pub binding: GeometryBinding,
     pub normalized: Vec<JsText>,
+    pub syntax: Vec<Option<FreeTypedActionSyntax>>,
 }
+#[derive(Clone, Deserialize)]
+#[serde(tag = "kind", rename_all = "kebab-case", rename_all_fields = "camelCase", deny_unknown_fields)]
+pub(crate) enum FreeTypedActionSyntax {
+    Stop { activity: Option<String> },
+    Point { x: Option<f64>, z: Option<f64>, surface_id: Option<String> },
+    Offset { x: Option<f64>, z: Option<f64> },
+    DistanceNeeded,
+}
+impl HeapBytes for FreeTypedActionSyntax { fn heap_bytes(&self) -> Option<usize> { match self { Self::Stop { activity } => activity.heap_bytes(), Self::Point { surface_id, .. } => surface_id.heap_bytes(), _ => Some(0) } } }
 pub(crate) struct NormalizedAttemptFacts {
     descriptions: Vec<JsText>,
     normalized: Vec<JsText>,
+    syntax: Vec<Option<FreeTypedActionSyntax>>,
     _reservation: ByteReservation,
 }
 pub(crate) struct NormalizedAttempt<'a> {
     description: &'a JsText,
     normalized: &'a JsText,
+    syntax: Option<&'a FreeTypedActionSyntax>,
 }
 impl NormalizedAttempt<'_> {
     pub(crate) fn description(&self) -> &JsText {
@@ -33,12 +45,14 @@ impl NormalizedAttempt<'_> {
     pub(crate) fn normalized(&self) -> &JsText {
         self.normalized
     }
+    pub(crate) fn syntax(&self) -> Option<&FreeTypedActionSyntax> { self.syntax }
 }
 impl NormalizedAttemptFacts {
     pub(crate) fn get(&self, index: usize) -> Option<NormalizedAttempt<'_>> {
         Some(NormalizedAttempt {
             description: self.descriptions.get(index)?,
             normalized: self.normalized.get(index)?,
+            syntax: self.syntax.get(index)?.as_ref(),
         })
     }
 }
@@ -82,7 +96,7 @@ impl AttemptNormalizationRequest {
         self,
         answer: AttemptNormalizationAnswer,
     ) -> Result<NormalizedAttemptFacts, ExecutionError> {
-        if answer.binding != self.binding || answer.normalized.len() != self.descriptions.len() {
+        if answer.binding != self.binding || answer.normalized.len() != self.descriptions.len() || answer.syntax.len() != self.descriptions.len() {
             return Err(ExecutionError::InvalidCheckpoint);
         }
         let Self {
@@ -98,12 +112,14 @@ impl AttemptNormalizationRequest {
                 .normalized
                 .heap_bytes()
                 .and_then(|n| n.checked_add(descriptions.heap_bytes()?))
+                .and_then(|n| n.checked_add(answer.syntax.heap_bytes()?))
                 .and_then(|n| n.checked_add(size_of::<NormalizedAttemptFacts>()))
                 .ok_or(ExecutionError::Capacity)?,
         )?;
         Ok(NormalizedAttemptFacts {
             descriptions,
             normalized: answer.normalized,
+            syntax: answer.syntax,
             _reservation: reservation,
         })
     }

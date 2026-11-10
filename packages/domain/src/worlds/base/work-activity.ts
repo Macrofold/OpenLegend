@@ -19,6 +19,7 @@ import { hasRecordFields, isSafeRecordId } from '../../records.js';
 import { outcome } from '../../events.js';
 import { observeActor } from '../../kernel.js';
 import { definitionPin } from '../../world-modules.js';
+import { baseWorkHandsChoice } from './activity-choice-format.js';
 
 function requestsFor(world: ActivityRequestDefinitionScope): ActivityRequestDescriptor[] {
   const work = world.workBatchPolicy,
@@ -298,14 +299,7 @@ export const BASE_WORK_ACTIVITY_HOST: ActivityHostDescriptor = {
       const selected = choice(world, actorId, text.gather.id, 'sourceId', source.id);
       if (selected) choices.push(selected);
     }
-    choices.push({
-      id: actorId,
-      label: work.handsLabel,
-      kind: 'entity',
-      roles: ['instrumentId'],
-      requestIds: [text.gather.id],
-      accessible: true,
-    });
+    choices.push(baseWorkHandsChoice(actorId, text.gather.id, work.handsLabel));
     for (const selected of carriedGatheringChoices(
       world,
       actorId,

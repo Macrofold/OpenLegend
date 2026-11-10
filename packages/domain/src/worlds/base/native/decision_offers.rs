@@ -17,8 +17,109 @@ pub struct DecisionOfferRules {
     pub natural_strike_body_plans: Vec<String>,
     pub hunting_purpose: String,
     pub hunting: HuntingOfferRules,
+    pub slot_requirements: SlotRequirements,
+    pub activity_choices: Vec<ActivityChoiceHost>,
     pub availability: DiscoveryMessages,
     pub probes: Vec<ProbeOffer>,
+}
+/// These are the same authored family facts used by installed action meanings.
+/// They describe an already offered command; they never install a family.
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SlotRequirements {
+    pub tool_fields: indexmap::IndexMap<String, Vec<String>>,
+    pub unit_per_command: Vec<String>,
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ActivityChoiceHost {
+    pub pin: crate::values::DefinitionPin,
+    pub kind: ActivityChoiceKind,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub own_supply_request: Option<String>,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub travel_request: Option<String>,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub combat_request: Option<String>,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub hands: Option<ActivityHandsChoice>,
+    pub maximum_visible: usize,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub visible_warning: Option<crate::text::JsText>,
+    #[serde(deserialize_with = "crate::values::deserialize_nullable")]
+    pub own_label: Option<crate::text::JsText>,
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ActivityChoiceKind {
+    Camp,
+    Outings,
+    Work,
+    Reservoir,
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ActivityHandsChoice {
+    pub request_id: String,
+    pub label: crate::text::JsText,
+}
+
+pub(crate) fn activity_recipient_eligible(
+    installed: &crate::simulation::InstalledWorld,
+    other: &crate::state::Entity,
+) -> Result<bool, crate::execution::ExecutionError> {
+    let Some(body) = other.actor.as_ref() else {
+        return Ok(false);
+    };
+    Ok(body.alive
+        && other.has_memory()
+        && !body.incapacitated
+        && other.actively_participates()
+        && !body
+            .participation
+            .as_ref()
+            .is_some_and(|state| state.phase == "exiting")
+        && !installed
+            .capabilities
+            .capability_blocked(Some(other), "actions")?
+        && !installed
+            .capabilities
+            .capability_blocked(Some(other), "locomotion")?)
+}
+pub(crate) fn activity_opponent_permitted(
+    installed: &crate::simulation::InstalledWorld,
+    observer: &crate::state::Entity,
+    other: &crate::state::Entity,
+) -> bool {
+    let Some(source) = observer
+        .actor
+        .as_ref()
+        .filter(|actor| actor.alive && !actor.incapacitated && observer.actively_participates())
+    else {
+        return false;
+    };
+    let Some(target) = other
+        .actor
+        .as_ref()
+        .filter(|actor| actor.alive && other.actively_participates() && other.id != observer.id)
+    else {
+        return false;
+    };
+    installed
+        .body_policy
+        .as_ref()
+        .and_then(|policy| policy.value().combat.as_ref())
+        .is_some_and(|policy| {
+            let targets = match source.controller.as_str() {
+                "player" => Some(&policy.targets.player),
+                "npc" => Some(&policy.targets.npc),
+                "native" => Some(&policy.targets.native),
+                _ => None,
+            };
+            targets.is_some_and(|targets| targets.contains(&target.controller))
+                && (source.controller != "player"
+                    || policy.human_issued_targets.contains(&target.controller))
+        })
 }
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

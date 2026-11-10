@@ -1208,9 +1208,9 @@ export function captureSituationFromRead(
     discovery.push(row);
     presentedKeys.push(key);
   }
-  const attentionReferences = Object.fromEntries(
+  const attentionReferences = Object.fromEntries<string>(
     [...detailed, ...discovery]
-      .map((row) => [row.reference, allAttentionReferences[row.reference]!])
+      .map((row) => [row.reference, allAttentionReferences[row.reference]!] as const)
       .filter(([, key]) => key !== undefined),
   );
   const retentionReferences: Record<string, TemporalReceiptLocator> = {};

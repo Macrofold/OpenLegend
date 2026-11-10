@@ -27,6 +27,7 @@ use crate::plans::{
 use crate::records::SqlCell;
 use crate::text::JsText;
 use std::sync::Arc;
+mod grounding;
 
 pub(crate) enum ResponseAnswer {
     AppraisalCreates(AppraisalCreatesAnswer),
@@ -117,6 +118,8 @@ pub(crate) struct ResponseCursor {
     source_check: Option<crate::capture::NpcSourcesCursor>,
     appraisal_creates: Option<AppraisalCreatesRequest>,
     appraisal_bindings: Option<crate::appraisals::AppraisalBindings>,
+    attempt_bindings: Vec<ResponseAttemptBinding>,
+    preparing_grounding: bool,
     canonical_purpose: CanonicalPurpose,
     digest: Option<ResponseDigest>,
     normalization: Option<AttemptNormalizationRequest>,
@@ -159,10 +162,34 @@ impl ResponseCursor {
                     .input
                     .appraisal_bindings
                     .heap_bytes()
+                    .ok_or(ExecutionError::Capacity)?
+                + bindings
+                    .input
+                    .attempt_bindings
+                    .heap_bytes()
                     .ok_or(ExecutionError::Capacity)?,
         )?;
         let binding = Self::binding(core, candidate)?;
         let appraisal_bindings = bindings.input.appraisal_bindings.clone();
+        let attempt_bindings = bindings.input.attempt_bindings.clone();
+        let preparing_grounding = bindings.input.native.is_some()
+            && Self::proposal_descriptions(&response).next().is_some();
+        let normalization = if preparing_grounding {
+            Some(AttemptNormalizationRequest::prepare(
+                Self::binding(core, candidate)?,
+                Self::proposal_descriptions(&response).chain(
+                    bindings.input.native.iter().flat_map(|native| {
+                        native
+                            .attempt_candidates
+                            .iter()
+                            .map(|candidate| &candidate.description)
+                    }),
+                ),
+                budget,
+            )?)
+        } else {
+            None
+        };
         let appraisal_creates = if bindings.input.native.is_some() && appraisal_bindings.is_some() {
             AppraisalCreatesRequest::prepare(
                 core.state,
@@ -174,10 +201,10 @@ impl ResponseCursor {
         } else {
             None
         };
-        let canonical = if appraisal_creates.is_none() {
+        let canonical = if appraisal_creates.is_none() && !preparing_grounding {
             Some(ResponseDigestRequest::prepare(
                 binding,
-                &bindings.digest_view(&response, appraisal_bindings.as_ref()),
+                &bindings.digest_view(&response, appraisal_bindings.as_ref(), &attempt_bindings),
                 budget,
             )?)
         } else {
@@ -201,9 +228,11 @@ impl ResponseCursor {
             source_check,
             appraisal_creates,
             appraisal_bindings,
+            attempt_bindings,
+            preparing_grounding,
             canonical_purpose: CanonicalPurpose::Response,
             digest: None,
-            normalization: None,
+            normalization,
             normalized: None,
             active: None,
             command: None,
@@ -562,7 +591,7 @@ impl ResponseCursor {
                 })
                 .filter_map(|op| op.text("description"))
         };
-        if descriptions().next().is_some() {
+        if self.normalized.is_none() && descriptions().next().is_some() {
             self.normalization = Some(AttemptNormalizationRequest::prepare(
                 Self::binding(core, self.candidate)?,
                 descriptions(),
@@ -784,7 +813,7 @@ impl ResponseCursor {
                 {
                     add(choice)?
                 }
-                for binding in self.bindings.input.attempt_bindings.iter().filter(|b| {
+                for binding in self.attempt_bindings.iter().filter(|b| {
                     b.operation_id.as_deref() == Some(op.local_id)
                         && op.text("description") == Some(&b.description)
                 }) {
@@ -1036,11 +1065,39 @@ impl ResponseCursor {
                     &self.budget,
                 )?;
             self.merge(custody)?;
+            if !self.preparing_grounding {
+                self.canonical = Some(ResponseDigestRequest::prepare(
+                    Self::binding(core, self.candidate)?,
+                    &self.bindings.digest_view(
+                        &self.response,
+                        self.appraisal_bindings.as_ref(),
+                        &self.attempt_bindings,
+                    ),
+                    &self.budget,
+                )?);
+            }
+        }
+        if self.preparing_grounding {
+            let supplied = match answer.take() {
+                Some(ResponseAnswer::Normalization(value)) => value,
+                Some(_) => return Err(ExecutionError::InvalidCheckpoint.into()),
+                None => return Ok(Progress::Normalization),
+            };
+            self.normalized = Some(
+                self.normalization
+                    .take()
+                    .ok_or(ExecutionError::Invariant)?
+                    .finish(supplied)?,
+            );
+            self.ground_offered(core)?;
+            self.preparing_grounding = false;
             self.canonical = Some(ResponseDigestRequest::prepare(
                 Self::binding(core, self.candidate)?,
-                &self
-                    .bindings
-                    .digest_view(&self.response, self.appraisal_bindings.as_ref()),
+                &self.bindings.digest_view(
+                    &self.response,
+                    self.appraisal_bindings.as_ref(),
+                    &self.attempt_bindings,
+                ),
                 &self.budget,
             )?);
         }
@@ -1588,6 +1645,7 @@ impl ResponseCursor {
                             &op,
                             self.initial_generation.ok_or(ExecutionError::Invariant)?,
                             language,
+                            &self.attempt_bindings,
                             &self.budget,
                         )?
                     };

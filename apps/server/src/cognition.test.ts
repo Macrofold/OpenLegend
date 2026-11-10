@@ -1,3 +1,4 @@
+import { sourceMacrofoldHost } from './source-macrofold-host.js';
 import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { entityGet } from '@open-legend/domain';
 import { testRepository } from '../../../tests/fixtures/database.js';
@@ -379,7 +380,7 @@ describe('fixture: cognition vertical slice', () => {
         return new Response(JSON.stringify(data), { status: 200 });
       }),
     );
-    const backend = new MacrofoldBackend(s);
+    const backend = new MacrofoldBackend(sourceMacrofoldHost(s));
     for (let i = 0; i < 2; i++) {
       const result = await backend.generate({
         requestId: `fixture-${i}`,
@@ -391,6 +392,7 @@ describe('fixture: cognition vertical slice', () => {
         schema: boundResponseJsonSchema(['myself'], [], {
           speech: false,
           expressions: false,
+          expressionVerbs: [],
           proposals: false,
         }),
       });
@@ -472,7 +474,7 @@ describe('fixture: cognition vertical slice', () => {
           throw new Error(`Unexpected cancelled receipt request ${path}`);
         }),
       );
-      const backend = new MacrofoldBackend(s);
+      const backend = new MacrofoldBackend(sourceMacrofoldHost(s));
       const pending =
         kind === 'judgment'
           ? backend.judge({
@@ -535,7 +537,7 @@ describe('fixture: cognition vertical slice', () => {
     // Admission journals real SQL before HTTP. Give that phase room, then cancel
     // near the original deadline so the one-second receipt grace cannot win.
     const deadlineMs = Date.now() + 2000;
-    const pending = new MacrofoldBackend(s).judge({
+    const pending = new MacrofoldBackend(sourceMacrofoldHost(s)).judge({
       requestId: 'cancelled-original-deadline',
       signal: controller.signal,
       deadlineMs,
@@ -649,7 +651,9 @@ describe('fixture: cognition vertical slice', () => {
           s.config.macrofoldBillingMode = billingMode === 'managed' ? 'byok' : 'managed';
           s.config.macrofoldModel = 'fixture-changed-model';
         }
-        const reply = await new MacrofoldBackend(s).message(message(`continued-request-${turn}`));
+        const reply = await new MacrofoldBackend(sourceMacrofoldHost(s)).message(
+          message(`continued-request-${turn}`),
+        );
         expect(reply).toMatchObject({ ok: true, code: 'completed' });
         const receipt = settled.mock.calls.at(-1)![1];
         expect(await s.store.attemptReceipt(receipt.requestId)).toMatchObject({
@@ -679,7 +683,9 @@ describe('fixture: cognition vertical slice', () => {
         ['model', { id: 'continued-session', billingMode }],
       ] as const) {
         await s.store.putIntegration(laneKey, { ...lane, session });
-        const refused = await new MacrofoldBackend(s).message(message(`missing-session-${field}`));
+        const refused = await new MacrofoldBackend(sourceMacrofoldHost(s)).message(
+          message(`missing-session-${field}`),
+        );
         expect(refused).toMatchObject({ ok: false, code: 'invalid' });
         expect(settled.mock.calls.at(-1)![1]).toMatchObject({ dispatched: false });
       }
@@ -830,7 +836,7 @@ describe('fixture: cognition vertical slice', () => {
           throw new Error(`Unexpected inference fixture path ${path}`);
         }),
       );
-      const backend = new MacrofoldBackend(s);
+      const backend = new MacrofoldBackend(sourceMacrofoldHost(s));
       const result =
         execution === 'judge'
           ? await backend.judge({ requestId: 'fixture-judgment', state, questions })
@@ -915,7 +921,7 @@ describe('fixture: cognition vertical slice', () => {
           completed.inference.billing.provider_reported_cost_status = 'unavailable';
         if ('changedConfig' in scenario)
           s.config.macrofoldBillingMode = billingMode === 'byok' ? 'managed' : 'byok';
-        await new MacrofoldBackend(s).inspectCall('fixture-inspection');
+        await new MacrofoldBackend(sourceMacrofoldHost(s)).inspectCall('fixture-inspection');
         const reconciled = await s.store.attemptReceipt(pendingReceipt.requestId);
         if (billingMode === 'byok' && missingUsage) expect(reconciled).toEqual(pendingReceipt);
         else
@@ -1025,7 +1031,7 @@ describe('fixture: cognition vertical slice', () => {
           throw new Error(`Unexpected native receipt fixture path ${path}`);
         }),
       );
-      await new MacrofoldBackend(s).inspectCall('native-inspection');
+      await new MacrofoldBackend(sourceMacrofoldHost(s)).inspectCall('native-inspection');
       const reconciled = await s.store.attemptReceipt(receipt.requestId);
       if (scenario.expected === undefined) expect(reconciled).toEqual(receipt);
       else

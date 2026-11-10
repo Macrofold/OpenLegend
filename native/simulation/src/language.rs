@@ -12,7 +12,7 @@ use std::mem::size_of;
 mod attempts;
 pub(crate) use attempts::{
     AttemptNormalizationAnswer, AttemptNormalizationRequest, NormalizedAttempt,
-    NormalizedAttemptFacts,
+    NormalizedAttemptFacts, FreeTypedActionSyntax,
 };
 
 #[derive(Debug)]

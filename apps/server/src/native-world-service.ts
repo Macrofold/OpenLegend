@@ -16,6 +16,8 @@ import type {
   CommandInput,
   CommandReceiptResult,
   GameView,
+  WorldInputUpdate,
+  WorldInputResult,
 } from '@open-legend/protocol';
 import type { AssetRevisionReference } from '@open-legend/assets';
 import {
@@ -58,6 +60,7 @@ import { NativePlayerCapture } from './native-player-capture.js';
 import { NativeNpcCapture } from './native-npc-capture.js';
 import type { NativeNpcSourceSelection } from './native-npc-sources.js';
 import { NativeRecentRetention } from './native-retention.js';
+import { readNativeTemporalTail } from './native-temporal-tail.js';
 import { RETENTION_MIN_DELAY_MS } from './retention-deadlines.js';
 import { playerInteractionAvailability } from './player-interaction.js';
 import { nativePlayerCommandReferences } from './native-player-command.js';
@@ -114,6 +117,7 @@ type NativeOperationRequest = {
   receipts?: (outcome: Outcome) => readonly GameplayReceipt[];
   outcomes?: CommitInputs['outcomes'];
   signal?: AbortSignal;
+  admitPublication?: (publication: NativePublication) => boolean;
 };
 
 /** The native handle owns gameplay and canonical rows. This service owns only
@@ -133,6 +137,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   private readonly reads = new AsyncLocalStorage<PlayerContext>();
   private readonly memoryReads = new AsyncLocalStorage<LiveReadCuts>();
   private readonly listeners = new Set<() => void>();
+  private readonly publicationListeners = new Set<(publication: NativePublication) => void>();
   private pending: NativePendingSave;
   private recent: NativeRecentRetention;
   private provider?: ReturnType<NativeDefinitionCapture['geometry']>;
@@ -208,6 +213,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     actors: NativeActorRoster,
     recentRows: readonly { readonly slot: string; readonly payload: string }[],
     private readonly now: () => number,
+    private readonly installationRelease?: AssetRevisionReference,
   ) {
     this.worldId = installation.worldId;
     this.storageGeneration = installation.generation;
@@ -259,6 +265,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     store: SqlGameRepository;
     config: AppConfig;
     now?: () => number;
+    presentationRelease?: AssetRevisionReference;
   }): Promise<NativeWorldService> {
     const { store, config } = options;
     await store.ready;
@@ -382,6 +389,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         ),
         source.records.tables['mind_temporal_actors'] ?? [],
         options.now ?? Date.now,
+        options.presentationRelease,
       );
       const allocation = service.work.reserveAllocation(installation.workAllocation);
       const receipt = await store.adoptNativeCurrentWorld(installation, {
@@ -426,9 +434,13 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       service.unsubscribers.push(store.assets.subscribeAuthority(() => service!.notify(false)));
       service.unsubscribers.push(store.onProjection(() => service!.notify(false)));
       if (config.authentication.mode === 'local') await service.signInLocal();
+      await service.withSaveBarrier(undefined, 'play', () =>
+        service!.lane.run(() => service!.reconcileParticipationInLane()),
+      );
       service.scheduleRecentRetention();
       return service;
     } catch (error) {
+      service?.closeAdmission();
       await service?.provider?.close().catch(() => undefined);
       service?.unsubscribers.splice(0).forEach((unsubscribe) => unsubscribe());
       service?.work.close();
@@ -448,6 +460,9 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   }
   get paused(): boolean {
     return !!this.failure || this.operational.manuallyPaused || this.absent;
+  }
+  get storageError(): string | null {
+    return this.failure?.message ?? null;
   }
   get commandEpoch(): string {
     return this.epoch.token;
@@ -516,7 +531,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   }
-  notify(history: boolean): void {
+  notify(history = false): void {
     this.version++;
     if (history) this.historyVersion++;
     for (const listener of this.listeners) {
@@ -524,6 +539,80 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         listener();
       } catch {
         /* A connection observer cannot refuse accepted gameplay. */
+      }
+    }
+  }
+  /** Fixed accepted prefix. Model waits join its scheduled save, never force an
+   * early flush or retarget themselves to a later unrelated physical cut. */
+  durabilityTicket(): number {
+    return this.pending.through;
+  }
+  isDurable(ticket: number): boolean {
+    return this.pending.durableMark().through >= ticket;
+  }
+  get simTime(): number {
+    return this.progress.at;
+  }
+  get identityThrough(): number {
+    return this.progress.identityThrough;
+  }
+  get durableIdentityThrough(): number {
+    return this.durableProgress.identityThrough;
+  }
+  npcActorIds(): Iterable<string> {
+    return this.actors.npcIds();
+  }
+  npcActor(id: string) {
+    return this.actors.get(id);
+  }
+  async whenDurable(ticket = this.durabilityTicket()): Promise<void> {
+    if (this.isDurable(ticket)) return;
+    if (this.failure) throw this.failure;
+    if (this.closed) throw new Error('Native service closed before the evidence became durable.');
+    return new Promise<void>((resolve, reject) => {
+      let unsubscribe = () => {};
+      const changed = () => {
+        if (this.isDurable(ticket)) {
+          unsubscribe();
+          resolve();
+        } else if (this.failure || this.closed) {
+          unsubscribe();
+          reject(
+            this.failure ?? new Error('Native service closed before the evidence became durable.'),
+          );
+        }
+      };
+      unsubscribe = this.subscribe(changed);
+      changed();
+    });
+  }
+  privateReadFence(actorId: string, permitted: () => boolean): () => boolean {
+    const generation = this.generation,
+      epoch = this.privacyEpoch;
+    const scope = { worldId: this.worldId, actorId };
+    const revision = this.store.memories.sourceAccessRevision(scope);
+    return () =>
+      !this.closed &&
+      !this.restoring &&
+      !this.failure &&
+      this.generation === generation &&
+      this.privacyEpoch === epoch &&
+      revision === this.store.memories.sourceAccessRevision(scope) &&
+      !this.store.memories.sourceEditPending(scope) &&
+      permitted();
+  }
+  /** Accepted sparse changes only. Consumers retain their own finite trigger
+   * reads; they never subscribe to a second writable actor/world graph. */
+  onPublication(listener: (publication: NativePublication) => void): () => void {
+    this.publicationListeners.add(listener);
+    return () => this.publicationListeners.delete(listener);
+  }
+  private publishAccepted(publication: NativePublication): void {
+    for (const listener of this.publicationListeners) {
+      try {
+        listener(publication);
+      } catch {
+        /* Scheduling cannot undo accepted gameplay. */
       }
     }
   }
@@ -564,11 +653,28 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   ) {
     return this.lane.run(async () => {
       this.assertAdmission();
-      const capture = await NativeNpcCapture.capture(this.world, actorId, requiredAppraisals);
-      // Choice setup uses the same unchanged native cut as its mental capture.
-      // No model or embedding call runs in this short preparation lane.
-      await capture.prepareChoices(this.world, this.geometry, options);
+      let capture = await NativeNpcCapture.capture(this.world, actorId, requiredAppraisals);
       try {
+        const tail = capture.receiptTailRequest();
+        if (tail) {
+          const before = capture.facts.self.acceptedCut;
+          const captured = await captureNativeReadCut(this.world, actorId);
+          if (captured.acceptedCut !== before) throw new ViewChangedError();
+          const answer = await readNativeTemporalTail(
+            this.store.db,
+            captured,
+            this.pending.liveReadCuts(),
+            tail,
+          );
+          await this.world.resolveReceiptTail(Buffer.from(JSON.stringify(answer)));
+          capture.release();
+          capture = await NativeNpcCapture.capture(this.world, actorId, requiredAppraisals);
+          if (capture.facts.self.acceptedCut !== before || capture.receiptTailRequest())
+            throw new ViewChangedError();
+        }
+        // Tail resolution changes derived metadata only. Choice setup and the
+        // mental/history read still share their exact initial accepted cut.
+        await capture.prepareChoices(this.world, this.geometry, options);
         const cut = nativeScopedReadCut(
           await captureNativeReadCut(this.world, actorId),
           this.pending.liveReadCuts(),
@@ -604,6 +710,32 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     });
   }
 
+  prepareNpcSituation(
+    capture: NativeNpcCapture,
+    jobId: string,
+    history: Parameters<NativeNpcCapture['prepareSituation']>[3],
+    observations: Parameters<NativeNpcCapture['prepareSituation']>[4] = [],
+  ) {
+    return this.lane.run(() => {
+      this.assertNpcCapture(capture);
+      return capture.prepareSituation(this.world, this.definitions, jobId, history, observations);
+    });
+  }
+  prepareNpcExperiencePresentation(capture: NativeNpcCapture, values: readonly unknown[]) {
+    return this.lane.run(() => {
+      this.assertNpcCapture(capture);
+      return capture.prepareExperiencePresentation(this.world, this.definitions, values);
+    });
+  }
+  private assertNpcCapture(capture: NativeNpcCapture): void {
+    this.assertAdmission();
+    if (
+      capture.facts.self.worldId !== this.worldId ||
+      capture.facts.self.generation !== this.generation
+    )
+      throw new ViewChangedError();
+  }
+
   /** Memory repositories select only their scoped SQL/pending rows. This
    * context is separate from embodied player reads and grants no player scope. */
   withMemoryRead<T>(cut: LiveReadCuts, operation: () => Promise<T>): Promise<T> {
@@ -619,6 +751,46 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     return this.memoryReads.run(cut, () =>
       this.store.db.readAtCut!(cut, () => this.store.db.readTransaction!(operation)),
     );
+  }
+
+  /** One repository operation gets a fresh SQL/pending cut. Provider and model
+   * waits stay outside it; the original NPC observation remains its own owner. */
+  async withNpcMemoryRead<T>(
+    actorId: string,
+    operation: (cut: LiveReadCuts) => Promise<T>,
+  ): Promise<T> {
+    const cut = await this.lane.run(async () => {
+      this.assertAdmission();
+      return nativeScopedReadCut(
+        await captureNativeReadCut(this.world, actorId),
+        this.pending.liveReadCuts(),
+      );
+    });
+    return this.withMemoryRead(cut, () => operation(cut));
+  }
+
+  /** SQL admission precedes this final short turn when the callback needs SQL.
+   * Only server-owned recall/ticket publication runs here, never paid work. */
+  publishRecall<T>(operation: () => Promise<T>): Promise<T> {
+    return this.lane.run(() => {
+      this.assertAdmission();
+      return operation();
+    });
+  }
+
+  publishNpcHistory<T>(capture: NativeNpcCapture, start: () => T): Promise<{ result: T }> {
+    return this.publishRecall(async () => {
+      this.assertNpcCapture(capture);
+      const publication = await capture.historyPublication(this.world);
+      try {
+        if (!publication?.isCurrent()) throw new ViewChangedError();
+        // Wrapping the result deliberately starts, but never awaits, provider
+        // work while this actual historical disclosure lease is held.
+        return { result: start() };
+      } finally {
+        publication?.release();
+      }
+    });
   }
 
   setPlayerInteractionAdmission(admit: (actorId: string) => boolean): () => void {
@@ -850,9 +1022,14 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     paused: boolean,
     speed: number,
     manuallyPaused: boolean,
+    scope?: RequestScope,
+    capability: Capability = 'play',
+    controlling = false,
   ): Promise<ApiResult> {
     const publication = await this.protectedOperation({
-      capability: 'play',
+      scope,
+      capability,
+      controlling,
       inLane: true,
       current: () => !this.closed && !this.failure,
       first: () =>
@@ -866,6 +1043,30 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   clockStartedAt = 0;
   private debtSeconds = 0;
   private inputAccountedThrough?: number;
+  private clockAdmission: 'duration' | 'monotonic' = 'duration';
+  useMonotonicClock(): void {
+    this.clockAdmission = 'monotonic';
+  }
+  get speed(): number {
+    return this.operational.speed;
+  }
+  private accountInputTime(until: number, fallback = this.clockStartedAt): void {
+    this.clockAdmission = 'monotonic';
+    if (this.paused) {
+      this.inputs.clear();
+      this.inputAccountedThrough = until;
+      return;
+    }
+    const from = Math.max(this.clockStartedAt, this.inputAccountedThrough ?? fallback);
+    if (until <= from) {
+      this.inputAccountedThrough = from;
+      return;
+    }
+    const ratio = this.config.baseRatio * this.speed;
+    this.inputs.credit(from, until, this.progress.at + this.debtSeconds, ratio);
+    this.debtSeconds += ((until - from) / 1000) * ratio;
+    this.inputAccountedThrough = until;
+  }
   private resetClock(): void {
     this.debtSeconds = 0;
     this.inputs.clear();
@@ -1086,10 +1287,18 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         }
         const speed = input.speed ?? this.operational.speed,
           manuallyPaused = input.paused ?? this.operational.manuallyPaused;
+        if (this.clockAdmission === 'monotonic') this.accountInputTime(performance.now());
         const paused = manuallyPaused || this.absent || !!this.failure,
           resuming = this.progress.paused && !paused;
         if (paused || this.progress.paused) this.resetClock();
-        const outcome = await this.hostControlInLane(paused, speed, manuallyPaused);
+        const outcome = await this.hostControlInLane(
+          paused,
+          speed,
+          manuallyPaused,
+          scope,
+          'play',
+          true,
+        );
         if (outcome.ok && resuming) this.clockStartedAt = performance.now();
         if (outcome.ok) this.scheduleRecentRetention();
         return outcome.ok ? worldControlOutcome(paused, speed) : outcome;
@@ -1148,6 +1357,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   private async protectedOperation(request: {
     readonly scope?: RequestScope;
     readonly capability: Capability;
+    readonly controlling?: boolean;
     readonly actorId?: string;
     readonly first: () => Promise<NativeWorldTurn>;
     readonly current: () => boolean;
@@ -1162,7 +1372,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     try {
       const operation = async () => {
         this.assertAdmission(true);
-        if (request.scope) this.assertScope(request.scope, request.capability);
+        if (request.scope) this.assertScope(request.scope, request.capability, request.controlling);
         const live = this.pending.liveReadCuts();
         const before = request.actorId
           ? nativeScopedReadCut(await captureNativeReadCut(this.world, request.actorId), live)
@@ -1228,7 +1438,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                         authority: {
                           scope: request.scope,
                           capability: request.capability,
-                          controlling: false,
+                          controlling: request.controlling ?? false,
                           now: this.now,
                         },
                       }
@@ -1260,6 +1470,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         if (result.staged) {
           await this.acknowledgeCommitted();
           if (result.publication.privacyChange) this.privacyEpoch++;
+          this.publishAccepted(result.publication);
           this.notify(result.publication.events.length !== 0);
           this.scheduleRecentRetention();
         } else if (
@@ -1282,12 +1493,23 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   }
 
   async createSave(label: string, id: string, scope: RequestScope): Promise<void> {
-    const release = await this.store.saves.admit(id, 'manual');
+    return this.captureCheckpoint(label, id, 'manual', scope);
+  }
+  async createAutosave(): Promise<void> {
+    return this.captureCheckpoint('Autosave', randomUUID(), 'auto');
+  }
+  private async captureCheckpoint(
+    label: string,
+    id: string,
+    kind: 'manual' | 'auto',
+    scope?: RequestScope,
+  ): Promise<void> {
+    const release = await this.store.saves.admit(id, kind);
     let completion: Promise<void> | undefined;
     try {
       await this.withSaveBarrier(scope, 'save', () =>
         this.lane.run(async () => {
-          this.assertScope(scope, 'save');
+          if (scope) this.assertScope(scope, 'save');
           let captured!: () => void;
           const ready = new Promise<void>((resolve) => {
             captured = resolve;
@@ -1295,7 +1517,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           completion = this.store.saves.create(this.worldId, label, id, {
             captured,
             expectedRevision: this.pending.durableMark().revision,
-            kind: 'manual',
+            kind,
           });
           // The actual worker pins this SQL revision before admission reopens.
           // File streaming/rename then continues without occupying the lane.
@@ -1305,6 +1527,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       await completion;
     } catch (error) {
       if (
+        kind === 'manual' &&
         !(error instanceof CheckpointBusyError) &&
         !(error instanceof AuthorityError) &&
         !(error instanceof OverloadError)
@@ -1352,7 +1575,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     this.assertScope(scope, 'save');
     await this.store.saves.assertCanonicalAssetDependencies(
       selected.captured,
-      this.operational.presentationRelease,
+      this.installationRelease,
       { accountId: scope.accountId },
       id,
     );
@@ -1538,6 +1761,15 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       await this.store.saves.retainRecovery(this.worldId);
     }
   }
+  async pauseForRestore(scope: RequestScope): Promise<ApiResult> {
+    return this.withSaveBarrier(scope, 'save', () =>
+      this.lane.run(async () => {
+        this.assertScope(scope, 'save');
+        this.resetClock();
+        return this.hostControlInLane(true, this.speed, true, scope, 'save');
+      }),
+    );
+  }
   private async refreshValues(): Promise<void> {
     const retained = await captureNativeRetainedValues(this.world);
     if (
@@ -1582,6 +1814,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       work: this.work,
       current: () => !this.closed && !this.failure && request.current(),
       signal: request.signal,
+      admitPublication: request.admitPublication,
       history: { db: this.store.db, liveReadCuts: () => before },
       stage: async (publication) => {
         if (publication.privacyChange)
@@ -1651,6 +1884,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       this.failure = error instanceof Error ? error : new Error(String(error));
       throw error;
     }
+    this.publishAccepted(publication);
     this.notify(publication.events.length !== 0);
     this.scheduleSave();
     this.scheduleRecentRetention();
@@ -1907,6 +2141,206 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     });
   }
 
+  private participationDue(): boolean {
+    this.present;
+    const participating = this.participatingHumans();
+    for (const id of this.actors.playerIds()) {
+      const phase = this.actors.get(id)!.participation;
+      if (participating.has(id)) {
+        if (phase && phase.phase !== 'active') return true;
+        continue;
+      }
+      if (
+        phase?.phase === 'inactive' ||
+        (this.progress.paused && this.awaitingRestoredPresence.has(id))
+      )
+        continue;
+      const attempt = this.exits.get(id);
+      if (!attempt || phase?.phase !== 'exiting' || phase.exitAttemptId !== attempt.id) return true;
+      if (
+        this.definitions.facts.definitions.participationPolicy?.exitExposureSeconds === undefined &&
+        this.now() >= attempt.deadline
+      )
+        return true;
+    }
+    return false;
+  }
+
+  /** The host offers actual elapsed intervals. Unadvanced debt survives a
+   * bounded native batch; a navigation wait does not manufacture an accepted
+   * SQL cut, and a suspended callback never grants input credit. */
+  async tick(
+    elapsedRealSeconds: number,
+    suspendedRealSeconds = elapsedRealSeconds > 2 ? elapsedRealSeconds : 0,
+    options: { drain?: boolean; offeredUntil?: number } = {},
+  ): Promise<boolean> {
+    if (
+      !Number.isFinite(elapsedRealSeconds) ||
+      elapsedRealSeconds < 0 ||
+      !Number.isFinite(suspendedRealSeconds) ||
+      suspendedRealSeconds < 0 ||
+      (options.offeredUntil !== undefined &&
+        (!Number.isFinite(options.offeredUntil) || options.offeredUntil < 0))
+    )
+      throw new Error('Tick durations must be finite nonnegative seconds.');
+    do {
+      const outstanding = this.save;
+      if (
+        outstanding &&
+        this.pending.oldestAcceptedAt !== undefined &&
+        performance.now() - this.pending.oldestAcceptedAt >= LIVE_SAVE_MAX_AGE_MS
+      )
+        await outstanding;
+      if (this.participationDue() || this.progress.paused !== this.paused)
+        await this.withSaveBarrier(undefined, 'play', () =>
+          this.lane.run(async () => {
+            await this.reconcileParticipationInLane();
+            if (this.progress.paused !== this.paused) await this.syncPauseInLane();
+          }),
+        );
+      const more = await this.lane.run(async () => {
+        this.assertAdmission();
+        if (this.paused) return false;
+        if (options.offeredUntil !== undefined)
+          elapsedRealSeconds = Math.min(
+            elapsedRealSeconds,
+            Math.max(0, (options.offeredUntil - this.clockStartedAt) / 1000),
+          );
+        if (suspendedRealSeconds > 0) {
+          this.debtSeconds = 0;
+          this.inputs.clear();
+          this.inputAccountedThrough = options.offeredUntil ?? performance.now();
+          elapsedRealSeconds = Math.max(0, elapsedRealSeconds - suspendedRealSeconds);
+          this.inputAccountedThrough -= elapsedRealSeconds * 1000;
+          if (!elapsedRealSeconds) return false;
+        }
+        if (options.offeredUntil !== undefined)
+          this.accountInputTime(
+            options.offeredUntil,
+            options.offeredUntil - elapsedRealSeconds * 1000,
+          );
+        else {
+          this.clockAdmission = 'duration';
+          this.inputs.clear();
+          this.inputAccountedThrough = undefined;
+          this.debtSeconds += elapsedRealSeconds * this.config.baseRatio * this.speed;
+        }
+        this.inputs.expire(performance.now());
+        const offered = Math.min(this.debtSeconds, 86400);
+        if (offered < 1e-6) return false;
+        const before = this.progress.at,
+          inputs = this.inputs.inputs(performance.now());
+        const publication = await this.acceptInLane({
+          first: () => this.world.advance(offered, 4096, Buffer.from(JSON.stringify(inputs))),
+          current: () => !this.paused && this.inputs.authorized(inputs, performance.now()),
+          admitPublication: (value) =>
+            !(
+              value.progress.at === before &&
+              value.outcome.ok &&
+              value.outcome.code === 'navigation-pending'
+            ),
+        });
+        if (!publication) return false;
+        if (!publication.outcome.ok) {
+          this.fail(
+            new Error(
+              `Required native work stopped before advancing time: ${publication.outcome.message}`,
+            ),
+          );
+          return false;
+        }
+        const advanced = publication.progress.at - before;
+        this.debtSeconds = Math.max(0, this.debtSeconds - advanced);
+        return (
+          !this.paused &&
+          this.debtSeconds >= 1e-6 &&
+          advanced > 0 &&
+          publication.outcome.code !== 'navigation-pending'
+        );
+      });
+      elapsedRealSeconds = suspendedRealSeconds = 0;
+      if (!more || options.drain === false) return more;
+      await new Promise<void>((resolve) => setImmediate(resolve));
+    } while (true);
+  }
+  fail(error: unknown): void {
+    this.failure = error instanceof Error ? error : new Error(String(error));
+    this.inputs.clear();
+    this.notify(false);
+  }
+
+  private inputState(scope: RequestScope, self: NativePlayerRead['self']) {
+    const life = self.physicalLife ?? 0,
+      alive = self.alive,
+      generation = this.generation,
+      paused = this.paused;
+    const state = this.inputs.state(
+      scope.actorId,
+      digest({ scope, generation, life: self.physicalLife, alive, paused }),
+      () =>
+        this.currentScope(scope, 'play', true) &&
+        this.generation === generation &&
+        this.paused === paused &&
+        this.inputLives.get(scope.actorId)?.life === life &&
+        this.inputLives.get(scope.actorId)?.alive === alive,
+    );
+    if (
+      !this.inputLives.has(scope.actorId) &&
+      this.inputLives.size >= this.config.capacity.presence
+    )
+      for (const id of this.inputLives.keys()) if (!this.inputs.has(id)) this.inputLives.delete(id);
+    this.inputLives.set(scope.actorId, { life, alive });
+    if (!self.player.canSteer && state.steering) this.inputs.invalidateMovement(scope.actorId);
+    return state;
+  }
+  async updateWorldInput(input: WorldInputUpdate, scope: RequestScope): Promise<WorldInputResult> {
+    return this.lane.run(async () => {
+      this.assertAdmission();
+      this.assertScope(scope, 'play', true);
+      const now = performance.now();
+      this.accountInputTime(now);
+      this.inputs.expire(now, scope.actorId);
+      const capture = await NativePlayerCapture.capture(
+        this.world,
+        scope,
+        PLAYER_EVENT_WINDOW,
+        this.geometry,
+      );
+      try {
+        const self = capture.facts.self,
+          state = this.inputState(scope, self);
+        if (this.paused)
+          return {
+            ok: false,
+            code: 'paused',
+            message: 'Resume the world to move or release.',
+            inputScope: { ...state.scope },
+          };
+        if (!self.alive)
+          return {
+            ok: false,
+            code: 'unavailable',
+            message: 'This character cannot move now.',
+            inputScope: { ...state.scope },
+          };
+        if (
+          input.kind === 'steer' &&
+          (input.direction.x || input.direction.z) &&
+          !self.player.canSteer
+        )
+          return {
+            ok: false,
+            code: 'busy',
+            message: 'This character cannot steer during the current work or condition.',
+            inputScope: { ...state.scope },
+          };
+        return this.inputs.update(state, input, now, this.progress.at + this.debtSeconds);
+      } finally {
+        capture.release();
+      }
+    });
+  }
+
   /** Capture SQL's actual accepted overlay and the native disclosure token in
    * one mutation-lane turn. Async formatting then leaves that lane available. */
   async publishPlayer(
@@ -1981,32 +2415,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       self = facts.self;
     const controlling = this.currentScope(scope, 'play', true);
     const lifecycle = this.lifecycle();
-    const life = self.physicalLife ?? 0,
-      alive = self.alive;
-    const inputIdentity = digest({
-      scope,
-      generation: this.generation,
-      life: self.physicalLife,
-      alive: self.alive,
-      paused: this.paused,
-    });
-    const lifecyclePause = this.paused;
-    const input = this.inputs.state(
-      scope.actorId,
-      inputIdentity,
-      () =>
-        this.currentScope(scope, 'play', true) &&
-        this.generation === lifecycle.generation &&
-        this.paused === lifecyclePause &&
-        this.inputLives.get(scope.actorId)?.life === life &&
-        this.inputLives.get(scope.actorId)?.alive === alive,
-    );
-    if (
-      !this.inputLives.has(scope.actorId) &&
-      this.inputLives.size >= this.config.capacity.presence
-    )
-      for (const id of this.inputLives.keys()) if (!this.inputs.has(id)) this.inputLives.delete(id);
-    this.inputLives.set(scope.actorId, { life, alive });
+    const input = this.inputState(scope, self);
     for (const account of facts.events.accounts)
       if (account.authoredBySelf) this.speechActors.set(account.original.id, scope.actorId);
     while (this.speechActors.size > PLAYER_EVENT_WINDOW * this.connectionLimit)
@@ -2312,6 +2721,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     })()
       .catch((error: unknown) => {
         this.failure = error instanceof Error ? error : new Error(String(error));
+        this.notify(false);
         throw error;
       })
       .finally(() => {

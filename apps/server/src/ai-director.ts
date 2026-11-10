@@ -1,4 +1,7 @@
-import { resultEvidenceId } from '@open-legend/domain';
+import { sourceDecisionHost } from './source-decision-host.js';
+import { dispatchDecision, StopJob } from './decision-dispatch.js';
+import { sourceMacrofoldHost } from './source-macrofold-host.js';
+import { resultEvidenceId, selectedResponseExpressions } from '@open-legend/domain';
 import { nativeText } from '@open-legend/domain';
 import { readableDecisionContext } from './response-context.js';
 import { entityHandle } from './entity-references.js';
@@ -177,17 +180,6 @@ import { CONTEXT_BYTE_LIMIT, ContextBudgetError } from './context.js';
 import { digest, type JobRecord } from './store.js';
 import type { WorldService } from './world-service.js';
 
-/** `outcome` keeps provider refusal, unavailability, invalid output, uncertain completion and
- * budget refusal distinct in job results and traces; the job status stays coarse. */
-class StopJob extends Error {
-  constructor(
-    readonly status: 'failed' | 'cancelled' | 'stale',
-    message: string,
-    readonly outcome?: string,
-  ) {
-    super(message);
-  }
-}
 const RESPONSE_INTERRUPTION = { importance: 8, urgency: 8 } as const;
 interface ResponseInterruption {
   eventId: string;
@@ -348,7 +340,7 @@ export class AiDirector {
   ) {
     const config = service.config;
     const log = (this.log = new IntelligenceLog(service.store));
-    this.macrofold = new MacrofoldBackend(service, log);
+    this.macrofold = new MacrofoldBackend(sourceMacrofoldHost(service), log);
     this.client = log.wrap(
       client ??
         (config.macrofoldKey
@@ -374,7 +366,7 @@ export class AiDirector {
     this.execution = execution ?? new CognitionExecution(service.store, now);
     this.recall = new RecallService(service, log, undefined, this.execution);
     this.escalator = new DecisionEscalator(
-      service,
+      sourceDecisionHost(service),
       this.execution,
       log,
       (job, signal) => prepareReconsideration(service, this.recall, job, signal),
@@ -2053,253 +2045,44 @@ export class AiDirector {
     dispatch: (requestId: string) => Promise<AiResult<T>>,
     meter?: Meter,
   ): Promise<T> {
-    const evidenceActor = this.current(run);
-    const sourceAccess = this.service.store.memories?.sourceAccessRevision({
-      worldId: this.service.world.id,
-      actorId: evidenceActor,
-    });
-    const evidenceThrough = this.service.durabilityTicket();
-    // Every actual request is already rendered when this boundary is entered.
-    // Join its fixed save prefix before reserving/dispatching; never force a save
-    // or retarget this wait as unrelated physical publications arrive.
-    await this.service.whenDurable(evidenceThrough);
-    const sourceActorId = this.current(run);
-    if (
-      sourceAccess !==
-        this.service.store.memories?.sourceAccessRevision({
-          worldId: this.service.world.id,
-          actorId: sourceActorId,
-        }) ||
-      this.service.store.memories?.sourceEditPending({
-        worldId: this.service.world.id,
-        actorId: sourceActorId,
-      })
-    )
-      throw new StopJob('failed', 'The character’s evidence changed before dispatch.', 'stale');
-    const sourceCurrent = this.service.privateReadFence(
-      sourceActorId,
-      () => this.current(run) === sourceActorId,
+    const director = this;
+    return dispatchDecision(
+      {
+        get worldId() {
+          return director.service.world.id;
+        },
+        get config() {
+          return director.service.config;
+        },
+        get store() {
+          return director.service.store;
+        },
+        get paused() {
+          return director.service.paused;
+        },
+        execution: this.execution,
+        macrofold: this.macrofold,
+        log: this.log,
+        now: this.now,
+        current: (active) => this.current(active),
+        durabilityTicket: () => this.service.durabilityTicket(),
+        whenDurable: (ticket) => this.service.whenDurable(ticket),
+        privateReadFence: (actorId, permitted) => this.service.privateReadFence(actorId, permitted),
+        awaitResume: (active, ready) => this.awaitResume(active, ready),
+        update: (active, status, message) => this.update(active, status, message),
+        attemptBudget: (active) =>
+          inventionAttemptBudget(this.service, active.job.request.invention),
+        settleDiscovery: (active, discovery) =>
+          this.service.publishAttention(discovery.actorId, active.generation, (world) =>
+            settleDiscovery(world, discovery.actorId, discovery.reservation, true),
+          ),
+      },
+      run,
+      provider,
+      suffix,
+      dispatch,
+      meter,
     );
-    // This selected strategy declares both dependent calls in advance. Its
-    // original useful lifetime still fences every dispatch/commit via current();
-    // a stage transition neither renews that clock nor funds a fallback.
-    if (
-      run.job.decision &&
-      !run.preparedResponse &&
-      (this.now() >= run.job.decision.fastPublishBy ||
-        performance.now() >= run.job.decision.fastPublishByMonotonic)
-    )
-      throw new StopJob(
-        'failed',
-        'No new immediate inference was started after the one-second boundary.',
-        'expired',
-      );
-    const lease = await this.execution.primary(run.urgent);
-    if (!lease)
-      throw new StopJob('failed', 'The primary model execution slot is occupied.', 'capacity');
-    let reservedId: string | undefined,
-      dispatchIntent = false,
-      completed = false;
-    try {
-      if (this.service.paused && run.job.request.invention?.mode !== 'workshop')
-        await this.awaitResume(run);
-      const actorId = this.current(run);
-      const id = `${run.job.id}:${suffix}`;
-      const config = this.service.config;
-      // Conservative bounds use request UTF-8 bytes as an upper token proxy, plus output ceiling.
-      // Exact provider invoices remain external; custom prices must match the selected model.
-      const reserve = decisionAllowance(config, provider, meter?.model);
-      // A decision's own level work stays within that level's per-decision limits.
-      // docs/limits/cognition.md#cg08
-      const category =
-        meter?.category ?? (/classify|interpret/.test(suffix) ? 'grounding' : 'preparation');
-      const admitted = run.ledger?.admit(category, meter?.level, reserve);
-      if (admitted && !admitted.ok)
-        throw new StopJob(
-          'failed',
-          `${admitted.reason} No further paid request was sent.`,
-          'budget-exhausted',
-        );
-      const reserveAttempt = async () => {
-        if (
-          !(await this.service.store.reserve(
-            id,
-            provider,
-            reserve,
-            config.budgetUsd,
-            actorId,
-            undefined,
-            inventionAttemptBudget(this.service, run.job.request.invention),
-            {
-              rootJobId: run.job.id,
-              category,
-              ...(meter?.level ? { level: meter.level } : {}),
-              stage: suffix,
-              executionClass: lease.executionClass,
-            },
-          ))
-        )
-          throw new StopJob(
-            'failed',
-            'Your usage allowance is used up. Existing actions and learned recipes still work.',
-            'budget-exhausted',
-          );
-      };
-      if (run.job.decision && provider === 'openai' && meter?.model === DECISION_MODEL) {
-        const direct = await this.service.store.mutateDecision(run.job.id, async (job) => {
-          if (job.decision!.phase === 'closed' || job.decision!.higherEntitlement !== 'available')
-            return undefined;
-          await reserveAttempt();
-          return { ...job, decision: { ...job.decision!, higherEntitlement: 'used-direct' } };
-        });
-        if (!direct)
-          throw new StopJob(
-            'failed',
-            'The higher-model allowance was already used.',
-            'budget-exhausted',
-          );
-        run.job = direct;
-      } else await reserveAttempt();
-      reservedId = id;
-      run.ledger?.record({
-        requestId: id,
-        stage: suffix,
-        category,
-        ...(meter?.level ? { level: meter.level } : {}),
-        provider,
-        size: meter?.size ?? { instructions: 0, context: 0, schema: 0 },
-        reservedUsd: reserve,
-      });
-      await this.update(
-        run,
-        provider === 'jev' ? 'judging' : 'generating',
-        provider === 'jev'
-          ? 'Jev is checking the bounded route.'
-          : run.job.kind === 'invention'
-            ? 'Generating a new material-and-mechanism definition.'
-            : run.job.kind === 'action'
-              ? 'Interpreting the requested action.'
-              : 'Preparing a detailed decision. This may take about a minute.',
-      );
-      this.current(run);
-      if (run.job.decision && !run.preparedResponse) {
-        if (
-          this.now() >= run.job.decision.fastPublishBy ||
-          performance.now() >= run.job.decision.fastPublishByMonotonic
-        )
-          throw new StopJob('failed', 'The immediate dispatch deadline passed.', 'expired');
-      }
-      dispatchIntent = true;
-      if (!(await this.service.store.markDecisionDispatch(id))) {
-        throw new StopJob('failed', 'This model request already has dispatch intent.', 'uncertain');
-      }
-      let sourceFailure: unknown;
-      const result = await this.macrofold.withSourceValidation(
-        async () => {
-          try {
-            this.current(run);
-            await run.validateJudgmentSource?.();
-            this.current(run);
-            if (!sourceCurrent())
-              throw new StopJob('stale', 'The character’s evidence changed before dispatch.');
-            if (
-              run.job.decision &&
-              !run.preparedResponse &&
-              (this.now() >= run.job.decision.fastPublishBy ||
-                performance.now() >= run.job.decision.fastPublishByMonotonic)
-            )
-              throw new StopJob('failed', 'The immediate dispatch deadline passed.', 'expired');
-          } catch (error) {
-            sourceFailure = error;
-            throw error;
-          }
-        },
-        async () => {
-          if (run.discovery && !run.discovery.spent) {
-            const discovery = run.discovery;
-            if (
-              !(await this.service.publishAttention(discovery.actorId, run.generation, (world) =>
-                settleDiscovery(world, discovery.actorId, discovery.reservation, true),
-              ))
-            )
-              throw new StopJob('stale', 'The attention opportunity is no longer available.');
-            discovery.spent = true;
-          }
-          return dispatch(id);
-        },
-      );
-      const accountingStartedAt = new Date().toISOString();
-      result.receipt = normalizeReceiptCost(result.receipt);
-      await this.service.store.settle(id, result.receipt);
-      completed = true;
-      run.receipt = result.receipt;
-      run.failure =
-        result.outcome === 'value' ? undefined : { outcome: result.outcome, reason: result.reason };
-      if (result.receipt.completionUncertain) lease?.uncertain(id);
-      run.ledger?.settle(id, result.receipt, result.outcome);
-      if (result.receipt.completionUncertain)
-        throw new StopJob(
-          'failed',
-          'The original provider execution is still uncertain; no world effect or second request was allowed.',
-          'uncertain',
-        );
-      await this.log.record(
-        `${id}:accounting`,
-        'Accounting',
-        { provider, requestId: result.receipt.requestId },
-        { settled: true, receipt: result.receipt },
-        accountingStartedAt,
-      );
-      if (result.outcome !== 'value' && run.job.request.invention)
-        run.job.invention = {
-          ...run.job.invention,
-          code: result.receipt.completionUncertain ? 'uncertain' : result.outcome,
-        };
-      if (
-        result.outcome === 'value' &&
-        this.service.paused &&
-        run.job.request.invention?.mode !== 'workshop'
-      )
-        await this.awaitResume(run, true);
-      if (run.cancelReason) throw new StopJob('cancelled', run.cancelReason);
-      // The transport cannot interpret a gameplay guard and reports a stopped
-      // admission. Settle its exact undispatched receipt, then retain the owning
-      // refusal (expiry, privacy or control), rather than mislabelling cancellation.
-      if (sourceFailure && !result.receipt.dispatched && !result.receipt.completionUncertain)
-        throw sourceFailure;
-      // Surface actual provider failures even when an explicit request is paused.
-      if (result.outcome === 'value' || !this.service.paused || run.job.kind === 'thought')
-        this.current(run);
-      if (result.outcome !== 'value')
-        throw new StopJob(
-          result.outcome === 'cancelled' ? 'cancelled' : 'failed',
-          `${provider === 'jev' ? 'Jev' : 'Language model'} returned ${result.outcome}: ${result.reason}. No world effect or automatic retry followed.`,
-          // An adapter may report a dispatched, unknown completion as failed; the receipt decides.
-          result.outcome !== 'cancelled' && result.receipt.completionUncertain
-            ? 'uncertain'
-            : ((
-                {
-                  deployment_capacity: 'capacity',
-                  deployment_budget_exhausted: 'budget-exhausted',
-                  unsupported_model_capability: 'unsupported',
-                  context_length_exceeded: 'context-exceeded',
-                  deployment_binding_stale: 'resource-unavailable',
-                  deployment_not_ready: 'resource-unavailable',
-                  deployment_unavailable: 'resource-unavailable',
-                } as Record<string, string>
-              )[result.receipt.providerErrorCode ?? ''] ?? result.outcome),
-        );
-      if (provider === 'openai') run.generatedBy = result.receipt.model;
-      return result.value;
-    } finally {
-      if (reservedId && !dispatchIntent)
-        await this.service.store.settle(
-          reservedId,
-          undispatchedReceipt(reservedId, provider, this.now()),
-        );
-      if (dispatchIntent && !completed && reservedId) lease?.uncertain(reservedId);
-      lease?.release();
-    }
   }
 
   /** Translate the one binding chosen by `resolveLevel1` into an ordinary response for the
@@ -3452,6 +3235,10 @@ export class AiDirector {
         {
           speech: canSpeak(entityGet(this.service.world.entities, actorId)),
           expressions: supportsManualWork(entityGet(this.service.world.entities, actorId)),
+          expressionVerbs: selectedResponseExpressions(
+            this.service.world,
+            supportsManualWork(entityGet(this.service.world.entities, actorId)),
+          ).expressionVerbs,
         },
         Object.keys(prepared.binding.knowledgeReferences ?? {}),
         namedClockTimes(this.service.world),

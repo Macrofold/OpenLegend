@@ -5,6 +5,7 @@ import {
   commitActorResponse,
   namedClockTimes,
   supportsManualWork,
+  selectedResponseExpressions,
   validResponseEnvelope,
   type ActorResponse,
 } from '@open-legend/domain';
@@ -148,6 +149,10 @@ export async function prepareReconsideration(
         {
           speech: canSpeak(entityGet(service.world.entities, actorId)),
           expressions: supportsManualWork(entityGet(service.world.entities, actorId)),
+          expressionVerbs: selectedResponseExpressions(
+            service.world,
+            supportsManualWork(entityGet(service.world.entities, actorId)),
+          ).expressionVerbs,
           proposals: false,
         },
         Object.keys(prepared.binding.knowledgeReferences ?? {}),

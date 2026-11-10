@@ -108,7 +108,7 @@ interface NpcPacket {
 export class NativeNpcCapture {
   private constructor(
     private packet: NpcPacket | undefined,
-    private readonly read: NativeWorldNpcRead,
+    private read: NativeWorldNpcRead,
   ) {}
 
   static async capture(
@@ -126,6 +126,41 @@ export class NativeNpcCapture {
       read.release();
       throw error;
     }
+  }
+
+  /** A single situation-query continuation receives the very same native read
+   * owners back from its unused ticket. It cannot substitute a later capture. */
+  static async reopenResponse(
+    world: NativeWorld,
+    ticket: NativeWorldNpcResponseTicket,
+    original: NativeNpcCapture,
+    current: NativeNpcCapture,
+  ): Promise<void> {
+    const reads = await world.openNpcResponse(ticket);
+    try {
+      await original.adoptRead(reads.original);
+      await current.adoptRead(reads.current);
+    } catch (error) {
+      reads.original.release();
+      reads.current.release();
+      throw error;
+    }
+  }
+
+  private async adoptRead(read: NativeWorldNpcRead): Promise<void> {
+    const before = this.facts;
+    const after = freezeNativeProduct(decodeNativeProduct<NpcPacket>(await read.packet()));
+    if (
+      after.self.worldId !== before.self.worldId ||
+      after.self.generation !== before.self.generation ||
+      after.self.actorId !== before.self.actorId ||
+      after.self.acceptedCut !== before.self.acceptedCut ||
+      after.historyScope.readSerial !== before.historyScope.readSerial
+    )
+      throw new Error('A situation query returned another native read owner.');
+    this.read.release();
+    this.read = read;
+    this.packet = after;
   }
 
   get facts(): NpcPacket {
@@ -189,6 +224,13 @@ export class NativeNpcCapture {
   sources(): readonly NativeNpcSourceInventory[] {
     const facts = this.facts;
     return retainNativeSources(facts.sources, facts);
+  }
+
+  /** Mint only at the last dispatch turn. The caller releases this gate before
+   * awaiting provider work; the originating history remains native-owned. */
+  historyPublication(world: NativeWorld) {
+    this.facts;
+    return world.npcHistoryPublication(this.read);
   }
 
   /** A later expansion keeps the original evidence window while reading the

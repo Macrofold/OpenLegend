@@ -251,9 +251,9 @@ export function nativeResponseReferences(
     {
       references,
       identityReferences,
-      entityReferences: Object.fromEntries([
-        ...ids.map((id) => [roleHandle(id), id]),
-        ...remembered.map((id) => [rememberedHandle(id), id]),
+      entityReferences: Object.fromEntries<string>([
+        ...ids.map((id) => [roleHandle(id), id] as const),
+        ...remembered.map((id) => [rememberedHandle(id), id] as const),
       ]),
       physicalEntityReferences: Object.fromEntries(
         [...new Set([self.actorId, ...visibleIds])].map((id) => [entityHandle(id), id]),

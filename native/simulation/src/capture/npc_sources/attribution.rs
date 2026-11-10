@@ -46,6 +46,8 @@ struct SourceAttribution {
     #[serde(default)]
     observation: Option<SubjectObservation>,
     #[serde(default)]
+    observations: Vec<SubjectObservation>,
+    #[serde(default)]
     manifest: Option<Manifest>,
     #[serde(default)]
     entity_ids: Vec<String>,
@@ -264,6 +266,7 @@ impl NpcSourceAttribution {
                 n.checked_add(
                     body.observation
                         .iter()
+                        .chain(&body.observations)
                         .chain(&manifest.observations)
                         .try_fold(0usize, |n, original| n.checked_add(original.facets.len()))?,
                 )
@@ -316,6 +319,7 @@ impl NpcSourceAttribution {
             .chain(
                 body.observation
                     .into_iter()
+                    .chain(body.observations)
                     .chain(manifest.observations)
                     .flat_map(|observation| {
                         observation.facets.into_iter().filter_map(|facet| {

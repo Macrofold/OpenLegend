@@ -4,7 +4,8 @@ import { attackPermissionProblem } from '../../combat-consent.js';
 import { seesEntity } from '../../perception.js';
 import { outcome } from '../../events.js';
 import { observeActor } from '../../kernel.js';
-import { observerDescription } from './knowledge.js';
+import { observerName } from './knowledge.js';
+import { baseOutingChoice } from './activity-choice-format.js';
 import { outingDestination, outingInvitationProblem } from '../../outings.js';
 import { BASE_OUTING, BASE_COMBAT_HELP } from './outing-policy.js';
 
@@ -120,14 +121,12 @@ export const BASE_OUTING_HOST: ActivityHostDescriptor = {
             )
           : fieldId === 'destinationId' && !!outingDestination(world, actorId, candidateId);
     if (!allowed) return;
-    return {
-      id: candidateId,
-      label: observerDescription(world, actorId, candidateId, 'definite'),
-      kind: 'entity',
-      roles: [fieldId],
-      requestIds: [requestId],
-      accessible: true,
-    };
+    return baseOutingChoice(
+      candidateId,
+      requestId,
+      fieldId,
+      observerName(world, actorId, candidateId),
+    );
   },
   requestChoices(world, actorId, observed) {
     const observation = observed ?? observeActor(world, actorId, { includeMemories: false });

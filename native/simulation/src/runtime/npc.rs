@@ -3,11 +3,18 @@
 //! source lease; the context producer must bind those independently.
 use super::*;
 use crate::appraisals::AppraisalScope;
+use crate::host::PublicationLease;
 use crate::simulation::AcceptedActorRead;
 use std::mem::size_of;
 
 mod bindings;
 pub use bindings::RuntimeNpcResponseTicket;
+
+/// A brief dispatch gate, never retained while SQL or a provider is awaited.
+/// Historical disclosure and current response semantics are separate routes.
+pub struct RuntimeNpcPublication {
+    _lease: PublicationLease,
+}
 
 pub struct RuntimeNpcRead {
     pub(super) read: AcceptedActorRead,
@@ -19,6 +26,7 @@ pub struct RuntimeNpcRead {
     intent_ids: Vec<String>,
     sources: Vec<crate::capture::PreparedNpcSources>,
     candidate_key: Option<CandidateKey>,
+    query_expanded: bool,
     _custody: ByteReservation,
 }
 pub enum RuntimeNpcPreparationStep {
@@ -42,6 +50,119 @@ struct NpcReadRequest {
 }
 
 impl NativeWorldSession {
+    /// One query continuation moves the actual read owners back to preparation.
+    /// Serialized context can neither recreate a read nor replace its old cut.
+    pub fn open_npc_response(
+        &self,
+        ticket: &mut Option<RuntimeNpcResponseTicket>,
+    ) -> Result<(RuntimeNpcRead, RuntimeNpcRead), RuntimeError> {
+        self.require_active()?;
+        let checked = ticket
+            .as_ref()
+            .ok_or_else(|| failure("NPC response was released"))?;
+        if checked.original.query_expanded
+            || checked.original.candidate_key.is_some()
+            || checked.current.candidate_key.is_some()
+        {
+            return Err(failure(
+                "NPC situation query was already expanded or is busy",
+            ));
+        }
+        let mut owned = ticket
+            .take()
+            .ok_or_else(|| failure("NPC response was released"))?;
+        owned.original.query_expanded = true;
+        Ok((owned.original, owned.current))
+    }
+
+    pub fn npc_history_publication(
+        &self,
+        read: &RuntimeNpcRead,
+    ) -> Result<Option<RuntimeNpcPublication>, RuntimeError> {
+        self.require_active()?;
+        let simulation = self.session.accepted().map_err(failure)?;
+        if read.candidate_key.is_some()
+            || !read.historical_scope.still_permitted(&simulation.state)
+            || !simulation
+                .state
+                .physical
+                .entities
+                .get(&read.read.perception.actor_id)
+                .is_some_and(|entity| {
+                    entity.has_memory()
+                        && entity
+                            .actor
+                            .as_ref()
+                            .is_some_and(|actor| actor.controller == "npc")
+                })
+        {
+            return Ok(None);
+        }
+        Ok(Some(RuntimeNpcPublication {
+            _lease: self.session.fence().begin_publication().map_err(failure)?,
+        }))
+    }
+
+    pub fn npc_response_publication(
+        &self,
+        ticket: &RuntimeNpcResponseTicket,
+    ) -> Result<Option<RuntimeNpcPublication>, RuntimeError> {
+        use crate::response::ResponseValidityRoute;
+        self.require_active()?;
+        let state = &self.session.accepted().map_err(failure)?.state;
+        let actor_id = &ticket.current.read.perception.actor_id;
+        let Some(entity) = state.physical.entities.get(actor_id) else {
+            return Ok(None);
+        };
+        let Some(actor) = entity.actor.as_ref() else {
+            return Ok(None);
+        };
+        if state.physical.header.paused
+            || !entity.actively_participates()
+            || !actor.alive
+            || actor.incapacitated
+            || !ticket.original.historical_scope.still_permitted(state)
+            || !ticket.current.historical_scope.still_permitted(state)
+            || ticket
+                .original
+                .sources
+                .iter()
+                .any(|source| !source.scope.still_permitted(state))
+        {
+            return Ok(None);
+        }
+        let witness = ticket
+            .current
+            .read
+            .native_validity
+            .as_ref()
+            .ok_or_else(|| failure("NPC semantic validity capture is unavailable"))?;
+        let current = match ticket.bindings.validity {
+            ResponseValidityRoute::Decision => witness.current(state, actor_id, &self.budget),
+            ResponseValidityRoute::PreparedResponse => {
+                witness.prepared_current(state, actor_id, &self.budget)
+            }
+        }
+        .map_err(failure)?;
+        if !current
+            || !ticket
+                .bindings
+                .appraisals
+                .as_ref()
+                .map(|appraisals| {
+                    appraisals.current(state, &ticket.current.read, actor_id, &self.budget)
+                })
+                .transpose()
+                .map_err(failure)?
+                .unwrap_or(true)
+        {
+            return Ok(None);
+        }
+        Ok(Some(RuntimeNpcPublication {
+            _lease: self.session.fence().begin_publication().map_err(failure)?,
+        }))
+    }
+
     pub fn read_npc(&mut self, request: &[u8]) -> Result<RuntimeNpcRead, RuntimeError> {
         self.require_active()?;
         let _decode = decode_preparation(request, &self.budget)?;
@@ -116,6 +237,7 @@ impl NativeWorldSession {
             intent_ids,
             sources: Vec::new(),
             candidate_key: None,
+            query_expanded: false,
             _custody: custody,
         })
     }
@@ -263,7 +385,10 @@ impl RuntimeNpcRead {
         let history_scope = RuntimeJson::encode(&self.historical_scope, budget)?;
         let reference_facts = RuntimeJson::encode(&self.reference_facts, budget)?;
         let sources = RuntimeJson::encode(&self.sources, budget)?;
-        let validity = self.read.native_validity.as_ref()
+        let validity = self
+            .read
+            .native_validity
+            .as_ref()
             .ok_or_else(|| failure("NPC semantic validity capture is unavailable"))?;
         let candidates = self
             .candidates

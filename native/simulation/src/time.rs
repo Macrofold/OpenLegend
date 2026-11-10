@@ -14,7 +14,7 @@ mod endpoint;
 pub(crate) use endpoint::{EndpointAnswer, EndpointCursor, EndpointStep};
 mod input;
 mod movement;
-pub(crate) use input::AdmittedWorldInput;
+pub(crate) use input::{AdmittedWorldInput, can_steer};
 pub(crate) use movement::MotionSliceCursor;
 mod advance;
 mod navigation;

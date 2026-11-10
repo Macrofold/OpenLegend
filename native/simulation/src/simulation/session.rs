@@ -558,6 +558,15 @@ impl Session {
         self.host.manually_paused = manually_paused;
         Ok(key)
     }
+    pub(crate) fn begin_npc_intake(&mut self, request: super::npc_intake::NpcIntakeRequest) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let cursor = super::npc_intake::NpcIntakeCursor::new(request, &self.budget)?;
+            let mut core = CoreMutation { state: &mut self.simulation.state, journal: &mut journal };
+            OperationDriver::npc_intake(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
     pub(crate) fn begin_recent_retention(
         &mut self,
         actors: Vec<String>,

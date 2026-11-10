@@ -1,3 +1,4 @@
+import { sourceMacrofoldHost } from '../apps/server/src/source-macrofold-host.js';
 import { writeOperationalBackup } from '../apps/server/src/operational-backup.js';
 import { createDisposableDatabase } from './disposable-postgres.mjs';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
@@ -98,7 +99,7 @@ try {
     !currentBodySubject(service.world, service.defaultResidentEntityId, service.controlledEntityId)
   )
     throw new Error('The encounter needs an acquired local person before paid interpretation.');
-  const backend = new MacrofoldBackend(service);
+  const backend = new MacrofoldBackend(sourceMacrofoldHost(service));
   const id = randomUUID();
   const speech = await service.say(
     `encounter-${id}`,
@@ -211,7 +212,7 @@ try {
           ? boundResponseJsonSchema(
               Object.keys(prepared.entityReferences),
               Object.keys(prepared.binding.actions),
-              { speech: false, expressions: false, proposals: false },
+              { speech: false, expressions: false, expressionVerbs: [], proposals: false },
               [],
               [],
               [],
@@ -361,7 +362,7 @@ try {
   await enter(service);
   if (mindFor(service.world, service.defaultResidentEntityId).revision !== revision)
     throw new Error('Mind did not survive restart.');
-  const continued = new MacrofoldBackend(service);
+  const continued = new MacrofoldBackend(sourceMacrofoldHost(service));
   const second = await deliberate(
     continued,
     service,

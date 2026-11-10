@@ -217,7 +217,7 @@ enum AppraisalUndo {
         _workspace: ByteReservation,
     },
 }
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Serialize)]
 pub(crate) struct AppraisalContentWitness(u64);
 impl AppraisalContentWitness {
     pub(crate) fn current(&self, state: &AppraisalState, actor: &str) -> bool {

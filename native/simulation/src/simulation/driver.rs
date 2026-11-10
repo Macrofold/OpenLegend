@@ -250,7 +250,7 @@ impl DecodeShape {
             | ProviderKind::Sources
             | ProviderKind::AppraisalOutcomes
             | ProviderKind::RestoreArchives => 0,
-            ProviderKind::Normalization => size_of::<JsText>(),
+            ProviderKind::Normalization => size_of::<JsText>().max(size_of::<Option<crate::language::FreeTypedActionSyntax>>()),
             ProviderKind::ChoiceDescriptions => size_of::<JsText>(),
         };
         let arrays = self
@@ -505,6 +505,7 @@ pub(crate) enum CompletedOperation {
     Forget(crate::experience::CompletedForgetExperience),
     RecentRetention(crate::received::CompletedRecentRetention),
     HostControl(super::host_control::CompletedHostControl),
+    NpcIntake(super::npc_intake::CompletedNpcIntake),
 }
 impl CompletedOperation {
     pub(crate) fn outcome(&self) -> &crate::commands::Outcome {
@@ -517,6 +518,7 @@ impl CompletedOperation {
             Self::Forget(f) => f.outcome(),
             Self::RecentRetention(r) => &r.outcome,
             Self::HostControl(r) => &r.outcome,
+            Self::NpcIntake(r) => &r.outcome,
         }
     }
     pub(crate) fn events(&self) -> impl Iterator<Item = &crate::events::WorldEvent> + Clone {
@@ -528,7 +530,7 @@ impl CompletedOperation {
             Self::Restore(_)
             | Self::Forget(_)
             | Self::RecentRetention(_)
-            | Self::HostControl(_) => (None, None, None, None),
+            | Self::HostControl(_) | Self::NpcIntake(_) => (None, None, None, None),
         };
         advance
             .into_iter()
@@ -549,7 +551,7 @@ impl CompletedOperation {
             | Self::Response(_)
             | Self::Forget(_)
             | Self::RecentRetention(_)
-            | Self::HostControl(_) => None,
+            | Self::HostControl(_) | Self::NpcIntake(_) => None,
             Self::Participation(_) => None,
         }
     }
@@ -576,6 +578,7 @@ enum OperationCursor {
     NpcCandidates(crate::capture::NpcCandidateCursor),
     RecentRetention(crate::received::RecentRetentionCursor),
     HostControl(super::host_control::HostControlCursor),
+    NpcIntake(super::npc_intake::NpcIntakeCursor),
     NpcSources(crate::capture::NpcSourcesCursor),
 }
 impl<T, R> Poll<T, R> {
@@ -596,7 +599,7 @@ impl OperationCursor {
             Self::Response(r) => r.abort(core),
             Self::Forget(f) => f.abort(core),
             Self::NpcCandidates(cursor) => cursor.abort(core),
-            Self::RecentRetention(_) | Self::HostControl(_) | Self::NpcSources(_) => Ok(()),
+            Self::RecentRetention(_) | Self::HostControl(_) | Self::NpcIntake(_) | Self::NpcSources(_) => Ok(()),
             Self::Participation(_) => Ok(()),
         }
     }
@@ -736,6 +739,10 @@ impl OperationCursor {
                 }
                 _ => Err(DriveError::StaleResponse),
             },
+            Self::NpcIntake(cursor) => {
+                if route.is_some() || answer.is_some() { return Err(DriveError::StaleResponse); }
+                Ok(Poll::Complete(DriverCompletion::Operation(CompletedOperation::NpcIntake(cursor.complete(core, budget)?))))
+            }
             Self::RecentRetention(cursor) => {
                 if route.is_some() || answer.is_some() {
                     return Err(DriveError::StaleResponse);
@@ -785,6 +792,9 @@ impl OperationDriver {
         budget: &ByteBudget,
     ) -> Result<Self, DriveError> {
         Self::new(core, OperationCursor::Participation(cursor), budget)
+    }
+    pub(crate) fn npc_intake(core: &mut CoreMutation<'_>, cursor: super::npc_intake::NpcIntakeCursor, budget: &ByteBudget) -> Result<Self, DriveError> {
+        Self::new(core, OperationCursor::NpcIntake(cursor), budget)
     }
     pub(crate) fn host_control(
         core: &mut CoreMutation<'_>,

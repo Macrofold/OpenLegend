@@ -1,5 +1,6 @@
 import { expect, it } from 'vitest';
 import { boundResponseSchema } from './cognition-contracts.js';
+import { BASE_RESPONSE_RULES } from '../../../packages/domain/src/worlds/base/response-rules.js';
 
 const operation = {
   localId: 'choose',
@@ -19,7 +20,11 @@ const bound = (attention: string[] = [], retention: string[] = []) =>
   boundResponseSchema(
     ['self'],
     [],
-    { speech: true, expressions: true },
+    {
+      speech: true,
+      expressions: true,
+      expressionVerbs: Object.keys(BASE_RESPONSE_RULES.expression.verbs),
+    },
     [],
     [],
     [],

@@ -45,6 +45,7 @@ import {
   activityRequestChoices,
   activityRequestDescriptors,
   itemOutputFamilies,
+  selectedResponseExpressions,
   portableItemIds,
   worldPosition,
   worldSupport,
@@ -255,12 +256,12 @@ function socialEntityIds(world: Parameters<typeof activeAppraisals>[0], actorId:
   ].filter((id) => !!entityGet(world.entities, id));
 }
 
-function fitActionCandidates(
+export function fitActionCandidates<T extends { description: string }>(
   context: Record<string, unknown>,
-  candidates: CandidateAction[],
+  candidates: T[],
   reservedBytes = 0,
   coverage: 'optional' | 'complete-required' = 'optional',
-): CandidateAction[] {
+): T[] {
   if (coverage === 'complete-required') {
     const offered = candidates.map((candidate, index) => ({
       id: `a${index}`,
@@ -731,6 +732,10 @@ export async function prepareDecision(
         speech: canSpeak(observed.actor),
         expressions: supportsManualWork(observed.actor),
       },
+      expressionGuidance: selectedResponseExpressions(
+        readWorld(),
+        supportsManualWork(observed.actor),
+      ).expressionGuidance,
       stimulus,
       notepad: generalKnowledgeContext(readWorld(), actorId),
       knowledgeInstructions: readWorld().knowledgePolicy
@@ -1142,6 +1147,10 @@ export async function prepareDecision(
         speech: canSpeak(currentObserved.actor),
         expressions: supportsManualWork(currentObserved.actor),
       },
+      expressionGuidance: selectedResponseExpressions(
+        currentWorld,
+        supportsManualWork(currentObserved.actor),
+      ).expressionGuidance,
       stimulus,
       notepad: generalKnowledgeContext(currentWorld, actorId),
       knowledgeInstructions: currentWorld.knowledgePolicy

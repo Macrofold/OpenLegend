@@ -7,6 +7,7 @@ import type {
   NativeWorldNpcTurn,
   NativeChangedRows,
 } from '@open-legend/native-simulation';
+import { baseActivityChoiceLabel, type BaseActivityChoiceLabel } from '@open-legend/domain';
 import { nativeActivityDisplay } from './native-activity.js';
 import { nativeCanonicalCommand } from './native-command.js';
 import { worldControlOutcome } from './world-control-outcome.js';
@@ -23,7 +24,10 @@ import {
   type NativeHistoryEditReadRequest,
 } from './native-temporal-pages.js';
 import { readNativeNpcSources, type NativeNpcSourcesRequest } from './native-npc-sources.js';
-import { readNativeAppraisalOutcomes, type NativeAppraisalOutcomesRequest } from './native-appraisal-outcomes.js';
+import {
+  readNativeAppraisalOutcomes,
+  type NativeAppraisalOutcomesRequest,
+} from './native-appraisal-outcomes.js';
 import {
   readNativeRestoreArchives,
   type NativeRestoreArchivesRequest,
@@ -67,12 +71,16 @@ async function prepareProviderAnswer(
   const value = question.value;
   switch (question.kind) {
     case 'choice-descriptions': {
-      const request = value as NativeNpcDescriptionRead & { readonly binding: Binding };
+      const request = value as NativeNpcDescriptionRead & {
+        readonly binding: Binding;
+        readonly activityLabels: readonly BaseActivityChoiceLabel[];
+      };
       return JSON.stringify({
         binding: request.binding,
         descriptions: formatNativeNpcCandidateDescriptions(request).map(
           (offer) => offer.description,
         ),
+        activityLabels: request.activityLabels.map(baseActivityChoiceLabel),
       });
     }
     case 'appraisal-outcomes': {

@@ -1,8 +1,17 @@
 import type { AutosaveSettings, AutosaveStatus, GameSaveSummary } from '@open-legend/protocol';
 import { AUTOSAVE_DEFAULTS, CheckpointBusyError, GameSaveError } from './game-saves.js';
 import { OverloadError } from './work-lane.js';
-import type { WorldService } from './world-service.js';
+import type { GameRepository } from './store.js';
 import { CheckpointAllowanceError, type CheckpointAllowanceDetails } from './save-files.js';
+
+/** The cadence needs operational checkpoint facts, never a gameplay graph. */
+export interface AutosaveOwner {
+  readonly worldId: string;
+  readonly paused: boolean;
+  readonly store: Pick<GameRepository, 'saves'>;
+  createAutosave(): Promise<void>;
+  notify(): void;
+}
 
 /** Wall-time cadence is operational policy, not a simulation clock or durability boundary.
  * Enable, cadence and retention are operator settings (C05); defaults are on, every five
@@ -56,7 +65,7 @@ export class Autosaves {
   private settingsReadFailures = 0;
   private settingsReading?: Promise<void>;
   private storageBytes?: number;
-  constructor(private readonly service: WorldService) {}
+  constructor(private readonly service: AutosaveOwner) {}
   async initialize() {
     await this.refreshSettings();
   }
@@ -64,7 +73,7 @@ export class Autosaves {
     const saves = this.service.store.saves;
     if (!saves) return;
     try {
-      this.settings = await saves.settings(this.service.world.id);
+      this.settings = await saves.settings(this.service.worldId);
       this.settingsError = undefined;
       this.settingsUnread = false;
       this.settingsReadFailures = 0;
@@ -85,7 +94,7 @@ export class Autosaves {
       if (++this.settingsReadFailures === 3)
         await saves
           .recordFailure(
-            this.service.world.id,
+            this.service.worldId,
             'auto',
             `Automatic checkpoints are paused: autosave settings could not be read (${message}).`,
           )
@@ -104,7 +113,7 @@ export class Autosaves {
   async status(): Promise<AutosaveStatus> {
     const saves = this.service.store.saves;
     if (this.settingsError) await this.refreshSettings();
-    const failure = await saves?.failure(this.service.world.id);
+    const failure = await saves?.failure(this.service.worldId);
     return {
       saving: !!this.active || !!saves?.busy,
       pendingManual: !!saves?.pendingManual,
@@ -120,7 +129,7 @@ export class Autosaves {
     const saves = this.service.store.saves;
     if (!saves) throw new Error('Saves unavailable.');
     try {
-      this.settings = await saves.updateSettings(this.service.world.id, input, revision);
+      this.settings = await saves.updateSettings(this.service.worldId, input, revision);
     } catch (error) {
       // Let the panel see the stored revision it conflicted with.
       if (error instanceof GameSaveError) await this.refreshSettings();
@@ -166,7 +175,7 @@ export class Autosaves {
       this.lastCompletedAt = new Date().toISOString();
       this.deferred = 0;
       stage = 'Autosave retention failed';
-      await saves?.rotate(this.service.world.id, 'auto', this.settings.retain);
+      await saves?.rotate(this.service.worldId, 'auto', this.settings.retain);
       this.outcomes.rotations++;
     } catch (error) {
       if (error instanceof CheckpointBusyError || error instanceof OverloadError) {
@@ -178,7 +187,7 @@ export class Autosaves {
         this.elapsed = Math.max(0, this.cadenceSeconds - 30);
         if (++this.deferred === 3)
           await saves?.recordFailure(
-            this.service.world.id,
+            this.service.worldId,
             'auto',
             `Automatic checkpoints are being delayed because the server is busy (${error.message}) Earlier checkpoints retained.`,
           );
@@ -194,7 +203,7 @@ export class Autosaves {
         // Only consecutive busy refusals count toward the busy report.
         this.deferred = 0;
         await saves?.recordFailure(
-          this.service.world.id,
+          this.service.worldId,
           'auto',
           `${stage}: ${error instanceof Error ? error.message : 'unknown error'} Previous checkpoints retained.`,
         );

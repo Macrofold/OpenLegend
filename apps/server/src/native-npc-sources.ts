@@ -99,7 +99,7 @@ export interface NativeNpcAliasOrdinal {
 }
 export type NativeNpcEntityOrdinal =
   | { readonly kind: 'myself' }
-  | { readonly kind: 'body' | 'knowledge' | 'social'; readonly ordinal: number }
+  | { readonly kind: 'body' | 'received-body' | 'knowledge' | 'social'; readonly ordinal: number }
   | {
       readonly kind: 'personal';
       readonly inventory: number;
@@ -108,8 +108,12 @@ export type NativeNpcEntityOrdinal =
     };
 export type NativeNpcSubjectOrdinal =
   | { readonly kind: 'myself' }
-  | { readonly kind: 'body' | 'knowledge' | 'social'; readonly ordinal: number }
-  | { readonly kind: 'body-subject'; readonly ordinal: number; readonly subject: number }
+  | { readonly kind: 'body' | 'received-body' | 'knowledge' | 'social'; readonly ordinal: number }
+  | {
+      readonly kind: 'body-subject' | 'received-body-subject';
+      readonly ordinal: number;
+      readonly subject: number;
+    }
   | {
       readonly kind: 'personal';
       readonly inventory: number;
@@ -136,7 +140,17 @@ export interface NativeNpcBindingSelection {
     readonly alias: string;
     readonly source: NativeNpcSubjectOrdinal;
   }[];
-  readonly observations: readonly NativeNpcAliasOrdinal[];
+  readonly observations: readonly {
+    readonly alias: string;
+    readonly source:
+      | { readonly kind: 'acquired'; readonly ordinal: number }
+      | {
+          readonly kind: 'personal';
+          readonly inventory: number;
+          readonly ordinal: number;
+          readonly observation: number;
+        };
+  }[];
   readonly current: readonly NativeNpcAliasOrdinal[];
   readonly receipts: readonly {
     readonly alias: string;

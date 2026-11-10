@@ -19,6 +19,7 @@ const actorId = (parent: string) => (JSON.parse(parent) as string[]).at(-1)!;
 export class NativeActorRoster {
   private readonly actors = new Map<string, NativeActorPresence>();
   private readonly humans = new Set<string>();
+  private readonly npcs = new Set<string>();
   private readonly exposures = new Set<string>();
 
   constructor(rows: readonly Row[], exposures: readonly Pick<Row, 'slot'>[]) {
@@ -49,6 +50,8 @@ export class NativeActorRoster {
     else this.actors.delete(id);
     if (actor?.controller === 'player') this.humans.add(id);
     else this.humans.delete(id);
+    if (actor?.controller === 'npc') this.npcs.add(id);
+    else this.npcs.delete(id);
   }
   get(id: string): NativeActorPresence | undefined {
     return this.actors.get(id);
@@ -58,6 +61,9 @@ export class NativeActorRoster {
   }
   playerIds(): Iterable<string> {
     return this.humans;
+  }
+  npcIds(): Iterable<string> {
+    return this.npcs;
   }
   get exitExposureActive(): boolean {
     return this.exposures.size > 0;

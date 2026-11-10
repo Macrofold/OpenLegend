@@ -1,3 +1,4 @@
+import { sourceMacrofoldHost } from './source-macrofold-host.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createNetworkOwner } from '@open-legend/network';
 import { MacrofoldTransport, type TypedQuestionMap } from '@open-legend/ai';
@@ -332,7 +333,7 @@ describe('native decisions through the actual server adapter and durable journal
         }),
       );
       try {
-        const backend = new MacrofoldBackend(service);
+        const backend = new MacrofoldBackend(sourceMacrofoldHost(service));
         const request = { requestId: 'native-fixture', state: { weather: 'rain' }, questions };
         const observed = await backend.judge(request);
         expect(observed.outcome).toBe('value');
@@ -362,11 +363,16 @@ describe('native decisions through the actual server adapter and durable journal
           stream: false,
         });
         serviceAvailable = false;
-        expect(await new MacrofoldBackend(service).judge(request)).toMatchObject({
+        expect(
+          await new MacrofoldBackend(sourceMacrofoldHost(service)).judge(request),
+        ).toMatchObject({
           outcome: 'value',
         });
         expect(
-          await new MacrofoldBackend(service).judge({ ...request, state: { weather: 'sun' } }),
+          await new MacrofoldBackend(sourceMacrofoldHost(service)).judge({
+            ...request,
+            state: { weather: 'sun' },
+          }),
         ).toMatchObject({ outcome: 'failed', receipt: { dispatched: false } });
         expect(bodies).toHaveLength(1);
         if (!recovery)
@@ -415,7 +421,7 @@ describe('native decisions through the actual server adapter and durable journal
       vi.stubGlobal('fetch', fetcher);
       try {
         expect(
-          await new MacrofoldBackend(service).judge({
+          await new MacrofoldBackend(sourceMacrofoldHost(service)).judge({
             requestId: 'refused-fixture',
             state: {},
             questions,
@@ -452,7 +458,7 @@ describe('native decisions through the actual server adapter and durable journal
     });
     vi.stubGlobal('fetch', fetcher);
     try {
-      const backend = new MacrofoldBackend(service);
+      const backend = new MacrofoldBackend(sourceMacrofoldHost(service));
       const request = { requestId: 'source-fenced-fixture', state: { weather: 'rain' }, questions };
       const observed = await backend.withSourceValidation(
         async () => {
@@ -465,10 +471,12 @@ describe('native decisions through the actual server adapter and durable journal
         outcome: 'cancelled',
         receipt: { dispatched: false, completionUncertain: false },
       });
-      expect(await new MacrofoldBackend(service).judge(request)).toMatchObject({
-        outcome: 'cancelled',
-        receipt: { dispatched: false },
-      });
+      expect(await new MacrofoldBackend(sourceMacrofoldHost(service)).judge(request)).toMatchObject(
+        {
+          outcome: 'cancelled',
+          receipt: { dispatched: false },
+        },
+      );
       expect(fetcher).toHaveBeenCalledTimes(1);
     } finally {
       await store.close();
@@ -500,7 +508,7 @@ describe('native decisions through the actual server adapter and durable journal
     vi.stubGlobal('fetch', fetcher);
     try {
       expect(
-        await new MacrofoldBackend(service).judge({
+        await new MacrofoldBackend(sourceMacrofoldHost(service)).judge({
           requestId: 'deadline-fixture',
           state: { weather: 'rain' },
           questions,
@@ -540,12 +548,16 @@ describe('native decisions through the actual server adapter and durable journal
     );
     try {
       const request = { requestId: 'unknown-fixture', state: { weather: 'rain' }, questions };
-      expect(await new MacrofoldBackend(service).judge(request)).toMatchObject({
-        outcome: 'uncertain',
-      });
-      expect(await new MacrofoldBackend(service).judge(request)).toMatchObject({
-        outcome: 'uncertain',
-      });
+      expect(await new MacrofoldBackend(sourceMacrofoldHost(service)).judge(request)).toMatchObject(
+        {
+          outcome: 'uncertain',
+        },
+      );
+      expect(await new MacrofoldBackend(sourceMacrofoldHost(service)).judge(request)).toMatchObject(
+        {
+          outcome: 'uncertain',
+        },
+      );
       expect(paths).toEqual([`/v1/model-deployments/${deployment}`, '/v1/inferences']);
     } finally {
       await store.close();

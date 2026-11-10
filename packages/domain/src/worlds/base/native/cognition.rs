@@ -60,6 +60,8 @@ pub struct ThoughtRule {
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ExpressionRules {
+    pub guidance: String,
+    pub unsupported_guidance: String,
     pub event_type: String,
     pub body_plans: Vec<String>,
     pub unsupported_body: String,

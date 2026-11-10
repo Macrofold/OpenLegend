@@ -53,8 +53,8 @@ impl AdmittedWorldInput {
             })
     }
 }
-pub(super) fn can_steer(core: &CoreMutation<'_>, entity: &Entity) -> Result<bool, ExecutionError> {
-    let installed = &core.state.installed;
+pub(crate) fn can_steer(state: &crate::simulation::SimulationState, entity: &Entity) -> Result<bool, ExecutionError> {
+    let installed = &state.installed;
     Ok(entity
         .actor
         .as_ref()
@@ -94,7 +94,7 @@ pub(super) fn input_boundary(
             .is_some_and(|s| s.starts_at <= now && s.ends_at > now)
         {
             if let Some(entity) = core.state.physical.entities.get(&input.actor_id) {
-                if can_steer(core, entity)? {
+                if can_steer(core.state, entity)? {
                     let handle = core
                         .state
                         .physical
@@ -169,7 +169,7 @@ impl SteeringPreparation {
             let Some(entity) = core.state.physical.entities.get(&input.actor_id) else {
                 continue;
             };
-            if !can_steer(core, entity)? {
+            if !can_steer(core.state, entity)? {
                 continue;
             }
             let Some(Placement::World {

@@ -2,19 +2,66 @@
 //! context owner releases it or moves it into a native response ticket.
 use super::*;
 use openlegend_simulation::runtime::{
-    RuntimeNpcPreparationStep, RuntimeNpcRead, RuntimeNpcResponseTicket,
+    RuntimeNpcPreparationStep, RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket,
 };
 use std::sync::Weak;
 
 struct NpcReadRuntime {
     read: Mutex<Option<RuntimeNpcRead>>,
     released: AtomicBool,
+    _custody: openlegend_simulation::host::ByteReservation,
+}
+
+fn read_wrapper_custody(
+    budget: &ByteBudget,
+) -> Result<openlegend_simulation::host::ByteReservation> {
+    budget
+        .reserve(
+            std::mem::size_of::<NpcReadRuntime>()
+                .checked_sub(std::mem::size_of::<RuntimeNpcRead>())
+                .and_then(|n| n.checked_add(2 * std::mem::size_of::<usize>()))
+                .and_then(|n| n.checked_add(std::mem::size_of::<NativeWorldNpcRead>()))
+                .ok_or_else(|| failure("capacity"))?,
+        )
+        .map_err(operation_error)
+}
+
+#[napi(object, object_from_js = false)]
+pub struct NativeWorldNpcReads {
+    pub original: NativeWorldNpcRead,
+    pub current: NativeWorldNpcRead,
 }
 
 struct NpcResponseTicketRuntime {
     ticket: Mutex<Option<RuntimeNpcResponseTicket>>,
     released: AtomicBool,
     _custody: openlegend_simulation::host::ByteReservation,
+}
+
+enum NpcPublicationOwner {
+    Read(Arc<NpcReadRuntime>),
+    Response(Arc<NpcResponseTicketRuntime>),
+}
+#[napi]
+pub struct NativeWorldNpcPublication {
+    inner: Option<RuntimeNpcPublication>,
+    owner: NpcPublicationOwner,
+    _custody: openlegend_simulation::host::ByteReservation,
+}
+#[napi]
+impl NativeWorldNpcPublication {
+    #[napi]
+    pub fn is_current(&self) -> bool {
+        self.inner.is_some()
+            && !match &self.owner {
+                NpcPublicationOwner::Read(read) => read.released.load(Ordering::Acquire),
+                NpcPublicationOwner::Response(ticket) => ticket.released.load(Ordering::Acquire),
+            }
+    }
+    #[napi]
+    pub fn release(&mut self) {
+        self.inner = None;
+    }
 }
 
 /// This handle has no permission-map or command constructor. The native writer
@@ -237,6 +284,131 @@ fn begin_preparation<'a>(
 
 #[napi]
 impl NativeWorld {
+    #[napi(ts_return_type = "Promise<NativeWorldNpcReads>")]
+    pub fn open_npc_response<'a>(
+        &self,
+        env: &'a Env,
+        ticket: &NativeWorldNpcResponseTicket,
+    ) -> Result<Object<'a>> {
+        let world = Arc::downgrade(&self.world);
+        if !Weak::ptr_eq(&ticket.world, &world) {
+            return Err(failure("NPC response belongs to another native writer"));
+        }
+        let ticket = Arc::clone(&ticket.inner);
+        let host = Arc::clone(&self.host);
+        self.compute(env, move |session, cancel, budget| {
+            let mut owner = ticket
+                .ticket
+                .try_lock()
+                .map_err(|_| failure("native NPC response is busy or unavailable"))?;
+            if ticket.released.load(Ordering::Acquire) || cancel.requested() {
+                return Err(failure("native NPC response was released"));
+            }
+            // Both real class/Arc wrappers are funded before consuming the old
+            // ticket. A capacity refusal leaves its original owners available.
+            let original_custody = read_wrapper_custody(budget)?;
+            let current_custody = read_wrapper_custody(budget)?;
+            let (original, current) = session
+                .open_npc_response(&mut owner)
+                .map_err(operation_error)?;
+            ticket.released.store(true, Ordering::Release);
+            Ok(NativeWorldNpcReads {
+                original: NativeWorldNpcRead {
+                    inner: Arc::new(NpcReadRuntime {
+                        read: Mutex::new(Some(original)),
+                        released: AtomicBool::new(false),
+                        _custody: original_custody,
+                    }),
+                    host: Arc::clone(&host),
+                    world: world.clone(),
+                },
+                current: NativeWorldNpcRead {
+                    inner: Arc::new(NpcReadRuntime {
+                        read: Mutex::new(Some(current)),
+                        released: AtomicBool::new(false),
+                        _custody: current_custody,
+                    }),
+                    host,
+                    world,
+                },
+            })
+        })
+    }
+
+    #[napi(ts_return_type = "Promise<NativeWorldNpcPublication | null>")]
+    pub fn npc_history_publication<'a>(
+        &self,
+        env: &'a Env,
+        read: &NativeWorldNpcRead,
+    ) -> Result<Object<'a>> {
+        if !Weak::ptr_eq(&read.world, &Arc::downgrade(&self.world)) {
+            return Err(failure("NPC read belongs to another native writer"));
+        }
+        let read = Arc::clone(&read.inner);
+        self.compute(env, move |session, _cancel, budget| {
+            let owner = read
+                .read
+                .try_lock()
+                .map_err(|_| failure("native NPC read is busy or unavailable"))?;
+            if read.released.load(Ordering::Acquire) {
+                return Err(failure("native NPC read was released"));
+            }
+            let custody = budget
+                .reserve(std::mem::size_of::<NativeWorldNpcPublication>())
+                .map_err(operation_error)?;
+            let publication = session
+                .npc_history_publication(
+                    owner
+                        .as_ref()
+                        .ok_or_else(|| failure("native NPC read was released"))?,
+                )
+                .map_err(operation_error)?;
+            drop(owner);
+            Ok(publication.map(|inner| NativeWorldNpcPublication {
+                inner: Some(inner),
+                owner: NpcPublicationOwner::Read(read),
+                _custody: custody,
+            }))
+        })
+    }
+
+    #[napi(ts_return_type = "Promise<NativeWorldNpcPublication | null>")]
+    pub fn npc_response_publication<'a>(
+        &self,
+        env: &'a Env,
+        ticket: &NativeWorldNpcResponseTicket,
+    ) -> Result<Object<'a>> {
+        if !Weak::ptr_eq(&ticket.world, &Arc::downgrade(&self.world)) {
+            return Err(failure("NPC response belongs to another native writer"));
+        }
+        let ticket = Arc::clone(&ticket.inner);
+        self.compute(env, move |session, _cancel, budget| {
+            let owner = ticket
+                .ticket
+                .try_lock()
+                .map_err(|_| failure("native NPC response is busy or unavailable"))?;
+            if ticket.released.load(Ordering::Acquire) {
+                return Err(failure("native NPC response was released"));
+            }
+            let custody = budget
+                .reserve(std::mem::size_of::<NativeWorldNpcPublication>())
+                .map_err(operation_error)?;
+            let publication = session
+                .npc_response_publication(
+                    owner
+                        .as_ref()
+                        .ok_or_else(|| failure("native NPC response was released"))?,
+                )
+                .map_err(operation_error)?;
+            drop(owner);
+            Ok(publication.map(|inner| NativeWorldNpcPublication {
+                inner: Some(inner),
+                owner: NpcPublicationOwner::Response(ticket),
+                _custody: custody,
+            }))
+        })
+    }
+
     #[napi(ts_return_type = "Promise<NativeWorldNpcResponseTicket>")]
     pub fn bind_npc_response<'a>(
         &self,
@@ -281,6 +453,9 @@ impl NativeWorld {
                     std::mem::size_of::<NpcResponseTicketRuntime>()
                         .checked_sub(std::mem::size_of::<RuntimeNpcResponseTicket>())
                         .and_then(|n| n.checked_add(2 * std::mem::size_of::<usize>()))
+                        .and_then(|n| {
+                            n.checked_add(std::mem::size_of::<NativeWorldNpcResponseTicket>())
+                        })
                         .ok_or_else(|| failure("capacity"))?,
                 )
                 .map_err(operation_error)?;
@@ -410,11 +585,13 @@ impl NativeWorld {
         let world = Arc::downgrade(&self.world);
         self.compute(env, move |session, _cancel, _budget| {
             let _custody = custody;
+            let read_custody = read_wrapper_custody(_budget)?;
             let read = session.read_npc(&request).map_err(operation_error)?;
             Ok(NativeWorldNpcRead {
                 inner: Arc::new(NpcReadRuntime {
                     read: Mutex::new(Some(read)),
                     released: AtomicBool::new(false),
+                    _custody: read_custody,
                 }),
                 host,
                 world,

@@ -122,7 +122,7 @@ impl MotionSliceCursor {
                 }
                 let entity = core.state.physical.entities.resolve(*handle);
                 if let Some(entity) = entity {
-                    if can_steer(core, entity)? {
+                    if can_steer(core.state, entity)? {
                         self.binding.serial = core.journal.next_provider_serial()?;
                         self.steering_current = Some(MotionOperation::start_steering(
                             core,

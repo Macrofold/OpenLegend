@@ -26,7 +26,9 @@ mod enumerate;
 mod geometry;
 mod work;
 use work::NpcWorkContext;
+mod activity;
 mod descriptions;
+use activity::{NpcActivityPreparation, NpcActivityRead};
 use descriptions::DescriptionContext;
 pub(crate) use descriptions::{NpcDescriptionsAnswer, NpcDescriptionsRequest};
 
@@ -87,6 +89,8 @@ pub(crate) struct NpcCandidateCursor {
     description_context: Option<DescriptionContext>,
     description_request: Option<NpcDescriptionsRequest>,
     descriptions_done: bool,
+    activity: Option<NpcActivityPreparation>,
+    activity_done: Option<NpcActivityRead>,
 }
 
 #[derive(Serialize)]
@@ -237,6 +241,8 @@ impl NpcCandidateCursor {
             description_context: Some(description_context),
             description_request: None,
             descriptions_done: false,
+            activity: None,
+            activity_done: None,
         })
     }
     fn reserve(&mut self, bytes: usize) -> Result<(), ExecutionError> {
@@ -348,6 +354,11 @@ impl NpcCandidateCursor {
         self.queries
             .as_ref()
             .or_else(|| {
+                self.activity
+                    .as_ref()
+                    .and_then(|activity| activity.queries.as_ref())
+            })
+            .or_else(|| {
                 self.sight
                     .as_ref()
                     .map(crate::reception::SightBatch::queries)
@@ -403,6 +414,10 @@ impl NpcCandidateCursor {
                     for (offer, description) in self.offers.iter_mut().zip(answer.descriptions) {
                         offer.description = Some(description);
                     }
+                    self.activity_done
+                        .as_mut()
+                        .ok_or(ExecutionError::Invariant)?
+                        .finish_labels(answer.activity_labels)?;
                     self.description_request = None;
                     self.descriptions_done = true;
                 }
@@ -416,6 +431,17 @@ impl NpcCandidateCursor {
                     for target in &mut self.targets {
                         target.visible = sight.seen(&target.id) == Some(true);
                     }
+                }
+                NpcCandidateAnswer::Geometry(answer)
+                    if self
+                        .activity
+                        .as_ref()
+                        .is_some_and(|activity| activity.queries.is_some()) =>
+                {
+                    self.activity
+                        .as_mut()
+                        .ok_or(ExecutionError::Invariant)?
+                        .answer(answer)?;
                 }
                 NpcCandidateAnswer::Geometry(answer) if self.queries.is_some() => {
                     self.answer_geometry(core, answer)?
@@ -446,6 +472,9 @@ impl NpcCandidateCursor {
                         .ok_or(ExecutionError::Invariant)?
                         .queries(),
                 ));
+            }
+            if self.activity.as_ref().is_some_and(|activity| activity.queries.is_some()) {
+                return Ok(NpcCandidateStep::Geometry(self.activity.as_ref().and_then(|activity| activity.queries.as_ref()).ok_or(ExecutionError::Invariant)?));
             }
             if self.plan_display.is_some() {
                 return Ok(NpcCandidateStep::Display(
@@ -522,7 +551,31 @@ impl NpcCandidateCursor {
             if self.enumerate(core)? {
                 continue;
             }
-            if !self.descriptions_done && !self.offers.is_empty() {
+            if self.activity_done.is_none() {
+                if self.activity.is_none() {
+                    self.activity = Some(NpcActivityPreparation::prepare(
+                        core,
+                        &self.actor,
+                        &self.targets,
+                        self.candidate,
+                        &self.budget,
+                    )?);
+                    continue;
+                }
+                self.activity_done = Some(
+                    self.activity
+                        .take()
+                        .ok_or(ExecutionError::Invariant)?
+                        .finish(core, &self.actor, &self.targets, &self.budget)?,
+                );
+            }
+            if !self.descriptions_done
+                && (!self.offers.is_empty()
+                    || self
+                        .activity_done
+                        .as_ref()
+                        .is_some_and(|activity| !activity.labels.is_empty()))
+            {
                 self.description_request = Some(NpcDescriptionsRequest::prepare(
                     core,
                     self.description_context
@@ -530,6 +583,9 @@ impl NpcCandidateCursor {
                         .ok_or(ExecutionError::Invariant)?,
                     &self.targets,
                     &self.offers,
+                    self.activity_done
+                        .as_ref()
+                        .ok_or(ExecutionError::Invariant)?,
                     self.candidate,
                     &self.budget,
                 )?);
@@ -554,6 +610,7 @@ impl NpcCandidateCursor {
                 offers: std::mem::take(&mut self.offers),
                 work_context: self.work_context.take().ok_or(ExecutionError::Invariant)?,
                 visible_body_ordinals,
+                activity: self.activity_done.take().ok_or(ExecutionError::Invariant)?,
                 selection: self.selection.take().ok_or(ExecutionError::Invariant)?,
                 work: self.work.take().ok_or(ExecutionError::Invariant)?,
                 _work_storage: self.work_storage.take().ok_or(ExecutionError::Invariant)?,

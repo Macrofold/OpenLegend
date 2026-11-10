@@ -3,7 +3,11 @@ import type {
   nativeSetupSettings,
   selectedNativeLawDefinitions,
 } from '@open-legend/domain/native-install';
-import type { WorldState } from '@open-legend/domain';
+import {
+  activityRequestDescriptors,
+  installedActionMeanings,
+  type WorldState,
+} from '@open-legend/domain';
 import {
   decodeNativeProduct,
   freezeNativeProduct,
@@ -71,6 +75,25 @@ export class NativeDefinitionCapture {
   geometry() {
     const facts = this.facts;
     return retainNativeSources(new NativeGeometryProviders(facts.geometry), facts);
+  }
+
+  /** These are the selected world's authored request and slot meanings. They
+   * describe a model request; the native choice owner still admits execution. */
+  actionRequirements() {
+    const facts = this.facts;
+    return retainNativeSources(
+      installedActionMeanings(facts.definitions).map(([command, meaning]) => ({
+        command,
+        ...(meaning.toolFields ? { toolFields: meaning.toolFields } : {}),
+        ...(meaning.unitPerCommand !== undefined ? { unitPerCommand: meaning.unitPerCommand } : {}),
+      })),
+      facts,
+    );
+  }
+
+  requestDescriptors() {
+    const facts = this.facts;
+    return retainNativeSources(activityRequestDescriptors(facts.definitions), facts);
   }
 
   release(): void {

@@ -1,3 +1,5 @@
+import { sourceDecisionHost } from '../../apps/server/src/source-decision-host.js';
+import { sourceMacrofoldHost } from '../../apps/server/src/source-macrofold-host.js';
 import {
   recordDecisionTiming,
   type DecisionPublication,
@@ -253,7 +255,7 @@ const fixture: AiClient = {
   },
 };
 const escalator = new DecisionEscalator(
-  service,
+  sourceDecisionHost(service),
   execution,
   log,
   async (job) => {
@@ -288,7 +290,7 @@ try {
     !live || probe
       ? fixture
       : config.macrofoldKey
-        ? new MacrofoldBackend(service, log)
+        ? new MacrofoldBackend(sourceMacrofoldHost(service), log)
         : createAiClient({
             jev: { apiKey: config.jevKey, model: config.jevModel, prices: config.jevPrices },
             timeoutMs: 31_000,

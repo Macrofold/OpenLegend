@@ -29,6 +29,7 @@ export function nativeDecisionFields(
     work = nativeNpcWorkContext(capture.candidates(), definitions);
   const policy = installed.definitions.moduleManifest.bodyPolicy,
     concern = policy?.carryingConcern;
+  const expressions = installed.nativePolicies.occurrenceRules.response.expression;
   // Both counts come from fully consumed closed native owners. A later family
   // conversion must supply its real inventory/method formatter before widening.
   if (self.npc.inventoryCount !== 0 || self.npc.knownRecipesCount !== 0)
@@ -48,7 +49,14 @@ export function nativeDecisionFields(
       : undefined;
   return retainNativeSources(
     {
-      capabilities: { speech: self.speech, expressions: self.npc.expressions },
+      capabilities: {
+        speech: self.speech,
+        expressions: self.npc.expressions,
+        expressionVerbs: self.npc.expressions ? Object.keys(expressions.verbs) : [],
+      },
+      expressionGuidance: self.npc.expressions
+        ? expressions.guidance
+        : expressions.unsupportedGuidance,
       notepad: capture.generalKnowledgeContext(
         installed.definitions.knowledgePolicy?.maxCharacters.general,
       ),

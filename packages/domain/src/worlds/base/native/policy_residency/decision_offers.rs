@@ -12,9 +12,25 @@ heap_record!(DecisionOfferRules {
     natural_strike_body_plans,
     hunting_purpose,
     hunting,
+    slot_requirements,
+    activity_choices,
     availability,
     probes
 });
+heap_record!(SlotRequirements {
+    tool_fields,
+    unit_per_command
+});
+heap_record!(ActivityChoiceHost {
+    pin,
+    own_supply_request,
+    travel_request,
+    combat_request,
+    hands,
+    visible_warning,
+    own_label
+});
+heap_record!(ActivityHandsChoice { request_id, label });
 heap_record!(DiscoveryMessages {
     invalid_follow,
     unknown_strike,

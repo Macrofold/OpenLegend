@@ -57,17 +57,38 @@ pub(crate) struct CapturedNpcPersonalSource {
     pub selection: usize,
     pub record: Arc<PersonalSourceRecord>,
     pub attribution: NpcSourceAttribution,
+    pub originals: crate::experience::CapturedPersonalOriginals,
     _pin: Arc<SharedMemoryPin>,
 }
 impl Serialize for CapturedNpcPersonalSource {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let body: &serde_json::value::RawValue =
             serde_json::from_str(self.record.payload()).map_err(serde::ser::Error::custom)?;
-        let mut out = serializer.serialize_struct("PersonalSource", 4)?;
+        let mut out = serializer.serialize_struct("PersonalSource", 5)?;
         out.serialize_field("selection", &self.selection)?;
         out.serialize_field("reference", &self.record.header().reference)?;
         out.serialize_field("value", body)?;
         out.serialize_field("attribution", &self.attribution)?;
+        struct Originals<'a>(&'a crate::experience::CapturedPersonalOriginals);
+        impl Serialize for Originals<'_> {
+            fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                use serde::ser::SerializeSeq;
+                #[derive(Serialize)]
+                struct Original<'a> {
+                    id: &'a str,
+                    revision: u64,
+                }
+                let mut out = serializer.serialize_seq(Some(self.0.observations().len()))?;
+                for original in self.0.observations() {
+                    out.serialize_element(&Original {
+                        id: &original.id,
+                        revision: original.revision,
+                    })?;
+                }
+                out.end()
+            }
+        }
+        out.serialize_field("originals", &Originals(&self.originals))?;
         out.end()
     }
 }
@@ -153,7 +174,12 @@ impl PreparedNpcSources {
             selection
                 .personal
                 .len()
-                .checked_mul(size_of::<Option<Arc<PersonalSourceRecord>>>())
+                .checked_mul(size_of::<
+                    Option<(
+                        Arc<PersonalSourceRecord>,
+                        crate::experience::CapturedPersonalOriginals,
+                    )>,
+                >())
                 .ok_or(ExecutionError::Capacity)?,
             selection
                 .receipts
@@ -296,8 +322,14 @@ impl PreparedNpcSources {
         if value_ids.values().any(|used| !used) {
             return Err(ExecutionError::InvalidCheckpoint);
         }
-        let mut personal_by_id: Vec<Option<Arc<PersonalSourceRecord>>> =
-            vec![None; selection.personal.len()];
+        let mut personal_by_id: Vec<
+            Option<(
+                Arc<PersonalSourceRecord>,
+                crate::experience::CapturedPersonalOriginals,
+            )>,
+        > = std::iter::repeat_with(|| None)
+            .take(selection.personal.len())
+            .collect();
         for supplied in rows.personal {
             let _decode = budget.reserve(crate::experience::encoded_body_bound(
                 &supplied.row.payload,
@@ -323,8 +355,12 @@ impl PreparedNpcSources {
             if header.reference != selection.personal[index] {
                 return Err(ExecutionError::InvalidCheckpoint);
             }
-            record.validate_originals(&mut originals, personal_cut.at)?;
-            if personal_by_id[index].replace(Arc::new(record)).is_some() {
+            let original_capture =
+                record.capture_originals(&mut originals, personal_cut.at, budget)?;
+            if personal_by_id[index]
+                .replace((Arc::new(record), original_capture))
+                .is_some()
+            {
                 return Err(ExecutionError::InvalidCheckpoint);
             }
         }
@@ -338,7 +374,7 @@ impl PreparedNpcSources {
             actor,
         )?;
         for (index, requested) in selection.personal.iter().enumerate() {
-            let Some(record) = &personal_by_id[index] else {
+            let Some((record, original_capture)) = personal_by_id[index].take() else {
                 unavailable_personal.push(index);
                 continue;
             };
@@ -356,9 +392,10 @@ impl PreparedNpcSources {
             }
             personal.push(CapturedNpcPersonalSource {
                 selection: index,
-                attribution: NpcSourceAttribution::capture(state, actor, record, &names, budget)?,
+                attribution: NpcSourceAttribution::capture(state, actor, &record, &names, budget)?,
+                originals: original_capture,
                 _pin: record.capture_pin(budget)?,
-                record: Arc::clone(record),
+                record,
             });
         }
         let mut receipts = Vec::with_capacity(selection.receipts.len());
@@ -475,12 +512,7 @@ impl PreparedNpcSources {
             originals.validate(observation)?;
         }
         for source in &self.personal {
-            let _decode = budget.reserve(crate::experience::encoded_body_bound(
-                source.record.payload(),
-            )?)?;
-            source
-                .record
-                .validate_originals(&mut originals, self.personal_cut.at)?;
+            source.originals.validate(&mut originals)?;
         }
         Ok(())
     }

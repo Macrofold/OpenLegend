@@ -28,7 +28,7 @@ export async function buildNativeConversationContext(input: {
   current: NativeNpcCapture;
   original: NativeNpcCapture;
   definitions: NativeDefinitionCapture;
-  repository: MemoryRepository;
+  repository: Pick<MemoryRepository, 'currentCompactionSources' | 'publishConversationCompaction'>;
   scope: MemoryScope;
   sources: readonly NativePersonalSource[];
   presentation: CapturedExperienceContext;

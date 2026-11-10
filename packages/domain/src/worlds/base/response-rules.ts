@@ -8,6 +8,10 @@ export const BASE_RESPONSE_RULES = {
   thought: { source: 'self_thought', summaryPrefix: 'thought: ', importance: 5 },
   interpretation: { importance: 5 },
   expression: {
+    guidance:
+      'Supported gestures: nod, smile, frown, wave, shrug, shake_head, slap. Expressions have no mechanical effects; a slap requires contact range.',
+    unsupportedGuidance:
+      'This body has no supported gesture expressions. Do not use act.kind=expression or describe human gestures as performed.',
     eventType: 'expression',
     bodyPlans: BASE_MANUAL_WORK_BODY_PLANS,
     unsupportedBody: 'This gesture requires a supported biped body.',

@@ -1,4 +1,3 @@
-import { entityGet, settleDiscovery } from '@open-legend/domain';
 import { undispatchedReceipt } from './decision-state.js';
 import {
   createAiClient,
@@ -11,7 +10,8 @@ import type { ApiResult } from '@open-legend/protocol';
 import { DecisionLedger, interactiveAllowance } from './cognition-budget.js';
 import { type CognitionExecution, type ExecutionLease } from './cognition-execution.js';
 import type { IntelligenceLog } from './intelligence-log.js';
-import type { WorldService } from './world-service.js';
+import type { AppConfig } from './config.js';
+import type { GameRepository } from './store.js';
 import { digest, type JobRecord } from './store.js';
 import {
   DECISION_LIMITS,
@@ -33,8 +33,6 @@ import {
   type DecisionAnswer,
 } from './decision-task.js';
 import { recordDecisionTiming, type DecisionPublication } from './decision-publication.js';
-import { nativeProtectionReason } from './native-protection.js';
-import { decisionValidity } from './decision-validity.js';
 
 export interface PreparedReconsideration {
   tasks: Record<string, DecisionTask>;
@@ -49,6 +47,39 @@ export interface PreparedReconsideration {
   publish(answers: Record<string, DecisionAnswer>, claim: DecisionPublication): Promise<ApiResult>;
 }
 type Prepare = (job: JobRecord, signal: AbortSignal) => Promise<PreparedReconsideration>;
+
+type DecisionScope = Pick<
+  DecisionState,
+  | 'worldId'
+  | 'timelineId'
+  | 'generation'
+  | 'actorId'
+  | 'physicalLife'
+  | 'usefulUntilSim'
+  | 'policyDigest'
+>;
+/** Real semantic read owners supply character eligibility and source validity.
+ * Queueing, paid entitlement, deadlines and receipts remain one shared owner. */
+export interface DecisionEscalationHost {
+  readonly worldId: string;
+  readonly timelineId: string;
+  readonly generation: string;
+  readonly config: AppConfig;
+  readonly store: GameRepository;
+  readonly paused: boolean;
+  readonly simTime: number;
+  scopeCurrent(
+    state: DecisionScope,
+    authority: JobRecord['authority'],
+    validity?: string,
+    eligibility?: boolean,
+  ): boolean | Promise<boolean>;
+  validity(actorId: string): string | Promise<string>;
+  settleDiscovery(actorId: string, rootId: string, generation: string): Promise<boolean>;
+  subscribe(listener: () => void): () => void;
+  notify(): void;
+  storageFailed(message: string): void;
+}
 
 /** One funded reconsideration at the existing server boundary; transports still submit once. */
 export class DecisionEscalator {
@@ -85,7 +116,7 @@ export class DecisionEscalator {
   private readonly unsubscribeSettlement: () => void;
 
   constructor(
-    private readonly service: WorldService,
+    private readonly service: DecisionEscalationHost,
     private readonly execution: CognitionExecution,
     private readonly log: IntelligenceLog,
     private readonly prepare: Prepare,
@@ -98,58 +129,54 @@ export class DecisionEscalator {
     this.unsubscribeSettlement = service.store.onSettlement(() => {
       for (const id of this.awaiting.keys())
         void this.reconcilePrimary(id).catch(() => {
-          service.storageError = 'A reconciled decision could not be saved.';
+          service.storageFailed('A reconciled decision could not be saved.');
         });
     });
-    this.unsubscribe = service.subscribe(() => {
-      const policy = this.scopes.size ? decisionPolicyDigest(service.config) : undefined;
-      for (const [id, scope] of this.scopes) {
-        const actor = entityGet(service.world.entities, scope.state.actorId)?.actor;
-        if (
-          service.paused ||
-          scope.state.policyDigest !== policy ||
-          service.generation !== scope.state.generation ||
-          service.timelineId !== scope.state.timelineId ||
-          !actor?.alive ||
-          actor.incapacitated ||
-          actor.controller !== 'npc' ||
-          (actor.physicalLife ?? 0) !== scope.state.physicalLife ||
-          (scope.validity &&
-            scope.validity !== decisionValidity(service.world, scope.state.actorId)) ||
-          (scope.state.usefulUntilSim !== undefined &&
-            service.world.simTime >= scope.state.usefulUntilSim) ||
-          (scope.authority && !service.currentScope(scope.authority, 'play', true))
-        ) {
+    this.unsubscribe = service.subscribe(() => this.checkScopes());
+  }
+  private scopeCheck?: Promise<void>;
+  private scopesDirty = false;
+  private checkScopes(): void {
+    this.scopesDirty = true;
+    if (this.scopeCheck) return;
+    this.scopeCheck = (async () => {
+      while (this.scopesDirty && !this.stopped) {
+        this.scopesDirty = false;
+        const policy = this.scopes.size ? decisionPolicyDigest(this.service.config) : undefined;
+        for (const [id, scope] of this.scopes) {
+          const current =
+            !this.service.paused &&
+            scope.state.policyDigest === policy &&
+            (await this.service.scopeCurrent(scope.state, scope.authority, scope.validity));
+          // An asynchronous native read cannot retire a replacement scope.
+          if (this.scopes.get(id) !== scope || current) continue;
           this.active.get(id)?.abort();
-          void this.end(id, service.paused ? 'paused' : 'stale').catch(() => {
-            service.storageError = 'A cancelled decision could not be saved.';
-          });
+          await this.end(id, this.service.paused ? 'paused' : 'stale');
         }
       }
-    });
+    })()
+      .catch(() => this.service.storageFailed('A cancelled decision could not be saved.'))
+      .finally(() => {
+        this.scopeCheck = undefined;
+        if (this.scopesDirty && !this.stopped) this.checkScopes();
+      });
   }
-  private eligible(job: JobRecord, state: DecisionState): boolean {
-    const actor = entityGet(this.service.world.entities, state.actorId)?.actor;
+  private async eligible(job: JobRecord, state: DecisionState): Promise<boolean> {
     return (
       !this.stopped &&
       !this.service.paused &&
       state.phase !== 'closed' &&
-      state.worldId === this.service.world.id &&
+      state.worldId === this.service.worldId &&
       state.timelineId === this.service.timelineId &&
       state.generation === this.service.generation &&
-      !!actor?.alive &&
-      !actor.incapacitated &&
-      actor.controller === 'npc' &&
-      (actor.physicalLife ?? 0) === state.physicalLife &&
-      actor.capabilities?.cognition !== false &&
-      !nativeProtectionReason(this.service.world, state.actorId) &&
       this.now() < state.usefulUntilWall &&
       performance.now() < state.usefulUntilMonotonic &&
-      (state.usefulUntilSim === undefined || this.service.world.simTime < state.usefulUntilSim) &&
-      (!job.authority || this.service.currentScope(job.authority, 'play', true)) &&
-      state.policyDigest === decisionPolicyDigest(this.service.config)
+      (state.usefulUntilSim === undefined || this.service.simTime < state.usefulUntilSim) &&
+      state.policyDigest === decisionPolicyDigest(this.service.config) &&
+      (await this.service.scopeCurrent(state, job.authority, undefined, true))
     );
   }
+
   hasActor(actorId: string): boolean {
     return [...this.scopes.values()].some((scope) => scope.state.actorId === actorId);
   }
@@ -158,7 +185,8 @@ export class DecisionEscalator {
     let immediateChanged = false;
     const written = await this.service.store.mutateDecision(rootId, async (job) => {
       const state = job.decision!;
-      if (!this.eligible(job, state) || state.higherEntitlement !== 'available') return undefined;
+      if (!(await this.eligible(job, state)) || state.higherEntitlement !== 'available')
+        return undefined;
       immediateChanged = state.immediate.kind === 'pending';
       if (state.cursor) await this.service.store.consumeDecisionCursor(state.cursor);
       return {
@@ -195,7 +223,7 @@ export class DecisionEscalator {
     const timer = setTimeout(
       () => {
         void this.end(rootId, 'expired').catch(() => {
-          this.service.storageError = 'An expired uncertain decision could not be saved.';
+          this.service.storageFailed('An expired uncertain decision could not be saved.');
         });
       },
       Math.max(
@@ -222,7 +250,7 @@ export class DecisionEscalator {
       clearTimeout(waiting.timer);
       this.awaiting.delete(rootId);
       const job = await this.service.store.getJob(rootId);
-      if (!job?.decision || !this.eligible(job, job.decision)) {
+      if (!job?.decision || !(await this.eligible(job, job.decision))) {
         await this.end(rootId, 'stale');
         return;
       }
@@ -246,7 +274,7 @@ export class DecisionEscalator {
     queued = await this.service.store.mutateDecision(rootId, async (job) => {
       const state = job.decision!;
       if (
-        !this.eligible(job, state) ||
+        !(await this.eligible(job, state)) ||
         state.higherEntitlement !== 'available' ||
         (await this.service.store.decisionAttempts(rootId)).some(
           (attempt) => !attempt.receipt || attempt.receipt.completionUncertain,
@@ -322,7 +350,7 @@ export class DecisionEscalator {
         ...(state.usefulUntilSim === undefined ? {} : { usefulUntilSim: state.usefulUntilSim }),
       },
       authority: queued.authority,
-      validity: decisionValidity(this.service.world, state.actorId),
+      validity: await this.service.validity(state.actorId),
       ...(releasePreparation ? { releasePreparation } : {}),
     });
     this.queued.add(rootId);
@@ -449,7 +477,7 @@ export class DecisionEscalator {
       let job = await this.service.store.mutateDecision(rootId, async (current) => {
         const state = current.decision!;
         if (
-          !this.eligible(current, state) ||
+          !(await this.eligible(current, state)) ||
           state.higher?.state !== 'queued' ||
           this.now() >= state.higher.dispatchBy ||
           performance.now() >= state.higher.dispatchByMonotonic
@@ -492,7 +520,7 @@ export class DecisionEscalator {
         const refreshed = await this.service.store.mutateDecision(rootId, async (current) => {
           const live = current.decision!;
           if (
-            !this.eligible(current, live) ||
+            !(await this.eligible(current, live)) ||
             live.refreshUsed ||
             live.higher?.state !== 'preparing' ||
             this.now() >= live.higher.dispatchBy ||
@@ -571,7 +599,7 @@ export class DecisionEscalator {
         job = await this.service.store.mutateDecision(rootId, async (current) => {
           const live = current.decision!;
           if (
-            !this.eligible(current, live) ||
+            !(await this.eligible(current, live)) ||
             live.higher?.state !== 'preparing' ||
             this.now() >= dispatchBy ||
             performance.now() >= dispatchByMonotonic ||
@@ -657,7 +685,7 @@ export class DecisionEscalator {
         const dispatched = await this.service.store.mutateDecision(rootId, async (current) => {
           const live = current.decision!;
           if (
-            !this.eligible(current, live) ||
+            !(await this.eligible(current, live)) ||
             live.higher?.state !== 'reserved' ||
             this.now() >= dispatchBy ||
             performance.now() >= dispatchByMonotonic ||
@@ -700,17 +728,9 @@ export class DecisionEscalator {
           });
         let receipt: AiReceipt | undefined;
         try {
-          const semantic = entityGet(this.service.world.entities, state.actorId)?.actor?.agency
-            .semantic;
-          if (semantic?.discovery === 'reserved' && semantic.reservation === rootId) {
-            if (
-              !(await this.service.publishAttention(state.actorId, state.generation, (world) =>
-                settleDiscovery(world, state.actorId, rootId, true),
-              ))
-            ) {
-              await this.end(rootId, 'stale');
-              return;
-            }
+          if (!(await this.service.settleDiscovery(state.actorId, rootId, state.generation))) {
+            await this.end(rootId, 'stale');
+            return;
           }
           const result = await this.log.run(
             'Higher-model decision',
@@ -779,7 +799,7 @@ export class DecisionEscalator {
             controller.signal.aborted ||
             this.now() >= child.publishBy ||
             performance.now() >= child.publishByMonotonic ||
-            !this.eligible(dispatched, dispatched.decision!) ||
+            !(await this.eligible(dispatched, dispatched.decision!)) ||
             !(await preparation.current())
           ) {
             await this.end(rootId, 'stale');
@@ -806,7 +826,7 @@ export class DecisionEscalator {
               const live = latest.decision;
               if (
                 !live ||
-                !this.eligible(latest, live) ||
+                !(await this.eligible(latest, live)) ||
                 live.higher?.state !== 'dispatched' ||
                 live.higher.attemptId !== attemptId ||
                 controller.signal.aborted
@@ -824,7 +844,7 @@ export class DecisionEscalator {
             continue;
           }
           const current = await this.service.store.getJob(rootId);
-          if (!current?.decision || !this.eligible(current, current.decision)) {
+          if (!current?.decision || !(await this.eligible(current, current.decision))) {
             await this.end(rootId, 'stale');
             return;
           }
@@ -908,6 +928,7 @@ export class DecisionEscalator {
     this.unsubscribe();
     this.unsubscribeSettlement();
     for (const controller of this.active.values()) controller.abort();
+    await this.scopeCheck;
     for (const id of [...this.queued, ...this.active.keys(), ...this.awaiting.keys()])
       await this.end(id, 'cancelled');
     this.queued.clear();

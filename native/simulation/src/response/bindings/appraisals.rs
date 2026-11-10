@@ -40,6 +40,7 @@ struct Record {
     pin: crate::values::DefinitionPin,
 }
 pub(crate) struct PreparedResponseAppraisals {
+    actor: String,
     guard: AppraisalGuard,
     policies: IndexMap<String, crate::values::DefinitionPin>,
     records: IndexMap<String, Record>,
@@ -72,6 +73,12 @@ impl PreparedResponseAppraisals {
         ])
         .ok_or(ExecutionError::Capacity)?;
         let mut storage = budget.reserve(bytes)?;
+        storage.resize(
+            storage
+                .bytes()
+                .checked_add(read.perception.actor_id.len())
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
         storage.resize(
             storage
                 .bytes()
@@ -165,6 +172,7 @@ impl PreparedResponseAppraisals {
             }
         }
         Ok(Self {
+            actor: read.perception.actor_id.clone(),
             guard: selected.guard,
             policies,
             records,
@@ -256,25 +264,38 @@ impl PreparedResponseAppraisals {
         budget: &ByteBudget,
     ) -> Result<(SqlCell, ByteReservation), ExecutionError> {
         let invalid = || ExecutionError::InvalidCheckpoint;
-        let null = |key| input.get(key).is_some_and(SqlCell::is_null);
         let kind = input
             .get("kind")
             .and_then(SqlCell::as_str)
             .ok_or_else(invalid)?;
+        let fields: &[&str] = match kind {
+            "create" => &["kind", "definition", "source", "target", "value"],
+            "reframe" => &["kind", "appraisal", "source", "value"],
+            "resolve" => &["kind", "appraisal"],
+            _ => return Err(invalid()),
+        };
+        if !input.as_object().is_some_and(|object| {
+            object.len() == fields.len() && fields.iter().all(|key| object.contains_key(*key))
+        }) {
+            return Err(invalid());
+        }
         let record = input
             .get("appraisal")
             .and_then(SqlCell::as_str)
-            .and_then(|alias| self.records.get(alias));
+            .and_then(|alias| self.records.get(alias))
+            .filter(|record| {
+                state
+                    .appraisals
+                    .owners
+                    .get(&self.actor)
+                    .and_then(|owner| owner.records.get(&record.id))
+                    .is_some_and(|current| {
+                        current.value.revision == record.revision
+                            && current.value.definition_pin == record.pin
+                    })
+            });
         if kind == "resolve" {
             let record = record.ok_or_else(invalid)?;
-            if input.get("expectedRevision").and_then(SqlCell::as_f64)
-                != Some(record.revision as f64)
-                || !["policy", "source", "subject", "value"]
-                    .into_iter()
-                    .all(null)
-            {
-                return Err(invalid());
-            }
             #[derive(Serialize)]
             #[serde(rename_all = "camelCase")]
             struct Resolution<'a> {
@@ -298,7 +319,7 @@ impl PreparedResponseAppraisals {
             .ok_or_else(invalid)?;
         let pin = if kind == "create" {
             input
-                .get("policy")
+                .get("definition")
                 .and_then(SqlCell::as_str)
                 .and_then(|alias| self.policies.get(alias))
                 .ok_or_else(invalid)?
@@ -313,26 +334,40 @@ impl PreparedResponseAppraisals {
             .get(&pin.id)
             .filter(|definition| definition.pin == *pin && definition.value.decision)
             .ok_or_else(invalid)?;
-        let value = match definition.value.value {
-            ValueLaw::Qualitative if null("value") => AppraisalValue::Qualitative,
-            ValueLaw::Scaled { .. } if !null("value") => AppraisalValue::Scaled {
-                value: input
-                    .get("value")
-                    .and_then(SqlCell::as_f64)
-                    .ok_or_else(invalid)?,
-            },
+        let supplied_value = input.get("value").ok_or_else(invalid)?;
+        let value = match (
+            &definition.value.value,
+            supplied_value.get("kind").and_then(SqlCell::as_str),
+        ) {
+            (ValueLaw::Qualitative, Some("qualitative"))
+                if supplied_value
+                    .as_object()
+                    .is_some_and(|object| object.len() == 1) =>
+            {
+                AppraisalValue::Qualitative
+            }
+            (ValueLaw::Scaled { min, max }, Some("scaled"))
+                if supplied_value
+                    .as_object()
+                    .is_some_and(|object| object.len() == 2) =>
+            {
+                AppraisalValue::Scaled {
+                    value: supplied_value
+                        .get("value")
+                        .and_then(SqlCell::as_f64)
+                        .filter(|value| value.is_finite() && value >= min && value <= max)
+                        .ok_or_else(invalid)?,
+                }
+            }
             _ => return Err(invalid()),
         };
         if kind == "create" {
-            if !null("appraisal") || !null("expectedRevision") {
-                return Err(invalid());
-            }
-            let target = if null("subject") {
+            let target = if input.get("target").is_some_and(SqlCell::is_null) {
                 None
             } else {
                 Some(
                     input
-                        .get("subject")
+                        .get("target")
                         .and_then(SqlCell::as_str)
                         .and_then(|alias| subjects.get(alias))
                         .ok_or_else(invalid)?
@@ -360,13 +395,6 @@ impl PreparedResponseAppraisals {
             )
         } else {
             let record = record.ok_or_else(invalid)?;
-            if input.get("expectedRevision").and_then(SqlCell::as_f64)
-                != Some(record.revision as f64)
-                || !null("policy")
-                || !null("subject")
-            {
-                return Err(invalid());
-            }
             #[derive(Serialize)]
             #[serde(rename_all = "camelCase")]
             struct Reframe<'a> {

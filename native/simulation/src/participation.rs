@@ -25,6 +25,11 @@ pub(crate) struct ParticipationState {
     storage: ResidentReservation,
 }
 impl ParticipationState {
+    /// Installation consumed complete outing/compact owners and refused every
+    /// positive member. Selected writers do not create social episodes.
+    pub(crate) fn require_closed_social(&self) {
+        let _presence = (self._outings_present, self._compacts_present);
+    }
     pub(crate) fn exposures(&self) -> Option<&IndexMap<String, f64>> {
         self.exposures.as_ref()
     }

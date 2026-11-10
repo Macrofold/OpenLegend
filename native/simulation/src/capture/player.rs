@@ -245,6 +245,7 @@ impl<'a> PlayerReadScope<'a> {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(super) struct OwnPlayerView<'a> {
+    pub can_steer: bool,
     pub seed: u64,
     pub module_revision: u64,
     pub spatial_revision: u64,

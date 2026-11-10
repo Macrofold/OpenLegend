@@ -21,6 +21,7 @@ pub(crate) use validity::DecisionValidityWitness;
 mod navigation;
 mod npc_bindings;
 mod npc_current;
+pub(crate) mod npc_intake;
 mod npc_references;
 mod npc_subject;
 pub(crate) use npc_bindings::{
@@ -86,6 +87,8 @@ pub(crate) struct CapturedBodyBinding {
     pub source_id: String,
     pub physical_life: Option<u64>,
     pub lease_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub episode: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub subject: Option<ObserverSubject>,
     pub name: OwnedPersonalName,
@@ -230,6 +233,7 @@ pub(crate) fn capture_actor_perception(
                     .heap_bytes()
                     .and_then(|n| n.checked_add(body.field.id.len()))
                     .and_then(|n| n.checked_add(id.len()))
+                    .and_then(|n| n.checked_add(state.reception.perception_episodes.as_ref().and_then(|owners| owners.get(actor_id)).and_then(|episodes| episodes.get(id)).map_or(0, String::len)))
                     .and_then(|n| {
                         n.checked_add(
                             individual
@@ -350,6 +354,7 @@ pub(crate) fn capture_actor_perception(
                 source_id: id.to_owned(),
                 physical_life: body.grant.subject_physical_life,
                 lease_id: body.field.id.clone(),
+                episode: state.reception.perception_episodes.as_ref().and_then(|owners| owners.get(actor_id)).and_then(|episodes| episodes.get(id)).cloned(),
                 subject,
                 name: names.capture_intended_name(id, SpeechTargetRole::Body, budget)?,
                 identity,
@@ -842,6 +847,7 @@ pub(crate) fn write_actor_self(
             None
         } else {
             Some(OwnPlayerView {
+                can_steer: crate::time::can_steer(state, entity)?,
                 seed: state.physical.header.seed,
                 module_revision: state.installed.manifest.revision,
                 spatial_revision: state.installed.geometry.spatial.revision,

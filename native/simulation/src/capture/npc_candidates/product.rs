@@ -67,6 +67,7 @@ pub(crate) struct PreparedNpcCandidates {
     pub work: ResponseWorkIdentity,
     pub(super) work_context: NpcWorkContext,
     pub(super) visible_body_ordinals: Vec<usize>,
+    pub(super) activity: NpcActivityRead,
     pub(super) _work_storage: ByteReservation,
     pub(super) _storage: ByteReservation,
 }
@@ -89,6 +90,7 @@ impl PreparedNpcCandidates {
             work: &'a ResponseWorkIdentity,
             work_context: &'a NpcWorkContext,
             visible_body_ordinals: &'a [usize],
+            activity: &'a NpcActivityRead,
         }
         let value = Product {
             offers: &self.offers,
@@ -96,6 +98,7 @@ impl PreparedNpcCandidates {
             work: &self.work,
             work_context: &self.work_context,
             visible_body_ordinals: &self.visible_body_ordinals,
+            activity: &self.activity,
         };
         let length =
             crate::encoding::json_record_len(&value).map_err(|_| ExecutionError::Invariant)?;

@@ -1,4 +1,6 @@
+import { sourceDecisionHost } from './source-decision-host.js';
 import { nativeText } from '@open-legend/domain';
+import { BASE_RESPONSE_RULES } from '../../../packages/domain/src/worlds/base/response-rules.js';
 import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
@@ -318,7 +320,7 @@ function readerCoordinator(
     },
   };
   const escalator = new DecisionEscalator(
-    h.service,
+    sourceDecisionHost(h.service),
     h.execution,
     log,
     async () => {
@@ -1059,6 +1061,7 @@ describe('closed structured question contract', () => {
         valueSchema: boundResponseSchema(['me', 'speaker'], ['rest'], {
           speech: true,
           expressions: true,
+          expressionVerbs: Object.keys(BASE_RESPONSE_RULES.expression.verbs),
           proposals: false,
         }),
       },
@@ -1249,7 +1252,7 @@ describe('durable reader publication and bounded scheduling', () => {
     const log = new IntelligenceLog(h.store),
       recall = new RecallService(h.service, log, undefined, h.execution);
     const escalator = new DecisionEscalator(
-      h.service,
+      sourceDecisionHost(h.service),
       h.execution,
       log,
       (job, signal) => prepareReconsideration(h.service, recall, job, signal),
@@ -1661,7 +1664,7 @@ describe('durable reader publication and bounded scheduling', () => {
       },
     };
     const escalator = new DecisionEscalator(
-      h.service,
+      sourceDecisionHost(h.service),
       h.execution,
       log,
       (job, signal) => prepareReconsideration(h.service, recall, job, signal),
@@ -2139,7 +2142,7 @@ describe('durable reader publication and bounded scheduling', () => {
     );
     const log = new IntelligenceLog(h.store);
     const escalator = new DecisionEscalator(
-      h.service,
+      sourceDecisionHost(h.service),
       h.execution,
       log,
       async () =>

@@ -16,6 +16,7 @@ use std::sync::{Arc, Mutex};
 mod control;
 mod maintenance;
 mod npc;
+mod npc_intake;
 mod participation;
 mod player;
 mod privacy;

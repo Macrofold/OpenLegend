@@ -95,10 +95,29 @@ export function activeStimuli(
         changedAt.set(entry.targetId, entry.at);
     }
   }
+  return activeStimuliFromRead(world.simTime, salient.map(({ sourceId, states, seen }) => ({
+    sourceId, states, since: Math.max(seen, changedAt.get(sourceId) ?? seen),
+  })), policy);
+}
+
+/** A scoped native read supplies only the same visible states and actual private
+ * onset. It grants no sensing and carries no hidden target state to a model. */
+export interface StimulusRead {
+  readonly sourceId: string;
+  readonly states: readonly string[];
+  readonly since: number;
+}
+export function activeStimuliFromRead(
+  at: number,
+  inputs: readonly StimulusRead[],
+  policy: StimulusPolicy,
+): { stimuli: ActiveStimulus[]; omitted: number } {
   const stimuli: ActiveStimulus[] = [];
-  for (const { sourceId, states, salience, seen } of salient) {
-    const since = Math.max(seen, changedAt.get(sourceId) ?? seen);
-    const age = Math.max(0, world.simTime - since);
+  for (const { sourceId, states: inputStates, since } of inputs) {
+    const states = inputStates.filter(Boolean),
+      salience = Math.max(0, ...states.map((state) => policy.salience[state] ?? 0));
+    if (salience <= 0) continue;
+    const age = Math.max(0, at - since);
     const reviews = policy.reviewSeconds ? Math.floor(age / policy.reviewSeconds) : 0;
     stimuli.push({
       sourceId,

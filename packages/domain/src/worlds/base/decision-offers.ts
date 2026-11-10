@@ -1,5 +1,5 @@
 import { namePhrase, type Named } from '@open-legend/language';
-import { BASE_ACTION_DEFAULTS } from './actions.js';
+import { BASE_ACTION_DEFAULTS, BASE_FAMILY_FACTS } from './actions.js';
 import { BASE_MANUAL_WORK_BODY_PLANS } from './bodies.js';
 import { FOLLOW_RULES } from './navigation.js';
 import { BASE_STRIKE_BODY_RULES } from './strikes.js';
@@ -21,6 +21,10 @@ export const BASE_DECISION_OFFERS = {
   naturalStrikeBodyPlans: BASE_STRIKE_BODY_RULES.unrestrictedBodyPlans,
   huntingPurpose: 'Hunt once',
   hunting: BASE_HUNTING,
+  slotRequirements: {
+    toolFields: BASE_FAMILY_FACTS.toolFields,
+    unitPerCommand: BASE_FAMILY_FACTS.unitPerCommand,
+  },
   availability: {
     invalidFollow: {
       code: 'invalid-follow',

@@ -48,6 +48,8 @@ export interface NativePersonalSource {
   readonly selection: number;
   readonly reference: PersonalSourceRef;
   readonly value: unknown;
+  /** Exact ordinal roster of the canonical originals retained by this source. */
+  readonly originals: readonly { readonly id: string; readonly revision: number }[];
   readonly attribution: {
     readonly subjects: readonly NativeNpcSubjectFact[];
     readonly entitySubjects: readonly NativeNpcSubjectFact[];

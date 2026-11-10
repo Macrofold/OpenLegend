@@ -16,6 +16,8 @@ mod native;
 pub(crate) use native::{ResponseNativeGuard, ResponseValidityRoute};
 mod creates;
 pub(crate) use creates::{AppraisalCreatesAnswer, AppraisalCreatesRequest};
+mod offers;
+pub(crate) use offers::{ResponseAttemptCandidate, capture_attempt_candidates};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -124,7 +126,7 @@ pub(crate) struct ResponseActionChoice {
     pub transition: crate::commands::WorkTransitionMode,
     pub expected_work: ResponseWorkIdentity,
 }
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct ResponseAttemptBinding {
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -155,11 +157,33 @@ pub(crate) struct ResponseSituation {
     pub attention_references: IndexMap<String, String>,
     pub retention_references: IndexMap<String, TemporalReceiptLocator>,
     pub receipt_details: IndexMap<String, std::sync::Arc<CapturedTemporalReceipt>>,
-    /// Indices refer only to this ticket's guard-owning evidence cut.
-    pub observation_references: IndexMap<String, usize>,
+    /// Original current-cut or retained personal-source captures, each funded
+    /// by the actual native owner retained with this ticket.
+    pub observation_references: IndexMap<String, ResponseObservation>,
     pub current_references: IndexMap<String, usize>,
     pub presented: Vec<AttentionPresentation>,
     pub semantic_causes: Option<Vec<ResponseSemanticCause>>,
+}
+#[derive(PartialEq)]
+pub(crate) enum ResponseObservation {
+    Acquired(usize),
+    Personal(std::sync::Arc<crate::reception::ObservationContribution>),
+}
+impl ResponseObservation {
+    pub(super) fn observation<'a>(
+        &'a self,
+        cut: &'a crate::experience::EvidenceCut,
+    ) -> Option<&'a crate::reception::ObservationContribution> {
+        match self {
+            Self::Acquired(index) => cut.acquired.get(*index).map(std::sync::Arc::as_ref),
+            Self::Personal(original) => Some(original.as_ref()),
+        }
+    }
+}
+impl HeapBytes for ResponseObservation {
+    fn heap_bytes(&self) -> Option<usize> {
+        Some(0)
+    }
 }
 /// The original situation/history and refreshed current menu are separate real
 /// reads in Source prepareDecision. Later unrelated cuts do not revoke either.
@@ -221,10 +245,11 @@ impl ResponseBindings {
         if let Some(situation) = &input.situation {
             let cut = input.reads.original.perception.evidence.cut();
             if situation.privacy_revision != cut.privacy_revision
-                || situation
-                    .observation_references
-                    .values()
-                    .any(|index| *index >= cut.acquired.len())
+                || situation.observation_references.values().any(|reference| {
+                    reference
+                        .observation(cut)
+                        .is_none_or(|original| original.observer.actor_id != cut.observer.actor_id)
+                })
                 || situation
                     .current_references
                     .values()
@@ -253,11 +278,13 @@ impl ResponseBindings {
         &'a self,
         response: &'a ActorResponse,
         appraisals: Option<&'a AppraisalBindings>,
+        attempts: &'a [ResponseAttemptBinding],
     ) -> ResponseDigestView<'a> {
         ResponseDigestView {
             bindings: self,
             response,
             appraisals,
+            attempts,
         }
     }
 }
@@ -266,6 +293,7 @@ pub(super) struct ResponseDigestView<'a> {
     bindings: &'a ResponseBindings,
     response: &'a ActorResponse,
     appraisals: Option<&'a AppraisalBindings>,
+    attempts: &'a [ResponseAttemptBinding],
 }
 impl Serialize for ResponseDigestView<'_> {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -276,7 +304,7 @@ impl Serialize for ResponseDigestView<'_> {
         out.serialize_field("actions", &input.actions)?;
         out.serialize_field("entityIds", &input.entity_ids)?;
         out.serialize_field("expectedPlan", &input.expected_plan)?;
-        out.serialize_field("attemptBindings", &input.attempt_bindings)?;
+        out.serialize_field("attemptBindings", self.attempts)?;
         if let Some(value) = &input.expected_encounters {
             out.serialize_field("expectedEncounters", value)?;
         }
@@ -311,8 +339,10 @@ impl Serialize for SituationDigest<'_> {
                 use serde::ser::SerializeMap;
                 let mut out = serializer
                     .serialize_map(Some(self.0.situation.observation_references.len()))?;
-                for (key, index) in &self.0.situation.observation_references {
-                    let original = &self.0.cut.acquired[*index];
+                for (key, reference) in &self.0.situation.observation_references {
+                    let original = reference.observation(self.0.cut).ok_or_else(|| {
+                        serde::ser::Error::custom("selected original is unavailable")
+                    })?;
                     out.serialize_entry(key, &(&original.id, original.revision))?;
                 }
                 out.end()

@@ -11,6 +11,10 @@ export * from './ordered-record.js';
 export { immutableDataSnapshot } from './records.js';
 export * from './world-creation.js';
 export * from './world-composition.js';
+export {
+  baseActivityChoiceLabel,
+  type BaseActivityChoiceLabel,
+} from './worlds/base/activity-choice-format.js';
 export { itemIllustration, type ItemArt } from './presentation-art.js';
 export type {
   EventCategory,
@@ -49,6 +53,8 @@ export { BASE_SKILLED_TEXT } from './worlds/base/skilled-execution.js';
 export { describeBodyRemains } from './worlds/base/bodies.js';
 export {
   activeStimuli,
+  activeStimuliFromRead,
+  type StimulusRead,
   stimulusSalience,
   type ActiveStimulus,
   type StimulusPolicy,
