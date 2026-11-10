@@ -1,5 +1,13 @@
 # Chrono Trigger and Clair Obscur: Expedition 33 — full research
 
+## Chrono Trigger transcript expansion — November 9, 2026
+
+Mike requested additional Chrono Trigger research using a supplied YouTube transcript. The full G187 dossier already exists; this scoped expansion preserves its R01–R15 coverage and the completed November 6–7 assignment below. Base: `https://github.com/Macrofold/OpenLegend.git`, published `main` at `00b96687b853ed7a2c5e9fc9b11542e10147ea0f`. New branch: `docs/chrono-trigger-video-research-20261109`. Research only.
+
+**In progress:** incorporated the supplied SNES completionist perspective, contrasting DS/Steam player accounts, Time Egg foreshadowing and Kato's later distinction between a time-travel premise and a worthwhile experience. Remaining: integrate checked mechanical/story corrections and worked examples, reconcile the existing STORY/PACING lessons, review the complete affected diff and links, then commit the finished expansion. No other game or runtime work is opened.
+
+## Original full-dossier assignment
+
 **Assigned November 6, 2026.** Scope: a full new Chrono Trigger dossier and a complete expansion/audit of G77 Expedition 33 across R01–R14, the economics/enjoyment/lore amendment, and the conditional R15 creator-tools investigation. Research only; no gameplay implementation or new engine task list.
 
 Base: `Macrofold/OpenLegend`, published `main` at `e1df4d4d5866190b580aedc34dff2d6a1c67f089`. Branch: `docs/chrono-trigger-expedition-33-research`.
@@ -50,3 +58,4 @@ The crossing example now connects an earned repair to discovery, willing coopera
 Conversation capture: recognition at its actual scale, practical and personal significance, coherent-but-divisive revelations, distinct kinds of mastery, music as part of authorship, worthwhile stopping, and bounded production/commercial inferences are represented in the dossiers and these owners. The existing world-tone, history-authoring, first-playable and audio documents already cover the broader ambitions; repeating them or promoting every review complaint into work would add maintenance cost without a selected benefit. No new cosmology, mandatory tragedy, universal difficulty model or roadmap reorder follows from these two authored adventures.
 
 Verification is limited to the affected documentation diff, source-label preservation and relevant links/anchors. No new gameplay, listening, mod execution, external-source crawl or paid-provider work is claimed.
+

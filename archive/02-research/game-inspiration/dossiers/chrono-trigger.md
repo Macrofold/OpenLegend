@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Research standard](../research-requirements.md) · [This investigation](../research-progress-chrono-trigger-expedition-33-2026-11-06.md)
 
-**Full dossier — November 6, 2026.** Covers R01–R14 and the applicable R15 creator-ecosystem investigation. The original Super Famicom/SNES adventure is the baseline; PlayStation, DS, mobile and PC differences are identified. **Major story and ending spoilers follow.** Research informs OpenLegend choices without approving features. No new playthrough, executed mod or watched video is claimed.
+**Full dossier — November 6, 2026; transcript-informed expansion November 9, 2026.** Covers R01–R14 and the applicable R15 creator-ecosystem investigation. The original Super Famicom/SNES adventure is the baseline; PlayStation, DS, mobile and PC differences are identified. The supplied retrospective is read as text, with its factual claims checked separately from its judgments. **Major story and ending spoilers follow.** Research informs OpenLegend choices without approving features. No new playthrough, executed mod or watched video is claimed.
 
 ## Reading map
 
@@ -208,6 +208,8 @@ Crono sacrifices himself in the Ocean Palace confrontation. The remaining compan
 
 The loss is especially instructive because the party and the player's purpose can survive the removal of the nominal center. **Interpretation:** attachment becomes active when the player has a comprehensible way to respond. That does not imply every death should be reversible, nor that a persistent world should manufacture a death merely to force attachment. A world must establish its own recovery rules and preserve the consequences of the route it offers.
 
+**A planted clue can still fail to persuade.** The supplied reviewer finds the Time Egg contrived while finding the reunion moving. A Zeal NPC already mentions Gaspar developing the Time Egg before the loss. [CTV01], [CTV02] **Interpretation:** distinguish a clue's existence, whether a player encounters and remembers it, whether it explains the later action, and whether that action feels emotionally earned. An explanation can succeed on one measure and fail on another. For OpenLegend, an old object becoming useful should allow the player to reconstruct the connection; placing an obscure line somewhere in the world does not establish that result.
+
 ### Acknowledgment can matter even when the main route converges
 
 The trial reuses selected behavior from the fair: testimony can make an apparently casual interaction feel remembered. Eric Van Allen's 2023 first-time-player account describes being surprised by that recognition, while explicitly observing that the prison sequence still follows either verdict. The scene therefore supports a narrower and more useful claim than unlimited branching: the game can respond specifically to how someone behaved without creating a different campaign for every action. It also has a limit—these are authored checks, not proof that all actions are observed. [CTN20]
@@ -278,6 +280,8 @@ Research date: November 6, 2026. Edition dates and commercial observations retai
 **A later first-party conversation makes the production tradeoff concrete.** Kato describes a weekly cycle of discussing the scenario with Horii and implementing it for review. He credits a reduction in eligible character combinations with making the combination-tech workload manageable. Matsui and Kato also contrast manually staged encounters with automation. Their discussion warns that praise for labor-intensive work encouraged later teams to normalize exhausting methods; Kato says directors and producers should intervene. These are retrospective accounts, not measured efficiency comparisons. [CTP20]
 
 **Interpretation:** preserve the player's valuable choice while controlling the authoring burden. A small set of distinctive combinations can be preferable to a nominally universal system whose possibilities cannot all be made worthwhile. Reuse and automation should support deliberate exceptions, with visible costs.
+
+**The premise is not the experience.** In a July 2025 interview, Kato recalls opposing time-travel designs that amounted to setting a past flag and checking the future; he wanted adventure and surprises particular to games. In the interview's separate Final Fantasy XI discussion, he describes the difficulty of transforming a shared place when newcomers and established players have different histories. These are retrospective accounts of distinct projects. [CTP22] **Interpretation:** evaluate what a changed place enables someone to understand or do. For OpenLegend, a later arrival needs a coherent situation and worthwhile choices of their own. This supports careful treatment of shared consequences, without prescribing either an immutable world or a private copy of history for every player.
 
 **What is not known.** These interviews do not establish the complete internal toolchain, source-control system, exact editor implementation, production burn rate, milestone acceptance criteria, outsourcing allocation, staff-month count, or quantitative playtest sample. Their observations are stronger evidence of intent and remembered working practices than of measured productivity. The community tools discussed below must not be retroactively described as Square's original tools. No inspectable production ledger was found; detailed internal economics remain unknown.
 
@@ -451,6 +455,16 @@ The English **Most Helpful (All Time)** surface mixes recommendations and reject
 
 **Controls can create a separate learning burden.** On another accessible Steam helpful-week snapshot, first-time player rヨn enjoys the story and techniques but initially finds timed command entry frustrating and some paths obscure; they recommend the game despite a reported graphics-driver problem. Returning player thatDubstepSound describes emotional familiarity and periodic revisits while preferring SNES presentation and a personal mix of modifications. The displayed posts say March 22 and March 23 without years. Their accounts establish particular experiences; they do not establish the state of the latest build. [CTR12]
 
+### Supplied SNES retrospective and contrasting playthroughs
+
+The supplied narrator describes replaying the **SNES version with a 100% collection goal**, after an earlier DS playthrough. Their strongest travel complaint concerns hunting every chest and Tab before unrestricted flight. Their estimates of ten-to-fifteen-minute returns and flight arriving around 85% of the adventure describe that run; they are not measured timings for ordinary completion. They report becoming especially absorbed at Zeal, value Frog's concise emotional scenes and Robo's long commitment, and still criticize the revival device, limited build authorship and some repeat endings. Appreciation and dissatisfaction coexist in the same account. The video's title, creator, publication date and URL were not established from the supplied text. [CTV01]
+
+Two April 2024 DS accounts sharpen the contrast. **joshakazam** praises party synergies and deliberately staged encounters but finds traversing the same battle screens tiring; that review does not isolate every complaint from DS-added content. **Fancy_Flapjacks**, who explicitly skipped the additions, finds the combat approachable and chooses companions partly for their relationships, yet reports substantial delay from an unclear route. This separates repeated combat, navigation legibility and the freedom to bring a favorite companion. It does not establish equal strength for every party or a representative difficulty preference. [CTR20], [CTR21]
+
+Selected October 2025 Tildes group-play comments add a different tension. **Wes**, identifying Steam play, enjoys learning equipment and elemental interactions but later finds repeated probing tiresome and suspects overpreparation weakened the finale. **Mendanbar** values companion resolutions while using guides under time pressure. **kfwyre** praises a first experience without childhood nostalgia while describing the final stretch as partly obligation. These are selected accounts from one community, not independent surveys. [CTR22]
+
+**Research interpretation:** distinguish initial discovery, purposeful return, exhaustive collection and later-edition additions before prescribing faster travel. Optional personal closure can feel worthwhile while still creating pressure to finish everything. A low burden of rules can support expressive party choices even when it offers less build variation; those are separate kinds of agency. The transcript's broad claims about younger audiences, perfect balance and the inevitable superiority of newer features are judgments, not measured audience findings.
+
 ### Why play remains enjoyable—or stops being enjoyable
 
 The mechanisms below are **researcher interpretations** grounded in the specific accounts, not measured causes of sales, retention or wellbeing.
@@ -572,7 +586,7 @@ The annotated registers retain the original URL, source type and access boundary
 
 This is the first dedicated Chrono Trigger dossier in the inspected repository. It preserves links to the earlier player-music research and does not overwrite that study. Its roster key is **G187 / `chrono-trigger`**. Chrono Cross, Radical Dreamers, Sea of Stars and other influenced works remain separate research subjects. Their existence does not establish that their systems or later explanations were present in the original game.
 
-Research accessed **November 6, 2026**. Dated claims retain the date and edition of their underlying evidence. Historical announcements are not silently relabeled as the current release; inaccessible sources are not represented as fully read. Source registers provide the evidence for detailed claims; the transfer section marks the researcher's deductions.
+Initial research accessed **November 6, 2026**; additional transcript, script, creator-interview and player-account research accessed **November 9, 2026**. The expansion preserves the full earlier dossier and its dated commercial and creator-tool evidence; it is not a new measurement of those sections. Dated claims retain the date and edition of their underlying evidence. Historical announcements are not silently relabeled as the current release; inaccessible sources are not represented as fully read. Source registers provide the evidence for detailed claims; the transfer section marks the researcher's deductions.
 
 ### Requirement-to-evidence map
 
@@ -737,6 +751,26 @@ All sources accessed 2026-11-06. Dates below are publication dates or explicit d
 - **CTR18 — Madeleine Philbrook, Chronicles preservation project, “Chrono Trigger SNES Box Front,” page timestamp 2015-07-23, related documentation updated 2015-09-07.** https://scalar.usc.edu/works/chronicles/media/chrono-trigger-snes-box-front — Documentation and archive links read. Both linked Nintendo Power PDFs returned 404: https://dtc-wsuv.org/mbrookman14/chronicles/Nintendo%20Power%20Volume%2073.pdf and https://dtc-wsuv.org/mbrookman14/chronicles/Nintendo%20Power%20Volume%2074.pdf . Unavailable scans are a retrieval limit, not counted as reviewed evidence.
 - **CTR19 — GameSpot, Phil Hornshaw, “Chrono Trigger's Story Is Simpler Than You Remember, But That's What Makes It Great,” 2025-08-14.** https://www.gamespot.com/articles/chrono-trigger-story-is-simpler-than-you-remember-but-thats-what-makes-it-great/1100-6530092/ — Full substantive retrospective body read. Original criticism of the underlying adventure and personal reassessment, with major sidequest spoilers. Embedded videos not viewed.
 
+### Supplied retrospective and additional evidence
+
+The following sources were read November 9, 2026. The supplied transcript is audience criticism and a source of questions; the checked game text, rules and creator accounts retain their different evidentiary roles. No footage, new playthrough or listening session was inspected.
+
+<a id="supplied-transcript-source"></a>
+
+- **CTV01 — User-supplied YouTube transcript, `Pasted text(7).txt`.** Full supplied text read. SHA-256: `62d15e6954679b885381a1855502af3f170668d25f527b078d8b86a056c5811a`. The narrator describes a completionist SNES replay after playing on DS. No verified title, channel, URL, publication date or timestamps; the sign-off is insufficient attribution. Speech-to-text spellings are normalized in discussion. Raw transcript remains the supplied attachment rather than a duplicate repository document.
+- **CTV02 — ZeaLitY, Chrono Trigger SNES game-script transcription, GameFAQs.** https://gamefaqs.gamespot.com/snes/563538-chrono-trigger/faqs/31563 — Relevant complete passages read, including Zeal's Time Egg reference and Geno Dome. Preserved primary game dialogue through a community host; compiler organization and stage directions are not developer testimony. No ROM comparison performed.
+- **CTP22 — DenFamiNicoGamer, Masato Kato interview, July 11, 2025, page 3.** https://news.denfaminicogamer.jp/interview/250711b/3 — Japanese interview body read; summaries paraphrase Kato's recollections. Chrono Trigger's time-travel discussion and Final Fantasy XI's shared-world constraints are explicitly separate subjects. The interview does not establish OpenLegend's architecture or a measured production advantage.
+- **CTR20 — joshakazam, “In Dedication to Akira Toriyama,” Grouvee, April 22, 2024.** https://www.grouvee.com/user/115694-joshakazam/reviews/3641928/ — Complete original review read; Nintendo DS. Individual retrospective about authored encounters and repeated traversal, without an isolated SNES route or representative timing sample.
+- **CTR21 — Fancy_Flapjacks, “Timeless,” Grouvee, April 9, 2024.** https://www.grouvee.com/user/137543-Fancy_Flapjacks/reviews/3631904/ — Complete original review read; Nintendo DS, with the reviewer explicitly skipping added dungeons. Used for stated preferences and navigation difficulty, not as a mechanics authority.
+- **CTR22 — Tildes, October 2025 Colossal Game Adventure completion discussion.** https://tildes.net/~games/1qsz/cga_2025_10_remove_cartridge_chrono_trigger — Selected original comment chains read: Wes, October 19; Mendanbar, October 26; kfwyre, October 28. Steam is identified for Wes; do not assign unstated editions to others. One self-selected community source; reproduced historical reviews in the opening post are not counted as newly inspected originals.
+
+[CTV01]: #supplied-transcript-source
+[CTV02]: https://gamefaqs.gamespot.com/snes/563538-chrono-trigger/faqs/31563
+[CTP22]: https://news.denfaminicogamer.jp/interview/250711b/3
+[CTR20]: https://www.grouvee.com/user/115694-joshakazam/reviews/3641928/
+[CTR21]: https://www.grouvee.com/user/137543-Fancy_Flapjacks/reviews/3631904/
+[CTR22]: https://tildes.net/~games/1qsz/cga_2025_10_remove_cartridge_chrono_trigger
+
 [CTA01]: https://www.rpgsite.net/news/291-square-targets-existing-fans-with-chrono-trigger-adverts
 [CTA02]: https://www.siliconera.com/now-this-is-the-right-way-to-advertise-chrono-trigger-for-the-ds/
 [CTA03]: https://www.mobygames.com/game/4501/chrono-trigger/promo/
@@ -841,3 +875,4 @@ All sources accessed 2026-11-06. Dates below are publication dates or explicit d
 [CTR17]: https://www.defunctgames.com/egm/13/electronic-gaming-monthlys-best-reviewed-games-of-1995
 [CTR18]: https://scalar.usc.edu/works/chronicles/media/chrono-trigger-snes-box-front
 [CTR19]: https://www.gamespot.com/articles/chrono-trigger-story-is-simpler-than-you-remember-but-thats-what-makes-it-great/1100-6530092/
+
