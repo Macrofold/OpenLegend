@@ -3,7 +3,7 @@ import { ArtMaterials, candidateArt } from './art-treatment';
 import { isFoliageMaterialName, prepareFoliageLight } from './environment-art';
 import { BundledModels, destroyModelApplication, type BundledModel } from './bundled-models';
 import { CAMERA_FOV_DEGREES, initialCamera } from './world-camera';
-import { installLocomotion } from './model-animation';
+import { installStudyAnimations, type StudyAnimationBinding } from './model-animation';
 import { StudyCapture } from './study-capture';
 import studyLayout from './props/art-study/layout.json';
 import selections from './props/art-study/selections.json';
@@ -88,7 +88,7 @@ function describeLocal(asset: Choice, artwork: pc.Entity, resource: BundledModel
   const clips = clipNames(resource);
   asset.description =
     `Clips: ${clips.length ? clips.join(', ') : 'none'}` +
-    (hasLocomotion(resource) ? '' : ' · Idle and Run are needed for motion');
+    (hasLocomotion(resource) ? '' : ' · Incomplete game locomotion: Idle and Run are required.');
 }
 function element<T extends HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
@@ -109,10 +109,11 @@ for (const family of new Set(choices.map(subjectKey))) {
   subject.append(option);
 }
 /** One option per shown version of the chosen subject; subjects have different numbers. */
-function refreshVersions(): void {
+function refreshVersions(hasLocal = false): void {
   const versions = element<HTMLSelectElement>('versions');
   const kept = versions.value;
-  for (const option of [...versions.options]) if (/^\d+$/.test(option.value)) option.remove();
+  for (const option of [...versions.options])
+    if (/^\d+$/.test(option.value) || option.value === 'local-only') option.remove();
   choices
     .filter((asset) => subjectKey(asset) === subject.value && !asset.sourceControl)
     .forEach((asset, index) =>
@@ -120,6 +121,7 @@ function refreshVersions(): void {
         new Option(`${String.fromCharCode(65 + index)} · ${asset.variant}`, String(index)),
       ),
     );
+  if (hasLocal) versions.append(new Option('Local model only', 'local-only'));
   versions.value = [...versions.options].some((option) => option.value === kept) ? kept : 'compare';
 }
 const requested = new URLSearchParams(location.hash.slice(1)).get('subject');
@@ -145,7 +147,7 @@ export class ArtStudy {
   private materials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
   private readonly stageMaterial: pc.StandardMaterial;
   private roots: pc.Entity[] = [];
-  private animations: pc.AnimComponent[] = [];
+  private animations: StudyAnimationBinding[] = [];
   private readonly bounds: pc.Vec3[] = [];
   private displayed: Choice[] = [];
   private local?: Choice;
@@ -232,10 +234,7 @@ export class ArtStudy {
     this.observer.observe(canvas.parentElement!);
     const on = (target: EventTarget, event: string, handler: EventListener) =>
       target.addEventListener(event, handler, { signal: this.events.signal });
-    on(subject, 'change', () => {
-      refreshVersions();
-      void this.show();
-    });
+    on(subject, 'change', () => void this.show());
     on(element('versions'), 'change', () => void this.show());
     const captureName = () =>
       'openlegend-asset-' +
@@ -372,22 +371,28 @@ export class ArtStudy {
         this.yaw += Math.min(dt, 0.1) * 0.22;
         this.placeCamera();
       }
-      const pose = element<HTMLSelectElement>('pose').value;
-      if (pose !== 'still' && this.motionAllowed && this.animations.length) {
-        for (const anim of this.animations) {
-          // A model without the chosen clip stands in Idle beside those that have it.
-          const state = anim.baseLayer?.states.includes(pose) ? pose : 'Idle';
+      const motion = element<HTMLSelectElement>('pose');
+      const pose = motion.selectedOptions[0]?.dataset.clip ?? motion.value;
+      if (motion.value !== 'still' && this.motionAllowed && this.animations.length) {
+        let advanced = false;
+        for (const { anim, states } of this.animations) {
+          // Keep the ordinary Idle fallback; a diagnostic without Idle holds its pose.
+          const state = states.get(pose) ?? states.get('Idle');
+          if (!state) continue;
           if (anim.baseLayer?.activeState !== state) anim.baseLayer?.play(state);
           anim.update(Math.min(dt, 0.1));
+          advanced = true;
         }
-        this.invalidate();
+        if (advanced) this.invalidate();
       }
-      const playing = this.animations.filter((anim) => anim.baseLayer?.activeState === pose);
+      const playing = this.animations.filter(
+        ({ anim, states }) => anim.baseLayer?.activeState === states.get(pose),
+      );
       const motionEvidence = !this.motionAllowed
         ? 'Motion paused by your reduced-motion preference.'
-        : pose === 'still'
+        : motion.value === 'still'
           ? 'Pose held for comparison.'
-          : `${playing.length} of ${this.animations.length} animated models · ${pose} · ${(playing[0]?.baseLayer?.activeStateCurrentTime ?? 0).toFixed(1)} s`;
+          : `${playing.length} of ${this.animations.length} animated models · ${pose} · ${(playing[0]?.anim.baseLayer?.activeStateCurrentTime ?? 0).toFixed(1)} s`;
       if (element('motion-evidence').textContent !== motionEvidence)
         element('motion-evidence').textContent = motionEvidence;
       if (this.labelsDirty) {
@@ -451,47 +456,57 @@ export class ArtStudy {
   }
   async show(): Promise<void> {
     if (this.disposed) return;
-    const epoch = ++this.epoch,
-      composition = ['composition', 'calibration', 'cast', 'characters'].includes(subject.value);
+    const epoch = ++this.epoch;
     if (this.pendingModels) this.releaseModels(this.pendingModels);
     this.pendingModels = undefined;
+    refreshVersions(!!this.local);
     const versions = element<HTMLSelectElement>('versions');
+    const compositionSubject = ['composition', 'calibration', 'cast', 'characters'].includes(
+      subject.value,
+    );
     const sourceOption = versions.querySelector<HTMLOptionElement>('option[value="source"]')!;
     sourceOption.disabled =
-      composition ||
+      compositionSubject ||
       !choices.some((asset) => subjectKey(asset) === subject.value && asset.sourceControl);
     if (versions.value === 'source' && sourceOption.disabled) versions.value = 'compare';
     const version = versions.value;
+    const localOnly = version === 'local-only';
+    const composition = !localOnly && compositionSubject;
     const compare = !composition && version === 'compare';
-    let selected = composition
-      ? choices.filter(
-          (asset) =>
-            asset.recommended &&
-            (subject.value === 'composition'
-              ? asset.historical
-              : subject.value === 'characters'
-                ? asset.collection === 'study-characters'
-                : !asset.historical &&
-                  !asset.collection &&
-                  (subject.value === 'cast'
-                    ? ['mercenary', 'ada', 'mike', 'mara', 'tavin', 'kest', 'orin']
-                    : ['mercenary', 'ada', 'grounded-chest', 'natural-sword']
-                  ).includes(asset.family)),
-        )
-      : choices.filter(
-          (asset) =>
-            subjectKey(asset) === subject.value &&
-            Boolean(asset.sourceControl) === (version === 'source'),
-        );
-    if (!compare && !composition && version !== 'source')
+    let selected = localOnly
+      ? this.local
+        ? [this.local]
+        : []
+      : composition
+        ? choices.filter(
+            (asset) =>
+              asset.recommended &&
+              (subject.value === 'composition'
+                ? asset.historical
+                : subject.value === 'characters'
+                  ? asset.collection === 'study-characters'
+                  : !asset.historical &&
+                    !asset.collection &&
+                    (subject.value === 'cast'
+                      ? ['mercenary', 'ada', 'mike', 'mara', 'tavin', 'kest', 'orin']
+                      : ['mercenary', 'ada', 'grounded-chest', 'natural-sword']
+                    ).includes(asset.family)),
+          )
+        : choices.filter(
+            (asset) =>
+              subjectKey(asset) === subject.value &&
+              Boolean(asset.sourceControl) === (version === 'source'),
+          );
+    if (!localOnly && !compare && !composition && version !== 'source')
       selected =
         version === 'selected'
           ? selected.filter((asset) => asset.recommended)
           : selected.slice(Number(version), Number(version) + 1);
-    if (this.local) selected = [...selected, this.local];
+    if (this.local && !localOnly) selected = [...selected, this.local];
     if (!selected.length) {
       // Removing the only shown model must not leave it on screen untracked.
       this.clearDisplayed();
+      this.refreshMotions();
       this.cards([]);
       element('status').textContent = 'No exported assets are available for this subject yet.';
       this.canvas.dataset.ready = 'true';
@@ -527,7 +542,7 @@ export class ArtStudy {
         ),
       );
       if (this.disposed || epoch !== this.epoch) return;
-      const animations: pc.AnimComponent[] = [];
+      const animations: StudyAnimationBinding[] = [];
       const fresh: pc.Entity[] = [];
       try {
         resources.forEach((resource, index) => {
@@ -539,8 +554,8 @@ export class ArtStudy {
           const asset = selected[index]!;
           if (asset.localBytes) describeLocal(asset, artwork, resource);
           this.prepare(artwork, materials, asset);
-          if (asset.motionUrl || (asset.localBytes && hasLocomotion(resource)))
-            animations.push(installLocomotion(artwork, resource));
+          const animation = installStudyAnimations(artwork, resource);
+          if (animation) animations.push(animation);
           // A single exported mesh may carry its own origin offset. Position a
           // parent so its original model transform (and ground contact) survives.
           const placement = new pc.Entity(selected[index]!.id, this.app);
@@ -557,6 +572,7 @@ export class ArtStudy {
       installed = true;
       this.roots = fresh;
       this.animations = animations;
+      this.refreshMotions();
       this.displayed = selected;
       const largest = Math.max(
         ...selected.map((asset) =>
@@ -617,10 +633,11 @@ export class ArtStudy {
       console.error(error);
       element('status').textContent =
         'This comparison could not load. The previous displayed assets are retained; choose another subject or reload.';
+      // A failed replacement or removal still owns the prior displayed local model.
+      this.local = this.displayed.find((asset) => asset.localBytes);
+      element('local-model-remove').hidden = !this.local;
+      refreshVersions(!!this.local);
       if (failed?.localBytes) {
-        // Keep tracking whichever local model the retained comparison still shows.
-        this.local = this.displayed.find((asset) => asset.localBytes);
-        element('local-model-remove').hidden = !this.local;
         element('status').textContent =
           'That file could not be read as a GLB model. The previous comparison is retained.';
       }
@@ -633,7 +650,7 @@ export class ArtStudy {
       }
     }
   }
-  /** Show a local GLB beside the current comparison, in the game's own look. */
+  /** Show a local GLB beside the comparison or by itself, in the game's own look. */
   private async chooseLocal(file: File): Promise<void> {
     if (file.size > LOCAL_MODEL_BYTES) {
       element('status').textContent =
@@ -670,6 +687,7 @@ export class ArtStudy {
     element<HTMLInputElement>('local-model').value = '';
     element('local-model-remove').hidden = true;
     if (redisplay) void this.show();
+    else refreshVersions();
   }
   /** Remove the displayed comparison and release what it owns. */
   private clearDisplayed(): void {
@@ -690,6 +708,27 @@ export class ArtStudy {
     if (!pending) return;
     this.modelCleanup.add(pending);
     void pending.finally(() => this.modelCleanup.delete(pending));
+  }
+  private refreshMotions(): void {
+    const motion = element<HTMLSelectElement>('pose');
+    const kept = motion.value;
+    for (const option of [...motion.options])
+      if (option.dataset.clip !== undefined) option.remove();
+    const existing = new Set(
+      [...motion.options]
+        .filter((option) => option.value !== 'still')
+        .map((option) => option.value),
+    );
+    for (const { states } of this.animations)
+      for (const name of states.keys()) {
+        if (existing.has(name)) continue;
+        // Keep Frozen pose distinct even when an imported clip is literally named "still".
+        const option = new Option(name, 'clip:' + name);
+        option.dataset.clip = name;
+        motion.append(option);
+        existing.add(name);
+      }
+    motion.value = [...motion.options].some((option) => option.value === kept) ? kept : 'still';
   }
   private cards(assets: Choice[]): void {
     element('asset-cards').replaceChildren(

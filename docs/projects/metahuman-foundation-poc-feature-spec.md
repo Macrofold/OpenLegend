@@ -1,8 +1,8 @@
 # MetaHuman foundation proof — feature specification
 
-| Status      | Current progress                                                                                                            | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Native geometry export and private preservation work; attractive foundations and independent kit qualification remain open. | 2026-11-07   |
+| Status      | Current progress                                                                                                    | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Both neutral foundations export; browser appearance, human selection and independent-kit qualification remain open. | 2026-11-07   |
 
 ## Purpose
 
@@ -71,7 +71,7 @@ The [execution guide](metahuman-foundation-poc-tech-design.md#4-execution-sequen
 
 - **Required pass:** visibly good covered anatomy and heads in the browser; portable bounded sliders on both families; correct independent wearers, tunic fitting and locomotion; asset budgets; no per-character vendor dependency; reproducible archived sources.
 - **Required measurement:** source-to-browser losses, basic facial-animation export, authoring effort, conversion time and before/after performance. A result must be reported even if poor; measurement alone does not approve it.
-- **Human acceptance:** Mike approves browser body/head appearance and the final comparison. Without that response, mark technical results complete and visual selection pending. Do not multiply wardrobe work before the body/head checkpoint.
+- **Human acceptance:** Mike selects browser body/head appearance, or explicitly delegates that selection, and approves the final comparison. Without the relevant response, keep selection/acceptance pending; completed technical evidence is reported separately. Do not multiply wardrobe work before the body/head checkpoint.
 - **External decision:** lawful use of the selected assets, organization-specific licensing and eventual browser distribution. Private evaluation permission is not a blanket public redistribution grant.
 
 Fail the independent-kit hypothesis if new ordinary characters still need MetaHuman, if endpoint samples cannot retain reliable correspondence, or if good faces require ongoing manual vertex repair. Fail visual qualification if the result has alien eyes, collapsed lips, neck seams, hollow replacement torsos, cardboard underwear, obvious clipping or broken gait. Fail the current runtime profile if necessary fidelity cannot fit it. Do not silently weaken a requirement or substitute an Unreal video.
@@ -83,7 +83,7 @@ A failed proof is a useful completed experiment when its bounded investigation a
 | Question                                                                                                                | Resolution owner and effect                                                                                                                |
 | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | Can exported MetaHuman shapes, eyes, necks and joint placement fit the existing family contract without losing quality? | MHP02–MHP03. A failing answer blocks the independent-kit claim; do not disguise it as routine finishing.                                   |
-| Are the two foundations and their bounded variations attractive and sufficiently close to the intended characters?      | Mike at the body/head and final browser reviews. Source selection remains provisional until then.                                          |
+| Are the two foundations and their bounded variations attractive and sufficiently close to the intended characters?      | Mike, or his explicit delegate, at the body/head review; Mike at the final browser review. Final acceptance remains pending until then.    |
 | Do the selected rights support public browser delivery and a redistributable customization kit?                         | MHP01's private evaluation permission is resolved; public rights and an explicit source-license decision remain prerequisites to adoption. |
 | Does the result merit replacing the current source foundation?                                                          | Mike after MHP06. The recommendation is conditional; no workflow migration is authorized by a passing report.                              |
 

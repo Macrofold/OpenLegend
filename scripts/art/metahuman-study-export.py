@@ -8,12 +8,15 @@ sys.argv. On macOS, pass the entire script/argument string as ONE shell argument
 
   UnrealEditor-Cmd '/external project/Proof.uproject' \
     '-ExecutePythonScript=/checkout with spaces/scripts/art/metahuman-study-export.py --plan \"/external workspace/plan.json\"' \
-    -unattended -nosplash -nosound -ScriptErrorsAreFatal
+    -unattended -nosplash -nosound
 
 The macOS launcher wraps argument values containing spaces; do not add another
 pair of outer double quotes inside the shell argument. Escaped inner quotes
 preserve a plan pathname containing spaces. The plugin identifies the script
 pathname through its .py extension, then constructs sys.argv for argparse.
+Require result.json status geometry-exported and verified outputs; exit 0 alone
+does not prove success. Leave ScriptErrorsAreFatal off: an ordinary recorded
+Python failure must not become a native fatal shutdown during this study.
 
 The external JSON plan has these fields:
   source: {asset: "/Game/Proof/Neutral.Neutral", file: "/external/.../Neutral.uasset",

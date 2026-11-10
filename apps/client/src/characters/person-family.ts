@@ -128,6 +128,10 @@ export interface PersonMaterial {
   metallic: number;
   colorTexture?: PersonTexture;
   normalTexture?: PersonTexture;
+  /** Cutout coverage is baseColor alpha × colorTexture alpha, independent of age paint. */
+  alphaCutoff?: number;
+  /** Missing/false keeps ordinary back-face culling and lighting. */
+  doubleSided?: boolean;
   palettes?: Readonly<Record<string, readonly [number, number, number, number]>>;
   paletteSelectionRole?: string;
   /** Linear red-channel weight for palette tint; zero preserves authored colour. */
@@ -831,6 +835,12 @@ function assertPersonFamily(value: unknown): asserts value is CompiledPersonFami
     numbers(material['baseColor'], 'base color', 4);
     numeric(material['roughness'], 'roughness');
     numeric(material['metallic'], 'metallic');
+    if (material['alphaCutoff'] !== undefined) {
+      const cutoff = numeric(material['alphaCutoff'], 'alpha cutoff');
+      if (cutoff < 0 || cutoff > 1) fail('alpha cutoff');
+    }
+    if (material['doubleSided'] !== undefined && typeof material['doubleSided'] !== 'boolean')
+      fail('double-sided material');
     if (material['colorTexture'] !== undefined) texture(material['colorTexture']);
     if (material['normalTexture'] !== undefined) texture(material['normalTexture']);
     if (material['tintMask'] !== undefined) {

@@ -51,7 +51,19 @@ export class BundledModels {
   /** Parse a developer-chosen local file for the study viewer's local preview.
    * The bytes never leave the browser and are not cached or shared by URL. */
   loadBytes(name: string, filename: string, contents: ArrayBuffer): Promise<BundledModel> {
-    return this.parse(name, `local-model/${++nextLocalModel}`, filename, contents);
+    // The pinned parser treats other bytes as JSON; its thrown JSON error can
+    // strand the asynchronous asset callback and therefore owner cleanup.
+    if (contents.byteLength < 20)
+      return Promise.reject(new Error(name + ' is not a GLB 2.0 model.'));
+    const header = new DataView(contents, 0, 12);
+    if (
+      header.getUint32(0, true) !== 0x46546c67 ||
+      header.getUint32(4, true) !== 2 ||
+      header.getUint32(8, true) !== contents.byteLength
+    )
+      return Promise.reject(new Error(name + ' has an invalid GLB 2.0 header.'));
+    // Decoder hint only: Asset.name and the study card keep the displayed name.
+    return this.parse(name, `local-model/${++nextLocalModel}`, filename + '.glb', contents);
   }
 
   private parse(
