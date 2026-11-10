@@ -2,7 +2,7 @@
 
 **Requested by Mike, October 13, 2026.** Read with [the full assignment](research-requirements.md). This amendment expands the existing R01–R14 dimensions; it does not replace them, renumber them, lower the review minimum, or authorize implementation. It applies to subsequent full passes and explicitly requested audits of existing subjects. Earlier completion labels describe the earlier standard, not automatic compliance with this amendment.
 
-**Current execution boundary:** the newly approved G150–G166 subjects are roster additions only. Mike explicitly said not to start their research yet. Do not treat the older assignment's continuation instructions as authorization to begin those passes. The [expansion ledger](research-progress-expansion-2026-10-13.md) records this boundary and amendment coverage; the [earlier ledger](research-progress.md) preserves prior research history and whole-library gates.
+**Current execution boundary:** the October 13 G150–G166 subjects were roster additions only. Mike authorized G162 Manor Lords on November 9, 2026; the [medieval-game record](research-progress-medieval-games-2026-11-09.md) owns that full pass. The other sixteen remain pending research authorization. Do not treat the older assignment's continuation instructions as authorization to begin those passes. The [expansion ledger](research-progress-expansion-2026-10-13.md) records this boundary and amendment coverage; the [earlier ledger](research-progress.md) preserves prior research history and whole-library gates.
 
 ## R11 — Estimate commercial results and explain economic success or failure
 
@@ -95,3 +95,4 @@ Include a concrete end-to-end example: start from an existing supported artifact
 ## Coverage and preservation
 
 A new full pass must map these additions to its substantive sections alongside R01–R14. A scoped supplement may complete only the explicitly requested dimensions and must say so. Do not claim that the original 149 subjects have all been retroactively audited or revenue-modeled because this requirements file exists. Preserve earlier evidence, examples and dated judgments; qualify superseded facts explicitly. Track remaining amendment coverage without duplicating the full requirement bodies or creating engine-maintainer tasks.
+

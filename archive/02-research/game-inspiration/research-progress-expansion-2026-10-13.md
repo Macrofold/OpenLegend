@@ -4,7 +4,9 @@
 
 ## Scope and authorization
 
-Mike approved the full recommendation following the Don't Starve Together question plus Shattered Pixel Dungeon, then explicitly instructed: **do not start the new games' research yet; only add them to the roster**. G150–G166 are all **Not started — roster only, awaiting research authorization**. The roster owns their seventeen titles, output filenames and edition boundaries. No new per-game dossier for that range was created in this task. Don't Starve Together stays G140; Apocalypse Rising is a targeted example in G04's supplement, not a new full-game assignment.
+**Later authorization:** Mike requested full Manor Lords research on November 9, 2026. G162 now follows the [medieval-game scoped record](research-progress-medieval-games-2026-11-09.md); the other sixteen G150–G166 subjects retain their hold. The completed October 13 work and its evidence below remain historical.
+
+Mike approved the full recommendation following the Don't Starve Together question plus Shattered Pixel Dungeon, then explicitly instructed: **do not start the new games' research yet; only add them to the roster**. At the October 13 checkpoint, G150–G166 were all **Not started — roster only, awaiting research authorization**. The roster owns their seventeen titles, output filenames and edition boundaries. No new per-game dossier for that range was created in this task. Don't Starve Together stays G140; Apocalypse Rising is a targeted example in G04's supplement, not a new full-game assignment.
 
 This ledger owns only the new range's status and coverage of the October 13 amendment. The earlier ledger retains G01–G149 completion provenance and P01–P05 whole-library gates. Its dated counts and completion labels do not certify the new requirements or mean the roster still ends at G149. No earlier game is silently recertified.
 
@@ -54,3 +56,4 @@ The G04/G149 supplements are scoped additions, not new complete R01–R14 review
 ## Resume boundary
 
 No further research or documentation work remains in this agreed scope. The literal rename cannot be completed through the available connector actions; the broader working branch and preserved old ref are stated above. Do not begin G150–G166, a whole-library backfill, game execution or implementation without a new instruction. For later authorized work, preserve earlier research, use the intended branch and check its current head before writing.
+
