@@ -2,7 +2,7 @@
 
 **Designed adult art profile, November 6, 2026; assets and ranges remain experimental until qualified.** This is the human content for the [people-from-parts design](../../projects/people-from-parts-feature-spec.md). It describes the first adult kit to build and judge. The [current art direction](../../../art-direction/decisions.md#current-direction-at-a-glance) owns the look, and the [existing cast](first-playable-people.md) owns who these people are.
 
-The executable authoring owner is [people-appearance.ts](../../../packages/domain/src/worlds/base/people-appearance.ts): `BASE_APPEARANCE_PROFILE` supplies controls/choices/presets and `BASE_WARDROBE` supplies actual item/part mappings and creation-default flags. Export these into the art package rather than maintaining a second JSON list. Main selects the public descriptor identity `world/base/wayfarer-adult-people` through its trusted opening initializer, with the exact revision and compiled file supplied by the installed presentation release. Assets and browser acceptance remain required before that family is published for use.
+The executable authoring owner is [people-appearance.ts](../../../packages/domain/src/worlds/base/people-appearance.ts): `BASE_APPEARANCE_PROFILE` supplies controls/choices/presets and `BASE_WARDROBE` supplies actual item/part mappings and creation-default flags. Export these into the art package rather than maintaining a second JSON list. Main's Wayfarer installation selects the public descriptor identity `world/base/wayfarer-adult-people` through its trusted opening initializer, with the exact revision and compiled file supplied by the installed presentation release. Assets and browser acceptance remain required before that family is published for use.
 
 ## An adult body to start from
 
@@ -75,6 +75,8 @@ Hair starts with a removable short swept style and a tied/braided style; provide
 ### Playable scope and content authority
 
 One selected baked trio, one shared Wayfarer outfit and compatible motion are the first asset delivery. The full family adds the above controls and age samples without blocking use of an individually accepted baked person. The eight preset recipes are evaluated examples, never separate meshes with different topology. First-cast recipes use explicit resolved values; no repeated randomisation occurs on load. Body control names and limits belong to this selected family, not engine-wide enums. The bundled world module selects its exact family release, permitted parts and preset recipes; the asset manifest owns the shape/fit data and control mappings once. The engine consumes this data without restating human ages, gendered frames or this world's garment slots.
+
+The separate private [MHP07 Main-world pilot](../../maintainers/art/metahuman-poc.md#current-progress) uses one provisional Vivian family, Bald and linen bra/briefs, with one removable compound shirt/shorts item occupying torso and legs. [modular-pilot.ts](../../../packages/domain/src/worlds/base/modular-pilot.ts) owns its person brief and item mapping. It uses ordinary creation, equipment and stature admission; it does not replace this broader Wayfarer design or convert the existing cast. Actual-game qualification remains with MHP07.
 
 ## Height in play
 

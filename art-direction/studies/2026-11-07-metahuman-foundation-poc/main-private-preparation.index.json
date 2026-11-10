@@ -1,0 +1,34 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-vivian-main-pilot-preparation-proof",
+    "revisionId": "runtime02-preparation01",
+    "manifestSha256": "183fb28609b432cbdee84790939a5c81101967d76dc6310dcc675a814da2fe30"
+  },
+  "files": {
+    "source-proof/main-game-pilot01/preparation-and-source.tar.xz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "319bf9a8764c6cd7c9c33a1f5103d5ac8ee3791898ec4d83ecd9ac73df85c3b7",
+      "bytes": 77948,
+      "mediaType": "application/x-xz"
+    },
+    "source-proof/main-game-pilot01/inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2ac9502402acb712ba13fa8f73de87a03b46cff3cb3c6ea84ce2c5aca252fab7",
+      "bytes": 67089,
+      "mediaType": "application/json"
+    },
+    "source-proof/main-game-pilot01/summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "513255a3c5835ac362bc613182c23856b7a4a79bcbc7b04ed5cf46a5d7a5c930",
+      "bytes": 3813,
+      "mediaType": "application/json"
+    }
+  }
+}

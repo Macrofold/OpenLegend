@@ -9,10 +9,10 @@ import {
   type AssetRevisionReference,
 } from '@open-legend/assets';
 import { validateAppearanceFamily, type AppearanceFamilyDefinition } from '@open-legend/domain';
-import type { AssetRepository } from './asset-repository.js';
+import type { AssetPrincipal, AssetRepository } from './asset-repository.js';
 
 const named = z.object({ id: z.string(), label: z.string() }).strict();
-// This is the public metadata boundary. Domain admission below owns reference,
+// This is the participant-facing metadata boundary. Domain admission owns reference,
 // namespace, defaults, choices and envelope semantics; extra source provenance
 // cannot enter a creator projection by being spread into an installed definition.
 const descriptorMetadata = z
@@ -91,8 +91,9 @@ const selections = z.array(
 export async function installedAppearanceFamilies(
   assets: AssetRepository,
   index: AssetIndex,
+  principal?: AssetPrincipal,
 ): Promise<AppearanceFamilyDefinition[]> {
-  const closure = await assets.permittedRevisionClosure(index.release);
+  const closure = await assets.permittedRevisionClosure(index.release, principal);
   if (
     closure.record.manifest.kind !== 'release' ||
     closure.record.destination.boundary !== 'runtime'
@@ -115,19 +116,18 @@ export async function installedAppearanceFamilies(
       !descriptor ||
       !sameAssetRevision(descriptor.reference, entry.descriptor) ||
       descriptor.manifest.kind !== 'asset' ||
-      descriptor.destination.boundary !== 'runtime' ||
-      descriptor.destination.accessDomain !== 'public'
+      descriptor.destination.boundary !== 'runtime'
     )
-      throw new Error('The appearance descriptor is not public metadata in the installed release.');
+      throw new Error(
+        'The appearance descriptor is not runtime metadata in the installed release.',
+      );
     const profile = descriptorMetadata.parse(descriptor.manifest.metadata['appearanceFamily']);
     const compiled = indexedAsset(index, entry.compiledPath);
-    if (
-      compiled.boundary !== 'runtime' ||
-      compiled.accessDomain !== 'public' ||
-      !/^application\/json(?:;|$)/.test(compiled.mediaType)
-    )
-      throw new Error('The compiled appearance file is not a public runtime representation.');
-    await assets.authorizeArtifact(undefined, index.release, compiled);
+    if (compiled.boundary !== 'runtime' || !/^application\/json(?:;|$)/.test(compiled.mediaType))
+      throw new Error('The compiled appearance file is not a runtime representation.');
+    // The selected build is not a grant: private runtime files use the admitting
+    // account's current permission through the same closure and delivery owner.
+    await assets.authorizeArtifact(principal, index.release, compiled);
     const family = {
       ...profile,
       reference: entry.descriptor,

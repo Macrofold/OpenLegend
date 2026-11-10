@@ -1,14 +1,14 @@
 # MetaHuman foundation proof — feature specification
 
-| Status  | Current progress                                                                                            | Last updated |
-| ------- | ----------------------------------------------------------------------------------------------------------- | ------------ |
-| Blocked | Verified private kits and proof are preserved; final masculine wardrobe scope awaits the coverage decision. | 2026-11-10   |
+| Status  | Current progress                                                                                    | Last updated |
+| ------- | --------------------------------------------------------------------------------------------------- | ------------ |
+| Blocked | The private Main pilot is complete; broader foundation work awaits the masculine coverage decision. | 2026-11-10   |
 
 ## Purpose
 
 Determine whether MetaHuman can supply anatomically believable **complete heads and bodies** for OpenLegend, and whether a small exported kit can create further characters without running MetaHuman. This is a bounded feasibility proof: make one adjustment toward the approved athletic references, correct elbows, qualify one premade garment across representative shapes, then test one existing natural-looking hair-card style in the actual renderer. Perfect production anatomy, hair polishing and hairstyle-library expansion are outside this proof. An Unreal screenshot or functioning slider alone is insufficient.
 
-This is an authorized standalone private experiment, not adoption of MetaHuman into the art workflow. The normal art workflow, selected game assets, world definitions and existing character pilot retain their own selections and unfinished obligations. [Execution evidence](../verification/metahuman-foundation-poc.md) distinguishes capability checks from actual source/export qualification.
+Authorization covers private foundation evaluation and MHP07's one-NPC integration in existing Main. The normal art workflow, production selections and existing character pilot retain their own unfinished obligations. [Execution evidence](../verification/metahuman-foundation-poc.md) distinguishes native/source checks from actual-game qualification.
 
 ## Product decisions and relationship to the existing pilot
 
@@ -52,16 +52,26 @@ MetaHuman and Reallusion Character Creator both cover heads **and bodies**. Meta
 7. Idle, Walk and Run operate on all four review characters, including transitions and two differently shaped wearers visible together. A separate blink/jaw-opening export diagnostic measures the path to facial animation; the proof does not claim a complete expression or speech system.
 8. An archived kit and recipes reproduce the result without MetaHuman, Epic authentication, a generation provider or a commercial character editor. Report which outputs are reusable and which later body changes require new source samples, bindings, masks, rigs or motion qualification. Authoring additional foundations can still require those tools and their licenses.
 
+## Private Main-world pilot
+
+MHP07 integrates one provisional Vivian NPC into the existing Main world and ordinary scene alongside the Peacock Mercenary and current cast. Use the existing character creation/spawn, appearance, equipment, save/load, animation, renderer and asset-storage owners. Main initialization owns the authored newcomer; explicit artwork selection installs the exact permitted family/wardrobe definitions, while adding a person to an already-running Main uses normal creation. Existing characters, art, environment, camera and UI remain unchanged. Do not create a replacement world, scene, study or viewer.
+
+The selected private runtime projection offers separate linen bra/briefs as baseline coverage and Bald. The premade shirt/shorts is one compound outfit occupying torso and legs, with no new abilities. Equipment is its sole visible outfit authority; removing it restores covered complete anatomy. The existing authoring sources remain provisional MVP assets; production likeness, physique, materials and hair do not block this unit. MetaHuman/providers are not runtime dependencies. This is a private/local exception, not public publication, production selection or regular-workflow adoption.
+
+Required actual-game evidence: coexistence with the unchanged cast; saved appearance and outfit after save/reload; Idle/Walk/Run and start/stop without backward elbows or major breakthroughs; visible equip/remove; outfit transfer to a compatible temporary wearer; existing stature/spatial and appearance authority; cosmetic isolation from abilities, permissions and cognition. Present existing assets before qualification, then actual gameplay screenshots/recordings with defects and unqualified cases labeled. Broader controls, six-preset library, full wardrobe, custom garments, hair generation/polish and cast conversion are excluded.
+
+The current private pilot demonstrates one saved Nessa recipe and compound outfit, visible removal/restoration, compatible-wearer transfer, short movement/start-stop witnesses, corrected moving ground shadows and clean ordinary-server reopening in Main. The corrected ground-shadow path remains a bounded experiment with measured CPU/frame-tail cost; standalone timings do not qualify it. Bald hair and the shirt/shorts remain provisional. [Main gameplay evidence](../verification/metahuman-foundation-poc.md#november-10-2026--ordinary-main-gameplay) owns the demonstrated scope and [MHP07](../maintainers/art/metahuman-poc.md#current-progress) owns completion.
+
 ## Scope and deliberate exclusions
 
-| Included                                                                                         | Deferred to adoption or the existing character project                                                                                           |
-| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Two adult foundations, bounded deformations, preset recipes, independent slider evaluation       | Broad age/fullness/ancestry coverage, children, arbitrary species, unrestricted random faces, blending between the two body families             |
-| Complete anatomy with separate opaque underwear, a suitable premade outfit, one rigid attachment | Full Wayfarer wardrobe; separate torso/legs/gloves/inner armour/outer armour/helmet/hat/boots/accessory catalogue                                |
-| One existing natural-looking premade hair-card style plus bald, existing eye-colour selection    | Hair polishing/sculpting, a custom hair system, hairstyle-library expansion, facial-hair catalogue, broader body/face controls                   |
-| Locomotion and facial-export diagnostic                                                          | Combat/contact coverage, all hand gestures, lip sync, full FACS/ARKit, facial performance capture                                                |
-| Actual game renderer/actor in a developer study                                                  | Installing the kit in the ordinary world, changing character authority/save formats, normal creator rollout, workflow/provider selection changes |
-| Static skin and normal-map preparation under current art direction                               | Recreating Unreal skin/eye shaders, cinematic fidelity at every distance, strand-groom runtime or cloth simulation                               |
+| Included                                                                                         | Deferred to adoption or the existing character project                                                                               |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Two adult foundations, bounded deformations, preset recipes, independent slider evaluation       | Broad age/fullness/ancestry coverage, children, arbitrary species, unrestricted random faces, blending between the two body families |
+| Complete anatomy with separate opaque underwear, a suitable premade outfit, one rigid attachment | Full Wayfarer wardrobe; separate torso/legs/gloves/inner armour/outer armour/helmet/hat/boots/accessory catalogue                    |
+| One existing natural-looking premade hair-card style plus bald, existing eye-colour selection    | Hair polishing/sculpting, a custom hair system, hairstyle-library expansion, facial-hair catalogue, broader body/face controls       |
+| Locomotion and facial-export diagnostic                                                          | Combat/contact coverage, all hand gestures, lip sync, full FACS/ARKit, facial performance capture                                    |
+| Actual renderer/actor study plus one private Main-world NPC through existing gameplay paths      | Broad creator/cast rollout, changed authority/save formats, production and workflow/provider selection changes                       |
+| Static skin and normal-map preparation under current art direction                               | Recreating Unreal skin/eye shaders, cinematic fidelity at every distance, strand-groom runtime or cloth simulation                   |
 
 The existing larger modular-character design remains the owner of those deferred requirements. This proof must expose a viable extension path, not implement them in advance. A measured facial-export failure is a material adoption risk, even when the neutral foundation passes.
 

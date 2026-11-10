@@ -128,6 +128,8 @@ for routine, feeding and danger. Camp contacts require real travel and perceptio
 
 The compact main candidate retains exact prospective world/player/resident identities, seed and authored title/premise. Its scenario contents come from the shared initializer rather than a second world snapshot or editable list of copied fixtures. Main-template editing changes its title/premise; **Describe a world** still begins with the supported editable small-opening model. Real native approach/material/action checks qualify initial activities, not every future encounter, autonomous decision or population cost.
 
+The opt-in private [MHP07 pilot](../../maintainers/art/metahuman-poc.md#current-progress) admits one provisional modular courier alongside this cast through [the world-owned pilot content](../../../packages/domain/src/worlds/base/modular-pilot.ts). Fresh Main composition may include Nessa Vale when that exact family is installed. In an existing Main, explicit artwork selection installs family/item definitions only; ordinary character creation adds the person. The environment, camera, UI and existing cast artwork remain unchanged. Gameplay qualification is tracked separately from source preparation.
+
 ## Solo testing ground
 
 The supplied solo opening creates one controlled person with tools, a fire, finite nearby fiber/wood/stone/berries and known fiber-cleaning, cord-twisting and pouch methods. It creates no resident, hunting animal, rival, investigation or expedition. Gather and prepare fibers, then make the pouch; the limited starting prepared fiber keeps this useful testing sequence available.

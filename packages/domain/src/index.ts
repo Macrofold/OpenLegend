@@ -2,10 +2,12 @@ export {
   BASE_APPEARANCE_PROFILE,
   BASE_APPEARANCE_ASSET,
   installBaseOpeningAppearances,
+  installBaseAppearanceFamilies,
   BASE_WARDROBE,
   baseAppearanceFamily,
   installBaseAppearanceKit,
 } from './worlds/base/people-appearance.js';
+export { baseModularPilotPerson } from './worlds/base/modular-pilot.js';
 export * from './appearance-state.js';
 export * from './appearance.js';
 export * from './expression-definitions.js';

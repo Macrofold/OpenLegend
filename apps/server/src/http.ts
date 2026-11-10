@@ -356,8 +356,8 @@ async function initializeGameServer(
       now: options.now,
       closeStore: !options.store,
       prepare: (initial, binding, candidate) =>
-        prepareCreatedWorld(initial, binding, config, candidate, assetIndex.release, () =>
-          installedAppearanceFamilies(store.assets, assetIndex),
+        prepareCreatedWorld(initial, binding, config, candidate, assetIndex.release, (principal) =>
+          installedAppearanceFamilies(store.assets, assetIndex, principal),
         ),
       adopt: (receipt, publicServer) =>
         createGameServer({
@@ -379,7 +379,8 @@ async function initializeGameServer(
     executionSource: options.executionSource,
     createdActivation: options.createdActivation,
     presentationRelease: assetIndex.release,
-    appearanceFamilies: () => installedAppearanceFamilies(store.assets, assetIndex),
+    appearanceFamilies: (principal) =>
+      installedAppearanceFamilies(store.assets, assetIndex, principal),
   });
   const { service, autosaves, navigation } = runtime;
   const cognitionExecution = runtime.execution;

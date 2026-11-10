@@ -22,7 +22,7 @@ Private execution is authorized. Numerical POC choices below remain **Proposed**
 
 ## MHP-L05 — Scope, repair and spending boundaries
 
-**Proposed · Restrictiveness: Very safe.** Private developer study; no production selection, game-state mutation, normal art-workflow adoption or per-character vendor calls. One focused repair per failed gate before a decision on substantial extra work. Existing task-spending rules apply, with no new software purchase or paid call made by this design. A blocker preserves evidence and stops dependent work rather than silently weakening acceptance. Owner: design §§4 and 11, MHP01/MHP06.
+**Accepted bounded scope · Restrictiveness: Very safe.** The foundation study and one private/local Main-world NPC pilot are authorized. MHP07 uses provisional Vivian assets, Bald, separate underwear and one compound premade shirt/shorts item; existing cast artwork and ordinary scene remain unchanged. No public MetaHuman publication, production selection, automatic normal-workflow adoption or per-character vendor calls. Broader controls, the six-preset library, wardrobe/cast conversion and polishing remain outside this unit. One focused repair per failed gate precedes a decision on substantial extra work. The existing cumulative $100 ceiling is retained; no new allowance or software purchase is implied. A blocker preserves evidence and stops dependent work rather than weakening acceptance. Owner: design §11, MHP01/MHP06/MHP07.
 
 ## MHP-L06 — Retention and growth
 

@@ -1,0 +1,56 @@
+{
+  "status": "Private Main integration proof published and fresh normal workspace/member readback verified",
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-vivian-main-pilot-integration-proof",
+    "revisionId": "runtime03-main-final01",
+    "manifestSha256": "fcb61ce3871d74047a296e53ada3d093f3009d4ff3dfe4ff16ad9d098fc51012"
+  },
+  "index": {
+    "file": "main-private-gameplay.index.json",
+    "sha256": "15a62dbc7c7a5807e552c2ef19dd011b3746c32f03edd022de2e13a18351424a",
+    "bytes": 1189
+  },
+  "sourceExecutableCommit": "729b9b77e1899057effdee9e207f704bd2cb55d8",
+  "publicationOperation": "mhp-main-integration-final-proof-publication-20261110",
+  "normalWorkspaceFiles": 3,
+  "archiveMembersVerified": 1819,
+  "logicalBytes": 514232457,
+  "newLibraryBytesIncludingCanonicalManifest": 460015360,
+  "currentAuthority": {
+    "generation": "356",
+    "complete": "1"
+  },
+  "independentPermissionCoverage": {
+    "generation": 356,
+    "status": "complete",
+    "markerVersionId": "nNp0KuzXiAaFmGNTdfzlWeTk6KqFuYj1",
+    "markerSha256": "029d8c2e851047f759e1d316e937a75778099e31529f7e220b1f7f665d355ad5",
+    "authority": {
+      "reference": {
+        "boundary": "asset-recovery",
+        "accessDomain": "openlegend-assets",
+        "sha256": "1a2c4cac54bc1075fca4e24108acfbfdb030e7f2dac41f72c797a7fe9ad88e9a",
+        "bytes": 260584,
+        "mediaType": "application/json"
+      },
+      "key": "domains/openlegend-assets/blobs/sha256/1a/1a2c4cac54bc1075fca4e24108acfbfdb030e7f2dac41f72c797a7fe9ad88e9a",
+      "versionId": "3OvxpuYSjh_1.oQe5qYAbxz6V2xzV9Rq"
+    }
+  },
+  "normalAuthenticatedReadback": true,
+  "separateDisasterCredentialRehearsal": false,
+  "gameDatabaseWrites": false,
+  "grantsAndDefaultSelectionsUnchanged": true,
+  "startedAtUtc": "2026-11-10T20:48:51.547808+00:00",
+  "hardDeadlineUtc": "2026-11-10T21:03:51.547808+00:00",
+  "allClientsClosedAtUtc": "2026-11-10T20:50:49.251193+00:00",
+  "providerCalls": 0,
+  "incrementalProviderSoftwareUsd": 0,
+  "conservativeTaskControlUsd": 41.99,
+  "taskCeilingUsd": 100,
+  "actualAwsInvoiceSpend": "Unmeasured; control/reservation is not spend."
+}

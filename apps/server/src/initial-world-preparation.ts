@@ -29,6 +29,7 @@ import type { SavedWorld } from './store.js';
 import type { AssetRevisionReference } from '@open-legend/assets';
 import { validateCurrentWorldState } from './upgrade-world.js';
 import { prepareOpeningReadiness } from './world-opening-authoring.js';
+import type { AssetPrincipal } from './asset-repository.js';
 
 /** Initial selection only; the publication transaction still checks current
  * permission and retains this exact release through AssetRepository.bindWorld. */
@@ -40,7 +41,7 @@ export function initialWorldArtwork(reference: AssetRevisionReference) {
 }
 
 /** Apply only the selected opening's transient trusted installation policy. The
- * public descriptor and compiled file are already admitted by the asset owner;
+ * participant-facing descriptor and compiled file are admitted by the asset owner;
  * numerical correspondence remains the publication/renderer admission contract.
  * docs/projects/people-from-parts-authoring-contract.md#external-family-package
  */
@@ -49,11 +50,14 @@ export async function prepareInitialAppearance(
     InitialWorldPreparation,
     'world' | 'useInstalledArtwork' | 'installAppearanceFamilies'
   >,
-  appearanceFamilies?: () => Promise<readonly AppearanceFamilyDefinition[]>,
+  principal: AssetPrincipal,
+  appearanceFamilies?: (
+    principal: AssetPrincipal,
+  ) => Promise<readonly AppearanceFamilyDefinition[]>,
 ): Promise<WorldState> {
   const install = initial.useInstalledArtwork && initial.installAppearanceFamilies;
   if (!install || !appearanceFamilies) return initial.world;
-  const families = await appearanceFamilies();
+  const families = await appearanceFamilies(principal);
   return families.length
     ? updateWorld(initial.world, (world) => install(world, families))
     : initial.world;
@@ -109,13 +113,19 @@ export async function prepareCreatedWorld(
   config: AppConfig,
   candidate: WorldCreationCandidate,
   installedRelease: AssetRevisionReference,
-  appearanceFamilies?: () => Promise<readonly AppearanceFamilyDefinition[]>,
+  appearanceFamilies?: (
+    principal: AssetPrincipal,
+  ) => Promise<readonly AppearanceFamilyDefinition[]>,
 ): Promise<CreationStartupPreparation> {
   const selected = selectedCreationProfileForCandidate(candidate);
   if (!binding.actorId || binding.actorId !== selected.profile.controlledActor(selected.candidate))
     throw new Error('The prepared account must control the selected starting person.');
   const authorityOwners = new Map([[binding.actorId, binding.accountId]]);
-  const world = await prepareInitialAppearance(initial, appearanceFamilies);
+  const world = await prepareInitialAppearance(
+    initial,
+    { accountId: binding.accountId },
+    appearanceFamilies,
+  );
   const savedWorld = prepareWorldForStartup(
     {
       world,

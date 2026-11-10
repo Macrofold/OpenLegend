@@ -412,10 +412,14 @@ export class PersonActor {
           this.node,
         );
         instance.skinInstance = source.jointWeights ? this.skinInstance : null;
-        instance.visible = instance.castShadow = false;
+        instance.visible = false;
+        // PlayCanvas registers shadow-caster membership only when the mesh is added.
+        // Visibility admission below controls whether that registered caster draws.
+        instance.castShadow = true;
         existing = { mesh, instance, source };
         this.meshes.set(id, existing);
         this.worldLayer.addMeshInstances([instance]);
+        instance.castShadow = false;
       } else if (existing.source !== source) {
         this.upload(existing.mesh, source, existing.source);
         existing.instance.material = this.materials.material(source.materialId);

@@ -274,6 +274,7 @@ import { randomUUID } from 'node:crypto';
 import {
   createBaseStartingWorld,
   baseWorldInitialConstructionSeeds,
+  selectedCreationProfileForWorld,
   updateWorld,
   appendedEventCount,
   freezeWorld,
@@ -317,7 +318,9 @@ import type { AppConfig } from './config.js';
 import { digest, type SavedWorld, type GameRepository, type PreparedCommit } from './store.js';
 import {
   assertAssetRevisionReference,
+  assetRevisionKey,
   sameAssetRevision,
+  sameArtifact,
   type AssetRevisionReference,
 } from '@open-legend/assets';
 import type { CreationActivationReceipt } from './creation-target-contracts.js';
@@ -981,9 +984,9 @@ export class WorldService {
       embeddingClient?: EmbeddingClient;
       /** Trusted installed build lock. It never silently binds a saved world. */
       presentationRelease?: AssetRevisionReference;
-      appearanceFamilies?: () => Promise<
-        readonly import('@open-legend/domain').AppearanceFamilyDefinition[]
-      >;
+      appearanceFamilies?: (
+        principal: import('./asset-repository.js').AssetPrincipal,
+      ) => Promise<readonly import('@open-legend/domain').AppearanceFamilyDefinition[]>;
       cognitionControl?: import('./cognition-runtime-control.js').CognitionRuntimeControl;
       runtimeLiveness?: () => boolean;
       runtimeAuthority?: (scope: RequestScope) => boolean;
@@ -1025,7 +1028,11 @@ export class WorldService {
           this.startup.initialWorldId,
         );
     if (initial && this.startup.presentationRelease)
-      initial.world = await prepareInitialAppearance(initial, this.startup.appearanceFamilies);
+      initial.world = await prepareInitialAppearance(
+        initial,
+        { accountId: this.currentProfile.id },
+        this.startup.appearanceFamilies,
+      );
     // Native opening preparation requests installed artwork; the application
     // resolves its exact release. Reopening a saved world never makes this choice.
     const initialArtwork =
@@ -1295,11 +1302,38 @@ export class WorldService {
       const record = await this.store.assets!.revision(request.reference, principal);
       if (record.manifest.kind !== 'release' || record.destination.boundary !== 'runtime')
         throw new Error('This game build requires an approved runtime asset release.');
+      const families = this.startup.appearanceFamilies
+        ? await this.startup.appearanceFamilies(principal)
+        : [];
+      this.assertScope(scope, 'save');
+      // Saved appearance definitions keep exact files. Selecting another release cannot
+      // strand their models, even when that release otherwise has valid rights.
+      const selectedFamilies = new Map(
+        families.map((family) => [assetRevisionKey(family.reference), family]),
+      );
+      for (const family of Object.values(this.world.appearanceDefinitions?.families ?? {})) {
+        if (!family.compiled) continue;
+        const retained = selectedFamilies.get(assetRevisionKey(family.reference));
+        if (
+          !retained?.compiled ||
+          !sameAssetRevision(retained.reference, family.reference) ||
+          retained.compiledPath !== family.compiledPath ||
+          !sameArtifact(retained.compiled, family.compiled)
+        )
+          throw new Error(
+            'The selected artwork does not include an appearance collection used by this world.',
+          );
+      }
+      const install = selectedCreationProfileForWorld(this.world).installAppearanceFamilies;
+      const world = install
+        ? updateWorld(this.world, (draft) => install(draft, families))
+        : this.world;
       const reference = structuredClone(request.reference);
       if (
         !(await this.commit(
           {
             ...this.saved,
+            world,
             presentationRelease: reference,
             presentationReleaseRevision: request.expectedRevision + 1,
           },

@@ -254,10 +254,10 @@ export function clientViteConfiguration(
         studies,
         resolve(
           options.indexPath ??
-            resolve(
-              workspace,
-              studies ? 'assets/locks/studies.json' : 'assets/locks/development.json',
-            ),
+            (studies
+              ? resolve(workspace, 'assets/locks/studies.json')
+              : (process.env['OPEN_LEGEND_ASSET_INDEX'] ??
+                resolve(workspace, 'assets/locks/development.json'))),
         ),
         options.localAssetDelivery ?? false,
       ),
