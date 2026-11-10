@@ -13,6 +13,7 @@ pub use cells::SqlCell;
 pub use layout::{ChildShape, RecordChild, RecordCodec, RecordLayout};
 mod encode;
 mod merge;
+pub(crate) use merge::{merge_changes, merge_workspace_bound};
 mod output;
 pub(crate) use encode::{EncodedRows, RowEffects, RowEncoder};
 mod list_changes;

@@ -101,6 +101,43 @@ pub fn json_record_len<T: Serialize + ?Sized>(record: &T) -> Result<usize, serde
     Ok(count.0)
 }
 
+/// Compare one typed factory encoding without retaining a second JSON body.
+/// Callers comparing semantic records serialize both through the same factory;
+/// this does not equate arbitrary imported payload member order.
+pub(crate) fn json_record_eq<T: Serialize + ?Sized>(
+    record: &T,
+    encoded: &str,
+) -> Result<bool, serde_json::Error> {
+    struct Equal<'a> {
+        expected: &'a [u8],
+        at: usize,
+        same: bool,
+    }
+    impl io::Write for Equal<'_> {
+        fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
+            let end = self
+                .at
+                .checked_add(bytes.len())
+                .ok_or_else(|| io::Error::other("Native JSON byte count exceeds its range."))?;
+            self.same &= self.expected.get(self.at..end) == Some(bytes);
+            self.at = end;
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> io::Result<()> {
+            Ok(())
+        }
+    }
+    let mut output = Equal {
+        expected: encoded.as_bytes(),
+        at: 0,
+        same: true,
+    };
+    let mut serializer =
+        serde_json::Serializer::with_formatter(&mut output, JsFormatter::default());
+    record.serialize(&mut serializer)?;
+    Ok(output.same && output.at == output.expected.len())
+}
+
 pub fn serialize_js_value<S: Serializer>(value: &Value, serializer: S) -> Result<S::Ok, S::Error> {
     JsValue(value).serialize(serializer)
 }

@@ -315,7 +315,7 @@ try {
       undefined,
       attempt.id,
     );
-    await recovery.create(current.state, 'Before last load', recoveryId, {
+    await recovery.create(current.state.world.id, 'Before last load', recoveryId, {
       kind: 'recovery',
       expectedRevision: current.revision,
     });

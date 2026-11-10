@@ -13,13 +13,29 @@ use openlegend_simulation::runtime::{
 };
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
-mod npc;
-mod maintenance;
 mod control;
+mod maintenance;
+mod npc;
+mod participation;
 mod player;
 mod privacy;
 mod read_cut;
+mod restore;
 mod retained_values;
+
+fn activation_available(world: &Arc<WorldRuntime>, worlds: &[Arc<WorldRuntime>]) -> Result<()> {
+    if world.active.load(Ordering::Acquire)
+        || worlds.iter().any(|other| {
+            !Arc::ptr_eq(other, world)
+                && other.world_id == world.world_id
+                && other.active.load(Ordering::Acquire)
+                && !other.stopped()
+        })
+    {
+        return Err(failure("this world already has a native writer"));
+    }
+    Ok(())
+}
 
 fn operation_error(error: impl std::fmt::Debug) -> napi::Error {
     failure(format!("{error:?}"))
@@ -367,14 +383,41 @@ impl NativeHost {
         bytes: BufferSlice<'_>,
         database_schema: String,
     ) -> Result<Object<'a>> {
+        self.install_inactive(env, bytes, database_schema, false)
+    }
+    #[napi(ts_return_type = "Promise<NativeWorld>")]
+    pub fn install_restoring_world<'a>(
+        &self,
+        env: &'a Env,
+        bytes: BufferSlice<'_>,
+        database_schema: String,
+    ) -> Result<Object<'a>> {
+        self.install_inactive(env, bytes, database_schema, true)
+    }
+}
+impl NativeHost {
+    fn install_inactive<'a>(
+        &self,
+        env: &'a Env,
+        bytes: BufferSlice<'_>,
+        database_schema: String,
+        restoring: bool,
+    ) -> Result<Object<'a>> {
         boundary(|| {
             let (bytes, custody) = input(&bytes, &self.runtime.bytes)?;
             let host = Arc::clone(&self.runtime);
             dispatch(env, &self.runtime, None, move |cancel| {
                 let _custody = custody;
-                let session =
+                let session = if restoring {
+                    NativeWorldSession::install_restore(
+                        &bytes,
+                        &database_schema,
+                        host.bytes.clone(),
+                    )
+                } else {
                     NativeWorldSession::install(&bytes, &database_schema, host.bytes.clone())
-                        .map_err(operation_error)?;
+                }
+                .map_err(operation_error)?;
                 let world = Arc::new(WorldRuntime {
                     world_id: session.world_id().map_err(operation_error)?.to_owned(),
                     fence: session.fence(),
@@ -410,16 +453,7 @@ impl NativeWorld {
                 .worlds
                 .lock()
                 .map_err(|_| failure("native world registry unavailable"))?;
-            if world.active.load(Ordering::Acquire)
-                || worlds.iter().any(|other| {
-                    !Arc::ptr_eq(other, &world)
-                        && other.world_id == world.world_id
-                        && other.active.load(Ordering::Acquire)
-                        && !other.stopped()
-                })
-            {
-                return Err(failure("this world already has a native writer"));
-            }
+            activation_available(&world, &worlds)?;
             session.activate(receipt).map_err(operation_error)?;
             world.active.store(true, Ordering::Release);
             Ok(())

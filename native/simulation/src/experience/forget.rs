@@ -124,6 +124,14 @@ pub(crate) struct ForgetExperienceCursor {
     done: bool,
 }
 impl ForgetExperienceCursor {
+    pub(super) fn pending_collation(
+        &self,
+    ) -> Result<&crate::language::CollationRequest, ExecutionError> {
+        self.edit
+            .as_ref()
+            .ok_or(ExecutionError::Invariant)?
+            .pending_collation()
+    }
     pub(crate) fn new(
         core: &mut CoreMutation<'_>,
         actor: &str,

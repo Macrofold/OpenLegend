@@ -6,7 +6,14 @@ use crate::install::{InstallError, RowImport, WorldChildren};
 use crate::state::EntityStore;
 use indexmap::IndexMap;
 
+mod due;
 mod install;
+mod transition;
+pub(crate) use due::{DueExits, next_exit_deadline};
+pub(crate) use transition::{
+    CompletedParticipation, ParticipationAnswer, ParticipationCursor, ParticipationError,
+    ParticipationRequest, ParticipationStep,
+};
 
 pub(crate) struct ParticipationState {
     pub(super) exposures: Option<IndexMap<String, f64>>,
@@ -81,7 +88,9 @@ impl ParticipationState {
         let desired = if new && count == capacity {
             capacity
                 .checked_mul(2)
-                .and_then(|n| n.checked_add(1))
+                // IndexMap's first public capacity is three; later tables
+                // round upward too. Admit that backing before try_reserve.
+                .and_then(|n| n.checked_add(3))
                 .ok_or(crate::execution::ExecutionError::Capacity)?
         } else {
             capacity
@@ -116,8 +125,14 @@ impl ParticipationState {
         self.storage.resize(bytes)?;
         Ok(())
     }
-    pub(crate) fn settle_restored(&mut self, from: &mut crate::host::ByteReservation) -> Result<(), crate::execution::ExecutionError> {
-        let bytes = self.exposures.heap_bytes().ok_or(crate::execution::ExecutionError::Capacity)?;
+    pub(crate) fn settle_restored(
+        &mut self,
+        from: &mut crate::host::ByteReservation,
+    ) -> Result<(), crate::execution::ExecutionError> {
+        let bytes = self
+            .exposures
+            .heap_bytes()
+            .ok_or(crate::execution::ExecutionError::Capacity)?;
         if bytes > self.storage.bytes() {
             let growth = from.split_off(bytes - self.storage.bytes())?;
             self.budget.restore_backing(&mut self.storage, growth)?;

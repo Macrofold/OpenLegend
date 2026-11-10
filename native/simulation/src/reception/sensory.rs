@@ -401,6 +401,7 @@ impl SensoryJournal {
                 discontinuity,
                 ..
             } => (entity_id, Some(*before), Some(*after), *discontinuity),
+            PhysicalChange::Participation { entity_id } => (entity_id, None, None, true),
             // rootMembershipChanged is a spatial notice with nullable bounds;
             // it is distinct from a global spatial-candidate definition change.
             PhysicalChange::Membership {

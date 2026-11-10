@@ -1,6 +1,7 @@
 //! Finite label preparation joins the native capture before model admission.
-//! The response ticket has its separate semantic validity after asynchronous
-//! model work; this same-cut preparation check is not a publication veto.
+//! The received scene keeps its original cut while current personal names may
+//! finish after history retrieval. Its actual life/privacy/timeline owner fences
+//! that join; the response ticket separately validates executable bindings.
 use super::*;
 use crate::reception::ObserverSubject;
 use crate::worlds::InstalledPersonalNameReader;
@@ -36,12 +37,9 @@ impl NativeWorldSession {
         let request: Request = serde_json::from_slice(request).map_err(failure)?;
         let simulation = self.session.accepted().map_err(failure)?;
         let state = &simulation.state;
-        if state.accepted_cut != read.read.accepted_cut
-            || state.generation != read.read.perception.evidence.generation()
-            || state.physical.header.id != read.read.perception.world_id
-        {
+        if !read.historical_scope.still_permitted(state) {
             return Err(failure(
-                "NPC label preparation belongs to another accepted cut",
+                "NPC label preparation lost its originating personal scope",
             ));
         }
         let actor = &read.read.perception.actor_id;

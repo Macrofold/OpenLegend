@@ -21,12 +21,14 @@ pub(crate) enum EndpointAnswer {
     Geometry(GeometryAnswers),
 }
 pub(crate) enum EndpointStep<'a> {
+    Participation(&'a str),
     Occurrence(StagedOccurrence),
     Personal(&'a PendingActivityResult),
     Geometry(&'a GeometryQueries),
     Complete,
 }
 enum Progress {
+    Participation,
     Occurrence(StagedOccurrence),
     Personal,
     Geometry,
@@ -34,6 +36,7 @@ enum Progress {
 }
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Phase {
+    Exits,
     Rates,
     Actor,
     Body,
@@ -43,6 +46,8 @@ enum Phase {
     Done,
 }
 pub(crate) struct EndpointCursor {
+    exits: Option<crate::participation::DueExits>,
+    work_after_exits: bool,
     actors: Vec<EntityHandle>,
     actions: Option<(SliceActions, f64)>,
     rates: Option<StatusIntegrationCursor>,
@@ -65,6 +70,10 @@ fn occurrence(
     }
 }
 impl EndpointCursor {
+    pub(crate) fn complete_participation(&mut self, completed: &crate::participation::CompletedParticipation) -> Result<(), ExecutionError> {
+        if self.phase != Phase::Exits { return Err(ExecutionError::InvalidCheckpoint) }
+        self.exits.as_mut().ok_or(ExecutionError::Invariant)?.complete(completed)
+    }
     pub(crate) fn geometry_request(&self) -> Option<&GeometryQueries> {
         self.work.as_ref().and_then(|cursor| cursor.queries().ok())
     }
@@ -148,7 +157,13 @@ impl EndpointCursor {
         } else {
             None
         };
+        let exits = if actions.is_some() {
+            let due = crate::participation::DueExits::prepare(&core.state.physical, core.state.installed.time_epsilon, budget)?;
+            due.current().is_some().then_some(due)
+        } else { None };
         Ok(Self {
+            exits,
+            work_after_exits: false,
             actors,
             actions,
             rates,
@@ -172,6 +187,7 @@ impl EndpointCursor {
         answer: Option<EndpointAnswer>,
     ) -> Result<EndpointStep<'a>, ExecutionError> {
         Ok(match self.progress(core, answer)? {
+            Progress::Participation => EndpointStep::Participation(self.exits.as_ref().and_then(|exits| exits.current()).ok_or(ExecutionError::Invariant)?),
             Progress::Occurrence(event) => EndpointStep::Occurrence(event),
             Progress::Personal => EndpointStep::Personal(if self.phase == Phase::Body {
                 self.body
@@ -220,7 +236,7 @@ impl EndpointCursor {
                         return Err(ExecutionError::UnfinishedOccurrence);
                     }
                     let Some(handle) = self.actors.get(self.next) else {
-                        self.phase = Phase::Done;
+                        self.phase = if self.exits.is_some() { Phase::Exits } else { Phase::Done };
                         continue;
                     };
                     let entity = core.state.physical.entities.resolve(*handle);
@@ -288,6 +304,7 @@ impl EndpointCursor {
                     }
                 },
                 Phase::Work => {
+                    if self.exits.is_some() && !self.work_after_exits { self.phase = Phase::Next; continue; }
                     if self.work.is_none() {
                         if answer.is_some() {
                             return Err(ExecutionError::UnfinishedOccurrence);
@@ -343,7 +360,15 @@ impl EndpointCursor {
                 }
                 Phase::Next => {
                     self.next += 1;
-                    self.phase = Phase::Actor;
+                    self.phase = if self.work_after_exits {
+                        if self.next == self.actors.len() { Phase::Done } else { Phase::Work }
+                    } else { Phase::Actor };
+                }
+                Phase::Exits => {
+                    if self.exits.as_ref().and_then(|exits| exits.current()).is_some() { return Ok(Progress::Participation); }
+                    self.work_after_exits = true;
+                    self.next = 0;
+                    self.phase = if self.actors.is_empty() { Phase::Done } else { Phase::Work };
                 }
                 Phase::Done => {
                     if answer.is_some() {

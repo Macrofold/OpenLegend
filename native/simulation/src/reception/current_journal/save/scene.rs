@@ -63,7 +63,7 @@ fn one<T: Serialize + ?Sized>(
                 address.value(),
                 &payload,
                 &[],
-                false,
+                address.create(),
                 RowEffects::default(),
             )?;
         } else if !address.create() {
@@ -162,7 +162,6 @@ impl CurrentJournal {
                 before.map(|before| before.fragments.as_slice()),
                 after.map(|after| after.fragments.as_slice()),
                 |fragment| Some(fragment.key.as_str()),
-                true,
                 output,
                 budget,
             )?;
@@ -177,7 +176,6 @@ impl CurrentJournal {
                 before.map(|before| before.boundaries.as_slice()),
                 after.map(|after| after.boundaries.as_slice()),
                 |_| None,
-                true,
                 output,
                 budget,
             )?;

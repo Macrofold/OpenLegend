@@ -109,6 +109,7 @@ import {
 import { captureExperienceContext } from './experience-context.js';
 import { decisionFeelings } from './appraisal-context.js';
 import { formatDecisionSelfContext } from './decision-self-context.js';
+import { decisionActivityFactsFromRead } from './decision-activity-facts.js';
 
 import {
   captureTemporalHistoryReadContext,
@@ -201,18 +202,11 @@ function activityDecisionFacts(
 ) {
   const selected = observed.inspectedContainer;
   const available = activityRequestChoices(world, actorId, observed);
-  return {
+  return decisionActivityFactsFromRead({
     simTime: world.simTime,
     outing: outingContext(world, actorId),
-    activityRequests: {
-      requests: activityRequestDescriptors(world),
-      choices: available.choices.map(({ id, kind, ...choice }) => ({
-        ...choice,
-        kind,
-        ...(kind === 'entity' ? { entityId: id } : { definitionId: id }),
-      })),
-      warnings: available.warnings,
-    },
+    requests: activityRequestDescriptors(world),
+    available,
     ...(selected
       ? {
           inspectedContainer: {
@@ -233,7 +227,7 @@ function activityDecisionFacts(
           },
         }
       : {}),
-  };
+  });
 }
 function activityDecisionReferences(facts: ReturnType<typeof activityDecisionFacts>): string[] {
   return [

@@ -62,6 +62,7 @@ import { OpenIdAuthentication, browserLoginToken } from './authentication.js';
 import { NavigationCoordinator } from './navigation/coordinator.js';
 import { HistoryCursorError } from './perceived-events.js';
 import { readHttpJson } from './http-json.js';
+import { gameCookie, readGameCookie, gameHttpLocation, writeJson } from './http-boundary.js';
 import { WorldAgentRunner } from './world-agent-runner.js';
 import { WorldAgentStore } from './world-agent-store.js';
 import { PrivateSnapshotStream } from './private-snapshot-stream.js';
@@ -509,14 +510,6 @@ const godWorldEvent = z
   })
   .strict();
 
-function writeJson(response: ServerResponse, status: number, value: unknown) {
-  response.writeHead(status, {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Cache-Control': 'no-store',
-  });
-  response.end(JSON.stringify(value));
-}
-
 /** Whole-shutdown budget: stages share it, then resource close is attempted regardless (PF06). */
 export const SHUTDOWN_DEADLINE_MS = 30_000;
 export interface ShutdownReport {
@@ -723,9 +716,8 @@ async function initializeGameServer(
       ? new OpenIdAuthentication(config.authentication, now)
       : undefined;
   const cookie = (name: string, value: string, maxAge?: number) =>
-    `${name}=${value}; HttpOnly; SameSite=Lax; Path=/${config.authentication.mode === 'oidc' && config.authentication.origin.startsWith('https:') ? '; Secure' : ''}${maxAge === undefined ? '' : `; Max-Age=${maxAge}`}`;
-  const readCookie = (request: IncomingMessage, name: 'ol_session' | 'ol_login' | 'ol_invite') =>
-    new RegExp(`(?:^|;\\s*)${name}=([a-f0-9]{64})(?:;|$)`).exec(request.headers.cookie ?? '')?.[1];
+    gameCookie(config.authentication, name, value, maxAge);
+  const readCookie = readGameCookie;
   type StreamState = {
     scope: RequestScope;
     revision: number;
@@ -979,47 +971,19 @@ async function initializeGameServer(
       return mcp.handle(request, response);
     const address = (options.publicServer ?? server).address();
     const port = address && typeof address !== 'string' ? address.port : config.port;
-    const loopbackHosts = new Set([`127.0.0.1:${port}`, `localhost:${port}`, `[::1]:${port}`]);
-    const publicOrigin =
-      config.authentication.mode === 'oidc' ? new URL(config.authentication.origin) : undefined;
-    const allowedHosts = publicOrigin ? new Set([publicOrigin.host]) : loopbackHosts;
-    let url: URL;
-    try {
-      url = new URL(request.url ?? '/', `http://${request.headers.host}`);
-    } catch {
-      return send(response, 400, { ok: false, code: 'url', message: 'Invalid URL.' });
+    const location = gameHttpLocation(request, port, config.authentication);
+    if ('redirect' in location) {
+      response.writeHead(307, { Location: location.redirect, 'Cache-Control': 'no-store' });
+      response.end();
+      return;
     }
-    if (!allowedHosts.has(request.headers.host ?? '')) {
-      // Local browser entry must reach the registered sign-in origin before cookies
-      // are issued. Redirect navigation only; API access keeps its exact Host checks.
-      if (
-        config.authentication.insecureLoopback &&
-        publicOrigin?.protocol === 'http:' &&
-        loopbackHosts.has(publicOrigin.host) &&
-        loopbackHosts.has(request.headers.host ?? '') &&
-        (request.method === 'GET' || request.method === 'HEAD') &&
-        request.url?.startsWith('/') &&
-        !['/api', '/auth', '/mcp'].some(
-          (path) => url.pathname === path || url.pathname.startsWith(`${path}/`),
-        )
-      ) {
-        response.writeHead(307, {
-          Location: `${publicOrigin.origin}${url.pathname}${url.search}`,
-          'Cache-Control': 'no-store',
-        });
-        response.end();
-        return;
-      }
-      return send(response, 403, {
+    if ('status' in location)
+      return send(response, location.status, {
         ok: false,
-        code: 'host',
-        message: 'Use the configured game host.',
+        code: location.code,
+        message: location.message,
       });
-    }
-    const ownOrigin =
-      config.authentication.mode === 'oidc'
-        ? config.authentication.origin
-        : `http://${request.headers.host}`;
+    const { url, ownOrigin } = location;
     if (request.method === 'GET' && url.pathname.startsWith('/auth/')) {
       const cancellation = new AbortController();
       const disconnect = () => {

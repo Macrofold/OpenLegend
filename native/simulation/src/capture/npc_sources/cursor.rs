@@ -61,8 +61,52 @@ impl NpcSourcesAnswer {
         })
     }
 }
+/// Recall may select a personal record acquired after the initial situation.
+/// This is the actual Sources preparation cut; it never advances the older
+/// temporal receipt prefix or turns personal sequence into a universal clock.
+#[derive(Clone)]
+pub(super) struct NpcPersonalScope {
+    pub(super) at: f64,
+    pub(super) identity_through: u64,
+    pub(super) accepted_cut: u64,
+    coverage: [Option<crate::experience::SourceCoverage>; 3],
+}
+impl NpcPersonalScope {
+    fn capture(state: &SimulationState, actor: &str) -> Result<Self, ExecutionError> {
+        let coverage = |kind| {
+            state
+                .experience
+                .optional_collection(actor, kind)
+                .map(|collection| collection.map(|collection| collection.coverage().clone()))
+                .map_err(ExecutionError::from)
+        };
+        Ok(Self {
+            at: state.physical.header.sim_time,
+            identity_through: state.physical.identity.next_id(),
+            accepted_cut: state.accepted_cut,
+            coverage: [
+                coverage(PersonalSourceKind::Awareness)?,
+                coverage(PersonalSourceKind::Memory)?,
+                coverage(PersonalSourceKind::Summary)?,
+            ],
+        })
+    }
+    pub(super) fn coverage(
+        &self,
+        kind: PersonalSourceKind,
+    ) -> Option<&crate::experience::SourceCoverage> {
+        self.coverage[match kind {
+            PersonalSourceKind::Awareness => 0,
+            PersonalSourceKind::Memory => 1,
+            PersonalSourceKind::Summary => 2,
+        }]
+        .as_ref()
+    }
+}
+
 pub(crate) struct NpcSourcesCursor {
     request: NpcSourcesRequest,
+    personal_cut: NpcPersonalScope,
     _storage: ByteReservation,
     done: bool,
 }
@@ -121,7 +165,9 @@ impl NpcSourcesCursor {
             core.state.installed.geometry.spatial.revision,
             core.journal.next_provider_serial()?,
         );
+        let personal_cut = NpcPersonalScope::capture(core.state, &scope.actor_id)?;
         Ok(Self {
+            personal_cut,
             request: NpcSourcesRequest {
                 binding,
                 origin: scope,
@@ -150,6 +196,7 @@ impl NpcSourcesCursor {
         let result = PreparedNpcSources::prepare(
             core.state,
             Arc::clone(&self.request.origin),
+            self.personal_cut.clone(),
             &self.request.selection,
             answer.value.rows,
             budget,

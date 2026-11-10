@@ -15,17 +15,19 @@ pub(crate) struct NpcSubjectFact {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) canonical_id: Option<String>,
     label: JsText,
-    identity_present: bool,
-    current_communication: bool,
+    pub(crate) identity_present: bool,
+    pub(crate) current_communication: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     preferred_name: Option<JsText>,
     #[serde(skip_serializing_if = "Option::is_none")]
     observer_name: Option<crate::worlds::OwnedPersonalName>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    reference_attribution: Option<crate::records::SqlCell>,
     name_revision: u64,
     note_revision: u64,
     note_characters: usize,
-    seed_only: bool,
-    can_address_remembered: bool,
+    pub(crate) seed_only: bool,
+    pub(crate) can_address_remembered: bool,
     named: bool,
     #[serde(skip)]
     _storage: ByteReservation,
@@ -62,6 +64,18 @@ pub(crate) fn subject_fact(
         }
         ObserverSubject::Individual { .. } => false,
     };
+    let reference = match &subject {
+        ObserverSubject::Entity { entity_id } => Some(
+            if let Some((lease, _)) = names.current_body_grant(entity_id)? {
+                Ok(lease)
+            } else if names.recognizes_subject(entity_id)? {
+                Ok("known")
+            } else {
+                Err(state.physical.header.sequence)
+            },
+        ),
+        ObserverSubject::Individual { .. } => None,
+    };
     let _key = budget.reserve(
         subject
             .heap_bytes()
@@ -86,6 +100,7 @@ pub(crate) fn subject_fact(
         .and_then(|n| n.checked_add(canonical.map_or(0, str::len)))
         .and_then(|n| n.checked_add(label.storage_bytes()))
         .and_then(|n| n.checked_add(preferred.map_or(Some(0), HeapBytes::heap_bytes)?))
+        .and_then(|n| n.checked_add(reference.map_or(0, |value| value.map_or(0, str::len))))
         .ok_or(ExecutionError::Capacity)?;
     let storage = budget.reserve(bytes)?;
     Ok(NpcSubjectFact {
@@ -102,6 +117,10 @@ pub(crate) fn subject_fact(
             }
             _ => None,
         },
+        reference_attribution: reference.map(|value| match value {
+            Ok(text) => crate::records::SqlCell::from(text),
+            Err(sequence) => crate::records::SqlCell::from(sequence),
+        }),
         name_revision: identity.map_or(0, |identity| identity.revision),
         note_revision: note.map_or(0, |note| note.revision),
         note_characters: note.map_or(0, |note| note.text.character_count()),

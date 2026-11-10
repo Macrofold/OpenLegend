@@ -85,12 +85,30 @@ pub(crate) fn end_current_evidence(
         .get(observer)
         .and_then(|entity| entity.physical_life())
         .ok_or(ExecutionError::MissingActor)?;
-    end_current_for_life(core, observer, life, budget)
+    end_current_for_life(core, observer, life, None, budget)
+}
+/// Physical departure removes only this body from other observers. Their
+/// unrelated body, geometry and historical grants remain owned as before.
+pub(crate) fn end_current_subject(
+    core: &mut CoreMutation<'_>,
+    observer: &str,
+    subject: &str,
+    budget: &ByteBudget,
+) -> Result<EndedCurrentEvidence, ExecutionError> {
+    let life = core
+        .state
+        .physical
+        .entities
+        .get(observer)
+        .and_then(|entity| entity.physical_life())
+        .ok_or(ExecutionError::MissingActor)?;
+    end_current_for_life(core, observer, life, Some(subject), budget)
 }
 fn end_current_for_life(
     core: &mut CoreMutation<'_>,
     observer: &str,
     life: u64,
+    subject: Option<&str>,
     budget: &ByteBudget,
 ) -> Result<EndedCurrentEvidence, ExecutionError> {
     let entity = core
@@ -113,17 +131,32 @@ fn end_current_for_life(
             _reservation: proof_reservation,
         });
     };
-    let has_work = !current.current.is_empty()
-        || current.geometry.is_some()
-        || current
-            .motion_samples
-            .as_ref()
-            .is_some_and(|motion| !motion.is_empty())
-        || !current.gaps.is_empty()
-        || current
-            .attention
-            .as_ref()
-            .is_some_and(|attention| !attention.annotations.is_empty());
+    let has_work = if let Some(subject) = subject {
+        current.current.contains_key(subject)
+            || current
+                .motion_samples
+                .as_ref()
+                .is_some_and(|samples| samples.contains_key(subject))
+            || current.gaps.contains_key(subject)
+            || current.attention.as_ref().is_some_and(|attention| {
+                attention
+                    .annotations
+                    .values()
+                    .any(|annotation| annotation.source_id == subject)
+            })
+    } else {
+        !current.current.is_empty()
+            || current.geometry.is_some()
+            || current
+                .motion_samples
+                .as_ref()
+                .is_some_and(|motion| !motion.is_empty())
+            || !current.gaps.is_empty()
+            || current
+                .attention
+                .as_ref()
+                .is_some_and(|attention| !attention.annotations.is_empty())
+    };
     if !has_work {
         return Ok(EndedCurrentEvidence {
             observer_id: observer.to_owned(),
@@ -158,6 +191,9 @@ fn end_current_for_life(
         .checked_mul(size_of::<(&String, &CurrentContact)>())
         .ok_or(ExecutionError::Capacity)?;
     for (id, contact) in &current.current {
+        if subject.is_some_and(|subject| subject != id) {
+            continue;
+        }
         count = count
             .checked_add(contact.content.field_order.len())
             .ok_or(ExecutionError::Capacity)?;
@@ -194,6 +230,11 @@ fn end_current_for_life(
     }
     bytes = heap_sum([
         bytes,
+        subject
+            .map_or(0, str::len)
+            .checked_mul(2)
+            .ok_or(ExecutionError::Capacity)?,
+        map_storage::<String, ()>(1).ok_or(ExecutionError::Capacity)?,
         map_storage::<String, ()>(count.checked_mul(2).ok_or(ExecutionError::Capacity)?)
             .ok_or(ExecutionError::Capacity)?,
     ])
@@ -203,7 +244,12 @@ fn end_current_for_life(
     contacts
         .try_reserve_exact(current.current.len())
         .map_err(|_| ExecutionError::Capacity)?;
-    contacts.extend(current.current.iter());
+    contacts.extend(
+        current
+            .current
+            .iter()
+            .filter(|(id, _)| subject.is_none_or(|subject| subject == id.as_str())),
+    );
     contacts.sort_by_key(|(_, contact)| contact.order);
     let mut addresses = Vec::new();
     addresses
@@ -265,7 +311,9 @@ fn end_current_for_life(
         .journal
         .current
         .begin_batch(&core.state.reception, observer)?;
-    end_geometry(core, observer, life, budget)?;
+    if subject.is_none() {
+        end_geometry(core, observer, life, budget)?;
+    }
     let transition = core
         .journal
         .acquisitions
@@ -308,11 +356,14 @@ fn end_current_for_life(
         )?;
     }
     finish_received(core, transition)?;
-    if core
-        .journal
-        .current
-        .retire_motion(&mut core.state.reception, observer)?
-    {
+    let motion_changed = if let Some(subject) = subject {
+        super::phase::retire_motion_subjects(core, observer, std::iter::once(subject))?
+    } else {
+        core.journal
+            .current
+            .retire_motion(&mut core.state.reception, observer)?
+    };
+    if subject.is_none() && motion_changed {
         attention_control::dirty_attention_relations(
             &core.state.physical,
             &mut core.state.reception,
@@ -324,9 +375,16 @@ fn end_current_for_life(
             ],
         )?;
     }
-    core.journal
-        .current
-        .clear_gaps(&mut core.state.reception, observer)?;
+    if let Some(subject) = subject {
+        core.journal
+            .current
+            .set_gap(&mut core.state.reception, observer, subject, None)?;
+    } else {
+        core.journal
+            .current
+            .clear_gaps(&mut core.state.reception, observer)?;
+    }
+    let scoped = subject.map(|subject| IndexSet::from([subject.to_owned()]));
     prune_withdrawn_attention(
         &core.state.physical,
         &mut core.state.reception,
@@ -334,16 +392,18 @@ fn end_current_for_life(
         &core.state.experience,
         &mut core.journal.current,
         observer,
-        None,
+        scoped.as_ref(),
         None,
     )?;
-    crate::worlds::prune_selected_observer_individuals(
-        core,
-        observer,
-        &lost,
-        crate::worlds::IndividualPruneMode::CurrentLoss,
-        budget,
-    )?;
+    if subject.is_none() || !addresses.is_empty() {
+        crate::worlds::prune_selected_observer_individuals(
+            core,
+            observer,
+            &lost,
+            crate::worlds::IndividualPruneMode::CurrentLoss,
+            budget,
+        )?;
+    }
     if let Some(before) = before {
         reconcile_current_cohort(core, Arc::clone(&before), None, budget)?;
     }
@@ -421,7 +481,7 @@ pub(crate) fn retire_perception_life(
     {
         return Err(invalid());
     }
-    let mut ended = end_current_for_life(core, observer, old_life, budget)?;
+    let mut ended = end_current_for_life(core, observer, old_life, None, budget)?;
     core.state
         .temporal
         .clear_recording_reservations(observer, old_life)?;

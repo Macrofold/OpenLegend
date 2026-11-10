@@ -19,6 +19,7 @@ use serde_json::Value;
 use std::{collections::BTreeMap, sync::Arc};
 
 mod accounts;
+mod restore;
 mod actor;
 mod materialize;
 pub(crate) use materialize::hydrate_selected_temporal_pages;
@@ -444,6 +445,7 @@ pub struct TemporalCheckpoint {
 #[derive(Debug)]
 enum TemporalUndo {
     Reservation(crate::host::ByteReservation),
+    Namespace { before:String, storage:crate::host::ByteReservation },
     CreatedActor {
         actor_id: String,
         before_next: u64,
@@ -511,7 +513,7 @@ impl TemporalState {
         }
         Ok(Self {
             root_storage: budget
-                .reserve_record(
+                .reserve_backing(
                     generation
                         .capacity()
                         .checked_add(
@@ -597,6 +599,11 @@ impl TemporalState {
         while self.undo.len() > checkpoint.operations {
             match self.undo.pop().expect("Journal length checked") {
                 TemporalUndo::Reservation(_) => {}
+                TemporalUndo::Namespace{before,mut storage} => {
+                    let bytes=self.root_storage.bytes().checked_sub(self.header.namespace.capacity()).and_then(|n|n.checked_add(before.capacity())).ok_or(ReceivedError("Restore namespace allocation overflow."))?;
+                    if bytes>self.root_storage.bytes(){let growth=storage.split_off(bytes-self.root_storage.bytes()).map_err(|_|ReceivedError("Restore namespace rollback capacity."))?;self.budget.restore_backing(&mut self.root_storage,growth).map_err(|_|ReceivedError("Restore namespace rollback capacity."))?;}
+                    self.header.namespace=before;self.root_storage.resize(bytes).map_err(|_|ReceivedError("Restore namespace rollback capacity."))?;
+                }
                 TemporalUndo::CreatedActor {
                     actor_id,
                     before_next,

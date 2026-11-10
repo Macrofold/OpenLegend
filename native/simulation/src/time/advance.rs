@@ -96,6 +96,7 @@ impl From<crate::values::ValueError> for AdvanceError {
 }
 
 pub(crate) enum AdvanceAnswer {
+    Participation(crate::participation::CompletedParticipation),
     Geometry(GeometryAnswers),
     Collation(CollationAnswer),
     Event(CompletedEvent),
@@ -104,6 +105,7 @@ pub(crate) enum AdvanceAnswer {
     Perception(CompletedPerception),
 }
 pub(crate) enum AdvanceStep<'a> {
+    Participation(&'a mut crate::participation::ParticipationCursor),
     Continue,
     Geometry(&'a GeometryQueries),
     Collation(&'a CollationRequest),
@@ -114,6 +116,7 @@ pub(crate) enum AdvanceStep<'a> {
     Complete(CompletedAdvance),
 }
 enum EventBatch {
+    Participation(crate::participation::CompletedParticipation),
     Event {
         event: WorldEvent,
         _reservation: ByteReservation,
@@ -129,6 +132,7 @@ impl EventBatch {
         let (ordinary, perception) = match self {
             Self::Event { event, .. } => (std::slice::from_ref(event), &[][..]),
             Self::Command(value) => (value.events.as_slice(), &[][..]),
+            Self::Participation(value) => (value.events.as_slice(), &[][..]),
             Self::Perception { events, .. } => (&[][..], events.as_slice()),
         };
         ordinary
@@ -236,6 +240,7 @@ impl CompletedAdvance {
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Phase {
     Begin,
+    ExitsStart,
     RemainsStart,
     AppraisalsStart,
     StatusStart,
@@ -288,6 +293,9 @@ enum NativeIntention {
     Stop,
 }
 pub(crate) struct AdvanceCursor {
+    exits: Option<crate::participation::DueExits>,
+    participation: Option<crate::participation::ParticipationCursor>,
+    participation_endpoint: bool,
     candidate: CandidateKey,
     child: Option<CandidateCheckpoint>,
     start_at: f64,
@@ -450,6 +458,9 @@ impl AdvanceCursor {
         let now = core.state.physical.header.sim_time;
         let continuation = continuation.filter(|value| value.current(core, candidate));
         let mut result = Self {
+            exits: None,
+            participation: None,
+            participation_endpoint: false,
             candidate,
             child: None,
             start_at: now,
@@ -682,6 +693,7 @@ impl AdvanceCursor {
                 AdvanceStep::Collation(self.preparation.as_ref().ok_or_else(invalid)?.request())
             }
             Progress::Event => AdvanceStep::Event(self.event.as_mut().ok_or_else(invalid)?),
+            Progress::Participation => AdvanceStep::Participation(self.participation.as_mut().ok_or_else(invalid)?),
             Progress::Plan => AdvanceStep::Plan(self.plan.as_mut().ok_or_else(invalid)?),
             Progress::Command => AdvanceStep::Command(self.command.as_mut().ok_or_else(invalid)?),
             Progress::Perception => {
@@ -692,6 +704,7 @@ impl AdvanceCursor {
     }
 }
 enum Progress {
+    Participation,
     Continue,
     Geometry,
     Collation,

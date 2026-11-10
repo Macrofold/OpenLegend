@@ -91,6 +91,28 @@ pub struct Named {
     pub indefinite_article: Option<String>,
 }
 
+/// A restore admits this validated private read continuation solely to clear
+/// it through the owned metadata journal before publication.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct InventoryInspection {
+    #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
+    pub revision: u64,
+    pub scope: crate::text::JsText,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub container_id: Option<String>,
+    pub container_name: Named,
+    pub after: String,
+    pub more: bool,
+    pub item_ids: Vec<String>,
+    pub item_names: Vec<Named>,
+    pub evidence_ids: Vec<String>,
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "mode", rename_all = "lowercase", deny_unknown_fields)]
 pub enum Placement {
@@ -1037,7 +1059,7 @@ pub struct ActorState {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub inventory_inspection: Option<UnconvertedField>,
+    pub inventory_inspection: Option<InventoryInspection>,
     #[serde(
         default,
         deserialize_with = "crate::values::deserialize_present_safe_integer",
@@ -1127,13 +1149,13 @@ pub struct ActorState {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub personality: Option<String>,
+    pub personality: Option<crate::text::JsText>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub backstory: Option<String>,
+    pub backstory: Option<crate::text::JsText>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",

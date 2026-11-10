@@ -142,7 +142,6 @@ impl CurrentJournal {
                     *prior,
                     Some(after.as_slice()),
                     |_| None,
-                    false,
                     output,
                     budget,
                 )?;

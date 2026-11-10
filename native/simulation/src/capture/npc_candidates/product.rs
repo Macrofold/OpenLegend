@@ -48,6 +48,8 @@ pub(crate) enum NpcOfferMeaning {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct PreparedNpcOffer {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<crate::text::JsText>,
     pub id: String,
     pub meaning: NpcOfferMeaning,
     pub command: Option<NativeCommand>,
@@ -109,10 +111,12 @@ impl PreparedNpcCandidates {
     }
 }
 pub(crate) enum NpcCandidateAnswer {
+    Descriptions(NpcDescriptionsAnswer),
     Geometry(GeometryAnswers),
     Display(CompletedActivityDisplay),
 }
 pub(crate) enum NpcCandidateStep<'a> {
+    Descriptions(&'a NpcDescriptionsRequest),
     Geometry(&'a GeometryQueries),
     Display(&'a mut ActivityDisplayCursor),
     Complete(PreparedNpcCandidates),

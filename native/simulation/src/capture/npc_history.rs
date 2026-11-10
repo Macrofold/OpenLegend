@@ -1,7 +1,6 @@
 //! An NPC's history query retains its originating reception cutoff. This is a
 //! finite read scope, not a replacement temporal actor or a mutable SQL cache.
 use crate::execution::ExecutionError;
-use crate::experience::{PersonalSourceKind, SourceCoverage};
 use crate::host::{ByteBudget, ByteReservation};
 use crate::received::{ReceivedFrontier, TemporalReceipt};
 use crate::simulation::{AcceptedActorRead, SimulationState};
@@ -53,8 +52,6 @@ pub(crate) struct NpcHistoricalScope {
     pub frontier: Option<ReceivedFrontier>,
     pub receipt_prefix: NpcHistoryPrefix,
     #[serde(skip)]
-    personal: [Option<SourceCoverage>; 3],
-    #[serde(skip)]
     _storage: ByteReservation,
 }
 
@@ -99,13 +96,6 @@ impl NpcHistoricalScope {
                 tail_revision: request.tail_revision,
             },
         };
-        let coverage = |kind| {
-            state
-                .experience
-                .optional_collection(actor, kind)
-                .map(|collection| collection.map(|collection| collection.coverage().clone()))
-                .map_err(ExecutionError::from)
-        };
         Ok(Self {
             world_id: read.perception.world_id.clone(),
             generation: state.generation.clone(),
@@ -127,11 +117,6 @@ impl NpcHistoricalScope {
             released_through: temporal.and_then(|history| history.header().released_through),
             frontier: temporal.and_then(|history| history.header().frontier.clone()),
             receipt_prefix,
-            personal: [
-                coverage(PersonalSourceKind::Awareness)?,
-                coverage(PersonalSourceKind::Memory)?,
-                coverage(PersonalSourceKind::Summary)?,
-            ],
             _storage: storage,
         })
     }
@@ -153,15 +138,6 @@ impl NpcHistoricalScope {
                 .actor(&self.actor_id)
                 .map_or(0, |actor| actor.privacy.revision())
                 == self.privacy_revision
-    }
-
-    pub(crate) fn personal_coverage(&self, kind: PersonalSourceKind) -> Option<&SourceCoverage> {
-        self.personal[match kind {
-            PersonalSourceKind::Awareness => 0,
-            PersonalSourceKind::Memory => 1,
-            PersonalSourceKind::Summary => 2,
-        }]
-        .as_ref()
     }
 
     pub(crate) fn includes_receipt(&self, receipt: &TemporalReceipt) -> bool {

@@ -27,7 +27,6 @@ pub(super) fn bytes(entity: &Entity) -> Option<usize> {
             actor.personality.heap_bytes()?,
             actor.backstory.heap_bytes()?,
             actor.initial_goals.heap_bytes()?,
-            actor.controller.capacity(),
             actor.species.heap_bytes()?,
             actor.body.heap_bytes()?,
         ])

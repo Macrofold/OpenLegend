@@ -18,11 +18,9 @@ pub(crate) fn encode_list_changes<T: Serialize>(
     before: Option<&[T]>,
     after: Option<&[T]>,
     key: fn(&T) -> Option<&str>,
-    complete: bool,
     output: &mut RowEncoder<'_>,
     budget: &ByteBudget,
 ) -> Result<(), RecordEncodingError> {
-    let collection_existed = before.is_some();
     let count = before.map_or(0, |before| before.len());
     let keys = before
         .into_iter()
@@ -96,7 +94,9 @@ pub(crate) fn encode_list_changes<T: Serialize>(
             address.value(),
             &payload,
             &[],
-            address.create() && complete && collection_existed,
+            // Placement already proves absence from the ledger or this exact
+            // finite before-list. A newly created parent does not weaken it.
+            address.create(),
             RowEffects::default(),
         )?;
     }

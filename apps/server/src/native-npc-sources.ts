@@ -57,6 +57,7 @@ export interface NativeNpcSubjectFact {
   readonly currentCommunication: boolean;
   readonly preferredName?: string;
   readonly observerName?: Readonly<Named>;
+  readonly referenceAttribution?: string | number;
   readonly nameRevision: number;
   readonly noteRevision: number;
   readonly noteCharacters: number;
@@ -66,8 +67,14 @@ export interface NativeNpcSubjectFact {
 }
 export interface NativeNpcReferenceFacts {
   readonly myself: NativeNpcSubjectFact;
-  readonly bodies: readonly { readonly ordinal: number; readonly subject?: NativeNpcSubjectFact; readonly subjects: readonly NativeNpcSubjectFact[] }[];
+  readonly bodies: readonly {
+    readonly ordinal: number;
+    readonly entity: NativeNpcSubjectFact;
+    readonly subject?: NativeNpcSubjectFact;
+    readonly subjects: readonly NativeNpcSubjectFact[];
+  }[];
   readonly knowledge: readonly NativeNpcSubjectFact[];
+  readonly social: readonly NativeNpcSubjectFact[];
   readonly attributionIdentities: Readonly<
     Record<
       string,
@@ -82,6 +89,75 @@ export interface NativeNpcSourceInventory {
   })[];
   readonly unavailablePersonal: readonly number[];
   readonly unavailableReceipts: readonly number[];
+}
+
+/** Every number addresses a row owned by the originating native handle. An
+ * alias supplies spelling only; it cannot supply a command, ID or grant. */
+export interface NativeNpcAliasOrdinal {
+  readonly alias: string;
+  readonly ordinal: number;
+}
+export type NativeNpcEntityOrdinal =
+  | { readonly kind: 'myself' }
+  | { readonly kind: 'body' | 'knowledge' | 'social'; readonly ordinal: number }
+  | {
+      readonly kind: 'personal';
+      readonly inventory: number;
+      readonly ordinal: number;
+      readonly entity: number;
+    };
+export type NativeNpcSubjectOrdinal =
+  | { readonly kind: 'myself' }
+  | { readonly kind: 'body' | 'knowledge' | 'social'; readonly ordinal: number }
+  | { readonly kind: 'body-subject'; readonly ordinal: number; readonly subject: number }
+  | {
+      readonly kind: 'personal';
+      readonly inventory: number;
+      readonly ordinal: number;
+      readonly subject: number;
+    };
+export interface NativeNpcBindingSelection {
+  /** The admitted director route; never selected from model response JSON. */
+  readonly validity: 'decision' | 'prepared-response';
+  readonly actions: readonly NativeNpcAliasOrdinal[];
+  /** Ordinals address the refreshed native read's actual pending intent list. */
+  readonly intents: readonly NativeNpcAliasOrdinal[];
+  /** Sources actually included in the compact request, in presentation order. */
+  readonly evidence: readonly { readonly inventory: number; readonly ordinal: number }[];
+  readonly entities: readonly {
+    readonly alias: string;
+    readonly source: NativeNpcEntityOrdinal;
+  }[];
+  readonly identities: readonly {
+    readonly alias: string;
+    readonly source: NativeNpcSubjectOrdinal;
+  }[];
+  readonly knowledge: readonly {
+    readonly alias: string;
+    readonly source: NativeNpcSubjectOrdinal;
+  }[];
+  readonly observations: readonly NativeNpcAliasOrdinal[];
+  readonly current: readonly NativeNpcAliasOrdinal[];
+  readonly receipts: readonly {
+    readonly alias: string;
+    readonly inventory: number;
+    readonly ordinal: number;
+  }[];
+  readonly attention: readonly NativeNpcAliasOrdinal[];
+  readonly presented: readonly number[];
+  readonly appraisals: {
+    readonly guard: 'all' | 'required';
+    /** Ordinals address the full installed appraisal definition order. Native
+     * verifies each selected policy actually permits decision writes. */
+    readonly policies: readonly NativeNpcAliasOrdinal[];
+    readonly records: readonly NativeNpcAliasOrdinal[];
+    readonly sources: readonly {
+      readonly alias: string;
+      readonly inventory: number;
+      readonly ordinal: number;
+    }[];
+    readonly trigger: { readonly inventory: number; readonly ordinal: number } | null;
+  } | null;
 }
 
 function integer(value: unknown): number {

@@ -106,7 +106,7 @@ pub(crate) fn encode_sparse_map_changes<T: Serialize>(
                 address.value(),
                 &payload,
                 &extra,
-                false,
+                address.create(),
                 RowEffects::default(),
             )?;
         } else if prior.is_some() && !address.create() {
@@ -197,7 +197,7 @@ pub(crate) fn encode_marked_owners<T>(
                 address.value(),
                 if array { "[]" } else { "{}" },
                 &[],
-                false,
+                address.create(),
                 RowEffects::default(),
             )?;
         } else if !address.create() {

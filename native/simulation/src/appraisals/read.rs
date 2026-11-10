@@ -5,9 +5,10 @@ use crate::host::retained_size::{heap_sum, map_storage, tree_node_bound};
 use crate::simulation::SimulationState;
 use crate::work::{WorkMeters, WorkUnit};
 use crate::worlds::{InstalledPersonalName, InstalledPersonalNameReader};
+use serde::ser::{SerializeSeq, SerializeStruct};
 use std::collections::BTreeSet;
 
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct AppraisalScope {
     pub definition_pin: DefinitionPin,
@@ -150,24 +151,145 @@ fn view<'a>(
     }))
 }
 
-/// Same 24-result/200-examined hot page as Source, followed by complete exact
-/// subscribed scopes. All rich records stay borrowed until this owned string is
-/// complete; output and scratch capacities share the caller's real allowance.
-pub(crate) fn write_actor_appraisals(
-    state: &SimulationState,
+/// The request keeps precisely the records selected by the formatter, with
+/// shared capture pins. A JSON presentation is never parsed back into authority.
+pub(crate) struct CapturedActorAppraisals {
+    pub(crate) json: String,
+    records: Vec<Arc<AppraisalRecord>>,
+    hot_count: usize,
+    pub(crate) content: AppraisalContentWitness,
+    pub(crate) knowledge_revision: Option<u64>,
+    pub(crate) owner_account: Option<String>,
+    required_scopes: Vec<AppraisalScope>,
+    required_revisions: IndexMap<String, u64>,
+    _pins: Vec<Arc<crate::host::SharedMemoryPin>>,
+    _backing: ByteReservation,
+    _json: ByteReservation,
+}
+impl CapturedActorAppraisals {
+    pub(crate) fn scoped_current(
+        &self,
+        state: &SimulationState,
+        actor: &str,
+        budget: &ByteBudget,
+    ) -> Result<bool, ExecutionError> {
+        let current = select_views(state, actor, &self.required_scopes, budget)?;
+        Ok(current.subscribed.len() == self.required_revisions.len()
+            && current
+                .subscribed
+                .iter()
+                .all(|record| self.required_revisions.get(record.id) == Some(&record.revision)))
+    }
+    pub(crate) fn record(&self, ordinal: usize) -> Option<&Appraisal> {
+        self.records.get(ordinal).map(|record| &record.value)
+    }
+    pub(crate) fn records(&self) -> impl Iterator<Item = &Appraisal> + Clone {
+        self.records.iter().map(|record| &record.value)
+    }
+    pub(crate) fn social_targets(&self) -> impl Iterator<Item = &str> + Clone {
+        self.records[..self.hot_count]
+            .iter()
+            .filter_map(|record| record.value.target_id.as_deref())
+    }
+}
+
+struct SelectedViews<'a> {
+    values: Vec<Feeling<'a>>,
+    subscribed: Vec<Revision<'a>>,
+    hot_count: usize,
+    _storage: ByteReservation,
+}
+/// The decision fingerprint consumes the same hot page and exact subscribed
+/// scopes as ordinary formatting. Continuous decay is compared by its installed
+/// bands; subscribed revisions remain exact, including empty scopes.
+pub(crate) struct CapturedValidityViews<'a> {
+    selected: SelectedViews<'a>,
+    state: &'a AppraisalState,
+}
+struct ValidityHot<'s, 'a>(&'s CapturedValidityViews<'a>);
+impl Serialize for ValidityHot<'_, '_> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut out = serializer.serialize_seq(Some(self.0.selected.hot_count))?;
+        for feeling in &self.0.selected.values[..self.0.selected.hot_count] {
+            struct Item<'a> {
+                view: &'a AppraisalView<'a>,
+                band: Option<i64>,
+            }
+            impl Serialize for Item<'_> {
+                fn serialize<S: serde::Serializer>(
+                    &self,
+                    serializer: S,
+                ) -> Result<S::Ok, S::Error> {
+                    #[derive(Serialize)]
+                    struct Band {
+                        kind: &'static str,
+                        band: i64,
+                    }
+                    let v = self.view;
+                    let mut out = serializer.serialize_struct("DecisionAppraisal", 8)?;
+                    out.serialize_field("id", v.id)?;
+                    out.serialize_field("revision", &v.revision)?;
+                    out.serialize_field("feeling", v.feeling)?;
+                    out.serialize_field("targetId", &v.target_id)?;
+                    if let Some(band) = self.band {
+                        out.serialize_field("value", &Band { kind: "band", band })?;
+                    } else {
+                        out.serialize_field("value", &v.value)?;
+                    }
+                    out.serialize_field("lifetime", v.lifetime)?;
+                    out.serialize_field("definitionPin", v.definition_pin)?;
+                    out.serialize_field("coverage", v.coverage)?;
+                    out.end()
+                }
+            }
+            let definition = self
+                .0
+                .state
+                .definitions
+                .get(&feeling.view.definition_pin.id)
+                .ok_or_else(|| serde::ser::Error::custom("Appraisal definition disappeared"))?;
+            let band = match (&definition.value.lifetime, &feeling.view.value) {
+                (LifetimeLaw::Decays { bands, .. }, AppraisalValue::Scaled { value }) => Some(
+                    bands
+                        .iter()
+                        .position(|boundary| value >= boundary)
+                        .map_or(-1, |at| at as i64),
+                ),
+                _ => None,
+            };
+            out.serialize_element(&Item {
+                view: &feeling.view,
+                band,
+            })?;
+        }
+        out.end()
+    }
+}
+impl CapturedValidityViews<'_> {
+    pub(crate) fn hot(&self) -> impl Serialize + '_ {
+        ValidityHot(self)
+    }
+    pub(crate) fn subscribed(&self) -> impl Serialize + '_ {
+        &self.selected.subscribed
+    }
+}
+pub(crate) fn capture_validity_views<'a>(
+    state: &'a SimulationState,
+    actor: &str,
+    required: &[AppraisalScope],
+    budget: &ByteBudget,
+) -> Result<CapturedValidityViews<'a>, ExecutionError> {
+    Ok(CapturedValidityViews {
+        selected: select_views(state, actor, required, budget)?,
+        state: &state.appraisals,
+    })
+}
+fn select_views<'a>(
+    state: &'a SimulationState,
     actor_id: &str,
     required: &[AppraisalScope],
     budget: &ByteBudget,
-) -> Result<(String, ByteReservation), ExecutionError> {
-    let entity = state
-        .physical
-        .entities
-        .get(actor_id)
-        .ok_or(ExecutionError::MissingEntity)?;
-    let actor = entity.actor.as_ref().ok_or(ExecutionError::MissingActor)?;
-    if !entity.has_memory() || actor.controller != "npc" {
-        return Err(ExecutionError::UnsupportedFamily);
-    }
+) -> Result<SelectedViews<'a>, ExecutionError> {
     let group = state.installed.work_policy.policy().group;
     let prefix_bytes = required.iter().try_fold(0usize, |bytes, scope| {
         heap_sum([
@@ -260,7 +382,7 @@ pub(crate) fn write_actor_appraisals(
             .ok_or_else(capacity)?,
     ])
     .ok_or_else(capacity)?;
-    let _selection = budget.reserve(selection_bound)?;
+    let storage = budget.reserve(selection_bound)?;
     let mut selected = Vec::new();
     selected
         .try_reserve_exact(maximum)
@@ -272,6 +394,7 @@ pub(crate) fn write_actor_appraisals(
     let mut positions = IndexMap::new();
     positions.try_reserve(maximum).map_err(|_| capacity())?;
     let now = state.physical.header.sim_time;
+    let mut hot_count = 0;
     if let Some(owner) = owner {
         for id in owner.index.active().take(200) {
             if selected.len() >= 24 {
@@ -283,6 +406,7 @@ pub(crate) fn write_actor_appraisals(
                 selected.push(value);
             }
         }
+        hot_count = selected.len();
         let mut seen = BTreeSet::new();
         for prefix in &prefixes {
             for id in owner.index.scoped(prefix) {
@@ -328,6 +452,40 @@ pub(crate) fn write_actor_appraisals(
             .ok_or(ExecutionError::Invariant)?
             .finish(token)?;
     }
+    Ok(SelectedViews {
+        values: selected,
+        subscribed,
+        hot_count,
+        _storage: storage,
+    })
+}
+
+/// Same 24-result/200-examined hot page as Source, followed by complete exact
+/// subscribed scopes. All rich records stay borrowed until this owned string is
+/// complete; output and scratch capacities share the caller's real allowance.
+pub(crate) fn capture_actor_appraisals(
+    state: &SimulationState,
+    actor_id: &str,
+    required: &[AppraisalScope],
+    budget: &ByteBudget,
+) -> Result<CapturedActorAppraisals, ExecutionError> {
+    let entity = state
+        .physical
+        .entities
+        .get(actor_id)
+        .ok_or(ExecutionError::MissingEntity)?;
+    let actor = entity.actor.as_ref().ok_or(ExecutionError::MissingActor)?;
+    if !entity.has_memory() || actor.controller != "npc" {
+        return Err(ExecutionError::UnsupportedFamily);
+    }
+    let SelectedViews {
+        values: selected,
+        subscribed,
+        hot_count,
+        _storage: _selection,
+    } = select_views(state, actor_id, required, budget)?;
+    let owner = state.appraisals.owners.get(actor_id);
+    let now = state.physical.header.sim_time;
     let names = if selected.is_empty() {
         None
     } else {
@@ -375,6 +533,60 @@ pub(crate) fn write_actor_appraisals(
             }
         }
     }
+    let owner_account = state
+        .administration
+        .authorship
+        .player_account_ids
+        .get(actor_id);
+    let required_bytes = required
+        .iter()
+        .try_fold(
+            required
+                .len()
+                .checked_mul(size_of::<AppraisalScope>())
+                .ok_or_else(capacity)?,
+            |n, scope| {
+                n.checked_add(scope.definition_pin.heap_bytes()?)?
+                    .checked_add(scope.target_id.heap_bytes()?)
+            },
+        )
+        .and_then(|n| n.checked_add(map_storage::<String, u64>(subscribed.len())?))
+        .and_then(|n| {
+            subscribed
+                .iter()
+                .try_fold(n, |n, value| n.checked_add(value.id.len()))
+        })
+        .ok_or_else(capacity)?;
+    let backing = budget.reserve(
+        selected
+            .len()
+            .checked_mul(
+                size_of::<Arc<AppraisalRecord>>() + size_of::<Arc<crate::host::SharedMemoryPin>>(),
+            )
+            .and_then(|n| n.checked_add(owner_account.map_or(0, String::len)))
+            .and_then(|n| n.checked_add(required_bytes))
+            .ok_or_else(capacity)?,
+    )?;
+    let mut records = Vec::with_capacity(selected.len());
+    let required_revisions = subscribed
+        .iter()
+        .map(|record| (record.id.to_owned(), record.revision))
+        .collect();
+    let required_scopes = required.to_vec();
+    let mut pins = Vec::with_capacity(selected.len());
+    for value in &selected {
+        let record = owner
+            .and_then(|owner| owner.records.get(value.view.id))
+            .ok_or(ExecutionError::Invariant)?;
+        pins.push(
+            record
+                ._reservation
+                .as_ref()
+                .ok_or(ExecutionError::Invariant)?
+                .capture_pin(budget)?,
+        );
+        records.push(Arc::clone(record));
+    }
     let product = Product {
         world_id: &state.physical.header.id,
         actor_id,
@@ -392,5 +604,22 @@ pub(crate) fn write_actor_appraisals(
     let mut reservation = budget.reserve(length.checked_mul(2).ok_or_else(capacity)?.max(8))?;
     let text = json_record(&product).map_err(|_| ExecutionError::Invariant)?;
     reservation.resize(text.capacity())?;
-    Ok((text, reservation))
+    Ok(CapturedActorAppraisals {
+        json: text,
+        records,
+        hot_count,
+        content: state.appraisals.content_witness(actor_id),
+        knowledge_revision: state
+            .reception
+            .knowledge_revisions
+            .as_ref()
+            .and_then(|revisions| revisions.get(actor_id))
+            .copied(),
+        owner_account: owner_account.cloned(),
+        required_scopes,
+        required_revisions,
+        _pins: pins,
+        _backing: backing,
+        _json: reservation,
+    })
 }

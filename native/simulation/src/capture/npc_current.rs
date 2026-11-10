@@ -10,6 +10,7 @@ use serde::ser::{SerializeMap, SerializeSeq};
 
 pub(crate) struct NpcCurrentCapture {
     json: String,
+    pub(super) attention: crate::reception::CapturedAttentionPresentations,
     _storage: ByteReservation,
 }
 impl Serialize for NpcCurrentCapture {
@@ -389,9 +390,8 @@ pub(crate) fn prepare(
                 })
                 .count()
         });
-    let (attention, _attention_storage) =
-        crate::reception::capture_attention_read(state, actor_id, budget)?;
-    let attention = serde_json::from_str::<&serde_json::value::RawValue>(&attention)
+    let attention_read = crate::reception::capture_attention_read(state, actor_id, budget)?;
+    let attention = serde_json::from_str::<&serde_json::value::RawValue>(&attention_read.json)
         .map_err(|_| ExecutionError::Invariant)?;
     let mut handle_ids = Vec::new();
     handle_ids
@@ -480,6 +480,7 @@ pub(crate) fn prepare(
     Ok(PreparedNpcCurrent {
         capture: NpcCurrentCapture {
             json,
+            attention: attention_read.presentations,
             _storage: storage,
         },
         current,

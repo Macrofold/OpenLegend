@@ -153,10 +153,8 @@ export async function writeOperationalBackup(
       if (!head) throw new Error('No current world records are available to back up.');
       const checkpoint = randomUUID(),
         operations = randomUUID();
-      // Only the identity is used: the stream reads all state from this same snapshot.
-      const state = { world: { id: head.worldId } };
       await new GameSaves(db, join(staging, 'checkpoints')).create(
-        state,
+        head.worldId,
         'Operational backup',
         checkpoint,
         { expectedRevision: head.revision, unordered: true },

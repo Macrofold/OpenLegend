@@ -1,4 +1,8 @@
-import type { NativeWorld, NativeWorldNpcRead } from '@open-legend/native-simulation';
+import type {
+  NativeWorld,
+  NativeWorldNpcRead,
+  NativeWorldNpcResponseTicket,
+} from '@open-legend/native-simulation';
 import type {
   ActorAgency,
   ActorMind,
@@ -23,6 +27,7 @@ import {
   retainNativeSources,
 } from './native-consumer.js';
 import type { NativeHistoryInput } from './native-history.js';
+import type { NativeDecisionValidityRead } from './native-decision-validity.js';
 import { formatGeneralKnowledgeContext } from './knowledge-context.js';
 import { presentationSubjects } from './experience-context.js';
 import { captureSituationFromRead, situationPresentationValues } from './situation-context.js';
@@ -41,6 +46,7 @@ import {
 } from './native-providers.js';
 import { captureNativeReadCut, nativeScopedReadCut } from './native-read-cut.js';
 import type {
+  NativeNpcBindingSelection,
   NativeNpcHistoricalScope,
   NativeNpcSourceInventory,
   NativeNpcSourceSelection,
@@ -79,6 +85,8 @@ export interface NativeNpcActorSelf extends NativeActorSelf {
     readonly inventoryCount: number;
     readonly knownRecipesCount: number;
     readonly corrections?: Readonly<Record<string, string>>;
+    readonly forgotten?: readonly string[];
+    readonly mapMarkerLabels?: Readonly<Record<string, string>>;
   };
 }
 
@@ -91,6 +99,7 @@ interface NpcPacket {
   readonly historyScope: NativeNpcHistoricalScope;
   readonly referenceFacts: NativeNpcReferenceFacts;
   readonly sources: readonly NativeNpcSourceInventory[];
+  readonly validity: NativeDecisionValidityRead;
 }
 
 /** One actual native read owner across asynchronous context preparation. Source
@@ -209,6 +218,31 @@ export class NativeNpcCapture {
     const latest = sources.at(-1);
     if (!latest) throw new Error('Native source preparation produced no owned inventory.');
     return retainNativeSources(latest, sources);
+  }
+
+  /** The first read owns situation/history, while the refreshed read owns the
+   * current physical menu. Only their native ordinals and displayed spellings
+   * enter issuance; neither permission maps nor commands cross back to native. */
+  async bindResponse(
+    world: NativeWorld,
+    current: NativeNpcCapture,
+    decisionId: string,
+    selection: NativeNpcBindingSelection,
+    signal?: AbortSignal,
+  ): Promise<NativeWorldNpcResponseTicket> {
+    const originalFacts = this.facts,
+      currentFacts = current.facts;
+    signal?.throwIfAborted();
+    const ticket = await world.bindNpcResponse(
+      this.read,
+      current.read,
+      Buffer.from(JSON.stringify({ decisionId, selection })),
+    );
+    if (signal?.aborted) {
+      ticket.release();
+      signal.throwIfAborted();
+    }
+    return retainNativeSources(ticket, originalFacts, currentFacts);
   }
 
   choiceDescriptions(definitions: NativeDefinitionCapture) {

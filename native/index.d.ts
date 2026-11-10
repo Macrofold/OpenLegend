@@ -7,13 +7,11 @@
  * flavor napi-rs can build is listed, because `NAPI_RS_NATIVE_LIBRARY_PATH`
  * can point the loader at a WASI artifact this package does not build itself.
  */
-export declare const __napiBindingTarget:
-  | "native"
-  | "wasm32-wasi"
-  | "wasm32-wasip1";
+export declare const __napiBindingTarget: 'native' | 'wasm32-wasi' | 'wasm32-wasip1';
 
 export declare class NativeHost {
   installWorld(bytes: Buffer, databaseSchema: string): Promise<NativeWorld>;
+  installRestoringWorld(bytes: Buffer, databaseSchema: string): Promise<NativeWorld>;
   constructor(workers: number);
   /** This status reads control metadata only, never tentative gameplay state. */
   status(): HostStatus;
@@ -25,18 +23,16 @@ export declare class NativeHost {
 }
 
 export declare class NativeWorld {
-  npcPresentationLabels(
-    read: NativeWorldNpcRead,
+  beginControl(bytes: Buffer): Promise<NativeWorldTurn>;
+  beginRecentRetention(bytes: Buffer): Promise<NativeWorldTurn>;
+  bindNpcResponse(
+    original: NativeWorldNpcRead,
+    current: NativeWorldNpcRead,
     request: Buffer,
-  ): Promise<NativeWorldJson>;
-  npcCandidates(
-    read: NativeWorldNpcRead,
-    request: Buffer,
-  ): Promise<NativeWorldNpcTurn>;
-  npcSources(
-    read: NativeWorldNpcRead,
-    request: Buffer,
-  ): Promise<NativeWorldNpcTurn>;
+  ): Promise<NativeWorldNpcResponseTicket>;
+  npcPresentationLabels(read: NativeWorldNpcRead, request: Buffer): Promise<NativeWorldJson>;
+  npcCandidates(read: NativeWorldNpcRead, request: Buffer): Promise<NativeWorldNpcTurn>;
+  npcSources(read: NativeWorldNpcRead, request: Buffer): Promise<NativeWorldNpcTurn>;
   answerNpcPreparation(
     read: NativeWorldNpcRead,
     key: NativeCandidateKey,
@@ -44,40 +40,26 @@ export declare class NativeWorld {
     answer: Buffer,
   ): Promise<NativeWorldNpcTurn>;
   readNpc(request: Buffer): Promise<NativeWorldNpcRead>;
-  beginRecentRetention(bytes: Buffer): Promise<NativeWorldTurn>;
-  beginControl(bytes: Buffer): Promise<NativeWorldTurn>;
-  playerInteraction(
-    read: NativeWorldPlayerRead,
-    bytes: Buffer,
-  ): Promise<NativeWorldJson>;
-  readPlayer(
-    account: string,
-    actor: string,
-    eventWindow: number,
-  ): Promise<NativeWorldPlayerRead>;
+  beginParticipation(bytes: Buffer): Promise<NativeWorldTurn>;
+  playerInteraction(read: NativeWorldPlayerRead, bytes: Buffer): Promise<NativeWorldJson>;
+  readPlayer(account: string, actor: string, eventWindow: number): Promise<NativeWorldPlayerRead>;
   playerPublication(
     read: NativeWorldPlayerRead,
     selectedEventIds: Array<string>,
     paused: boolean,
     controlling: boolean,
-  ): Promise<NativeWorldPlayerPublication>;
+  ): Promise<NativeWorldPlayerPublication | null>;
   forget(bytes: Buffer): Promise<NativeWorldTurn>;
   resolveReceiptTail(reply: Buffer): Promise<void>;
   readCut(request: Buffer): Promise<NativeWorldJson>;
+  beginRestore(bytes: Buffer): Promise<NativeWorldTurn>;
+  activateRestored(key: NativeCandidateKey, receipt: string): Promise<void>;
   retainedValues(): Promise<NativeWorldJson>;
   activate(receipt: string): Promise<void>;
   definitions(): Promise<NativeWorldJson>;
   installation(): Promise<NativeWorldJson>;
-  advance(
-    seconds: number,
-    maximumIntervals: number,
-    bytes: Buffer,
-  ): Promise<NativeWorldTurn>;
-  command(
-    bytes: Buffer,
-    canonical: Buffer,
-    preview: boolean,
-  ): Promise<NativeWorldTurn>;
+  advance(seconds: number, maximumIntervals: number, bytes: Buffer): Promise<NativeWorldTurn>;
+  command(bytes: Buffer, canonical: Buffer, preview: boolean): Promise<NativeWorldTurn>;
   answer(
     key: NativeCandidateKey,
     provider: NativeWorldProvider,
@@ -115,6 +97,14 @@ export declare class NativeWorldNpcRead {
   release(): void;
 }
 
+/**
+ * This handle has no permission-map or command constructor. The native writer
+ * issues it only by consuming the two originating accepted read handles.
+ */
+export declare class NativeWorldNpcResponseTicket {
+  release(): void;
+}
+
 export declare class NativeWorldPlayerPublication {
   canUseInventory(): boolean;
   release(): void;
@@ -144,11 +134,11 @@ export declare class NativeWorldSave {
 }
 
 export declare const enum HostPhase {
-  Open = "Open",
-  Closing = "Closing",
-  ShutdownPending = "ShutdownPending",
-  Closed = "Closed",
-  Unavailable = "Unavailable",
+  Open = 'Open',
+  Closing = 'Closing',
+  ShutdownPending = 'ShutdownPending',
+  Closed = 'Closed',
+  Unavailable = 'Unavailable',
 }
 
 export interface HostStatus {

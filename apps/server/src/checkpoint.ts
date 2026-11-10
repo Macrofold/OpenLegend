@@ -71,11 +71,14 @@ async function* checkpointLines(
   }
 }
 
-export async function readCheckpoint(
+/** Actual current-format checkpoint rows before any runtime representation is
+ * assembled. Both native restore and Source decoding consume this one manifest
+ * and record integrity boundary. */
+export async function readCheckpointRecords(
   lines: AsyncIterable<string>,
   worldId: string,
   format: string,
-): Promise<SavePayload> {
+) {
   const groups = new Map<string, Map<string, JsonRecord[]>>();
   const history = Object.fromEntries(
     HISTORY_TABLES.map((table) => [table, [] as JsonRecord[]]),
@@ -84,8 +87,10 @@ export async function readCheckpoint(
     MEMORY_HISTORY_TABLES.map((table) => [table, [] as JsonRecord[]]),
   ) as NonNullable<SavePayload['memory']>;
   let header = false,
-    index = -1;
+    index = -1,
+    revision = 0;
   let tables: string[] = [];
+  let canonicalColumns: ReadonlySet<string> | undefined;
   const identities = new Set<string>();
   for await (const line of lines) {
     const value = JSON.parse(line) as Record<string, unknown>;
@@ -95,6 +100,8 @@ export async function readCheckpoint(
         value['encoding'] !== CHECKPOINT_ENCODING ||
         value['worldId'] !== worldId ||
         value['format'] !== format ||
+        !Number.isSafeInteger(value['revision']) ||
+        Number(value['revision']) < 0 ||
         !Array.isArray(declared) ||
         declared.some((table) => typeof table !== 'string' || !CHECKPOINT_TABLES.includes(table)) ||
         new Set(declared).size !== declared.length ||
@@ -104,6 +111,7 @@ export async function readCheckpoint(
         throw new Error('Unsupported or incomplete checkpoint manifest.');
       header = true;
       tables = value['tables'] as string[];
+      revision = Number(value['revision']);
       continue;
     }
     const table = String(value['table']);
@@ -111,18 +119,38 @@ export async function readCheckpoint(
     if (!row) {
       if (tables[++index] !== table) throw new Error('Checkpoint table coverage mismatch.');
       identities.clear();
+      const node = RECORD_NODES.get(table);
+      canonicalColumns = node
+        ? new Set([
+            'world_id',
+            'id',
+            'parent_id',
+            'slot',
+            'position',
+            'revision',
+            'payload',
+            ...Object.keys(node.columns ?? {}),
+          ])
+        : undefined;
       continue;
     }
     if (tables[index] !== table || row['world_id'] !== worldId)
       throw new Error('Checkpoint row scope mismatch.');
     if (RECORD_NODES.has(table)) {
+      const fields = Object.keys(row);
       if (
+        !canonicalColumns ||
+        fields.length !== canonicalColumns.size ||
+        fields.some((field) => !canonicalColumns!.has(field)) ||
         typeof row['id'] !== 'string' ||
         typeof row['parent_id'] !== 'string' ||
         typeof row['slot'] !== 'string' ||
         typeof row['payload'] !== 'string' ||
         !Number.isSafeInteger(Number(row['position'])) ||
         Number(row['position']) < 0 ||
+        !Number.isSafeInteger(Number(row['revision'])) ||
+        Number(row['revision']) < 0 ||
+        Number(row['revision']) > revision ||
         identities.has(row['id'])
       )
         throw new Error('Invalid or repeated canonical checkpoint record.');
@@ -151,6 +179,17 @@ export async function readCheckpoint(
   const total = history.history_totals;
   if (total.length !== 1 || Number(total[0]!['event_count']) !== history.history_events.length)
     throw new Error('Checkpoint retained event coverage disagrees with its count.');
+  return { worldId, format, revision, groups, history, memory };
+}
+
+export type CanonicalCheckpoint = Awaited<ReturnType<typeof readCheckpointRecords>>;
+
+export async function readCheckpoint(
+  lines: AsyncIterable<string>,
+  worldId: string,
+  format: string,
+): Promise<SavePayload> {
+  const { groups, history, memory } = await readCheckpointRecords(lines, worldId, format);
   const events = new Map(history.history_events.map((row) => [row['id'], row['payload']]));
   for (const siblings of groups.get('world_hot_events')?.values() ?? [])
     for (const row of siblings) {

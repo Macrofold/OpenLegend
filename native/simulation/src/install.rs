@@ -42,7 +42,7 @@ mod working_set;
 pub(crate) use working_set::{InstalledWorkingSet, WorkingSetSelection};
 mod scope;
 pub(crate) use core::{
-    CoreInstallError, CoreInstallInput, CoreInstallation, assemble_core, assemble_working_core,
+    CoreInstallError, CoreInstallInput, CoreInstallation, InstallPurpose, assemble_core, assemble_working_core,
 };
 pub(crate) use scope::{SelectedInstallation, finish_selected_installation};
 

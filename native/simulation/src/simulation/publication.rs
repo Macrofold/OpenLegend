@@ -68,7 +68,7 @@ impl PreparedPublication {
         fence.validate_phase(key, CandidatePhase::Preparing)?;
         let release = journal.prepare_release(state, key)?;
         let allocation = state.work_allocation().map_err(ExecutionError::from)?;
-        let rows = encode_candidate_changes(state, journal, host, write_host, budget)?;
+        let rows = encode_candidate_changes(state, journal, write_host.then_some(host), budget)?;
         let (changes, owners, rows_guard) = rows.into_parts();
         // The encoded rows keep their original custody until the accumulating
         // save has funded and taken the actual bodies. This is the last
@@ -129,6 +129,15 @@ impl PreparedPublication {
         save: &'a SaveJournal,
     ) -> Result<Option<&'a crate::records::SaveRows>, PublicationError> {
         save.prepared_prefix(&self.append).map_err(Into::into)
+    }
+    pub(crate) fn restore_residency<'a>(
+        &self,
+        save: &'a SaveJournal,
+    ) -> Result<&'a Arc<crate::received::SavedTemporalResidency>, PublicationError> {
+        Ok(save
+            .prepared_prefix_owner(&self.append)?
+            .ok_or(SaveError::Binding)?
+            .temporal_residency())
     }
     /// Check exact owners immediately before the separate host fence flips.
     /// There is no serialization, world traversal or capacity admission here.

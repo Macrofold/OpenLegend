@@ -10,6 +10,7 @@ import { readTemporalPageRecord } from './temporal-storage.js';
 import { decodeCurrentContactRow } from './current-contact-codec.js';
 import { RECORD_NODES } from './world-record-schema.js';
 import { temporalDirectoriesFromRows, type WorldRecords } from './world-records.js';
+import type { CanonicalCheckpoint } from './checkpoint.js';
 
 function integer(value: unknown): number {
   const number =
@@ -129,6 +130,69 @@ export async function captureCurrentSources(records: WorldRecords, databaseSchem
       originals,
     };
   });
+}
+
+/** A fixed checkpoint already contains complete current table coverage. Reuse
+ * the same SQL-cell/current-row codec and child marker owner as a cold open;
+ * only the real restore generation/revision and identity floor are supplied by
+ * its protected host. No Source world or alternate save format is created. */
+export function checkpointCurrentSources(
+  checkpoint: CanonicalCheckpoint,
+  databaseSchema: string,
+  binding: {
+    readonly generation: string;
+    readonly revision: number;
+    readonly identityFloor: number;
+  },
+) {
+  const tables: Record<string, CurrentRow[]> = {};
+  const highwaters = new Map<string, Map<string, number>>();
+  for (const table of RECORD_NODES.keys()) {
+    const owners = new Map<string, number>();
+    const rows: CurrentRow[] = [];
+    for (const siblings of checkpoint.groups.get(table)?.values() ?? [])
+      for (const row of siblings) {
+        const current = nativeCurrentRow(table, row);
+        rows.push(current);
+        owners.set(
+          current.parent,
+          Math.max(owners.get(current.parent) ?? 0, ordinal(current.position + 1)),
+        );
+      }
+    tables[table] = rows;
+    highwaters.set(table, owners);
+  }
+  const headerRow = tables['world_settings']?.find((row) => row.id === '["world"]');
+  if (!headerRow) throw new Error('Checkpoint has no canonical world header.');
+  const header = JSON.parse(headerRow.payload) as Record<string, unknown>;
+  const floor = ordinal(binding.identityFloor);
+  if (floor > ordinal(header['nextId'])) {
+    header['nextId'] = floor;
+    headerRow.payload = JSON.stringify(header);
+  }
+  const byId = new Map(checkpoint.history.history_events.map((row) => [row['id'], row['payload']]));
+  const originals = (tables['world_hot_events'] ?? []).map((row) => {
+    const pointer = JSON.parse(row.payload) as { id: string };
+    const payload = byId.get(pointer.id);
+    if (typeof payload !== 'string')
+      throw new Error('Checkpoint is missing a referenced original occurrence.');
+    return { eventId: pointer.id, payload };
+  });
+  return {
+    records: currentRecordMetadata(
+      {
+        worldId: checkpoint.worldId,
+        revision: ordinal(binding.revision),
+        generation: binding.generation,
+      },
+      databaseSchema,
+      tables,
+      highwaters,
+      () => true,
+      new Map(),
+    ),
+    originals,
+  };
 }
 
 type CurrentRow = ReturnType<typeof nativeCurrentRow>;

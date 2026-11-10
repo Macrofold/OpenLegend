@@ -22,11 +22,12 @@ use index::AppraisalIndex;
 mod hydration;
 mod read;
 mod response;
-pub(crate) use read::{AppraisalScope, write_actor_appraisals};
+pub(crate) use read::{AppraisalScope, CapturedActorAppraisals, capture_actor_appraisals, capture_validity_views};
 pub(crate) use response::{
     AppraisalBindings, AppraisalChangeCursor, AppraisalChangeStep, AppraisalPublication,
     CompletedAppraisalChange,
 };
+pub(crate) use response::identity as creation_identity;
 
 #[derive(Clone, Deserialize, Serialize)]
 #[serde(
@@ -170,6 +171,9 @@ pub(crate) struct AppraisalRecord {
     _reservation: Option<crate::host::ResidentReservation>,
 }
 pub(crate) struct AppraisalOwner {
+    // Only canonical record writes advance this dependency. Residency and
+    // hydration preserve the logical Source appraisal object unchanged.
+    semantic_serial: u64,
     pub row: Option<InstalledRow>,
     pub coverage: OwnerCoverage,
     pub active_complete: bool,
@@ -201,6 +205,7 @@ enum AppraisalUndo {
     Record {
         actor: String,
         id: String,
+        semantic_serial: u64,
         prior: Option<(usize, Arc<AppraisalRecord>)>,
         next: u64,
         _workspace: ByteReservation,
@@ -212,6 +217,27 @@ enum AppraisalUndo {
         _workspace: ByteReservation,
     },
 }
+#[derive(Clone, Copy)]
+pub(crate) struct AppraisalContentWitness(u64);
+impl AppraisalContentWitness {
+    pub(crate) fn current(&self, state: &AppraisalState, actor: &str) -> bool {
+        self.0
+            == state
+                .owners
+                .get(actor)
+                .map_or(0, |owner| owner.semantic_serial)
+    }
+}
+impl AppraisalState {
+    pub(crate) fn content_witness(&self, actor: &str) -> AppraisalContentWitness {
+        AppraisalContentWitness(
+            self.owners
+                .get(actor)
+                .map_or(0, |owner| owner.semantic_serial),
+        )
+    }
+}
+
 #[derive(Clone, Copy)]
 pub(crate) struct AppraisalCheckpoint {
     undo: usize,
@@ -350,6 +376,7 @@ pub(crate) fn install_appraisals(
         owners.insert(
             row.slot.clone(),
             AppraisalOwner {
+                semantic_serial: 0,
                 row: Some(row),
                 active_complete,
                 coverage: records.coverage,
@@ -464,6 +491,7 @@ impl AppraisalState {
                 AppraisalUndo::Record {
                     actor,
                     id,
+                    semantic_serial,
                     prior,
                     next,
                     ..
@@ -482,6 +510,7 @@ impl AppraisalState {
                         owner.records.shift_insert(at, id, record);
                     }
                     owner.coverage.next_ordinal = next;
+                    owner.semantic_serial = semantic_serial;
                 }
             }
         }
@@ -621,6 +650,7 @@ fn put(
             extra: Vec::new(),
         };
         let mut owner = AppraisalOwner {
+            semantic_serial: 0,
             row: Some(row),
             coverage: OwnerCoverage {
                 table: "mind_appraisals".to_owned(),
@@ -667,11 +697,28 @@ fn put(
     {
         return Err(ExecutionError::Invariant);
     }
+    let semantic_serial = owner.semantic_serial;
     let next = owner.coverage.next_ordinal;
     let position = prior
         .as_ref()
         .map_or(next, |(_, record)| record.row.position);
     let payload = json_record(&value).map_err(|_| ExecutionError::Invariant)?;
+    // Repeated erasure can put an already-cleared invalidated record. Compare
+    // typed records through this same factory: imported member order is not
+    // meaning, and a redundant write must not veto Source guard:'all'.
+    let unchanged = prior
+        .as_ref()
+        .map(|(_, prior)| crate::encoding::json_record_eq(&prior.value, &payload))
+        .transpose()
+        .map_err(|_| ExecutionError::Invariant)?
+        .unwrap_or(false);
+    let next_serial = if unchanged {
+        semantic_serial
+    } else {
+        semantic_serial
+            .checked_add(1)
+            .ok_or(ExecutionError::Capacity)?
+    };
     let row = InstalledRow {
         id: json_record(&["world", "appraisals", actor, id])
             .map_err(|_| ExecutionError::Invariant)?,
@@ -695,6 +742,7 @@ fn put(
     let undo = AppraisalUndo::Record {
         actor: actor.clone(),
         id: id.clone(),
+        semantic_serial,
         prior,
         next,
         _workspace: reservation,
@@ -717,6 +765,7 @@ fn put(
     if matches!(&undo, AppraisalUndo::Record { prior: None, .. }) {
         owner.coverage.next_ordinal = next.checked_add(1).ok_or(ExecutionError::Identity)?;
     }
+    owner.semantic_serial = next_serial;
     state.undo.push(undo);
     Ok(())
 }

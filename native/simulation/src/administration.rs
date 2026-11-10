@@ -47,6 +47,7 @@ pub(crate) struct AdministrationState {
     pub authorship: Authorship,
     pub object_membership: ObjectMembership,
     _storage: crate::host::ResidentReservation,
+    pub(crate) player_storage: crate::host::ResidentReservation,
 }
 
 /// Server controls travel back to the operational owner on installation. They
@@ -264,11 +265,12 @@ pub(crate) fn install_administration(
             .reserve_record(
                 heap_sum([
                     control.heap_bytes().ok_or(InstallError::Capacity)?,
-                    authorship.heap_bytes().ok_or(InstallError::Capacity)?,
+                    authorship.creator_account_ids.heap_bytes().ok_or(InstallError::Capacity)?,
                 ])
                 .ok_or(InstallError::Capacity)?,
             )
             .map_err(|_| InstallError::Capacity)?,
+        player_storage: budget.reserve_record(authorship.player_account_ids.heap_bytes().ok_or(InstallError::Capacity)?).map_err(|_|InstallError::Capacity)?,
         control,
         authorship,
         object_membership,

@@ -30,6 +30,8 @@ interface TransactionScope {
   liveOverlays?: Map<string, LiveReadOverlay>;
   exactCut?: boolean;
   actor?: { worldId: string; actorId: string };
+  rollbackViewActive?: boolean;
+  writeFailure?: unknown;
 }
 
 export type PostgresTransactionOutcome = 'rolled-back' | 'unknown' | 'committed';
@@ -222,6 +224,57 @@ export class PostgresDatabase implements SqlDatabase {
     if (this.transactionContext.getStore()?.active) return operation();
     return this.read(operation, true);
   }
+  async rollbackView<T>(operation: () => Promise<T>): Promise<T> {
+    const parent = this.transactionContext.getStore();
+    if (!parent?.active || parent.readOnly || parent.rollbackViewActive)
+      throw new Error('A tentative SQL projection requires its exclusive write transaction.');
+    parent.rollbackViewActive = true;
+    const child: TransactionScope = {
+      active: true,
+      client: parent.client,
+      readOnly: false,
+      committed: [],
+      rolledBack: [],
+      rollbackViewActive: true,
+      actor: parent.actor,
+    };
+    let saved = false;
+    let result: T | undefined;
+    let failed = false;
+    let failure: unknown;
+    try {
+      await this.query('SAVEPOINT openlegend_rollback_view');
+      saved = true;
+      try {
+        result = await this.transactionContext.run(child, operation);
+      } catch (error) {
+        failed = true;
+        failure = error;
+      }
+      // These statements run in the parent context. No tentative row or
+      // afterCommit callback may escape a successful or failed projection.
+      await this.query('ROLLBACK TO SAVEPOINT openlegend_rollback_view');
+      await this.query('RELEASE SAVEPOINT openlegend_rollback_view');
+      saved = false;
+      child.active = false;
+      const failures = runTransactionCallbacks(child.rolledBack);
+      if (failures.length) {
+        const error = new AggregateError(failed ? [failure, ...failures] : failures);
+        parent.writeFailure = error;
+        throw error;
+      }
+      if (failed) throw failure;
+      return result as T;
+    } catch (error) {
+      // An unusable savepoint must abort the enclosing transaction. Its real
+      // owner determines rollback/unknown outcome; this view never commits it.
+      if (saved) parent.writeFailure = error;
+      throw error;
+    } finally {
+      child.active = false;
+      if (!saved) parent.rollbackViewActive = false;
+    }
+  }
   private read<T>(
     operation: () => Promise<T>,
     snapshot: boolean,
@@ -273,7 +326,7 @@ export class PostgresDatabase implements SqlDatabase {
     exactCut = false,
     actor?: { worldId: string; actorId: string },
   ): Promise<T> {
-    const scope = {
+    const scope: TransactionScope = {
       active: true,
       client,
       readOnly,
@@ -293,6 +346,7 @@ export class PostgresDatabase implements SqlDatabase {
           throw new PostgresTransactionError('unknown', new AggregateError([error, failure]));
         }
         scope.active = false;
+        if (scope.writeFailure !== undefined) this.fail();
         const failures = runTransactionCallbacks(scope.rolledBack);
         if (failures.length) {
           this.fail();
@@ -320,6 +374,7 @@ export class PostgresDatabase implements SqlDatabase {
         );
         if (!readOnly && !this.writeGroups) await this.query("SET LOCAL statement_timeout = '30s'");
         result = await operation();
+        if (scope.writeFailure !== undefined) throw scope.writeFailure;
       } catch (error) {
         return rollback(error);
       }

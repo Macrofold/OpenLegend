@@ -293,10 +293,9 @@ impl ActivityOccurrence {
         {
             return Err(ActivityError::UnsupportedFamily);
         }
-        if matches!(
-            self.command,
-            NativeCommand::InspectInventory { .. } | NativeCommand::InspectActivities { .. }
-        ) {
+        // Inventory inspection is a valid Source historical occurrence even
+        // while its executable Native command remains outside this proof.
+        if matches!(self.command, NativeCommand::InspectActivities { .. }) {
             return Err(ActivityError::InvalidStructure);
         }
         if self.actor_id != actor_id

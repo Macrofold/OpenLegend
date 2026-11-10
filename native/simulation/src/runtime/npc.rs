@@ -6,6 +6,9 @@ use crate::appraisals::AppraisalScope;
 use crate::simulation::AcceptedActorRead;
 use std::mem::size_of;
 
+mod bindings;
+pub use bindings::RuntimeNpcResponseTicket;
+
 pub struct RuntimeNpcRead {
     pub(super) read: AcceptedActorRead,
     pub(super) serial: u64,
@@ -13,6 +16,7 @@ pub struct RuntimeNpcRead {
     pub(super) historical_scope: Arc<crate::capture::NpcHistoricalScope>,
     reference_facts: crate::capture::NpcReferenceFacts,
     candidates: Option<crate::capture::PreparedNpcCandidates>,
+    intent_ids: Vec<String>,
     sources: Vec<crate::capture::PreparedNpcSources>,
     candidate_key: Option<CandidateKey>,
     _custody: ByteReservation,
@@ -73,10 +77,34 @@ impl NativeWorldSession {
         let reference_facts =
             crate::capture::NpcReferenceFacts::capture(&simulation.state, &read, &self.budget)
                 .map_err(failure)?;
+        let attempts = &simulation
+            .state
+            .physical
+            .entities
+            .get(&request.actor_id)
+            .and_then(|entity| entity.actor.as_ref())
+            .ok_or_else(|| failure("NPC actor disappeared"))?
+            .agency
+            .attempts;
+        let intent_bytes = attempts.iter().try_fold(
+            attempts
+                .len()
+                .checked_mul(size_of::<String>())
+                .ok_or_else(|| failure("capacity"))?,
+            |n, attempt| {
+                n.checked_add(attempt.id.len())
+                    .ok_or_else(|| failure("capacity"))
+            },
+        )?;
         let custody = self
             .budget
-            .reserve(size_of::<RuntimeNpcRead>())
+            .reserve(
+                size_of::<RuntimeNpcRead>()
+                    .checked_add(intent_bytes)
+                    .ok_or_else(|| failure("capacity"))?,
+            )
             .map_err(failure)?;
+        let intent_ids = attempts.iter().map(|attempt| attempt.id.clone()).collect();
         self.next_read_serial = serial;
         Ok(RuntimeNpcRead {
             read,
@@ -85,6 +113,7 @@ impl NativeWorldSession {
             historical_scope,
             reference_facts,
             candidates: None,
+            intent_ids,
             sources: Vec::new(),
             candidate_key: None,
             _custody: custody,
@@ -194,9 +223,12 @@ impl NativeWorldSession {
                 .ok_or_else(|| failure("capacity"))?;
             read._custody
                 .resize(
-                    size_of::<RuntimeNpcRead>()
+                    read._custody
+                        .bytes()
                         .checked_add(
                             capacity
+                                .checked_sub(read.sources.capacity())
+                                .ok_or_else(|| failure("capacity"))?
                                 .checked_mul(size_of::<crate::capture::PreparedNpcSources>())
                                 .ok_or_else(|| failure("capacity"))?,
                         )
@@ -231,6 +263,8 @@ impl RuntimeNpcRead {
         let history_scope = RuntimeJson::encode(&self.historical_scope, budget)?;
         let reference_facts = RuntimeJson::encode(&self.reference_facts, budget)?;
         let sources = RuntimeJson::encode(&self.sources, budget)?;
+        let validity = self.read.native_validity.as_ref()
+            .ok_or_else(|| failure("NPC semantic validity capture is unavailable"))?;
         let candidates = self
             .candidates
             .as_ref()
@@ -257,6 +291,11 @@ impl RuntimeNpcRead {
                 reference_facts.bytes(),
                 b",\"sources\":",
                 sources.bytes(),
+                b",\"validity\":{\"decision\":",
+                validity.decision_json().as_bytes(),
+                b",\"prepared\":",
+                validity.prepared_json().as_bytes(),
+                b"}",
                 candidate_key,
                 candidate_value,
                 b"}",

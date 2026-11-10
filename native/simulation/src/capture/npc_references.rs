@@ -8,17 +8,19 @@ use crate::reception::KnowledgeSubject;
 use crate::simulation::AcceptedActorRead;
 
 #[derive(Serialize)]
-struct BodySubject {
+pub(crate) struct BodySubject {
     ordinal: usize,
+    pub(crate) entity: NpcSubjectFact,
     #[serde(skip_serializing_if = "Option::is_none")]
-    subject: Option<NpcSubjectFact>,
-    subjects: Vec<NpcSubjectFact>,
+    pub(crate) subject: Option<NpcSubjectFact>,
+    pub(crate) subjects: Vec<NpcSubjectFact>,
 }
 #[derive(Serialize)]
 pub(crate) struct NpcReferenceFacts {
-    myself: NpcSubjectFact,
-    bodies: Vec<BodySubject>,
-    knowledge: Vec<NpcSubjectFact>,
+    pub(crate) myself: NpcSubjectFact,
+    pub(crate) bodies: Vec<BodySubject>,
+    pub(crate) knowledge: Vec<NpcSubjectFact>,
+    pub(crate) social: Vec<NpcSubjectFact>,
     #[serde(rename = "attributionIdentities")]
     attribution_identities: crate::worlds::CapturedAttributionIdentities,
     #[serde(skip)]
@@ -42,7 +44,7 @@ impl NpcReferenceFacts {
                 read.perception
                     .bodies
                     .len()
-                    .checked_mul(size_of::<BodySubject>() + 2 * size_of::<NpcSubjectFact>())
+                    .checked_mul(size_of::<BodySubject>() + 3 * size_of::<NpcSubjectFact>())
                     .ok_or(ExecutionError::Capacity)?,
             )
             .and_then(|n| n.checked_add(count.checked_mul(size_of::<NpcSubjectFact>())?))
@@ -79,8 +81,19 @@ impl NpcReferenceFacts {
             for selected in selected.into_iter().flatten() {
                 subjects.push(subject_fact(state, actor, &names, selected, budget)?);
             }
+            let _copy = budget.reserve(body.source_id.len())?;
+            let entity = subject_fact(
+                state,
+                actor,
+                &names,
+                ObserverSubject::Entity {
+                    entity_id: body.source_id.clone(),
+                },
+                budget,
+            )?;
             bodies.push(BodySubject {
                 ordinal,
+                entity,
                 subject,
                 subjects,
             });
@@ -107,6 +120,43 @@ impl NpcReferenceFacts {
             };
             knowledge.push(subject_fact(state, actor, &names, subject, budget)?);
         }
+        let hot_targets = read
+            .appraisal_read()
+            .map(|appraisals| appraisals.social_targets());
+        let social_count = hot_targets
+            .as_ref()
+            .map_or(0, |targets| targets.clone().count());
+        let mut storage = storage;
+        storage.resize(
+            storage
+                .bytes()
+                .checked_add(
+                    social_count
+                        .checked_mul(size_of::<NpcSubjectFact>())
+                        .ok_or(ExecutionError::Capacity)?,
+                )
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let mut social = Vec::with_capacity(social_count);
+        for id in hot_targets.into_iter().flatten() {
+            if state.physical.entities.get(id).is_none()
+                || social
+                    .iter()
+                    .any(|fact: &NpcSubjectFact| fact.canonical_id.as_deref() == Some(id))
+            {
+                continue;
+            }
+            let _copy = budget.reserve(id.len())?;
+            social.push(subject_fact(
+                state,
+                actor,
+                &names,
+                ObserverSubject::Entity {
+                    entity_id: id.to_owned(),
+                },
+                budget,
+            )?);
+        }
         let attribution_identities = names.capture_attribution_identities(
             read.perception
                 .bodies
@@ -124,6 +174,7 @@ impl NpcReferenceFacts {
             myself,
             bodies,
             knowledge,
+            social,
             attribution_identities,
             _storage: storage,
         })

@@ -137,6 +137,7 @@ pub(super) fn encode_privacy_changes(
     for operation in &journal.undo {
         if let super::super::mutation::ExperienceUndo::Privacy(operation) = operation {
             match operation {
+                PrivacyUndo::CreatedActor { .. } => {},
                 PrivacyUndo::Revision { actor, .. } => {
                     revisions.insert(actor.as_str());
                 }

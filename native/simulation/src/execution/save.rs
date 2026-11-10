@@ -639,7 +639,8 @@ impl PhysicalJournal {
                 _ => {
                     let handle = match change {
                         Undo::Placement { entity, .. }
-                        | Undo::Participation { entity, .. }
+                        | Undo::RestoreActor { entity, .. } | Undo::Participation { entity, .. }
+                        | Undo::Contact { entity, .. }
                         | Undo::AgencyPlaces { entity, .. }
                         | Undo::AgencyPlan { entity, .. }
                         | Undo::AgencyGoals { entity, .. }
@@ -683,6 +684,7 @@ impl PhysicalJournal {
                     match change {
                         Undo::SensoryProgress { .. } => rows.root = true,
                         Undo::Participation { .. } => rows.actor = true,
+                        Undo::Contact { .. } => rows.actor = true,
                         Undo::BodyRevision { .. }
                         | Undo::PlanGeneration { .. }
                         | Undo::PendingDeath { .. }
@@ -785,6 +787,7 @@ impl PhysicalJournal {
                                 rows.attributes.entry(id.as_str()).or_insert(true);
                             }
                         }
+                        Undo::RestoreActor { .. } => { rows.actor = true; }
                         Undo::Practice { key, .. } => {
                             rows.practice.entry(key.as_str()).or_insert(true);
                         }

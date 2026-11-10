@@ -3697,7 +3697,7 @@ export class WorldService {
       const ready = new Promise<void>((resolve) => {
         captured = resolve;
       });
-      completion = this.store.saves.create(this.saved, label, id, {
+      completion = this.store.saves.create(this.world.id, label, id, {
         captured,
         expectedRevision: this.persistedRevision,
         kind,
@@ -3825,7 +3825,7 @@ export class WorldService {
         this.store.saves?.validatePayload(payload);
         if (this.store.saves)
           try {
-            await this.store.saves.create(this.saved, 'Before last load', recoveryId, {
+            await this.store.saves.create(this.world.id, 'Before last load', recoveryId, {
               kind: 'recovery',
               expectedRevision: this.persistedRevision,
             });

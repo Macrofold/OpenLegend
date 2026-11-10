@@ -137,6 +137,7 @@ impl MechanicalForecast {
             core.state, budget,
         )?);
         bound.at(core.state.appraisals.next_deadline());
+        bound.at(crate::participation::next_exit_deadline(physical));
         let mut immediate = false;
         let mut reference_count = 0usize;
         let mut reference_bytes = 0usize;

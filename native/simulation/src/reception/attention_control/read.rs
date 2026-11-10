@@ -5,14 +5,16 @@ use super::*;
 use crate::host::{ByteBudget, ByteReservation};
 use serde::Serialize;
 
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct Presentation<'a> {
-    key: &'a str,
-    description_revision: &'a str,
-    change_revision: &'a str,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    point: Option<AttentionPoint>,
+/// These exact same presentations feed the read's JSON and its opaque response
+/// ticket. Formatting never reconstructs an acknowledgment from an encoded row.
+pub(crate) struct CapturedAttentionPresentations {
+    pub(crate) entries: Vec<AttentionPresentation>,
+    _storage: ByteReservation,
+}
+pub(crate) struct CapturedAttentionRead {
+    pub(crate) json: String,
+    pub(crate) presentations: CapturedAttentionPresentations,
+    pub(crate) _storage: ByteReservation,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -33,7 +35,7 @@ struct Cue<'a> {
 struct Product<'a> {
     entries: &'a [AttentionEntry],
     candidates: &'a IndexMap<String, AttentionCandidate>,
-    presentations: &'a [Presentation<'a>],
+    presentations: &'a [AttentionPresentation],
     cues: &'a [Cue<'a>],
 }
 
@@ -41,7 +43,7 @@ pub(crate) fn capture_attention_read(
     state: &crate::simulation::SimulationState,
     observer: &str,
     budget: &ByteBudget,
-) -> Result<(String, ByteReservation), crate::execution::ExecutionError> {
+) -> Result<CapturedAttentionRead, crate::execution::ExecutionError> {
     let mut scratch = CurrentJournal::new(budget)?;
     let attention = owner(&state.reception, observer).and_then(|owner| owner.attention.as_ref());
     let candidates = if let Some(attention) = attention {
@@ -60,12 +62,26 @@ pub(crate) fn capture_attention_read(
     };
     let latches = attention.map_or(0, |state| state.latches.len());
     scratch.reserve_growth(
-        candidates
-            .len()
-            .checked_mul(size_of::<Presentation<'_>>())
-            .and_then(|n| n.checked_add(latches.checked_mul(size_of::<Cue<'_>>())?))
+        latches
+            .checked_mul(size_of::<Cue<'_>>())
             .ok_or_else(capacity)?,
     )?;
+    let presentation_bytes = candidates.iter().try_fold(
+        candidates
+            .len()
+            .checked_mul(size_of::<AttentionPresentation>())
+            .ok_or_else(capacity)?,
+        |n, (key, candidate)| {
+            heap_sum([
+                n,
+                key.len(),
+                candidate.description_revision.len(),
+                candidate.change_revision.len(),
+            ])
+            .ok_or_else(capacity)
+        },
+    )?;
+    let mut presentation_storage = budget.reserve(presentation_bytes)?;
     let mut presentations = Vec::new();
     presentations
         .try_reserve_exact(candidates.len())
@@ -86,21 +102,30 @@ pub(crate) fn capture_attention_read(
                 &candidate.annotation.lease_id,
             )?
             .ok_or_else(invalid)?;
-        presentations.push(Presentation {
-            key,
-            description_revision: &candidate.description_revision,
-            change_revision: &candidate.change_revision,
+        // A scoped point can own its support ID. Fund that exact clone before
+        // transferring it into the detached presentation alongside its strings.
+        let point = current_point(
+            scope,
+            &candidate.annotation.source_id,
+            CurrentFacetSelector {
+                channel: Some(&body.grant.channel),
+                ..Default::default()
+            },
+            &mut scratch,
+        )?;
+        presentation_storage.resize(
+            presentation_storage
+                .bytes()
+                .checked_add(point.heap_bytes().ok_or_else(capacity)?)
+                .ok_or_else(capacity)?,
+        )?;
+        presentations.push(AttentionPresentation {
+            key: key.clone(),
+            description_revision: candidate.description_revision.clone(),
+            change_revision: candidate.change_revision.clone(),
             // Source presentation selects the channel without narrowing the
             // exposure; an ambiguous current location therefore stays absent.
-            point: current_point(
-                scope,
-                &candidate.annotation.source_id,
-                CurrentFacetSelector {
-                    channel: Some(&body.grant.channel),
-                    ..Default::default()
-                },
-                &mut scratch,
-            )?,
+            point,
         });
     }
     let mut cues = Vec::new();
@@ -172,5 +197,12 @@ pub(crate) fn capture_attention_read(
     let json = crate::encoding::json_record(&product)
         .map_err(|_| crate::execution::ExecutionError::Invariant)?;
     storage.resize(json.capacity())?;
-    Ok((json, storage))
+    Ok(CapturedAttentionRead {
+        json,
+        _storage: storage,
+        presentations: CapturedAttentionPresentations {
+            entries: presentations,
+            _storage: presentation_storage,
+        },
+    })
 }

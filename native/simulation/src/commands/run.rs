@@ -784,7 +784,10 @@ impl CommandCursor {
                         }
                     }
                     if self.preparation_mode.is_some()
-                        && matches!(self.command, NativeCommand::Cancel { .. })
+                        && matches!(
+                            self.command,
+                            NativeCommand::Cancel { .. } | NativeCommand::WithdrawAttempt { .. }
+                        )
                     {
                         self.reserve(128)?;
                         self.outcome = Some(outcome(
@@ -812,6 +815,18 @@ impl CommandCursor {
                         continue;
                     }
                     match &self.command {
+                        NativeCommand::WithdrawAttempt { attempt_id, .. } => {
+                            let result = crate::plans::withdraw_attempt(
+                                core,
+                                &actor_id,
+                                attempt_id,
+                                &self.budget,
+                            )?;
+                            let (outcome, storage) = result.into_parts();
+                            self._reservation.merge(storage)?;
+                            self.phase = if outcome.ok { Phase::Tail } else { Phase::Done };
+                            self.outcome = Some(outcome);
+                        }
                         NativeCommand::Move { destination, .. } => {
                             if ![destination.x, destination.y, destination.z]
                                 .iter()
@@ -2015,6 +2030,7 @@ fn actor_problem(
     if !matches!(
         command,
         NativeCommand::Cancel { .. }
+            | NativeCommand::WithdrawAttempt { .. }
             | NativeCommand::InspectInventory { .. }
             | NativeCommand::InspectActivities { .. }
     ) && entity.has_memory()

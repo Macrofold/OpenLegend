@@ -30,7 +30,13 @@ impl ParticipationState {
         }
         let present = presence(children, "exitExposures")?;
         let rows = take_collection(import, "sim_exit_exposures", "[\"world\"]", present, true)?;
-        let bytes = map_storage::<String, f64>(rows.rows.len())
+        let capacity = rows
+            .rows
+            .len()
+            .checked_mul(2)
+            .and_then(|n| n.checked_add(3))
+            .ok_or(InstallError::Capacity)?;
+        let bytes = map_storage::<String, f64>(if rows.rows.is_empty() { 0 } else { capacity })
             .and_then(|n| {
                 rows.rows
                     .iter()

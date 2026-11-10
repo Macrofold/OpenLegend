@@ -19,6 +19,8 @@ use crate::records::save::{
 use crate::time::{AcceptedAdvanceContinuation, AdmittedWorldInput, AdvanceCursor};
 use crate::values::WorkVector;
 use std::sync::Arc;
+mod restore;
+pub(crate) use restore::PreparedRestoreFacts;
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -229,6 +231,7 @@ pub(crate) struct Session {
     host_before: Option<HostControlSnapshot>,
     save: SaveJournal,
     pending_residency: Option<Arc<crate::received::SavedTemporalResidency>>,
+    restore_adoption: Option<restore::RestoreAdoption>,
     candidate: Option<Candidate>,
     continuation: Option<AcceptedAdvanceContinuation>,
     generation: u64,
@@ -273,6 +276,7 @@ impl Session {
             host_before: None,
             save,
             pending_residency: None,
+            restore_adoption: None,
             candidate: None,
             continuation: None,
             generation,
@@ -569,6 +573,18 @@ impl Session {
         })();
         self.install_driver(key, journal, driver, false)
     }
+    /// Operational control and the exact domain participation effects commit
+    /// together. No prior accepted suffix may be omitted from that SQL barrier.
+    pub(crate) fn begin_participation(&mut self, request: crate::participation::ParticipationRequest) -> Result<CandidateKey, SessionError> {
+        if !self.save_barrier_complete() { return Err(FenceError::Busy.into()); }
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let cursor = crate::participation::ParticipationCursor::new(request, key, &self.budget)?;
+            let mut core = CoreMutation {state: &mut self.simulation.state, journal: &mut journal};
+            OperationDriver::participation(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
     pub(crate) fn begin_cancel_preview(
         &mut self,
         command: crate::commands::NativeCommand,
@@ -734,7 +750,7 @@ impl Session {
                     .map_err(PublicationError::from)?;
                     let protected = matches!(&result, CompletedOperation::Forget(done)
                         if done.privacy_change().is_some())
-                        || matches!(&result, CompletedOperation::HostControl(_));
+                        || matches!(&result, CompletedOperation::Restore(_) | CompletedOperation::HostControl(_) | CompletedOperation::Participation(_));
                     let publication = PreparedPublication::prepare(
                         &mut self.simulation.state,
                         &preparing.journal,
@@ -742,7 +758,7 @@ impl Session {
                         &self.simulation.fence,
                         key,
                         &self.host,
-                        matches!(&result, CompletedOperation::HostControl(_)),
+                        matches!(&result, CompletedOperation::Restore(_) | CompletedOperation::HostControl(_)),
                         protected.then_some(self.temporal_save_limits),
                         &self.budget,
                     )?;
@@ -941,6 +957,7 @@ impl Session {
         journal: &mut CandidateJournal,
         key: CandidateKey,
     ) -> Result<(), SessionError> {
+        self.restore_adoption = None;
         if let Err(error) = journal.rollback_all(&mut self.simulation.state) {
             self.simulation.fence.poison();
             return Err(error.into());

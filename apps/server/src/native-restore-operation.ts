@@ -1,0 +1,312 @@
+import type {
+  NativeHost,
+  NativeWorld,
+  NativeWorldPrepared,
+  NativeWorldTurn,
+} from '@open-legend/native-simulation';
+import {
+  selectedTemporalPolicy,
+  type ExperiencePrivacy,
+  type WorkVector,
+} from '@open-legend/domain';
+import { nativeSetupSettings } from '@open-legend/domain/native-install';
+import { DATABASE_SCHEMA, type NativeWorldAdoption, type SqlGameRepository } from './store.js';
+import { nativeDefinitionSources } from './native-definition-sources.js';
+import { nativeRecordLayouts, nativeStorageSettings } from './native-install-inputs.js';
+import { NativeDefinitionCapture } from './native-definition-capture.js';
+import { decodeNativeProduct, retainNativeSources } from './native-consumer.js';
+import { nativeRecordChanges } from './native-records.js';
+import { nativeRestoredHistory } from './native-private-history.js';
+import { driveNativeOperation } from './native-providers.js';
+import { NativePendingSave } from './native-pending-save.js';
+import { NativeActorRoster } from './native-actor-roster.js';
+import { NativeRecentRetention } from './native-retention.js';
+import type { NativeRetainedValues } from './native-retained-values.js';
+import type { HostWork } from './host-work.js';
+import type { LiveReadCuts } from './live-read-overlay.js';
+import type {
+  NativeRestoreProjection,
+  NativeRestorePublication,
+  NativeRestoreStage,
+} from './native-restore.js';
+import { captureWorkingSources } from './native-current-sources.js';
+
+/** One inactive native preparation and its genuine Ready fence stay owned
+ * through the outer SQL outcome. Neither rejection nor activation fabricates
+ * an ordinary save acknowledgement. */
+export class NativeRestorePreparation implements NativeRestoreProjection {
+  private settled = false;
+  private receipt?: NativeWorldAdoption;
+  readonly installation;
+  readonly inputs;
+  readonly archives;
+  readonly pending: NativePendingSave;
+  readonly recent: NativeRecentRetention;
+  readonly retained: NativeRetainedValues;
+  readonly operational;
+  readonly milestones;
+  readonly actors: NativeActorRoster;
+  readonly providers;
+
+  private constructor(
+    readonly world: NativeWorld,
+    readonly definitions: NativeDefinitionCapture,
+    readonly geometry: ReturnType<NativeDefinitionCapture['geometry']>,
+    readonly turn: NativeWorldTurn,
+    private readonly prepared: NativeWorldPrepared,
+    readonly publication: NativeRestorePublication,
+    private readonly allocation: ReturnType<HostWork['reserveAllocation']>,
+    stage: NativeRestoreStage,
+    store: SqlGameRepository,
+    timeline: string,
+    history: Awaited<ReturnType<typeof nativeRestoredHistory>>,
+    backgroundSearchAdmission: () => boolean,
+    currentRetained: (world: NativeWorld) => NativeRetainedValues | undefined,
+  ) {
+    const restored = publication.restore;
+    this.installation = retainNativeSources(restored.installation, publication);
+    const changes = retainNativeSources(nativeRecordChanges(restored.changes), publication);
+    this.archives = retainNativeSources(publication.restoreMetadata.keptArchives, publication);
+    this.inputs = retainNativeSources(
+      {
+        worldId: restored.worldId,
+        initial: false,
+        restore: true,
+        changes,
+        history,
+        sources: store.memories.prepareSources(
+          restored.worldId,
+          changes,
+          this.installation.memoryAllowance,
+        ),
+        outcomes: [],
+        privacy: publication.restoreMetadata.privacy,
+        privacyChanged: true,
+        invalidations: publication.invalidatedMemoryIds ?? {},
+        hotEventIds: [],
+        collectReceivedValues: true,
+      },
+      publication,
+    );
+    this.pending = new NativePendingSave(store, {
+      worldId: restored.worldId,
+      generation: restored.generation,
+      revision: restored.revision,
+      acceptedCut: restored.acceptedCut,
+      timeline,
+    });
+    this.retained = retainNativeSources(
+      {
+        worldId: restored.worldId,
+        generation: restored.generation,
+        acceptedCut: restored.acceptedCut,
+        ids: retainNativeSources(restored.retainedValues, publication),
+      },
+      publication,
+    );
+    const pending = this.pending,
+      worldId = restored.worldId;
+    let prospective: NativeRetainedValues | undefined = this.retained;
+    this.providers = {
+      liveReadCuts: () => pending.liveReadCuts(),
+      retainedValues: (id: string) => {
+        if (id !== worldId) return {};
+        const current = currentRetained(world);
+        if (current) {
+          // The activated service now owns its regular IDs-only product. Do
+          // not retain the entire prepared publication's admission forever.
+          prospective = undefined;
+          return current.ids;
+        }
+        return prospective?.ids ?? {};
+      },
+      backgroundSearchAdmission,
+    };
+    this.recent = new NativeRecentRetention(
+      restored.worldId,
+      selectedTemporalPolicy(definitions.facts.definitions).recent,
+      stage.source.records.tables['mind_temporal_actors'] ?? [],
+    );
+    this.recent.prepare(restored.changes)();
+    const host =
+      restored.changes.writes['data_world']?.find((row) => row.id === '[]') ??
+      stage.source.records.tables['data_world']!.find((row) => row.id === '[]')!;
+    this.operational = JSON.parse(host.payload) as {
+      speed: number;
+      manuallyPaused: boolean;
+      presentationRelease?: import('@open-legend/assets').AssetRevisionReference;
+      presentationReleaseRevision?: number;
+    };
+    this.milestones = Object.fromEntries(
+      (stage.source.records.tables['actor_milestones'] ?? []).map((row) => [
+        row.slot,
+        JSON.parse(row.payload) as Record<string, boolean>,
+      ]),
+    );
+    this.actors = new NativeActorRoster(
+      stage.source.records.tables['sim_actors'] ?? [],
+      stage.source.records.tables['sim_exit_exposures'] ?? [],
+    );
+    this.actors.prepare(restored.changes)();
+  }
+
+  static async prepare(request: {
+    readonly host: NativeHost;
+    readonly stage: NativeRestoreStage;
+    readonly store: SqlGameRepository;
+    readonly work: HostWork;
+    readonly timeline: string;
+    readonly privacy: ExperiencePrivacy;
+    readonly checkpointPrivacy: ExperiencePrivacy;
+    readonly current: () => void;
+    readonly backgroundSearchAdmission: () => boolean;
+    readonly currentRetained: (world: NativeWorld) => NativeRetainedValues | undefined;
+    readonly signal?: AbortSignal;
+  }): Promise<NativeRestorePreparation> {
+    const { stage, store } = request;
+    request.signal?.throwIfAborted();
+    const working = await captureWorkingSources(store.records, DATABASE_SCHEMA);
+    if (
+      !working ||
+      working.records.generation !== stage.generation ||
+      working.records.durableRevision !== stage.revision
+    )
+      throw new Error('Restore working selection differs from its protected SQL installation.');
+    const world = await request.host.installRestoringWorld(
+      Buffer.from(
+        JSON.stringify({
+          ...working,
+          definitions: nativeDefinitionSources(working),
+          settings: nativeSetupSettings,
+          storage: nativeStorageSettings,
+          layouts: nativeRecordLayouts(),
+          acceptedCut: 0,
+        }),
+      ),
+      DATABASE_SCHEMA,
+    );
+    let definitions: NativeDefinitionCapture | undefined;
+    let geometry: ReturnType<NativeDefinitionCapture['geometry']> | undefined;
+    let turn: NativeWorldTurn | undefined;
+    let allocation: ReturnType<HostWork['reserveAllocation']> | undefined;
+    try {
+      const initial = decodeNativeProduct<NativeRestoreProjection['installation']>(
+        await world.installation(),
+      );
+      definitions = await NativeDefinitionCapture.capture(world);
+      geometry = definitions.geometry();
+      const reads = await stage.prepareReads(initial);
+      // This is the actual private SQL installation at cut zero, inside its
+      // still-open transaction. No ordinary live read can access this owner.
+      const cut: LiveReadCuts = {
+        worldId: initial.worldId,
+        generation: initial.generation,
+        storageGeneration: stage.generation,
+        timeline: request.timeline,
+        revision: stage.revision,
+        sequence: initial.acceptedCut,
+        durableSequence: initial.acceptedCut,
+        cuts: [],
+      };
+      turn = await driveNativeOperation(
+        world,
+        await world.beginRestore(
+          Buffer.from(
+            JSON.stringify({
+              privacy: request.privacy,
+              metadata: stage.metadata,
+            }),
+          ),
+        ),
+        geometry,
+        request.signal,
+        {
+          db: store.db,
+          liveReadCuts: () => cut,
+          restoreView: (projection, read) => reads.withPrivateView(projection, read),
+        },
+      );
+      if (turn.kind !== 'prepared' || !turn.prepared)
+        throw new Error('Native checkpoint reconciliation did not produce a sealed preparation.');
+      allocation = request.work.reserveAllocation(
+        JSON.parse(turn.prepared.allocation()) as WorkVector,
+      );
+      const publication = decodeNativeProduct<NativeRestorePublication>(
+        turn.prepared.takePublication(),
+      );
+      if (
+        !publication.restore ||
+        publication.restore.worldId !== initial.worldId ||
+        publication.restore.generation !== initial.generation ||
+        publication.restore.revision !== stage.revision
+      )
+        throw new Error('Native restore output does not bind the staged checkpoint.');
+      const history = await nativeRestoredHistory(
+        publication,
+        request.checkpointPrivacy,
+        store.db,
+        cut,
+      );
+      const result = new NativeRestorePreparation(
+        world,
+        definitions,
+        geometry,
+        turn,
+        turn.prepared,
+        publication,
+        allocation,
+        stage,
+        store,
+        request.timeline,
+        history,
+        request.backgroundSearchAdmission,
+        request.currentRetained,
+      );
+      request.signal?.throwIfAborted();
+      request.current();
+      turn.prepared.ready();
+      return result;
+    } catch (error) {
+      if (turn?.kind === 'prepared') await world.cancel(turn.key);
+      allocation?.rollback();
+      world.closeAdmission();
+      await world.finishStop();
+      await geometry?.close();
+      definitions?.release();
+      throw error;
+    }
+  }
+
+  async reject(): Promise<void> {
+    if (this.settled) throw new Error('Native restore settlement was already decided.');
+    this.settled = true;
+    if (this.prepared.settle(false) || (await this.world.finishSettlement(this.turn.key)))
+      throw new Error('Rejected native restore unexpectedly accepted its candidate.');
+    this.allocation.rollback();
+    this.world.closeAdmission();
+    await this.world.finishStop();
+    await this.geometry.close();
+    this.definitions.release();
+  }
+
+  retainReceipt(receipt: NativeWorldAdoption): void {
+    if (this.receipt) throw new Error('Restore SQL receipt was already retained.');
+    this.receipt = receipt;
+  }
+  get sqlReceipt(): NativeWorldAdoption {
+    if (!this.receipt) throw new Error('Restore has no staged SQL installation receipt.');
+    return this.receipt;
+  }
+
+  /** Only a known whole-install COMMIT permits this irreversible adoption. */
+  async activate(receipt: NativeWorldAdoption, old: NativeWorld): Promise<void> {
+    if (this.settled) throw new Error('Native restore settlement was already decided.');
+    this.settled = true;
+    if (!this.prepared.settle(true))
+      throw new Error('Committed native restore refused its accepted candidate.');
+    old.closeAdmission();
+    await old.finishStop();
+    await this.world.activateRestored(this.turn.key, JSON.stringify(receipt));
+    this.allocation.commit();
+  }
+}

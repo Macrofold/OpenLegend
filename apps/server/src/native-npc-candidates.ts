@@ -10,11 +10,7 @@ import {
   type WorldState,
   WORK_TRANSITION_AVAILABLE_MESSAGE,
 } from '@open-legend/domain';
-import type {
-  NativeActorPerception,
-  NativeActorSelf,
-  NativeBodyBinding,
-} from './native-perception.js';
+import type { NativeActorPerception, NativeActorSelf } from './native-perception.js';
 import { formatCandidateDetails, formatCandidateTemporary } from './candidate-description.js';
 import { retainNativeSources } from './native-consumer.js';
 import type { NativeDefinitionCapture } from './native-definition-capture.js';
@@ -24,7 +20,7 @@ import {
   formatDecisionWorkHandling,
 } from './decision-work-context.js';
 
-type Meaning =
+export type NativeNpcOfferMeaning =
   | { readonly kind: 'activities' | 'inspection' }
   | {
       readonly kind: 'continuation';
@@ -56,8 +52,9 @@ type Meaning =
  * descriptions and ordinals; a selected ordinal is rebound inside that owner. */
 export interface NativeNpcCandidates {
   readonly offers: readonly {
+    readonly description: string;
     readonly id: string;
-    readonly meaning: Meaning;
+    readonly meaning: NativeNpcOfferMeaning;
     readonly command: Readonly<Command> | null;
     readonly transition: WorkTransitionMode;
     readonly temporary?: Outcome;
@@ -150,133 +147,190 @@ export interface NativeFormattedNpcOffer {
   readonly transition: WorkTransitionMode;
 }
 
-/** Exact Source wording over finite native-issued offer meanings. Raw current
- * metadata supplies values; fresh native sight supplies description eligibility. */
+/** The actual candidate owner supplies only these measured/current facts.
+ * This formatter receives no command, source permission map or writable world. */
+export interface NativeNpcDescriptionRead {
+  readonly self: {
+    readonly name: NativeActorSelf['observerName'];
+    readonly position: Pick<NativeActorSelf['position'], 'x' | 'y' | 'z'>;
+    readonly hasAction: boolean;
+    readonly health: Parameters<typeof formatObservedBodyHealth>[0] | null;
+  };
+  readonly bodies: readonly {
+    readonly ordinal: number;
+    readonly sourceId: string;
+    readonly name: NativeActorSelf['observerName'];
+    readonly position?: Pick<NativeActorSelf['position'], 'x' | 'y' | 'z'> | null;
+    readonly visible: boolean;
+    readonly health: Parameters<typeof formatObservedBodyHealth>[0] | null;
+  }[];
+  readonly offers: readonly {
+    readonly id: string;
+    readonly meaning: NativeNpcOfferMeaning;
+    readonly transition: WorkTransitionMode;
+    readonly hasCommand: boolean;
+    readonly temporary?: Outcome;
+    readonly nextAt?: number;
+  }[];
+  readonly definitions: NativeNpcCandidateDefinitions;
+}
+
+/** Existing complete-capture caller and the finite native provider use the same
+ * Source description path. Their actual owners retain the formatted product. */
 export function nativeNpcCandidateDescriptions(
   self: NativeActorSelf,
   perception: NativeActorPerception,
   candidates: NativeNpcCandidates,
   definitions: NativeNpcCandidateDefinitions,
 ): readonly NativeFormattedNpcOffer[] {
-  const strikes = Object.values(definitions.nativeStrikes ?? {});
   const visible = new Set(candidates.visibleBodyOrdinals);
-  const body = (ordinal: number) => {
-    const binding = perception.bodies[ordinal];
-    if (!binding) throw new Error('The native choice has no captured body.');
-    return binding;
-  };
-  const values = (binding: NativeBodyBinding) =>
-    perception.cut.current.slice(binding.first, binding.first + binding.count);
-  const targetDetails = (ordinal: number | null) => {
-    if (ordinal === null)
-      return {
-        description: namePhrase(self.observerName),
-        health: formatObservedBodyHealth(self.attributes.find((attribute) => attribute.bodyHealth)),
-        distance: 0,
-      };
-    if (!visible.has(ordinal)) return;
-    const binding = body(ordinal),
-      facets = values(binding);
-    const observed = facets.find((facet) => facet.value.kind === 'body')?.value;
-    if (observed?.kind !== 'body') throw new Error('The native choice body value is unavailable.');
-    const health = facets
-      .flatMap((facet) => (facet.value.kind === 'public-attributes' ? facet.value.attributes : []))
-      .find((attribute) => attribute.bodyHealth);
-    return {
-      description: namePhrase(binding.name),
-      health: formatObservedBodyHealth(health),
-      distance: Math.hypot(
-        self.position.x - observed.body.position.x,
-        self.position.y - observed.body.position.y,
-        self.position.z - observed.body.position.z,
-      ),
-    };
-  };
   return retainNativeSources(
-    candidates.offers.map((offer, ordinal) => {
-      const meaning = offer.meaning;
-      let base: { description: string; firstActionDescription?: string };
-      let target: ReturnType<typeof targetDetails>;
-      let subjectIds: readonly string[] | undefined;
-      switch (meaning.kind) {
-        case 'activities':
-        case 'inspection':
-          base = decisionOfferDescription({ kind: meaning.kind });
-          break;
-        case 'continuation':
-          base = decisionOfferDescription({
-            kind: 'continuation',
-            actionType: meaning.actionType ?? undefined,
-            planPending: meaning.planPending,
-          });
-          break;
-        case 'follow':
-          base = decisionOfferDescription({ kind: 'follow', target: body(meaning.body).name });
-          target = targetDetails(meaning.body);
-          break;
-        case 'status': {
-          const definition = definitions.statusEffectPolicy.definitions[meaning.definition];
-          if (!definition?.actions)
-            throw new Error('The native status choice definition is unavailable.');
-          base = decisionOfferDescription({
-            kind: 'status',
-            label: meaning.active ? definition.actions.deactivate : definition.actions.activate,
-            ...(meaning.body === null ? {} : { targetName: body(meaning.body).name.name }),
-          });
-          target = targetDetails(meaning.body);
-          break;
-        }
-        case 'approach':
-          base = decisionOfferDescription({
-            kind: 'approach',
-            targetDescription: namePhrase(body(meaning.body).name, 'definite'),
-            distance: meaning.distance.toFixed(1),
-            reach: meaning.reach,
-          });
-          subjectIds = [body(meaning.body).sourceId];
-          break;
-        case 'probe': {
-          const probe = definitions.probes[meaning.probe];
-          if (!probe) throw new Error('The native movement probe is unavailable.');
-          base = decisionOfferDescription({ kind: 'probe', direction: probe.direction });
-          break;
-        }
-        case 'strike': {
-          const definition = strikes[meaning.definition];
-          if (!definition) throw new Error('The native strike choice definition is unavailable.');
-          base = decisionOfferDescription({
-            kind: 'natural-strike',
-            target: body(meaning.body).name,
-            definition,
-            hunting: meaning.hunting,
-          });
-          target = targetDetails(meaning.body);
-          break;
-        }
-      }
-      const description = offer.temporary
-        ? formatCandidateTemporary(base.description, {
-            message: offer.temporary.message,
-            ...(offer.nextAt === undefined ? {} : { nextAt: offer.nextAt }),
-          })
-        : base.description;
-      return {
-        ordinal,
-        id: offer.id,
-        ...(base.firstActionDescription
-          ? { firstActionDescription: base.firstActionDescription }
-          : {}),
-        ...(subjectIds ? { subjectIds } : {}),
-        transition: offer.transition,
-        description: formatCandidateDetails(
-          description,
-          offer.transition,
-          !!(self.action && offer.command),
-          undefined,
-          target,
-        ),
-      };
+    formatNativeNpcCandidateDescriptions({
+      self: {
+        name: self.observerName,
+        position: self.position,
+        hasAction: !!self.action,
+        health: self.attributes.find((attribute) => attribute.bodyHealth),
+      },
+      bodies: perception.bodies.map((binding, ordinal) => {
+        const facets = perception.cut.current.slice(binding.first, binding.first + binding.count);
+        const body = facets.find((facet) => facet.value.kind === 'body')?.value;
+        return {
+          ordinal,
+          sourceId: binding.sourceId,
+          name: binding.name,
+          visible: visible.has(ordinal),
+          ...(body?.kind === 'body' ? { position: body.body.position } : {}),
+          health: facets
+            .flatMap((facet) =>
+              facet.value.kind === 'public-attributes' ? facet.value.attributes : [],
+            )
+            .find((attribute) => attribute.bodyHealth),
+        };
+      }),
+      offers: candidates.offers.map(({ command, ...offer }) => ({
+        ...offer,
+        hasCommand: !!command,
+      })),
+      definitions,
     }),
     candidates,
   );
+}
+
+export function formatNativeNpcCandidateDescriptions(
+  read: NativeNpcDescriptionRead,
+): readonly NativeFormattedNpcOffer[] {
+  const definitions = read.definitions;
+  const strikes = Object.values(definitions.nativeStrikes ?? {});
+  const bodies = new Map(read.bodies.map((body) => [body.ordinal, body]));
+  const body = (ordinal: number) => {
+    const value = bodies.get(ordinal);
+    if (!value) throw new Error('The native choice has no captured body.');
+    return value;
+  };
+  const targetDetails = (ordinal: number | null) => {
+    if (ordinal === null)
+      return {
+        description: namePhrase(read.self.name),
+        health: formatObservedBodyHealth(read.self.health ?? undefined),
+        distance: 0,
+      };
+    const target = body(ordinal);
+    if (!target.visible) return;
+    if (!target.position) throw new Error('The native choice body value is unavailable.');
+    return {
+      description: namePhrase(target.name),
+      health: formatObservedBodyHealth(target.health ?? undefined),
+      distance: Math.hypot(
+        read.self.position.x - target.position.x,
+        read.self.position.y - target.position.y,
+        read.self.position.z - target.position.z,
+      ),
+    };
+  };
+  return read.offers.map((offer, ordinal) => {
+    const meaning = offer.meaning;
+    let base: { description: string; firstActionDescription?: string };
+    let target: ReturnType<typeof targetDetails>;
+    let subjectIds: readonly string[] | undefined;
+    switch (meaning.kind) {
+      case 'activities':
+      case 'inspection':
+        base = decisionOfferDescription({ kind: meaning.kind });
+        break;
+      case 'continuation':
+        base = decisionOfferDescription({
+          kind: 'continuation',
+          actionType: meaning.actionType ?? undefined,
+          planPending: meaning.planPending,
+        });
+        break;
+      case 'follow':
+        base = decisionOfferDescription({ kind: 'follow', target: body(meaning.body).name });
+        target = targetDetails(meaning.body);
+        break;
+      case 'status': {
+        const definition = definitions.statusEffectPolicy.definitions[meaning.definition];
+        if (!definition?.actions)
+          throw new Error('The native status choice definition is unavailable.');
+        base = decisionOfferDescription({
+          kind: 'status',
+          label: meaning.active ? definition.actions.deactivate : definition.actions.activate,
+          ...(meaning.body === null ? {} : { targetName: body(meaning.body).name.name }),
+        });
+        target = targetDetails(meaning.body);
+        break;
+      }
+      case 'approach':
+        base = decisionOfferDescription({
+          kind: 'approach',
+          targetDescription: namePhrase(body(meaning.body).name, 'definite'),
+          distance: meaning.distance.toFixed(1),
+          reach: meaning.reach,
+        });
+        subjectIds = [body(meaning.body).sourceId];
+        break;
+      case 'probe': {
+        const probe = definitions.probes[meaning.probe];
+        if (!probe) throw new Error('The native movement probe is unavailable.');
+        base = decisionOfferDescription({ kind: 'probe', direction: probe.direction });
+        break;
+      }
+      case 'strike': {
+        const definition = strikes[meaning.definition];
+        if (!definition) throw new Error('The native strike choice definition is unavailable.');
+        base = decisionOfferDescription({
+          kind: 'natural-strike',
+          target: body(meaning.body).name,
+          definition,
+          hunting: meaning.hunting,
+        });
+        target = targetDetails(meaning.body);
+        break;
+      }
+    }
+    const description = offer.temporary
+      ? formatCandidateTemporary(base.description, {
+          message: offer.temporary.message,
+          ...(offer.nextAt === undefined ? {} : { nextAt: offer.nextAt }),
+        })
+      : base.description;
+    return {
+      ordinal,
+      id: offer.id,
+      ...(base.firstActionDescription
+        ? { firstActionDescription: base.firstActionDescription }
+        : {}),
+      ...(subjectIds ? { subjectIds } : {}),
+      transition: offer.transition,
+      description: formatCandidateDetails(
+        description,
+        offer.transition,
+        read.self.hasAction && offer.hasCommand,
+        undefined,
+        target,
+      ),
+    };
+  });
 }

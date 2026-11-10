@@ -82,58 +82,23 @@ export function restoredSourceVersions(
   state: SavedWorld,
   rows: readonly Record<string, unknown>[],
 ): { state: SavedWorld; rows: Record<string, unknown>[] } {
-  const needed = new Map<string, Category>();
-  const include = (actorId: string, entry: ExperienceEntry) => {
-    if (entry.source === 'memory' && entry.value.kind === 'impression') return;
-    const refs =
-      entry.source === 'summary'
-        ? [...entry.value.sources, ...entry.value.manifest.coverage]
-        : entry.source === 'memory'
-          ? (entry.value.manifest?.coverage ?? [])
-          : [];
-    for (const source of refs) {
-      if (state.world.experience?.forgotten[actorId]?.includes(source.id)) continue;
-      const id = key({ actorId, kind: source.kind, id: source.id, revision: source.revision }),
-        category = accountClass(entry),
-        old = needed.get(id);
-      if (old === undefined || priority(category) > priority(old)) needed.set(id, category);
-    }
-  };
-  for (const [actorId, values] of Object.entries(state.world.experience?.summaries ?? {}))
-    for (const value of values) include(actorId, { source: 'summary', value });
-  for (const [actorId, values] of Object.entries(state.world.memories))
-    for (const value of values) include(actorId, { source: 'memory', value });
-  const totals = new Map<string, ReturnType<typeof zero>>();
-  const retained = rows.flatMap((row) => {
-    if (row['source_kind'] === 'perspective')
-      return state.world.experience?.forgotten[String(row['actor_id'])]?.includes(
-        String(row['source_id']),
-      )
-        ? []
-        : [{ ...row }];
-    const actorId = String(row['actor_id']),
-      category = needed.get(
-        key({
-          actorId,
-          kind: String(row['source_kind']),
-          id: String(row['source_id']),
-          revision: String(row['revision']),
-        }),
-      );
-    if (!category) return [];
-    const bytes = Buffer.byteLength(String(row['payload']));
-    const value = totals.get(actorId) ?? zero();
-    value[category].bytes += bytes;
-    value[category].count++;
-    totals.set(actorId, value);
-    return [{ ...row, retention_class: category, logical_bytes: bytes }];
-  });
+  function* owners(): Generator<{ actorId: string; entry: ExperienceEntry }> {
+    for (const [actorId, values] of Object.entries(state.world.experience?.summaries ?? {}))
+      for (const value of values) yield { actorId, entry: { source: 'summary', value } };
+    for (const [actorId, values] of Object.entries(state.world.memories))
+      for (const value of values) yield { actorId, entry: { source: 'memory', value } };
+  }
+  const selection = new RestoredSourceVersionSelection(
+    (actorId, sourceId) => !!state.world.experience?.forgotten[actorId]?.includes(sourceId),
+  );
+  for (const { actorId, entry } of owners()) selection.include(actorId, entry);
+  const selected = selection.select(rows);
   const world = updateWorld(
     state.world,
     (draft) => {
       for (const [actorId, actor] of Object.entries(draft.experience?.temporal?.actors ?? {})) {
         const old = actor.accounts?.archives ?? zero(),
-          next = totals.get(actorId) ?? zero();
+          next = selected.totals.get(actorId) ?? zero();
         if (JSON.stringify(old) === JSON.stringify(next)) continue;
         ensureExperienceAccounting(draft, actorId);
         for (const category of ['optional', 'required', 'speech'] as const) {
@@ -145,7 +110,68 @@ export function restoredSourceVersions(
     },
     { retainNativeValues: true },
   );
-  return { state: world === state.world ? state : { ...state, world }, rows: retained };
+  return { state: world === state.world ? state : { ...state, world }, rows: selected.rows };
+}
+
+/** Both restore authorities use the same archive selection. Native callers
+ * stream their strictly installed canonical memory/summary rows here; only
+ * referenced identities and the resulting byte/count totals are retained. */
+export class RestoredSourceVersionSelection {
+  private readonly needed = new Map<string, Category>();
+  constructor(private readonly forgotten: (actorId: string, sourceId: string) => boolean) {}
+
+  include(actorId: string, entry: ExperienceEntry): void {
+    if (entry.source === 'memory' && entry.value.kind === 'impression') return;
+    const refs =
+      entry.source === 'summary'
+        ? [...entry.value.sources, ...entry.value.manifest.coverage]
+        : entry.source === 'memory'
+          ? (entry.value.manifest?.coverage ?? [])
+          : [];
+    this.includeReferences(actorId, accountClass(entry), refs);
+  }
+
+  includeReferences(actorId: string, category: Category, refs: Iterable<PersonalSourceRef>): void {
+    for (const source of refs) {
+      if (this.forgotten(actorId, source.id)) continue;
+      const id = key({ actorId, kind: source.kind, id: source.id, revision: source.revision }),
+        old = this.needed.get(id);
+      if (old === undefined || priority(category) > priority(old)) this.needed.set(id, category);
+    }
+  }
+
+  retainedClass(actorId: string, source: PersonalSourceRef): Category | undefined {
+    return this.needed.get(
+      key({ actorId, kind: source.kind, id: source.id, revision: source.revision }),
+    );
+  }
+
+  select(rows: readonly Record<string, unknown>[]) {
+    const totals = new Map<string, ReturnType<typeof zero>>();
+    const retained = rows.flatMap((row) => {
+      if (row['source_kind'] === 'perspective')
+        return this.forgotten(String(row['actor_id']), String(row['source_id']))
+          ? []
+          : [{ ...row }];
+      const actorId = String(row['actor_id']),
+        category = this.needed.get(
+          key({
+            actorId,
+            kind: String(row['source_kind']),
+            id: String(row['source_id']),
+            revision: String(row['revision']),
+          }),
+        );
+      if (!category) return [];
+      const bytes = Buffer.byteLength(String(row['payload']));
+      const value = totals.get(actorId) ?? zero();
+      value[category].bytes += bytes;
+      value[category].count++;
+      totals.set(actorId, value);
+      return [{ ...row, retention_class: category, logical_bytes: bytes }];
+    });
+    return { rows: retained, totals };
+  }
 }
 const tables = {
   awareness: 'mind_awareness',

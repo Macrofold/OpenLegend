@@ -27,6 +27,7 @@ pub(crate) use save::{encode_candidate_changes, encode_root_changes};
 mod publication;
 pub(crate) use publication::{PreparedPublication, PublicationError};
 mod host_control;
+pub(crate) mod restore;
 mod driver;
 pub(crate) mod session;
 pub(crate) use driver::{

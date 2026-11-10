@@ -152,6 +152,7 @@ impl ActivityDisplayCursor {
         if matches!(
             command,
             NativeCommand::Cancel { .. }
+                | NativeCommand::WithdrawAttempt { .. }
                 | NativeCommand::InspectInventory { .. }
                 | NativeCommand::InspectActivities { .. }
         ) {
@@ -393,6 +394,7 @@ impl ActivityDisplayCursor {
             },
             NativeCommand::Strike { .. } => Command::Strike { purpose },
             NativeCommand::Cancel { .. }
+            | NativeCommand::WithdrawAttempt { .. }
             | NativeCommand::InspectInventory { .. }
             | NativeCommand::InspectActivities { .. } => {
                 return Err(ExecutionError::UnsupportedFamily);

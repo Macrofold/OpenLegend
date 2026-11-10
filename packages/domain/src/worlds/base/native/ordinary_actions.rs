@@ -14,6 +14,24 @@ pub(crate) struct ActionMessage {
     pub code: String,
     pub message: String,
 }
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct ParticipationRules {
+    pub changed_refresh: ActionMessage,
+    pub invalid_attempt: ActionMessage,
+    pub stale_attempt: ActionMessage,
+    pub changed: ActionMessage,
+    pub already_pending: ActionMessage,
+    pub already_participating: ActionMessage,
+    pub unsafe_return: ActionMessage,
+    pub active: ActionMessage,
+    pub exiting: ActionMessage,
+    pub inactive: ActionMessage,
+    pub departed_event: String,
+    pub departed_clause: String,
+    pub returned_event: String,
+    pub returned_clause: String,
+}
 impl ActionMessage {
     pub(crate) fn outcome(&self, ok: bool) -> Outcome {
         Outcome {
@@ -38,6 +56,7 @@ pub(crate) struct OrdinaryActionRules {
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub version: u64,
     pub plan: plan_rules::PlanRules,
+    pub participation: ParticipationRules,
     pub invalid_command: ActionMessage,
     pub unknown_actor: ActionMessage,
     pub inactive: ActionMessage,

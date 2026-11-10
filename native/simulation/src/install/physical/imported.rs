@@ -436,6 +436,7 @@ pub(super) fn install_entities(
     present: bool,
     installed: &PhysicalDefinitions<'_>,
     now: f64,
+    purpose: crate::install::InstallPurpose,
     budget: &ByteBudget,
 ) -> Result<EntityStore, InstallError> {
     if !present {
@@ -497,7 +498,7 @@ pub(super) fn install_entities(
         {
             return Err(InstallError::CurrentFormat);
         }
-        validate_entity(&entity, installed, now)?;
+        validate_entity(&entity, installed, now, purpose)?;
         let order = orders.shift_remove(&id).ok_or(InstallError::Identity)?;
         entries.push((order, entity));
     }

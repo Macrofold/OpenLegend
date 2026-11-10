@@ -124,6 +124,10 @@ pub(crate) enum NativeCommand {
         envelope: CommandEnvelope,
         expected_action_id: Option<String>,
     },
+    WithdrawAttempt {
+        envelope: CommandEnvelope,
+        attempt_id: String,
+    },
     /// These current syntax families participate in genuine discovery and
     /// record-size preparation. Their physical executors are outside the
     /// selected installation, so ordinary execution refuses before effects.
@@ -160,7 +164,7 @@ macro_rules! optional {
         }
     }
 }
-optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:SurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,after:i64,method_after:u64);
+optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:SurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String);
 
 impl<'de> Deserialize<'de> for NativeCommand {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
@@ -191,6 +195,7 @@ impl<'de> Deserialize<'de> for NativeCommand {
             return Err(D::Error::custom("Invalid selected native command binding."));
         }
         let discovery_fields = input.distance.is_some()
+            || input.attempt_id.is_some()
             || input.weapon_item_id.is_some()
             || input.auto_equip.is_some()
             || input.after.is_some()
@@ -255,6 +260,28 @@ impl<'de> Deserialize<'de> for NativeCommand {
             chosen_purpose: input.chosen_purpose,
         };
         match input.kind.as_str() {
+            "withdraw-attempt"
+                if !discovery_extras
+                    && input.distance.is_none()
+                    && input.weapon_item_id.is_none()
+                    && input.auto_equip.is_none()
+                    && input.after.is_none()
+                    && input.method_after.is_none()
+                    && input.target_id.is_none()
+                    && input.definition_id.is_none() =>
+            {
+                Ok(Self::WithdrawAttempt {
+                    envelope,
+                    attempt_id: input
+                        .attempt_id
+                        .filter(|id| is_safe_record_id(id))
+                        .ok_or_else(|| {
+                            D::Error::custom(
+                                "Intent withdrawal requires its actual pending identity.",
+                            )
+                        })?,
+                })
+            }
             "move" if !extras_for_move => Ok(Self::Move {
                 envelope,
                 destination: input.destination.ok_or_else(|| {
@@ -292,6 +319,7 @@ impl<'de> Deserialize<'de> for NativeCommand {
             }),
             "follow"
                 if !discovery_extras
+                    && input.attempt_id.is_none()
                     && input.definition_id.is_none()
                     && input.weapon_item_id.is_none()
                     && input.auto_equip.is_none()
@@ -308,6 +336,7 @@ impl<'de> Deserialize<'de> for NativeCommand {
             }
             "strike"
                 if !discovery_extras
+                    && input.attempt_id.is_none()
                     && input.distance.is_none()
                     && input.after.is_none()
                     && input.method_after.is_none() =>
@@ -334,6 +363,7 @@ impl<'de> Deserialize<'de> for NativeCommand {
             }
             "inspect-activities"
                 if !discovery_extras
+                    && input.attempt_id.is_none()
                     && input.target_id.is_none()
                     && input.definition_id.is_none()
                     && input.distance.is_none()
@@ -371,6 +401,7 @@ impl NativeCommand {
             | Self::Say { envelope, .. }
             | Self::StatusEffect { envelope, .. }
             | Self::Cancel { envelope, .. }
+            | Self::WithdrawAttempt { envelope, .. }
             | Self::Follow { envelope, .. }
             | Self::Strike { envelope, .. }
             | Self::InspectInventory { envelope }
@@ -389,6 +420,7 @@ impl NativeCommand {
             | Self::Say { envelope, .. }
             | Self::StatusEffect { envelope, .. }
             | Self::Cancel { envelope, .. }
+            | Self::WithdrawAttempt { envelope, .. }
             | Self::Follow { envelope, .. }
             | Self::Strike { envelope, .. }
             | Self::InspectInventory { envelope }
@@ -401,6 +433,7 @@ impl NativeCommand {
             Self::Say { .. } => "say",
             Self::StatusEffect { .. } => "status-effect",
             Self::Cancel { .. } => "cancel",
+            Self::WithdrawAttempt { .. } => "withdraw-attempt",
             Self::Follow { .. } => "follow",
             Self::Strike { .. } => "strike",
             Self::InspectInventory { .. } => "inspect-inventory",

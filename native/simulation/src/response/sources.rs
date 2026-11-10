@@ -236,7 +236,7 @@ pub(super) fn remember(
                 selected.push(captured);
                 continue;
             }
-            let cut = &bindings.input.read.perception.evidence;
+            let cut = &bindings.input.reads.original.perception.evidence;
             let law = core.state.installed.account_law();
             let captured = if let Some(index) = situation.current_references.get(reference) {
                 if !evidence_cut_member_eligible(
@@ -507,6 +507,7 @@ pub(super) fn knowledge(
         .as_ref()
         .into_iter()
         .flat_map(|situation| situation.receipt_details.values())
+        .map(std::sync::Arc::as_ref)
         .filter(matches)
         .collect();
     let mut needs_retention = false;

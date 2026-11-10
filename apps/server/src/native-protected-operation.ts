@@ -35,6 +35,8 @@ export async function acceptProtectedNativeOperation<T extends object>(request: 
   readonly accept: (staged: T) => void;
   readonly park: (hold: NativeProtectedHold, error: unknown) => void;
   readonly signal?: AbortSignal;
+  /** A refused domain transition must not execute attached control SQL. */
+  readonly requireSuccess?: boolean;
   readonly history: NativeHistoryReadContext;
 }): Promise<{ readonly publication: NativePublication; readonly staged?: T }> {
   const { world } = request;
@@ -69,7 +71,7 @@ export async function acceptProtectedNativeOperation<T extends object>(request: 
     const publication = decodeNativeProduct<NativePublication>(prepared.takePublication());
     // Refused/no-change operations have no protected SQL prefix. Their actual
     // semantic result is returned after exact rollback, without a fake save.
-    if (!publication.protectedSave) {
+    if (!publication.protectedSave || (request.requireSuccess && !publication.outcome.ok)) {
       await reject();
       return { publication };
     }

@@ -38,6 +38,8 @@ struct Manifest {
 #[serde(rename_all = "camelCase")]
 struct SourceAttribution {
     #[serde(default)]
+    modality: Option<Box<serde_json::value::RawValue>>,
+    #[serde(default)]
     source_subject: Option<ObserverSubject>,
     #[serde(default)]
     evidence: Option<SpeechSubject>,
@@ -63,12 +65,16 @@ struct OccurrenceRole {
 }
 pub(crate) struct NpcSourceAttribution {
     subjects: Vec<NpcSubjectFact>,
+    entity_subjects: Vec<NpcSubjectFact>,
     presentation_subjects: Vec<NpcSubjectFact>,
     permitted_entities: Vec<String>,
+    bound_entity_ids: Vec<String>,
     occurrence_roles: Vec<OccurrenceRole>,
     names: crate::worlds::CapturedNames,
     identities: crate::worlds::CapturedAttributionIdentities,
     named_other: bool,
+    reading_modality: Option<String>,
+    reading_entities: Vec<String>,
     _storage: ByteReservation,
 }
 impl Serialize for NpcSourceAttribution {
@@ -99,10 +105,12 @@ impl Serialize for NpcSourceAttribution {
                 out.end()
             }
         }
-        let mut out = serializer.serialize_struct("Attribution", 6)?;
+        let mut out = serializer.serialize_struct("Attribution", 8)?;
         out.serialize_field("subjects", &self.subjects)?;
+        out.serialize_field("entitySubjects", &self.entity_subjects)?;
         out.serialize_field("presentationSubjects", &self.presentation_subjects)?;
         out.serialize_field("permittedEntities", &self.permitted_entities)?;
+        out.serialize_field("boundEntityIds", &self.bound_entity_ids)?;
         out.serialize_field("occurrenceRoles", &Roles(self))?;
         out.serialize_field("namedOther", &self.named_other)?;
         out.serialize_field("attributionIdentities", &self.identities)?;
@@ -110,6 +118,74 @@ impl Serialize for NpcSourceAttribution {
     }
 }
 impl NpcSourceAttribution {
+    pub(crate) fn appraisal_source(
+        &self,
+        record: &PersonalSourceRecord,
+        decision: &str,
+        trigger: bool,
+        budget: &ByteBudget,
+    ) -> Result<(crate::appraisals::PerceivedCause, ByteReservation), ExecutionError> {
+        let header = record.header();
+        let source_kind = match header.reference.kind {
+            PersonalSourceKind::Awareness => "awareness",
+            PersonalSourceKind::Memory => "memory",
+            PersonalSourceKind::Summary => "summary",
+        };
+        let coverage = match header.reference.kind {
+            PersonalSourceKind::Awareness => self
+                .reading_modality
+                .as_deref()
+                .ok_or(ExecutionError::InvalidCheckpoint)?,
+            PersonalSourceKind::Memory => header
+                .source
+                .as_deref()
+                .ok_or(ExecutionError::InvalidCheckpoint)?,
+            PersonalSourceKind::Summary => "inferred",
+        };
+        let occurrence = header.event_id.as_deref().unwrap_or(&header.reference.id);
+        let kind = if trigger && header.reference.kind == PersonalSourceKind::Awareness {
+            "perceived-event"
+        } else {
+            "remembered"
+        };
+        let bytes = heap_sum([
+            kind.len(),
+            source_kind.len(),
+            header.actor_id.len(),
+            header.reference.id.len(),
+            occurrence.len(),
+            header.reference.revision.len(),
+            coverage.len(),
+            decision.len(),
+            self.reading_entities
+                .heap_bytes()
+                .ok_or(ExecutionError::Capacity)?,
+        ])
+        .ok_or(ExecutionError::Capacity)?;
+        let storage = budget.reserve(bytes)?;
+        Ok((
+            crate::appraisals::PerceivedCause {
+                kind: kind.into(),
+                actor_id: header.actor_id.clone(),
+                source_id: header.reference.id.clone(),
+                source_kind: source_kind.into(),
+                occurrence_id: occurrence.to_owned(),
+                source_version: header.reference.revision.clone(),
+                coverage: coverage.to_owned(),
+                subject_ids: self.reading_entities.clone(),
+                recall_episode_id: Some(decision.to_owned()),
+            },
+            storage,
+        ))
+    }
+    pub(crate) fn subject(&self, ordinal: usize) -> Option<&NpcSubjectFact> {
+        self.subjects.get(ordinal)
+    }
+    pub(crate) fn entity(&self, ordinal: usize) -> Option<(&NpcSubjectFact, bool)> {
+        let fact = self.entity_subjects.get(ordinal)?;
+        let id = fact.canonical_id.as_deref()?;
+        Some((fact, self.bound_entity_ids.iter().any(|bound| bound == id)))
+    }
     pub(super) fn capture(
         state: &SimulationState,
         actor: &str,
@@ -269,7 +345,32 @@ impl NpcSourceAttribution {
                 body.entity_episodes.get(id).map(String::as_str),
             )
         };
+        // Awareness role references have a narrower source-bound roster than
+        // retained association subjects. Preserve the actual factory order.
+        let bound_inputs = || {
+            body.source_id
+                .iter()
+                .chain(&body.target_id)
+                .chain(&body.entity_ids)
+        };
+        let bound_bytes = bound_inputs().try_fold(
+            (body.entity_ids.len() + 2)
+                .checked_mul(size_of::<String>())
+                .ok_or(ExecutionError::Capacity)?,
+            |n, id| n.checked_add(id.len()).ok_or(ExecutionError::Capacity),
+        )?;
+        let bound_storage = budget.reserve(if awareness { bound_bytes } else { 0 })?;
+        let mut bound_entity_ids = Vec::with_capacity(if awareness {
+            body.entity_ids.len() + 2
+        } else {
+            0
+        });
         if awareness {
+            for id in bound_inputs() {
+                if binds(id)? {
+                    bound_entity_ids.push(id.clone());
+                }
+            }
             for id in &body.entity_ids {
                 if binds(id)? {
                     permitted.insert(id);
@@ -318,6 +419,7 @@ impl NpcSourceAttribution {
             role_ids[index] = &role.entity_id;
         }
         let identities = names.capture_attribution_identities(permitted.iter().copied(), budget)?;
+        let names_for_subjects = names;
         let names = names.capture_names(&role_ids[..occurrence_roles.len()], budget)?;
         let permitted_bytes = permitted
             .iter()
@@ -325,21 +427,83 @@ impl NpcSourceAttribution {
             .and_then(|n| n.checked_add(permitted.len().checked_mul(size_of::<String>())?))
             .ok_or(ExecutionError::Capacity)?;
         let mut storage = storage;
+        storage.merge(bound_storage)?;
         storage.resize(
             storage
                 .bytes()
                 .checked_add(permitted_bytes)
                 .ok_or(ExecutionError::Capacity)?,
         )?;
+        storage.resize(
+            storage
+                .bytes()
+                .checked_add(
+                    permitted
+                        .len()
+                        .checked_mul(size_of::<NpcSubjectFact>())
+                        .ok_or(ExecutionError::Capacity)?,
+                )
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let mut entity_subjects = Vec::with_capacity(permitted.len());
+        for id in &permitted {
+            let _copy = budget.reserve(id.len())?;
+            entity_subjects.push(subject_fact(
+                state,
+                actor,
+                names_for_subjects,
+                ObserverSubject::Entity {
+                    entity_id: (*id).to_owned(),
+                },
+                budget,
+            )?);
+        }
         let permitted_entities = permitted.into_iter().map(str::to_owned).collect();
+        let reading_modality = if awareness {
+            let raw = body
+                .modality
+                .as_ref()
+                .ok_or(ExecutionError::InvalidCheckpoint)?;
+            storage.resize(
+                storage
+                    .bytes()
+                    .checked_add(
+                        raw.get()
+                            .len()
+                            .checked_mul(4)
+                            .ok_or(ExecutionError::Capacity)?,
+                    )
+                    .ok_or(ExecutionError::Capacity)?,
+            )?;
+            Some(
+                serde_json::from_str::<String>(raw.get())
+                    .map_err(|_| ExecutionError::InvalidCheckpoint)?,
+            )
+        } else {
+            None
+        };
+        storage.resize(
+            storage
+                .bytes()
+                .checked_add(
+                    body.entity_ids
+                        .heap_bytes()
+                        .ok_or(ExecutionError::Capacity)?,
+                )
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
         Ok(Self {
             subjects,
+            entity_subjects,
             permitted_entities,
+            bound_entity_ids,
             occurrence_roles,
             names,
             identities,
             named_other,
             presentation_subjects,
+            reading_modality,
+            reading_entities: body.entity_ids,
             _storage: storage,
         })
     }

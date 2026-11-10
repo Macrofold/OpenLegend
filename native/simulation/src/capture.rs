@@ -16,19 +16,32 @@ mod controls;
 mod definitions;
 pub(crate) use definitions::write_installed_definitions;
 mod metadata;
+mod validity;
+pub(crate) use validity::DecisionValidityWitness;
 mod navigation;
+mod npc_bindings;
 mod npc_current;
-mod npc_subject;
 mod npc_references;
+mod npc_subject;
+pub(crate) use npc_bindings::{
+    NpcAliasOrdinal, NpcBindingMaps, NpcBindingRead, NpcBindingSelection,
+};
 pub(crate) use npc_references::NpcReferenceFacts;
 mod npc_history;
 pub(crate) use npc_history::{NpcHistoricalScope, NpcHistoryPrefix};
 mod npc_sources;
-pub(crate) use npc_sources::{NpcSourceRows, NpcSourceSelection, NpcSourcesAnswer, NpcSourcesCursor, PreparedNpcSources};
+pub(crate) use npc_sources::{
+    NpcSourceRows, NpcSourceSelection, NpcSourcesAnswer, NpcSourcesCursor, NpcSourcesRequest,
+    PreparedNpcSources,
+};
 mod npc_selection;
 pub(crate) use npc_selection::NpcObservationSelection;
 mod npc_candidates;
-pub(crate) use npc_candidates::{NpcCandidateAnswer,NpcCandidateCursor,NpcCandidateStep,NpcOfferCoverage,PreparedNpcCandidates};
+pub(crate) use npc_candidates::{
+    NpcCandidateAnswer, NpcCandidateCursor, NpcCandidateStep, NpcOfferCoverage,
+    PreparedNpcCandidates,
+    NpcDescriptionsRequest, NpcDescriptionsAnswer,
+};
 mod outcomes;
 mod player;
 mod practice;
@@ -125,6 +138,11 @@ struct PerceptionProduct<'a> {
     npc_current: Option<&'a npc_current::NpcCurrentCapture>,
 }
 impl CapturedActorPerception {
+    pub(crate) fn attention_presentations(&self) -> &[crate::attention::AttentionPresentation] {
+        self.npc_current
+            .as_ref()
+            .map_or(&[], |current| current.attention.entries.as_slice())
+    }
     pub(crate) fn write_json(
         &self,
         budget: &ByteBudget,
@@ -514,6 +532,21 @@ struct OwnNpcObservation<'a> {
     known_recipes_count: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
     corrections: Option<&'a indexmap::IndexMap<String, String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    forgotten: Option<&'a [String]>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    map_marker_labels: Option<OwnNpcMapLabels<'a>>,
+}
+struct OwnNpcMapLabels<'a>(&'a indexmap::IndexMap<String, crate::reception::MapMarker>);
+impl Serialize for OwnNpcMapLabels<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeMap;
+        let mut out = serializer.serialize_map(Some(self.0.len()))?;
+        for (id, marker) in self.0 {
+            out.serialize_entry(id, &marker.label)?;
+        }
+        out.end()
+    }
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -778,12 +811,32 @@ pub(crate) fn write_actor_self(
         npc: private.then(|| OwnNpcObservation {
             contacts: &actor.contacts,
             expressions: actor.body.as_ref().is_some_and(|body| {
-                state.installed.occurrence_rules.value().response.offers.manual_work_body_plans
-                    .iter().any(|plan| *plan == body.plan)
+                state
+                    .installed
+                    .occurrence_rules
+                    .value()
+                    .response
+                    .offers
+                    .manual_work_body_plans
+                    .iter()
+                    .any(|plan| *plan == body.plan)
             }),
             inventory_count: inventory.held_stock.len(),
             known_recipes_count: state.learned_capabilities.known_recipes().len(),
-            corrections: state.experience.actor(actor_id).map(|actor| actor.privacy.corrections()),
+            forgotten: state
+                .experience
+                .actor(actor_id)
+                .map(|history| history.privacy.forgotten_ids()),
+            corrections: state
+                .experience
+                .actor(actor_id)
+                .map(|actor| actor.privacy.corrections()),
+            map_marker_labels: state
+                .reception
+                .map_markers
+                .as_ref()
+                .and_then(|owners| owners.get(actor_id))
+                .map(OwnNpcMapLabels),
         }),
         player: if private {
             None

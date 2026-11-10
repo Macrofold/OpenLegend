@@ -316,4 +316,10 @@ export class NativePendingSave {
     this.revision = revision;
     this.prefix = undefined;
   }
+
+  release(): void {
+    if (this.dirty || this.prefix)
+      throw new Error('An unacknowledged native prefix cannot be released during shutdown.');
+    this.head = this.tail = undefined;
+  }
 }

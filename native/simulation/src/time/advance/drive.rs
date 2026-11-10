@@ -115,6 +115,7 @@ impl AdvanceCursor {
                 .iter()
                 .any(|change| match change {
                     PhysicalChange::Body { .. }
+                    | PhysicalChange::Participation { .. }
                     | PhysicalChange::Behavior { .. }
                     | PhysicalChange::Contribution { .. }
                     | PhysicalChange::Membership { .. } => true,
@@ -213,6 +214,14 @@ impl AdvanceCursor {
             }
             return Ok(Progress::Event);
         }
+        if self.participation.is_some() {
+            let Some(AdvanceAnswer::Participation(done)) = answer.take() else { return Ok(Progress::Participation) };
+            if self.participation_endpoint {
+                self.endpoint.as_mut().ok_or_else(invalid)?.complete_participation(&done)?;
+            } else { self.exits.as_mut().ok_or_else(invalid)?.complete(&done)?; }
+            self.participation = None;
+            self.retain(EventBatch::Participation(done))?;
+        }
         if self.preparation.is_some() {
             let Some(AdvanceAnswer::Collation(value)) = answer.take() else {
                 return Ok(Progress::Collation);
@@ -279,6 +288,7 @@ impl AdvanceCursor {
                         matches!(
                             change,
                             PhysicalChange::Body { .. }
+                                | PhysicalChange::Participation { .. }
                                 | PhysicalChange::Behavior { .. }
                                 | PhysicalChange::Contribution { .. }
                                 | PhysicalChange::Attribute { .. }
@@ -337,6 +347,7 @@ impl AdvanceCursor {
                 continue;
             }
             if self.roster.is_some()
+                && self.phase != Phase::ExitsStart
                 && self.reconcile.is_none()
                 && self.endpoint.is_none()
                 && self.motion.is_none()
@@ -349,7 +360,7 @@ impl AdvanceCursor {
                     .any(|change| {
                         matches!(
                             change,
-                            PhysicalChange::Body { .. } | PhysicalChange::Membership { .. }
+                            PhysicalChange::Body { .. } | PhysicalChange::Participation { .. } | PhysicalChange::Membership { .. }
                         )
                     });
                 self.roster_cursor = core.journal.physical.change_cursor();
@@ -407,6 +418,11 @@ impl AdvanceCursor {
                     _ => return Err(invalid().into()),
                 };
                 match cursor.step(core, input)? {
+                    EndpointStep::Participation(actor) => {
+                        self.participation = Some(crate::participation::ParticipationCursor::due(core, actor, self.candidate, budget)?);
+                        self.participation_endpoint = true;
+                        return Ok(Progress::Participation);
+                    }
                     EndpointStep::Geometry(_) => return Ok(Progress::Geometry),
                     EndpointStep::Occurrence(value) => {
                         core.sync_sensory_changes()?;
@@ -462,11 +478,21 @@ impl AdvanceCursor {
                         self.capture_perceivers(core)?;
                     }
                     self.phase = if self.mechanics.is_none() {
-                        Phase::RemainsStart
+                        self.exits = Some(crate::participation::DueExits::prepare(&core.state.physical, core.state.installed.time_epsilon, budget)?);
+                        Phase::ExitsStart
                     } else {
                         Phase::ActorCondition
                     };
                     self.next = 0;
+                }
+                Phase::ExitsStart => {
+                    if let Some(actor) = self.exits.as_ref().and_then(|exits| exits.current()) {
+                        self.participation = Some(crate::participation::ParticipationCursor::due(core, actor, self.candidate, budget)?);
+                        self.participation_endpoint = false;
+                        return Ok(Progress::Participation);
+                    }
+                    self.exits = None;
+                    self.phase = Phase::RemainsStart;
                 }
                 Phase::RemainsStart | Phase::RemainsEnd => {
                     let next = if self.phase == Phase::RemainsStart {

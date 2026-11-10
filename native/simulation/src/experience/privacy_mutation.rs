@@ -7,6 +7,7 @@ use crate::host::retained_size::{map_storage, tree_node_bound};
 use std::mem::size_of;
 
 pub(super) enum PrivacyUndo {
+    CreatedActor { actor:String },
     Revision {
         actor: String,
         before: Option<u64>,
@@ -25,7 +26,7 @@ pub(super) enum PrivacyUndo {
 impl PrivacyUndo {
     pub(super) fn actor(&self) -> &str {
         match self {
-            Self::Revision { actor, .. }
+            Self::CreatedActor { actor } | Self::Revision { actor, .. }
             | Self::Forgotten { actor, .. }
             | Self::Correction { actor, .. } => actor,
         }
@@ -37,6 +38,11 @@ impl PrivacyUndo {
     ) -> Result<(), ExperienceError> {
         let metadata = super::residency::MetadataBefore::capture(state, self.actor())?;
         match self {
+            Self::CreatedActor { actor } => {
+                let value=state.actors.shift_remove(&actor).ok_or(ExperienceError::ForeignOwner)?;
+                if !value.sources.is_empty()||value.privacy.revision.is_some()||!value.privacy.forgotten.is_empty()||!value.privacy.corrections.is_empty(){return Err(ExperienceError::StaleHydration)}
+                state.settle_metadata(metadata,&actor,actor.len(),0,funding)?;
+            }
             Self::Revision { actor, before } => {
                 state
                     .actors

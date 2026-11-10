@@ -82,7 +82,7 @@ export class NativePlayerCapture {
     operational: () => { paused: boolean; controlling: boolean },
     operationalStillCurrent: () => boolean,
   ): Promise<Buffer> {
-    if (this.released) throw new ViewChangedError();
+    if (this.released || !operationalStillCurrent()) throw new ViewChangedError();
     const before = operational();
     const publication = await this.world.playerPublication(
       this.read,

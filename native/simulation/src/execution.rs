@@ -35,6 +35,7 @@ mod body;
 mod conditions;
 mod practice;
 mod participation;
+mod restore;
 mod rates;
 mod routes;
 mod save;
@@ -128,6 +129,7 @@ pub(crate) enum ActionFinish {
 }
 
 struct CandidateFrame {
+    restore_metadata: usize,
     memory: crate::host::MemoryCheckpoint,
     knowledge: crate::knowledge::KnowledgeCheckpoint,
     encounters: crate::events::EncounterCheckpoint,
@@ -161,6 +163,7 @@ pub(crate) struct CandidateCheckpoint {
 /// token certifies semantic closure; Ready additionally needs complete encoded
 /// output, save/host admission and the actual current authority/input checks.
 pub(crate) struct CandidateJournal {
+    pub(crate) restore_metadata: crate::restore::MetadataJournal,
     pub knowledge: crate::knowledge::KnowledgeJournal,
     owner: Arc<()>,
     base_cut: u64,
@@ -438,6 +441,7 @@ impl CandidateJournal {
         let cognition = crate::cognition::CognitionJournal::new(budget)?;
         let root_cognition = cognition.checkpoint();
         Ok(Self {
+            restore_metadata: crate::restore::MetadataJournal::new(budget)?,
             owner: Arc::new(()),
             base_cut: state.accepted_cut,
             installed: state.installed.clone(),
@@ -514,6 +518,7 @@ impl CandidateJournal {
             depth: self.frames.len(),
         };
         self.frames.push(CandidateFrame {
+            restore_metadata: self.restore_metadata.checkpoint(),
             memory: self.memory.checkpoint()?,
             knowledge: self.knowledge.checkpoint(&state.reception.actor_knowledge),
             encounters,
@@ -575,6 +580,7 @@ impl CandidateJournal {
             return Err(ExecutionError::InvalidCheckpoint);
         }
         let frame = self.frames.pop().ok_or(ExecutionError::InvalidCheckpoint)?;
+        self.restore_metadata.rollback_to(state,frame.restore_metadata)?;
         self.encounters.rollback_to(frame.encounters);
         self.acquisitions.rollback_to(frame.acquisitions)?;
         state.appraisals.rollback_to(frame.appraisals)?;
@@ -636,6 +642,7 @@ impl CandidateJournal {
         &mut self,
         state: &mut SimulationState,
     ) -> Result<(), ExecutionError> {
+        self.restore_metadata.rollback_to(state,0)?;
         self.encounters.rollback_all()?;
         self.acquisitions.rollback_all()?;
         state.appraisals.rollback_to(self.root_appraisals)?;
@@ -857,6 +864,7 @@ impl CoreMutation<'_> {
         {
             match change {
                 PhysicalChange::Body { .. }
+                | PhysicalChange::Participation { .. }
                 | PhysicalChange::Contribution { .. }
                 | PhysicalChange::Spatial {
                     discontinuity: true,
@@ -1060,6 +1068,7 @@ impl From<IdentityExhausted> for ExecutionError {
 
 #[derive(Clone, Debug)]
 pub(crate) enum PhysicalChange {
+    Participation { entity_id: String },
     Membership {
         entity_id: String,
         before: Option<Point>,
@@ -1132,7 +1141,9 @@ pub(crate) struct ActionRouteWrite {
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 enum UndoKey {
     Participation(usize, u64),
+    RestoreActor(usize, u64),
     ExitExposure(String),
+    Contact(usize, u64, String),
     CoachingPresence,
     AgencyPlaces(usize, u64),
     AgencyPlan(usize, u64),
@@ -1233,6 +1244,7 @@ struct WindowClock {
     binding_count: u64,
 }
 enum Undo {
+    RestoreActor { entity: EntityHandle, controller: String, inspection: Option<crate::state::InventoryInspection> },
     Participation {
         entity: EntityHandle,
         before: Option<crate::state::Participation>,
@@ -1241,6 +1253,11 @@ enum Undo {
         actor: String,
         before: Option<(usize, f64)>,
         root_present: bool,
+    },
+    Contact {
+        entity: EntityHandle,
+        subject: String,
+        before: (usize, crate::reception::ContactEpisode),
     },
     CoachingPresence {
         before: bool,
@@ -1685,6 +1702,11 @@ impl PhysicalJournal {
                         .ok_or(ExecutionError::Invariant)?.participation = before;
                     state.entities.settle_participation_memory(entity, &mut self.reservation, true)?;
                 }
+                Undo::Contact { entity, subject, before: (position, value) } => {
+                    state.entities.resolve_mut(entity).and_then(|e| e.actor.as_mut())
+                        .and_then(|actor| actor.contacts.as_mut()).ok_or(ExecutionError::Invariant)?
+                        .shift_insert(position, subject, value);
+                }
                 Undo::ExitExposure { actor, before, root_present } => {
                     let rows = &mut state.participation.exposures;
                     if let Some((position, deadline)) = before {
@@ -2016,6 +2038,13 @@ impl PhysicalJournal {
                         .ok_or(ExecutionError::Invariant)?
                         .spatial
                         .heading = before;
+                }
+                Undo::RestoreActor { entity, controller, inspection } => {
+                    let actor = state.entities.resolve_mut(entity).and_then(|e|e.actor.as_mut()).ok_or(ExecutionError::Invariant)?;
+                    actor.controller=controller;actor.inventory_inspection=inspection;
+                    state.entities.settle_operational_memory(entity,&mut self.reservation,true)?;
+                    let id=state.entities.resolve(entity).ok_or(ExecutionError::Invariant)?.id.as_str();
+                    state.bodies.refresh(&state.entities,id)?;
                 }
                 Undo::Health { entity, before } => {
                     state

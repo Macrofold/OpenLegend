@@ -1,7 +1,7 @@
 import { selectedRecognitionSupportReader } from '@open-legend/domain';
 import type { NativeNpcCapture } from './native-npc-capture.js';
 import type { NativeInstalledDefinitions } from './native-definition-capture.js';
-import type { NativeActorReadCut } from './native-read-cut.js';
+import type { LiveReadCuts } from './live-read-overlay.js';
 import type { IndexedTemporalHistoryReadContext } from './temporal-storage.js';
 
 /** Exact actor-private query input for the existing indexed history consumer.
@@ -9,26 +9,33 @@ import type { IndexedTemporalHistoryReadContext } from './temporal-storage.js';
  * page preview; a durable-only connection cannot represent unsaved reception. */
 export function nativeTemporalHistoryContext(
   facts: NativeNpcCapture['facts'],
-  captured: NativeActorReadCut,
+  captured: LiveReadCuts,
   definitions: NativeInstalledDefinitions,
 ): IndexedTemporalHistoryReadContext {
   const { self, perception } = facts,
     seed = perception.npcCurrent;
   if (!seed.receiptPrefix)
     throw new Error('The native history tail must be resolved before selecting personal history.');
-  const cut = captured.history.cuts[0];
+  const cut = facts.history.cuts[0];
+  const live = captured.historyEligibility?.get(self.actorId);
   if (
     captured.worldId !== self.worldId ||
     captured.generation !== self.generation ||
-    captured.actorId !== self.actorId ||
-    captured.acceptedCut !== self.acceptedCut ||
-    captured.at !== self.at ||
-    captured.sequence !== self.sequence ||
-    captured.history.cuts.length !== 1 ||
+    captured.sequence < self.acceptedCut ||
+    !live ||
+    live.at < self.at ||
+    facts.history.worldId !== self.worldId ||
+    facts.history.generation !== self.generation ||
+    facts.history.baseCut !== self.acceptedCut ||
+    facts.history.cuts.length !== 1 ||
     cut?.actorId !== self.actorId ||
     cut.at !== self.at
   )
     throw new Error('History query metadata belongs to a different native NPC cut.');
+  // SQL may already represent later unrelated progress. Its real current
+  // eligibility/overlay supplies the rows, while this originating prefix and
+  // time retain what the actor had actually received. Native source admission
+  // separately rechecks the original life/privacy/timeline before consumption.
   const policy = definitions.nativePolicies.attention;
   return {
     storage: 'indexed',

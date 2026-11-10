@@ -151,6 +151,7 @@ impl HeapBytes for NativeCommand {
                 envelope,
                 expected_action_id,
             } => heap_sum([envelope.heap_bytes()?, expected_action_id.heap_bytes()?]),
+            Self::WithdrawAttempt { envelope, attempt_id } => heap_sum([envelope.heap_bytes()?, attempt_id.heap_bytes()?]),
             Self::Follow {
                 envelope,
                 target_id,

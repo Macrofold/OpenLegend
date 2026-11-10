@@ -11,8 +11,8 @@ const FIELDS: [&str; 10] = [
 ];
 
 pub(crate) struct ActorResponse {
-    value: SqlCell,
-    _reservation: ByteReservation,
+    pub(super) value: SqlCell,
+    pub(super) _reservation: ByteReservation,
 }
 #[derive(Debug)]
 pub(crate) enum ResponseEnvelopeError {

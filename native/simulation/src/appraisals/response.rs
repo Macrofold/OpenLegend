@@ -199,7 +199,7 @@ fn valid_value(definition: &Definition, value: &AppraisalValue) -> bool {
         _ => false,
     }
 }
-fn identity(
+pub(crate) fn identity(
     actor: &str,
     pin: &DefinitionPin,
     target: Option<&str>,

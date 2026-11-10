@@ -35,6 +35,22 @@ impl Serialize for Map<'_> {
         map.end()
     }
 }
+/// Only immutable wording fields consumed by the offered-action formatter.
+pub(super) fn choice_description_definitions(installed: &InstalledWorld) -> impl Serialize + '_ {
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct ChoiceDefinitions<'a> {
+        status_effect_policy: &'a crate::status::StatusEffectPolicy,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        native_strikes: Option<Map<'a>>,
+        probes: &'a [crate::worlds::base_decision_offers::ProbeOffer],
+    }
+    ChoiceDefinitions {
+        status_effect_policy: &installed.status_policy,
+        native_strikes: installed.retained.native_strikes.as_ref().map(Map),
+        probes: &installed.occurrence_rules.value().response.offers.probes,
+    }
+}
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct Definitions<'a> {

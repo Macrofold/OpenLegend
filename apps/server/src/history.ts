@@ -106,13 +106,28 @@ export function validateHistoryEvidence(
         payload,
       );
     }
+  addHistoryAccountVersions(world.id, accounts, versions);
+  validateHistoryEvidenceRows(history, world.id, (row) =>
+    storedStoryAccount(String(row['payload']), world.id, String(row['actor_id']), accounts, {
+      receipts,
+      sources: world.receivedValues?.sources ?? {},
+    }),
+  );
+}
+
+/** Exact versions are common archive data for both runtime representations. */
+export function addHistoryAccountVersions(
+  worldId: string,
+  accounts: Map<string, string>,
+  versions: readonly Record<string, unknown>[],
+): void {
   for (const row of versions) {
     const payload = String(row['payload']);
-    if (row['world_id'] !== world.id || personalAccountRevision(payload) !== row['revision'])
+    if (row['world_id'] !== worldId || personalAccountRevision(payload) !== row['revision'])
       throw new Error('Invalid retained personal account version.');
     accounts.set(
       personalAccountKey(
-        world.id,
+        worldId,
         String(row['actor_id']),
         String(row['source_kind']),
         String(row['source_id']),
@@ -121,16 +136,20 @@ export function validateHistoryEvidence(
       payload,
     );
   }
-  for (const row of history.history_perspectives) {
-    const source = storedStoryAccount(
-      String(row['payload']),
-      world.id,
-      String(row['actor_id']),
-      accounts,
-      { receipts, sources: world.receivedValues?.sources ?? {} },
-    );
+}
+
+/** Source and native archive readers resolve actual personal account bodies
+ * through their own storage owner, then share the same scope/evidence checks. */
+export function validateHistoryEvidenceRows(
+  history: Record<(typeof HISTORY_TABLES)[number], Record<string, unknown>[]>,
+  worldId: string,
+  resolve: (row: Record<string, unknown>) => StorySource,
+  perspectives: Iterable<Record<string, unknown>> = history.history_perspectives,
+): void {
+  for (const row of perspectives) {
+    const source = resolve(row);
     if (
-      row['world_id'] !== world.id ||
+      row['world_id'] !== worldId ||
       source.id !== row['event_id'] ||
       source.evidence.actorId !== row['actor_id']
     )

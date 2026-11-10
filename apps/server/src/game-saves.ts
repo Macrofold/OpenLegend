@@ -6,8 +6,16 @@ import { HISTORY_TABLES, validateHistoryEvidence } from './history.js';
 import { digest, type SavedWorld, type SqlDatabase } from './store.js';
 import type { AutosaveSettings, CheckpointFailure, GameSaveSummary } from '@open-legend/protocol';
 import { SaveFiles, compareSaves, type SavePosition, type SaveFileMetadata } from './save-files.js';
-import { writeCheckpoint, readCheckpoint } from './checkpoint.js';
+import {
+  writeCheckpoint,
+  readCheckpoint,
+  readCheckpointRecords,
+  type CanonicalCheckpoint,
+} from './checkpoint.js';
 import { CheckpointWorker, type CheckpointSource } from './checkpoint-worker-client.js';
+import { validateNativeCheckpointHistory } from './native-checkpoint-history.js';
+import { checkpointCurrentSources } from './native-current-sources.js';
+import type { WorldRecords, RecordChanges } from './world-records.js';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import {
@@ -405,7 +413,7 @@ export class GameSaves {
       .slice(0, options?.limit);
   }
   create(
-    state: { world: { id: string } },
+    worldId: string,
     label: string,
     id: string,
     options: {
@@ -419,7 +427,7 @@ export class GameSaves {
     if (this.active) {
       if (
         this.active.id !== id ||
-        this.active.worldId !== state.world.id ||
+        this.active.worldId !== worldId ||
         this.active.label !== label ||
         this.active.kind !== (options.kind ?? 'manual')
       )
@@ -444,25 +452,25 @@ export class GameSaves {
         const prior = await this.files.metadata(id);
         if (prior) {
           if (
-            prior.worldId !== state.world.id ||
+            prior.worldId !== worldId ||
             prior.label !== label ||
             (prior.kind ?? 'manual') !== (options.kind ?? 'manual')
           )
             throw new GameSaveError('Save identity conflicts.');
           finishCapture();
           await this.files.confirmPublished(prior);
-          if (!options.unordered) await this.assets.completeSaveSnapshot(state.world.id, id);
+          if (!options.unordered) await this.assets.completeSaveSnapshot(worldId, id);
           return;
         }
-        const sequence = options.unordered ? undefined : await this.nextSequence(state.world.id);
+        const sequence = options.unordered ? undefined : await this.nextSequence(worldId);
         if (!options.unordered)
-          await this.assets.claimSaveSnapshot(state.world.id, id, options.expectedRevision);
+          await this.assets.claimSaveSnapshot(worldId, id, options.expectedRevision);
         if (this.worker) {
           await this.worker.capture(
             {
               directory: this.directory,
               id,
-              worldId: state.world.id,
+              worldId: worldId,
               label,
               format: SAVE_FORMAT,
               kind: options.kind ?? 'manual',
@@ -471,7 +479,7 @@ export class GameSaves {
             },
             finishCapture,
           );
-          if (!options.unordered) await this.assets.completeSaveSnapshot(state.world.id, id);
+          if (!options.unordered) await this.assets.completeSaveSnapshot(worldId, id);
           return;
         }
         await writeCheckpoint(
@@ -479,7 +487,7 @@ export class GameSaves {
           this.files,
           {
             id,
-            worldId: state.world.id,
+            worldId: worldId,
             label,
             format: SAVE_FORMAT,
             kind: options.kind ?? 'manual',
@@ -487,13 +495,13 @@ export class GameSaves {
           },
           { expectedRevision: options.expectedRevision, captured: finishCapture },
         );
-        if (!options.unordered) await this.assets.completeSaveSnapshot(state.world.id, id);
+        if (!options.unordered) await this.assets.completeSaveSnapshot(worldId, id);
       })
       .catch(async (error: unknown) => {
         // The worker has settled/terminated before rejection. Only a proven absent
         // slot releases its own provisional hold; an ambiguous published file keeps it.
         if (!options.unordered && !(await this.files.metadata(id)))
-          await this.assets.releaseSaveSnapshot(state.world.id, id, true);
+          await this.assets.releaseSaveSnapshot(worldId, id, true);
         throw error;
       })
       .finally(() => {
@@ -503,7 +511,7 @@ export class GameSaves {
       id,
       label,
       kind: options.kind ?? 'manual',
-      worldId: state.world.id,
+      worldId: worldId,
       done,
       captured: ready,
     };
@@ -580,6 +588,84 @@ export class GameSaves {
     this.validatePayload(payload);
     return payload;
   }
+
+  /** Native restore starts from these exact canonical rows. The inactive
+   * native installer performs its current-family and semantic validation;
+   * this boundary never constructs a writable Source world along the way. */
+  async readCanonical(worldId: string, id: string) {
+    id = await this.assetSlotId(worldId, id);
+    const metadata = await this.files.metadata(id);
+    if (!metadata) throw new GameSaveError('That save no longer exists.');
+    if (metadata.worldId !== worldId) throw new GameSaveError('Save belongs to another world.');
+    if (metadata.format !== SAVE_FORMAT)
+      throw new GameSaveError('Unsupported save format; existing data was not changed.');
+    const captured = await readCheckpointRecords(
+      this.files.lines(metadata),
+      worldId,
+      metadata.format,
+    );
+    if (metadata.revision !== undefined && captured.revision !== metadata.revision)
+      throw new GameSaveError('Save revision disagrees with its captured records.');
+    validateNativeCheckpointHistory(captured);
+    return { id, metadata, captured };
+  }
+
+  /** Only the protected restore transaction may replace its tentative current
+   * records. The inactive native installer reads these same uncommitted rows;
+   * a refused installation rolls the replacement back with that transaction. */
+  async stageCanonical(
+    captured: CanonicalCheckpoint,
+    records: WorldRecords,
+    binding: {
+      readonly databaseSchema: string;
+      readonly generation: string;
+      readonly revision: number;
+      readonly identityFloor: number;
+    },
+    restore: Omit<RestoreSave, 'payload'> & {
+      readonly beforeTime: number;
+      readonly beforeEntities: readonly string[];
+    },
+  ) {
+    if (!this.db.transactionActive || records.db !== this.db)
+      throw new Error('Checkpoint installation requires its protected writer transaction.');
+    await this.assertCanonicalAssetDependencies(
+      captured,
+      undefined,
+      restore.assetPrincipal,
+      restore.id,
+    );
+    await this.beginInstall(
+      captured.worldId,
+      restore.beforeTime,
+      restore,
+      this.canonicalHost(captured).presentationRelease,
+    );
+    const source = checkpointCurrentSources(captured, binding.databaseSchema, binding);
+    const changes: RecordChanges = {
+      writes: new Map(
+        Object.entries(source.records.tables).map(([table, rows]) => [
+          table,
+          rows.map((row) => ({ ...row, create: true })),
+        ]),
+      ),
+      deletes: new Map(),
+      rows: Object.values(source.records.tables).reduce((count, rows) => count + rows.length, 0),
+    };
+    // Structural ownership cascades from the one root. Physical containment is
+    // restrictive, so remove its actual placement edges before that cascade.
+    await this.db.prepare('DELETE FROM sim_placements WHERE world_id=?').run(captured.worldId);
+    await this.db.prepare('DELETE FROM data_world WHERE world_id=?').run(captured.worldId);
+    await records.write(captured.worldId, binding.revision, changes);
+    await this.replaceHistory(captured.worldId, captured);
+    await this.finishInstall(captured.worldId, restore, [
+      ...restore.beforeEntities,
+      ...[...(captured.groups.get('sim_entities')?.values() ?? [])].flatMap((siblings) =>
+        siblings.map((row) => String(row['entity_id'])),
+      ),
+    ]);
+    return { source, changes };
+  }
   async delete(worldId: string, id: string) {
     // A creation still waiting for its capture would publish after this deletion.
     if (this.claim?.id === id || this.waiting?.id === id)
@@ -630,7 +716,39 @@ export class GameSaves {
     principal?: AssetPrincipal,
     retainedSlotId?: string,
   ): Promise<void> {
-    const reference = payload.state.presentationRelease;
+    return this.assertReleaseDependencies(
+      payload.state.world.id,
+      payload.state.presentationRelease,
+      installed,
+      principal,
+      retainedSlotId,
+    );
+  }
+
+  async assertCanonicalAssetDependencies(
+    captured: CanonicalCheckpoint,
+    installed?: AssetRevisionReference,
+    principal?: AssetPrincipal,
+    retainedSlotId?: string,
+  ): Promise<void> {
+    const host = this.canonicalHost(captured);
+    assertAssetBinding(host.presentationRelease, host.presentationReleaseRevision);
+    return this.assertReleaseDependencies(
+      captured.worldId,
+      host.presentationRelease,
+      installed,
+      principal,
+      retainedSlotId,
+    );
+  }
+
+  private async assertReleaseDependencies(
+    worldId: string,
+    reference: AssetRevisionReference | undefined,
+    installed?: AssetRevisionReference,
+    principal?: AssetPrincipal,
+    retainedSlotId?: string,
+  ): Promise<void> {
     if (reference === undefined) return;
     assertAssetRevisionReference(reference);
     if (installed && !sameAssetRevision(reference, installed))
@@ -639,7 +757,7 @@ export class GameSaves {
       );
     const status = principal
       ? await this.assets.retainedReleaseStatus(reference, principal)
-      : await this.assets.worldReleaseStatus(payload.state.world.id, reference);
+      : await this.assets.worldReleaseStatus(worldId, reference);
     const record = status.record;
     if (!status.available) {
       if (!retainedSlotId)
@@ -647,8 +765,8 @@ export class GameSaves {
           'This external checkpoint cannot establish retained unavailable art. Current rights are required.',
         );
       await this.assets.assertRetainedSave(
-        payload.state.world.id,
-        await this.assetSlotId(payload.state.world.id, retainedSlotId),
+        worldId,
+        await this.assetSlotId(worldId, retainedSlotId),
         reference,
       );
     }
@@ -665,15 +783,65 @@ export class GameSaves {
       restore.assetPrincipal,
       restore.id,
     );
+    await this.beginInstall(
+      current.world.id,
+      current.world.simTime,
+      restore,
+      restore.payload.state.presentationRelease,
+    );
+    const privateVersions = restoredSourceVersions(
+      restored,
+      restore.payload.memory?.mind_source_versions ?? [],
+    );
+    // A rewind replaces the recent history, including retired batches awaiting
+    // cleanup. Their children cascade; the same transaction installs the complete
+    // restored pages and rebuilds reverse uses before any reader can observe it.
+    await this.db.prepare('DELETE FROM mind_temporal_pages WHERE world_id=?').run(current.world.id);
+    await this.replaceHistory(current.world.id, {
+      history: restore.payload.history,
+      memory: {
+        ...restore.payload.memory,
+        mind_source_versions: privateVersions.rows,
+        mind_source_annotations: (restore.payload.memory?.mind_source_annotations ?? []).filter(
+          (row) =>
+            !restored.world.experience?.forgotten[String(row['actor_id'])]?.includes(
+              String(row['source_id']),
+            ),
+        ),
+      },
+    });
+    await this.finishInstall(current.world.id, restore, [
+      ...entityKeys(current.world.entities),
+      ...entityKeys(restore.payload.state.world.entities),
+    ]);
+  }
+
+  private canonicalHost(captured: CanonicalCheckpoint) {
+    for (const siblings of captured.groups.get('data_world')?.values() ?? [])
+      for (const row of siblings)
+        if (row['id'] === '[]')
+          return JSON.parse(String(row['payload'])) as {
+            presentationRelease?: AssetRevisionReference;
+            presentationReleaseRevision?: number;
+          };
+    throw new GameSaveError('Save has no canonical host settings.');
+  }
+
+  private async beginInstall(
+    worldId: string,
+    simTime: number,
+    restore: Omit<RestoreSave, 'payload'>,
+    presentationRelease: AssetRevisionReference | undefined,
+  ): Promise<void> {
     await this.assets.restoreWorldBinding(
       restore.assetPrincipal,
-      current.world.id,
-      restore.payload.state.presentationRelease,
-      await this.assetSlotId(current.world.id, restore.id),
+      worldId,
+      presentationRelease,
+      await this.assetSlotId(worldId, restore.id),
     );
     const { recoveryId } = restore;
     const prepared = await this.files.metadata(recoveryId);
-    if (!prepared || prepared.worldId !== current.world.id || prepared.kind !== 'recovery')
+    if (!prepared || prepared.worldId !== worldId || prepared.kind !== 'recovery')
       throw new GameSaveError('The pre-load recovery checkpoint is missing; nothing was changed.');
     // The immutable recovery file is already published. Its pointer switches atomically
     // with the world; a failed install retains the previous pointer and authority.
@@ -684,66 +852,21 @@ export class GameSaves {
       )
       .run(
         'before-load',
-        current.world.id,
+        worldId,
         'Before last load',
         new Date().toISOString(),
-        current.world.simTime,
+        simTime,
         SAVE_FORMAT,
         digest(pointer),
         JSON.stringify(pointer),
       );
-    const privateVersions = restoredSourceVersions(
-      restored,
-      restore.payload.memory?.mind_source_versions ?? [],
-    );
-    // A rewind replaces the recent history, including retired batches awaiting
-    // cleanup. Their children cascade; the same transaction installs the complete
-    // restored pages and rebuilds reverse uses before any reader can observe it.
-    await this.db.prepare('DELETE FROM mind_temporal_pages WHERE world_id=?').run(current.world.id);
-    for (const table of [...HISTORY_TABLES, ...MEMORY_HISTORY_TABLES]) {
-      await this.db.prepare(`DELETE FROM ${table} WHERE world_id=?`).run(current.world.id);
-      const originalRows =
-        table in restore.payload.history
-          ? restore.payload.history[table as keyof SavePayload['history']]
-          : (restore.payload.memory?.[table as keyof NonNullable<SavePayload['memory']>] ?? []);
-      const rows =
-        table === 'mind_source_versions'
-          ? privateVersions.rows
-          : table === 'mind_source_annotations'
-            ? originalRows.filter(
-                (row) =>
-                  !restored.world.experience?.forgotten[String(row['actor_id'])]?.includes(
-                    String(row['source_id']),
-                  ),
-              )
-            : originalRows;
-      const columns = Object.keys(rows[0] ?? {});
-      if (columns.some((key) => !/^[a-z_]+$/.test(key)))
-        throw new GameSaveError('Invalid save history.');
-      for (let offset = 0; offset < rows.length; ) {
-        const values: unknown[][] = [];
-        let bytes = 0;
-        while (offset < rows.length) {
-          const row = rows[offset]!;
-          if (row['world_id'] !== current.world.id || Object.keys(row).join() !== columns.join())
-            throw new GameSaveError('Invalid save history.');
-          const size = Buffer.byteLength(JSON.stringify(row));
-          if (
-            values.length &&
-            (bytes + size > 262144 || (values.length + 1) * columns.length > 900)
-          )
-            break;
-          values.push(columns.map((key) => row[key]));
-          bytes += size;
-          offset++;
-        }
-        await this.db
-          .prepare(
-            `INSERT INTO ${table} (${columns.join(',')}) VALUES ${values.map((row) => `(${row.map(() => '?').join(',')})`).join(',')}`,
-          )
-          .run(...values.flat());
-      }
-    }
+  }
+
+  private async finishInstall(
+    worldId: string,
+    restore: Omit<RestoreSave, 'payload'>,
+    entityIds: Iterable<string>,
+  ): Promise<void> {
     for (const row of await this.db.prepare('SELECT id,payload FROM jobs').all()) {
       const job = JSON.parse(String(row['payload'])) as Record<string, unknown>;
       if (!job['playerSpeechEventId']) continue;
@@ -757,10 +880,10 @@ export class GameSaves {
       .prepare(
         "UPDATE story_jobs SET state='cancelled' WHERE world_id=? AND state IN ('running','queued')",
       )
-      .run(current.world.id);
+      .run(worldId);
     for (const [key, value] of [
-      [`command-epoch:${current.world.id}`, restore.epoch],
-      [`world-timeline:${current.world.id}`, restore.timeline],
+      [`command-epoch:${worldId}`, restore.epoch],
+      [`world-timeline:${worldId}`, restore.timeline],
       [`load-request:${restore.requestId}`, { saveId: restore.id }],
     ] as const)
       await this.db
@@ -769,13 +892,56 @@ export class GameSaves {
         )
         .run(`integration:${key}`, JSON.stringify(value));
     // These are queued opportunities / derived caches, not billing or attempt records.
-    for (const actorId of new Set([
-      ...entityKeys(current.world.entities),
-      ...entityKeys(restore.payload.state.world.entities),
-    ]))
+    for (const actorId of new Set(entityIds))
       for (const prefix of ['vectors', 'interests', 'reflection-queue', 'semantic-schedule'])
         await this.db
           .prepare('DELETE FROM meta WHERE key=?')
-          .run(`integration:${prefix}:${current.world.id}:${actorId}`);
+          .run(`integration:${prefix}:${worldId}:${actorId}`);
+  }
+  /** Whole checkpoint replacement runs inside its protected world transaction.
+   * Both authorities retain the same table order, exact row columns and bounded
+   * SQL batches. Canonical record rows have their separate existing writer. */
+  private async replaceHistory(
+    worldId: string,
+    captured: Pick<CanonicalCheckpoint, 'history' | 'memory'>,
+  ): Promise<void> {
+    for (const table of [...HISTORY_TABLES, ...MEMORY_HISTORY_TABLES]) {
+      const rows =
+        table in captured.history
+          ? captured.history[table as keyof typeof captured.history]
+          : captured.memory[table as keyof typeof captured.memory];
+      await this.replaceHistoryTable(worldId, table, rows);
+    }
+  }
+
+  private async replaceHistoryTable(
+    worldId: string,
+    table: (typeof HISTORY_TABLES)[number] | (typeof MEMORY_HISTORY_TABLES)[number],
+    rows: readonly Record<string, unknown>[],
+  ): Promise<void> {
+    await this.db.prepare(`DELETE FROM ${table} WHERE world_id=?`).run(worldId);
+    const columns = Object.keys(rows[0] ?? {});
+    if (columns.some((key) => !/^[a-z_]+$/.test(key)))
+      throw new GameSaveError('Invalid save history.');
+    for (let offset = 0; offset < rows.length; ) {
+      const values: unknown[][] = [];
+      let bytes = 0;
+      while (offset < rows.length) {
+        const row = rows[offset]!;
+        if (row['world_id'] !== worldId || Object.keys(row).join() !== columns.join())
+          throw new GameSaveError('Invalid save history.');
+        const size = Buffer.byteLength(JSON.stringify(row));
+        if (values.length && (bytes + size > 262144 || (values.length + 1) * columns.length > 900))
+          break;
+        values.push(columns.map((key) => row[key]));
+        bytes += size;
+        offset++;
+      }
+      await this.db
+        .prepare(
+          `INSERT INTO ${table} (${columns.join(',')}) VALUES ${values.map((row) => `(${row.map(() => '?').join(',')})`).join(',')}`,
+        )
+        .run(...values.flat());
+    }
   }
 }

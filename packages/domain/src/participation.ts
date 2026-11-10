@@ -18,6 +18,7 @@ import type { Entity } from './types.js';
 import { reconcileOutings } from './outings.js';
 import { endCurrentEvidence } from './perception-evidence.js';
 import { initializePerception } from './kernel.js';
+import { selectedOrdinaryActionRules } from './world-composition.js';
 export { activelyParticipates, type ParticipationState } from './participation-state.js';
 
 function interruptDepartureWork(world: WorldState, entity: Entity): void {
@@ -39,6 +40,7 @@ function interruptDepartureWork(world: WorldState, entity: Entity): void {
     }
 }
 function departActor(world: WorldState, entity: Entity, events: WorldEvent[]): void {
+  const words = selectedOrdinaryActionRules(world).participation;
   interruptDepartureWork(world, entity);
   const state = entity.actor!.participation!;
   const support = supportedPosition(entity);
@@ -94,8 +96,8 @@ function departActor(world: WorldState, entity: Entity, events: WorldEvent[]): v
   emit(
     world,
     events,
-    'departed',
-    subjectNarration(entity, `left the active world.`),
+    words.departedEvent,
+    subjectNarration(entity, words.departedClause),
     entity,
     undefined,
     { significant: true },
@@ -132,42 +134,35 @@ export function changeParticipation(
 ): Transition {
   const source = entityGet(input.entities, actorId),
     previous = source?.actor?.participation;
-  const reject = (message: string): Transition => ({
+  const words = selectedOrdinaryActionRules(input).participation;
+  const result = (ok: boolean, message: { code: string; message: string }): Transition => ({
     world: input,
     events: [],
-    outcome: outcome(false, 'participation-unavailable', message),
+    outcome: outcome(ok, message.code, message.message),
   });
   if (
     !source?.actor ||
     (previous?.revision ?? 0) !== expectedRevision ||
     !Number.isSafeInteger(expectedRevision + 1)
   )
-    return reject('Participation changed. Refresh before continuing.');
+    return result(false, words.changedRefresh);
   if (operation.type !== 'return' && !isSafeRecordId(operation.attemptId))
-    return reject('Invalid exit attempt.');
+    return result(false, words.invalidAttempt);
   if (
     operation.type === 'depart' &&
     (previous?.phase !== 'exiting' || previous.exitAttemptId !== operation.attemptId)
   )
-    return reject('This exit attempt is no longer current.');
+    return result(false, words.staleAttempt);
   if (
     operation.type === 'begin-exit' &&
     previous?.phase !== undefined &&
     previous.phase !== 'active'
   )
     return previous.exitAttemptId === operation.attemptId
-      ? {
-          world: input,
-          events: [],
-          outcome: outcome(true, 'unchanged', 'Exit is already pending.'),
-        }
-      : reject('Participation changed.');
+      ? result(true, words.alreadyPending)
+      : result(false, words.changed);
   if (operation.type === 'return' && (!previous || previous.phase === 'active'))
-    return {
-      world: input,
-      events: [],
-      outcome: outcome(true, 'unchanged', 'Already participating.'),
-    };
+    return result(true, words.alreadyParticipating);
   const candidates = [
     previous?.returnAnchor ?? supportedPosition(source),
     input.participationPolicy?.safeReturnAnchor,
@@ -182,9 +177,7 @@ export function changeParticipation(
     !source.actor.pendingDeath &&
     !anchor
   )
-    return reject(
-      'The saved location and configured return location are unavailable. A safe return location must be restored.',
-    );
+    return result(false, words.unsafeReturn);
   const world = draftWorld(input);
   const entity = entityGet(world.entities, actorId)!,
     actor = entity.actor!,
@@ -216,8 +209,8 @@ export function changeParticipation(
       emit(
         world,
         events,
-        'returned',
-        subjectNarration(entity, `returned to the active world.`),
+        words.returnedEvent,
+        subjectNarration(entity, words.returnedClause),
         entity,
         undefined,
         { significant: true },
@@ -229,19 +222,7 @@ export function changeParticipation(
   }
   reconcileOutings(world, events, { changedOnly: true });
   reconcileCompacts(world, events);
-  return finish(
-    world,
-    events,
-    outcome(
-      true,
-      state.phase,
-      state.phase === 'inactive'
-        ? 'You have left the active world. Your belongings and history are retained.'
-        : state.phase === 'exiting'
-          ? 'Departure is pending.'
-          : 'You have returned.',
-    ),
-  );
+  return finish(world, events, outcome(true, state.phase, words[state.phase].message));
 }
 
 export function validateParticipation(world: WorldState): void {

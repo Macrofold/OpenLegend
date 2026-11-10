@@ -20,14 +20,16 @@ mod input;
 mod maintenance;
 mod npc;
 mod npc_labels;
+mod participation;
 mod player;
 mod privacy;
 mod read_cut;
+mod restore;
 mod retained_values;
 pub use handoff::RuntimeOutputHandoff;
 mod consumer;
 pub use consumer::RuntimeConsumer;
-pub use npc::{RuntimeNpcPreparationStep, RuntimeNpcRead};
+pub use npc::{RuntimeNpcPreparationStep, RuntimeNpcRead, RuntimeNpcResponseTicket};
 pub use player::{RuntimePlayerPublication, RuntimePlayerRead};
 
 #[derive(Debug)]
@@ -239,6 +241,8 @@ pub struct NativeWorldSession {
     _history_policy_custody: ResidentReservation,
     next_read_serial: u64,
     active: bool,
+    restore_installation: bool,
+    restoring: Option<CandidateKey>,
     temporal_save_limits: crate::received::TemporalSaveLimits,
     history_edit_limits: crate::experience::HistoryEditLimits,
 }
@@ -248,6 +252,32 @@ impl NativeWorldSession {
         database_schema: &str,
         budget: ByteBudget,
     ) -> Result<Self, RuntimeError> {
+        Self::install_purpose(
+            bytes,
+            database_schema,
+            budget,
+            crate::install::InstallPurpose::Current,
+        )
+    }
+    pub fn install_restore(
+        bytes: &[u8],
+        database_schema: &str,
+        budget: ByteBudget,
+    ) -> Result<Self, RuntimeError> {
+        Self::install_purpose(
+            bytes,
+            database_schema,
+            budget,
+            crate::install::InstallPurpose::Restore,
+        )
+    }
+    fn install_purpose(
+        bytes: &[u8],
+        database_schema: &str,
+        budget: ByteBudget,
+        purpose: crate::install::InstallPurpose,
+    ) -> Result<Self, RuntimeError> {
+        let restore_installation = matches!(&purpose, crate::install::InstallPurpose::Restore);
         let budget = budget.for_world();
         // Parsed rows coexist with the caller's input and consuming installers.
         // This is transient preparation, not a canonical-world size policy.
@@ -261,6 +291,7 @@ impl NativeWorldSession {
         };
         let history_edit_limits = input.storage.history_edit;
         let core = crate::install::CoreInstallInput {
+            purpose,
             records: input.records,
             originals: input.originals,
             definitions: input.definitions,
@@ -318,6 +349,8 @@ impl NativeWorldSession {
             _history_policy_custody: history_policy_custody,
             next_read_serial: 0,
             active: false,
+            restore_installation,
+            restoring: None,
             temporal_save_limits,
             history_edit_limits,
         })
@@ -359,6 +392,8 @@ impl NativeWorldSession {
     pub fn activate(&mut self, receipt: RuntimeActivation) -> Result<(), RuntimeError> {
         let state = &self.session.accepted().map_err(failure)?.state;
         if self.active
+            || self.restore_installation
+            || self.restoring.is_some()
             || receipt.world_id != state.physical.header.id
             || receipt.generation != state.generation
             || receipt.revision != state.durable_revision
@@ -456,6 +491,12 @@ impl NativeWorldSession {
                 ));
             }
             SessionStep::Prepared(prepared) => {
+                if self.restoring == Some(key) {
+                    if let Err(error) = self.session.prepare_restore_adoption(key) {
+                        self.session.cancel(key).map_err(failure)?;
+                        return Err(failure(error));
+                    }
+                }
                 let (
                     operation,
                     history,
@@ -465,6 +506,7 @@ impl NativeWorldSession {
                     protected_save,
                     progress,
                 ) = self.session.prepared_products(key).map_err(failure)?;
+                let restore = self.session.prepared_restore_facts(key).map_err(failure)?;
                 let output = (|| {
                     let handoff = RuntimeOutputHandoff::new(&self.budget)?;
                     let mut output = RuntimeJson::encode(
@@ -476,6 +518,7 @@ impl NativeWorldSession {
                             personal_predecessors,
                             protected_save,
                             progress,
+                            restore,
                         },
                         &self.budget,
                     )?;
@@ -501,6 +544,11 @@ impl NativeWorldSession {
     /// Requires the genuine fence result, never an acceptance boolean supplied
     /// to the mutable world. All output bytes were admitted before Ready.
     pub fn finish_settlement(&mut self, key: CandidateKey) -> Result<bool, RuntimeError> {
+        if self.restoring == Some(key)
+            && self.session.fence().phase() != crate::host::CandidatePhase::Rejected
+        {
+            return Err(failure("whole-install commit requires restored activation"));
+        }
         if self
             .prepared_output
             .as_ref()
@@ -510,6 +558,9 @@ impl NativeWorldSession {
         }
         let accepted = self.session.finish_settlement(key).map_err(failure)?;
         self.prepared_output = None;
+        if self.restoring == Some(key) {
+            self.restoring = None;
+        }
         Ok(accepted.is_some())
     }
     pub fn cancel(&mut self, key: CandidateKey) -> Result<(), RuntimeError> {
@@ -523,10 +574,16 @@ impl NativeWorldSession {
             .is_ok()
         {
             self.prepared_output = None;
+            if self.restoring == Some(key) {
+                self.restoring = None;
+            }
             return Ok(());
         }
         self.session.cancel(key).map_err(failure)?;
         self.prepared_output = None;
+        if self.restoring == Some(key) {
+            self.restoring = None;
+        }
         Ok(())
     }
     pub fn save_barrier_complete(&self) -> bool {
@@ -606,6 +663,7 @@ struct Products<'a> {
     personal_predecessors: &'a crate::experience::PersonalPredecessors,
     protected_save: Option<&'a crate::records::SaveRows>,
     progress: crate::simulation::session::PreparedReadProgress<'a>,
+    restore: Option<crate::simulation::session::PreparedRestoreFacts<'a>>,
 }
 impl Serialize for Products<'_> {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -614,9 +672,16 @@ impl Serialize for Products<'_> {
         map.serialize_entry("events", &Events(self.operation))?;
         map.serialize_entry("history", &self.history.value())?;
         map.serialize_entry("notices", self.notices)?;
-        map.serialize_entry("records", self.records)?;
+        if let Some(restore) = &self.restore {
+            map.serialize_entry("restore", restore)?;
+            if let CompletedOperation::Restore(operation) = self.operation {
+                map.serialize_entry("restoreMetadata", &operation.metadata)?;
+            }
+        } else {
+            map.serialize_entry("records", self.records)?;
+        }
         map.serialize_entry("personalPredecessors", &self.personal_predecessors.value())?;
-        if let Some(prefix) = self.protected_save {
+        if let Some(prefix) = self.protected_save.filter(|_| self.restore.is_none()) {
             map.serialize_entry("protectedSave", prefix)?;
         }
         map.serialize_entry("progress", &self.progress)?;

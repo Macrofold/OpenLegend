@@ -14,14 +14,16 @@ use indexmap::IndexMap;
 pub(crate) fn encode_candidate_changes(
     state: &SimulationState,
     journal: &crate::execution::CandidateJournal,
-    host: &InstalledHostSettings,
-    write_host: bool,
+    host: Option<&InstalledHostSettings>,
     budget: &ByteBudget,
 ) -> Result<crate::records::EncodedRows, RecordEncodingError> {
     // Encoding is also useful inside a private rollback checkpoint. It grants
     // no publication: Ready must separately require closed operations and fund
     // the actual ledger/save/consumer products before accepting this delta.
     let mut output = RowEncoder::new(&state.installed.schema, budget)?;
+    journal
+        .restore_metadata
+        .encode_changes(state, &mut output, budget)?;
     journal
         .physical
         .encode_changes(&state.physical, &state.records, &[], &mut output, budget)?;
@@ -63,7 +65,7 @@ pub(crate) fn encode_candidate_changes(
         budget,
         state.physical.identity.next_id(),
     )?;
-    encode_root_changes(state, host, write_host, &mut output, budget)?;
+    encode_root_changes(state, host, &mut output, budget)?;
     output.finish()
 }
 fn error() -> RecordEncodingError {
@@ -99,8 +101,7 @@ fn marker(map: &mut IndexMap<String, SqlCell>, key: &str, present: bool) {
 }
 pub(crate) fn encode_root_changes(
     state: &SimulationState,
-    host: &InstalledHostSettings,
-    write_host: bool,
+    host: Option<&InstalledHostSettings>,
     output: &mut RowEncoder<'_>,
     budget: &ByteBudget,
 ) -> Result<(), RecordEncodingError> {
@@ -181,7 +182,11 @@ pub(crate) fn encode_root_changes(
         "coachingEpisodes",
         state.physical.coaching.is_present(),
     );
-    marker(&mut body, "exitExposures", state.physical.participation.is_present());
+    marker(
+        &mut body,
+        "exitExposures",
+        state.physical.participation.is_present(),
+    );
     marker(
         &mut body,
         "workState",
@@ -230,7 +235,7 @@ pub(crate) fn encode_root_changes(
         .placement("world_settings", "[\"world\"]")
         .ok_or_else(error)?;
     output.write_if_changed("world_settings", placement, &body, template)?;
-    if write_host {
+    if let Some(host) = host {
         let template = state.records.host_settings_template();
         let _host = budget
             .reserve(

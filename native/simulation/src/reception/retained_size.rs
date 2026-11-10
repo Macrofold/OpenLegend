@@ -52,6 +52,7 @@ fixed!(
     crate::received::values::FrameKind
 );
 heap_record!(SurfacePoint { surface_id });
+heap_record!(ContactEpisode { id, sense_id });
 heap_record!(Named {
     name,
     name_form,

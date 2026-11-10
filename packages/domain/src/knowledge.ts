@@ -250,7 +250,11 @@ export function knowledgePage(world: WorldState, actorId: string, after = '', li
 }
 
 /** Page the selected owner's actual documents without requiring a world read. */
-export function knowledgePageFromDocuments(documents: Readonly<ActorKnowledge>, after = '', limit = 40) {
+export function knowledgePageFromDocuments(
+  documents: Readonly<ActorKnowledge>,
+  after = '',
+  limit = 40,
+) {
   if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100)
     throw new Error('Invalid knowledge page size.');
   let keys = Object.isFrozen(documents) ? orderedDocuments.get(documents) : undefined;

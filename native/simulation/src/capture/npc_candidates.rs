@@ -26,6 +26,9 @@ mod enumerate;
 mod geometry;
 mod work;
 use work::NpcWorkContext;
+mod descriptions;
+use descriptions::DescriptionContext;
+pub(crate) use descriptions::{NpcDescriptionsAnswer, NpcDescriptionsRequest};
 
 struct Target {
     body: usize,
@@ -81,6 +84,9 @@ pub(crate) struct NpcCandidateCursor {
     storage: Option<ByteReservation>,
     _cursor_storage: ByteReservation,
     done: bool,
+    description_context: Option<DescriptionContext>,
+    description_request: Option<NpcDescriptionsRequest>,
+    descriptions_done: bool,
 }
 
 #[derive(Serialize)]
@@ -190,6 +196,8 @@ impl NpcCandidateCursor {
         let (work, work_storage) =
             ResponseWorkIdentity::capture(core.state, &read.perception.actor_id, budget)?;
         let work_context = NpcWorkContext::prepare(core, &read.perception.actor_id, budget)?;
+        let description_context =
+            DescriptionContext::prepare(core, read, selection.body_ordinals(), budget)?;
         let actor = core
             .state
             .physical
@@ -226,6 +234,9 @@ impl NpcCandidateCursor {
             storage: Some(budget.reserve(size_of::<PreparedNpcCandidates>())?),
             _cursor_storage: storage,
             done: false,
+            description_context: Some(description_context),
+            description_request: None,
+            descriptions_done: false,
         })
     }
     fn reserve(&mut self, bytes: usize) -> Result<(), ExecutionError> {
@@ -310,6 +321,7 @@ impl NpcCandidateCursor {
         self.child = Some(child);
         self.child_copy = Some(copy);
         self.pending = Some(PreparedNpcOffer {
+            description: None,
             id,
             meaning,
             command: Some(command),
@@ -372,6 +384,28 @@ impl NpcCandidateCursor {
         let mut child_answer = None;
         if let Some(answer) = answer {
             match answer {
+                NpcCandidateAnswer::Descriptions(answer) => {
+                    let request = self
+                        .description_request
+                        .as_ref()
+                        .ok_or(ExecutionError::InvalidCheckpoint)?;
+                    if request.binding != answer.binding
+                        || answer.descriptions.len() != self.offers.len()
+                    {
+                        return Err(ExecutionError::InvalidCheckpoint);
+                    }
+                    self.reserve(
+                        answer
+                            .descriptions
+                            .heap_bytes()
+                            .ok_or(ExecutionError::Capacity)?,
+                    )?;
+                    for (offer, description) in self.offers.iter_mut().zip(answer.descriptions) {
+                        offer.description = Some(description);
+                    }
+                    self.description_request = None;
+                    self.descriptions_done = true;
+                }
                 NpcCandidateAnswer::Geometry(answer) if self.sight.is_some() => {
                     let sight = self
                         .sight
@@ -398,6 +432,13 @@ impl NpcCandidateCursor {
             }
         }
         loop {
+            if self.description_request.is_some() {
+                return Ok(NpcCandidateStep::Descriptions(
+                    self.description_request
+                        .as_ref()
+                        .ok_or(ExecutionError::Invariant)?,
+                ));
+            }
             if self.sight.is_some() {
                 return Ok(NpcCandidateStep::Geometry(
                     self.sight
@@ -481,6 +522,20 @@ impl NpcCandidateCursor {
             if self.enumerate(core)? {
                 continue;
             }
+            if !self.descriptions_done && !self.offers.is_empty() {
+                self.description_request = Some(NpcDescriptionsRequest::prepare(
+                    core,
+                    self.description_context
+                        .take()
+                        .ok_or(ExecutionError::Invariant)?,
+                    &self.targets,
+                    &self.offers,
+                    self.candidate,
+                    &self.budget,
+                )?);
+                continue;
+            }
+            self.description_context = None;
             self.done = true;
             self.reserve(
                 self.targets

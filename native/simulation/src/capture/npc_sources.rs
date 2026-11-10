@@ -19,7 +19,7 @@ use std::collections::BTreeSet;
 use std::mem::size_of;
 use std::sync::Arc;
 mod cursor;
-pub(crate) use cursor::{NpcSourcesAnswer, NpcSourcesCursor};
+pub(crate) use cursor::{NpcSourcesAnswer, NpcSourcesCursor, NpcSourcesRequest};
 mod attribution;
 use attribution::NpcSourceAttribution;
 
@@ -73,7 +73,7 @@ impl Serialize for CapturedNpcPersonalSource {
 }
 pub(crate) struct CapturedNpcReceipt {
     pub selection: usize,
-    pub capture: CapturedTemporalReceipt,
+    pub capture: Arc<CapturedTemporalReceipt>,
 }
 impl Serialize for CapturedNpcReceipt {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -102,6 +102,8 @@ impl Serialize for CapturedNpcReceipt {
 pub(crate) struct PreparedNpcSources {
     #[serde(skip)]
     pub scope: Arc<NpcHistoricalScope>,
+    #[serde(skip)]
+    personal_cut: cursor::NpcPersonalScope,
     pub personal: Vec<CapturedNpcPersonalSource>,
     pub receipts: Vec<CapturedNpcReceipt>,
     pub unavailable_personal: Vec<usize>,
@@ -114,12 +116,19 @@ impl PreparedNpcSources {
     pub(crate) fn prepare(
         state: &SimulationState,
         scope: Arc<NpcHistoricalScope>,
+        personal_cut: cursor::NpcPersonalScope,
         selection: &NpcSourceSelection,
         rows: NpcSourceRows,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         if !scope.still_permitted(state)
             || matches!(scope.receipt_prefix, NpcHistoryPrefix::Pending { .. })
+        {
+            return Err(ExecutionError::InvalidCheckpoint);
+        }
+        if personal_cut.accepted_cut != state.accepted_cut
+            || personal_cut.at != state.physical.header.sim_time
+            || personal_cut.identity_through != state.physical.identity.next_id()
         {
             return Err(ExecutionError::InvalidCheckpoint);
         }
@@ -296,15 +305,15 @@ impl PreparedNpcSources {
             let record =
                 PersonalSourceRecord::install(supplied.kind, actor, supplied.row, &law, budget)?;
             let header = record.header();
-            let coverage = scope
-                .personal_coverage(supplied.kind)
+            let coverage = personal_cut
+                .coverage(supplied.kind)
                 .ok_or(ExecutionError::InvalidCheckpoint)?;
             // Source personal producers use different sequence clocks (for
             // example received sample order versus gameplay sequence). The
             // actual owner ordinal, time and exact body digest bind this read.
             if !coverage.parent_present
                 || record.position() >= coverage.next_ordinal
-                || header.at > scope.at
+                || header.at > personal_cut.at
             {
                 return Err(ExecutionError::InvalidCheckpoint);
             }
@@ -314,7 +323,7 @@ impl PreparedNpcSources {
             if header.reference != selection.personal[index] {
                 return Err(ExecutionError::InvalidCheckpoint);
             }
-            record.validate_originals(&mut originals, scope.at)?;
+            record.validate_originals(&mut originals, personal_cut.at)?;
             if personal_by_id[index].replace(Arc::new(record)).is_some() {
                 return Err(ExecutionError::InvalidCheckpoint);
             }
@@ -400,7 +409,7 @@ impl PreparedNpcSources {
             if eligible {
                 receipts.push(CapturedNpcReceipt {
                     selection: index,
-                    capture,
+                    capture: capture.into_shared()?,
                 })
             } else {
                 unavailable_receipts.push(index)
@@ -439,6 +448,7 @@ impl PreparedNpcSources {
         )?;
         Ok(Self {
             scope,
+            personal_cut,
             personal,
             receipts,
             unavailable_personal,
@@ -470,7 +480,7 @@ impl PreparedNpcSources {
             )?)?;
             source
                 .record
-                .validate_originals(&mut originals, self.scope.at)?;
+                .validate_originals(&mut originals, self.personal_cut.at)?;
         }
         Ok(())
     }

@@ -10,6 +10,12 @@ use crate::reception::ObserverSubject;
 use crate::simulation::{AcceptedActorRead, SimulationState};
 use crate::text::JsText;
 use serde::ser::SerializeStruct;
+mod appraisals;
+pub(crate) use appraisals::{AppraisalSelection, PreparedResponseAppraisals};
+mod native;
+pub(crate) use native::{ResponseNativeGuard, ResponseValidityRoute};
+mod creates;
+pub(crate) use creates::{AppraisalCreatesAnswer, AppraisalCreatesRequest};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -73,7 +79,7 @@ impl ResponseWorkIdentity {
             storage,
         ))
     }
-    pub(super) fn current(&self, state: &SimulationState, id: &str) -> bool {
+    pub(crate) fn current(&self, state: &SimulationState, id: &str) -> bool {
         let Some(actor) = state
             .physical
             .entities
@@ -148,15 +154,44 @@ pub(crate) struct ResponseSituation {
     pub privacy_revision: u64,
     pub attention_references: IndexMap<String, String>,
     pub retention_references: IndexMap<String, TemporalReceiptLocator>,
-    pub receipt_details: IndexMap<String, CapturedTemporalReceipt>,
+    pub receipt_details: IndexMap<String, std::sync::Arc<CapturedTemporalReceipt>>,
     /// Indices refer only to this ticket's guard-owning evidence cut.
     pub observation_references: IndexMap<String, usize>,
     pub current_references: IndexMap<String, usize>,
     pub presented: Vec<AttentionPresentation>,
     pub semantic_causes: Option<Vec<ResponseSemanticCause>>,
 }
+/// The original situation/history and refreshed current menu are separate real
+/// reads in Source prepareDecision. Later unrelated cuts do not revoke either.
+pub(crate) struct ResponseReads {
+    pub original: AcceptedActorRead,
+    pub current: AcceptedActorRead,
+}
+impl ResponseReads {
+    pub(crate) fn validate(&self) -> bool {
+        Self::compatible(&self.original, &self.current)
+    }
+    pub(crate) fn compatible(original: &AcceptedActorRead, current: &AcceptedActorRead) -> bool {
+        matches!(
+            original.purpose,
+            crate::capture::ActorReadPurpose::NpcDecision
+        ) && matches!(
+            current.purpose,
+            crate::capture::ActorReadPurpose::NpcDecision
+        ) && original.perception.world_id == current.perception.world_id
+            && original.perception.actor_id == current.perception.actor_id
+            && original.perception.evidence.generation() == current.perception.evidence.generation()
+            && original.perception.evidence.cut().observer
+                == current.perception.evidence.cut().observer
+            && original.perception.evidence.cut().privacy_revision
+                == current.perception.evidence.cut().privacy_revision
+            && original.perception.at <= current.perception.at
+            && original.accepted_cut <= current.accepted_cut
+    }
+}
 pub(crate) struct ResponseBindingInput {
-    pub read: AcceptedActorRead,
+    pub native: Option<ResponseNativeGuard>,
+    pub reads: ResponseReads,
     pub actions: IndexMap<String, ResponseActionChoice>,
     pub entity_ids: Vec<String>,
     pub expected_plan: u64,
@@ -180,14 +215,11 @@ impl ResponseBindings {
         input: ResponseBindingInput,
         mut storage: ByteReservation,
     ) -> Result<Self, ExecutionError> {
-        if !matches!(
-            input.read.purpose,
-            crate::capture::ActorReadPurpose::NpcDecision
-        ) {
+        if !input.reads.validate() {
             return Err(ExecutionError::InvalidCheckpoint);
         }
         if let Some(situation) = &input.situation {
-            let cut = input.read.perception.evidence.cut();
+            let cut = input.reads.original.perception.evidence.cut();
             if situation.privacy_revision != cut.privacy_revision
                 || situation
                     .observation_references
@@ -212,15 +244,20 @@ impl ResponseBindings {
         })
     }
     pub(crate) fn actor_id(&self) -> &str {
-        &self.input.read.perception.actor_id
+        &self.input.reads.current.perception.actor_id
     }
     pub(crate) fn world_id(&self) -> &str {
-        &self.input.read.perception.world_id
+        &self.input.reads.current.perception.world_id
     }
-    pub(super) fn digest_view<'a>(&'a self, response: &'a ActorResponse) -> ResponseDigestView<'a> {
+    pub(super) fn digest_view<'a>(
+        &'a self,
+        response: &'a ActorResponse,
+        appraisals: Option<&'a AppraisalBindings>,
+    ) -> ResponseDigestView<'a> {
         ResponseDigestView {
             bindings: self,
             response,
+            appraisals,
         }
     }
 }
@@ -228,6 +265,7 @@ impl ResponseBindings {
 pub(super) struct ResponseDigestView<'a> {
     bindings: &'a ResponseBindings,
     response: &'a ActorResponse,
+    appraisals: Option<&'a AppraisalBindings>,
 }
 impl Serialize for ResponseDigestView<'_> {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -251,11 +289,11 @@ impl Serialize for ResponseDigestView<'_> {
                 "situationBinding",
                 &SituationDigest {
                     situation: value,
-                    cut: self.bindings.input.read.perception.evidence.cut(),
+                    cut: self.bindings.input.reads.original.perception.evidence.cut(),
                 },
             )?;
         }
-        if let Some(value) = &input.appraisal_bindings {
+        if let Some(value) = self.appraisals {
             out.serialize_field("appraisalBindings", value)?;
         }
         out.end()

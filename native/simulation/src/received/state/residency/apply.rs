@@ -56,9 +56,33 @@ impl SavedTemporalResidency {
         state: &SimulationState,
         budget: &ByteBudget,
     ) -> Result<PreparedTemporalResidency, ExecutionError> {
+        self.prepare_apply_at(state, state.accepted_cut, budget)
+    }
+    /// Whole-world restoration has a genuine privately prepared next cut. Its
+    /// placement is admitted before SQL commits and applied only after that
+    /// same candidate is accepted; it is not an ordinary prefix ACK.
+    pub(crate) fn prepare_restore_apply(
+        &self,
+        state: &SimulationState,
+        proposed_cut: u64,
+        budget: &ByteBudget,
+    ) -> Result<PreparedTemporalResidency, ExecutionError> {
+        if state.accepted_cut.checked_add(1) != Some(proposed_cut)
+            || self.through_cut != proposed_cut
+        {
+            return Err(invalid());
+        }
+        self.prepare_apply_at(state, proposed_cut, budget)
+    }
+    fn prepare_apply_at(
+        &self,
+        state: &SimulationState,
+        accepted_cut: u64,
+        budget: &ByteBudget,
+    ) -> Result<PreparedTemporalResidency, ExecutionError> {
         if self.world_id != state.physical.header.id
             || self.generation != state.generation
-            || self.through_cut > state.accepted_cut
+            || self.through_cut > accepted_cut
             || self.identity_through > state.physical.identity.next_id()
         {
             return Err(invalid());
@@ -135,7 +159,11 @@ impl SavedTemporalResidency {
             let affected = self.affected.contains(id);
             let tail = self.actors.get(id);
             let mut page_storage = storage.split_off(fresh_page_map_bytes(
-                actor.pages.len().checked_add(tail.map_or(0, |tail| tail.pages.len())).ok_or_else(capacity)?
+                actor
+                    .pages
+                    .len()
+                    .checked_add(tail.map_or(0, |tail| tail.pages.len()))
+                    .ok_or_else(capacity)?,
             )?)?;
             let mut pages = BTreeMap::new();
             let mut represented = BTreeSet::new();
@@ -311,7 +339,7 @@ impl SavedTemporalResidency {
         Ok(PreparedTemporalResidency {
             world: state.physical.header.id.clone(),
             generation: state.generation.clone(),
-            cut: state.accepted_cut,
+            cut: accepted_cut,
             identity: state.physical.identity.next_id(),
             actors,
             values,
@@ -377,7 +405,10 @@ impl PreparedTemporalResidency {
                 .actors
                 .get_mut(&id)
                 .expect("prepared temporal actor exists");
-            let page_storage = state.temporal.budget.adopt_backing(projection.page_storage)
+            let page_storage = state
+                .temporal
+                .budget
+                .adopt_backing(projection.page_storage)
                 .expect("prepared page-index custody transfers without new workspace");
             actor.pages = projection.pages;
             actor.page_storage = page_storage;

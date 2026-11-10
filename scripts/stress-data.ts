@@ -552,7 +552,9 @@ try {
     mutations['targetCaller'] = await measure('afterTargetCaller', retrieval);
     const checkpointId = randomUUID();
     await measure('checkpointPublication', () =>
-      store.saves.create(state, 'Data stress', checkpointId, { expectedRevision: revision }),
+      store.saves.create(state.world.id, 'Data stress', checkpointId, {
+        expectedRevision: revision,
+      }),
     );
     const checkpointBytes = (await stat(join(directory, 'saves', checkpointId, 'world.jsonl')))
         .size,
@@ -581,7 +583,7 @@ try {
       ),
       recoveryId = randomUUID();
     await measure('recoveryCheckpoint', () =>
-      store.saves.create(state, 'Before data stress restore', recoveryId, {
+      store.saves.create(state.world.id, 'Before data stress restore', recoveryId, {
         expectedRevision: revision,
         kind: 'recovery',
       }),

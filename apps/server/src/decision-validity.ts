@@ -10,9 +10,119 @@ import {
   requiredOutcomeEvidence,
   scopedAppraisals,
   type AppraisalScope,
+  type ActorComponent,
+  type ActorAgency,
+  type Entity,
+  type ResultEvidence,
   type WorldState,
 } from '@open-legend/domain';
 import { digest } from './content-digest.js';
+
+type Attribute = ReturnType<typeof projectAttributes>[number];
+type Feeling = ReturnType<typeof activeAppraisals>[number];
+export interface DecisionValidityFacts {
+  readonly installed: {
+    readonly modules: number;
+    readonly cognition: number;
+    readonly status: number;
+  };
+  readonly identity: {
+    readonly name: Entity['name'];
+    readonly species: ActorComponent['species'];
+    readonly traits: ActorComponent['traits'];
+  };
+  readonly actorId: string;
+  readonly life: ActorComponent['physicalLife'];
+  readonly controller: ActorComponent['controller'];
+  readonly alive: ActorComponent['alive'];
+  readonly incapacitated: ActorComponent['incapacitated'];
+  readonly capabilities: ActorComponent['capabilities'];
+  readonly body: string;
+  readonly attributes: readonly (Attribute | Omit<Attribute, 'value' | 'revision'>)[];
+  readonly feelings: readonly (
+    | Feeling
+    | (Omit<Feeling, 'value'> & {
+        readonly value: { readonly kind: 'band'; readonly band: number };
+      })
+  )[];
+  readonly planGeneration: ActorComponent['planGeneration'];
+  readonly agency: Omit<ActorAgency, 'semantic'>;
+  readonly action: Pick<
+    NonNullable<ActorComponent['action']>,
+    'id' | 'type' | 'stage' | 'targetId'
+  > | null;
+  readonly mind: number | undefined;
+  readonly forgotten: readonly string[] | undefined;
+  readonly corrections: Readonly<Record<string, string>> | undefined;
+  readonly outcomes: readonly ResultEvidence[];
+}
+/** The semantic read owner supplies every dependency. Explicit ordering retains
+ * the existing fingerprint independently of a producer's object construction. */
+export function decisionValidityFromRead(read: DecisionValidityFacts): string {
+  return digest({
+    installed: read.installed,
+    identity: read.identity,
+    actorId: read.actorId,
+    life: read.life,
+    controller: read.controller,
+    alive: read.alive,
+    incapacitated: read.incapacitated,
+    capabilities: read.capabilities,
+    body: read.body,
+    attributes: read.attributes,
+    feelings: read.feelings,
+    planGeneration: read.planGeneration,
+    agency: read.agency,
+    action: read.action,
+    mind: read.mind,
+    forgotten: read.forgotten,
+    corrections: read.corrections,
+    outcomes: read.outcomes,
+  });
+}
+export interface PreparedResponseValidityFacts {
+  readonly world: string;
+  readonly policy: WorldState['cognitionPolicy'];
+  readonly modules: number;
+  readonly status: number;
+  readonly identity: readonly [
+    Entity['name'] | undefined,
+    Entity['description'] | undefined,
+    ActorComponent['species'],
+    ActorComponent['traits'],
+    ActorComponent['personality'],
+    ActorComponent['backstory'],
+  ];
+  readonly life: ActorComponent['physicalLife'];
+  readonly controller: ActorComponent['controller'] | undefined;
+  readonly alive: ActorComponent['alive'] | undefined;
+  readonly incapacitated: ActorComponent['incapacitated'] | undefined;
+  readonly capabilities: ActorComponent['capabilities'];
+  readonly goals: ActorAgency['goals'] | undefined;
+  readonly mind: number | undefined;
+  readonly forgotten: readonly string[] | undefined;
+  readonly corrections: Readonly<Record<string, string>> | undefined;
+  readonly feelings: readonly { readonly id: string; readonly revision: number }[];
+}
+export function preparedResponseValidityFromRead(read: PreparedResponseValidityFacts): string {
+  return digest({
+    world: read.world,
+    policy: read.policy,
+    modules: read.modules,
+    status: read.status,
+    identity: read.identity,
+    life: read.life,
+    controller: read.controller,
+    alive: read.alive,
+    incapacitated: read.incapacitated,
+    capabilities: read.capabilities,
+    goals: read.goals,
+    mind: read.mind,
+    forgotten: read.forgotten,
+    corrections: read.corrections,
+    feelings: read.feelings,
+  });
+}
 
 /** Additive personally experienced blows remain evidence for the next opportunity,
  * not an automatic veto of a still-legal choice after the one funded refresh.
@@ -25,7 +135,7 @@ export function preparedResponseValidity(
 ): string {
   const entity = entityGet(world.entities, actorId),
     actor = entity?.actor;
-  return digest({
+  return preparedResponseValidityFromRead({
     world: world.id,
     policy: world.cognitionPolicy,
     modules: world.moduleManifest.revision,
@@ -92,14 +202,14 @@ export function decisionValidity(world: WorldState, actorId: string): string {
       return {
         ...feeling,
         value: {
-          kind: 'band',
+          kind: 'band' as const,
           band: definition.lifetime.bands.findIndex((boundary) => value >= boundary),
         },
       };
     }
     return feeling;
   });
-  return digest({
+  return decisionValidityFromRead({
     // Installed rules and authored identity shape the meaning of the prepared question.
     // Their revisions change independently of the plan or selected memory sources.
     installed: {

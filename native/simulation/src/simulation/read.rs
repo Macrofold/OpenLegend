@@ -24,13 +24,13 @@ impl From<ExecutionError> for ActorReadError {
 /// Private source bindings stay in perception.evidence, alongside its values.
 /// A player wire response must still use the scoped public projection owner.
 pub(crate) struct AcceptedActorRead {
+    pub(crate) native_validity: Option<crate::capture::DecisionValidityWitness>,
     pub accepted_cut: u64,
     pub purpose: ActorReadPurpose,
     own_json: String,
-    appraisals_json: Option<String>,
+    appraisals: Option<crate::appraisals::CapturedActorAppraisals>,
     pub perception: CapturedActorPerception,
     _own_reservation: ByteReservation,
-    _appraisals_reservation: Option<ByteReservation>,
     actor_life: u64,
     actor_alive: bool,
     actor_participating: bool,
@@ -38,11 +38,16 @@ pub(crate) struct AcceptedActorRead {
     _self_body_reservation: Option<ByteReservation>,
 }
 impl AcceptedActorRead {
+    pub(crate) fn appraisal_read(&self) -> Option<&crate::appraisals::CapturedActorAppraisals> {
+        self.appraisals.as_ref()
+    }
     pub(crate) fn own_json(&self) -> &str {
         &self.own_json
     }
     pub(crate) fn appraisals_json(&self) -> Option<&str> {
-        self.appraisals_json.as_deref()
+        self.appraisals
+            .as_ref()
+            .map(|appraisals| appraisals.json.as_str())
     }
 }
 impl Simulation {
@@ -301,7 +306,7 @@ impl Simulation {
         let (own_json, reservation) = write_actor_self(state, actor_id, purpose, budget)?;
         let perception = capture_actor_perception(state, actor_id, purpose, budget)?;
         let appraisals = if matches!(purpose, ActorReadPurpose::NpcDecision) {
-            Some(crate::appraisals::write_actor_appraisals(
+            Some(crate::appraisals::capture_actor_appraisals(
                 state,
                 actor_id,
                 required_appraisals,
@@ -310,18 +315,23 @@ impl Simulation {
         } else {
             None
         };
-        let (appraisals_json, appraisals_reservation) = match appraisals {
-            Some((value, guard)) => (Some(value), Some(guard)),
-            None => (None, None),
-        };
         Ok(AcceptedActorRead {
+            native_validity: if matches!(purpose, ActorReadPurpose::NpcDecision) {
+                Some(crate::capture::DecisionValidityWitness::capture(
+                    state,
+                    actor_id,
+                    required_appraisals,
+                    budget,
+                )?)
+            } else {
+                None
+            },
             accepted_cut: state.accepted_cut,
             purpose,
             own_json,
-            appraisals_json,
+            appraisals,
             perception,
             _own_reservation: reservation,
-            _appraisals_reservation: appraisals_reservation,
             actor_life: actor.physical_life.unwrap_or(0),
             actor_alive: actor.alive,
             actor_participating: entity.actively_participates(),

@@ -78,7 +78,7 @@ pub(crate) fn encode_temporal_changes(
                     .entry((actor_id.as_str(), id.as_str()))
                     .or_insert(before.is_some());
             }
-            TemporalUndo::PendingAppend { .. } | TemporalUndo::Reservation(_)
+            TemporalUndo::PendingAppend { .. } | TemporalUndo::Reservation(_) | TemporalUndo::Namespace { .. }
             | TemporalUndo::RecentRetirement { .. } => {}
             TemporalUndo::HydratedPages {
                 actor_id,
@@ -109,6 +109,10 @@ pub(crate) fn encode_temporal_changes(
                 );
             }
         }
+    }
+    if state.undo.iter().any(|change|matches!(change,TemporalUndo::Namespace{..})) {
+        let placement=ledger.placement("mind_temporal_state","[\"world\",\"experience\",\"temporal\"]").ok_or_else(error)?;
+        output.write("mind_temporal_state",placement,&state.header,&[],false,RowEffects::default())?;
     }
     // Ordinary Source map insertion can shift existing numeric-key positions.
     // This finite owner is complete; no page or cold-body scan is involved.

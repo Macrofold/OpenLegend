@@ -14,6 +14,11 @@ pub(super) struct RequiredResult<'a> {
     evidence: &'a ResultEvidence,
     recent_eligible: bool,
 }
+impl<'a> RequiredResult<'a> {
+    pub(super) fn evidence(&self) -> &'a ResultEvidence {
+        self.evidence
+    }
+}
 pub(super) struct RequiredResults<'a> {
     values: Vec<RequiredResult<'a>>,
     _reservation: ByteReservation,

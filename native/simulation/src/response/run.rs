@@ -29,6 +29,8 @@ use crate::text::JsText;
 use std::sync::Arc;
 
 pub(crate) enum ResponseAnswer {
+    AppraisalCreates(AppraisalCreatesAnswer),
+    Sources(crate::capture::NpcSourcesAnswer),
     Digest(ResponseDigestAnswer),
     Normalization(AttemptNormalizationAnswer),
     Geometry(GeometryAnswers),
@@ -37,6 +39,8 @@ pub(crate) enum ResponseAnswer {
     Event(CompletedEvent),
 }
 pub(crate) enum ResponseStep<'a> {
+    AppraisalCreates(&'a AppraisalCreatesRequest),
+    Sources(&'a crate::capture::NpcSourcesRequest),
     Digest(&'a ResponseDigestRequest),
     Normalization(&'a AttemptNormalizationRequest),
     Geometry(&'a GeometryQueries),
@@ -93,6 +97,8 @@ enum Active {
     Command(CommandOperation),
 }
 enum Progress {
+    AppraisalCreates,
+    Sources,
     Digest,
     Normalization,
     Geometry,
@@ -108,6 +114,9 @@ pub(crate) struct ResponseCursor {
     candidate: CandidateKey,
     checkpoint: Option<CandidateCheckpoint>,
     canonical: Option<ResponseDigestRequest>,
+    source_check: Option<crate::capture::NpcSourcesCursor>,
+    appraisal_creates: Option<AppraisalCreatesRequest>,
+    appraisal_bindings: Option<crate::appraisals::AppraisalBindings>,
     canonical_purpose: CanonicalPurpose,
     digest: Option<ResponseDigest>,
     normalization: Option<AttemptNormalizationRequest>,
@@ -145,11 +154,42 @@ impl ResponseCursor {
             size_of::<Self>()
                 + id.len()
                 + map_storage::<String, Outcome>(response.len()).ok_or(ExecutionError::Capacity)?
-                + response.len() * 24,
+                + response.len() * 24
+                + bindings
+                    .input
+                    .appraisal_bindings
+                    .heap_bytes()
+                    .ok_or(ExecutionError::Capacity)?,
         )?;
         let binding = Self::binding(core, candidate)?;
-        let canonical =
-            ResponseDigestRequest::prepare(binding, &bindings.digest_view(&response), budget)?;
+        let appraisal_bindings = bindings.input.appraisal_bindings.clone();
+        let appraisal_creates = if bindings.input.native.is_some() && appraisal_bindings.is_some() {
+            AppraisalCreatesRequest::prepare(
+                core.state,
+                bindings.actor_id(),
+                &response,
+                binding,
+                budget,
+            )?
+        } else {
+            None
+        };
+        let canonical = if appraisal_creates.is_none() {
+            Some(ResponseDigestRequest::prepare(
+                binding,
+                &bindings.digest_view(&response, appraisal_bindings.as_ref()),
+                budget,
+            )?)
+        } else {
+            None
+        };
+        let source_check = bindings
+            .input
+            .native
+            .as_ref()
+            .map(|guard| guard.source_cursor(core, candidate, budget))
+            .transpose()?
+            .flatten();
         let checkpoint = core.journal.checkpoint(core.state)?;
         Ok(Self {
             id: id.into(),
@@ -157,7 +197,10 @@ impl ResponseCursor {
             bindings,
             candidate,
             checkpoint: Some(checkpoint),
-            canonical: Some(canonical),
+            canonical,
+            source_check,
+            appraisal_creates,
+            appraisal_bindings,
             canonical_purpose: CanonicalPurpose::Response,
             digest: None,
             normalization: None,
@@ -221,6 +264,8 @@ impl ResponseCursor {
         self.active = None;
         self.event = None;
         self.canonical = None;
+        self.source_check = None;
+        self.appraisal_creates = None;
         self.normalization = None;
         self.command = None;
         Ok(())
@@ -385,6 +430,41 @@ impl ResponseCursor {
         }
         let actor = actor.ok_or(ExecutionError::MissingActor)?;
         let entity = entity.ok_or(ExecutionError::MissingActor)?;
+        let current_read = &self.bindings.input.reads.current;
+        let native_scope_changed = current_read.perception.evidence.generation()
+            != core.state.generation
+            || current_read
+                .perception
+                .evidence
+                .cut()
+                .observer
+                .physical_life
+                != actor.physical_life.unwrap_or(0);
+        let semantic_changed = if let Some(native) = &self.bindings.input.native {
+            let witness = current_read
+                .native_validity
+                .as_ref()
+                .ok_or(ExecutionError::InvalidCheckpoint)?;
+            !match native.route {
+                ResponseValidityRoute::Decision => {
+                    witness.current(core.state, actor_id, &self.budget)?
+                }
+                ResponseValidityRoute::PreparedResponse => {
+                    witness.prepared_current(core.state, actor_id, &self.budget)?
+                }
+            }
+        } else {
+            false
+        };
+        if native_scope_changed || semantic_changed {
+            let result = self.result(
+                false,
+                "response-rejected",
+                "The character's situation changed before this response.",
+            )?;
+            self.merge(result.storage)?;
+            return self.complete(core, result.outcome, false, false).map(Some);
+        }
         let tail = if !actor.alive {
             Some(" is dead and cannot respond.")
         } else if actor.incapacitated {
@@ -448,6 +528,21 @@ impl ResponseCursor {
             .as_ref()
             .is_some_and(|s| s.privacy_revision != sources::privacy_revision(core, actor_id))
             || !sources::receipt_details_current(core, &self.bindings)?
+            || self
+                .bindings
+                .input
+                .native
+                .as_ref()
+                .map(|guard| {
+                    guard.current(
+                        core.state,
+                        &self.bindings.input.reads.current,
+                        actor_id,
+                        &self.budget,
+                    )
+                })
+                .transpose()?
+                .is_some_and(|current| !current)
         {
             let result = self.result(
                 false,
@@ -850,6 +945,17 @@ impl ResponseCursor {
             }
         };
         Ok(match progress {
+            Progress::AppraisalCreates => ResponseStep::AppraisalCreates(
+                self.appraisal_creates
+                    .as_ref()
+                    .ok_or(ExecutionError::Invariant)?,
+            ),
+            Progress::Sources => ResponseStep::Sources(
+                self.source_check
+                    .as_ref()
+                    .ok_or(ExecutionError::Invariant)?
+                    .request(),
+            ),
             Progress::Digest => {
                 ResponseStep::Digest(self.canonical.as_ref().ok_or(ExecutionError::Invariant)?)
             }
@@ -892,6 +998,52 @@ impl ResponseCursor {
             return Err(ExecutionError::InvalidCheckpoint.into());
         }
         let mut answer = answer;
+        if let Some(cursor) = self.source_check.as_mut() {
+            let supplied = match answer.take() {
+                Some(ResponseAnswer::Sources(supplied)) => supplied,
+                Some(_) => return Err(ExecutionError::InvalidCheckpoint.into()),
+                None => return Ok(Progress::Sources),
+            };
+            let checked = cursor.complete(core, supplied, &self.budget)?;
+            let current = checked.unavailable_personal.is_empty();
+            self.source_check = None;
+            if !current {
+                let result = self.result(
+                    false,
+                    "response-rejected",
+                    "The supplied sources changed before this response.",
+                )?;
+                self.merge(result.storage)?;
+                return self.complete(core, result.outcome, false, false);
+            }
+        }
+        if self.appraisal_creates.is_some() {
+            let supplied = match answer.take() {
+                Some(ResponseAnswer::AppraisalCreates(supplied)) => supplied,
+                Some(_) => return Err(ExecutionError::InvalidCheckpoint.into()),
+                None => return Ok(Progress::AppraisalCreates),
+            };
+            let custody = self
+                .appraisal_creates
+                .take()
+                .ok_or(ExecutionError::Invariant)?
+                .finish(
+                    core.state,
+                    supplied,
+                    self.appraisal_bindings
+                        .as_mut()
+                        .ok_or(ExecutionError::Invariant)?,
+                    &self.budget,
+                )?;
+            self.merge(custody)?;
+            self.canonical = Some(ResponseDigestRequest::prepare(
+                Self::binding(core, self.candidate)?,
+                &self
+                    .bindings
+                    .digest_view(&self.response, self.appraisal_bindings.as_ref()),
+                &self.budget,
+            )?);
+        }
         if self.event.is_some() {
             match answer.take() {
                 Some(ResponseAnswer::Event(value)) => self.keep_event(value)?,
@@ -947,8 +1099,6 @@ impl ResponseCursor {
                         .operation(self.index)
                         .ok_or(ExecutionError::Invariant)?;
                     let bindings = self
-                        .bindings
-                        .input
                         .appraisal_bindings
                         .as_ref()
                         .ok_or(ExecutionError::Invariant)?;

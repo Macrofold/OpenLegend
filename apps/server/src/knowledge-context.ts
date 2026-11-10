@@ -97,20 +97,7 @@ export function subjectKnowledgeCandidates(
         doc.subjectId.kind === 'map-marker'
           ? (world.mapMarkers?.[actorId]?.[doc.subjectId.markerId]?.label ?? 'a map marker')
           : 'a known place';
-      return [
-        {
-          id: `notepad:${id}`,
-          kind: 'knowledge' as const,
-          text: `Your map note about ${label}; read-only annotation, not an entity reference.\n${historicalAccountText(doc.text)}`,
-          embeddingText: `Map note about ${label}: ${doc.text}`,
-          revision: JSON.stringify([doc.subjectId.kind, doc.revision, label]),
-          required: false,
-          automatic: false,
-          entityIds: [],
-          at: world.simTime,
-          salience: 3,
-        },
-      ];
+      return [formatMapKnowledgeCandidate(id, doc, doc.subjectId.kind, label, world.simTime)];
     }
     const entity =
       doc.subjectId.kind === 'entity'
@@ -146,6 +133,27 @@ export function subjectKnowledgeCandidates(
       }),
     ];
   });
+}
+
+export function formatMapKnowledgeCandidate(
+  id: string,
+  doc: NonNullable<ReturnType<typeof knowledgeDocument>>,
+  kind: 'place' | 'map-marker',
+  label: string,
+  at: number,
+): AttentionCandidate {
+  return {
+    id: `notepad:${id}`,
+    kind: 'knowledge',
+    text: `Your map note about ${label}; read-only annotation, not an entity reference.\n${historicalAccountText(doc.text)}`,
+    embeddingText: `Map note about ${label}: ${doc.text}`,
+    revision: JSON.stringify([kind, doc.revision, label]),
+    required: false,
+    automatic: false,
+    entityIds: [],
+    at,
+    salience: 3,
+  };
 }
 
 /** Native and Source readers separately prove subject binding and select the

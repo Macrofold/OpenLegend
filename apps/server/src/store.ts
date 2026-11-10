@@ -63,6 +63,17 @@ import {
   compactContributionHistory,
 } from './history-residency.js';
 import { MemoryRepository } from './memory-repository.js';
+import {
+  nativeRestoredArchives,
+  nativeRestoredSourceBatches,
+  nativeRestoreArchiveMetadata,
+  assertNativeRestoredArchives,
+  applyNativeRestoredArchives,
+  type NativeRestoreProjection,
+  type NativeRestoreRequest,
+  type NativeRestoreStage,
+} from './native-restore.js';
+import { nativeRecordChanges } from './native-records.js';
 import type { DerivedMemoryAllowance } from './memory-derivatives.js';
 import {
   materializeTemporalChanges,
@@ -211,6 +222,9 @@ export interface SqlDatabase {
   setLiveReadCuts?(provider: LiveReadCutsProvider): void;
   maintenanceTransaction?<T>(operation: () => Promise<T>): Promise<T>;
   readTransaction?<T>(operation: () => Promise<T>): Promise<T>;
+  /** A tentative SQL read projection inside an actual write transaction. All
+   * rows and callback effects are rolled back before returning its result. */
+  rollbackView?<T>(operation: () => Promise<T>): Promise<T>;
   readForActor?<T>(worldId: string, actorId: string, operation: () => Promise<T>): Promise<T>;
   readAtCut?<T>(cut: LiveReadCuts, operation: () => Promise<T>): Promise<T>;
   /** Selected canonical metadata plus explicit pending merge, in the same
@@ -1459,6 +1473,213 @@ export class SqlGameRepository implements GameRepository {
     return { revision, generation: cut.generation, through: cut.through };
   }
 
+  /** Replace one native timeline under its single actual SQL transaction. The
+   * old installed owner remains intact until COMMIT; the caller holds both
+   * inactive preparation and old admission/disclosure fence through settlement. */
+  async restoreCaptured<T extends NativeRestoreProjection>(
+    expectedRevision: number,
+    request: NativeRestoreRequest,
+    prepare: (stage: NativeRestoreStage) => Promise<T>,
+  ): Promise<{ prepared: T; receipt: NativeWorldAdoption }> {
+    await this.ready;
+    this.assertWriteAdmission();
+    const owner = this.capturedOwner;
+    if (
+      this.db.transactionActive !== false ||
+      !this.db.afterCommit ||
+      !this.db.afterRollback ||
+      !owner ||
+      owner.worldId !== request.checkpoint.worldId ||
+      owner.generation !== request.generation ||
+      this.acceptedRevision !== expectedRevision ||
+      this.baselineLost
+    )
+      throw new Error('Native restore no longer owns its completed durable predecessor.');
+    const priorAllowance = this.memories.captureAllowance(owner.worldId);
+    return this.db.transaction(async () => {
+      await this.authority.assertFence(request.authority);
+      if (this.capturedOwner !== owner || this.acceptedRevision !== expectedRevision)
+        throw new Error('Native restore lost its installed writer while awaiting authority.');
+      const before = await this.db
+        .prepare('SELECT payload FROM world_settings WHERE world_id=? AND id=?')
+        .get(owner.worldId, '["world"]');
+      if (!before) throw new Error('Native restore has no current canonical header.');
+      const header = JSON.parse(String(before['payload'])) as { nextId: number; simTime: number };
+      const beforeEntities = (
+        await this.db
+          .prepare('SELECT entity_id FROM sim_entities WHERE world_id=?')
+          .all(owner.worldId)
+      ).map((row) => String(row['entity_id']));
+      const metadata: NativeRestoreStage['metadata'] = {
+        identityFloor: header.nextId,
+        actorOwners: [...(await this.authority.actorOwners(owner.worldId))].map(
+          ([actorId, accountId]) => ({ actorId, accountId }),
+        ),
+        worldGrants: (await this.authority.worldGrants(owner.worldId)).map((grant) => ({
+          actorId: grant.actorId ?? null,
+          accountId: grant.accountId,
+        })),
+        privacyRevisions: Object.fromEntries(
+          (
+            await this.db
+              .prepare(
+                'SELECT slot,payload FROM mind_privacy_revisions WHERE world_id=? ORDER BY parent_id,position,id',
+              )
+              .all(owner.worldId)
+          ).map((row) => [String(row['slot']), JSON.parse(String(row['payload'])) as number]),
+        ),
+        namespace: request.restore.timeline,
+        archives: nativeRestoreArchiveMetadata(request.checkpoint.memory.mind_source_versions),
+      };
+      this.integrationValues.clear();
+      this.db.afterCommit!(() => this.integrationValues.clear());
+      this.db.afterRollback!(() => {
+        this.integrationValues.clear();
+        this.memories.configureAllowance(priorAllowance);
+      });
+      const revision = await this.records.advance(owner.worldId, expectedRevision, true);
+      const head = await this.records.head();
+      if (!head || head.worldId !== owner.worldId || head.revision !== revision)
+        throw new Error('Native restore lost its tentative whole-install head.');
+
+      // Clear the old world's derived source/dependency ownership before the
+      // structural cascade. The final canonical sources are inserted once below.
+      const removed: RecordChanges = {
+        writes: new Map(),
+        deletes: new Map([['data_world', ['[]']]]),
+        rows: 0,
+      };
+      const affected = await this.memories.project(owner.worldId, removed, false);
+      const staged = await this.saves.stageCanonical(
+        request.checkpoint,
+        this.records,
+        {
+          databaseSchema: DATABASE_SCHEMA,
+          generation: head.generation,
+          revision,
+          identityFloor: header.nextId,
+        },
+        {
+          ...request.restore,
+          beforeTime: header.simTime,
+          beforeEntities,
+        },
+      );
+      let readsPrepared = false;
+      let readsInitialized = false;
+      const prepared = await prepare({
+        ...staged,
+        revision,
+        generation: head.generation,
+        metadata,
+        prepareReads: async (installation) => {
+          if (
+            readsPrepared ||
+            installation.worldId !== owner.worldId ||
+            installation.generation !== head.generation ||
+            installation.revision !== revision ||
+            installation.acceptedCut !== 0 ||
+            !this.db.rollbackView
+          )
+            throw new Error('Native restore reads require their exact inactive SQL installation.');
+          readsPrepared = true;
+          this.memories.configureAllowance(installation.memoryAllowance);
+          for await (const sources of nativeRestoredSourceBatches(this.db, owner.worldId))
+            await this.memories.writeSources(
+              owner.worldId,
+              sources,
+              affected,
+              this.memories.prepareSources(owner.worldId, sources, installation.memoryAllowance),
+            );
+          await this.memories.reconcile(owner.worldId, affected);
+          readsInitialized = true;
+          return {
+            withPrivateView: async (projection, read) => {
+              if (!this.db.transactionActive)
+                throw new Error('Native restore history lost its protected SQL transaction.');
+              return this.db.rollbackView!(async () => {
+                const changes = nativeRecordChanges(projection);
+                const changed = await this.memories.project(owner.worldId, changes, false);
+                await this.records.write(owner.worldId, revision, changes);
+                await this.memories.writeSources(
+                  owner.worldId,
+                  changes,
+                  changed,
+                  this.memories.prepareSources(
+                    owner.worldId,
+                    changes,
+                    installation.memoryAllowance,
+                  ),
+                );
+                await this.memories.reconcile(owner.worldId, changed);
+                return read();
+              });
+            },
+          };
+        },
+      });
+      const { installation, inputs, providers } = prepared;
+      if (
+        installation.worldId !== owner.worldId ||
+        installation.generation !== head.generation ||
+        installation.revision !== revision ||
+        !Number.isSafeInteger(installation.acceptedCut) ||
+        installation.acceptedCut < 0 ||
+        inputs.worldId !== owner.worldId ||
+        !inputs.restore ||
+        !inputs.history.restore ||
+        inputs.history.worldId !== owner.worldId ||
+        inputs.sources.worldId !== owner.worldId ||
+        inputs.sources.changes !== inputs.changes ||
+        installation.memoryAllowance.worldId !== owner.worldId
+      )
+        throw new Error('Native restore preparation does not bind its tentative SQL installation.');
+      if (readsInitialized) {
+        const initial = await this.memories.project(owner.worldId, removed, false);
+        // This full replacement reconciles every affected actor once. Do not
+        // carry the initialized checkpoint's old source rows into final INSERTs.
+        for (const actor of initial.keys()) affected.set(actor, null);
+      }
+      await this.applyCommitPrivacy(inputs);
+      await this.applyCommitInputs(inputs, revision, { deferSources: true });
+      const archives = await nativeRestoredArchives(this.db, owner.worldId, inputs.privacy);
+      assertNativeRestoredArchives(prepared.archives, archives.selected);
+      await applyNativeRestoredArchives(this.db, revision, archives);
+      this.memories.configureAllowance(installation.memoryAllowance);
+      for await (const sources of nativeRestoredSourceBatches(this.db, owner.worldId))
+        await this.memories.writeSources(
+          owner.worldId,
+          sources,
+          affected,
+          this.memories.prepareSources(owner.worldId, sources, installation.memoryAllowance),
+        );
+      await this.memories.reconcile(owner.worldId, affected);
+      await this.receivedOwnership.project(owner.worldId, revision, inputs.changes, true);
+      await this.receivedOwnership.validate(owner.worldId, 'retained');
+      if ((await this.history.auditEventCount(owner.worldId)) !== installation.historyEventCount)
+        throw new Error('Native restore history coverage differs from its sealed installation.');
+      await this.memories.reuseVectors(owner.worldId);
+      const receipt: NativeWorldAdoption = Object.freeze({
+        worldId: owner.worldId,
+        generation: head.generation,
+        revision,
+        acceptedCut: installation.acceptedCut,
+      });
+      prepared.retainReceipt(receipt);
+      this.db.afterCommit!(() => {
+        this.installNativeOwner(
+          receipt.worldId,
+          receipt.revision,
+          receipt.generation,
+          receipt.acceptedCut,
+          providers,
+        );
+        this.publishCommitInputs(inputs);
+      });
+      return { prepared, receipt };
+    });
+  }
+
   async commit(
     expectedRevision: number,
     state: SavedWorld,
@@ -1857,7 +2078,11 @@ export class SqlGameRepository implements GameRepository {
       listener(memoryRevision !== this.memories.publicationRevision);
   }
 
-  private async applyCommitInputs(inputs: CommitInputs, revision: number): Promise<void> {
+  private async applyCommitInputs(
+    inputs: CommitInputs,
+    revision: number,
+    options?: { deferSources: true },
+  ): Promise<void> {
     const { worldId, changes, restore } = inputs;
     const sharedWrites = new SqlWriteBatch(this.db);
     await timed('history.project', () =>
@@ -1909,9 +2134,13 @@ export class SqlGameRepository implements GameRepository {
       await this.memories.applySourceVersionPlan(worldId, revision, sources.versions);
     await this.records.write(worldId, revision, changes, sharedWrites);
     await this.history.revokeTemporalAccounts(worldId, changes);
-    await this.memories.writeSources(worldId, changes, affected, sources);
-    if (this.records.needsHotPrune)
+    if (!options?.deferSources)
+      await this.memories.writeSources(worldId, changes, affected, sources);
+    // A whole restore has already replaced the complete hot-record family;
+    // an old cold-open prune request cannot prune the new tentative timeline.
+    if (!options?.deferSources && this.records.needsHotPrune)
       await this.records.pruneActiveEvents(worldId, inputs.hotEventIds);
+    if (options?.deferSources) return;
     await this.memories.reconcile(worldId, affected);
     await this.receivedOwnership.project(worldId, revision, changes, !!restore);
     if (restore || inputs.initial) await this.memories.reuseVectors(worldId);

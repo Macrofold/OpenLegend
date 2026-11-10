@@ -20,9 +20,13 @@ mod digest;
 pub(crate) use digest::{ResponseDigestAnswer, ResponseDigestRequest};
 mod bindings;
 pub(crate) use bindings::{
-    ResponseActionChoice, ResponseAttemptBinding, ResponseBindingInput, ResponseBindings,
-    ResponseSemanticCause, ResponseSituation, ResponseWorkIdentity,
+    AppraisalCreatesAnswer, AppraisalCreatesRequest, AppraisalSelection,
+    PreparedResponseAppraisals, ResponseActionChoice, ResponseAttemptBinding, ResponseBindingInput,
+    ResponseBindings, ResponseNativeGuard, ResponseReads, ResponseSemanticCause, ResponseSituation,
+    ResponseValidityRoute, ResponseWorkIdentity,
 };
+mod aliases;
+pub(crate) use aliases::ResponseAliases;
 mod actions;
 mod expression;
 mod run;

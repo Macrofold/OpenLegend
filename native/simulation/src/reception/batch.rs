@@ -100,6 +100,7 @@ enum Phase {
     Done,
 }
 pub(crate) struct PerceptionCursor {
+    initialize: bool,
     entries: IndexMap<EntityHandle, Entry>,
     selected: Vec<EntityHandle>,
     policies: Option<RoutinePolicyCache>,
@@ -121,6 +122,19 @@ fn invalid() -> ObserverReceptionError {
     ExecutionError::Invariant.into()
 }
 impl PerceptionCursor {
+    /// Only an actual embodiment return takes a fresh physical sample. Restore
+    /// and ordinary interval callers continue through their due-clock path.
+    pub(crate) fn initialize_selected(
+        core: &mut CoreMutation<'_>,
+        selected: &[EntityHandle],
+        candidate: CandidateKey,
+        budget: &ByteBudget,
+    ) -> Result<Self, ObserverReceptionError> {
+        let policies = RoutinePolicyCache::new(core.state.installed.clone(), budget)?;
+        let mut result = Self::prepare(core, selected, policies, candidate, budget)?;
+        result.initialize = true;
+        Ok(result)
+    }
     pub(crate) fn prepare(
         core: &mut CoreMutation<'_>,
         selected: &[EntityHandle],
@@ -186,6 +200,7 @@ impl PerceptionCursor {
             .ok_or_else(invalid)?
             .revision;
         Ok(Self {
+            initialize: false,
             entries,
             selected: selected.to_vec(),
             policies: Some(policies),
@@ -373,6 +388,14 @@ impl PerceptionCursor {
                         .due_work(core.state, &entry.id, budget)?;
                     let mut timing =
                         RoutineObservation::prepare(core.state, handle, &policy, work, budget)?;
+                    if self.initialize {
+                        timing.sight = true;
+                        timing.contact = true;
+                        timing.sampled_sight = true;
+                        timing.sampled_contact = true;
+                        timing.detail = false;
+                        timing.immediate = true;
+                    }
                     if timing.contact
                         && (policy.contact.is_some()
                             || entity
@@ -385,7 +408,8 @@ impl PerceptionCursor {
                     }
                     timing.record_progress(&mut core.physical())?;
                     entry.requested_sight = timing.sight;
-                    if timing.sight
+                    if !self.initialize
+                        && timing.sight
                         && let Some(scheduled) = scheduled
                         && let Some(sight) = policy
                             .sight

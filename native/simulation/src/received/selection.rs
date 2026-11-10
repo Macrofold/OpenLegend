@@ -263,6 +263,22 @@ pub(crate) struct CapturedTemporalReceipt {
     _reservation: ByteReservation,
 }
 impl CapturedTemporalReceipt {
+    /// An issued NPC alias and its inventory share this same admitted capture.
+    /// Its allocation header follows the capture, rather than a shorter-lived
+    /// packet or undo guard.
+    pub(crate) fn into_shared(mut self) -> Result<Arc<Self>, ReceivedError> {
+        let bytes = self
+            ._reservation
+            .bytes()
+            .checked_add(2 * size_of::<usize>())
+            .ok_or(ReceivedError(
+                "Temporal shared capture allocation overflow.",
+            ))?;
+        self._reservation
+            .resize(bytes)
+            .map_err(|_| ReceivedError("Temporal shared capture exceeds native byte allowance."))?;
+        Ok(Arc::new(self))
+    }
     pub(crate) fn read_view(&self) -> impl serde::Serialize + '_ {
         read::receipt_read(&self.receipt)
     }

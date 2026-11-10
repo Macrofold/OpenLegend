@@ -109,6 +109,7 @@ impl NpcCandidateCursor {
                 let (id, id_guard) = self.id(&["continue"])?;
                 guard.merge(id_guard)?;
                 self.append(PreparedNpcOffer {
+                    description: None,
                     id,
                     meaning: NpcOfferMeaning::Continuation {
                         action_type,

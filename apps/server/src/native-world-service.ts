@@ -11,7 +11,12 @@ import {
   type Outcome,
 } from '@open-legend/domain';
 import { nativeSetupSettings } from '@open-legend/domain/native-install';
-import type { ApiResult, CommandInput, GameView } from '@open-legend/protocol';
+import type {
+  ApiResult,
+  CommandInput,
+  CommandReceiptResult,
+  GameView,
+} from '@open-legend/protocol';
 import type { AssetRevisionReference } from '@open-legend/assets';
 import {
   AuthorityError,
@@ -22,6 +27,8 @@ import {
   type Capability,
   type LoginSession,
   type RequestScope,
+  type ExitAttempt,
+  type ControlRequest,
 } from './authority.js';
 import type { AppConfig } from './config.js';
 import { DATABASE_SCHEMA, digest, type SqlGameRepository } from './store.js';
@@ -46,8 +53,10 @@ import {
 import { nativePrivateHistory } from './native-private-history.js';
 import { postgresTransactionOutcome } from './postgres.js';
 import { SOURCE_EDIT_PREPARATION_CAPACITY } from './history-edit.js';
+import { CheckpointBusyError, GameSaveError } from './game-saves.js';
 import { NativePlayerCapture } from './native-player-capture.js';
 import { NativeNpcCapture } from './native-npc-capture.js';
+import type { NativeNpcSourceSelection } from './native-npc-sources.js';
 import { NativeRecentRetention } from './native-retention.js';
 import { RETENTION_MIN_DELAY_MS } from './retention-deadlines.js';
 import { playerInteractionAvailability } from './player-interaction.js';
@@ -80,6 +89,11 @@ import { LIVE_SAVE_INTERVAL_MS, LIVE_SAVE_MAX_AGE_MS } from './pending-world-sav
 import { WorldInputOwner } from './world-input.js';
 import { permittedSourceHandle } from './entity-references.js';
 import { driveNativeOperation } from './native-providers.js';
+import { NativeRestorePreparation } from './native-restore-operation.js';
+import type { NativeWorldAdoption } from './store.js';
+import { checkpointPrivacy } from './native-restore.js';
+import { NativeActorRoster } from './native-actor-roster.js';
+import { worldSpeedRefusal, worldControlOutcome } from './world-control-outcome.js';
 
 type Progress = NativePublication['progress'];
 type OperationalSettings = {
@@ -106,6 +120,12 @@ type NativeOperationRequest = {
  * request authority, bounded scheduling, accepted publication products and the
  * existing ordered PostgreSQL writer. It never loads a TypeScript world. */
 export class NativeWorldService implements NativePlayerRequestOwner {
+  readonly worldId: string;
+  private storageGeneration: string;
+  private nativeWorld: NativeWorld;
+  private nativeDefinitions: NativeDefinitionCapture;
+  private timeline: string;
+  localSessionToken = '';
   private readonly lane: WorkLane;
   private readonly projection: WorkLane;
   private readonly work = new HostWork(this);
@@ -113,17 +133,26 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   private readonly reads = new AsyncLocalStorage<PlayerContext>();
   private readonly memoryReads = new AsyncLocalStorage<LiveReadCuts>();
   private readonly listeners = new Set<() => void>();
-  private readonly pending: NativePendingSave;
-  private readonly recent: NativeRecentRetention;
-  private readonly geometry: ReturnType<NativeDefinitionCapture['geometry']>;
-  private readonly milestones: Readonly<Record<string, Readonly<Record<string, boolean>>>>;
+  private pending: NativePendingSave;
+  private recent: NativeRecentRetention;
+  private provider?: ReturnType<NativeDefinitionCapture['geometry']>;
+  private milestones: Readonly<Record<string, Readonly<Record<string, boolean>>>>;
   private readonly profiles = new Map<string, Promise<GameView['profile']>>();
   private readonly receipts = new Map<string, GameplayReceipt>();
   private readonly receiptReaders = new Map<string, number>();
   private readonly durableReceipts = new Set<string>();
   private readonly inputLives = new Map<string, { life: number; alive: boolean }>();
   private readonly speechActors = new Map<string, string>();
-  private readonly actorControllers = new Map<string, 'player' | 'npc'>();
+  private actors: NativeActorRoster;
+  private readonly connections = new Map<string, RequestScope>();
+  private readonly connectionPreferences = new Map<string, boolean>();
+  private readonly presence = new Map<string, { at: number; scope: RequestScope }>();
+  private readonly presenceOrders = new Map<
+    string,
+    { sequence: number; at: number; controlGeneration: number }
+  >();
+  private readonly exits = new Map<string, ExitAttempt>();
+  private readonly awaitingRestoredPresence = new Set<string>();
   private readonly sourceEdits = new Map<string, () => void>();
   private readonly inventoryReads = new Map<
     string,
@@ -136,7 +165,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   >();
   private nextReadRevision = 0;
   private readonly unsubscribers: (() => void)[] = [];
-  private retained: NativeRetainedValues;
+  private retained?: NativeRetainedValues;
   private progress: Progress;
   private durableProgress: Progress;
   private privacy: ExperiencePrivacy;
@@ -155,37 +184,49 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   private protectedHold?: NativeProtectedHold;
   private committedPrefix?: { readonly prefix: NativePendingPrefix; readonly revision: number };
   private playerInteractionAdmission?: (actorId: string) => boolean;
+  private stopping?: Promise<void>;
+  private restoring = false;
+  private restoration?: {
+    readonly preparation: NativeRestorePreparation;
+    readonly receipt?: NativeWorldAdoption;
+  };
 
   private constructor(
     readonly store: SqlGameRepository,
     readonly config: AppConfig,
-    readonly world: NativeWorld,
-    readonly definitions: NativeDefinitionCapture,
-    readonly installation: NativeCurrentWorldInstallation,
-    readonly timelineId: string,
-    private readonly operational: OperationalSettings,
+    private readonly host: NativeHost,
+    world: NativeWorld,
+    definitions: NativeDefinitionCapture,
+    installation: NativeCurrentWorldInstallation,
+    timelineId: string,
+    private operational: OperationalSettings,
     retained: NativeRetainedValues,
     progress: Progress,
     privacy: ExperiencePrivacy,
     epoch: CommandEpoch,
     milestones: Readonly<Record<string, Readonly<Record<string, boolean>>>>,
-    controllers: readonly (readonly [string, 'player' | 'npc'])[],
+    actors: NativeActorRoster,
     recentRows: readonly { readonly slot: string; readonly payload: string }[],
     private readonly now: () => number,
   ) {
+    this.worldId = installation.worldId;
+    this.storageGeneration = installation.generation;
+    this.nativeWorld = world;
+    this.nativeDefinitions = definitions;
+    this.timeline = timelineId;
     this.retained = retained;
     this.progress = progress;
     this.durableProgress = progress;
     this.privacy = privacy;
     this.epoch = epoch;
     this.milestones = milestones;
-    for (const [id, controller] of controllers) this.actorControllers.set(id, controller);
+    this.actors = actors;
     this.recent = new NativeRecentRetention(
       installation.worldId,
       selectedTemporalPolicy(definitions.facts.definitions).recent,
       recentRows,
     );
-    this.geometry = definitions.geometry();
+    this.provider = definitions.geometry();
     this.lane = new WorkLane('native.mutation', config.capacity.requests);
     this.projection = new WorkLane('native.projection', config.capacity.requests);
     this.inputs = new WorldInputOwner(config.capacity.presence);
@@ -196,6 +237,19 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       acceptedCut: installation.acceptedCut,
       timeline: timelineId,
     });
+  }
+
+  get generation(): string {
+    return this.storageGeneration;
+  }
+  get world(): NativeWorld {
+    return this.nativeWorld;
+  }
+  get definitions(): NativeDefinitionCapture {
+    return this.nativeDefinitions;
+  }
+  get timelineId(): string {
+    return this.timeline;
   }
 
   /** Reopen only a real current-format scoped world. Creating the normal game
@@ -311,6 +365,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       service = new NativeWorldService(
         store,
         config,
+        options.host,
         world,
         definitions,
         installation,
@@ -321,10 +376,10 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         privacy,
         epoch,
         milestones,
-        (source.records.tables['sim_actors'] ?? []).map((row) => [
-          (JSON.parse(row.parent) as string[]).at(-1)!,
-          (JSON.parse(row.payload) as { controller: 'player' | 'npc' }).controller,
-        ]),
+        new NativeActorRoster(
+          source.records.tables['sim_actors'] ?? [],
+          source.records.tables['sim_exit_exposures'] ?? [],
+        ),
         source.records.tables['mind_temporal_actors'] ?? [],
         options.now ?? Date.now,
       );
@@ -335,7 +390,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           service!.reads.getStore()?.cut ??
           service!.pending.liveReadCuts(),
         retainedValues: (worldId) =>
-          worldId === installation.worldId ? service!.retained.ids : {},
+          worldId === installation.worldId ? (service!.retained?.ids ?? {}) : {},
         backgroundSearchAdmission: () => !service!.closed && !service!.failure,
       });
       await world.activate(JSON.stringify(receipt));
@@ -352,6 +407,15 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         paused: initial.paused,
       };
       service.durableProgress = service.progress;
+      for (const attempt of await store.authority.exitAttempts(installation.worldId))
+        service.exits.set(attempt.actorId, attempt);
+      if (service.progress.paused)
+        for (const actorId of service.actors.playerIds())
+          if (
+            !service.exits.has(actorId) &&
+            service.actors.get(actorId)?.participation?.phase !== 'exiting'
+          )
+            service.awaitingRestoredPresence.add(actorId);
       service.unsubscribers.push(
         store.authority.subscribe(() => {
           service!.inputs.clear();
@@ -361,9 +425,12 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       );
       service.unsubscribers.push(store.assets.subscribeAuthority(() => service!.notify(false)));
       service.unsubscribers.push(store.onProjection(() => service!.notify(false)));
+      if (config.authentication.mode === 'local') await service.signInLocal();
       service.scheduleRecentRetention();
       return service;
     } catch (error) {
+      await service?.provider?.close().catch(() => undefined);
+      service?.unsubscribers.splice(0).forEach((unsubscribe) => unsubscribe());
       service?.work.close();
       definitions?.release();
       world.closeAdmission();
@@ -372,17 +439,15 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     }
   }
 
-  get worldId(): string {
-    return this.installation.worldId;
-  }
-  get generation(): string {
-    return this.installation.generation;
+  private get geometry() {
+    if (!this.provider) throw new Error('Native physical provider is closed.');
+    return this.provider;
   }
   get connectionLimit(): number {
     return this.config.capacity.connections;
   }
   get paused(): boolean {
-    return this.progress.paused;
+    return !!this.failure || this.operational.manuallyPaused || this.absent;
   }
   get commandEpoch(): string {
     return this.epoch.token;
@@ -418,10 +483,30 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     );
   }
   assertScope(scope: RequestScope, capability: Capability = 'play', controlling = false): void {
-    if (!this.currentScope(scope, capability, controlling)) throw new AuthorityError('stale-scope');
+    if (!this.currentScope(scope, capability, controlling))
+      throw new AuthorityError(controlling ? 'control-changed' : 'stale-scope');
   }
   requestScope(session: LoginSession, connectionId: string): Promise<RequestScope> {
     return this.store.authority.scope(session, this.worldId, this.timelineId, connectionId);
+  }
+  authenticationMutation<T>(operation: () => Promise<T>): Promise<T> {
+    return this.lane.run(() => {
+      if (this.closed) throw new AuthorityError('stale-scope');
+      return operation();
+    });
+  }
+  async signInLocal(): Promise<string> {
+    if (this.config.authentication.mode !== 'local') throw new AuthorityError('forbidden');
+    return this.authenticationMutation(async () => {
+      const login = await this.store.authority.login(
+        { issuer: 'https://local.openlegend.invalid', subject: 'local-player' },
+        this.now(),
+        this.config.authentication.sessionMs,
+        this.config.capacity.sessions,
+      );
+      this.localSessionToken = login.token;
+      return login.token;
+    });
   }
   refreshScope(scope: RequestScope): RequestScope {
     this.assertScope(scope);
@@ -472,10 +557,17 @@ export class NativeWorldService implements NativePlayerRequestOwner {
 
   /** One native mental capture and its actual pending SQL overlay are acquired
    * together. Callers retain this finite read owner through context preparation. */
-  captureNpc(actorId: string, requiredAppraisals: readonly AppraisalScope[]) {
+  captureNpc(
+    actorId: string,
+    requiredAppraisals: readonly AppraisalScope[],
+    options: Parameters<NativeNpcCapture['prepareChoices']>[2] = {},
+  ) {
     return this.lane.run(async () => {
       this.assertAdmission();
       const capture = await NativeNpcCapture.capture(this.world, actorId, requiredAppraisals);
+      // Choice setup uses the same unchanged native cut as its mental capture.
+      // No model or embedding call runs in this short preparation lane.
+      await capture.prepareChoices(this.world, this.geometry, options);
       try {
         const cut = nativeScopedReadCut(
           await captureNativeReadCut(this.world, actorId),
@@ -490,9 +582,32 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     });
   }
 
+  prepareNpcSources(
+    capture: NativeNpcCapture,
+    selection: NativeNpcSourceSelection,
+    signal?: AbortSignal,
+  ) {
+    return this.lane.run(async () => {
+      this.assertAdmission();
+      if (
+        capture.facts.self.worldId !== this.worldId ||
+        capture.facts.self.generation !== this.generation
+      )
+        throw new ViewChangedError();
+      return capture.prepareSources(
+        this.world,
+        selection,
+        this.geometry,
+        { db: this.store.db, liveReadCuts: () => this.pending.liveReadCuts() },
+        signal,
+      );
+    });
+  }
+
   /** Memory repositories select only their scoped SQL/pending rows. This
    * context is separate from embodied player reads and grants no player scope. */
   withMemoryRead<T>(cut: LiveReadCuts, operation: () => Promise<T>): Promise<T> {
+    if (this.restoring) throw new ViewChangedError();
     if (
       cut.worldId !== this.worldId ||
       cut.generation !== this.generation ||
@@ -534,6 +649,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     scope: RequestScope,
     existing?: NativePlayerCapture,
   ) {
+    if (this.restoring) throw new ViewChangedError();
     this.assertScope(scope);
     const capture =
       existing ??
@@ -558,17 +674,434 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   get pauseReason(): 'manual' | 'away' | 'storage' | 'maintenance' | null {
     return this.failure
       ? 'storage'
-      : this.paused
-        ? this.operational.manuallyPaused
-          ? 'manual'
-          : 'away'
-        : null;
+      : this.operational.manuallyPaused
+        ? 'manual'
+        : this.absent
+          ? 'away'
+          : null;
   }
 
-  private assertAdmission(protectedOwner = false): void {
+  private presenceKey(scope: RequestScope): string {
+    return `${scope.accountId}:${scope.sessionId}:${scope.connectionId}`;
+  }
+  get present(): boolean {
+    const cutoff = this.now() - 12_000;
+    const connected = new Set(
+      [...this.connections.values()].map((scope) => this.presenceKey(scope)),
+    );
+    for (const [key, entry] of this.presence)
+      if (entry.at < cutoff || !this.currentScope(entry.scope, 'play', true)) {
+        this.presence.delete(key);
+        if (!connected.has(key)) this.presenceOrders.delete(key);
+      }
+    for (const [key, entry] of this.presenceOrders)
+      if (entry.at < cutoff && !connected.has(key)) this.presenceOrders.delete(key);
+    return this.presence.size > 0;
+  }
+  private get absent(): boolean {
+    if (this.present || this.actors.exitExposureActive) return false;
+    for (const scope of this.connections.values())
+      if (
+        this.currentScope(scope) &&
+        this.currentScope(this.refreshScope(scope), 'play', true) &&
+        this.connectionPreferences.get(scope.accountId) === false
+      )
+        return false;
+    return true;
+  }
+  private controllerPresent(scope: RequestScope): boolean {
+    const controller = this.store.authority.currentController(scope, this.now());
+    if (!controller) return false;
+    const key = this.presenceKey(controller);
+    const presence = this.presence.get(key);
+    if (
+      presence &&
+      presence.at >= this.now() - 12_000 &&
+      this.currentScope(presence.scope, 'play', true)
+    )
+      return true;
+    const returning = this.presenceOrders.get(key);
+    if (
+      returning?.controlGeneration === controller.controlGeneration &&
+      returning.at >= this.now() - 12_000
+    )
+      return true;
+    return [...this.connections.values()].some(
+      (connection) =>
+        connection.connectionId === controller.connectionId &&
+        connection.sessionId === controller.sessionId &&
+        this.currentScope(connection) &&
+        this.currentScope(this.refreshScope(connection), 'play', true),
+    );
+  }
+  controlsElsewhere(scope: RequestScope): boolean {
+    const controller = this.store.authority.currentController(scope, this.now());
+    return (
+      !!controller &&
+      controller.connectionId !== scope.connectionId &&
+      this.controllerPresent(scope)
+    );
+  }
+  private participatingHumans(): Set<string> {
+    const actors = new Set<string>();
+    for (const scope of [
+      ...this.connections.values(),
+      ...[...this.presence.values()].map((entry) => entry.scope),
+    ])
+      if (this.currentScope(scope) && this.currentScope(this.refreshScope(scope), 'play', true))
+        actors.add(scope.actorId);
+    return actors;
+  }
+  private orderPresence(key: string, sequence: number | undefined, scope: RequestScope): boolean {
+    if (sequence === undefined) return true;
+    const previous = this.presenceOrders.get(key);
+    if (previous?.controlGeneration === scope.controlGeneration && sequence <= previous.sequence)
+      return false;
+    if (!previous && this.presenceOrders.size >= this.config.capacity.presence)
+      throw new Error('Presence capacity reached. Reconnect before continuing.');
+    this.presenceOrders.set(key, {
+      sequence,
+      at: this.now(),
+      controlGeneration: scope.controlGeneration,
+    });
+    return true;
+  }
+  private async participationInLane(
+    actorId: string,
+    operation:
+      | { type: 'begin-exit' | 'depart' | 'reconcile-exit'; attemptId: string }
+      | { type: 'return' },
+    attempt: ExitAttempt | null,
+    control?: { scope: RequestScope; request: ControlRequest; unattended: boolean },
+  ): Promise<NativePublication> {
+    const expectedRevision = this.actors.get(actorId)?.participation?.revision ?? 0;
+    return this.protectedOperation({
+      capability: 'play',
+      ...(control ? { scope: control.scope } : {}),
+      actorId,
+      inLane: true,
+      requireSuccess: true,
+      first: () =>
+        this.world.beginParticipation(
+          Buffer.from(JSON.stringify({ actorId, expectedRevision, operation })),
+        ),
+      current: () => !this.closed && !this.failure,
+      operationalChange: async () => {
+        if (control)
+          await this.store.authority.changeControl(
+            control.scope,
+            control.request,
+            this.now,
+            control.unattended,
+          );
+        await this.store.authority.saveExit(this.worldId, actorId, attempt);
+      },
+      accepted: () => {
+        if (attempt) this.exits.set(actorId, attempt);
+        else this.exits.delete(actorId);
+      },
+    });
+  }
+  private async reconcileParticipationInLane(): Promise<void> {
+    this.present;
+    const participating = this.participatingHumans();
+    for (const actorId of this.actors.playerIds()) {
+      const actor = this.actors.get(actorId)!;
+      if (participating.has(actorId)) {
+        this.awaitingRestoredPresence.delete(actorId);
+        if (actor.participation && actor.participation.phase !== 'active')
+          await this.participationInLane(actorId, { type: 'return' }, null);
+        continue;
+      }
+      if (actor.participation?.phase === 'inactive') {
+        this.awaitingRestoredPresence.delete(actorId);
+        continue;
+      }
+      if (this.progress.paused && this.awaitingRestoredPresence.has(actorId)) continue;
+      this.awaitingRestoredPresence.delete(actorId);
+      const attempt = this.exits.get(actorId) ?? {
+        worldId: this.worldId,
+        actorId,
+        id: randomUUID(),
+        deadline: this.now() + this.config.exitGraceMs,
+      };
+      if (
+        actor.participation?.phase !== 'exiting' ||
+        actor.participation.exitAttemptId !== attempt.id
+      ) {
+        const result = await this.participationInLane(
+          actorId,
+          {
+            type: actor.participation?.phase === 'exiting' ? 'reconcile-exit' : 'begin-exit',
+            attemptId: attempt.id,
+          },
+          attempt,
+        );
+        if (!result.outcome.ok) continue;
+      }
+      if (
+        this.definitions.facts.definitions.participationPolicy?.exitExposureSeconds === undefined &&
+        this.now() >= attempt.deadline
+      )
+        await this.participationInLane(actorId, { type: 'depart', attemptId: attempt.id }, attempt);
+    }
+  }
+  private async hostControlInLane(
+    paused: boolean,
+    speed: number,
+    manuallyPaused: boolean,
+  ): Promise<ApiResult> {
+    const publication = await this.protectedOperation({
+      capability: 'play',
+      inLane: true,
+      current: () => !this.closed && !this.failure,
+      first: () =>
+        this.world.beginControl(Buffer.from(JSON.stringify({ paused, speed, manuallyPaused }))),
+      accepted: () => {
+        this.operational = { ...this.operational, speed, manuallyPaused };
+      },
+    });
+    return publication.outcome;
+  }
+  clockStartedAt = 0;
+  private debtSeconds = 0;
+  private inputAccountedThrough?: number;
+  private resetClock(): void {
+    this.debtSeconds = 0;
+    this.inputs.clear();
+    this.inputAccountedThrough = performance.now();
+  }
+  private async syncPauseInLane(): Promise<void> {
+    this.resetClock();
+    const paused = this.paused,
+      resuming = this.progress.paused && !paused;
+    if (this.progress.paused !== paused)
+      await this.hostControlInLane(paused, this.operational.speed, this.operational.manuallyPaused);
+    else this.notify(false);
+    if (resuming && !this.progress.paused) this.clockStartedAt = performance.now();
+  }
+
+  async setConnection(
+    connectionId: string,
+    connected: boolean,
+    scope: RequestScope,
+  ): Promise<void> {
+    await this.withSaveBarrier(undefined, 'play', () =>
+      this.lane.run(async () => {
+        if (connected) {
+          this.assertScope(scope);
+          if (this.connections.size >= this.connectionLimit)
+            throw new Error('Connection capacity reached.');
+          const profile = await this.profileFor(scope);
+          this.connections.set(connectionId, scope);
+          this.connectionPreferences.set(scope.accountId, profile.preferences.pauseWhenHidden);
+        } else {
+          const previous = this.connections.get(connectionId);
+          this.connections.delete(connectionId);
+          if (
+            previous &&
+            ![...this.connections.values()].some(
+              (item) => this.presenceKey(item) === this.presenceKey(previous),
+            )
+          ) {
+            this.inputs.clear(previous.actorId);
+            this.presence.delete(this.presenceKey(previous));
+            this.presenceOrders.delete(this.presenceKey(previous));
+            if (
+              ![...this.connections.values()].some((item) => item.accountId === previous.accountId)
+            )
+              this.connectionPreferences.delete(previous.accountId);
+          }
+        }
+        await this.reconcileParticipationInLane();
+        if (this.progress.paused !== this.paused) await this.syncPauseInLane();
+      }),
+    );
+  }
+  private readonly pendingPresenceChanges = new Map<string, number>();
+  private steadyPresence(scope: RequestScope): boolean {
+    const key = this.presenceKey(scope),
+      entry = this.presence.get(key);
+    if (
+      this.pendingPresenceChanges.has(key) ||
+      !entry ||
+      entry.at < this.now() - 12_000 ||
+      !this.currentScope(entry.scope, 'play', true) ||
+      !this.currentScope(scope, 'play', true) ||
+      this.progress.paused !== this.paused ||
+      this.exits.size ||
+      this.awaitingRestoredPresence.size
+    )
+      return false;
+    const participating = this.participatingHumans();
+    for (const id of this.actors.playerIds())
+      if (
+        (this.actors.get(id)!.participation?.phase ?? 'active') !==
+        (participating.has(id) ? 'active' : 'inactive')
+      )
+        return false;
+    return true;
+  }
+  async reportPresence(
+    clientId: string,
+    visible: boolean,
+    sequence: number | undefined,
+    scope: RequestScope,
+  ): Promise<void> {
+    this.assertScope(scope, 'play', true);
+    if (clientId !== scope.connectionId && this.config.authentication.mode !== 'local')
+      throw new AuthorityError('forbidden');
+    const key = this.presenceKey(scope);
+    if (visible && sequence !== undefined && this.steadyPresence(scope)) {
+      await this.store.authority.assertFence({
+        scope,
+        capability: 'play',
+        controlling: true,
+        now: this.now,
+      });
+      this.assertScope(scope, 'play', true);
+      if (this.steadyPresence(scope)) {
+        if (this.orderPresence(key, sequence, scope))
+          this.presence.set(key, { at: this.now(), scope });
+        return;
+      }
+    }
+    this.pendingPresenceChanges.set(key, (this.pendingPresenceChanges.get(key) ?? 0) + 1);
+    try {
+      await this.withSaveBarrier(scope, 'play', () =>
+        this.lane.run(async () => {
+          this.assertScope(scope, 'play', true);
+          await this.setPresenceInLane(clientId, visible, sequence, scope);
+        }),
+      );
+    } finally {
+      const count = this.pendingPresenceChanges.get(key)! - 1;
+      if (count) this.pendingPresenceChanges.set(key, count);
+      else this.pendingPresenceChanges.delete(key);
+    }
+  }
+  private async setPresenceInLane(
+    clientId: string,
+    visible: boolean,
+    sequence: number | undefined,
+    scope: RequestScope,
+  ): Promise<void> {
+    if (clientId !== scope.connectionId && this.config.authentication.mode !== 'local')
+      throw new AuthorityError('forbidden');
+    const key = this.presenceKey(scope);
+    if (!this.orderPresence(key, sequence, scope)) return;
+    const wasPaused = this.paused;
+    if (wasPaused && !this.progress.paused) await this.syncPauseInLane();
+    if (visible) {
+      if (!this.presence.has(key) && this.presence.size >= this.config.capacity.presence)
+        throw new Error('Presence capacity reached. Reconnect before continuing.');
+      this.presence.set(key, { at: this.now(), scope });
+    } else {
+      this.presence.delete(key);
+      this.inputs.clear(scope.actorId);
+    }
+    await this.reconcileParticipationInLane();
+    if (this.paused !== wasPaused || this.progress.paused !== this.paused)
+      await this.syncPauseInLane();
+  }
+
+  async changeEmbodiment(scope: RequestScope, request: ControlRequest): Promise<ApiResult> {
+    return this.withSaveBarrier(scope, 'play', () =>
+      this.lane.run(async () => {
+        this.assertScope(scope);
+        if (await this.store.authority.controlReceipt(scope, request))
+          return {
+            ok: true,
+            code: 'replayed',
+            message: 'Control request already committed. Refresh to see current control.',
+          };
+        const actor = this.actors.get(scope.actorId);
+        if (actor?.controller !== 'player') throw new AuthorityError('forbidden');
+        if (request.operation !== 'release') {
+          this.present;
+          if (
+            !this.presenceOrders.has(this.presenceKey(scope)) &&
+            this.presenceOrders.size >= this.config.capacity.presence
+          )
+            throw new Error('Presence capacity reached. Reconnect before continuing.');
+        }
+        const attempt =
+          request.operation === 'release'
+            ? (this.exits.get(scope.actorId) ?? {
+                worldId: this.worldId,
+                actorId: scope.actorId,
+                id: randomUUID(),
+                deadline: this.now() + this.config.exitGraceMs,
+              })
+            : null;
+        const publication = await this.participationInLane(
+          scope.actorId,
+          attempt ? { type: 'begin-exit', attemptId: attempt.id } : { type: 'return' },
+          attempt,
+          {
+            scope,
+            request,
+            unattended: actor.participation?.phase === 'inactive' || !this.controllerPresent(scope),
+          },
+        );
+        if (!publication.outcome.ok) return publication.outcome;
+        if (!attempt) {
+          const returned = this.refreshScope(scope);
+          this.presenceOrders.set(this.presenceKey(returned), {
+            sequence: -1,
+            at: this.now(),
+            controlGeneration: returned.controlGeneration,
+          });
+        }
+        return {
+          ...publication.outcome,
+          message:
+            request.operation === 'release'
+              ? 'Your tab is paused; your character is leaving the world.'
+              : 'Resumed here.',
+        };
+      }),
+    );
+  }
+  async control(
+    input: { paused?: boolean; speed?: number; clientId?: string; presenceSequence?: number },
+    scope: RequestScope,
+  ): Promise<ApiResult> {
+    return this.withSaveBarrier(scope, 'play', () =>
+      this.lane.run(async () => {
+        this.assertScope(scope, 'play', true);
+        const refused = worldSpeedRefusal(input.speed, this.config.godMode, () =>
+          this.currentScope(scope, 'create'),
+        );
+        if (refused) return refused;
+        if (input.paused === false) {
+          if (input.clientId)
+            await this.setPresenceInLane(input.clientId, true, input.presenceSequence, scope);
+          if (this.absent)
+            return {
+              ok: false,
+              code: 'away',
+              message: 'This game tab has not reconnected yet. Reload it and try Resume again.',
+            };
+        }
+        const speed = input.speed ?? this.operational.speed,
+          manuallyPaused = input.paused ?? this.operational.manuallyPaused;
+        const paused = manuallyPaused || this.absent || !!this.failure,
+          resuming = this.progress.paused && !paused;
+        if (paused || this.progress.paused) this.resetClock();
+        const outcome = await this.hostControlInLane(paused, speed, manuallyPaused);
+        if (outcome.ok && resuming) this.clockStartedAt = performance.now();
+        if (outcome.ok) this.scheduleRecentRetention();
+        return outcome.ok ? worldControlOutcome(paused, speed) : outcome;
+      }),
+    );
+  }
+
+  private assertAdmission(protectedOwner = false, healthyWriter = true): void {
     if (this.closed) throw new Error('Native world admission is closed.');
-    if (this.failure) throw this.failure;
     if (this.protectedAdmission && !protectedOwner) throw new OverloadError();
+    if (!healthyWriter) return;
+    if (this.failure) throw this.failure;
     if (
       this.pending.oldestAcceptedAt !== undefined &&
       performance.now() - this.pending.oldestAcceptedAt >= LIVE_SAVE_MAX_AGE_MS
@@ -580,16 +1113,40 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   mayInspectPrivate(actorId: string, scope: RequestScope): boolean {
     return (
       this.currentScope(scope) &&
-      this.actorControllers.has(actorId) &&
+      this.actors.has(actorId) &&
       (actorId === scope.actorId ||
-        (this.actorControllers.get(actorId) !== 'player' && this.currentScope(scope, 'inspect')))
+        (this.actors.get(actorId)?.controller !== 'player' && this.currentScope(scope, 'inspect')))
     );
+  }
+
+  /** Only the operational admission gate spans the asynchronous save barrier;
+   * the mutation lane stays available to the exact older prefix's ACK. */
+  private async withSaveBarrier<T>(
+    scope: RequestScope | undefined,
+    capability: Capability,
+    operation: () => Promise<T>,
+  ): Promise<T> {
+    await this.lane.run(() => {
+      this.assertAdmission();
+      if (scope) this.assertScope(scope, capability);
+      this.protectedAdmission = true;
+    });
+    try {
+      await this.flush();
+      // An older in-flight save may have acquired a newer accepted suffix
+      // before this gate closed. Drain that exact suffix too before preparing.
+      while (this.pending.dirty) await this.flush();
+      return await operation();
+    } finally {
+      if (!this.protectedHold) this.protectedAdmission = false;
+      this.scheduleRecentRetention();
+    }
   }
 
   /** The private native candidate and its full packed SQL prefix stay held
    * through the database result. This also owns the ordinary-save barrier. */
   private async protectedOperation(request: {
-    readonly scope: RequestScope;
+    readonly scope?: RequestScope;
     readonly capability: Capability;
     readonly actorId?: string;
     readonly first: () => Promise<NativeWorldTurn>;
@@ -597,20 +1154,15 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     readonly operationalChange?: () => Promise<void>;
     readonly accepted?: () => void;
     readonly signal?: AbortSignal;
+    /** Only internal host reconciliation already inside the barrier/lane. */
+    readonly inLane?: boolean;
+    readonly requireSuccess?: boolean;
   }): Promise<NativePublication> {
-    await this.lane.run(() => {
-      this.assertAdmission();
-      this.assertScope(request.scope, request.capability);
-      this.protectedAdmission = true;
-    });
     let accepted = false;
     try {
-      // No newer operation may enter between this prefix and the protected
-      // candidate. Previously accepted work remains owned by its exact writer.
-      await this.flush();
-      return await this.lane.run(async () => {
+      const operation = async () => {
         this.assertAdmission(true);
-        this.assertScope(request.scope, request.capability);
+        if (request.scope) this.assertScope(request.scope, request.capability);
         const live = this.pending.liveReadCuts();
         const before = request.actorId
           ? nativeScopedReadCut(await captureNativeReadCut(this.world, request.actorId), live)
@@ -622,12 +1174,16 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           work: this.work,
           current: () => !this.closed && request.current(),
           signal: request.signal,
+          requireSuccess: request.requireSuccess,
           history: { db: this.store.db, liveReadCuts: () => before },
           stage: async (publication) => {
             const change = publication.privacyChange;
             const privacy: ExperiencePrivacy = change
               ? {
-                  forgotten: { ...this.privacy.forgotten, [change.actorId]: [...change.forgotten] },
+                  forgotten: {
+                    ...this.privacy.forgotten,
+                    [change.actorId]: [...change.forgotten],
+                  },
                   corrections: {
                     ...this.privacy.corrections,
                     [change.actorId]: { ...change.corrections },
@@ -651,7 +1207,12 @@ export class NativeWorldService implements NativePlayerRequestOwner {
               before,
             );
             const prepared = this.pending.prepareProtected(publication, versions, history, privacy);
-            return { prepared, privacy, retain: this.recent.prepare(publication.records) };
+            return {
+              prepared,
+              privacy,
+              retain: this.recent.prepare(publication.records),
+              actors: this.actors.prepare(publication.records),
+            };
           },
           commit: async ({ prepared }) => {
             const prefix = prepared.prefix;
@@ -662,12 +1223,16 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                 {
                   generation: prefix.cut.generation,
                   through: prefix.cut.throughCut,
-                  authority: {
-                    scope: request.scope,
-                    capability: request.capability,
-                    controlling: false,
-                    now: this.now,
-                  },
+                  ...(request.scope
+                    ? {
+                        authority: {
+                          scope: request.scope,
+                          capability: request.capability,
+                          controlling: false,
+                          now: this.now,
+                        },
+                      }
+                    : {}),
                   operationalChange: request.operationalChange,
                 },
               );
@@ -678,9 +1243,10 @@ export class NativeWorldService implements NativePlayerRequestOwner {
               throw error;
             }
           },
-          accept: ({ prepared, privacy, retain }) => {
+          accept: ({ prepared, privacy, retain, actors }) => {
             prepared.accept();
             retain();
+            actors();
             accepted = true;
             this.progress = prepared.value.publication.progress;
             this.privacy = privacy;
@@ -696,15 +1262,280 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           if (result.publication.privacyChange) this.privacyEpoch++;
           this.notify(result.publication.events.length !== 0);
           this.scheduleRecentRetention();
-        } else if (result.publication.protectedSave) throw new AuthorityError('stale-scope');
+        } else if (
+          result.publication.protectedSave &&
+          !(request.requireSuccess && !result.publication.outcome.ok)
+        )
+          throw new AuthorityError('stale-scope');
         return result.publication;
-      });
+      };
+      return request.inLane
+        ? await operation()
+        : await this.withSaveBarrier(request.scope, request.capability, () =>
+            this.lane.run(operation),
+          );
     } catch (error) {
       if (accepted || this.protectedHold)
         this.failure = error instanceof Error ? error : new Error(String(error));
       throw error;
+    }
+  }
+
+  async createSave(label: string, id: string, scope: RequestScope): Promise<void> {
+    const release = await this.store.saves.admit(id, 'manual');
+    let completion: Promise<void> | undefined;
+    try {
+      await this.withSaveBarrier(scope, 'save', () =>
+        this.lane.run(async () => {
+          this.assertScope(scope, 'save');
+          let captured!: () => void;
+          const ready = new Promise<void>((resolve) => {
+            captured = resolve;
+          });
+          completion = this.store.saves.create(this.worldId, label, id, {
+            captured,
+            expectedRevision: this.pending.durableMark().revision,
+            kind: 'manual',
+          });
+          // The actual worker pins this SQL revision before admission reopens.
+          // File streaming/rename then continues without occupying the lane.
+          await Promise.race([ready, completion]);
+        }),
+      );
+      await completion;
+    } catch (error) {
+      if (
+        !(error instanceof CheckpointBusyError) &&
+        !(error instanceof AuthorityError) &&
+        !(error instanceof OverloadError)
+      )
+        await this.store.saves.recordFailure(
+          this.worldId,
+          'manual',
+          `Manual save failed: ${error instanceof Error ? error.message : 'unknown error'}`,
+        );
+      throw error;
     } finally {
-      if (!this.protectedHold) this.protectedAdmission = false;
+      release();
+    }
+  }
+
+  async deleteSave(id: string, scope: RequestScope): Promise<void> {
+    const completion = await this.lane.run(() => {
+      this.assertScope(scope, 'save');
+      const done = this.store.saves.delete(this.worldId, id);
+      void done.catch(() => undefined);
+      return { done };
+    });
+    await completion.done;
+  }
+
+  /** The HTTP owner pauses and drains model work before this call. The old
+   * native handle stays private but usable on confirmed rollback; only the
+   * actual whole-install SQL result permits its irreversible replacement. */
+  async restoreSave(
+    id: string,
+    requestId: string,
+    scope: RequestScope,
+    signal?: AbortSignal,
+  ): Promise<void> {
+    this.assertScope(scope, 'save');
+    const prior = (await this.store.getIntegration(`load-request:${requestId}`)) as
+      | { saveId: string }
+      | undefined;
+    this.assertScope(scope, 'save');
+    if (prior) {
+      if (prior.saveId !== id) throw new GameSaveError('Load request identity conflicts.');
+      return;
+    }
+    const selected = await this.store.saves.readCanonical(this.worldId, id);
+    this.assertScope(scope, 'save');
+    await this.store.saves.assertCanonicalAssetDependencies(
+      selected.captured,
+      this.operational.presentationRelease,
+      { accountId: scope.accountId },
+      id,
+    );
+    try {
+      await this.withSaveBarrier(scope, 'save', () =>
+        this.lane.run(async () => {
+          this.assertAdmission(true);
+          this.assertScope(scope, 'save');
+          if (!this.progress.paused)
+            throw new GameSaveError('Pause the world before loading a checkpoint.');
+          await this.store.saves.drain();
+          const generation = this.generation,
+            timelineBefore = this.timelineId;
+          const current = () => {
+            signal?.throwIfAborted();
+            this.assertScope(scope, 'save');
+            if (generation !== this.generation || timelineBefore !== this.timelineId)
+              throw new AuthorityError('stale-scope');
+          };
+          current();
+          this.restoring = true;
+          this.inputs.clear();
+          this.notify(false);
+          const recoveryId = randomUUID();
+          let preparation: NativeRestorePreparation | undefined;
+          let committed = false;
+          let receipt: NativeWorldAdoption | undefined;
+          let committedError: unknown;
+          try {
+            try {
+              await this.store.saves.create(this.worldId, 'Before last load', recoveryId, {
+                kind: 'recovery',
+                expectedRevision: this.pending.durableMark().revision,
+              });
+            } catch (error) {
+              const reason = error instanceof Error ? error.message : 'unknown error';
+              await this.store.saves.recordFailure(
+                this.worldId,
+                'recovery',
+                `Load refused: the current world could not be preserved first. ${reason}`,
+              );
+              throw new GameSaveError(
+                `Load refused; the current world was kept (paused) because it could not be preserved first. ${reason} Free disk space or resolve the capture limit, then load again.`,
+              );
+            }
+            current();
+            const epoch = {
+              generation: this.epoch.generation + 1,
+              openedAt: this.now(),
+              token: randomUUID(),
+            };
+            if (!Number.isSafeInteger(epoch.generation))
+              throw new Error('Command epoch exhausted.');
+            const timeline = randomUUID();
+            try {
+              const result = await this.store.restoreCaptured(
+                this.pending.durableMark().revision,
+                {
+                  generation,
+                  checkpoint: selected.captured,
+                  authority: { scope, capability: 'save', controlling: false, now: this.now },
+                  restore: {
+                    id,
+                    requestId,
+                    recoveryId,
+                    epoch,
+                    timeline,
+                    assetPrincipal: { accountId: scope.accountId },
+                  },
+                },
+                async (stage) => {
+                  preparation = await NativeRestorePreparation.prepare({
+                    host: this.host,
+                    stage,
+                    store: this.store,
+                    work: this.work,
+                    timeline,
+                    privacy: this.privacy,
+                    checkpointPrivacy: checkpointPrivacy(selected.captured),
+                    current,
+                    signal,
+                    backgroundSearchAdmission: () =>
+                      !this.closed && !this.failure && !this.restoring,
+                    currentRetained: (world) => (this.world === world ? this.retained : undefined),
+                  });
+                  return preparation;
+                },
+              );
+              committed = true;
+              receipt = result.receipt;
+            } catch (error) {
+              const outcome = postgresTransactionOutcome(error);
+              if (outcome === 'committed' && preparation) {
+                committed = true;
+                receipt = preparation.sqlReceipt;
+                committedError = error;
+              } else if (outcome === 'rolled-back') throw error;
+              else {
+                if (preparation) this.restoration = { preparation };
+                this.failure = error instanceof Error ? error : new Error(String(error));
+                throw error;
+              }
+            }
+            if (!preparation || !receipt)
+              throw new Error('Committed restore has no actual native owner.');
+            this.restoration = { preparation, receipt };
+            const oldDefinitions = this.definitions,
+              oldProvider = this.provider,
+              oldPending = this.pending;
+            await preparation.activate(receipt, this.world);
+            // All objects below were prepared before Ready. No await exposes a
+            // mixture of old and new request/save/definition owners.
+            this.nativeWorld = preparation.world;
+            this.nativeDefinitions = preparation.definitions;
+            this.storageGeneration = receipt.generation;
+            this.timeline = timeline;
+            this.pending = preparation.pending;
+            this.recent = preparation.recent;
+            this.provider = preparation.geometry;
+            this.retained = preparation.retained;
+            this.progress = this.durableProgress = preparation.publication.progress;
+            this.privacy = preparation.publication.restoreMetadata.privacy;
+            this.operational = preparation.operational;
+            this.milestones = preparation.milestones;
+            this.actors = preparation.actors;
+            this.epoch = epoch;
+            this.connections.clear();
+            this.presence.clear();
+            this.presenceOrders.clear();
+            this.connectionPreferences.clear();
+            this.awaitingRestoredPresence.clear();
+            for (const actorId of this.actors.playerIds())
+              if (
+                !this.exits.has(actorId) &&
+                this.actors.get(actorId)?.participation?.phase !== 'exiting'
+              )
+                this.awaitingRestoredPresence.add(actorId);
+            this.inputLives.clear();
+            this.inputs.clear();
+            this.receipts.clear();
+            this.durableReceipts.clear();
+            this.speechActors.clear();
+            this.inventoryReads.clear();
+            this.profiles.clear();
+            for (const release of this.sourceEdits.values()) release();
+            this.sourceEdits.clear();
+            oldPending.release();
+            await oldProvider?.close();
+            oldDefinitions.release();
+            await this.refreshValues();
+            // Resetting a paused transport does not itself make a restored
+            // person depart. Existing operational exits still reconcile now.
+            await this.reconcileParticipationInLane();
+            this.resetClock();
+            this.inputAccountedThrough = undefined;
+            this.restoration = undefined;
+            this.restoring = false;
+            this.privacyEpoch++;
+            this.notify(true);
+            if (committedError) throw committedError;
+          } catch (error) {
+            if (committed || this.restoration || this.failure) {
+              this.failure = error instanceof Error ? error : new Error(String(error));
+            } else {
+              try {
+                await preparation?.reject();
+              } catch (cleanup) {
+                if (preparation) this.restoration = { preparation };
+                this.failure = new AggregateError(
+                  [error, cleanup],
+                  'Restore rollback cleanup failed.',
+                );
+                throw this.failure;
+              }
+              this.restoring = false;
+              this.notify(false);
+            }
+            throw error;
+          }
+        }),
+      );
+    } finally {
+      await this.store.saves.retainRecovery(this.worldId);
     }
   }
   private async refreshValues(): Promise<void> {
@@ -770,7 +1601,6 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           request.outcomes,
         );
         const lives: [string, { life: number; alive: boolean } | undefined][] = [];
-        const controllers: [string, 'player' | 'npc' | undefined][] = [];
         for (const row of publication.records.writes['sim_actors'] ?? []) {
           const actorId = (JSON.parse(row.parent) as string[]).at(-1)!;
           const actor = JSON.parse(row.payload) as {
@@ -778,16 +1608,19 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             alive: boolean;
             controller: 'player' | 'npc';
           };
-          controllers.push([actorId, actor.controller]);
           if (this.inputLives.has(actorId))
             lives.push([actorId, { life: actor.physicalLife ?? 0, alive: actor.alive }]);
         }
         for (const id of publication.records.deletes['sim_entities'] ?? []) {
           const actorId = (JSON.parse(id) as string[]).at(-1)!;
           if (this.inputLives.has(actorId)) lives.push([actorId, undefined]);
-          controllers.push([actorId, undefined]);
         }
-        return { ...pending, lives, controllers, retain: this.recent.prepare(publication.records) };
+        return {
+          ...pending,
+          lives,
+          actors: this.actors.prepare(publication.records),
+          retain: this.recent.prepare(publication.records),
+        };
       },
     });
     if (!accepted.accepted) return undefined;
@@ -795,10 +1628,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     try {
       accepted.value.accept();
       accepted.value.retain();
+      accepted.value.actors();
       this.progress = publication.progress;
-      for (const [id, controller] of accepted.value.controllers)
-        if (controller) this.actorControllers.set(id, controller);
-        else this.actorControllers.delete(id);
       for (const [id, after] of accepted.value.lives) {
         const before = this.inputLives.get(id);
         if (!after || after.life !== before?.life || after.alive !== before.alive)
@@ -880,6 +1711,13 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         code: 'invalid-command',
         message: 'Command IDs cannot use the reserved gameplay namespace.',
       };
+    await this.lane.run(async () => {
+      this.assertAdmission(false, false);
+      this.assertScope(scope, 'play', true);
+      await this.refreshCommandEpoch();
+    });
+    const generation = this.generation,
+      timeline = this.timelineId;
     const id = `gameplay:${scope.accountId}:${epoch}:${digest(commandId)}`;
     const fingerprint = digest({ actor: scope.actorId, input, scope });
     const readers = this.receiptReaders.get(id) ?? 0;
@@ -889,9 +1727,10 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     try {
       const selected = this.receipts.get(id) ?? (await this.store.commands.get(this.worldId, id));
       return await this.lane.run(async () => {
-        this.assertAdmission();
+        this.assertAdmission(false, false);
         this.assertScope(scope, 'play', true);
-        await this.refreshCommandEpoch();
+        if (generation !== this.generation || timeline !== this.timelineId)
+          throw new AuthorityError('stale-scope');
         const prior = this.receipts.get(id) ?? selected;
         if (prior) {
           if (this.now() >= prior.expiresAt)
@@ -908,6 +1747,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                 message: 'That command ID was used for different input.',
               };
         }
+        this.assertAdmission();
         if (epoch !== this.commandEpoch)
           return {
             ok: false,
@@ -931,7 +1771,11 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             input.aimPoint ||
             input.aimBasis
           )
-            throw new Error('The selected native command requires an unconverted request binder.');
+            return {
+              ok: false,
+              code: 'unavailable',
+              message: 'This action is unavailable in this build.',
+            };
           const command = ordinaryPlayerCommand(resolved, {
             id,
             actorId: scope.actorId,
@@ -941,7 +1785,12 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             ...(input.combatHelpId ? { combatHelpId: input.combatHelpId } : {}),
             ...(input.cooperation ? { cooperation: input.cooperation } : {}),
           });
-          if (!command) throw new Error('This command family has no native proof executor.');
+          if (!command || ('type' in command && command.type === 'evade'))
+            return {
+              ok: false,
+              code: 'unavailable',
+              message: 'This action is unavailable in this build.',
+            };
           if ('ok' in command) return command;
           if (command.type === 'say') {
             const available = await playerInteractionAvailability({
@@ -1003,6 +1852,42 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     }
   }
 
+  async commandReceipt(
+    commandId: string,
+    input: CommandInput,
+    epoch: string,
+    scope: RequestScope,
+  ): Promise<CommandReceiptResult> {
+    this.assertScope(scope);
+    const audience = scopeKey(scope);
+    const id = `gameplay:${scope.accountId}:${epoch}:${digest(commandId)}`;
+    const selected = this.receipts.get(id) ?? (await this.store.commands.get(this.worldId, id));
+    const prior = this.receipts.get(id) ?? selected;
+    this.assertScope(scope);
+    if (!prior)
+      return {
+        ok: false,
+        scope: audience,
+        status: epoch === this.commandEpoch ? 'unknown' : 'expired',
+        message: 'The original result is not available. This does not confirm whether it happened.',
+      };
+    if (prior.recoveryFingerprint !== commandRecoveryFingerprint(input, scope))
+      return {
+        ok: false,
+        scope: audience,
+        status: 'unavailable',
+        message: 'This result is unavailable for the current access and original request.',
+      };
+    if (this.now() >= prior.expiresAt)
+      return {
+        ok: false,
+        scope: audience,
+        status: 'expired',
+        message: 'The original result has expired. Its outcome remains unconfirmed.',
+      };
+    return { ok: true, scope: audience, status: 'resolved', result: prior.result };
+  }
+
   /** An explicit admitted duration remains independent from wall-clock/UI
    * polling. The host's clock runner supplies actual leased input intervals. */
   advance(
@@ -1032,6 +1917,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     await this.projection.run(async () => {
       for (let attempt = 0; ; attempt++) {
         const context = await this.lane.run(async () => {
+          if (this.restoring) throw new ViewChangedError();
           this.assertScope(scope);
           const captured = await NativePlayerCapture.capture(
             this.world,
@@ -1085,6 +1971,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   }
 
   async capture(scope: RequestScope): Promise<NativePlayerRead> {
+    if (this.restoring) throw new ViewChangedError();
     this.assertScope(scope);
     const context = this.reads.getStore();
     if (!context || context.scope !== scopeKey(scope))
@@ -1278,6 +2165,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             complete,
             () => ({ paused: this.paused, controlling: this.currentScope(scope, 'play', true) }),
             () =>
+              !this.restoring &&
+              this.generation === lifecycle.generation &&
               this.currentScope(scope) &&
               !this.store.memories.sourceEditPending({
                 worldId: this.worldId,
@@ -1389,7 +2278,10 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       clearTimeout(this.saveTimer);
       this.saveTimer = undefined;
     }
-    if (this.failure && !this.committedPrefix) throw this.failure;
+    // A failed post-COMMIT callback can stop new work even after its exact
+    // prefix was acknowledged. A clean durable owner still has to close.
+    if (this.failure && !this.committedPrefix && (this.pending.inFlight || this.pending.dirty))
+      throw this.failure;
     this.save = (async () => {
       const prefix = await this.lane.run(async () => {
         if (this.committedPrefix) return this.committedPrefix.prefix;
@@ -1450,5 +2342,50 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     for (const receipt of prefix.receipts) this.durableReceipts.add(receipt.id);
     this.pruneReceipts();
     await this.refreshValues();
+  }
+
+  /** Stop intake first; accepted saves keep their original owner and are still
+   * allowed to finish. Uncertain protected SQL cannot be cancelled as rollback. */
+  closeAdmission(): void {
+    if (this.closed) return;
+    this.closed = true;
+    clearTimeout(this.saveTimer);
+    clearTimeout(this.retentionTimer);
+    this.saveTimer = this.retentionTimer = undefined;
+    this.inputs.clear();
+    this.inputLives.clear();
+    for (const unsubscribe of this.unsubscribers.splice(0)) unsubscribe();
+    this.notify(false);
+  }
+
+  close(): Promise<void> {
+    this.closeAdmission();
+    this.stopping ??= (async () => {
+      await this.lane.idle();
+      await this.projection.idle();
+      await this.retentionTask;
+      if (this.protectedHold || this.restoring || this.restoration)
+        throw new Error('Protected SQL settlement remains held for durable recovery.');
+      await this.flush();
+      while (this.pending.dirty) await this.flush();
+      this.world.closeAdmission();
+      await this.world.finishStop();
+      await this.provider?.close();
+      this.provider = undefined;
+      this.definitions.release();
+      this.retained = undefined;
+      // Keep only the confirmed scalar report. Owned native products used by
+      // another real consumer retain their own admission until its last drop.
+      this.progress = { ...this.progress };
+      this.durableProgress = { ...this.durableProgress };
+      this.pending.release();
+      this.profiles.clear();
+      this.speechActors.clear();
+      this.inventoryReads.clear();
+      for (const release of this.sourceEdits.values()) release();
+      this.sourceEdits.clear();
+      this.work.close();
+    })();
+    return this.stopping;
   }
 }

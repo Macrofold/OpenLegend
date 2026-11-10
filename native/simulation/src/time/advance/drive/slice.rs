@@ -424,6 +424,7 @@ impl AdvanceCursor {
                     matches!(
                         change,
                         crate::execution::PhysicalChange::Body { .. }
+                            | crate::execution::PhysicalChange::Participation { .. }
                             | crate::execution::PhysicalChange::Behavior { .. }
                             | crate::execution::PhysicalChange::Contribution { .. }
                             | crate::execution::PhysicalChange::Attribute { .. }
@@ -450,6 +451,12 @@ impl AdvanceCursor {
         core: &mut CoreMutation<'_>,
         budget: &ByteBudget,
     ) -> Result<(), AdvanceError> {
+        for batch in &self.events {
+            if let EventBatch::Participation(exit) = batch {
+                core.physical()
+                    .reconcile_semantic_interval(exit.actor_id())?;
+            }
+        }
         let code = if self.navigation_blocked {
             "navigation-pending"
         } else if core.state.physical.header.sim_time < self.end_at {

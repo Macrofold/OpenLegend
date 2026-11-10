@@ -68,11 +68,14 @@ pub(crate) use privacy_run::{
 };
 mod forget;
 pub(crate) use forget::{CompletedForgetExperience, ForgetExperienceCursor, ForgetExperienceStep};
+mod restore;
+mod restore_metadata;
 pub(crate) use privacy_prepare::{
     ClosedPrivacyScope, HistoryEditAnswer, HistoryEditLimits, HistoryEditQuestion,
     HistoryEditReadRequest, HistoryPreparationError, PreparedPrivacyEdit, PrivacyPreparationCursor,
     PrivacyPreparationStep,
 };
+pub(crate) use restore::{RestorePrivacyCursor, RestorePrivacyInput, RestorePrivacyStep};
 mod hydration;
 mod invalidation;
 mod mutation;
@@ -1279,6 +1282,9 @@ impl ActorPrivacy {
     }
     pub fn forgotten(&self) -> impl Iterator<Item = &String> {
         self.forgotten.iter()
+    }
+    pub(crate) fn forgotten_ids(&self) -> &[String] {
+        &self.forgotten
     }
     pub fn corrections(&self) -> &IndexMap<String, String> {
         &self.corrections

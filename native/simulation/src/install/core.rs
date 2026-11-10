@@ -55,7 +55,11 @@ impl From<crate::execution::ExecutionError> for CoreInstallError {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum InstallPurpose { Current, Restore }
+
 pub(crate) struct CoreInstallInput {
+    pub purpose: InstallPurpose,
     pub records: CurrentRecords,
     pub originals: Vec<OriginalOccurrenceInput>,
     pub definitions: NativeDefinitionInputs,
@@ -127,6 +131,7 @@ fn assemble_selected_core(
         return Err(InstallError::Identity.into());
     }
     let CoreInstallInput {
+        purpose,
         records,
         originals,
         definitions,
@@ -261,6 +266,7 @@ fn assemble_selected_core(
         mut children,
     } = install_physical(
         &mut import,
+        purpose,
         root,
         &PhysicalDefinitions {
             senses: &meanings.senses,

@@ -79,9 +79,9 @@ pub(crate) use batch::{
 };
 mod current_journal;
 pub(crate) use attention_control::{
-    AttentionSelection, AttentionUpdate, acknowledge_attention, acknowledge_semantic_cause,
-    capture_attention_read, evaluate_attention_relations, next_attention_work_at,
-    prune_withdrawn_attention, set_attention_focus, update_attention,
+    AttentionSelection, AttentionUpdate, CapturedAttentionPresentations, acknowledge_attention,
+    acknowledge_semantic_cause, capture_attention_read, evaluate_attention_relations,
+    next_attention_work_at, prune_withdrawn_attention, set_attention_focus, update_attention,
 };
 mod cohort;
 pub(crate) use cohort::{
@@ -93,11 +93,16 @@ mod current_write;
 use current_admission::*;
 mod current_recording;
 use current_recording::*;
+mod participation;
 mod privacy;
 mod retirement;
+mod restore;
+pub(crate) use restore::clear_restore_recordings;
+pub(crate) use participation::depart_receiving;
 pub(crate) use privacy::{revoke_attention_evidence, revoke_current_evidence};
 pub(crate) use retirement::{
-    EndedCurrentEvidence, RetiredPerceptionLife, end_current_evidence, retire_perception_life,
+    EndedCurrentEvidence, RetiredPerceptionLife, end_current_evidence, end_current_subject,
+    retire_perception_life,
 };
 mod warning;
 pub(crate) use warning::acquire_ordinary_warning;

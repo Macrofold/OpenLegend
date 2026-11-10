@@ -162,6 +162,38 @@ impl SaveJournal {
             .map(|prefix| prefix.rows()))
     }
 
+    pub(crate) fn prepared_prefix_owner(
+        &self,
+        prepared: &PreparedSaveAppend,
+    ) -> Result<Option<&Arc<SavePrefix>>, SaveError> {
+        self.validate_prepared(prepared)?;
+        Ok(self
+            .pending_append
+            .as_ref()
+            .expect("validated private prefix")
+            .protected
+            .as_ref())
+    }
+
+    /// A complete current-format install adopts its one SQL head directly.
+    /// Fund this fresh owner before commit; replacing it after the genuine
+    /// install receipt never acknowledges an invented ordinary save revision.
+    pub(crate) fn prepare_installation_journal(
+        &self,
+        revision: u64,
+        through_cut: u64,
+        identity_through: u64,
+    ) -> Result<SaveJournal, SaveError> {
+        SaveJournal::new(
+            self.world_id.clone(),
+            self.generation.clone(),
+            revision,
+            through_cut,
+            identity_through,
+            self.budget.clone(),
+        )
+    }
+
     /// Both ordinary capture and protected preparation use this exact factory.
     /// The caller admitted the complete move/merge/index peak before allocation.
     pub(super) fn finish_prefix(

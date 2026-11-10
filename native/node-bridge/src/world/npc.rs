@@ -1,12 +1,44 @@
 //! Server-internal NPC capture. It retains one actual accepted read until its
 //! context owner releases it or moves it into a native response ticket.
 use super::*;
-use openlegend_simulation::runtime::{RuntimeNpcPreparationStep, RuntimeNpcRead};
+use openlegend_simulation::runtime::{
+    RuntimeNpcPreparationStep, RuntimeNpcRead, RuntimeNpcResponseTicket,
+};
 use std::sync::Weak;
 
 struct NpcReadRuntime {
     read: Mutex<Option<RuntimeNpcRead>>,
     released: AtomicBool,
+}
+
+struct NpcResponseTicketRuntime {
+    ticket: Mutex<Option<RuntimeNpcResponseTicket>>,
+    released: AtomicBool,
+    _custody: openlegend_simulation::host::ByteReservation,
+}
+
+/// This handle has no permission-map or command constructor. The native writer
+/// issues it only by consuming the two originating accepted read handles.
+#[napi]
+pub struct NativeWorldNpcResponseTicket {
+    inner: Arc<NpcResponseTicketRuntime>,
+    host: Arc<HostRuntime>,
+    world: Weak<WorldRuntime>,
+}
+impl Drop for NativeWorldNpcResponseTicket {
+    fn drop(&mut self) {
+        self.release();
+    }
+}
+#[napi]
+impl NativeWorldNpcResponseTicket {
+    #[napi]
+    pub fn release(&self) {
+        self.inner.released.store(true, Ordering::Release);
+        if let Ok(mut owner) = self.inner.ticket.try_lock() {
+            *owner = None;
+        }
+    }
 }
 #[napi(object, object_from_js = false)]
 pub struct NativeWorldNpcTurn {
@@ -205,6 +237,74 @@ fn begin_preparation<'a>(
 
 #[napi]
 impl NativeWorld {
+    #[napi(ts_return_type = "Promise<NativeWorldNpcResponseTicket>")]
+    pub fn bind_npc_response<'a>(
+        &self,
+        env: &'a Env,
+        original: &NativeWorldNpcRead,
+        current: &NativeWorldNpcRead,
+        request: BufferSlice<'_>,
+    ) -> Result<Object<'a>> {
+        let world = Arc::downgrade(&self.world);
+        if !Weak::ptr_eq(&original.world, &world) || !Weak::ptr_eq(&current.world, &world) {
+            return Err(failure("NPC read belongs to another native writer"));
+        }
+        if Arc::ptr_eq(&original.inner, &current.inner) {
+            return Err(failure(
+                "Original and current NPC captures must be distinct handles",
+            ));
+        }
+        let first = Arc::clone(&original.inner);
+        let fresh = Arc::clone(&current.inner);
+        let host = Arc::clone(&self.host);
+        let (request, input_custody) = input(&request, &self.host.bytes)?;
+        self.compute(env, move |session, cancel, budget| {
+            let _input_custody = input_custody;
+            let mut original = first
+                .read
+                .try_lock()
+                .map_err(|_| failure("original NPC read is busy"))?;
+            let mut current = fresh
+                .read
+                .try_lock()
+                .map_err(|_| failure("current NPC read is busy"))?;
+            if first.released.load(Ordering::Acquire)
+                || fresh.released.load(Ordering::Acquire)
+                || cancel.requested()
+            {
+                return Err(failure("NPC response capture was released"));
+            }
+            // Runtime custody already covers the ticket body and its captures.
+            // This guard funds this actual Arc/Mutex wrapper before allocation.
+            let custody = budget
+                .reserve(
+                    std::mem::size_of::<NpcResponseTicketRuntime>()
+                        .checked_sub(std::mem::size_of::<RuntimeNpcResponseTicket>())
+                        .and_then(|n| n.checked_add(2 * std::mem::size_of::<usize>()))
+                        .ok_or_else(|| failure("capacity"))?,
+                )
+                .map_err(operation_error)?;
+            let ticket = session
+                .bind_npc_response(&mut original, &mut current, &request)
+                .map_err(operation_error)?;
+            if first.released.load(Ordering::Acquire)
+                || fresh.released.load(Ordering::Acquire)
+                || cancel.requested()
+            {
+                return Err(failure("NPC response capture was released"));
+            }
+            Ok(NativeWorldNpcResponseTicket {
+                inner: Arc::new(NpcResponseTicketRuntime {
+                    ticket: Mutex::new(Some(ticket)),
+                    released: AtomicBool::new(false),
+                    _custody: custody,
+                }),
+                host,
+                world,
+            })
+        })
+    }
+
     #[napi(ts_return_type = "Promise<NativeWorldJson>")]
     pub fn npc_presentation_labels<'a>(
         &self,

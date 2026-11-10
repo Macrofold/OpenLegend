@@ -178,9 +178,7 @@ impl SaveJournal {
         }
         Ok(SaveReadMetadata {
             durable_revision: self.durable_revision,
-            durable_cut: self
-                .last_acknowledged
-                .map_or(self.initial_cut, |ack| ack.through_cut),
+            durable_cut: self.durable_cut(),
             through_cut: self.through_cut,
             in_flight_through: self
                 .in_flight
@@ -338,7 +336,9 @@ impl SaveJournal {
             .take()
             .expect("validated pending append");
         if let Some(prefix) = pending.protected {
-            // SQL has already committed this exact private prefix. Its bodies,
+            // SQL has already committed these exact private rows, either as an
+            // ordinary protected prefix or a complete restored installation.
+            // Its bodies,
             // presence index and residency were funded before Ready; acceptance
             // only installs that same owner so the exact ACK can follow.
             self.through_cut = pending.through_cut;
@@ -409,10 +409,14 @@ impl SaveJournal {
             schema,
             scratch,
         )?;
+        // A real accepted cut can have no gameplay rows while the application
+        // still owes its command receipt or control outcome. Give that cut the
+        // same immutable SQL prefix/ACK path; never invent host writes here.
         if self.suffix.writes.is_empty()
             && self.suffix.deletes.is_empty()
             && self.suffix.expired.is_empty()
             && pages.changes().rows == 0
+            && self.durable_cut() == self.through_cut
         {
             return Err(SaveError::NoChanges);
         }
@@ -521,6 +525,13 @@ impl SaveJournal {
             && self.in_flight.is_none()
             && self.durable_identity_through == self.identity_through
             && self.suffix.rows == 0
+            && self.suffix.expired.is_empty()
+            && self.durable_cut() == self.through_cut
+    }
+    fn durable_cut(&self) -> u64 {
+        self.last_acknowledged
+            .as_ref()
+            .map_or(self.initial_cut, |ack| ack.through_cut)
     }
     pub(crate) fn durable_identity_through(&self) -> u64 {
         self.durable_identity_through

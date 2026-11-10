@@ -426,6 +426,7 @@ pub(crate) fn read_physical_root(
 
 pub(crate) fn install_physical(
     import: &mut RowImport,
+    purpose: super::InstallPurpose,
     root: PhysicalRoot,
     installed: &PhysicalDefinitions<'_>,
     budget: &crate::host::ByteBudget,
@@ -487,7 +488,7 @@ pub(crate) fn install_physical(
             }
         }
     }
-    let entities = install_entities(import, true, installed, header.sim_time, budget)?;
+    let entities = install_entities(import, true, installed, header.sim_time, purpose, budget)?;
     installed
         .population_work
         .require_population(&entities, &installed.work_policy)
@@ -541,7 +542,10 @@ pub(crate) fn install_physical(
     let bodies = crate::movement::BodyIndex::install(&entities, budget)
         .map_err(|_| InstallError::Capacity)?;
     let participation = crate::participation::ParticipationState::install(
-        import, &mut children, &entities, budget,
+        import,
+        &mut children,
+        &entities,
+        budget,
     )?;
     Ok(PhysicalInstallation {
         state: PhysicalState {
@@ -621,6 +625,7 @@ fn validate_entity(
     entity: &Entity,
     installed: &PhysicalDefinitions<'_>,
     now: f64,
+    purpose: super::InstallPurpose,
 ) -> Result<(), InstallError> {
     // The declared proof's concrete writers create actors and actor corpses.
     // Map scenery remains with its immutable geometry owner. Accepting another
@@ -740,9 +745,38 @@ fn validate_entity(
         if actor.attack_mode_notice.is_some()
             || actor.encounters.is_some()
             || actor.coaching_episode_id.is_some()
-            || actor.inventory_inspection.is_some()
+            || (purpose != super::InstallPurpose::Restore && actor.inventory_inspection.is_some())
         {
             return Err(InstallError::CurrentFormat);
+        }
+        if let Some(inspection) = &actor.inventory_inspection {
+            let short_id = |id: &str| !id.is_empty() && id.encode_utf16().count() <= 120;
+            if inspection.scope.units_len() > 16000
+                || inspection
+                    .container_id
+                    .as_deref()
+                    .is_some_and(|id| !short_id(id))
+                || inspection.after.encode_utf16().count() > 120
+                || inspection.item_ids.len() > 16
+                || inspection
+                    .item_ids
+                    .iter()
+                    .enumerate()
+                    .any(|(i, id)| !short_id(id) || inspection.item_ids[..i].contains(id))
+                || !crate::narration::valid_name(&inspection.container_name)
+                || inspection.item_names.len() != inspection.item_ids.len()
+                || inspection
+                    .item_names
+                    .iter()
+                    .any(|name| !crate::narration::valid_name(name))
+                || inspection.evidence_ids.len() != inspection.item_ids.len() + 1
+                || inspection.evidence_ids.iter().enumerate().any(|(i, id)| {
+                    !crate::values::is_safe_record_id(id)
+                        || inspection.evidence_ids[..i].contains(id)
+                })
+            {
+                return Err(InstallError::CurrentFormat);
+            }
         }
         if actor.action.as_ref().is_some_and(|a| {
             a.has_unconverted_fields()
