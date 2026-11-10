@@ -69,6 +69,8 @@ pub(crate) enum ProviderKind {
     ActivityLearningFormat,
     #[serde(rename = "restore-archives")]
     RestoreArchives,
+    #[serde(rename = "restore-retention")]
+    RestoreRetention,
     #[serde(rename = "support-membership")]
     SupportMembership,
     #[serde(rename = "source-versions")]
@@ -295,6 +297,7 @@ impl DecodeShape {
             | ProviderKind::ActivityHistory
             | ProviderKind::ActivityLearningFormat
             | ProviderKind::RestoreArchives
+            | ProviderKind::RestoreRetention
             | ProviderKind::SourceVersions => 0,
             ProviderKind::Normalization => {
                 size_of::<JsText>().max(size_of::<Option<crate::language::FreeTypedActionSyntax>>())
@@ -374,6 +377,7 @@ enum Answer {
     AppraisalOutcomes(crate::response::AppraisalCreatesAnswer),
     ChoiceDescriptions(crate::capture::NpcDescriptionsAnswer),
     RestoreArchives(crate::restore::RestoreArchivesAnswer),
+    RestoreRetention(crate::experience::retention::RestoreRetentionAnswer),
     SupportMembership(crate::received::SupportMembershipAnswer),
     SourceVersions(SourceVersionsAnswer),
 }
@@ -384,6 +388,9 @@ impl Answer {
             DriveError::MalformedResponse
         };
         let value = match input.kind {
+            ProviderKind::RestoreRetention => Self::RestoreRetention(
+                crate::experience::retention::RestoreRetentionAnswer::decode(&input.json, budget)?,
+            ),
             ProviderKind::SourceVersions => {
                 Self::SourceVersions(SourceVersionsAnswer::decode(&input.json, budget)?)
             }
@@ -477,6 +484,7 @@ impl Answer {
             Self::ActivityHistory(v) => v.binding,
             Self::ActivityLearningFormat(v) => v.binding,
             Self::RestoreArchives(v) => v.provider_binding(geometry_revision),
+            Self::RestoreRetention(v) => v.provider_binding(geometry_revision),
         }
     }
     fn kind(&self) -> ProviderKind {
@@ -502,6 +510,7 @@ impl Answer {
             Self::ActivityHistory(_) => ProviderKind::ActivityHistory,
             Self::ActivityLearningFormat(_) => ProviderKind::ActivityLearningFormat,
             Self::RestoreArchives(_) => ProviderKind::RestoreArchives,
+            Self::RestoreRetention(_) => ProviderKind::RestoreRetention,
         }
     }
 }

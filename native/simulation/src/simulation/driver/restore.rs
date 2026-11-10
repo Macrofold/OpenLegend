@@ -8,6 +8,10 @@ pub(super) enum RestoreReply {
     History,
     Collation,
     Archives,
+    Retention,
+    Support,
+    RetentionCollation,
+    SourceVersions,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -31,6 +35,33 @@ pub(super) fn poll_restore(
         Some(RestoreReply::Collation) => {
             privacy_reply(answer, Some(ForgetReply::Collation))?.map(RestoreAnswer::Privacy)
         }
+        Some(RestoreReply::Retention) => {
+            let Answer::RestoreRetention(value) = direct(answer, ProviderKind::RestoreRetention)?
+            else {
+                return Err(DriveError::StaleResponse);
+            };
+            Some(RestoreAnswer::Retention(value))
+        }
+        Some(RestoreReply::Support) => {
+            let Answer::SupportMembership(value) = direct(answer, ProviderKind::SupportMembership)?
+            else {
+                return Err(DriveError::StaleResponse);
+            };
+            Some(RestoreAnswer::Support(value))
+        }
+        Some(RestoreReply::RetentionCollation) => {
+            let Answer::Collation(value) = direct(answer, ProviderKind::Collation)? else {
+                return Err(DriveError::StaleResponse);
+            };
+            Some(RestoreAnswer::RetentionCollation(value))
+        }
+        Some(RestoreReply::SourceVersions) => {
+            let Answer::SourceVersions(value) = direct(answer, ProviderKind::SourceVersions)?
+            else {
+                return Err(DriveError::StaleResponse);
+            };
+            Some(RestoreAnswer::SourceVersions(value))
+        }
         Some(RestoreReply::Archives) => {
             let Answer::RestoreArchives(value) = direct(answer, ProviderKind::RestoreArchives)?
             else {
@@ -41,6 +72,38 @@ pub(super) fn poll_restore(
     };
     let settings = cursor.read_projection_settings();
     match cursor.step(core, supplied, budget)? {
+        RestoreStep::Continue => Ok(Poll::Continue),
+        RestoreStep::SourceVersions(request) => {
+            Ok(Poll::Question(request, RestoreReply::SourceVersions))
+        }
+        RestoreStep::Retention(request) => projected_question(
+            core,
+            answer,
+            ProviderKind::RestoreRetention,
+            request.provider_binding(core.state.installed.geometry.spatial.revision),
+            request.value(),
+            settings,
+            budget,
+            RestoreReply::Retention,
+        ),
+        RestoreStep::Support(request) => projected_question(
+            core,
+            answer,
+            ProviderKind::SupportMembership,
+            request.binding,
+            request,
+            settings,
+            budget,
+            RestoreReply::Support,
+        ),
+        RestoreStep::RetentionCollation(request) => question(
+            answer,
+            ProviderKind::Collation,
+            request.binding(),
+            request,
+            budget,
+            RestoreReply::RetentionCollation,
+        ),
         RestoreStep::Complete(done) => Ok(Poll::Complete(done)),
         RestoreStep::Collation(request) => question(
             answer,
@@ -86,7 +149,11 @@ fn projected_question<T: Serialize + ?Sized>(
 ) -> Result<Poll<CompletedRestore, RestoreReply>, DriveError> {
     let projection = crate::simulation::restore::RestoreReadProjection::capture(
         core,
-        crate::host::CandidateKey { id: binding.candidate_id, base_cut: binding.base_cut, generation: binding.generation },
+        crate::host::CandidateKey {
+            id: binding.candidate_id,
+            base_cut: binding.base_cut,
+            generation: binding.generation,
+        },
         limits,
         floor,
         budget,

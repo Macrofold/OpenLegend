@@ -174,9 +174,14 @@ async function queueInputs(read: NativeWorldNpcTrigger): Promise<NativeNpcQueueI
 export class NativeNpcIntake {
   private constructor(
     private product: NativeNpcIntakeFacts | undefined,
-    private readonly read: NativeWorldNpcTrigger,
+    private readOwner: NativeWorldNpcTrigger | undefined,
     private readonly afterSequence: number,
   ) {}
+  private get read(): NativeWorldNpcTrigger {
+    if (!this.readOwner) throw new Error('The native thought intake read was released.');
+    return this.readOwner;
+  }
+
   static async capture(
     world: NativeWorld,
     actorId: string,
@@ -228,7 +233,8 @@ export class NativeNpcIntake {
   }
   release(): void {
     this.product = undefined;
-    this.read.release();
+    this.readOwner?.release();
+    this.readOwner = undefined;
   }
   retain<T extends object>(owner: T): T {
     return retainNativeSources(owner, this.facts);

@@ -25,9 +25,19 @@ export class NativePlayerCapture {
   private released = false;
   private constructor(
     private packet: PlayerPacket | undefined,
-    private readonly world: NativeWorld,
-    private readonly read: NativeWorldPlayerRead,
+    private worldOwner: NativeWorld | undefined,
+    private readOwner: NativeWorldPlayerRead | undefined,
   ) {}
+
+  private get world(): NativeWorld {
+    if (!this.worldOwner) throw new ViewChangedError();
+    return this.worldOwner;
+  }
+
+  private get read(): NativeWorldPlayerRead {
+    if (!this.readOwner) throw new ViewChangedError();
+    return this.readOwner;
+  }
 
   get facts(): PlayerPacket {
     if (!this.packet) throw new ViewChangedError();
@@ -124,6 +134,8 @@ export class NativePlayerCapture {
   release(): void {
     this.released = true;
     this.packet = undefined;
-    this.read.release();
+    this.readOwner?.release();
+    this.readOwner = undefined;
+    this.worldOwner = undefined;
   }
 }

@@ -13,6 +13,11 @@ export declare class NativeHost {
   installWorld(bytes: Buffer, databaseSchema: string): Promise<NativeWorld>;
   installRestoringWorld(bytes: Buffer, databaseSchema: string): Promise<NativeWorld>;
   constructor(workers: number);
+  /**
+   * Opening must admit its encoded input before a resident world exists.
+   * This grants capacity only, with the same lifetime as world consumers.
+   */
+  reserveConsumerBytes(bytes: number): NativeWorldConsumer;
   /** This status reads control metadata only, never tentative gameplay state. */
   status(): HostStatus;
   /**
@@ -87,6 +92,8 @@ export declare class NativeWorld {
   beginSupportRetention(bytes: Buffer): Promise<NativeWorldTurn>;
   beginKnowledgeRetention(bytes: Buffer): Promise<NativeWorldTurn>;
   beginRecentRetention(bytes: Buffer): Promise<NativeWorldTurn>;
+  readNavigation(actor: string): Promise<NativeWorldNavigationRead | null>;
+  resolveNavigation(read: NativeWorldNavigationRead, answer: Buffer): Promise<boolean>;
   npcPerspectives(read: NativeWorldNpcRead, request: Buffer): Promise<NativeWorldJson>;
   /**
    * Trusted operational protection chooses the actual SQL-before-acceptance
@@ -136,8 +143,24 @@ export declare class NativeWorld {
     controlling: boolean,
   ): Promise<NativeWorldPlayerPublication | null>;
   forget(bytes: Buffer): Promise<NativeWorldTurn>;
+  correct(bytes: Buffer): Promise<NativeWorldTurn>;
   resolveReceiptTail(reply: Buffer): Promise<void>;
   readCut(request: Buffer): Promise<NativeWorldJson>;
+  readRecentHistory(actorId: string): Promise<NativeWorldRecentHistoryRead>;
+  recentHistorySources(
+    read: NativeWorldRecentHistoryRead,
+    inputBytes: Buffer,
+  ): Promise<NativeWorldNpcTurn>;
+  answerRecentHistorySources(
+    read: NativeWorldRecentHistoryRead,
+    key: NativeCandidateKey,
+    provider: NativeWorldProvider,
+    answer: string,
+  ): Promise<NativeWorldNpcTurn>;
+  cancelRecentHistorySources(read: NativeWorldRecentHistoryRead): Promise<void>;
+  recentHistoryPublication(
+    read: NativeWorldRecentHistoryRead,
+  ): Promise<NativeWorldRecentHistoryPublication | null>;
   beginRestore(bytes: Buffer): Promise<NativeWorldTurn>;
   activateRestored(key: NativeCandidateKey, receipt: string): Promise<void>;
   retainedValues(): Promise<NativeWorldJson>;
@@ -229,6 +252,11 @@ export declare class NativeWorldMaintenanceRead {
   release(): void;
 }
 
+export declare class NativeWorldNavigationRead {
+  packet(): Promise<NativeWorldJson>;
+  release(): void;
+}
+
 export declare class NativeWorldNpcInspection {
   isCurrent(): boolean;
   release(): void;
@@ -282,6 +310,18 @@ export declare class NativeWorldPrepared {
 
 export declare class NativeWorldProvider {
   question(): NativeWorldJson;
+}
+
+export declare class NativeWorldRecentHistoryPublication {
+  isCurrent(): boolean;
+  release(): void;
+}
+
+export declare class NativeWorldRecentHistoryRead {
+  packet(): Promise<NativeWorldJson>;
+  sources(): Promise<NativeWorldJson>;
+  isCurrent(): boolean;
+  release(): void;
 }
 
 export declare class NativeWorldReflectionTicket {

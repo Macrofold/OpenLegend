@@ -981,6 +981,7 @@ const {
   NativeWorldJson,
   NativeWorldMaintenancePublication,
   NativeWorldMaintenanceRead,
+  NativeWorldNavigationRead,
   NativeWorldNpcInspection,
   NativeWorldNpcPublication,
   NativeWorldNpcRead,
@@ -990,6 +991,8 @@ const {
   NativeWorldPlayerRead,
   NativeWorldPrepared,
   NativeWorldProvider,
+  NativeWorldRecentHistoryPublication,
+  NativeWorldRecentHistoryRead,
   NativeWorldReflectionTicket,
   NativeWorldSave,
   HostPhase,
@@ -1006,6 +1009,7 @@ export { NativeWorldConsumer };
 export { NativeWorldJson };
 export { NativeWorldMaintenancePublication };
 export { NativeWorldMaintenanceRead };
+export { NativeWorldNavigationRead };
 export { NativeWorldNpcInspection };
 export { NativeWorldNpcPublication };
 export { NativeWorldNpcRead };
@@ -1015,6 +1019,8 @@ export { NativeWorldPlayerPublication };
 export { NativeWorldPlayerRead };
 export { NativeWorldPrepared };
 export { NativeWorldProvider };
+export { NativeWorldRecentHistoryPublication };
+export { NativeWorldRecentHistoryRead };
 export { NativeWorldReflectionTicket };
 export { NativeWorldSave };
 export { HostPhase };

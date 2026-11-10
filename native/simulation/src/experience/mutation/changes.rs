@@ -91,10 +91,18 @@ impl ExperienceJournal {
         &self,
         checkpoint: ExperienceCheckpoint,
     ) -> Result<bool, ExperienceError> {
-        Ok(self.personal_changes(Some(checkpoint))?.undo.iter().any(|operation| {
-            matches!(operation, ExperienceUndo::Remove { .. } | ExperienceUndo::Replace { .. }
-                | ExperienceUndo::SummaryCollection { .. })
-        }))
+        Ok(self
+            .personal_changes(Some(checkpoint))?
+            .undo
+            .iter()
+            .any(|operation| {
+                matches!(
+                    operation,
+                    ExperienceUndo::Remove { .. }
+                        | ExperienceUndo::Replace { .. }
+                        | ExperienceUndo::SummaryCollection { .. }
+                )
+            }))
     }
     pub(in crate::experience) fn personal_changes(
         &self,

@@ -1,10 +1,22 @@
-import { buildReceivedRecentDirectory, jsonByteLength, summaryMemory, type ExperienceSummary, type ReceivedChargeDirectory, type ReceivedFrontier, type TemporalReadContext } from '@open-legend/domain';
+import {
+  buildReceivedRecentDirectory,
+  jsonByteLength,
+  summaryMemory,
+  type ExperienceSummary,
+  type ReceivedChargeDirectory,
+  type ReceivedFrontier,
+  type TemporalReadContext,
+} from '@open-legend/domain';
 import type {
   NativeWorldAccountRetention,
   NativeWorldConsumer,
 } from '@open-legend/native-simulation';
 import { ACCOUNT_RETENTION_PREPARATION } from './account-retention.js';
-import { RetentionMetadata, accountTables, readAccountRetentionCandidates } from './retention-metadata.js';
+import {
+  RetentionMetadata,
+  accountTables,
+  readAccountRetentionCandidates,
+} from './retention-metadata.js';
 import type { LiveReadCuts } from './live-read-overlay.js';
 import { selectActorRecordChanges } from './actor-record-selection.js';
 import { mergeRecordChanges, type RecordChanges, type RowChange } from './world-records.js';
@@ -393,30 +405,81 @@ export async function readNativeRestoreRetention(
               signal,
             );
           if (request.phase === 'membership') {
-            if (!supportSources) throw new Error('Restore membership has no selected support reader.');
-            const selected = request.data as Extract<NativeRestoreRetentionRequest['data'], { aliases: unknown }>;
-            const entries = selected.recentDirectories.reduce((sum, directory) => sum + directory.entries.length, 0);
-            roots.push(capacity.reserveBytes(jsonByteLength(selected) * 6 + entries * 1024 +
-              (selected.aliases.length + selected.individualIds.length) * 256));
-            const directory = buildReceivedRecentDirectory(selected.recentDirectories, selected.frontier ?? undefined);
-            if ((directory?.bytes ?? 0) !== selected.recentBytes || (directory?.count ?? 0) !== selected.recentCount)
-              throw new Error('Restore membership recent directories disagree with their actual totals.');
+            if (!supportSources)
+              throw new Error('Restore membership has no selected support reader.');
+            const selected = request.data as Extract<
+              NativeRestoreRetentionRequest['data'],
+              { aliases: unknown }
+            >;
+            const entries = selected.recentDirectories.reduce(
+              (sum, directory) => sum + directory.entries.length,
+              0,
+            );
+            roots.push(
+              capacity.reserveBytes(
+                jsonByteLength(selected) * 6 +
+                  entries * 1024 +
+                  (selected.aliases.length + selected.individualIds.length) * 256,
+              ),
+            );
+            const directory = buildReceivedRecentDirectory(
+              selected.recentDirectories,
+              selected.frontier ?? undefined,
+            );
+            if (
+              (directory?.bytes ?? 0) !== selected.recentBytes ||
+              (directory?.count ?? 0) !== selected.recentCount
+            )
+              throw new Error(
+                'Restore membership recent directories disagree with their actual totals.',
+              );
             const metadata = new RetentionMetadata();
             metadata.initializeIndexed(baseline);
-            const [membership] = await metadata.view(request.binding.worldId, pending).survivingMembershipBatch(
-              db, request.binding.worldId, [{ actorId: selected.actorId, aliases: selected.aliases,
-                individualIds: selected.individualIds, includeRecent: true }], {
-                storage: 'indexed', worldId: request.binding.worldId, actorId: selected.actorId,
-                at: selected.at, maxAgeSeconds: selected.maxAgeSeconds,
-                actor: { recent: directory.recent, ...(selected.frontier ? { frontier: selected.frontier } : {}) },
-                disclosure: { actorId: selected.actorId, forgotten: new Set(selected.forgotten),
-                  corrected: new Set(Object.keys(selected.corrections)), recognitionSupportSourceIds: supportSources },
-                reserveBytes: (bytes) => { roots.push(capacity.reserveBytes(bytes)); },
-                reserveJson: (bytes) => { roots.push(capacity.reserveJson(bytes)); },
-              },
-            );
-            return { aliases: selected.aliases.flatMap((id, index) => membership!.aliases.has(id) ? [index] : []),
-              individuals: selected.individualIds.flatMap((id, index) => membership!.individuals.has(id) ? [index] : []) };
+            const [membership] = await metadata
+              .view(request.binding.worldId, pending)
+              .survivingMembershipBatch(
+                db,
+                request.binding.worldId,
+                [
+                  {
+                    actorId: selected.actorId,
+                    aliases: selected.aliases,
+                    individualIds: selected.individualIds,
+                    includeRecent: true,
+                  },
+                ],
+                {
+                  storage: 'indexed',
+                  worldId: request.binding.worldId,
+                  actorId: selected.actorId,
+                  at: selected.at,
+                  maxAgeSeconds: selected.maxAgeSeconds,
+                  actor: {
+                    recent: directory.recent,
+                    ...(selected.frontier ? { frontier: selected.frontier } : {}),
+                  },
+                  disclosure: {
+                    actorId: selected.actorId,
+                    forgotten: new Set(selected.forgotten),
+                    corrected: new Set(Object.keys(selected.corrections)),
+                    recognitionSupportSourceIds: supportSources,
+                  },
+                  reserveBytes: (bytes) => {
+                    roots.push(capacity.reserveBytes(bytes));
+                  },
+                  reserveJson: (bytes) => {
+                    roots.push(capacity.reserveJson(bytes));
+                  },
+                },
+              );
+            return {
+              aliases: selected.aliases.flatMap((id, index) =>
+                membership!.aliases.has(id) ? [index] : [],
+              ),
+              individuals: selected.individualIds.flatMap((id, index) =>
+                membership!.individuals.has(id) ? [index] : [],
+              ),
+            };
           }
           const selected = request.data as Extract<
             NativeRestoreRetentionRequest['data'],

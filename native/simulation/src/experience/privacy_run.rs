@@ -500,5 +500,18 @@ fn finish(
             policy,
         )?;
     }
+    if let PrivacyEditMode::Correct { event_id } = mode {
+        // Both live correction and accepted-ledger replay preserve the whole
+        // acquired account's pre-invalidation aliases, after derived cleanup.
+        // Association facts above are additional roots, not a substitute.
+        for alias in &consequences.selection.roots {
+            core.journal.experience.set_correction(
+                &mut core.state.experience,
+                actor,
+                alias,
+                Some(event_id),
+            )?;
+        }
+    }
     Ok(())
 }

@@ -19,12 +19,14 @@ import {
   traceSupportLine,
   validateSpatialMap,
   walkSurfaceLine,
+  SPATIAL_LIMITS,
   type NavigationRequest,
   type BoundsQueryCursor,
   type SpatialMap,
 } from '@open-legend/spatial';
 import { GeometryBatches } from './geometry-batches.js';
 import { NavigationPreparation } from './navigation/preparation.js';
+import { WorkLane } from './work-lane.js';
 
 /** Physical preparation retains one immutable provider map, never a WorldState.
  * Native owns the bodies, action, permission and acquiring observer. The caller
@@ -34,6 +36,7 @@ export class NativeGeometryProviders {
   private readonly map: SpatialMap;
   private readonly batches = new GeometryBatches();
   private readonly navigation = new NavigationPreparation();
+  private readonly navigationLane = new WorkLane('native.navigation', 64, 20_000);
   private closed = false;
   private active = false;
 
@@ -135,48 +138,8 @@ export class NativeGeometryProviders {
       const convexViews = queries.convexViews.map(({ from, target, allowance }) =>
         queryConvexView(this.map, from, target, allowance),
       );
-      const routes = queries.routes.map((query) => {
-        if (
-          query.kind === 'approach' &&
-          query.targetPosition &&
-          query.goal &&
-          query.reach !== undefined
-        )
-          return (
-            findApproachRoute(
-              this.map,
-              query.from,
-              query.body,
-              query.targetPosition,
-              query.targetSupport ?? null,
-              query.reach,
-              query.goal,
-            ) ?? { status: 'no-route' as const, path: [], expanded: 0 }
-          );
-        if (query.kind === 'surface' && query.to)
-          return findSurfaceRoute(this.map, query.from, query.to, query.body);
-        if (query.kind === 'outside' && query.bounds)
-          return findOutsideSurfaceRoute(this.map, query.from, query.bounds, query.body);
-        throw new Error('Native physical preparation has no route goal.');
-      });
-      const navigation: NativeGeometryAnswers['navigation'] = [];
-      // Recast retains its own existing bounded admission and termination. The
-      // direct route phase above preserves its actual cheap-positive behavior.
-      for (let at = 0; at < queries.navigation.length; at += 64) {
-        const requests = queries.navigation.slice(at, at + 64).map((request, offset) => ({
-          id: String(at + offset),
-          request: navigationRequest(request),
-        }));
-        const results = await this.navigation.compute(this.map, requests);
-        for (const { id, request } of requests) {
-          const result = results.get(id);
-          if (!result) throw new Error('Native route preparation returned an incomplete batch.');
-          navigation.push({
-            result,
-            problem: navigationResultProblem(this.map, request, result, request.body),
-          });
-        }
-      }
+      const routes = this.routes(queries);
+      const navigation = await this.navigationAnswers(queries);
       if (this.closed) throw new Error('Native physical provider closed during preparation.');
       return {
         binding: queries.binding,
@@ -200,9 +163,103 @@ export class NativeGeometryProviders {
     }
   }
 
+  private routes(queries: NativeGeometryQueries): NativeGeometryAnswers['routes'] {
+    return queries.routes.map((query) => {
+      if (
+        query.kind === 'approach' &&
+        query.targetPosition &&
+        query.goal &&
+        query.reach !== undefined
+      )
+        return (
+          findApproachRoute(
+            this.map,
+            query.from,
+            query.body,
+            query.targetPosition,
+            query.targetSupport ?? null,
+            query.reach,
+            query.goal,
+          ) ?? { status: 'no-route' as const, path: [], expanded: 0 }
+        );
+      if (query.kind === 'surface' && query.to)
+        return findSurfaceRoute(this.map, query.from, query.to, query.body);
+      if (query.kind === 'outside' && query.bounds)
+        return findOutsideSurfaceRoute(this.map, query.from, query.bounds, query.body);
+      throw new Error('Native physical preparation has no route goal.');
+    });
+  }
+
+  private navigationAnswers(
+    queries: NativeGeometryQueries,
+  ): Promise<NativeGeometryAnswers['navigation']> {
+    if (!queries.navigation.length) return Promise.resolve([]);
+    return this.navigationLane.run(async () => {
+      if (this.closed) throw new Error('Native physical provider is closed.');
+      const navigation: NativeGeometryAnswers['navigation'] = [];
+      // Recast retains its own existing bounded admission and termination. The
+      // direct route phase above preserves its actual cheap-positive behavior.
+      for (let at = 0; at < queries.navigation.length; at += 64) {
+        const requests = queries.navigation.slice(at, at + 64).map((request, offset) => ({
+          id: String(at + offset),
+          request: navigationRequest(request),
+        }));
+        const results = await this.navigation.compute(this.map, requests);
+        for (const { id, request } of requests) {
+          const result = results.get(id);
+          if (!result) throw new Error('Native route preparation returned an incomplete batch.');
+          navigation.push({
+            result,
+            problem: navigationResultProblem(this.map, request, result, request.body),
+          });
+        }
+      }
+      if (this.closed) throw new Error('Native physical provider closed during preparation.');
+      return navigation;
+    });
+  }
+
+  /** Entity-local preparation shares the existing bounded Recast provider,
+   * while unrelated synchronous physical phases continue on the accepted map. */
+  prepareEntityNavigation(queries: NativeGeometryQueries): Promise<NativeGeometryAnswers> {
+    if (this.closed || queries.binding.geometryRevision !== this.map.spatial.revision)
+      throw new Error('Native navigation preparation names unavailable geometry.');
+    for (const key of Object.keys(queries) as (keyof NativeGeometryQueries)[]) {
+      if (key !== 'binding' && key !== 'routes' && key !== 'navigation' && queries[key].length)
+        throw new Error('Entity-local preparation contains another physical phase.');
+    }
+    return this.navigationAnswers(queries).then((navigation) => ({
+      binding: queries.binding,
+      routes: this.routes(queries),
+      navigation,
+      sight: [],
+      walking: [],
+      support: [],
+      standing: [],
+      surfaceLines: [],
+      sightSweeps: [],
+      sound: [],
+      features: [],
+      featureIds: [],
+      convexViews: [],
+      bodySweeps: [],
+      standingColumns: [],
+    }));
+  }
+
+  entityNavigationWorkspace(): number {
+    let longest = 0;
+    for (const surface of this.map.spatial.surfaces) longest = Math.max(longest, surface.id.length);
+    // The physical provider already caps each route at maxPathPoints. Cover
+    // its result and bridge arrays/point objects/UTF-16 support identifiers
+    // before invoking that provider, including one finite problem envelope.
+    return SPATIAL_LIMITS.maxPathPoints * (512 + 4 * longest) + 16 * 1024;
+  }
+
   async close(): Promise<void> {
     this.closed = true;
     await Promise.all([this.batches.close(), this.navigation.close()]);
+    await this.navigationLane.idle();
   }
 }
 

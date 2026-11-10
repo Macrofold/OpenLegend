@@ -147,10 +147,15 @@ export class NativeNpcCapture {
   private sourceInventories: readonly NativeNpcSourceInventory[] | undefined;
   private constructor(
     private packet: NpcPacket | undefined,
-    private read: NativeWorldNpcRead,
+    private readOwner: NativeWorldNpcRead | undefined,
     readonly consumer: NativeNpcConsumer,
   ) {
     this.adoptPacket(packet!);
+  }
+
+  private get read(): NativeWorldNpcRead {
+    if (!this.readOwner) throw new Error('The native NPC capture was released.');
+    return this.readOwner;
   }
 
   private adoptPacket(packet: NpcPacket): void {
@@ -203,6 +208,7 @@ export class NativeNpcCapture {
 
   private async adoptRead(read: NativeWorldNpcRead): Promise<void> {
     const before = this.facts;
+    const previousRead = this.read;
     const after = freezeNativeProduct(decodeNativeProduct<NpcPacket>(await read.packet()));
     if (
       after.self.worldId !== before.self.worldId ||
@@ -212,8 +218,9 @@ export class NativeNpcCapture {
       after.historyScope.readSerial !== before.historyScope.readSerial
     )
       throw new Error('A situation query returned another native read owner.');
-    this.read.release();
-    this.read = read;
+    this.facts;
+    previousRead.release();
+    this.readOwner = read;
     this.adoptPacket(after);
   }
 
@@ -353,6 +360,7 @@ export class NativeNpcCapture {
     signal?: AbortSignal,
   ): Promise<NativeNpcSourceInventory> {
     const facts = this.facts;
+    const read = this.read;
     signal?.throwIfAborted();
     const current = await captureNativeReadCut(world, facts.self.actorId);
     const pending = history.liveReadCuts({
@@ -363,12 +371,12 @@ export class NativeNpcCapture {
     const cut = nativeScopedReadCut(current, pending);
     const prepared = { db: history.db, liveReadCuts: () => cut };
     const first = await withNativeJsonInput(world, selection, (bytes) =>
-      world.npcSources(this.read, bytes),
+      world.npcSources(read, bytes),
     );
-    await driveNativeNpcSources(world, this.read, first, geometry, prepared, signal);
+    await driveNativeNpcSources(world, read, first, geometry, prepared, signal);
     const product = freezeNativeProduct(
       decodeNativeProduct<{ ordinal: number; inventory: NativeNpcSourceInventory }>(
-        await this.read.latestSources(),
+        await read.latestSources(),
       ),
     );
     const previous = this.sources();
@@ -493,6 +501,7 @@ export class NativeNpcCapture {
     } = {},
   ): Promise<void> {
     this.facts;
+    const read = this.read;
     try {
       options.signal?.throwIfAborted();
       const first = await withNativeJsonInput(
@@ -501,11 +510,11 @@ export class NativeNpcCapture {
           expandedBodyOrdinals: options.expandedBodyOrdinals ?? [],
           coverage: options.coverage ?? 'suggestions',
         },
-        (bytes) => world.npcCandidates(this.read, bytes),
+        (bytes) => world.npcCandidates(read, bytes),
       );
-      await driveNativeNpcCandidates(world, this.read, first, geometry, options.signal);
+      await driveNativeNpcCandidates(world, read, first, geometry, options.signal);
       this.preparedCandidates = freezeNativeProduct(
-        decodeNativeProduct<NativeNpcCandidates>(await this.read.candidates()),
+        decodeNativeProduct<NativeNpcCandidates>(await read.candidates()),
       );
     } catch (error) {
       this.release();
@@ -575,6 +584,7 @@ export class NativeNpcCapture {
     this.packet = undefined;
     this.preparedCandidates = undefined;
     this.sourceInventories = undefined;
-    this.read.release();
+    this.readOwner?.release();
+    this.readOwner = undefined;
   }
 }

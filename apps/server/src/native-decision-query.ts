@@ -16,7 +16,12 @@ import {
   type CapturedSituation,
   type SituationQuery,
 } from './situation-context.js';
-import { readableDecisionContext } from './response-context.js';
+import {
+  nativeDecisionPrompt,
+  nativeDecisionPromptSize,
+  nativeDecisionJsonText,
+  joinNativeDecisionText,
+} from './native-decision-prompt.js';
 import { CONTEXT_BYTE_LIMIT, ContextBudgetError } from './context.js';
 
 /** Select the exact represented members, including genuine fieldless receipts.
@@ -110,23 +115,30 @@ export async function expandNativeDecisionSituation(input: {
   await admitNativeSituationHistory(service, original, situation, signal);
   const { expandedIds: _expandedIds, ...disclosed } = expansion;
   const context = { ...input.context, situationQueries: false };
-  const extra = `${input.additionalContext}\nRequested received evidence: ${JSON.stringify(disclosed)}`;
+  const disclosedText = nativeDecisionJsonText(service.world, disclosed);
+  const extraText = joinNativeDecisionText(
+    service.world,
+    input.additionalContext,
+    '\nRequested received evidence: ',
+    disclosedText.text,
+  );
+  const extra = extraText.text;
   let offered = [...input.offered];
-  const render = () => readableDecisionContext(context, offered, true) + extra;
-  if (Buffer.byteLength(render()) + Buffer.byteLength(input.instructions) > CONTEXT_BYTE_LIMIT) {
+  const renderBytes = () => nativeDecisionPromptSize(service.world, context, offered, true, extra);
+  if (renderBytes() + Buffer.byteLength(input.instructions) > CONTEXT_BYTE_LIMIT) {
     const all = offered;
     let low = 0,
       high = all.length;
     while (low < high) {
       const middle = Math.ceil((low + high) / 2);
       offered = all.slice(0, middle);
-      if (Buffer.byteLength(render()) + Buffer.byteLength(input.instructions) <= CONTEXT_BYTE_LIMIT)
-        low = middle;
+      if (renderBytes() + Buffer.byteLength(input.instructions) <= CONTEXT_BYTE_LIMIT) low = middle;
       else high = middle - 1;
     }
     offered = all.slice(0, low);
   }
-  const prompt = render();
+  const promptText = nativeDecisionPrompt(service.world, context, offered, true, extra);
+  const prompt = promptText.text;
   if (Buffer.byteLength(prompt) + Buffer.byteLength(input.instructions) > CONTEXT_BYTE_LIMIT)
     throw new ContextBudgetError(
       'Complete accepted inner world and required context exceed the input budget.',
@@ -161,5 +173,12 @@ export async function expandNativeDecisionSituation(input: {
       input.semanticTrigger,
     ),
   );
-  return { disclosed, ticket, prompt, context, offered };
+  return {
+    disclosed,
+    ticket,
+    prompt,
+    context,
+    offered,
+    textProducts: [disclosedText, extraText, promptText],
+  };
 }

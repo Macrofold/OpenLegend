@@ -8,6 +8,20 @@ use crate::values::RetainedBinding;
 use indexmap::IndexSet;
 
 impl CoreMutation<'_> {
+    /// Source's default world-edit boundary settles already-earned arithmetic
+    /// and retires its sampling prediction. Typed live commands keep their
+    /// separate scoped retention rules.
+    pub(crate) fn materialize_world_edit(&mut self) -> Result<(), ExecutionError> {
+        if self.physical().settle_all_numeric_values()? {
+            self.journal.sensory.invalidate_all(
+                &mut self.state.reception,
+                self.state.physical.header.sim_time,
+            )?;
+        }
+        self.state.physical.header.native_interval = None;
+        Ok(())
+    }
+
     pub(crate) fn retain_numeric_interval(
         &mut self,
         incoming: Vec<RetainedBinding>,
@@ -38,6 +52,30 @@ impl CoreMutation<'_> {
     }
 }
 impl PhysicalMutation<'_> {
+    /// Ordinary Source startup materializes the already-earned deferred window
+    /// before its world edit. Use each existing episode's sparse journal; this
+    /// neither earns time nor charges another invocation.
+    pub(crate) fn settle_all_numeric_values(&mut self) -> Result<bool, ExecutionError> {
+        let Some(window) = self.state.pending_values.as_ref() else {
+            return Ok(false);
+        };
+        let bytes = window.bindings.keys().try_fold(
+            window
+                .bindings
+                .len()
+                .checked_mul(size_of::<String>())
+                .ok_or(ExecutionError::Capacity)?,
+            |bytes, key| bytes.checked_add(key.len()).ok_or(ExecutionError::Capacity),
+        )?;
+        self.journal.reserve(bytes)?;
+        let mut episodes: Vec<String> = window.bindings.keys().cloned().collect();
+        episodes.sort_by(|left, right| crate::encoding::js_property_cmp(left, right));
+        for episode in &episodes {
+            self.settle_episode(episode)?;
+        }
+        Ok(!episodes.is_empty())
+    }
+
     fn retain_numeric_values(
         &mut self,
         incoming: Vec<RetainedBinding>,

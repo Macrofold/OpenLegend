@@ -1,3 +1,4 @@
+import { copyNativeOutcome } from './native-outcome.js';
 import { nativeMilestoneUpdates } from './native-milestones.js';
 import { nativeRecordChanges } from './native-records.js';
 import { readNativeResidentPressure } from './native-maintenance-read.js';
@@ -35,6 +36,10 @@ import {
   type SpeechVolume,
   type Awareness,
   heardAddressedSpeech,
+  jsonByteLength,
+  temporalReceiptId,
+  validatePersonalReceiptLocator,
+  type TemporalReceiptLocator,
 } from '@open-legend/domain';
 import { nativeSetupSettings } from '@open-legend/domain/native-install';
 import type {
@@ -71,10 +76,13 @@ import {
 } from './native-retained-values.js';
 import {
   decodeNativeProduct,
+  createNativeConsumerScope,
+  retainNativeProduct,
   encodeNativeJson,
   releaseNativeProduct,
   retainNativeSources,
   withNativeConsumerScope,
+  withNativeJsonInput,
   withoutNativeConsumerScope,
 } from './native-consumer.js';
 import { NativePendingSave, type NativePendingPrefix } from './native-pending-save.js';
@@ -89,6 +97,14 @@ import { SOURCE_EDIT_PREPARATION_CAPACITY } from './history-edit.js';
 import { CheckpointBusyError, GameSaveError } from './game-saves.js';
 import { NativePlayerCapture } from './native-player-capture.js';
 import { NativeNpcCapture, type NativeNpcConsumer } from './native-npc-capture.js';
+import { NativeRecentHistoryCapture } from './native-recent-history.js';
+import { nativeRecentHistoryContext, nativeReceiptLocator } from './native-temporal-context.js';
+import {
+  projectRecentHistoryPage,
+  recentHistoryQuery,
+  selectRecentHistoryPage,
+} from './recent-history.js';
+import { HistoryCursorError } from './perceived-events.js';
 import type { NativeNpcSourceSelection } from './native-npc-sources.js';
 import { NativeRetention } from './native-retention.js';
 import { ACCOUNT_RETENTION_PREPARATION } from './account-retention.js';
@@ -136,6 +152,7 @@ import { NativeRestorePreparation } from './native-restore-operation.js';
 import type { NativeWorldAdoption } from './store.js';
 import { checkpointPrivacy } from './native-restore.js';
 import { NativeActorRoster } from './native-actor-roster.js';
+import { NativeNavigation } from './native-navigation.js';
 import { worldSpeedRefusal, worldControlOutcome } from './world-control-outcome.js';
 
 type Progress = NativePublication['progress'];
@@ -160,6 +177,7 @@ type NativeOperationRequest = {
     | ((publication: NativePublication) => CommitInputs['outcomes']);
   signal?: AbortSignal;
   admitPublication?: (publication: NativePublication) => boolean;
+  prepareOutcome?: (outcome: Outcome) => Promise<void>;
 };
 
 /** The native handle owns gameplay and canonical rows. This service owns only
@@ -194,6 +212,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   private readonly inputLives = new Map<string, { life: number; alive: boolean }>();
   private readonly speechActors = new Map<string, string>();
   private actors: NativeActorRoster;
+  private readonly navigation: NativeNavigation;
   private readonly connections = new Map<string, RequestScope>();
   private readonly connectionPreferences = new Map<string, boolean>();
   private readonly presence = new Map<string, { at: number; scope: RequestScope }>();
@@ -281,6 +300,14 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     this.lane = new WorkLane('native.mutation', config.capacity.requests);
     this.projection = new WorkLane('native.projection', config.capacity.requests);
     this.inputs = new WorldInputOwner(config.capacity.presence);
+    this.navigation = new NativeNavigation({
+      world: () => this.world,
+      geometry: () => this.geometry,
+      pending: () => this.actors.pendingNavigationIds(),
+      available: () => !this.closed && !this.failure && !this.restoring,
+      inLane: (read) => this.lane.run(read, undefined, true),
+      failed: (error) => this.fail(error instanceof Error ? error : new Error(String(error))),
+    });
     this.pending = new NativePendingSave(
       store,
       {
@@ -347,19 +374,19 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         ? {}
         : { presentationReleaseRevision: saved.presentationReleaseRevision }),
     };
-    const world = await options.host.installWorld(
-      Buffer.from(
-        JSON.stringify({
-          ...source,
-          definitions: nativeDefinitionSources(source),
-          settings: nativeSetupSettings,
-          storage: nativeStorageSettings,
-          layouts: nativeRecordLayouts(),
-          acceptedCut: 0,
-        }),
-      ),
-      DATABASE_SCHEMA,
+    const world = await withNativeJsonInput(
+      options.host,
+      {
+        ...source,
+        definitions: nativeDefinitionSources(source),
+        settings: nativeSetupSettings,
+        storage: nativeStorageSettings,
+        layouts: nativeRecordLayouts(),
+        acceptedCut: 0,
+      },
+      (bytes) => options.host.installWorld(bytes, DATABASE_SCHEMA),
     );
+
     let definitions: NativeDefinitionCapture | undefined;
     let service: NativeWorldService | undefined;
     try {
@@ -435,6 +462,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         new NativeActorRoster(
           source.records.tables['sim_actors'] ?? [],
           source.records.tables['sim_exit_exposures'] ?? [],
+          source.records.tables['sim_native_response_episodes'] ?? [],
         ),
         source.records.tables['mind_temporal_actors'] ?? [],
         options.now ?? Date.now,
@@ -593,6 +621,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     return () => this.listeners.delete(listener);
   }
   notify(history = false): void {
+    this.navigation.schedule();
     this.version++;
     if (history) this.historyVersion++;
     for (const listener of this.listeners) {
@@ -781,6 +810,134 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       } catch (error) {
         capture.release();
         throw error;
+      }
+    });
+  }
+
+  /** The real private history reader selects SQL receipts, admits their native
+   * bodies, and starts the actual HTTP write inside its disclosure lease. */
+  async publishRecentHistory<T>(
+    actorId: string,
+    scope: RequestScope,
+    request: { cursor?: string; query?: string },
+    publish: (bytes: Buffer) => T,
+  ): Promise<T> {
+    return withNativeConsumerScope(async () => {
+      const permitted = () => this.mayInspectPrivate(actorId, scope);
+      if (!permitted()) throw new AuthorityError('forbidden');
+      const world = this.world;
+      const capture = await this.lane.run(async () => {
+        this.assertAdmission();
+        let read = await NativeRecentHistoryCapture.capture(world, actorId);
+        try {
+          const tail = read.tailRequest();
+          if (tail) {
+            const before = read.facts.scope.acceptedCut;
+            const cut = await captureNativeReadCut(world, actorId);
+            if (cut.acceptedCut !== before) {
+              releaseNativeProduct(cut);
+              throw new ViewChangedError();
+            }
+            const answer = await readNativeTemporalTail(
+              this.store.db,
+              cut,
+              this.pending.liveReadCuts(),
+              tail,
+            );
+            try {
+              await withNativeJsonInput(world, answer, (bytes) => world.resolveReceiptTail(bytes));
+            } finally {
+              releaseNativeProduct(answer);
+            }
+            read.release();
+            read = await NativeRecentHistoryCapture.capture(world, actorId);
+            if (read.facts.scope.acceptedCut !== before || read.tailRequest())
+              throw new ViewChangedError();
+          }
+          return read;
+        } catch (error) {
+          read.release();
+          throw error;
+        }
+      });
+      let formatting: ReturnType<NativeWorld['reserveConsumerBytes']> | undefined;
+      try {
+        const facts = capture.facts;
+        const { query, before, fence } = recentHistoryQuery(
+          scope,
+          this.generation,
+          actorId,
+          request,
+        );
+        const selected = await this.withActorMemoryRead(actorId, (cut) =>
+          this.store.memories.temporalHistory(
+            { worldId: facts.scope.worldId, actorId, generation: facts.scope.generation },
+            { before, limit: 128, bytes: 8192 },
+            nativeRecentHistoryContext(facts, cut, this.definitions.facts),
+          ),
+        );
+        // The bounded formatter can keep text parts, joined/lowercase carriers,
+        // page objects and encrypted cursor/reference strings simultaneously.
+        // Fund from the actual selected shape before constructing those copies.
+        formatting = world.reserveConsumerBytes(
+          16 * jsonByteLength(selected) +
+            128 * 256 +
+            20 *
+              16 *
+              (facts.scope.worldId.length + facts.scope.generation.length + actorId.length + 256),
+        );
+        const selection = selectRecentHistoryPage(selected, query);
+        const inventory = await this.lane.run(async () => {
+          this.assertAdmission();
+          if (!permitted() || !capture.read.isCurrent()) throw new ViewChangedError();
+          const cut = nativeScopedReadCut(
+            await captureNativeReadCut(world, actorId),
+            this.pending.liveReadCuts(),
+          );
+          try {
+            return await capture.prepareSources(
+              world,
+              {
+                personal: [],
+                receipts: selection.page.map(({ entry }) => ({
+                  locator: nativeReceiptLocator(entry.receipt),
+                  memberIndices: entry.receipt.facets.map((facet) => facet.memberIndex),
+                })),
+              },
+              this.geometry,
+              { db: this.store.db, liveReadCuts: () => cut },
+            );
+          } finally {
+            releaseNativeProduct(cut);
+          }
+        });
+        if (
+          inventory.unavailableReceipts.length ||
+          inventory.receipts.length !== selection.page.length
+        )
+          throw new HistoryCursorError('Recent observations changed. Browse again.');
+        const page = selectRecentHistoryPage({ ...selected, entries: inventory.receipts }, query);
+        const result = projectRecentHistoryPage(
+          { worldId: facts.scope.worldId, generation: facts.scope.generation },
+          scope,
+          actorId,
+          { ...selection, page: page.page },
+          fence,
+        );
+        const bytes = encodeNativeJson(world, result);
+        return await this.publishRecall(async () => {
+          if (!permitted()) throw new AuthorityError('forbidden');
+          const publication = await world.recentHistoryPublication(capture.read);
+          try {
+            if (!publication?.isCurrent() || !permitted()) throw new ViewChangedError();
+            return publish(bytes);
+          } finally {
+            publication?.release();
+          }
+        });
+      } finally {
+        formatting?.release();
+        capture.release();
       }
     });
   }
@@ -1599,6 +1756,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     /** Only internal host reconciliation already inside the barrier/lane. */
     readonly inLane?: boolean;
     readonly requireSuccess?: boolean;
+    readonly prepareOutcome?: (outcome: Outcome) => Promise<void>;
   }): Promise<NativePublication> {
     return withoutNativeConsumerScope(async () => {
       let accepted = false;
@@ -1624,6 +1782,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
               requireSuccess: request.requireSuccess,
               history: { db: this.store.db, liveReadCuts: () => before },
               stage: async (publication) => {
+                await request.prepareOutcome?.(publication.outcome);
                 const change = publication.privacyChange;
                 const privacy: ExperiencePrivacy = change
                   ? {
@@ -1646,20 +1805,27 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                   this.store.db,
                   before,
                 );
-                const prepared = await this.pending.prepareProtected(
-                  this.world,
-                  publication,
-                  versions,
-                  history,
-                  privacy,
-                );
+                let prepared: Awaited<ReturnType<NativePendingSave['prepareProtected']>>;
+                try {
+                  prepared = await this.pending.prepareProtected(
+                    this.world,
+                    publication,
+                    versions,
+                    history,
+                    privacy,
+                  );
+                } finally {
+                  releaseNativeProduct(history);
+                }
                 staged = prepared;
-                return {
+                const output = {
                   prepared,
                   privacy,
                   retain: this.retention.prepare(publication.records),
                   actors: this.prepareActorRows(publication.records),
                 };
+                stagedOutput = output;
+                return output;
               },
               commit: async ({ prepared }) => {
                 const prefix = prepared.prefix;
@@ -1706,7 +1872,10 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                 this.failure = error instanceof Error ? error : new Error(String(error));
               },
             });
-            stagedOutput = result.staged;
+            // A semantic refusal can have no protected SQL prefix. It has
+            // already rolled back, so preparing its returned report cannot
+            // introduce a failure after accepted effects.
+            if (!result.staged) await request.prepareOutcome?.(result.publication.outcome);
             if (result.staged) {
               await this.acknowledgeCommitted();
               if (result.publication.privacyChange) this.privacyEpoch++;
@@ -1722,7 +1891,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           } finally {
             releaseNativeProduct(before);
             if (!accepted && !this.protectedHold) staged?.cancel();
-            if (stagedOutput) releaseNativeProduct(stagedOutput);
+            if (stagedOutput && !this.protectedHold) releaseNativeProduct(stagedOutput);
           }
         };
         return request.inLane
@@ -2097,6 +2266,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           history: { db: this.store.db, liveReadCuts: () => before },
           discard: () => staged?.cancel(),
           stage: async (publication) => {
+            await request.prepareOutcome?.(publication.outcome);
             if (publication.privacyChange)
               throw new Error('A private edit requires its protected durable acceptance owner.');
             const versions = publication.sourceVersions;
@@ -2247,10 +2417,17 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         releaseNativeProduct(response);
       }
     };
+    const resultOwner = createNativeConsumerScope();
+    let publication: NativePublication | undefined;
+    let result: Outcome | undefined;
+    const prepareOutcome = (outcome: Outcome) =>
+      resultOwner.run(async () => {
+        result = copyNativeOutcome(this.world, outcome);
+      });
     try {
       if (input.claim) {
         const claim = input.claim;
-        const publication = await this.protectedOperation({
+        publication = await this.protectedOperation({
           get scope() {
             return authority;
           },
@@ -2259,6 +2436,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           capability: 'play',
           first,
           current,
+          prepareOutcome,
           signal: input.signal,
           operationalChange: async (publication) => {
             const receiptRow = (publication.records.writes['response_receipts'] ?? []).find(
@@ -2286,17 +2464,18 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           claim.deliveredAt = claim.now();
           claim.deliveredElapsedMs = Math.max(0, performance.now() - claim.startedMonotonic);
         }
-        return retainNativeSources(publication.outcome, publication);
+        return retainNativeProduct(result!);
       }
-      const publication = await this.acceptOperation({
+      publication = await this.acceptOperation({
         actorId,
         first,
         current,
+        prepareOutcome,
         signal: input.signal,
         outcomes: (publication) => [{ id: input.responseId, outcome: publication.outcome }],
       });
       return (
-        (publication && retainNativeSources(publication.outcome, publication)) ?? {
+        (publication && retainNativeProduct(result!)) ?? {
           ok: false,
           code: 'stale-publication',
           message: 'This response is no longer current.',
@@ -2310,6 +2489,11 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           message: 'This decision is no longer pending.',
         };
       throw error;
+    } finally {
+      // The pending writer, notices and the returned small result have their
+      // own admissions. This application caller has consumed the parent graph.
+      if (publication) releaseNativeProduct(publication);
+      resultOwner.dispose();
     }
   }
 
@@ -2338,6 +2522,28 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     );
   }
 
+  async forgetRecentObservation(
+    receipt: TemporalReceiptLocator,
+    scope: RequestScope,
+  ): Promise<ApiResult> {
+    validatePersonalReceiptLocator(receipt, receipt.actorId);
+    return this.forgetMemory(receipt.actorId, temporalReceiptId(receipt), scope);
+  }
+
+  async correctRecentObservation(
+    receipt: TemporalReceiptLocator,
+    correctionEventId: string,
+    scope: RequestScope,
+  ): Promise<ApiResult> {
+    validatePersonalReceiptLocator(receipt, receipt.actorId);
+    return this.correctMemory(
+      receipt.actorId,
+      temporalReceiptId(receipt),
+      correctionEventId,
+      scope,
+    );
+  }
+
   private async recallEdit(
     actorId: string,
     sourceId: string,
@@ -2363,6 +2569,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       release = this.store.memories.beginSourceEdit(this.worldId, [actorId]);
       this.sourceEdits.set(key, release);
     }
+    let report: (Outcome & { revision: number }) | undefined;
     try {
       const publication = await this.protectedOperation({
         scope,
@@ -2383,16 +2590,30 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             releaseNativeProduct(input);
           }
         },
+        prepareOutcome: async (outcome) => {
+          if (outcome.ok) {
+            // Reserve/decode the complete independent reply before Ready. The
+            // existing scalar slot receives the actual view counter after SQL.
+            const value = { ...outcome, revision: 0 };
+            report = copyNativeOutcome(this.world, value) as Outcome & { revision: number };
+          }
+        },
         signal,
       });
       if (publication.outcome.ok || !previousDenial) {
         release();
         this.sourceEdits.delete(key);
       }
-      return publication.outcome;
+      if (!publication.outcome.ok) return publication.outcome;
+      // Source's history-edit reply carries the actual published view counter,
+      // independently of world sequence, SQL revision or the privacy clock.
+      if (!report) throw new Error('The accepted recall edit has no prepared reply.');
+      report.revision = this.version;
+      return report;
     } catch (error) {
       // Failed dependency/SQL work retains the actual actor disclosure denial.
       // A new explicit retry of this identity reuses the same denial handle.
+      if (report) releaseNativeProduct(report);
       throw error;
     }
   }
@@ -3596,11 +3817,14 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         identityThrough: prefix.cut.identityThrough,
       }),
     );
-    this.pending.acknowledge(prefix, revision);
-    this.store.memories.acceptedSettled(this.worldId, prefix.cut.throughCut);
-    this.committedPrefix = undefined;
+    const through = prefix.cut.throughCut;
     this.replaceProgress(this.progress, prefix.progress);
     for (const receipt of prefix.receipts) this.durableReceipts.add(receipt.id);
+    // Finish this caller's use before ending the prefix owner. Readers that
+    // outlive ACK retain their independent snapshot pins.
+    this.pending.acknowledge(prefix, revision);
+    this.store.memories.acceptedSettled(this.worldId, through);
+    this.committedPrefix = undefined;
     this.pruneReceipts();
     await this.refreshValues();
   }
@@ -3634,6 +3858,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   close(): Promise<void> {
     this.closeAdmission();
     this.stopping ??= (async () => {
+      await this.navigation.close();
       await this.lane.idle();
       await this.projection.idle();
       await this.retentionTask;

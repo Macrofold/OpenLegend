@@ -81,6 +81,13 @@ export function nativeResponseSelection(input: {
         return { kind: 'received-body', ordinal };
       const index = body?.subjects.findIndex((fact) => subjectKey(fact.subject) === key) ?? -1;
       if (index >= 0) return { kind: 'received-body-subject', ordinal, subject: index };
+      if (
+        body?.entity.identityPresent &&
+        !body.entity.seedOnly &&
+        body.entity.canAddressRemembered &&
+        subjectKey(body.entity.subject) === key
+      )
+        return { kind: 'received-body-entity', ordinal };
       throw new Error('The expanded identity has no originating native subject.');
     }
     if (subjectKey(metadata.myself.subject) === key) return { kind: 'myself' };
@@ -116,6 +123,15 @@ export function nativeResponseSelection(input: {
           ordinal: source.ordinal,
           subject: index,
         };
+    }
+    for (const body of original.facts.referenceFacts.bodies) {
+      if (
+        body.entity.identityPresent &&
+        !body.entity.seedOnly &&
+        body.entity.canAddressRemembered &&
+        subjectKey(body.entity.subject) === key
+      )
+        return { kind: 'received-body-entity', ordinal: body.ordinal };
     }
     throw new Error('The native response reference has no acquired subject source.');
   };

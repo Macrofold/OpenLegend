@@ -447,6 +447,7 @@ export interface GameRepository extends WorldStore {
   prepareRetainedSourceClosure?(
     state: SavedWorld,
     complete?: boolean,
+    archiveBaseline?: readonly Record<string, unknown>[],
   ): Promise<import('./temporal-storage.js').PreparedMemoryRetention>;
   releaseHistory?(state: SavedWorld): SavedWorld;
   /** Same residency compaction as releaseHistory, without changing the durable baseline. */
@@ -567,12 +568,19 @@ export class SqlGameRepository implements GameRepository {
   async prepareRetainedSourceClosure(
     initial: SavedWorld,
     complete = false,
+    archiveBaseline?: readonly Record<string, unknown>[],
   ): Promise<import('./temporal-storage.js').PreparedMemoryRetention> {
     return this.readSourceClosure(async () => {
+      if (complete && !archiveBaseline)
+        throw new Error('Complete source closure requires its approved checkpoint archives.');
       let state = initial;
       const rows = new Map<string, string[]>(),
         positions = new Map<string, Map<string, number>>(),
         previous = new Map<string, Map<string, unknown>>();
+      // Complete restore starts from its real post-privacy canonical accounts.
+      // Every closure round must keep those predecessors while retirement can
+      // replace or remove a source still referenced by a surviving derivation.
+      const initialMetadata = complete ? this.completeRetentionView(initial) : undefined;
       let preparedVersions: SourceVersionPlan | undefined;
       for (let round = 0; round < SOURCE_RETENTION_CLOSURE_ROUNDS; round++) {
         if (preparedVersions) {
@@ -585,10 +593,22 @@ export class SqlGameRepository implements GameRepository {
         const changes = complete
           ? this.records.captureMetadataRecords(state, retainedSourceTables)
           : this.records.prepare(this.acceptedState ?? undefined, state, retainedSourceTables);
+        if (complete) {
+          // All current owners supply the complete dependency roster. Removed
+          // owners still need their real initial metadata and before-bodies.
+          const cumulative = this.records.captureMetadataRecords(
+            state,
+            retainedSourceTables,
+            initial,
+          );
+          changes.deletes = cumulative.deletes;
+          for (const ids of changes.deletes.values()) changes.rows += ids.length;
+        }
         const metadata = await this.retentionView(state, changes, complete);
         const planned = await this.memories.prepareSourceVersionRetention(state, changes, {
-          before: metadata.withChanges(),
+          before: initialMetadata ?? metadata.withChanges(),
           previous,
+          ...(complete ? { complete: { archiveRows: archiveBaseline! } } : {}),
         });
         preparedVersions = planned.plan;
         const retained = await this.memories.prepareRetention(
@@ -776,20 +796,22 @@ export class SqlGameRepository implements GameRepository {
         : prepare();
     });
   }
+  private completeRetentionView(state: SavedWorld): RetentionMetadataView {
+    const metadata = new RetentionMetadata();
+    metadata.fromRecords(
+      state.world,
+      this.records.captureMetadataRecords(state, retainedSourceTables),
+    );
+    metadata.assertCandidateCoverage(state.world);
+    return metadata.view(state.world.id);
+  }
   private async retentionView(
     state: SavedWorld,
     changes: RecordChanges,
     complete: boolean,
   ): Promise<RetentionMetadataView> {
+    if (complete) return this.completeRetentionView(state);
     const metadata = new RetentionMetadata();
-    if (complete) {
-      metadata.fromRecords(
-        state.world,
-        this.records.captureMetadataRecords(state, retainedSourceTables),
-      );
-      metadata.assertCandidateCoverage(state.world);
-      return metadata.view(state.world.id);
-    }
     const accepted = this.acceptedState;
     const revision = this.acceptedRevision;
     const due = [...retentionDueActors(state.world)];

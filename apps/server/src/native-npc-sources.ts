@@ -131,6 +131,7 @@ export type NativeNpcSubjectOrdinal =
         | 'body'
         | 'body-entity'
         | 'received-body'
+        | 'received-body-entity'
         | 'knowledge'
         | 'social'
         | 'mind-record';

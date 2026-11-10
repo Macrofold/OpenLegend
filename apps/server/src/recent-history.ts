@@ -15,7 +15,11 @@ import { HistoryCursorError } from './perceived-events.js';
 import { permittedSourceHandle, historicalAccountText } from './entity-references.js';
 import { digest } from './store.js';
 import { sealCursor, openCursor } from './scoped-cursor.js';
-import { captureTemporalHistoryReadContext, temporalHistoryWindow } from './temporal-storage.js';
+import {
+  captureTemporalHistoryReadContext,
+  temporalHistoryWindow,
+  type TemporalHistoryPage,
+} from './temporal-storage.js';
 import type { WorldService } from './world-service.js';
 
 const cursorSchema = z
@@ -163,32 +167,16 @@ export function resolveRecentObservationReference(
   return value.receipt;
 }
 
-/** Deliberate inspection of recent received evidence, separate from lasting memories.
- * No AI, reinforcement, canonical identity lookup or raw world-event fallback. */
-export async function recentHistory(
-  service: WorldService,
-  actorId: string,
+/** Both actual history readers share query/cursor meaning and text projection.
+ * Native admission still owns the selected receipt bodies and final disclosure. */
+export function recentHistoryQuery(
   scope: RequestScope,
+  storageGeneration: string,
+  actorId: string,
   request: { cursor?: string; query?: string },
-): Promise<MemoryHistoryPage> {
-  const permitted = () =>
-    service.mayInspectPrivate(actorId, scope) &&
-    !!entityGet(service.world.entities, actorId)?.actor;
-  if (!permitted()) throw new AuthorityError('forbidden');
-  await service.ready;
-  const records = service.store.records,
-    memories = service.store.memories;
-  if (!records || !memories) throw new Error('Recent observations require the history database.');
-  const head = await records.head();
-  if (!head) throw new Error('Recent observations are unavailable.');
-  const context = captureTemporalHistoryReadContext(service.world, actorId);
-  const worldId = context.worldId,
-    forgotten = service.world.experience?.forgotten[actorId],
-    corrections = service.world.experience?.corrections?.[actorId],
-    generation = service.generation,
-    historyEpoch = service.historyEpoch;
+) {
   const query = request.query?.trim().toLocaleLowerCase() ?? '';
-  const fence = digest([scopeKey(scope), head.generation, actorId, 'recent-observations', query]);
+  const fence = digest([scopeKey(scope), storageGeneration, actorId, 'recent-observations', query]);
   let before:
     | {
         at: number;
@@ -208,12 +196,15 @@ export async function recentHistory(
       throw new HistoryCursorError('Recent observations changed. Browse again.');
     }
   }
-  if (!permitted()) throw new AuthorityError('forbidden');
-  const selected = await memories.temporalHistory(
-    { worldId, actorId, generation: head.generation },
-    { before, limit: 128, bytes: 8192 },
-    context,
-  );
+  return { query, fence, before };
+}
+
+export function selectRecentHistoryPage(
+  selected: Omit<TemporalHistoryPage, 'entries'> & {
+    readonly entries: readonly TemporalHistoryPage['entries'][number][];
+  },
+  query: string,
+) {
   const rows = selected.entries
     .filter(({ receipt }) => receipt.change !== 'receiver-frame')
     .map((entry) => ({
@@ -227,20 +218,18 @@ export async function recentHistory(
         ? page[0]?.entry.receipt
         : (selected.nextBefore ?? rows[0]?.entry.receipt);
   const more = matching.length > 20 || selected.hasMore;
-  const receiptsCurrent = await memories.temporalSelectionsCurrent(
-    { worldId, actorId, generation: head.generation },
-    page.map((row) => row.entry),
-    () => temporalHistoryWindow(service.world, actorId),
-  );
-  if (
-    !receiptsCurrent ||
-    !permitted() ||
-    generation !== service.generation ||
-    historyEpoch !== service.historyEpoch ||
-    forgotten !== service.world.experience?.forgotten[actorId] ||
-    corrections !== service.world.experience?.corrections?.[actorId]
-  )
-    throw new HistoryCursorError('Recent observations changed. Browse again.');
+  return { page, oldest, more, incomplete: selected.incomplete };
+}
+
+export function projectRecentHistoryPage(
+  owner: RecentObservationReferenceOwner,
+  scope: RequestScope,
+  actorId: string,
+  selection: ReturnType<typeof selectRecentHistoryPage>,
+  fence: string,
+): MemoryHistoryPage {
+  const { worldId, generation } = owner;
+  const { page, oldest, more } = selection;
   return {
     ok: true,
     worldId,
@@ -278,6 +267,56 @@ export async function recentHistory(
             order: oldest.order,
           })
         : null,
-    scanLimited: selected.incomplete,
+    scanLimited: selection.incomplete,
   };
+}
+
+/** Deliberate inspection of recent received evidence, separate from lasting memories.
+ * No AI, reinforcement, canonical identity lookup or raw world-event fallback. */
+export async function recentHistory(
+  service: WorldService,
+  actorId: string,
+  scope: RequestScope,
+  request: { cursor?: string; query?: string },
+): Promise<MemoryHistoryPage> {
+  const permitted = () =>
+    service.mayInspectPrivate(actorId, scope) &&
+    !!entityGet(service.world.entities, actorId)?.actor;
+  if (!permitted()) throw new AuthorityError('forbidden');
+  await service.ready;
+  const records = service.store.records,
+    memories = service.store.memories;
+  if (!records || !memories) throw new Error('Recent observations require the history database.');
+  const head = await records.head();
+  if (!head) throw new Error('Recent observations are unavailable.');
+  const context = captureTemporalHistoryReadContext(service.world, actorId);
+  const worldId = context.worldId,
+    forgotten = service.world.experience?.forgotten[actorId],
+    corrections = service.world.experience?.corrections?.[actorId],
+    generation = service.generation,
+    historyEpoch = service.historyEpoch;
+  const { query, fence, before } = recentHistoryQuery(scope, head.generation, actorId, request);
+  if (!permitted()) throw new AuthorityError('forbidden');
+  const selected = await memories.temporalHistory(
+    { worldId, actorId, generation: head.generation },
+    { before, limit: 128, bytes: 8192 },
+    context,
+  );
+  const selection = selectRecentHistoryPage(selected, query);
+  const { page } = selection;
+  const receiptsCurrent = await memories.temporalSelectionsCurrent(
+    { worldId, actorId, generation: head.generation },
+    page.map((row) => row.entry),
+    () => temporalHistoryWindow(service.world, actorId),
+  );
+  if (
+    !receiptsCurrent ||
+    !permitted() ||
+    generation !== service.generation ||
+    historyEpoch !== service.historyEpoch ||
+    forgotten !== service.world.experience?.forgotten[actorId] ||
+    corrections !== service.world.experience?.corrections?.[actorId]
+  )
+    throw new HistoryCursorError('Recent observations changed. Browse again.');
+  return projectRecentHistoryPage({ worldId, generation }, scope, actorId, selection, fence);
 }

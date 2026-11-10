@@ -12,19 +12,17 @@ use crate::native_response::NavigationWait;
 use crate::state::NavigationRequest;
 use std::mem::size_of;
 
-struct ProposalBinding {
-    key: String,
+pub(crate) struct ProposalBinding {
+    pub(crate) key: String,
     _reservation: ByteReservation,
 }
-fn binding(
-    core: &CoreMutation<'_>,
+pub(crate) fn binding(
+    physical: &crate::simulation::PhysicalState,
     actor: &str,
     generation: u64,
     budget: &ByteBudget,
 ) -> Result<ProposalBinding, ExecutionError> {
-    let entity = core
-        .state
-        .physical
+    let entity = physical
         .entities
         .get(actor)
         .ok_or(ExecutionError::MissingActor)?;
@@ -40,7 +38,7 @@ fn binding(
     let body = entity.body_profile();
     let scope = (
         generation,
-        &core.state.physical.header.id,
+        &physical.header.id,
         &entity.id,
         animal.physical_life,
         &episode.id,
@@ -78,11 +76,11 @@ impl PendingRefugeNavigation {
     pub(crate) fn prepare(
         core: &mut CoreMutation<'_>,
         actor: &str,
-        mut request: NavigationRequest,
+        request: NavigationRequest,
         candidate: CandidateKey,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
-        let scope = binding(core, actor, candidate.generation, budget)?;
+        let scope = binding(&core.state.physical, actor, candidate.generation, budget)?;
         let proposal = core
             .state
             .physical
@@ -96,6 +94,23 @@ impl PendingRefugeNavigation {
             NavigationWait::Entity => "entity",
             NavigationWait::World => "world",
         };
+        let binding = GeometryBinding::new(
+            candidate,
+            core.state.installed.geometry.spatial.revision,
+            core.journal.next_provider_serial()?,
+        );
+        Self::from_request(scope, request, wait, binding, budget)
+    }
+    /// An accepted proposal can be prepared while unrelated actors advance.
+    /// This creates only provider custody; the controller rechecks its binding
+    /// before route scoring and remains the sole gameplay mutation owner.
+    pub(crate) fn from_request(
+        scope: ProposalBinding,
+        mut request: NavigationRequest,
+        wait: &str,
+        binding: GeometryBinding,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
         let bytes = heap_sum([
             size_of::<Self>(),
             size_of::<NavigationRequest>(),
@@ -110,11 +125,6 @@ impl PendingRefugeNavigation {
         .ok_or(ExecutionError::Capacity)?;
         let reservation = budget.reserve(bytes)?;
         request.wait = Some(wait.into());
-        let binding = GeometryBinding::new(
-            candidate,
-            core.state.installed.geometry.spatial.revision,
-            core.journal.next_provider_serial()?,
-        );
         let mut queries = GeometryQueries::new(binding);
         queries.navigation = vec![request];
         Ok(Self {
@@ -125,6 +135,15 @@ impl PendingRefugeNavigation {
     }
     pub(crate) fn queries(&self) -> &GeometryQueries {
         &self.queries
+    }
+    pub(crate) fn is_current(
+        &self,
+        physical: &crate::simulation::PhysicalState,
+        actor: &str,
+        generation: u64,
+        budget: &ByteBudget,
+    ) -> Result<bool, ExecutionError> {
+        Ok(binding(physical, actor, generation, budget)?.key == self.binding.key)
     }
     /// The host keeps this exact finite request across admission/dispatch. Only
     /// its actual bound provider product can become a prepared answer.
@@ -185,6 +204,15 @@ impl PendingRefugeNavigation {
     }
 }
 impl PreparedRefugeNavigation {
+    pub(crate) fn is_current(
+        &self,
+        physical: &crate::simulation::PhysicalState,
+        actor: &str,
+        generation: u64,
+        budget: &ByteBudget,
+    ) -> Result<bool, ExecutionError> {
+        Ok(binding(physical, actor, generation, budget)?.key == self.binding.key)
+    }
     pub(crate) fn matches(
         &self,
         core: &CoreMutation<'_>,
@@ -200,7 +228,7 @@ impl PreparedRefugeNavigation {
         )? {
             return Ok(false);
         }
-        let current = binding(core, actor, generation, budget)?;
+        let current = binding(&core.state.physical, actor, generation, budget)?;
         // Source overlays the saved wait mode on the direct route request.
         // The proposal binding already checks that mode; compare every other
         // request field so equal proposals cannot bless a different corridor.

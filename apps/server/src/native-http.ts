@@ -31,6 +31,9 @@ import { SHUTDOWN_DEADLINE_MS, type ShutdownReport } from './server-shutdown.js'
 import { worldInputSchema } from './world-input-schema.js';
 import { Autosaves } from './autosaves.js';
 import { GameSaveError } from './game-saves.js';
+import { resolveRecentObservationReference } from './recent-history.js';
+import { HistoryCursorError } from './perceived-events.js';
+import { releaseNativeProduct, retainNativeProduct } from './native-consumer.js';
 
 const clientId = z
   .string()
@@ -841,15 +844,91 @@ export async function createNativeGameServer(options: {
               ),
             );
           }
+          case '/api/memories':
+          case '/api/god/memories': {
+            const { actorId, ...value } = z
+              .object({
+                actorId: requestIdSchema,
+                cursor: z.string().max(2048).optional(),
+                query: z.string().max(200).optional(),
+                thoughts: z.boolean().optional(),
+                recent: z.boolean().optional(),
+              })
+              .strict()
+              .parse(body);
+            if (
+              (url.pathname === '/api/memories' && actorId !== scope.actorId) ||
+              (url.pathname === '/api/god/memories' && !config.godMode)
+            )
+              throw new AuthorityError('forbidden');
+            if (!value.recent)
+              return send(503, {
+                ok: false,
+                code: 'unavailable',
+                message: 'This action is unavailable in this build.',
+              });
+            await current.publishRecentHistory(actorId, scope, value, (bytes) => {
+              if (response.destroyed) return;
+              response.writeHead(200, {
+                'Content-Type': 'application/json; charset=utf-8',
+                'Cache-Control': 'no-store',
+              });
+              retainNativeProduct(bytes);
+              response.once('close', () => releaseNativeProduct(bytes));
+              response.end(bytes, () => releaseNativeProduct(bytes));
+            });
+            return;
+          }
+          case '/api/god/correct-memory':
           case '/api/god/forget-memory': {
             capability = 'create';
             current.assertScope(scope, capability);
+            const correction = url.pathname === '/api/god/correct-memory';
+            const fields = {
+              actorId: requestIdSchema,
+              ...(correction ? { correctionEventId: requestIdSchema } : {}),
+            };
             const value = z
-              .object({ actorId: requestIdSchema, sourceId: requestIdSchema })
-              .strict()
+              .union([
+                z.object({ ...fields, sourceId: requestIdSchema }).strict(),
+                z.object({ ...fields, receiptReference: z.string().min(1).max(2048) }).strict(),
+              ])
               .parse(body);
-            const outcome = await current.forgetMemory(value.actorId, value.sourceId, scope);
-            if (outcome.ok) await store.db.exec('DELETE FROM intelligence_calls');
+            // Both route schemas above require this actual evidence field only
+            // for correction; the semantic writer independently admits its body.
+            const correctionEventId =
+              'correctionEventId' in value ? (value.correctionEventId as string) : undefined;
+            const outcome =
+              'receiptReference' in value
+                ? correctionEventId
+                  ? await current.correctRecentObservation(
+                      resolveRecentObservationReference(
+                        current,
+                        value.actorId,
+                        scope,
+                        value.receiptReference,
+                      ),
+                      correctionEventId,
+                      scope,
+                    )
+                  : await current.forgetRecentObservation(
+                      resolveRecentObservationReference(
+                        current,
+                        value.actorId,
+                        scope,
+                        value.receiptReference,
+                      ),
+                      scope,
+                    )
+                : correctionEventId
+                  ? await current.correctMemory(
+                      value.actorId,
+                      value.sourceId,
+                      correctionEventId,
+                      scope,
+                    )
+                  : await current.forgetMemory(value.actorId, value.sourceId, scope);
+            if (!correction && outcome.ok) await store.db.exec('DELETE FROM intelligence_calls');
             return send(200, outcome);
           }
           default:
@@ -866,7 +945,10 @@ export async function createNativeGameServer(options: {
           return;
         }
         const authority = error instanceof AuthorityError;
-        const invalid = error instanceof z.ZodError || error instanceof SyntaxError;
+        const invalid =
+          error instanceof z.ZodError ||
+          error instanceof SyntaxError ||
+          error instanceof HistoryCursorError;
         return writeJson(
           response,
           authority
@@ -886,7 +968,10 @@ export async function createNativeGameServer(options: {
                   ? 'invalid-input'
                   : 'server',
             message:
-              authority || error instanceof OverloadError || error instanceof GameSaveError
+              authority ||
+              error instanceof OverloadError ||
+              error instanceof GameSaveError ||
+              error instanceof HistoryCursorError
                 ? error.message
                 : invalid
                   ? 'Invalid input.'

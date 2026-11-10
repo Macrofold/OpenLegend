@@ -52,9 +52,19 @@ impl TemporalState {
     ) -> Result<impl Iterator<Item = (&str, &Arc<TemporalSupportRecord>)>, ReceivedError> {
         let undo = self.undo.get(checkpoint.operations..).ok_or_else(invalid)?;
         Ok(undo.iter().filter_map(|operation| {
-            let TemporalUndo::Support { actor_id, id, before: Some((_, before)), .. } = operation
-                else { return None; };
-            let present = self.actors.get(actor_id).and_then(|actor| actor.supports.as_ref())
+            let TemporalUndo::Support {
+                actor_id,
+                id,
+                before: Some((_, before)),
+                ..
+            } = operation
+            else {
+                return None;
+            };
+            let present = self
+                .actors
+                .get(actor_id)
+                .and_then(|actor| actor.supports.as_ref())
                 .is_some_and(|supports| supports.records.contains_key(id));
             (!present).then_some((actor_id.as_str(), before))
         }))

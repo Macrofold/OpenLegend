@@ -924,12 +924,24 @@ export class RetentionMetadataView {
         request.individualIds.filter((id) => this.hasIndividual(request.actorId, id)),
       ),
     }));
-    const indexed = nativeCut && 'storage' in nativeCut ? nativeCut as IndexedRecentMembershipRead : undefined;
-    const world = indexed ? undefined : nativeCut as WorldState | undefined ?? this.owner.capturedWorld();
-    const recentRead = (actorId: string): RecentMembershipRead | undefined => indexed
-      ? indexed.actorId === actorId ? { ...indexed, source: indexed.disclosure } : undefined
-      : world ? { at: world.simTime, maxAgeSeconds: selectedTemporalPolicy(world).recent.maxAgeSeconds,
-          actor: world.experience?.temporal?.actors[actorId], source: world } : undefined;
+    const indexed =
+      nativeCut && 'storage' in nativeCut ? (nativeCut as IndexedRecentMembershipRead) : undefined;
+    const world = indexed
+      ? undefined
+      : ((nativeCut as WorldState | undefined) ?? this.owner.capturedWorld());
+    const recentRead = (actorId: string): RecentMembershipRead | undefined =>
+      indexed
+        ? indexed.actorId === actorId
+          ? { ...indexed, source: indexed.disclosure }
+          : undefined
+        : world
+          ? {
+              at: world.simTime,
+              maxAgeSeconds: selectedTemporalPolicy(world).recent.maxAgeSeconds,
+              actor: world.experience?.temporal?.actors[actorId],
+              source: world,
+            }
+          : undefined;
     if (indexed && indexed.worldId !== worldId)
       throw new Error('Personal retention native eligibility belongs to another world.');
     if (world && world.id !== worldId)
@@ -1064,16 +1076,13 @@ export class RetentionMetadataView {
                 )
               : null,
           pressure_batch: recent
-            ? (recentRead(actorId)?.actor?.frontier?.pressureThrough?.address
-                .batchOrder ?? null)
+            ? (recentRead(actorId)?.actor?.frontier?.pressureThrough?.address.batchOrder ?? null)
             : null,
           pressure_entry: recent
-            ? (recentRead(actorId)?.actor?.frontier?.pressureThrough?.address
-                .entryIndex ?? null)
+            ? (recentRead(actorId)?.actor?.frontier?.pressureThrough?.address.entryIndex ?? null)
             : null,
           pressure_member: recent
-            ? (recentRead(actorId)?.actor?.frontier?.pressureThrough?.address
-                .memberIndex ?? null)
+            ? (recentRead(actorId)?.actor?.frontier?.pressureThrough?.address.memberIndex ?? null)
             : null,
         },
       ];
@@ -1196,7 +1205,10 @@ export class RetentionMetadataView {
         )
           throw new Error('Recent membership exceeds bounded block preparation.');
         // The SQL size projection precedes raw row hydration and parsing.
-        indexed?.reserveBytes([...pageSizes.values()].reduce((sum, bytes) => sum + bytes, 0) * 4 + pageSizes.size * 2048);
+        indexed?.reserveBytes(
+          [...pageSizes.values()].reduce((sum, bytes) => sum + bytes, 0) * 4 +
+            pageSizes.size * 2048,
+        );
         const pages = new Map<string, TemporalPage>();
         for (const row of await db
           .prepare('SELECT * FROM mind_temporal_pages WHERE world_id=? AND id=ANY(?::text[])')
@@ -1274,11 +1286,7 @@ export class RetentionMetadataView {
           entryIndex: entry.entryIndex,
         };
         if (
-          !temporalRecentAt(
-            entry.receivedAt,
-            read.at,
-            read.maxAgeSeconds,
-          ) ||
+          !temporalRecentAt(entry.receivedAt, read.at, read.maxAgeSeconds) ||
           !receivedDirectoryContains(actor.recent, locator)
         )
           continue;

@@ -33,7 +33,11 @@ mod npc_labels;
 mod participation;
 mod player;
 mod privacy;
+mod recent_history;
+pub use recent_history::{RuntimeRecentHistoryPublication, RuntimeRecentHistoryRead};
+mod navigation;
 mod read_cut;
+pub use navigation::RuntimeNavigationRead;
 mod restore;
 mod retained_values;
 pub use handoff::RuntimeOutputHandoff;
@@ -277,6 +281,14 @@ pub struct NativeWorldSession {
     history_policy_revision: u64,
     _history_policy_custody: ResidentReservation,
     next_read_serial: u64,
+    navigation: navigation::PreparedNavigationCache,
+    pending_navigation: Option<(
+        Vec<(
+            crate::state::EntityHandle,
+            crate::native_refuge::PendingRefugeNavigation,
+        )>,
+        ByteReservation,
+    )>,
     active: bool,
     restore_installation: bool,
     restoring: Option<CandidateKey>,
@@ -391,6 +403,7 @@ impl NativeWorldSession {
             })
             .map_err(failure)?;
         let held_receipts = npc::HeldReceiptRegistry::new(generation, &budget).map_err(failure)?;
+        let navigation = navigation::PreparedNavigationCache::new(&budget)?;
         Ok(Self {
             session: Session::new(
                 installed,
@@ -408,6 +421,8 @@ impl NativeWorldSession {
             history_policy_revision,
             _history_policy_custody: history_policy_custody,
             next_read_serial: 0,
+            navigation,
+            pending_navigation: None,
             active: false,
             restore_installation,
             restoring: None,
@@ -482,8 +497,9 @@ impl NativeWorldSession {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let inputs = serde_json::from_slice(input).map_err(failure)?;
+        let (prepared, _transfer) = self.navigation.take(&self.budget)?;
         self.session
-            .begin_advance(seconds, maximum_intervals, Vec::new(), inputs)
+            .begin_advance(seconds, maximum_intervals, prepared, inputs)
             .map_err(failure)
     }
     pub fn begin_command(
@@ -630,7 +646,16 @@ impl NativeWorldSession {
         if self.restoring == Some(key) {
             self.restoring = None;
         }
-        Ok(accepted.is_some())
+        let accepted = match accepted {
+            Some(accepted) => {
+                if let CompletedOperation::Advance(advance) = accepted.result {
+                    self.pending_navigation = Some(advance.into_navigation());
+                }
+                true
+            }
+            None => false,
+        };
+        Ok(accepted)
     }
     pub fn cancel(&mut self, key: CandidateKey) -> Result<(), RuntimeError> {
         // Terminal cursor errors already roll back through Session. Repeated

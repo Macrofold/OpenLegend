@@ -360,6 +360,25 @@ impl SensoryJournal {
         pending.scope_count = 0;
         Ok(())
     }
+    /// A Source edit that materializes a whole deferred physical window has no
+    /// classified sensory write set. Preserve its one conservative refresh;
+    /// ordinary typed numeric writes keep their existing scoped behavior.
+    pub(crate) fn invalidate_all(
+        &mut self,
+        state: &mut ReceptionState,
+        now: f64,
+    ) -> Result<(), ReceivedError> {
+        self.initialize(state, now)?;
+        let pending = state.sensory.as_mut().ok_or_else(invariant)?;
+        next_revision(pending)?;
+        pending.broad_at.get_or_insert(now);
+        pending.detail_at.get_or_insert(now);
+        self.widen(pending)?;
+        pending.invalidated_at.get_or_insert(now);
+        pending.invalidated_revision = Some(pending.revision);
+        Ok(())
+    }
+
     pub(crate) fn queue_physical_change(
         &mut self,
         state: &mut ReceptionState,

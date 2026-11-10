@@ -12,7 +12,11 @@ import type {
   NativeWorldNpcTurn,
   NativeChangedRows,
 } from '@open-legend/native-simulation';
-import { baseActivityChoiceLabel, type BaseActivityChoiceLabel, type TemporalReadContext } from '@open-legend/domain';
+import {
+  baseActivityChoiceLabel,
+  type BaseActivityChoiceLabel,
+  type TemporalReadContext,
+} from '@open-legend/domain';
 import { nativeActivityDisplay } from './native-activity.js';
 import { nativeCanonicalCommand } from './native-command.js';
 import { worldControlOutcome } from './world-control-outcome.js';
@@ -172,9 +176,18 @@ async function prepareProviderAnswer(
       return JSON.stringify(await readNativeSourceVersions(history.db, cut, request));
     }
     case 'support-membership': {
-      const request = value as NativeSupportMembershipRequest;
+      const request = value as NativeSupportMembershipRequest & {
+        readonly restoreProjection?: NativeChangedRows;
+      };
       const cut = history?.liveReadCuts({ worldId: request.worldId, actorId: request.actorId });
       if (!history || !cut) throw new Error('Native support cleanup requires its actual SQL cut.');
+      if (request.restoreProjection) {
+        if (!history.restoreView)
+          throw new Error('Restore support cleanup requires its actual private SQL view.');
+        return history.restoreView(request.restoreProjection, async () =>
+          JSON.stringify(await readNativeSupportMembership(history.db, cut, request)),
+        );
+      }
       return JSON.stringify(await readNativeSupportMembership(history.db, cut, request));
     }
     case 'activity-learning-format':

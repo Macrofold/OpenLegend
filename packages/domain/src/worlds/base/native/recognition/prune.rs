@@ -102,8 +102,12 @@ pub(crate) fn maintain_restore_recognition(
     observer: &str,
     budget: &ByteBudget,
 ) -> Result<(), ExecutionError> {
-    if core.state.temporal.actor(observer)
-        .is_some_and(|actor| actor.header().accounts.is_some()) {
+    if core
+        .state
+        .temporal
+        .actor(observer)
+        .is_some_and(|actor| actor.header().accounts.is_some())
+    {
         return super::maintain_recognition(core, observer, budget);
     }
     let installed = core.state.installed.clone();
@@ -116,8 +120,13 @@ pub(crate) fn maintain_restore_recognition(
         budget,
     };
     super::maintenance::expire_seeds(
-        &mut core.state.physical, &mut core.state.reception, &installed,
-        &mut core.state.temporal, &mut core.journal.recognition, &mut receiving, observer,
+        &mut core.state.physical,
+        &mut core.state.reception,
+        &installed,
+        &mut core.state.temporal,
+        &mut core.journal.recognition,
+        &mut receiving,
+        observer,
     )
 }
 struct IndividualPruning {
@@ -361,7 +370,10 @@ fn prepare_pruning(
             .temporal
             .mark_support_dirty(observer, Some(&sources))?;
     }
-    Ok(Some(IndividualPruning { pinned, _storage: reservation }))
+    Ok(Some(IndividualPruning {
+        pinned,
+        _storage: reservation,
+    }))
 }
 fn finish_pruning(
     core: &mut CoreMutation<'_>,
@@ -409,7 +421,12 @@ fn finish_pruning(
         }
     }
     if let Some(retained) = retained {
-        pinned.extend(retained.iter().filter(|id| candidates.contains(*id)).cloned());
+        pinned.extend(
+            retained
+                .iter()
+                .filter(|id| candidates.contains(*id))
+                .cloned(),
+        );
     }
     let _retained_pins = budget.reserve(pinned.heap_bytes().ok_or_else(capacity)?)?;
     let retained_pins = pinned.clone();
@@ -559,42 +576,65 @@ impl PreparedIndividualRetirement {
         binding: crate::geometry::GeometryBinding,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
-        let identities = core.state.reception.observer_identities.as_ref()
+        let identities = core
+            .state
+            .reception
+            .observer_identities
+            .as_ref()
             .and_then(|owners| owners.get(observer));
-        let count = identities.map_or(0, IndexMap::len);
-        let strings = identities.into_iter().flat_map(|records| records.keys())
+        let count = identities.map_or(0, |records| records.len());
+        let strings = identities
+            .into_iter()
+            .flat_map(|records| records.keys())
             .try_fold(0usize, |n, key| n.checked_add(key.len().checked_mul(2)?))
             .ok_or_else(capacity)?;
-        let storage = budget.reserve(heap_sum([
-            size_of::<Self>(), observer.len(), strings,
-            map_storage::<String, ()>(count.checked_mul(4).ok_or_else(capacity)?)
-                .ok_or_else(capacity)?,
-        ]).ok_or_else(capacity)?)?;
+        let storage = budget.reserve(
+            heap_sum([
+                size_of::<Self>(),
+                observer.len(),
+                strings,
+                map_storage::<String, ()>(count.checked_mul(4).ok_or_else(capacity)?)
+                    .ok_or_else(capacity)?,
+            ])
+            .ok_or_else(capacity)?,
+        )?;
         let mut candidates = IndexSet::with_capacity(count);
         let mut selected_retained = IndexSet::with_capacity(count);
         for key in identities.into_iter().flat_map(|records| records.keys()) {
             candidates.insert(key.clone());
-            if retained.contains(key) { selected_retained.insert(key.clone()); }
+            if retained.contains(key) {
+                selected_retained.insert(key.clone());
+            }
         }
         // Comparison allocation precedes the familiarity writer; its selected
         // sample keys are unchanged by familiarity's independent roots.
-        let privacy = if released.is_empty() { None } else {
-            super::RecognitionPrivacyPreparation::prepare(core, observer, released, binding, budget)?
+        let privacy = if released.is_empty() {
+            None
+        } else {
+            super::RecognitionPrivacyPreparation::prepare(
+                core, observer, released, binding, budget,
+            )?
         };
         let prepared = prepare_pruning(core, observer, &candidates, budget)?;
-        Ok(Self { observer: observer.to_owned(), candidates,
-            retained: selected_retained, prepared, privacy, _storage: storage })
+        Ok(Self {
+            observer: observer.to_owned(),
+            candidates,
+            retained: selected_retained,
+            prepared,
+            privacy,
+            _storage: storage,
+        })
     }
     pub(crate) fn comparisons(&self) -> Option<&crate::language::CollationRequest> {
         self.privacy.as_ref().map(|privacy| privacy.comparisons())
     }
     pub(crate) fn validate_answer(
-        &self,
+        &mut self,
         answer: Option<&crate::language::CollationAnswer>,
     ) -> Result<(), ExecutionError> {
-        match (&self.privacy, answer) {
+        match (&mut self.privacy, answer) {
             (Some(privacy), Some(answer)) => {
-                privacy.comparisons().finish(answer).map_err(|_| ExecutionError::Invariant)?;
+                privacy.validate_answer(answer)?;
                 Ok(())
             }
             (None, None) => Ok(()),
@@ -611,8 +651,15 @@ impl PreparedIndividualRetirement {
             privacy.finish(core, answer.ok_or(ExecutionError::Invariant)?, budget)?;
         }
         if let Some(prepared) = self.prepared {
-            finish_pruning(core, &self.observer, &self.candidates,
-                IndividualPruneMode::RecentRetirement, prepared, Some(&self.retained), budget)?;
+            finish_pruning(
+                core,
+                &self.observer,
+                &self.candidates,
+                IndividualPruneMode::RecentRetirement,
+                prepared,
+                Some(&self.retained),
+                budget,
+            )?;
         }
         Ok(())
     }

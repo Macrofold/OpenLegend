@@ -1,3 +1,4 @@
+import { releaseNativeProduct } from './native-consumer.js';
 import { ContextBudgetError } from './context.js';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { dispatchEmbedding } from './embedding-dispatch.js';
@@ -1134,21 +1135,27 @@ export class NativeNpcDirector {
       },
       claim,
     });
-    if (claim?.deliveredAt !== undefined)
-      await recordDecisionTiming(
-        this.log,
-        run.job,
-        'final',
-        claim.deliveredAt,
-        claim.deliveredElapsedMs,
-      );
-    if (run.job.decision) run.job = (await this.service.store.getJob(run.job.id)) ?? run.job;
-    else
-      await this.update(run, outcome.ok ? 'completed' : 'failed', outcome.message, {
-        disposition: outcome.ok ? 'resolved' : 'native-rejection',
-        outcome,
-      });
-    if (!outcome.ok && (await this.handoff(run, 'native-rejection', true))) return;
+    try {
+      if (claim?.deliveredAt !== undefined)
+        await recordDecisionTiming(
+          this.log,
+          run.job,
+          'final',
+          claim.deliveredAt,
+          claim.deliveredElapsedMs,
+        );
+      if (run.job.decision) run.job = (await this.service.store.getJob(run.job.id)) ?? run.job;
+      else
+        await this.update(run, outcome.ok ? 'completed' : 'failed', outcome.message, {
+          disposition: outcome.ok ? 'resolved' : 'native-rejection',
+          outcome,
+        });
+      if (!outcome.ok && (await this.handoff(run, 'native-rejection', true))) return;
+    } finally {
+      // SQL and diagnostics have consumed/copied the report; a handoff has
+      // captured its own stored job. This caller returns no borrowed outcome.
+      releaseNativeProduct(outcome);
+    }
   }
 
   private knownResponse(prepared: Preparation, id: string): ActorResponse {

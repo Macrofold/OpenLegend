@@ -45,6 +45,15 @@ pub(crate) struct RestorePrivacyCursor {
     _storage: ByteReservation,
 }
 impl RestorePrivacyCursor {
+    pub(crate) fn has_pending_edits(&self, core: &CoreMutation<'_>) -> bool {
+        !self.groups.is_empty()
+            || self.input.forgotten.iter().any(|(actor, sources)| {
+                let owner = core.state.experience.actor(actor);
+                sources.iter().any(|source| {
+                    !owner.is_some_and(|owner| owner.privacy.forgotten_ids().contains(source))
+                })
+            })
+    }
     pub(crate) fn new(
         core: &CoreMutation<'_>,
         input: RestorePrivacyInput,

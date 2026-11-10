@@ -82,7 +82,7 @@ impl Finalizer {
         since: Option<crate::experience::ExperienceCheckpoint>,
         budget: &ByteBudget,
     ) -> Result<Option<Self>, DriveError> {
-        Self::prepare_with::<()>(core, key, since, None, budget)
+        Self::prepare_with::<()>(core, key, since, None, 1, budget)
     }
     /// Restoration plans only edits after its genuine post-privacy baseline.
     /// SQL replays that immutable before-view, including its first selected
@@ -93,6 +93,7 @@ impl Finalizer {
         since: crate::experience::ExperienceCheckpoint,
         projection: &ChangedRows,
         baseline: &crate::restore::RestoreArchiveBaseline,
+        serial: u64,
         budget: &ByteBudget,
     ) -> Result<Option<Self>, DriveError> {
         Self::prepare_with(
@@ -103,6 +104,7 @@ impl Finalizer {
                 restore_projection: projection,
                 archive_baseline: baseline.archives(),
             }),
+            serial,
             budget,
         )
     }
@@ -111,6 +113,7 @@ impl Finalizer {
         key: crate::host::CandidateKey,
         since: Option<crate::experience::ExperienceCheckpoint>,
         restore: Option<RestoreContext<'_, A>>,
+        serial: u64,
         budget: &ByteBudget,
     ) -> Result<Option<Self>, DriveError> {
         let mut output = RowEncoder::new(&core.state.installed.schema, budget)
@@ -214,7 +217,8 @@ impl Finalizer {
             budget,
         )
         .map_err(|_| DriveError::Encoding)?;
-        let binding = GeometryBinding::new(key, core.state.installed.geometry.spatial.revision, 1);
+        let binding =
+            GeometryBinding::new(key, core.state.installed.geometry.spatial.revision, serial);
         let maximum_transfer_bytes = budget.limit();
         let question = ProviderQuestion::prepare(
             ProviderKind::SourceVersions,

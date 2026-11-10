@@ -61,8 +61,12 @@ impl RestoreRetentionQuestion {
         )
     }
     pub(crate) fn membership<T: Serialize + ?Sized>(
-        core: &CoreMutation<'_>, actor: &str, key: CandidateKey, serial: u64,
-        data: &T, budget: &ByteBudget,
+        core: &CoreMutation<'_>,
+        actor: &str,
+        key: CandidateKey,
+        serial: u64,
+        data: &T,
+        budget: &ByteBudget,
     ) -> Result<Arc<Self>, ExecutionError> {
         Self::new(core, actor, key, serial, Phase::Membership, data, budget)
     }
@@ -139,6 +143,18 @@ pub(crate) struct RestoreRetentionAnswer {
     _data_storage: ByteReservation,
 }
 impl RestoreRetentionAnswer {
+    pub(crate) fn provider_binding(&self, revision: u64) -> GeometryBinding {
+        GeometryBinding::new(
+            CandidateKey {
+                id: self.binding.candidate_id,
+                base_cut: self.binding.accepted_cut,
+                generation: self.binding.candidate_generation,
+            },
+            revision,
+            self.binding.request_serial,
+        )
+    }
+
     pub(crate) fn into_membership(
         self,
         question: &RestoreRetentionQuestion,
@@ -215,10 +231,15 @@ impl RestoreRetentionAnswer {
                 let value = serde_json::from_str(envelope.data.get())
                     .map_err(|_| HistoryPreparationError::MalformedResponse)?;
                 (Data::Records(value), storage)
-            }            Phase::Membership => {
+            }
+            Phase::Membership => {
                 let storage = crate::install::reserve_typed_parse::<RestoreMembershipAnswer>(
-                    envelope.data.get(), size_of::<usize>(), None, budget,
-                ).map_err(|error| match error {
+                    envelope.data.get(),
+                    size_of::<usize>(),
+                    None,
+                    budget,
+                )
+                .map_err(|error| match error {
                     crate::install::InstallError::Capacity => HistoryPreparationError::Capacity,
                     _ => HistoryPreparationError::MalformedResponse,
                 })?;
@@ -226,7 +247,6 @@ impl RestoreRetentionAnswer {
                     .map_err(|_| HistoryPreparationError::MalformedResponse)?;
                 (Data::Membership(value), storage)
             }
-
         };
         Ok(Self {
             binding,

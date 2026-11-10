@@ -53,6 +53,11 @@ export interface SourceVersionPreparation {
   actorIds?: readonly string[];
   /** Selected original bodies already hydrated by account retirement. */
   previous?: ReadonlyMap<string, ReadonlyMap<string, unknown>>;
+  /** The restore owner proves complete current source coverage. Its changed
+   * input includes every current owner plus cumulative initial deletions, and
+   * these are the exact archives approved before the first retention pass.
+   * The abandoned live timeline's SQL indexes cannot answer this purpose. */
+  complete?: { readonly archiveRows: readonly Record<string, unknown>[] };
 }
 export const sourceVersionKey = (value: VersionKey) =>
   JSON.stringify([value.actorId, value.kind, value.id, value.revision]);
@@ -393,6 +398,7 @@ export async function prepareSourceVersionPlan(
   // one alias; resolve it once, with no per-reference SQL or changed.find walk.
   for (const [kind, sources] of unresolved)
     for (const batch of sqlRowBatches(sources.map((source) => [source.actorId, source.id]))) {
+      if (preparation.complete) throw new Error('Exact learned-identity source is unavailable.');
       const requests = batch.map(([actor_id, source_id]) => ({ actor_id, source_id }));
       const found = new Map<string, string>();
       for (const row of await db
@@ -453,7 +459,20 @@ export async function prepareSourceVersionPlan(
     ),
   );
   const archives = new Map<string, RetainedSourceVersion>();
+  if (preparation.complete)
+    for (const row of preparation.complete.archiveRows) {
+      const value = {
+        actorId: String(row['actor_id']),
+        kind: String(row['source_kind']),
+        id: String(row['source_id']),
+        revision: String(row['revision']),
+        category: row['retention_class'] as Category,
+        bytes: Buffer.byteLength(String(row['payload'])),
+      };
+      if (affected.has(key(value))) archives.set(key(value), value);
+    }
   for (let offset = 0; offset < keys.length; offset += 256) {
+    if (preparation.complete) break;
     const batch = keys.slice(offset, offset + 256).map((value) => ({
       actor_id: value.actorId,
       kind: value.kind,

@@ -1744,6 +1744,7 @@ export class WorldService {
       operationalChange?: () => Promise<void>;
     },
     cleanup?: PreparedMemoryRetention,
+    restoreArchiveBaseline?: readonly Record<string, unknown>[],
   ): Promise<boolean> {
     const protectedOperation =
       !!restore ||
@@ -1802,7 +1803,7 @@ export class WorldService {
       const retention: PreparedMemoryRetention =
         cleanup ??
         (restore
-          ? await this.prepareRetention(saved, true)
+          ? await this.prepareRetention(saved, true, restoreArchiveBaseline)
           : sourceVersionPreparationNeeded(transitionBefore, saved.world)
             ? await this.prepareChangedSourceVersions(saved, {
                 ...this.saved,
@@ -2428,6 +2429,7 @@ export class WorldService {
   private async prepareRetention(
     saved: SavedWorld,
     complete = false,
+    archiveBaseline?: readonly Record<string, unknown>[],
   ): Promise<PreparedMemoryRetention> {
     const versions = sourceVersionPreparationNeeded(this.persistedMemorySources, saved.world);
     if (!this.store.memories || (!retentionNeedsPreparation(saved.world) && !versions))
@@ -2438,12 +2440,13 @@ export class WorldService {
         versions: undefined,
       };
     await this.backgroundSave?.done;
-    let retained: PreparedMemoryRetention;
-    if (!complete) {
-      if (!this.store.prepareRetainedSourceClosure)
-        throw new Error('Exact retained source preparation is unavailable.');
-      retained = await this.store.prepareRetainedSourceClosure(saved);
-    } else retained = await this.store.memories.prepareRetention(saved, complete);
+    if (!this.store.prepareRetainedSourceClosure)
+      throw new Error('Exact retained source preparation is unavailable.');
+    const retained = await this.store.prepareRetainedSourceClosure(
+      saved,
+      complete,
+      archiveBaseline,
+    );
     // Account expiry and payload reclamation do not settle physical arithmetic.
     // Their editable intermediate wrappers are complete now; preserve preparation
     // only after the exposure owner proves every actual input stayed identical.
@@ -3827,10 +3830,11 @@ export class WorldService {
         // would conservatively invalidate sight despite unchanged physical data.
         freezeWorld(restored.world);
         restored.world = reapplyExperiencePrivacy(restored.world, ledger);
-        restored.world = restoredSourceVersions(
+        const restoredArchives = restoredSourceVersions(
           restored,
           payload.memory?.mind_source_versions ?? [],
-        ).state.world;
+        );
+        restored.world = restoredArchives.state.world;
         restored.world = updateWorld(restored.world, (world) => {
           for (const [actorId, revision] of Object.entries(
             this.world.experience?.privacyRevisions ?? {},
@@ -3877,15 +3881,17 @@ export class WorldService {
             );
           }
         if (
-          !(await this.commit(restored, undefined, 'diff', baseline, undefined, {
-            id,
-            requestId,
-            payload,
-            epoch,
-            timeline,
-            recoveryId,
-            assetPrincipal,
-          }))
+          !(await this.commit(
+            restored,
+            undefined,
+            'diff',
+            baseline,
+            undefined,
+            { id, requestId, payload, epoch, timeline, recoveryId, assetPrincipal },
+            undefined,
+            undefined,
+            restoredArchives.rows,
+          ))
         )
           throw new Error(this.storageError ?? 'Load failed.');
         this.storageGeneration = (await this.store.records?.head())?.generation ?? '';

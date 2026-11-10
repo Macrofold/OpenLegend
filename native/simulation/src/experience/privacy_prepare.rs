@@ -139,6 +139,11 @@ impl From<ExecutionError> for HistoryPreparationError {
         Self::Owner(error)
     }
 }
+impl From<crate::host::CapacityError> for HistoryPreparationError {
+    fn from(_: crate::host::CapacityError) -> Self {
+        Self::Capacity
+    }
+}
 impl HistoryEditAnswer {
     pub(crate) fn provider_binding(
         &self,

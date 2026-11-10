@@ -739,8 +739,12 @@ export class WorldRecords {
   /** Captures a complete candidate without rebinding live collection ordinals.
    * Coverage is checked separately; a rejected resident tail must leave its
    * accepted placement and staged cold-retirement metadata untouched. */
-  captureMetadataRecords(after: SavedWorld, selectedTables: ReadonlySet<string>): RecordChanges {
-    return this.prepareRecords(undefined, after, selectedTables, true);
+  captureMetadataRecords(
+    after: SavedWorld,
+    selectedTables: ReadonlySet<string>,
+    before?: SavedWorld,
+  ): RecordChanges {
+    return this.prepareRecords(before, after, selectedTables, true);
   }
   private prepareRecords(
     before: SavedWorld | undefined,

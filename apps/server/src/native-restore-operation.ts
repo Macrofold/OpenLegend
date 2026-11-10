@@ -16,7 +16,11 @@ import { DATABASE_SCHEMA, type NativeWorldAdoption, type SqlGameRepository } fro
 import { nativeDefinitionSources } from './native-definition-sources.js';
 import { nativeRecordLayouts, nativeStorageSettings } from './native-install-inputs.js';
 import { NativeDefinitionCapture } from './native-definition-capture.js';
-import { decodeNativeProduct, retainNativeSources } from './native-consumer.js';
+import {
+  decodeNativeProduct,
+  retainNativeSources,
+  withNativeJsonInput,
+} from './native-consumer.js';
 import { nativeRecordChanges } from './native-records.js';
 import { nativeRestoredHistory } from './native-private-history.js';
 import { driveNativeOperation } from './native-providers.js';
@@ -169,6 +173,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
     this.actors = new NativeActorRoster(
       stage.source.records.tables['sim_actors'] ?? [],
       stage.source.records.tables['sim_exit_exposures'] ?? [],
+      stage.source.records.tables['sim_native_response_episodes'] ?? [],
     );
     this.actors.prepare(restored.changes)();
   }
@@ -195,18 +200,17 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
       working.records.durableRevision !== stage.revision
     )
       throw new Error('Restore working selection differs from its protected SQL installation.');
-    const world = await request.host.installRestoringWorld(
-      Buffer.from(
-        JSON.stringify({
-          ...working,
-          definitions: nativeDefinitionSources(working),
-          settings: nativeSetupSettings,
-          storage: nativeStorageSettings,
-          layouts: nativeRecordLayouts(),
-          acceptedCut: 0,
-        }),
-      ),
-      DATABASE_SCHEMA,
+    const world = await withNativeJsonInput(
+      request.host,
+      {
+        ...working,
+        definitions: nativeDefinitionSources(working),
+        settings: nativeSetupSettings,
+        storage: nativeStorageSettings,
+        layouts: nativeRecordLayouts(),
+        acceptedCut: 0,
+      },
+      (bytes) => request.host.installRestoringWorld(bytes, DATABASE_SCHEMA),
     );
     let definitions: NativeDefinitionCapture | undefined;
     let geometry: ReturnType<NativeDefinitionCapture['geometry']> | undefined;
@@ -236,18 +240,18 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
       };
       turn = await driveNativeOperation(
         world,
-        await world.beginRestore(
-          Buffer.from(
-            JSON.stringify({
-              privacy: request.privacy,
-              metadata: stage.metadata,
-              retentionPreparation: {
-                accounts: ACCOUNT_RETENTION_PREPARATION,
-                support: SUPPORT_MEMBERSHIP_PREPARATION,
-                rounds: SOURCE_RETENTION_CLOSURE_ROUNDS,
-              },
-            }),
-          ),
+        await withNativeJsonInput(
+          world,
+          {
+            privacy: request.privacy,
+            metadata: stage.metadata,
+            retentionPreparation: {
+              accounts: ACCOUNT_RETENTION_PREPARATION,
+              support: SUPPORT_MEMBERSHIP_PREPARATION,
+              rounds: SOURCE_RETENTION_CLOSURE_ROUNDS,
+            },
+          },
+          (bytes) => world.beginRestore(bytes),
         ),
         geometry,
         request.signal,
@@ -261,7 +265,9 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
             reserveJson: (bytes) => world.reserveConsumerJson(bytes),
           },
           retentionSignal: request.signal,
-          retentionSupportSourceIds: selectedRecognitionSupportReader(definitions.facts.definitions),
+          retentionSupportSourceIds: selectedRecognitionSupportReader(
+            definitions.facts.definitions,
+          ),
         },
       );
       if (turn.kind !== 'prepared' || !turn.prepared)

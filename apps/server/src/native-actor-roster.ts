@@ -24,10 +24,16 @@ export class NativeActorRoster {
   private readonly humans = new Set<string>();
   private readonly npcs = new Set<string>();
   private readonly exposures = new Set<string>();
+  private readonly navigation = new Set<string>();
 
-  constructor(rows: readonly Row[], exposures: readonly Pick<Row, 'slot'>[]) {
+  constructor(
+    rows: readonly Row[],
+    exposures: readonly Pick<Row, 'slot'>[],
+    episodes: readonly Row[],
+  ) {
     for (const row of rows) this.put(actorId(row.parent), this.read(row.payload));
     for (const row of exposures) this.exposures.add(row.slot);
+    for (const row of episodes) this.putNavigation(row);
   }
   private read(payload: string): NativeActorPresence {
     const actor = JSON.parse(payload) as NativeActorPresence & {
@@ -73,6 +79,19 @@ export class NativeActorRoster {
   npcIds(): Iterable<string> {
     return this.npcs;
   }
+  pendingNavigationIds(): Iterable<string> {
+    return this.navigation;
+  }
+  private putNavigation(row: Row): void {
+    const [id, pending] = this.readNavigation(row);
+    if (pending) this.navigation.add(id);
+    else this.navigation.delete(id);
+  }
+  private readNavigation(row: Row): readonly [string, boolean] {
+    const id = (JSON.parse(row.parent) as string[])[2]!;
+    const episode = JSON.parse(row.payload) as { proposal?: { wait?: string } };
+    return [id, episode.proposal?.wait === 'entity'];
+  }
   get exitExposureActive(): boolean {
     return this.exposures.size > 0;
   }
@@ -88,10 +107,22 @@ export class NativeActorRoster {
     const removed = (changes.deletes['sim_exit_exposures'] ?? []).map(
       (id) => (JSON.parse(id) as string[]).at(-1)!,
     );
+    const episodes = (changes.writes['sim_native_response_episodes'] ?? []).map((row) =>
+      this.readNavigation(row),
+    );
+    const removedEpisodes = (changes.deletes['sim_native_response_episodes'] ?? []).map(
+      (id) => (JSON.parse(id) as string[])[2]!,
+    );
     return () => {
       for (const [id, actor] of actors) this.put(id, actor);
       for (const id of added) this.exposures.add(id);
       for (const id of removed) this.exposures.delete(id);
+      for (const [id, pending] of episodes) {
+        if (pending) this.navigation.add(id);
+        else this.navigation.delete(id);
+      }
+      for (const id of removedEpisodes) this.navigation.delete(id);
+      for (const [id, actor] of actors) if (!actor) this.navigation.delete(id);
     };
   }
 }

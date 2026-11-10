@@ -90,6 +90,7 @@ import type { WorldService } from './world-service.js';
 import { COGNITION_VERSION, RESPONSE_INSTRUCTIONS } from './cognition-contracts.js';
 import {
   readableDecisionContext,
+  measureReadableDecisionContext,
   responseReferences,
   responseTrigger,
   responseTriggerContext,
@@ -261,6 +262,12 @@ export function fitActionCandidates<T extends { description: string }>(
   candidates: T[],
   reservedBytes = 0,
   coverage: 'optional' | 'complete-required' = 'optional',
+  contextBytes: (
+    context: Record<string, unknown>,
+    actions: { id: string; description: string }[],
+    includeActions: boolean,
+  ) => number = (context, actions, includeActions) =>
+    measureReadableDecisionContext(context, actions, includeActions).bytes,
 ): T[] {
   if (coverage === 'complete-required') {
     const offered = candidates.map((candidate, index) => ({
@@ -268,7 +275,7 @@ export function fitActionCandidates<T extends { description: string }>(
       description: candidate.description,
     }));
     const bytes =
-      Buffer.byteLength(readableDecisionContext(context, offered, true)) +
+      contextBytes(context, offered, true) +
       Buffer.byteLength(RESPONSE_INSTRUCTIONS) +
       reservedBytes;
     if (bytes > CONTEXT_BYTE_LIMIT)
@@ -278,7 +285,7 @@ export function fitActionCandidates<T extends { description: string }>(
   let remaining =
     CONTEXT_BYTE_LIMIT -
     reservedBytes -
-    Buffer.byteLength(readableDecisionContext(context, [], true)) -
+    contextBytes(context, [], true) -
     Buffer.byteLength(RESPONSE_INSTRUCTIONS);
   return candidates.filter((candidate, index) => {
     const bytes = Buffer.byteLength(`- a${index}: ${candidate.description}\n`) + 64;

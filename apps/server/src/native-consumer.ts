@@ -16,13 +16,18 @@ type Entry = {
   readonly owned?: true;
 };
 type Scope = { readonly holders: Set<Holder>; closed: boolean };
-type Holder = { readonly entries: readonly Entry[]; scope?: Scope; released?: true };
+type Holder = { entries: readonly Entry[]; scope?: Scope; released?: true };
 const scopes = new AsyncLocalStorage<Scope>();
 function release(holder: Holder): void {
   if (holder.released) return;
   holder.released = true;
   holder.scope?.holders.delete(holder);
   for (const entry of holder.entries) entry.consumer.release();
+  // A completed product can remain in a diagnostic/cache as ordinary data.
+  // Drop its dead internal JS class references too; each native header keeps
+  // its fixed charge until that actual class is destroyed.
+  holder.entries = [];
+  holder.scope = undefined;
 }
 const decodedConsumers = new FinalizationRegistry<Holder>(release);
 const holders = new WeakMap<object, Holder>();
@@ -213,14 +218,17 @@ export function retainNativeSources<T extends object>(
   const entries: Entry[] = [];
   const seen = new Set<symbol>();
   try {
-    for (const entry of holders.get(owner)?.entries ?? []) {
+    const previous = holders.get(owner);
+    if (previous?.released) throw new Error('Native output allocation owner was released.');
+    for (const entry of previous?.entries ?? []) {
       if (!entry.owned) continue;
       entries.push({ ...entry, consumer: entry.consumer.retain() });
       seen.add(entry.origin);
     }
     for (const root of roots) {
       const holder = holders.get(root);
-      if (!holder) throw new Error('A derived native product has no scoped allocation owner.');
+      if (!holder || holder.released)
+        throw new Error('A derived native product has no live scoped allocation owner.');
       for (const entry of holder.entries) {
         if (seen.has(entry.origin)) continue;
         const consumer = entry.consumer.retain();
@@ -253,6 +261,7 @@ export function attachNativeConsumer<T extends object>(
         if (root === owner) continue;
         throw new Error('A derived native product has no scoped allocation owner.');
       }
+      if (holder.released) throw new Error('Native output allocation owner was released.');
       for (const entry of holder.entries) {
         if (seen.has(entry.origin)) continue;
         entries.push({

@@ -70,6 +70,12 @@ impl RecognitionPrivacyPreparation {
     pub(crate) fn comparisons(&self) -> &CollationRequest {
         &self.comparisons
     }
+    pub(crate) fn validate_answer(
+        &mut self,
+        answer: &CollationAnswer,
+    ) -> Result<(), ExecutionError> {
+        self.comparisons.validate(answer).map_err(|_| invalid())
+    }
     pub(crate) fn finish(
         self,
         core: &mut CoreMutation<'_>,

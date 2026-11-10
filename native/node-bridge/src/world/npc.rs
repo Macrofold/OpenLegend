@@ -281,12 +281,13 @@ impl NativeWorldNpcRead {
         let read = Arc::clone(&self.inner);
         let budget = self.host.bytes.clone();
         dispatch(env, &self.host, None, move |_cancel| {
-            let mut owner = read
+            let owner = read
                 .read
                 .try_lock()
                 .map_err(|_| failure("native NPC read is busy or unavailable"))?;
+            // Release owns cancellation of any parked preparation. Keep its
+            // payload/key until that queued cleanup acquires this mutex.
             if read.released.load(Ordering::Acquire) {
-                *owner = None;
                 return Err(failure("native NPC read was released"));
             }
             let value = owner
@@ -296,7 +297,7 @@ impl NativeWorldNpcRead {
                 .map(|value| NativeWorldJson::new(value, budget))
                 .map_err(operation_error);
             if read.released.load(Ordering::Acquire) {
-                *owner = None;
+                return Err(failure("native NPC read was released"));
             }
             result
         })

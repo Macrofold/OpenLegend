@@ -1,3 +1,4 @@
+import { indentedContextTextBytes } from './response-context.js';
 import {
   experienceSourceKey,
   resultEvidenceId,
@@ -60,7 +61,14 @@ import { contextSections, type SharedModelExperience } from './perceived-context
 import { fitActionCandidates } from './decision-context.js';
 import { decisionActivityFactsFromRead } from './decision-activity-facts.js';
 import { ContextBudgetError, CONTEXT_BYTE_LIMIT } from './context.js';
-import { readableDecisionContext } from './response-context.js';
+import {
+  nativeDecisionPrompt,
+  nativeDecisionPromptSize,
+  nativeDecisionJsonText,
+  nativeDecisionJsonSize,
+  joinNativeDecisionText,
+  type NativeDecisionText,
+} from './native-decision-prompt.js';
 import {
   COGNITION_VERSION,
   RESPONSE_INSTRUCTIONS,
@@ -134,6 +142,7 @@ export async function prepareNativeDecision(input: NativeDecisionInput) {
   try {
     return await owner.run(() => prepareOwnedDecision(input, owner));
   } catch (error) {
+    input.semanticTrigger = undefined;
     owner.dispose();
     throw error;
   }
@@ -144,6 +153,17 @@ async function prepareOwnedDecision(
   owner: ReturnType<typeof createNativeConsumerScope>,
 ) {
   const { service, actorId, jobId, signal } = input;
+  const textProducts: NativeDecisionText[] = [];
+  const keepText = (product: NativeDecisionText): string => {
+    textProducts.push(product);
+    return product.text;
+  };
+  const promptBytes = (
+    context: Record<string, unknown>,
+    actions: { id: string; description: string }[],
+    includeActions: boolean,
+  ) => nativeDecisionPromptSize(service.world, context, actions, includeActions);
+
   let decisionId = jobId;
   const generation = service.generation;
   const repository = service.store.memories;
@@ -462,8 +482,8 @@ async function prepareOwnedDecision(
         .reduce(
           (sum, candidate) =>
             sum +
-            Buffer.byteLength(candidate.text.replace(/\n/g, '\n  ')) +
-            Buffer.byteLength(JSON.stringify(candidate.experience ?? [])) +
+            indentedContextTextBytes(candidate.text) +
+            nativeDecisionJsonSize(service.world, candidate.experience ?? []) +
             Buffer.byteLength(candidate.id) +
             8,
           0,
@@ -472,8 +492,7 @@ async function prepareOwnedDecision(
       context: Record<string, unknown>,
       actions: { id: string; description: string }[] = [],
     ) =>
-      Buffer.byteLength(readableDecisionContext(context, actions, actions.length > 0)) +
-      Buffer.byteLength(RESPONSE_INSTRUCTIONS);
+      promptBytes(context, actions, actions.length > 0) + Buffer.byteLength(RESPONSE_INSTRUCTIONS);
     let requiredBytes = bytes(baseContext);
     if (requiredBytes + requiredRecallBytes() > CONTEXT_BYTE_LIMIT)
       throw new ContextBudgetError(
@@ -756,9 +775,13 @@ async function prepareOwnedDecision(
         experience: value.experience,
       });
     projectNativeDecisionContext(service.world, context, now, references.entityReferences);
-    const allOffers = fitActionCandidates(context, [
-      ...now.choiceDescriptions(service.definitions),
-    ]);
+    const allOffers = fitActionCandidates(
+      context,
+      [...now.choiceDescriptions(service.definitions)],
+      0,
+      'optional',
+      promptBytes,
+    );
     let actionSource: 'original' | 'current' = 'current';
     let offered: NativeFormattedNpcOffer[];
     if (input.mode === 'reflection') offered = [];
@@ -820,11 +843,15 @@ async function prepareOwnedDecision(
     // Source preparation allowance. Its actual JSON request has its own full
     // budget check in the shared maintenance owner.
     const reflectionPreparationPrompt =
-      input.mode === 'reflection' ? readableDecisionContext(context, [], false) : undefined;
+      input.mode === 'reflection'
+        ? keepText(nativeDecisionPrompt(service.world, context, [], false))
+        : undefined;
     const invention =
       input.mode === 'reflection' ? undefined : await prepareNativeActorInvention(service, actorId);
     const instructions = invention
-      ? `${RESPONSE_INSTRUCTIONS} ${invention.instructions}`
+      ? keepText(
+          joinNativeDecisionText(service.world, RESPONSE_INSTRUCTIONS, ' ', invention.instructions),
+        )
       : RESPONSE_INSTRUCTIONS;
     const appraisal = hasAppraisals
       ? await input.prepareAppraisals({
@@ -862,22 +889,33 @@ async function prepareOwnedDecision(
       : undefined;
     if (input.mode === 'reflection' && appraisal) context['feelings'] = appraisal.context;
     const additionalContext = invention
-      ? `\n${invention.context}${appraisal ? '\nPermitted feeling proposals: ' + JSON.stringify(appraisal.context) : ''}`
+      ? keepText(
+          joinNativeDecisionText(
+            service.world,
+            '\n',
+            invention.context,
+            appraisal ? '\nPermitted feeling proposals: ' : '',
+            appraisal ? keepText(nativeDecisionJsonText(service.world, appraisal.context)) : '',
+          ),
+        )
       : '';
+    const renderBytes = () =>
+      reflectionPreparationPrompt !== undefined
+        ? Buffer.byteLength(reflectionPreparationPrompt)
+        : nativeDecisionPromptSize(service.world, context, offered, true, additionalContext);
     const render = () =>
       reflectionPreparationPrompt ??
-      readableDecisionContext(context, offered, true) + additionalContext;
+      keepText(nativeDecisionPrompt(service.world, context, offered, true, additionalContext));
     // Required evidence keeps its allowance. Only optional assistance loses a
     // whole suffix when the complete generation envelope needs more room.
-    if (Buffer.byteLength(render()) + Buffer.byteLength(instructions) > CONTEXT_BYTE_LIMIT) {
+    if (renderBytes() + Buffer.byteLength(instructions) > CONTEXT_BYTE_LIMIT) {
       const all = offered;
       let low = 0,
         high = all.length;
       while (low < high) {
         const middle = Math.ceil((low + high) / 2);
         offered = all.slice(0, middle);
-        if (Buffer.byteLength(render()) + Buffer.byteLength(instructions) <= CONTEXT_BYTE_LIMIT)
-          low = middle;
+        if (renderBytes() + Buffer.byteLength(instructions) <= CONTEXT_BYTE_LIMIT) low = middle;
         else high = middle - 1;
       }
       offered = all.slice(0, low);
@@ -1026,7 +1064,12 @@ async function prepareOwnedDecision(
                 const result = withoutNativeConsumerScope(start);
                 // Actual local provider consumption, rather than cancellation
                 // time, closes the last lease on its originating preparation.
-                void owner.run(() => Promise.resolve(result)).catch(() => undefined);
+                void owner
+                  .run(async () => {
+                    await result;
+                    void textProducts.length;
+                  })
+                  .catch(() => undefined);
                 return { result };
               } finally {
                 publication?.release();
@@ -1075,6 +1118,7 @@ async function prepareOwnedDecision(
               },
             });
             ticket = expansion.ticket;
+            textProducts.push(...expansion.textProducts);
             prompt = expansion.prompt;
             context = expansion.context;
             offered = expansion.offered;
@@ -1088,11 +1132,22 @@ async function prepareOwnedDecision(
             await conversationCheck(false, selectedProofs);
             if (!(await currentTicket()))
               throw new Error('The retained native decision became stale.');
-            const nextOffers = fitActionCandidates(retainedContext, [...retainedOffers]).map(
-              (offer, index) => ({ ...offer, id: `a${index}` }),
+            const nextOffers = fitActionCandidates(
+              retainedContext,
+              [...retainedOffers],
+              0,
+              'optional',
+              promptBytes,
+            ).map((offer, index) => ({ ...offer, id: `a${index}` }));
+            const nextPrompt = keepText(
+              nativeDecisionPrompt(
+                service.world,
+                retainedContext,
+                nextOffers,
+                true,
+                additionalContext,
+              ),
             );
-            const nextPrompt =
-              readableDecisionContext(retainedContext, nextOffers, true) + additionalContext;
             if (
               Buffer.byteLength(nextPrompt) + Buffer.byteLength(instructions) >
               CONTEXT_BYTE_LIMIT
@@ -1133,6 +1188,9 @@ async function prepareOwnedDecision(
           ticket = undefined;
         },
         dispose() {
+          // This private preparation envelope borrows the intake handle only
+          // through binding/query reuse. Other intake owners remain independent.
+          input.semanticTrigger = undefined;
           ticket?.release();
           reflectionTicket?.release();
           ticket = undefined;
@@ -1154,7 +1212,7 @@ async function prepareOwnedDecision(
           sections: Object.fromEntries(
             Object.entries(context).map(([key, value]) => [
               key,
-              Buffer.byteLength(JSON.stringify(value)),
+              nativeDecisionJsonSize(service.world, value),
             ]),
           ),
         },

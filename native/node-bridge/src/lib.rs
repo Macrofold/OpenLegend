@@ -235,6 +235,18 @@ impl NativeHost {
         })
     }
 
+    /// Opening must admit its encoded input before a resident world exists.
+    /// This grants capacity only, with the same lifetime as world consumers.
+    #[napi]
+    pub fn reserve_consumer_bytes(&self, bytes: f64) -> Result<world::NativeWorldConsumer> {
+        boundary(|| {
+            if self.runtime.pool.is_closing() {
+                return Err(failure("native consumer admission is closed"));
+            }
+            world::NativeWorldConsumer::reserve_bytes(bytes, &self.runtime.bytes)
+        })
+    }
+
     /// This status reads control metadata only, never tentative gameplay state.
     #[napi]
     pub fn status(&self) -> Result<HostStatus> {

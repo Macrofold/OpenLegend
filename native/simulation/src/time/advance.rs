@@ -233,6 +233,21 @@ impl AcceptedAdvanceContinuation {
     }
 }
 impl CompletedAdvance {
+    pub(crate) fn into_navigation(
+        mut self,
+    ) -> (
+        Vec<(EntityHandle, PendingRefugeNavigation)>,
+        ByteReservation,
+    ) {
+        // retain_navigation admitted every inline slot before allocation. This
+        // is a shrink of existing custody, so acceptance needs no new capacity.
+        self._reservation
+            .resize(
+                self.navigation.capacity() * size_of::<(EntityHandle, PendingRefugeNavigation)>(),
+            )
+            .expect("completed navigation slots were admitted");
+        (self.navigation, self._reservation)
+    }
     pub(crate) fn events(&self) -> impl Iterator<Item = &WorldEvent> + Clone {
         self.events.iter().flat_map(EventBatch::events)
     }

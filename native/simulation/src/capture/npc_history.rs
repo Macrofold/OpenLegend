@@ -64,6 +64,31 @@ enum HistoricalPermission {
 }
 
 impl NpcHistoricalScope {
+    pub(crate) fn capture_recent(
+        state: &SimulationState,
+        actor: &str,
+        serial: u64,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let physical = state
+            .physical
+            .entities
+            .get(actor)
+            .and_then(|entity| entity.actor.as_ref())
+            .ok_or(ExecutionError::InvalidCheckpoint)?;
+        Self::capture_owner(
+            state,
+            actor,
+            serial,
+            physical.physical_life.unwrap_or(0),
+            state
+                .experience
+                .actor(actor)
+                .map_or(0, |actor| actor.privacy.revision()),
+            HistoricalPermission::ReceivingLife,
+            budget,
+        )
+    }
     pub(crate) fn capture(
         state: &SimulationState,
         read: &AcceptedActorRead,

@@ -1,6 +1,16 @@
 //! Operational memory admission is separate from semantic world authority.
 use super::*;
 
+impl NativeWorldConsumer {
+    pub(crate) fn reserve_bytes(bytes: f64, budget: &ByteBudget) -> Result<Self> {
+        let bytes = usize::try_from(integer(bytes)?)
+            .map_err(|_| failure("native consumer allocation overflow"))?;
+        Ok(Self {
+            value: RuntimeConsumer::reserve(bytes, budget).map_err(operation_error)?,
+        })
+    }
+}
+
 #[napi]
 impl NativeWorld {
     #[napi]
@@ -9,12 +19,7 @@ impl NativeWorld {
             if self.world.stopped() || self.host.pool.is_closing() {
                 return Err(failure("native consumer admission is closed"));
             }
-            let bytes = usize::try_from(integer(bytes)?)
-                .map_err(|_| failure("native consumer allocation overflow"))?;
-            Ok(NativeWorldConsumer {
-                value: RuntimeConsumer::reserve(bytes, &self.host.bytes)
-                    .map_err(operation_error)?,
-            })
+            NativeWorldConsumer::reserve_bytes(bytes, &self.host.bytes)
         })
     }
 

@@ -31,6 +31,7 @@ impl StartupCursor {
             .storage
             .take()
             .ok_or(ExecutionError::InvalidCheckpoint)?;
+        core.materialize_world_edit()?;
         // Source current-world preparation pauses before transport/presence
         // reconciliation. This prevents a restart from becoming a fictional
         // departure and does not advance time, sequence, randomness or IDs.

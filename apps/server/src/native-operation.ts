@@ -113,7 +113,8 @@ export async function acceptNativeOperation<T extends object>(request: {
     }
     // A failure in history/source projection or consumer admission still rolls
     // back the genuine native checkpoint. No fallible staging follows accept.
-    value = retainNativeSources(await request.stage(publication), publication);
+    value = await request.stage(publication);
+    value = retainNativeSources(value, publication);
     prepared.ready();
     ready = true;
     accepted = !signal?.aborted && request.current();

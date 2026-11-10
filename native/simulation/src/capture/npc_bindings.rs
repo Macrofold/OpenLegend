@@ -99,6 +99,11 @@ pub(crate) enum NpcSubjectOrdinal {
     ReceivedBody {
         ordinal: usize,
     },
+    /// Historical interpretation can keep an acquired entity identity after
+    /// contact loss. This ordinal grants neither a body lease nor communication.
+    ReceivedBodyEntity {
+        ordinal: usize,
+    },
     ReceivedBodySubject {
         ordinal: usize,
         subject: usize,
@@ -315,6 +320,12 @@ impl NpcBindingRead<'_> {
                         .subject
                         .as_ref()
                 })
+            }
+            NpcSubjectOrdinal::ReceivedBodyEntity { ordinal } => {
+                self.original.perception.bodies.get(ordinal)?;
+                let fact = &self.original_references.bodies.get(ordinal)?.entity;
+                (fact.identity_present && !fact.seed_only && fact.can_address_remembered)
+                    .then_some(fact)
             }
             NpcSubjectOrdinal::ReceivedBodySubject { ordinal, subject } => {
                 self.original.perception.bodies.get(ordinal).and_then(|_| {
@@ -756,9 +767,14 @@ impl NpcBindingMaps {
                 let fact = read.subject(&selected.source).ok_or_else(invalid)?;
                 let interpretation =
                     !knowledge && matches!(selected.source, NpcSubjectOrdinal::MindRecord { .. });
-                if !interpretation
-                    && matches!(fact.subject, ObserverSubject::Individual { .. })
-                    && (!fact.identity_present || fact.seed_only)
+                if knowledge
+                    && matches!(
+                        selected.source,
+                        NpcSubjectOrdinal::ReceivedBodyEntity { .. }
+                    )
+                    || !interpretation
+                        && matches!(fact.subject, ObserverSubject::Individual { .. })
+                        && (!fact.identity_present || fact.seed_only)
                     || knowledge
                         && matches!(fact.subject, ObserverSubject::Entity { .. })
                         && fact.canonical_id.as_deref() != Some(actor)

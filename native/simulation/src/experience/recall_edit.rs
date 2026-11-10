@@ -590,7 +590,8 @@ fn retained_source(
         || core
             .state
             .activity
-            .retains_source_evidence(actor, source, budget)?
+            .retains_source_evidence(actor, source, budget)
+            .map_err(ExecutionError::Activity)?
     {
         return Ok(true);
     }

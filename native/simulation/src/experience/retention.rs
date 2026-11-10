@@ -14,7 +14,7 @@ pub(crate) use apply::{AccountRetentionCursor, CompletedAccountRetention};
 mod recollection;
 mod restore;
 pub(crate) use restore::{
-    RestoreRetentionAnswer, RestoreAccountCursor, RestoreRetentionQuestion, RestoreAccountStep,
+    RestoreAccountCursor, RestoreAccountStep, RestoreRetentionAnswer, RestoreRetentionQuestion,
 };
 
 #[derive(Clone, Copy, Deserialize)]

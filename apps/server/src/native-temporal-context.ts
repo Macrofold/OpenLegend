@@ -1,8 +1,13 @@
-import { selectedRecognitionSupportReader, type TemporalReceiptLocator } from '@open-legend/domain';
+import {
+  selectedRecognitionSupportReader,
+  type TemporalReceiptLocator,
+  type TemporalReceiptPrefix,
+} from '@open-legend/domain';
 import type { NativeNpcCapture } from './native-npc-capture.js';
 import type { NativeInstalledDefinitions } from './native-definition-capture.js';
 import type { LiveReadCuts } from './live-read-overlay.js';
 import type { IndexedTemporalHistoryReadContext } from './temporal-storage.js';
+import type { NativeRecentHistoryPacket } from './native-recent-history.js';
 
 export function nativeReceiptLocator(receipt: TemporalReceiptLocator): TemporalReceiptLocator {
   return {
@@ -24,9 +29,52 @@ export function nativeTemporalHistoryContext(
 ): IndexedTemporalHistoryReadContext {
   const { self, perception } = facts,
     seed = perception.npcCurrent;
-  if (!seed.receiptPrefix)
+  return indexedNativeHistoryContext(
+    self,
+    facts.history,
+    seed.history,
+    seed.receiptPrefix,
+    captured,
+    definitions,
+  );
+}
+
+export function nativeRecentHistoryContext(
+  facts: NativeRecentHistoryPacket,
+  captured: LiveReadCuts,
+  definitions: NativeInstalledDefinitions,
+): IndexedTemporalHistoryReadContext {
+  const { scope } = facts;
+  return indexedNativeHistoryContext(
+    scope,
+    facts.history,
+    { releasedThrough: scope.releasedThrough, recordingGap: facts.recordingGap },
+    scope.receiptPrefix.state === 'known' ? scope.receiptPrefix.prefix : undefined,
+    captured,
+    definitions,
+  );
+}
+
+function indexedNativeHistoryContext(
+  self: {
+    readonly worldId: string;
+    readonly generation: string;
+    readonly actorId: string;
+    readonly acceptedCut: number;
+    readonly at: number;
+  },
+  history: NativeRecentHistoryPacket['history'],
+  window: {
+    readonly releasedThrough?: number;
+    readonly recordingGap?: { readonly from: number; readonly through: number };
+  },
+  prefix: TemporalReceiptPrefix | undefined,
+  captured: LiveReadCuts,
+  definitions: NativeInstalledDefinitions,
+): IndexedTemporalHistoryReadContext {
+  if (!prefix)
     throw new Error('The native history tail must be resolved before selecting personal history.');
-  const cut = facts.history.cuts[0];
+  const cut = history.cuts[0];
   const live = captured.historyEligibility?.get(self.actorId);
   if (
     captured.worldId !== self.worldId ||
@@ -34,10 +82,10 @@ export function nativeTemporalHistoryContext(
     captured.sequence < self.acceptedCut ||
     !live ||
     live.at < self.at ||
-    facts.history.worldId !== self.worldId ||
-    facts.history.generation !== self.generation ||
-    facts.history.baseCut !== self.acceptedCut ||
-    facts.history.cuts.length !== 1 ||
+    history.worldId !== self.worldId ||
+    history.generation !== self.generation ||
+    history.baseCut !== self.acceptedCut ||
+    history.cuts.length !== 1 ||
     cut?.actorId !== self.actorId ||
     cut.at !== self.at
   )
@@ -56,7 +104,7 @@ export function nativeTemporalHistoryContext(
     maximumSubjects: policy.maximumCapacity,
     maximumOperations: policy.scene.historyReceipts,
     maximumCandidates: policy.scene.candidateVisits,
-    ...seed.history,
+    ...window,
     ...(cut.frontier ? { frontier: cut.frontier } : {}),
     disclosure: {
       actorId: self.actorId,
@@ -64,6 +112,6 @@ export function nativeTemporalHistoryContext(
       corrected: new Set(cut.corrected),
       recognitionSupportSourceIds: selectedRecognitionSupportReader(definitions.definitions),
     },
-    cut: seed.receiptPrefix,
+    cut: prefix,
   };
 }
