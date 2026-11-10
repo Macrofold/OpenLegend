@@ -141,4 +141,3 @@ Art/media is linked as reference, not copied into game assets. Paraphrase source
 Read this file and the ledger owning the active scope, inspect the current remote branch head, then fetch the active game's committed dossier and any named source checkpoint. Check for another writer's changes before updating shared files. Resume the exact unfinished sections, not the entire research from memory. Use the current blob SHA for each update and preserve unrelated work.
 
 Keep the ledger's active subject, next action and unresolved evidence precise enough for a fresh conversation with no prior context. Source notes and substantive drafts belong with the relevant dossier; the ledger links them rather than becoming a second bibliography. Do not claim background work or future delivery. If execution is interrupted, the remote branch and this research-only ledger must truthfully show what is and is not complete.
-

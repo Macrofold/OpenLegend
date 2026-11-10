@@ -56,4 +56,3 @@ The G04/G149 supplements are scoped additions, not new complete R01–R14 review
 ## Resume boundary
 
 No further research or documentation work remains in this agreed scope. The literal rename cannot be completed through the available connector actions; the broader working branch and preserved old ref are stated above. Do not begin G150–G166, a whole-library backfill, game execution or implementation without a new instruction. For later authorized work, preserve earlier research, use the intended branch and check its current head before writing.
-

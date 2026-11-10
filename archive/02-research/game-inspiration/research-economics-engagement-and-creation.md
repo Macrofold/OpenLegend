@@ -95,4 +95,3 @@ Include a concrete end-to-end example: start from an existing supported artifact
 ## Coverage and preservation
 
 A new full pass must map these additions to its substantive sections alongside R01–R14. A scoped supplement may complete only the explicitly requested dimensions and must say so. Do not claim that the original 149 subjects have all been retroactively audited or revenue-modeled because this requirements file exists. Preserve earlier evidence, examples and dated judgments; qualify superseded facts explicitly. Track remaining amendment coverage without duplicating the full requirement bodies or creating engine-maintainer tasks.
-

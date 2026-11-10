@@ -274,7 +274,6 @@ Mike requested a full dossier covering major mechanics, the detailed world and d
 
 Mike requested a full dossier on the released game, player praise and criticism, S-GAME's history and earlier games, and the campaign behind preorders and launch demand. G186 applies R01–R14, the economics/enjoyment/lore/creation amendment and the conditional R15 screen. The [dossier](dossiers/phantom-blade-zero.md) and [scoped record](research-progress-phantom-blade-zero-2026-10-31.md) own this single-game pass. Reported wishlists, estimated paid preorders, official unit disclosures and postlaunch demand remain separate. This addition does not reopen unrelated subjects or authorize gameplay implementation.
 
-
 ## November 9 medieval-game research
 
 Mike requested Kingdom Come: Deliverance, Manor Lords, Medieval Dynasty, Bellwright and “Mount and Blade 3,” if not already researched. G188 covers the original Deliverance; G114 Deliverance II and G115 Bannerlord retain their existing audited dossiers without a redundant new pass. G162 is now authorized, and G189–G190 are new subjects. The [scoped record](research-progress-medieval-games-2026-11-09.md) owns completion and the unresolved literal title: no official Mount & Blade III was located; Bannerlord/War Sails is the documented reference, not a fabricated third game. Other queued subjects and whole-library gates retain their status.
