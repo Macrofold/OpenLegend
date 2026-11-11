@@ -5,6 +5,7 @@ import {
   borrowNativeProduct,
   createNativeConsumerScope,
   releaseNativeProduct,
+  retainNativeProduct,
   retainNativeSources,
   withNativeConsumerScope,
 } from './native-consumer.js';
@@ -1550,6 +1551,9 @@ export class NativeNpcDirector {
             intake?.release();
           } finally {
             if (this.names.get(run.actorId) === label) this.names.delete(run.actorId);
+            // This old label can outlive a replacement in the lookup map. Its
+            // retained higher/uncertain owner, rather than that map, ends it.
+            if (label) releaseNativeProduct(label);
           }
         }
       },
@@ -2239,7 +2243,12 @@ export class NativeNpcDirector {
       ledger: new DecisionLedger(levelLimits(this.service.config)),
       ...(discovery ? { discovery: { ...discovery, spent: false } } : {}),
     };
-    const labels = (await read.queueInputs()).facts;
+    const queued = await read.queueInputs();
+    const labels = retainNativeProduct(queued.facts);
+    // This caller consumes only labels; the scheduling vector and envelope
+    // have independent pins and no later consumer in this run.
+    releaseNativeProduct(queued.input.values);
+    releaseNativeProduct(queued);
     this.runs.set(job.id, run);
     this.names.set(actorId, labels);
     try {
@@ -2295,6 +2304,7 @@ export class NativeNpcDirector {
       if (run.expiryTimer) clearTimeout(run.expiryTimer);
       this.runs.delete(job.id);
       this.names.delete(actorId);
+      releaseNativeProduct(labels);
       if (discovery)
         await this.settleDiscovery(actorId, discovery.reservation, run.generation, false);
       throw error;
@@ -2398,7 +2408,10 @@ export class NativeNpcDirector {
           // permanently busy. A handed-off label stays with its real retained
           // intake until the higher/uncertain owner releases that preparation.
           if (this.runs.get(job.id) === run) this.runs.delete(job.id);
-          if (!run.handedOff && this.names.get(actorId) === labels) this.names.delete(actorId);
+          if (!run.handedOff) {
+            if (this.names.get(actorId) === labels) this.names.delete(actorId);
+            releaseNativeProduct(labels);
+          }
           this.service.notifyTelemetry();
         }
       }

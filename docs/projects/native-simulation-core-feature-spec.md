@@ -1,12 +1,12 @@
 # Native simulation core and adaptive execution
 
-| Status      | Current progress                                                                                     | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Current candidate rejected: held-reply resource and durability gates fail; E2 remains blocked/unrun. | 2026-11-11   |
+| Status      | Current progress                                                                                   | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Requalifying 128 MiB: held consumers, sustained multiplayer gameplay, recovery and E2 remain open. | 2026-11-11   |
 
 ## 1. Purpose and selected direction
 
-The [current trial decision](../maintainers/native-simulation-core.md#nsc03-measured-disposition--november-11-2026) rejects this implementation under its selected profile. The conditional targets below remain design intent, not delivered adoption.
+The [prior trial decision](../maintainers/native-simulation-core.md#nsc03-measured-disposition--november-11-2026) rejects the 64 MiB profile. Mike selected provisional 128 MiB transient requalification and completion of NSC02/NSC03; adoption remains unproved.
 
 Make the ordinary OpenLegend opening comfortably responsive, and make additional active people and places affordable without sacrificing individual knowledge, independent characters or meaningful consequences. The intended scale is dozens and ideally hundreds of active characters, with many simultaneous players distributed through a continuous world. These are design goals, not measured capacity claims or a promise that an arbitrarily large battle fits one machine.
 
@@ -14,7 +14,9 @@ The selected direction is a resident simulation core with explicit state ownersh
 
 Design authorization covers these documents. Runtime implementation, dependency installation, paid experiments and deployment require the ordinary task authorization. Later-stage entry conditions below remain controlling even after implementation is requested.
 
-NSC01–NSC03 implementation is now authorized on the stealth-runtime source line. The [delivery tracker](../maintainers/native-simulation-core.md#current-progress) owns the frozen comparison base, caller/field inventory and measured rejection. Successful NSC02/NSC03 exits remain unmet; no later stage follows from the rejected trial.
+OpenLegend is an authoritative multiplayer world. Login, reconnect and returning expose the player’s permitted view of the current server world. Ordinary background saving belongs in gameplay measurements; cold server startup and administrative checkpoint recovery are separate windows. Player-controlled rewind is outside the intended normal flow.
+
+NSC01–NSC03 implementation is now authorized on the stealth-runtime source line. The [delivery tracker](../maintainers/native-simulation-core.md#current-progress) owns the frozen comparison base, caller/field inventory, prior rejection and current remaining-work checklist. Successful NSC02/NSC03 exits remain unmet; no later stage follows without the new supported adoption decision.
 
 ## 2. Player value
 

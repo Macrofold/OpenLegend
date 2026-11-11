@@ -281,7 +281,6 @@ pub(super) fn receive_subject(
     phase: &mut VisualReception,
     core: &mut CoreMutation<'_>,
     subject: &str,
-    sight: &SightResults,
     detailed: bool,
     budget: &ByteBudget,
 ) -> Result<Option<u64>, ExecutionError> {
@@ -320,14 +319,8 @@ pub(super) fn receive_subject(
     if detailed {
         phase.detailed.insert(subject.into());
     }
-    let mut prepared = super::super::visual_source::prepare_visual_source(
-        core.state,
-        &phase.observer.actor_id,
-        subject,
-        sight,
-        detailed,
-        budget,
-    )?;
+    let mut prepared =
+        super::super::visual_source::prepare_visual_source(core.state, subject, detailed, budget)?;
     let held = current_native_facet_at(
         Some(owner(core, &phase.observer.actor_id)?),
         subject,

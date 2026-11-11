@@ -293,6 +293,36 @@ pub(crate) fn subject_reference_current(
         })
 }
 
+/// Only the measured outward category; this never selects an individual's
+/// authored name. The receiving owner establishes its eligible broad roster or
+/// exact detail measurement before reading presentation, as Source does.
+pub(crate) fn outward_body_name<'a>(
+    rules: &'a PersonalNameRules,
+    entity: &'a crate::state::Entity,
+) -> PersonalName<'a> {
+    let name = if let Some(actor) = &entity.actor {
+        let species = actor
+            .species
+            .as_deref()
+            .filter(|species| !species.is_empty());
+        PersonalName {
+            name: species
+                .filter(|species| *species != rules.human_species)
+                .unwrap_or(&rules.person_noun)
+                .into(),
+            name_form: Some("count"),
+            indefinite_article: None,
+        }
+    } else {
+        PersonalName {
+            name: (&entity.name).into(),
+            name_form: entity.name_form.as_deref(),
+            indefinite_article: entity.indefinite_article.as_deref(),
+        }
+    };
+    name
+}
+
 pub(crate) struct PersonalNameReader<'a> {
     observer_id: &'a str,
     reception: &'a ReceptionState,
@@ -579,6 +609,8 @@ impl<'a> PersonalNameReader<'a> {
         }
         Ok(self.current_body_grant(id)?.is_some())
     }
+    /// Speech audience preparation needs its own fresh sight witness. Broad
+    /// receiving instead selects its eligible relation before presentation.
     pub(crate) fn outward_body_name(
         &self,
         id: &str,
@@ -597,27 +629,7 @@ impl<'a> PersonalNameReader<'a> {
             return Ok(None);
         }
         let entity = self.entities.get(id).ok_or_else(unavailable)?;
-        let name = if let Some(actor) = &entity.actor {
-            let species = actor
-                .species
-                .as_deref()
-                .filter(|species| !species.is_empty());
-            PersonalName {
-                name: species
-                    .filter(|species| *species != self.rules.human_species)
-                    .unwrap_or(&self.rules.person_noun)
-                    .into(),
-                name_form: Some("count"),
-                indefinite_article: None,
-            }
-        } else {
-            PersonalName {
-                name: (&entity.name).into(),
-                name_form: entity.name_form.as_deref(),
-                indefinite_article: entity.indefinite_article.as_deref(),
-            }
-        };
-        Ok(Some(name))
+        Ok(Some(outward_body_name(self.rules, entity)))
     }
     pub(crate) fn observer_name(&self, id: &str) -> Result<PersonalName<'_>, ReceivedError> {
         let known = if self.observer_id == id {

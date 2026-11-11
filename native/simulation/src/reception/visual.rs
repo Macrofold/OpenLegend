@@ -95,7 +95,7 @@ pub(crate) fn receive_native_visual(
     phase.receive_losses(core, sight, None, None, budget)?;
     for (id, seen) in sight.iter() {
         if seen && id != phase.observer.actor_id {
-            receive_subject(&mut phase, core, id, sight, false, budget)?;
+            receive_subject(&mut phase, core, id, false, budget)?;
         }
     }
     phase.current.note_frame_checked(

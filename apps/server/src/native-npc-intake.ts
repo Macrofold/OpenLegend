@@ -27,6 +27,7 @@ import { nativeProtectionReasonFromRead } from './native-protection.js';
 import {
   decodeNativeProduct,
   freezeNativeProduct,
+  releaseNativeProduct,
   retainNativeSources,
   withNativeJsonInput,
 } from './native-consumer.js';
@@ -239,9 +240,17 @@ export class NativeNpcIntake {
     return !!this.product && (await world.npcTriggerCurrent(this.read));
   }
   release(): void {
+    const product = this.product,
+      read = this.readOwner;
     this.product = undefined;
-    this.readOwner?.release();
     this.readOwner = undefined;
+    try {
+      // Escaping records/inputs own independent pins through retain(), so the
+      // intake's own decoded packet ends with this semantic read owner.
+      if (product) releaseNativeProduct(product);
+    } finally {
+      read?.release();
+    }
   }
   retain<T extends object>(owner: T): T {
     return retainNativeSources(owner, this.facts);

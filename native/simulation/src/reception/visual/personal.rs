@@ -522,14 +522,14 @@ impl PersonalVisualCursor {
             // order; exchanging those orders changes saved sample chronology.
             for id in &requested.ids {
                 if eligible.contains(id) {
-                    receive_subject(&mut visual, core, id, sight, true, budget)?;
+                    receive_subject(&mut visual, core, id, true, budget)?;
                 }
             }
             visual.finish_checks(core, false, budget)?;
         } else {
             visual.receive_losses(core, sight, None, Some(&eligible), budget)?;
             for id in self.people.iter().chain(&self.objects) {
-                receive_subject(&mut visual, core, id, sight, false, budget)?;
+                receive_subject(&mut visual, core, id, false, budget)?;
             }
             visual.finish_checks(core, true, budget)?;
             let changed: Vec<_> = visual.attention_changes.iter().cloned().collect();
@@ -564,7 +564,7 @@ impl PersonalVisualCursor {
             detail.receive_losses(core, sight, Some(&requested.ids), Some(&eligible), budget)?;
             for &(id, _) in &ordered {
                 if requested.ids.contains(id) && eligible.contains(id) {
-                    receive_subject(&mut detail, core, id, sight, true, budget)?;
+                    receive_subject(&mut detail, core, id, true, budget)?;
                 }
             }
             detail.finish_checks(core, false, budget)?;

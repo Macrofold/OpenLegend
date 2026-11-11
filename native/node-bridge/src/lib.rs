@@ -16,7 +16,7 @@ use std::sync::{Arc, Mutex, OnceLock};
 use std::thread;
 use std::time::Duration;
 
-const HOST_BYTE_ALLOWANCE: usize = 64 * 1024 * 1024;
+const HOST_BYTE_ALLOWANCE: usize = 128 * 1024 * 1024;
 const OPEN: u8 = 0;
 const CLOSING: u8 = 1;
 const SHUTDOWN_PENDING: u8 = 2;

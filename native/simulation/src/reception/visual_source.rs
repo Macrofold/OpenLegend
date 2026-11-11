@@ -26,9 +26,7 @@ fn invalid() -> ExecutionError {
 }
 pub(super) fn prepare_visual_source(
     state: &SimulationState,
-    observer_id: &str,
     subject_id: &str,
-    sight: &SightResults,
     detailed: bool,
     budget: &ByteBudget,
 ) -> Result<PreparedVisualSource, ExecutionError> {
@@ -52,16 +50,14 @@ pub(super) fn prepare_visual_source(
     {
         return Err(invalid());
     }
-    let reader = crate::worlds::base_knowledge::PersonalNameReader::prepare(
-        &state.physical,
-        &state.reception,
-        &state.installed,
-        &state.experience,
-        observer_id,
-    )?;
-    let label = reader
-        .outward_body_name(subject_id, sight)?
-        .ok_or(ExecutionError::Invariant)?;
+    // Broad reception may reuse an unchanged eligible relation even when a
+    // separate detail check is negative. Do not replace the receiving owner's
+    // scoped broad roster with that detail result. Neither path reads a hidden
+    // personal name: the world factory supplies only the outward body category.
+    let label = crate::worlds::base_knowledge::outward_body_name(
+        state.installed.name_rules.value(),
+        subject,
+    );
     let rules = state.installed.observation_rules.value();
     let inventory = state
         .inventory
