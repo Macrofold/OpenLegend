@@ -179,7 +179,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
       this.providers = {
         liveReadCuts: () => pending.liveReadCuts(),
         retainedValues: (id: string) => {
-          if (id !== worldId) return {};
+          if (id !== worldId) return undefined;
           const current = currentRetained(world);
           if (current) {
             // The activated service now owns its regular IDs-only product. Do
@@ -187,7 +187,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
             prospective = undefined;
             return current.ids;
           }
-          return prospective?.ids ?? {};
+          return prospective?.ids;
         },
         backgroundSearchAdmission,
       };

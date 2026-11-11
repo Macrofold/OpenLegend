@@ -62,11 +62,15 @@ export class NativePlayerCapture {
       if (question) {
         const query =
           decodeNativeProduct<Parameters<NativeGeometryProviders['compute']>[0]>(question);
-        const answers = await geometry.compute(query);
         try {
-          await withNativeJsonInput(world, answers, (bytes) => read.finishControls(bytes));
+          const answers = await geometry.compute(query);
+          try {
+            await withNativeJsonInput(world, answers, (bytes) => read.finishControls(bytes));
+          } finally {
+            releaseNativeProduct(answers);
+          }
         } finally {
-          releaseNativeProduct(answers);
+          releaseNativeProduct(query);
         }
       }
       return new NativePlayerCapture(
@@ -101,7 +105,10 @@ export class NativePlayerCapture {
         ),
       ),
     );
-    if (this.released) throw new ViewChangedError();
+    if (this.released) {
+      releaseNativeProduct(result);
+      throw new ViewChangedError();
+    }
     return result;
   }
 
@@ -142,6 +149,7 @@ export class NativePlayerCapture {
 
   release(): void {
     this.released = true;
+    if (this.packet) releaseNativeProduct(this.packet);
     this.packet = undefined;
     this.readOwner?.release();
     this.readOwner = undefined;

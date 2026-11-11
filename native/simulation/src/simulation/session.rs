@@ -797,6 +797,7 @@ impl Session {
                 preview: true,
                 native_controller: false,
                 native_movement: None,
+                durable_receipt: false,
             },
         )
     }

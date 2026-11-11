@@ -32,6 +32,7 @@ pub(crate) struct CommandOptions {
     pub preview: bool,
     pub native_controller: bool,
     pub native_movement: Option<NativeMovementInput>,
+    pub durable_receipt: bool,
 }
 pub(crate) enum CommandAnswer {
     Geometry(GeometryAnswers),
@@ -1887,7 +1888,13 @@ impl CommandCursor {
                     }
                     self.begin_chosen_work(core)?;
                     let result = self.outcome.as_ref().ok_or(ExecutionError::Invariant)?;
-                    if result.ok && !self.duplicate && !self.options.native_controller {
+                    // Public commands stage their exact retry receipt with the
+                    // SQL prefix. Keep one owner, as in Source's command writer.
+                    if result.ok
+                        && !self.duplicate
+                        && !self.options.native_controller
+                        && !self.options.durable_receipt
+                    {
                         core.journal.commands.append(
                             &mut core.state.commands,
                             &self.command.envelope().id,

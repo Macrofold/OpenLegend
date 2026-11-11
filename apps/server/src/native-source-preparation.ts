@@ -33,9 +33,23 @@ function currentSection(): Section | undefined {
   const section = preparation.getStore();
   return section?.closed ? undefined : section;
 }
+/** A repository result that belongs to this read cannot enter a shared Source cache. */
+export function nativeSourcePreparationActive(): boolean {
+  return currentSection() !== undefined;
+}
 function currentFrame(section: Section): Frame | undefined {
   const frame = frames.getStore();
   return frame && !frame.closed && frame.section === section ? frame : undefined;
+}
+
+/** The selected repository may construct a small projection after reading its
+ * admitted rows. Its parser and new projection overlap until that read ends. */
+export function fundNativeSourceWorkspace(bytes: number): void {
+  const section = currentSection();
+  if (!section) return;
+  const frame = currentFrame(section);
+  if (!frame) throw new Error('Native source workspace has no preparation owner.');
+  frame.guards.push(frame.budget.reserveConsumerBytes(bytes));
 }
 
 /** Native bootstrap uses the existing current-row codecs inside its own

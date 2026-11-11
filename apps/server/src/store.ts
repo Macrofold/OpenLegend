@@ -1,4 +1,10 @@
-import { withoutNativeSqlPreparation } from './native-source-preparation.js';
+import {
+  fundNativeSourceWorkspace,
+  nativeSourcePreparationActive,
+  parseSourceJson,
+  withoutNativeSqlPreparation,
+} from './native-source-preparation.js';
+import { retainNativeSources, withNativeConsumerScope } from './native-consumer.js';
 import { JOB_UPSERT_SQL, jobPayloadPrefix, jobSelection } from './job-storage.js';
 import { diagnosticStorage, diagnosticSelectionPattern } from './diagnostic-storage.js';
 import {
@@ -268,7 +274,7 @@ export interface SavedWorld {
  * TypeScript world. They are installed only with the matching SQL authority. */
 export interface NativeWorldProviders {
   readonly liveReadCuts: LiveReadCutsProvider;
-  readonly retainedValues: (worldId: string) => Readonly<Record<string, unknown>>;
+  readonly retainedValues: (worldId: string) => Readonly<Record<string, unknown>> | undefined;
   readonly backgroundSearchAdmission: () => boolean;
 }
 
@@ -432,7 +438,7 @@ export interface GameRepository extends WorldStore {
   /** Current health of the exclusively owned durable writer session. */
   assertWriteAdmission(): void;
   readonly ready: Promise<void>;
-  setRetainedValueLookup?(provider: (worldId: string) => Readonly<Record<string, unknown>>): void;
+  setRetainedValueLookup?(provider: NativeWorldProviders['retainedValues']): void;
   setLiveReadCuts?(provider: LiveReadCutsProvider): void;
   captureRetentionActors?(state: SavedWorld, kind: RetentionWorkKind): string[];
   prepareAccountRetention?(
@@ -650,15 +656,19 @@ export class SqlGameRepository implements GameRepository {
   private readonly receivedOwnership: ReceivedValueOwnership;
   private readonly retentionActors = new RetentionActorSelection();
   private liveReadCuts?: LiveReadCutsProvider;
-  private retainedValueLookup?: (worldId: string) => Readonly<Record<string, unknown>>;
-  setRetainedValueLookup(provider: (worldId: string) => Readonly<Record<string, unknown>>): void {
+  private retainedValueLookup?: NativeWorldProviders['retainedValues'];
+  setRetainedValueLookup(provider: NativeWorldProviders['retainedValues']): void {
     this.retainedValueLookup = provider;
   }
   private captureValueProtection(worldId: string): (id: string) => boolean {
-    const native = this.retainedValueLookup?.(worldId) ?? {};
+    const ids = this.retainedValueLookup?.(worldId);
+    // The collector uses this exact cut across its SQL read. A later accepted
+    // publication can replace the service's lookup while this borrow is live.
+    const native =
+      this.capturedOwner?.worldId === worldId && ids ? retainNativeSources({ ids }, ids) : { ids };
     const cuts = this.liveReadCuts?.();
     return (id) => {
-      if (Object.hasOwn(native, id)) return true;
+      if (native.ids && Object.hasOwn(native.ids, id)) return true;
       if (cuts?.worldId === worldId)
         for (const cut of cuts.cuts)
           if (this.receivedOwnership.pendingReferences(cut.changes).has(id)) return true;
@@ -678,8 +688,9 @@ export class SqlGameRepository implements GameRepository {
         const selected = this.cleanupWorld ?? worldId;
         this.cleanupWorld = undefined;
         let more = false;
-        this.cleanupTask = this.receivedOwnership
-          .collect(selected, () => this.captureValueProtection(selected))
+        const collect = () =>
+          this.receivedOwnership.collect(selected, () => this.captureValueProtection(selected));
+        this.cleanupTask = (this.capturedOwner ? withNativeConsumerScope(collect) : collect())
           .then((count) => {
             more = count > 0;
           })
@@ -2291,6 +2302,13 @@ export class SqlGameRepository implements GameRepository {
 
   async getSpeechJobs(eventIds: string[]): Promise<Map<string, JobRecord>> {
     await this.ready;
+    if (nativeSourcePreparationActive()) {
+      let units = 0;
+      for (const id of eventIds) units += id.length;
+      // Selected address/set/parameter arrays plus JSON escapes and the
+      // PostgreSQL text carrier for these exact event identities.
+      fundNativeSourceWorkspace(5 * 256 + 512 * eventIds.length + 24 * units);
+    }
     const ids = [...new Set(eventIds)];
     const jobs = new Map<string, JobRecord>();
     if (!ids.length) return jobs;
@@ -2300,7 +2318,7 @@ export class SqlGameRepository implements GameRepository {
       )
       .all(...ids.map(sqlTextKey));
     for (const row of rows) {
-      const job = JSON.parse(String(row['payload'])) as JobRecord;
+      const job = parseSourceJson<JobRecord>(String(row['payload']));
       if (job.playerSpeechEventId && !jobs.has(job.playerSpeechEventId))
         jobs.set(job.playerSpeechEventId, job);
     }
@@ -2479,7 +2497,7 @@ export class SqlGameRepository implements GameRepository {
   }
   async recentJobs(limit = 12): Promise<JobRecord[]> {
     await this.ready;
-    const shared = this.canShareRead();
+    const shared = this.canShareRead() && !nativeSourcePreparationActive();
     let pending = shared ? this.recentJobReads.get(limit) : undefined;
     if (!pending) {
       if (shared && this.recentJobReads.size >= 8)
@@ -2487,7 +2505,7 @@ export class SqlGameRepository implements GameRepository {
       pending = this.db
         .prepare('SELECT payload FROM jobs ORDER BY created_at DESC, id DESC LIMIT ?')
         .all(limit)
-        .then((rows) => rows.map((row) => JSON.parse(String(row['payload'])) as JobRecord));
+        .then((rows) => rows.map((row) => parseSourceJson<JobRecord>(String(row['payload']), 2)));
       if (shared) this.recentJobReads.set(limit, pending);
     }
     try {
@@ -2818,7 +2836,7 @@ export class SqlGameRepository implements GameRepository {
   async usage(ceilingUsd: number, actorId?: string) {
     const period = new Date().toISOString().slice(0, 7);
     const key = JSON.stringify([period, ceilingUsd, actorId]);
-    const shared = this.canShareRead();
+    const shared = this.canShareRead() && !nativeSourcePreparationActive();
     let cached = shared ? this.usageCache.get(key) : undefined;
     if (!cached) {
       // Display-only totals change with accounting writes, not movement or job progress.
@@ -2850,6 +2868,10 @@ export class SqlGameRepository implements GameRepository {
         Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1),
         ...(actorId ? [actorId] : []),
       );
+    if (nativeSourcePreparationActive()) {
+      const accounts = actorId && rows.length ? 1 : rows.length;
+      fundNativeSourceWorkspace(8 * 256 + accounts * 8 * 256);
+    }
     const accountAmounts: Record<string, { spent: number; reserved: number }> = {};
     let spent = 0,
       reserved = 0,
@@ -2872,7 +2894,7 @@ export class SqlGameRepository implements GameRepository {
       spent = nextSpent;
       reserved = nextReserved;
       if (row['receipt']) {
-        const receipt = JSON.parse(String(row['receipt'])) as AiReceipt;
+        const receipt = parseSourceJson<AiReceipt>(String(row['receipt']));
         if (receipt.dispatched) {
           if (row['provider'] === 'jev') jevCalls++;
           else if (row['provider'] === 'openai') llmCalls++;

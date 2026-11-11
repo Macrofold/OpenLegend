@@ -127,6 +127,7 @@ import { playerInteractionAvailability } from './player-interaction.js';
 import { nativePlayerCommandReferences } from './native-player-command.js';
 import { ordinaryPlayerCommand } from './ordinary-player-command.js';
 import {
+  clearNativePlayerViewCache,
   projectNativePlayerView,
   type NativePlayerRead,
   type NativePlayerRequestOwner,
@@ -511,7 +512,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             service!.reads.getStore()?.cut ??
             service!.pending.liveReadCuts(),
           retainedValues: (worldId) =>
-            worldId === installation.worldId ? (service!.retained?.ids ?? {}) : {},
+            worldId === installation.worldId ? service!.retained?.ids : undefined,
           backgroundSearchAdmission: () => !service!.closed && !service!.failure,
         });
         await world.activate(JSON.stringify(receipt));
@@ -591,11 +592,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       admittedProfiles?.release();
       service?.inputs.release();
       admittedInputs?.release();
-      if (service?.retained) {
-        // SQL's already captured lookup has its own independent child pin.
-        releaseNativeProduct(service.retained);
-        service.retained = undefined;
-      }
+      service?.replaceRetainedValues(undefined);
       if (retainedOwner) {
         // No service was constructed, so this lookup reached no SQL caller.
         releaseNativeProduct(retainedOwner.ids);
@@ -2475,7 +2472,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             this.retention = preparation.retention;
             oldRetention.release();
             this.provider = preparation.geometry;
-            this.retained = preparation.retained;
+            this.replaceRetainedValues(preparation.retained);
             this.replaceProgress(preparation.progress, preparation.progress);
             this.privacy = preparation.privacy;
             this.operational = preparation.operational;
@@ -2502,6 +2499,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             this.clearReceipts();
             this.durableReceipts.clear();
             this.speechActors.clear();
+            clearNativePlayerViewCache(this);
             this.inventoryReads.clear();
             this.profiles.clear();
             for (const release of this.sourceEdits.values()) release();
@@ -2563,9 +2561,20 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       retained.worldId !== this.worldId ||
       retained.generation !== this.generation ||
       retained.acceptedCut !== this.pending.through
-    )
+    ) {
+      releaseNativeProduct(retained.ids);
+      releaseNativeProduct(retained);
       throw new Error('Native value protection snapshot belongs to a different accepted cut.');
+    }
+    this.replaceRetainedValues(retained);
+  }
+  private replaceRetainedValues(retained: NativeRetainedValues | undefined): void {
+    const before = this.retained;
     this.retained = retained;
+    if (before && before !== retained) {
+      releaseNativeProduct(before.ids);
+      releaseNativeProduct(before);
+    }
   }
   private async refreshCommandEpoch(): Promise<void> {
     if (this.now() - this.epoch.openedAt < COMMAND_RETRY_MS) return;
@@ -3327,7 +3336,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           try {
             publication = await this.acceptInLane({
               actorId: scope.actorId,
-              first: () => beginNativeCommand(this.world, command),
+              first: () => beginNativeCommand(this.world, command, { durableReceipt: true }),
               current: () => this.currentScope(scope, 'play', true) && epoch === this.commandEpoch,
               signal,
               prepareOutcome: async (outcome) => {
@@ -3983,7 +3992,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       };
       const turn = await driveNativeOperation(
         this.world,
-        await beginNativeCommand(this.world, command, true),
+        await beginNativeCommand(this.world, command, { preview: true }),
         this.geometry,
       );
       if (turn.kind !== 'preview' || !turn.preview)
@@ -4363,7 +4372,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       this.definitions.release();
       this.actors.release();
       this.retention.release();
-      this.retained = undefined;
+      this.replaceRetainedValues(undefined);
       // Keep only the confirmed scalar report. Owned native products used by
       // another real consumer retain their own admission until its last drop.
       this.replaceProgress({ ...this.progress }, { ...this.durableProgress });
@@ -4371,6 +4380,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       this.clearReceipts();
       this.profiles.release();
       this.speechActors.clear();
+      clearNativePlayerViewCache(this);
       this.inventoryReads.release();
       this.inputs.release();
       for (const release of this.sourceEdits.values()) release();

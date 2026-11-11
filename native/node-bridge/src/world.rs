@@ -25,8 +25,8 @@ mod npc_intake;
 mod participation;
 mod player;
 mod privacy;
-mod read_cut;
 mod private_history;
+mod read_cut;
 mod restore;
 mod retained_values;
 mod startup;
@@ -575,6 +575,7 @@ impl NativeWorld {
         bytes: BufferSlice<'_>,
         canonical: BufferSlice<'_>,
         preview: bool,
+        durable_receipt: bool,
     ) -> Result<Object<'a>> {
         let (bytes, custody) = input(&bytes, &self.host.bytes)?;
         let (canonical, canonical_custody) = input(&canonical, &self.host.bytes)?;
@@ -586,7 +587,7 @@ impl NativeWorld {
             let key = if preview {
                 session.begin_cancel_preview(&bytes, canonical)
             } else {
-                session.begin_command(&bytes, canonical)
+                session.begin_command(&bytes, canonical, durable_receipt)
             }
             .map_err(operation_error)?;
             turn(session, key, None, cancel, budget)

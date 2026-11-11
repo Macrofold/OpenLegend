@@ -10,7 +10,11 @@ import {
 /** The actual command bytes and separately ordered receipt signature live
  * through the native borrow. Canonical ordering does not change encoded size
  * for these trusted plain command values. Preview keeps the same input owner. */
-export async function beginNativeCommand(world: NativeWorld, command: Command, preview = false) {
+export async function beginNativeCommand(
+  world: NativeWorld,
+  command: Command,
+  options: { preview?: boolean; durableReceipt?: boolean } = {},
+) {
   const encoded = encodeNativeJson(world, command);
   let output: NativeWorldConsumer | undefined;
   let workspace: NativeWorldConsumer | undefined;
@@ -25,7 +29,7 @@ export async function beginNativeCommand(world: NativeWorld, command: Command, p
       workspace = undefined;
     }
     return await withNativeUtf8Input(world, canonical, (signature) =>
-      world.command(encoded, signature, preview),
+      world.command(encoded, signature, options.preview ?? false, options.durableReceipt ?? false),
     );
   } finally {
     workspace?.release();

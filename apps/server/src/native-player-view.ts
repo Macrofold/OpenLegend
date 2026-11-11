@@ -1,14 +1,20 @@
 import { isConversationEvent } from '@open-legend/domain';
 import type { NativeWorld, NativeWorldConsumer } from '@open-legend/native-simulation';
-import type { GameView, WorldInputScope } from '@open-legend/protocol';
+import type { AiJobView, GameView, WorldInputScope } from '@open-legend/protocol';
 import { scopeKey, type RequestScope } from './authority.js';
 import {
   attachNativeConsumer,
+  copyNativeProduct,
   retainNativeSources,
   releaseNativeProduct,
   reserveNativeJsonTextWorkspace,
+  withoutNativeConsumerScope,
 } from './native-consumer.js';
-import type { GameRepository } from './store.js';
+import {
+  fundNativeSourceWorkspace,
+  withNativeSqlPreparation,
+} from './native-source-preparation.js';
+import type { GameRepository, SqlDatabase } from './store.js';
 import type { PlayerPracticeLoader } from './player-self-view.js';
 import { playerHasWork } from './player-self-view.js';
 import {
@@ -30,7 +36,6 @@ import {
 } from './native-view.js';
 import {
   memoizer,
-  optional,
   permittedPlayerJobs,
   playerSpeechJobIds,
   playerUsageFallback,
@@ -110,11 +115,13 @@ export interface NativePlayerRequestOwner extends PlayerAsyncOwner {
 }
 export interface NativePlayerViewRequest {
   readonly owner: NativePlayerRequestOwner;
-  readonly capacity: Pick<NativeWorld, 'reserveConsumerBytes'>;
+  readonly capacity: Pick<NativeWorld, 'reserveConsumerBytes' | 'reserveConsumerJson'>;
   readonly scope: RequestScope;
   readonly definitions: NativePlayerViewDefinitions;
   readonly map: Parameters<typeof nativePlayerWorldView>[4]['map'];
-  readonly store: Pick<GameRepository, 'usage' | 'recentJobs' | 'getSpeechJobs' | 'history'>;
+  readonly store: Pick<GameRepository, 'usage' | 'recentJobs' | 'getSpeechJobs' | 'history'> & {
+    readonly db: Pick<SqlDatabase, 'withReadTransferAdmission'>;
+  };
   readonly practiceLoader: PlayerPracticeLoader;
   readonly executionSource: 'live-model' | 'test-fixture';
   readonly budgetUsd: number;
@@ -125,18 +132,202 @@ export interface NativePlayerViewRequest {
    * a slow socket does not retain the publication lock while it drains. */
   readonly publish: (bytes: Buffer, view: GameView) => void;
 }
-const caches = new WeakMap<NativePlayerRequestOwner, Map<string, PlayerAsyncCache>>();
-function scopedCache(owner: NativePlayerRequestOwner, scope: RequestScope): PlayerAsyncCache {
-  let scopes = caches.get(owner);
-  if (!scopes) caches.set(owner, (scopes = new Map()));
-  for (const [key, cache] of scopes) if (!owner.currentScope(cache.scope)) scopes.delete(key);
+
+type OptionalSection = 'usage' | 'jobs' | 'speechJobs';
+type ViewDependency = string | number;
+type OptionalView = {
+  readonly deps: readonly ViewDependency[];
+  readonly allocation: NativeWorldConsumer;
+  value?: object;
+  loading: boolean;
+  retired: boolean;
+};
+type NativePlayerCache = Pick<PlayerAsyncCache, 'scope' | 'values'> & {
+  readonly optional: Partial<Record<OptionalSection, OptionalView>>;
+  readonly allocation: NativeWorldConsumer;
+  loading: number;
+  readers: number;
+  retired: boolean;
+};
+const caches = new WeakMap<
+  NativePlayerRequestOwner,
+  { readonly scopes: Map<string, NativePlayerCache>; readonly allocation: NativeWorldConsumer }
+>();
+
+function finishCache(cache: NativePlayerCache): void {
+  if (cache.retired && !cache.loading && !cache.readers) cache.allocation.release();
+}
+
+function retireOptional(entry: OptionalView): void {
+  entry.retired = true;
+  if (entry.value) releaseNativeProduct(entry.value);
+  entry.value = undefined;
+  if (!entry.loading) entry.allocation.release();
+}
+
+function retireCache(cache: NativePlayerCache): void {
+  cache.retired = true;
+  for (const key of ['usage', 'jobs', 'speechJobs'] as const) {
+    const entry = cache.optional[key];
+    if (entry) retireOptional(entry);
+    delete cache.optional[key];
+  }
+  cache.values.clear();
+  finishCache(cache);
+}
+
+/** End this world's cache ownership at actual restore adoption or close.
+ * Pending SQL and already borrowed view values finish under their own owners. */
+export function clearNativePlayerViewCache(owner: NativePlayerRequestOwner): void {
+  const table = caches.get(owner);
+  if (!table) return;
+  caches.delete(owner);
+  for (const cache of table.scopes.values()) retireCache(cache);
+  table.scopes.clear();
+  table.allocation.release();
+}
+
+function scopedCache(
+  owner: NativePlayerRequestOwner,
+  scope: RequestScope,
+  capacity: NativePlayerViewRequest['capacity'],
+): NativePlayerCache {
+  let table = caches.get(owner);
+  if (!table) {
+    const allocation = capacity.reserveConsumerBytes((owner.connectionLimit + 3) * 256);
+    table = { scopes: new Map(), allocation };
+    caches.set(owner, table);
+  }
+  const scopes = table.scopes;
+  for (const [key, cache] of scopes)
+    if (!owner.currentScope(cache.scope)) {
+      scopes.delete(key);
+      retireCache(cache);
+    }
   const key = scopeKey(scope);
   let cache = scopes.get(key);
   if (!cache) {
-    while (scopes.size >= owner.connectionLimit) scopes.delete(scopes.keys().next().value!);
-    scopes.set(key, (cache = { scope, values: new Map(), sections: new Map() }));
+    let units = key.length;
+    for (const value of Object.values(scope)) if (typeof value === 'string') units += value.length;
+    const allocation = capacity.reserveConsumerBytes(8 * 256 + 2 * units);
+    while (scopes.size >= owner.connectionLimit) {
+      const oldest = scopes.keys().next().value!;
+      retireCache(scopes.get(oldest)!);
+      scopes.delete(oldest);
+    }
+    cache = {
+      scope: { ...scope },
+      values: new Map(),
+      optional: {},
+      allocation,
+      loading: 0,
+      readers: 0,
+      retired: false,
+    };
+    scopes.set(key, cache);
   }
+  cache.readers++;
   return cache;
+}
+
+async function loadOptionalView<T extends object>(
+  owner: NativePlayerRequestOwner,
+  cache: NativePlayerCache,
+  section: OptionalSection,
+  entry: OptionalView,
+  capacity: NativePlayerViewRequest['capacity'],
+  db: NativePlayerViewRequest['store']['db'],
+  load: () => Promise<T>,
+): Promise<void> {
+  let selected: T | undefined;
+  try {
+    // These operational tables have single-statement snapshots and no live
+    // gameplay overlay. Keep their actual transfer/parse owner independent of
+    // the player cut, whose view may complete before these reads settle.
+    await withoutNativeConsumerScope(() =>
+      withNativeSqlPreparation(capacity, db, async () => {
+        selected = copyNativeProduct(capacity, await load());
+      }),
+    );
+    if (entry.retired || !owner.currentScope(cache.scope)) return;
+    entry.value = selected;
+    selected = undefined;
+    owner.notify(false);
+  } catch {
+    // These sections are optional. The next matching request may retry them.
+  } finally {
+    if (!entry.value && cache.optional[section] === entry) {
+      delete cache.optional[section];
+      retireOptional(entry);
+    }
+    if (selected) releaseNativeProduct(selected);
+    entry.loading = false;
+    if (entry.retired) entry.allocation.release();
+    cache.loading--;
+    finishCache(cache);
+  }
+}
+
+function optionalNativePlayerView<T extends object>(
+  owner: NativePlayerRequestOwner,
+  cache: NativePlayerCache,
+  capacity: NativePlayerViewRequest['capacity'],
+  db: NativePlayerViewRequest['store']['db'],
+  section: OptionalSection,
+  deps: readonly ViewDependency[],
+  load: () => Promise<T>,
+  fallback: T,
+  borrowed: object[],
+): T {
+  if (cache.retired) return fallback;
+  const current = cache.optional[section];
+  if (
+    current &&
+    current.deps.length === deps.length &&
+    deps.every((dep, index) => dep === current.deps[index])
+  ) {
+    if (!current.value) return fallback;
+    borrowed.push(retainNativeSources({}, current.value));
+    return current.value as T;
+  }
+  if (current) {
+    delete cache.optional[section];
+    retireOptional(current);
+  }
+  let units = 0;
+  for (const dep of deps) if (typeof dep === 'string') units += dep.length;
+  let allocation: NativeWorldConsumer;
+  try {
+    // Speech uses both its dependency vector and the selected SQL addresses.
+    allocation = capacity.reserveConsumerBytes(6 * 256 + 2 * units + 2 * 64 * deps.length);
+  } catch {
+    return fallback;
+  }
+  const entry: OptionalView = { deps, allocation, loading: true, retired: false };
+  cache.optional[section] = entry;
+  cache.loading++;
+  void loadOptionalView(owner, cache, section, entry, capacity, db, load);
+  return fallback;
+}
+
+type SpeechReply = Pick<AiJobView, 'id' | 'status' | 'message'>;
+async function selectedPlayerJobs(
+  owner: NativePlayerRequestOwner,
+  scope: RequestScope,
+  store: NativePlayerViewRequest['store'],
+): Promise<GameView['ai']['jobs']> {
+  const jobs = await store.recentJobs();
+  fundNativeSourceWorkspace(4 * 256 + jobs.length * (256 + 9 * 64 + 2 * 64));
+  return projectPlayerJobs(permittedPlayerJobs(jobs, scope, (id) => owner.speechEventActor(id)));
+}
+
+async function selectedSpeechReplies(
+  store: NativePlayerViewRequest['store'],
+  ids: string[],
+): Promise<Array<[string, SpeechReply]>> {
+  const jobs = await store.getSpeechJobs(ids);
+  fundNativeSourceWorkspace(4 * 256 + jobs.size * (3 * 256 + 7 * 64));
+  return [...jobs].map(([event, { id, status, message }]) => [event, { id, status, message }]);
 }
 
 /** The complete ordinary embodied request. Private simulation reads end at the
@@ -144,7 +335,7 @@ function scopedCache(owner: NativePlayerRequestOwner, scope: RequestScope): Play
  * or WorldState. The supported installation refuses positive unconverted item,
  * recipe and agreement families; this request explicitly refuses inspection. */
 export async function projectNativePlayerView(request: NativePlayerViewRequest): Promise<void> {
-  const { owner, capacity, scope, definitions, store } = request;
+  const { owner, capacity, scope, definitions, store, budgetUsd } = request;
   owner.assertScope(scope);
   if (scope.audience !== 'embodied')
     throw new Error('Native authorized-inspection presentation is unavailable.');
@@ -157,7 +348,9 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
   let scopeWorkspace: NativeWorldConsumer | undefined;
   let viewOutput: NativeWorldConsumer | undefined;
   let eventOutput: NativeWorldConsumer | undefined;
-  let jobOutput: NativeWorldConsumer | undefined;
+  let replyWorkspace: NativeWorldConsumer | undefined;
+  let cache: NativePlayerCache | undefined;
+  let borrowed: object[] | undefined;
   try {
     // Small closures and scratch carriers remain live while the caller awaits
     // the real prepared fields. The returned view has separate custody.
@@ -184,8 +377,9 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
     );
     projection = capacity.reserveConsumerBytes(bound.workspace);
     viewOutput = capacity.reserveConsumerBytes(bound.output);
-    const cache = scopedCache(owner, scope),
-      memo = memoizer(cache);
+    const sections = (cache = scopedCache(owner, scope, capacity));
+    const sources = (borrowed = [] as object[]);
+    const memo = memoizer(sections);
     const owned = await nativePlayerOwnedView(
       self,
       perception,
@@ -204,36 +398,38 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
     const selectedEvents = nativePlayerEvents(self, perception, read.events, definitions);
     const conversation = selectedEvents.filter(isConversationEvent).slice(-30);
     const speechIds = playerSpeechJobIds(conversation, self.actorId);
-    const usage = optional(
+    const usage = optionalNativePlayerView(
       owner,
-      cache,
+      sections,
+      capacity,
+      store.db,
       'usage',
-      memo('usage', [read.telemetryRevision], () => store.usage(request.budgetUsd, scope.actorId)),
-      playerUsageFallback(request.budgetUsd),
+      [read.telemetryRevision],
+      () => store.usage(budgetUsd, sections.scope.actorId),
+      playerUsageFallback(budgetUsd),
+      sources,
     );
-    const jobRows = optional(
+    const jobs = optionalNativePlayerView(
       owner,
-      cache,
+      sections,
+      capacity,
+      store.db,
       'jobs',
-      memo('jobs', [read.telemetryRevision], async () =>
-        permittedPlayerJobs(await store.recentJobs(), scope, (id) => owner.speechEventActor(id)),
-      ),
+      [read.telemetryRevision],
+      () => selectedPlayerJobs(owner, sections.scope, store),
       [],
+      sources,
     );
-    // The optional repository read may supply a cached positive result. Its
-    // projection creates one narrow row and at most one small label per job.
-    jobOutput = capacity.reserveConsumerBytes(256 + jobRows.length * (256 + 7 * 64 + 2 * 64));
-    const jobs = projectPlayerJobs(jobRows);
-    const replies = optional(
+    const replyRows = optionalNativePlayerView(
       owner,
-      cache,
+      sections,
+      capacity,
+      store.db,
       'speechJobs',
-      // Only SQL addresses belong in this retained cache. Holding ActorEvent
-      // objects here would outlive their native capture byte/evidence custody.
-      memo('speechJobs', [host.historyEpoch, read.telemetryRevision, ...speechIds], () =>
-        store.getSpeechJobs(speechIds),
-      ),
-      new Map<string, never>(),
+      [host.historyEpoch, read.telemetryRevision, ...speechIds],
+      () => selectedSpeechReplies(store, speechIds),
+      [],
+      sources,
     );
     const pausedStop =
       clock.paused && playerHasWork(!!self.action, self.player.agency)
@@ -241,6 +437,7 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
         : undefined;
     const timing = { at: self.at, maxAgeSeconds: definitions.recentMaxAgeSeconds };
     const narratorRevision = store.history?.bannerRevisionAt(self.worldId, scope.accountId, timing);
+    if (sections.retired) throw new ViewChangedError();
     const narration = await memo(
       'narrator',
       [narratorRevision, host.historyEpoch],
@@ -254,6 +451,7 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
     const eventBound = nativePlayerEventViewBytes(selectedEvents, conversation, definitions);
     eventWorkspace = capacity.reserveConsumerBytes(eventBound.workspace);
     eventOutput = capacity.reserveConsumerBytes(eventBound.output);
+    replyWorkspace = capacity.reserveConsumerBytes(256 + 4 * 64 * replyRows.length);
     const world = nativePlayerWorldView(self, perception, definitions, controls, {
       ...clock,
       map: request.map,
@@ -267,7 +465,7 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
       definitions,
       scope,
       host.saveTimeline,
-      replies,
+      new Map(replyRows),
     );
     const projected: Omit<GameView, 'player'> & {
       player: Omit<GameView['player'], 'canUseInventory'>;
@@ -325,9 +523,10 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
         viewOutput = undefined;
         attachNativeConsumer(finalView, eventOutput!);
         eventOutput = undefined;
-        attachNativeConsumer(finalView, jobOutput!);
-        jobOutput = undefined;
-        request.publish(bytes, retainNativeSources(finalView, bytes, profile, inputScope));
+        request.publish(
+          bytes,
+          retainNativeSources(finalView, bytes, profile, inputScope, ...sources),
+        );
         return bytes;
       },
       () => {
@@ -348,7 +547,12 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
   } finally {
     read?.release();
     releaseNativeProduct(profile);
-    jobOutput?.release();
+    if (borrowed) for (const source of borrowed) releaseNativeProduct(source);
+    if (cache) {
+      cache.readers--;
+      finishCache(cache);
+    }
+    replyWorkspace?.release();
     eventOutput?.release();
     viewOutput?.release();
     eventWorkspace?.release();

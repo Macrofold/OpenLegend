@@ -1235,6 +1235,7 @@ impl ResponseCursor {
                             preview: false,
                             native_controller: false,
                             native_movement: None,
+                            durable_receipt: false,
                         },
                         Self::binding(core, self.candidate)?,
                         &self.budget,

@@ -534,6 +534,7 @@ impl NativeWorldSession {
         &mut self,
         input: &[u8],
         canonical: String,
+        durable_receipt: bool,
     ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
@@ -546,6 +547,7 @@ impl NativeWorldSession {
                     preview: false,
                     native_controller: false,
                     native_movement: None,
+                    durable_receipt,
                 },
             )
             .map_err(failure)

@@ -178,6 +178,7 @@ impl PlanRunCursor {
                         preview: false,
                         native_controller: false,
                         native_movement: None,
+                        durable_receipt: false,
                     },
                     binding,
                     budget,

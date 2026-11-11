@@ -145,8 +145,6 @@ export declare class NativeWorld {
   ): Promise<NativeWorldPlayerPublication | null>;
   forget(bytes: Buffer): Promise<NativeWorldTurn>;
   correct(bytes: Buffer): Promise<NativeWorldTurn>;
-  resolveReceiptTail(reply: Buffer): Promise<void>;
-  readCut(request: Buffer): Promise<NativeWorldJson>;
   readHistory(actorId: string, purpose: string): Promise<NativeWorldPrivateHistoryRead>;
   historySources(
     read: NativeWorldPrivateHistoryRead,
@@ -162,6 +160,8 @@ export declare class NativeWorld {
   historyPublication(
     read: NativeWorldPrivateHistoryRead,
   ): Promise<NativeWorldPrivateHistoryPublication | null>;
+  resolveReceiptTail(reply: Buffer): Promise<void>;
+  readCut(request: Buffer): Promise<NativeWorldJson>;
   beginRestore(bytes: Buffer): Promise<NativeWorldTurn>;
   activateRestored(key: NativeCandidateKey, receipt: string): Promise<void>;
   retainedValues(): Promise<NativeWorldJson>;
@@ -170,7 +170,12 @@ export declare class NativeWorld {
   definitions(): Promise<NativeWorldJson>;
   installation(): Promise<NativeWorldJson>;
   advance(seconds: number, maximumIntervals: number, bytes: Buffer): Promise<NativeWorldTurn>;
-  command(bytes: Buffer, canonical: Buffer, preview: boolean): Promise<NativeWorldTurn>;
+  command(
+    bytes: Buffer,
+    canonical: Buffer,
+    preview: boolean,
+    durableReceipt: boolean,
+  ): Promise<NativeWorldTurn>;
   answer(
     key: NativeCandidateKey,
     provider: NativeWorldProvider,
