@@ -1,8 +1,8 @@
 # Native simulation core and adaptive execution
 
-| Status      | Current progress                                                                                        | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Native owner integration is in progress; complete gameplay proof and AWS adoption evidence remain open. | 2026-11-11   |
+| Status      | Current progress                                                                                               | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Connected gameplay runs; held-reply memory qualification fails locally and AWS decision evidence remains open. | 2026-11-11   |
 
 ## 1. Purpose and selected direction
 

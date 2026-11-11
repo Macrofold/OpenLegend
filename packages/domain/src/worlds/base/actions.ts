@@ -98,4 +98,3 @@ export function nativeMovementSpeed(
       : scarFactor(world, entity, 'movementFactor'))
   );
 }
-

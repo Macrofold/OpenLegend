@@ -531,17 +531,25 @@ export class MacrofoldBackend implements AiClient {
     preparation?: {
       inputFingerprint: string;
       prepareBody: () => Promise<unknown>;
+      onCaptured?: () => void;
     },
   ): Promise<Record<string, unknown>> {
     // Ordinary callers capture before the journal wait. Capability-dependent callers
     // first resolve the exact logical input's prior outcome, before new eligibility.
     const capture = (body: unknown) => {
-      if (this.api.currentAllocation()) this.api.reserve(2 * jsonCaptureBytes(body));
-      return {
-        body,
-        preparedBody: new PreparedJson(body, 500_000),
-        fingerprint: digest({ path, body }),
-      };
+      const allocated = this.api.currentAllocation() !== undefined;
+      const bytes = allocated ? jsonCaptureBytes(body) : 0;
+      // The journal can retain the original body across accepted callbacks. Its
+      // owner is separate from the completed serializer and digest workspace.
+      if (allocated) this.api.reserve(bytes);
+      const workspace = allocated ? this.api.reserve(bytes) : undefined;
+      try {
+        const preparedBody = new PreparedJson(body, 500_000);
+        if (allocated) this.api.reserve(64 + 2 * preparedBody.text(500_000).length);
+        return { body, preparedBody, fingerprint: digest({ path, body }) };
+      } finally {
+        workspace?.release();
+      }
     };
     let captured = preparation ? undefined : capture(body);
     const previous = await this.load<{
@@ -574,7 +582,10 @@ export class MacrofoldBackend implements AiClient {
         'World Agent could not confirm whether its earlier request started. No duplicate was sent.',
       );
     }
-    if (preparation) captured = capture(await preparation.prepareBody());
+    if (preparation) {
+      captured = capture(await preparation.prepareBody());
+      preparation.onCaptured?.();
+    }
     if (!captured) throw new InvalidData('missing_request_body');
     const { preparedBody, fingerprint } = captured;
     body = captured.body;
@@ -1970,47 +1981,70 @@ export class MacrofoldBackend implements AiClient {
       timeout_seconds: Math.min(240, Math.ceil(config.aiTimeoutMs / 1000)),
     };
     const allocation = this.api.currentAllocation();
-    if (allocation)
-      this.api.reserve(
-        2 *
-          jsonCaptureBytes({
-            context: request.context,
-            instructions: request.instructions,
-            schema: preparedSchema.schema,
-          }),
-      );
-    const logicalBody = {
-      ...(target
-        ? macrofoldDeploymentRequestFields(target)
-        : {
-            model_binding: {
-              provider,
-              model,
-              billing_mode: receipt.macrofoldBillingMode,
-              ...(config.macrofoldProviderConnectionId
-                ? { provider_connection_id: config.macrofoldProviderConnectionId }
-                : {}),
-            },
-          }),
-      // Capture the exact chat input before journal I/O, including caller-owned context.
-      input: {
-        ...(!target ? macrofoldModelParameters(request.reasoningEffort) : {}),
-        ...prepareMacrofoldGenerationInput(
-          {
-            ...request,
-            macrofoldDeployment: target,
-            schemaName: request.schemaName ?? 'decision',
-            maxOutputTokens: limits.max_output_tokens,
+    let logicalBodyOwner: ReturnType<MacrofoldTransport['reserve']>;
+    const logicalBody = (() => {
+      const inputWorkspace = allocation
+        ? this.api.reserve(
+            2 *
+              jsonCaptureBytes({
+                context: request.context,
+                instructions: request.instructions,
+                schema: preparedSchema.schema,
+              }),
+          )
+        : undefined;
+      try {
+        const logicalBody = {
+          ...(target
+            ? macrofoldDeploymentRequestFields(target)
+            : {
+                model_binding: {
+                  provider,
+                  model,
+                  billing_mode: receipt.macrofoldBillingMode,
+                  ...(config.macrofoldProviderConnectionId
+                    ? { provider_connection_id: config.macrofoldProviderConnectionId }
+                    : {}),
+                },
+              }),
+          // Capture the exact chat input before journal I/O, including caller-owned context.
+          input: {
+            ...(!target ? macrofoldModelParameters(request.reasoningEffort) : {}),
+            ...prepareMacrofoldGenerationInput(
+              {
+                ...request,
+                macrofoldDeployment: target,
+                schemaName: request.schemaName ?? 'decision',
+                maxOutputTokens: limits.max_output_tokens,
+              },
+              preparedSchema,
+              request.macrofoldOutputMode,
+            ),
           },
-          preparedSchema,
-          request.macrofoldOutputMode,
-        ),
-      },
-      limits,
-      ...(request.onProgress ? { stream: true } : {}),
-    };
-    if (allocation) this.api.reserve(jsonCaptureBytes(logicalBody));
+          limits,
+          ...(request.onProgress ? { stream: true } : {}),
+        };
+        logicalBodyOwner = allocation ? this.api.reserve(jsonCaptureBytes(logicalBody)) : undefined;
+        return logicalBody;
+      } finally {
+        inputWorkspace?.release();
+      }
+    })();
+    if (allocation) {
+      // prepareBody only replaces the envelope and limits. Keep these old
+      // shells while mutation's captured body takes ownership of shared input.
+      this.api.reserve(jsonCaptureBytes({ ...logicalBody, input: null, model_binding: null }));
+    }
     signal.throwIfAborted();
+    let inputFingerprint: string;
+    const fingerprintWorkspace = allocation
+      ? this.api.reserve(jsonCaptureBytes(logicalBody))
+      : undefined;
+    try {
+      inputFingerprint = digest(logicalBody);
+    } finally {
+      fingerprintWorkspace?.release();
+    }
     const accepted = await this.mutation(
       `single:${request.requestId}`,
       '/v1/inferences',
@@ -2029,7 +2063,8 @@ export class MacrofoldBackend implements AiClient {
           }
         : undefined,
       {
-        inputFingerprint: digest(logicalBody),
+        inputFingerprint,
+        ...(allocation ? { onCaptured: () => logicalBodyOwner?.release() } : {}),
         prepareBody: async () => {
           const operation = this.api.currentOperation();
           if (!operation) throw new InvalidData('missing_inference_operation');

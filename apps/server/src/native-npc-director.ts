@@ -480,34 +480,38 @@ export class NativeNpcDirector {
       this.maintenance.cancel();
       const spoken = await this.service.speakToNpc(jobId, text, npcReference, volume, scope);
       if (!spoken.ok) return spoken.outcome;
-      const job: JobRecord = {
-        authority: scope,
-        id: jobId,
-        kind: 'chat',
-        fingerprint,
-        status: spoken.heard ? 'queued' : 'completed',
-        playerSpeechEventId: spoken.eventId,
-        message: spoken.heard
-          ? `${spoken.recipientName} is considering your words.`
-          : 'Spoken. No conversational reply was requested.',
-        request: { text, volume, npcId: spoken.actorId },
-        createdAt: this.now(),
-      };
-      if (!spoken.heard) {
-        await this.service.store.putJob(job);
-        this.service.notifyTelemetry();
-        return { ok: true, code: 'spoken', message: job.message, jobId };
-      }
-      const read = await this.service.captureNpcIntake(spoken.actorId, 0);
-      let transferred = false;
       try {
-        this.work.wake(spoken.actorId, { reason: 'directed-speech' });
-        await this.begin(job, read);
-        transferred = true;
+        const job: JobRecord = {
+          authority: scope,
+          id: jobId,
+          kind: 'chat',
+          fingerprint,
+          status: spoken.heard ? 'queued' : 'completed',
+          playerSpeechEventId: spoken.eventId,
+          message: spoken.heard
+            ? `${spoken.recipientName} is considering your words.`
+            : 'Spoken. No conversational reply was requested.',
+          request: { text, volume, npcId: spoken.actorId },
+          createdAt: this.now(),
+        };
+        if (!spoken.heard) {
+          await this.service.store.putJob(job);
+          this.service.notifyTelemetry();
+          return { ok: true, code: 'spoken', message: job.message, jobId };
+        }
+        const read = await this.service.captureNpcIntake(spoken.actorId, 0);
+        let transferred = false;
+        try {
+          this.work.wake(spoken.actorId, { reason: 'directed-speech' });
+          await this.begin(job, read);
+          transferred = true;
+        } finally {
+          if (!transferred) read.release();
+        }
+        return { ok: true, code: 'queued', message: job.message, jobId };
       } finally {
-        if (!transferred) read.release();
+        releaseNativeProduct(spoken);
       }
-      return { ok: true, code: 'queued', message: job.message, jobId };
     });
   }
   /** A deliberate retry reuses authored speech and buys only a new reply. */

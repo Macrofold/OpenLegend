@@ -3166,6 +3166,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         PLAYER_EVENT_WINDOW,
         this.geometry,
       );
+      let publication: NativePublication | undefined;
       try {
         const resolved = nativePlayerCommandReferences(
           scope,
@@ -3207,7 +3208,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         });
         if (!command) throw new Error('Speech command factory returned no command.');
         if ('ok' in command) return { ok: false, outcome: command };
-        const publication = await this.acceptInLane({
+        publication = await this.acceptInLane({
           actorId: scope.actorId,
           first: () => beginNativeCommand(this.world, command),
           current: () => this.currentScope(scope, 'play', true),
@@ -3257,6 +3258,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           publication,
         );
       } finally {
+        if (publication) releaseNativeProduct(publication);
         capture.release();
       }
     });

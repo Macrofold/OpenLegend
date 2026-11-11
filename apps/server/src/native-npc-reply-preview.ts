@@ -37,7 +37,8 @@ export function nativeNpcReplyPreviewHost(service: NativeWorldService): NpcReply
   let pending: Frame | undefined;
   let current: { key: string; epoch: string; value: Facts } | undefined;
   const listeners = new Set<() => void>();
-  const stateMemory = service.world.reserveConsumerBytes(decisionObjectBytes(12));
+  let stateMemory: ReturnType<NativeWorldService['world']['reserveConsumerBytes']> | undefined =
+    service.world.reserveConsumerBytes(decisionObjectBytes(12));
   const notify = () => {
     for (const listener of listeners) {
       try {
@@ -207,7 +208,8 @@ export function nativeNpcReplyPreviewHost(service: NativeWorldService): NpcReply
         await running;
       } finally {
         listeners.clear();
-        stateMemory.release();
+        stateMemory?.release();
+        stateMemory = undefined;
       }
     },
   };

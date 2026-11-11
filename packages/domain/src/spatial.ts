@@ -491,8 +491,13 @@ export function findApproachPath(
   const start = supportedPosition(actor);
   if (!start) return null;
   return findApproachRoute(
-    spatialMap(world), start, bodyProfile(actor), worldPosition(target),
-    supportedPosition(target), reach, goal,
+    spatialMap(world),
+    start,
+    bodyProfile(actor),
+    worldPosition(target),
+    supportedPosition(target),
+    reach,
+    goal,
     occupiedBodies ? occupiedBodySweepReader(world, actor) : undefined,
   );
 }

@@ -29,12 +29,8 @@ export function nativePlayerCommandReferences(
     return { ...input, ...(input.type === 'say' ? { targetRole: 'body' as const } : {}) };
   for (const body of read.perception.bodies)
     if (
-      currentContactReferenceFor(
-        scope,
-        body.sourceId,
-        body.physicalLife ?? 0,
-        body.leaseId,
-      ) === input.targetId
+      currentContactReferenceFor(scope, body.sourceId, body.physicalLife ?? 0, body.leaseId) ===
+      input.targetId
     )
       return {
         ...input,

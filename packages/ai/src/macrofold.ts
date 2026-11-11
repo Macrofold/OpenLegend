@@ -93,7 +93,12 @@ export class MacrofoldTransport {
     allocation?: Allocation,
   ): Promise<T> {
     const admission = allocation ?? this.currentAllocation() ?? this.defaultAllocation;
-    return this.network.run(budget, (operation) => this.scoped(operation, admission, work));
+    // Nested inference observation still borrows the outer raw input/schema.
+    // Its actual abandoned resources must retain that original owner's lease.
+    const parent = budget.parent ?? this.currentOperation();
+    return this.network.run(parent ? { ...budget, parent } : budget, (operation) =>
+      this.scoped(operation, admission, work),
+    );
   }
   runCleanup<T>(work: () => Promise<T>, signal?: AbortSignal, allocation?: Allocation): Promise<T> {
     const admission = allocation ?? this.currentAllocation() ?? this.defaultAllocation;
@@ -244,15 +249,17 @@ export class MacrofoldTransport {
       this.reserve(6 * maxResponseBytes + 64 * 1024);
       let requestBody: string | undefined;
       if (body !== undefined) {
+        const borrowed = body instanceof PreparedJson;
         const serializing =
-          allocated && !(body instanceof PreparedJson)
-            ? this.reserve(jsonCaptureBytes(body))
-            : undefined;
+          allocated && !borrowed ? this.reserve(jsonCaptureBytes(body)) : undefined;
         try {
-          requestBody = (
-            body instanceof PreparedJson ? body : new PreparedJson(body, 500_000)
-          ).text(500_000);
-          this.reserve(64 + 2 * requestBody.length);
+          requestBody = (borrowed ? body : new PreparedJson(body, 500_000)).text(500_000);
+          // PreparedJson's producer owns this same cached text through the
+          // original resource lease. Only newly serialized text needs a pin.
+          if (!borrowed) this.reserve(64 + 2 * requestBody.length);
+          // Node's fetch body source keeps that string and separately encodes
+          // a UTF-8 Uint8Array when the request stream is pulled.
+          if (allocated) this.reserve(256 + Buffer.byteLength(requestBody));
         } finally {
           serializing?.release();
         }
