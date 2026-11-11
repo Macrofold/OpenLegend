@@ -44,6 +44,12 @@ export interface PreparedReconsideration {
   dispose(): void;
   current(): Promise<boolean>;
   dispatch: HttpPublication;
+  prepareRequest?(): {
+    tasks: Record<string, DecisionTask>;
+    request: ReturnType<typeof prepareDecisionTask>;
+    jsonSize(value: unknown): number;
+    release(): void;
+  };
   /** A genuine refreshed preparation may retain its original cause witness. */
   refresh?(job: JobRecord, signal: AbortSignal): Promise<PreparedReconsideration>;
   /** One explicit evidence query may request a separately funded continuation. */
@@ -490,6 +496,7 @@ export class DecisionEscalator {
       dispatchIntent = false,
       completed = false;
     let prepared: PreparedReconsideration | undefined;
+    let releaseRequest: (() => void) | undefined;
     try {
       // A previous director can settle its last request after replacement. Read
       // the persisted account/model observation after acquiring shared execution,
@@ -582,6 +589,8 @@ export class DecisionEscalator {
       }
       const preparation = prepared;
       for (let queryRound = 0; queryRound < 2; queryRound++) {
+        releaseRequest?.();
+        releaseRequest = undefined;
         const attemptId = queryRound ? `${child.id}:query` : child.id;
         const dispatchBy = queryRound ? child.publishBy : child.dispatchBy;
         const dispatchByMonotonic = queryRound
@@ -594,24 +603,27 @@ export class DecisionEscalator {
           await this.end(rootId, 'stale');
           return;
         }
-        const request = prepareDecisionTask(
-          preparation.tasks,
-          preparation.context,
-          preparation.instructions,
-        );
+        const admitted = preparation.prepareRequest?.();
+        releaseRequest = admitted?.release;
+        const jsonSize =
+          admitted?.jsonSize ?? ((value: unknown) => Buffer.byteLength(JSON.stringify(value)));
+        const tasks = admitted?.tasks ?? preparation.tasks;
+        const request =
+          admitted?.request ??
+          prepareDecisionTask(tasks, preparation.context, preparation.instructions);
         const unresolved = Object.entries(state.groups)
           .filter(([, group]) => group.state === 'open')
           .map(([id]) => id)
           .sort();
         if (
-          JSON.stringify(unresolved) !== JSON.stringify(Object.keys(preparation.tasks).sort()) ||
-          unresolved.some((id) => preparation.tasks[id]?.kind !== state.groups[id]?.kind)
+          JSON.stringify(unresolved) !== JSON.stringify(Object.keys(tasks).sort()) ||
+          unresolved.some((id) => tasks[id]?.kind !== state.groups[id]?.kind)
         ) {
           await this.end(rootId, 'unsupported');
           return;
         }
         failure = 'missing-pricing';
-        const allowance = higherDecisionAllowance(this.service.config, request);
+        const allowance = higherDecisionAllowance(this.service.config, request, jsonSize);
         failure = 'preparation-failed';
         if (!ledger.admit('level', 4, allowance).ok) {
           await this.end(rootId, 'budget-exhausted');
@@ -697,12 +709,12 @@ export class DecisionEscalator {
           size: {
             instructions: Buffer.byteLength(request.instructions),
             context: Buffer.byteLength(request.context),
-            schema: Buffer.byteLength(JSON.stringify(request.schema)),
+            schema: jsonSize(request.schema),
           },
           reservedUsd: allowance,
         });
         const rateAdmission = this.rate.beforeNext(
-          Buffer.byteLength(JSON.stringify(request)) + 4096 + DECISION_LIMITS.outputTokens,
+          jsonSize(request) + 4096 + DECISION_LIMITS.outputTokens,
           this.now(),
           attemptId,
         );
@@ -835,6 +847,10 @@ export class DecisionEscalator {
           }
           failure = 'invalid-output';
           const answers = request.decode(result.value);
+          // Accounting and decoding have consumed this request. Publication
+          // uses the independently held preparation and decoded answer.
+          releaseRequest?.();
+          releaseRequest = undefined;
           if (
             controller.signal.aborted ||
             this.now() >= child.publishBy ||
@@ -947,6 +963,7 @@ export class DecisionEscalator {
               : failure,
       );
     } finally {
+      releaseRequest?.();
       prepared?.dispose();
       this.scopes.get(rootId)?.releasePreparation?.();
       if (reservedId && !dispatchIntent)

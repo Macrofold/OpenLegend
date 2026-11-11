@@ -29,6 +29,7 @@ import {
 } from './native-decision-query.js';
 import { prepareNativeActorInvention } from './native-actor-invention.js';
 import { withSituationQueries } from './decision-situation-query.js';
+import { reconsiderationResponseCapabilities } from './decision-preparation.js';
 import { nativeRequiredOutcomeEvidence } from './native-decision-context.js';
 import { nativeDecisionFields } from './native-decision-fields.js';
 import {
@@ -79,7 +80,9 @@ import { attentionIncludes, ACTION_EVIDENCE_POLICY } from './jev-questions.js';
 import { ACTION_RETRIEVAL_LIMIT } from './action-retrieval.js';
 import { noteReference } from './knowledge-context.js';
 import {
+  copyNativeProduct,
   createNativeConsumerScope,
+  releaseNativeProduct,
   retainNativeSources,
   withNativeConsumerScope,
   withoutNativeConsumerScope,
@@ -91,6 +94,14 @@ import { nativeNpcPersonalSelection } from './native-npc-sources.js';
 import { projectNativeDecisionContext } from './native-context-projection.js';
 import type { z } from 'zod';
 import type { DecisionAppraisalProposal } from './cognition-contracts.js';
+import {
+  admitDecisionGraph,
+  decisionArrayBytes,
+  decisionObjectBytes,
+  decisionRecordEntries,
+  decisionTextBytes,
+  projectDecisionSchema,
+} from './native-decision-allocation.js';
 
 type Judge = (
   request: Omit<JudgeRequest, 'requestId' | 'signal'>,
@@ -154,8 +165,15 @@ async function prepareOwnedDecision(
   owner: ReturnType<typeof createNativeConsumerScope>,
 ) {
   const { service, actorId, jobId, signal } = input;
+  const formattingOwner = createNativeConsumerScope();
+  const format = <T>(build: () => T): T => formattingOwner.runSync(build);
+  let contextRetired = false;
+  const requireContext = () => {
+    if (contextRetired) throw new Error('The native decision request context was consumed.');
+  };
   const textProducts: NativeDecisionText[] = [];
-  const keepText = (product: NativeDecisionText): string => {
+  const keepText = (build: () => NativeDecisionText): string => {
+    const product = format(build);
     textProducts.push(product);
     return product.text;
   };
@@ -174,6 +192,7 @@ async function prepareOwnedDecision(
     consumer: input.consumer,
   });
   const original = start.capture;
+  const conversationOwner = createNativeConsumerScope();
   let current: NativeNpcCapture | undefined;
   let conversationCurrent: NativeNpcCapture | undefined;
   let ticket: NativeWorldNpcResponseTicket | undefined;
@@ -344,36 +363,50 @@ async function prepareOwnedDecision(
       boundEntities: [],
       expectedPerspective: '',
     };
+    let compactedSources: Parameters<typeof repository.currentCompactionSources>[1] | undefined;
     const saved = includeConversation
       ? await service.store.getIntegration(conversationCompactionKey(scope.worldId, actorId))
       : undefined;
-    const baseContext: Record<string, unknown> = {
-      situationQueries: input.mode !== 'native-only',
-      receivedSituation: situation.packet,
-      ...(recentWorkResults ? { recentWorkResults } : {}),
-      ...nativeDecisionFields(original, service.definitions, 'initial'),
-      ...decisionActivityFactsFromRead({
-        simTime: original.facts.self.at,
-        requests: service.definitions.requestDescriptors(),
-        ...original.candidates().activity,
-      }),
-      stimulus,
-      triggerFacts: initialTrigger?.facts ?? null,
-      intentActions: [],
-      planOffers: [],
-      references: nativeResponseReferences(
-        original,
-        original,
-        original.recallEntities().flatMap((candidate) => candidate.entityIds),
-        evidence,
-        evidenceIds,
-        original.facts.referenceFacts.social.flatMap((fact) => fact.canonicalId ?? []),
-      ).references,
-      commitments: [],
-      conversation: [],
-      surroundings: [],
-      possessions: [],
-    };
+    const initialFields = nativeDecisionFields(original, service.definitions, 'initial');
+    const initialActivity = decisionActivityFactsFromRead({
+      simTime: original.facts.self.at,
+      requests: service.definitions.requestDescriptors(),
+      ...original.candidates().activity,
+    });
+    const baseContext = format(() =>
+      admitDecisionGraph<Record<string, unknown>>(
+        service.world,
+        // The initial fields are already actor-scoped. This record and its six
+        // initially empty lists are the new carriers owned by this preparation.
+        decisionObjectBytes(
+          14 + decisionRecordEntries(initialFields) + decisionRecordEntries(initialActivity),
+        ) +
+          6 * decisionArrayBytes(0),
+        () => ({
+          situationQueries: input.mode !== 'native-only',
+          receivedSituation: situation.packet,
+          ...(recentWorkResults ? { recentWorkResults } : {}),
+          ...initialFields,
+          ...initialActivity,
+          stimulus,
+          triggerFacts: initialTrigger?.facts ?? null,
+          intentActions: [],
+          planOffers: [],
+          references: nativeResponseReferences(
+            original,
+            original,
+            original.recallEntities().flatMap((candidate) => candidate.entityIds),
+            evidence,
+            evidenceIds,
+            original.facts.referenceFacts.social.flatMap((fact) => fact.canonicalId ?? []),
+          ).references,
+          commitments: [],
+          conversation: [],
+          surroundings: [],
+          possessions: [],
+        }),
+      ),
+    );
     const recalled = await retrieveNativeRecall({
       ...input,
       mode: input.mode === 'reflection' ? 'ordinary' : input.mode,
@@ -432,18 +465,23 @@ async function prepareOwnedDecision(
     if (speech.unavailablePersonal.length)
       throw new Error('Selected native speech or cached source changed during preparation.');
     conversationCurrent = (
-      await service.captureNpc(actorId, input.requiredAppraisals, {
-        signal,
-        consumer: input.consumer,
-      })
+      await conversationOwner.run(() =>
+        service.captureNpc(actorId, input.requiredAppraisals, {
+          signal,
+          consumer: input.consumer,
+          choices: false,
+        }),
+      )
     ).capture;
     // The labels and their identity cut share one accepted service turn, like
     // Source's synchronous conversation projection after its SQL admission.
     const { presentation, conversationPerspectives } = await service.publishRecall(async () => {
-      const presentation = await conversationCurrent!.prepareExperiencePresentation(
-        service.world,
-        service.definitions,
-        speech.personal.map((source) => source.value),
+      const presentation = await conversationOwner.run(() =>
+        conversationCurrent!.prepareExperiencePresentation(
+          service.world,
+          service.definitions,
+          speech.personal.map((source) => source.value),
+        ),
       );
       const conversationPerspectives = await original.capturePerspectives(service.world, [
         ...(cachedReferences.length ? cachedCandidate!.value.entityIds : []),
@@ -513,49 +551,49 @@ async function prepareOwnedDecision(
             additionalSources,
           ),
         );
+        const covered = compactedSources ?? validity.usedCache?.value.sources;
         const coverage =
-          !validity.usedCache ||
-          (await sql(() =>
-            repository.currentCompactionSources(scope, validity.usedCache!.value.sources),
-          ));
+          !covered || (await sql(() => repository.currentCompactionSources(scope, covered)));
         if (!valid || !coverage) throw new Error('Selected speech or recall sources changed.');
         if (!(await historyCurrent())) throw new Error('Native decision sources changed.');
       });
-    const conversation = await buildNativeConversationContext({
-      original,
-      current: conversationCurrent,
-      definitions: service.definitions,
-      repository: {
-        currentCompactionSources: (...args) =>
-          sql(() => repository.currentCompactionSources(...args)),
-        publishConversationCompaction: (...args) =>
-          repository.publishConversationCompaction(...args),
-      },
-      scope,
-      sources: speech.personal,
-      presentation,
-      attribution: conversationPerspectives.attribution,
-      snapshot,
-      saved,
-      requiredIds: recallIds,
-      maxBytes: CONTEXT_BYTE_LIMIT - requiredBytes - requiredRecallBytes(),
-      signal,
-      attempt: input.attempt,
-      model: service.config.macrofoldKey
-        ? service.config.macrofoldComplexModel
-        : service.config.complexModel,
-      ...(input.compact
-        ? {
-            generate: async (...args: Parameters<ConversationGenerate>) => {
-              await historyCurrent();
-              return input.compact!({ ...args[0], publication: publishHistory }, args[1]);
-            },
-          }
-        : {}),
-      check: conversationCheck,
-      assertCurrent,
-      validity,
-    });
+    const conversation = await conversationOwner.run(() =>
+      buildNativeConversationContext({
+        original,
+        current: conversationCurrent!,
+        definitions: service.definitions,
+        repository: {
+          currentCompactionSources: (...args) =>
+            sql(() => repository.currentCompactionSources(...args)),
+          publishConversationCompaction: (...args) =>
+            repository.publishConversationCompaction(...args),
+        },
+        scope,
+        sources: speech.personal,
+        presentation,
+        attribution: conversationPerspectives.attribution,
+        snapshot,
+        saved,
+        requiredIds: recallIds,
+        maxBytes: CONTEXT_BYTE_LIMIT - requiredBytes - requiredRecallBytes(),
+        signal,
+        attempt: input.attempt,
+        model: service.config.macrofoldKey
+          ? service.config.macrofoldComplexModel
+          : service.config.complexModel,
+        ...(input.compact
+          ? {
+              generate: async (...args: Parameters<ConversationGenerate>) => {
+                await historyCurrent();
+                return input.compact!({ ...args[0], publication: publishHistory }, args[1]);
+              },
+            }
+          : {}),
+        check: conversationCheck,
+        assertCurrent,
+        validity,
+      }),
+    );
     conversationCurrent.release();
     conversationCurrent = undefined;
     baseContext['conversation'] = conversation.lines;
@@ -703,11 +741,22 @@ async function prepareOwnedDecision(
           ]).has(id),
       ).length;
     const fields = nativeDecisionFields(now, service.definitions, 'current');
-    const intentActions = now.facts.self.agency.attempts.map((attempt, ordinal) => ({
-      id: `w${ordinal}`,
-      ordinal,
-      description: `Decline/withdraw pending intent: ${attempt.description}`,
-    }));
+    const attempts = now.facts.self.agency.attempts;
+    let intentBytes = decisionArrayBytes(attempts.length);
+    for (let ordinal = 0; ordinal < attempts.length; ordinal++)
+      intentBytes +=
+        decisionObjectBytes(3) +
+        decisionTextBytes(ordinal < 10 ? 2 : 2 + Math.floor(Math.log10(ordinal))) +
+        decisionTextBytes(
+          'Decline/withdraw pending intent: '.length + attempts[ordinal]!.description.length,
+        );
+    const intentActions = admitDecisionGraph(service.world, intentBytes, () =>
+      attempts.map((attempt, ordinal) => ({
+        id: `w${ordinal}`,
+        ordinal,
+        description: `Decline/withdraw pending intent: ${attempt.description}`,
+      })),
+    );
     const trigger =
       triggerSource &&
       nativeTriggerContext(
@@ -717,49 +766,86 @@ async function prepareOwnedDecision(
         service.definitions,
         situation.presentation,
       );
-    let context: Record<string, unknown> = {
-      ...baseContext,
-      ...fields,
-      ...decisionActivityFactsFromRead({
-        simTime: now.facts.self.at,
-        requests: service.definitions.requestDescriptors(),
-        ...now.candidates().activity,
-      }),
-      triggerFacts: trigger?.facts ?? null,
-      intentActions: intentActions.map(({ id, description }) => ({ id, description })),
-      references: references.references,
-      agency: {
-        ...fields.agency,
-        outcomeCoverage: missing
-          ? `${missing} recent work records are unavailable under current memory permissions/retention. Base decisions only on available memories and current evidence; do not reconstruct their effects from execution status.`
-          : 'Recent work results are included through the same personal memories as other experiences.',
-      },
-      knowledgeCoverage:
-        'knowledgeRetrieval' in selection.diagnostics
-          ? selection.diagnostics.knowledgeRetrieval
-          : { partial: true },
-      ...contextSections(
+    let experiences = conversation.experience.length;
+    for (const candidate of refreshed)
+      if (candidate.kind !== 'conversation' && candidate.kind !== 'entity')
+        experiences += candidate.experience?.length ?? 0;
+    let selectedSections: string[] = [];
+    const decisionSections = () => {
+      const sections = contextSections(
         refreshed.filter(
           (candidate) => candidate.kind !== 'conversation' && candidate.kind !== 'entity',
         ),
-      ),
+      );
+      selectedSections = Object.keys(sections);
+      return sections;
     };
+    let context = format(() =>
+      admitDecisionGraph<Record<string, unknown>>(
+        service.world,
+        decisionObjectBytes(
+          decisionRecordEntries(baseContext) + decisionRecordEntries(fields) + 16,
+        ) +
+          decisionObjectBytes(decisionRecordEntries(fields.agency) + 1) +
+          decisionObjectBytes(7) +
+          decisionArrayBytes(7) +
+          7 * decisionArrayBytes(0) +
+          2 * decisionArrayBytes(refreshed.length) +
+          2 * decisionArrayBytes(experiences) +
+          decisionArrayBytes(intentActions.length) +
+          intentActions.length * decisionObjectBytes(2),
+        () => ({
+          ...baseContext,
+          ...fields,
+          ...decisionActivityFactsFromRead({
+            simTime: now.facts.self.at,
+            requests: service.definitions.requestDescriptors(),
+            ...now.candidates().activity,
+          }),
+          triggerFacts: trigger?.facts ?? null,
+          intentActions: intentActions.map(({ id, description }) => ({ id, description })),
+          references: references.references,
+          agency: {
+            ...fields.agency,
+            outcomeCoverage: missing
+              ? `${missing} recent work records are unavailable under current memory permissions/retention. Base decisions only on available memories and current evidence; do not reconstruct their effects from execution status.`
+              : 'Recent work results are included through the same personal memories as other experiences.',
+          },
+          knowledgeCoverage:
+            'knowledgeRetrieval' in selection.diagnostics
+              ? selection.diagnostics.knowledgeRetrieval
+              : { partial: true },
+          ...decisionSections(),
+        }),
+      ),
+    );
     context['experience'] = [
       ...((context['experience'] as SharedModelExperience['experience'][]) ?? []),
       ...conversation.experience,
     ];
-    const knowledge = Object.fromEntries(
-      refreshed
-        .filter((candidate) => candidate.kind === 'knowledge')
-        .flatMap((candidate) => {
-          const doc = now.facts.self.knowledge?.[candidate.id.slice('notepad:'.length)];
-          return doc?.subjectId &&
-            (doc.subjectId.kind === 'entity' || doc.subjectId.kind === 'individual')
-            ? [[noteReference(actorId, doc.subjectId), doc.subjectId]]
-            : [];
-        }),
+    const knowledge = admitDecisionGraph(
+      service.world,
+      decisionObjectBytes(refreshed.length) +
+        3 * decisionArrayBytes(refreshed.length) +
+        refreshed.length * decisionArrayBytes(2),
+      () =>
+        Object.fromEntries(
+          refreshed
+            .filter((candidate) => candidate.kind === 'knowledge')
+            .flatMap((candidate) => {
+              const doc = now.facts.self.knowledge?.[candidate.id.slice('notepad:'.length)];
+              return doc?.subjectId &&
+                (doc.subjectId.kind === 'entity' || doc.subjectId.kind === 'individual')
+                ? [[noteReference(actorId, doc.subjectId), doc.subjectId]]
+                : [];
+            }),
+        ),
     );
-    const sharedExperiences = new Map<string, SharedModelExperience>();
+    const sharedExperiences = admitDecisionGraph(
+      service.world,
+      decisionObjectBytes(experiences) + experiences * decisionObjectBytes(3),
+      () => new Map<string, SharedModelExperience>(),
+    );
     for (const candidate of refreshed)
       candidate.experience?.forEach((experience, index) => {
         const key = candidate.sourceKeys?.[index];
@@ -775,7 +861,43 @@ async function prepareOwnedDecision(
         revision: value.revision,
         experience: value.experience,
       });
-    projectNativeDecisionContext(service.world, context, now, references.entityReferences);
+    format(() =>
+      projectNativeDecisionContext(service.world, context, now, references.entityReferences),
+    );
+    // Interpretations cite the projected complete record actually included in
+    // this request, rather than another copy of its unprojected source.
+    const projected = context['experience'] as SharedModelExperience['experience'][];
+    const unprojected = [
+      ...refreshed
+        .filter((candidate) => candidate.kind !== 'conversation' && candidate.kind !== 'entity')
+        .flatMap((candidate) => candidate.experience ?? []),
+      ...conversation.experience,
+    ];
+    for (const [key, shared] of sharedExperiences) {
+      const index = unprojected.indexOf(shared.experience);
+      if (index < 0 || !projected[index])
+        throw new Error('Shared appraisal evidence has no included native experience.');
+      sharedExperiences.set(key, {
+        index,
+        revision: shared.revision,
+        experience: projected[index]!,
+      });
+    }
+    // The actual request now owns the independently projected conversation
+    // text and experiences. Only selected proof keys and diagnostics escape.
+    const retainedConversation = copyNativeProduct(service.world, {
+      boundSources: validity.boundSources,
+      boundEntities: validity.boundEntities,
+      compactedSources: validity.usedCache?.value.sources,
+      evidenceIds: conversation.evidenceIds,
+      awarenessSequence: conversation.awarenessSequence,
+      diagnostics: conversation.diagnostics,
+    });
+    validity.boundSources = retainedConversation.boundSources;
+    validity.boundEntities = retainedConversation.boundEntities;
+    validity.usedCache = undefined;
+    compactedSources = retainedConversation.compactedSources;
+    conversationOwner.dispose();
     const allOffers = fitActionCandidates(
       context,
       [...now.choiceDescriptions(service.definitions)],
@@ -784,6 +906,7 @@ async function prepareOwnedDecision(
       promptBytes,
     );
     let actionSource: 'original' | 'current' = 'current';
+    let reconsidering = input.validity === 'prepared-response';
     let offered: NativeFormattedNpcOffer[];
     if (input.mode === 'reflection') offered = [];
     else if (input.mode === 'native-only')
@@ -816,25 +939,6 @@ async function prepareOwnedDecision(
         offered = options;
       }
     }
-    // Interpretations cite the projected complete record actually included in
-    // this request, rather than another copy of its unprojected source.
-    const projected = context['experience'] as SharedModelExperience['experience'][];
-    const unprojected = [
-      ...refreshed
-        .filter((candidate) => candidate.kind !== 'conversation' && candidate.kind !== 'entity')
-        .flatMap((candidate) => candidate.experience ?? []),
-      ...conversation.experience,
-    ];
-    for (const [key, shared] of sharedExperiences) {
-      const index = unprojected.indexOf(shared.experience);
-      if (index < 0 || !projected[index])
-        throw new Error('Shared appraisal evidence has no included native experience.');
-      sharedExperiences.set(key, {
-        index,
-        revision: shared.revision,
-        experience: projected[index]!,
-      });
-    }
     const hasAppraisals =
       input.mode === 'reflection' ||
       service.definitions.facts.definitions.moduleManifest.appraisals?.definitions.some(
@@ -845,16 +949,16 @@ async function prepareOwnedDecision(
     // budget check in the shared maintenance owner.
     const reflectionPreparationPrompt =
       input.mode === 'reflection'
-        ? keepText(nativeDecisionPrompt(service.world, context, [], false))
+        ? keepText(() => nativeDecisionPrompt(service.world, context, [], false))
         : undefined;
     const invention =
       input.mode === 'reflection' ? undefined : await prepareNativeActorInvention(service, actorId);
-    const instructions = invention
-      ? keepText(
+    let instructions = invention
+      ? keepText(() =>
           joinNativeDecisionText(service.world, RESPONSE_INSTRUCTIONS, ' ', invention.instructions),
         )
       : RESPONSE_INSTRUCTIONS;
-    const appraisal = hasAppraisals
+    let appraisal = hasAppraisals
       ? await input.prepareAppraisals({
           original,
           current: now,
@@ -862,7 +966,7 @@ async function prepareOwnedDecision(
           evidenceIds: [
             ...new Set([
               ...refreshed.flatMap((candidate) => candidate.sourceIds ?? []),
-              ...conversation.evidenceIds,
+              ...retainedConversation.evidenceIds,
             ]),
           ],
           subjects: references.entityReferences,
@@ -871,6 +975,7 @@ async function prepareOwnedDecision(
           currentTicket,
         })
       : undefined;
+    const appraisalCurrent = appraisal?.current;
     const interpretationRecords =
       input.mode === 'reflection'
         ? await offerNativeInterpretationRecords({
@@ -889,14 +994,16 @@ async function prepareOwnedDecision(
       ? { ...interpretationRecords, identityHandles: Object.keys(references.identityReferences) }
       : undefined;
     if (input.mode === 'reflection' && appraisal) context['feelings'] = appraisal.context;
-    const additionalContext = invention
-      ? keepText(
+    let additionalContext = invention
+      ? keepText(() =>
           joinNativeDecisionText(
             service.world,
             '\n',
             invention.context,
             appraisal ? '\nPermitted feeling proposals: ' : '',
-            appraisal ? keepText(nativeDecisionJsonText(service.world, appraisal.context)) : '',
+            appraisal
+              ? keepText(() => nativeDecisionJsonText(service.world, appraisal!.context))
+              : '',
           ),
         )
       : '';
@@ -906,7 +1013,9 @@ async function prepareOwnedDecision(
         : nativeDecisionPromptSize(service.world, context, offered, true, additionalContext);
     const render = () =>
       reflectionPreparationPrompt ??
-      keepText(nativeDecisionPrompt(service.world, context, offered, true, additionalContext));
+      keepText(() =>
+        nativeDecisionPrompt(service.world, context, offered, true, additionalContext),
+      );
     // Required evidence keeps its allowance. Only optional assistance loses a
     // whole suffix when the complete generation envelope needs more room.
     if (renderBytes() + Buffer.byteLength(instructions) > CONTEXT_BYTE_LIMIT) {
@@ -938,6 +1047,7 @@ async function prepareOwnedDecision(
       knowledge,
       situation,
       sources: selectedProofs,
+      conversationEvidence: validity.boundSources,
       actions: offered,
       actionSource,
       prototypeSource: actionSource,
@@ -949,42 +1059,107 @@ async function prepareOwnedDecision(
     ticket = await service.publishRecall(() =>
       original.bindResponse(service.world, now, jobId, binding, signal, input.semanticTrigger),
     );
-    const schemaFor = () =>
-      boundResponseSchema(
-        Object.keys(references.entityReferences),
-        [...offered.map((offer) => offer.id), ...intentActions.map((offer) => offer.id)],
-        fields.capabilities,
-        Object.keys(knowledge),
-        fields.namedTimes,
-        service.definitions.requestDescriptors(),
-        appraisal?.schema,
-        Object.keys(references.identityReferences),
-        Object.keys(references.physicalEntityReferences),
-        situationResponseCapabilities(situation),
+    const schemaFor = (queries: boolean) => {
+      const requests = service.definitions.requestDescriptors();
+      const situationAliases =
+        decisionRecordEntries(situation.attentionReferences) +
+        decisionRecordEntries(situation.retentionReferences) +
+        decisionRecordEntries(situation.observationReferences) +
+        decisionRecordEntries(situation.currentReferences);
+      const aliases =
+        3 * decisionRecordEntries(references.entityReferences) +
+        2 * decisionRecordEntries(references.identityReferences) +
+        decisionRecordEntries(references.physicalEntityReferences) +
+        decisionRecordEntries(knowledge) +
+        offered.length +
+        intentActions.length +
+        fields.namedTimes.length +
+        fields.capabilities.expressionVerbs.length +
+        situationAliases;
+      let requestBytes = decisionArrayBytes(requests.length);
+      for (const request of requests) {
+        const fields = decisionRecordEntries(request.fields);
+        // Each installed field has one typed constructor and at most five
+        // check/clone stages. The request object and union borrow their IDs.
+        requestBytes += decisionObjectBytes(8 + fields) + fields * decisionObjectBytes(24);
+      }
+      const build = () =>
+        boundResponseSchema(
+          Object.keys(references.entityReferences),
+          [...offered.map((offer) => offer.id), ...intentActions.map((offer) => offer.id)],
+          reconsidering
+            ? reconsiderationResponseCapabilities(fields.capabilities)
+            : fields.capabilities,
+          Object.keys(knowledge),
+          fields.namedTimes,
+          requests,
+          appraisal?.schema,
+          Object.keys(references.identityReferences),
+          Object.keys(references.physicalEntityReferences),
+          situationResponseCapabilities(situation),
+        );
+      // Fixed operation objects, extensions and their shared 11-field
+      // variants, plus the actual enum vectors/maps and installed requests.
+      const variants =
+        6 +
+        Number(fields.capabilities.speech) +
+        Number(!!appraisal?.schema) +
+        Number(decisionRecordEntries(situation.attentionReferences) > 0) +
+        Number(situationAliases > decisionRecordEntries(situation.attentionReferences));
+      return format(() =>
+        admitDecisionGraph(
+          service.world,
+          decisionObjectBytes(8) * (96 + (queries ? 5 : 0)) +
+            variants * decisionObjectBytes(15) +
+            aliases * decisionObjectBytes(1) +
+            requestBytes,
+          () => {
+            const schema = build();
+            return queries ? withSituationQueries(schema, situation.policy.maximumQueries) : schema;
+          },
+        ),
       );
-    let schema:
-      | ReturnType<typeof schemaFor>
-      | ReturnType<typeof withSituationQueries<ReturnType<typeof schemaFor>['shape']>> =
-      withSituationQueries(schemaFor(), situation.policy.maximumQueries);
+    };
+    let schema: ReturnType<typeof schemaFor> | undefined = schemaFor(true);
+    const replaceSchema = (queries: boolean) => {
+      const next = schemaFor(queries);
+      if (schema) releaseNativeProduct(schema);
+      schema = next;
+    };
     let queryUsed = false;
+    let queryDisclosure:
+      | Awaited<ReturnType<typeof expandNativeDecisionSituation>>['disclosed']
+      | undefined;
     // Source retains the initial preparation for a higher request. A query
     // mutates the shared received situation, but its added prompt/context and
     // the direct route's refreshed action catalogue are request-local.
-    const retainedContext = context;
-    const retainedOffers = offersAtStart;
+    let retainedContext = context;
+    let retainedOffers = offersAtStart;
 
     const prepared = retainNativeSources(
       {
         get context() {
+          requireContext();
           return context;
         },
+        get selectedSections() {
+          requireContext();
+          return selectedSections;
+        },
         get prompt() {
+          requireContext();
           return prompt;
         },
         get offered() {
+          requireContext();
           return offered.map(({ id, description }) => ({ id, description }));
         },
+        get offerCount() {
+          requireContext();
+          return offered.length;
+        },
         get noInterventionChoices() {
+          requireContext();
           return new Set(
             offered
               .filter(
@@ -996,12 +1171,14 @@ async function prepareOwnedDecision(
           );
         },
         workTransition(id: string) {
+          requireContext();
           return (
             offered.find((offer) => offer.id === id)?.transition ??
             (intentActions.some((intent) => intent.id === id) ? ('continue' as const) : undefined)
           );
         },
         get activityRequests() {
+          requireContext();
           // The projection above changes reference spellings, preserving this
           // actual captured activity request shape (as in Source preparation).
           return context['activityRequests'] as ReturnType<
@@ -1023,7 +1200,14 @@ async function prepareOwnedDecision(
         addressedSpeech,
         speechTrigger,
         get schema() {
+          requireContext();
+          if (!schema) throw new Error('The native decision response schema was consumed.');
           return schema;
+        },
+        requestSchema() {
+          requireContext();
+          if (!schema) throw new Error('The native decision response schema was consumed.');
+          return projectDecisionSchema(service.world, schema);
         },
         get ticket() {
           if (!ticket)
@@ -1031,21 +1215,36 @@ async function prepareOwnedDecision(
           return ticket;
         },
         get queryUsed() {
+          requireContext();
           return queryUsed;
         },
-        instructions,
+        get queryDisclosure() {
+          requireContext();
+          return queryDisclosure;
+        },
+        get appraisalContext() {
+          requireContext();
+          return appraisal?.context;
+        },
+        get instructions() {
+          requireContext();
+          return instructions;
+        },
         situation,
-        sharedExperiences,
+        get sharedExperiences() {
+          requireContext();
+          return sharedExperiences;
+        },
         ...(reflection ? { reflection } : {}),
         validity: nativeDecisionValidity(now, service.definitions),
         preparedValidity: nativePreparedResponseValidity(now),
-        awarenessSequence: conversation.awarenessSequence,
+        awarenessSequence: retainedConversation.awarenessSequence,
         async current() {
           if (!ticket && !reflectionTicket) return false;
           return owner.run(() =>
             withNativeConsumerScope(async () => {
               await conversationCheck(false, selectedProofs);
-              return (!appraisal || (await appraisal.current())) && (await currentTicket());
+              return (!appraisalCurrent || (await appraisalCurrent())) && (await currentTicket());
             }),
           );
         },
@@ -1059,17 +1258,20 @@ async function prepareOwnedDecision(
                 ? await service.world.reflectionPublication(reflectionTicket)
                 : await service.world.npcResponsePublication(ticket!);
               try {
+                requireContext();
                 assertCurrent();
                 if (!publication?.isCurrent())
                   throw new Error('The native response became stale before dispatch.');
                 const result = withoutNativeConsumerScope(start);
                 // Actual local provider consumption, rather than cancellation
-                // time, closes the last lease on its originating preparation.
+                // time, closes the leases on both originating owners.
                 void owner
-                  .run(async () => {
-                    await result;
-                    void textProducts.length;
-                  })
+                  .run(() =>
+                    formattingOwner.run(async () => {
+                      await result;
+                      void textProducts.length;
+                    }),
+                  )
                   .catch(() => undefined);
                 return { result };
               } finally {
@@ -1080,10 +1282,11 @@ async function prepareOwnedDecision(
         },
         async expandQueries(queries: readonly SituationQuery[]) {
           return owner.run(async () => {
+            requireContext();
             if (queryUsed || !ticket || !queries.length)
               throw new Error('The situation query continuation is unavailable.');
             await conversationCheck(false, selectedProofs);
-            if ((appraisal && !(await appraisal.current())) || !(await currentTicket()))
+            if ((appraisalCurrent && !(await appraisalCurrent())) || !(await currentTicket()))
               throw new Error('The native decision became stale before its situation query.');
             queryUsed = true;
             const expansion = await expandNativeDecisionSituation({
@@ -1098,6 +1301,7 @@ async function prepareOwnedDecision(
               references,
               knowledge,
               sources: selectedProofs,
+              conversationEvidence: validity.boundSources,
               offered,
               actionSource,
               prototypeSource: actionSource,
@@ -1113,6 +1317,7 @@ async function prepareOwnedDecision(
               additionalContext,
               instructions,
               signal,
+              format,
               check: () => conversationCheck(false, selectedProofs),
               reopened: () => {
                 ticket = undefined;
@@ -1123,24 +1328,34 @@ async function prepareOwnedDecision(
             prompt = expansion.prompt;
             context = expansion.context;
             offered = expansion.offered;
-            schema = schemaFor();
+            queryDisclosure = expansion.disclosed;
+            replaceSchema(false);
             return expansion.disclosed;
           });
         },
         async rebindDecision(childId: string): Promise<void> {
           return owner.run(async () => {
+            requireContext();
             if (!ticket) throw new Error('Native decision has no issued response ticket.');
             await conversationCheck(false, selectedProofs);
             if (!(await currentTicket()))
               throw new Error('The retained native decision became stale.');
-            const nextOffers = fitActionCandidates(
-              retainedContext,
-              [...retainedOffers],
-              0,
-              'optional',
-              promptBytes,
-            ).map((offer, index) => ({ ...offer, id: `a${index}` }));
-            const nextPrompt = keepText(
+            const nextOffers = format(() =>
+              admitDecisionGraph(
+                service.world,
+                3 * decisionArrayBytes(retainedOffers.length) +
+                  retainedOffers.length * (decisionObjectBytes(7) + decisionTextBytes(20)),
+                () =>
+                  fitActionCandidates(
+                    retainedContext,
+                    [...retainedOffers],
+                    0,
+                    'optional',
+                    promptBytes,
+                  ).map((offer, index) => ({ ...offer, id: `a${index}` })),
+              ),
+            );
+            const nextPrompt = keepText(() =>
               nativeDecisionPrompt(
                 service.world,
                 retainedContext,
@@ -1170,12 +1385,15 @@ async function prepareOwnedDecision(
               (bytes) => service.world.rebindNpcResponse(ticket!, bytes),
             );
             decisionId = childId;
+            reconsidering = true;
             actionSource = 'original';
             context = retainedContext;
             offered = nextOffers;
             prompt = nextPrompt;
             queryUsed = false;
-            schema = withSituationQueries(schemaFor(), situation.policy.maximumQueries);
+            if (queryDisclosure) releaseNativeProduct(queryDisclosure);
+            queryDisclosure = undefined;
+            replaceSchema(true);
           });
         },
         adoptReflectionTicket(owner: NativeWorldReflectionTicket): void {
@@ -1186,6 +1404,29 @@ async function prepareOwnedDecision(
           // without imposing a decision self-signature on reflection.
           reflectionTicket = owner;
           ticket = undefined;
+        },
+        retireContext(): void {
+          requireContext();
+          contextRetired = true;
+          // Native admission owns its bound reads and source metadata. The
+          // decoded response has consumed the final request presentation.
+          for (const key in context) if (Object.hasOwn(context, key)) delete context[key];
+          for (const key in retainedContext)
+            if (Object.hasOwn(retainedContext, key)) delete retainedContext[key];
+          context = {};
+          retainedContext = {};
+          prompt = '';
+          instructions = '';
+          additionalContext = '';
+          schema = undefined;
+          offered = [];
+          retainedOffers = [];
+          sharedExperiences.clear();
+          appraisal = undefined;
+          selectedSections.length = 0;
+          textProducts.length = 0;
+          queryDisclosure = undefined;
+          formattingOwner.dispose();
         },
         dispose() {
           // This private preparation envelope borrows the intake handle only
@@ -1199,6 +1440,7 @@ async function prepareOwnedDecision(
           original.release();
           now.release();
           bodies.dispose();
+          formattingOwner.dispose();
           owner.dispose();
         },
         diagnostics: {
@@ -1208,7 +1450,7 @@ async function prepareOwnedDecision(
           inputBytes,
           estimatedInputTokens: Math.ceil(inputBytes / 3),
           selection: selection.diagnostics,
-          conversation: conversation.diagnostics,
+          conversation: retainedConversation.diagnostics,
           sections: Object.fromEntries(
             Object.entries(context).map(([key, value]) => [
               key,
@@ -1226,7 +1468,9 @@ async function prepareOwnedDecision(
     completed = true;
     return prepared;
   } finally {
+    conversationOwner.dispose();
     if (!completed) {
+      formattingOwner.dispose();
       ticket?.release();
       reflectionTicket?.release();
       fence.release();

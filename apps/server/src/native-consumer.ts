@@ -47,6 +47,16 @@ export function createNativeConsumerScope() {
     }
   };
   return {
+    runSync<T>(operation: () => T): T {
+      if (ending) throw new Error('The native consumer owner was released.');
+      active++;
+      try {
+        return scopes.run(scope, operation);
+      } finally {
+        active--;
+        finish();
+      }
+    },
     async run<T>(operation: () => Promise<T>): Promise<T> {
       if (ending) throw new Error('The native consumer owner was released.');
       active++;

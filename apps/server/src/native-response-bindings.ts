@@ -6,7 +6,7 @@ import type {
   NativeNpcSubjectOrdinal,
 } from './native-npc-sources.js';
 import type { CapturedSituation } from './situation-context.js';
-import type { CurrentMemorySource } from './memory-repository.js';
+import type { ConversationSource, CurrentMemorySource } from './memory-repository.js';
 import type { NativeFormattedNpcOffer } from './native-npc-candidates.js';
 import type { nativeResponseReferences } from './native-response-context.js';
 import { nativeReceiptLocator } from './native-temporal-context.js';
@@ -23,6 +23,7 @@ export function nativeResponseSelection(input: {
   knowledge: Readonly<Record<string, ObserverSubject>>;
   situation: CapturedSituation;
   sources: readonly CurrentMemorySource[];
+  conversationEvidence: readonly Pick<ConversationSource, 'id' | 'revision'>[];
   actions: readonly Pick<NativeFormattedNpcOffer, 'id' | 'ordinal'>[];
   actionSource: 'original' | 'current';
   prototypeSource: 'original' | 'current';
@@ -135,17 +136,27 @@ export function nativeResponseSelection(input: {
     }
     throw new Error('The native response reference has no acquired subject source.');
   };
-  const evidence = input.sources.flatMap((source) => {
-    if (source.receipt) return [];
+  const admittedEvidence = (
+    kind: CurrentMemorySource['sourceKind'],
+    id: string,
+    revision: string,
+  ) => {
     const found = personal.find(
       ({ record }) =>
-        record.reference.kind === source.sourceKind &&
-        record.reference.id === source.id &&
-        record.reference.revision === source.revision,
+        record.reference.kind === kind &&
+        record.reference.id === id &&
+        record.reference.revision === revision,
     );
     if (!found) throw new Error('Included personal evidence has no native admitted body.');
-    return [{ inventory: found.inventory, ordinal: found.ordinal }];
-  });
+    return { inventory: found.inventory, ordinal: found.ordinal };
+  };
+  const evidence = input.sources.flatMap((source) =>
+    source.receipt ? [] : [admittedEvidence(source.sourceKind, source.id, source.revision)],
+  );
+  // Source binds exact conversation turns after recall, even when the
+  // conversation removed their duplicate recall candidates.
+  for (const turn of input.conversationEvidence)
+    evidence.push(admittedEvidence('awareness', turn.id, turn.revision));
   const acquired = original.facts.perception.cut.acquired;
   const currentFacets = original.facts.perception.cut.current;
   const observations = Object.entries(situation.observationReferences).map(

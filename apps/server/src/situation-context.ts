@@ -1624,6 +1624,7 @@ export async function expandSituation(
   readHistory: (
     query: import('./temporal-storage.js').TemporalHistoryQuery,
   ) => Promise<SituationHistoryPage>,
+  jsonSize: (value: unknown) => number = (value) => Buffer.byteLength(JSON.stringify(value)),
 ) {
   const { policy, presentation: world, actorId, at } = captured;
   if (queries.length > policy.maximumQueries) throw new Error('Too many situation queries.');
@@ -1639,7 +1640,7 @@ export async function expandSituation(
     visited: policy.queryVisits - visits,
     coverage: results.length === queries.length ? 'requested-batch' : 'partial',
   });
-  const encodedBytes = () => Buffer.byteLength(JSON.stringify(wire()));
+  const encodedBytes = () => jsonSize(wire());
   const subjects = new Map<string, string>();
   for (const [handle, track] of captured.subjectReferences) {
     subjects.set(handle, track);
@@ -1774,7 +1775,7 @@ export async function expandSituation(
         // Fit this result's full envelope before choosing rows. Outer trimming
         // cannot prune the history's separate acquisition-frame dictionary.
         const envelopeBytes =
-          Buffer.byteLength(JSON.stringify({ query, result: null })) -
+          jsonSize({ query, result: null }) -
           Buffer.byteLength('null') +
           (results.length ? 1 : 0) +
           (results.length + 1 === queries.length

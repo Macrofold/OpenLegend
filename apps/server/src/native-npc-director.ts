@@ -1,4 +1,21 @@
 import { releaseNativeProduct } from './native-consumer.js';
+import {
+  joinNativeDecisionText,
+  nativeDecisionJsonSize,
+  nativeDecisionJsonText,
+} from './native-decision-prompt.js';
+import {
+  admitDecisionGraph,
+  decisionArrayBytes,
+  decisionObjectBytes,
+  decisionRecordEntries,
+  decisionTextBytes,
+} from './native-decision-allocation.js';
+import {
+  reconsiderationContextValue,
+  reconsiderationResponseTask,
+  RECONSIDERATION_RESPONSE_QUESTION,
+} from './decision-preparation.js';
 import { ContextBudgetError } from './context.js';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { dispatchEmbedding } from './embedding-dispatch.js';
@@ -8,7 +25,6 @@ import type { HttpPublication } from '@open-legend/network';
 import { humanRequestId } from './human-request-id.js';
 import type { RequestScope } from './authority.js';
 import { randomUUID } from 'node:crypto';
-import { z } from 'zod';
 import {
   activeGoalTexts,
   nativeText,
@@ -58,6 +74,7 @@ import {
   permitsEscalation,
   level1EscalationReason,
   decisionFailureReason,
+  prepareDecisionTask,
   type DecisionTask,
 } from './decision-task.js';
 import { recordDecisionTiming, type DecisionPublication } from './decision-publication.js';
@@ -139,11 +156,13 @@ const judgmentMeter = (request: Pick<JudgeRequest, 'state' | 'questions'>): Deci
 /** Actual actor-owned NPC jobs over native reads. The shared queue, execution,
  * billing, escalation and SQL owners retain their ordinary Source semantics;
  * no TypeScript world or model-created binding map enters this composition. */
-/** Situation queries are host preparation metadata. Source removes them before
- * parsing/publication of the canonical actor response, including a null query. */
-function responseEffects(value: ActorResponse & { queries?: unknown }): ActorResponse {
-  const { queries: _queries, ...response } = value;
-  return response;
+/** A fresh parsed response only stores canonical effects. Source removes
+ * situation-query metadata and only writes an appraisal when one is proposed. */
+function responseEffects(parsed: ActorResponse & { queries?: unknown }): ActorResponse {
+  delete parsed.queries;
+  for (const operation of parsed.operations)
+    if (operation.appraise === null) delete operation.appraise;
+  return parsed;
 }
 
 export class NativeNpcDirector {
@@ -754,7 +773,7 @@ export class NativeNpcDirector {
         size: {
           instructions: bytes(request.instructions),
           context: bytes(request.context),
-          schema: bytes(request.schema),
+          schema: nativeDecisionJsonSize(this.service.world, request.schema),
         },
       },
       request.publication,
@@ -1080,26 +1099,40 @@ export class NativeNpcDirector {
         },
       );
       const generate = async (suffix: string) => {
-        let request: Omit<GenerateRequest, 'requestId' | 'signal'> = {
-          task: 'npc_response',
-          actorScope: run.actorId,
-          execution: level === 2 ? 'fast' : 'complex',
-          ...('macrofoldDeployment' in selectedModel
-            ? { macrofoldDeployment: selectedModel.macrofoldDeployment }
-            : { model: selectedModel.model, reasoningEffort: selectedModel.reasoningEffort }),
-          maxOutputTokens: selectedModel.maxOutputTokens,
-          instructions: prepared.instructions + ` ${SITUATION_QUERY_INSTRUCTIONS}`,
-          context: prepared.prompt,
-          schema: z.toJSONSchema(prepared.schema, { target: 'draft-7', io: 'input' }),
-        };
-        if (request.macrofoldDeployment)
-          request = await this.macrofold.prepareDeploymentGeneration(
-            request,
-            selectedModel.structuredOutput,
-            run.controller.signal,
-            run.validateJudgmentSource!,
-          );
-        return this.generate(run, request, suffix, level);
+        const schema = prepared.requestSchema();
+        let instructions: ReturnType<typeof joinNativeDecisionText> | undefined;
+        try {
+          if (!prepared.queryUsed)
+            instructions = joinNativeDecisionText(
+              this.service.world,
+              prepared.instructions,
+              ' ',
+              SITUATION_QUERY_INSTRUCTIONS,
+            );
+          let request: Omit<GenerateRequest, 'requestId' | 'signal'> = {
+            task: 'npc_response',
+            actorScope: run.actorId,
+            execution: level === 2 ? 'fast' : 'complex',
+            ...('macrofoldDeployment' in selectedModel
+              ? { macrofoldDeployment: selectedModel.macrofoldDeployment }
+              : { model: selectedModel.model, reasoningEffort: selectedModel.reasoningEffort }),
+            maxOutputTokens: selectedModel.maxOutputTokens,
+            instructions: instructions?.text ?? prepared.instructions,
+            context: prepared.prompt,
+            schema,
+          };
+          if (request.macrofoldDeployment)
+            request = await this.macrofold.prepareDeploymentGeneration(
+              request,
+              selectedModel.structuredOutput,
+              run.controller.signal,
+              run.validateJudgmentSource!,
+            );
+          return await this.generate(run, request, suffix, level);
+        } finally {
+          if (instructions) releaseNativeProduct(instructions);
+          releaseNativeProduct(schema);
+        }
       };
       let value = await generate('attempt:0:generate');
       const queries = readSituationQueryResponse(value, prepared.situation.policy.maximumQueries);
@@ -1243,6 +1276,7 @@ export class NativeNpcDirector {
   ): Promise<PreparedReconsideration> {
     const state = job.decision;
     if (!state?.higher) throw new Error('Missing admitted reconsideration.');
+    const higher = state.higher;
     const run: Run = {
       actorId: state.actorId,
       physicalLife: state.physicalLife,
@@ -1269,12 +1303,7 @@ export class NativeNpcDirector {
       );
       const tasks = (): Record<string, DecisionTask> => ({
         q0: response
-          ? {
-              kind: 'response',
-              question:
-                'Propose the still-unresolved response to this initiating situation. Speech is optional unless an addressed reply is needed. Use only supplied operations and handles.',
-              valueSchema: source.schema,
-            }
+          ? reconsiderationResponseTask(source.schema, source.queryUsed)
           : {
               kind: 'choice',
               question:
@@ -1302,6 +1331,77 @@ export class NativeNpcDirector {
         sourceTime: source.diagnostics.sourceTime,
         current: () => source.current(),
         dispatch: (start) => source.publish(start),
+        prepareRequest: () => {
+          const capacity = this.service.world;
+          const count = source.offerCount;
+          const selected = admitDecisionGraph(
+            capacity,
+            decisionObjectBytes(1) +
+              decisionObjectBytes(4) +
+              (response
+                ? decisionTextBytes(
+                    RECONSIDERATION_RESPONSE_QUESTION.length +
+                      1 +
+                      SITUATION_QUERY_INSTRUCTIONS.length,
+                  )
+                : decisionObjectBytes(count) +
+                  2 * decisionArrayBytes(count) +
+                  count * (decisionObjectBytes(2) + decisionArrayBytes(2))),
+            tasks,
+          );
+          let input: ReturnType<typeof nativeDecisionJsonText> | undefined;
+          let guidance: ReturnType<typeof nativeDecisionJsonText> | undefined;
+          try {
+            const character = source.context;
+            const agency = character['agency'] as Record<string, unknown>;
+            const projection = admitDecisionGraph(
+              capacity,
+              decisionObjectBytes(7) +
+                decisionObjectBytes(decisionRecordEntries(character)) +
+                decisionObjectBytes(decisionRecordEntries(agency)) +
+                decisionObjectBytes(2) +
+                decisionArrayBytes(count) +
+                count * decisionObjectBytes(2),
+              () =>
+                reconsiderationContextValue({
+                  sourceTime: source.diagnostics.sourceTime,
+                  context: character,
+                  selectedSections: source.selectedSections,
+                  queryUsed: source.queryUsed,
+                  response,
+                  expansion: source.queryDisclosure,
+                  offered: response ? source.offered : [],
+                  appraisals: source.appraisalContext,
+                  reason: higher.reason,
+                }),
+            );
+            try {
+              input = nativeDecisionJsonText(capacity, projection);
+            } finally {
+              releaseNativeProduct(projection);
+            }
+            guidance = nativeDecisionJsonText(
+              capacity,
+              this.service.definitions.facts.definitions.cognitionPolicy.actionGuidance,
+            );
+            const request = prepareDecisionTask(selected, input.text, guidance.text, capacity);
+            return {
+              tasks: selected,
+              request,
+              jsonSize: (value) => nativeDecisionJsonSize(capacity, value),
+              release: () => {
+                releaseNativeProduct(request);
+                releaseNativeProduct(selected);
+              },
+            };
+          } catch (error) {
+            releaseNativeProduct(selected);
+            throw error;
+          } finally {
+            if (input) releaseNativeProduct(input);
+            if (guidance) releaseNativeProduct(guidance);
+          }
+        },
         refresh: (job, refreshSignal) =>
           this.prepareHigher(job, refreshSignal, undefined, intake, semanticCauseOrdinals),
         dispose: () => {
@@ -1336,10 +1436,12 @@ export class NativeNpcDirector {
               ...(!value.operations.length ? { continued: true } : {}),
             },
           };
+          const ticket = source.ticket;
+          source.retireContext();
           return this.service.applyNpcResponse({
             actorId: state.actorId,
             responseId: state.higher!.id,
-            ticket: source.ticket,
+            ticket,
             response: value,
             generation: state.generation,
             current: () =>

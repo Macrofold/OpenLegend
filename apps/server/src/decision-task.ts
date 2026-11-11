@@ -17,6 +17,22 @@ import {
   type DecisionAppraisalProposal,
 } from './cognition-contracts.js';
 import type { Level1Outcome } from './level1-selection.js';
+import type { NativeWorld } from '@open-legend/native-simulation';
+import {
+  admitDecisionGraph,
+  decisionArrayBytes,
+  decisionObjectBytes,
+  decisionRecordEntries,
+  projectDecisionSchema,
+} from './native-decision-allocation.js';
+import {
+  releaseNativeProduct,
+  reserveNativeJsonTextWorkspace,
+  retainNativeSources,
+} from './native-consumer.js';
+import { nativeDecisionJsonSize, nativeDecisionJsonText } from './native-decision-prompt.js';
+
+type RequestCapacity = Pick<NativeWorld, 'reserveConsumerBytes'>;
 
 type WireResponse = z.infer<typeof responseSchema>;
 export type DecisionValue =
@@ -169,17 +185,24 @@ export function prepareDecisionTask(
   tasks: Record<string, DecisionTask>,
   context: string,
   worldInstructions = '',
+  capacity?: RequestCapacity,
 ) {
-  const prepared = compileDecisionTask(tasks, context, worldInstructions);
-  if (
-    Buffer.byteLength(prepared.instructions) + Buffer.byteLength(prepared.context) >
-      DECISION_LIMITS.inputBytes ||
-    Buffer.byteLength(JSON.stringify(prepared.schema)) > DECISION_LIMITS.schemaBytes
-  )
-    throw new Error(
-      `Complete required decision input or schema exceeds its byte allowance: ${Buffer.byteLength(prepared.instructions) + Buffer.byteLength(prepared.context)} input bytes; ${Buffer.byteLength(JSON.stringify(prepared.schema))} schema bytes.`,
-    );
-  return prepared;
+  const prepared = compileDecisionTask(tasks, context, worldInstructions, capacity);
+  try {
+    const inputBytes =
+      Buffer.byteLength(prepared.instructions) + Buffer.byteLength(prepared.context);
+    const schemaBytes = capacity
+      ? nativeDecisionJsonSize(capacity, prepared.schema)
+      : Buffer.byteLength(JSON.stringify(prepared.schema));
+    if (inputBytes > DECISION_LIMITS.inputBytes || schemaBytes > DECISION_LIMITS.schemaBytes)
+      throw new Error(
+        `Complete required decision input or schema exceeds its byte allowance: ${inputBytes} input bytes; ${schemaBytes} schema bytes.`,
+      );
+    return prepared;
+  } catch (error) {
+    if (capacity) releaseNativeProduct(prepared);
+    throw error;
+  }
 }
 
 /** Pure prompt/schema/decoder compilation, without grading keys or dispatch authority. */
@@ -187,6 +210,31 @@ export function compileDecisionTask(
   tasks: Record<string, DecisionTask>,
   context: string,
   worldInstructions = '',
+  capacity?: RequestCapacity,
+) {
+  if (!capacity) return compileTaskGraph(tasks, context, worldInstructions);
+  const count = decisionRecordEntries(tasks);
+  let bytes = decisionArrayBytes(count) + decisionObjectBytes(count);
+  for (const key in tasks) {
+    if (!Object.hasOwn(tasks, key)) continue;
+    const task = tasks[key]!;
+    // Answer/status/reason/value wrappers and their fixed fields. An existing
+    // selected response/appraisal schema is borrowed by its request wrapper.
+    bytes += decisionObjectBytes(8) * 12;
+    if (task.valueSchema) continue;
+    const values = task.choices ?? task.categories ?? task.candidates;
+    if (values) bytes += decisionRecordEntries(values) * decisionObjectBytes(1);
+  }
+  return admitDecisionGraph(capacity, bytes, () =>
+    compileTaskGraph(tasks, context, worldInstructions, capacity),
+  );
+}
+
+function compileTaskGraph(
+  tasks: Record<string, DecisionTask>,
+  context: string,
+  worldInstructions: string,
+  capacity?: RequestCapacity,
 ) {
   const keys = Object.keys(tasks);
   if (!keys.length) throw new Error('A decision requires an unresolved question.');
@@ -204,11 +252,13 @@ export function compileDecisionTask(
   );
   const schema = z.object({ answers: z.object(answerSchemas).strict() }).strict();
   // Providers emit schema inputs; decoding can then bind captured native values.
-  const jsonSchema = z.toJSONSchema(schema, {
-    target: 'draft-7',
-    unrepresentable: 'throw',
-    io: 'input',
-  });
+  const jsonSchema = capacity
+    ? projectDecisionSchema(capacity, schema)
+    : z.toJSONSchema(schema, {
+        target: 'draft-7',
+        unrepresentable: 'throw',
+        io: 'input',
+      });
   const questions = Object.fromEntries(
     Object.entries(tasks).map(([id, task]) => {
       const { valueSchema: _schema, ...description } = task;
@@ -216,55 +266,72 @@ export function compileDecisionTask(
     }),
   );
   const instructions = DECISION_INSTRUCTIONS;
-  const input = JSON.stringify({
+  const inputValue = {
     permittedContext: context,
     installedWorldGuidance: worldInstructions,
     questions,
-  });
-  return {
-    instructions,
-    context: input,
-    schema: jsonSchema,
-    inputDigest: digest({ instructions, input }),
-    schemaDigest: digest(jsonSchema),
-    decode(raw: unknown): Record<string, DecisionAnswer> {
-      const parsed = schema.parse(raw);
-      const answers: Record<string, DecisionAnswer> = {};
-      for (const key of keys) {
-        const answer = parsed.answers[key]!;
-        if (answer.status === 'answered') {
-          if (answer.value === null || answer.reason !== null)
-            throw new Error('Invalid answered decision.');
-          const value = answer.value;
-          if ('keep' in value) value.keep = [...new Set(value.keep)];
-          answers[key] = { status: 'answered', value, reason: null };
-        } else {
-          if (answer.value !== null || answer.reason === null)
-            throw new Error('Invalid abstained decision.');
-          answers[key] = { status: 'abstained', value: null, reason: answer.reason };
-        }
-      }
-      return answers;
-    },
   };
+  let inputText: ReturnType<typeof nativeDecisionJsonText> | undefined;
+  const inputDigestValue = (input: string) => ({ instructions, input });
+  const digestInput = (value: unknown) => {
+    const workspace = capacity && reserveNativeJsonTextWorkspace(capacity, value);
+    try {
+      return digest(value);
+    } finally {
+      workspace?.release();
+    }
+  };
+  try {
+    if (capacity) inputText = nativeDecisionJsonText(capacity, inputValue);
+    const input = inputText?.text ?? JSON.stringify(inputValue);
+    const compiled = {
+      instructions,
+      context: input,
+      schema: jsonSchema,
+      inputDigest: digestInput(inputDigestValue(input)),
+      schemaDigest: digestInput(jsonSchema),
+      decode(raw: unknown): Record<string, DecisionAnswer> {
+        const parsed = schema.parse(raw);
+        const answers: Record<string, DecisionAnswer> = {};
+        for (const key of keys) {
+          const answer = parsed.answers[key]!;
+          if (answer.status === 'answered') {
+            if (answer.value === null || answer.reason !== null)
+              throw new Error('Invalid answered decision.');
+            const value = answer.value;
+            if ('keep' in value) value.keep = [...new Set(value.keep)];
+            answers[key] = { status: 'answered', value, reason: null };
+          } else {
+            if (answer.value !== null || answer.reason === null)
+              throw new Error('Invalid abstained decision.');
+            answers[key] = { status: 'abstained', value: null, reason: answer.reason };
+          }
+        }
+        return answers;
+      },
+    };
+    return inputText ? retainNativeSources(compiled, jsonSchema, inputText) : compiled;
+  } finally {
+    if (capacity) releaseNativeProduct(jsonSchema);
+    if (inputText) releaseNativeProduct(inputText);
+  }
 }
 export function higherDecisionAllowance(
   config: AppConfig,
   request: ReturnType<typeof prepareDecisionTask>,
+  jsonSize: (value: unknown) => number = (value) => Buffer.byteLength(JSON.stringify(value)),
 ): number {
   if (!modelTokenPrices(config.llmModelPrices, DECISION_MODEL))
     throw new Error('Exact Luna fallback pricing is not configured.');
   const bytes =
-    Buffer.byteLength(
-      JSON.stringify({
-        model: DECISION_MODEL,
-        instructions: request.instructions,
-        input: request.context,
-        schema: request.schema,
-        reasoning: { effort: DECISION_EFFORT },
-        store: false,
-      }),
-    ) + 4096;
+    jsonSize({
+      model: DECISION_MODEL,
+      instructions: request.instructions,
+      input: request.context,
+      schema: request.schema,
+      reasoning: { effort: DECISION_EFFORT },
+      store: false,
+    }) + 4096;
   return generationAllowance(
     config,
     DECISION_MODEL,

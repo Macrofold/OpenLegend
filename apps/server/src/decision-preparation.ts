@@ -24,6 +24,7 @@ import type { RecallService } from './recall.js';
 import { digest, type JobRecord } from './store.js';
 import { compileDecisionTask, prepareDecisionTask, type DecisionTask } from './decision-task.js';
 import { DECISION_LIMITS } from './decision-state.js';
+import type { DecisionReason } from './decision-state.js';
 import type { WorldService } from './world-service.js';
 import {
   expandDecisionSituation,
@@ -32,6 +33,125 @@ import {
   withSituationQueries,
 } from './decision-situation-query.js';
 import { situationProposalBinding, situationResponseCapabilities } from './situation-context.js';
+
+export function reconsiderationResponseCapabilities(
+  capabilities: Parameters<typeof boundResponseSchema>[2],
+) {
+  return { ...capabilities, proposals: false };
+}
+
+export function reconsiderationResponseTask(
+  valueSchema: NonNullable<DecisionTask['valueSchema']>,
+  queryUsed: boolean,
+): DecisionTask {
+  return {
+    kind: 'response',
+    question:
+      RECONSIDERATION_RESPONSE_QUESTION + (!queryUsed ? ` ${SITUATION_QUERY_INSTRUCTIONS}` : ''),
+    valueSchema,
+  };
+}
+
+export const RECONSIDERATION_RESPONSE_QUESTION =
+  'Propose the still-unresolved response to this initiating situation. Speech is optional unless an addressed reply is needed. Use only supplied operations and handles.';
+
+// The response envelope exposes the current character fields in the same
+// order as prepareDecision. Optional sections keep their selected encounter
+// order; the ordinary readable view may also contain empty display headings.
+const currentCharacterFields = [
+  'situationQueries',
+  'receivedSituation',
+  'recentWorkResults',
+  'simTime',
+  'outing',
+  'activityRequests',
+  'inspectedContainer',
+  'supplyOpportunities',
+  'inspectedActions',
+  'inspectedMethods',
+  'capabilities',
+  'expressionGuidance',
+  'stimulus',
+  'notepad',
+  'knowledgeInstructions',
+  'triggerFacts',
+  'navigation',
+  'namedTimes',
+  'outputFamilies',
+  'currentSupport',
+  'publicSurfaces',
+  'intentActions',
+  'identity',
+  'feelings',
+  'requiredChoices',
+  'aboutMe',
+  'now',
+  'body',
+  'contacts',
+  'methodCoverage',
+  'inventoryCoverage',
+  'commitments',
+  'activityCoverage',
+  'goal',
+  'agency',
+  'planOffers',
+  'conversation',
+  'knowledgeCoverage',
+] as const;
+const endingCharacterFields = ['reconsideration', 'carryingConcern', 'references'] as const;
+
+function reconsiderationCharacter(
+  context: Record<string, unknown>,
+  queryAvailable: boolean,
+  selectedSections?: readonly string[],
+) {
+  if (!selectedSections) return { ...context, situationQueries: queryAvailable };
+  const character: Record<string, unknown> = {};
+  for (const key of currentCharacterFields)
+    if (Object.hasOwn(context, key)) character[key] = context[key];
+  character['situationQueries'] = queryAvailable;
+  const capability = context['capabilities'] as
+    | { speech: boolean; expressions: boolean }
+    | undefined;
+  if (capability)
+    character['capabilities'] = { speech: capability.speech, expressions: capability.expressions };
+  const agency = context['agency'] as Record<string, unknown> | undefined;
+  if (agency) character['agency'] = { outcomeCoverage: agency['outcomeCoverage'], ...agency };
+  for (const key of selectedSections)
+    if (!Object.hasOwn(character, key) && !endingCharacterFields.some((ending) => ending === key))
+      character[key] = context[key];
+  if (Object.hasOwn(context, 'experience')) character['experience'] = context['experience'];
+  for (const key of endingCharacterFields)
+    if (Object.hasOwn(context, key)) character[key] = context[key];
+  return character;
+}
+
+export function reconsiderationContextValue(input: {
+  sourceTime: number;
+  context: Record<string, unknown>;
+  selectedSections?: readonly string[];
+  queryUsed: boolean;
+  response: boolean;
+  expansion?: object;
+  offered: readonly { id: string; description: string }[];
+  appraisals: unknown;
+  reason: DecisionReason;
+}) {
+  return {
+    sourceTime: input.sourceTime,
+    observationPolicy:
+      'Continuous meters and feeling decay are observations from sourceTime; their meaningful conditions must remain unchanged. All current execution prerequisites are checked again.',
+    character: reconsiderationCharacter(
+      input.context,
+      input.response && !input.queryUsed,
+      input.selectedSections,
+    ),
+    ...(input.expansion ? { requestedReceivedEvidence: input.expansion } : {}),
+    ...(input.response ? { choices: input.offered } : {}),
+    appraisals: input.appraisals,
+    reconsiderationReason: input.reason,
+  };
+}
 
 /** The same response owner handles a supplied action on either model route. */
 export function knownDecisionResponse(
@@ -146,15 +266,14 @@ export async function prepareReconsideration(
         Object.keys(prepared.binding.actions).filter(
           (id) => !/^a\d+$/.test(id) || offered.some((option) => option.id === id),
         ),
-        {
+        reconsiderationResponseCapabilities({
           speech: canSpeak(entityGet(service.world.entities, actorId)),
           expressions: supportsManualWork(entityGet(service.world.entities, actorId)),
           expressionVerbs: selectedResponseExpressions(
             service.world,
             supportsManualWork(entityGet(service.world.entities, actorId)),
           ).expressionVerbs,
-          proposals: false,
-        },
+        }),
         Object.keys(prepared.binding.knowledgeReferences ?? {}),
         namedClockTimes(service.world),
         activityRequestDescriptors(service.world),
@@ -192,13 +311,7 @@ export async function prepareReconsideration(
               valueSchema: appraisal!.schema,
             }
           : response
-            ? {
-                kind: 'response',
-                question:
-                  'Propose the still-unresolved response to this initiating situation. Speech is optional unless an addressed reply is needed. Use only supplied operations and handles.' +
-                  (!queryUsed ? ` ${SITUATION_QUERY_INSTRUCTIONS}` : ''),
-                valueSchema: responseSchemaFor(offered),
-              }
+            ? reconsiderationResponseTask(responseSchemaFor(offered), queryUsed)
             : {
                 kind: 'choice',
                 question:
@@ -208,16 +321,18 @@ export async function prepareReconsideration(
                 ),
               },
       } satisfies Record<string, DecisionTask>,
-      context: JSON.stringify({
-        sourceTime,
-        observationPolicy:
-          'Continuous meters and feeling decay are observations from sourceTime; their meaningful conditions must remain unchanged. All current execution prerequisites are checked again.',
-        character: { ...prepared.context, situationQueries: response && !queryUsed },
-        ...(expansion ? { requestedReceivedEvidence: expansion } : {}),
-        ...(response ? { choices: offered } : {}),
-        appraisals: appraisal?.context,
-        reconsiderationReason: higher.reason,
-      }),
+      context: JSON.stringify(
+        reconsiderationContextValue({
+          sourceTime,
+          context: prepared.context,
+          queryUsed,
+          response,
+          expansion,
+          offered,
+          appraisals: appraisal?.context,
+          reason: higher.reason,
+        }),
+      ),
       instructions: JSON.stringify(prepared.actionGuidance),
     });
     const fits = (offered: typeof prepared.offered) => {

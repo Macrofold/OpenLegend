@@ -889,11 +889,12 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     requiredAppraisals: readonly AppraisalScope[],
     options: Parameters<NativeNpcCapture['prepareChoices']>[2] & {
       consumer?: NativeNpcConsumer;
+      choices?: false;
     } = {},
   ) {
     return this.lane.run(async () => {
       this.assertAdmission();
-      const { consumer, ...choiceOptions } = options;
+      const { consumer, choices = true, ...choiceOptions } = options;
       let capture = await NativeNpcCapture.capture(
         this.world,
         actorId,
@@ -927,7 +928,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         }
         // Tail resolution changes derived metadata only. Choice setup and the
         // mental/history read still share their exact initial accepted cut.
-        await capture.prepareChoices(this.world, this.geometry, choiceOptions);
+        if (choices) await capture.prepareChoices(this.world, this.geometry, choiceOptions);
+        else choiceOptions.signal?.throwIfAborted();
         const cut = nativeScopedReadCut(
           await captureNativeReadCut(this.world, actorId),
           this.pending.liveReadCuts(),
@@ -2801,11 +2803,11 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         throw new DecisionClaimLost();
       authority = job.authority;
       if (input.claim) {
-        const capture = await NativeNpcCapture.capture(this.world, actorId, []);
-        try {
-          const own = capture.facts.self,
+        const claim = input.claim;
+        admission = await withNativeConsumerScope(async () => {
+          const own = (await NativeNpcIntake.refresh(this.world, actorId)).facts,
             actor = this.actors.get(actorId);
-          admission = {
+          const facts: DecisionClaimFacts = {
             worldId: this.worldId,
             timelineId: this.timelineId,
             generation: this.generation,
@@ -2819,11 +2821,9 @@ export class NativeWorldService implements NativePlayerRequestOwner {
               actor.cognition !== false &&
               !own.actionsBlocked,
           };
-          if (!decisionClaimCurrentFromRead(job, input.claim, admission))
-            throw new DecisionClaimLost();
-        } finally {
-          capture.release();
-        }
+          if (!decisionClaimCurrentFromRead(job, claim, facts)) throw new DecisionClaimLost();
+          return facts;
+        });
       } else if (!['generating', 'queued', 'judging'].includes(job.status) && !job.responseReady) {
         throw new DecisionClaimLost();
       }
