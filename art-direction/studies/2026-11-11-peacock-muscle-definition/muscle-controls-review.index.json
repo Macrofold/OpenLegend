@@ -1,0 +1,20 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "peacock-muscle-controls",
+    "revisionId": "muscle-controls-20261111-87a517eefb97",
+    "manifestSha256": "501b067499cb3e9069adf0de93c05ef69bee9f3fb4dc3e49bd3f29bb5cb3a3f0"
+  },
+  "files": {
+    "Peacock-muscle-controls-review.zip": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "87a517eefb97a9d78fb2e2330732b899c5c27373684f06ef610da5eeadd58455",
+      "bytes": 184246214,
+      "mediaType": "application/zip"
+    }
+  }
+}
