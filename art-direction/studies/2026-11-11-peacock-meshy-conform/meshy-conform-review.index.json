@@ -1,0 +1,20 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "peacock-meshy-conform",
+    "revisionId": "meshy-conform-20261111-b30199385c8f",
+    "manifestSha256": "20d0832bec8fc546cb3d35b476c78612b495232f7c1243b003fadaee44264f54"
+  },
+  "files": {
+    "Peacock-Meshy-MetaHuman-review.zip": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b30199385c8f077c45d1d81a199533115f5dcedaf51ce316512cdd374da358ec",
+      "bytes": 142794697,
+      "mediaType": "application/zip"
+    }
+  }
+}
