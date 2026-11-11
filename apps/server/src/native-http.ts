@@ -1068,6 +1068,7 @@ export async function createNativeGameServer(options: {
           error instanceof z.ZodError ||
           error instanceof SyntaxError ||
           error instanceof HistoryCursorError;
+        if (error instanceof OverloadError) response.setHeader('Retry-After', '1');
         return writeJson(
           response,
           authority
@@ -1085,7 +1086,9 @@ export async function createNativeGameServer(options: {
                 ? 'save'
                 : invalid
                   ? 'invalid-input'
-                  : 'server',
+                  : error instanceof OverloadError
+                    ? 'busy'
+                    : 'server',
             message:
               authority ||
               error instanceof OverloadError ||
