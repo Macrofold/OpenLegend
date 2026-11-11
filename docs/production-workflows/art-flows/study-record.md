@@ -17,7 +17,7 @@ One line: the current stage and what is true now, using the separate facts **cre
 - **Look:** what the [current art direction](README.md#3-read-the-look-from-the-art-direction) requires for this subject: target and rejects, proportion and scale rules, production notes, review conditions. Link the owners rather than copying long passages.
 - **Game facts:** real size in metres, handedness and carried things, supported actions, the visible states the simulation records, and the consumer that will use the files. Link each fact's owner.
 - **Model and motion:** for models and animation, the resolved rig or target, the exact clip list, the material choice and the output format; for finalization, the selected prototype or source and the required improvements. Link existing source and export settings instead of copying them.
-- **Signature:** for a person or creature, the two or three features that must identify it at play distance.
+- **Signature:** for a person or creature, the two or three features that must identify it at play distance. This is a recognition summary, not a substitute for the full visual references and component construction requirements.
 - **References:** each exact retained reference with its original source or filename, role, rights, and whether it may be uploaded to a generator.
 - **Required outputs** and the [play checks](profiles.md#play-checks) that apply.
 - **Plan line** as stated before spending.
@@ -61,7 +61,7 @@ provider job is not a qualified target export. See [Animation authoring](animati
 
 ### Review and remaining gaps
 
-Observed strengths and defects, fit with the brief and look, play-check results, critique findings and what was fixed. For production checks, name the export revision, tool or viewer, and conditions. Keep visual judgment, export checks and runtime evidence distinct. For an AF07 handoff/check trial, name the affected checks repeated under the [repair map](../assets-and-animation.md#repair-map-and-downstream-effects) and the prior evidence that remains valid.
+Observed strengths and defects, fit with the brief and look, play-check results, critique findings and what was fixed. Link the source/current comparisons and name remaining anatomical, construction, surface and source-to-export losses separately. Slider/handle counts and render counts do not establish likeness. For production checks, name the export revision, tool or viewer, and conditions. Keep visual judgment, export checks and runtime evidence distinct. For an AF07 handoff/check trial, name the affected checks repeated under the [repair map](../assets-and-animation.md#repair-map-and-downstream-effects) and the prior evidence that remains valid.
 
 **Cost:** balance before and after each paid batch, exact model IDs, request counts, dollar values (with the conversion used) and the running task total; mark unknowns. Note use of Mike's plan quotas (for example Claude Design) and his manual involvement.
 

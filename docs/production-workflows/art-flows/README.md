@@ -198,6 +198,14 @@ Judgment enters in predictable places: resolving views that disagree, inventing 
 
 The levels use the same vocabulary as the [runtime presentation contract](../../invention-art-pipeline.md#2-the-shared-presentation-contract): locks are its pinned features and free areas its cosmetic freedom; `exact` and `faithful` refine rendering, `interpretive` may redesign appearance.
 
+#### Keep the visual source authoritative
+
+For reference-matched work, the original images and accepted component views remain active inputs throughout construction, fitting and export. Descriptions, signature features, measurements and slider values supplement them; they never replace them. Give each maker and reviewer the actual relevant images and available geometry, not only a coordinator's summary. Derived views and generated meshes are interpretations: compare them back to the original before using them downstream. Mark hidden anatomy/construction and conflicting views as interpretations rather than measured facts.
+
+**Do not invent identity-bearing geometry or texture procedurally from a coarse description.** Use suitable existing art, reference-conditioned generation or direct artist modeling unless the procedural method has a source-derived reconstruction specification: relevant contours and cross-sections, landmark relationships, panel/overlap/edge construction, asymmetry, and texture placement, scale and material response. Attach the views or geometry that constrain those details, with observable comparison criteria. A long script, many parameters or an elaborate prose brief is not that specification. The resulting part must still pass direct visual comparison. This applies to features such as faces, brows, hair, garment folds and ornament; it does not prohibit scripts that preserve accepted art while fitting, transferring topology/weights, baking or exporting it.
+
+Use the [comparison loop](#matched-scale-comparison) while making the asset, before multiplying dependent work. Keep silhouette/proportion, regional modeling, surface finish and consumer conversion as separate judgments. A correct rig, complete anatomy, working equipment or successful export cannot compensate for a visibly wrong identity. Fix a failed component through its source or method; do not conceal it with clothing, lighting or texture. Reuse passing components and valid checks. If the current method cannot close a specific gap, preserve the best result and change the method within scope or report the missing capability; do not spend repeated iterations making unrelated detail.
+
 ## 3. Read the look from the art direction
 
 Before writing a brief, read the selected world's current art direction. For the bundled world that is [Current direction at a glance](../../../art-direction/decisions.md#current-direction-at-a-glance), which names the current world-art requirements, the interface direction, the concept-art decision and **how the current look changes production**. Read the creative brief or design system it links only for the subject at hand.
@@ -238,7 +246,7 @@ flowchart LR
 4. Search for reusable approved assets, library sources and existing family bodies or parts before planning new work.
 5. Write the brief in the study record ([§7](#7-working-files-ids-and-records)) using the [record outline](study-record.md#brief): purpose and the play moment it serves, settings, Look block, game facts and states, locks and free areas, references, consumer (where the files will be used), required outputs, play checks from the [profile](profiles.md), and the plan line.
 
-**Check:** another person could produce compatible work from the brief alone. **Stop:** if the request is only for a brief or prompt, deliver that text here. Otherwise continue within the requested scope.
+**Check:** another person has the brief and exact visual sources needed to produce compatible work without reconstructing the design from prose. **Stop:** if the request is only for a brief or prompt, deliver that text here. Otherwise continue within the requested scope.
 
 ### Stage 2 — Explore (only when no approved source exists)
 
@@ -298,6 +306,14 @@ Present choices as one sheet per decision: every candidate labelled with its ID,
 
 When fidelity matters, draw the export the way its consumer draws it and place it beside the corresponding part of the source at the same scale and background. Compare texture, colour, edges and proportions side by side; never report fidelity from memory or from separate screenshots. The first Gildmoss production pass flattened textured edges and dimmed the glass to about 60% of the study's brightness; Mike caught it by asking, and matched-scale sheets are the method that now prevents it.
 
+For reference-matched construction, repeat this comparison at the affected component boundaries, not only after final assembly:
+
+1. Show the original, any accepted intermediate and the current result together, including the views/crops that expose the disputed feature. Match pose, projection and lighting as far as the reference permits; a painted view is not a calibrated scan. Use contours/overlays and clay views for shape, textured views for surface, and the actual consumer for conversion losses.
+2. Identify the largest visible mismatch and its owner: anatomy or contour, construction, texture/material, pose, projection or lighting. Correct that cause, render again and check both the intended improvement and previously matching features. A numeric distance or image score can aid diagnosis but cannot establish likeness.
+3. Advance dependent work only when its required component fidelity holds. Preserve the high-quality source; compare before/after fitting, baking and reduction against it and the original so successive approximations do not accumulate. If budget and visible fidelity conflict, expose the tradeoff instead of silently simplifying a locked feature.
+
+Scale this loop to the requested change; it imposes no fixed iteration count or unrelated views on a small repair. Completion follows the requested visual result and acceptance boundary, not the number of controls, renders or passes. User limits and genuine unresolved capabilities remain stopping conditions.
+
 ### Independent critique
 
 For a substantial study, a production package or a new character or creature, ask a fresh reviewer (a separate agent or person with no editing authority) to critique the actual files against the brief and the look, at intended viewing conditions: appeal, originality, fit, consistency and fidelity. Turn each confirmed finding into a fix and, where it can recur, into a check in the recipe.
@@ -328,7 +344,7 @@ Recover submitted jobs rather than resubmitting them. For a tool that sends no c
   - Never work in a temporary or repository directory: asset payloads stay outside Git ([asset workflow](../../asset-workflow.md#where-files-belong)).
 - **Candidate IDs:** a stage letter and two digits, unique within the study: `c` concepts, `v` reference view sets, `m` models, `k` kits and other made assets, `f` finished revisions (`c01`, `v01`, `m03`, `f02`). Refer to them across threads as `<study-id>/m03`. Never renumber; a revision of `m03` becomes a new ID whose record names `m03` as its parent. Keep provider filenames in the record.
 - **Operations:** while a batch runs, keep its job IDs, status and committed cost in the record's Resume section, so an interrupted run can recover instead of resubmitting.
-- **One coordinator** owns the whole result. When work is delegated to another agent or person, give them only their assignment, the permitted references, the relevant constraints, the output folder and format, the stopping point and their share of the budget. The coordinator moves files and feedback, keeps one writer per source file, and keeps dependent steps in order; Mike never has to relay between specialists.
+- **One coordinator** owns the whole result. When work is delegated to another agent or person, give them their assignment, the actual permitted visual references under the [fidelity rule](#keep-the-visual-source-authoritative), relevant constraints, output folder and format, stopping point and share of the budget. The coordinator moves files and feedback, keeps one writer per source file, and keeps dependent steps in order; Mike never has to relay between specialists.
 - **Sessions and accounts:** reuse authorized sessions. Sign-ins, verification codes and payments are Mike's to complete through the host's handoff; never ask for credentials in the conversation. Review and pin any new external skill or tool before using it; a vendor's instructions grant no authority.
 - **Game environments:** a study needs no game database, app build or browser test run. Start a game or study server only when a requested look check, preview or integration needs it, and leave other tasks' running services alone.
 
