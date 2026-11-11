@@ -1,0 +1,149 @@
+{
+  "status": "published, fresh readback and exact-version independent recovery passed",
+  "scope": "This partial browser proof only; all earlier source/runtime/native/browser indices and recovery records remain unchanged.",
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-browser-qualification-proof-20261109",
+    "revisionId": "partial-one-wearer-recording01",
+    "manifestSha256": "9b8960551846c9b9836b59cb39ee62681af8ddf8bf449a621cea6297bd18c435"
+  },
+  "index": {
+    "file": "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/evidence/aws-task-cost01/resumed-verification01/final-browser-proof01/handoff01/resumed-browser-proof.index.json",
+    "bytes": 4576,
+    "sha256": "d81040738a8c8f2b502223e7de476c3c9967288fa2b035b7a4f28210bd4c9117"
+  },
+  "publicationOperationId": "mhp-resumed-browser-qualification-proof-20261109",
+  "privateRevisionApprovalOperationId": "mhp-resumed-browser-qualification-proof-20261109-rights",
+  "fileClaims": 15,
+  "logicalPayloadBytes": 2714280,
+  "metadataBytesIncludingArchive": 188794,
+  "mediaBytes": 2525486,
+  "ordinaryFreshLibraryReadback": {
+    "status": "passed",
+    "fileClaims": 15,
+    "bytes": 2714280,
+    "receipt": {
+      "file": "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/evidence/aws-task-cost01/resumed-verification01/final-browser-proof01/library-readback.json",
+      "bytes": 6025,
+      "sha256": "bca55f35148a644a66c0d75e3f0b845105cd0459021bd7463a916331af1e7e66"
+    }
+  },
+  "independentRecovery": {
+    "objectsIncludingCanonicalManifest": 16,
+    "bytes": 2719213,
+    "priorProofsReused": 0,
+    "authorityGenerationBefore": 288,
+    "authorityGenerationAfter": 288,
+    "durableReceipt": {
+      "reference": {
+        "boundary": "asset-recovery",
+        "accessDomain": "openlegend-assets",
+        "sha256": "cffa57449eda87d0472abe9ca6525771845358d969e6eae5c3b2e2ac63293b1c",
+        "bytes": 26928,
+        "mediaType": "application/json"
+      },
+      "location": {
+        "accountId": "027677879749",
+        "region": "us-east-2",
+        "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+        "key": "domains/openlegend-assets/blobs/sha256/cf/cffa57449eda87d0472abe9ca6525771845358d969e6eae5c3b2e2ac63293b1c",
+        "versionId": "sZc_82WWgLQufydLHJQauenxCNTKOdVK"
+      },
+      "readerHashVerified": true,
+      "authorityGeneration": 288,
+      "scope": "Exact partial browser proof only; durable new-unit recovery receipt, not a whole-catalogue checkpoint",
+      "completedAtUtc": "2026-11-09T00:15:57.153Z"
+    },
+    "receiptScope": "Exact new-unit source versions, copied and freshly downloaded by the separate recovery reader. No whole-catalogue recovery, historical redownload or new grant."
+  },
+  "losslessRawCaptureRestoration": {
+    "status": "passed",
+    "archiveSha256": "72346ff416fcd924067aab7f4056045744effbbf52a059bcdab442c0359fc972",
+    "archiveBytes": 107724,
+    "standardFormat": "POSIX tar inside gzip; ordinary extraction preserves every original raw byte.",
+    "rawCaptureCount": 6,
+    "rawCaptureBytes": 3002246,
+    "rawFiles": [
+      {
+        "path": "captures/a-one-1.json",
+        "bytes": 540556,
+        "sha256": "bde7c66abbc8e3d8f1261e1703322cc2cb31ece26fc84124776c266daa8e4baa",
+        "hashVerified": true
+      },
+      {
+        "path": "captures/a-one-2.json",
+        "bytes": 488827,
+        "sha256": "85be11aa85928a982114442ba74f4a59d03cdc3b931f9bf5934585617c61fcbe",
+        "hashVerified": true
+      },
+      {
+        "path": "captures/a-one-3.json",
+        "bytes": 488470,
+        "sha256": "780813138b7f4412a28cb14d753310391902ec97592d1eab8780957371b59b68",
+        "hashVerified": true
+      },
+      {
+        "path": "captures/a-one-3-corrected.json",
+        "bytes": 488611,
+        "sha256": "46e6ff349954f65815a0a8684e900d2bbe8b4766f05e1b5623e40fc0bfc57de5",
+        "hashVerified": true
+      },
+      {
+        "path": "captures/b-one-1.json",
+        "bytes": 507449,
+        "sha256": "796b3f9dcb1486169df1bb851797a57e3c3aeeaea3418291c803684e6b5cf5ab",
+        "hashVerified": true
+      },
+      {
+        "path": "captures/b-one-2.json",
+        "bytes": 488333,
+        "sha256": "8c9ea550a8542c9d661881288e9ea4196bcb6d7ba66063bf935f46e77ebe7102",
+        "hashVerified": true
+      }
+    ],
+    "discardedOriginalRetained": "captures/a-one-3.json",
+    "proof": {
+      "file": "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/evidence/aws-task-cost01/resumed-verification01/final-browser-proof01/raw-capture-independent-restore.json",
+      "bytes": 1849,
+      "sha256": "03aa85e9d95c2e8d6588e642167671ff4ea86deb350e4ec86cb5d20dbbfb0d11"
+    }
+  },
+  "qualification": {
+    "validOneWearerCaptures": 5,
+    "adjustableSamples": 3,
+    "fixedSamples": 2,
+    "matchedPairs": 2,
+    "discardedCaptureRetained": 1,
+    "actualRecordingSaved": true,
+    "recordingDurationIndependentlyDecoded": false,
+    "overallPerformancePassed": false,
+    "overallArtOrMovingFitAccepted": false,
+    "limits": "B3, four-wearer workloads, required slider/edit/lifetime checks and remaining visual/motion checks are incomplete. The Mac locked again. No new art or runtime selection was adopted."
+  },
+  "cleanup": {
+    "observedAtUtc": "2026-11-09T00:17:01.175516+00:00",
+    "ownedCommandGroupsGone": true,
+    "viewerPort3228ListenerPresent": false,
+    "parentReportedViewerExit": "Root viewer86951 closed normally at2026-11-09T00:08:43.326413Z; port3228 has no listener and the one-use ticket file was removed.",
+    "lastAuthorityClientClosedAtUtc": "2026-11-09T00:15:57.323593Z",
+    "noResourcesCapacityPermissionsChanged": true
+  },
+  "pauseAndComputeObservation": "Reported separately after the 300-second pause tail through CloudWatch only; this durable recovery locator does not change.",
+  "admission": {
+    "firstNewAuthorityConnectionAttemptUtc": "2026-11-08T23:51:59.605Z",
+    "hardDeadlineUtc": "2026-11-09T00:51:59.605Z",
+    "wholeTaskConservativeControlUsd": 9.85,
+    "standingTaskCeilingUsd": 10,
+    "actualAwsInvoiceSpend": "Unmeasured",
+    "providerSoftwareSpendUsd": 0,
+    "estimateIsNotTheControlOrAnInvoice": true,
+    "newMediaCapBytes": 20000000,
+    "newMetadataCapBytes": 2000000,
+    "newTransferCapBytes": 671088640,
+    "newRequestCap": 10000,
+    "resourcesCapacityOrGrantsChanged": false
+  }
+}

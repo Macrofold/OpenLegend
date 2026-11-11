@@ -2908,11 +2908,12 @@ export class WildernessScene implements WorldRenderer {
           : this.targeting
             ? 1
             : Math.min(1, (age - WORLD_HOVER_DELAY_MS) / WORLD_HOVER_FADE_MS);
+    // Loaded props can group their render meshes below a transform-only root.
     this.outline.update(
       fade > 0 && hovered
         ? hovered.model?.visible
           ? hovered.model.outlineMeshes
-          : hovered.sprite.render!.meshInstances
+          : hovered.meshes
         : NO_OUTLINE_MESHES,
       fade,
       !!hovered && this.selected !== hovered.view.id,

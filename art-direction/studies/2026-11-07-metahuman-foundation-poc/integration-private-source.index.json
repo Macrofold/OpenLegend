@@ -1,0 +1,230 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-integration-ready-private-source",
+    "revisionId": "source-normal-alias-brooch01",
+    "manifestSha256": "f837759ef6ae75558bb0937533c6e98911c0c904ea23c29e138edc2fd69099c1"
+  },
+  "files": {
+    "source-proof/integration-ready01/closed-sources.tar.xz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0b5f5e2f4a1a8b340cf03f8699fa3e1470e3bddf92f3563b775ef0b12bf6912b",
+      "bytes": 82950948,
+      "mediaType": "application/x-xz"
+    },
+    "source-proof/integration-ready01/original-cc-by-source.zip": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2dfe0594808d0d296649c613d764bb1192c3a59f6c78f6f58ace32aa966c59f6",
+      "bytes": 39976527,
+      "mediaType": "application/zip"
+    },
+    "source-proof/integration-ready01/inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fb4743011b713e5d4e6fb5b0f191ed3cc091c005a2b143a587509f7142b6669b",
+      "bytes": 997864,
+      "mediaType": "application/json"
+    },
+    "source-proof/integration-ready01/source-verification.tar.gz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "85010a2648e0d937017f1eaf199beb696d2d5a40a471e97ebef80f9d72568af9",
+      "bytes": 23870,
+      "mediaType": "application/gzip"
+    },
+    "source-proof/integration-ready01/aliases/c6432f925f8c940afc21c433ddf3b651cab6130b8acd1e61026170d5e852aa7c": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c6432f925f8c940afc21c433ddf3b651cab6130b8acd1e61026170d5e852aa7c",
+      "bytes": 2304965,
+      "mediaType": "image/png"
+    },
+    "source-proof/integration-ready01/aliases/19c0d16eed17d841cee0bbd5f4a2664ccabc813c149673cf18c68d19af7d8f0c": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "19c0d16eed17d841cee0bbd5f4a2664ccabc813c149673cf18c68d19af7d8f0c",
+      "bytes": 338899,
+      "mediaType": "image/png"
+    },
+    "source-proof/integration-ready01/aliases/3e3d47d0908126ddeb18331209ed28d28e5a62825cffc496c4a7fe7d2d44c272": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3e3d47d0908126ddeb18331209ed28d28e5a62825cffc496c4a7fe7d2d44c272",
+      "bytes": 22085,
+      "mediaType": "image/png"
+    },
+    "source-proof/integration-ready01/aliases/f1637df8e3401f6d7d1c1d57663fbae21913eb863a9e9a7fa95178fa434853ce": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f1637df8e3401f6d7d1c1d57663fbae21913eb863a9e9a7fa95178fa434853ce",
+      "bytes": 355116,
+      "mediaType": "image/png"
+    },
+    "source-proof/integration-ready01/aliases/4303044a6c7ff8bf60491f9a109a19a8da5022c37fca43b4458c93a0fd510217": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4303044a6c7ff8bf60491f9a109a19a8da5022c37fca43b4458c93a0fd510217",
+      "bytes": 463958,
+      "mediaType": "image/png"
+    },
+    "source-proof/integration-ready01/aliases/f485dcee6c772014352bcdd155bb5233124a27c748c7ccfba9c0ee6342f198c7": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f485dcee6c772014352bcdd155bb5233124a27c748c7ccfba9c0ee6342f198c7",
+      "bytes": 66255,
+      "mediaType": "image/png"
+    },
+    "source-proof/integration-ready01/aliases/0ee0f0b31b035cf0c64a524a60f632fc9ad6986a264167472e0ccaacb79299de": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0ee0f0b31b035cf0c64a524a60f632fc9ad6986a264167472e0ccaacb79299de",
+      "bytes": 14835,
+      "mediaType": "image/png"
+    },
+    "source-proof/integration-ready01/aliases/1ebed770f3955ee6b69441f60b20085e2c9736272ff335891a6e65e0db9f9af3": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1ebed770f3955ee6b69441f60b20085e2c9736272ff335891a6e65e0db9f9af3",
+      "bytes": 6409,
+      "mediaType": "image/png"
+    },
+    "source-proof/integration-ready01/aliases/e23b5f73ae98691f370eb39c72d91a3c5c629fe89251200ca10ccf13e784d865": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e23b5f73ae98691f370eb39c72d91a3c5c629fe89251200ca10ccf13e784d865",
+      "bytes": 3416752,
+      "mediaType": "image/png"
+    },
+    "source-proof/integration-ready01/aliases/b00d696a08d8a3943a3a68ac6253ce4bd18da4659e90c57f7a577669bdce4924": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b00d696a08d8a3943a3a68ac6253ce4bd18da4659e90c57f7a577669bdce4924",
+      "bytes": 818760,
+      "mediaType": "image/png"
+    },
+    "source-proof/integration-ready01/aliases/b2609a21614f886ae017f1f3c314e9d3dfb81b0eb30e0d0d0d560d78e30eec2f": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b2609a21614f886ae017f1f3c314e9d3dfb81b0eb30e0d0d0d560d78e30eec2f",
+      "bytes": 1512230,
+      "mediaType": "image/png"
+    },
+    "source-proof/integration-ready01/aliases/d389a5cb4d5fc4399aad701c98359de97da5ff8ff2aa3fb6fe61a180254cb8ad": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d389a5cb4d5fc4399aad701c98359de97da5ff8ff2aa3fb6fe61a180254cb8ad",
+      "bytes": 466677,
+      "mediaType": "image/png"
+    },
+    "source-proof/integration-ready01/aliases/58288434e60407482c779f86061461e67f626c3e35f8aa155da5d59f01378779": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "58288434e60407482c779f86061461e67f626c3e35f8aa155da5d59f01378779",
+      "bytes": 2672640,
+      "mediaType": "image/png"
+    },
+    "source-proof/integration-ready01/aliases/6d1fa28c458c7cf424e080369fd56507ce019929f06932679914a75435a96c59": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6d1fa28c458c7cf424e080369fd56507ce019929f06932679914a75435a96c59",
+      "bytes": 3322804,
+      "mediaType": "image/png"
+    },
+    "source-proof/integration-ready01/aliases/20d473d05fa051bae94646ddcfad4fcb55f385db7ea036a754f30430479f3949": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "20d473d05fa051bae94646ddcfad4fcb55f385db7ea036a754f30430479f3949",
+      "bytes": 321730,
+      "mediaType": "image/png"
+    },
+    "source-proof/integration-ready01/aliases/dba40848b47d17b8427eb43be0a6482230375400a0f56585e2783d772fa60ed1": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dba40848b47d17b8427eb43be0a6482230375400a0f56585e2783d772fa60ed1",
+      "bytes": 10482429,
+      "mediaType": "application/json"
+    },
+    "source-proof/integration-ready01/aliases/039a48c36c523122c4044b092200540dc9cbdc41d2468473ef484a59f02b8564": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "039a48c36c523122c4044b092200540dc9cbdc41d2468473ef484a59f02b8564",
+      "bytes": 10482132,
+      "mediaType": "application/json"
+    },
+    "source-proof/integration-ready01/aliases/231000ea5cccfdcaffb7edd75db22bda8068c1f29779f3d97480a57f4f1301df": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "231000ea5cccfdcaffb7edd75db22bda8068c1f29779f3d97480a57f4f1301df",
+      "bytes": 11266884,
+      "mediaType": "application/json"
+    },
+    "source-proof/integration-ready01/aliases/88025e574544202be93702004cecadd12ad618bb08569a62e83af3613f30ca96": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "88025e574544202be93702004cecadd12ad618bb08569a62e83af3613f30ca96",
+      "bytes": 11266587,
+      "mediaType": "application/json"
+    },
+    "source-proof/integration-ready01/aliases/db6b26b6cee4cb5272b2932b5c874d0f79f8787a2ae785ecc3a6efda790f6f1f": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "db6b26b6cee4cb5272b2932b5c874d0f79f8787a2ae785ecc3a6efda790f6f1f",
+      "bytes": 6378465,
+      "mediaType": "application/json"
+    },
+    "source-proof/integration-ready01/aliases/0c2376d721acd9102ab01c95efddad6fb2949933ac0dace20527d8bad733019f": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0c2376d721acd9102ab01c95efddad6fb2949933ac0dace20527d8bad733019f",
+      "bytes": 3451,
+      "mediaType": "application/json"
+    },
+    "source-proof/integration-ready01/aliases/b300160db237d7da91502439e1d5a2c480d8bb40fe6249d51058d1e3afe34613": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b300160db237d7da91502439e1d5a2c480d8bb40fe6249d51058d1e3afe34613",
+      "bytes": 6158442,
+      "mediaType": "application/json"
+    },
+    "source-proof/integration-ready01/aliases/ce960ddedee40a5da3d2108c3e43e43ad421d51b2454511565ec3a806b55d904": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ce960ddedee40a5da3d2108c3e43e43ad421d51b2454511565ec3a806b55d904",
+      "bytes": 3433,
+      "mediaType": "application/json"
+    },
+    "source-proof/integration-ready01/aliases/63dc2beb82e388163fc835ffdc73ecf82ef87b3f8f1771945b0a98f63095bf7a": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "63dc2beb82e388163fc835ffdc73ecf82ef87b3f8f1771945b0a98f63095bf7a",
+      "bytes": 6160209,
+      "mediaType": "application/json"
+    },
+    "source-proof/integration-ready01/aliases/3186b06458fc60fc7403e9cf797d80802c091cd9c72a95f2aabc1659ef6e8746": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3186b06458fc60fc7403e9cf797d80802c091cd9c72a95f2aabc1659ef6e8746",
+      "bytes": 3457,
+      "mediaType": "application/json"
+    },
+    "source-proof/integration-ready01/aliases/04dec1bd62625d06058bef91d30208d7375fe0767b59c803ef35915839acc748": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "04dec1bd62625d06058bef91d30208d7375fe0767b59c803ef35915839acc748",
+      "bytes": 6162666,
+      "mediaType": "application/json"
+    },
+    "source-proof/integration-ready01/aliases/f4bb6fac984c48c8a92abae05e7bb1fefc03101168d78bad06d0fb205baba86a": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f4bb6fac984c48c8a92abae05e7bb1fefc03101168d78bad06d0fb205baba86a",
+      "bytes": 3448,
+      "mediaType": "application/json"
+    }
+  }
+}

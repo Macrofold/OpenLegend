@@ -243,6 +243,7 @@ export function clientViteConfiguration(
         study: `${root}art-study.html`,
         worldStudy: `${root}scene-study.html`,
         survey: `${root}asset-survey.html`,
+        people: `${root}people-study.html`,
       }
     : { game: `${root}index.html`, 'network-tools': `${root}src/network-tools.ts` };
   return {
@@ -253,10 +254,10 @@ export function clientViteConfiguration(
         studies,
         resolve(
           options.indexPath ??
-            resolve(
-              workspace,
-              studies ? 'assets/locks/studies.json' : 'assets/locks/development.json',
-            ),
+            (studies
+              ? resolve(workspace, 'assets/locks/studies.json')
+              : (process.env['OPEN_LEGEND_ASSET_INDEX'] ??
+                resolve(workspace, 'assets/locks/development.json'))),
         ),
         options.localAssetDelivery ?? false,
       ),

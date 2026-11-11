@@ -1,0 +1,34 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-vivian-main-pilot-integration-proof",
+    "revisionId": "runtime03-main-final01",
+    "manifestSha256": "fcb61ce3871d74047a296e53ada3d093f3009d4ff3dfe4ff16ad9d098fc51012"
+  },
+  "files": {
+    "source-proof/main-game-pilot01-final/main-integration-proof.tar.xz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1c8ac2acde4f4bfd223b5d6162103b5b8b6e16f8f7bcc1e96194814b2b8b3757",
+      "bytes": 458951048,
+      "mediaType": "application/x-xz"
+    },
+    "source-proof/main-game-pilot01-final/inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "19dfab0ec5e1efd112cc22cfe7f76b5351b117e3c82c1411c4dbed505c485d6f",
+      "bytes": 1057312,
+      "mediaType": "application/json"
+    },
+    "source-proof/main-game-pilot01-final/summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d28dbe4518f8991772de74a9f958525a6800f350dcd1fefe8b997adec9bcf462",
+      "bytes": 4425,
+      "mediaType": "application/json"
+    }
+  }
+}

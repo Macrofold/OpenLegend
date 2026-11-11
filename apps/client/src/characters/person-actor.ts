@@ -308,6 +308,16 @@ export class PersonActor {
   get availableMotions(): readonly string[] {
     return this.family?.motion?.clips.map((clip) => clip.name) ?? [];
   }
+  get availableStrides(): readonly Stride[] {
+    return this.fittedMotion
+      .flatMap((clip) =>
+        clip.groundSpeed === undefined ||
+        !this.family?.motion?.clips.some((source) => source.name === clip.name && source.stride)
+          ? []
+          : [{ name: clip.name, groundSpeed: clip.groundSpeed, seconds: clip.duration }],
+      )
+      .sort((a, b) => a.groundSpeed - b.groundSpeed);
+  }
   get source(): CompiledPersonFamily | undefined {
     return this.family;
   }
@@ -393,19 +403,25 @@ export class PersonActor {
         const mesh = new pc.Mesh(this.environment.app.graphicsDevice);
         mesh.clear(true, true);
         mesh.skin = this.skin;
+        // The pinned renderer captures UV/tangent shader flags at construction.
+        // Supply the vertex format before creating its draw instance.
+        this.upload(mesh, source);
         const instance = new pc.MeshInstance(
           mesh,
           this.materials.material(source.materialId),
           this.node,
         );
         instance.skinInstance = source.jointWeights ? this.skinInstance : null;
-        instance.visible = instance.castShadow = false;
+        instance.visible = false;
+        // PlayCanvas registers shadow-caster membership only when the mesh is added.
+        // Visibility admission below controls whether that registered caster draws.
+        instance.castShadow = true;
         existing = { mesh, instance, source };
         this.meshes.set(id, existing);
-        this.upload(existing, source, true);
         this.worldLayer.addMeshInstances([instance]);
+        instance.castShadow = false;
       } else if (existing.source !== source) {
-        this.upload(existing, source, false);
+        this.upload(existing.mesh, source, existing.source);
         existing.instance.material = this.materials.material(source.materialId);
         existing.source = source;
       }
@@ -427,13 +443,12 @@ export class PersonActor {
     this.setVisible(this.requestedVisible);
   }
 
-  private upload(entry: DrawMesh, source: EvaluatedPersonMesh, initial: boolean): void {
-    const { mesh } = entry;
-    if (initial || entry.source.positions !== source.positions) mesh.setPositions(source.positions);
-    if (initial || entry.source.normals !== source.normals) mesh.setNormals(source.normals);
-    if (initial || entry.source.triangles !== source.triangles) mesh.setIndices(source.triangles);
-    if (initial && source.uvs) mesh.setUvs(0, Float32Array.from(source.uvs));
-    if (initial && source.jointIndices)
+  private upload(mesh: pc.Mesh, source: EvaluatedPersonMesh, previous?: EvaluatedPersonMesh): void {
+    if (!previous || previous.positions !== source.positions) mesh.setPositions(source.positions);
+    if (!previous || previous.normals !== source.normals) mesh.setNormals(source.normals);
+    if (!previous || previous.triangles !== source.triangles) mesh.setIndices(source.triangles);
+    if (!previous && source.uvs) mesh.setUvs(0, Float32Array.from(source.uvs));
+    if (!previous && source.jointIndices)
       mesh.setVertexStream(
         pc.SEMANTIC_BLENDINDICES,
         Uint16Array.from(source.jointIndices),
@@ -441,7 +456,7 @@ export class PersonActor {
         undefined,
         pc.TYPE_UINT16,
       );
-    if (initial && source.jointWeights)
+    if (!previous && source.jointWeights)
       mesh.setVertexStream(pc.SEMANTIC_BLENDWEIGHT, Float32Array.from(source.jointWeights), 4);
     mesh.update(pc.PRIMITIVE_TRIANGLES, true);
     // Position changes invalidate the pinned engine's cached per-bone bounds.
@@ -610,14 +625,7 @@ export class PersonActor {
     this.contact?.destroy();
     this.contact = evaluated.source.motion?.legs.length ? new PersonContact(evaluated) : undefined;
     if (!this.environment.preview) {
-      const strides = this.fittedMotion
-        .flatMap((clip) =>
-          clip.groundSpeed === undefined ||
-          !this.family?.motion?.clips.some((source) => source.name === clip.name && source.stride)
-            ? []
-            : [{ name: clip.name, groundSpeed: clip.groundSpeed, seconds: clip.duration }],
-        )
-        .sort((a, b) => a.groundSpeed - b.groundSpeed);
+      const strides = this.availableStrides;
       if (strides.length && this.tracks.some((track) => track.name === 'Idle'))
         this.installMotion(this.tracks, strides);
     }

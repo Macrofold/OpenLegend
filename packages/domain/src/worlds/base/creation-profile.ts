@@ -14,6 +14,7 @@ import {
   type BaseOpeningIdentities,
 } from './initial-opening.js';
 import { checkBaseOpeningReadiness } from './opening-readiness.js';
+import { installBaseAppearanceFamilies } from './people-appearance.js';
 import {
   createBaseMainWorldCandidate,
   validateBaseMainWorldCandidate,
@@ -44,6 +45,7 @@ export const BASE_CREATION_PROFILE: WorldCreationProfile = {
   version: BASE_OPENING_PROFILE.version,
   choices: BASE_OPENING_PROFILE.openings.filter((opening) => opening.id !== 'inhabited'),
   recoveryOpeningId: 'main',
+  installAppearanceFamilies: installBaseAppearanceFamilies,
   identityKeys: [
     'player',
     'resident',

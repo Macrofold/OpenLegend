@@ -12,6 +12,7 @@ import { validateAppearanceState } from '../../appearance-state.js';
 import { BASE_BODY_PROFILES } from './spatial-definitions.js';
 import type { ItemDefinition, WorldState } from '../../types.js';
 import { canonicalJson } from '../../events.js';
+import { installBaseModularPilotKit, populateBaseModularPilot } from './modular-pilot.js';
 
 const localControl = (id: string, label: string, group = 'body'): AppearanceControlDefinition => ({
   id,
@@ -307,9 +308,9 @@ export const BASE_WARDROBE = [
   defaultForCreation: boolean;
 }>;
 
-/** Trusted current-world installation after asset compilation/permission checks.
- * It adds the pilot to the existing opening; it neither changes existing people nor
- * resets world content. Generic spawn/edit consumes the installed exact definitions. */
+/** Trusted definition installation after asset compilation/permission checks.
+ * Generic spawn/edit consumes these exact definitions; installation creates no
+ * people, changes no native bodies and equips no possessions. */
 export function installBaseAppearanceKit(
   world: WorldState,
   family: AppearanceFamilyDefinition,
@@ -378,6 +379,17 @@ export function installBaseOpeningAppearances(
   world: WorldState,
   families: readonly AppearanceFamilyDefinition[],
 ): void {
+  installBaseAppearanceFamilies(world, families);
+  populateBaseModularPilot(world);
+}
+
+/** Explicit installed-art selection offers admitted families to ordinary creation;
+ * fresh Main composition separately owns its authored starting population. */
+export function installBaseAppearanceFamilies(
+  world: WorldState,
+  families: readonly AppearanceFamilyDefinition[],
+): void {
+  installBaseModularPilotKit(world, families);
   const selected = families.filter(
     (family) =>
       family.reference.owner.kind === BASE_APPEARANCE_ASSET.owner.kind &&

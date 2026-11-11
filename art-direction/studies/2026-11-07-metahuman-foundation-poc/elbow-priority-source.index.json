@@ -1,0 +1,629 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-elbow-priority-source-proof",
+    "revisionId": "failed-premade-control01",
+    "manifestSha256": "84de89c0cbd4b29781e1ed5b1c6dd514ef6163ece79c4afbbad20861fbe94a00"
+  },
+  "files": {
+    "source-proof/elbow-priority01/premade-control01/assessment01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3919cb464e7caa5d28885c672c95f9615c42aea67ce54a054568576e8798e7a7",
+      "bytes": 21214,
+      "mediaType": "application/json"
+    },
+    "source-proof/elbow-priority01/premade-control01/browser-control-walk-quarter.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a6e611af1f33c0885b65ac03cbfb35e470284b5740ff8634b3b731a8f3f10b1b",
+      "bytes": 107220,
+      "mediaType": "image/jpeg"
+    },
+    "source-proof/elbow-priority01/premade-control01/browser-control-walk-side.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "39e80f51220c8c0ee18bf8fdb67408b2adc4789a25e0e086883779cdd230fc29",
+      "bytes": 106418,
+      "mediaType": "image/jpeg"
+    },
+    "source-proof/elbow-priority01/premade-control01/convert-one-body.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0e07e118149ded00924037ad40eab485864c1ff67aa7831211e4dd8b67d3afc0",
+      "bytes": 17787,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "source-proof/elbow-priority01/premade-control01/convert-one-body02.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4ac0e64b4debce92855ea59edb846e9d355f6da8b9b09f1608fe6304c9d186c1",
+      "bytes": 18996,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "source-proof/elbow-priority01/premade-control01/execution01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "552a368abd0269a9b5e20b805095d4d283876af4fec567fa16afb466dec67689",
+      "bytes": 1116,
+      "mediaType": "application/json"
+    },
+    "source-proof/elbow-priority01/premade-control01/finish-inspection.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3e6711c10e488644f2a3f4e4fa484d59ce4a54db120a18033bbb8e5dd4f6556b",
+      "bytes": 9643,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "source-proof/elbow-priority01/premade-control01/finish-inspection02.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "54db92f82650aa7ae2dfed272369d217c5ddc4c3197a7452c227232e41abf9b9",
+      "bytes": 9843,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "source-proof/elbow-priority01/premade-control01/inspection-execution02.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f1a62b80ad96edefb10aad64f948bb5d226b9b9f5ba3ddae3413e5a428c1a474",
+      "bytes": 1132,
+      "mediaType": "application/json"
+    },
+    "source-proof/elbow-priority01/premade-control01/inspection-plan02.prepared.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0256d3d5d4f3f009620b601e4e14c011bf09e06828118f5de3e48febac299639",
+      "bytes": 11354,
+      "mediaType": "application/json"
+    },
+    "source-proof/elbow-priority01/premade-control01/inspection-plan03.prepared.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "917d6110601d7427920a6d2092f2752e6c09d831f59640af3de2b9a73bc8b1e0",
+      "bytes": 11358,
+      "mediaType": "application/json"
+    },
+    "source-proof/elbow-priority01/premade-control01/inspection-stderr02.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source-proof/elbow-priority01/premade-control01/inspection-stdout02.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a412ede0fd76e39593f111576e5fa9626cabd8743ff699cdf57db306dc53b1d9",
+      "bytes": 2692,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source-proof/elbow-priority01/premade-control01/plan.prepared.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "84745e081e491d7e2cdf65db3cb53f673e74759b3a5614c55a92d69caf263709",
+      "bytes": 9862,
+      "mediaType": "application/json"
+    },
+    "source-proof/elbow-priority01/premade-control01/plan02.prepared.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9b71b0752379750d98566d0ebd9a817d3ecfe05b8030a8277930bf1669421ca9",
+      "bytes": 10419,
+      "mediaType": "application/json"
+    },
+    "source-proof/elbow-priority01/premade-control01/stderr01.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f4447e44e6122a61ddc30e7ae3b17d1ee58965959b7ef2d8a928728d5f9b6800",
+      "bytes": 1433,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source-proof/elbow-priority01/premade-control01/stdout01.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2cf5a4548c7cdecb39194321f7977deaa8324fff175cfd2013928b668a705bf3",
+      "bytes": 2418,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source-proof/elbow-priority01/premade-control01/supervise-inspection02.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4847a1bc05f5a47fffed5dcd62ce150436f534314f7ea8fb3d65dbe21d628c0c",
+      "bytes": 2126,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "source-proof/elbow-priority01/premade-control01/supervise-inspection03.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "585386f0bde9801549a6684b12c7a06058fad1d8047558a6b005e3d3bea6bb15",
+      "bytes": 2126,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "source-proof/elbow-priority01/premade-control01/supervise.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0619fde1e7c36ae793346b97e0593d3e03a9acd154603cb207f4e17a69e6f97f",
+      "bytes": 2085,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "source-proof/elbow-priority01/premade-control01/supervise02.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a2aedbcd703c5adf6a4438558d9d09b44f73689edcaa3db80931f6befe822d49",
+      "bytes": 2087,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "source-proof/elbow-priority01/premade-control01/run01/baked-textures/eyes-color.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d19b44537e3fed1622aeadc2924292647c8d3f0c54c7f939be7d6cad56e414e9",
+      "bytes": 339199,
+      "mediaType": "image/png"
+    },
+    "source-proof/elbow-priority01/premade-control01/run01/baked-textures/lashes-color.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f485dcee6c772014352bcdd155bb5233124a27c748c7ccfba9c0ee6342f198c7",
+      "bytes": 66255,
+      "mediaType": "image/png"
+    },
+    "source-proof/elbow-priority01/premade-control01/run01/baked-textures/skin-color.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c6432f925f8c940afc21c433ddf3b651cab6130b8acd1e61026170d5e852aa7c",
+      "bytes": 2304965,
+      "mediaType": "image/png"
+    },
+    "source-proof/elbow-priority01/premade-control01/run01/baked-textures/skin-normal.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e23b5f73ae98691f370eb39c72d91a3c5c629fe89251200ca10ccf13e784d865",
+      "bytes": 3416752,
+      "mediaType": "image/png"
+    },
+    "source-proof/elbow-priority01/premade-control01/run01/baked-textures/teeth-color.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f1637df8e3401f6d7d1c1d57663fbae21913eb863a9e9a7fa95178fa434853ce",
+      "bytes": 355116,
+      "mediaType": "image/png"
+    },
+    "source-proof/elbow-priority01/premade-control01/run01/baked-textures/teeth-normal.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4303044a6c7ff8bf60491f9a109a19a8da5022c37fca43b4458c93a0fd510217",
+      "bytes": 463958,
+      "mediaType": "image/png"
+    },
+    "source-proof/elbow-priority01/premade-control01/run01/control.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c6e214186242e0ba6caf2633b55e585a4c2135ad5207e7b78c2b753abf4a9a2c",
+      "bytes": 9236018,
+      "mediaType": "application/x-blender"
+    },
+    "source-proof/elbow-priority01/premade-control01/run01/control.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3fa5afef810876c241cb9b69483aab7f6cdfe69f3b772ba9bf8f0ed9031cf437",
+      "bytes": 8607232,
+      "mediaType": "model/gltf-binary"
+    },
+    "source-proof/elbow-priority01/premade-control01/run01/native-source-extraction.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1193781119d77cc09ac6b7340066e8e30aceb2a3dd527517185cbf36e0a9718f",
+      "bytes": 8232600,
+      "mediaType": "application/json"
+    },
+    "source-proof/elbow-priority01/premade-control01/run01/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "95e978587882e0cdce1019ec30078797e47028299bc194364dabb272e15e693e",
+      "bytes": 15793,
+      "mediaType": "application/json"
+    },
+    "source-proof/elbow-priority01/premade-control01/inspection02/idle-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "82a2bb745985b6c39d0bb8d04317afe1e22343f6ae82802820733f25f975b483",
+      "bytes": 723288,
+      "mediaType": "image/png"
+    },
+    "source-proof/elbow-priority01/premade-control01/inspection02/rest-back.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "82ae4d4a3c383e98260b4509c2cea6c424a2a41686900b6eed4bde6605c4743c",
+      "bytes": 728129,
+      "mediaType": "image/png"
+    },
+    "source-proof/elbow-priority01/premade-control01/inspection02/rest-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "998b25707c93589ee0dd5ba57801285a67e8b17e59320efc30f27ac440ecc5d1",
+      "bytes": 732685,
+      "mediaType": "image/png"
+    },
+    "source-proof/elbow-priority01/premade-control01/inspection02/rest-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d234fd4e9a018b6e6317f25cfa3211bfcb7cd160a1b46cf277a6b15e5f86a172",
+      "bytes": 726026,
+      "mediaType": "image/png"
+    },
+    "source-proof/elbow-priority01/premade-control01/inspection02/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7c9bf22c33b828caea1e88a20d66377707b16b1d82d0019945d7e976be5e4042",
+      "bytes": 11630,
+      "mediaType": "application/json"
+    },
+    "source-proof/elbow-priority01/premade-control01/inspection02/run-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "26e9baf90141966518fa2d88a5935c56cde6c0a51340e08ec29fa30fcc5c17d2",
+      "bytes": 713833,
+      "mediaType": "image/png"
+    },
+    "source-proof/elbow-priority01/premade-control01/inspection02/run-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dbf64ebe5f012633e990575ec1619a2d68ff2763521aed45d549dc32bff781c0",
+      "bytes": 722610,
+      "mediaType": "image/png"
+    },
+    "source-proof/elbow-priority01/premade-control01/inspection02/run-right.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0bff996d1f409f8eef6f1babdd263ffc88b848801ef5b1a73f1822e6ed2e57a0",
+      "bytes": 711364,
+      "mediaType": "image/png"
+    },
+    "source-proof/elbow-priority01/premade-control01/inspection02/walk-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9200fcffa11b2cc2ea87b3bd714a08f041cc3bd78870e4b9e05aa677e3b71074",
+      "bytes": 730182,
+      "mediaType": "image/png"
+    },
+    "source-proof/elbow-priority01/premade-control01/inspection02/walk-right.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1c4e1cc615721ba7cc34dce5acb114ecee77415a6856b97645125a750a81e1bc",
+      "bytes": 730882,
+      "mediaType": "image/png"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/actor-orlando-corrected-left.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2456420ac634cd29f94d246cb726b567266c834d2d720d8e391bd0f38db0ac4b",
+      "bytes": 118297,
+      "mediaType": "image/jpeg"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/actor-orlando-corrected-left.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3428dac165343508c972ca92e8e963622663997afde86429ed9582a91f27719a",
+      "bytes": 1042681,
+      "mediaType": "video/webm"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/actor-orlando-corrected-right.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2f39d26b33f182aab2644a3f803f9a85a71e480ef7d6818a05916ea120478be3",
+      "bytes": 120331,
+      "mediaType": "image/jpeg"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/actor-orlando-corrected-right.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0d478f7e4d623ee342293426b499a8d7d87be9d640414fdc9d134ab7b51fe2fe",
+      "bytes": 1213946,
+      "mediaType": "video/webm"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/actor-orlando-foreground-left.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4b5c3a20312f37b784a8ddb6c1e6af1802774937ab1a676ac15ba5cef7bfdc2c",
+      "bytes": 64124,
+      "mediaType": "image/jpeg"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/actor-orlando-foreground-left.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "56b3204fbf489a7c45d1adc5373eeb7bd843be7c4dffbea774da1b371e6da541",
+      "bytes": 1048375,
+      "mediaType": "video/webm"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/actor-orlando-foreground-right.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "07772b8d2eab5002e27d7c8f412bcf7520195b8792792fccc0f8b8b68aeb6167",
+      "bytes": 65307,
+      "mediaType": "image/jpeg"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/actor-orlando-foreground-right.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b11922c421850c5c0d567043a59fe5165e105468b86ac77f827ae80f7dfd6a28",
+      "bytes": 1199531,
+      "mediaType": "video/webm"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/actor-vivian-corrected-left.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a70bc8b88d5d4fc37bb51c7547b51a34b7bc56a3cf1f40ced4a7d868b9415c61",
+      "bytes": 119020,
+      "mediaType": "image/jpeg"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/actor-vivian-corrected-left.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d3e695e3fce1960d0c6d503bef438169d94a37e04166a2e91522a6fa38a91920",
+      "bytes": 928319,
+      "mediaType": "video/webm"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/actor-vivian-corrected-right.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "fcab8fc20523e51334be9faa0cabe283a3ab9ff6eb767505645b9da5c062913f",
+      "bytes": 120157,
+      "mediaType": "image/jpeg"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/actor-vivian-corrected-right.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "26d812c05e917268ca2af504a3b7351fc7dd178285555691c6cabb1f1659d164",
+      "bytes": 1061114,
+      "mediaType": "video/webm"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/actor-vivian-foreground-left.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c53bc95b8ee7821b26ab9fd176e72992f95ef0e511a552bdd9fe6715242e4a70",
+      "bytes": 63523,
+      "mediaType": "image/jpeg"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/actor-vivian-foreground-left.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "12620acbb78b95a9c8de6e5910194893db84018928781631374778e44a61f5a0",
+      "bytes": 928042,
+      "mediaType": "video/webm"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/actor-vivian-foreground-right.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4291d6772751ee69fdc26503459f28cfcdb25a14a03832fa11086962068efc20",
+      "bytes": 64244,
+      "mediaType": "image/jpeg"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/actor-vivian-foreground-right.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3852b8de64827e0fdb44d2691f0a2921ac0caa1000b4c8e4fca3c1873b0d3845",
+      "bytes": 1067194,
+      "mediaType": "video/webm"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/orlando-broken-export-side.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "175006c1f080818768d62b3a19310dd346c091a493130c0ac0d5404b93ce86c4",
+      "bytes": 110230,
+      "mediaType": "image/jpeg"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/orlando-broken-export-side.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "33328c561796f87acab44f51701d83c4a164bcc0cc82eb3e29e63bd6f02d7c65",
+      "bytes": 1052461,
+      "mediaType": "video/webm"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/orlando-corrected-export-side.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "87d4f61f2041788f9796983d08ef822eaf5b51b80afafaa80ad6f63ce64a075b",
+      "bytes": 109689,
+      "mediaType": "image/jpeg"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/orlando-corrected-export-side.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0ca09d65372508020031cb0cd32f8892298d1490d8aaa24fd6b0b82e7e299777",
+      "bytes": 1156811,
+      "mediaType": "video/webm"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/sela-source-walk-side.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "544d8ac88c4d79e006bf36d128c63169821c7c12239b58780769cb28b2a95eb5",
+      "bytes": 50727,
+      "mediaType": "image/jpeg"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/sela-source-walk-side.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "83b822705187ac5b311f757e49e02cdbf94cb8201122191594dfab43acefa6d9",
+      "bytes": 1043112,
+      "mediaType": "video/webm"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/vivian-corrected-walk-side.jpg": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2ce2bd6eed85114bfcd966c2bc76b9ef19a2fd062ddf9df5147ea4a3d61d8422",
+      "bytes": 49674,
+      "mediaType": "image/jpeg"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/source-chain-diagnosis01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b0809db8cdb2e7556044f59cfbc34a70e62684e8af9d8d80b05e7af2b88627a8",
+      "bytes": 31580,
+      "mediaType": "application/json"
+    },
+    "source-proof/elbow-priority01/actor-diagnosis/fresh-visual-witness01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "075e79ce4903745bff4788afc1e5b7a29d35e2b0d3e1140e5001a9724fec85c1",
+      "bytes": 6822,
+      "mediaType": "application/json"
+    },
+    "source-proof/elbow-priority01/source-inputs/adapter/metahuman-study.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e3470c28f438a56fa181bc2034cf65dca5d49cef68101ec44347365a1a45bb2c",
+      "bytes": 51735,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "source-proof/elbow-priority01/source-inputs/fbx/N_Outfits.fbx": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a75345054e2368a54c851372374d82d7441b2529d4c5f3c9a5087bc7b289163f",
+      "bytes": 3444080,
+      "mediaType": "application/octet-stream"
+    },
+    "source-proof/elbow-priority01/source-inputs/nativeReceipt/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6e93e0a71f234c23babd17f7b33c973643e255db86ae3da0bfd1fc1dab5aa997",
+      "bytes": 4276,
+      "mediaType": "application/json"
+    },
+    "source-proof/elbow-priority01/source-inputs/gltfWeightExtract/primitive_extract.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ede08dd6f7931a1206e087117c9bac3422825e9aeb95fbe1097d91c772825550",
+      "bytes": 87628,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "source-proof/elbow-priority01/source-inputs/gltfWeightNormalize/primitive_attributes.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "815331d39cdf06e73ae110e9921ebfc8cb37825290843cbcbf4d1a7559899e5d",
+      "bytes": 10150,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "source-proof/elbow-priority01/source-input-provenance.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3919abb4c6b3299b669e7c13a5ba7bd83e9a83a9c967abd5ab040bc00f275839",
+      "bytes": 29415,
+      "mediaType": "application/json"
+    },
+    "source-proof/elbow-priority01/premade-control01/weights-diagnostic01/assessment01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9741e5dc368b64ddfc3f8f5f64c19b99ac111f39c157826c6560892a0571df77",
+      "bytes": 6544,
+      "mediaType": "application/json"
+    },
+    "source-proof/elbow-priority01/premade-control01/weights-diagnostic01/diagnose-weights.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1c11900178309670c7f356402c360e5f587c77febaefb69fa8c2b4942aa9cac0",
+      "bytes": 7737,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "source-proof/elbow-priority01/premade-control01/weights-diagnostic01/execution01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d18f93921e69b0865301991bf3cd0c3febafb8a69ac152c7841116b45ff7d85b",
+      "bytes": 1152,
+      "mediaType": "application/json"
+    },
+    "source-proof/elbow-priority01/premade-control01/weights-diagnostic01/plan.prepared.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "89336864de1ec51b091083d2836ded59c5c8f5da934a3708692cff0942f53bab",
+      "bytes": 3497,
+      "mediaType": "application/json"
+    },
+    "source-proof/elbow-priority01/premade-control01/weights-diagnostic01/run01/a-current-max4-run-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "597bb37c97bdcc3f3ef5c6e5693d5d579f35a62096f1a9a2d4b2bc40ad005050",
+      "bytes": 722435,
+      "mediaType": "image/png"
+    },
+    "source-proof/elbow-priority01/premade-control01/weights-diagnostic01/run01/a-current-max4-walk-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0fb60ce84628f6c057627f5674fe661e8ca03aa15a79b145b0d87e15f7fd6d29",
+      "bytes": 730363,
+      "mediaType": "image/png"
+    },
+    "source-proof/elbow-priority01/premade-control01/weights-diagnostic01/run01/a-current-max4-walk-right.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "152676d805c6e1733cbf83d1e36828d4fe3f04a2ab5ca0312f3b8e4582bc2289",
+      "bytes": 731028,
+      "mediaType": "image/png"
+    },
+    "source-proof/elbow-priority01/premade-control01/weights-diagnostic01/run01/b-retained28-uncapped-run-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "89672e53f9347da906b2336af37143d3775ce1a48146872f67e1b2d7cde82e5b",
+      "bytes": 722613,
+      "mediaType": "image/png"
+    },
+    "source-proof/elbow-priority01/premade-control01/weights-diagnostic01/run01/b-retained28-uncapped-walk-left.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "560d11fc437343b6c510573182fb648971e2f2f7b1cf3e1828172ad68231831f",
+      "bytes": 730027,
+      "mediaType": "image/png"
+    },
+    "source-proof/elbow-priority01/premade-control01/weights-diagnostic01/run01/b-retained28-uncapped-walk-right.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "366f7c18ad1fe41faa4bb13cdcf09c8c9596c4232b6e75c71fc5585a6f6e1f82",
+      "bytes": 730926,
+      "mediaType": "image/png"
+    },
+    "source-proof/elbow-priority01/premade-control01/weights-diagnostic01/run01/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "222a7351c078f9ead720a5815471d7ff02af905d7f47db091c9930df389e78ea",
+      "bytes": 5815,
+      "mediaType": "application/json"
+    },
+    "source-proof/elbow-priority01/premade-control01/weights-diagnostic01/stderr01.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source-proof/elbow-priority01/premade-control01/weights-diagnostic01/stdout01.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "03388bd192924196c95667a0c926912b2425f1e6fbc5a4c767fec5ab4d98ccf2",
+      "bytes": 1628,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source-proof/elbow-priority01/premade-control01/weights-diagnostic01/supervise.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c5571ed89b8ed0eee774fdf992dc02d147eef9bcfbb9bd33188ca821e0be6574",
+      "bytes": 2080,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "source-proof/elbow-priority01/current-window-summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8b61376f2200dc2ee096148fc701d4ef6db886fb5a2504bf22f58395bd24a1ff",
+      "bytes": 1228,
+      "mediaType": "application/json"
+    },
+    "source-proof/elbow-priority01/inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8333bc04ed6b87dbcc45d2f1cdf1bb18772a8998e26ccc3f47b801159617c481",
+      "bytes": 63637,
+      "mediaType": "application/json"
+    }
+  }
+}

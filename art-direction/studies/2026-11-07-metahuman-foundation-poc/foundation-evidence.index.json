@@ -1,0 +1,282 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-native-20261107",
+    "revisionId": "native03-pbr-hair-facial-vivian",
+    "manifestSha256": "48f9c98ebc404847a47ade3734328b6c59f52184a47c7596e66266b1bdcb6a9f"
+  },
+  "files": {
+    "preservation-freeze.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5ff2496d21e9e79a0bbc272f03e9d72cd34db2a0bf7e1aca6ad9e0e05a8a3617",
+      "bytes": 99613,
+      "mediaType": "application/json"
+    },
+    "source/dcc02/M.zip": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ff7e587d161ba87d7d336f75f632206053ac7bb619573e3db603a5429ddcf05f",
+      "bytes": 129187381,
+      "mediaType": "application/zip"
+    },
+    "source/vivian-neutral01/N.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "28b16e3d31aa91270b3c85f12ce37ec0d92da007c138afbb91389a912c5fa6de",
+      "bytes": 9103197,
+      "mediaType": "application/octet-stream"
+    },
+    "source/vivian-neutral01/Vivian-preset.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "678c55d9761380cfb27ee62a3f883e8d125cd4d5f1cb0d18f29bcb08fbe52be9",
+      "bytes": 9103034,
+      "mediaType": "application/octet-stream"
+    },
+    "source/tool-licenses/Holotype-application-MIT-LICENSE.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f9aee56103e867d1d19c1010352191e40e24ec5475fade1a3e4dc731c269c9b6",
+      "bytes": 1073,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "renders/pbr-preview01/native-baked-covered-static.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "343846cd55adef0123e1aa6f13aa512b2442708df79c1584b8a4c4ffca6ea279",
+      "bytes": 8135064,
+      "mediaType": "model/gltf-binary"
+    },
+    "renders/pbr-preview02/native-baked-covered-static.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f5355e07b81f752f174cc906da2f8852e62ee009a3070468102d5b576c996769",
+      "bytes": 8240416,
+      "mediaType": "model/gltf-binary"
+    },
+    "renders/browser-pbr02/front-face-day.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "515d34c0fd9f68b1461e07321cd93ada65d46b2fe63ff5fdf294ba29e65d8ba4",
+      "bytes": 75326,
+      "mediaType": "image/png"
+    },
+    "renders/browser-pbr02/quarter-day.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "298d21f50d2503290e7ce6178061a2bba037dcfff7d2a9917a36ab2799d87730",
+      "bytes": 72269,
+      "mediaType": "image/png"
+    },
+    "evidence/landmark-atlas01/atlas.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "402789f9075a7f46b1bbaa302c86886f03d3c2ac30227c24bf251690cecc28fa",
+      "bytes": 337528,
+      "mediaType": "image/png"
+    },
+    "evidence/landmark-atlas02/atlas.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "25892428c7ce4913dac43e7b9c6306d4151e67759e450e29c8e8576f444aac70",
+      "bytes": 7360761,
+      "mediaType": "image/png"
+    },
+    "evidence/material-cutout01/run01/comparison.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "06fa564324f7dee274c86d70edb6e1551206698a65421687d4c36a172512a2c8",
+      "bytes": 30052,
+      "mediaType": "model/gltf-binary"
+    },
+    "evidence/material-cutout01/run01/comparison.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "77edaa0d754ac80848c3f703a40381b055d6d136f119b0ad9b9976219e1ea440",
+      "bytes": 491097,
+      "mediaType": "image/png"
+    },
+    "evidence/material-cutout01/packing-correction01/run01/comparison.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3db88b34ea84852cad2d86e4ac0950431ccda97f48ead38cbadb1033b89dc987",
+      "bytes": 94508,
+      "mediaType": "model/gltf-binary"
+    },
+    "evidence/material-cutout01/packing-correction01/run01/comparison.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7ca75f8babfdd1c9f8c59acda636e79988bb6aa493a95445163bad3a64d91742",
+      "bytes": 493938,
+      "mediaType": "image/png"
+    },
+    "evidence/facial-export01/run01/head-arkit52.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4c4590fc285a8eb71e2d13d57de459b937af5d3c30af688c6d14cfa9ec435c3e",
+      "bytes": 23191404,
+      "mediaType": "model/gltf-binary"
+    },
+    "evidence/facial-export01/run02/output/head-facial-diagnostic.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c50aef3a98fcc9446152e590be32c4848cb2d61b9c9f07bcb96f06c758045956",
+      "bytes": 3277488,
+      "mediaType": "model/gltf-binary"
+    },
+    "evidence/facial-export01/run02/output/neutral-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0c5a21bc3bd1e26752f4d497c5eff19cb77056471f4db1c50e69e3f8c0b26eb8",
+      "bytes": 377738,
+      "mediaType": "image/png"
+    },
+    "evidence/facial-export01/run02/output/blink-left-full-front.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5905514bf97b371f85ff63c2c505ea6feaf3bf4938740ffd8ce9bd2f6b13088b",
+      "bytes": 377705,
+      "mediaType": "image/png"
+    },
+    "evidence/facial-export01/run02/output/jaw-modest-three-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bf6c743137ae46f499cd9e8c8dde9e1425327116309f14df5010be1c87a427c6",
+      "bytes": 378667,
+      "mediaType": "image/png"
+    },
+    "renders/vivian-neutral01/vivian-native-covered-clay-static.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0055f2a7457351050aad3dd43f7ad28e9954c015e468495ac6bc76825a286884",
+      "bytes": 1097700,
+      "mediaType": "model/gltf-binary"
+    },
+    "samples/groom-intake04/payload/eyebrows-g0-lod3-0.fbx": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "080d708c120eb0a7a48b977729e99ebe66688c8b1f2c77082e7320cd1b04ee82",
+      "bytes": 186240,
+      "mediaType": "application/octet-stream"
+    },
+    "samples/groom-intake04/payload/hair-g0-lod3-0.fbx": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "649da33311ad1ba72fed0fe530b55a2de96c9e59de996cbd5485c6b17a6d4b23",
+      "bytes": 1019424,
+      "mediaType": "application/octet-stream"
+    },
+    "samples/groom-intake05/payload/eyebrows-g0-lod3-0.fbx": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d755ddf8a4eb862121af00eabad40be8ba31faa899d30752ae835b6f85cac0da",
+      "bytes": 181488,
+      "mediaType": "application/octet-stream"
+    },
+    "samples/groom-intake05/payload/hair-g0-lod4-0.fbx": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "97e93fa37e510ad5d9110166c1db9e9bda5ede590cf650a0a58e96379d00d912",
+      "bytes": 795360,
+      "mediaType": "application/octet-stream"
+    },
+    "source/selected-native-card-assets/I/M/O/Grooms/Eyebrows_M_FlatThick_CardsMesh_Group0_LOD3.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "540648c7ec3f518b58561692079458b9cb82dbd818cd5ac16885df9d07026d9c",
+      "bytes": 105800,
+      "mediaType": "application/octet-stream"
+    },
+    "source/selected-native-card-assets/I/M/O/Grooms/Hair_S_SweptUp_CardsMesh_Group0_LOD3.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3232c48c7f8e451d653c08e54c566324548ec4c213a3264d344c07324d025fff",
+      "bytes": 676813,
+      "mediaType": "application/octet-stream"
+    },
+    "source/selected-native-card-assets/J/M/O/Grooms/Eyebrows_M_FlatThick_CardsMesh_Group0_LOD3.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "75980e18a54514121ff09ae79b25b4713098c505adef1425c53878686f6ba134",
+      "bytes": 105800,
+      "mediaType": "application/octet-stream"
+    },
+    "source/selected-native-card-assets/J/M/O/Grooms/Hair_S_SweptUp_CardsMesh_Group0_LOD4.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c08780371be38838c127fc624b8779b1e535c3d883b593b1f15299cb6aa39559",
+      "bytes": 553609,
+      "mediaType": "application/octet-stream"
+    }
+  },
+  "preservation": {
+    "scope": "Private completed PBR/cutout/landmark/groom/facial/Vivian source tranche; not a complete catalog/world checkpoint, game asset approval or self-contained native groom package.",
+    "fullManifestArtifact": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "48f9c98ebc404847a47ade3734328b6c59f52184a47c7596e66266b1bdcb6a9f",
+      "bytes": 70033,
+      "mediaType": "application/json"
+    },
+    "totalReleaseFiles": 286,
+    "totalReleaseFileBytes": 516379641,
+    "dependencies": [
+      {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-native-20261107",
+        "revisionId": "native02-dcc31",
+        "manifestSha256": "03358167534490126210a8e5f732f920d79a0ad992e8acbf39052a1bb02c1eda"
+      }
+    ],
+    "freshRestore": {
+      "status": "passed",
+      "independentlyHashedFiles": 286,
+      "bytes": 516379641
+    },
+    "supplementaryExactRecovery": {
+      "status": "passed",
+      "uniqueObjectsIncludingManifest": 254,
+      "independentlyHashedFiles": 254,
+      "bytes": 492328092,
+      "generationBefore": 262,
+      "generationAfter": 262,
+      "receipt": {
+        "reference": {
+          "boundary": "asset-recovery",
+          "accessDomain": "openlegend-assets",
+          "sha256": "344d68d43d7e912fc65e75402e089db60042c8b430e2f89b1d622ecc93f9971f",
+          "bytes": 535745,
+          "mediaType": "application/json"
+        },
+        "location": {
+          "accountId": "027677879749",
+          "region": "us-east-2",
+          "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+          "key": "domains/openlegend-assets/blobs/sha256/34/344d68d43d7e912fc65e75402e089db60042c8b430e2f89b1d622ecc93f9971f",
+          "versionId": "ijrvlQBJzU9ioFVdJNlylZojzQzkNCsj"
+        },
+        "readerHashVerified": true,
+        "authorityGeneration": 262,
+        "scope": "Immutable supplementary exact-native03 preservation receipt, not complete catalog/world checkpoint",
+        "completedAtUtc": "2026-11-08T01:59:31.084Z"
+      }
+    },
+    "limits": [
+      "Native card/wardrobe/material dependency closure is incomplete; portable selected FBX/PNG geometry/atlases and source pins are retained.",
+      "PBR03, groom-selection01 and active browser-facial01 were deliberately excluded.",
+      "No body/head, material finish, expression closure/parity, wardrobe, reusable-kit, motion, runtime performance or public-rights acceptance is inferred."
+    ],
+    "cost": {
+      "newPaidProviderSoftwareUsd": 0,
+      "additionalConservativeAwsAdmissionUsd": 2,
+      "actualAwsCharges": "Not separately measured; the admission estimate is not actual spend."
+    }
+  }
+}

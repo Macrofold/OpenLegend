@@ -1,6 +1,38 @@
 # Tools, source access and reuse
 
-Reviewed October 14, 2026. These notes distinguish learning an algorithm, modifying licensed source and shipping assets. No package was purchased, installed or uploaded to a model during this research.
+These notes distinguish learning an algorithm, using licensed assets in a game and supplying references to a generator. The marketplace guidance below is checked against primary sources on November 7, 2026; dated tool/provider snapshots retain their original scope. Research does not authorize purchases or uploads.
+
+## Marketplace and MetaHuman licensing
+
+The [source policy](../../decisions.md#current-visual-requirements--october-31-2026) currently requires CC0 or CC BY for third-party game art. [RP12](../../../docs/maintainers/revisitable-policies.md#rp12--third-party-art-licenses) tracks reconsideration; Mike's willingness to buy tools/assets does not itself replace that rule.
+
+- **[CC0](https://creativecommons.org/publicdomain/zero/1.0/):** copyright is waived as far as legally possible. Commercial use, modification and redistribution are permitted without required attribution; trademark, privacy and other third-party rights can still matter.
+- **[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/):** commercial use, modification and redistribution are permitted with appropriate credit, a license link and an indication of changes. It does not require open-sourcing the game or licensing our code under CC BY; preserve recipients' licensed freedoms in the artwork.
+- **[Fab Standard](https://www.fab.com/eula):** permits commercial projects, modification and compatible tools outside Unreal. It prohibits standalone asset redistribution. Collaborator sharing within the project differs from publishing a freely downloadable asset library. Check the exact listing: CC BY, legacy terms and Reference-Only products have different implications; Reference-Only does not supply source files for editable 3D intake.
+
+**Proposed sourcing policy, awaiting Mike's decision:** prefer CC0/CC-BY when quality and effort are comparable, while admitting assets under other licenses whose terms support the intended game, browser delivery, customization and any generator uploads. Keep restricted sources separate from freely redistributable content. This would broaden the quality/effort choices without assuming that players or world creators may export purchased assets into unrelated projects.
+
+### Price thresholds
+
+USD list-price/terms observations, not actual spending or purchase approval; recheck before acquisition.
+
+| Use | Threshold and consequence |
+| --- | --- |
+| MetaHuman/Unreal authoring for our PlayCanvas game | MetaHuman is included with Unreal. When the seat exemption no longer applies, current pricing is **$1,850 per tool user per year**: one user $1,850, two $3,700, not a charge per character/player. The indie exemption uses less than $1 million corporate-group gross revenue over the preceding 12 months, including advances/funds raised. Zero game users alone does not establish eligibility. |
+| Exported models in a game without Unreal runtime code | Qualifying Non-Engine Products do not incur Unreal's game royalties merely because their assets were authored there. A game using Unreal runtime code has a different royalty model; the standard 5% above $1 million lifetime product revenue is not the selected PlayCanvas route. |
+| Fab Standard purchases | Personal is available at no more than **$100,000 gross commercial revenue over the preceding 12 months**; above that, new purchases use Professional. Sellers set each tier's price, possibly the same. Both grant the same Standard-license rights. Qualifying Personal purchases need no upgrade when revenue later grows; crossing the threshold creates no automatic subscription or revenue royalty. Check the EULA's entity/revenue calculation at purchase. |
+
+Sources: [MetaHuman license](https://www.metahuman.com/license), [Unreal pricing](https://www.unrealengine.com/license), [Unreal EULA §§4(a)(i), 6](https://www.unrealengine.com/eula/unreal), [Fab pricing](https://dev.epicgames.com/documentation/fab/licenses-and-pricing-in-fab), [Fab license summary](https://www.fab.com/eula). The seat/revenue question is separate from permission to redistribute a customizable asset kit.
+
+### AI-reference permission
+
+On a Fab product page, inspect **Details → Allows usage with AI**, the actual license and any seller conditions. **Generated with AI** describes how the asset was made; it does not grant us permission. [Example listing showing both fields](https://www.fab.com/listings/2a6e1f61-a0d5-417a-b97a-689cfe264d94).
+
+- **Yes:** check that the actual license and selected provider's upload terms cover the intended operation; the label is not a waiver of other conditions.
+- **No/NoAI:** exclude it from our generation-reference inputs unless the applicable terms or an explicit seller grant establish permission for that operation.
+- **Missing, conflicting or unclear:** resolve the specific permission before uploading; do not infer permission from a purchase, public preview or absence of a badge.
+
+NoAI scope depends on the governing agreement. For example, the [Epic Content License Agreement §17](https://www.unrealengine.com/eula/content) includes generative-AI inputs, not only model training. Do not apply a legacy agreement to every Fab purchase, or assume that rendered screenshots evade an applicable restriction. Provider retention, public sharing and training rights over inputs also matter. A useful seller question is: “May we upload rendered images of this asset to [provider] as style references to generate new assets for our commercial game? We will not train or fine-tune a model ourselves.” Record the exact asset/license, intended operation, provider and any permission in the existing source receipt; do not treat derived output as automatically unrestricted.
 
 ## Generator rights and plan snapshot — October 17, 2026
 

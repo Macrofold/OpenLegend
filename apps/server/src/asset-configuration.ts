@@ -115,7 +115,8 @@ export async function readAssetConfiguration(
   return schema.parse(await smallJson(resolve(path), 128 * 1024));
 }
 export async function readAssetIndex(
-  path = join(assetRepositoryRoot, 'assets/locks/development.json'),
+  path = process.env['OPEN_LEGEND_ASSET_INDEX'] ??
+    join(assetRepositoryRoot, 'assets/locks/development.json'),
 ): Promise<AssetIndex> {
   const value = await smallJson(resolve(path), 4 * 1024 * 1024);
   assertAssetIndex(value);

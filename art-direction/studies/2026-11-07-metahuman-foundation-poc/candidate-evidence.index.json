@@ -1,0 +1,376 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-native-20261107",
+    "revisionId": "native04-clean-fit-browser-source",
+    "manifestSha256": "4edde23ce8d65929cc31ec180f91bd6e6bc1a19a780ff22238dfd29b48479da4"
+  },
+  "files": {
+    "evidence/vivian-fit01/all-native-fbx-comparison.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e2d50e0e3f334c8384220d01fccd4604d6d9a3e2b65133f0e17b5a8fde758e33",
+      "bytes": 41512,
+      "mediaType": "application/json"
+    },
+    "evidence/vivian-fit01/body1-corner-order.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1ef83af4e2c756cdc944279dc5360f4ec81fb5fb89cff0fa1b7fcae478f4fc94",
+      "bytes": 7478,
+      "mediaType": "application/json"
+    },
+    "evidence/vivian-fit01/native-fbx-topology-diagnostic.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a91dff1b141d3448317edf0efecfd79ad9fe65fddeb13799fc0cfbb1d227d2e9",
+      "bytes": 868,
+      "mediaType": "application/json"
+    },
+    "evidence/vivian-fit01/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "072c2ec8782f71c2fece1f4c6b877d5a256e042057a379c6414b3695cf201c7f",
+      "bytes": 17373,
+      "mediaType": "application/json"
+    },
+    "preservation-freeze.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "50cca7ddd18c57da74a86ecb2f8e3b5aea3528720bcb753ac5f1c33d68c8122f",
+      "bytes": 55075,
+      "mediaType": "application/json"
+    },
+    "renders/browser-facial01/close-live.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "abcb85da054e49d254d8e96dbaf96118455bd03b1120375eccefa3f5aeef3a46",
+      "bytes": 113356,
+      "mediaType": "image/png"
+    },
+    "renders/browser-facial01/facial-diagnostic-eight-seconds.webm": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "89cd6e43dd118a33edef05b5995cea3b2230de02371959405e859c271a4a176c",
+      "bytes": 150035,
+      "mediaType": "video/webm"
+    },
+    "renders/browser-facial01/invalid-replacement-retained.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b1625f702e5579ae501662778b57ce8a64b4bd4c2ce7b00f713aa21424a166c9",
+      "bytes": 112456,
+      "mediaType": "image/png"
+    },
+    "renders/browser-facial01/named-clip-playing.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ad840d5917e1e6c42e809f5d674afff3a38eef13a5f96c8d347b9e54f6a0c7fd",
+      "bytes": 65282,
+      "mediaType": "image/png"
+    },
+    "renders/browser-facial01/paused.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7b9be0b467d9d21efcfd20a95fb6dd08be20bd1d4f398fe8c0a7e1198f0ce61c",
+      "bytes": 110417,
+      "mediaType": "image/png"
+    },
+    "renders/browser-facial01/solo-complete-head.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ae1e99652fbac8d46d012279bca01da1c36be8f1c7613d6e61269f5351430c15",
+      "bytes": 64845,
+      "mediaType": "image/png"
+    },
+    "renders/browser-facial01/solo-playing.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7c0dbe3be76ecc9c86b552916d96223df6573b15954b857cc6dc3ccf9ca66705",
+      "bytes": 66228,
+      "mediaType": "image/png"
+    },
+    "renders/browser-facial01/solo-zoomed-playing.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "350c6d2ebfcd635b2dab6bdd4737adc30646a4984826665f6fa2e9f85cd97af3",
+      "bytes": 67702,
+      "mediaType": "image/png"
+    },
+    "renders/browser-facial01/source-facing-clip-playing.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "36dd393f8e89840dd2058786c0704b46fd465e03a5aee5d05735a1c1710ead57",
+      "bytes": 66611,
+      "mediaType": "image/png"
+    },
+    "renders/browser-facial01/unsupported-walk-holds.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a4d12b9ea11d5f2ca9ff85c4ab10fc0c93662bc8f70bdeef9b892bd97a9d15f7",
+      "bytes": 112190,
+      "mediaType": "image/png"
+    },
+    "renders/browser-pbr03/body-front-overcast.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8d11958c791e2762c35db9c70cf6cab5bc46ac077e36b7cd1f55eebffd87b1b4",
+      "bytes": 113334,
+      "mediaType": "image/png"
+    },
+    "renders/browser-pbr03/close-front-natural-day.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4521a629fbd2ebd8c8f41a5111bdacdb30e9402ad25f407bec67e461e0a355e9",
+      "bytes": 117780,
+      "mediaType": "image/png"
+    },
+    "renders/browser-pbr03/close-quarter-natural-overcast.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "207a464b5977dc02477b6731b2caed67ab9c13578f9a951afda738e998bfabac",
+      "bytes": 113679,
+      "mediaType": "image/png"
+    },
+    "renders/browser-pbr03/front-natural-day.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "51622be72b1cb2486e74250b0eff3155fe37860bf2bb447e7491a4fcf4ee8404",
+      "bytes": 115925,
+      "mediaType": "image/png"
+    },
+    "renders/browser-pbr03/game-camera-comparison.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9cc5489b36b0bff8df26ab3f1b3f699efd27613c81a46877109ec253ebb89463",
+      "bytes": 132073,
+      "mediaType": "image/png"
+    },
+    "renders/browser-pbr03/replacement-reset-to-frozen.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "317177f3e18c61c7ad401d97bb02a29877012132f2befaf62e0224c6f5b39a57",
+      "bytes": 108861,
+      "mediaType": "image/png"
+    },
+    "renders/browser-pbr03/roughness-quarter-day.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c259e32eed9ea409bec7721808b2d379f98a240c13591cff4b4177237716240b",
+      "bytes": 117143,
+      "mediaType": "image/png"
+    },
+    "renders/browser-pbr03/roughness-quarter-eye-level-day.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "52706210f72c1c85848c9e871ee5fd64e4003ce06873ab62f2d048966351c4bf",
+      "bytes": 116894,
+      "mediaType": "image/png"
+    },
+    "renders/browser-pbr03/zero-specular-quarter-eye-level-day.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "696e82e1b99fc695157ff6c9ff121863441f8ee2bf4058104cecf355f3c028ab",
+      "bytes": 116809,
+      "mediaType": "image/png"
+    },
+    "renders/hair-specular-diagnostic01/zero-specular-diagnostic.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "58948666f789865f3a328beb4e907e165ac039712a77639234bf73807544ee54",
+      "bytes": 9173928,
+      "mediaType": "model/gltf-binary"
+    },
+    "renders/pbr-preview03/native-hair-covered-static.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "706d7d6191b901e247d54cbe6e0fb1ff80dad3550910a780f3df7256d06510b9",
+      "bytes": 9173752,
+      "mediaType": "model/gltf-binary"
+    },
+    "renders/pbr-preview03-roughness01/native-hair-covered-static.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "daba61fc4397db19db58a230b00b5a77e18a7de8db258c7749f633c0e22580bc",
+      "bytes": 9173764,
+      "mediaType": "model/gltf-binary"
+    },
+    "renders/vivian-fit01/vivian-fit-covered-clay-static.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ced1a66800d46f2562ca873fa4c634975041c2467b48b64d6fa7425c87b3b1a1",
+      "bytes": 1099240,
+      "mediaType": "model/gltf-binary"
+    },
+    "samples/groom-intake07/payload/eyebrows-g0-lod3-0.fbx": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "cd96b9ef5dcf5fbd837329eefbfa724b2fa6a8006aae749c5f53ef691389777a",
+      "bytes": 181488,
+      "mediaType": "application/octet-stream"
+    },
+    "samples/groom-intake07/payload/hair-g0-lod4-0.fbx": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b0e6bfd9fb4ab7fbb412a2a45f84a6b8d1883f2f2788e6e48d1152409e33cfb1",
+      "bytes": 269856,
+      "mediaType": "application/octet-stream"
+    },
+    "samples/groom-intake07/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "369c0f920c3df4322462429045f13436f460d25f57f5e4fbe3c290ae10227f4a",
+      "bytes": 89362,
+      "mediaType": "application/json"
+    },
+    "samples/groom-selection01/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3872b1b15cb84131f132368f361092b719e3ef0258e172bc87533659ac3bc284",
+      "bytes": 19782,
+      "mediaType": "application/json"
+    },
+    "samples/vivian-fit01/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "e78c0d4d45227dae3f3a4ec8cde39ec14fb17d0c5838a4ce033120ba2eba38eb",
+      "bytes": 24815,
+      "mediaType": "application/json"
+    },
+    "source/current-native-inputs/VF/neutral/neutral.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "091a6b9763ed21a8d94c71f0d64a81b3fb17e6b0e4857d1652c50e1fe148650a",
+      "bytes": 9094667,
+      "mediaType": "application/octet-stream"
+    },
+    "source/current-native-inputs/Z/N.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7396e47afae25b1bd07ff62918d3fd992d11a148d7dbad294bac386ecf8b0095",
+      "bytes": 140106928,
+      "mediaType": "application/octet-stream"
+    },
+    "source/selected-native-card-assets/K/M/O/Grooms/Eyebrows_M_FlatThick_CardsMesh_Group0_LOD3.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5b614ad19fd3a06874633e62316426989d9cc51f728813cfe66192c7663374fe",
+      "bytes": 105800,
+      "mediaType": "application/octet-stream"
+    },
+    "source/selected-native-card-assets/K/M/O/Grooms/Hair_S_Clean_CardsMesh_Group0_LOD4.uasset": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9d1d6616e09517baad0502b58fb97a9c3ee55c76f51ee425a05437ca1cceb4df",
+      "bytes": 144856,
+      "mediaType": "application/octet-stream"
+    }
+  },
+  "preservation": {
+    "scope": "Private completed Clean/native-fit/PBR/browser evidence tranche; no complete catalog/world checkpoint or independent kit qualification.",
+    "fullManifestArtifact": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4edde23ce8d65929cc31ec180f91bd6e6bc1a19a780ff22238dfd29b48479da4",
+      "bytes": 36026,
+      "mediaType": "application/json"
+    },
+    "totalReleaseFiles": 141,
+    "totalReleaseFileBytes": 276026489,
+    "dependencies": [
+      {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-native-20261107",
+        "revisionId": "native03-pbr-hair-facial-vivian",
+        "manifestSha256": "48f9c98ebc404847a47ade3734328b6c59f52184a47c7596e66266b1bdcb6a9f"
+      }
+    ],
+    "exactDependencyClosure": {
+      "direct": {
+        "owner": {
+          "kind": "collection",
+          "id": "art-studies"
+        },
+        "assetId": "metahuman-foundation-poc-native-20261107",
+        "revisionId": "native03-pbr-hair-facial-vivian",
+        "manifestSha256": "48f9c98ebc404847a47ade3734328b6c59f52184a47c7596e66266b1bdcb6a9f"
+      },
+      "transitive": [
+        {
+          "owner": {
+            "kind": "collection",
+            "id": "art-studies"
+          },
+          "assetId": "metahuman-foundation-poc-native-20261107",
+          "revisionId": "native02-dcc31",
+          "manifestSha256": "03358167534490126210a8e5f732f920d79a0ad992e8acbf39052a1bb02c1eda"
+        },
+        {
+          "owner": {
+            "kind": "collection",
+            "id": "art-studies"
+          },
+          "assetId": "metahuman-foundation-poc-smoke-20261107",
+          "revisionId": "native-smoke02",
+          "manifestSha256": "f10b6485f627eb9986fd8c09b1301d47ad6dbfdc7907aea9eb1094cff12b6f9a"
+        }
+      ]
+    },
+    "freshRestore": {
+      "status": "passed",
+      "independentlyHashedFiles": 141,
+      "bytes": 276026489
+    },
+    "supplementaryExactRecovery": {
+      "status": "passed",
+      "uniqueObjectsIncludingManifest": 139,
+      "independentlyHashedFiles": 139,
+      "bytes": 275333560,
+      "generationBefore": 264,
+      "generationAfter": 264,
+      "receipt": {
+        "reference": {
+          "boundary": "asset-recovery",
+          "accessDomain": "openlegend-assets",
+          "sha256": "e8c17debebbb5e5f6d45aa89325030ee2c7d83c271b6dc2a672e13e933d458f8",
+          "bytes": 388284,
+          "mediaType": "application/json"
+        },
+        "location": {
+          "accountId": "027677879749",
+          "region": "us-east-2",
+          "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+          "key": "domains/openlegend-assets/blobs/sha256/e8/e8c17debebbb5e5f6d45aa89325030ee2c7d83c271b6dc2a672e13e933d458f8",
+          "versionId": "WO9b2ClAOJi9ytlsamZCDLrAQ9TFLmxC"
+        },
+        "readerHashVerified": true,
+        "authorityGeneration": 264,
+        "scope": "Immutable supplementary exact-native04 preservation receipt, not complete catalog/world checkpoint",
+        "completedAtUtc": "2026-11-08T03:03:14.733Z"
+      }
+    },
+    "metadataAdmissionCorrection": {
+      "unpublishedApprovedDraftUnchanged": true,
+      "scope": "Two identical JSON byte sequences require one application/json description; corrected fresh revision/operation explicitly authorized within the same bound.",
+      "initialRejectedEvidenceIncludedInRecoveryReceipt": true,
+      "sourcePayloadChangedByMimeCorrection": false
+    },
+    "limits": [
+      "Native Unreal groom/material/Engine dependency closure remains incomplete; portable FBX/PNG data and exact source states/pins are retained.",
+      "Active/prepared Vivian-source01/FV acquisition output is excluded.",
+      "No body/head, final appearance, convincing closure/source parity, skinning/locomotion, continuous family, lifecycle/performance, kit or public/runtime rights approval is inferred."
+    ],
+    "cost": {
+      "newPaidProviderSoftwareUsd": 0,
+      "additionalConservativeAwsAdmissionUsd": 2,
+      "sameAdmissionForCorrection": true,
+      "actualAwsCharges": "Not separately measured; admission is not actual spend."
+    }
+  }
+}

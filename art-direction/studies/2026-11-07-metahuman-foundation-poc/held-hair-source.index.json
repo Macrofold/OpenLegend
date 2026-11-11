@@ -1,0 +1,503 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-held-hair-source",
+    "revisionId": "generated-hair-held-20261109",
+    "manifestSha256": "74681e05e07f8371148ca472aca86f3141f95b1edc94dfc14db6b81f9cb67659"
+  },
+  "files": {
+    "source-study/finish-art02/completed-hair/after-front-credit-observation.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3f789326164f6314bf7260cadc965273a4eec8be6d9254edc131d78429d4ff80",
+      "bytes": 1139,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/back-construction-full.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bba5e7edb9f0d4a0bd60b0e3e97e227082d93b3a4e9a6e036e8e693f5eb457ed",
+      "bytes": 5656266,
+      "mediaType": "image/png"
+    },
+    "source-study/finish-art02/completed-hair/back.attempt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d690deea74f9c63b746682818db95043e653499679230a877e4e2c42bd49cf2d",
+      "bytes": 439,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/back.plan.ready.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0353870aa9094e435275407401661b622f2db40dff451a8658c62dedabf37e79",
+      "bytes": 2431,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/back.prompt.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0ba2763d87478eac6d786d37b42e066167ddabc673f6a2a18e4ee3b5745913ac",
+      "bytes": 1131,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source-study/finish-art02/completed-hair/candidate3d.create-attempt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "aa09424eec947492f29d129b0b0f7f3396e04bc078a2978953bf328b4405fdd4",
+      "bytes": 290,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/candidate3d.submission.safe.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5a0cb9ed03385742845addf068a8db543b75760f6eb026f773a94e640b076e59",
+      "bytes": 349,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/credit-observation.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "33e933a3bff4c1add225d2db4ed694b6d3e7d53647c362c0d0820b472bb9cdf6",
+      "bytes": 661,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/first-image-plan.ready.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "afad3cd1b2a8f1630aaa00391731dbb63d67d172b5a76c8e50ac9531c7d4e380",
+      "bytes": 4091,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/front-construction-full.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6007429c2c1d7f91e1b634364b6948f721d42c3d80fc309b3c40957a89625d7e",
+      "bytes": 3712789,
+      "mediaType": "image/png"
+    },
+    "source-study/finish-art02/completed-hair/front-construction.webp": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f02a61f692bea583da9057ef713bf9d043f11e418deb5691b25d587329d08377",
+      "bytes": 98826,
+      "mediaType": "image/webp"
+    },
+    "source-study/finish-art02/completed-hair/front.create-attempt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "99fe5a39e667408b33c9663277fed88c475dfca187a40b80c2a98a5d305a46b2",
+      "bytes": 297,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/front.prompt.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9617f5fd34e951228386157c6eb7ada817b0a301b04dc3be97b559f34939271c",
+      "bytes": 1557,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source-study/finish-art02/completed-hair/gpt_image_2_5.schema.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "34f6590fb34e9c7d7cb05844a025bcd81b7101ae1034f57c353d0c06bd5861a5",
+      "bytes": 1481,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/image-cost.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "004038dde608f5299d51de960025caa929de6ac2cafd5b215c20b234aadfd70b",
+      "bytes": 648,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/image-view-once.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2e31cc7eba256218cfa68abe49b205d1dae35380fde2680e81d7210f91473fab",
+      "bytes": 3946,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "source-study/finish-art02/completed-hair/inspect-source.py": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5a41376da45394636784f9c6ef5472c3c50754bf3d8a0ac50af8bd4cbea23c2d",
+      "bytes": 5711,
+      "mediaType": "text/x-python; charset=utf-8"
+    },
+    "source-study/finish-art02/completed-hair/left-construction-full.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "33efe36ead0b30f6bbabfc94019d533b35fa6bb3f411ee570d7cdacbc5e718df",
+      "bytes": 5156452,
+      "mediaType": "image/png"
+    },
+    "source-study/finish-art02/completed-hair/left.attempt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1aadbf9b767731628daf8d360fb432dccc46b8c028d8777312622b2a2bdb2546",
+      "bytes": 436,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/left.plan.ready.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f89b16b9da1ba473e5e6438cd87707875d45a108bb88661e1b7b34af857644cb",
+      "bytes": 1864,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/left.prompt.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2a29af8cd065ce6a8ebe2f3a30285a267580b8ebf20f6ba1fbf51ac9e618f92a",
+      "bytes": 1171,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source-study/finish-art02/completed-hair/meshy-multi-cost.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b98318b23f98b8edc3e627bd774809d4e22fdca7fb666b533f117a324067626c",
+      "bytes": 770,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/meshy7-hairpiece-source.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "560848083d0bdffb58cc140d906793f46917af700ec4a4ca8d97360022b339ff",
+      "bytes": 3526844,
+      "mediaType": "model/gltf-binary"
+    },
+    "source-study/finish-art02/completed-hair/meshy7-high-authoring-quote01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0e7f401fdc0162e0fd0c847dd279f25e2372aa24f0dbc76ebda39de2b79bbd12",
+      "bytes": 1727,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/meshy7-source-geometry-observation.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f2d2ae7ed20be8ab85c8994b43e12eff261740ead3827700a91c207b6a0103a2",
+      "bytes": 2069,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/meshy7-source-inspection.plan.ready.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "665ad6799e0810a86b333095b9efbced313dce41e6b18ef3e2a61cd91a9858bc",
+      "bytes": 2093,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/meshy7-source-inspection01/clay-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d9cb1787110cf8ec4852d2672e40ad13e3a3b2d17bc41f808adc1a7cc0038e5a",
+      "bytes": 456332,
+      "mediaType": "image/png"
+    },
+    "source-study/finish-art02/completed-hair/meshy7-source-inspection01/clay-underside.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "99a3b455bbac1cb1e8a2b5ff2ed47a8733ab8d659f8dc9107e15ba9ce15ac8cf",
+      "bytes": 465940,
+      "mediaType": "image/png"
+    },
+    "source-study/finish-art02/completed-hair/meshy7-source-inspection01/material-native-negx.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ed5b938aa09ec9819de42f36a6909c08dbdd664e5baf516157ca514734832a46",
+      "bytes": 501073,
+      "mediaType": "image/png"
+    },
+    "source-study/finish-art02/completed-hair/meshy7-source-inspection01/material-native-negz.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5063664671f5af119866b3f9f4a76e94e183ac4acfe8a30528e74e6f1c915658",
+      "bytes": 499836,
+      "mediaType": "image/png"
+    },
+    "source-study/finish-art02/completed-hair/meshy7-source-inspection01/material-native-posx.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9eb3ad55d5b5d4381e99fea49a47a652f987c6c75eee07ad3c2820b510ffa8a6",
+      "bytes": 493166,
+      "mediaType": "image/png"
+    },
+    "source-study/finish-art02/completed-hair/meshy7-source-inspection01/material-native-posz.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3139c1376feffe1851531f879f353628261de07671936bc1b9ba7cc7366c4390",
+      "bytes": 483378,
+      "mediaType": "image/png"
+    },
+    "source-study/finish-art02/completed-hair/meshy7-source-inspection01/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "77b1fb6319a613ffbe24a89fa11cdba2fb71097005dee45e15843d2d3347db14",
+      "bytes": 3928,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/meshy7-source-inspection01/unmodified-imported-source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d678acb92d7457210dce49d168c2cc5b257f088aede7f3a9c4b7790710145873",
+      "bytes": 3309217,
+      "mediaType": "application/octet-stream"
+    },
+    "source-study/finish-art02/completed-hair/meshy7-source-inspection01.execution.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "5f2c813808c9cbe2e6f032142f40f35cfd395a7d9a186d9bd8677cf76d4bd87b",
+      "bytes": 975,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/meshy7-source-inspection01.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "bdf64599698570bc62893b53f6845da84c7c05ca5567fd556010df6823173d39",
+      "bytes": 2053,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source-study/finish-art02/completed-hair/meshy7-source-visual-assessment01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4393ba03137f4d2a05fe25577576edbddc65437427bb7dd50391e6fe06765bd4",
+      "bytes": 5810,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/meshy7.create-attempt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "dbb2836544360058da8985632883c799e8398e48c3ab5cac9fd8f6fa8b0b2c7b",
+      "bytes": 1462,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/meshy7.submission.safe.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "68b5722cde15254a5984ea292e05f6d1f41659f34783c83b75a4169492ce8756",
+      "bytes": 382,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/meshy_v7_image_to_3d.actual-3d-quote.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9be153295155a6e03af9f0cb3e4d6e9666d289415c71e90af682a5c72f5c0f33",
+      "bytes": 1532,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/meshy_v7_image_to_3d.schema.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "43f42b69b7e12584b77e8e05e4ed21b9280fc23fbd4ce44c0b82d4ebec0a8ffa",
+      "bytes": 3090,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/multi_image_to_3d.actual-3d-quote.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "a3f87fdaf7d3e10fe057466eb1484e54d6cf854790eeb55b344c97549d923cd7",
+      "bytes": 3044,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/multi_image_to_3d.schema.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "121a5e2006e3d0c659808ed287c1a48f61fb65173a61bc1e07b459945c8cc6cf",
+      "bytes": 3118,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/provider-receipts.url-free.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "2a5cf195cef988b7da555d3d6755f14cc45df17080448cc711a86b3c91fa73b7",
+      "bytes": 28027,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/right-construction-full.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "848b53eec6d301a92db4ea6b55bac00712b85415dd0592b9543427542c22c356",
+      "bytes": 5394396,
+      "mediaType": "image/png"
+    },
+    "source-study/finish-art02/completed-hair/right.attempt.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b53a7c23e05f590f8ce8097be2f1ab3a9f89c7123cc974f17eaa9c7730dc967c",
+      "bytes": 439,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/right.plan.ready.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "d2aa5a56762b9ba4957dcf314ca1308c05b777490b750cc6f038e6962dc77135",
+      "bytes": 3045,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/right.prompt.txt": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3b435fbc823e5488584c9e19655c270c7b114ffd462463a6cd35c6bc706941b7",
+      "bytes": 1210,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source-study/finish-art02/completed-hair/safe-state.hold01.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c6bc7979436eabd2ead7c7dcd5acb126feb7c3fc5cfdf8d595e33cd350aad49a",
+      "bytes": 6060,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/source-duplicate-face-observation.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "9f0fe4a6de85c8d5e3d7e7d27b040d142eeacd47c9ad934fcaa43ec72c3f8c43",
+      "bytes": 799,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/source-inspection.plan.ready.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ec6fea8e789bd95be17f7b1f49e94fa3296e89621f50c423af2b1195dac9cc60",
+      "bytes": 2027,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/source-inspection01/clay-quarter.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ad1669429e23a4e999b494ed88f3821135b22fac1522eded6d58a55b371eeeea",
+      "bytes": 481739,
+      "mediaType": "image/png"
+    },
+    "source-study/finish-art02/completed-hair/source-inspection01/clay-underside.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c5565974a13e5384d6327b6edaa7af95cbc81884d8dfa9f9ef3cb2c5ff478291",
+      "bytes": 491411,
+      "mediaType": "image/png"
+    },
+    "source-study/finish-art02/completed-hair/source-inspection01/material-native-negx.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f3cbc745b0d69443bb857a8b818bb4e7056c4608a1e5bb795d4d92f7ccac31b9",
+      "bytes": 605925,
+      "mediaType": "image/png"
+    },
+    "source-study/finish-art02/completed-hair/source-inspection01/material-native-negz.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "95f2ac675daf0cab27724bcf616d17d371ecb9a459fe6b5f202cd4e379e8f4fa",
+      "bytes": 567541,
+      "mediaType": "image/png"
+    },
+    "source-study/finish-art02/completed-hair/source-inspection01/material-native-posx.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "910bdef7bc08370e1ebee7698b80e669046cce3fc417882a444680bffd6fc41d",
+      "bytes": 594336,
+      "mediaType": "image/png"
+    },
+    "source-study/finish-art02/completed-hair/source-inspection01/material-native-posz.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "01f44e2157781776b773adb5a1c4ab1fa0868b10c2c9737654076cc6ebddb858",
+      "bytes": 580823,
+      "mediaType": "image/png"
+    },
+    "source-study/finish-art02/completed-hair/source-inspection01/result.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3dcfd09a0649c8a81136b6761812a32d0bac54e94e22792afd828ecefaef51ea",
+      "bytes": 3950,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/source-inspection01/unmodified-imported-source.blend": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4c0e7a8840196bf8983874bf3e223ce8bb22a5e8e8974fbfc3f3a6d4db82838f",
+      "bytes": 4690628,
+      "mediaType": "application/octet-stream"
+    },
+    "source-study/finish-art02/completed-hair/source-inspection01.execution.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1c6e4cf5050344363d1a39028265a3d853dced29232295c4f87374ea150990c8",
+      "bytes": 767,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/source-inspection01.log": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ad9cc17830ef8e8e76175765cfdae371aed1f82182579d38b3ba02fe1ea394e4",
+      "bytes": 2057,
+      "mediaType": "text/plain; charset=utf-8"
+    },
+    "source-study/finish-art02/completed-hair/source-normal-topology-observation.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ad89d53ee3435ac249d53e4eabceb739a5d5e512ec83b6e98e13b66155b94c04",
+      "bytes": 1980,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/source-winding-constraint-observation.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0797274283d957cb4418b66f6aec310a14f3ce85552c64156e19401f2bee08a1",
+      "bytes": 1002,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/tripo-cost.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "47456c37305b833f180cd1124b284924397aa0c2a596ee54c0af3eca11da30a8",
+      "bytes": 774,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/tripo-front-first.plan.ready.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "38b3373d2b4559187f91782cdd483b0386fccc324d61e17dcb9f83308d926d33",
+      "bytes": 4372,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/tripo-hairpiece-source.glb": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b56d5f2a7f9d796f93ebff31a04866426d9e600d3ef5bf6d70ce559acf90d284",
+      "bytes": 4636880,
+      "mediaType": "model/gltf-binary"
+    },
+    "source-study/finish-art02/completed-hair/tripo-source-rejection.assessment.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "be69078a39230ff2fe2c0857c70ba6747e08a0aed21ce2bf3c7e3cf1246d699d",
+      "bytes": 3356,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/tripo_h3_1_multiview_to_3d.actual-3d-quote.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6b2a4e0ab722ee37b03d5f6e2fe26e5af6a07bc74b7eec42671a97070c8dbded",
+      "bytes": 2754,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/tripo_h3_1_multiview_to_3d.schema.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "6d91d5d491c5aaff94ed44b1db64923f56ba7c967b77263eee9d6d21e8813f1e",
+      "bytes": 1695,
+      "mediaType": "application/json"
+    },
+    "source-study/finish-art02/completed-hair/view-order-evidence.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "0ceaafa3e107fb920124221e98c3767afdc22fae37e9f3d97fdd18a1cb1c2430",
+      "bytes": 1078,
+      "mediaType": "application/json"
+    }
+  }
+}

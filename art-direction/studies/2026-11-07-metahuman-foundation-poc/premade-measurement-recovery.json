@@ -1,0 +1,89 @@
+{
+  "status": "Publication, current-permission readback, independent exact-version recovery and durable receipt verification passed.",
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-premade-measurement-proof",
+    "revisionId": "offline-timing-fresh-source01",
+    "manifestSha256": "1ea5464f3a49434c5f606259c0026c1bbdaa6a69544a5fa7c70d2bf56be34225"
+  },
+  "publicationOperationId": "mhp-premade-measurement-proof-20261110",
+  "sourceIndex": {
+    "file": "premade-measurement-proof.index.json",
+    "bytes": 1176,
+    "sha256": "fd9002f11bfccac2650d04d4244995d619e79e7b3797e236dd632170f97aee76"
+  },
+  "publishedUniqueObjects": 4,
+  "publishedPayloadBytesIncludingCanonical": 34312224,
+  "archiveMembers": 67,
+  "reusedExactPreviouslyPreservedSourceRows": 136,
+  "scope": "Six valid offline 30-second timing reports, three excluded preliminary reports, setup/analysis, all four distinct new held-out GLBs and fresh-restored source/export/readback/browser witnesses, plus the final user-facing four-body views. No overall art/POC/scaling/coldload or hair acceptance.",
+  "evidenceOutcome": {
+    "timing": "Three finite paired garment CPU-threshold comparisons passed.",
+    "freshSource": "Both new premade kits recompiled byte-exact; held-out native/profile/export checks and browser views passed; Unreal remained closed.",
+    "appearanceAcceptance": false
+  },
+  "durableRecoveryReceipt": {
+    "reference": {
+      "boundary": "asset-recovery",
+      "accessDomain": "openlegend-assets",
+      "sha256": "a62991b490702e696231a60d0cdebde351c9e34ebae05dc0ce5e92a91377fb04",
+      "bytes": 21861,
+      "mediaType": "application/json"
+    },
+    "location": {
+      "accountId": "027677879749",
+      "region": "us-east-2",
+      "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+      "key": "domains/openlegend-assets/blobs/sha256/a6/a62991b490702e696231a60d0cdebde351c9e34ebae05dc0ce5e92a91377fb04",
+      "versionId": "viYRiKmCGQ4robhmjJDAgvAix2PAzAmW"
+    },
+    "readerHashVerified": true,
+    "authorityGeneration": 322,
+    "scope": "Exact timing and fresh-heldout proof; actual admission and sanitized preflight are embedded in this durable receipt",
+    "completedAtUtc": "2026-11-10T04:01:13.438Z"
+  },
+  "receiptContainsActualAdmissionAndCurrentPreflight": true,
+  "actualReceiptLocalProof": {
+    "file": "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/evidence/premade-measurement01/proof01/recovery/receipt.json",
+    "bytes": 21861,
+    "sha256": "a62991b490702e696231a60d0cdebde351c9e34ebae05dc0ce5e92a91377fb04"
+  },
+  "clock": {
+    "firstAuthorityAttemptUtc": "2026-11-10T03:58:39.038647+00:00",
+    "hardDeadlineUtc": "2026-11-10T04:08:39.038647+00:00",
+    "clientsClosedAtUtc": "2026-11-10T04:01:13.621805+00:00",
+    "fullPauseTailSeconds": 300,
+    "modeledPauseTailReservedThroughUtc": "2026-11-10T04:06:13.621805+00:00",
+    "capacityZeroObserved": false,
+    "noClockResetOrRetry": true
+  },
+  "cleanup": {
+    "allOwnedAuthorityClientsClosed": true,
+    "viewerStarted": false,
+    "port3228Absent": true,
+    "nativeProviderJobs": 0,
+    "noFurtherAwsCallsPlanned": true
+  },
+  "accounting": {
+    "retainedPriorControlUsd": 25.99,
+    "newReservedUsd": 1,
+    "wholeConservativeControlUsd": 26.99,
+    "sharedTaskCeilingUsd": 100,
+    "actualAwsInvoiceSpend": "Unmeasured",
+    "softwareProviderNewSpendUsd": 0,
+    "modelSubtotalUsd": 0.56347676416,
+    "firstMonthStorageModelOnly": true
+  },
+  "limits": {
+    "newPayloadBytes": 40000000,
+    "readBytes": 1073741824,
+    "requests": 1000,
+    "newObjects": 20,
+    "operationSeconds": 600,
+    "fullPauseTailSeconds": 300
+  },
+  "priorIndexesAndRecoveryRecordsUnchanged": true
+}

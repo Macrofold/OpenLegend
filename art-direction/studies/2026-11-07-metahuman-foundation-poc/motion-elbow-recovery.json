@@ -1,0 +1,128 @@
+{
+  "status": "passed",
+  "scope": "Eight private corrected descriptor/runtime/source/derivation/composite units; all original39 claims and controls retained",
+  "releases": [
+    {
+      "owner": {
+        "kind": "collection",
+        "id": "art-studies"
+      },
+      "assetId": "metahuman-foundation-poc-orlando-walk-elbow-descriptor",
+      "revisionId": "poc-c1f7a60ff8188f3069f939f7",
+      "manifestSha256": "216d14636cde3a6e6348df225e8ec6c5e1a15c5bacf3be6b0e7ae753b962e2b7"
+    },
+    {
+      "owner": {
+        "kind": "collection",
+        "id": "art-studies"
+      },
+      "assetId": "metahuman-foundation-poc-orlando-walk-elbow-runtime",
+      "revisionId": "poc-c1f7a60ff8188f3069f939f7",
+      "manifestSha256": "262b8166a49b14cba99009234634980772a1b4f2adc81f323d1e18dbaca1e2ba"
+    },
+    {
+      "owner": {
+        "kind": "collection",
+        "id": "art-studies"
+      },
+      "assetId": "metahuman-foundation-poc-orlando-walk-elbow-source",
+      "revisionId": "poc-c1f7a60ff8188f3069f939f7",
+      "manifestSha256": "a8d644f8fef6943640e2ab791bf2cd489132d2c8b5d6432348fa505db8ea72dd"
+    },
+    {
+      "owner": {
+        "kind": "collection",
+        "id": "art-studies"
+      },
+      "assetId": "metahuman-foundation-poc-vivian-walk-elbow-descriptor",
+      "revisionId": "poc-e1495e16e221662359946c69",
+      "manifestSha256": "31064f30858087dba6a82f5b6526da5a73c757be3bd8f1a0b264ee567d91f380"
+    },
+    {
+      "owner": {
+        "kind": "collection",
+        "id": "art-studies"
+      },
+      "assetId": "metahuman-foundation-poc-vivian-walk-elbow-runtime",
+      "revisionId": "poc-e1495e16e221662359946c69",
+      "manifestSha256": "9be3c81bd9dde0fd492bcbded8a06dc45fc9482e65b513381860a028826cac2c"
+    },
+    {
+      "owner": {
+        "kind": "collection",
+        "id": "art-studies"
+      },
+      "assetId": "metahuman-foundation-poc-vivian-walk-elbow-source",
+      "revisionId": "poc-e1495e16e221662359946c69",
+      "manifestSha256": "5fdb3e275e2d1adcabcfbf585d24a362cb0c8d8f26b1a77f67e4bab1eb538192"
+    },
+    {
+      "owner": {
+        "kind": "collection",
+        "id": "art-studies"
+      },
+      "assetId": "metahuman-foundation-poc-walk-elbow-derivation",
+      "revisionId": "source-native-complete01",
+      "manifestSha256": "539d700cec5b5e75b36add21eca87ab695f6d4d4d79717799d3bd9dbe76382df"
+    },
+    {
+      "owner": {
+        "kind": "collection",
+        "id": "art-studies"
+      },
+      "assetId": "metahuman-foundation-poc-private-elbow-comparison-root",
+      "revisionId": "old-new-walk01",
+      "manifestSha256": "00ab82a26c84462f8d6d73ce5bbb60a365a6ec843ff30a80e5e561c84684b769"
+    }
+  ],
+  "publicationOperations": [
+    "mhp-elbow01-orlando-descriptor-20261109",
+    "mhp-elbow01-orlando-runtime-20261109",
+    "mhp-elbow01-orlando-source-20261109",
+    "mhp-elbow01-vivian-descriptor-20261109",
+    "mhp-elbow01-vivian-runtime-20261109",
+    "mhp-elbow01-vivian-source-20261109",
+    "mhp-elbow01-derivation-complete-20261109",
+    "mhp-elbow01-composite-20261109"
+  ],
+  "newObjectsIndependentlyVerified": 37,
+  "newBytesIndependentlyVerified": 82559635,
+  "priorVerifiedObjectsReused": 36,
+  "authorityGenerationBefore": 299,
+  "authorityGenerationAfter": 299,
+  "durableRecoveryReceipt": {
+    "reference": {
+      "boundary": "asset-recovery",
+      "accessDomain": "openlegend-assets",
+      "sha256": "7fb1d553551bd5b515242e6301a1702868c83f87cf8e4ecff79b9e96031069c0",
+      "bytes": 124218,
+      "mediaType": "application/json"
+    },
+    "location": {
+      "accountId": "027677879749",
+      "region": "us-east-2",
+      "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+      "key": "domains/openlegend-assets/blobs/sha256/7f/7fb1d553551bd5b515242e6301a1702868c83f87cf8e4ecff79b9e96031069c0",
+      "versionId": "6ghceSfsn4aKDFlsnR6niP5fMz5ayXGN"
+    },
+    "readerHashVerified": true,
+    "authorityGeneration": 299,
+    "scope": "Exact partial browser proof only; durable new-unit recovery receipt, not a whole-catalogue checkpoint",
+    "completedAtUtc": "2026-11-09T15:43:51.714Z"
+  },
+  "sourceReceipt": {
+    "file": "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/evidence/motion-elbow01/publication02/recovery/receipt.json",
+    "bytes": 124218,
+    "sha256": "7fb1d553551bd5b515242e6301a1702868c83f87cf8e4ecff79b9e96031069c0"
+  },
+  "firstAuthorityAttemptAtUtc": "2026-11-09T15:30:37.743403+00:00",
+  "hardDeadlineUtc": "2026-11-09T16:00:37.743403+00:00",
+  "wholeTaskConservativeControlUsd": 11.99,
+  "standingTaskCeilingUsd": 100,
+  "actualAwsInvoiceSpend": "Unmeasured",
+  "providerSoftwareUsd": 0,
+  "privateOnly": true,
+  "noPublicOrWorldSelectionChanges": true,
+  "qualification": "Individual frozen native/browser assessments own findings. No overall POC, finished art, likeness or garment adoption is implied.",
+  "scopeAnnotation": "Initial receipt inherited a generic partial-browser-proof label; exact listed releases/files identify actual scope, and immutable original bytes were retained."
+}

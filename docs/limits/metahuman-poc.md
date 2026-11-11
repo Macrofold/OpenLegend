@@ -2,7 +2,7 @@
 
 [Feature](../projects/metahuman-foundation-poc-feature-spec.md) · [Execution design](../projects/metahuman-foundation-poc-tech-design.md) · [Tasks](../maintainers/art/metahuman-poc.md)
 
-All POC choices below are **Proposed**, with no runtime qualification yet. Shared [A3D](3d-pixel-art.md) and [asset-storage](game-asset-storage.md) limits keep their owners; this inventory does not raise them.
+Private execution is authorized. Numerical POC choices below remain **Proposed** experiment targets. Tested steady-render and foreground Height-drag results meet their targets; [execution evidence](../verification/metahuman-foundation-poc.md) records their limited workloads and unfinished qualification. Shared [A3D](3d-pixel-art.md) and [asset-storage](game-asset-storage.md) limits keep their owners; this inventory does not raise them.
 
 ## MHP-L01 — Finite authoring sample set
 
@@ -14,7 +14,7 @@ All POC choices below are **Proposed**, with no runtime qualification yet. Share
 
 ## MHP-L03 — Parts and motion coverage
 
-**Proposed · Restrictiveness: Very safe.** Separate underwear, one tunic design with one binding per family, two short hair styles plus bald, at least three eye colours and one rigid attachment. Idle/Walk/Run, transitions and two diagnostic bends; blink/jaw export is a separate required measurement. Full wardrobe, cloth simulation, long hair, fingers/expressive gameplay and broad pose coverage remain unqualified. This bounds the proof, not the larger character feature. Owner: design §§7–8, MHP04.
+**Accepted proof scope · Restrictiveness: Very safe.** Existing separate coverage, one premade garment design with one binding per family, one existing natural-looking premade hair-card style plus bald, existing eye colours and one rigid attachment. Make one bounded athletic adjustment; do not pursue production-body or hair polish. Idle/Walk/Run, transitions and two diagnostic bends remain; blink/jaw export is a separate measurement. Custom garment construction requires an agreed specific unmet need; no custom hair system or hairstyle-library expansion. Full wardrobe, cloth simulation, expressive gameplay and broad pose coverage remain unqualified. Owner: design §§7–8, MHP04.
 
 ## MHP-L04 — Bounded runtime work and study measurements
 
@@ -22,7 +22,7 @@ All POC choices below are **Proposed**, with no runtime qualification yet. Share
 
 ## MHP-L05 — Scope, repair and spending boundaries
 
-**Proposed · Restrictiveness: Very safe.** Private developer study; no production selection, game-state mutation, normal art-workflow adoption or per-character vendor calls. One focused repair per failed gate before a decision on substantial extra work. Existing task-spending rules apply, with no new software purchase or paid call made by this design. A blocker preserves evidence and stops dependent work rather than silently weakening acceptance. Owner: design §§4 and 11, MHP01/MHP06.
+**Accepted bounded scope · Restrictiveness: Very safe.** The foundation study and one private/local Main-world NPC pilot are authorized. MHP07 uses provisional Vivian assets, Bald, separate underwear and one compound premade shirt/shorts item; existing cast artwork and ordinary scene remain unchanged. No public MetaHuman publication, production selection, automatic normal-workflow adoption or per-character vendor calls. Broader controls, the six-preset library, wardrobe/cast conversion and polishing remain outside this unit. One focused repair per failed gate precedes a decision on substantial extra work. The existing cumulative $100 ceiling is retained; no new allowance or software purchase is implied. A blocker preserves evidence and stops dependent work rather than weakening acceptance. Owner: design §11, MHP01/MHP06/MHP07.
 
 ## MHP-L06 — Retention and growth
 

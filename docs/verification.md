@@ -2,6 +2,8 @@
 
 - [Adjustable people](verification/people-from-parts.md) — isolated garment fitting, anatomical height, spawn clearance, modular draw cost and cognition-boundary measurements.
 
+- [MetaHuman foundation proof](verification/metahuman-foundation-poc.md) — private toolchain, source-export and independent-kit gates; no production source adoption.
+
 - [Renderer preparation](verification/renderer-preparation.md) — current PlayCanvas responsibility/consumer inventory, exact study assets/settings, independent cloth extraction and bounded baseline evidence; shared-controller and dual-renderer qualification remain separate.
 
 - [Gildmoss interface](verification/gildmoss-interface.md) — native/private-map/trade/storage review, actual running-game interactions, revision-3 material kit and 14 character-panel styles, and remaining UIUX21 screen, responsive and performance qualification.

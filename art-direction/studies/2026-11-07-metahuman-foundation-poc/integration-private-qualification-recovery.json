@@ -1,0 +1,66 @@
+{
+  "status": "Verified private final proof published, normally read back, independently exact-version recovered and durably retained",
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-integration-ready-final-proof",
+    "revisionId": "qualification01",
+    "manifestSha256": "dd44639b8206bc8c023ee289f37525b8aafee3d27084e4e360ef3f5bb982c69c"
+  },
+  "index": {
+    "file": "integration-private-qualification.index.json",
+    "bytes": 1158,
+    "sha256": "8a5fff8c51fef9ee7fbcc00ca652789ee35d4c141d130dea89b5d3e59d47a0dc"
+  },
+  "libraryPublicationOperation": "mhp-integration-ready-final-qualification-20261110",
+  "rightsOperation": "mhp-integration-ready-final-qualification-20261110-rights",
+  "libraryArtifactsIncludingCanonical": 4,
+  "newLibraryBytesIncludingCanonical": 25115176,
+  "normalWorkspaceFiles": 3,
+  "normalStandardArchiveMembersVerified": 106,
+  "allFourHeldoutGlbsRetained": true,
+  "independentRecoveryObjectsVerified": 4,
+  "independentReaderAllHashesVerified": true,
+  "durableRecoveryReceipt": {
+    "reference": {
+      "boundary": "asset-recovery",
+      "accessDomain": "openlegend-assets",
+      "sha256": "fbab9e4eb89ec82377958a51a3e27ea172dc5ebd7bf01c28b424974f1f1c8563",
+      "bytes": 11709,
+      "mediaType": "application/json"
+    },
+    "location": {
+      "accountId": "027677879749",
+      "region": "us-east-2",
+      "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+      "key": "domains/openlegend-assets/blobs/sha256/fb/fbab9e4eb89ec82377958a51a3e27ea172dc5ebd7bf01c28b424974f1f1c8563",
+      "versionId": "IsLNcxNKseOdiZ6IU2BNYD7qh_kZn5VH"
+    },
+    "readerHashVerified": true,
+    "authorityGeneration": 342,
+    "scope": "Exact private-study qualification and preservation proof; actual admission and sanitized preflight are embedded in this durable receipt",
+    "completedAtUtc": "2026-11-10T11:41:47.324Z"
+  },
+  "authorityGeneration": 342,
+  "proofOnlyWindowFirstAttemptAtUtc": "2026-11-10T11:38:54.421176+00:00",
+  "proofOnlyWindowHardDeadlineUtc": "2026-11-10T11:48:54.421176+00:00",
+  "ownedClientsClosedAtUtc": "2026-11-10T11:41:47.505096+00:00",
+  "ownedClientsClosed": true,
+  "viewerStartedInProofWindow": false,
+  "nativeOrProviderCalls": 0,
+  "full300secondShutdownTailStillReserved": true,
+  "zeroCapacityObserved": false,
+  "aggregateNewLibraryArtifacts": 42,
+  "aggregateNewLibraryBytesIncludingCanonical": 217524799,
+  "aggregateLibraryArtifactsIncluding15ExactPriorMaps": 57,
+  "retainedPriorStudySourceRecoveryLocator": "integration-private-recovery.json",
+  "gameInstalled": false,
+  "maleCurationPerformed": false,
+  "publicRuntimeApproved": false,
+  "privateRuntimeApproved": false,
+  "wholeConservativeControlUsd": 30.99,
+  "taskCeilingUsd": 100,
+  "actualAwsInvoiceSpend": "Unmeasured; control/reservation is not spend."
+}

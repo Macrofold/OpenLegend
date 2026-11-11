@@ -1,0 +1,61 @@
+{
+  "status": "published, fresh library readback, exact independent recovery and durable receipt passed",
+  "scope": "This exact qualification proof only; earlier unrelated proof records remain unchanged.",
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-browser-qualification-proof-20261109",
+    "revisionId": "functional-captures02",
+    "manifestSha256": "2e3a3117d6b9fb256d035030f01c8e7f68438170b9a2562e329734e032c62752"
+  },
+  "fileClaims": 51,
+  "filePayloadBytes": 5828530,
+  "index": {
+    "file": "/Users/mike/Documents/ChatGPT/OpenLegend-art/2026-11-07-metahuman-foundation-poc/study/evidence/aws-task-cost01/proof-only-closure01/handoff01/resumed-browser-proof02.index.json",
+    "bytes": 14842,
+    "sha256": "6d1a992f61ff45eb0d25224321ebd627bc973459f49263460afb955fb15e0099"
+  },
+  "publicationOperationId": "mhp-resumed-browser-qualification-proof02-20261109",
+  "independentRecovery": {
+    "objectsIncludingCanonicalManifest": 52,
+    "bytes": 5841417,
+    "authorityGenerationBefore": 289,
+    "authorityGenerationAfter": 289,
+    "durableReceipt": {
+      "reference": {
+        "boundary": "asset-recovery",
+        "accessDomain": "openlegend-assets",
+        "sha256": "3683ca3df032c1fd28bef4518b18836fe12eafa303a97f0e63375e754c96173e",
+        "bytes": 85535,
+        "mediaType": "application/json"
+      },
+      "location": {
+        "accountId": "027677879749",
+        "region": "us-east-2",
+        "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+        "key": "domains/openlegend-assets/blobs/sha256/36/3683ca3df032c1fd28bef4518b18836fe12eafa303a97f0e63375e754c96173e",
+        "versionId": "2Si6o2CFaMOYDNl6bX_zOJwAHBsnyyXA"
+      },
+      "readerHashVerified": true,
+      "authorityGeneration": 289,
+      "scope": "Exact functional-captures02 proof only; resumed completion of previously copied52 versions, no whole-catalogue recovery.",
+      "completedAtUtc": "2026-11-09T03:37:26.258Z"
+    }
+  },
+  "actualAwsInvoiceSpend": "Unmeasured",
+  "providerSoftwareSpendUsd": 0,
+  "wholeTaskConservativeControlUsd": 9.96,
+  "pauseAndCompute": "Reported separately through the explicitly authorized CloudWatch-only cleanup read; no database will be reopened.",
+  "previousCutoff": {
+    "stoppedAtUtc": "2026-11-09T03:06:43.313513Z",
+    "original52CopiesAndDownloadsCompleted": true,
+    "finalClosureWasIncompleteThen": true,
+    "resumedAtUtc": "2026-11-09T03:36:46.514Z",
+    "completedAtUtc": "2026-11-09T03:37:24.405Z",
+    "physicalCopiesCreatedThisResume": 0,
+    "all52ExactRecoveryVersionsRevalidated": true,
+    "clientsClosedAtUtc": "2026-11-09T03:37:26.325Z"
+  }
+}

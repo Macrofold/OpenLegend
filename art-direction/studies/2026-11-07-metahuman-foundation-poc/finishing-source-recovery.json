@@ -1,0 +1,106 @@
+{
+  "scope": "Exact current finishing source and terminal proof only; not the old catalogue or current runtime selection",
+  "sourceRelease": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-finishing-source",
+    "revisionId": "finish-art02-closed-20261109-exact-media",
+    "manifestSha256": "617666669e53fd816244fe3c0ef24e354d6003693e80bc062b4cc142f444aba7"
+  },
+  "sourcePublicationOperationId": "mhp-finish-art02-exact-media-source-20261109",
+  "terminalProofRelease": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-finishing-preservation-proof",
+    "revisionId": "finish-art02-terminal-20261109",
+    "manifestSha256": "3ace5584d14f6ac68b3a8df7459e48e792bdf5633ef0d8ec82e8403257e30940"
+  },
+  "terminalPublicationOperationId": "mhp-finish-art02-terminal-proof-20261109",
+  "sourceDurableRecoveryReceipt": {
+    "reference": {
+      "boundary": "asset-recovery",
+      "accessDomain": "openlegend-assets",
+      "sha256": "146648298cd191be121443b42b5869e92ebd0845e6399dfea373a46a1301e340",
+      "bytes": 20117,
+      "mediaType": "application/json"
+    },
+    "location": {
+      "accountId": "027677879749",
+      "region": "us-east-2",
+      "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+      "key": "domains/openlegend-assets/blobs/sha256/14/146648298cd191be121443b42b5869e92ebd0845e6399dfea373a46a1301e340",
+      "versionId": "ejXmfPNH31IPdnHH36dkk8rbV8rYZQ8u"
+    },
+    "readerHashVerified": true,
+    "authorityGeneration": 302,
+    "scope": "Exact finishing source artifacts; durable selected-unit recovery receipt, not a whole-catalogue checkpoint",
+    "completedAtUtc": "2026-11-09T21:56:55.171Z"
+  },
+  "terminalDurableRecoveryReceipt": {
+    "reference": {
+      "boundary": "asset-recovery",
+      "accessDomain": "openlegend-assets",
+      "sha256": "59a81f01186fea4bd82d34faa4d06c63238cad023e5d6f0d932838326c6331da",
+      "bytes": 8936,
+      "mediaType": "application/json"
+    },
+    "location": {
+      "accountId": "027677879749",
+      "region": "us-east-2",
+      "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+      "key": "domains/openlegend-assets/blobs/sha256/59/59a81f01186fea4bd82d34faa4d06c63238cad023e5d6f0d932838326c6331da",
+      "versionId": "EVyrIwQwGy6khVGaMCYMZgBSjeIRJabn"
+    },
+    "readerHashVerified": true,
+    "authorityGeneration": 303,
+    "scope": "Exact finishing terminal proof artifacts; durable selected-unit recovery receipt, not a whole-catalogue checkpoint",
+    "completedAtUtc": "2026-11-09T22:04:44.066Z"
+  },
+  "archiveExactVersions": {
+    "reference": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1fe2ba9a36847e6b2b1bf09f975b3023218930abbc13d4b495cb8d3d9dd5ac95",
+      "bytes": 523304412,
+      "mediaType": "application/x-xz"
+    },
+    "sourceLocation": {
+      "accountId": "027677879749",
+      "region": "us-east-2",
+      "bucket": "openlegend-assets-librarybucket-ijzk7jkcx54e",
+      "key": "domains/curated-private/blobs/sha256/1f/1fe2ba9a36847e6b2b1bf09f975b3023218930abbc13d4b495cb8d3d9dd5ac95",
+      "versionId": "a8aoZzwdm7IK3dCp4c0Wu2vrMvVXdZ.Q"
+    },
+    "recovery": {
+      "reference": {
+        "boundary": "asset-recovery",
+        "accessDomain": "openlegend-assets",
+        "sha256": "1fe2ba9a36847e6b2b1bf09f975b3023218930abbc13d4b495cb8d3d9dd5ac95",
+        "bytes": 523304412,
+        "mediaType": "application/x-xz"
+      },
+      "location": {
+        "accountId": "027677879749",
+        "region": "us-east-2",
+        "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+        "key": "origins/027677879749/openlegend-assets-librarybucket-ijzk7jkcx54e/domains/curated-private/blobs/sha256/1f/1fe2ba9a36847e6b2b1bf09f975b3023218930abbc13d4b495cb8d3d9dd5ac95",
+        "versionId": "2VIQlYXJwiIgm03LxaefaxAAlM1uSndO"
+      }
+    },
+    "readerHashVerified": true
+  },
+  "sourceArtifactsVerified": 12,
+  "terminalArtifactsVerified": 5,
+  "newLibraryArtifactCount": 16,
+  "alreadyAdmittedLibraryArtifactCount": 1,
+  "currentPermissionScope": "48 exact prior inputs authorized offline; current selected-unit reads/recovery authorized through existing owners. No historical payloads fetched.",
+  "globalFirstAttemptUtc": "2026-11-09T21:40:03.677682+00:00",
+  "globalHardDeadlineUtc": "2026-11-09T22:40:03.677682+00:00",
+  "ownedClientsClosedAtUtc": "2026-11-09T22:04:44.377164+00:00",
+  "fullPauseTailNotBeforeUtc": "2026-11-09T22:09:44.377164+00:00",
+  "noResourcesGrantsOrPublicSelectionChanges": true
+}

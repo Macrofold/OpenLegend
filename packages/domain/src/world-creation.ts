@@ -13,16 +13,17 @@ export interface WorldOpeningIdentities {
   worldId: string;
   ids: Record<string, string>;
 }
+export type AppearanceFamilyInstaller = (
+  world: WorldState,
+  families: readonly AppearanceFamilyDefinition[],
+) => void;
 export interface InitialWorldPreparation {
   world: WorldState;
   /** The trusted opening uses this deployment's installed artwork; the server
    * resolves its exact release and current permission before publication. */
   useInstalledArtwork?: true;
   /** Trusted selected-opening policy, never serialized into a world or proposal. */
-  installAppearanceFamilies?: (
-    world: WorldState,
-    families: readonly AppearanceFamilyDefinition[],
-  ) => void;
+  installAppearanceFamilies?: AppearanceFamilyInstaller;
   accountRoles: Array<{ accountId: string; actorId: string | null; role: 'creator' | 'player' }>;
   constructionSeeds: ConstructionPermission[];
 }
@@ -69,6 +70,9 @@ export interface WorldCreationProfile {
   /** Optional selected opening offered for a separate recovery run. */
   recoveryOpeningId?: string;
   metadata: Readonly<Record<string, unknown>>;
+  /** Trusted selected-world installation on an explicit installed-art selection;
+   * ordinary reopening does not recreate starting people or equipment. */
+  installAppearanceFamilies?: AppearanceFamilyInstaller;
   validate(value: unknown): WorldCreationCandidate;
   create(
     identities: WorldOpeningIdentities,

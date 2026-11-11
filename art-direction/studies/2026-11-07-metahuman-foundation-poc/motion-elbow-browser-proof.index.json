@@ -1,0 +1,34 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-walk-elbow-browser-proof",
+    "revisionId": "raw-comparison01",
+    "manifestSha256": "96e48b3d7d0b0adc9267e2e2d39aed141c818e8bd34e2119633432ecadcb64f4"
+  },
+  "files": {
+    "proof/motion-elbow01/browser-and-terminal.tar.gz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "19cc8dd57b5494e3079ffecc7ce31e5a20cf1d514b8003adb41bbec22cb3e9e3",
+      "bytes": 1794206,
+      "mediaType": "application/gzip"
+    },
+    "proof/motion-elbow01/inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "17f3a4a4452fc9ed008660ec16576016e1abaa9e4052d0dcd03ffc8a77aed430",
+      "bytes": 26744,
+      "mediaType": "application/json"
+    },
+    "proof/motion-elbow01/summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "58c11e3ed03b6c80de6b4406800b0f46a1c904c210962e13f91cb5dbf8d1cbb2",
+      "bytes": 834,
+      "mediaType": "application/json"
+    }
+  }
+}

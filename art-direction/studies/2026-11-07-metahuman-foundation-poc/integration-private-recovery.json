@@ -1,0 +1,45 @@
+{
+  "status": "Source/study publication, normal current-permission readback and independent exact recovery passed; final viewer/timing proof remains pending",
+  "studyIndex": {
+    "file": "integration-private-study.index.json",
+    "sha256": "178fa4c6bc1e9c9fa39a0a4584621458bb1ca02a6cab2faafb49398349fd0d68"
+  },
+  "sourceIndex": {
+    "file": "integration-private-source.index.json",
+    "sha256": "64250f025f8d0fceeeefd53d2781760c8b8ee2673cec133ceb606448e02f8a72"
+  },
+  "recoveryReceipt": {
+    "reference": {
+      "boundary": "asset-recovery",
+      "accessDomain": "openlegend-assets",
+      "sha256": "9fcce88bb268b92c3c0820a3a22e4b397e063167a90cd0409cf1a5772798ec8e",
+      "bytes": 95957,
+      "mediaType": "application/json"
+    },
+    "location": {
+      "accountId": "027677879749",
+      "region": "us-east-2",
+      "bucket": "openlegend-assets-recoverybucket-n0fg3q4eienm",
+      "key": "domains/openlegend-assets/blobs/sha256/9f/9fcce88bb268b92c3c0820a3a22e4b397e063167a90cd0409cf1a5772798ec8e",
+      "versionId": "wph6hw852A8r93_5KDpJrJwxKIvy2mhy"
+    },
+    "readerHashVerified": true,
+    "authorityGeneration": 341,
+    "scope": "Exact private-study qualification and preservation proof; actual admission and sanitized preflight are embedded in this durable receipt",
+    "completedAtUtc": "2026-11-10T10:17:19.764Z"
+  },
+  "selectedLibraryObjects": 53,
+  "newIndependentlyRecoveredObjects": 38,
+  "exactPriorProofsReused": 15,
+  "authorityGeneration": 341,
+  "firstAuthorityAtUtc": "2026-11-10T09:57:08.698303+00:00",
+  "hardDeadlineUtc": "2026-11-10T10:42:08.698303+00:00",
+  "libraryPublicationAndRecoveryClientsClosed": true,
+  "viewerClients": "Current and before guarded viewers remain separately active under root coordination; do not claim allclientsclosed.",
+  "gameInstalled": false,
+  "maleCurationPerformed": false,
+  "privateRuntimeApproved": false,
+  "publicRuntimeApproved": false,
+  "wholeConservativeControlUsd": 30.99,
+  "actualAwsInvoice": "Unmeasured"
+}

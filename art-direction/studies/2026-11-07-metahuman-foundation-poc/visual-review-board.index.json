@@ -1,0 +1,41 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "metahuman-foundation-poc-visual-review-board",
+    "revisionId": "self-contained-local01",
+    "manifestSha256": "f71d055032b928f2957b02d578a982f333fbc756b4f642981a682bc26fbba17c"
+  },
+  "files": {
+    "studies/metahuman-foundation-poc/visual-review01/index.html": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8e4d9dbab0a545db111b2362d8e0ac254d0ebe23eb14118f28dabdab9c7e8d14",
+      "bytes": 42669191,
+      "mediaType": "text/html; charset=utf-8"
+    },
+    "source-proof/visual-review01/board-evidence.tar.gz": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4862fc175ecab1be1e6f79a03a7ce47722cbb3457e2e9b2fcf62d1dd9a79005e",
+      "bytes": 81518,
+      "mediaType": "application/gzip"
+    },
+    "source-proof/visual-review01/inventory.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "3e44db83b1acdce569db68b719f9b575d842ea3b6a02c5f2907fa01edf224689",
+      "bytes": 4965,
+      "mediaType": "application/json"
+    },
+    "source-proof/visual-review01/summary.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "8a8b17ff42f80a5957bed46a6c7c2ee27873145414c9373f182aab034804eb3f",
+      "bytes": 1367,
+      "mediaType": "application/json"
+    }
+  }
+}

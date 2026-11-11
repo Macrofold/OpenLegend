@@ -2,7 +2,7 @@ import { assetTemplateWire, parseAssetTemplate } from './template.js';
 import { toolRemote as execute, toolSequence, toolDelay, remoteErrorMatches } from '../network.js';
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { homedir, tmpdir } from 'node:os';
+import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -10,7 +10,7 @@ import { parseArgs } from 'node:util';
 const projectAccount = '027677879749';
 const projectRegion = 'us-east-2';
 const profile = 'openlegend';
-const cli = join(homedir(), '.local/bin/aws');
+const cli = 'aws';
 const templatePath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   '../../infrastructure/assets/template.json',
