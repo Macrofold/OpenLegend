@@ -106,6 +106,8 @@ pub struct ActivityFact {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ActivityView {
     pub name: JsText,
+    // Source builds the name and facts before adding observed labels.
+    pub facts: Vec<ActivityFact>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -124,7 +126,6 @@ pub struct ActivityView {
         skip_serializing_if = "Option::is_none"
     )]
     pub tool: Option<JsText>,
-    pub facts: Vec<ActivityFact>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",

@@ -1766,6 +1766,10 @@ export class WorldService {
     // Operational effects and privacy changes remain ordered behind accepted play.
     await this.flushAcceptedProgress();
     if (restore) {
+      // The rewind and receipt epoch have already produced this complete
+      // candidate. Authority reconciliation can audit its actual entity edits
+      // against that fixed baseline, including an unchanged pending sight cut.
+      freezeWorld(saved.world);
       const contributions = constructionPermissionBatch(
         saved.world.id,
         this.store.authority!.constructionPermissions(saved.world.id),
