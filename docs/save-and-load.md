@@ -186,16 +186,18 @@ The binding rule is maintained only in [AGENTS.md — Development save policy](.
 
 ## Purpose and recovery promises
 
-A player should be able to retain a world at a committed point, leave it, and continue from that point later. Loading a pre-death save restores the coherent world from before the death, including its other consequences; selectively reviving a character is a separate gameplay operation.
+OpenLegend is an authoritative multiplayer world maintained and persisted by the server while people play. Login, reconnect, switching tabs and returning later expose the player’s permitted view of that current world. Ordinary background persistence belongs in gameplay costs. Player-controlled save, play and rewind is outside the intended normal flow.
+
+Administrative checkpoint recovery restores one coherent retained world, including its consequences and saved work, while preserving independently current operational access and privacy protections. It is distinct from ordinary reconnect and from physical database backup/recovery.
 
 Keep four capabilities distinct:
 
-| Capability         | Promise                                                                                                                                                       |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Crash recovery     | Recover the latest durable committed state under the published durability policy.                                                                             |
-| Gameplay save      | Retain an identified point that remains loadable independently of later world progress. Manual saves and rolling autosaves use the same correctness contract. |
-| Operational backup | Recover storage and control records after infrastructure failure under the operations policy.                                                                 |
-| Replay             | Reconstruct a sequence from retained inputs/outcomes under compatible rules; not a prerequisite for loading a save.                                           |
+| Capability                | Promise                                                                                                                                                                      |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Crash recovery            | Recover the latest durable committed state under the published durability policy.                                                                                            |
+| Administrative checkpoint | Retain an identified coherent world point for deliberate recovery independently of later progress. Operator captures and rolling checkpoints share the correctness contract. |
+| Operational backup        | Recover storage and control records after infrastructure failure under the operations policy.                                                                                |
+| Replay                    | Reconstruct a sequence from retained inputs/outcomes under compatible rules; not a prerequisite for loading a save.                                                          |
 
 A compacted recovery journal alone does not provide historical saves. “Ten minutes ago” is recoverable only to a retained point, unless a separate verified point-in-time reconstruction capability exists. Show both real creation time and simulated time so accelerated or paused play is unambiguous. A save is successful only once it is durably published, not when its request is queued.
 
@@ -361,7 +363,11 @@ Loading replaces a coherent world timeline through one authoritative operation:
 2. Validate the candidate against the current supported model and its exact dependencies, retaining the source on failure. Restore identities and relationships and prepare required derived state without emitting gameplay events or performing paid work. Compatibility scope follows the [development save policy](../AGENTS.md#development-save-policy).
 3. Quiesce world admission, establish a recoverable pre-load point, and recheck mutable permissions, privacy restrictions and external ledgers at installation. Fence outstanding work and requests using a fresh authority generation.
 4. Install the world and its required projections atomically, or by an equivalent recoverable generation switch. A crash must recover one complete authority generation. Failed preparation leaves the active world untouched; failed installation must never expose a mixture.
-5. Rebuild remaining safe caches, issue fresh client baselines, invalidate old cursors/selections and resume paused. Advancing again is an explicit player action.
+5. Rebuild remaining safe caches, issue fresh client baselines, invalidate old cursors/selections and resume paused. Advancing again follows the current operational world controls.
+
+Stopped-server privileged operator recovery can replace damaged gameplay from a validated current-format operational backup without first decoding or capturing the unusable predecessor. It installs the complete canonical checkpoint, history and retained-source closure, rebuilds derived ownership/search records, reapplies current account bindings and operational privacy, and fences the new command/receipt timeline in one protected transaction. Readable targets retain the pre-load recovery checkpoint. Unreadable targets do not fabricate that checkpoint or replace its pointer; failed installation rolls back to the original damaged SQL and retains the source backup. Full replacement deliberately removes placement edges and the canonical root before reinserting all checkpoint rows; it is not an incremental gameplay save.
+
+The independent operational world head, current access/privacy and a known allocation floor remain required. If the gameplay header cannot supply the floor, a fully validated target-retained checkpoint must match the exact current revision and operational receipt timeline. Stale, unbound or non-temporal evidence refuses explicitly rather than risk reusing issued identities. Arbitrary loss of operational metadata and physical database corruption remain backup/recovery concerns; this repair adds no compatibility reader or live-server authorization bypass.
 
 These are responsibilities, not prescribed services or APIs. An initial loader may stop the world during preparation. A later loader can prepare off the critical path if it revalidates the installation boundary. Restoration must not call ordinary creation hooks that allocate replacement identities, award items, schedule duplicate effects or consume fresh randomness.
 

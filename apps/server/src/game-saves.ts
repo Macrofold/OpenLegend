@@ -96,6 +96,17 @@ export interface RestoreSave {
   assetPrincipal?: AssetPrincipal;
 }
 
+/** Only the stopped-server operator recovery path can replace unusable
+ * gameplay without first decoding/capturing that damaged predecessor. */
+export type AdministrativeRestoreSave = Omit<RestoreSave, 'recoveryId'> & {
+  readonly recoveryId?: string;
+};
+export interface AdministrativeRestoreTarget {
+  readonly worldId: string;
+  readonly simTime: number;
+  readonly entityIds: readonly string[];
+}
+
 /** The database captures authority; manual slots publish to local files after capture. */
 export class GameSaves {
   private readonly files: SaveFiles;
@@ -782,6 +793,32 @@ export class GameSaves {
       );
   }
   async install(current: SavedWorld, restore: RestoreSave, restored: SavedWorld) {
+    return this.installPayload(
+      {
+        worldId: current.world.id,
+        simTime: current.world.simTime,
+        entityIds: [...entityKeys(current.world.entities)],
+      },
+      restore,
+      restored,
+    );
+  }
+
+  async installAdministrative(
+    current: AdministrativeRestoreTarget,
+    restore: AdministrativeRestoreSave,
+    restored: SavedWorld,
+  ) {
+    if (!this.db.transactionActive || current.worldId !== restored.world.id)
+      throw new Error('Administrative recovery requires its exact protected writer transaction.');
+    return this.installPayload(current, restore, restored);
+  }
+
+  private async installPayload(
+    current: AdministrativeRestoreTarget,
+    restore: AdministrativeRestoreSave,
+    restored: SavedWorld,
+  ) {
     this.validatePayload(restore.payload);
     await this.assertAssetDependencies(
       restore.payload,
@@ -790,8 +827,8 @@ export class GameSaves {
       restore.id,
     );
     await this.beginInstall(
-      current.world.id,
-      current.world.simTime,
+      current.worldId,
+      current.simTime,
       restore,
       restore.payload.state.presentationRelease,
     );
@@ -802,8 +839,8 @@ export class GameSaves {
     // A rewind replaces the recent history, including retired batches awaiting
     // cleanup. Their children cascade; the same transaction installs the complete
     // restored pages and rebuilds reverse uses before any reader can observe it.
-    await this.db.prepare('DELETE FROM mind_temporal_pages WHERE world_id=?').run(current.world.id);
-    await this.replaceHistory(current.world.id, {
+    await this.db.prepare('DELETE FROM mind_temporal_pages WHERE world_id=?').run(current.worldId);
+    await this.replaceHistory(current.worldId, {
       history: restore.payload.history,
       memory: {
         ...restore.payload.memory,
@@ -816,8 +853,8 @@ export class GameSaves {
         ),
       },
     });
-    await this.finishInstall(current.world.id, restore, [
-      ...entityKeys(current.world.entities),
+    await this.finishInstall(current.worldId, restore, [
+      ...current.entityIds,
       ...entityKeys(restore.payload.state.world.entities),
     ]);
   }
@@ -836,7 +873,7 @@ export class GameSaves {
   private async beginInstall(
     worldId: string,
     simTime: number,
-    restore: Omit<RestoreSave, 'payload'>,
+    restore: Omit<AdministrativeRestoreSave, 'payload'>,
     presentationRelease: AssetRevisionReference | undefined,
   ): Promise<void> {
     await this.assets.restoreWorldBinding(
@@ -846,6 +883,10 @@ export class GameSaves {
       await this.assetSlotId(worldId, restore.id),
     );
     const { recoveryId } = restore;
+    // An unreadable gameplay target cannot produce an honest pre-load game
+    // checkpoint. Operator recovery preserves the original SQL on rollback;
+    // it neither fabricates nor replaces an existing recovery-file pointer.
+    if (recoveryId === undefined) return;
     const prepared = await this.files.metadata(recoveryId);
     if (!prepared || prepared.worldId !== worldId || prepared.kind !== 'recovery')
       throw new GameSaveError('The pre-load recovery checkpoint is missing; nothing was changed.');
@@ -870,7 +911,7 @@ export class GameSaves {
 
   private async finishInstall(
     worldId: string,
-    restore: Omit<RestoreSave, 'payload'>,
+    restore: Omit<AdministrativeRestoreSave, 'payload'>,
     entityIds: Iterable<string>,
   ): Promise<void> {
     for (const row of await this.db.prepare('SELECT id,payload FROM jobs').all()) {

@@ -25,10 +25,16 @@ import {
 } from '../apps/server/src/operational-restore-attempt.js';
 import { recoveryFile, SAVE_FORMAT } from '../apps/server/src/game-saves.js';
 import { GameSaves } from '../apps/server/src/game-saves.js';
+import { SaveFiles } from '../apps/server/src/save-files.js';
 import { readConfig } from '../apps/server/src/config.js';
 import { DATABASE_SCHEMA, SqlGameRepository } from '../apps/server/src/store.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
-import { reapplyExperiencePrivacy, preserveIdentityHighWater } from '@open-legend/domain';
+import {
+  reapplyExperiencePrivacy,
+  beginTemporalReceiptEpoch,
+  temporalPageMutation,
+  updateWorld,
+} from '@open-legend/domain';
 import { privacyLedgerKey, readPrivacyLedger } from '../apps/server/src/privacy-ledger.js';
 import { validateCurrentWorldState } from '../apps/server/src/upgrade-world.js';
 import { join } from 'node:path';
@@ -67,11 +73,74 @@ let keep = new Set<string>();
 // The pre-restore recovery checkpoint this attempt published (existing-world restore only).
 let recoveryId: string | undefined;
 let attempt: RestoreAttempt | undefined;
+
+/** A damaged gameplay graph is not an incremental predecessor. Its allocation
+ * floor must still be known independently of the checkpoint being installed. */
+async function currentAllocationFloor(head: {
+  worldId: string;
+  revision: number;
+}): Promise<number> {
+  const row = await store.db
+    .prepare('SELECT payload FROM world_settings WHERE world_id=? AND id=?')
+    .get(head.worldId, '["world"]');
+  if (row) {
+    try {
+      const header = JSON.parse(String(row['payload'])) as { id?: unknown; nextId?: unknown };
+      if (
+        header.id === head.worldId &&
+        Number.isSafeInteger(header.nextId) &&
+        Number(header.nextId) > 0
+      )
+        return Number(header.nextId);
+    } catch {
+      // A malformed gameplay header can use an exact validated target artifact.
+    }
+  }
+  const timeline = await store.getIntegration(`world-timeline:${head.worldId}`);
+  if (typeof timeline === 'string' && timeline) {
+    const files = new SaveFiles(join(config.dataDirectory, 'saves'));
+    for (const metadata of await files.list(head.worldId, { limit: 101 })) {
+      if (metadata.revision !== head.revision) continue;
+      try {
+        const canonical = await store.saves.readCanonical(head.worldId, metadata.id);
+        if (canonical.captured.revision !== head.revision) continue;
+        const payload = await store.saves.read(head.worldId, metadata.id);
+        // Revision alone cannot identify an imported slot from another timeline.
+        if (payload.state.world.experience?.temporal?.namespace === timeline)
+          return payload.state.world.nextId;
+      } catch {
+        // Damaged/unavailable candidates establish no allocation guarantee.
+      }
+    }
+  }
+  throw new Error(
+    'Current identity floor is unavailable; restore refused. Keep the target and provide an intact current-revision checkpoint from its current timeline.',
+  );
+}
 try {
   await store.ready;
   const backup = await readOperationalBackup(file, store.db);
-  let current = await store.load();
-  const state = backup.state;
+  const head = await store.records.head();
+  if (
+    head &&
+    (!head.worldId || !Number.isSafeInteger(head.revision) || head.revision < 0 || !head.generation)
+  )
+    throw new Error('The target operational world head is unusable; restore refused.');
+  let current: Awaited<ReturnType<SqlGameRepository['load']>> = null;
+  if (head) {
+    try {
+      current = await store.load();
+      if (!current) throw new Error('Current gameplay root is missing.');
+    } catch (error) {
+      console.error(
+        `Current gameplay cannot be loaded; privileged checkpoint replacement will retain its operational authority and privacy: ${String(error)}`,
+      );
+    }
+  }
+  // Keep the validated checkpoint separate from the restored candidate: current
+  // privacy and new receipt epochs deliberately change the installed state,
+  // while its original history must still validate against the captured state.
+  let state = structuredClone(backup.state);
   validateCurrentWorldState(state.world);
   const fenceCommands = async () => {
     const key = `command-epoch:${state.world.id}`;
@@ -90,15 +159,14 @@ try {
     archived.length !== state.world.archivedEventCount + state.world.events.length
   )
     throw new Error('Backup is missing archived history; full restore refused.');
-  if (current && state.world.id !== current.state.world.id)
-    throw new Error('World identity mismatch.');
+  if (head && state.world.id !== head.worldId) throw new Error('World identity mismatch.');
   let assetPrincipal: { accountId: string } | undefined;
   const assetRestoreKey = `full-restore-asset-authority:${backup.identity}`;
   const assetRestore = (await store.getIntegration(assetRestoreKey)) as
     | { status: 'pending' | 'complete'; worldId: string; attemptId: string }
     | undefined;
   const resumeAssets =
-    !!current && assetRestore?.status === 'pending' && assetRestore.worldId === state.world.id;
+    !!head && assetRestore?.status === 'pending' && assetRestore.worldId === state.world.id;
   const finishAssetAuthority = async () => {
     const assets = new S3AssetStorage(await readAssetConfiguration(), 'recovery-restore');
     const directory = await mkdtemp(join(tmpdir(), 'openlegend-full-restore-authority-'));
@@ -134,12 +202,12 @@ try {
       );
     const assets = new S3AssetStorage(
       await readAssetConfiguration(),
-      current && !resumeAssets ? 'authoring' : 'recovery-restore',
+      head && !resumeAssets ? 'authoring' : 'recovery-restore',
     );
     let authorityDirectory: string | undefined;
     try {
       assetPrincipal = { accountId: await assets.principal() };
-      if (!current) {
+      if (!head) {
         // Read independent current restrictions before the installation transaction;
         // cloud I/O must never hold the SQL/world mutation lock.
         authorityDirectory = await mkdtemp(join(tmpdir(), 'openlegend-full-restore-authority-'));
@@ -152,7 +220,7 @@ try {
       assets.close();
       if (authorityDirectory) await rm(authorityDirectory, { recursive: true, force: true });
     }
-    if (current && !resumeAssets) {
+    if (head && !resumeAssets) {
       const release = await store.assets.revision(state.presentationRelease, assetPrincipal);
       await store.assets.assertPermission(assetPrincipal, release.destination, 'manage');
     }
@@ -170,14 +238,18 @@ try {
     const installed = (await store.getIntegration(`restore-attempt:${assetRestore!.attemptId}`)) as
       | { worldId: string }
       | undefined;
-    if (installed?.worldId !== state.world.id || !isDeepStrictEqual(current!.state, expected))
+    if (
+      !current ||
+      installed?.worldId !== state.world.id ||
+      !isDeepStrictEqual(current.state, expected)
+    )
       throw new Error('The target changed after its interrupted full restore; source retained.');
     await finishAssetAuthority();
     await store.recoverInterruptedWork();
     console.log(
       'Interrupted full restore completed; independently current asset permissions verified.',
     );
-  } else if (!current) {
+  } else if (!head) {
     const tables = BACKUP_TABLES.filter((table) => table !== 'meta');
     for (const table of tables)
       if (
@@ -268,31 +340,62 @@ try {
         ? recoveryFile(JSON.parse(String(pointer['payload'])), pointer['checksum'])
         : undefined;
     } catch {
-      // The restore replaces a damaged pointer; there is simply no slot to protect.
-      console.error('The target recovery pointer is damaged; it will be replaced by this restore.');
+      // A damaged pointer cannot identify an intact slot to protect.
+      console.error('The target recovery pointer is damaged; it grants no protected slot.');
     }
     if (referenced) keep = new Set([referenced]);
-    recoveryId = randomUUID();
+    // Healthy targets retain the normal pre-load checkpoint promise. A corrupt
+    // gameplay target cannot honestly be published as a valid game checkpoint;
+    // SQL rollback and the unchanged source backup protect failed replacement.
+    if (current) recoveryId = randomUUID();
+    const identityFloor = current?.state.world.nextId ?? (await currentAllocationFloor(head));
+    const entityIds = (
+      await store.db
+        .prepare('SELECT entity_id FROM sim_entities WHERE world_id=?')
+        .all(head.worldId)
+    ).map((row) => String(row['entity_id']));
+    const ledger = readPrivacyLedger(await store.getIntegration(privacyLedgerKey(head.worldId)));
+    if (!current && !ledger)
+      throw new Error('Current operational privacy ledger is unavailable; restore refused.');
     attempt = await beginRestoreAttempt(config.dataDirectory, {
       directoryOwner,
       worldId: state.world.id,
-      startingRevision: current.revision,
+      startingRevision: head.revision,
       saves: backup.saves ?? [],
       preexisting: await preexistingRestoreSlots(config.dataDirectory, backup.saves ?? []),
       recoveryId,
     });
     await restoreBackupSlots(backup, config.dataDirectory, attempt.id, keep);
     validateCurrentWorldState(state.world);
-    preserveIdentityHighWater(state.world, current.state.world);
+    state.world.nextId = Math.max(state.world.nextId, identityFloor);
     await store.authority.restoreBindings(state.world);
-    const ledger = readPrivacyLedger(await store.getIntegration(privacyLedgerKey(state.world.id)));
     state.world = reapplyExperiencePrivacy(state.world, ledger);
     state.manuallyPaused = true;
-    state.world.paused = true;
-    const before = {
-      ...current.state.world,
-      events: await store.history.allEvents(state.world.id),
-    };
+    const timeline = randomUUID();
+    state.world = updateWorld(state.world, (world) => {
+      world.paused = true;
+      beginTemporalReceiptEpoch(world, timeline);
+    });
+    const retention = await store.prepareRetainedSourceClosure(
+      state,
+      true,
+      backup.tables['mind_source_versions'] ?? [],
+    );
+    state = retention.state;
+    state.world = updateWorld(state.world, (world) => {
+      // These markers normally survive until their exact DELETE commits.
+      // Full root replacement already deletes every predecessor block; a
+      // zero-charge empty edited marker is no retained gameplay/history.
+      for (const actor of Object.values(world.experience?.temporal?.actors ?? {}))
+        actor.pages = actor.pages.filter(
+          (page) =>
+            page.batches.length !== 0 ||
+            page.bytes !== 0 ||
+            page.count !== 0 ||
+            page.appendClosed !== true ||
+            temporalPageMutation(page) !== 'edit',
+        );
+    });
     const hotIds = new Set(state.world.events.map((event) => event.id));
     const after = state.world.archivedEventCount
       ? {
@@ -307,18 +410,25 @@ try {
         }
       : state.world;
     state.world = retainHotEvents(after);
-    // Preserve the world being replaced before the installation transaction, as gameplay loads
-    // do (SL09-A); a failed install can then remove exactly this file (SB18).
-    const recovery = new GameSaves(
-      store.db,
-      join(config.dataDirectory, 'saves'),
-      undefined,
-      attempt.id,
-    );
-    await recovery.create(current.state.world.id, 'Before last load', recoveryId, {
-      kind: 'recovery',
-      expectedRevision: current.revision,
-    });
+    validateCurrentWorldState(state.world);
+    // Removing only terminal tombstones and changing physical residency does
+    // not alter the completed source closure. Carry its actual writer inputs.
+    store.memories.stageSourceVersions(state.world, retention.versions);
+    store.records.stageRetirements(state, retention.rows, retention.positions, retention.previous);
+    // A readable target keeps the normal pre-load checkpoint promise (SL09-A);
+    // a failed install can then remove exactly this attempt-owned file (SB18).
+    if (current && recoveryId) {
+      const recovery = new GameSaves(
+        store.db,
+        join(config.dataDirectory, 'saves'),
+        undefined,
+        attempt.id,
+      );
+      await recovery.create(head.worldId, 'Before last load', recoveryId, {
+        kind: 'recovery',
+        expectedRevision: head.revision,
+      });
+    }
     await store.db.transaction(async () => {
       for (const row of backup.tables['memory_vector_cache'] ?? []) {
         if (row['world_id'] !== state.world.id)
@@ -347,7 +457,7 @@ try {
       const payload = {
         // The backup's gameplay checkpoint is a current-format save package.
         format: SAVE_FORMAT,
-        state,
+        state: backup.state,
         history: Object.fromEntries(
           HISTORY_TABLES.map((table) => [table, backup.tables[table] ?? []]),
         ) as import('../apps/server/src/game-saves.js').SavePayload['history'],
@@ -355,19 +465,26 @@ try {
           MEMORY_HISTORY_TABLES.map((table) => [table, backup.tables[table] ?? []]),
         ) as NonNullable<import('../apps/server/src/game-saves.js').SavePayload['memory']>,
       };
-      await store.commit(current!.revision, state, undefined, undefined, {
-        before,
+      await store.restoreAdministrative(
+        head.revision,
+        state,
         after,
-        restore: {
+        {
+          worldId: head.worldId,
+          identityFloor,
+          simTime: current?.state.world.simTime ?? 0,
+          entityIds,
+        },
+        {
           id: 'backup',
           requestId: randomUUID(),
           payload,
           epoch,
-          timeline: randomUUID(),
-          recoveryId: recoveryId!,
+          timeline,
+          recoveryId,
           assetPrincipal,
         },
-      });
+      );
       await markRestoreInstalled(store, attempt!);
       install.state = 'uncertain';
     });

@@ -109,7 +109,12 @@ import {
 import { WorldAgentStore } from './world-agent-store.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
 import { CreationTargetRepository } from './creation-target.js';
-import { GameSaves, type RestoreSave } from './game-saves.js';
+import {
+  GameSaves,
+  type RestoreSave,
+  type AdministrativeRestoreSave,
+  type AdministrativeRestoreTarget,
+} from './game-saves.js';
 import { timed, timedSync, countMetric, recordBackgroundFailure } from './performance.js';
 import { HistoryRepository } from './history.js';
 import { prepareHistory, captureHistoryProjection } from './history-preparation.js';
@@ -1758,6 +1763,82 @@ export class SqlGameRepository implements GameRepository {
     } finally {
       historySlots?.release();
     }
+  }
+
+  /** Stopped-server operator recovery replaces every canonical family, including
+   * damaged/unreadable rows. Current operational authority is never imported.
+   * A known world head and allocation floor remain mandatory; no failed load
+   * grants permission to use an unknown incremental baseline. */
+  async restoreAdministrative(
+    expectedRevision: number,
+    state: SavedWorld,
+    historyAfter: WorldState,
+    target: AdministrativeRestoreTarget & { readonly identityFloor: number },
+    restore: AdministrativeRestoreSave,
+  ): Promise<number> {
+    await this.ready;
+    this.assertWriteAdmission();
+    if (
+      this.capturedOwner ||
+      target.worldId !== state.world.id ||
+      historyAfter.id !== state.world.id ||
+      !Number.isSafeInteger(target.identityFloor) ||
+      target.identityFloor < 0 ||
+      state.world.nextId < target.identityFloor
+    )
+      throw new Error('Administrative recovery lacks its exact world and allocation fence.');
+    freezeWorld(state.world);
+    const changes = materializeTemporalChanges(
+      this.records.prepare(undefined, state),
+      state.world,
+      undefined,
+    );
+    const preparedHistory = this.prepareHistoryWrite(undefined, historyAfter, 'restore');
+    const inputs = this.captureCommitInputs(
+      null,
+      state,
+      changes,
+      preparedHistory,
+      undefined,
+      historyAfter,
+      true,
+    );
+    const write: TableWrite = { before: null, state, revision: expectedRevision + 1, inputs };
+    return this.db.transaction(async () => {
+      this.assertWriteAdmission();
+      const head = await this.records.head();
+      if (head?.worldId !== target.worldId || head.revision !== expectedRevision)
+        throw new Error('Administrative recovery lost its exact current world head.');
+      const revision = await this.records.advance(target.worldId, expectedRevision, true);
+      write.revision = revision;
+      this.integrationValues.clear();
+      this.db.afterRollback?.(() => this.integrationValues.clear());
+      const affected = await this.memories.project(
+        target.worldId,
+        { writes: new Map(), deletes: new Map([['data_world', ['[]']]]), rows: 0 },
+        false,
+      );
+      await this.saves.installAdministrative(target, restore, state);
+      // Structural ownership cascades from the root; actual containment edges
+      // must be removed first. Reinsert complete checkpoint rows, never a diff
+      // against the damaged predecessor or a scenery/definition shortcut.
+      await this.db.prepare('DELETE FROM sim_placements WHERE world_id=?').run(target.worldId);
+      await this.db.prepare('DELETE FROM data_world WHERE world_id=?').run(target.worldId);
+      await this.applyCommitPrivacy(inputs);
+      await this.applyCommitInputs(inputs, revision);
+      await this.memories.reconcile(target.worldId, affected);
+      await this.memories.invalidateConversationCompactions(target.worldId);
+      const publish = () => {
+        this.integrationValues.clear();
+        this.acceptedRevision = revision;
+        this.acceptedState = state;
+        this.baselineLost = false;
+        this.publishWorldTables(write);
+      };
+      if (this.db.afterCommit) this.db.afterCommit(publish);
+      else publish();
+      return revision;
+    });
   }
 
   async commit(
