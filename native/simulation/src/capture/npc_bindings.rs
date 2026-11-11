@@ -273,6 +273,10 @@ pub(crate) struct NpcBindingRead<'a> {
     pub perspectives: &'a [super::NpcPerspectiveSnapshot],
     pub candidates: Option<&'a PreparedNpcCandidates>,
     pub original_candidates: Option<&'a PreparedNpcCandidates>,
+    /// Optional post-routing feasibility has its own acquired body scope. It
+    /// supplies executable choices, while context aliases keep current's cut.
+    pub action_read: Option<&'a AcceptedActorRead>,
+    pub action_candidates: Option<&'a PreparedNpcCandidates>,
     pub intent_ids: &'a [String],
     pub invocation_id: &'a str,
 }
@@ -403,6 +407,12 @@ impl NpcBindingMaps {
             .entities
             .len()
             .checked_add(1)
+            .and_then(|n| {
+                n.checked_add(
+                    read.action_candidates
+                        .map_or(0, |c| c.selection().body_ordinals().len()),
+                )
+            })
             .ok_or(ExecutionError::Capacity)?;
         let encounter_count = count
             .checked_add(
@@ -554,7 +564,10 @@ impl NpcBindingMaps {
             }
         }
         let (mut actions, ordinary_aliases, action_storage) =
-            if let (Some(original), Some(current)) = (read.original_candidates, read.candidates) {
+            if let (Some(original), Some(current)) = (
+                read.original_candidates,
+                read.action_candidates.or(read.candidates),
+            ) {
                 prepare_ordinary_actions(
                     original,
                     current,
@@ -731,6 +744,27 @@ impl NpcBindingMaps {
             if let Some(episode) = episode {
                 reserve(&mut storage, id.len() + episode.len())?;
                 insert(&mut expected_encounters, id, episode.clone())?;
+            }
+        }
+        if let (Some(action_read), Some(candidates)) = (read.action_read, read.action_candidates) {
+            for &ordinal in candidates.selection().body_ordinals() {
+                let body = action_read
+                    .perception
+                    .bodies
+                    .get(ordinal)
+                    .ok_or_else(invalid)?;
+                // An already displayed subject retains its original grant.
+                // Only newly offered action targets acquire the fresh lease.
+                if !entity_leases.contains_key(&body.source_id) {
+                    reserve(&mut storage, body.source_id.len() + body.lease_id.len())?;
+                    entity_leases.insert(body.source_id.clone(), body.lease_id.clone());
+                }
+                if let Some(episode) = &body.episode {
+                    if !expected_encounters.contains_key(&body.source_id) {
+                        reserve(&mut storage, body.source_id.len() + episode.len())?;
+                        expected_encounters.insert(body.source_id.clone(), episode.clone());
+                    }
+                }
             }
         }
         // Situation-query expansion explicitly restores only these old frame

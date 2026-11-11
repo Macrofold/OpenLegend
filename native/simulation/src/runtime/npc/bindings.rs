@@ -39,6 +39,7 @@ pub struct RuntimeNpcResponseTicket {
     pub(in crate::runtime) current: RuntimeNpcRead,
     pub(in crate::runtime) decision_id: String,
     pub(in crate::runtime) bindings: NpcBindingMaps,
+    action_work_generation: u64,
     attempt_candidates: Arc<Vec<crate::response::ResponseAttemptCandidate>>,
     phase: Arc<AtomicU8>,
     _custody: Arc<ByteReservation>,
@@ -120,8 +121,10 @@ impl NativeWorldSession {
             .ok_or_else(|| failure("original NPC choices unavailable"))?;
         let current = ticket
             .current
-            .candidates
+            .action_catalogue
             .as_ref()
+            .map(|catalogue| &catalogue.candidates)
+            .or(ticket.current.candidates.as_ref())
             .ok_or_else(|| failure("current NPC choices unavailable"))?;
         let controls = ticket
             .bindings
@@ -328,7 +331,7 @@ impl NativeWorldSession {
             ResponseBindingInput, ResponseBindings, ResponseNativeGuard, ResponseReads,
         };
         ticket.require_prepared()?;
-        let expected_plan = ticket.current.work_generation;
+        let expected_plan = ticket.action_work_generation;
         let (appraisal_bindings, appraisal_storage) =
             if let Some(appraisals) = &ticket.bindings.appraisals {
                 let (bindings, storage) = appraisals
@@ -442,6 +445,7 @@ impl NativeWorldSession {
         current: &mut Option<RuntimeNpcRead>,
         request: &[u8],
         trigger: Option<&RuntimeNpcTrigger>,
+        mut action_read: Option<&mut Option<RuntimeNpcRead>>,
     ) -> Result<RuntimeNpcResponseTicket, RuntimeError> {
         self.require_active()?;
         let _decode = decode_preparation(request, &self.budget)?;
@@ -457,6 +461,20 @@ impl NativeWorldSession {
         let fresh = current
             .as_ref()
             .ok_or_else(|| failure("current NPC read was released"))?;
+        let action = action_read.as_deref().and_then(Option::as_ref);
+        if action.is_some_and(|action| {
+            action.serial == first.serial
+                || action.serial == fresh.serial
+                || action.candidate_key.is_some()
+                || action.candidates.is_none()
+                || fresh.action_catalogue.is_some()
+                || request.selection.purpose != NpcBindingPurpose::Decision
+                || !crate::response::ResponseReads::compatible(&fresh.read, &action.read)
+        }) {
+            return Err(failure(
+                "NPC action refresh is not an independent compatible read",
+            ));
+        }
         if first.serial == fresh.serial
             || first.candidate_key.is_some()
             || fresh.candidate_key.is_some()
@@ -466,10 +484,25 @@ impl NativeWorldSession {
         let simulation = self.session.accepted().map_err(failure)?;
         if !first.historical_scope.still_permitted(&simulation.state)
             || !fresh.historical_scope.still_permitted(&simulation.state)
+            || action.is_some_and(|read| !read.historical_scope.still_permitted(&simulation.state))
         {
             return Err(failure("NPC response capture was revoked"));
         }
         let candidates = fresh.candidates.as_ref();
+        let action_candidates = action
+            .and_then(|read| read.candidates.as_ref())
+            .or_else(|| {
+                fresh
+                    .action_catalogue
+                    .as_ref()
+                    .map(|catalogue| &catalogue.candidates)
+            });
+        let action_perception = action.map(|read| read.read.as_ref()).or_else(|| {
+            fresh
+                .action_catalogue
+                .as_ref()
+                .map(|catalogue| catalogue.read.as_ref())
+        });
         let mut bindings = NpcBindingMaps::prepare(
             &simulation.state,
             NpcBindingRead {
@@ -481,6 +514,8 @@ impl NativeWorldSession {
                 perspectives: &first.perspectives,
                 candidates,
                 original_candidates: first.candidates.as_ref(),
+                action_read: action_perception,
+                action_candidates,
                 intent_ids: &fresh.intent_ids,
                 invocation_id: &request.decision_id,
             },
@@ -525,7 +560,10 @@ impl NativeWorldSession {
         }
         let catalogue = match request.selection.prototype_source {
             NpcCatalogueSource::Original => first.candidates.as_ref(),
-            NpcCatalogueSource::Current => candidates,
+            NpcCatalogueSource::Current => action
+                .and_then(|read| read.candidates.as_ref())
+                .or(action_candidates)
+                .or(candidates),
         };
         let (attempt_candidates, attempt_storage) = if let Some(catalogue) = catalogue {
             crate::response::capture_attempt_candidates(
@@ -547,6 +585,38 @@ impl NativeWorldSession {
             )
             .map_err(failure)?;
         custody.merge(attempt_storage).map_err(failure)?;
+        let action_work_generation = action.map_or_else(
+            || {
+                fresh
+                    .action_catalogue
+                    .as_ref()
+                    .map_or(fresh.work_generation, |catalogue| catalogue.work_generation)
+            },
+            |read| read.work_generation,
+        );
+        // Preserve only the physical catalogue and its acquisition for the
+        // one query continuation. Context aliases keep their originating read.
+        let action_catalogue = action_read
+            .as_deref_mut()
+            .and_then(Option::take)
+            .map(|mut read| {
+                Ok::<_, RuntimeError>(super::RuntimeNpcActionCatalogue {
+                    read: Arc::clone(&read.read),
+                    candidates: read
+                        .candidates
+                        .take()
+                        .ok_or_else(|| failure("NPC action catalogue unavailable"))?,
+                    work_generation: read.work_generation,
+                    _custody: Arc::clone(&read._custody),
+                })
+            })
+            .transpose()?;
+        if let Some(catalogue) = action_catalogue {
+            current
+                .as_mut()
+                .ok_or_else(|| failure("current NPC read was released"))?
+                .action_catalogue = Some(catalogue);
+        }
         Ok(RuntimeNpcResponseTicket {
             // The checked Some owners cannot change while the caller holds
             // these two exclusive slots in the same serialized writer job.
@@ -558,6 +628,7 @@ impl NativeWorldSession {
                 .ok_or_else(|| failure("current NPC read was released"))?,
             decision_id: request.decision_id,
             bindings,
+            action_work_generation,
             attempt_candidates: Arc::new(attempt_candidates),
             phase: Arc::new(AtomicU8::new(FRESH)),
             _custody: Arc::new(custody),

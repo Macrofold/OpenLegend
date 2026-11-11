@@ -166,8 +166,8 @@ impl AcousticPolicy {
                 clarity_margin_db: None,
             });
         }
-        let received = source_level_db_spl_at1m - 20.0 * separation.max(0.25).log10()
-            + 10.0 * transmission.log10();
+        let received = source_level_db_spl_at1m - 20.0 * crate::spatial::log10(separation.max(0.25))
+            + 10.0 * crate::spatial::log10(transmission);
         let margin = received - self.background_level_db_spl.max(hearing_floor_db_spl);
         let detail = if margin >= self.thresholds_db.clear {
             HearingDetail::Clear

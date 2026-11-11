@@ -1,4 +1,4 @@
-The Rust atan/atan2 adaptation in simulation/src/spatial/angle.rs derives
+The Rust atan/atan2 and log/log10 adaptations in simulation/src/spatial derive
 from Node v22.23.2 deps/v8/src/base/ieee754.cc:
 https://github.com/nodejs/node/blob/v22.23.2/deps/v8/src/base/ieee754.cc
 

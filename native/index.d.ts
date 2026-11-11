@@ -119,6 +119,7 @@ export declare class NativeWorld {
     current: NativeWorldNpcRead,
     request: Buffer,
     trigger?: NativeWorldNpcTrigger | undefined | null,
+    actions?: NativeWorldNpcRead | undefined | null,
   ): Promise<NativeWorldNpcResponseTicket>;
   npcPresentationLabels(read: NativeWorldNpcRead, request: Buffer): Promise<NativeWorldJson>;
   npcCandidates(read: NativeWorldNpcRead, request: Buffer): Promise<NativeWorldNpcTurn>;
@@ -341,6 +342,7 @@ export declare class NativeWorldReflectionTicket {
 
 export declare class NativeWorldSave {
   rows(): NativeWorldJson;
+  release(): void;
 }
 
 export declare const enum HostPhase {

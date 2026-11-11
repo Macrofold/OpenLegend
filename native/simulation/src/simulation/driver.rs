@@ -1446,55 +1446,53 @@ fn poll_event(
         };
         supplied = Some(EventAnswer::Words(v));
     }
-    loop {
-        match cursor.step(core, supplied.take(), budget)? {
-            EventStep::Continue => return Ok(Poll::Continue),
-            EventStep::Complete(done) => return Ok(Poll::Complete(done)),
-            EventStep::Geometry(q) => {
-                return question(
-                    answer,
-                    ProviderKind::Geometry,
-                    q.binding,
-                    q,
-                    budget,
-                    EventReply::Geometry,
-                );
+    match cursor.step(core, supplied.take(), budget)? {
+        EventStep::Continue => return Ok(Poll::Continue),
+        EventStep::Complete(done) => return Ok(Poll::Complete(done)),
+        EventStep::Geometry(q) => {
+            return question(
+                answer,
+                ProviderKind::Geometry,
+                q.binding,
+                q,
+                budget,
+                EventReply::Geometry,
+            );
+        }
+        EventStep::Utterance { binding, text } => {
+            #[derive(Serialize)]
+            struct Request<'a> {
+                binding: GeometryBinding,
+                text: &'a JsText,
             }
-            EventStep::Utterance { binding, text } => {
-                #[derive(Serialize)]
-                struct Request<'a> {
-                    binding: GeometryBinding,
-                    text: &'a JsText,
-                }
-                return question(
-                    answer,
-                    ProviderKind::Utterance,
-                    binding,
-                    &Request { binding, text },
-                    budget,
-                    EventReply::Utterance,
-                );
-            }
-            EventStep::Collation(q) => {
-                return question(
-                    answer,
-                    ProviderKind::Collation,
-                    q.binding(),
-                    q,
-                    budget,
-                    EventReply::Collation,
-                );
-            }
-            EventStep::Words(q) => {
-                return question(
-                    answer,
-                    ProviderKind::Words,
-                    q.binding(),
-                    q,
-                    budget,
-                    EventReply::Words,
-                );
-            }
+            return question(
+                answer,
+                ProviderKind::Utterance,
+                binding,
+                &Request { binding, text },
+                budget,
+                EventReply::Utterance,
+            );
+        }
+        EventStep::Collation(q) => {
+            return question(
+                answer,
+                ProviderKind::Collation,
+                q.binding(),
+                q,
+                budget,
+                EventReply::Collation,
+            );
+        }
+        EventStep::Words(q) => {
+            return question(
+                answer,
+                ProviderKind::Words,
+                q.binding(),
+                q,
+                budget,
+                EventReply::Words,
+            );
         }
     }
 }
@@ -1582,29 +1580,27 @@ fn poll_display(
             view: v.view,
         });
     }
-    loop {
-        match cursor.step(core, supplied.take(), budget)? {
-            ActivityDisplayStep::Complete(done) => return Ok(Poll::Complete(done)),
-            ActivityDisplayStep::Geometry(q) => {
-                return question(
-                    answer,
-                    ProviderKind::Geometry,
-                    q.binding,
-                    q,
-                    budget,
-                    DisplayReply::Geometry,
-                );
-            }
-            ActivityDisplayStep::Format(q) => {
-                return question(
-                    answer,
-                    ProviderKind::Display,
-                    q.binding,
-                    q,
-                    budget,
-                    DisplayReply::Format,
-                );
-            }
+    match cursor.step(core, supplied.take(), budget)? {
+        ActivityDisplayStep::Complete(done) => return Ok(Poll::Complete(done)),
+        ActivityDisplayStep::Geometry(q) => {
+            return question(
+                answer,
+                ProviderKind::Geometry,
+                q.binding,
+                q,
+                budget,
+                DisplayReply::Geometry,
+            );
+        }
+        ActivityDisplayStep::Format(q) => {
+            return question(
+                answer,
+                ProviderKind::Display,
+                q.binding,
+                q,
+                budget,
+                DisplayReply::Format,
+            );
         }
     }
 }
@@ -1751,29 +1747,27 @@ fn poll_held(
         };
         supplied = Some(GeometryReceptionAnswer::Language(v));
     }
-    loop {
-        match cursor.step(core, supplied.take(), budget)? {
-            HeldReceptionStep::Complete(done) => return Ok(Poll::Complete(done)),
-            HeldReceptionStep::Geometry(q) => {
-                return question(
-                    answer,
-                    ProviderKind::Geometry,
-                    q.binding,
-                    q,
-                    budget,
-                    HeldReply::Geometry,
-                );
-            }
-            HeldReceptionStep::Language(q) => {
-                return question(
-                    answer,
-                    ProviderKind::Collation,
-                    q.binding(),
-                    q,
-                    budget,
-                    HeldReply::Language,
-                );
-            }
+    match cursor.step(core, supplied.take(), budget)? {
+        HeldReceptionStep::Complete(done) => return Ok(Poll::Complete(done)),
+        HeldReceptionStep::Geometry(q) => {
+            return question(
+                answer,
+                ProviderKind::Geometry,
+                q.binding,
+                q,
+                budget,
+                HeldReply::Geometry,
+            );
+        }
+        HeldReceptionStep::Language(q) => {
+            return question(
+                answer,
+                ProviderKind::Collation,
+                q.binding(),
+                q,
+                budget,
+                HeldReply::Language,
+            );
         }
     }
 }
@@ -1793,19 +1787,17 @@ fn poll_native(
         };
         supplied = Some(v);
     }
-    loop {
-        match cursor.step(core, supplied.take(), budget)? {
-            NativeExposureStep::Complete(done) => return Ok(Poll::Complete(done)),
-            NativeExposureStep::Geometry(q) => {
-                return question(
-                    answer,
-                    ProviderKind::Geometry,
-                    q.binding,
-                    q,
-                    budget,
-                    NativeReply::Geometry,
-                );
-            }
+    match cursor.step(core, supplied.take(), budget)? {
+        NativeExposureStep::Complete(done) => return Ok(Poll::Complete(done)),
+        NativeExposureStep::Geometry(q) => {
+            return question(
+                answer,
+                ProviderKind::Geometry,
+                q.binding,
+                q,
+                budget,
+                NativeReply::Geometry,
+            );
         }
     }
 }

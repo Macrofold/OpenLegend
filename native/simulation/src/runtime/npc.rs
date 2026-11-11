@@ -29,6 +29,7 @@ pub struct RuntimeNpcRead {
     pub(super) historical_scope: Arc<crate::capture::NpcHistoricalScope>,
     reference_facts: crate::capture::NpcReferenceFacts,
     candidates: Option<crate::capture::PreparedNpcCandidates>,
+    action_catalogue: Option<RuntimeNpcActionCatalogue>,
     intent_ids: Vec<String>,
     pub(super) work_generation: u64,
     sources: Arc<Vec<crate::capture::PreparedNpcSources>>,
@@ -36,6 +37,15 @@ pub struct RuntimeNpcRead {
     candidate_key: Option<CandidateKey>,
     query_expanded: bool,
     receipt_payload: Arc<AtomicBool>,
+    _custody: Arc<ByteReservation>,
+}
+
+/// A later physical catalogue can survive the one situation-query reopen
+/// without replacing the context's original body, source or reference cut.
+struct RuntimeNpcActionCatalogue {
+    read: Arc<AcceptedActorRead>,
+    candidates: crate::capture::PreparedNpcCandidates,
+    work_generation: u64,
     _custody: Arc<ByteReservation>,
 }
 impl Drop for RuntimeNpcRead {
@@ -380,6 +390,7 @@ impl NativeWorldSession {
             historical_scope,
             reference_facts,
             candidates: None,
+            action_catalogue: None,
             intent_ids,
             work_generation,
             sources: Arc::new(Vec::new()),

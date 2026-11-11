@@ -363,6 +363,7 @@ impl SupportRetentionCursor {
         let held = crate::worlds::selected_held_support_aliases(core, actor_id, budget)?;
         let installed = Arc::clone(&core.state.installed);
         let now = core.state.physical.header.sim_time;
+        let mut changed = false;
         for candidate in &selection.candidates {
             if candidate.aliases.iter().any(|index| {
                 selection.retained[*index]
@@ -394,11 +395,19 @@ impl SupportRetentionCursor {
                 &installed.attention.value().retention,
                 None,
             )?;
+            changed = true;
         }
         if !self.restore {
-            core.state
+            changed |= core
+                .state
                 .temporal
                 .settle_support_cleanup(actor_id, selection.revision)?;
+            if changed {
+                // Source publishes this cleanup through updateWorld. Only its
+                // actual mutation discards inherited sampling progress.
+                // docs/simulation-time.md#native-interval-contract
+                core.state.physical.header.native_interval = None;
+            }
         }
         self.current = None;
         self.next += 1;

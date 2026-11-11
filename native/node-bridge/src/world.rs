@@ -290,7 +290,7 @@ impl NativeWorldPrepared {
 }
 #[napi]
 pub struct NativeWorldSave {
-    inner: RuntimeSave,
+    inner: Option<RuntimeSave>,
     budget: ByteBudget,
 }
 #[napi]
@@ -299,10 +299,16 @@ impl NativeWorldSave {
     pub fn rows(&self) -> Result<NativeWorldJson> {
         boundary(|| {
             self.inner
+                .as_ref()
+                .ok_or_else(|| failure("native save capture was released"))?
                 .json(&self.budget)
                 .map(|value| NativeWorldJson::new(value, self.budget.clone()))
                 .map_err(operation_error)
         })
+    }
+    #[napi]
+    pub fn release(&mut self) {
+        self.inner = None;
     }
 }
 
@@ -643,7 +649,7 @@ impl NativeWorld {
             session
                 .capture_save()
                 .map(|inner| NativeWorldSave {
-                    inner,
+                    inner: Some(inner),
                     budget: budget.clone(),
                 })
                 .map_err(operation_error)

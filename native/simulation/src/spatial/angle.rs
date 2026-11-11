@@ -9,6 +9,10 @@
 //! Adapted from Node v22.23.2 deps/v8/src/base/ieee754.cc (atan and atan2).
 //! Original fdlibm and V8 notices are retained in ../../../fdlibm-NOTICE.txt.
 
+// Preserve the exact fdlibm split coefficients and source evaluation: replacing
+// these literals with standard constants can change serialized observations.
+#![allow(clippy::approx_constant, clippy::excessive_precision)]
+
 const HIGH: [f64; 4] = [
     4.63647609000806093515e-1,
     7.85398163397448278999e-1,
@@ -36,7 +40,7 @@ const COEFFICIENT: [f64; 11] = [
 ];
 
 #[inline]
-fn multiply_add(a: f64, b: f64, c: f64) -> f64 {
+pub(super) fn multiply_add(a: f64, b: f64, c: f64) -> f64 {
     #[cfg(target_arch = "aarch64")]
     {
         a.mul_add(b, c)

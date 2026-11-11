@@ -607,6 +607,7 @@ impl NativeWorld {
         current: &NativeWorldNpcRead,
         request: BufferSlice<'_>,
         trigger: Option<&super::npc_intake::NativeWorldNpcTrigger>,
+        actions: Option<&NativeWorldNpcRead>,
     ) -> Result<Object<'a>> {
         let world = Arc::downgrade(&self.world);
         if !Weak::ptr_eq(&original.world, &world) || !Weak::ptr_eq(&current.world, &world) {
@@ -617,8 +618,16 @@ impl NativeWorld {
                 "Original and current NPC captures must be distinct handles",
             ));
         }
+        if actions.is_some_and(|actions| {
+            !Weak::ptr_eq(&actions.world, &world)
+                || Arc::ptr_eq(&actions.inner, &original.inner)
+                || Arc::ptr_eq(&actions.inner, &current.inner)
+        }) {
+            return Err(failure("NPC action refresh requires its own current read"));
+        }
         let first = Arc::clone(&original.inner);
         let fresh = Arc::clone(&current.inner);
+        let actions = actions.map(|read| Arc::clone(&read.inner));
         let trigger = trigger.map(|trigger| Arc::clone(&trigger.inner));
         let host = Arc::clone(&self.host);
         let (request, input_custody) = input(&request, &self.host.bytes)?;
@@ -632,8 +641,19 @@ impl NativeWorld {
                 .read
                 .try_lock()
                 .map_err(|_| failure("current NPC read is busy"))?;
+            let mut action_read = actions
+                .as_ref()
+                .map(|read| {
+                    read.read
+                        .try_lock()
+                        .map_err(|_| failure("NPC action refresh is busy"))
+                })
+                .transpose()?;
             if first.released.load(Ordering::Acquire)
                 || fresh.released.load(Ordering::Acquire)
+                || actions
+                    .as_ref()
+                    .is_some_and(|read| read.released.load(Ordering::Acquire))
                 || cancel.requested()
             {
                 return Err(failure("NPC response capture was released"));
@@ -672,10 +692,14 @@ impl NativeWorld {
                     &mut current,
                     &request,
                     trigger_read.as_ref().and_then(|owner| owner.as_ref()),
+                    action_read.as_mut().map(|read| &mut **read),
                 )
                 .map_err(operation_error)?;
             if first.released.load(Ordering::Acquire)
                 || fresh.released.load(Ordering::Acquire)
+                || actions
+                    .as_ref()
+                    .is_some_and(|read| read.released.load(Ordering::Acquire))
                 || cancel.requested()
             {
                 return Err(failure("NPC response capture was released"));
@@ -684,6 +708,9 @@ impl NativeWorld {
             // disposal must not revoke the moved payload's held-source grant.
             first.released.store(true, Ordering::Release);
             fresh.released.store(true, Ordering::Release);
+            if let Some(actions) = &actions {
+                actions.released.store(true, Ordering::Release);
+            }
             Ok(NativeWorldNpcResponseTicket {
                 inner: Arc::new(NpcResponseTicketRuntime {
                     payloads: ticket.receipt_liveness(),
