@@ -1,8 +1,8 @@
 # Native simulation core and adaptive execution
 
-| Status      | Current progress                                                                                     | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Controlled gameplay and damaged recovery pass; ordinary-play capacity, AWS costs and E2 remain open. | 2026-11-11   |
+| Status      | Current progress                                                                                                  | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Controlled/ordinary gameplay and damaged recovery pass locally; AWS memory/cost qualification and E2 remain open. | 2026-11-11   |
 
 ## 1. Purpose and selected direction
 
