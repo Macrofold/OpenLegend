@@ -1,5 +1,9 @@
 import { nativeActivityMethodSignatures, nativeNormalizedIntents } from './native-language.js';
-import { coldEntityOrdering, temporalPageReferences } from '@open-legend/domain';
+import {
+  ACTIVITY_LEARNING_PREPARATION,
+  coldEntityOrdering,
+  temporalPageReferences,
+} from '@open-legend/domain';
 import { HISTORY_TABLES, HISTORY_MAP_TABLES, HOT_TEMPORAL_BYTES } from './history-residency.js';
 import { hotEventRecordDependencies, HOT_EVENT_RECENT_ROWS } from './hot-events.js';
 import {
@@ -18,6 +22,7 @@ import {
   prepareNativeSourceSync,
   parseSourceJson,
   decodeSourceJson,
+  fundNativeSourceWorkspace,
   retainPreparedSource,
 } from './native-source-preparation.js';
 
@@ -226,6 +231,69 @@ export function checkpointCurrentSources(
 
 type CurrentRow = ReturnType<typeof nativeCurrentRow>;
 type CurrentHead = NonNullable<Awaited<ReturnType<WorldRecords['head']>>>;
+
+/** Source restores against the complete abandoned activity list: matching
+ * identities keep their slots, new identities append after its last position.
+ * The saved rows still supply every restored body and its checkpoint order. */
+export async function reconcileRestoredActivityPositions(
+  source: ReturnType<typeof checkpointCurrentSources>,
+  records: WorldRecords,
+  budget: Pick<NativeHost, 'reserveConsumerBytes' | 'reserveConsumerJson'>,
+): Promise<void> {
+  const { worldId, coverage, tables } = source.records;
+  let ownerCount = 0;
+  for (const entry of coverage) if (entry.table === 'activity_occurrences') ownerCount++;
+  if (!ownerCount) return;
+  const metadata = budget.reserveConsumerBytes(512 + ownerCount * 256);
+  try {
+    const owners = new Map<string, (typeof coverage)[number]>();
+    for (const entry of coverage)
+      if (entry.table === 'activity_occurrences') owners.set(entry.owner, entry);
+    await withNativeSqlPreparation(budget, records.db, async () => {
+      const before = await records.readOrdinalHighwaters(worldId, ['activity_occurrences']);
+      for (const entry of owners.values())
+        entry.nextOrdinal = ordinal(before.get(`activity_occurrences:${entry.owner}`) ?? 0);
+    });
+    const rows = tables['activity_occurrences'] ?? [];
+    const size = ACTIVITY_LEARNING_PREPARATION.rows;
+    for (let offset = 0; offset < rows.length; offset += size)
+      await withNativeSqlPreparation(budget, records.db, async () => {
+        const end = Math.min(offset + size, rows.length);
+        let units = 0;
+        for (let index = offset; index < end; index++) units += rows[index]!.id.length;
+        fundNativeSourceWorkspace(8 * 256 + (end - offset) * 6 * 64 + 24 * units);
+        const batch = rows.slice(offset, end);
+        const matched = await records.db
+          .prepare(
+            'SELECT id,parent_id,position FROM activity_occurrences WHERE world_id=? AND id=ANY(?::text[])',
+          )
+          .all(
+            worldId,
+            batch.map((row) => row.id),
+          );
+        const previous = new Map(matched.map((row) => [String(row['id']), row]));
+        for (const row of batch) {
+          const owner = owners.get(row.parent);
+          const old = previous.get(row.id);
+          if (
+            !owner?.parentPresent ||
+            row.slot !== String(row.position) ||
+            (old && old['parent_id'] !== row.parent)
+          )
+            throw new Error('Restore activity placement differs from its canonical collection.');
+          const position = old ? ordinal(old['position']) : owner.nextOrdinal;
+          if (!old) owner.nextOrdinal = ordinal(position + 1);
+          if (position !== row.position) {
+            row.position = position;
+            row.slot = String(position);
+          }
+        }
+      });
+  } finally {
+    metadata.release();
+  }
+}
+
 function currentRecordMetadata(
   head: CurrentHead,
   databaseSchema: string,

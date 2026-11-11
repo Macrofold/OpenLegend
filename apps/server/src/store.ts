@@ -1541,10 +1541,19 @@ export class SqlGameRepository implements GameRepository {
     )
       throw new Error('Native restore no longer owns its completed durable predecessor.');
     const priorAllowance = this.memories.captureAllowance(owner.worldId);
-    return this.db.transaction(async () => {
+    let activityRows = 0;
+    for (const siblings of request.checkpoint.groups.get('activity_occurrences')?.values() ?? [])
+      activityRows += siblings.length;
+    let activitySlots:
+      | ReturnType<NativeRestoreRequest['capacity']['reserveConsumerBytes']>
+      | undefined;
+    const restore = async () => {
       await this.authority.assertFence(request.authority);
       if (this.capturedOwner !== owner || this.acceptedRevision !== expectedRevision)
         throw new Error('Native restore lost its installed writer while awaiting authority.');
+      // Reassigned slots are decimal safe integers. Hold their prospective
+      // strings through the protected writer and inactive installation handoff.
+      if (activityRows) activitySlots = request.capacity.reserveConsumerBytes(96 * activityRows);
       const before = await this.db
         .prepare('SELECT payload FROM world_settings WHERE world_id=? AND id=?')
         .get(owner.worldId, '["world"]');
@@ -1603,6 +1612,7 @@ export class SqlGameRepository implements GameRepository {
           generation: head.generation,
           revision,
           identityFloor: header.nextId,
+          activityCapacity: request.capacity,
         },
         {
           ...request.restore,
@@ -1740,7 +1750,12 @@ export class SqlGameRepository implements GameRepository {
         this.publishCommitInputs(inputs);
       });
       return { prepared, receipt };
-    });
+    };
+    try {
+      return await this.db.transaction(restore);
+    } finally {
+      activitySlots?.release();
+    }
   }
 
   async commit(

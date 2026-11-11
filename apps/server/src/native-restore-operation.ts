@@ -44,6 +44,7 @@ import {
   withAdmittedWorkingSources,
   nativeSourceFlatStringFields,
 } from './native-current-sources.js';
+import { fundNativeSourceWorkspace } from './native-source-preparation.js';
 import { ACCOUNT_RETENTION_PREPARATION } from './account-retention.js';
 import { SUPPORT_MEMBERSHIP_PREPARATION } from './retention-cleanup.js';
 import { SOURCE_RETENTION_CLOSURE_ROUNDS } from './source-version-retention.js';
@@ -392,6 +393,21 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
           working.records.durableRevision !== stage.revision
         )
           throw new Error('Restore working selection differs from its protected SQL installation.');
+        // SQL now contains only the restored activity rows. Preserve the actual
+        // allocation floor from the abandoned collection in this live install.
+        let activityOwners = 0;
+        for (const entry of stage.source.records.coverage)
+          if (entry.table === 'activity_occurrences') activityOwners++;
+        fundNativeSourceWorkspace(512 + 256 * activityOwners);
+        const activityPositions = new Map<string, number>();
+        for (const entry of stage.source.records.coverage)
+          if (entry.table === 'activity_occurrences')
+            activityPositions.set(entry.owner, entry.nextOrdinal);
+        for (const entry of working.records.coverage) {
+          if (entry.table !== 'activity_occurrences') continue;
+          const next = activityPositions.get(entry.owner);
+          if (next !== undefined && next > entry.nextOrdinal) entry.nextOrdinal = next;
+        }
         return encodeNativeJson(
           request.host,
           {

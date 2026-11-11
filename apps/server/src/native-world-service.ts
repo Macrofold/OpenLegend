@@ -2409,6 +2409,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                 this.pending.durableMark().revision,
                 {
                   generation,
+                  capacity: this.world,
                   checkpoint: selected.captured,
                   authority: { scope, capability: 'save', controlling: false, now: this.now },
                   restore: {

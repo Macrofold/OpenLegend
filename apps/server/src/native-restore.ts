@@ -1,5 +1,5 @@
 import type { ExperiencePrivacy } from '@open-legend/domain';
-import type { NativeChangedRows } from '@open-legend/native-simulation';
+import type { NativeChangedRows, NativeWorld } from '@open-legend/native-simulation';
 import type { CanonicalCheckpoint } from './checkpoint.js';
 import type { CommitInputs } from './commit-inputs.js';
 import type { GameSaves, RestoreSave } from './game-saves.js';
@@ -61,6 +61,7 @@ export interface NativeRestorePublication
 
 export interface NativeRestoreRequest {
   readonly generation: string;
+  readonly capacity: Pick<NativeWorld, 'reserveConsumerBytes' | 'reserveConsumerJson'>;
   readonly authority: AuthorityFence;
   readonly checkpoint: CanonicalCheckpoint;
   readonly restore: Omit<RestoreSave, 'payload'>;

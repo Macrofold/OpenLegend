@@ -14,7 +14,11 @@ import {
 } from './checkpoint.js';
 import { CheckpointWorker, type CheckpointSource } from './checkpoint-worker-client.js';
 import { validateNativeCheckpointHistory } from './native-checkpoint-history.js';
-import { checkpointCurrentSources } from './native-current-sources.js';
+import {
+  checkpointCurrentSources,
+  reconcileRestoredActivityPositions,
+} from './native-current-sources.js';
+import type { NativeHost } from '@open-legend/native-simulation';
 import type { WorldRecords, RecordChanges } from './world-records.js';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
@@ -621,6 +625,7 @@ export class GameSaves {
       readonly generation: string;
       readonly revision: number;
       readonly identityFloor: number;
+      readonly activityCapacity: Pick<NativeHost, 'reserveConsumerBytes' | 'reserveConsumerJson'>;
     },
     restore: Omit<RestoreSave, 'payload'> & {
       readonly beforeTime: number;
@@ -642,6 +647,7 @@ export class GameSaves {
       this.canonicalHost(captured).presentationRelease,
     );
     const source = checkpointCurrentSources(captured, binding.databaseSchema, binding);
+    await reconcileRestoredActivityPositions(source, records, binding.activityCapacity);
     const changes: RecordChanges = {
       writes: new Map(
         Object.entries(source.records.tables).map(([table, rows]) => [
