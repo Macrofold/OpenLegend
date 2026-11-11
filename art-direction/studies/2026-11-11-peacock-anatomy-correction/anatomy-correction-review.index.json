@@ -1,0 +1,20 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "peacock-anatomy-correction",
+    "revisionId": "anatomy-correction-20261111-ec7d25f43fbe",
+    "manifestSha256": "6de2d88d1452832bf5ec858c9fc2222a0c4d0969ee9246b67a677ffd69e639f4"
+  },
+  "files": {
+    "Peacock-anatomy-correction-review.zip": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "ec7d25f43fbe511c2e3d970c2d7c1c078a809e02e1491cb2c75fce5ce4a6b236",
+      "bytes": 66900640,
+      "mediaType": "application/zip"
+    }
+  }
+}
