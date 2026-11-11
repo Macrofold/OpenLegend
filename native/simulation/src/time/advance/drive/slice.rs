@@ -16,6 +16,22 @@ impl AdvanceCursor {
         }
         let installed = core.state.installed.clone();
         let participants = self.roster.as_ref().ok_or_else(invalid)?;
+        let mut sample_preparation = None;
+        if let Some(changes) = self.local_changes.take() {
+            self.mechanics = if changes.same_roster(participants) {
+                match self.mechanics.as_ref() {
+                    Some(forecast) => {
+                        forecast.refine(core, participants, &changes.handles, budget)?
+                    }
+                    None => None,
+                }
+            } else {
+                None
+            };
+            if self.mechanics.is_some() {
+                sample_preparation = Some(true)
+            }
+        }
         if self.mechanics.is_none() {
             let mut mechanics = MechanicalForecast::prepare(core, participants, budget)?;
             let saved = self.saved_interval.take();
@@ -25,6 +41,11 @@ impl AdvanceCursor {
                     mechanics.ends_at = saved.ends_at;
                 }
             }
+            sample_preparation = Some(saved.is_some());
+            self.mechanics = Some(mechanics);
+        }
+        if let Some(retain_sample) = sample_preparation {
+            let mechanics = self.mechanics.as_ref().ok_or_else(invalid)?;
             for handle in &mechanics.private_walkers {
                 let entity = core
                     .state
@@ -38,7 +59,7 @@ impl AdvanceCursor {
                     .and_then(|actor| actor.action.as_ref())
                     .ok_or(ExecutionError::Invariant)?;
                 let limit = mechanics.travel_for(*handle);
-                let remaining = if saved.is_some() {
+                let remaining = if retain_sample {
                     action
                         .motion_sample_remaining_metres
                         .unwrap_or(limit)
@@ -51,7 +72,6 @@ impl AdvanceCursor {
                 core.physical()
                     .set_motion_sample_remaining(*handle, &id, remaining)?;
             }
-            self.mechanics = Some(mechanics);
         }
         let now = core.state.physical.header.sim_time;
         let mechanics = self.mechanics.as_ref().ok_or_else(invalid)?;
@@ -477,6 +497,22 @@ impl AdvanceCursor {
         );
         self.continuation = if let (Some(mechanics), Some(roster)) = (&self.mechanics, &self.roster)
         {
+            // A navigation wait can publish after an isolated command but before
+            // prediction. Keep that finite refinement proof with this exact cut.
+            let local_changes = self
+                .local_changes
+                .take()
+                .map(|mut changes| {
+                    changes._reservation.resize(
+                        changes
+                            ._reservation
+                            .bytes()
+                            .checked_add(size_of::<LocalForecastChanges>() + 2 * size_of::<usize>())
+                            .ok_or(ExecutionError::Capacity)?,
+                    )?;
+                    Ok::<_, ExecutionError>(Arc::new(changes))
+                })
+                .transpose()?;
             Some(AdvanceContinuation(Arc::new(AdvanceSnapshot {
                 candidate: self.candidate,
                 installed: core.state.installed.clone(),
@@ -485,6 +521,7 @@ impl AdvanceCursor {
                 physical: core.journal.physical.change_cursor(),
                 mechanics: mechanics.clone(),
                 roster: roster.clone(),
+                local_changes,
                 _reservation: budget
                     .reserve(size_of::<AdvanceSnapshot>() + 2 * size_of::<usize>())?,
             })))

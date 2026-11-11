@@ -155,7 +155,77 @@ impl AdvanceCursor {
     fn discard_mechanics(&mut self) -> Result<(), AdvanceError> {
         self.mechanics = None;
         self.saved_interval = None;
+        self.local_changes = None;
         Ok(())
+    }
+    fn localize_command(
+        &mut self,
+        core: &CoreMutation<'_>,
+        handle: EntityHandle,
+        before: LocalCommandPreparation,
+        budget: &ByteBudget,
+    ) -> Result<bool, AdvanceError> {
+        let Some(mechanics) = &self.mechanics else {
+            return Ok(false);
+        };
+        if !before.isolated
+            || self.event_count() != before.events
+            || !mechanics.can_refine(core, handle)?
+        {
+            return Ok(false);
+        }
+        // This sealed native movement may issue its own action identity. Source
+        // localizes that known transition by its affected owners, not ID equality.
+        let id = self.actor(core, handle)?;
+        let changes = core.journal.physical.changes_since(before.physical)?;
+        let mut changed = false;
+        for change in changes {
+            let owner = match change {
+                PhysicalChange::Body { entity_id }
+                | PhysicalChange::Behavior { entity_id, .. }
+                | PhysicalChange::Attribute { entity_id, .. }
+                | PhysicalChange::Contribution { entity_id } => {
+                    changed = true;
+                    entity_id
+                }
+                // These private controller/bookkeeping writes do not change a
+                // captured rate or physical deadline on their own.
+                PhysicalChange::Navigation { entity_id }
+                | PhysicalChange::AnimalClock { entity_id } => entity_id,
+                _ => return Ok(false),
+            };
+            if owner != id {
+                return Ok(false);
+            }
+        }
+        if !changed {
+            return Ok(true);
+        }
+        if self.local_changes.is_none() {
+            self.local_changes = Some(LocalForecastChanges {
+                handles: Vec::new(),
+                roster: self.roster.as_ref().ok_or_else(invalid)?.clone(),
+                _reservation: budget.reserve(0)?,
+            });
+        }
+        let local = self.local_changes.as_mut().ok_or_else(invalid)?;
+        if !local.handles.contains(&handle) {
+            if local.handles.len() == local.handles.capacity() {
+                local._reservation.resize(
+                    local
+                        ._reservation
+                        .bytes()
+                        .checked_add(size_of::<EntityHandle>())
+                        .ok_or(ExecutionError::Capacity)?,
+                )?;
+                local
+                    .handles
+                    .try_reserve_exact(1)
+                    .map_err(|_| ExecutionError::Capacity)?;
+            }
+            local.handles.push(handle);
+        }
+        Ok(true)
     }
     fn retain_navigation(
         &mut self,
@@ -266,11 +336,18 @@ impl AdvanceCursor {
                 let actor = actor.to_owned();
                 crate::native_controller::movement_refused(core, &actor, done.command.outcome())?;
             }
+            let successful = done.command.outcome().ok;
             self.retain(EventBatch::Command(done))?;
             self.command = None;
+            let before = self.command_before.take();
             if self.phase == Phase::Wander {
                 self.slice_invalidated = true;
-            } else {
+            } else if !successful
+                || match before {
+                    Some(before) => !self.localize_command(core, handle, before, budget)?,
+                    None => true,
+                }
+            {
                 self.discard_mechanics()?;
             }
         }
@@ -873,6 +950,16 @@ impl AdvanceCursor {
                     let actor = self.actor(core, handle)?;
                     let _name = budget.reserve(actor.len())?;
                     let actor = actor.to_owned();
+                    self.command_before = Some(LocalCommandPreparation {
+                        physical: core.journal.physical.change_cursor(),
+                        events: self.event_count(),
+                        isolated: self
+                            .mechanics
+                            .as_ref()
+                            .map(|forecast| forecast.can_refine(core, handle))
+                            .transpose()?
+                            .unwrap_or(false),
+                    });
                     let (command, mode) = match intention {
                         NativeIntention::Stop => (
                             begin_native_stop(core, &actor, self.candidate, budget)?,

@@ -158,6 +158,51 @@ pub(crate) struct AcceptedAdvanceContinuation {
     snapshot: AdvanceContinuation,
     accepted: AcceptedCandidate,
 }
+struct LocalForecastChanges {
+    handles: Vec<EntityHandle>,
+    roster: NativeParticipants,
+    _reservation: ByteReservation,
+}
+impl LocalForecastChanges {
+    fn copy(&self, budget: &ByteBudget) -> Result<Self, ExecutionError> {
+        let reservation = budget.reserve(
+            self.handles
+                .len()
+                .checked_mul(size_of::<EntityHandle>())
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let mut handles = Vec::new();
+        handles
+            .try_reserve_exact(self.handles.len())
+            .map_err(|_| ExecutionError::Capacity)?;
+        handles.extend_from_slice(&self.handles);
+        Ok(Self {
+            handles,
+            roster: self.roster.clone(),
+            _reservation: reservation,
+        })
+    }
+    fn same_roster(&self, next: &NativeParticipants) -> bool {
+        let previous = &self.roster;
+        previous.actors() == next.actors()
+            && previous.ambient() == next.ambient()
+            && previous.ambient_movers() == next.ambient_movers()
+            && previous.animals() == next.animals()
+            && previous.heat_sources() == next.heat_sources()
+            && previous.remains() == next.remains()
+            && previous.planned_actors() == next.planned_actors()
+            && previous.territorial() == next.territorial()
+            && previous.statuses() == next.statuses()
+            && previous.projectile_bodies() == next.projectile_bodies()
+            && previous.permission_actions() == next.permission_actions()
+            && previous.players() == next.players()
+    }
+}
+struct LocalCommandPreparation {
+    physical: PhysicalChangeCursor,
+    events: usize,
+    isolated: bool,
+}
 struct AdvanceSnapshot {
     candidate: CandidateKey,
     installed: Arc<crate::simulation::InstalledWorld>,
@@ -166,6 +211,7 @@ struct AdvanceSnapshot {
     physical: PhysicalChangeCursor,
     mechanics: MechanicalForecast,
     roster: NativeParticipants,
+    local_changes: Option<Arc<LocalForecastChanges>>,
     _reservation: ByteReservation,
 }
 impl AdvanceContinuation {
@@ -228,6 +274,7 @@ impl AcceptedAdvanceContinuation {
             physical: core.journal.physical.change_cursor(),
             mechanics: snapshot.mechanics.clone(),
             roster: snapshot.roster.clone(),
+            local_changes: snapshot.local_changes.clone(),
             _reservation: reservation,
         }))))
     }
@@ -330,6 +377,7 @@ pub(crate) struct AdvanceCursor {
     preparation: Option<ParticipantPreparation>,
     policies: Option<RoutinePolicyCache>,
     mechanics: Option<MechanicalForecast>,
+    local_changes: Option<LocalForecastChanges>,
     pending_seconds: f64,
     pending_rates: Option<(
         Vec<std::sync::Arc<crate::status::StatusRateInterval>>,
@@ -354,6 +402,7 @@ pub(crate) struct AdvanceCursor {
     command: Option<CommandOperation>,
     command_actor: Option<EntityHandle>,
     command_mode: Option<LocomotionMode>,
+    command_before: Option<LocalCommandPreparation>,
     queued_movement: Option<(EntityHandle, NativeIntention, Phase)>,
     slice_invalidated: bool,
     boundary_recorded: bool,
@@ -473,6 +522,10 @@ impl AdvanceCursor {
         )?;
         let now = core.state.physical.header.sim_time;
         let continuation = continuation.filter(|value| value.current(core, candidate));
+        let local_changes = continuation
+            .and_then(|value| value.0.local_changes.as_ref())
+            .map(|changes| changes.copy(budget))
+            .transpose()?;
         let mut result = Self {
             exits: None,
             participation: None,
@@ -496,6 +549,7 @@ impl AdvanceCursor {
             preparation: None,
             policies: None,
             mechanics: continuation.map(|value| value.0.mechanics.clone()),
+            local_changes,
             pending_seconds: 0.0,
             pending_rates: None,
             seconds: 0.0,
@@ -517,6 +571,7 @@ impl AdvanceCursor {
             command: None,
             command_actor: None,
             command_mode: None,
+            command_before: None,
             queued_movement: None,
             slice_invalidated: false,
             boundary_recorded: false,

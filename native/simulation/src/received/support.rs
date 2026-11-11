@@ -379,8 +379,10 @@ impl TemporalSupportCollection {
                     .ok_or_else(error)?,
             )
             .map_err(|_| error())?;
+        // Match the funded dense capacity. Ordinary IndexMap reservation can
+        // round this Vec up to a larger hash-table capacity after allocation.
         self.records
-            .try_reserve(target - self.records.len())
+            .try_reserve_exact(target - self.records.len())
             .map_err(|_| error())?;
         let actual = fixed
             .checked_add(

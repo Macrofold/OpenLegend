@@ -57,6 +57,15 @@ impl MechanicalForecast {
         participants: &NativeParticipants,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
+        Self::prepare_selected(core, participants, None, budget)
+    }
+    fn prepare_selected(
+        core: &mut CoreMutation<'_>,
+        participants: &NativeParticipants,
+        changed: Option<&[EntityHandle]>,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let selected = |handle: &&EntityHandle| changed.is_none_or(|ids| ids.contains(handle));
         let installed = core.state.installed.clone();
         let physical = &core.state.physical;
         let read = installed.status_read(physical);
@@ -74,7 +83,7 @@ impl MechanicalForecast {
             .ok_or(ExecutionError::Capacity)?,
         )?;
         let mut rates = Vec::new();
-        for handle in participants.statuses() {
+        for handle in participants.statuses().iter().filter(selected) {
             let entity = physical
                 .entities
                 .resolve(*handle)
@@ -121,14 +130,18 @@ impl MechanicalForecast {
         };
         bound.at(crate::body::next_remains_deadline(
             physical,
-            participants.remains().iter().map(|handle| {
-                physical
-                    .entities
-                    .resolve(*handle)
-                    .expect("prepared remains handle")
-                    .id
-                    .as_str()
-            }),
+            participants
+                .remains()
+                .iter()
+                .filter(selected)
+                .map(|handle| {
+                    physical
+                        .entities
+                        .resolve(*handle)
+                        .expect("prepared remains handle")
+                        .id
+                        .as_str()
+                }),
         ));
         bound.at(crate::experience::next_sensory_expiry(
             &core.state.experience,
@@ -141,7 +154,7 @@ impl MechanicalForecast {
         let mut immediate = false;
         let mut reference_count = 0usize;
         let mut reference_bytes = 0usize;
-        for handle in participants.statuses() {
+        for handle in participants.statuses().iter().filter(selected) {
             let entity = physical
                 .entities
                 .resolve(*handle)
@@ -195,7 +208,7 @@ impl MechanicalForecast {
             .ok_or(ExecutionError::Capacity)?,
         )?;
         let mut referenced = IndexSet::with_capacity(reference_count);
-        for handle in participants.statuses() {
+        for handle in participants.statuses().iter().filter(selected) {
             let entity = physical
                 .entities
                 .resolve(*handle)
@@ -225,7 +238,7 @@ impl MechanicalForecast {
                 }
             }
         }
-        for handle in participants.ambient() {
+        for handle in participants.ambient().iter().filter(selected) {
             let entity = physical
                 .entities
                 .resolve(*handle)
@@ -267,7 +280,7 @@ impl MechanicalForecast {
             }
         }
         let mut private_walkers = IndexSet::with_capacity(participants.actors().len());
-        for handle in participants.actors() {
+        for handle in participants.actors().iter().filter(selected) {
             let entity = physical
                 .entities
                 .resolve(*handle)
@@ -375,7 +388,7 @@ impl MechanicalForecast {
             }
         }
         bound.limit(crate::status::attribute_boundary(&read, &sums, epsilon)?);
-        for handle in participants.statuses() {
+        for handle in participants.statuses().iter().filter(selected) {
             let entity = physical
                 .entities
                 .resolve(*handle)
@@ -403,5 +416,192 @@ impl MechanicalForecast {
                 _reservation: reservation,
             }),
         })
+    }
+    /// The existing Source local-forecast contract permits only isolated owners.
+    /// Retaining an unrelated countdown also retains its exact subtraction history;
+    /// re-predicting its path from a later pose can change the saved deadline.
+    pub(crate) fn can_refine(
+        &self,
+        core: &CoreMutation<'_>,
+        handle: EntityHandle,
+    ) -> Result<bool, ExecutionError> {
+        let entity = core
+            .state
+            .physical
+            .entities
+            .resolve(handle)
+            .ok_or(ExecutionError::Invariant)?;
+        if self.requires_immediate_integration || self.referenced.contains(&entity.id) {
+            return Ok(false);
+        }
+        let Some(actor) = &entity.actor else {
+            return Ok(true);
+        };
+        if entity.threat.is_some()
+            || actor.agency.plan.is_some()
+            || actor
+                .action
+                .as_ref()
+                .is_some_and(|action| action.kind == "follow" || action.has_unconverted_fields())
+        {
+            return Ok(false);
+        }
+        if actor.controller == "npc" {
+            let read = core.state.installed.status_read(&core.state.physical);
+            for id in actor
+                .attributes
+                .iter()
+                .flat_map(|attributes| attributes.keys())
+            {
+                let definition = core
+                    .state
+                    .installed
+                    .attributes
+                    .get(id)
+                    .ok_or(ExecutionError::Invariant)?
+                    .value();
+                if definition.reservoir.is_some()
+                    && let Some(concern) = &definition.concern
+                    && let Some(AttributeValue::Number(value)) = read.value(&entity.id, id)?
+                    && value < concern.below
+                {
+                    return Ok(false);
+                }
+            }
+        }
+        Ok(true)
+    }
+    pub(crate) fn refine(
+        &self,
+        core: &mut CoreMutation<'_>,
+        participants: &NativeParticipants,
+        changed: &[EntityHandle],
+        budget: &ByteBudget,
+    ) -> Result<Option<Self>, ExecutionError> {
+        for handle in changed {
+            if !self.can_refine(core, *handle)? {
+                return Ok(None);
+            }
+        }
+        // Both the old selected rates and the new selected states must be local.
+        let old_foreign = self
+            .rates
+            .iter()
+            .filter(|rate| {
+                core.state
+                    .physical
+                    .entities
+                    .handle(&rate.entity_id)
+                    .is_some_and(|handle| changed.contains(&handle))
+            })
+            .any(|interval| {
+                interval
+                    .rates
+                    .iter()
+                    .any(|rate| rate.target_id != interval.entity_id)
+                    || interval
+                        .periodic
+                        .iter()
+                        .any(|rate| rate.target_id != interval.entity_id)
+            });
+        if old_foreign {
+            return Ok(None);
+        }
+        let mut result = Self::prepare_selected(core, participants, Some(changed), budget)?;
+        let changed_id = |id: &str| {
+            core.state
+                .physical
+                .entities
+                .handle(id)
+                .is_some_and(|handle| changed.contains(&handle))
+        };
+        if result.requires_immediate_integration || !result.referenced.is_empty() {
+            return Ok(None);
+        }
+        let preparation = Arc::get_mut(&mut result.preparation).ok_or(ExecutionError::Invariant)?;
+        let count = self
+            .rates
+            .iter()
+            .filter(|rate| !changed_id(&rate.entity_id))
+            .count()
+            .checked_add(preparation.rates.len())
+            .ok_or(ExecutionError::Capacity)?;
+        let private_bytes = map_storage::<EntityHandle, ()>(participants.actors().len())
+            .ok_or(ExecutionError::Capacity)?;
+        let old_bytes = preparation
+            .rates
+            .capacity()
+            .checked_mul(size_of::<Arc<StatusRateInterval>>())
+            .and_then(|bytes| bytes.checked_add(private_bytes))
+            .ok_or(ExecutionError::Capacity)?;
+        let extra = heap_sum([
+            count
+                .checked_mul(size_of::<Arc<StatusRateInterval>>())
+                .ok_or(ExecutionError::Capacity)?,
+            private_bytes,
+            map_storage::<String, ()>(self.referenced.len()).ok_or(ExecutionError::Capacity)?,
+            self.referenced
+                .iter()
+                .try_fold(0usize, |bytes, id| bytes.checked_add(id.len()))
+                .ok_or(ExecutionError::Capacity)?,
+        ])
+        .ok_or(ExecutionError::Capacity)?;
+        preparation._reservation.resize(
+            preparation
+                ._reservation
+                .bytes()
+                .checked_add(extra)
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let mut rates = Vec::new();
+        rates
+            .try_reserve_exact(count)
+            .map_err(|_| ExecutionError::Capacity)?;
+        // Keep the original participant/episode integration order and share the
+        // unchanged certified intervals rather than re-evaluating their rules.
+        let mut previous = self.rates.iter().peekable();
+        let mut local = preparation.rates.iter().peekable();
+        for handle in participants.statuses() {
+            let entity = core
+                .state
+                .physical
+                .entities
+                .resolve(*handle)
+                .ok_or(ExecutionError::Invariant)?;
+            while previous
+                .peek()
+                .is_some_and(|rate| rate.entity_id == entity.id)
+            {
+                let rate = previous.next().ok_or(ExecutionError::Invariant)?;
+                if !changed.contains(handle) {
+                    rates.push(rate.clone())
+                }
+            }
+            while local.peek().is_some_and(|rate| rate.entity_id == entity.id) {
+                rates.push(local.next().ok_or(ExecutionError::Invariant)?.clone());
+            }
+        }
+        let mut walkers = IndexSet::with_capacity(participants.actors().len());
+        walkers.extend(
+            self.private_walkers
+                .iter()
+                .filter(|handle| !changed.contains(handle))
+                .copied(),
+        );
+        walkers.extend(preparation.private_walkers.iter().copied());
+        let mut referenced = IndexSet::with_capacity(self.referenced.len());
+        referenced.extend(self.referenced.iter().cloned());
+        preparation.rates = rates;
+        preparation.private_walkers = walkers;
+        preparation.referenced = referenced;
+        // The temporary local arrays have now gone; only their replacements live.
+        preparation
+            ._reservation
+            .resize(preparation._reservation.bytes() - old_bytes)?;
+        if !(result.seconds < self.seconds) {
+            result.seconds = self.seconds;
+            result.ends_at = self.ends_at;
+        }
+        Ok(Some(result))
     }
 }
