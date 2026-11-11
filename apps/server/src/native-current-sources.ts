@@ -26,11 +26,6 @@ import {
   retainPreparedSource,
 } from './native-source-preparation.js';
 
-/** These installation fields preserve flat strings delivered by PostgreSQL
- * decoding (plus flat JSON-encoder metadata); they do not assemble body ropes.
- * The installation encoder funds the other authored fields' possible flattening. */
-export const nativeSourceFlatStringFields = ['records', 'originals', 'coldDirectories'] as const;
-
 /** Bootstrap keeps the real selected SQL strings and row layouts within
  * one transfer owner. Parsed metadata and packet encoders have separate owners. This never assembles a Source world.
  * Persistent small scheduling facts need their own owner before this returns. */

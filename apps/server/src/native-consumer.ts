@@ -210,43 +210,10 @@ function jsonStringifierBodies(bytes: number): number {
   return Math.max(3 * capacity, 2 * capacity + 2 * bytes);
 }
 
-// Installation packets are trusted plain JSON records. Split their first
-// three object levels (packet, record set, table directory), leaving each
-// actual table/array to JSON.stringify. This preserves the existing codec and
-// member order without a whole-world intermediate string. The input owner
-// already funds these objects; shape below funds the live Object.keys ancestry.
-function installationChunks(
-  value: unknown,
-  objectLevels: number,
-  append: (value: unknown, literal?: string) => void,
-): void {
-  if (!objectLevels || value === null || typeof value !== 'object' || Array.isArray(value)) {
-    append(value);
-    return;
-  }
-  const record = value as Record<string, unknown>;
-  append(undefined, '{');
-  let fields = 0;
-  for (const key of Object.keys(record)) {
-    const child = record[key];
-    if (child === undefined || typeof child === 'function' || typeof child === 'symbol') continue;
-    if (fields++) append(undefined, ',');
-    append(key);
-    append(undefined, ':');
-    installationChunks(child, objectLevels - 1, append);
-  }
-  append(undefined, '}');
-}
-
 export interface NativeJsonEncodingOptions {
   readonly prefix?: string;
   readonly suffix?: string;
   readonly sources?: readonly object[];
-  /** Trusted plain own-data installation root only: no getters or toJSON.
-   * Children still use the existing JSON.stringify codec. Only the actual
-   * PostgreSQL/JSON-decoded producer may identify fields with flat strings;
-   * authored definitions/settings/layouts retain their flattening allowance. */
-  readonly installationRoot?: { readonly flatStringFields: readonly string[] };
 }
 
 function measureNativeJson(
@@ -255,42 +222,17 @@ function measureNativeJson(
   options: NativeJsonEncodingOptions,
 ) {
   const prefix = options.prefix ?? '',
-    suffix = options.suffix ?? '',
-    installation = options.installationRoot;
-  if (installation && (value === null || typeof value !== 'object' || Array.isArray(value)))
-    throw new Error('Native installation encoding requires its plain record root.');
-  const root = value as Record<string, unknown>;
+    suffix = options.suffix ?? '';
   const shape = nativeJsonFixedWorkspace + jsonAncestorWorkspace(value);
-  let flattenUnits = 0;
-  if (installation) {
-    for (const key in root)
-      if (Object.hasOwn(root, key)) {
-        flattenUnits += key.length;
-        if (!installation.flatStringFields.includes(key))
-          flattenUnits += jsonInputStringUnits(root[key]);
-      }
-  } else flattenUnits = jsonInputStringUnits(value);
-  const flattening = 2 * flattenUnits;
+  const flattening = 2 * jsonInputStringUnits(value);
   // Measuring uses the same live Object.keys ancestry. Disable Native cache
   // writes: persistent WeakMap/proof entries cannot borrow a temporary guard.
   const measuring = world.reserveConsumerBytes(shape + flattening + 256);
   let bytes: number,
     bodyPeak = 0;
   try {
-    if (installation) {
-      bytes = 0;
-      installationChunks(root, 3, (chunk, literal) => {
-        if (literal !== undefined) bytes += literal.length;
-        else {
-          const size = jsonByteLength(chunk, { cache: false });
-          bytes += size;
-          bodyPeak = Math.max(bodyPeak, jsonStringifierBodies(size));
-        }
-      });
-    } else {
-      bytes = jsonByteLength(value, { cache: false });
-      bodyPeak = jsonStringifierBodies(bytes);
-    }
+    bytes = jsonByteLength(value, { cache: false });
+    bodyPeak = jsonStringifierBodies(bytes);
     bytes += Buffer.byteLength(prefix) + Buffer.byteLength(suffix);
   } finally {
     measuring.release();
@@ -321,27 +263,17 @@ export function encodeNativeJson(
   options: NativeJsonEncodingOptions = {},
 ): Buffer {
   const prefix = options.prefix ?? '',
-    suffix = options.suffix ?? '',
-    installation = options.installationRoot;
+    suffix = options.suffix ?? '';
   const { bytes, bodyPeak, shape, flattening } = measureNativeJson(world, value, options);
   const output = world.reserveConsumerBytes(bytes + 32 * 8);
   let workspace: NativeWorldConsumer | undefined;
   try {
-    // The fixed output Buffer is admitted separately. Installation emits one
-    // child string at a time, so its temporary body bound is the largest actual
-    // chunk's V8 growth/result overlap, not four copies of the whole packet.
-    // Ordinary callers keep their existing monolithic floor.
-    workspace = world.reserveConsumerBytes(
-      (installation ? bodyPeak : Math.max(4 * bytes, bodyPeak)) + shape + flattening,
-    );
+    // Fund V8's complete builder/result overlap independently of the output.
+    workspace = world.reserveConsumerBytes(Math.max(4 * bytes, bodyPeak) + shape + flattening);
     // Avoid Node's pooled small-Buffer slab: this owner funds this exact body.
     const buffer = Buffer.allocUnsafeSlow(bytes);
     let at = buffer.write(prefix, 0, 'utf8');
-    if (installation) {
-      installationChunks(value, 3, (chunk, literal) => {
-        at += buffer.write(literal ?? JSON.stringify(chunk), at, 'utf8');
-      });
-    } else at += buffer.write(JSON.stringify(value), at, 'utf8');
+    at += buffer.write(JSON.stringify(value), at, 'utf8');
     buffer.write(suffix, at, 'utf8');
     return attachNativeConsumer(buffer, output, ...(options.sources ?? []));
   } catch (error) {

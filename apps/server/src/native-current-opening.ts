@@ -8,10 +8,7 @@ import {
   releaseNativeProduct,
   retainNativeProduct,
 } from './native-consumer.js';
-import {
-  nativeSourceFlatStringFields,
-  withAdmittedWorkingSources,
-} from './native-current-sources.js';
+import { withAdmittedWorkingSources } from './native-current-sources.js';
 import { nativeDefinitionSources } from './native-definition-sources.js';
 import { nativeRecordLayouts, nativeStorageSettings } from './native-install-inputs.js';
 import type { NativeMilestones } from './native-milestones.js';
@@ -160,18 +157,14 @@ export class NativeCurrentOpening {
             source.records.tables['mind_temporal_actors'] ?? [],
           );
           opening.packet = retainNativeProduct(
-            encodeNativeJson(
-              host,
-              {
-                ...source,
-                definitions,
-                settings: nativeSetupSettings,
-                storage: nativeStorageSettings,
-                layouts: nativeRecordLayouts(),
-                acceptedCut: 0,
-              },
-              { installationRoot: { flatStringFields: nativeSourceFlatStringFields } },
-            ),
+            encodeNativeJson(host, {
+              ...source,
+              definitions,
+              settings: nativeSetupSettings,
+              storage: nativeStorageSettings,
+              layouts: nativeRecordLayouts(),
+              acceptedCut: 0,
+            }),
           );
           return opening;
         },

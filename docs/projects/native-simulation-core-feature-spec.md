@@ -1,10 +1,12 @@
 # Native simulation core and adaptive execution
 
-| Status      | Current progress                                                                                               | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Connected gameplay runs; held-reply memory qualification fails locally and AWS decision evidence remains open. | 2026-11-11   |
+| Status      | Current progress                                                                                     | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Current candidate rejected: held-reply resource and durability gates fail; E2 remains blocked/unrun. | 2026-11-11   |
 
 ## 1. Purpose and selected direction
+
+The [current trial decision](../maintainers/native-simulation-core.md#nsc03-measured-disposition--november-11-2026) rejects this implementation under its selected profile. The conditional targets below remain design intent, not delivered adoption.
 
 Make the ordinary OpenLegend opening comfortably responsive, and make additional active people and places affordable without sacrificing individual knowledge, independent characters or meaningful consequences. The intended scale is dozens and ideally hundreds of active characters, with many simultaneous players distributed through a continuous world. These are design goals, not measured capacity claims or a promise that an arbitrarily large battle fits one machine.
 

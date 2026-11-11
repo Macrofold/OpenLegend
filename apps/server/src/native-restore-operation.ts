@@ -42,7 +42,6 @@ import type {
 } from './native-restore.js';
 import {
   withAdmittedWorkingSources,
-  nativeSourceFlatStringFields,
   RESTORED_HISTORY_POSITION_TABLES,
 } from './native-current-sources.js';
 import { fundNativeSourceWorkspace } from './native-source-preparation.js';
@@ -413,18 +412,14 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
             if (next !== undefined && next > entry.nextOrdinal) entry.nextOrdinal = next;
           }
         }
-        return encodeNativeJson(
-          request.host,
-          {
-            ...working,
-            definitions: nativeDefinitionSources(working),
-            settings: nativeSetupSettings,
-            storage: nativeStorageSettings,
-            layouts: nativeRecordLayouts(),
-            acceptedCut: 0,
-          },
-          { installationRoot: { flatStringFields: nativeSourceFlatStringFields } },
-        );
+        return encodeNativeJson(request.host, {
+          ...working,
+          definitions: nativeDefinitionSources(working),
+          settings: nativeSetupSettings,
+          storage: nativeStorageSettings,
+          layouts: nativeRecordLayouts(),
+          acceptedCut: 0,
+        });
       },
     );
     let world: NativeWorld;
