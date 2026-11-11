@@ -4,6 +4,7 @@ import { AuthorityError, scopeKey, type RequestScope } from './authority.js';
 import {
   attachNativeConsumer,
   encodeNativeJson,
+  nativeJsonFixedWorkspace,
   releaseNativeProduct,
   retainNativeProduct,
 } from './native-consumer.js';
@@ -23,6 +24,98 @@ type Execution = Pick<
   NativePlayerViewRequest,
   'executionSource' | 'jevConfigured' | 'llmConfigured'
 >;
+
+const slots = (count: number) => 256 + 64 * count;
+
+function fields(value: object): number {
+  let count = 0;
+  for (const key in value) if (Object.hasOwn(value, key)) count++;
+  return count;
+}
+
+/** The comparison keeps key arrays only along its active ancestors. A common
+ * immutable child, particularly the installed map, ends the walk there. */
+function comparisonKeys(value: unknown, shared?: unknown): number {
+  if (value === shared || !value || typeof value !== 'object') return 0;
+  let nested = 0;
+  if (Array.isArray(value)) {
+    for (let index = 0; index < value.length; index++)
+      nested = Math.max(
+        nested,
+        comparisonKeys(value[index], Array.isArray(shared) ? shared[index] : undefined),
+      );
+    return slots(value.length) + nested;
+  }
+  const record = value as Record<string, unknown>;
+  const peer =
+    shared && typeof shared === 'object' ? (shared as Record<string, unknown>) : undefined;
+  let count = 0;
+  for (const key in record)
+    if (Object.hasOwn(record, key)) {
+      count++;
+      nested = Math.max(nested, comparisonKeys(record[key], peer?.[key]));
+    }
+  return slots(count) + nested;
+}
+
+function patchWorkspace(previous: GameView, next: GameView): number {
+  const oldEntities = previous.entities.length,
+    newEntities = next.entities.length;
+  const oldEvents = previous.events.length,
+    newEvents = next.events.length;
+  // Entity/event lookup tables, pair arrays, add/remove/update/order lists and
+  // their growth overlap. All record bodies and unchanged children are borrowed.
+  let bytes =
+    6 * slots(oldEntities) +
+    6 * slots(newEntities) +
+    (oldEntities + newEntities + oldEvents) * (slots(2) + 4 * 64) +
+    4 * slots(oldEvents) +
+    5 * slots(newEvents) +
+    14 * slots(12);
+  let oldWidth = 0,
+    compare = 0;
+  for (const entity of previous.entities) {
+    oldWidth = Math.max(oldWidth, fields(entity));
+    compare = Math.max(compare, comparisonKeys(entity));
+  }
+  for (const entity of next.entities) {
+    const width = fields(entity);
+    // One sparse replacement object and at most one removed-field list per
+    // next entity, with the existing `id` filtering scratch kept separate.
+    bytes += slots(3) + 2 * slots(width) + 3 * slots(oldWidth);
+    compare = Math.max(compare, comparisonKeys(entity));
+  }
+  for (const event of previous.events) compare = Math.max(compare, comparisonKeys(event));
+  for (const event of next.events) compare = Math.max(compare, comparisonKeys(event));
+  for (const key of ['clock', 'player', 'ai'] as const)
+    bytes += 3 * slots(fields(previous[key])) + 2 * slots(fields(next[key]));
+  for (const key of [
+    'presentationRelease',
+    'inventionPolicy',
+    'godTools',
+    'vision',
+    'hearing',
+    'map',
+    'maintenance',
+    'clock',
+    'player',
+    'ai',
+    'cartography',
+    'communicationReferences',
+    'narrator',
+    'profile',
+    'recipes',
+    'conversation',
+    'milestones',
+    'persistence',
+  ] as const)
+    compare = Math.max(
+      compare,
+      comparisonKeys(previous[key], next[key]),
+      comparisonKeys(next[key], previous[key]),
+    );
+  return nativeJsonFixedWorkspace + bytes + 2 * compare;
+}
 
 /** Player bytes are serialized and queued during the native disclosure lease.
  * A drain callback requests a fresh permitted view instead of replaying an old
@@ -163,14 +256,7 @@ export class NativePlayerHttp {
         const prior = stream.view?.historyEpoch === view.historyEpoch ? stream.view : undefined;
         if (prior?.revision === view.revision && scopeKey(stream.scope) === view.access?.scope)
           return;
-        const patch = prior ? projectPatch(prior, view) : null;
-        const message = patch
-          ? encodeNativeJson(this.service.world, patch, {
-              prefix: 'event: patch\ndata: ',
-              suffix: '\n\n',
-              sources: [view],
-            })
-          : this.resetBytes(bytes, view);
+        const message = (prior && this.patchBytes(prior, view)) ?? this.resetBytes(bytes, view);
         retainNativeProduct(message);
         this.write(stream, message);
         if (stream.view) releaseNativeProduct(stream.view);
@@ -178,6 +264,30 @@ export class NativePlayerHttp {
       },
       this.execution,
     );
+  }
+
+  private patchBytes(previous: GameView, view: GameView): Buffer | null {
+    const world = this.service.world;
+    const sizing = world.reserveConsumerBytes(nativeJsonFixedWorkspace);
+    let bound: number;
+    try {
+      bound = patchWorkspace(previous, view);
+    } finally {
+      sizing.release();
+    }
+    const preparation = world.reserveConsumerBytes(bound);
+    try {
+      const patch = projectPatch(previous, view);
+      return patch
+        ? encodeNativeJson(world, patch, {
+            prefix: 'event: patch\ndata: ',
+            suffix: '\n\n',
+            sources: [view],
+          })
+        : null;
+    } finally {
+      preparation.release();
+    }
   }
 
   private resetBytes(bytes: Buffer, view: GameView): Buffer {
