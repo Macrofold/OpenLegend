@@ -3977,17 +3977,17 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                 ...execution,
                 // A retained stream view also borrows immutable map/policy
                 // children. Their old installation may retire after restore.
-                publish: (bytes, view) => {
+                publish: (view, encode) => {
                   const reference = view.presentationRelease;
                   try {
                     return publish(
-                      bytes,
                       retainNativeSources(
                         view,
                         view,
                         definitions,
                         ...(reference ? [reference] : []),
                       ),
+                      encode,
                     );
                   } finally {
                     if (reference) releaseNativeProduct(reference);

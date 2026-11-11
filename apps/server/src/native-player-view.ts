@@ -9,6 +9,7 @@ import {
   releaseNativeProduct,
   reserveNativeJsonTextWorkspace,
   withoutNativeConsumerScope,
+  type NativeJsonEncodingOptions,
 } from './native-consumer.js';
 import {
   fundNativeSourceWorkspace,
@@ -68,6 +69,11 @@ type Lifecycle = {
   assetAuthorityGeneration: number;
   at: number;
 };
+/** Valid only during the synchronous, currently permitted publication callback. */
+export type NativePlayerEncoder = (
+  value: object,
+  options?: Pick<NativeJsonEncodingOptions, 'prefix' | 'suffix'>,
+) => Buffer;
 /** The host retains the actual native actor/event tokens until release. These
  * methods call the native scoped fences, never compare an entire accepted cut. */
 export interface NativePlayerRead {
@@ -93,9 +99,13 @@ export interface NativePlayerRead {
    * canUseInventory; captured own fields cannot supply that post-await check. */
   publishIfPermitted(
     ids: readonly string[],
-    complete: (canUseInventory: boolean, encode: (value: object) => Buffer) => Buffer,
+    complete: (
+      canUseInventory: boolean,
+      encode: NativePlayerEncoder,
+      retain: <T extends object>(value: T, ...sources: readonly object[]) => T,
+    ) => void,
     operationalStillCurrent: () => boolean,
-  ): Promise<Buffer>;
+  ): Promise<void>;
   release(): void;
 }
 export interface NativePlayerRequestOwner extends PlayerAsyncOwner {
@@ -125,10 +135,10 @@ export interface NativePlayerViewRequest {
   readonly budgetUsd: number;
   readonly jevConfigured: boolean;
   readonly llmConfigured: boolean;
-  /** Queue these exact bytes synchronously in the actual HTTP/connection sink.
-   * Native disclosure remains fenced through serialization and this handoff;
-   * a slow socket does not retain the publication lock while it drains. */
-  readonly publish: (bytes: Buffer, view: GameView) => void;
+  /** Select the outgoing payload, encode it and hand it to the sink here.
+   * The encoder expires when this synchronous disclosure callback returns;
+   * a slow socket retains its own bytes, never the publication lease. */
+  readonly publish: (view: GameView, encode: NativePlayerEncoder) => void;
 }
 
 type OptionalSection = 'usage' | 'jobs' | 'speechJobs';
@@ -513,25 +523,22 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
     owner.assertScope(scope);
     await read.publishIfPermitted(
       selectedEvents.map((event) => event.id),
-      (canUseInventory, encode) => {
+      (canUseInventory, encode, retain) => {
         const finalView = { ...projected, player: { ...projected.player, canUseInventory } };
-        const bytes = encode(finalView);
         attachNativeConsumer(finalView, viewOutput!);
         viewOutput = undefined;
         attachNativeConsumer(finalView, eventOutput!);
         eventOutput = undefined;
         request.publish(
-          bytes,
-          retainNativeSources(
+          retain(
             finalView,
-            bytes,
             profile,
             inputScope,
             ...sources,
             ...(narrationBorrow ? [narrationBorrow] : []),
           ),
+          encode,
         );
-        return bytes;
       },
       () => {
         owner.assertScope(scope);

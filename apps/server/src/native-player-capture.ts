@@ -10,6 +10,7 @@ import {
   encodeNativeJson,
   freezeNativeProduct,
   releaseNativeProduct,
+  retainNativeSources,
   withNativeJsonInput,
 } from './native-consumer.js';
 
@@ -117,10 +118,10 @@ export class NativePlayerCapture {
    * neither a captured pause value nor a global world cut replaces that check. */
   async publishIfPermitted(
     selectedEventIds: readonly string[],
-    complete: (canUseInventory: boolean, encode: (value: object) => Buffer) => Buffer,
+    complete: Parameters<NativePlayerRead['publishIfPermitted']>[1],
     operational: () => { paused: boolean; controlling: boolean },
     operationalStillCurrent: () => boolean,
-  ): Promise<Buffer> {
+  ): Promise<void> {
     if (this.released || !operationalStillCurrent()) throw new ViewChangedError();
     const before = operational();
     const publication = await this.world.playerPublication(
@@ -130,19 +131,36 @@ export class NativePlayerCapture {
       before.controlling,
     );
     if (!publication) throw new ViewChangedError();
-    try {
+    let active = true;
+    const assertCurrent = () => {
       const current = operational();
       if (
+        !active ||
         this.released ||
         current.paused !== before.paused ||
         current.controlling !== before.controlling ||
         !operationalStillCurrent()
       )
         throw new ViewChangedError();
-      return complete(publication.canUseInventory(), (value) =>
-        encodeNativeJson(this.world, value, { sources: [this.facts] }),
+    };
+    try {
+      assertCurrent();
+      complete(
+        publication.canUseInventory(),
+        (value, options) => {
+          assertCurrent();
+          // Serialized bytes own their copied body independently of the view.
+          return encodeNativeJson(this.world, value, options);
+        },
+        (value, ...sources) => {
+          assertCurrent();
+          // Child records borrow the decoded packet's allocation, not an
+          // otherwise unused full-view encoding. No parent graph is retained.
+          return retainNativeSources(value, this.facts, ...sources);
+        },
       );
     } finally {
+      active = false;
       publication.release();
     }
   }

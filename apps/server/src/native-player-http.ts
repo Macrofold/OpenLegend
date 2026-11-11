@@ -2,14 +2,12 @@ import type { ServerResponse } from 'node:http';
 import type { GameView } from '@open-legend/protocol';
 import { AuthorityError, scopeKey, type RequestScope } from './authority.js';
 import {
-  attachNativeConsumer,
-  encodeNativeJson,
   nativeJsonFixedWorkspace,
   releaseNativeProduct,
   retainNativeProduct,
 } from './native-consumer.js';
 import type { NativeWorldService } from './native-world-service.js';
-import type { NativePlayerViewRequest } from './native-player-view.js';
+import type { NativePlayerEncoder, NativePlayerViewRequest } from './native-player-view.js';
 import { OverloadError, WorkLane } from './work-lane.js';
 import { ViewChangedError, projectPatch } from './view.js';
 
@@ -26,6 +24,17 @@ type Execution = Pick<
 >;
 
 const slots = (count: number) => 256 + 64 * count;
+
+/** The socket can close before Node invokes its write callback. Keep this
+ * copied payload's custody until either actual completion, then forget both. */
+function transportRelease(response: ServerResponse, bytes: Buffer): () => void {
+  const release = () => {
+    response.off('close', release);
+    releaseNativeProduct(bytes);
+  };
+  response.once('close', release);
+  return release;
+}
 
 function fields(value: object): number {
   let count = 0;
@@ -153,15 +162,21 @@ export class NativePlayerHttp {
   async state(scope: RequestScope, response: ServerResponse): Promise<void> {
     await this.service.publishPlayer(
       scope,
-      (bytes) => {
+      (view, encode) => {
         if (response.destroyed || this.closed) return;
+        const bytes = encode(view);
         response.writeHead(200, {
           'Content-Type': 'application/json; charset=utf-8',
           'Cache-Control': 'no-store',
         });
         retainNativeProduct(bytes);
-        response.once('close', () => releaseNativeProduct(bytes));
-        response.end(bytes, () => releaseNativeProduct(bytes));
+        const release = transportRelease(response, bytes);
+        try {
+          response.end(bytes, release);
+        } catch (error) {
+          release();
+          throw error;
+        }
       },
       this.execution,
     );
@@ -222,11 +237,20 @@ export class NativePlayerHttp {
   }
 
   private write(stream: Stream, bytes: Buffer): void {
-    if (stream.blocked || stream.response.destroyed) return;
-    if (!stream.response.write(bytes, () => releaseNativeProduct(bytes))) {
-      stream.blocked = true;
-      stream.timeout = setTimeout(() => stream.response.destroy(), 30_000);
-      stream.timeout.unref();
+    if (stream.blocked || stream.response.destroyed) {
+      releaseNativeProduct(bytes);
+      return;
+    }
+    const release = transportRelease(stream.response, bytes);
+    try {
+      if (!stream.response.write(bytes, release)) {
+        stream.blocked = true;
+        stream.timeout = setTimeout(() => stream.response.destroy(), 30_000);
+        stream.timeout.unref();
+      }
+    } catch (error) {
+      release();
+      throw error;
     }
   }
 
@@ -240,8 +264,16 @@ export class NativePlayerHttp {
     }
     await this.service.publishPlayer(
       stream.scope,
-      (bytes, view) => {
+      (view, encode) => {
         if (!this.current(stream) || stream.blocked) return;
+        // A privacy boundary jumps directly to a newly permitted reset. It
+        // never emits a patch containing earlier forgotten private content.
+        const prior = stream.view?.historyEpoch === view.historyEpoch ? stream.view : undefined;
+        if (prior?.revision === view.revision && scopeKey(stream.scope) === view.access?.scope)
+          return;
+        const message =
+          (prior && this.patchBytes(prior, view, encode)) ??
+          encode(view, { prefix: 'event: reset\ndata: ', suffix: '\n\n' });
         if (!stream.response.headersSent) {
           stream.response.writeHead(200, {
             'Content-Type': 'text/event-stream',
@@ -251,12 +283,6 @@ export class NativePlayerHttp {
           });
           stream.response.flushHeaders();
         }
-        // A privacy boundary jumps directly to a newly permitted reset. It
-        // never emits a patch containing earlier forgotten private content.
-        const prior = stream.view?.historyEpoch === view.historyEpoch ? stream.view : undefined;
-        if (prior?.revision === view.revision && scopeKey(stream.scope) === view.access?.scope)
-          return;
-        const message = (prior && this.patchBytes(prior, view)) ?? this.resetBytes(bytes, view);
         retainNativeProduct(message);
         this.write(stream, message);
         if (stream.view) releaseNativeProduct(stream.view);
@@ -266,7 +292,11 @@ export class NativePlayerHttp {
     );
   }
 
-  private patchBytes(previous: GameView, view: GameView): Buffer | null {
+  private patchBytes(
+    previous: GameView,
+    view: GameView,
+    encode: NativePlayerEncoder,
+  ): Buffer | null {
     const world = this.service.world;
     const sizing = world.reserveConsumerBytes(nativeJsonFixedWorkspace);
     let bound: number;
@@ -279,31 +309,13 @@ export class NativePlayerHttp {
     try {
       const patch = projectPatch(previous, view);
       return patch
-        ? encodeNativeJson(world, patch, {
+        ? encode(patch, {
             prefix: 'event: patch\ndata: ',
             suffix: '\n\n',
-            sources: [view],
           })
         : null;
     } finally {
       preparation.release();
-    }
-  }
-
-  private resetBytes(bytes: Buffer, view: GameView): Buffer {
-    const prefix = 'event: reset\ndata: ',
-      suffix = '\n\n';
-    const length = Buffer.byteLength(prefix) + bytes.length + Buffer.byteLength(suffix);
-    const storage = this.service.world.reserveConsumerBytes(length + 32 * 8);
-    try {
-      const message = Buffer.allocUnsafeSlow(length);
-      const at = message.write(prefix, 0, 'utf8');
-      bytes.copy(message, at);
-      message.write(suffix, at + bytes.length, 'utf8');
-      return attachNativeConsumer(message, storage, view);
-    } catch (error) {
-      storage.release();
-      throw error;
     }
   }
 
