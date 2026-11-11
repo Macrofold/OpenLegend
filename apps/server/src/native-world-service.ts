@@ -274,6 +274,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   private retentionTask?: Promise<void>;
   private failure?: Error;
   private protectedAdmission = false;
+  private protectedCompletion?: Promise<void>;
   private protectedHold?: NativeProtectedHold;
   private committedPrefix?: { readonly prefix: NativePendingPrefix; readonly revision: number };
   private playerInteractionAdmission?: (actorId: string) => boolean;
@@ -998,7 +999,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       choices?: false;
     } = {},
   ) {
-    return this.lane.run(async () => {
+    return this.atAcceptedBoundary(async () => {
       this.assertAdmission();
       const { consumer, choices = true, ...choiceOptions } = options;
       let capture = await NativeNpcCapture.capture(
@@ -1046,14 +1047,14 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         capture.release();
         throw error;
       }
-    });
+    }, options.signal);
   }
 
   captureNpcActions(actorId: string, consumer: NativeNpcConsumer, signal: AbortSignal) {
-    return this.lane.run(() => {
+    return this.atAcceptedBoundary(() => {
       this.assertAdmission();
       return NativeNpcActionCapture.capture(this.world, this.geometry, actorId, consumer, signal);
-    });
+    }, signal);
   }
 
   /** Lasting and recent history share the existing permitted page contracts;
@@ -1360,7 +1361,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     selection: NativeNpcSourceSelection,
     signal?: AbortSignal,
   ) {
-    return this.lane.run(async () => {
+    return this.atAcceptedBoundary(async () => {
       this.assertAdmission();
       if (
         capture.facts.self.worldId !== this.worldId ||
@@ -1374,7 +1375,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         { db: this.store.db, liveReadCuts: () => this.pending.liveReadCuts() },
         signal,
       );
-    });
+    }, signal);
   }
 
   captureNpcIntake(
@@ -1382,7 +1383,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     afterSequence: number,
     weighedThrough?: number,
   ): Promise<NativeNpcIntake> {
-    return this.lane.run(() => {
+    return this.atAcceptedBoundary(() => {
       this.assertAdmission();
       return NativeNpcIntake.capture(this.world, actorId, afterSequence, weighedThrough);
     });
@@ -1393,7 +1394,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     read: NativeNpcIntake,
     inspected: (current: () => boolean) => T,
   ): Promise<{ result: T } | undefined> {
-    return this.lane.run(async () => {
+    return this.atAcceptedBoundary(async () => {
       this.assertAdmission();
       const publication = await read.inspection(this.world);
       if (!publication) return;
@@ -1433,13 +1434,13 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     history: Parameters<NativeNpcCapture['prepareSituation']>[3],
     observations: Parameters<NativeNpcCapture['prepareSituation']>[4] = [],
   ) {
-    return this.lane.run(() => {
+    return this.atAcceptedBoundary(() => {
       this.assertNpcCapture(capture);
       return capture.prepareSituation(this.world, this.definitions, jobId, history, observations);
     });
   }
   prepareNpcExperiencePresentation(capture: NativeNpcCapture, values: readonly unknown[]) {
-    return this.lane.run(() => {
+    return this.atAcceptedBoundary(() => {
       this.assertNpcCapture(capture);
       return capture.prepareExperiencePresentation(this.world, this.definitions, values);
     });
@@ -1486,9 +1487,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     // A final publisher may revalidate SQL inside its already held short lane.
     // Only its live token permits reentry; an inherited expired async context
     // must acquire the lane normally before capturing a new accepted cut.
-    const cut = await (this.publicationContext.getStore()?.active
-      ? capture()
-      : this.lane.run(capture));
+    const cut = await this.atAcceptedBoundary(capture);
     const world = this.world;
     try {
       return await this.withMemoryRead(cut, () =>
@@ -1505,11 +1504,68 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     }
   }
 
+  /** Wait only before the semantic callback starts. A protected SQL wait leaves
+   * this lane free, but it exposes no accepted native read until it completes.
+   * Admission and that wait share one deadline; callback work is never replayed.
+   */
+  private async atAcceptedBoundary<T>(
+    operation: () => T | Promise<T>,
+    signal?: AbortSignal,
+  ): Promise<T> {
+    signal?.throwIfAborted();
+    if (this.publicationContext.getStore()?.active) return operation();
+    const deadline = performance.now() + this.lane.waitMs;
+    for (;;) {
+      signal?.throwIfAborted();
+      const remaining = deadline - performance.now();
+      if (remaining <= 0) throw new OverloadError();
+      const turn = await this.lane.run<{ completion: Promise<void> } | { value: T }>(async () => {
+        signal?.throwIfAborted();
+        if (
+          this.protectedAdmission &&
+          this.protectedCompletion &&
+          !this.protectedHold &&
+          !this.failure &&
+          !this.closed
+        )
+          return { completion: this.protectedCompletion };
+        // The semantic owner retains its existing admission/current checks.
+        // A permanent protected hold has no completion and still refuses there.
+        return { value: await operation() };
+      }, remaining);
+      if ('value' in turn) return turn.value;
+      const waitMs = deadline - performance.now();
+      if (waitMs <= 0) throw new OverloadError();
+      await new Promise<void>((resolve, reject) => {
+        let settled = false;
+        const finish = (error?: unknown) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          signal?.removeEventListener('abort', aborted);
+          if (error === undefined) resolve();
+          else reject(error);
+        };
+        const aborted = () => {
+          try {
+            signal?.throwIfAborted();
+          } catch (error) {
+            finish(error);
+          }
+        };
+        const timer = setTimeout(() => finish(new OverloadError()), waitMs);
+        signal?.addEventListener('abort', aborted, { once: true });
+        if (signal?.aborted) aborted();
+        void turn.completion.then(() => finish(), finish);
+      });
+    }
+  }
+
   /** SQL admission precedes this final short turn when the callback needs SQL.
    * Only server-owned recall/ticket publication runs here, never paid work. */
   publishRecall<T>(operation: () => Promise<T>): Promise<T> {
     if (this.publicationContext.getStore()?.active) return operation();
-    return this.lane.run(async () => {
+    return this.atAcceptedBoundary(async () => {
       this.assertAdmission();
       const owner = { active: true };
       try {
@@ -2129,10 +2185,15 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     capability: Capability,
     operation: () => Promise<T>,
   ): Promise<T> {
+    let complete!: () => void;
+    const completion = new Promise<void>((resolve) => {
+      complete = resolve;
+    });
     await this.lane.run(() => {
       this.assertAdmission();
       if (scope) this.assertScope(scope, capability);
       this.protectedAdmission = true;
+      this.protectedCompletion = completion;
     });
     try {
       await this.flush();
@@ -2142,6 +2203,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       return await operation();
     } finally {
       if (!this.protectedHold) this.protectedAdmission = false;
+      this.protectedCompletion = undefined;
+      complete();
       this.scheduleRetention();
     }
   }
@@ -2725,7 +2788,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   /** Internal NPC/command callers submit their real bound cursor, not effects.
    * The current callback must retain its original authority/source/input epoch. */
   acceptOperation(request: NativeOperationRequest): Promise<NativePublication | undefined> {
-    return this.lane.run(() => this.acceptInLane(request));
+    return this.atAcceptedBoundary(() => this.acceptInLane(request), request.signal);
   }
   /** A supplied native ticket owns the semantic writes. Optional SQL source
    * validation finishes before any private native candidate is opened. */
