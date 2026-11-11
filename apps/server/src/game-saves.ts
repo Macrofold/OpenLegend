@@ -16,7 +16,7 @@ import { CheckpointWorker, type CheckpointSource } from './checkpoint-worker-cli
 import { validateNativeCheckpointHistory } from './native-checkpoint-history.js';
 import {
   checkpointCurrentSources,
-  reconcileRestoredActivityPositions,
+  reconcileRestoredHistoryPositions,
 } from './native-current-sources.js';
 import type { NativeHost } from '@open-legend/native-simulation';
 import type { WorldRecords, RecordChanges } from './world-records.js';
@@ -625,7 +625,7 @@ export class GameSaves {
       readonly generation: string;
       readonly revision: number;
       readonly identityFloor: number;
-      readonly activityCapacity: Pick<NativeHost, 'reserveConsumerBytes' | 'reserveConsumerJson'>;
+      readonly historyCapacity: Pick<NativeHost, 'reserveConsumerBytes' | 'reserveConsumerJson'>;
     },
     restore: Omit<RestoreSave, 'payload'> & {
       readonly beforeTime: number;
@@ -647,7 +647,7 @@ export class GameSaves {
       this.canonicalHost(captured).presentationRelease,
     );
     const source = checkpointCurrentSources(captured, binding.databaseSchema, binding);
-    await reconcileRestoredActivityPositions(source, records, binding.activityCapacity);
+    await reconcileRestoredHistoryPositions(source, records, binding.historyCapacity);
     const changes: RecordChanges = {
       writes: new Map(
         Object.entries(source.records.tables).map(([table, rows]) => [

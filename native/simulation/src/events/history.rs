@@ -378,7 +378,9 @@ impl OccurrenceHistory {
                 event: Arc::clone(&original),
                 row_id,
                 parent,
-                slot: self.hot.len().to_string(),
+                // Rewind and eviction preserve ordinal gaps. The SQL slot
+                // follows that canonical position, not the resident count.
+                slot: position.to_string(),
                 position,
             },
         );

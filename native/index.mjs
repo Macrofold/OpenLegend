@@ -994,6 +994,8 @@ const {
   NativeWorldPrivateHistoryRead,
   NativeWorldProvider,
   NativeWorldReflectionTicket,
+  NativeWorldReplyPreviewPublication,
+  NativeWorldReplyPreviewRead,
   NativeWorldSave,
   HostPhase,
   nativeBuildInfo,
@@ -1022,6 +1024,8 @@ export { NativeWorldPrivateHistoryPublication };
 export { NativeWorldPrivateHistoryRead };
 export { NativeWorldProvider };
 export { NativeWorldReflectionTicket };
+export { NativeWorldReplyPreviewPublication };
+export { NativeWorldReplyPreviewRead };
 export { NativeWorldSave };
 export { HostPhase };
 export { nativeBuildInfo };

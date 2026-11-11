@@ -26,6 +26,8 @@ import {
   record,
   serialize,
   prepareQuestions,
+  jsonCaptureBytes,
+  jsonTextCaptureBytes,
 } from './validation.js';
 import type {
   AiReceipt,
@@ -437,7 +439,11 @@ interface PreparedInference<T> {
   input: Record<string, unknown>;
   maxOutputTokens: number;
   decode(raw: unknown): { value: T } | { refused: true };
+  releaseSchema?: () => void;
 }
+type Reservation = { release(): void };
+type Reserve = (bytes: number) => void;
+type CaptureResult = <T>(bytes: number, build: () => T) => T;
 
 function outputTokenLimit(value: number): number {
   if (!Number.isSafeInteger(value) || value < 1 || value > 16_384)
@@ -489,7 +495,7 @@ function createMacrofoldExecutor(
   const api = new MacrofoldTransport(config.baseUrl, config.apiKey, config.fetch, config.network);
   return async function execute<T>(
     request: InferenceRequest,
-    prepare: () => PreparedInference<T>,
+    prepare: (reserve: Reserve, captureResult: CaptureResult) => PreparedInference<T>,
   ): Promise<AiResult<T>> {
     const started = Date.now();
     const receipt: AiReceipt = {
@@ -508,6 +514,36 @@ function createMacrofoldExecutor(
       completionUncertain: false,
     };
     let run: string | undefined;
+    let releaseSchema: (() => void) | undefined;
+    const allocations: Reservation[] = [];
+    let resultAllocation: Reservation | undefined;
+    let operationStarted = false;
+    let resourcesClosed = false;
+    let callerEnded = false;
+    const reserve: Reserve = (bytes) => {
+      const allocation = request.allocation?.reserveBytes(bytes);
+      if (allocation) allocations.push(allocation);
+    };
+    const captureResult: CaptureResult = (bytes, build) => {
+      const allocation = request.allocation?.reserveBytes(bytes);
+      try {
+        const result = build();
+        resultAllocation = allocation;
+        return result;
+      } catch (error) {
+        allocation?.release();
+        throw error;
+      }
+    };
+    const release = () => {
+      if (!callerEnded || (operationStarted && !resourcesClosed)) return;
+      releaseSchema?.();
+      releaseSchema = undefined;
+      resultAllocation?.release();
+      resultAllocation = undefined;
+      for (const allocation of allocations) allocation.release();
+      allocations.length = 0;
+    };
     try {
       if (
         typeof request.requestId !== 'string' ||
@@ -525,9 +561,15 @@ function createMacrofoldExecutor(
             ? 'decision_streaming_unsupported'
             : 'inference_streaming_unsupported',
         );
-      const prepared = prepare();
+      const prepared = prepare(reserve, captureResult);
+      releaseSchema = prepared.releaseSchema;
       const input = prepared.input;
-      receipt.contextDigest = digest(serialize(input, 500_000));
+      const serializing = request.allocation?.reserveBytes(jsonCaptureBytes(input));
+      try {
+        receipt.contextDigest = digest(serialize(input, 500_000));
+      } finally {
+        serializing?.release();
+      }
       if (!config.apiKey.trim())
         return { outcome: 'unavailable', reason: 'provider_not_configured', receipt };
       if (request.signal?.aborted)
@@ -535,14 +577,20 @@ function createMacrofoldExecutor(
       const remaining = Math.min(timeout, (request.deadlineMs ?? started + timeout) - Date.now());
       if (!Number.isFinite(remaining) || remaining <= 0)
         return { outcome: 'unavailable', reason: 'deadline_expired', receipt };
-      return await api.run(
+      const result = await api.run<AiResult<T>>(
         {
           timeoutMs: Math.max(1, Math.floor(remaining)),
           deadlineAtMs: request.deadlineMs,
           signal: request.signal,
         },
         async (operation) => {
+          operationStarted = true;
+          api.hold(() => {
+            resourcesClosed = true;
+            release();
+          });
           const signal = operation.signal;
+          if (request.allocation) reserve(16 * 1024);
           const body = {
             ...(request.stream ? { stream: true } : {}),
             ...(deployment
@@ -564,7 +612,14 @@ function createMacrofoldExecutor(
               timeout_seconds: Math.ceil(remaining / 1000),
             },
           };
-          const preparedBody = new PreparedJson(body, 500_000);
+          const bodyWorkspace = request.allocation?.reserveBytes(jsonCaptureBytes(body));
+          let preparedBody: PreparedJson;
+          try {
+            preparedBody = new PreparedJson(body, 500_000);
+            if (request.allocation) reserve(64 + 2 * preparedBody.text(500_000).length);
+          } finally {
+            bodyWorkspace?.release();
+          }
           receipt.providerRequestDigest = digest(preparedBody.text(500_000));
           signal.throwIfAborted();
           receipt.dispatched = true;
@@ -676,7 +731,18 @@ function createMacrofoldExecutor(
             ? { outcome: 'refused', reason: 'provider_refused', receipt }
             : { outcome: 'value', value: decoded.value, receipt };
         },
+        request.allocation,
       );
+      if (
+        result.outcome === 'value' &&
+        resultAllocation &&
+        result.value !== null &&
+        typeof result.value === 'object'
+      ) {
+        request.allocation!.retain(result.value, resultAllocation);
+        resultAllocation = undefined;
+      }
+      return result;
     } catch (error) {
       const stopped =
         error instanceof NetworkError && ['cancelled', 'deadline_exceeded'].includes(error.kind);
@@ -684,13 +750,16 @@ function createMacrofoldExecutor(
       if (stopped && run) {
         const originalRun = run;
         try {
-          await api.runCleanup(() =>
-            api.request(
-              `/v1/runs/${encodeURIComponent(originalRun)}/cancel`,
-              {},
-              digest(`cancel:${request.requestId}`),
-              undefined,
-            ),
+          await api.runCleanup(
+            () =>
+              api.request(
+                `/v1/runs/${encodeURIComponent(originalRun)}/cancel`,
+                {},
+                digest(`cancel:${request.requestId}`),
+                undefined,
+              ),
+            undefined,
+            request.allocation,
           );
         } catch {
           /* Original reservation remains uncertain. */
@@ -729,6 +798,8 @@ function createMacrofoldExecutor(
         receipt,
       };
     } finally {
+      callerEnded = true;
+      release();
       receipt.completedAt = new Date().toISOString();
       receipt.latencyMs = Date.now() - started;
     }
@@ -747,8 +818,10 @@ export function createMacrofoldDecisionClient(configuration: MacrofoldDecisionCo
   const execute = createMacrofoldExecutor(configuration, 'decision');
   return {
     judge: (request) =>
-      execute(request, () => {
+      execute(request, (reserve, captureResult) => {
         const maxOutputTokens = outputTokenLimit(request.maxOutputTokens ?? 16_384);
+        if (request.allocation)
+          reserve(jsonCaptureBytes(request.state) + 2 * jsonCaptureBytes(request.questions));
         const input = {
           state: JSON.parse(serialize(request.state, 500_000)) as unknown,
           questions: prepareQuestions(request.questions, 500_000),
@@ -759,7 +832,12 @@ export function createMacrofoldDecisionClient(configuration: MacrofoldDecisionCo
             maxOutputTokens,
             Math.max(1024, Object.keys(input.questions).length * 64),
           ),
-          decode: (raw) => ({ value: decodeJudge(raw, input.questions) }),
+          decode: (raw) => ({
+            value: captureResult(
+              request.allocation ? jsonCaptureBytes(raw) + jsonCaptureBytes(input.questions) : 0,
+              () => decodeJudge(raw, input.questions),
+            ),
+          }),
         };
       }),
   };
@@ -778,7 +856,7 @@ export function createMacrofoldGenerationClient(configuration: MacrofoldGenerati
   const execute = createMacrofoldExecutor(config, 'generation');
   return {
     generate<T = JsonValue>(request: MacrofoldGenerationRequest): Promise<AiResult<T>> {
-      return execute<T>(request, () => {
+      return execute<T>(request, (reserve, captureResult) => {
         const deployment = config.macrofoldDeployment;
         if (deployment) {
           if (request.model !== undefined || request.reasoningEffort !== undefined)
@@ -807,17 +885,40 @@ export function createMacrofoldGenerationClient(configuration: MacrofoldGenerati
           if (request.model !== undefined && request.model !== config.model)
             throw new InvalidData('model_not_authorized');
         }
-        const preparedSchema = prepareSchema(request.schema, 500_000);
-        const maxOutputTokens = outputTokenLimit(request.maxOutputTokens ?? 4096);
-        return {
-          maxOutputTokens,
-          input: prepareMacrofoldGenerationInput(
-            { ...request, maxOutputTokens },
-            preparedSchema,
-            config.macrofoldOutputMode,
-          ),
-          decode: (raw) => decodeMacrofoldGeneration<T>(raw, preparedSchema),
-        };
+        const preparedSchema = prepareSchema(
+          request.schema,
+          500_000,
+          request.allocation?.reserveBytes,
+          request.allocation?.borrow,
+        );
+        try {
+          const maxOutputTokens = outputTokenLimit(request.maxOutputTokens ?? 4096);
+          if (request.allocation)
+            reserve(
+              4096 +
+                jsonCaptureBytes(request.context) +
+                (config.macrofoldOutputMode === 'json_object' ||
+                config.macrofoldOutputMode === 'prompted_json'
+                  ? jsonCaptureBytes(preparedSchema.schema)
+                  : 0),
+            );
+          return {
+            maxOutputTokens,
+            input: prepareMacrofoldGenerationInput(
+              { ...request, maxOutputTokens },
+              preparedSchema,
+              config.macrofoldOutputMode,
+            ),
+            decode: (raw) =>
+              decodeMacrofoldGeneration<T>(raw, preparedSchema, (text, parse) =>
+                captureResult(request.allocation ? jsonTextCaptureBytes(text) : 0, parse),
+              ),
+            releaseSchema: preparedSchema.release,
+          };
+        } catch (error) {
+          preparedSchema.release?.();
+          throw error;
+        }
       });
     },
   };

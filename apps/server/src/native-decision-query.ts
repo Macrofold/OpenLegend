@@ -73,6 +73,7 @@ export async function expandNativeDecisionSituation(input: {
   sources: readonly CurrentMemorySource[];
   conversationEvidence: readonly Pick<ConversationSource, 'id' | 'revision'>[];
   offered: readonly NativeFormattedNpcOffer[];
+  includeActions: boolean;
   actionSource: 'original' | 'current';
   prototypeSource: 'original' | 'current';
   perspectives: NativeNpcBindingSelection['perspectives'];
@@ -213,7 +214,7 @@ export async function expandNativeDecisionSituation(input: {
     const extra = extraText.text;
     let offered = [...input.offered];
     const renderBytes = () =>
-      nativeDecisionPromptSize(service.world, context, offered, true, extra);
+      nativeDecisionPromptSize(service.world, context, offered, input.includeActions, extra);
     if (renderBytes() + Buffer.byteLength(input.instructions) > CONTEXT_BYTE_LIMIT) {
       const all = offered;
       let low = 0,
@@ -228,7 +229,7 @@ export async function expandNativeDecisionSituation(input: {
       offered = all.slice(0, low);
     }
     const promptText = input.format(() =>
-      nativeDecisionPrompt(service.world, context, offered, true, extra),
+      nativeDecisionPrompt(service.world, context, offered, input.includeActions, extra),
     );
     const prompt = promptText.text;
     if (Buffer.byteLength(prompt) + Buffer.byteLength(input.instructions) > CONTEXT_BYTE_LIMIT)

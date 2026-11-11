@@ -1,4 +1,14 @@
-import { releaseNativeProduct } from './native-consumer.js';
+import { NpcReplyPreviews } from './npc-reply-preview.js';
+import { nativeNpcReplyPreviewHost } from './native-npc-reply-preview.js';
+import {
+  attachNativeConsumer,
+  borrowNativeProduct,
+  createNativeConsumerScope,
+  releaseNativeProduct,
+  retainNativeSources,
+  withNativeConsumerScope,
+} from './native-consumer.js';
+import type { NativeWorldConsumer } from '@open-legend/native-simulation';
 import {
   joinNativeDecisionText,
   nativeDecisionJsonSize,
@@ -8,6 +18,7 @@ import {
   admitDecisionGraph,
   decisionArrayBytes,
   decisionObjectBytes,
+  decisionJsonGraphBytes,
   decisionRecordEntries,
   decisionTextBytes,
 } from './native-decision-allocation.js';
@@ -39,6 +50,7 @@ import {
   validateJudgmentSize,
   type AiClient,
   type AiResult,
+  type EmbeddingRequest,
   type GenerateRequest,
   type JudgeRequest,
   type JudgeValue,
@@ -78,12 +90,8 @@ import {
   type DecisionTask,
 } from './decision-task.js';
 import { recordDecisionTiming, type DecisionPublication } from './decision-publication.js';
-import {
-  decisionQuestions,
-  activityRouteCriterion,
-  batchedAttentionQuestions,
-  ACTION_EVIDENCE_POLICY,
-} from './jev-questions.js';
+import { decisionQuestions, activityRouteCriterion } from './jev-questions.js';
+import { decisionActionAttentionRequest } from './attention-request.js';
 import {
   resolveLevel1,
   escalationLevel,
@@ -100,7 +108,11 @@ import { NativeNpcIntake, type NativeNpcInputFacts } from './native-npc-intake.j
 import { NativeNpcCapture } from './native-npc-capture.js';
 import { nativeDecisionValidity } from './native-decision-validity.js';
 import { nativeAppraisals } from './native-appraisal-context.js';
-import { prepareNativeDecision } from './native-decision.js';
+import {
+  prepareNativeDecision,
+  type NativeDecisionRouteInput,
+  type NativeDecisionRouting,
+} from './native-decision.js';
 import type { NativeRecallRuntime } from './native-recall-service.js';
 import type { NativeWorldService } from './native-world-service.js';
 import type { NativePublication } from './native-operation.js';
@@ -142,6 +154,7 @@ interface Run extends DispatchRun {
   level1?: Level1Outcome;
   immediateTimer?: ReturnType<typeof setTimeout>;
   expiryTimer?: ReturnType<typeof setTimeout>;
+  temporalSourcesCurrent?: () => boolean;
 }
 const bytes = (value: unknown) =>
   value === undefined
@@ -152,6 +165,13 @@ const judgmentMeter = (request: Pick<JudgeRequest, 'state' | 'questions'>): Deci
   level: 1,
   size: { instructions: 0, context: bytes(request.state), schema: bytes(request.questions) },
 });
+
+// Both complete authored rubrics cover the fixed factory's polarity branches.
+// Policy-limited requests remove fields; optional activity criteria are sized
+// separately from their actual installed labels and descriptions below.
+const routeQuestionBytes =
+  decisionJsonGraphBytes(decisionQuestions(true, 4, true, true)) +
+  decisionJsonGraphBytes(decisionQuestions(false, 4, true, true));
 
 /** Actual actor-owned NPC jobs over native reads. The shared queue, execution,
  * billing, escalation and SQL owners retain their ordinary Source semantics;
@@ -166,6 +186,7 @@ function responseEffects(parsed: ActorResponse & { queries?: unknown }): ActorRe
 }
 
 export class NativeNpcDirector {
+  readonly replyPreviews: NpcReplyPreviews;
   readonly client: AiClient;
   readonly macrofold: MacrofoldBackend;
   private readonly log: IntelligenceLog;
@@ -193,6 +214,7 @@ export class NativeNpcDirector {
   }>();
   private readonly embeddings;
   private readonly maintenance: NativeNpcMaintenance;
+  private readonly providerAllocation: NonNullable<GenerateRequest['allocation']>;
 
   constructor(
     readonly service: NativeWorldService,
@@ -203,6 +225,21 @@ export class NativeNpcDirector {
   ) {
     const director = this,
       config = service.config;
+    this.replyPreviews = new NpcReplyPreviews(nativeNpcReplyPreviewHost(service));
+    const allocation: NonNullable<GenerateRequest['allocation']> = {
+      reserveBytes: (bytes) => service.world.reserveConsumerBytes(bytes),
+      borrow: borrowNativeProduct,
+      retain: (value, reservation) => {
+        attachNativeConsumer(value, reservation as NativeWorldConsumer);
+        // Judgment answer maps and response/query arrays can outlive their
+        // transport envelope while the real decision consumer is awaiting.
+        for (const key in value) {
+          const child = (value as Record<string, unknown>)[key];
+          if (child !== null && typeof child === 'object') retainNativeSources(child, value);
+        }
+      },
+    };
+    this.providerAllocation = allocation;
     this.log = new IntelligenceLog(service.store);
     this.macrofold = new MacrofoldBackend(
       {
@@ -228,28 +265,32 @@ export class NativeNpcDirector {
         notify: () => service.notifyTelemetry(),
       },
       this.log,
+      allocation,
     );
-    this.client = this.log.wrap(
+    const backend =
       client ??
-        (config.macrofoldKey
-          ? this.macrofold
-          : createAiClient({
-              jev: { apiKey: config.jevKey, model: config.jevModel, prices: config.jevPrices },
-              openai: {
-                apiKey: config.llmKey,
-                model: config.llmModel,
-                prices: config.llmPrices,
-                modelPrices: config.llmModelPrices,
-                reasoningEffort: 'low',
-              },
-              network: this.log.network,
-              timeoutMs: config.aiTimeoutMs,
-              maxRequestBytes: 500_000,
-              maxResponseBytes: 500_000,
-              maxOutputTokens: 8192,
-            })),
-    );
-    this.embeddings = createEmbeddingClient({
+      (config.macrofoldKey
+        ? this.macrofold
+        : createAiClient({
+            jev: { apiKey: config.jevKey, model: config.jevModel, prices: config.jevPrices },
+            openai: {
+              apiKey: config.llmKey,
+              model: config.llmModel,
+              prices: config.llmPrices,
+              modelPrices: config.llmModelPrices,
+              reasoningEffort: 'low',
+            },
+            network: this.log.network,
+            timeoutMs: config.aiTimeoutMs,
+            maxRequestBytes: 500_000,
+            maxResponseBytes: 500_000,
+            maxOutputTokens: 8192,
+          }));
+    this.client = this.log.wrap({
+      judge: (request) => backend.judge({ ...request, allocation }),
+      generate: <T>(request: GenerateRequest) => backend.generate<T>({ ...request, allocation }),
+    });
+    const embeddings = createEmbeddingClient({
       apiKey: config.embeddingKey,
       model: config.embeddingModel,
       dimensions: config.embeddingDimensions,
@@ -257,6 +298,9 @@ export class NativeNpcDirector {
       network: this.log.network,
       timeoutMs: config.aiTimeoutMs,
     });
+    this.embeddings = {
+      embed: (request: EmbeddingRequest) => embeddings.embed({ ...request, allocation }),
+    };
     this.ownsExecution = !execution;
     this.execution = execution ?? new CognitionExecution(service.store, now);
     this.memoryIndex = nativeMemoryIndex(
@@ -305,45 +349,51 @@ export class NativeNpcDirector {
       mutateDecision: (id, operation) =>
         service.publishRecall(() => service.store.mutateDecision(id, operation)),
       observe: (operation) => service.publishRecall(operation),
-      scopeCurrent: async (state, authority, validity, eligibility) => {
-        const actor = service.npcActor(state.actorId);
-        if (
-          state.generation !== service.generation ||
-          state.timelineId !== service.timelineId ||
-          !actor?.alive ||
-          !actor.memory ||
-          actor.incapacitated ||
-          actor.controller !== 'npc' ||
-          actor.physicalLife !== state.physicalLife ||
-          (state.usefulUntilSim !== undefined && service.simTime >= state.usefulUntilSim) ||
-          (authority && !service.currentScope(authority, 'play', true))
-        )
-          return false;
-        const read = await NativeNpcIntake.capture(service.world, state.actorId, 0);
-        try {
-          if (eligibility && (!read.facts.cognition || read.facts.actionsBlocked)) return false;
-          if (validity) {
-            const captured = await NativeNpcCapture.capture(service.world, state.actorId, []);
+      // These checks return scalars; their complete inspection packets have
+      // no later consumer and must not stay admitted until garbage collection.
+      scopeCurrent: (state, authority, validity, eligibility) =>
+        withNativeConsumerScope(async () => {
+          const actor = service.npcActor(state.actorId);
+          if (
+            state.generation !== service.generation ||
+            state.timelineId !== service.timelineId ||
+            !actor?.alive ||
+            !actor.memory ||
+            actor.incapacitated ||
+            actor.controller !== 'npc' ||
+            actor.physicalLife !== state.physicalLife ||
+            (state.usefulUntilSim !== undefined && service.simTime >= state.usefulUntilSim) ||
+            (authority && !service.currentScope(authority, 'play', true))
+          )
+            return false;
+          const read = await NativeNpcIntake.capture(service.world, state.actorId, 0);
+          try {
+            if (eligibility && (!read.facts.cognition || read.facts.actionsBlocked)) return false;
+            if (validity) {
+              const captured = await NativeNpcCapture.capture(service.world, state.actorId, []);
+              try {
+                if (nativeDecisionValidity(captured, service.definitions) !== validity)
+                  return false;
+              } finally {
+                captured.release();
+              }
+            }
+            return true;
+          } finally {
+            read.release();
+          }
+        }),
+      validity: (actorId) =>
+        service.publishRecall(() =>
+          withNativeConsumerScope(async () => {
+            const captured = await NativeNpcCapture.capture(service.world, actorId, []);
             try {
-              if (nativeDecisionValidity(captured, service.definitions) !== validity) return false;
+              return nativeDecisionValidity(captured, service.definitions);
             } finally {
               captured.release();
             }
-          }
-          return true;
-        } finally {
-          read.release();
-        }
-      },
-      validity: (actorId) =>
-        service.publishRecall(async () => {
-          const captured = await NativeNpcCapture.capture(service.world, actorId, []);
-          try {
-            return nativeDecisionValidity(captured, service.definitions);
-          } finally {
-            captured.release();
-          }
-        }),
+          }),
+        ),
       settleDiscovery: (actorId, id, generation) =>
         this.settleDiscovery(actorId, id, generation, true),
       subscribe: (listener) => service.subscribe(listener),
@@ -360,6 +410,7 @@ export class NativeNpcDirector {
     );
     const releasePublication = service.onPublication((publication) => this.changed(publication));
     const releaseChange = service.subscribe(() => {
+      this.replyPreviews.recheck();
       for (const run of this.runs.values()) {
         try {
           this.current(run);
@@ -555,6 +606,7 @@ export class NativeNpcDirector {
       return { ok: false, code: 'not-running', message: 'That request is no longer running.' };
     if (!run.controller.signal.aborted) {
       run.cancelReason = 'Request cancelled.';
+      this.replyPreviews.end(run.job.id);
       await this.update(run, run.job.status, 'Cancelling request…');
       run.controller.abort();
     }
@@ -595,6 +647,8 @@ export class NativeNpcDirector {
       );
     const state = run.job.decision,
       actor = this.service.npcActor(run.actorId);
+    if (run.temporalSourcesCurrent && !run.temporalSourcesCurrent())
+      throw new StopJob('stale', 'The selected personal evidence changed or expired.');
     if (
       state &&
       (this.now() >= state.usefulUntilWall ||
@@ -844,6 +898,7 @@ export class NativeNpcDirector {
     signal: AbortSignal,
     validity: 'decision' | 'prepared-response',
     nativeOnly: boolean,
+    route = false,
   ): Promise<Preparation> {
     let attention = 0;
     const requiredAppraisals: readonly AppraisalScope[] = [];
@@ -876,6 +931,7 @@ export class NativeNpcDirector {
       semanticTrigger: run.intake?.trigger,
       semanticCauses: run.semanticCauseOrdinals,
       validity,
+      routeActions: route ? (input) => this.routeDecision(run, input) : undefined,
       prepareAppraisals: (input) =>
         nativeAppraisals({
           purpose: 'decision',
@@ -889,7 +945,163 @@ export class NativeNpcDirector {
     });
   }
 
+  private async routeDecision(
+    run: Run,
+    input: NativeDecisionRouteInput,
+  ): Promise<NativeDecisionRouting> {
+    // The route is already paid work while the rest of preparation is being
+    // built. The existing bounded run subscription must see source withdrawal.
+    run.temporalSourcesCurrent = input.sourcesCurrent;
+    run.validateJudgmentSource = async () => {
+      if (!input.sourcesCurrent())
+        throw new StopJob('stale', 'The selected personal evidence changed before dispatch.');
+    };
+    const policy = this.service.definitions.facts.definitions.cognitionPolicy;
+    const finish = (build: () => NativeDecisionRouting) =>
+      admitDecisionGraph(this.service.world, decisionObjectBytes(5), build);
+    const generationAvailable =
+      !this.service.config.jevOnly &&
+      !!(this.service.config.macrofoldKey || this.service.config.llmKey);
+    let questionBytes = routeQuestionBytes;
+    let fieldEntries = 0;
+    for (const descriptor of input.activityRequests.requests) {
+      fieldEntries += decisionRecordEntries(descriptor.fields);
+      questionBytes +=
+        decisionObjectBytes(1) +
+        decisionTextBytes(256 + descriptor.label.length + descriptor.description.length);
+    }
+    const questions = admitDecisionGraph(this.service.world, questionBytes, () =>
+      decisionQuestions(
+        input.addressedSpeech,
+        policy.maxImmediateLevel,
+        input.speechTrigger,
+        generationAvailable,
+      ),
+    );
+    const routeQuestion = questions['route'];
+    if (routeQuestion?.type !== 'choice') throw new Error('Missing route rubric.');
+    const families = admitDecisionGraph(
+      this.service.world,
+      decisionObjectBytes(input.activityRequests.requests.length) +
+        3 * decisionArrayBytes(fieldEntries) +
+        fieldEntries * decisionArrayBytes(2) +
+        input.activityRequests.choices.length * (decisionObjectBytes(2) + decisionArrayBytes(1)),
+      () => requestRoutes(input.activityRequests.requests, input.activityRequests.choices),
+    );
+    for (const [key, descriptor] of families)
+      routeQuestion.criteria[key] = activityRouteCriterion(descriptor);
+    let judged: JudgeValue | undefined;
+    let actionAnswers: Record<string, JudgmentAnswer> | undefined;
+    if (!input.speechTrigger) {
+      await input.refreshActions();
+      const request = input.actionRequest('choose-action');
+      const combined = admitDecisionGraph(
+        this.service.world,
+        decisionObjectBytes(
+          decisionRecordEntries(request.questions) + decisionRecordEntries(questions),
+        ),
+        () => ({ ...request.questions, ...questions }),
+      );
+      let fits = true;
+      try {
+        validateJudgmentSize(request.state, combined);
+      } catch (error) {
+        if (!(error instanceof InvalidData)) throw error;
+        fits = false;
+      }
+      if (fits && Object.keys(request.questions).length) {
+        const all = await this.judge(
+          run,
+          'attempt:0:route',
+          { state: request.state, questions: combined },
+          input.publish,
+        );
+        const split = admitDecisionGraph(
+          this.service.world,
+          4 * decisionArrayBytes(decisionRecordEntries(all.answers)) +
+            decisionRecordEntries(all.answers) *
+              (2 * decisionArrayBytes(2) + decisionArrayBytes(1)) +
+            2 * decisionObjectBytes(decisionRecordEntries(all.answers)) +
+            2 * decisionObjectBytes(2),
+          () => ({
+            routing: Object.fromEntries(
+              Object.keys(questions).flatMap((key) =>
+                all.answers[key] ? [[key, all.answers[key]!]] : [],
+              ),
+            ),
+            actions: Object.fromEntries(
+              Object.entries(all.answers).filter(([key]) => !Object.hasOwn(questions, key)),
+            ),
+          }),
+        );
+        judged = { answers: split.routing };
+        actionAnswers = split.actions;
+      }
+    }
+    judged ??= await this.judge(
+      run,
+      'attempt:0:route',
+      { state: input.prompt, questions },
+      input.publish,
+    );
+    const routingJudgment = judged;
+    const answer = judged.answers['route'];
+    const probability = answer?.type === 'choice' ? (answer.probabilities[answer.choice] ?? 0) : 0;
+    const selected = answer?.type === 'choice' && probability >= 0.5 ? answer.choice : null;
+    const route =
+      generationAvailable && input.addressedSpeech && selected === 'native'
+        ? 'level2'
+        : (selected ?? (generationAvailable && input.addressedSpeech ? 'level2' : null));
+    const gate = judged.answers['possibleAction'];
+    const actions =
+      !input.speechTrigger ||
+      !gate ||
+      gate.type !== 'choice' ||
+      gate.choice === 'yes' ||
+      (gate.probabilities['no'] ?? 0) < 0.8;
+    if (
+      !route ||
+      route === 'native' ||
+      !Object.hasOwn(routeQuestion.criteria, route) ||
+      families.has(route) ||
+      !actions
+    )
+      return finish(() => ({ judged: routingJudgment, questions, families }));
+    const actionPurpose = route === 'level1' ? 'choose-action' : 'actions';
+    if (!actionAnswers) {
+      await input.refreshActions();
+      const request = input.actionRequest(actionPurpose);
+      try {
+        actionAnswers = Object.keys(request.questions).length
+          ? (await this.judge(run, 'attempt:0:action-attention', request, input.publish)).answers
+          : {};
+      } catch (error) {
+        if (route === 'level1' || run.controller.signal.aborted) throw error;
+        this.current(run);
+        await input.publish(() => undefined);
+        return finish(() => ({
+          judged: routingJudgment,
+          questions,
+          families,
+          actionPurpose,
+          actionFallback: true,
+        }));
+      }
+    }
+    return finish(() => ({
+      judged: routingJudgment,
+      questions,
+      families,
+      actionPurpose,
+      actionAnswers,
+    }));
+  }
+
   private async decide(run: Run): Promise<void> {
+    return withNativeConsumerScope(() => this.decideOwned(run));
+  }
+
+  private async decideOwned(run: Run): Promise<void> {
     this.current(run);
     if (!(await this.execution.primaryAvailable(run.urgent)))
       throw new StopJob(
@@ -915,45 +1127,48 @@ export class NativeNpcDirector {
       run.controller.signal,
       'decision',
       !!run.job.decision,
+      true,
     ));
+    if (prepared.routingFailure) {
+      const { error } = prepared.routingFailure;
+      prepared.retireRouting();
+      throw error;
+    }
     run.validateJudgmentSource = async () => {
       if (!(await prepared.current()))
         throw new StopJob('stale', 'The selected personal evidence changed before dispatch.');
     };
+    run.temporalSourcesCurrent = prepared.sourcesCurrent;
     const policy = this.service.definitions.facts.definitions.cognitionPolicy,
       generationAvailable =
         !this.service.config.jevOnly &&
         !!(this.service.config.macrofoldKey || this.service.config.llmKey);
-    const questions = decisionQuestions(
-      prepared.addressedSpeech,
-      policy.maxImmediateLevel,
-      prepared.speechTrigger,
-      generationAvailable,
-    );
-    const routeQuestion = questions['route'];
+    let questions: NativeDecisionRouting['questions'] | undefined =
+      prepared.routing?.questions ??
+      decisionQuestions(
+        prepared.addressedSpeech,
+        policy.maxImmediateLevel,
+        prepared.speechTrigger,
+        generationAvailable,
+      );
+    let routeQuestion = questions['route'];
     if (routeQuestion?.type !== 'choice') throw new Error('Missing route rubric.');
-    const families = requestRoutes(
-      prepared.activityRequests.requests,
-      prepared.activityRequests.choices,
-    );
+    let families: NativeDecisionRouting['families'] | undefined =
+      prepared.routing?.families ??
+      requestRoutes(prepared.activityRequests.requests, prepared.activityRequests.choices);
     for (const [key, descriptor] of families)
       routeQuestion.criteria[key] = activityRouteCriterion(descriptor);
-    const rating = () => ({
-      state: {
-        attentionPolicy: ACTION_EVIDENCE_POLICY,
-        candidates: Object.fromEntries(
-          prepared.offered.map((offer) => [offer.id, offer.description]),
-        ),
-      },
-      questions: batchedAttentionQuestions(
-        prepared.offered.map((offer) => offer.id),
+    const rating = () =>
+      decisionActionAttentionRequest(
+        prepared.context,
+        prepared.offered,
         'choose-action',
         policy.actionGuidance,
-      ),
-    });
-    let answers: Record<string, JudgmentAnswer> | undefined;
-    let judged: JudgeValue;
-    if (!prepared.speechTrigger) {
+      );
+    let answers: Record<string, JudgmentAnswer> | undefined = prepared.routing?.actionAnswers;
+    let judged: JudgeValue | undefined;
+    if (prepared.routing) judged = prepared.routing.judged;
+    else if (!prepared.speechTrigger) {
       const request = rating(),
         combined = { ...request.questions, ...questions };
       let combine = true;
@@ -981,10 +1196,14 @@ export class NativeNpcDirector {
           ),
         );
       } else
-        judged = await this.judge(run, 'attempt:0:route', { state: prepared.prompt, questions });
-    } else judged = await this.judge(run, 'attempt:0:route', { state: prepared.prompt, questions });
-    const answer = judged.answers['route'],
-      probability = answer?.type === 'choice' ? (answer.probabilities[answer.choice] ?? 0) : 0,
+        judged = await this.judge(run, 'attempt:0:route', {
+          state: prepared.routePrompt,
+          questions,
+        });
+    } else
+      judged = await this.judge(run, 'attempt:0:route', { state: prepared.routePrompt, questions });
+    let answer = judged.answers['route'];
+    const probability = answer?.type === 'choice' ? (answer.probabilities[answer.choice] ?? 0) : 0,
       selected = answer?.type === 'choice' && probability >= 0.5 ? answer.choice : null,
       route =
         generationAvailable && prepared.addressedSpeech && selected === 'native'
@@ -992,12 +1211,7 @@ export class NativeNpcDirector {
           : (selected ?? (generationAvailable && prepared.addressedSpeech ? 'level2' : null));
     if (generationAvailable && policy.reflection) {
       const reflection = judged.answers['reflection'];
-      if (
-        reflection?.type === 'choice' &&
-        reflection.choice === 'yes' &&
-        typeof reflection.confidence === 'number' &&
-        reflection.confidence >= 0.55
-      )
+      if (reflection?.type === 'choice' && reflection.choice === 'yes')
         await this.maintenance.enqueue(
           run.actorId,
           run.job.id,
@@ -1089,7 +1303,49 @@ export class NativeNpcDirector {
         level = resolved.outcome.level;
       } else response = this.knownResponse(prepared, resolved.outcome.handle);
     }
+    // Route and action judgments have finished selection and logging. Retain
+    // the permitted offered menu, while generation owns only its actual input.
+    questions = undefined;
+    routeQuestion = undefined;
+    families = undefined;
+    judged = undefined;
+    answers = undefined;
+    answer = undefined;
+    prepared.retireRouting();
+    const previewController = run.controller;
+    const previewHistoryEpoch = this.service.historyEpoch;
+    const startPreview = () =>
+      !run.job.decision &&
+      run.job.kind === 'chat' &&
+      run.job.authority &&
+      run.job.playerSpeechEventId &&
+      this.service.config.macrofoldKey
+        ? this.replyPreviews.start({
+            scope: run.job.authority,
+            requestId: run.job.id,
+            npcId: run.actorId,
+            playerSpeechEventId: run.job.playerSpeechEventId,
+            attempt: 0,
+            maxBytes: Math.min(
+              1_000_000,
+              levelLimits(this.service.config)[level].visibleOutputBytes,
+            ),
+            rootKeys: [...Object.keys(prepared.schema.shape), 'queries'],
+            current: () =>
+              this.runs.get(run.job.id) === run &&
+              run.controller === previewController &&
+              !previewController.signal.aborted &&
+              !run.cancelReason &&
+              !run.invalidated &&
+              run.generation === this.service.generation &&
+              previewHistoryEpoch === this.service.historyEpoch &&
+              this.service.npcActor(run.actorId)?.physicalLife === run.physicalLife,
+            operation: (value) => prepared.previewSpeech(value),
+          })
+        : undefined;
+    let preview: ReturnType<typeof startPreview>;
     if (!response) {
+      preview = startPreview();
       const selectedModel = resolveNpcGenerationConfig(
         this.service.config,
         level === 2 ? 'npc_response_fast' : 'npc_response_complex',
@@ -1101,6 +1357,7 @@ export class NativeNpcDirector {
       const generate = async (suffix: string) => {
         const schema = prepared.requestSchema();
         let instructions: ReturnType<typeof joinNativeDecisionText> | undefined;
+        let deployment: Omit<GenerateRequest, 'requestId' | 'signal'> | undefined;
         try {
           if (!prepared.queryUsed)
             instructions = joinNativeDecisionText(
@@ -1120,9 +1377,10 @@ export class NativeNpcDirector {
             instructions: instructions?.text ?? prepared.instructions,
             context: prepared.prompt,
             schema,
+            ...(preview ? { onProgress: preview.progress } : {}),
           };
           if (request.macrofoldDeployment)
-            request = await this.macrofold.prepareDeploymentGeneration(
+            request = deployment = await this.macrofold.prepareDeploymentGeneration(
               request,
               selectedModel.structuredOutput,
               run.controller.signal,
@@ -1130,6 +1388,7 @@ export class NativeNpcDirector {
             );
           return await this.generate(run, request, suffix, level);
         } finally {
+          if (deployment) this.macrofold.releaseDeploymentGeneration(deployment);
           if (instructions) releaseNativeProduct(instructions);
           releaseNativeProduct(schema);
         }
@@ -1137,12 +1396,34 @@ export class NativeNpcDirector {
       let value = await generate('attempt:0:generate');
       const queries = readSituationQueryResponse(value, prepared.situation.policy.maximumQueries);
       if (queries?.queries?.length) {
-        await prepared.expandQueries(queries.queries);
-        value = await generate('attempt:0:query-response');
+        try {
+          await prepared.expandQueries(queries.queries);
+          preview?.finish();
+        } finally {
+          // This read-only answer has finished disclosing its query. Retire
+          // its independent child pins before preparing the next inference.
+          if (value !== null && typeof value === 'object') {
+            for (const key in value) {
+              if (!Object.hasOwn(value, key)) continue;
+              const child = (value as Record<string, unknown>)[key];
+              if (child !== null && typeof child === 'object') releaseNativeProduct(child);
+            }
+            releaseNativeProduct(value);
+          }
+        }
+        preview = startPreview();
+        value = await generate('attempt:0:query-final');
+      }
+      try {
+        preview?.finish();
+      } catch {
+        throw new InvalidData('The response did not match the decision contract.');
       }
       if (bytes(value) > levelLimits(this.service.config)[level].visibleOutputBytes)
         throw new InvalidData('The response exceeds its visible output allowance.');
-      response = responseEffects(prepared.schema.parse(value) as ActorResponse);
+      response = admitDecisionGraph(this.service.world, decisionJsonGraphBytes(value), () =>
+        responseEffects(prepared.schema.parse(value) as ActorResponse),
+      );
     }
     this.current(run);
     await this.awaitResume(run, true);
@@ -1151,6 +1432,7 @@ export class NativeNpcDirector {
     const claim = run.job.decision
       ? this.claim(run.job, response, run.job.id, run.job.id)
       : undefined;
+    preview?.admitting();
     const outcome = await this.service.applyNpcResponse({
       actorId: run.actorId,
       responseId: run.job.id,
@@ -1169,6 +1451,7 @@ export class NativeNpcDirector {
       claim,
     });
     try {
+      await preview?.settle();
       if (claim?.deliveredAt !== undefined)
         await recordDecisionTiming(
           this.log,
@@ -1249,8 +1532,10 @@ export class NativeNpcDirector {
       label = this.names.get(run.actorId);
     let released = false;
     return {
-      prepare: (job: JobRecord, signal: AbortSignal) =>
-        this.prepareHigher(job, signal, retained, intake, run.semanticCauseOrdinals),
+      prepare: (job: JobRecord, signal: AbortSignal) => {
+        retained?.retireRouting();
+        return this.prepareHigher(job, signal, retained, intake, run.semanticCauseOrdinals);
+      },
       release: () => {
         if (released) return;
         released = true;
@@ -1292,6 +1577,7 @@ export class NativeNpcDirector {
     const abort = () => run.controller.abort();
     signal.addEventListener('abort', abort, { once: true });
     if (signal.aborted) abort();
+    const outputOwner = createNativeConsumerScope();
     let prepared: Preparation | undefined;
     try {
       prepared =
@@ -1314,6 +1600,11 @@ export class NativeNpcDirector {
             },
       });
       const result: PreparedReconsideration = {
+        allocation: {
+          reserveBytes: this.providerAllocation.reserveBytes,
+          retain: (value, reservation) =>
+            outputOwner.runSync(() => this.providerAllocation.retain(value, reservation)),
+        },
         get tasks() {
           return tasks();
         },
@@ -1406,6 +1697,7 @@ export class NativeNpcDirector {
           this.prepareHigher(job, refreshSignal, undefined, intake, semanticCauseOrdinals),
         dispose: () => {
           signal.removeEventListener('abort', abort);
+          outputOwner.dispose();
           source.dispose();
         },
         expand: async (answers) => {
@@ -1428,32 +1720,39 @@ export class NativeNpcDirector {
               message: 'The character could not settle on a supported answer.',
             };
           const value = response
-            ? responseEffects(source.schema.parse(selected.value) as ActorResponse)
+            ? admitDecisionGraph(this.service.world, decisionJsonGraphBytes(selected.value), () =>
+                responseEffects(source.schema.parse(selected.value) as ActorResponse),
+              )
             : this.knownResponse(source, 'choice' in selected.value ? selected.value.choice : '');
-          claim.groups = {
-            q0: {
-              operations: value.operations.map((operation) => operation.localId),
-              ...(!value.operations.length ? { continued: true } : {}),
-            },
-          };
-          const ticket = source.ticket;
-          source.retireContext();
-          return this.service.applyNpcResponse({
-            actorId: state.actorId,
-            responseId: state.higher!.id,
-            ticket,
-            response: value,
-            generation: state.generation,
-            current: () =>
-              !signal.aborted && !this.stopped && state.generation === this.service.generation,
-            signal,
-            claim,
-          });
+          try {
+            claim.groups = {
+              q0: {
+                operations: value.operations.map((operation) => operation.localId),
+                ...(!value.operations.length ? { continued: true } : {}),
+              },
+            };
+            const ticket = source.ticket;
+            source.retireContext();
+            return await this.service.applyNpcResponse({
+              actorId: state.actorId,
+              responseId: state.higher!.id,
+              ticket,
+              response: value,
+              generation: state.generation,
+              current: () =>
+                !signal.aborted && !this.stopped && state.generation === this.service.generation,
+              signal,
+              claim,
+            });
+          } finally {
+            releaseNativeProduct(value);
+          }
         },
       };
       return result;
     } catch (error) {
       signal.removeEventListener('abort', abort);
+      outputOwner.dispose();
       if (!retained) prepared?.dispose();
       throw error;
     }
@@ -2080,6 +2379,7 @@ export class NativeNpcDirector {
           },
         );
       } finally {
+        this.replyPreviews.end(run.job.id);
         run.preparation?.dispose();
         run.preparation = undefined;
         run.intake?.release();
@@ -2109,6 +2409,7 @@ export class NativeNpcDirector {
   close(): Promise<void> {
     return (this.closing ??= (async () => {
       this.stopped = true;
+      const previews = this.replyPreviews.close();
       this.releaseAdmission();
       this.unsubscribe();
       for (const run of this.runs.values()) run.controller.abort();
@@ -2116,7 +2417,7 @@ export class NativeNpcDirector {
       // execution/source owners drain. Its failure is still awaited below.
       const indexing = this.memoryIndex.close();
       void indexing.catch(() => undefined);
-      await this.escalator.close();
+      await Promise.all([previews, this.escalator.close()]);
       await this.admissionTail;
       await Promise.allSettled([...this.pending]);
       this.work.clear();

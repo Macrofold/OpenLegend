@@ -104,6 +104,7 @@ export function prepareMacrofoldGenerationInput(
 export function decodeMacrofoldGeneration<T>(
   raw: unknown,
   preparedSchema: PreparedSchema,
+  capture?: (text: string, parse: () => unknown) => unknown,
 ): { value: T } | { refused: true } {
   if (
     !record(raw) ||
@@ -118,12 +119,14 @@ export function decodeMacrofoldGeneration<T>(
   if (message.refusal || choice.finish_reason === 'content_filter') return { refused: true };
   if (choice.finish_reason !== 'stop') throw new InvalidData('generation_incomplete');
   if (typeof message.content !== 'string') throw new InvalidData('missing_generation_text');
-  let value: unknown;
-  try {
-    value = JSON.parse(message.content);
-  } catch {
-    throw new InvalidData('invalid_generation_json');
-  }
+  const parse = (): unknown => {
+    try {
+      return JSON.parse(message.content as string) as unknown;
+    } catch {
+      throw new InvalidData('invalid_generation_json');
+    }
+  };
+  const value = capture ? capture(message.content, parse) : parse();
   if (!preparedSchema.validate(value)) throw new InvalidData('generation_schema_mismatch');
   return { value: value as T };
 }

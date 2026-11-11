@@ -27,6 +27,7 @@ mod player;
 mod privacy;
 mod private_history;
 mod read_cut;
+mod reply_preview;
 mod restore;
 mod retained_values;
 mod startup;

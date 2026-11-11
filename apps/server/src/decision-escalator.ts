@@ -6,6 +6,7 @@ import {
   OpenAiRateGate,
   type AiClient,
   type AiReceipt,
+  type GenerateRequest,
 } from '@open-legend/ai';
 import type { ApiResult } from '@open-legend/protocol';
 import { DecisionLedger, interactiveAllowance } from './cognition-budget.js';
@@ -39,6 +40,7 @@ export interface PreparedReconsideration {
   tasks: Record<string, DecisionTask>;
   context: string;
   instructions?: string;
+  readonly allocation?: GenerateRequest['allocation'];
   bindingDigest: string;
   sourceTime: number;
   dispose(): void;
@@ -788,6 +790,7 @@ export class DecisionEscalator {
                 throw new Error('The selected evidence changed before model dispatch.');
               }
               return client.generate<unknown>({
+                allocation: preparation.allocation,
                 requestId: attemptId,
                 model: DECISION_MODEL,
                 reasoningEffort: DECISION_EFFORT,

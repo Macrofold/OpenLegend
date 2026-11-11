@@ -32,6 +32,7 @@ pub use npc_intake::{RuntimeNpcInspection, RuntimeNpcTrigger};
 mod npc_labels;
 mod participation;
 mod player;
+mod reply_preview;
 mod privacy;
 mod private_history;
 pub use private_history::{RuntimePrivateHistoryPublication, RuntimePrivateHistoryRead};
@@ -48,6 +49,7 @@ pub use npc::{
     RuntimeNpcPreparationStep, RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket,
 };
 pub use player::{RuntimePlayerPublication, RuntimePlayerRead};
+pub use reply_preview::{RuntimeReplyPreviewPublication, RuntimeReplyPreviewRead};
 
 #[derive(Debug)]
 pub struct RuntimeError(String);

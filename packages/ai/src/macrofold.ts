@@ -2,15 +2,23 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import {
   consumeHttp,
   createNetworkOwner,
-  requestText,
+  afterNetworkResourcesClose,
   SSEFramer,
   type FiniteBudget,
   type NetworkOperation,
   type NetworkOwner,
 } from '@open-legend/network';
-import { providerOwner } from './provider-http.js';
-import { serialize, record, PreparedJson, InvalidData, type PreparedSchema } from './validation.js';
-import type { FetchTransport, GenerateRequest } from './types.js';
+import { providerOwner, providerText } from './provider-http.js';
+import {
+  serialize,
+  record,
+  PreparedJson,
+  InvalidData,
+  jsonCaptureBytes,
+  jsonTextCaptureBytes,
+  type PreparedSchema,
+} from './validation.js';
+import type { FetchTransport, GenerateRequest, RequestControl } from './types.js';
 
 /** Structured HTTP failure; application code decides whether admission was rejected. */
 export class MacrofoldHttpError extends Error {
@@ -43,7 +51,14 @@ export class MacrofoldHttpError extends Error {
 
 /** Authenticated transport only: no game policy, world state or automatic retries. */
 const cleanupNetwork = createNetworkOwner({ role: 'ai-cleanup', capacity: 4 });
-const operationContext = new AsyncLocalStorage<NetworkOperation>();
+type Allocation = RequestControl['allocation'];
+type Reservation = { release(): void };
+type OperationContext = {
+  operation: NetworkOperation;
+  allocation: Allocation;
+  releases: Set<() => void>;
+};
+const operationContext = new AsyncLocalStorage<OperationContext>();
 
 export class MacrofoldTransport {
   private base: URL;
@@ -57,6 +72,7 @@ export class MacrofoldTransport {
     transport?: FetchTransport,
     network?: NetworkOwner,
     private readonly diagnostics = true,
+    private readonly defaultAllocation?: Allocation,
   ) {
     this.network = providerOwner(network, transport);
     this.cleanup = transport
@@ -71,18 +87,64 @@ export class MacrofoldTransport {
       throw new Error('Invalid Macrofold base URL.');
   }
   /** One original budget across admission, callbacks and same-Run observation. */
-  run<T>(budget: FiniteBudget, work: (operation: NetworkOperation) => Promise<T>): Promise<T> {
-    return this.network.run(budget, (operation) =>
-      this.context.run(operation, () => work(operation)),
+  run<T>(
+    budget: FiniteBudget,
+    work: (operation: NetworkOperation) => Promise<T>,
+    allocation?: Allocation,
+  ): Promise<T> {
+    const admission = allocation ?? this.currentAllocation() ?? this.defaultAllocation;
+    return this.network.run(budget, (operation) => this.scoped(operation, admission, work));
+  }
+  runCleanup<T>(work: () => Promise<T>, signal?: AbortSignal, allocation?: Allocation): Promise<T> {
+    const admission = allocation ?? this.currentAllocation() ?? this.defaultAllocation;
+    return this.cleanup.run({ timeoutMs: 5000, signal }, (operation) =>
+      this.scoped(operation, admission, work),
     );
   }
-  runCleanup<T>(work: () => Promise<T>, signal?: AbortSignal): Promise<T> {
-    return this.cleanup.run({ timeoutMs: 5000, signal }, (operation) =>
-      this.context.run(operation, work),
-    );
+  private scoped<T>(
+    operation: NetworkOperation,
+    allocation: Allocation,
+    work: (operation: NetworkOperation) => Promise<T>,
+  ): Promise<T> {
+    const context: OperationContext = { operation, allocation, releases: new Set() };
+    return this.context.run(context, async () => {
+      try {
+        return await work(operation);
+      } finally {
+        // A local deadline can leave fetch, body cancellation or a callback
+        // alive. Their actual network owner, including nested transports,
+        // retains request/schema/decoder custody until those resources close.
+        afterNetworkResourcesClose(operation, () => {
+          for (const release of context.releases) release();
+          context.releases.clear();
+        });
+      }
+    });
+  }
+  currentAllocation(): Allocation {
+    return this.context.getStore()?.allocation;
+  }
+  reserve(bytes: number): Reservation | undefined {
+    const context = this.context.getStore();
+    let reservation = context?.allocation?.reserveBytes(bytes);
+    if (!reservation) return undefined;
+    const release = () => {
+      if (!reservation) return;
+      const retained = reservation;
+      reservation = undefined;
+      context!.releases.delete(release);
+      retained.release();
+    };
+    context!.releases.add(release);
+    return { release };
+  }
+  hold(release: () => void): void {
+    const context = this.context.getStore();
+    if (!context) throw new InvalidData('missing_macrofold_operation');
+    context.releases.add(release);
   }
   currentOperation(): NetworkOperation | undefined {
-    return this.context.getStore();
+    return this.context.getStore()?.operation;
   }
   /** HTTP pacing belongs to this observation, never the serialized Run receipt or request identity. */
   retryAfterMs(value: unknown): number | undefined {
@@ -92,7 +154,7 @@ export class MacrofoldTransport {
     signal: AbortSignal | undefined,
     work: (operation: NetworkOperation) => Promise<T>,
   ): Promise<T> {
-    const parent = this.context.getStore();
+    const parent = this.context.getStore()?.operation;
     if (parent) {
       parent.throwIfStopped();
       signal?.throwIfAborted();
@@ -111,30 +173,43 @@ export class MacrofoldTransport {
       this.base,
     );
     return this.within(options.signal, async (operation) => {
-      const response = await requestText(operation, {
-        url,
-        diagnostics: this.diagnostics ? undefined : 'omit',
-        init: {
-          method,
-          redirect: 'error',
-          signal: options.signal,
-          headers: {
-            Authorization: `Bearer ${this.key}`,
-            ...(method === 'GET'
-              ? {}
-              : {
-                  'Content-Type': 'application/octet-stream',
-                  'If-Match': options.revision!,
-                  'Idempotency-Key': options.operationId!,
-                }),
+      this.reserve(6 * 16000 + 64 * 1024);
+      if (method === 'PUT' && options.text !== undefined)
+        this.reserve(64 + 2 * options.text.length);
+      let status = 0;
+      let revision: string | null = null;
+      const text = await providerText(
+        operation,
+        {
+          url,
+          diagnostics: this.diagnostics ? undefined : 'omit',
+          init: {
+            method,
+            redirect: 'error',
+            signal: options.signal,
+            headers: {
+              Authorization: `Bearer ${this.key}`,
+              ...(method === 'GET'
+                ? {}
+                : {
+                    'Content-Type': 'application/octet-stream',
+                    'If-Match': options.revision!,
+                    'Idempotency-Key': options.operationId!,
+                  }),
+            },
+            ...(method === 'PUT' ? { body: options.text } : {}),
           },
-          ...(method === 'PUT' ? { body: options.text } : {}),
+          bodyPolicy: { kind: 'bounded', maxBytes: 16000 },
         },
-        bodyPolicy: { kind: 'bounded', maxBytes: 16000 },
-      });
-      if (response.status < 200 || response.status >= 300)
-        throw new Error(`Workspace file request failed (HTTP ${response.status}).`);
-      return { text: response.text, revision: response.headers.get('etag') };
+        (value) => {
+          status = value.status;
+          revision = value.headers.get('etag');
+        },
+        this.currentAllocation()?.reserveBytes,
+      );
+      if (status < 200 || status >= 300)
+        throw new Error(`Workspace file request failed (HTTP ${status}).`);
+      return { text, revision };
     });
   }
   async request(
@@ -162,6 +237,26 @@ export class MacrofoldTransport {
     if (!this.key) throw new Error('MACROFOLD_API_KEY is not configured.');
     if (body !== undefined && !operationId) throw new Error('Mutation requires an operation ID.');
     return this.within(signal, async (operation) => {
+      const transport = this;
+      const allocated = this.currentAllocation() !== undefined;
+      // The bounded response can overlap its original chunks, concatenation,
+      // decoded UTF-16 text and the stream's retained output/carry.
+      this.reserve(6 * maxResponseBytes + 64 * 1024);
+      let requestBody: string | undefined;
+      if (body !== undefined) {
+        const serializing =
+          allocated && !(body instanceof PreparedJson)
+            ? this.reserve(jsonCaptureBytes(body))
+            : undefined;
+        try {
+          requestBody = (
+            body instanceof PreparedJson ? body : new PreparedJson(body, 500_000)
+          ).text(500_000);
+          this.reserve(64 + 2 * requestBody.length);
+        } finally {
+          serializing?.release();
+        }
+      }
       let status: number | undefined;
       let retryAfterMs: number | undefined;
       let streaming = false;
@@ -222,6 +317,9 @@ export class MacrofoldTransport {
       const frames = async (values: ReturnType<SSEFramer['push']>): Promise<boolean> => {
         for (const frame of values) {
           if (frame.kind !== 'event' || !frame.data || frame.data === '[DONE]') continue;
+          // The response escrow already owns the shared parser workspace.
+          // Accepted/terminal records and delta strings may survive this frame.
+          if (allocated) this.reserve(Math.max(0, jsonTextCaptureBytes(frame.data) - 64 * 1024));
           if ((await acceptEvent(JSON.parse(frame.data))) === false) return true;
         }
         return false;
@@ -247,6 +345,7 @@ export class MacrofoldTransport {
         if (status < 200 || status >= 300) {
           let code = '';
           try {
+            if (allocated) this.reserve(Math.max(0, jsonTextCaptureBytes(raw) - 64 * 1024));
             const data: unknown = JSON.parse(raw);
             const candidate = record(data) && record(data.error) ? data.error.code : undefined;
             if (typeof candidate === 'string' && /^[a-z_]{1,80}$/.test(candidate)) code = candidate;
@@ -255,8 +354,14 @@ export class MacrofoldTransport {
           }
           throw new MacrofoldHttpError(status, code, retryAfterMs);
         }
+        if (allocated) this.reserve(Math.max(0, jsonTextCaptureBytes(raw) - 64 * 1024));
         const value: unknown = JSON.parse(raw);
-        serialize(value, maxResponseBytes);
+        const serializing = allocated ? this.reserve(jsonCaptureBytes(value)) : undefined;
+        try {
+          serialize(value, maxResponseBytes);
+        } finally {
+          serializing?.release();
+        }
         if (retryAfterMs !== undefined && value !== null && typeof value === 'object')
           this.responseWaits.set(value, retryAfterMs);
         return value;
@@ -279,14 +384,7 @@ export class MacrofoldTransport {
                 ...(matchVersion === undefined ? {} : { 'If-Match': JSON.stringify(matchVersion) }),
                 ...(operationId ? { 'Idempotency-Key': operationId } : {}),
               },
-              ...(body === undefined
-                ? {}
-                : {
-                    body: (body instanceof PreparedJson
-                      ? body
-                      : new PreparedJson(body, 500_000)
-                    ).text(500_000),
-                  }),
+              ...(requestBody === undefined ? {} : { body: requestBody }),
             },
             bodyPolicy: { kind: 'bounded', maxBytes: maxResponseBytes * 4 },
           },
@@ -309,13 +407,18 @@ export class MacrofoldTransport {
             },
             async chunk(bytes, context) {
               if (streaming) {
+                // Admit UTF-8 decoding, frame strings and their carrier arrays
+                // before the shared framer makes any of those copies.
+                const framing = transport.reserve(8 * bytes.byteLength + 64 * 1024);
                 const ended = await frames(framer.push(bytes));
                 context.throwIfStopped();
+                framing?.release();
                 return ended ? { kind: 'complete', value: completed() } : { kind: 'continue' };
               }
               length += bytes.byteLength;
               if (length > maxResponseBytes)
                 throw new InvalidData('Macrofold response exceeds the size limit.');
+              transport.reserve(bytes.byteLength + 256 + 2 * 24);
               chunks.push(bytes.slice());
               return { kind: 'continue' };
             },

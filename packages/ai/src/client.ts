@@ -1,5 +1,5 @@
 import { captureHttpErrorDiagnostics, captureResponseRateLimits } from './http-diagnostics.js';
-import { NetworkError } from '@open-legend/network';
+import { afterNetworkResourcesClose, NetworkError } from '@open-legend/network';
 import { providerOwner, providerText, uncertainHttpStatus } from './provider-http.js';
 import {
   prepareSchema,
@@ -11,6 +11,8 @@ import {
   serialize,
   prepareQuestions,
   validateJudgmentSize,
+  jsonCaptureBytes,
+  jsonTextCaptureBytes,
 } from './validation.js';
 import { captureModelPrices, estimateCostUsd, modelTokenPrices } from './usage.js';
 import type {
@@ -104,6 +106,8 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
     prepare: (
       model: string,
       contextJson: string,
+      ownSchema: (release: (() => void) | undefined) => void,
+      captureResult: <R>(bytes: number, build: () => R) => R,
     ) => { body: unknown; decode: (data: unknown) => T },
   ): Promise<AiResult<T>> {
     const started = Date.now();
@@ -127,6 +131,21 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
       completionUncertain: false,
     };
     let httpFailure: OutcomeError | undefined;
+    let releaseSchema: (() => void) | undefined;
+    let contextAllocation: { release(): void } | undefined;
+    const allocations: { release(): void }[] = [];
+    let resultAllocation: { release(): void } | undefined;
+    let resourcesPending = false;
+    let releaseWhenClosed: (() => void) | undefined;
+    const reserve = (bytes: number) => {
+      const allocation = request.allocation?.reserveBytes(bytes);
+      if (allocation) allocations.push(allocation);
+      return allocation;
+    };
+    const captureResult = <R>(bytes: number, build: () => R): R => {
+      resultAllocation = request.allocation?.reserveBytes(bytes);
+      return build();
+    };
     const finish = () => {
       receipt.completedAt = new Date().toISOString();
       receipt.latencyMs = Math.max(0, Date.now() - started);
@@ -138,8 +157,16 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
         request.requestId.length > 256
       )
         throw new InvalidData('invalid_request_id');
-      const contextJson = serialize(context, maxRequestBytes);
+      contextAllocation = request.allocation?.reserveBytes(jsonCaptureBytes(context));
+      let contextJson = serialize(context, maxRequestBytes);
       receipt.contextDigest = digest(contextJson);
+      if (provider === 'openai' && typeof context === 'string') {
+        // Generation sends the original text. This quoted copy exists only
+        // for the digest, so its last use precedes schema compilation.
+        contextJson = '';
+        contextAllocation?.release();
+        contextAllocation = undefined;
+      }
       if (request.signal?.aborted) throw new OutcomeError('cancelled', 'caller_cancelled');
       if (
         request.deadlineMs !== undefined &&
@@ -150,13 +177,31 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
         throw new OutcomeError('unavailable', 'provider_not_configured');
       if (!validEndpoint(endpoint) || !model || model.length > 128 || /[\r\n]/.test(options.apiKey))
         throw new OutcomeError('unavailable', 'invalid_provider_configuration');
-      const prepared = prepare(model, contextJson);
-      const canonicalBody = serialize(prepared.body, maxRequestBytes);
-      receipt.providerRequestDigest = digest(canonicalBody);
-      const body =
-        provider === 'openai'
-          ? serialize(prepared.body, maxRequestBytes, { preserveKeyOrder: true })
-          : canonicalBody;
+      if (request.allocation && provider === 'jev')
+        reserve(2 * jsonCaptureBytes((request as JudgeRequest).questions));
+      const prepared = prepare(
+        model,
+        contextJson,
+        (release) => {
+          releaseSchema = release;
+        },
+        captureResult,
+      );
+      // Each serializer's clone ends before transport. Only the escaped wire
+      // string survives; transfer its exact UTF-16 backing before escrow ends.
+      let body: string;
+      const serializing = request.allocation?.reserveBytes(jsonCaptureBytes(prepared.body));
+      try {
+        body = serialize(prepared.body, maxRequestBytes);
+        receipt.providerRequestDigest = digest(body);
+        if (provider === 'openai') {
+          body = '';
+          body = serialize(prepared.body, maxRequestBytes, { preserveKeyOrder: true });
+        }
+        if (request.allocation) reserve(64 + 2 * body.length);
+      } finally {
+        serializing?.release();
+      }
       const remaining = Math.min(
         timeoutMs,
         (request.deadlineMs ?? started + timeoutMs) - Date.now(),
@@ -169,77 +214,114 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
           signal: request.signal,
         },
         async (operation): Promise<T> => {
-          operation.throwIfStopped();
-          const raw = await providerText(
-            operation,
-            {
-              publication: request.publication,
-              onDispatch: () => {
-                receipt.dispatched = true;
-              },
-              url: endpoint,
-              init: {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${options.apiKey}`,
-                },
-                body,
-                redirect: 'error',
-              },
-              bodyPolicy: { kind: 'bounded', maxBytes: maxResponseBytes },
-            },
-            (metadata) => {
-              receipt.httpStatus = metadata.status;
-              captureResponseRateLimits(receipt, metadata.headers);
-              const traceId = metadata.headers.get('x-request-id');
-              if (traceId && /^[\w.:-]{1,256}$/.test(traceId)) receipt.providerRequestId = traceId;
-              if (metadata.status < 200 || metadata.status >= 300)
-                httpFailure = httpError(metadata.status);
-            },
-          );
-          if (httpFailure) {
-            captureHttpErrorDiagnostics(raw, receipt);
-            throw httpFailure;
-          }
-          let data: unknown;
+          resourcesPending = true;
+          let responseText: { release(): void } | undefined;
+          let responseGraph: { release(): void } | undefined;
           try {
-            data = JSON.parse(raw);
-          } catch {
-            throw new InvalidData('invalid_response_json');
-          }
-          // Bound nesting before decoder/schema traversal as well as bounding bytes on the wire.
-          serialize(data, maxResponseBytes);
-          if (record(data)) {
-            if (typeof data.model === 'string' && /^[\w./:-]{1,128}$/.test(data.model)) {
-              receipt.model = data.model;
-              receipt.modelVersionStatus = 'reported';
+            operation.throwIfStopped();
+            // The network owner's bounded bytes and decoded text can overlap.
+            // Admit the complete body before any response is transferred.
+            responseText = request.allocation?.reserveBytes(6 * maxResponseBytes + 64 * 1024);
+            const raw = await providerText(
+              operation,
+              {
+                publication: request.publication,
+                onDispatch: () => {
+                  receipt.dispatched = true;
+                },
+                url: endpoint,
+                init: {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${options.apiKey}`,
+                  },
+                  body,
+                  redirect: 'error',
+                },
+                bodyPolicy: { kind: 'bounded', maxBytes: maxResponseBytes },
+              },
+              (metadata) => {
+                receipt.httpStatus = metadata.status;
+                captureResponseRateLimits(receipt, metadata.headers);
+                const traceId = metadata.headers.get('x-request-id');
+                if (traceId && /^[\w.:-]{1,256}$/.test(traceId))
+                  receipt.providerRequestId = traceId;
+                if (metadata.status < 200 || metadata.status >= 300)
+                  httpFailure = httpError(metadata.status);
+              },
+              request.allocation?.reserveBytes,
+            );
+            if (httpFailure) {
+              // Error identifiers are optional diagnostics. A carrier-heavy
+              // error JSON still needs admission; refusal preserves HTTP outcome.
+              let diagnostics: { release(): void } | undefined;
+              try {
+                diagnostics = request.allocation?.reserveBytes(jsonTextCaptureBytes(raw));
+                captureHttpErrorDiagnostics(raw, receipt);
+              } catch {
+                // Diagnostic admission cannot replace the known HTTP refusal.
+              } finally {
+                diagnostics?.release();
+              }
+              throw httpFailure;
             }
-            if (typeof data.id === 'string' && /^[\w.:-]{1,256}$/.test(data.id))
-              receipt.providerRequestId = data.id;
-            const usage = decodeUsage(data);
-            if (usage) {
-              receipt.usage = usage;
-              const cost = estimateCostUsd(
-                usage,
-                modelTokenPrices(
-                  options.modelPrices ?? [],
-                  model,
-                  data.model === undefined
-                    ? model
-                    : typeof data.model === 'string'
-                      ? data.model
-                      : '',
-                ),
-              );
-              if (cost !== undefined) receipt.estimatedCostUsd = cost;
+            let data: unknown;
+            responseGraph = request.allocation?.reserveBytes(jsonTextCaptureBytes(raw));
+            try {
+              data = JSON.parse(raw);
+            } catch {
+              throw new InvalidData('invalid_response_json');
             }
+            // Bound nesting before decoder/schema traversal as well as bounding bytes on the wire.
+            const responseWorkspace = request.allocation?.reserveBytes(jsonTextCaptureBytes(raw));
+            try {
+              serialize(data, maxResponseBytes);
+            } finally {
+              responseWorkspace?.release();
+            }
+            if (record(data)) {
+              if (typeof data.model === 'string' && /^[\w./:-]{1,128}$/.test(data.model)) {
+                receipt.model = data.model;
+                receipt.modelVersionStatus = 'reported';
+              }
+              if (typeof data.id === 'string' && /^[\w.:-]{1,256}$/.test(data.id))
+                receipt.providerRequestId = data.id;
+              const usage = decodeUsage(data);
+              if (usage) {
+                receipt.usage = usage;
+                const cost = estimateCostUsd(
+                  usage,
+                  modelTokenPrices(
+                    options.modelPrices ?? [],
+                    model,
+                    data.model === undefined
+                      ? model
+                      : typeof data.model === 'string'
+                        ? data.model
+                        : '',
+                  ),
+                );
+                if (cost !== undefined) receipt.estimatedCostUsd = cost;
+              }
+            }
+            const decoded = prepared.decode(data);
+            operation.throwIfStopped();
+            return decoded;
+          } finally {
+            afterNetworkResourcesClose(operation, () => {
+              responseGraph?.release();
+              responseText?.release();
+              resourcesPending = false;
+              releaseWhenClosed?.();
+            });
           }
-          const decoded = prepared.decode(data);
-          operation.throwIfStopped();
-          return decoded;
         },
       );
+      if (resultAllocation && value !== null && typeof value === 'object') {
+        request.allocation!.retain(value, resultAllocation);
+        resultAllocation = undefined;
+      }
       finish();
       return { outcome: 'value', value, receipt };
     } catch (error) {
@@ -273,12 +355,21 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
       receipt.completionUncertain = normalized.uncertain;
       finish();
       return { outcome: normalized.outcome, reason: normalized.reason, receipt };
+    } finally {
+      const release = () => {
+        contextAllocation?.release();
+        releaseSchema?.();
+        resultAllocation?.release();
+        for (const allocation of allocations) allocation.release();
+      };
+      if (resourcesPending) releaseWhenClosed = release;
+      else release();
     }
   }
 
   return {
     judge(request: JudgeRequest): Promise<AiResult<JudgeValue>> {
-      return run('jev', request, request.state, (model, contextJson) => {
+      return run('jev', request, request.state, (model, contextJson, _ownSchema, captureResult) => {
         if (
           typeof request.state !== 'string' &&
           !record(request.state) &&
@@ -289,67 +380,95 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
         validateJudgmentSize(request.state, questions);
         return {
           body: { model, state: JSON.parse(contextJson) as unknown, questions },
-          decode: (data) => decodeJudge(data, questions),
+          decode: (data) =>
+            captureResult(
+              request.allocation ? jsonCaptureBytes(data) + jsonCaptureBytes(questions) : 0,
+              () => decodeJudge(data, questions),
+            ),
         };
       });
     },
     generate<T>(request: GenerateRequest): Promise<AiResult<T>> {
-      return run('openai', request, request.context, (model, contextJson) => {
-        if (request.macrofoldDeployment !== undefined || request.macrofoldOutputMode !== undefined)
-          throw new InvalidData('macrofold_deployment_requires_macrofold');
-        if (!request.task?.trim() || !request.instructions?.trim())
-          throw new InvalidData('invalid_generation_instructions');
-        const name =
-          request.schemaName ?? request.task.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 64);
-        if (!/^[a-zA-Z0-9_-]{1,64}$/.test(name)) throw new InvalidData('invalid_schema_name');
-        const { schema, validate } = prepareSchema(request.schema, maxRequestBytes);
-        const outputLimit = request.maxOutputTokens ?? maxOutputTokens;
-        if (!Number.isSafeInteger(outputLimit) || outputLimit < 1 || outputLimit > maxOutputTokens)
-          throw new InvalidData('output_limit_exceeded');
-        const body: Record<string, unknown> = {
-          model,
-          instructions: request.instructions,
-          input: typeof request.context === 'string' ? request.context : contextJson,
-          store: false,
-          service_tier: 'default',
-          max_output_tokens: outputLimit,
-          text: { format: { type: 'json_schema', name, strict: true, schema } },
-        };
-        const effort = request.reasoningEffort ?? providerConfigs.openai?.reasoningEffort;
-        if (effort) body.reasoning = { effort };
-        return {
-          body,
-          decode(data: unknown): T {
-            if (!record(data) || !Array.isArray(data.output))
-              throw new InvalidData('invalid_generation_response');
-            const texts: string[] = [];
-            for (const item of data.output) {
-              if (!record(item) || item.type !== 'message' || !Array.isArray(item.content))
-                continue;
-              for (const part of item.content) {
-                if (!record(part)) continue;
-                if (part.type === 'refusal') throw new OutcomeError('refused', 'provider_refused');
-                if (part.type === 'output_text' && typeof part.text === 'string')
-                  texts.push(part.text);
+      return run(
+        'openai',
+        request,
+        request.context,
+        (model, contextJson, ownSchema, captureResult) => {
+          if (
+            request.macrofoldDeployment !== undefined ||
+            request.macrofoldOutputMode !== undefined
+          )
+            throw new InvalidData('macrofold_deployment_requires_macrofold');
+          if (!request.task?.trim() || !request.instructions?.trim())
+            throw new InvalidData('invalid_generation_instructions');
+          const name =
+            request.schemaName ?? request.task.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 64);
+          if (!/^[a-zA-Z0-9_-]{1,64}$/.test(name)) throw new InvalidData('invalid_schema_name');
+          const { schema, validate, release } = prepareSchema(
+            request.schema,
+            maxRequestBytes,
+            request.allocation?.reserveBytes,
+            request.allocation?.borrow,
+          );
+          ownSchema(release);
+          const outputLimit = request.maxOutputTokens ?? maxOutputTokens;
+          if (
+            !Number.isSafeInteger(outputLimit) ||
+            outputLimit < 1 ||
+            outputLimit > maxOutputTokens
+          )
+            throw new InvalidData('output_limit_exceeded');
+          const body: Record<string, unknown> = {
+            model,
+            instructions: request.instructions,
+            input: typeof request.context === 'string' ? request.context : contextJson,
+            store: false,
+            service_tier: 'default',
+            max_output_tokens: outputLimit,
+            text: { format: { type: 'json_schema', name, strict: true, schema } },
+          };
+          const effort = request.reasoningEffort ?? providerConfigs.openai?.reasoningEffort;
+          if (effort) body.reasoning = { effort };
+          return {
+            body,
+            decode(data: unknown): T {
+              if (!record(data) || !Array.isArray(data.output))
+                throw new InvalidData('invalid_generation_response');
+              const texts: string[] = [];
+              for (const item of data.output) {
+                if (!record(item) || item.type !== 'message' || !Array.isArray(item.content))
+                  continue;
+                for (const part of item.content) {
+                  if (!record(part)) continue;
+                  if (part.type === 'refusal')
+                    throw new OutcomeError('refused', 'provider_refused');
+                  if (part.type === 'output_text' && typeof part.text === 'string')
+                    texts.push(part.text);
+                }
               }
-            }
-            if (data.status === 'incomplete') throw new InvalidData('generation_incomplete');
-            if (data.status === 'failed') throw new OutcomeError('failed', 'generation_failed');
-            if (data.status !== 'completed')
-              throw new OutcomeError('uncertain', 'generation_not_completed', true);
-            if (texts.length === 0) throw new InvalidData('missing_generation_text');
-            let value: unknown;
-            try {
-              value = JSON.parse(texts.join(''));
-            } catch {
-              throw new InvalidData('invalid_generated_json');
-            }
-            serialize(value, maxResponseBytes);
-            if (!validate(value)) throw new InvalidData('generation_schema_mismatch');
-            return value as T;
-          },
-        };
-      });
+              if (data.status === 'incomplete') throw new InvalidData('generation_incomplete');
+              if (data.status === 'failed') throw new OutcomeError('failed', 'generation_failed');
+              if (data.status !== 'completed')
+                throw new OutcomeError('uncertain', 'generation_not_completed', true);
+              if (texts.length === 0) throw new InvalidData('missing_generation_text');
+              const text = texts.join('');
+              const value: unknown = captureResult(
+                request.allocation ? 2 * jsonTextCaptureBytes(text) : 0,
+                () => {
+                  try {
+                    return JSON.parse(text) as unknown;
+                  } catch {
+                    throw new InvalidData('invalid_generated_json');
+                  }
+                },
+              );
+              serialize(value, maxResponseBytes);
+              if (!validate(value)) throw new InvalidData('generation_schema_mismatch');
+              return value as T;
+            },
+          };
+        },
+      );
     },
   };
 }

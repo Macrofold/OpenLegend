@@ -83,7 +83,7 @@ import {
 import { namedClockTimes, clockDeadline, activityRequestDescriptors } from '@open-legend/domain';
 import { requestRoutes, chooseActivityRequest } from './activity-request-choice.js';
 import type { RequestScope } from './authority.js';
-import { NpcReplyPreviews } from './npc-reply-preview.js';
+import { NpcReplyPreviews, sourceNpcReplyPreviewHost } from './npc-reply-preview.js';
 import {
   observerDescription,
   observerName,
@@ -390,7 +390,7 @@ export class AiDirector {
       now,
       this.execution,
     );
-    this.replyPreviews = new NpcReplyPreviews(service);
+    this.replyPreviews = new NpcReplyPreviews(sourceNpcReplyPreviewHost(service));
     this.releasePlayerInteractionAdmission = service.setPlayerInteractionAdmission((actorId) =>
       this.canAdmit(actorId),
     );

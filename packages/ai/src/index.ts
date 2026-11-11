@@ -58,6 +58,8 @@ export {
   prepareQuestions,
   PreparedJson,
   serialize,
+  jsonCaptureBytes,
+  jsonTextCaptureBytes,
   InvalidData,
   validateQuestions,
   validateJudgmentSize,

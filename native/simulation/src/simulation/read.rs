@@ -78,7 +78,11 @@ impl Simulation {
         self.require_player_read(account_id, actor_id)?;
         self.capture_actor(actor_id, ActorReadPurpose::PlayerView, &[], budget)
     }
-    fn require_player_read(&self, account_id: &str, actor_id: &str) -> Result<(), ActorReadError> {
+    pub(crate) fn require_player_read(
+        &self,
+        account_id: &str,
+        actor_id: &str,
+    ) -> Result<(), ActorReadError> {
         self.require_accepted_read()?;
         if self
             .state

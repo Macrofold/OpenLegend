@@ -34,6 +34,14 @@ import { GameSaveError } from './game-saves.js';
 import { resolveRecentObservationReference } from './recent-history.js';
 import { HistoryCursorError } from './perceived-events.js';
 import { releaseNativeProduct, retainNativeProduct } from './native-consumer.js';
+import { PrivateSnapshotStream } from './private-snapshot-stream.js';
+import { nativeNpcReplyPreviewMemory } from './native-npc-reply-preview.js';
+import type { NpcReplyPreview } from '@open-legend/protocol';
+import {
+  decisionJsonGraphBytes,
+  decisionObjectBytes,
+  decisionTextBytes,
+} from './native-decision-allocation.js';
 
 const clientId = z
   .string()
@@ -149,6 +157,12 @@ export async function createNativeGameServer(options: {
     let requests = 0;
     let retainedBodyBytes = 0;
     let pendingStreams = 0;
+    const privateStreams = new Set<PrivateSnapshotStream<NpcReplyPreview | null>>();
+    const closePrivateStreams = async () => {
+      const owned = [...privateStreams];
+      for (const stream of owned) stream.close();
+      await Promise.all(owned.map((stream) => stream.drain()));
+    };
     const disconnects = new Set<Promise<void>>();
     let shutdown: Promise<ShutdownReport> | undefined;
     let previous = performance.now(),
@@ -418,8 +432,83 @@ export async function createNativeGameServer(options: {
           await views.state(scope, response);
           return;
         }
+        if (request.method === 'GET' && url.pathname === '/api/chat/preview') {
+          const previewScope = scope;
+          current.assertScope(previewScope, 'play', true);
+          const requestId = requestIdSchema.parse(url.searchParams.get('requestId'));
+          if (
+            url.searchParams.get('worldId') !== current.worldId ||
+            url.searchParams.get('scope') !== scopeKey(previewScope)
+          )
+            throw new AuthorityError('stale-scope');
+          if (views.connections + privateStreams.size + pendingStreams >= current.connectionLimit)
+            return send(429, {
+              ok: false,
+              code: 'connections',
+              message: 'Too many open connections.',
+            });
+          pendingStreams++;
+          try {
+            const initial = decisions.replyPreviews.snapshot(previewScope, requestId);
+            if (initial) releaseNativeProduct(initial);
+            current.assertScope(previewScope, 'play', true);
+            if (response.destroyed) return;
+            // Fund this stream, its watcher/timers and retained request scope
+            // separately from snapshots, serialized text and queued frames.
+            const streamMemory = current.world.reserveConsumerBytes(
+              decisionObjectBytes(36) +
+                decisionJsonGraphBytes(previewScope) +
+                decisionTextBytes(requestId.length),
+            );
+            try {
+              response.writeHead(200, {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-store',
+                Connection: 'keep-alive',
+                'X-Accel-Buffering': 'no',
+              });
+              response.flushHeaders();
+              const stream = new PrivateSnapshotStream(
+                response,
+                async () => decisions.replyPreviews.snapshot(previewScope, requestId),
+                () => !loadingSave && !stopping && current.currentScope(previewScope, 'play', true),
+                (notify) => decisions.replyPreviews.watch(notify),
+                () => {
+                  privateStreams.delete(stream);
+                  // A closed connection can still have a snapshot/publication
+                  // in flight. Its retained scope ends only after that pump.
+                  void stream.drain().then(
+                    () => streamMemory.release(),
+                    () => streamMemory.release(),
+                  );
+                },
+                (snapshot) => (snapshot ? `${snapshot.generation}:${snapshot.sequence}` : 'none'),
+                (snapshot) => {
+                  const latest = decisions.replyPreviews.snapshot(previewScope, requestId);
+                  try {
+                    return (
+                      snapshot?.generation === latest?.generation &&
+                      snapshot?.sequence === latest?.sequence
+                    );
+                  } finally {
+                    if (latest) releaseNativeProduct(latest);
+                  }
+                },
+                nativeNpcReplyPreviewMemory(current),
+                (publish) => current.publishReplyPreview(previewScope, publish),
+              );
+              privateStreams.add(stream);
+            } catch (error) {
+              streamMemory.release();
+              throw error;
+            }
+          } finally {
+            pendingStreams--;
+          }
+          return;
+        }
         if (request.method === 'GET' && url.pathname === '/api/events') {
-          if (views.connections + pendingStreams >= current.connectionLimit)
+          if (views.connections + privateStreams.size + pendingStreams >= current.connectionLimit)
             return send(429, {
               ok: false,
               code: 'connections',
@@ -709,6 +798,7 @@ export async function createNativeGameServer(options: {
             let draining = false,
               drained = false;
             try {
+              await closePrivateStreams();
               const paused = await current.control({ paused: true }, scope);
               try {
                 if (!paused.ok) throw new GameSaveError(paused.message);
@@ -1018,6 +1108,8 @@ export async function createNativeGameServer(options: {
     const stop = (deadlineMs = SHUTDOWN_DEADLINE_MS): Promise<ShutdownReport> => {
       shutdown ??= (async () => {
         stopping = true;
+        const privateClosed = closePrivateStreams();
+        void privateClosed.catch(() => undefined);
         clearInterval(clock);
         if (clockContinuation) clearImmediate(clockContinuation);
         decisions.macrofold.stop();
@@ -1044,6 +1136,7 @@ export async function createNativeGameServer(options: {
           }
         };
         await stage('Player publication', () => views.close());
+        await stage('Private publication', () => privateClosed);
         await stage('Admitted clock batch', () => activeTick ?? Promise.resolve());
         await stage('Connection cleanup', () => Promise.all(disconnects));
         await stage('Admitted requests', async () => {

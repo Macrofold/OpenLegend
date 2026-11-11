@@ -43,6 +43,7 @@ import type {
 import {
   withAdmittedWorkingSources,
   nativeSourceFlatStringFields,
+  RESTORED_HISTORY_POSITION_TABLES,
 } from './native-current-sources.js';
 import { fundNativeSourceWorkspace } from './native-source-preparation.js';
 import { ACCOUNT_RETENTION_PREPARATION } from './account-retention.js';
@@ -393,20 +394,24 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
           working.records.durableRevision !== stage.revision
         )
           throw new Error('Restore working selection differs from its protected SQL installation.');
-        // SQL now contains only the restored activity rows. Preserve the actual
-        // allocation floor from the abandoned collection in this live install.
-        let activityOwners = 0;
+        // SQL now contains only the restored rows. Preserve each abandoned
+        // canonical history tail so continued play cannot reuse its ordinals.
+        let historyOwners = 0;
         for (const entry of stage.source.records.coverage)
-          if (entry.table === 'activity_occurrences') activityOwners++;
-        fundNativeSourceWorkspace(512 + 256 * activityOwners);
-        const activityPositions = new Map<string, number>();
-        for (const entry of stage.source.records.coverage)
-          if (entry.table === 'activity_occurrences')
-            activityPositions.set(entry.owner, entry.nextOrdinal);
-        for (const entry of working.records.coverage) {
-          if (entry.table !== 'activity_occurrences') continue;
-          const next = activityPositions.get(entry.owner);
-          if (next !== undefined && next > entry.nextOrdinal) entry.nextOrdinal = next;
+          if (RESTORED_HISTORY_POSITION_TABLES.some((table) => entry.table === table))
+            historyOwners++;
+        fundNativeSourceWorkspace(
+          512 + 256 * (historyOwners + RESTORED_HISTORY_POSITION_TABLES.length),
+        );
+        for (const table of RESTORED_HISTORY_POSITION_TABLES) {
+          const positions = new Map<string, number>();
+          for (const entry of stage.source.records.coverage)
+            if (entry.table === table) positions.set(entry.owner, entry.nextOrdinal);
+          for (const entry of working.records.coverage) {
+            if (entry.table !== table) continue;
+            const next = positions.get(entry.owner);
+            if (next !== undefined && next > entry.nextOrdinal) entry.nextOrdinal = next;
+          }
         }
         return encodeNativeJson(
           request.host,

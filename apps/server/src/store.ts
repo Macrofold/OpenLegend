@@ -83,6 +83,7 @@ import {
   type NativeRestoreStage,
 } from './native-restore.js';
 import { nativeRecordChanges } from './native-records.js';
+import { RESTORED_HISTORY_POSITION_TABLES } from './native-current-sources.js';
 import type { DerivedMemoryAllowance } from './memory-derivatives.js';
 import {
   materializeTemporalChanges,
@@ -1541,10 +1542,11 @@ export class SqlGameRepository implements GameRepository {
     )
       throw new Error('Native restore no longer owns its completed durable predecessor.');
     const priorAllowance = this.memories.captureAllowance(owner.worldId);
-    let activityRows = 0;
-    for (const siblings of request.checkpoint.groups.get('activity_occurrences')?.values() ?? [])
-      activityRows += siblings.length;
-    let activitySlots:
+    let historyRows = 0;
+    for (const table of RESTORED_HISTORY_POSITION_TABLES)
+      for (const siblings of request.checkpoint.groups.get(table)?.values() ?? [])
+        historyRows += siblings.length;
+    let historySlots:
       | ReturnType<NativeRestoreRequest['capacity']['reserveConsumerBytes']>
       | undefined;
     const restore = async () => {
@@ -1553,7 +1555,7 @@ export class SqlGameRepository implements GameRepository {
         throw new Error('Native restore lost its installed writer while awaiting authority.');
       // Reassigned slots are decimal safe integers. Hold their prospective
       // strings through the protected writer and inactive installation handoff.
-      if (activityRows) activitySlots = request.capacity.reserveConsumerBytes(96 * activityRows);
+      if (historyRows) historySlots = request.capacity.reserveConsumerBytes(96 * historyRows);
       const before = await this.db
         .prepare('SELECT payload FROM world_settings WHERE world_id=? AND id=?')
         .get(owner.worldId, '["world"]');
@@ -1612,7 +1614,7 @@ export class SqlGameRepository implements GameRepository {
           generation: head.generation,
           revision,
           identityFloor: header.nextId,
-          activityCapacity: request.capacity,
+          historyCapacity: request.capacity,
         },
         {
           ...request.restore,
@@ -1754,7 +1756,7 @@ export class SqlGameRepository implements GameRepository {
     try {
       return await this.db.transaction(restore);
     } finally {
-      activitySlots?.release();
+      historySlots?.release();
     }
   }
 

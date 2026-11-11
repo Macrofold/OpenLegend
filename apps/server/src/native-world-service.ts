@@ -6,7 +6,8 @@ import { copyNativeOutcome } from './native-outcome.js';
 import { nativeMilestoneUpdates } from './native-milestones.js';
 import { nativeRecordChanges } from './native-records.js';
 import { readNativeResidentPressure } from './native-maintenance-read.js';
-import { namePhrase } from '@open-legend/language';
+import { namePhrase, type Named } from '@open-legend/language';
+import { decisionObjectBytes, decisionTextBytes } from './native-decision-allocation.js';
 import { NativeNpcIntake } from './native-npc-intake.js';
 import {
   decisionClaimCurrentFromRead,
@@ -47,6 +48,10 @@ import {
   type TemporalReceiptLocator,
 } from '@open-legend/domain';
 import { nativeSetupSettings } from '@open-legend/domain/native-install';
+import type {
+  NativeGeometryQueries,
+  NativeWorldReplyPreviewRead,
+} from '@open-legend/native-simulation';
 import type {
   ApiResult,
   CommandInput,
@@ -103,7 +108,11 @@ import { SOURCE_EDIT_PREPARATION_CAPACITY } from './history-edit.js';
 import { CheckpointBusyError, GameSaveError } from './game-saves.js';
 import { NativePlayerCapture } from './native-player-capture.js';
 import { NativePlayerProfiles } from './native-player-profiles.js';
-import { NativeNpcCapture, type NativeNpcConsumer } from './native-npc-capture.js';
+import {
+  NativeNpcActionCapture,
+  NativeNpcCapture,
+  type NativeNpcConsumer,
+} from './native-npc-capture.js';
 import { NativePrivateHistoryCapture } from './native-history-capture.js';
 import { nativeRecentHistoryContext, nativeReceiptLocator } from './native-temporal-context.js';
 import {
@@ -631,6 +640,9 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   get historyEpoch(): string {
     return `${this.generation}:${this.privacyEpoch}`;
   }
+  get acceptedCut(): number {
+    return this.pending.through;
+  }
   get durable() {
     const cut = this.pending.durableMark();
     return {
@@ -882,6 +894,88 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     return this.speechActors.get(id);
   }
 
+  /** Capture the two physical participants at this publication, before another
+   * accepted transition can hide an intervening loss of preview eligibility. */
+  captureReplyPreview(scope: RequestScope, npcId: string, volume?: SpeechVolume) {
+    this.assertScope(scope, 'play', true);
+    return this.world.readReplyPreview(scope.accountId, scope.actorId, npcId, volume);
+  }
+
+  async publishReplyPreview(scope: RequestScope, publish: () => void): Promise<boolean> {
+    return this.lane.run(async () => {
+      this.assertScope(scope, 'play', true);
+      const gate = await this.world.replyPreviewPublication(
+        scope.accountId,
+        scope.actorId,
+        this.acceptedCut,
+      );
+      try {
+        this.assertScope(scope, 'play', true);
+        if (!gate?.isCurrent()) return false;
+        // Serialization and the synchronous HTTP queue handoff occur while
+        // native acceptance is fenced; no provider/SQL await holds this lease.
+        publish();
+        return true;
+      } finally {
+        gate?.release();
+      }
+    });
+  }
+
+  async finishReplyPreview(read: NativeWorldReplyPreviewRead) {
+    return this.lane.run(() =>
+      withNativeConsumerScope(async () => {
+        let question: NativeGeometryQueries | undefined;
+        try {
+          const encoded = await read.question();
+          if (encoded) question = decodeNativeProduct<NativeGeometryQueries>(encoded);
+          const result = question
+            ? await (async () => {
+                const answers = await this.geometry.compute(question!);
+                try {
+                  return await withNativeJsonInput(this.world, answers, (bytes) =>
+                    this.world.finishReplyPreview(read, bytes),
+                  );
+                } finally {
+                  releaseNativeProduct(answers);
+                }
+              })()
+            : await this.world.finishReplyPreview(read, Buffer.alloc(0));
+          const facts = decodeNativeProduct<{
+            worldId: string;
+            generation: string;
+            acceptedCut: number;
+            eligible: boolean;
+            clear: boolean;
+            speakerNameData?: Named;
+          }>(result);
+          // Article-free formatting only trims/removes a leading article. Fund
+          // both temporary strings and the DTO before constructing either.
+          const formatting = this.world.reserveConsumerBytes(
+            decisionObjectBytes(7) + 2 * decisionTextBytes(facts.speakerNameData?.name.length ?? 0),
+          );
+          try {
+            return retainNativeProduct(
+              copyNativeProduct(this.world, {
+                worldId: facts.worldId,
+                generation: facts.generation,
+                acceptedCut: facts.acceptedCut,
+                eligible: facts.eligible,
+                clear: facts.clear,
+                speaker: facts.speakerNameData ? namePhrase(facts.speakerNameData, 'none') : '',
+              }),
+            );
+          } finally {
+            formatting.release();
+          }
+        } finally {
+          if (question) releaseNativeProduct(question);
+          read.release();
+        }
+      }),
+    );
+  }
+
   /** One native mental capture and its actual pending SQL overlay are acquired
    * together. Callers retain this finite read owner through context preparation. */
   captureNpc(
@@ -940,6 +1034,13 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         capture.release();
         throw error;
       }
+    });
+  }
+
+  captureNpcActions(actorId: string, consumer: NativeNpcConsumer, signal: AbortSignal) {
+    return this.lane.run(() => {
+      this.assertAdmission();
+      return NativeNpcActionCapture.capture(this.world, this.geometry, actorId, consumer, signal);
     });
   }
 
@@ -4260,7 +4361,16 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             if (this.pending.inFlight) return this.pending.inFlight;
             if (!this.pending.dirty) return undefined;
             const save = await this.world.captureSave();
-            return this.pending.capture(save, decodeNativeProduct(await save.rows()), this.privacy);
+            try {
+              return await this.pending.capture(
+                decodeNativeProduct(await save.rows()),
+                this.privacy,
+              );
+            } finally {
+              // The projected rows and native journal retain independent
+              // prefix owners. This one-use transport has finished reading.
+              save.release();
+            }
           },
           this.lane.waitMs,
           false,

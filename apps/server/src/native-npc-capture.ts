@@ -24,6 +24,7 @@ import {
 import { nativeBodyContext, nativePerceivedEntities } from './native-perception.js';
 import { formatEntityRecallCandidate } from './recall-entity.js';
 import {
+  copyNativeProduct,
   decodeNativeProduct,
   encodeNativeJson,
   freezeNativeProduct,
@@ -64,6 +65,7 @@ import type {
 import {
   nativeNpcCandidateDescriptions,
   type NativeNpcCandidates,
+  type NativeFormattedNpcOffer,
 } from './native-npc-candidates.js';
 import {
   nativeCurrentSources,
@@ -71,6 +73,11 @@ import {
   type NativeCurrentCaptureSeed,
 } from './native-current-capture.js';
 import { capturedAttributionReader, type AttributionIdentity } from './entity-references.js';
+import {
+  admitDecisionGraph,
+  decisionArrayBytes,
+  decisionObjectBytes,
+} from './native-decision-allocation.js';
 
 /** The NPC purpose supplies the actual selected first-person mental records.
  * These private facts are formatter input; model output cannot edit this graph
@@ -113,6 +120,97 @@ interface NpcPacket {
 }
 export type NativeNpcConsumer = 'inspection' | 'chat' | 'thought' | 'reflection';
 export type NativeNpcPerspectiveSelection = NativeNpcBindingSelection['perspectives'];
+
+interface NativeNpcActionOffer extends NativeFormattedNpcOffer {
+  readonly noIntervention: boolean;
+}
+
+/** Post-routing feasibility needs only the current catalogue. Its native read
+ * retains the physical grants; no second mental/history packet is decoded. */
+export class NativeNpcActionCapture {
+  private constructor(
+    private readOwner: NativeWorldNpcRead | undefined,
+    private formatted: readonly NativeNpcActionOffer[] | undefined,
+  ) {}
+
+  get read(): NativeWorldNpcRead {
+    if (!this.readOwner) throw new Error('The native action catalogue was released.');
+    return this.readOwner;
+  }
+
+  get offers(): readonly NativeFormattedNpcOffer[] {
+    if (!this.formatted) throw new Error('The native action catalogue was released.');
+    return this.formatted;
+  }
+
+  static async capture(
+    world: NativeWorld,
+    geometry: NativeGeometryProviders,
+    actorId: string,
+    consumer: NativeNpcConsumer,
+    signal?: AbortSignal,
+  ): Promise<NativeNpcActionCapture> {
+    const read = await withNativeJsonInput(
+      world,
+      { actorId, requiredAppraisals: [], consumer },
+      (bytes) => world.readNpc(bytes),
+    );
+    let product: NativeNpcCandidates | undefined;
+    let offers: readonly NativeNpcActionOffer[] | undefined;
+    try {
+      const first = await withNativeJsonInput(
+        world,
+        { expandedBodyOrdinals: [], coverage: 'suggestions' },
+        (bytes) => world.npcCandidates(read, bytes),
+      );
+      await driveNativeNpcCandidates(world, read, first, geometry, signal);
+      product = freezeNativeProduct(
+        decodeNativeProduct<NativeNpcCandidates>(await read.candidates()),
+      );
+      const candidates = product;
+      const projection = admitDecisionGraph(
+        world,
+        decisionArrayBytes(candidates.offers.length) +
+          candidates.offers.length * decisionObjectBytes(5),
+        () =>
+          candidates.offers.map((offer, ordinal) => ({
+            ordinal,
+            id: offer.id,
+            description: offer.description,
+            transition: offer.transition,
+            noIntervention: offer.command === null,
+          })),
+      );
+      try {
+        // Commands and work stay in the native catalogue. Independent caption
+        // strings let the model request release the complete decoded product.
+        offers = freezeNativeProduct(copyNativeProduct(world, projection));
+      } finally {
+        releaseNativeProduct(projection);
+      }
+      releaseNativeProduct(product);
+      product = undefined;
+      return new NativeNpcActionCapture(read, offers);
+    } catch (error) {
+      if (product) releaseNativeProduct(product);
+      if (offers) releaseNativeProduct(offers);
+      read.release();
+      throw error;
+    }
+  }
+
+  noIntervention(ordinal: number): boolean {
+    if (!this.formatted) throw new Error('The native action catalogue was released.');
+    return this.formatted[ordinal]?.noIntervention ?? false;
+  }
+
+  release(): void {
+    this.readOwner?.release();
+    this.readOwner = undefined;
+    if (this.formatted) releaseNativeProduct(this.formatted);
+    this.formatted = undefined;
+  }
+}
 
 /** A native naming cut owns the actual identity tuples. Only its ordinals go
  * back to the native validity owner; these tuples grant no entity access. */
@@ -197,8 +295,8 @@ export class NativeNpcCapture {
   ): Promise<void> {
     const reads = await world.openNpcResponse(ticket);
     try {
-      await original.adoptRead(reads.original);
-      await current.adoptRead(reads.current);
+      original.adoptRead(reads.original);
+      current.adoptRead(reads.current);
     } catch (error) {
       reads.original.release();
       reads.current.release();
@@ -206,22 +304,14 @@ export class NativeNpcCapture {
     }
   }
 
-  private async adoptRead(read: NativeWorldNpcRead): Promise<void> {
-    const before = this.facts;
-    const previousRead = this.read;
-    const after = freezeNativeProduct(decodeNativeProduct<NpcPacket>(await read.packet()));
-    if (
-      after.self.worldId !== before.self.worldId ||
-      after.self.generation !== before.self.generation ||
-      after.self.actorId !== before.self.actorId ||
-      after.self.acceptedCut !== before.self.acceptedCut ||
-      after.historyScope.readSerial !== before.historyScope.readSerial
-    )
-      throw new Error('A situation query returned another native read owner.');
+  private adoptRead(read: NativeWorldNpcRead): void {
+    // The native ticket returns these same paired immutable reads. Their
+    // admitted facts, candidates and source inventories already belong here;
+    // decoding the full packets again would duplicate every retained context.
     this.facts;
+    const previousRead = this.read;
     previousRead.release();
     this.readOwner = read;
-    this.adoptPacket(after);
   }
 
   get facts(): NpcPacket {
@@ -399,6 +489,7 @@ export class NativeNpcCapture {
     selection: NativeNpcBindingSelection,
     signal?: AbortSignal,
     trigger?: NativeWorldNpcTrigger,
+    actions?: NativeNpcActionCapture,
   ): Promise<NativeWorldNpcResponseTicket> {
     const originalFacts = this.facts,
       currentFacts = current.facts;
@@ -406,7 +497,7 @@ export class NativeNpcCapture {
     const input = encodeNativeJson(world, { decisionId, selection });
     let ticket: NativeWorldNpcResponseTicket;
     try {
-      ticket = await world.bindNpcResponse(this.read, current.read, input, trigger);
+      ticket = await world.bindNpcResponse(this.read, current.read, input, trigger, actions?.read);
     } finally {
       releaseNativeProduct(input);
     }

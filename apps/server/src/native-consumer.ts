@@ -435,6 +435,26 @@ export function retainNativeProduct<T extends object>(owner: T): T {
   return owner;
 }
 
+/** Capacity-only input custody survives the caller's temporary scope. The
+ * provider already holds the immutable value itself; these pins grant no read. */
+export function borrowNativeProduct(owner: object): { release(): void } | undefined {
+  const holder = holders.get(owner);
+  if (!holder || holder.released) return undefined;
+  const pins: NativeWorldConsumer[] = [];
+  try {
+    for (const entry of holder.entries) pins.push(entry.consumer.retain());
+  } catch (error) {
+    for (const pin of pins) pin.release();
+    throw error;
+  }
+  return {
+    release() {
+      for (const pin of pins) pin.release();
+      pins.length = 0;
+    },
+  };
+}
+
 /** The real transport/stream owner calls this only after final consumption. */
 export function releaseNativeProduct(owner: object): void {
   const holder = holders.get(owner);

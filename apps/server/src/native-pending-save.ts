@@ -1,7 +1,7 @@
 import type { NativeWorld } from '@open-legend/native-simulation';
 import { nativeTemporalPageEdits } from './native-temporal-edits.js';
 import type { PendingTemporalPage } from './temporal-page-storage.js';
-import type { NativeSaveRows, NativeWorldSave } from '@open-legend/native-simulation';
+import type { NativeSaveRows } from '@open-legend/native-simulation';
 import type { ExperiencePrivacy } from '@open-legend/domain';
 import type { CommitInputs } from './commit-inputs.js';
 import type { GameplayReceipt } from './command-receipts.js';
@@ -42,12 +42,9 @@ interface Entry {
   next?: Entry;
 }
 /** An application-owned projection of an actual native immutable SQL prefix.
- * The opaque save and its decoded rows stay retained through retry and ACK.
- * They never absorb a newer publication or become a second row merge owner. */
+ * Its decoded rows stay retained through retry and ACK, while the native
+ * journal independently owns the actual prefix until that acknowledgement. */
 export interface NativePendingPrefix {
-  /** A protected candidate already owns the exact private native prefix. It
-   * has no public Save handle until its SQL result determines settlement. */
-  readonly save?: NativeWorldSave;
   readonly cut: Cut;
   readonly inputs: CommitInputs;
   readonly receipts: readonly GameplayReceipt[];
@@ -206,7 +203,6 @@ export class NativePendingSave {
           retainNativeSources(prepared.value.changes, publication, temporal);
         }
         const prefix = await this.projectPrefix(
-          undefined,
           retainNativeSources(protectedSave, publication),
           [prepared.value],
           privacy,
@@ -298,11 +294,7 @@ export class NativePendingSave {
     }
   }
 
-  async capture(
-    save: NativeWorldSave,
-    rows: NativeSaveRows,
-    privacy: ExperiencePrivacy,
-  ): Promise<NativePendingPrefix> {
+  async capture(rows: NativeSaveRows, privacy: ExperiencePrivacy): Promise<NativePendingPrefix> {
     if (this.prefix) {
       releaseNativeProduct(rows);
       return this.prefix;
@@ -310,14 +302,13 @@ export class NativePendingSave {
     const pending = function* (first: Entry | undefined) {
       for (let entry = first; entry; entry = entry.next) yield entry.value;
     };
-    const prefix = await this.projectPrefix(save, rows, pending(this.head), privacy, this.accepted);
+    const prefix = await this.projectPrefix(rows, pending(this.head), privacy, this.accepted);
     // Only the complete projection replaces this pointer. Refused capture
     // leaves every earlier accepted publication and its exact suffix intact.
     return (this.prefix = prefix);
   }
 
   private async projectPrefix(
-    save: NativeWorldSave | undefined,
     rows: NativeSaveRows,
     pending: Iterable<NativePendingPublication>,
     privacy: ExperiencePrivacy,
@@ -397,7 +388,6 @@ export class NativePendingSave {
         // pointer. A refused capture keeps the same accepted queue available.
         const prefix = retainNativeSources(
           {
-            save,
             cut,
             inputs,
             progress,

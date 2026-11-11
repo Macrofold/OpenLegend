@@ -12,6 +12,7 @@ import { dispatchEmbedding } from './embedding-dispatch.js';
 import { nativeActivityLearning } from './native-activity-learning.js';
 import { prepareNativeMaintenanceReflection } from './native-maintenance-reflection.js';
 import { prepareNativeConsolidation } from './native-consolidation.js';
+import { copyNativeProduct, withNativeConsumerScope } from './native-consumer.js';
 
 /** Compose the same asynchronous scheduler/accounting owner as Source. All
  * private facts and every canonical mutation stay with actual native handles. */
@@ -144,7 +145,9 @@ function nativeMaintenanceHost(
         NativeMaintenanceRead.capture(service.world, actorId),
       );
       try {
-        return read.facts;
+        // Scheduling consumes this finite snapshot after the native read ends.
+        // Give the returned data its own admission rather than a released borrow.
+        return copyNativeProduct(service.world, read.facts);
       } finally {
         read.release();
       }
@@ -222,7 +225,7 @@ function nativeMaintenanceHost(
       );
       if (!active) throw new Error('Maintenance execution has no actor admission.');
       return ports.withActorName(active[0].actorId, active[1].facts.name, () =>
-        execution.run({ rootId: id, lease }, work),
+        execution.run({ rootId: id, lease }, () => withNativeConsumerScope(work)),
       );
     },
     prepareReflection: (input) =>

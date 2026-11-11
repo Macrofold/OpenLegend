@@ -163,6 +163,18 @@ export declare class NativeWorld {
   ): Promise<NativeWorldPrivateHistoryPublication | null>;
   resolveReceiptTail(reply: Buffer): Promise<void>;
   readCut(request: Buffer): Promise<NativeWorldJson>;
+  replyPreviewPublication(
+    account: string,
+    player: string,
+    expectedCut: number,
+  ): Promise<NativeWorldReplyPreviewPublication | null>;
+  readReplyPreview(
+    account: string,
+    player: string,
+    npc: string,
+    volume?: string | undefined | null,
+  ): NativeWorldReplyPreviewRead;
+  finishReplyPreview(read: NativeWorldReplyPreviewRead, bytes: Buffer): Promise<NativeWorldJson>;
   beginRestore(bytes: Buffer): Promise<NativeWorldTurn>;
   activateRestored(key: NativeCandidateKey, receipt: string): Promise<void>;
   retainedValues(): Promise<NativeWorldJson>;
@@ -337,6 +349,16 @@ export declare class NativeWorldReflectionTicket {
    * Body/workspace admission belongs to the maintenance read, separately.
    */
   sourcesCurrent(): boolean;
+  release(): void;
+}
+
+export declare class NativeWorldReplyPreviewPublication {
+  isCurrent(): boolean;
+  release(): void;
+}
+
+export declare class NativeWorldReplyPreviewRead {
+  question(): Promise<NativeWorldJson | null>;
   release(): void;
 }
 

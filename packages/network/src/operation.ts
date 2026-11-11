@@ -53,6 +53,12 @@ export function scopeOf(operation: NetworkOperation): OperationScope {
   return scope;
 }
 
+/** Release adapter-owned memory after this operation's actual resources close.
+ * Caller timeout remains independent of an abandoned transport's settlement. */
+export function afterNetworkResourcesClose(operation: NetworkOperation, release: () => void): void {
+  void scopeOf(operation).lease.resourcesClosed().then(release);
+}
+
 export class OperationScope extends FiniteLifetime implements NetworkOperation {
   private readonly operationParent?: OperationScope;
   private resources = 0;

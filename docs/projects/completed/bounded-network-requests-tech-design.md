@@ -303,6 +303,8 @@ An internal adapter-only activity registration associates each raw fetch/SDK inv
 
 Natural body EOF **before cancellation was requested**, a bodyless completed response, terminal raw transport failure, or the original cleanup promise fulfilling can establish quiescence for the supported adapter. A terminal Node source/sink/child closure can also do so. Time passing alone cannot.
 
+An adapter that admits request or response memory can register its nonblocking release with `afterNetworkResourcesClose(operation, release)` after its consumption callback ends. The observer uses that operation's existing resource lease. It preserves the admitted body and compiler/decoder products while a timed-out fetch or original body-cancellation promise remains unsettled. Independent returned values retain their own memory owner through final consumption.
+
 There is a subtle Web Streams race: `reader.cancel()` can immediately make a pending read return `done: true` while its underlying cancellation promise remains pending. Therefore EOF or `reader.closed` observed **after stop/cancel was requested** is not by itself closure evidence. Retain the original cancellation promise. Do not invoke cancellation twice and use the second already-closed result as proof the first cleanup finished.
 
 An ordinary native fetch abort may already error its body, so cancellation can reject with that known terminal error. A supported adapter may release from independently observed terminal transport/read failure; it must not quarantine every normal abort indiscriminately. Conversely, unknown cancellation failure without such evidence retains capacity. Test both cases.

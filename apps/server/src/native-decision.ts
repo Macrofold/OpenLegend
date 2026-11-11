@@ -6,15 +6,16 @@ import {
   clockDeadline,
   type AppraisalScope,
   type TemporalHistorySelection,
+  type ActivityRequestDescriptor,
 } from '@open-legend/domain';
-import type { JudgeRequest, JudgeValue } from '@open-legend/ai';
+import type { JudgeRequest, JudgeValue, JudgmentAnswer, TypedQuestionMap } from '@open-legend/ai';
 import type {
   NativeWorldNpcResponseTicket,
   NativeWorldNpcTrigger,
   NativeWorldReflectionTicket,
 } from '@open-legend/native-simulation';
 import type { NativeWorldService } from './native-world-service.js';
-import type { NativeNpcCapture } from './native-npc-capture.js';
+import type { NativeNpcActionCapture, NativeNpcCapture } from './native-npc-capture.js';
 import {
   MemoryReadCache,
   memorySourceProof,
@@ -74,9 +75,14 @@ import {
   COGNITION_VERSION,
   RESPONSE_INSTRUCTIONS,
   boundResponseSchema,
+  previewSpeechOperation,
 } from './cognition-contracts.js';
-import { attentionRequest } from './attention-request.js';
-import { attentionIncludes, ACTION_EVIDENCE_POLICY } from './jev-questions.js';
+import { decisionActionAttentionRequest } from './attention-request.js';
+import {
+  ACTION_EVIDENCE_POLICY,
+  attentionIncludes,
+  JEV_ACTION_THRESHOLD,
+} from './jev-questions.js';
 import { ACTION_RETRIEVAL_LIMIT } from './action-retrieval.js';
 import { noteReference } from './knowledge-context.js';
 import {
@@ -87,6 +93,7 @@ import {
   withNativeConsumerScope,
   withoutNativeConsumerScope,
   withNativeJsonInput,
+  reserveNativeJsonTextWorkspace,
 } from './native-consumer.js';
 import type { NativeFormattedNpcOffer } from './native-npc-candidates.js';
 import type { NativeNpcBindingSelection } from './native-npc-sources.js';
@@ -114,6 +121,26 @@ export interface NativeAppraisalPreparation {
   current(): Promise<boolean>;
 }
 
+export interface NativeDecisionRouting {
+  readonly judged: JudgeValue;
+  readonly questions: TypedQuestionMap;
+  readonly families: ReadonlyMap<string, ActivityRequestDescriptor>;
+  readonly actionPurpose?: 'actions' | 'choose-action';
+  readonly actionAnswers?: Record<string, JudgmentAnswer>;
+  readonly actionFallback?: true;
+}
+
+export interface NativeDecisionRouteInput {
+  prompt: string;
+  addressedSpeech: boolean;
+  speechTrigger: boolean;
+  activityRequests: ReturnType<typeof decisionActivityFactsFromRead>['activityRequests'];
+  actionRequest(purpose: 'actions' | 'choose-action'): Omit<JudgeRequest, 'requestId' | 'signal'>;
+  refreshActions(): Promise<void>;
+  sourcesCurrent(): boolean;
+  publish: Parameters<Judge>[1];
+}
+
 /** Complete ordinary decision preparation from native read owners and actual
  * indexed personal storage. The director supplies paid dispatch/accounting and
  * the appraisal owner; neither callback may supply world facts or permissions. */
@@ -137,6 +164,7 @@ type NativeDecisionInput = {
   validity: NativeNpcBindingSelection['validity'];
   semanticCauses: readonly number[];
   semanticTrigger?: NativeWorldNpcTrigger;
+  routeActions?(input: NativeDecisionRouteInput): Promise<NativeDecisionRouting>;
   prepareAppraisals(input: {
     original: NativeNpcCapture;
     current: NativeNpcCapture;
@@ -166,6 +194,7 @@ async function prepareOwnedDecision(
 ) {
   const { service, actorId, jobId, signal } = input;
   const formattingOwner = createNativeConsumerScope();
+  const routingOwner = createNativeConsumerScope();
   const format = <T>(build: () => T): T => formattingOwner.runSync(build);
   let contextRetired = false;
   const requireContext = () => {
@@ -197,6 +226,7 @@ async function prepareOwnedDecision(
   let conversationCurrent: NativeNpcCapture | undefined;
   let ticket: NativeWorldNpcResponseTicket | undefined;
   let reflectionTicket: NativeWorldReflectionTicket | undefined;
+  let actionCapture: NativeNpcActionCapture | undefined;
   let completed = false;
   const scope: MemoryScope = {
     worldId: service.worldId,
@@ -211,6 +241,8 @@ async function prepareOwnedDecision(
     if (generation !== service.generation || !fence.current())
       throw new Error('Personal evidence changed during native decision preparation.');
   };
+  const sourcesCurrent = () =>
+    generation === service.generation && fence.current() && !signal.aborted;
   const historyCurrent = async () => {
     assertCurrent();
     // Issuance moves the actual reads into the ticket. Checks after that move
@@ -795,22 +827,46 @@ async function prepareOwnedDecision(
           decisionArrayBytes(intentActions.length) +
           intentActions.length * decisionObjectBytes(2),
         () => ({
-          ...baseContext,
-          ...fields,
+          situationQueries: input.mode !== 'native-only',
+          receivedSituation: situation.packet,
+          ...(recentWorkResults ? { recentWorkResults } : {}),
           ...decisionActivityFactsFromRead({
             simTime: now.facts.self.at,
             requests: service.definitions.requestDescriptors(),
             ...now.candidates().activity,
           }),
+          capabilities: {
+            speech: fields.capabilities.speech,
+            expressions: fields.capabilities.expressions,
+          },
+          expressionGuidance: fields.expressionGuidance,
+          stimulus,
+          notepad: fields.notepad,
+          knowledgeInstructions: fields.knowledgeInstructions,
           triggerFacts: trigger?.facts ?? null,
+          navigation: fields.navigation,
+          namedTimes: fields.namedTimes,
+          outputFamilies: fields.outputFamilies,
+          currentSupport: fields.currentSupport,
+          publicSurfaces: fields.publicSurfaces,
           intentActions: intentActions.map(({ id, description }) => ({ id, description })),
-          references: references.references,
+          identity: fields.identity,
+          feelings: fields.feelings,
+          aboutMe: fields.aboutMe,
+          now: fields.now,
+          body: fields.body,
+          contacts: fields.contacts,
+          commitments: baseContext['commitments'],
+          activityCoverage: fields.activityCoverage,
+          goal: fields.goal,
           agency: {
-            ...fields.agency,
             outcomeCoverage: missing
               ? `${missing} recent work records are unavailable under current memory permissions/retention. Base decisions only on available memories and current evidence; do not reconstruct their effects from execution status.`
               : 'Recent work results are included through the same personal memories as other experiences.',
+            ...fields.agency,
           },
+          planOffers: [],
+          conversation: conversation.lines,
           knowledgeCoverage:
             'knowledgeRetrieval' in selection.diagnostics
               ? selection.diagnostics.knowledgeRetrieval
@@ -823,6 +879,9 @@ async function prepareOwnedDecision(
       ...((context['experience'] as SharedModelExperience['experience'][]) ?? []),
       ...conversation.experience,
     ];
+    if ('reconsideration' in fields) context['reconsideration'] = fields.reconsideration;
+    if ('carryingConcern' in fields) context['carryingConcern'] = fields.carryingConcern;
+    context['references'] = references.references;
     const knowledge = admitDecisionGraph(
       service.world,
       decisionObjectBytes(refreshed.length) +
@@ -898,7 +957,7 @@ async function prepareOwnedDecision(
     validity.usedCache = undefined;
     compactedSources = retainedConversation.compactedSources;
     conversationOwner.dispose();
-    const allOffers = fitActionCandidates(
+    let allOffers = fitActionCandidates(
       context,
       [...now.choiceDescriptions(service.definitions)],
       0,
@@ -907,38 +966,151 @@ async function prepareOwnedDecision(
     );
     let actionSource: 'original' | 'current' = 'current';
     let reconsidering = input.validity === 'prepared-response';
+    const guidance = service.definitions.facts.definitions.cognitionPolicy.actionGuidance;
+    let options = allOffers.map((offer, index) => ({ ...offer, id: `a${index}` }));
+    const refreshActions = async () => {
+      if (actionCapture) return;
+      await conversationCheck(false, selectedProofs);
+      actionCapture = await formattingOwner.run(() =>
+        service.captureNpcActions(actorId, input.consumer, signal),
+      );
+      await conversationCheck(false, selectedProofs);
+      const refreshed = actionCapture;
+      allOffers = format(() =>
+        admitDecisionGraph(service.world, 3 * decisionArrayBytes(refreshed.offers.length), () =>
+          fitActionCandidates(context, [...refreshed.offers], 0, 'optional', promptBytes),
+        ),
+      );
+      options = format(() =>
+        admitDecisionGraph(
+          service.world,
+          decisionArrayBytes(allOffers.length) +
+            allOffers.length * (decisionObjectBytes(5) + decisionTextBytes(20)),
+          () => allOffers.map((offer, index) => ({ ...offer, id: `a${index}` })),
+        ),
+      );
+    };
+    const actionRequest = (purpose: 'actions' | 'choose-action') =>
+      routingOwner.runSync(() => {
+        const contextKeys = decisionRecordEntries(context);
+        // The shared helper borrows context children. It creates its own maps,
+        // entry pairs, per-option question/label strings and JSON size probes.
+        const policyUnits = guidance.reasons.length + ACTION_EVIDENCE_POLICY.length + 192;
+        const questionUnits =
+          256 + (purpose === 'actions' ? guidance.consideration.length : guidance.selection.length);
+        const criteriaUnits =
+          'true'.length +
+          guidance.criteria.true.length +
+          'false'.length +
+          guidance.criteria.false.length +
+          16;
+        let requestBytes =
+          3 * decisionObjectBytes(contextKeys + options.length + 2) +
+          4 * decisionArrayBytes(contextKeys) +
+          6 * decisionArrayBytes(options.length) +
+          decisionTextBytes(policyUnits);
+        let largestProbeUnits = policyUnits;
+        for (const option of options) {
+          requestBytes +=
+            5 * decisionObjectBytes(4) +
+            decisionObjectBytes(decisionRecordEntries(guidance.criteria)) +
+            4 * decisionArrayBytes(2) +
+            decisionTextBytes(questionUnits + 2 * option.id.length);
+          largestProbeUnits = Math.max(
+            largestProbeUnits,
+            questionUnits + criteriaUnits + option.id.length + option.description.length,
+          );
+        }
+        const json = reserveNativeJsonTextWorkspace(service.world, context);
+        let probes: ReturnType<typeof service.world.reserveConsumerBytes> | undefined;
+        try {
+          probes = service.world.reserveConsumerBytes(
+            decisionTextBytes(6 * largestProbeUnits) + decisionArrayBytes(4),
+          );
+          return admitDecisionGraph(service.world, requestBytes, () =>
+            decisionActionAttentionRequest(context, options, purpose, guidance),
+          );
+        } finally {
+          probes?.release();
+          json.release();
+        }
+      });
+    let routeText =
+      input.mode === 'reflection'
+        ? undefined
+        : routingOwner.runSync(() => nativeDecisionPrompt(service.world, context, [], false));
+    let routePrompt = routeText?.text;
+    if (input.routeActions) await conversationCheck(false, selectedProofs);
+    let routing: NativeDecisionRouting | undefined;
+    let routingFailure: { error: unknown } | undefined;
+    try {
+      routing =
+        input.routeActions && routePrompt !== undefined
+          ? await routingOwner.run(() =>
+              input.routeActions!({
+                prompt: routePrompt!,
+                addressedSpeech,
+                speechTrigger,
+                activityRequests: context['activityRequests'] as ReturnType<
+                  typeof decisionActivityFactsFromRead
+                >['activityRequests'],
+                actionRequest,
+                refreshActions,
+                sourcesCurrent,
+                publish: publishHistory,
+              }),
+            )
+          : undefined;
+    } catch (error) {
+      signal.throwIfAborted();
+      if (input.mode !== 'native-only') throw error;
+      // Source retains the completed native-only preparation before routing.
+      // Preserve that same original cut when routing fails or expires; the
+      // director rethrows this exact failure after taking custody of the result.
+      routingFailure = admitDecisionGraph(service.world, decisionObjectBytes(1), () => ({ error }));
+    }
+    let actionAnswers = routing?.actionAnswers;
+    let includeActions = !routing || routing.actionPurpose !== undefined;
     let offered: NativeFormattedNpcOffer[];
     if (input.mode === 'reflection') offered = [];
-    else if (input.mode === 'native-only')
+    else if (input.mode === 'native-only' && !routing)
       offered = allOffers.map((offer, index) => ({ ...offer, id: `a${index}` }));
+    else if (routing && !routing.actionPurpose) offered = [];
+    else if (routing?.actionFallback) offered = options;
     else {
-      const guidance = service.definitions.facts.definitions.cognitionPolicy.actionGuidance;
-      const options = allOffers.map((offer, index) => ({ ...offer, id: `a${index}` }));
-      const request = attentionRequest(
-        {
-          decisionContext: Object.fromEntries(
-            Object.entries(context).filter(
-              ([key]) => !['knowledgeInstructions', 'navigation', 'planOffers'].includes(key),
-            ),
-          ),
-          attentionPolicy: `${guidance.reasons} ${ACTION_EVIDENCE_POLICY} Include uncertain but plausible options without choosing a final action. Listing is not endorsement; no action and unlisted attempts remain valid.`,
-        },
-        options.map((offer) => [offer.id, offer.description]),
-        'actions',
-        guidance,
-      );
+      const purpose = routing?.actionPurpose ?? 'actions';
       try {
         await conversationCheck(false, selectedProofs);
-        const judged = Object.keys(request.questions).length
-          ? await judge(request)
-          : { answers: {} };
-        offered = options.filter((offer) => attentionIncludes(judged.answers[offer.id]));
+        let judged: JudgeValue = { answers: actionAnswers ?? {} };
+        if (!actionAnswers) {
+          const request = actionRequest(purpose);
+          if (Object.keys(request.questions).length)
+            judged = await routingOwner.run(() => judge(request));
+        }
+        offered = options.filter((offer) => {
+          const answer = judged.answers[offer.id];
+          return purpose === 'choose-action'
+            ? answer?.type === 'noul' && answer.noul >= JEV_ACTION_THRESHOLD
+            : attentionIncludes(answer);
+        });
       } catch (error) {
         signal.throwIfAborted();
+        if (purpose === 'choose-action') throw error;
         await conversationCheck(false, selectedProofs);
         offered = options;
       }
     }
+    const retireRouting = () => {
+      // Selection and its log consume these requests before generation. The
+      // offered captions and native catalogue have independent request owners.
+      routing = undefined;
+      actionAnswers = undefined;
+      routePrompt = undefined;
+      routeText = undefined;
+      allOffers = [];
+      options = [];
+      routingOwner.dispose();
+    };
     const hasAppraisals =
       input.mode === 'reflection' ||
       service.definitions.facts.definitions.moduleManifest.appraisals?.definitions.some(
@@ -1010,11 +1182,17 @@ async function prepareOwnedDecision(
     const renderBytes = () =>
       reflectionPreparationPrompt !== undefined
         ? Buffer.byteLength(reflectionPreparationPrompt)
-        : nativeDecisionPromptSize(service.world, context, offered, true, additionalContext);
+        : nativeDecisionPromptSize(
+            service.world,
+            context,
+            offered,
+            includeActions,
+            additionalContext,
+          );
     const render = () =>
       reflectionPreparationPrompt ??
       keepText(() =>
-        nativeDecisionPrompt(service.world, context, offered, true, additionalContext),
+        nativeDecisionPrompt(service.world, context, offered, includeActions, additionalContext),
       );
     // Required evidence keeps its allowance. Only optional assistance loses a
     // whole suffix when the complete generation envelope needs more room.
@@ -1057,7 +1235,15 @@ async function prepareOwnedDecision(
       appraisals: appraisal?.selection ?? null,
     });
     ticket = await service.publishRecall(() =>
-      original.bindResponse(service.world, now, jobId, binding, signal, input.semanticTrigger),
+      original.bindResponse(
+        service.world,
+        now,
+        jobId,
+        binding,
+        signal,
+        input.semanticTrigger,
+        actionCapture,
+      ),
     );
     const schemaFor = (queries: boolean) => {
       const requests = service.definitions.requestDescriptors();
@@ -1138,6 +1324,7 @@ async function prepareOwnedDecision(
 
     const prepared = retainNativeSources(
       {
+        routingFailure,
         get context() {
           requireContext();
           return context;
@@ -1149,6 +1336,12 @@ async function prepareOwnedDecision(
         get prompt() {
           requireContext();
           return prompt;
+        },
+        get routePrompt() {
+          requireContext();
+          if (routePrompt === undefined)
+            throw new Error('Reflection has no immediate decision routing request.');
+          return routePrompt;
         },
         get offered() {
           requireContext();
@@ -1162,10 +1355,12 @@ async function prepareOwnedDecision(
           requireContext();
           return new Set(
             offered
-              .filter(
-                (offer) =>
-                  (actionSource === 'original' ? original : now).candidates().offers[offer.ordinal]
-                    ?.command === null,
+              .filter((offer) =>
+                actionSource === 'current' && actionCapture
+                  ? actionCapture.noIntervention(offer.ordinal)
+                  : (actionSource === 'original' ? original : now).candidates().offers[
+                      offer.ordinal
+                    ]?.command === null,
               )
               .map((offer) => offer.id),
           );
@@ -1199,10 +1394,27 @@ async function prepareOwnedDecision(
         })),
         addressedSpeech,
         speechTrigger,
+        sourcesCurrent,
+        get routing() {
+          requireContext();
+          return routing;
+        },
+        retireRouting,
         get schema() {
           requireContext();
           if (!schema) throw new Error('The native decision response schema was consumed.');
           return schema;
+        },
+        previewSpeech(value: unknown) {
+          requireContext();
+          if (!schema) throw new Error('The native decision response schema was consumed.');
+          const operation = previewSpeechOperation(schema.shape.operations.element, value);
+          if (!operation?.talk) return null;
+          const addressee = operation.talk.addresseeEntityId;
+          const canonical = addressee ? references.entityReferences[addressee] : undefined;
+          if (!canonical) return null;
+          const { appraise: _appraise, ...speech } = operation;
+          return { ...speech, talk: { ...operation.talk, addresseeEntityId: canonical } };
         },
         requestSchema() {
           requireContext();
@@ -1303,6 +1515,7 @@ async function prepareOwnedDecision(
               sources: selectedProofs,
               conversationEvidence: validity.boundSources,
               offered,
+              includeActions,
               actionSource,
               prototypeSource: actionSource,
               perspectives: selectedPerspectives(),
@@ -1386,6 +1599,7 @@ async function prepareOwnedDecision(
             );
             decisionId = childId;
             reconsidering = true;
+            includeActions = true;
             actionSource = 'original';
             context = retainedContext;
             offered = nextOffers;
@@ -1407,6 +1621,7 @@ async function prepareOwnedDecision(
         },
         retireContext(): void {
           requireContext();
+          retireRouting();
           contextRetired = true;
           // Native admission owns its bound reads and source metadata. The
           // decoded response has consumed the final request presentation.
@@ -1416,6 +1631,7 @@ async function prepareOwnedDecision(
           context = {};
           retainedContext = {};
           prompt = '';
+          routePrompt = undefined;
           instructions = '';
           additionalContext = '';
           schema = undefined;
@@ -1426,12 +1642,15 @@ async function prepareOwnedDecision(
           selectedSections.length = 0;
           textProducts.length = 0;
           queryDisclosure = undefined;
+          actionCapture?.release();
+          actionCapture = undefined;
           formattingOwner.dispose();
         },
         dispose() {
           // This private preparation envelope borrows the intake handle only
           // through binding/query reuse. Other intake owners remain independent.
           input.semanticTrigger = undefined;
+          retireRouting();
           ticket?.release();
           reflectionTicket?.release();
           ticket = undefined;
@@ -1439,6 +1658,7 @@ async function prepareOwnedDecision(
           fence.release();
           original.release();
           now.release();
+          actionCapture?.release();
           bodies.dispose();
           formattingOwner.dispose();
           owner.dispose();
@@ -1465,11 +1685,15 @@ async function prepareOwnedDecision(
       original.sources(),
       now.sources(),
     );
+    // Initial SQL hydration has finished. Returned readings own independent
+    // pins, and query continuation uses its bound native read owners.
+    bodies.dispose();
     completed = true;
     return prepared;
   } finally {
     conversationOwner.dispose();
     if (!completed) {
+      routingOwner.dispose();
       formattingOwner.dispose();
       ticket?.release();
       reflectionTicket?.release();
@@ -1477,6 +1701,7 @@ async function prepareOwnedDecision(
       conversationCurrent?.release();
       current?.release();
       original.release();
+      actionCapture?.release();
       bodies.dispose();
     }
   }

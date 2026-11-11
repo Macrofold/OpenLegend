@@ -1,7 +1,11 @@
 import { MemoryIndex } from './memory-index.js';
 import { nativeRecordActor } from './native-publication-actors.js';
 import { NativeMaintenanceRead } from './native-maintenance-read.js';
-import { attachNativeConsumer, decodeNativeProduct } from './native-consumer.js';
+import {
+  attachNativeConsumer,
+  createNativeConsumerScope,
+  decodeNativeProduct,
+} from './native-consumer.js';
 import { dispatchEmbedding } from './embedding-dispatch.js';
 import type { NativeWorldService } from './native-world-service.js';
 import type { NativeNpcMaintenancePorts } from './native-npc-director.js';
@@ -141,37 +145,43 @@ export function nativeMemoryIndex(
         };
         const current = () =>
           service.generation === admission.generation && isNpc(actorId) && read.current(admission);
+        const outputOwner = createNativeConsumerScope();
         return {
           current,
           async embed(request, sourcesCurrent, lease) {
             if (!lease) throw new Error('Native memory indexing has no admitted execution lease.');
-            return dispatchEmbedding({
-              service,
-              embeddings: ports.embeddings,
-              request,
-              lease,
-              current: () => sourcesCurrent.validate(),
-              now,
-              assertCurrent() {
-                if (service.paused || !current() || !sourcesCurrent.current())
-                  throw new Error('Personal indexing source was revoked.');
-              },
-              publication: (start) =>
-                service.publishRecall(async () => {
-                  if (!(await sourcesCurrent.validate()))
-                    throw new Error('Indexed personal sources changed before dispatch.');
-                  const publication = await read.publication(service.world, admission);
-                  try {
-                    if (!isNpc(actorId) || !publication?.isCurrent() || !sourcesCurrent.current())
-                      throw new Error('Personal indexing source was revoked.');
-                    return { result: start() };
-                  } finally {
-                    publication?.release();
-                  }
-                }),
-            });
+            return outputOwner.run(() =>
+              dispatchEmbedding({
+                service,
+                embeddings: ports.embeddings,
+                request,
+                lease,
+                current: () => sourcesCurrent.validate(),
+                now,
+                assertCurrent() {
+                  if (service.paused || !current() || !sourcesCurrent.current())
+                    throw new Error('Personal indexing source was revoked.');
+                },
+                publication: (start) =>
+                  service.publishRecall(async () => {
+                    if (!(await sourcesCurrent.validate()))
+                      throw new Error('Indexed personal sources changed before dispatch.');
+                    const publication = await read.publication(service.world, admission);
+                    try {
+                      if (!isNpc(actorId) || !publication?.isCurrent() || !sourcesCurrent.current())
+                        throw new Error('Personal indexing source was revoked.');
+                      return { result: start() };
+                    } finally {
+                      publication?.release();
+                    }
+                  }),
+              }),
+            );
           },
-          release: () => read.release(),
+          release() {
+            outputOwner.dispose();
+            read.release();
+          },
         };
       },
       read: (actorId, work) => service.withActorMemoryRead(actorId, work),

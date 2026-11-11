@@ -3,7 +3,7 @@ import {
   JUDGMENT_STATE_QUESTION_CHARACTERS,
   type TypedQuestionMap,
 } from '@open-legend/ai';
-import { batchedAttentionQuestions } from './jev-questions.js';
+import { ACTION_EVIDENCE_POLICY, batchedAttentionQuestions } from './jev-questions.js';
 import type { WorldState } from '@open-legend/domain';
 
 /** Fit actual descriptions and question text, rather than silently imposing a question count.
@@ -45,4 +45,27 @@ export function attentionRequest(
     longestQuestion = longest;
   }
   return { state: { ...state, candidates }, questions };
+}
+
+/** Both authority implementations ask the same relevance question over the
+ * selected actor's permitted context. Bindings remain with their own owner. */
+export function decisionActionAttentionRequest(
+  context: Record<string, unknown>,
+  actions: readonly { id: string; description: string }[],
+  purpose: 'actions' | 'choose-action',
+  guidance: WorldState['cognitionPolicy']['actionGuidance'],
+) {
+  return attentionRequest(
+    {
+      decisionContext: Object.fromEntries(
+        Object.entries(context).filter(
+          ([key]) => !['knowledgeInstructions', 'navigation', 'planOffers'].includes(key),
+        ),
+      ),
+      attentionPolicy: `${guidance.reasons} ${ACTION_EVIDENCE_POLICY}${purpose === 'actions' ? ' Include uncertain but plausible options without choosing a final action. Listing is not endorsement; no action and unlisted attempts remain valid.' : ''}`,
+    },
+    actions.map(({ id, description }) => [id, description]),
+    purpose,
+    guidance,
+  );
 }

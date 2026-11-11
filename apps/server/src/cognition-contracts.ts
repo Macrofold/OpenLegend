@@ -142,7 +142,8 @@ export function previewSpeechOperation(
   const op = parsed.data;
   return op.talk &&
     op.requiresAccepted.length === 0 &&
-    [op.note, op.name, op.act, op.goal, op.plan, op.think].every((part) => part === null)
+    [op.note, op.name, op.act, op.goal, op.plan, op.think].every((part) => part === null) &&
+    [op.appraise, op.observe, op.remember].every((part) => part == null)
     ? op
     : null;
 }

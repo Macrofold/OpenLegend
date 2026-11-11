@@ -95,12 +95,8 @@ import {
   responseTrigger,
   responseTriggerContext,
 } from './response-context.js';
-import { attentionRequest } from './attention-request.js';
-import {
-  ACTION_EVIDENCE_POLICY,
-  attentionIncludes,
-  JEV_ACTION_THRESHOLD,
-} from './jev-questions.js';
+import { decisionActionAttentionRequest } from './attention-request.js';
+import { attentionIncludes, JEV_ACTION_THRESHOLD } from './jev-questions.js';
 import { ACTION_RETRIEVAL_LIMIT } from './action-retrieval.js';
 import { navigationInstructions } from './navigation-contracts.js';
 import {
@@ -1626,21 +1622,9 @@ export async function selectDecisionActions(
     id: `a${index}`,
     description: candidate.description,
   }));
-  const candidateDescriptions = Object.fromEntries(
-    allOffers.map((candidate) => [candidate.id, candidate.description]),
-  );
-  const request = attentionRequest(
-    {
-      // Jev judges relevance, not the generative response schema or formatting instructions.
-      // docs/memory-architecture.md#4-jev-attention-before-context-inclusion
-      decisionContext: Object.fromEntries(
-        Object.entries(prepared.context).filter(
-          ([key]) => !['knowledgeInstructions', 'navigation', 'planOffers'].includes(key),
-        ),
-      ),
-      attentionPolicy: `${prepared.actionGuidance.reasons} ${ACTION_EVIDENCE_POLICY}${purpose === 'actions' ? ' Include uncertain but plausible options without choosing a final action. Listing is not endorsement; no action and unlisted attempts remain valid.' : ''}`,
-    },
-    Object.entries(candidateDescriptions),
+  const request = decisionActionAttentionRequest(
+    prepared.context,
+    allOffers,
     purpose,
     prepared.actionGuidance,
   );

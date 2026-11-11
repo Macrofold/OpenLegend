@@ -1,6 +1,10 @@
 import type { NativeWorld, NativeWorldConsumer } from '@open-legend/native-simulation';
 import { z } from 'zod';
-import { attachNativeConsumer, releaseNativeProduct } from './native-consumer.js';
+import {
+  attachNativeConsumer,
+  freezeNativeProduct,
+  releaseNativeProduct,
+} from './native-consumer.js';
 
 type Capacity = Pick<NativeWorld, 'reserveConsumerBytes'>;
 
@@ -107,9 +111,8 @@ export function projectDecisionSchema(capacity: Capacity, schema: z.ZodType) {
     const result = z.toJSONSchema(schema, { target: 'draft-7', io: 'input' });
     workspace.release();
     workspace = undefined;
-    return attachNativeConsumer(
-      result,
-      capacity.reserveConsumerBytes(decisionJsonGraphBytes(result)),
+    return freezeNativeProduct(
+      attachNativeConsumer(result, capacity.reserveConsumerBytes(decisionJsonGraphBytes(result))),
     );
   } finally {
     workspace?.release();

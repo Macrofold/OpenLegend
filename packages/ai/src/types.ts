@@ -54,6 +54,13 @@ export interface RequestControl {
   deadlineMs?: number;
   /** The caller's real final disclosure lease, after all provider preparation. */
   publication?: HttpPublication;
+  /** Application capacity only. This grants no evidence or execution authority. */
+  allocation?: {
+    reserveBytes(bytes: number): { release(): void };
+    /** Share existing immutable input custody, when this owner recognizes it. */
+    borrow?(value: object): { release(): void } | undefined;
+    retain(value: object, reservation: { release(): void }): void;
+  };
 }
 
 export interface JudgeRequest extends RequestControl {
