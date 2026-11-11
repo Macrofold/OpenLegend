@@ -518,13 +518,13 @@ pub enum NativeDanger {
             deserialize_with = "deserialize_present_option",
             skip_serializing_if = "Option::is_none"
         )]
-        lost_at: Option<f64>,
+        inside_avoidance: Option<bool>,
         #[serde(
             default,
             deserialize_with = "deserialize_present_option",
             skip_serializing_if = "Option::is_none"
         )]
-        inside_avoidance: Option<bool>,
+        lost_at: Option<f64>,
     },
     Region {
         source: RegionSource,

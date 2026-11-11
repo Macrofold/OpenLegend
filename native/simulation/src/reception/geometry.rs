@@ -138,6 +138,7 @@ pub struct ReceivedGeometryFeature {
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
+        serialize_with = "crate::received::serialize_geometry_recording",
         skip_serializing_if = "Option::is_none"
     )]
     pub recording: Option<TemporalCurrentGroupCheckpoint>,
@@ -156,6 +157,7 @@ pub struct GeometryFragment {
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
+        serialize_with = "crate::received::serialize_geometry_recording",
         skip_serializing_if = "Option::is_none"
     )]
     pub recording: Option<TemporalCurrentGroupCheckpoint>,

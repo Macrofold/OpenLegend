@@ -57,6 +57,7 @@ pub use metadata::*;
 pub mod values;
 pub use record::*;
 mod checkpoint;
+pub(crate) use checkpoint::serialize_geometry_recording;
 mod support;
 pub use support::{TemporalSupportCapsule, TemporalSupportCollection, TemporalSupportRecord};
 mod install;

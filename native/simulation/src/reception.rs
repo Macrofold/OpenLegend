@@ -1213,6 +1213,25 @@ pub(crate) fn serialize_original_fact_option<S: serde::Serializer>(
 ) -> Result<S::Ok, S::Error> {
     fact.as_ref().map(original_fact_view).serialize(serializer)
 }
+/// Borrow the actual factory views without allocating another proof graph.
+pub(crate) struct OriginalFacts<'a>(&'a [ObservationFactKey]);
+impl serde::Serialize for OriginalFacts<'_> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.collect_seq(self.0.iter().map(original_fact_view))
+    }
+}
+pub(crate) fn serialize_original_facts<S: serde::Serializer>(
+    facts: &[ObservationFactKey],
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    OriginalFacts(facts).serialize(serializer)
+}
+pub(crate) fn serialize_original_facts_option<S: serde::Serializer>(
+    facts: &Option<Vec<ObservationFactKey>>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    facts.as_deref().map(OriginalFacts).serialize(serializer)
+}
 pub(crate) fn original_fact_json(
     fact: &ObservationFactKey,
 ) -> Result<String, crate::received::ReceivedError> {

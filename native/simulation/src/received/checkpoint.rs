@@ -2,7 +2,7 @@
 //! It retains last admitted values and secured terminal bytes, not a second
 //! received proof graph or a promise to record content that was refused.
 
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, ser::SerializeStruct};
 
 use crate::reception::{CurrentReceivedPart, EvidenceFamily, EvidenceSource, ObserverLife};
 use crate::values::{deserialize_safe_integer, is_safe_record_id};
@@ -33,7 +33,7 @@ fn deserialize_refused_at<'de, D: Deserializer<'de>>(
     Ok(Some([bytes.0, count.0]))
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct TemporalCurrentGroupCheckpoint {
     pub epoch: String,
@@ -52,6 +52,56 @@ pub struct TemporalCurrentGroupCheckpoint {
     )]
     pub refused_at: Option<[u64; 2]>,
     pub gap: bool,
+}
+
+impl Serialize for TemporalCurrentGroupCheckpoint {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.serialize_source(&self.last_source, serializer)
+    }
+}
+impl TemporalCurrentGroupCheckpoint {
+    fn serialize_source<S: Serializer, T: Serialize>(
+        &self,
+        source: T,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error> {
+        let mut output = serializer.serialize_struct(
+            "TemporalCurrentGroupCheckpoint",
+            8 + usize::from(self.refused_at.is_some()),
+        )?;
+        output.serialize_field("epoch", &self.epoch)?;
+        output.serialize_field("members", &self.members)?;
+        output.serialize_field("content", &self.content)?;
+        output.serialize_field("lastSource", &source)?;
+        output.serialize_field("lastAt", &self.last_at)?;
+        output.serialize_field("lastMeasurementRevision", &self.last_measurement_revision)?;
+        output.serialize_field("terminalBytes", &self.terminal_bytes)?;
+        output.serialize_field("gap", &self.gap)?;
+        if let Some(refused) = &self.refused_at {
+            output.serialize_field("refusedAt", refused)?;
+        }
+        output.end()
+    }
+}
+struct GeometryRecording<'a>(&'a TemporalCurrentGroupCheckpoint);
+impl Serialize for GeometryRecording<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        // Geometry receives contributionFactKey().source; ordinary current
+        // body checkpoints retain their different native-exposure DTO order.
+        self.0.serialize_source(
+            crate::reception::original_source_view(&self.0.last_source),
+            serializer,
+        )
+    }
+}
+pub(crate) fn serialize_geometry_recording<S: Serializer>(
+    recording: &Option<TemporalCurrentGroupCheckpoint>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    recording
+        .as_ref()
+        .map(GeometryRecording)
+        .serialize(serializer)
 }
 
 impl TemporalCurrentGroupCheckpoint {

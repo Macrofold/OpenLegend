@@ -1842,21 +1842,31 @@ export class NativeNpcDirector {
     generation: string,
     dispatched: boolean,
   ): Promise<boolean> {
-    const read = await this.service.captureNpcIntake(actorId, 0);
     try {
-      if (
-        read.facts.semantic?.discovery !== 'reserved' ||
-        read.facts.semantic.reservation !== reservation
-      )
-        return true;
-    } finally {
-      read.release();
+      const read = await this.service.captureNpcIntake(actorId, 0);
+      try {
+        if (
+          read.facts.semantic?.discovery !== 'reserved' ||
+          read.facts.semantic.reservation !== reservation
+        )
+          return true;
+      } finally {
+        read.release();
+      }
+      return await this.service.changeNpcIntake(actorId, generation, {
+        type: 'settle-discovery',
+        reservation,
+        dispatched,
+      });
+    } catch (error) {
+      if (dispatched || !(error instanceof OverloadError)) throw error;
+      // A transport's protected save barrier can temporarily defer this
+      // optional cleanup. Recover the saved reservation through its existing
+      // receipt-aware owner instead of turning admission pressure into a
+      // permanent storage failure. This never repeats model dispatch.
+      if (generation === this.service.generation) this.discoveryRecovery.add(actorId);
+      return false;
     }
-    return this.service.changeNpcIntake(actorId, generation, {
-      type: 'settle-discovery',
-      reservation,
-      dispatched,
-    });
   }
   /** Recover only actual saved reservations. A durable dispatch intent spends
    * the permission; an unsubmitted orphan is released without a paid retry. */
@@ -1928,7 +1938,11 @@ export class NativeNpcDirector {
     const config = this.service.config;
     if (this.stopped || config.budgetUsd <= 0 || !(config.macrofoldKey || config.jevKey)) return;
     return this.admission(async () => {
-      void this.maintenance.tick(this.runs.size > 0).catch((error) => this.service.fail(error));
+      void this.maintenance.tick(this.runs.size > 0).catch((error: unknown) => {
+        // Protected gameplay work can defer optional maintenance admission;
+        // only an actual preparation/storage failure stops the world writer.
+        if (!(error instanceof OverloadError)) this.service.fail(error);
+      });
       if (this.generation !== this.service.generation) {
         this.work.clear();
         this.dirty.clear();

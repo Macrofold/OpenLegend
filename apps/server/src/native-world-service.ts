@@ -3856,6 +3856,9 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       this.projection.run(async () => {
         for (let attempt = 0; ; attempt++) {
           const context = await this.lane.run(async () => {
+            // A protected candidate can own mutable records while its SQL wait
+            // leaves this lane free. Defer before any accepted-state native read.
+            this.assertAdmission(false, false);
             if (this.restoring) throw new ViewChangedError();
             this.assertScope(scope);
             const captured = await NativePlayerCapture.capture(
@@ -4059,8 +4062,9 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       // ownership; no withdrawal exists in this accepted physical family.
       withdrawals: [],
       publishIfPermitted: (ids, complete, current) =>
-        this.lane.run(() =>
-          capture.publishIfPermitted(
+        this.lane.run(() => {
+          this.assertAdmission(false, false);
+          return capture.publishIfPermitted(
             ids,
             complete,
             () => ({ paused: this.paused, controlling: this.currentScope(scope, 'play', true) }),
@@ -4073,8 +4077,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                 actorId: scope.actorId,
               }) &&
               current(),
-          ),
-        ),
+          );
+        }),
       release: () => {
         try {
           capture.release();
@@ -4088,6 +4092,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
 
   async previewPausedStop(scope: RequestScope): Promise<{ ok: boolean; message: string }> {
     return this.lane.run(async () => {
+      this.assertAdmission(false, false);
       this.assertScope(scope);
       const command = {
         id: randomUUID(),

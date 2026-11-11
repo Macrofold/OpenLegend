@@ -148,6 +148,7 @@ pub struct AttentionRelationWitness {
         skip_serializing_if = "Option::is_none"
     )]
     pub drop_lower: Option<f64>,
+    #[serde(serialize_with = "crate::reception::serialize_original_facts")]
     pub proof: Vec<ObservationFactKey>,
 }
 
@@ -171,6 +172,8 @@ pub struct AttentionRelationLatch {
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub generation: u64,
     pub active: bool,
+    // Source creates revision first, then receives newest and entering proof.
+    pub revision: String,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -180,16 +183,17 @@ pub struct AttentionRelationLatch {
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub entry_proof: Option<Vec<ObservationFactKey>>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
+        serialize_with = "crate::reception::serialize_original_facts_option",
         skip_serializing_if = "Option::is_none"
     )]
     pub newest_proof: Option<Vec<ObservationFactKey>>,
-    pub revision: String,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        serialize_with = "crate::reception::serialize_original_facts_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub entry_proof: Option<Vec<ObservationFactKey>>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
