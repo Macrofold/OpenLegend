@@ -241,9 +241,9 @@ async function loadOptionalView<T extends object>(
 ): Promise<void> {
   let selected: T | undefined;
   try {
-    // These operational tables have single-statement snapshots and no live
-    // gameplay overlay. Keep their actual transfer/parse owner independent of
-    // the player cut, whose view may complete before these reads settle.
+    // These operational tables need no live gameplay overlay. Keep their
+    // fixed SQL transfer/parse owner independent of the player cut, whose
+    // view may complete before these reads settle.
     await withoutNativeConsumerScope(() =>
       withNativeSqlPreparation(capacity, db, async () => {
         selected = copyNativeProduct(capacity, await load());

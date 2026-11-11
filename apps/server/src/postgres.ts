@@ -297,6 +297,7 @@ export class PostgresDatabase implements SqlDatabase {
     const queuedAt = beginTiming();
     const explicitCut = this.explicitReadCut.getStore();
     const actor = this.actorReadScope.getStore();
+    const admitted = this.transferAdmission.getStore() !== undefined;
     const liveCuts =
       explicitCut ?? (snapshot || liveTables ? this.liveReadCuts?.(actor) : undefined);
     return this.readLane.run(async () => {
@@ -310,13 +311,14 @@ export class PostgresDatabase implements SqlDatabase {
       await this.readReady;
       if (
         snapshot ||
+        admitted ||
         explicitCut ||
         (liveTables &&
           (liveCuts?.cuts.length || (personalHistory && liveCuts?.historyEligibility?.size)))
       )
         return this.inTransaction(this.reader, true, operation, liveCuts, !!explicitCut, actor);
-      // A single SELECT already has an atomic PostgreSQL snapshot. It needs neither
-      // a writer slot nor BEGIN/COMMIT; explicit multi-query reads still use both.
+      // One ordinary SELECT already has an atomic PostgreSQL snapshot. An
+      // admitted read needs a fixed snapshot across its sizing and body queries.
       const scope = {
         active: true,
         client: this.reader,
