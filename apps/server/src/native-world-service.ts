@@ -2500,6 +2500,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             this.durableReceipts.clear();
             this.speechActors.clear();
             clearNativePlayerViewCache(this);
+            this.store.history.clearNativeNarrationReads();
             this.inventoryReads.clear();
             this.profiles.clear();
             for (const release of this.sourceEdits.values()) release();
@@ -4381,6 +4382,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       this.profiles.release();
       this.speechActors.clear();
       clearNativePlayerViewCache(this);
+      this.store.history.clearNativeNarrationReads();
       this.inventoryReads.release();
       this.inputs.release();
       for (const release of this.sourceEdits.values()) release();

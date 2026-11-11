@@ -35,13 +35,11 @@ import {
   type NativePlayerViewDefinitions,
 } from './native-view.js';
 import {
-  memoizer,
   permittedPlayerJobs,
   playerSpeechJobIds,
   playerUsageFallback,
   projectPlayerAi,
   projectPlayerJobs,
-  type PlayerAsyncCache,
   type PlayerAsyncOwner,
   ViewChangedError,
 } from './player-view-async.js';
@@ -142,7 +140,8 @@ type OptionalView = {
   loading: boolean;
   retired: boolean;
 };
-type NativePlayerCache = Pick<PlayerAsyncCache, 'scope' | 'values'> & {
+type NativePlayerCache = {
+  readonly scope: RequestScope;
   readonly optional: Partial<Record<OptionalSection, OptionalView>>;
   readonly allocation: NativeWorldConsumer;
   loading: number;
@@ -172,7 +171,6 @@ function retireCache(cache: NativePlayerCache): void {
     if (entry) retireOptional(entry);
     delete cache.optional[key];
   }
-  cache.values.clear();
   finishCache(cache);
 }
 
@@ -217,7 +215,6 @@ function scopedCache(
     }
     cache = {
       scope: { ...scope },
-      values: new Map(),
       optional: {},
       allocation,
       loading: 0,
@@ -351,6 +348,7 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
   let replyWorkspace: NativeWorldConsumer | undefined;
   let cache: NativePlayerCache | undefined;
   let borrowed: object[] | undefined;
+  let narrationBorrow: object | undefined;
   try {
     // Small closures and scratch carriers remain live while the caller awaits
     // the real prepared fields. The returned view has separate custody.
@@ -379,7 +377,6 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
     viewOutput = capacity.reserveConsumerBytes(bound.output);
     const sections = (cache = scopedCache(owner, scope, capacity));
     const sources = (borrowed = [] as object[]);
-    const memo = memoizer(sections);
     const owned = await nativePlayerOwnedView(
       self,
       perception,
@@ -438,14 +435,14 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
     const timing = { at: self.at, maxAgeSeconds: definitions.recentMaxAgeSeconds };
     const narratorRevision = store.history?.bannerRevisionAt(self.worldId, scope.accountId, timing);
     if (sections.retired) throw new ViewChangedError();
-    const narration = await memo(
-      'narrator',
-      [narratorRevision, host.historyEpoch],
-      () =>
-        store.history?.latestNarration(self.worldId, scope.accountId, timing) ??
-        Promise.resolve({ status: 'current' as const, item: null }),
-    );
+    const narration = (await store.history?.latestNarration(
+      self.worldId,
+      scope.accountId,
+      timing,
+      capacity,
+    )) ?? { status: 'current' as const, item: null };
     if (narration.status === 'stale') throw new ViewChangedError();
+    if (narration.item) narrationBorrow = narration;
     const assetAuthorityGeneration = owner.lifecycle().assetAuthorityGeneration;
     const presentationRelease = await owner.presentationReleaseFor(scope);
     const eventBound = nativePlayerEventViewBytes(selectedEvents, conversation, definitions);
@@ -525,7 +522,14 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
         eventOutput = undefined;
         request.publish(
           bytes,
-          retainNativeSources(finalView, bytes, profile, inputScope, ...sources),
+          retainNativeSources(
+            finalView,
+            bytes,
+            profile,
+            inputScope,
+            ...sources,
+            ...(narrationBorrow ? [narrationBorrow] : []),
+          ),
         );
         return bytes;
       },
@@ -547,6 +551,7 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
   } finally {
     read?.release();
     releaseNativeProduct(profile);
+    if (narrationBorrow) releaseNativeProduct(narrationBorrow);
     if (borrowed) for (const source of borrowed) releaseNativeProduct(source);
     if (cache) {
       cache.readers--;

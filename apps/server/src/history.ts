@@ -6,6 +6,7 @@ import {
 } from '@open-legend/domain';
 import { hasMemory } from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
+import type { NativeWorld, NativeWorldConsumer } from '@open-legend/native-simulation';
 import {
   initializePerceivedEventIndexes,
   readPerceivedEvents,
@@ -62,6 +63,17 @@ import type {
   WorldEventSourceReference,
 } from '@open-legend/protocol';
 import type { SqlDatabase } from './store.js';
+import {
+  copyNativeProduct,
+  releaseNativeProduct,
+  retainNativeSources,
+  withoutNativeConsumerScope,
+} from './native-consumer.js';
+import {
+  fundNativeSourceWorkspace,
+  parseSourceJson,
+  withNativeSqlPreparation,
+} from './native-source-preparation.js';
 
 export const HISTORY_TABLES = [
   'story_banners',
@@ -231,6 +243,49 @@ function publicTranscriptItem(
     })),
   };
 }
+
+type NarrationRead = { status: 'current'; item: TranscriptItem | null } | { status: 'stale' };
+type NarrationCapacity = Pick<NativeWorld, 'reserveConsumerBytes' | 'reserveConsumerJson'>;
+interface NarrationReadEntry {
+  revision: number;
+  privacy: unknown;
+  eligibility: number | undefined;
+  result?: TranscriptItem | null;
+  oldestTemporalAt?: number;
+  value: Promise<NarrationRead>;
+  native?: {
+    capacity: NarrationCapacity;
+    allocation: NativeWorldConsumer;
+    pending: boolean;
+    retired: boolean;
+    borrowers: number;
+    result?: NarrationRead;
+  };
+}
+
+function fundNativeBanner(item: TranscriptItem, worldId: string, actorId: string): void {
+  let workspace = 6 * 256;
+  for (const key in item) if (Object.hasOwn(item, key)) workspace += 3 * 64;
+  let aliasUnits = 0;
+  for (const impact of item.impacts) {
+    workspace += 256 + 2 * 64;
+    for (const key in impact) if (Object.hasOwn(impact, key)) workspace += 64;
+    if (impact.entityId !== actorId) {
+      workspace += 2 * 64;
+      // The observer tuple is JSON-encoded twice. A lone UTF-16 unit can
+      // become a six-character escape on the first pass, then escape its slash.
+      aliasUnits = Math.max(
+        aliasUnits,
+        7 * (worldId.length + actorId.length) +
+          6 * (impact.sourceId.length + impact.entityId.length),
+      );
+    }
+  }
+  // Impact aliases are generated serially. Retain their final hex separately
+  // above, and admit the largest live tuple, HMAC input and temporary digest.
+  fundNativeSourceWorkspace(workspace + 8 * (aliasUnits + 64));
+}
+
 /** Scoped durable history repository. Only the application binds owner and perspective. */
 export class HistoryRepository {
   constructor(
@@ -291,17 +346,41 @@ export class HistoryRepository {
   private notifiedRevision = 0;
   private narrationRevision = 0;
   private readonly bannerSourceEpochs = new Map<string, number>();
-  private readonly narrationReads = new Map<
-    string,
-    {
-      revision: number;
-      privacy: unknown;
-      eligibility: number | undefined;
-      result?: TranscriptItem | null;
-      oldestTemporalAt?: number;
-      value: Promise<{ status: 'current'; item: TranscriptItem | null } | { status: 'stale' }>;
+  private readonly narrationReads = new Map<string, NarrationReadEntry>();
+  private finishNarrationRead(entry: NarrationReadEntry): void {
+    const native = entry.native;
+    if (!native || !native.retired || native.pending || native.borrowers) return;
+    if (native.result) releaseNativeProduct(native.result);
+    native.result = undefined;
+    native.allocation.release();
+  }
+  private removeNarrationRead(key: string): void {
+    const entry = this.narrationReads.get(key);
+    this.narrationReads.delete(key);
+    this.retireNarrationRead(entry);
+  }
+  private retireNarrationRead(entry: NarrationReadEntry | undefined): void {
+    if (entry?.native) {
+      entry.native.retired = true;
+      this.finishNarrationRead(entry);
     }
-  >();
+  }
+  clearNativeNarrationReads(): void {
+    for (const [key, entry] of this.narrationReads) if (entry.native) this.removeNarrationRead(key);
+  }
+  private async borrowNativeNarration(entry: NarrationReadEntry): Promise<NarrationRead> {
+    const native = entry.native!;
+    native.borrowers++;
+    try {
+      const value = await entry.value;
+      return value.status === 'current' && value.item
+        ? retainNativeSources({ ...value }, value)
+        : value;
+    } finally {
+      native.borrowers--;
+      this.finishNarrationRead(entry);
+    }
+  }
   /** Expire only this principal's cached positive at its source deadline. The
    * player's view memo must observe this before reusing a banner; ordinary clock
    * changes never create SQL, cache scans or a global invalidation. */
@@ -322,7 +401,7 @@ export class HistoryRepository {
         (entry.oldestTemporalAt !== undefined &&
           !temporalRecentAt(entry.oldestTemporalAt, timing.at, timing.maxAgeSeconds)))
     ) {
-      this.narrationReads.delete(key);
+      this.removeNarrationRead(key);
       this.bannerSourceEpochs.set(actorId, (this.bannerSourceEpochs.get(actorId) ?? 0) + 1);
     }
     return `${this.narrationRevision}:${this.bannerSourceEpochs.get(actorId) ?? 0}`;
@@ -332,7 +411,7 @@ export class HistoryRepository {
     // changes expire views; ordinary movement and unrelated telemetry do not.
     const publish = () => {
       this.narrationRevision++;
-      this.narrationReads.clear();
+      for (const key of this.narrationReads.keys()) this.removeNarrationRead(key);
       this.bannerSourceEpochs.clear();
     };
     if (this.db.afterCommit) this.db.afterCommit(publish);
@@ -394,7 +473,7 @@ export class HistoryRepository {
         continue;
       // Known absence cannot become a banner through removing a source. Preserve
       // it while expiring only positive/in-flight results for the affected actor.
-      this.narrationReads.delete(key);
+      this.removeNarrationRead(key);
     }
   }
 
@@ -1297,7 +1376,8 @@ export class HistoryRepository {
     worldId: string,
     ownerId: string,
     timing?: { at: number; maxAgeSeconds: number },
-  ): Promise<{ status: 'current'; item: TranscriptItem | null } | { status: 'stale' }> {
+    capacity?: NarrationCapacity,
+  ): Promise<NarrationRead> {
     const principal = this.principals.find((p) => p.ownerId === ownerId);
     if (!principal) throw new Error('Unsupported history principal.');
     if (timing) this.bannerRevisionAt(worldId, ownerId, timing);
@@ -1310,14 +1390,13 @@ export class HistoryRepository {
     const cached = cacheable ? this.narrationReads.get(key) : undefined;
     if (
       cached?.revision === revision &&
+      cached.native?.capacity === capacity &&
       (cached.oldestTemporalAt === undefined || !!timing) &&
       (cached.result === null || (cached.privacy === privacy && cached.eligibility === eligibility))
     )
-      return cached.value;
+      return cached.native ? this.borrowNativeNarration(cached) : cached.value;
     let oldestTemporalAt: number | undefined;
-    const value = (async (): Promise<
-      { status: 'current'; item: TranscriptItem | null } | { status: 'stale' }
-    > => {
+    const readValue = async (): Promise<NarrationRead> => {
       const read = () =>
         this.db
           .prepare(
@@ -1342,48 +1421,66 @@ export class HistoryRepository {
         eligibility !== this.bannerSourceEpochs.get(principal.actorId)
       )
         return { status: 'stale' };
+      if (
+        !row ||
+        row['available'] !== true ||
+        (oldestTemporalAt !== undefined &&
+          timing &&
+          !temporalRecentAt(oldestTemporalAt, timing.at, timing.maxAgeSeconds))
+      )
+        return { status: 'current', item: null };
+      const item = parseSourceJson<TranscriptItem>(String(row['payload']));
+      if (capacity) fundNativeBanner(item, worldId, principal.actorId);
       return {
         status: 'current',
-        item:
-          row &&
-          row['available'] === true &&
-          (oldestTemporalAt === undefined ||
-            !timing ||
-            temporalRecentAt(oldestTemporalAt, timing.at, timing.maxAgeSeconds))
-            ? publicTranscriptItem(
-                projectNarration(JSON.parse(String(row['payload'])) as TranscriptItem),
-                worldId,
-                principal.actorId,
-              )
-            : null,
+        item: publicTranscriptItem(projectNarration(item), worldId, principal.actorId),
       };
-    })();
+    };
+    const native: NarrationReadEntry['native'] = capacity && {
+      capacity,
+      allocation: capacity.reserveConsumerBytes(12 * 256 + 2 * key.length),
+      pending: true,
+      retired: !cacheable,
+      borrowers: 0,
+    };
+    const value = native
+      ? withoutNativeConsumerScope(() =>
+          withNativeSqlPreparation(native.capacity, this.db, async () => {
+            const selected = await readValue();
+            return selected.status === 'current' && selected.item
+              ? copyNativeProduct(native.capacity, selected)
+              : selected;
+          }),
+        )
+      : readValue();
+    if (!cacheable && !native) return value;
+    const entry: NarrationReadEntry = { revision, privacy, eligibility, value, native };
     if (cacheable) {
       if (this.narrationReads.size >= 256)
-        this.narrationReads.delete(this.narrationReads.keys().next().value!);
-      const entry: {
-        revision: number;
-        privacy: unknown;
-        eligibility: number | undefined;
-        result?: TranscriptItem | null;
-        oldestTemporalAt?: number;
-        value: typeof value;
-      } = { revision, privacy, eligibility, value };
+        this.removeNarrationRead(this.narrationReads.keys().next().value!);
+      this.retireNarrationRead(this.narrationReads.get(key));
       this.narrationReads.set(key, entry);
-      // A transient storage failure must not poison a reusable absent-banner result.
-      void value.then(
-        (result) => {
-          if (result.status === 'current') {
-            entry.result = result.item;
-            entry.oldestTemporalAt = oldestTemporalAt;
-          }
-        },
-        () => {
-          if (this.narrationReads.get(key) === entry) this.narrationReads.delete(key);
-        },
-      );
     }
-    return value;
+    // A transient storage failure must not poison a reusable absent-banner result.
+    void value.then(
+      (result) => {
+        if (result.status === 'current') {
+          entry.result = result.item;
+          entry.oldestTemporalAt = oldestTemporalAt;
+        }
+        if (native) {
+          native.result = result;
+          native.pending = false;
+          this.finishNarrationRead(entry);
+        }
+      },
+      () => {
+        if (native) native.pending = false;
+        if (this.narrationReads.get(key) === entry) this.removeNarrationRead(key);
+        else this.finishNarrationRead(entry);
+      },
+    );
+    return native ? this.borrowNativeNarration(entry) : value;
   }
 
   async perceivedEvents(
