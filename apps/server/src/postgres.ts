@@ -10,6 +10,7 @@ import pg from 'pg';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { SqlDatabase } from './store.js';
 import { nativeSourceColumnParsers } from './native-source-preparation.js';
+import { createNativeConsumerScope } from './native-consumer.js';
 import {
   LiveReadOverlay,
   LiveReadRevisionError,
@@ -27,6 +28,7 @@ interface TransactionScope {
   committed: (() => void)[];
   rolledBack: (() => void)[];
   liveCuts?: LiveReadCuts;
+  liveCutOwner?: ReturnType<typeof createNativeConsumerScope>;
   liveHead?: Record<string, unknown>;
   liveOverlays?: Map<string, LiveReadOverlay>;
   exactCut?: boolean;
@@ -298,40 +300,62 @@ export class PostgresDatabase implements SqlDatabase {
     const explicitCut = this.explicitReadCut.getStore();
     const actor = this.actorReadScope.getStore();
     const admitted = this.transferAdmission.getStore() !== undefined;
-    const liveCuts =
-      explicitCut ?? (snapshot || liveTables ? this.liveReadCuts?.(actor) : undefined);
-    return this.readLane.run(async () => {
-      endTiming('postgres.readWait', queuedAt);
-      this.readReady ??= this.ready.then(async () => {
-        await this.reader.connect();
-        await this.reader.query(
-          'SET search_path TO open_legend; SET default_transaction_read_only=on',
-        );
-      });
-      await this.readReady;
-      if (
-        snapshot ||
-        admitted ||
-        explicitCut ||
-        (liveTables &&
-          (liveCuts?.cuts.length || (personalHistory && liveCuts?.historyEligibility?.size)))
-      )
-        return this.inTransaction(this.reader, true, operation, liveCuts, !!explicitCut, actor);
-      // One ordinary SELECT already has an atomic PostgreSQL snapshot. An
-      // admitted read needs a fixed snapshot across its sizing and body queries.
-      const scope = {
-        active: true,
-        client: this.reader,
-        readOnly: true,
-        committed: [] as (() => void)[],
-        rolledBack: [] as (() => void)[],
-      };
-      try {
-        return await this.transactionContext.run(scope, operation);
-      } finally {
-        scope.active = false;
-      }
-    });
+    // A provider can create a new native pending-cut snapshot. Only that
+    // capture and its retry belong to this read, while explicit caller cuts
+    // and independently admitted SQL results keep their own lifetimes.
+    const liveCutOwner =
+      !explicitCut && (snapshot || liveTables) && this.liveReadCuts
+        ? createNativeConsumerScope()
+        : undefined;
+    let liveCuts: LiveReadCuts | undefined;
+    try {
+      liveCuts = explicitCut ?? liveCutOwner?.runSync(() => this.liveReadCuts?.(actor));
+    } catch (error) {
+      liveCutOwner?.dispose();
+      throw error;
+    }
+    return this.readLane
+      .run(async () => {
+        endTiming('postgres.readWait', queuedAt);
+        this.readReady ??= this.ready.then(async () => {
+          await this.reader.connect();
+          await this.reader.query(
+            'SET search_path TO open_legend; SET default_transaction_read_only=on',
+          );
+        });
+        await this.readReady;
+        if (
+          snapshot ||
+          admitted ||
+          explicitCut ||
+          (liveTables &&
+            (liveCuts?.cuts.length || (personalHistory && liveCuts?.historyEligibility?.size)))
+        )
+          return this.inTransaction(
+            this.reader,
+            true,
+            operation,
+            liveCuts,
+            !!explicitCut,
+            actor,
+            liveCutOwner,
+          );
+        // One ordinary SELECT already has an atomic PostgreSQL snapshot. An
+        // admitted read needs a fixed snapshot across its sizing and body queries.
+        const scope = {
+          active: true,
+          client: this.reader,
+          readOnly: true,
+          committed: [] as (() => void)[],
+          rolledBack: [] as (() => void)[],
+        };
+        try {
+          return await this.transactionContext.run(scope, operation);
+        } finally {
+          scope.active = false;
+        }
+      })
+      .finally(() => liveCutOwner?.dispose());
   }
   private inTransaction<T>(
     client: pg.Client,
@@ -340,6 +364,7 @@ export class PostgresDatabase implements SqlDatabase {
     liveCuts?: LiveReadCuts,
     exactCut = false,
     actor?: { worldId: string; actorId: string },
+    liveCutOwner?: ReturnType<typeof createNativeConsumerScope>,
   ): Promise<T> {
     const scope: TransactionScope = {
       active: true,
@@ -348,6 +373,7 @@ export class PostgresDatabase implements SqlDatabase {
       committed: [] as (() => void)[],
       rolledBack: [] as (() => void)[],
       liveCuts,
+      liveCutOwner,
       exactCut,
       actor,
     };
@@ -467,7 +493,9 @@ export class PostgresDatabase implements SqlDatabase {
     } catch (error) {
       const latest =
         !scope.exactCut && error instanceof LiveReadRevisionError
-          ? this.liveReadCuts?.(scope.actor)
+          ? scope.liveCutOwner
+            ? scope.liveCutOwner.runSync(() => this.liveReadCuts?.(scope.actor))
+            : this.liveReadCuts?.(scope.actor)
           : undefined;
       if (
         !latest ||

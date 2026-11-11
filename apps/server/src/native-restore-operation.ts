@@ -436,8 +436,9 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
     let result: NativeRestorePreparation | undefined;
     let publication: NativeRestorePublication | undefined;
     let history: Awaited<ReturnType<typeof nativeRestoredHistory>> | undefined;
+    let initial: NativeRestoreProjection['installation'] | undefined;
     try {
-      const initial = decodeNativeProduct<NativeRestoreProjection['installation']>(
+      initial = decodeNativeProduct<NativeRestoreProjection['installation']>(
         await world.installation(),
       );
       definitions = await NativeDefinitionCapture.capture(world);
@@ -539,6 +540,8 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
       await geometry?.close();
       definitions?.release();
       throw error;
+    } finally {
+      if (initial) releaseNativeProduct(initial);
     }
   }
 
