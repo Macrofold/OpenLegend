@@ -1,14 +1,16 @@
 # MetaHuman foundation proof — feature specification
 
-| Status  | Current progress                                                                                    | Last updated |
-| ------- | --------------------------------------------------------------------------------------------------- | ------------ |
-| Blocked | The private Main pilot is complete; broader foundation work awaits the masculine coverage decision. | 2026-11-10   |
+| Status      | Current progress                                                                  | Last updated |
+| ----------- | --------------------------------------------------------------------------------- | ------------ |
+| In progress | The private Main pilot is complete and the Peacock transfer proof is in progress. | 2026-11-11   |
 
 ## Purpose
 
 Determine whether MetaHuman can supply anatomically believable **complete heads and bodies** for OpenLegend, and whether a small exported kit can create further characters without running MetaHuman. This is a bounded feasibility proof: make one adjustment toward the approved athletic references, correct elbows, qualify one premade garment across representative shapes, then test one existing natural-looking hair-card style in the actual renderer. Perfect production anatomy, hair polishing and hairstyle-library expansion are outside this proof. An Unreal screenshot or functioning slider alone is insufficient.
 
 Authorization covers private foundation evaluation and MHP07's one-NPC integration in existing Main. The normal art workflow, production selections and existing character pilot retain their own unfinished obligations. [Execution evidence](../verification/metahuman-foundation-poc.md) distinguishes native/source checks from actual-game qualification.
+
+The separate [Peacock transfer proof](../maintainers/art/metahuman-poc.md#peacock-anatomy-controls) tests one adult masculine family, three physique controls and one premade shirt over its full stated envelope. It preserves the installed Peacock and requires its own source, moving fit and private delivery evidence. The [shared authoring contract](people-from-parts-authoring-contract.md#character-control-model) owns the wider character system.
 
 ## Product decisions and relationship to the existing pilot
 

@@ -1,8 +1,8 @@
 # MetaHuman foundation proof — technical design
 
-| Status  | Current progress                                                                                    | Last updated |
-| ------- | --------------------------------------------------------------------------------------------------- | ------------ |
-| Blocked | The private Main pilot is complete; broader foundation work awaits the masculine coverage decision. | 2026-11-10   |
+| Status      | Current progress                                                                  | Last updated |
+| ----------- | --------------------------------------------------------------------------------- | ------------ |
+| In progress | The private Main pilot is complete and the Peacock transfer proof is in progress. | 2026-11-11   |
 
 ## 1. Experiment and dependency boundary
 
@@ -11,6 +11,8 @@
 Use MetaHuman to supply the difficult anatomical foundation. Use Blender and the existing character-family machinery to prepare and evaluate a bounded set of shapes. Do not reconstruct MetaHuman's full identity solver or embed its editor, DNA evaluator or cloud services in the game. Exported assets retain their licenses even when the software is no longer required at runtime.
 
 Implementation covers the private foundation proof and MHP07's bounded integration into existing Main. Preserve the existing pilot and other tasks' work. MetaHuman authoring stays in its isolated external project; game creation and movement use only the exported kit and normal game machinery. Do not replace Main, reset its database, create another scene/viewer, change production selection, generate new art or edit the regular art skill for this unit.
+
+[MHP10](../maintainers/art/metahuman-poc.md#peacock-anatomy-controls) separately qualifies full donor shape transfer, three exported control fields with their necessary corrections, and one existing premade shirt using the shared compiler, recipe, fit and game actor. The selected canonical vertex order and UVs remain the authoring correspondence. The private study must verify the actual transfer, garment and motion before broader reuse.
 
 The [feature specification](metahuman-foundation-poc-feature-spec.md) owns the replacement recommendation and user-visible scope. Current [people authoring](people-from-parts-authoring-contract.md), [world appearance](../worlds/base/people-appearance.md), [art direction](../../art-direction/decisions.md#current-direction-at-a-glance) and [storage](../asset-workflow.md) remain authoritative outside this experiment.
 
