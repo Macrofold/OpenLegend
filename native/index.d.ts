@@ -499,6 +499,11 @@ export interface NativeGeometryQueries {
   standingColumns: Array<NativeStandingColumnsQuery>;
 }
 
+export interface NativeHorizontalDirection {
+  x: number;
+  z: number;
+}
+
 export declare function nativeHostStatus(): HostStatus | null;
 
 export interface NativeNavigationAnswer {
@@ -605,14 +610,10 @@ export interface NativeSightSweepQuery {
   pointTo: NativePoint;
 }
 
-export interface NativeStandingColumn {
-  x: number;
-  z: number;
-}
-
 export interface NativeStandingColumnsQuery {
-  columns: Array<NativeStandingColumn>;
-  referenceY: number;
+  origin: NativePoint;
+  angle: number;
+  distances: Array<number>;
   body: NativeBodyProfile;
 }
 
@@ -624,6 +625,7 @@ export interface NativeStandingQuery {
 export interface NativeStandingSelection {
   index: number;
   point: NativeSurfacePoint;
+  direction: NativeHorizontalDirection;
 }
 
 export interface NativeSupportQuery {

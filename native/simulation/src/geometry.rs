@@ -372,7 +372,7 @@ pub struct BodySweepAnswer {
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub struct StandingColumn {
+pub struct HorizontalDirection {
     pub x: f64,
     pub z: f64,
 }
@@ -380,8 +380,9 @@ pub struct StandingColumn {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct StandingColumnsQuery {
-    pub columns: Vec<StandingColumn>,
-    pub reference_y: f64,
+    pub origin: Point,
+    pub angle: f64,
+    pub distances: Vec<f64>,
     pub body: BodyProfile,
 }
 
@@ -391,6 +392,7 @@ pub struct StandingSelection {
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub index: u64,
     pub point: SurfacePoint,
+    pub direction: HorizontalDirection,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -730,11 +732,21 @@ impl GeometryQueries {
                     result.as_ref().is_some_and(|result| {
                         match usize::try_from(result.index)
                             .ok()
-                            .and_then(|index| query.columns.get(index))
+                            .and_then(|index| query.distances.get(index))
                         {
-                            Some(column) => {
-                                result.point.x != column.x
-                                    || result.point.z != column.z
+                            Some(distance) => {
+                                // The current physical provider supplies Source's trig
+                                // rounding. Reject a different ray and require its exact
+                                // selected column, including after an external wait.
+                                let direction = result.direction;
+                                let rounding = 4.0 * f64::EPSILON;
+                                !query.angle.is_finite()
+                                    || !(-1.0..=1.0).contains(&direction.x)
+                                    || !(-1.0..=1.0).contains(&direction.z)
+                                    || (direction.x - query.angle.cos()).abs() > rounding
+                                    || (direction.z - query.angle.sin()).abs() > rounding
+                                    || result.point.x != query.origin.x + direction.x * distance
+                                    || result.point.z != query.origin.z + direction.z * distance
                                     || !point(&result.point)
                             }
                             None => true,

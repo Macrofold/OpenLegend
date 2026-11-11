@@ -3,9 +3,7 @@
 //! chooses the animal's bearing and how far to shorten along it.
 
 use crate::execution::{ExecutionError, PhysicalMutation};
-use crate::geometry::{
-    GeometryAnswers, GeometryBinding, GeometryQueries, StandingColumn, StandingColumnsQuery,
-};
+use crate::geometry::{GeometryAnswers, GeometryBinding, GeometryQueries, StandingColumnsQuery};
 use crate::host::{ByteBudget, ByteReservation};
 use crate::native_response::{RefugeCandidate, profile_key};
 use crate::simulation::{InstalledWorld, PhysicalState};
@@ -62,7 +60,7 @@ impl RefugeCandidateBatch {
         }
         let capacity = bound as usize;
         let bytes = capacity
-            .checked_mul(size_of::<StandingColumn>())
+            .checked_mul(size_of::<f64>())
             .and_then(|bytes| {
                 bytes.checked_add(
                     size_of::<Self>()
@@ -77,19 +75,16 @@ impl RefugeCandidateBatch {
         let reservation = budget
             .reserve(bytes)
             .map_err(|_| ExecutionError::Capacity)?;
-        let mut columns = Vec::new();
-        columns
+        let mut distances = Vec::new();
+        distances
             .try_reserve_exact(capacity)
             .map_err(|_| ExecutionError::Capacity)?;
         let mut distance = search.distance;
         while distance >= advance {
-            if columns.len() == capacity {
+            if distances.len() == capacity {
                 return Err(ExecutionError::Capacity);
             }
-            columns.push(StandingColumn {
-                x: proposal.origin.x + angle.cos() * distance,
-                z: proposal.origin.z + angle.sin() * distance,
-            });
+            distances.push(distance);
             let next = distance - advance;
             if next == distance {
                 return Err(ExecutionError::Invariant);
@@ -102,8 +97,9 @@ impl RefugeCandidateBatch {
             .try_reserve_exact(1)
             .map_err(|_| ExecutionError::Capacity)?;
         queries.standing_columns.push(StandingColumnsQuery {
-            columns,
-            reference_y: proposal.origin.y,
+            origin: proposal.origin.point(),
+            angle,
+            distances,
             body: animal.body_profile().into_owned(),
         });
         Ok(Self {

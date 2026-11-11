@@ -238,7 +238,9 @@ export class NativeGeometryAllocation implements GeometryPreparationAllocation {
         queries.standingColumns.length;
       array(s, slots, 14);
       point(s, queries.support.length + queries.standingColumns.length, this.surfaceUnits);
-      object(s, 2, queries.standingColumns.length + queries.bodySweeps.length);
+      object(s, 2, queries.bodySweeps.length);
+      object(s, 3, queries.standingColumns.length);
+      object(s, 2, queries.standingColumns.length); // Selected horizontal direction.
       const map = this.mapValue!;
       const linePoints = 2 * map.spatial.surfaces.length;
       object(s, 1, queries.surfaceLines.length);

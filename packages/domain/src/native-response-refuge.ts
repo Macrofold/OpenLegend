@@ -6,7 +6,7 @@ import {
   quadraticRoots,
   sightSweep,
   SPATIAL_LIMITS,
-  standingSurfaceAt,
+  standingSurfaceAlong,
   traceSupportLine,
   type RoutePlan,
   type SurfacePoint,
@@ -131,15 +131,14 @@ export function nativeRefugeCandidate(
     search.bearing + (search.side * profile.candidates.angles[search.attempted]! * Math.PI) / 180;
   const map = spatialMap(world),
     body = bodyProfile(observer),
-    from = proposal.origin;
+    from = proposal.origin,
+    direction = { x: Math.cos(angle), z: Math.sin(angle) };
   for (
     let distance = search.distance;
     distance >= profile.candidates.minimumAdvance;
     distance -= profile.candidates.minimumAdvance
   ) {
-    const x = from.x + Math.cos(angle) * distance,
-      z = from.z + Math.sin(angle) * distance;
-    const point = standingSurfaceAt(map, x, z, from.y, body);
+    const point = standingSurfaceAlong(map, from, direction, distance, body);
     if (point) return { id: String(search.attempted), point };
   }
   return undefined;

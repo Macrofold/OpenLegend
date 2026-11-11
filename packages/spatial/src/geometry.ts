@@ -83,6 +83,23 @@ export function standingSurfaceAt(
     )
     .find((point) => canStand(map, point, body));
 }
+
+/** Probe a support column at an already selected distance along a horizontal ray. */
+export function standingSurfaceAlong(
+  map: SpatialMap,
+  origin: WorldPoint,
+  direction: Pick<WorldPoint, 'x' | 'z'>,
+  distance: number,
+  body: BodyProfile,
+): SurfacePoint | undefined {
+  return standingSurfaceAt(
+    map,
+    origin.x + direction.x * distance,
+    origin.z + direction.z * distance,
+    origin.y,
+    body,
+  );
+}
 export function surfaceContains(
   surface: WalkableSurface,
   point: Pick<WorldPoint, 'x' | 'z'>,

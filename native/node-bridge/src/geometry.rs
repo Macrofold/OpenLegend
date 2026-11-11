@@ -184,16 +184,17 @@ pub struct NativeBodySweepAnswer {
     pub tested: f64,
 }
 
-#[napi(object, object_from_js = false)]
-pub struct NativeStandingColumn {
+#[napi(object)]
+pub struct NativeHorizontalDirection {
     pub x: f64,
     pub z: f64,
 }
 
 #[napi(object, object_from_js = false)]
 pub struct NativeStandingColumnsQuery {
-    pub columns: Vec<NativeStandingColumn>,
-    pub reference_y: f64,
+    pub origin: NativePoint,
+    pub angle: f64,
+    pub distances: Vec<f64>,
     pub body: NativeBodyProfile,
 }
 
@@ -201,6 +202,7 @@ pub struct NativeStandingColumnsQuery {
 pub struct NativeStandingSelection {
     pub index: f64,
     pub point: NativeSurfacePoint,
+    pub direction: NativeHorizontalDirection,
 }
 
 #[napi(object)]
@@ -568,15 +570,9 @@ impl TryFrom<core::GeometryQueries> for NativeGeometryQueries {
                 .standing_columns
                 .into_iter()
                 .map(|value| NativeStandingColumnsQuery {
-                    columns: value
-                        .columns
-                        .into_iter()
-                        .map(|value| NativeStandingColumn {
-                            x: value.x,
-                            z: value.z,
-                        })
-                        .collect(),
-                    reference_y: value.reference_y,
+                    origin: value.origin.into(),
+                    angle: value.angle,
+                    distances: value.distances,
                     body: value.body.into(),
                 })
                 .collect(),
@@ -669,6 +665,10 @@ impl TryFrom<NativeGeometryAnswers> for core::GeometryAnswers {
                             Ok(core::StandingSelection {
                                 index: safe_integer(value.index)?,
                                 point: value.point.into(),
+                                direction: core::HorizontalDirection {
+                                    x: value.direction.x,
+                                    z: value.direction.z,
+                                },
                             })
                         })
                         .transpose()

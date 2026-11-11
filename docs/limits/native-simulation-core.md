@@ -1,6 +1,6 @@
 # Native simulation core limits and experiment boundaries
 
-**Status: Staged implementation in progress; native gameplay/adoption remains unqualified.** The host foundation implements pool/job and byte-reservation primitives below; complete candidate/capture/save integration is still pending. [Feature](../projects/native-simulation-core-feature-spec.md), [technical design](../projects/native-simulation-core-tech-design.md) and [NSC tasks](../maintainers/native-simulation-core.md) own purpose, mechanics and delivery. Existing physical, attention, memory, admission, saving and provider limits retain their current owners.
+**Status: Staged implementation in progress; native gameplay/adoption remains unqualified.** The selected host runs the connected candidate, capture and save path. Complete allocation coverage, exact joined comparisons and the performance decision remain open. [Feature](../projects/native-simulation-core-feature-spec.md), [technical design](../projects/native-simulation-core-tech-design.md) and [NSC tasks](../maintainers/native-simulation-core.md) own purpose, mechanics and delivery. Existing physical, attention, memory, admission, saving and provider limits retain their current owners.
 
 ## NSC-L01 — Proof and adoption scope
 

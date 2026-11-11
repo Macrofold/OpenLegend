@@ -19,7 +19,7 @@ import {
   queryPhysicalFeatures,
   sightSweep,
   soundTransmission,
-  standingSurfaceAt,
+  standingSurfaceAlong,
   traceSupportLine,
   validateSpatialMap,
   walkSurfaceLine,
@@ -116,16 +116,16 @@ export class NativeGeometryProviders {
       );
       const standing = queries.standing.map(({ point, body }) => canStand(this.map, point, body));
       const standingColumns = queries.standingColumns.map((query) => {
-        for (let index = 0; index < query.columns.length; index++) {
-          const column = query.columns[index]!;
-          const point = standingSurfaceAt(
+        const direction = { x: Math.cos(query.angle), z: Math.sin(query.angle) };
+        for (let index = 0; index < query.distances.length; index++) {
+          const point = standingSurfaceAlong(
             this.map,
-            column.x,
-            column.z,
-            query.referenceY,
+            query.origin,
+            direction,
+            query.distances[index]!,
             query.body,
           );
-          if (point) return { index, point };
+          if (point) return { index, point, direction };
         }
         return null;
       });
