@@ -113,8 +113,8 @@ impl NativeWorldConsolidationTicket {
         dispatch(env, &self.host, Some(Arc::clone(&world)), move |_cancel| {
             let session = world
                 .session
-                .try_lock()
-                .map_err(|_| failure("native writer is busy"))?;
+                .lock()
+                .map_err(|_| failure("native writer is poisoned"))?;
             let session = session
                 .as_ref()
                 .ok_or_else(|| failure("native writer stopped"))?;

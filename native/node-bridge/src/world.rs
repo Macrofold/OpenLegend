@@ -527,10 +527,14 @@ impl NativeWorld {
         let world = Arc::clone(&self.world);
         let budget = self.host.bytes.clone();
         dispatch(env, &self.host, Some(Arc::clone(&world)), move |cancel| {
+            // Admitted worker work serializes with brief Node currentness reads.
+            // Only synchronous Node callers must refuse rather than block; this
+            // guard ends before any provider/SQL wait or deferred resolution.
+            // docs/projects/native-simulation-core-tech-design.md#61-stable-consumer-products-without-a-permanent-immutable-world-graph
             let mut owner = world
                 .session
-                .try_lock()
-                .map_err(|_| failure("native writer is busy or poisoned"))?;
+                .lock()
+                .map_err(|_| failure("native writer is poisoned"))?;
             let session = owner
                 .as_mut()
                 .ok_or_else(|| failure("native writer is stopped"))?;
@@ -671,8 +675,8 @@ impl NativeWorld {
         dispatch(env, &self.host, Some(Arc::clone(&world)), move |_cancel| {
             let mut owner = world
                 .session
-                .try_lock()
-                .map_err(|_| failure("native writer is busy or poisoned"))?;
+                .lock()
+                .map_err(|_| failure("native writer is poisoned"))?;
             owner
                 .as_ref()
                 .ok_or_else(|| failure("native writer already stopped"))?

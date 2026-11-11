@@ -305,8 +305,8 @@ impl NativeWorldMaintenanceRead {
             }
             let session = world
                 .session
-                .try_lock()
-                .map_err(|_| failure("maintenance writer is busy"))?;
+                .lock()
+                .map_err(|_| failure("maintenance writer is poisoned"))?;
             let session = session
                 .as_ref()
                 .ok_or_else(|| failure("maintenance writer stopped"))?;
