@@ -47,7 +47,7 @@ Ordinary player commands return their complete live in-memory result before Post
 
 The prior combined journey's forced-flush latency numbers remain valid for that fixture. Its first command waits for another command, eight game steps and intervening view requests before the explicit flush. Those values do not establish ordinary live-response or normal background-save tails. Recovery replacement and its known full reinsertion remain separate from steady gameplay database costs. The prior complete-walk count (Source 23/Native 10, same 69 prepared records/42,681 bytes) remains measured evidence; actual redundant queries/captures in the steady window require attribution before changing their owners.
 
-Task budget remains $10 total; prior conservative controller accounting is $2.935426 (not an invoice), external Jev/provider cost $0 cumulative. The previous worker is stopped; a new managed claim is required for measurements.
+Task budget remains $10 total; prior conservative controller accounting is $2.935426 (not an invoice), external Jev/provider cost $0 cumulative. Current campaign `60e03100-2e3f-4bfb-8211-359b78fb8063` owns retained slot 2, generation 226/run `3b2e4b3f1c82c9ae38b8763edab60ce3`, with an admitted $0.443624 hold under the existing $8 controller allocation. It pins source `e6652c6c66000a14c5a33b16660f487ab144a2fe`, Native `5868943c…`, immutable normal input6 and held input2. Actual hardware is the standard m7i.xlarge, four vCPU/16 GiB, in `us-east-2a`. Release, artifact collection and stop settlement remain open while it executes. No second experiment may overlap this claim.
 
 ## Component verification record
 
