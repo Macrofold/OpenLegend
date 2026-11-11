@@ -1,0 +1,69 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "peacock-full-transfer-study",
+    "revisionId": "full-transfer-20261111-fb55aefc887b",
+    "manifestSha256": "2b36afb1895c90ac440de03918dda1580fb4ea25503d3e5bac273b2e869edd67"
+  },
+  "files": {
+    "studies/peacock-full-transfer/full-transfer-20261111-fb55aefc887b/compiled.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4df76183917878e2f4fee8abbe9cc67ef31ff8b0ca2841a4c2ffac52e89deac2",
+      "bytes": 13010680,
+      "mediaType": "application/json"
+    },
+    "studies/peacock-full-transfer/full-transfer-20261111-fb55aefc887b/definition.json": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "7c8634e4604300f86d0c3b0fb3dc3da0a821952fe59befb77c4db3c61ad1987b",
+      "bytes": 4281,
+      "mediaType": "application/json"
+    },
+    "renders/pbr-preview02/textures/skin-color-atlas.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "c6432f925f8c940afc21c433ddf3b651cab6130b8acd1e61026170d5e852aa7c",
+      "bytes": 2304965,
+      "mediaType": "image/png"
+    },
+    "renders/pbr-preview02/textures/skin-normal-atlas-opengl.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "b2431d1f231b5b34123a30d2e47409356e1e004562809daac31d336d5ad6a7d5",
+      "bytes": 3568266,
+      "mediaType": "image/png"
+    },
+    "renders/pbr-preview02/textures/eyes-color.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "19c0d16eed17d841cee0bbd5f4a2664ccabc813c149673cf18c68d19af7d8f0c",
+      "bytes": 338899,
+      "mediaType": "image/png"
+    },
+    "renders/pbr-preview02/textures/teeth-color.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f1637df8e3401f6d7d1c1d57663fbae21913eb863a9e9a7fa95178fa434853ce",
+      "bytes": 355116,
+      "mediaType": "image/png"
+    },
+    "renders/pbr-preview02/textures/teeth-normal-opengl.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "4303044a6c7ff8bf60491f9a109a19a8da5022c37fca43b4458c93a0fd510217",
+      "bytes": 463958,
+      "mediaType": "image/png"
+    },
+    "renders/pbr-preview02/textures/eyelashes-color-alpha.png": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "f485dcee6c772014352bcdd155bb5233124a27c748c7ccfba9c0ee6342f198c7",
+      "bytes": 66255,
+      "mediaType": "image/png"
+    }
+  }
+}

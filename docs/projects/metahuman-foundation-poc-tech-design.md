@@ -1,8 +1,8 @@
 # MetaHuman foundation proof — technical design
 
-| Status      | Current progress                                                                  | Last updated |
-| ----------- | --------------------------------------------------------------------------------- | ------------ |
-| In progress | The private Main pilot is complete and the Peacock transfer proof is in progress. | 2026-11-11   |
+| Status  | Current progress                                                                            | Last updated |
+| ------- | ------------------------------------------------------------------------------------------- | ------------ |
+| Blocked | The Peacock transfer and controls are demonstrated. Shirt fit and natural Walk remain open. | 2026-11-11   |
 
 ## 1. Experiment and dependency boundary
 

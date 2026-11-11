@@ -1,0 +1,20 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "peacock-full-body-transfer",
+    "revisionId": "full-body-transfer-20261111-1effe05a4484",
+    "manifestSha256": "5cfb9b99250a10ec7159b0f1f61ca122f34a327f0af4c37286a5504652dbd331"
+  },
+  "files": {
+    "Peacock-full-body-transfer-review.zip": {
+      "boundary": "art-library",
+      "accessDomain": "curated-private",
+      "sha256": "1effe05a448433b7ebb16b948b02825888bc6dadbb2c2a89e18e61d035de3479",
+      "bytes": 473528963,
+      "mediaType": "application/zip"
+    }
+  }
+}
