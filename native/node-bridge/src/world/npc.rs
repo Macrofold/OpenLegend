@@ -329,6 +329,17 @@ impl NativeWorldNpcRead {
         if let Some(payload) = self.inner.payload.upgrade() {
             payload.store(false, Ordering::Release);
         }
+        // A completed read owns no writer candidate. Drop its immutable payload
+        // without admitting another root job while the writer is occupied.
+        if let Ok(mut owner) = self.inner.read.try_lock() {
+            if owner
+                .as_ref()
+                .is_none_or(|read| read.candidate_key().is_none())
+            {
+                *owner = None;
+                return;
+            }
+        }
         let Some(world) = self.world.upgrade() else {
             if let Ok(mut read) = self.inner.read.try_lock() {
                 *read = None;
