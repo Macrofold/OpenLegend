@@ -1,8 +1,8 @@
 # Native simulation core and adaptive execution
 
-| Status      | Current progress                                                                                   | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Requalifying 128 MiB: held consumers, sustained multiplayer gameplay, recovery and E2 remain open. | 2026-11-11   |
+| Status      | Current progress                                                                                     | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Controlled gameplay and damaged recovery pass; ordinary-play capacity, AWS costs and E2 remain open. | 2026-11-11   |
 
 ## 1. Purpose and selected direction
 

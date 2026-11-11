@@ -364,7 +364,7 @@ pub fn current_partition_with_check<'a>(
     selected.revision = revision;
     selected.confirmed_revision = partition.confirmed_revision.max(confirmation.revision);
     selected.received_order = confirmation.received_order;
-    selected.frame_ref = Some(confirmation.frame_ref.clone());
+    selected.set_frame(confirmation.frame_ref.clone());
     selected.times = CurrentGroupTimes::pack(times);
     Ok(Cow::Owned(selected))
 }

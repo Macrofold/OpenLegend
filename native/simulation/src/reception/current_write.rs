@@ -167,7 +167,7 @@ fn stamp(partition: &mut CurrentPartPartition, received: &CurrentReceptionStamp)
     partition.confirmed_revision = received.confirmed_revision;
     // Spreading an omitted optional stamp field preserves the held frame.
     if let Some(frame) = &received.frame_ref {
-        partition.frame_ref = Some(frame.clone());
+        partition.set_frame(frame.clone());
     }
 }
 fn track(group: &CurrentReceivedGroup) -> (&str, &str, u64, &str) {
@@ -386,7 +386,7 @@ fn current_facet_set_in_batch(
                     stamp(&mut next, received);
                     next.times = CurrentGroupTimes::pack(input.times);
                     next.revision = input.revision;
-                    next.availability = input.availability.clone();
+                    next.set_availability(input.availability.clone());
                     Ok((!same_partition(&next, partition)?).then_some(next))
                 },
             )? {
@@ -542,6 +542,7 @@ fn current_facet_set_in_batch(
                 received_order: received.received_order,
                 confirmed_revision: received.confirmed_revision,
                 frame_ref: received.frame_ref.clone(),
+                frame_ref_order: CurrentFrameOrder::Stamp,
             });
         }
         let existing = groups
@@ -951,10 +952,10 @@ fn current_set_unchecked_in_batch(
                                 return Ok(None);
                             }
                             let mut next = effective.into_owned();
-                            next.availability = Some(CurrentAvailability {
+                            next.set_availability(Some(CurrentAvailability {
                                 state: CurrentAvailabilityState::Unchecked,
                                 at,
-                            });
+                            }));
                             Ok(Some(next))
                         },
                     )? {

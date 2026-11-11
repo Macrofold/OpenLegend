@@ -1,8 +1,8 @@
 # Native simulation core — technical design
 
-| Status      | Current progress                                                                                   | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Requalifying 128 MiB: held consumers, sustained multiplayer gameplay, recovery and E2 remain open. | 2026-11-11   |
+| Status      | Current progress                                                                                     | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Controlled gameplay and damaged recovery pass; ordinary-play capacity, AWS costs and E2 remain open. | 2026-11-11   |
 
 Companion: [feature specification](native-simulation-core-feature-spec.md). Tasks live only in [NSC](../maintainers/native-simulation-core.md); [limits](../limits/native-simulation-core.md) owns experimental operating defaults. This is an accepted design direction with conditional adoption, not a claim that Rust or distributed execution is installed.
 

@@ -405,33 +405,188 @@ pub enum CurrentCheck {
     None,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum CurrentFrameOrder {
+    Stamp,
+    BeforeAvailability,
+    AfterAvailability,
+}
+#[derive(Clone, Debug, PartialEq)]
 pub struct CurrentPartPartition {
-    // Source creates partitions by spreading the reception stamp first. The
-    // metadata TEXT codec retains that exact current-format field order.
     pub received_at: f64,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
     pub received_order: u64,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
     pub confirmed_revision: u64,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
     pub frame_ref: Option<ReceivedValueReference>,
     pub members: Vec<(String, CurrentReceivedPart)>,
     pub times: CurrentGroupTimes,
-    #[serde(deserialize_with = "deserialize_safe_integer")]
     pub revision: u64,
     pub check: CurrentCheck,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
     pub availability: Option<CurrentAvailability>,
+    // Source spreads the original reception stamp before the member fields.
+    // A first later visual check appends its previously absent frame instead.
+    // This is codec history only; it grants no observation or fresh check.
+    pub(super) frame_ref_order: CurrentFrameOrder,
+}
+impl CurrentPartPartition {
+    pub(super) fn set_frame(&mut self, frame: ReceivedValueReference) {
+        if self.frame_ref.is_none() {
+            self.frame_ref_order = if self.availability.is_some() {
+                CurrentFrameOrder::AfterAvailability
+            } else {
+                CurrentFrameOrder::BeforeAvailability
+            };
+        }
+        self.frame_ref = Some(frame);
+    }
+    pub(super) fn set_availability(&mut self, availability: Option<CurrentAvailability>) {
+        // Source appends a newly added/re-added availability after a late frame.
+        if self.availability.is_none()
+            && availability.is_some()
+            && self.frame_ref.is_some()
+            && self.frame_ref_order != CurrentFrameOrder::Stamp
+        {
+            self.frame_ref_order = CurrentFrameOrder::BeforeAvailability;
+        }
+        self.availability = availability;
+    }
+}
+impl Serialize for CurrentPartPartition {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeStruct;
+        let mut output = serializer.serialize_struct(
+            "CurrentPartPartition",
+            7 + usize::from(self.frame_ref.is_some()) + usize::from(self.availability.is_some()),
+        )?;
+        output.serialize_field("receivedAt", &self.received_at)?;
+        output.serialize_field("receivedOrder", &self.received_order)?;
+        output.serialize_field("confirmedRevision", &self.confirmed_revision)?;
+        if self.frame_ref_order == CurrentFrameOrder::Stamp
+            && let Some(frame) = &self.frame_ref
+        {
+            output.serialize_field("frameRef", frame)?;
+        }
+        output.serialize_field("members", &self.members)?;
+        output.serialize_field("times", &self.times)?;
+        output.serialize_field("revision", &self.revision)?;
+        output.serialize_field("check", &self.check)?;
+        if self.frame_ref_order == CurrentFrameOrder::BeforeAvailability
+            && let Some(frame) = &self.frame_ref
+        {
+            output.serialize_field("frameRef", frame)?;
+        }
+        if let Some(availability) = &self.availability {
+            output.serialize_field("availability", availability)?;
+        }
+        if self.frame_ref_order == CurrentFrameOrder::AfterAvailability
+            && let Some(frame) = &self.frame_ref
+        {
+            output.serialize_field("frameRef", frame)?;
+        }
+        output.end()
+    }
+}
+impl<'de> Deserialize<'de> for CurrentPartPartition {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        #[derive(Deserialize)]
+        #[serde(field_identifier, rename_all = "camelCase")]
+        enum Field {
+            ReceivedAt,
+            ReceivedOrder,
+            ConfirmedRevision,
+            FrameRef,
+            Members,
+            Times,
+            Revision,
+            Check,
+            Availability,
+        }
+        #[derive(Deserialize)]
+        struct Ordinal(#[serde(deserialize_with = "deserialize_safe_integer")] u64);
+        struct PartitionVisitor;
+        impl<'de> serde::de::Visitor<'de> for PartitionVisitor {
+            type Value = CurrentPartPartition;
+            fn expecting(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.write_str("a current reception partition")
+            }
+            fn visit_map<A: serde::de::MapAccess<'de>>(
+                self,
+                mut map: A,
+            ) -> Result<Self::Value, A::Error> {
+                use serde::de::Error;
+                let (
+                    mut received_at,
+                    mut received_order,
+                    mut confirmed_revision,
+                    mut frame_ref,
+                    mut members,
+                    mut times,
+                    mut revision,
+                    mut check,
+                    mut availability,
+                ) = (None, None, None, None, None, None, None, None, None);
+                let mut frame_ref_order = CurrentFrameOrder::Stamp;
+                macro_rules! read {
+                    ($slot:ident, $name:literal, $value:expr) => {{
+                        if $slot.is_some() {
+                            return Err(A::Error::duplicate_field($name));
+                        }
+                        $slot = Some($value);
+                    }};
+                }
+                while let Some(field) = map.next_key::<Field>()? {
+                    match field {
+                        Field::ReceivedAt => read!(received_at, "receivedAt", map.next_value()?),
+                        Field::ReceivedOrder => read!(
+                            received_order,
+                            "receivedOrder",
+                            map.next_value::<Ordinal>()?.0
+                        ),
+                        Field::ConfirmedRevision => read!(
+                            confirmed_revision,
+                            "confirmedRevision",
+                            map.next_value::<Ordinal>()?.0
+                        ),
+                        Field::FrameRef => {
+                            // Preserve the actual current-format factory order on restore.
+                            frame_ref_order = if members.is_none() {
+                                CurrentFrameOrder::Stamp
+                            } else if availability.is_some() {
+                                CurrentFrameOrder::AfterAvailability
+                            } else {
+                                CurrentFrameOrder::BeforeAvailability
+                            };
+                            read!(frame_ref, "frameRef", map.next_value()?);
+                        }
+                        Field::Members => read!(members, "members", map.next_value()?),
+                        Field::Times => read!(times, "times", map.next_value()?),
+                        Field::Revision => {
+                            read!(revision, "revision", map.next_value::<Ordinal>()?.0)
+                        }
+                        Field::Check => read!(check, "check", map.next_value()?),
+                        Field::Availability => {
+                            read!(availability, "availability", map.next_value()?)
+                        }
+                    }
+                }
+                Ok(CurrentPartPartition {
+                    received_at: received_at
+                        .ok_or_else(|| A::Error::missing_field("receivedAt"))?,
+                    received_order: received_order
+                        .ok_or_else(|| A::Error::missing_field("receivedOrder"))?,
+                    confirmed_revision: confirmed_revision
+                        .ok_or_else(|| A::Error::missing_field("confirmedRevision"))?,
+                    frame_ref,
+                    members: members.ok_or_else(|| A::Error::missing_field("members"))?,
+                    times: times.ok_or_else(|| A::Error::missing_field("times"))?,
+                    revision: revision.ok_or_else(|| A::Error::missing_field("revision"))?,
+                    check: check.ok_or_else(|| A::Error::missing_field("check"))?,
+                    availability,
+                    frame_ref_order,
+                })
+            }
+        }
+        deserializer.deserialize_map(PartitionVisitor)
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

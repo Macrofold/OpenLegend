@@ -902,77 +902,89 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   }
 
   async publishReplyPreview(scope: RequestScope, publish: () => void): Promise<boolean> {
-    return this.lane.run(async () => {
-      this.assertScope(scope, 'play', true);
-      const gate = await this.world.replyPreviewPublication(
-        scope.accountId,
-        scope.actorId,
-        this.acceptedCut,
-      );
-      try {
+    return this.lane.run(
+      async () => {
         this.assertScope(scope, 'play', true);
-        if (!gate?.isCurrent()) return false;
-        // Serialization and the synchronous HTTP queue handoff occur while
-        // native acceptance is fenced; no provider/SQL await holds this lease.
-        publish();
-        return true;
-      } finally {
-        gate?.release();
-      }
-    });
+        const gate = await this.world.replyPreviewPublication(
+          scope.accountId,
+          scope.actorId,
+          this.acceptedCut,
+        );
+        try {
+          this.assertScope(scope, 'play', true);
+          if (!gate?.isCurrent()) return false;
+          // Serialization and the synchronous HTTP queue handoff occur while
+          // native acceptance is fenced; no provider/SQL await holds this lease.
+          publish();
+          return true;
+        } finally {
+          gate?.release();
+        }
+      },
+      this.lane.waitMs,
+      false,
+      // Optional private delivery consumes an accepted cut; it must not force
+      // another elapsed prefix merely to supply its asynchronous read.
+      true,
+    );
   }
 
   async finishReplyPreview(read: NativeWorldReplyPreviewRead) {
-    return this.lane.run(() =>
-      withNativeConsumerScope(async () => {
-        let question: NativeGeometryQueries | undefined;
-        try {
-          const encoded = await read.question();
-          if (encoded) question = decodeNativeProduct<NativeGeometryQueries>(encoded);
-          const result = question
-            ? await (async () => {
-                const answers = await this.geometry.compute(question!);
-                try {
-                  return await withNativeJsonInput(this.world, answers, (bytes) =>
-                    this.world.finishReplyPreview(read, bytes),
-                  );
-                } finally {
-                  releaseNativeProduct(answers);
-                }
-              })()
-            : await this.world.finishReplyPreview(read, Buffer.alloc(0));
-          const facts = decodeNativeProduct<{
-            worldId: string;
-            generation: string;
-            acceptedCut: number;
-            eligible: boolean;
-            clear: boolean;
-            speakerNameData?: Named;
-          }>(result);
-          // Article-free formatting only trims/removes a leading article. Fund
-          // both temporary strings and the DTO before constructing either.
-          const formatting = this.world.reserveConsumerBytes(
-            decisionObjectBytes(7) + 2 * decisionTextBytes(facts.speakerNameData?.name.length ?? 0),
-          );
+    return this.lane.run(
+      () =>
+        withNativeConsumerScope(async () => {
+          let question: NativeGeometryQueries | undefined;
           try {
-            return retainNativeProduct(
-              copyNativeProduct(this.world, {
-                worldId: facts.worldId,
-                generation: facts.generation,
-                acceptedCut: facts.acceptedCut,
-                eligible: facts.eligible,
-                clear: facts.clear,
-                speaker: facts.speakerNameData ? namePhrase(facts.speakerNameData, 'none') : '',
-              }),
+            const encoded = await read.question();
+            if (encoded) question = decodeNativeProduct<NativeGeometryQueries>(encoded);
+            const result = question
+              ? await (async () => {
+                  const answers = await this.geometry.compute(question!);
+                  try {
+                    return await withNativeJsonInput(this.world, answers, (bytes) =>
+                      this.world.finishReplyPreview(read, bytes),
+                    );
+                  } finally {
+                    releaseNativeProduct(answers);
+                  }
+                })()
+              : await this.world.finishReplyPreview(read, Buffer.alloc(0));
+            const facts = decodeNativeProduct<{
+              worldId: string;
+              generation: string;
+              acceptedCut: number;
+              eligible: boolean;
+              clear: boolean;
+              speakerNameData?: Named;
+            }>(result);
+            // Article-free formatting only trims/removes a leading article. Fund
+            // both temporary strings and the DTO before constructing either.
+            const formatting = this.world.reserveConsumerBytes(
+              decisionObjectBytes(7) +
+                2 * decisionTextBytes(facts.speakerNameData?.name.length ?? 0),
             );
+            try {
+              return retainNativeProduct(
+                copyNativeProduct(this.world, {
+                  worldId: facts.worldId,
+                  generation: facts.generation,
+                  acceptedCut: facts.acceptedCut,
+                  eligible: facts.eligible,
+                  clear: facts.clear,
+                  speaker: facts.speakerNameData ? namePhrase(facts.speakerNameData, 'none') : '',
+                }),
+              );
+            } finally {
+              formatting.release();
+            }
           } finally {
-            formatting.release();
+            if (question) releaseNativeProduct(question);
+            read.release();
           }
-        } finally {
-          if (question) releaseNativeProduct(question);
-          read.release();
-        }
-      }),
+        }),
+      this.lane.waitMs,
+      false,
+      true,
     );
   }
 

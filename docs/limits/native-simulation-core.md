@@ -1,6 +1,6 @@
 # Native simulation core limits and experiment boundaries
 
-**Status: Requalification under a provisional 128 MiB transient profile; no native adoption.** The prior 64 MiB candidate remains rejected. Ordinary connected gameplay and save/restore pass; full held-reply/repeated-cycle, steady-play and parallel qualification remains open. The unsuccessful ordered encoder stays removed. [Feature](../projects/native-simulation-core-feature-spec.md), [technical design](../projects/native-simulation-core-tech-design.md) and [NSC tasks](../maintainers/native-simulation-core.md) own purpose, mechanics and delivery. Existing physical, attention, memory, admission, saving and provider limits retain their current owners.
+**Status: Requalification under a provisional 128 MiB transient profile; no native adoption.** The prior 64 MiB candidate remains rejected. Controlled connected gameplay, held-reply/repeated-cycle and recovery comparisons pass. Ordinary-play capacity/cleanup, AWS memory/cost and parallel qualification remain open. The unsuccessful ordered encoder stays removed. [Feature](../projects/native-simulation-core-feature-spec.md), [technical design](../projects/native-simulation-core-tech-design.md) and [NSC tasks](../maintainers/native-simulation-core.md) own purpose, mechanics and delivery. Existing physical, attention, memory, admission, saving and provider limits retain their current owners.
 
 ## NSC-L01 — Proof and adoption scope
 

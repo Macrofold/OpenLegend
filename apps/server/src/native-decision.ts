@@ -222,6 +222,7 @@ async function prepareOwnedDecision(
   });
   const original = start.capture;
   const conversationOwner = createNativeConsumerScope();
+  const conversationPresentationOwner = createNativeConsumerScope();
   let current: NativeNpcCapture | undefined;
   let conversationCurrent: NativeNpcCapture | undefined;
   let ticket: NativeWorldNpcResponseTicket | undefined;
@@ -589,7 +590,7 @@ async function prepareOwnedDecision(
         if (!valid || !coverage) throw new Error('Selected speech or recall sources changed.');
         if (!(await historyCurrent())) throw new Error('Native decision sources changed.');
       });
-    const conversation = await conversationOwner.run(() =>
+    const projectedConversation = await conversationOwner.run(() =>
       buildNativeConversationContext({
         original,
         current: conversationCurrent!,
@@ -628,6 +629,50 @@ async function prepareOwnedDecision(
     );
     conversationCurrent.release();
     conversationCurrent = undefined;
+    const transferOwner = createNativeConsumerScope();
+    const conversation = (() => {
+      try {
+        const shared = projectedConversation.sharedExperiences;
+        const transfer = transferOwner.runSync(() =>
+          admitDecisionGraph(
+            service.world,
+            decisionObjectBytes(11) +
+              2 * decisionArrayBytes(shared.size) +
+              shared.size * (2 * decisionArrayBytes(2) + decisionObjectBytes(2)),
+            () => ({
+              lines: projectedConversation.lines,
+              experience: projectedConversation.experience,
+              evidenceIds: projectedConversation.evidenceIds,
+              sourceKeys: projectedConversation.sourceKeys,
+              entityIds: projectedConversation.entityIds,
+              awarenessSequence: projectedConversation.awarenessSequence,
+              diagnostics: projectedConversation.diagnostics,
+              // Preserve the selector's exact ordinal link into the copied
+              // experience array, rather than duplicating its shared object.
+              sharedExperiences: [...shared].map(
+                ([key, value]) => [key, { index: value.index, revision: value.revision }] as const,
+              ),
+              boundSources: validity.boundSources,
+              boundEntities: validity.boundEntities,
+              compactedSources: validity.usedCache?.value.sources,
+            }),
+          ),
+        );
+        return conversationPresentationOwner.runSync(() =>
+          copyNativeProduct(service.world, transfer),
+        );
+      } finally {
+        transferOwner.dispose();
+      }
+    })();
+    validity.boundSources = conversation.boundSources;
+    validity.boundEntities = conversation.boundEntities;
+    validity.usedCache = undefined;
+    compactedSources = conversation.compactedSources;
+    // Conversation formatting and any compaction provider have finished.
+    // Its independent selected output no longer borrows this earlier full
+    // actor read while later recall/actions prepare their own current cut.
+    conversationOwner.dispose();
     baseContext['conversation'] = conversation.lines;
     baseContext['experience'] = conversation.experience;
     const conversationKeys = new Set(conversation.sourceKeys);
@@ -918,7 +963,7 @@ async function prepareOwnedDecision(
       sharedExperiences.set(key, {
         index: 0,
         revision: value.revision,
-        experience: value.experience,
+        experience: conversation.experience[value.index]!,
       });
     format(() =>
       projectNativeDecisionContext(service.world, context, now, references.entityReferences),
@@ -942,21 +987,21 @@ async function prepareOwnedDecision(
         experience: projected[index]!,
       });
     }
-    // The actual request now owns the independently projected conversation
-    // text and experiences. Only selected proof keys and diagnostics escape.
+    // The final context now owns its projected text and experience records.
+    // Keep only the proof/diagnostic fields required by later query/higher
+    // consumers, ending the intermediate conversation presentation here.
     const retainedConversation = copyNativeProduct(service.world, {
       boundSources: validity.boundSources,
       boundEntities: validity.boundEntities,
-      compactedSources: validity.usedCache?.value.sources,
+      compactedSources,
       evidenceIds: conversation.evidenceIds,
       awarenessSequence: conversation.awarenessSequence,
       diagnostics: conversation.diagnostics,
     });
     validity.boundSources = retainedConversation.boundSources;
     validity.boundEntities = retainedConversation.boundEntities;
-    validity.usedCache = undefined;
     compactedSources = retainedConversation.compactedSources;
-    conversationOwner.dispose();
+    conversationPresentationOwner.dispose();
     let allOffers = fitActionCandidates(
       context,
       [...now.choiceDescriptions(service.definitions)],
@@ -1692,6 +1737,7 @@ async function prepareOwnedDecision(
     return prepared;
   } finally {
     conversationOwner.dispose();
+    conversationPresentationOwner.dispose();
     if (!completed) {
       routingOwner.dispose();
       formattingOwner.dispose();
