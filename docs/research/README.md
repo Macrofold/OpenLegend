@@ -4,6 +4,7 @@ Research informs decisions; it grants no implementation or spending authority. C
 
 - [Music and sound sourcing](audio/README.md): original score direction, AI and library licensing, studio practice, sound production, budgets and a bounded audition plan.
 - [Development-agent workflows](agent-workflows/README.md): sources, adoption rationale and unverified efficiency claims.
+- [Art-creation lessons needing design](art-production/lessons-needs-design.md): concept fidelity, mesh transfer, adjustable anatomy, garment fit, complete visual review and preservation; input to existing workflows, not automatic adoption.
 - [Gameplay and systems questions](gameplay-and-systems/README.md): scoped research questions retained from the former archive backlog, with current delivery owners.
 - [Player appreciation of game music](player-music-appreciation/README.md): player feedback, comparative cases, source evidence and limits; no selected music direction.
 
