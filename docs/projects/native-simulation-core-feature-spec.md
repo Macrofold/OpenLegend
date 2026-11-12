@@ -1,8 +1,8 @@
 # Native simulation core and adaptive execution
 
-| Status      | Current progress                                                                                                                | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Focused fixes pass; sustained Native play fails capacity and a held receiving repair is under verification before the decision. | 2026-11-12   |
+| Status      | Current progress                                                                                                                  | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Focused fixes and repaired held callers pass; AWS cost attribution is running before current resource and adoption qualification. | 2026-11-12   |
 
 ## 1. Purpose and selected direction
 

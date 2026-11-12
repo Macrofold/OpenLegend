@@ -1,8 +1,8 @@
 # Native simulation core — technical design
 
-| Status      | Current progress                                                                                                                | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Focused fixes pass; sustained Native play fails capacity and a held receiving repair is under verification before the decision. | 2026-11-12   |
+| Status      | Current progress                                                                                                                  | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Focused fixes and repaired held callers pass; AWS cost attribution is running before current resource and adoption qualification. | 2026-11-12   |
 
 Companion: [feature specification](native-simulation-core-feature-spec.md). Tasks live only in [NSC](../maintainers/native-simulation-core.md); [limits](../limits/native-simulation-core.md) owns experimental operating defaults. This is an accepted design direction with conditional adoption, not a claim that Rust or distributed execution is installed.
 
@@ -160,6 +160,8 @@ Ready jobs are bounded across the host, not multiplied by worlds × cells × wor
 Parallel candidates include geometry queries, path requests, different observers' acquisition calculations, independent status/rate calculations, selected context projection and changed-record encoding. Interacting body resolution, shared inventory transfers, outcome ordering and permission changes are not automatically independent. One subsystem must not be permanently pinned to one core. One actor must not become one OS thread.
 
 Reusing geometry does not share private evidence: a common calculation may answer a physical predicate, while separate receiver scopes still determine what was acquired. Conversely, do not duplicate a physical simulation for each observer. Capturing every actor merely because any actor changed would reproduce the original multiplicative cost.
+
+Scoped exposure preparation must retest changed people for their prior viewers even when both pending positions are outside the current spatial envelope. Otherwise merging unchanged roster entries can retain a departed person without current sensory support. Intersect existing selected observers’ visible rosters with pending source changes, funding the existing changed-person/detail sets before publication; missing or newly object-category sources still need removal/category reconciliation. This derived preparation grants no observation or detail by itself and drops on refusal without mutating canonical state.
 
 Some remaining work will be serial, memory-bandwidth-bound or I/O-bound. Report task scheduling, synchronization, copying and total CPU, not just worker utilization. More busy cores are not evidence of more useful progress.
 
