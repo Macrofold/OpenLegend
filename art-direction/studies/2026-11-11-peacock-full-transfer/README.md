@@ -2,7 +2,19 @@
 
 This private study evaluates the full usable [Meshy donor body and supplied sheet](../2026-11-11-peacock-meshy-conform/README.md) on the selected MetaHuman topology, rig and head. It uses the [previous filtered fit](../2026-11-11-peacock-muscle-definition/README.md) as a visual control. [MHP10](../../../docs/maintainers/art/metahuman-poc.md#peacock-anatomy-controls) owns acceptance. The [shared authoring contract](../../../docs/projects/people-from-parts-authoring-contract.md#character-control-model) owns the broader character system.
 
-## Transfer and body controls
+## Current local proof
+
+The approved body sheet governs the lower ribs, waist and pelvis where Meshy is narrower. At the reference recipe, lower-rib breadth is 28.34 cm versus 25.34 cm in the archived full transfer and a 28.41 cm projection from the artwork. Waist breadth is 27.37 cm versus 25.48 cm and a 27.14 cm projection. Reference stature, topology, UVs and rig stay fixed. The artwork's lowered profile arm and shorts obscure some contours; shoulder alignment and hidden seat anatomy remain uncertain. The deltoid, oblique, scapular and knee relief still read softer than the artwork.
+
+Body-only, coverage-only and combined views separate the sharp back ledge at the old shorts edge from the fuller body's lower-abdomen contour. The separate shorts reuse the original premade cut and preserve its inner hem return. The fullness targets round and soften the limbs as well as the torso. At fixed mass and definition, the measured forearm grows from 7.83 × 8.67 cm at 0% fullness to 8.03 × 9.09 cm at 50% and 8.29 × 9.58 cm at 100%, while its local relief softens. At fixed mass and fullness, calf width changes from 13.27 to 13.50 cm across the definition range while measured relief rises from 7.45 to 14.41 mm. The selected head stays in place; native captures check the smoother neck in neutral, turns and downward tilt.
+
+The seventh candidate has a six-angle renderer matrix at rest and raised arms for all 30 recipes, recordings of all 24 sweeps in both poses, and shared-actor recordings of Idle, Walk, Run and transitions across the matrix. The separate shirt removes and restores over full anatomy and separate shorts. The tenth candidate repairs overlapping underarm surfaces; both mesh levels pass orientation checks at all recipes and through the required sweeps. It has a separate renderer comparison at high mass and fullness. Neither candidate is accepted: the tenth still shows skin at the raised sleeve and an unnatural fold and inflated waist. The raw shirt, different skin weights and local fit adjustments do not supply a qualifying fit. The older clearance Walk retains forward elbow flexion but carries the arms visibly wide; the archived Kimodo alternative with corrected arm directions leaves intersections at the broad/full extreme. These are fit and motion failures, not accepted visual polish gaps.
+
+The adult age and body-base matrix has no results. It remains behind the [masculine repair gate](../../../docs/maintainers/art/metahuman-poc.md#peacock-anatomy-controls). The earlier independently authored feminine kit is fixed age and uses a different native shirt. Neither it nor the age material targets qualify ages 30–75 with the Peacock shirt.
+
+The editable sources, compiled families, measurements, captures, comparison boards and file inventory are retained under `2026-11-11-peacock-full-transfer/study/continuation/` in the local external art workspace. The seventh renderer family is `ed66d6a7ad8cd67695c198a5dbe1901f62609fa5c95e183d5237eb1ac6b207d3`; the tenth targeted renderer family is `ac47aaebe8f592ca1be0f3c720746af638170edcafb88fdb6f192a8f20ecb16e`. They are private local diagnostics. The game and production selection are unchanged. No provider work or publication ran for this batch.
+
+## Earlier archived transfer and controls
 
 The same registered donor supplies torso and limb shape, including depth, breadth and the placement of muscle volumes. The 3D comparison uses one clay camera and retains the donor in its original pose and after registration. The fitted source preserves ordered LOD0 and LOD1 topology, UVs, source weights and rig rests. The selected head stays independent. Skin under the fused shorts is inferred. Donor hands, feet, head/neck, damaged knee detail and a fused armpit patch are excluded from the fit statistics. The separate studio shorts retain a visible crotch fold.
 
@@ -12,7 +24,7 @@ The source recipe is muscle mass 50%, fullness 0%, definition 100%. Its source v
 
 Native neck measurements pair 92 seam vertices and report a 0.000958 mm maximum gap through neutral, ±25° turns and a modest downward tilt. Reduced renderer assembly preserves the paired vertices and weights. Matched browser views show the join through those poses. Skin shading and the retained shorts are provisional.
 
-## Shirt and motion qualification
+## Earlier shirt and motion evidence
 
 The fitted premade shirt keeps its cut, topology, UVs, original triangle correspondence and stock skin weights. The binding follows the complete evaluated surface and includes local offsets at measured contact points. The shirt and shorts are separate. Coverage masks stay disabled in the proof. Removal and restoration use the existing part evaluator.
 
