@@ -27,6 +27,8 @@ Named example characters, percentage samples, age anchors and measurements below
 
 ## 1. Preserve the user's actual objective through every stage
 
+The proposed [body reference-family procedure](../../production-workflows/art-flows/body-reference-family.md) applies these lessons to a bounded whole-body source, transfer and slider batch. It specifies independent reference validation, regional measurements, systematic support-plane additions, broad visual review and shirt/motion completion. This scoped design does not complete AF19's broader workflow incorporation or qualify the character assets.
+
 ### Specify the artifact and the claim separately
 
 An image resembling a character, a textured static mesh, a rigged character, a reusable adjustable family, a fitted garment and an integrated NPC are different deliverables. A task aimed at a reusable family cannot be completed by making one excellent fixed likeness. A feasibility proof may use provisional assets, but must still demonstrate the mechanism under investigation convincingly.

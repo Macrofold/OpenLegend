@@ -25,6 +25,8 @@ Companion pages: [Tools and defaults](tools.md) (which platform and model each s
 
 ## 1. Ask for art
 
+Specialized body-authoring experiment: [Build an adjustable body family from visual references](body-reference-family.md). Use it for a planned source/shape batch; ordinary people production still follows the parts procedure and its qualification gate.
+
 Only the wanted result is required. Everything else has a default.
 
 - "Make concept art for Tavin Vale. Three directions."

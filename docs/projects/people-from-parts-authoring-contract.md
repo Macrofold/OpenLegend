@@ -138,6 +138,8 @@ Author child, teen and adult bands with shared ages in neighboring bands where f
 
 ### Offline authoring and portable evaluation
 
+The proposed [reference-family production procedure](../production-workflows/art-flows/body-reference-family.md#8-compile-supports-into-the-existing-evaluator) specifies how a corresponding mass/fullness/definition grid decomposes into the existing bipolar and coupled targets. Its converter and source reconstruction still require implementation and isolated qualification; it introduces no second runtime evaluator. The procedure owns sampling and art review, while this contract owns representation and evaluation.
+
 Use MetaHuman offline to author or conform the source, inspect native adjustments and export geometry, rig and compatible maps. Measure whether each native adjustment preserves the transferred anatomy before reusing it. Export any needed OpenLegend targets and interaction corrections as data on the canonical topology. OpenLegend resolves recipes and evaluates shipped geometry, materials, joints, fits and clips through its existing owners. Compare offline exports and the actual game renderer with Unreal closed. The game requires only the permitted compiled family and part files.
 
 ## Geometry evaluation
