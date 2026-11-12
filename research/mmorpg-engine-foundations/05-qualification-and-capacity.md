@@ -6,7 +6,7 @@
 
 The repository evidence identifies a small-world representation/CPU problem and an accepted staged native-core response. It does not establish a maximum MMORPG population. External MMO counts, simple avoidance demos and configured connection limits cannot fill that gap.
 
-The next measurement should answer a specific architectural uncertainty, not produce the largest attractive number. Reuse [NSC](../../docs/maintainers/native-simulation-core.md), [performance](../../docs/maintainers/performance.md), R12 and PD09 rather than create a parallel benchmark programme. All speed measurements use the project's authorized AWS procedure. This documentation task ran no such experiment.
+Reuse [NSC](../../docs/maintainers/native-simulation-core.md), [performance](../../docs/maintainers/performance.md), R12 and PD09 rather than create another benchmark programme. All speed measurements follow the project's authorized AWS procedure. This documentation task ran no such experiment.
 
 ## Keep the small proof complete
 
@@ -18,31 +18,33 @@ Include tiny workloads where scheduling overhead can lose, independent workloads
 
 ## Grow independent dimensions deliberately
 
-A capacity profile should record at least connected humans, active human inputs, NPC/activity mix, occupied locations, density, effect reach, simulation-time rate, geometry size, mutable objects, history age, actual recipients, provider demand and supported client class. A single total-entity number is insufficient.
+A capacity profile records connected humans, actual human inputs, autonomous NPC decisions and native reactions separately, alongside occupied locations, density, effect reach, simulation rate, geometry, mutable objects, history age, actual recipients, provider demand and supported clients. State both the NPC mix and the interaction intensity; neither a fixed NPC-to-player ratio nor a total-entity count describes all useful play.
 
 Use a small set of connected scenarios rather than every possible combination:
 
-- **Dispersed exploration:** increase independently active areas while holding local density roughly fixed. Include terrain/navigation residency and autonomous residents, not empty bots standing in featureless space.
-- **Concentrated encounter:** increase people and NPCs in one meaningful scene, then vary visibility/effect reach and interaction intensity. Report useful accepted participants, not merely open sockets or people queued away.
-- **Boundaries and nonlocal dependencies:** move through ownership edges, include large bodies and supported long-range/shared-resource work, and compare with the same activity away from a boundary.
-- **Old world, same active scene:** independently grow saved history and dormant geography. Measure routine play, correction/forgetting, cold reads, restart and first useful return.
-- **Burst and failure:** simultaneous arrivals, reconnects, changed geometry, slow storage, provider unavailability and one noisy world competing with another. Include retained uncertain work and recovery load.
+- **Dispersed exploration:** increase independently active areas while holding local density roughly fixed. Include terrain/navigation residency and autonomous residents, not empty bots in featureless space.
+- **Concentrated encounter:** increase people and NPCs in one meaningful scene, then vary reach and interaction intensity. Report useful accepted participants, not merely open sockets or people queued away.
+- **Boundaries and nonlocal dependencies:** include supported large bodies, shared resources and long-range work; compare the same activity away from an ownership edge.
+- **Old world, same active scene:** independently grow history and dormant geography. Include ordinary play, correction/forgetting, cold reads, restart and first useful return.
+- **Burst and failure:** arrivals, reconnects, changed geometry, slow storage, provider unavailability and noisy-world contention. Include retained uncertain work and recovery load.
 
-These are scenario families, not fixed compulsory population numbers. Use the smallest informative case first and expand only under a scoped, authorized run. Maintain the distinction between required correctness passes, required measurements and exploratory upper-bound searches.
+These are scenario families, not compulsory population numbers. Use the smallest informative case first. Separate required correctness, required measurements and exploratory upper-bound searches; do not require every expansion scenario to complete the native proof.
 
-## Measure what the player and world actually receive
+## Measure useful play as well as useful computation
 
-Record action admission latency and first useful visible response separately. Record simulation progress against offered game time rather than reporting a low CPU rate achieved by falling behind. Include p95/p99 tails, starvation, longest pauses, backlog age and invalid/refused work alongside averages.
+The [existing capacity contract](../../docs/product-scalability/capacity-and-economics.md#10-qualification-workloads), character/scene owners and first-playable acceptance retain quality judgment. For the selected scene, keep a concrete useful journey in the load comparison: reach and interact with someone, receive the required reaction, pursue a goal, then encounter a meaningful later consequence. Use the [crowd applications](02-scale-model-and-crowds.md#player-value-and-the-first-crowd-candidate) as candidate journeys, not a new universal playtest checklist.
 
-For each bottleneck record work units and amplification: candidates examined versus accepted interactions; objective preparation versus recipient-specific work; logical changes versus persisted rows/bytes; received evidence versus retained support; eligible cognition versus dispatched useful decisions. Conservative fallbacks and unclassified dependencies need visible counts.
+An optimization that improves throughput by making residents interchangeable, preventing ordinary interaction, erasing independent choice or changing decisive outcomes is a different gameplay offer, not an equivalent-capacity pass. Record such changes explicitly and compare the resulting experience before adoption. Native correctness, human enjoyment and live-model quality are distinct evidence; none can stand in for the others. Lower-cost behavior can be a good design, but its value must be shown rather than assumed from the player count.
 
-Memory measurements include live state, scratch, indexes, in-flight snapshots, cold-read caches and retained queue objects. Storage measurements include database CPU, lock/connection waits, physical writes and maintenance. Network measurements include baseline/reconnect bursts, bytes, actual audiences and slow-client behavior. Client measurements include frame/input behavior and asset memory on the supported device class.
+Record action admission and first useful visible response separately. Record actual progress against offered game time, p95/p99 tails, longest pauses, starvation, backlog age and invalid/refused work. Low CPU achieved by falling behind is not efficiency.
 
-Prefer existing bounded source-attributed counters. Do not make per-entity high-cardinality telemetry or full tracing mandatory for normal production play.
+For attribution, compare candidates to accepted interactions; objective preparation to recipient-specific work; logical changes to persisted rows/bytes; received evidence to retained support; and eligible cognition to dispatched useful decisions. Include conservative fallbacks, unclassified dependencies, canceled/discarded preparation and detail-transition work. Count each authoritative activity once rather than simulate a shared scene per player.
+
+Memory includes live state, scratch, indexes, in-flight captures, cold caches and queues. Storage includes database CPU, lock/connection waits, physical writes and maintenance. Network includes baseline/reconnect bursts, actual audiences and slow clients. Client evidence includes frame/input behavior and asset memory on the supported device class. Prefer existing bounded source-attributed counters over per-entity high-cardinality telemetry.
 
 ## Why more cores are not a capacity estimate
 
-For a fixed useful workload, elapsed time is bounded by available parallel compute, the ordered critical path and shared resource throughput. A conceptual lower bound is:
+For a fixed useful workload, a conceptual lower bound is:
 
 ```text
 elapsed time >= max(total useful CPU work / effective parallelism,
@@ -51,20 +53,18 @@ elapsed time >= max(total useful CPU work / effective parallelism,
                     required external dependency time)
 ```
 
-The terms can overlap, and the expression omits overhead and contention; it is a diagnostic model, not a prediction. CPU work may itself increase when parallelization adds copies, synchronization or retries. Distinguish strong scaling of one scene from weak scaling by adding independent scenes.
+Terms can overlap; overhead and contention are omitted. This is a diagnostic model, not a forecast. Parallelization can add copies, synchronization or retries. Distinguish strong scaling of one scene from weak scaling by adding independent scenes.
 
-When threads stop helping, investigate insufficient parallel work, task overhead, lock contention, false sharing, memory bandwidth, host acceptance, capture/encoding and database publication before concluding the language or entire architecture failed. Likewise, a good multicore kernel does not qualify distributed execution after network and migration costs.
+When threads stop helping, inspect available parallel work, task overhead, locks, false sharing, memory traffic, host acceptance, capture/encoding and publication before blaming the language or declaring the ambition impossible. A good same-host kernel does not qualify distributed execution after network and migration costs.
 
 ## Find the feasible crowd frontier
 
-Begin with unchanged semantics and inexpensive work removal. Next compare suitable parallel decompositions. Then evaluate explicitly selected representation/fidelity alternatives in isolation. Finally measure any admission or congestion policy as a gameplay offer, not as hidden evidence that excluded players were supported.
+Compare unchanged-semantics work removal and parallel decomposition first, then explicitly selected representation or behavior alternatives. State the gain, changed behavior, worse cases and preserved individual guarantees. Include uncooperative participants, transition bursts and the cost of blocked-path recovery. Measure admission/congestion as a gameplay offer; excluded people do not count as successfully served.
 
-For every alternative, state what improved, what got cheaper, what behavior changed, which situations get worse, and what remains individual and exact. Include malicious or uncooperative player behavior. Measure transition costs into and out of the dense state, not only a stable scene.
-
-Do not require evidence of literal impossibility before considering an alternative. The practical stopping condition is that further improvement is unlikely to justify its engineering, operating or gameplay cost under the measured bottleneck. Equally, do not declare a low cap solely because the first straightforward implementation is slow.
+Transparent geographical compute placement is an implementation option, not evidence that players must be separated. An explicit operating limit may be necessary when the quality-qualified system still exceeds its resources; it should follow measured bottlenecks and reasonable alternatives rather than the first slow implementation. Do not require proof of literal computational impossibility to ship a smaller useful milestone, or treat that milestone as the maximum ambition.
 
 ## Decision outputs
 
-A valid report states the exact code/build, world definitions, hardware, enabled behavior, duration, workload and operating reserve. It reports both successful and failed scenarios and separates real provider quality from fixtures. It identifies the largest qualified envelope, not an untested interpolated promise.
+A report identifies exact code/build, world definitions, hardware, enabled behavior, duration, workload and operating reserve. Preserve failed scenarios and separate live-provider quality from fixtures. Report the largest qualified envelope, not an untested interpolation. Include full cost per useful active-player-hour and the declared unattended service where applicable.
 
-Use that envelope to choose the next bounded milestone: extend working-set support, reduce recipient amplification, qualify a larger same-host scene, or start the existing distributed experiment. Population targets may remain aspirational while the next useful game slice ships. No unsupported estimate in this research becomes a contractual player cap or an implementation acceptance gate.
+Use that evidence to choose the next bounded investment: working-set support, less recipient amplification, a larger same-host scene or the existing distributed experiment. Population targets can remain ambitious while a smaller game ships. No research estimate becomes an advertised capacity or a new implementation gate merely by appearing in this collection.

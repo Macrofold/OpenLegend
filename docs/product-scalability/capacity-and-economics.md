@@ -14,6 +14,8 @@ Independent worlds serving proportionally more active players are not inherently
 
 Do not adopt an unexplained universal "1,000 players per region" rule. Use supported workload envelopes incorporating bodies, density, effects, observations, communication, ongoing decisions, persistence, and presentation. The actual thresholds remain unqualified.
 
+The [D61 research ambition](../maintainers/decisions/world-and-play.md#d61--shared-world-scale-and-crowd-behavior) and [foundation handoff](../maintainers/decisions/mmorpg-engine-foundations.md) seek the largest useful shared encounter, not a predetermined small cap. Transparent compute partitioning can serve one continuous encounter; forcing separate encounters, restricting attendance or dispersing players is a different product choice. Optimize and qualify within-encounter work as well as distributed activity before treating gameplay separation as the solution. Smaller native and playable milestones remain independently completable.
+
 A mostly stationary concert, a crowded market, and unrestricted mass combat are distinct workloads. Smaller spatial cells do not reduce work when everyone can affect people across the borders. A district-wide cap also fails to protect a doorway where every admitted person gathers.
 
 Capacity accounting must consider neighboring interaction areas and groups converging into a dense cluster. Existing players can increase load after entry through summoning, machinery, speech, combat, or invention. Therefore user admission and action/capability admission are complementary rather than interchangeable.
@@ -60,6 +62,8 @@ The preferred policy preserves already-promised effects and information:
 6. Use explicit world-supported slow progression or service-failure behavior when necessary; expose it honestly rather than silently dropping time or outcomes.
 
 These are priorities, not a claim that every stage is currently implemented. An important in-progress fight cannot secretly receive a less capable opponent or ignored damage because the host is overloaded. Technical delays should not become unearned hunger, retrospective action time, or new knowledge.
+
+World-authored limited attention and technical overload are different causes. Do not let added load manufacture guard blindness, lost required memories or weaker admitted defenses. Detail transitions retain individual identity, current evidence and continuation; they do not replay rewards or create unheard history. Scope any changed cognitive/sensory rule prospectively in its existing world/attention owner. Same-semantics parallelism, preparation reuse and transparent distribution are engineering options before a gameplay concession, not reasons to adopt an arbitrary population ceiling.
 
 Time dilation is a secondary policy, not unlimited capacity. Different local progression rates complicate travel, external attacks, and shared commitments. It requires a coherent coupling contract before use, not an ad hoc timer change in a hot process.
 
@@ -109,6 +113,8 @@ For example, rolling back World A after an export while World B keeps the receiv
 | Popular official and coordinated worldwide event                                           | Queue fairness, important-character cost, and broad access to meaningful participation   |
 
 Numbers used to size experiments are workload inputs, not advertised capacities. Measure tails, cost, backlog, correctness, and player-visible quality together. A million synthetic idle entities is not acceptance for a million concurrent players. Native-only performance does not establish full network, model, storage, or client capacity.
+
+The [foundation qualification guidance](../../research/mmorpg-engine-foundations/05-qualification-and-capacity.md) refines these existing workloads rather than adds a new suite. Separate human input, autonomous decisions and native reactions, and retain a useful individual journey within the loaded scene. Compare quality through the existing character/scene/player-acceptance owners; fewer meaningful interactions or changed outcomes are a different offer, not an equivalent-work speedup. [NSC01/NSC08](../maintainers/native-simulation-core.md) owns native-conversion reconciliation; PS06/PS08, PF11 and the actual PT/PD consumer retain population, cost and operating acceptance.
 
 ## 11. Go/no-go criteria
 

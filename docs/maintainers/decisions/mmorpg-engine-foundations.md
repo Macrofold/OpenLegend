@@ -1,145 +1,95 @@
 # MMORPG engine foundations: needs-design briefs
 
-These briefs extend D22/D61 and R06/R12/R13/R15. They are proposed follow-through from the [foundation research](../../../research/mmorpg-engine-foundations/README.md), not new runtime authorization or a duplicate implementation tracker. Delivery stays in NSC, PF, PS, PD and the existing subsystem owners. A future full feature/technical design should update its existing pair where one exists and follow the current design policy.
+This is the focused design handoff from the [research](../../../research/mmorpg-engine-foundations/README.md), extending D22/D61 and R06/R12/R13/R15. It identifies refinements to existing owners, not nine new projects or an implementation-ready replacement engine design.
 
-## Target and interpretation
+## Target and disposition
 
-Mike selected a research ambition of **1,000 concurrent humans per independently evolving persistent world, potentially 5,000**, plus NPC activity. Establish the largest feasible local gathering through optimization and measurement; no arbitrary lower crowd cap is selected. Meaningful geography and physical crowding are candidate contributors, not capacity guarantees. Compromises may be evaluated, but existing gameplay/time/privacy contracts are not silently relaxed.
+Investigate **1,000 concurrent humans per independently evolving world, potentially 5,000**, plus declared NPC activity, and the largest useful local encounter. Preserve the smaller native proof and release gates. Spatial indexes and transparent compute ownership are not gameplay separation; a fixed crowd cap, forced dispersal, duplicated encounter or queue remains a separately justified product choice. Consider compromises explicitly without silently adopting them.
 
-Many worlds may share one seed but diverge in mutable state and history. The smaller native proof and existing release qualification remain valid milestones; this target does not turn 5,000 players into a prerequisite for the next playable game.
+The original source audit is pinned to `ec3d137f55434b01844075362f0f9364e2c91929`'s inherited runtime base `56e9ab35a1d6ac71ccce9cf97c0f76250a78e977`; `codex/native-simulation-proof` was unavailable during that audit. This research branch now follows `codex/native-simulation-proof` at `d1211430d65390957baf5b0094d2cf2057950f8f`. Moving the documents is not a new implementation review. The [native tracker](../native-simulation-core.md) and its [coverage inventory](../native-simulation-core-coverage.md) own current implementation and qualification evidence.
 
-Source basis: `Macrofold/OpenLegend`, `codex/stealth-runtime-01-evidence`, `56e9ab35a1d6ac71ccce9cf97c0f76250a78e977`. The named `codex/native-simulation-proof` ref was unavailable through GitHub during research. Reconcile actual implementation before changing its interfaces; do not treat a design-only tracker as proof that no local implementation exists.
+**Conversion follow-through:** use the existing caller/field manifest to review scoped state access, influence/wakeups, coordinates/identity and capture lifetimes as each owner is converted. Preserve the implementation branch's completed NSC01 and current NSC02/NSC03 gates; these research notes do not reopen satisfied work or claim that their broader requirements are already verified. Record satisfied coverage or the specific missing contract in the [native design pair](../../projects/native-simulation-core-tech-design.md) before its affected conversion. NSC04 consumes that coverage when full conversion is adopted, and NSC08 reconciles adoption and remaining qualification. Do not add a parallel manifest, implement general streaming to finish the small proof, or treat changed behavior as an equivalent-work speedup; use the [existing capacity/quality criteria](../../product-scalability/capacity-and-economics.md#10-qualification-workloads) and retain the actual human-input/NPC-decision/reaction mix.
 
-## How to use these briefs
+**Next consuming designs:** use the existing [scalability pair](../../projects/product-scalability-tech-design.md), [attention/scenes pair](../../projects/attention-and-scenes-tech-design.md), spatial/multiplayer owners and [capacity contract](../../product-scalability/capacity-and-economics.md). The main [needs-design register](../needs-design.md) already assigns continuing communities to DG17, worthwhile crowds to DG18, participants/travel to DG29 and shared campaigns to DG34. Those groups and PS/PF/PT/PD remain authoritative; do not add duplicate DG/ND entries. Detailed proposals below become implementation tasks in the named owner when their consumer is selected.
 
-For each selected design, trace current producers, consumers and persistence, identify which requirements are already satisfied, and add only the missing seam. Record one minimal end-to-end slice, unchanged contracts, explicit exclusions, required correctness passes, required measurements and conditions for later expansion. A design entry is not a request to build every scenario or write a new test framework.
-
-NOW means preserve a boundary while native storage and APIs are taking shape. SOON means a consuming larger-world or multiplayer slice should design and qualify it. LATER means retain the existing staged route without building speculative infrastructure. No new numerical limit below is an adopted gameplay policy.
+**Player value:** a busy place should offer recognizable people and useful individual encounters; bodily space can support readable approaches and protection rather than compulsory obstruction; one campaign can offer different contributions to one outcome; distant work can make return meaningful. [Concrete applications and the movement candidate](../../../research/mmorpg-engine-foundations/02-scale-model-and-crowds.md#player-value-and-the-first-crowd-candidate) are proposals to evaluate, not newly required mechanics. Current character, scene and playability acceptance owns whether they are worthwhile.
 
 ## Working-set lifecycle and exact background advancement
 
-**Timing and owners:** NOW access/lifecycle seam; SOON first nonresident region. NSC01/NSC04/NSC05, simulation-time and save/load owners, PS02/PS03. Basis: research chapters 01, 03 and 04; sources S06, S12 and S14.
+**Owners:** NSC01/NSC04/NSC05, simulation-time/save-load and PS02–PS03; DG17/DG29. Preserve the access seam now; design a nonresident place when a consuming slice needs it.
 
-**Existing coverage:** native resident authority, cold personal history, dirty/due work and selected exact distant activity. Missing qualification is their composition with partially resident physical geography and active obligations, not a reason to replace those systems.
+Distinguish persistent existence, residency and execution activity. Extend current query/dependency outcomes and cold-history access: missing resident input is not nonexistence, an empty container or false recollection. Prepare cold state outside the mutation lane and recheck relevant inputs before acceptance. Specify who activates/deactivates state, with unsaved changes, action continuation, scheduled deadlines, physical/nonlocal dependencies, pending external results, personal evidence and derived-index reconstruction covered. Trace entity/dependency access, advancement, native captures and `world-records.ts`; do not add a competing repository abstraction.
 
-**Design deliverable:** specify persistent existence versus residency versus execution activity; state/query outcomes when required input is cold; activation/deactivation ownership; deadlines and interruption horizons; unsaved changes and derived-index rebuild; pending action/model references; and readiness before publication. Trace `entity-collection.ts`, `dependencies.ts`, native state access, `world-records.ts`, the actual advancement caller and cold-read consumers. Preserve coherent time and current evidence when a cold place can affect an active one.
-
-**Minimal slice:** two places, one supported continuing activity and a real arrival/interrupt that requires a cold place. Cold preparation occurs outside authoritative mutation and its relevant inputs are rechecked before acceptance. Empty resident lookup is not interpreted as nonexistence. No full-world or lifetime-history load is required.
-
-**Completion evidence:** equivalent supported outcomes, identities, ordering, saved randomness and personal evidence across resident/nonresident execution, interruption and cold restore; bounded activation work and measured pause/CPU/memory. Exact elapsed progress is not inferred from the final position alone. Unsupported interactions are explicit, not silently approximated.
-
-**Deferred:** generic coarse simulation for every mechanic, independent regional clocks and distributed databases. Do not block the existing complete small proof on implementing the entire streaming system.
+**First slice and evidence:** two places, one supported continuing activity and an arrival/interrupt involving the cold place. Preserve effects, ordering, randomness, identity, observations and restoration without whole-world/lifetime-history hydration. Measure activation work and pause/memory cost; final positions alone do not prove exact progression. Unknown interactions retain the existing conservative path. Universal coarse simulation, independent authoritative clocks and distributed storage remain outside this slice.
 
 ## Influence declarations and sparse deterministic scheduling
 
-**Timing and owners:** NOW while porting recurring families. NSC01–NSC05 and existing native-time, dependency and operation owners. Basis: chapters 02/03/05; S07–S09.
+**Owners:** NSC01–NSC05 and existing operation, dependency and native-time owners. Extend declarations while porting recurring families.
 
-**Existing coverage:** typed query/dependency families, semantic changes, conservative fallbacks, ordered phases and bounded native pool. Extend these rather than creating a runtime universal dependency graph.
+Name actual reads/writes, spatial and named nonlocal dependencies, wakeups/deadlines, continuation/cancellation, ordering and output work. Reuse finite query families, semantic changes and operation declarations, not a generic runtime graph. Unknown or overflowed dependencies remain conservative and observable. Trace global revisions and fine boundaries that could accidentally trigger world-wide work; time crossing a deadline invalidates an unchanged-input skip.
 
-**Design deliverable:** for each consumed family name reads, writes, spatial and named nonlocal dependencies, due conditions, cancellation/continuation, required ordering and bounded output. Trace global geometry/dependency revisions and overflow paths. Specify what may run independently inside a busy cell and what must join a coupled scope. Distinguish safe unchanged-input skips from deadlines crossed by elapsed time.
-
-**Minimal slice:** one independent pair of jobs and one genuinely coupled interaction, with the same result under one/multiple workers and interior/boundary placement. Include a known nonlocal dependency and an unknown-dependency conservative path. Avoid recomputing every entity merely because one family's next boundary is short.
-
-**Completion evidence:** deterministic accepted effects and RNG/identity behavior, no missed wakeups or stale input, observed fallback frequency, total work and critical-path cost. Record actual worker and memory limits; race freedom or thread count alone is not a pass.
-
-**Deferred:** cross-machine execution and new RNG schemes. Unknown dependencies remain conservative until declared, not falsely parallel. Future authored-law expansion must state its supported execution envelope.
+**First slice and evidence:** independent jobs plus a genuinely coupled interaction, one named nonlocal dependency and a conservative unknown case. Compare one/multiple workers and interior/boundary placement for accepted effects, RNG/identity and missed wakeups. Measure total work, critical path, memory/copying and fallback frequency. Stable merging matters beyond race freedom. New RNG semantics and cross-machine execution are separate decisions.
 
 ## Coordinate precision and independently addressable geography
 
-**Timing and owners:** NOW numeric/frame contract; SOON first larger mutable geography slice. NSC01/NSC04, spatial/navigation and existing client geometry owners. Basis: chapter 03; S12/S13.
+**Owners:** NSC01/NSC04, spatial/navigation and client geometry. Resolve numeric/frame assumptions before they spread through native APIs.
 
-**Existing coverage:** current world positions, body bounds, spatial query indexes and compiled geometry/navigation providers. Existing query bins are not proof of large-coordinate correctness or streamed terrain.
+Trace units, required world extent/local accuracy and precision through TypeScript, Rust, boundary encoding, storage, physics, navigation and rendering. Specify narrowing conversions and local frames where needed; do not use floating positions or cell addresses as identities. Include attachments, routes and personal evidence across frame changes. Give mutable geometry independently addressable pieces and scoped revisions so a local change need not rebuild world-wide navigation or invalidate every observer. Visual streaming and authoritative residency have different consumers.
 
-**Design deliverable:** trace units and precision through TypeScript, Rust, boundary encoding, storage, physics, navigation and client rendering. Specify world extent, local accuracy and frame conversions; check narrowing casts and rebasing effects on identities, routes, attachments and perceived evidence. Define independently addressable geometry pieces and scoped invalidation for mutable structures without choosing a new renderer.
-
-**Minimal slice:** an ordinary interaction near the origin and far away, including crossing a piece boundary and changing geometry. Use a numeric extent selected by the actual authored world rather than a universal engine constant.
-
-**Completion evidence:** correct relative motion/contact/targeting, stable save/restore and references, no whole-map rebuild for a local mutation, measured conversion/loading overhead. Unsupported library precision must be visible, not masked with an arbitrary enlarged collision tolerance.
-
-**Deferred:** a complete procedural continent, global navigation precomputation or blanket replacement of all numbers. The design should identify exactly which boundaries need a change.
+**First slice and evidence:** the same supported interaction near and far from the origin, across a geometry boundary and after a local edit/save/restore. Qualify relative motion, contact, targeting, stable references and conversion/loading cost. Surface unsupported precision rather than conceal it with inflated collision tolerance. No complete procedural continent, global navigation precomputation or blanket numeric rewrite is required.
 
 ## Dense encounters and separate fidelity budgets
 
-**Timing and owners:** SOON before selecting a crowd offer; NOW retain separate mechanisms. D22/D61, PS04/PS06, PF11, ordinary movement/perception/participation owners. Basis: chapter 02; S01, S02, S08, S10 and S11.
+**Owners:** DG18/D22/D61, PS04/PS06, PF11, ordinary movement/perception/participation and existing character-quality owners. Refine the existing attention/scenes and scalability designs for one useful gathering before selecting a crowd offer.
 
-**Existing coverage:** personal attention, selected compact communication, conservative geometry candidates and native action continuation. The inspected `local-avoidance.ts` is not evidence of a complete crowd solver.
+Keep physical occupancy, goal navigation, advisory avoidance, authoritative collision, mandatory perception/reaction, optional deliberation, retained evidence and presentation distinct. The research's proposed first comparison is occupancy-limited kinematic movement with advisory avoidance, not an assumed fully pushable rigid-body crowd. Trace existing movement before choosing it: changing force transmission/pushing is a world-rule change. Require conservative whole-interval contact handling; a capped advisory neighbour list cannot certify nonpenetration. The inspected `local-avoidance.ts` concerns projectile avoidance, not a delivered general crowd solver.
 
-**Design deliverable:** distinguish physical occupancy, local movement/avoidance, coupled effects, mandatory perception/reaction, optional deliberation, evidence retention and presentation. Define the supported body's/influence family's geometric assumptions. Compare unchanged-semantics work removal and within-encounter parallelism before selecting any lower-detail behavior. Keep individual threats, speech and other required exceptions correct; do not switch every subsystem off through one hidden crowd flag.
+Preserve direct conversation, threats and consequential commitments under the installed evidence/reaction rules. World-authored attention limits must not become load-triggered blindness, weaker opponents or silent loss of evidence. Keep independent identity/choice and truthful memory through prospective detail transitions. Use relevant dependencies as well as spatial proximity, bound transition work, prevent thrashing and starvation, and revalidate stale opportunities instead of accumulating optional-thought debt.
 
-**Minimal slice:** a meaningful gathering with moving, stationary and uncooperative participants, entry/exit and a required individual interaction. Add a bottleneck, vertical/body-size variation and a long-range or chained dependency only as consumed by the supported family.
-
-**Completion evidence:** useful control and interaction under measured density, exact protected outcomes and privacy, no collision safety claim from silently truncated candidates, bounded transitions and observed fairness. Report both neighbour degree and connected-component/recipient load. Queued-away people are not supported active population.
-
-**Open product choices for a future offer:** which approximations, optional-thought delays or congestion controls are acceptable in the measured problem case. Research authorization to consider compromises does not answer those choices for every mechanic. No loading wall, time dilation, mandatory queue or fixed local cap is adopted here.
+**First slice and evidence:** moving and stationary/uncooperative participants, opposing flows and a required individual encounter, with entry/exit and blocked-route recovery. Add body sizes, corners, vertical overlap, moving support or long-range coupling only when supported. Measure useful control, individual response, fairness, local degree, coupled scope, recipient load and client playability. No dropped physical effects, false memories or queued-away capacity. The actual pushing/fidelity/congestion choices remain explicit proposals until selected; do not install a hidden global crowd mode.
 
 ## Recipient-first publication and bounded joining
 
-**Timing and owners:** NOW product boundaries; SOON multiplayer path. Existing multiplayer/projection/client owners, PF11, PS04 and NSC capture consumers. Basis: chapters 02/03; S01/S05.
+**Owners:** multiplayer/projection/client owners, PF11, PS04 and NSC captures; DG18/DG29.
 
-**Existing coverage:** scoped views, personal identity/freshness, independent publication and coalescing. Do not replace these with one objective crowd snapshot delivered to everybody.
+Select eligible recipients and changed subjects before rich preparation. Share compatible receiver-independent work, then preserve personal identity, freshness, correction and permissions. Define a bounded baseline, compatible deltas, reliable effects, replaceable presentation, resynchronization and revocation. Trace native capture through formatting, socket buffering, browser state and presentation; transport does not determine message meaning. Cheap rendering or delivery omission does not remove authoritative bodies/effects or grant unseen knowledge.
 
-**Design deliverable:** identify actual recipient scopes before rich preparation; share only compatible receiver-independent work; define permitted baseline, reliable effect sequence, replaceable updates, resynchronization and revocation. Trace native capture through formatting, sockets, browser state and presentation. Protect individual stale detail and unknown identity when global geometry changes. Separate transport from message meaning.
-
-**Minimal slice:** multiple observers with different knowledge, a late joiner and a slow/reconnecting client during an evolving encounter. A bounded baseline plus compatible updates restores current permitted state without world-wide serialization or replaying commands.
-
-**Completion evidence:** actual delivered byte/CPU and retained-buffer costs, first useful response, current authorization and correction handling, no secret leakage, and representative browser performance. Server sockets and a renderer-only crowd are separate evidence.
-
-**Deferred:** transport migration, a new renderer, universal client prediction and aggregate crowd semantics not yet adopted. Trace the current path first; choose a smaller optimization when it satisfies the needed envelope.
+**First slice and evidence:** observers with different knowledge, a late joiner and a slow/reconnecting client during an evolving encounter. Restore permitted state without world-wide serialization or replayed commands. Measure real bytes, CPU, retained buffers, first useful response and representative browser behavior. A socket count or renderer-only crowd is not full acceptance. Change transport, prediction or renderer only for a consuming measured bottleneck; aggregate sensory semantics still require their existing owner.
 
 ## Capture lifetimes, overload and fair resource admission
 
-**Timing and owners:** NOW at native/host boundaries; SOON cross-world contention. NSC01–NSC04, performance scheduling, NET and PD07/PD08. Basis: chapters 03/04/05; S16/S17.
+**Owners:** NSC01–NSC04, scheduling, NET and PD07/PD08; extend existing admission rather than create another queue service.
 
-**Existing coverage:** count/age-bounded queues, storage-failure handling, protected receipts, provider admission and current network lifetimes. Extend missing byte/work/fairness coverage rather than installing another queue service.
+Inventory scratch, undo batches, captures, model contexts, baselines, save suffixes and unresolved requests. Name release owners and count/byte/work/age bounds; counts alone do not bound memory. Reserve mandatory output before acceptance. Distinguish replaceable presentation from required evidence, receipts and accounting. Preserve uncertainty when local cancellation does not establish upstream completion. Fairness across worlds, participants and work classes cannot reorder accepted causal effects or let noisy inputs starve unrelated play.
 
-**Design deliverable:** inventory native scratch, undo batches, immutable products, in-flight model contexts, view baselines, save suffixes and unresolved requests. Name each release owner and count/byte/age bounds. Distinguish optional replacement from mandatory retention. Reserve required output before acceptance, retain capacity for uncertain external work, and schedule fairly across worlds and participants without reordering accepted causal effects.
-
-**Minimal slice:** one slow consumer or provider plus unrelated walking/commands, then one noisy world beside an independent world. Include cancellation that does not prove remote completion and pressure during required save/evidence production.
-
-**Completion evidence:** no unbounded retained cuts, no duplicate paid/accepted effects, preserved required evidence, bounded optional backlog, observable degraded state and absence of cross-world starvation. Measure complete memory and queue tails, not only main-thread utilization.
-
-**Deferred:** generalized priority frameworks or automatic paid retries. Existing pause, funding and storage policies remain controlling; a local queue timeout grants no new gameplay authority.
+**First slice and evidence:** one slow consumer/provider alongside useful walking/commands, then a noisy world beside an independent world, including required save/evidence pressure. Demonstrate bounded retained cuts/backlog, honest degraded state, no lost/duplicated effects and no cross-world starvation; measure complete memory and queue tails. Existing funding/storage-stop rules remain controlling. No automatic paid retries or generalized priority platform is selected.
 
 ## Seed-copy identity and many-world creation
 
-**Timing and owners:** NOW identity/source separation; SOON first many-world creation consumer. PD11, existing authored-world initializer, identity, save/load and travel owners. Basis: chapters 03/04; S04, S18–S20.
+**Owners:** PD11, authored-world initialization, identity/save-load and travel; DG12/DG29. Preserve immutable-source/mutable-instance separation now, with materialization consumed by actual creation work.
 
-**Existing coverage:** authored definitions and assets, selected identities, world lifecycle and production fleet direction. This brief does not prescribe one database or process per world.
+Qualify IDs and cache/database keys by the right namespace. Persistent identity survives native slot reuse and routing; current membership, origin, life/timeline and custody generations have distinct meanings. Define seed/definition/generator pins, lazy materialization order and RNG/ID allocation so exploration order does not alter unrelated content. Cover creation, mutation, explicit deletion/tombstones and bounded current-state resolution/compaction; do not resurrect seed objects or share mutable caches between worlds. Routing-only moves must not unnecessarily invalidate still-valid model work; actual dependency changes must.
 
-**Design deliverable:** distinguish immutable seed/version/generator/resource pins from mutable instance state; qualify local IDs against the right namespace; keep persistent identity independent of current machine and, where supported, travel destination. Specify lazy materialization order, RNG consumption, mutations, creations, deletions/tombstones and bounded current-state resolution. Prevent mutable references or caches from leaking changes between copies.
-
-**Minimal slice:** two instances of the same seed, different actions and one deletion, independent save/restore, and a nonmaterialized place encountered in different orders. Share actual immutable resources without sharing mutable consequences.
-
-**Completion evidence:** no cross-world aliasing, stable supported identity and seed content, no accidental resurrection, scoped database/cache keys and bounded creation/activation work. Record stored versus loaded versus active-world costs separately. Complete independent histories are not a state-sync problem to solve with layering.
-
-**Deferred:** a generalized snapshot/overlay storage engine, worldwide fleet infrastructure and cross-world travel mechanics. Existing travel design remains the authority for custody and permitted imports.
+**First slice and evidence:** two seed copies with divergent actions and a deletion, independent save/restore, and an unmaterialized place encountered in different orders. Verify identities, no aliases/resurrection, independently preserved knowledge/resources and bounded creation/activation cost. Share immutable resources, not consequences. Count stored, loaded and active worlds separately. A generic overlay engine, per-world database/process, fleet expansion and travel mechanics are not prerequisites; existing travel owners decide imports/custody.
 
 ## Mature persistence and recovery amplification
 
-**Timing and owners:** SOON alongside longer-lived playable worlds. Production-data/save/load owners, PF11, PD06 and NSC save/restore stages. Basis: chapters 03–05; S14/S15.
+**Owners:** production-data/save-load, PF11, PD06 and native save/restore; use existing changed-record and temporal-suffix owners.
 
-**Existing coverage:** incremental changed records, cold history and native candidate acceptance. Reuse temporal suffix/record codecs and the current PostgreSQL writer.
+Trace mutation, packing, batching, hot working indexes, cold reads, correction/forgetting, reclamation and restoration as history ages independently of geography. Bound hot state and retained captures without deleting required evidence for speed. Include physical writes/indexes/WAL/maintenance, not only logical payloads. Preserve in-memory acceptance versus durable cuts and current privacy/authority/accounting overlays on recovery; a database snapshot alone does not include unsaved native state.
 
-**Design deliverable:** trace routine mutation, packing, write batching, cold reads, retention/correction, physical reclamation and restore with independently aged history. Specify bounded hot data and working indexes without deleting required evidence for speed. Preserve accepted in-memory versus durable cut distinctions and current authority/privacy overlays on recovery.
-
-**Minimal slice:** the same active town in a fresh and aged world, with a current action, cold memory read, correction/forgetting and restart. Grow dormant geography separately from history to expose different causes.
-
-**Completion evidence:** useful restored continuity, no reappearance of revoked information, no lifetime scan on routine play, and complete CPU/memory/database/write-amplification results. A successful snapshot creation is not usable-world recovery.
-
-**Deferred:** regional storage sharding, a new event-sourcing platform or local WAL. The initial distributed design's whole-world complete-cut recovery remains selected until a separately adopted design changes it.
+**First slice and evidence:** the same active town fresh and aged, with an action, cold memory, correction/forgetting and restart. Demonstrate useful continuity, no revoked-information resurrection or routine lifetime scan, and complete CPU/memory/database cost. Keep the initial whole-world complete-cut recovery model. Regional storage, event sourcing and a local WAL remain separate designs.
 
 ## Capacity frontier and operating offer
 
-**Timing and owners:** NOW preserve attribution; SOON at each actual expansion. R12, PF11, PS06 and PD01/PD09. Basis: chapter 05 and its workload families.
+**Owners:** R12, PF11, PS06/PS08, PT01–PT06 and PD01/PD09; DG18/DG29/DG34. Reuse their acceptance, not another benchmark or fun-scoring framework.
 
-**Design deliverable:** define source-bound workload profiles separating dispersed activity, concentrated recipients/coupling, world age, cold activation and failure bursts. Choose exact correctness passes and measurements before running; keep exploratory maximum searches separate. Report useful active people, game-time progress, p95/p99 response, memory, write/network amplification, provider outcomes and complete cost.
+Use the [qualification chapter](../../../research/mmorpg-engine-foundations/05-qualification-and-capacity.md) and [existing quality/cost contract](../../product-scalability/capacity-and-economics.md#10-qualification-workloads). State human input, NPC decisions/native reactions, independently active places, density/reach, history, baseline/reconnect traffic and service failures separately. Compare the same useful gameplay journey while measuring useful progress, tails, client response, complete memory/write/network amplification and provider cost/quality. Native correctness, actual model quality and human enjoyment remain separate evidence.
 
-**Minimal slice:** reuse the complete native proof and its existing controls. Add one growth dimension that answers the next architectural uncertainty, not a compulsory 5,000-client gate or another benchmark framework.
+Preserve failures and exact source/hardware/configuration. A reduced-fidelity offer must name changed observable behavior, preserved guarantees, transition/failure cases and why the resulting play remains worthwhile. Excluded participants, inert bots, raw core counts or many independent worlds cannot qualify one concentrated encounter. Choose the next bounded investment from observed limits; no research estimate becomes a cap or mandatory 5,000-client test.
 
-**Completion evidence:** an honest qualified envelope with failures, source/hardware/configuration and behavior changes stated. Use it to select the next architecture investment or explicit compromise. Cloud fleet counts, CPU/core counts and configured connection limits are not substitutes.
+## Sequencing and unresolved decisions
 
-## Sequencing and unresolved dependencies
+The existing caller/field manifest and NSC08 own conversion reconciliation; NSC04 consumes that coverage when full conversion is adopted. Existing PS/PF/PT/PD tasks own the consuming implementations and evidence. This handoff does not mark these broader designs complete. Do not delay the small proof for unconsumed streaming, crowds, fleet or mature-world machinery.
 
-First preserve scoped state access, identity, numeric/frame contracts, declared recurring work and bounded products during NSC01–NSC04. Then select the smallest useful residency, delivery, crowd and mature-world designs when their consumers require them. NSC05–NSC07 retain cell/distribution/adaptation ownership; PD11–PD12 retain fleet and production expansion.
-
-The inaccessible implementation branch is a source-reconciliation dependency before modifying that work, not evidence of a runtime defect. Concrete fidelity, unattended-service and congestion offers require their existing product decisions before activation. No further product answer is required to retain these research findings and needs-design briefs. No runtime, cloud resource, load-test or paid-model work was performed for this record.
+No new product answer is required to preserve these seams. Before adopting the corresponding experience, settle pushing/body-blocking, any changed sensory/cognitive rules and their individual guarantees, or an actual unattended/congestion offer with its existing owner. Do not reopen already selected exact distant activity merely because another representation is being explored. No runtime, cloud resource, speed test or paid-model call was executed for this record.
