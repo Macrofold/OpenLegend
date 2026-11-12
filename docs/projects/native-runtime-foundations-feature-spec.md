@@ -2,7 +2,7 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| Not started | Implementation design is prepared; isolated experiments and runtime adoption remain unperformed. | 2026-11-11 |
+| Not started | Implementation recipes include dispatch safety and cognition-preserving comparisons; isolated experiments and adoption remain unperformed. | 2026-11-12 |
 
 [Technical design](native-runtime-foundations-tech-design.md) · [Source and repertoire reconciliation](native-runtime-foundations-evidence-and-repertoire.md)
 
@@ -28,11 +28,11 @@ History rebuilding, attention candidate rebuilding, unnecessary preparation, sha
 
 At the supported opening, a player moves, stops and talks while NPC replies are pending and native animals continue their actual reactions. Controls, current permitted views and ordinary saves remain usable. Optional model preparation must not pin unrelated full-world representations. A failed or canceled reply does not duplicate speech, erase accepted progress or release memory still owned by the transport.
 
-The performance work preserves the same meaningful encounter. It does not improve a result by canceling the second conversation, skipping animal activity, reducing evidence, slowing the world or excluding failed runs.
+The performance work preserves the same meaningful encounter. It does not improve a result by canceling the second conversation, skipping animal activity, reducing evidence, slowing the world or excluding failed runs. The actual cognition request and admitted reply effects must retain their meaning; fixed provider replies qualify deterministic continuity, not autonomous model quality.
 
 ### B. Two windows are not two copies of the world
 
-Two eligible connections viewing the same embodied character can reuse identical captured facts. They retain independent control tokens, connection state, transport buffers, reconnect baselines and final permission checks. Closing or blocking one window does not retire another window's valid data. A different observer does not acquire that character's private perspective.
+Two eligible connections viewing the same embodied character can reuse identical captured facts within one accepted cut. They retain independent control tokens, connection state, transport buffers, reconnect baselines and final permission checks. Closing or blocking one window does not retire another window's valid data. A different observer does not acquire that character's private perspective. New accepted progress ends reuse rather than dressing old facts as a newer view.
 
 The proposed reuse is below the complete player view. It grants no simultaneous-control feature and changes no account or multiplayer policy.
 
@@ -54,11 +54,11 @@ Complete physical-region unloading is outside this implementation slice. Current
 
 **S — One scratch owner for a synchronous encoding operation.** Compare reusing one explicitly resizable temporary reservation with constructing separate native wrapper objects for sequential measurement and serialization workspaces. Outputs and their consumers keep independent ownership. This is an isolated lifetime/CPU experiment, not a general arena, a higher allowance or permission to stop accounting for live headers.
 
-**P — Equivalent-connection capture reuse.** Compare one actual immutable player capture for a bounded group of compatible periodic publications with the current independent captures. Build and authorize each complete view separately. This is an isolated multiplayer preparation experiment; it is not global view caching or shared personal knowledge.
+**P — Equivalent-connection capture reuse.** Compare one actual immutable player capture for a bounded same-cut group of compatible periodic publications with independent captures. Build and authorize each complete view separately. This is an isolated multiplayer preparation experiment, not global view caching or shared personal knowledge; duplicate-tab savings do not establish distinct-player capacity.
 
-**R — Ordered read-only rate preparation.** Complete a concrete candidate for NSC03/E2 using the existing host pool. Independent status-rate selections read coherent state; results, arithmetic reductions, mutations, random draws and identities retain native order. This is an isolated parallel experiment, not parallel actor mutation or a new scheduler.
+**R — Ordered read-only rate preparation.** Complete a concrete NSC03/E2 candidate on the existing host pool. First serialize outer same-world bridge calls before they enter that pool (R0); then compare parallel status-rate selections (R1). This prevents a waiting worker from taking another call that blocks on its own world's held lock. Waiting requests keep existing admission and memory custody without occupying a compute worker. Results, reductions, mutations, random draws and identities retain native order. No parallel actor mutation or second scheduler service is introduced.
 
-All four are conditional because their complete benefit is unmeasured. J, S and P activate only when current attribution establishes material relevant cost. R runs under NSC03/E2's existing prerequisites. A documented rejection or not-applicable result is valid; an unmeasured implementation is not adoption. The [technical sequence](native-runtime-foundations-tech-design.md#7-experiment-sequence-and-adoption) makes each condition executable rather than leaving implementation choices implicit.
+All four are conditional because their complete benefit is unmeasured. J, S and P activate only when current attribution establishes material relevant cost. R runs under NSC03/E2's existing prerequisites, with R0 measured separately before R1. A documented rejection or not-applicable result is valid; an unmeasured implementation is not adoption. The [technical sequence](native-runtime-foundations-tech-design.md#7-experiment-sequence-and-adoption) makes each condition executable rather than leaving implementation choices implicit.
 
 ## 5. Foundation contracts to preserve now
 
@@ -82,9 +82,9 @@ No complete physical-region streaming, new world-seed overlay engine or broad cr
 
 A candidate must preserve equivalent actual work and useful player behavior through ordinary callers, not merely identical small helper outputs. Correctness, responsiveness, resource stability, complete operating cost and human enjoyment are separate evidence. No measured population capacity follows from this document.
 
-The implementation proceeds one independent change at a time. Reuse current NSC attribution and valid correctness evidence. For every performance candidate, pin a real before/after workload, include failures, compare complete native/Node/database/network work and revert an unsuccessful mechanism. Do not retain a permanent experimental switch or both implementations for compatibility.
+Proceed one independent change at a time. Reuse current NSC attribution and valid correctness evidence. Each candidate and any prerequisite refactor require an isolated before/after with actual consumer correctness and complete native/Node/database/network cost; preserve failed results. Include [the cognition-boundary comparison](native-runtime-foundations-tech-design.md#72-required-correctness), rather than infer response safety from unchanged final positions. Remove an unsuccessful mechanism and its otherwise unused machinery. Do not retain a permanent experimental switch or both implementations for compatibility.
 
-The selected design has no unresolved product choice needed to implement its experiments. Measured activation and adoption results are deliberately open. New pushing rules, lower-fidelity cognition, unattended-service promises or population-admission offers require their existing design owners; they are not unanswered prerequisites for this work.
+No unresolved product choice is needed to implement these experiments. Activation and adoption remain measured decisions. New pushing rules, lower-fidelity cognition, unattended-service promises or population-admission offers require their existing design owners; they are not unanswered prerequisites for this work.
 
 ## Maintained records
 
