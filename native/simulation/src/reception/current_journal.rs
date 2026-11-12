@@ -1180,6 +1180,26 @@ impl CurrentJournal {
         self.settle_owner(state, observer, CurrentOwnerPart::Gaps, false)?;
         Ok(())
     }
+    pub(super) fn replace_attention(
+        &mut self,
+        state: &mut ReceptionState,
+        observer: &str,
+        next: AttentionState,
+    ) -> Result<(), ReceivedError> {
+        let prior = &owner(state, observer)?.attention;
+        self.reserve_growth(
+            heap_sum([observer.len(), prior.heap_bytes().ok_or_else(capacity)?])
+                .ok_or_else(capacity)?,
+        )?;
+        // The prepared replacement already owns its working allocation. Keep
+        // the original body in undo before the fallible resident settlement.
+        let prior = owner_mut(state, observer)?.attention.replace(next);
+        self.undo.push(CurrentUndo::Attention {
+            observer: observer.to_owned(),
+            prior,
+        });
+        self.settle_attention(state, observer)
+    }
     pub(super) fn attention_mut<'a>(
         &mut self,
         state: &'a mut ReceptionState,

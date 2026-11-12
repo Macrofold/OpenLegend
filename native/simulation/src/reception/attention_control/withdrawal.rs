@@ -133,8 +133,7 @@ pub(crate) fn prune_withdrawn_attention(
             );
         }
     }
-    *journal.attention_mut(reception, observer)? = Some(state);
-    journal.settle_attention(reception, observer)?;
+    journal.replace_attention(reception, observer, state)?;
     Ok(!removed.is_empty())
 }
 fn next_revision(owned: &mut Option<u64>, current: &mut u64) -> Result<u64, ReceivedError> {

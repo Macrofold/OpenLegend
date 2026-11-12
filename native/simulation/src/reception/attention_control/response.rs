@@ -77,13 +77,9 @@ pub(crate) fn set_attention_focus(
             .ok_or_else(capacity)?;
         core.journal.current.reserve_growth(bound)?;
         let attention = initial_state(core.state.installed.attention.value())?;
-        *core
-            .journal
-            .current
-            .attention_mut(&mut core.state.reception, observer)? = Some(attention);
         core.journal
             .current
-            .settle_attention(&mut core.state.reception, observer)?;
+            .replace_attention(&mut core.state.reception, observer, attention)?;
     }
     let current = owner(&core.state.reception, observer)
         .and_then(|owner| owner.attention.as_ref())
