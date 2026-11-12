@@ -1,8 +1,8 @@
 # Native simulation core — technical design
 
-| Status      | Current progress                                                                                                    | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Caller repairs pass; current Native diagnostics fail capacity, with clean final measurement windows still required. | 2026-11-12   |
+| Status      | Current progress                                                                                          | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Current one-worker qualification fails; reconnect passes and final cold-recovery accounting is finishing. | 2026-11-12   |
 
 Companion: [feature specification](native-simulation-core-feature-spec.md). Tasks live only in [NSC](../maintainers/native-simulation-core.md); [limits](../limits/native-simulation-core.md) owns experimental operating defaults. This is an accepted design direction with conditional adoption, not a claim that Rust or distributed execution is installed.
 

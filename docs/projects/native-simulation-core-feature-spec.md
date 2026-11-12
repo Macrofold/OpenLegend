@@ -1,8 +1,8 @@
 # Native simulation core and adaptive execution
 
-| Status      | Current progress                                                                                                    | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Caller repairs pass; current Native diagnostics fail capacity, with clean final measurement windows still required. | 2026-11-12   |
+| Status      | Current progress                                                                                          | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Current one-worker qualification fails; reconnect passes and final cold-recovery accounting is finishing. | 2026-11-12   |
 
 ## 1. Purpose and selected direction
 
