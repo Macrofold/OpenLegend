@@ -1,0 +1,76 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "body-reference-family-stage-a-fit-evidence",
+    "revisionId": "fits-20261112-c10ff24c3c33",
+    "manifestSha256": "cafbe2d0eee43e3d40369a446f3b61857b375eda26dd6d37cee8cca7b6a5c102"
+  },
+  "files": {
+    "body-reference-family/stage-a/fit-evidence/fit-result.md": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "2308e4b61806bd036de2118116f547713a3dc548e0b109a124e05e425d13a35c",
+      "bytes": 4248,
+      "mediaType": "text/markdown"
+    },
+    "body-reference-family/stage-a/fit-evidence/replacement-assessment.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "d8864a0e10bf0b69f0e9a08331649ad316a03ad8eaae73392354f094fc9c7a7a",
+      "bytes": 1254,
+      "mediaType": "application/json"
+    },
+    "body-reference-family/stage-a/fit-evidence/replacement-profile-pose-comparison.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "be1fd35d20909537c727b597793f980f8018b734c4285baf99cbcc038d30c28d",
+      "bytes": 1339559,
+      "mediaType": "image/png"
+    },
+    "body-reference-family/stage-a/fit-evidence/replacement-profile.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "f05a4d9e474fe5ce86f88008dbf57c49ad8ef112f476c6316d6b32ec1d1ea2f8",
+      "bytes": 6604732,
+      "mediaType": "image/png"
+    },
+    "body-reference-family/stage-a/fit-evidence/replacement-prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "be57b61e87f5c1c6c01ed7693bfe40721e8df0f438a749dab8ddef393a7c2eba",
+      "bytes": 1317,
+      "mediaType": "text/plain"
+    },
+    "body-reference-family/stage-a/fit-evidence/stage-a-direct-failure.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "e1115317cb51c54f528a146328acbb3bc684b7e7f71b58027145db4477fad787",
+      "bytes": 1275681,
+      "mediaType": "image/png"
+    },
+    "body-reference-family/stage-a/fit-evidence/stage-a-laplacian-failure.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "d96a7fe982d55ab206d9c418237ec29a58a7ccd5ec83fe3d53e0920f7824845c",
+      "bytes": 1077834,
+      "mediaType": "image/png"
+    },
+    "body-reference-family/stage-a/fit-evidence/workspace-members.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "31d381d89b23a4c44a0ad1c199c4749e060fe4c924446a2d8e5ec49a7f7f9f0d",
+      "bytes": 14048,
+      "mediaType": "application/json"
+    },
+    "body-reference-family/stage-a/fit-evidence/workspace.tar.gz": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "6a2756cc3b850a3c403be47b67240f33b9238dec18505444db71aca92239d154",
+      "bytes": 69998113,
+      "mediaType": "application/gzip"
+    }
+  }
+}

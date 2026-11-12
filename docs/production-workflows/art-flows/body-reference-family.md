@@ -98,7 +98,7 @@ Plan all rows before production. Each has an intended reference or explicitly un
 
 Only 12 of the 27 initial validation shapes are independent supports. For the other fifteen, the initial evaluator synthesizes the shape; independent reference art judges whether that interpolation is believable and faithful. Synthetic midpoint geometry is not independent validation evidence. A source image that cannot be made mutually consistent stays unresolved, not a target the fitter must distort itself to satisfy.
 
-The first 12-shape experiment preserves MHP10's **30 recipes and 24 sweeps**. Its 30 are `M∈{0,.5,1}`, `F∈{0,1}`, `D∈{0,.25,.5,.75,1}`. Union with the 27-point grid gives **45 unique static recipes**, not 57. The six definition paths hold `M∈{0,.5,1},F∈{0,1}`; the nine fullness paths hold `M,D∈{0,.5,1}`; the nine mass paths hold `F,D∈{0,.5,1}`. Sweep the remaining axis over its complete range. Inspect quarter-fullness/quarter-mass observations from the recordings; do not replace the accepted check set with a smaller chart.
+The first 12-shape experiment preserves MHP10's **30 recipes and 24 sweeps**. Its 30 are `M∈{0,.5,1}`, `F∈{0,1}`, `D∈{0,.25,.5,.75,1}`. The 27-point grid shares 18 of those recipes, giving **39 unique static recipes**. The six definition paths hold `M∈{0,.5,1},F∈{0,1}`; the nine fullness paths hold `M,D∈{0,.5,1}`; the nine mass paths hold `F,D∈{0,.5,1}`. Sweep the remaining axis over its complete range. Inspect quarter-fullness/quarter-mass observations from the recordings; do not replace the accepted check set with a smaller chart.
 
 ### Age, base, height and the larger matrix
 

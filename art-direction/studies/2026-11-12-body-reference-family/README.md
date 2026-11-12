@@ -1,6 +1,27 @@
-# Body reference family — design concepts
+# Body reference family
 
-This design study supports the proposed [body reference-family workflow](../../../docs/production-workflows/art-flows/body-reference-family.md). It creates no Meshy donors, runtime targets or game selection. MHP10's anatomy/shirt acceptance remains open.
+This study executes the bounded [body reference-family workflow](../../../docs/production-workflows/art-flows/body-reference-family.md). Stage A requires one usable fixed-frame lean/full pair before adding other supports. The fuller source and two Meshy donors are available for private study. The corresponding body and natural motion remain unqualified.
+
+## Stage A source pair
+
+The approved Peacock lean sheet governs `50/0/100`. The corresponding V3 lean recipe fixes apparent age 30, frame 0 and stature 2.031899582 m. Seedream 5.0 Pro generated the fuller `50/100/100` reference. At the same normalized front waist level, the exposed width is 13.60% of stature on the lean image, 15.74% on the fuller image, and 15.75% and 16.01% on the two raw donors. These are image projections. The profile arm is lowered and obscures part of the flank, and the linen conceals the pelvis and upper thighs.
+
+The first Meshy multiview job forced an A-pose. The second kept the same three input panels and omitted the forced pose to isolate its effect. Both preserved the rounder abdomen and produced fused linen and exaggerated knee grooves. The second has more natural hand orientation, with remaining upper-arm and forearm length differences at the measured section centres. The lowered profile arm and covered anatomy limit what the sheet can verify. Both donors are technical trial inputs awaiting artist acceptance.
+
+Fresh permission-checked restores verified the [fuller reference and measurements](stage-a-reference.index.json), [forced-A-pose donor and comparison](stage-a-donor.index.json), and [alternate-pose donor and comparison](stage-a-donor-native-pose.index.json) with 8, 11 and 11 files respectively. A separate profile generated from the fuller front brought the projected wrist height closer. Its far sole still sits approximately 1.7–2.2% of image stature above the near sole, with further uncertainty around the elbows and knees. It was rejected as an input for another donor. Higgsfield charged 2.5 credits for each of the two image jobs and 30 for each of the two donors, leaving 142.75 credits. No new plan or top-up was purchased.
+
+## Stage A transfer and runtime evidence
+
+| Trial | Observed result |
+| --- | --- |
+| Direct transfer from the first donor | Fuller torso section widths and depths closely match the donor. Clay reveals cuts at the lower pecs and elbows and dents at the axilla. Recomputed geometric normals retain the same defects. |
+| Blender Laplacian Deform and target-normal projection from the second donor | The smoother wrap preserves the fixed seam and topology. A separate projection pass improves forward torso p95 from 6.53 to 0.87 mm. Arm p95 still measures 14.99–16.58 mm against the 4.06 mm gate. Rear elbow and wrist dents, a chest band and baseline-coverage intersections remain visible. The alternate donor's re-pose already introduced some limb creases. |
+| Unreal 5.8.4 Body Only on the first donor | Shoulders are smoother. Independent FBX measurement shows a 45.49 mm shorter body than the fixed 2.031899582 m input. The waist and ribs widen, muscle relief softens, and upper-thigh bands remain visible. |
+| Second-donor Laplacian body in the shared game renderer | The protected lean body reconstructs exactly. The interpolated body and the full endpoint match their numeric inputs within 1e-6 m. Rest and raised-arm views, a 52-sample slider recording and a covered Walk render with no optional shirt selected. The fuller torso changes visibly, but the legs still read lean, the underarms pinch and baseline shorts retain an angular fold. The observed Walk showed no obvious reversed elbow. Complete gait and clearance remain open. |
+
+The [offline fitting evidence](stage-a-fit-evidence.index.json) preserves editable candidates, coverage masks, matched comparisons and the source plan. The [native comparison](stage-a-native-conform.index.json) preserves the Unreal inputs and export. The [renderer evidence](stage-a-renderer-evidence.index.json) preserves the exact private kit, six-angle captures and actual Walk and slider recordings. Runtime evidence uses the Laplacian candidate. The subsequent projection candidate is an offline comparison only.
+
+Stage A remains open. A fuller donor must preserve the selected fixed frame after registration and transfer coherent anatomy across the shoulders, arms and torso. The 27-node grid plus the retained 30-recipe/24-sweep plan contains 39 unique static recipes. A standalone converter reconstructed diagnostic data through the existing compiler. The body grid, shirt, performance and later age/base qualification require a usable source pair first. The preserved premade shirt and animation remain the same inputs for that next stage.
 
 ## Generated output and limits
 

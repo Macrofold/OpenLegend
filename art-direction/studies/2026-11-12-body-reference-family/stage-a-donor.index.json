@@ -1,0 +1,90 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "body-reference-family-stage-a-donor",
+    "revisionId": "donor-20261112-fffc72dc70fd",
+    "manifestSha256": "b6406e15273846ac8840026d673f3bfb6afcae767b4c310b0ea40117dd49ee37"
+  },
+  "files": {
+    "body-reference-family/stage-a/donor/back.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "cad771fc269cbc2d47c2eda0f777b4561afaa83a0a14aae5ea646886940e733f",
+      "bytes": 403473,
+      "mediaType": "image/png"
+    },
+    "body-reference-family/stage-a/donor/body.glb": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "fffc72dc70fd03f346fe1279e4fc7c343f6131e402717af2057cb2086b87c3f7",
+      "bytes": 7626268,
+      "mediaType": "model/gltf-binary"
+    },
+    "body-reference-family/stage-a/donor/front.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "d3134eabce8d813ed4a06ebab7391c0464b6100c165b6ec6b43bbf6755e85e29",
+      "bytes": 417248,
+      "mediaType": "image/png"
+    },
+    "body-reference-family/stage-a/donor/profile.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "b134467c76b791e5176b977b453b2b8d35589de4aaf920ebb538c9d282f2885e",
+      "bytes": 380853,
+      "mediaType": "image/png"
+    },
+    "body-reference-family/stage-a/donor/projection-review.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "96c461a9570481bbffd85af1b77e6f8a060d3377ba1773951d3a29f6c15d7d13",
+      "bytes": 2407,
+      "mediaType": "application/json"
+    },
+    "body-reference-family/stage-a/donor/provider-and-review.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "91c240f48184cb8d08ae88b28b47d7a583ef8777ba98d2de243c6cd95783777e",
+      "bytes": 647,
+      "mediaType": "application/json"
+    },
+    "body-reference-family/stage-a/donor/quarter.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "3ecee3e5f51702561f8b3d184ded99deb7850377740f943d4e255262450d5a5e",
+      "bytes": 418268,
+      "mediaType": "image/png"
+    },
+    "body-reference-family/stage-a/donor/rear-quarter.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "2920df492d14ca9d9928c58252e0a6695e316da8bb76a39d7361819741d06b7f",
+      "bytes": 403599,
+      "mediaType": "image/png"
+    },
+    "body-reference-family/stage-a/donor/render-receipt.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "553362763796a0992a6dae8754dccddc1af3ba6a1521d058e0096acb790ca099",
+      "bytes": 11656,
+      "mediaType": "application/json"
+    },
+    "body-reference-family/stage-a/donor/request-record.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "3d06054d2700dd31ec376a50b652584d1ecf8a400a4784915feda211de24fbe2",
+      "bytes": 576,
+      "mediaType": "application/json"
+    },
+    "body-reference-family/stage-a/donor/source-comparison.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "221e50f7cef7dcaf02a8d302745e825479c706ed4a9bb30ca9e15bb0f72d2302",
+      "bytes": 1357180,
+      "mediaType": "image/png"
+    }
+  }
+}

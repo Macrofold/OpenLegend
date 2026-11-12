@@ -1,8 +1,8 @@
 # MetaHuman foundation proof — technical design
 
-| Status  | Current progress                                                                            | Last updated |
-| ------- | ------------------------------------------------------------------------------------------- | ------------ |
-| Blocked | The Peacock transfer and controls are demonstrated. Shirt fit and natural Walk remain open. | 2026-11-11   |
+| Status  | Current progress                                                                           | Last updated |
+| ------- | ------------------------------------------------------------------------------------------ | ------------ |
+| Blocked | The fuller Peacock body transfer must qualify before the full motion and shirt fit checks. | 2026-11-12   |
 
 ## 1. Experiment and dependency boundary
 

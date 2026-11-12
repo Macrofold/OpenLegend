@@ -1,0 +1,69 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "body-reference-family-stage-a-reference",
+    "revisionId": "reference-20261112-23f82bdd7fbf",
+    "manifestSha256": "170e6e93a62f79a950ddaa0b4bdff63cd2e6503d2b2d4a29f471598ea3b51839"
+  },
+  "files": {
+    "body-reference-family/stage-a/reference/back.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "141a5ecee6f885702075bb9b0ce6d9af8d0b288a5ae597b6ddc2ebff6a48576b",
+      "bytes": 1622572,
+      "mediaType": "image/png"
+    },
+    "body-reference-family/stage-a/reference/front.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "bdd3090e7f8131f664c095e43e0b017424d5d18e9b3a7f32f03d1b8f416a118d",
+      "bytes": 1612478,
+      "mediaType": "image/png"
+    },
+    "body-reference-family/stage-a/reference/measure-source.py": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "e3ee71b0b66fef8b07ec2bd6cc71036427aa56d9df49eaa6bf4768b32e7e5a48",
+      "bytes": 3068,
+      "mediaType": "text/plain"
+    },
+    "body-reference-family/stage-a/reference/profile.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "1a1bee46cf4425e436abd9a1dc4868bb3fa20f58ab6719766aa7d5a32f3e0df1",
+      "bytes": 1180277,
+      "mediaType": "image/png"
+    },
+    "body-reference-family/stage-a/reference/prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "4fac0663a07cb2a200cdd099efa0ccc918c17f39ffced0e7849cca8db9b0c4c7",
+      "bytes": 1724,
+      "mediaType": "text/plain"
+    },
+    "body-reference-family/stage-a/reference/record.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "d9537670b72bbe4f04e1763f26ee046ee903779a825dce920cae3054b6d619b7",
+      "bytes": 2029,
+      "mediaType": "application/json"
+    },
+    "body-reference-family/stage-a/reference/reference-projections.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "80c909dafdc6e966c6e29666531a5267bb8dddca7ced89583a5cbfc106e3141a",
+      "bytes": 366608,
+      "mediaType": "application/json"
+    },
+    "body-reference-family/stage-a/reference/sheet.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "23f82bdd7fbf5f0afc9580815a7c21e7967f1b89260b64603af982e5fd1b6a4d",
+      "bytes": 5297986,
+      "mediaType": "image/png"
+    }
+  }
+}

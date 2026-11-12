@@ -1,0 +1,153 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "body-reference-family-stage-a-native-conform",
+    "revisionId": "native-20261112-bda963a4cdcf",
+    "manifestSha256": "792d14b318e20771f71941097aa634091fe0c951bfb3cb55ef6972ef3db298b3"
+  },
+  "files": {
+    "body-reference-family/stage-a/native/NATIVE-RESULT.md": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "2f0b27775ec2bae92917a2d7cfc367ece812ae1d921cb0e92641e0c8199bdc4b",
+      "bytes": 3912,
+      "mediaType": "text/markdown"
+    },
+    "body-reference-family/stage-a/native/Project/Config/DefaultEngine.ini": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "11abd62588497d78a076625529f4642caa5e843d848bbb182df1dd41206a01c7",
+      "bytes": 563,
+      "mediaType": "text/plain"
+    },
+    "body-reference-family/stage-a/native/Project/Content/MetaHumanProof/MHP_OrlandoFit02.uasset": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "972c4599e885696a233d15181a134ca51633cfd0ee8d297fe945953e466952e9",
+      "bytes": 9167082,
+      "mediaType": "application/octet-stream"
+    },
+    "body-reference-family/stage-a/native/Project/Content/PeacockFit/StageAFuller.uasset": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "885710f9263480d94c411169a93b313c96e78e8e1124eca064fd690c04cb77fa",
+      "bytes": 9660766,
+      "mediaType": "application/octet-stream"
+    },
+    "body-reference-family/stage-a/native/Project/PeacockFit.uproject": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "da4a4c56692aaf29f75355743afb0a9a186088257d057e58b8265a20084cb91d",
+      "bytes": 418,
+      "mediaType": "application/json"
+    },
+    "body-reference-family/stage-a/native/body-fit/body-all-lods.fbx": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "bda963a4cdcf239170206abb79a43351593583a86a31e04036478b0169d0f1bc",
+      "bytes": 5037808,
+      "mediaType": "application/octet-stream"
+    },
+    "body-reference-family/stage-a/native/body-fit/head-all-lods.fbx": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "e1b97d8e64094f85c423bbdb74cc9a548bd91d2fbf92077e0027765bf058f9c2",
+      "bytes": 13501472,
+      "mediaType": "application/octet-stream"
+    },
+    "body-reference-family/stage-a/native/body-fit/result.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "15b0fe620369edc7dae69a96cf72ae26b229896c1f0f6fa565fddc6928cd0f8b",
+      "bytes": 16183,
+      "mediaType": "application/json"
+    },
+    "body-reference-family/stage-a/native/body-plan.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "d86c3f34e4ded2ce578abc8b1f7b90c4c9541dee1ebfabccf904150d8caa0972",
+      "bytes": 525,
+      "mediaType": "application/json"
+    },
+    "body-reference-family/stage-a/native/body-target.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "09a754bbf8e6e34d9873fb74c318b41fabfa4688f09096b47698ac4b0fe1dc27",
+      "bytes": 2233870,
+      "mediaType": "application/json"
+    },
+    "body-reference-family/stage-a/native/intake-receipt.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "114f7dfe5127f0b99d2fcce3a4ecab3efb2f41a6cb3526cdeae476e8a4e0c027",
+      "bytes": 2146,
+      "mediaType": "application/json"
+    },
+    "body-reference-family/stage-a/native/measure-export.py": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "27e82574fba391937cd855210f72f81eb63daf844c389fd62b1f16a3de174048",
+      "bytes": 7175,
+      "mediaType": "text/plain"
+    },
+    "body-reference-family/stage-a/native/native-archive-files.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "0de46fc90359c2abdd6ba5176b93de692e51e5448df5cbc29c9172a1dfd68908",
+      "bytes": 3137,
+      "mediaType": "application/json"
+    },
+    "body-reference-family/stage-a/native/native-body-only-comparison.jpg": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "e45cf58c98abcd543c6537a28bb9a4911af092f29baab7063ad7efb92d51dc8f",
+      "bytes": 259036,
+      "mediaType": "image/jpeg"
+    },
+    "body-reference-family/stage-a/native/native-geometry-measures.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "f084ae5c36b1e263b14340e555130725b3c699d84583219be6e87e196bbc41b8",
+      "bytes": 19604,
+      "mediaType": "application/json"
+    },
+    "body-reference-family/stage-a/native/native-matched-clay/render-receipt.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "66ed8b7cf8fe685826d55abf21145e13cc005e5b561555befa2cc1737a9cc41c",
+      "bytes": 12312,
+      "mediaType": "application/json"
+    },
+    "body-reference-family/stage-a/native/native_conform.py": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "57942991ee80eb49060366de74187163b87fa04c5b80ca12071e8407501bb583",
+      "bytes": 10846,
+      "mediaType": "text/plain"
+    },
+    "body-reference-family/stage-a/native/prepare-native-target.py": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "f5782f3527ed509b3b8cc0b0189a9880c80c2b7c84668f32e95de4fd891d1384",
+      "bytes": 4618,
+      "mediaType": "text/plain"
+    },
+    "body-reference-family/stage-a/native/run-editor.sh": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "f6184a59ad4f164e713d20df0bb463b5703bf69860f872553a846975f7354352",
+      "bytes": 494,
+      "mediaType": "text/plain"
+    },
+    "body-reference-family/stage-a/native/run_body.py": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "da5478b46f0a7e42c2f0be80a0543d20a9a1dda9ea8a9d35875193bd026e335d",
+      "bytes": 202,
+      "mediaType": "text/plain"
+    }
+  }
+}

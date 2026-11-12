@@ -1,0 +1,83 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "body-reference-family-stage-a-renderer-evidence",
+    "revisionId": "renderer-20261112-b1949525f98b",
+    "manifestSha256": "a0de7bd7f014b5646754ef54b212d274c09e6dd8960b03ddccb0cdf8a872113b"
+  },
+  "files": {
+    "body-reference-family/stage-a/renderer-evidence/coverage-walk-decoded.jpg": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "deb3fb6f24f01705ae754ae2f7b8ac01bd62de21e3bfbd70e36e4226bb9dea89",
+      "bytes": 185077,
+      "mediaType": "image/jpeg"
+    },
+    "body-reference-family/stage-a/renderer-evidence/coverage-walk.webm": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "65f73faf6b900ff34b93b39e4337651b5060c6e755a2f533e58f73da0e3cfdbf",
+      "bytes": 2144204,
+      "mediaType": "video/webm"
+    },
+    "body-reference-family/stage-a/renderer-evidence/fullness-sweep-coverage-rest-decoded.jpg": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "1748d306d5178397e888d5e02003b549f61186cb106ac0f5c1fee68d197f731a",
+      "bytes": 129924,
+      "mediaType": "image/jpeg"
+    },
+    "body-reference-family/stage-a/renderer-evidence/fullness-sweep-coverage-rest.webm": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "0262873c9d39783610793be5c5459d25c908a3baf0043ab3619fd1af248e242a",
+      "bytes": 416853,
+      "mediaType": "video/webm"
+    },
+    "body-reference-family/stage-a/renderer-evidence/raised-six-angles.jpg": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "019796fca44978e7373ca9a0b96b04d22887886eeda0508d9b44de79d8297d35",
+      "bytes": 254303,
+      "mediaType": "image/jpeg"
+    },
+    "body-reference-family/stage-a/renderer-evidence/renderer-result.md": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "831ef397169dc37a55e01cd26e4f83062f8e08b57ad55904802fa580c8d97da5",
+      "bytes": 3706,
+      "mediaType": "text/markdown"
+    },
+    "body-reference-family/stage-a/renderer-evidence/rest-six-angles.jpg": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "9a4b10b93d0ffda3a4c879fc88333058a0e8d0e151bea87ed9dd9628080b3274",
+      "bytes": 256021,
+      "mediaType": "image/jpeg"
+    },
+    "body-reference-family/stage-a/renderer-evidence/upper-body-and-pelvis.jpg": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "28e2dee5294e0a3b7e9fcac76d70a9361b236a76750cfdd761f8a6cf22eaf69b",
+      "bytes": 190687,
+      "mediaType": "image/jpeg"
+    },
+    "body-reference-family/stage-a/renderer-evidence/workspace-members.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "03f3350571fc7580d2f1a1848c562d724691266656b4523d35b11c1e43ba255d",
+      "bytes": 11611,
+      "mediaType": "application/json"
+    },
+    "body-reference-family/stage-a/renderer-evidence/workspace.tar.gz": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "b0f3465cf7d5090ac546054e88bb0bf22e79f2680ca8fe607d320d731057880c",
+      "bytes": 22461264,
+      "mediaType": "application/gzip"
+    }
+  }
+}
