@@ -25,6 +25,8 @@ A compound code separates canonical ownership from its read/storage consumers. N
 
 ## Candidate implementation ledger
 
+The [NRF J experiment](native-runtime-foundations.md#j-correctness-checkpoint--november-12-2026) fuses the two private JSON shape walks without changing allocation formulae, selected payloads, disclosure or mutation authority. Formula/bytes, genuine refusal/cleanup, actual GET/SSE and Source-equivalent fresh cognition/save/cold/checkpoint callers pass. The forgetting caller preserves the unchanged Native cancellation outcome and exact Native-control records; Source's failed/uncertain classification remains distinct. J has no cost/adoption qualification yet and does not supersede the NSC03 rejection.
+
 Maintenance deadline extraction now remains in the same existing accepted-boundary turn as its capture. The real old caller fails against an already accepted candidate; the repaired caller preserves nonempty Source deadlines, read release and exactly-once queued advancement. Native source/interface are unchanged. Evidence and the current failed capacity qualification remain in the [delivery record](native-simulation-core.md#remaining-proof-checklist); a scheduler status alone is not a persisted-reply witness.
 
 Compute-slot refusal now retains its pre-enqueue identity through the Native bridge and server overload owner. Actual GET/clock/debt/SSE-release and Source-earned animal navigation callers pass with two genuine jobs outstanding, one completion and exact reservation cleanup. The slot bound is unchanged; byte rejection, poison and cancellation remain distinct. Current-revision AWS qualification remains in the [delivery record](native-simulation-core.md#remaining-proof-checklist).

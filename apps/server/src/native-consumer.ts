@@ -162,40 +162,36 @@ export function nativeCanonicalJsonWorkspace(value: unknown, bytes: number): num
   );
 }
 
-function jsonAncestorWorkspace(value: unknown): number {
-  if (value === null || typeof value !== 'object') return 0;
-  let own = 32 * 8,
-    child = 0;
-  if (Array.isArray(value)) {
-    own += value.length * 8 * 8;
-    for (let index = 0; index < value.length; index++)
-      child = Math.max(child, jsonAncestorWorkspace(value[index]));
-  } else {
-    for (const key in value)
-      if (Object.hasOwn(value, key)) {
-        // Object.keys and V8's handles include an undefined property's key too.
-        own += 8 * 8;
-        child = Math.max(child, jsonAncestorWorkspace((value as Record<string, unknown>)[key]));
-      }
-  }
-  return own + child;
-}
-
 /** A selected string's UTF-16 backing is already funded by its input owner.
  * This extra overlap covers Flatten copying a rope while its old parts live.
  * After encoding, any resulting flat backing remains that same input's body. */
-function jsonInputStringUnits(value: unknown): number {
-  if (typeof value === 'string') return value.length;
-  if (value === null || typeof value !== 'object') return 0;
-  let units = 0;
-  if (Array.isArray(value)) {
-    for (let index = 0; index < value.length; index++) units += jsonInputStringUnits(value[index]);
-  } else {
-    for (const key in value)
-      if (Object.hasOwn(value, key))
-        units += key.length + jsonInputStringUnits((value as Record<string, unknown>)[key]);
-  }
-  return units;
+function nativeJsonShape(value: unknown) {
+  let stringUnits = 0;
+  const visit = (value: unknown): number => {
+    if (typeof value === 'string') {
+      stringUnits += value.length;
+      return 0;
+    }
+    if (value === null || typeof value !== 'object') return 0;
+    let own = 32 * 8,
+      child = 0;
+    if (Array.isArray(value)) {
+      own += value.length * 8 * 8;
+      for (let index = 0; index < value.length; index++)
+        child = Math.max(child, visit(value[index]));
+    } else {
+      for (const key in value)
+        if (Object.hasOwn(value, key)) {
+          // Undefined properties still own keys; only live ancestry overlaps.
+          own += 8 * 8;
+          stringUnits += key.length;
+          child = Math.max(child, visit((value as Record<string, unknown>)[key]));
+        }
+    }
+    return own + child;
+  };
+  const ancestorWorkspace = visit(value);
+  return { ancestorWorkspace, stringUnits };
 }
 
 /** V8 doubles one contiguous builder and copies it into the final string.
@@ -223,8 +219,9 @@ function measureNativeJson(
 ) {
   const prefix = options.prefix ?? '',
     suffix = options.suffix ?? '';
-  const shape = nativeJsonFixedWorkspace + jsonAncestorWorkspace(value);
-  const flattening = 2 * jsonInputStringUnits(value);
+  const { ancestorWorkspace, stringUnits } = nativeJsonShape(value);
+  const shape = nativeJsonFixedWorkspace + ancestorWorkspace;
+  const flattening = 2 * stringUnits;
   // Measuring uses the same live Object.keys ancestry. Disable Native cache
   // writes: persistent WeakMap/proof entries cannot borrow a temporary guard.
   const measuring = world.reserveConsumerBytes(shape + flattening + 256);
