@@ -68,6 +68,7 @@ import {
   releaseNativeProduct,
   retainNativeSources,
   withoutNativeConsumerScope,
+  type NativeEncodingCapacity,
 } from './native-consumer.js';
 import {
   fundNativeSourceWorkspace,
@@ -245,7 +246,7 @@ function publicTranscriptItem(
 }
 
 type NarrationRead = { status: 'current'; item: TranscriptItem | null } | { status: 'stale' };
-type NarrationCapacity = Pick<NativeWorld, 'reserveConsumerBytes' | 'reserveConsumerJson'>;
+type NarrationCapacity = NativeEncodingCapacity & Pick<NativeWorld, 'reserveConsumerJson'>;
 interface NarrationReadEntry {
   revision: number;
   privacy: unknown;

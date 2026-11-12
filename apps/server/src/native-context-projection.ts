@@ -1,6 +1,11 @@
 import type { NativeWorld, NativeWorldConsumer } from '@open-legend/native-simulation';
 import type { NativeNpcCapture } from './native-npc-capture.js';
-import { attachNativeConsumer, encodeNativeJson, releaseNativeProduct } from './native-consumer.js';
+import {
+  attachNativeConsumer,
+  encodeNativeJson,
+  releaseNativeProduct,
+  type NativeEncodingCapacity,
+} from './native-consumer.js';
 import { nativeEntityMarkerFactCount, nativeEntityMarkerReader } from './native-recall-service.js';
 import {
   measureEntityMarkerProjection,
@@ -13,7 +18,7 @@ const referenceField = /^(entityId|actorId|targetId|sourceId|targetEntityId|addr
  * strings, decoded sections and actual reference-spelling expansion separately
  * from the captured source graphs that they borrow. */
 export function projectNativeDecisionContext(
-  world: Pick<NativeWorld, 'reserveConsumerBytes' | 'reserveConsumerJson'>,
+  world: NativeEncodingCapacity & Pick<NativeWorld, 'reserveConsumerJson'>,
   context: Record<string, unknown>,
   capture: NativeNpcCapture,
   references: Readonly<Record<string, string>>,

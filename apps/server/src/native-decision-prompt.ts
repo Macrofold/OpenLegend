@@ -4,6 +4,7 @@ import {
   attachNativeConsumer,
   encodeNativeJsonText,
   nativeJsonEncodingWorkspace,
+  type NativeEncodingCapacity,
 } from './native-consumer.js';
 import { measureReadableDecisionContext, readableDecisionContext } from './response-context.js';
 
@@ -111,6 +112,9 @@ export function joinNativeDecisionText(
   }
 }
 
-export function nativeDecisionJsonText(world: Budget, value: unknown): NativeDecisionText {
+export function nativeDecisionJsonText(
+  world: NativeEncodingCapacity,
+  value: unknown,
+): NativeDecisionText {
   return encodeNativeJsonText(world, value);
 }

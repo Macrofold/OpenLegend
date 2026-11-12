@@ -9,7 +9,12 @@ import type {
   NativeWorld,
   NativeWorldConsumer,
 } from '@open-legend/native-simulation';
-import { attachNativeConsumer, encodeNativeJson, releaseNativeProduct } from './native-consumer.js';
+import {
+  attachNativeConsumer,
+  encodeNativeJson,
+  releaseNativeProduct,
+  type NativeEncodingCapacity,
+} from './native-consumer.js';
 import {
   RetentionActorSelection,
   accountRetentionDeadline,
@@ -19,7 +24,7 @@ import {
   type RetentionWorkKind,
 } from './retention-deadlines.js';
 
-type Admission = Pick<NativeWorld, 'reserveConsumerBytes' | 'reserveConsumerJson'>;
+type Admission = NativeEncodingCapacity & Pick<NativeWorld, 'reserveConsumerJson'>;
 type Policy = Parameters<typeof accountRetentionDeadline>[1];
 type Row = { readonly slot: string; readonly payload: string };
 type Owned<T> = { value: T; guard: NativeWorldConsumer };

@@ -972,6 +972,7 @@ if (__napiLoadedBindingTarget === 'native' && nativeBinding !== __napiRequiredNa
 
 const {
   NativeHost,
+  NativeJsonScratch,
   NativeWorld,
   NativeWorldAccountRetention,
   NativeWorldActivityLearningBatch,
@@ -1002,6 +1003,7 @@ const {
   nativeHostStatus,
 } = nativeBinding;
 export { NativeHost };
+export { NativeJsonScratch };
 export { NativeWorld };
 export { NativeWorldAccountRetention };
 export { NativeWorldActivityLearningBatch };

@@ -1,8 +1,8 @@
 # Native runtime foundations: technical design
 
-| Status      | Current progress                                                                                | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------- | ------------ |
-| In progress | J is rejected at 128 MiB and removed; S is selected next, while P/R retain unmet prerequisites. | 2026-11-12   |
+| Status      | Current progress                                                                                                                           | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | J is rejected and removed; S is implemented with focused checks, pending held-reply and AWS qualification; P/R retain unmet prerequisites. | 2026-11-12   |
 
 [Feature specification](native-runtime-foundations-feature-spec.md) · [Evidence and repertoire reconciliation](native-runtime-foundations-evidence-and-repertoire.md) · [NRF work](../maintainers/native-runtime-foundations.md) · [Constraints](../limits/native-runtime-foundations.md)
 

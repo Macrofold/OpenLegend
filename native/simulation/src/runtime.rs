@@ -32,9 +32,9 @@ pub use npc_intake::{RuntimeNpcInspection, RuntimeNpcTrigger};
 mod npc_labels;
 mod participation;
 mod player;
-mod reply_preview;
 mod privacy;
 mod private_history;
+mod reply_preview;
 pub use private_history::{RuntimePrivateHistoryPublication, RuntimePrivateHistoryRead};
 mod navigation;
 mod read_cut;
@@ -43,7 +43,7 @@ mod restore;
 mod retained_values;
 pub use handoff::RuntimeOutputHandoff;
 mod consumer;
-pub use consumer::RuntimeConsumer;
+pub use consumer::{RuntimeConsumer, RuntimeJsonScratch};
 pub(crate) use npc::HeldSourceProof;
 pub use npc::{
     RuntimeNpcPreparationStep, RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket,

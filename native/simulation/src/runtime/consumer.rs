@@ -15,6 +15,55 @@ pub struct RuntimeConsumer {
     _reference: ByteReservation,
 }
 
+/// Sequential temporary custody for one synchronous JSON encoding operation.
+/// Output and source consumers keep their independent reservations.
+pub struct RuntimeJsonScratch {
+    body: Option<ByteReservation>,
+    failed_growth: bool,
+}
+
+impl RuntimeJsonScratch {
+    pub fn reserve(budget: &ByteBudget) -> Result<Self, RuntimeError> {
+        Ok(Self {
+            body: Some(budget.reserve(0).map_err(failure)?),
+            failed_growth: false,
+        })
+    }
+
+    /// Only growth needs a live parent. Shrink remains cleanup after shutdown
+    /// or refusal; the previous charge survives every failed admission.
+    pub fn resize(
+        &mut self,
+        bytes: usize,
+        admit_growth: impl FnOnce() -> bool,
+    ) -> Result<(), RuntimeError> {
+        let body = self
+            .body
+            .as_mut()
+            .ok_or_else(|| failure("native JSON scratch is closed"))?;
+        if bytes > body.bytes() {
+            if self.failed_growth {
+                return Err(failure("native JSON scratch permits cleanup only"));
+            }
+            if !admit_growth() {
+                self.failed_growth = true;
+                return Err(failure("native JSON scratch admission is closed"));
+            }
+        }
+        if let Err(error) = body.resize(bytes) {
+            self.failed_growth = true;
+            return Err(failure(error));
+        }
+        Ok(())
+    }
+
+    /// Terminal and idempotent. The bridge's actual wrapper stays funded until
+    /// destruction, independently of the temporary body released here.
+    pub fn close(&mut self) {
+        self.body = None;
+    }
+}
+
 fn reference_bytes() -> Option<usize> {
     // Native class carrier plus conservative 64-bit opaque-wrapper metadata.
     size_of::<RuntimeConsumer>()

@@ -10,7 +10,7 @@ OpenLegend is an authoritative multiplayer server world. Login, reconnect and re
 
 This tracker owns native-core conversion and its experiments. [PF10/PF11](performance.md#pf10--workers-and-movement-prediction) retains worker/operating and population qualification; [D6/PD12](production-deployment.md#conditional-launch-and-expansion) retains production distributed delivery. Do not duplicate their task bodies or claim their completion from a proof. [BK29](production-data.md#bk29--pressure-and-preparation-work-removal-proposed) remains the owner of current-runtime semantic/retention improvements; take its accepted source as common behavior when comparing.
 
-The authorized [native-runtime-foundations continuation](native-runtime-foundations.md#current-selection-and-remaining-work) owns its conditional J/S/P/R experiments and their isolated evidence. J's focused correctness checkpoint does not reopen or replace this completed profile rejection, qualify settled memory or bypass the one-worker prerequisite for E2.
+The authorized [native-runtime-foundations continuation](native-runtime-foundations.md#current-selection-and-remaining-work) owns its conditional J/S/P/R experiments and their isolated evidence. J is rejected and removed; S's implementation and focused checks remain unqualified for adoption. Neither reopens or replaces this completed profile rejection, qualifies settled memory or bypasses the one-worker prerequisite for E2.
 
 ## Current progress
 

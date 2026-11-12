@@ -4,10 +4,11 @@ import {
   copyNativeProduct,
   releaseNativeProduct,
   retainNativeProduct,
+  type NativeEncodingCapacity,
 } from './native-consumer.js';
 
 export type NativeMilestones = Readonly<Record<string, Readonly<Record<string, boolean>>>>;
-type Admission = Pick<NativeWorld, 'reserveConsumerBytes' | 'reserveConsumerJson'>;
+type Admission = NativeEncodingCapacity & Pick<NativeWorld, 'reserveConsumerJson'>;
 
 /** Canonical rows are already validated by their native owner. Admit only the
  * temporary JSON decode here; this reader does not grant or validate a badge. */
