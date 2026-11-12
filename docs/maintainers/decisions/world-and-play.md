@@ -62,13 +62,13 @@ Scope/dependencies: Before P1 acceptance; F39/F51; [MVP](../../../archive/05-pro
 
 Lethal thresholds, injury progression, starting needs, ordinary revival/summoning and population balance remain open; [retained ghost continuity](../../worlds/base/lifecycle-and-protection.md#npc-death-ghosts-and-revival) is accepted; distinguish meaningful death from missing mechanics or stale AI results
 
-Scope/dependencies: Before P2 external test; design follow-ups and R08. Original decision status: **residual choice**.
+Scope/dependencies: Before P2 external test; design follow-ups and R08. Original decision status: **partly agreed**.
 
 ### D31 — Evolvable properties and modular homes
 
 [PX05’s paired design](../../projects/editable-shelters-tech-design.md) resolves the one-builder open-bay family and exact current-format lifecycle; broader grid/structural stress, comfort, household meaning, live definition conversion and thermal algorithms remain proposals. [The explicit expansion blockers](../../projects/editable-shelters-tech-design.md#101-consequential-unresolved-owner-decisions) require owner answers before dependent work; script pointers remain tentative under D20
 
-Scope/dependencies: With the first construction feature; F42, R21 and [construction specification](../../../archive/03-design-proposals/evolving-materials-and-construction.md); accepted September 19, 2026. Original decision status: **partly agreed**.
+Scope/dependencies: With the first construction feature; F42, R21 and [construction specification](../../../archive/03-design-proposals/evolving-materials-and-construction.md); accepted September 19, 2026. Original decision status: **residual choice**.
 
 ### D41 — Numeric state ownership and future influences
 
