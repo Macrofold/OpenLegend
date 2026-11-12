@@ -18,14 +18,14 @@ Physical exclusion can bound some local interaction work under explicit assumpti
 
 ## Reading and action map
 
-- [Context and existing coverage](01-context-and-existing-coverage.md): pinned source, earlier work, inspected code and the unavailable implementation ref.
+- [Context and existing coverage](01-context-and-existing-coverage.md): the original pinned source, earlier work, inspected code and historical implementation-ref access limitation.
 - [Scale model and crowds](02-scale-model-and-crowds.md): bounded local work, coupled interactions, recipient amplification and a proposed first movement comparison.
 - [Engine foundations and sequencing](03-foundations-and-sequencing.md): expensive-to-retrofit seams and deferred machinery.
 - [Persistent worlds and hosting](04-persistent-worlds-and-hosting.md): independent seed histories, residency, storage growth, provider boundaries and complete cost.
 - [Qualification and capacity](05-qualification-and-capacity.md): useful-work, quality and operating evidence.
 - [Primary sources](sources.md): mechanism evidence and its limits, not transferable OpenLegend benchmarks.
 
-The [focused design handoff](../../docs/maintainers/decisions/mmorpg-engine-foundations.md) maps refinements to existing designs, tasks and the main needs-design groups. [NSC01 and NSC08](../../docs/maintainers/native-simulation-core.md) own reconciliation during conversion; the [capacity owner](../../docs/product-scalability/capacity-and-economics.md#maintained-records) routes later population and gameplay qualification to PS/PF/PT/PD. Do not create a second task for work already owned there.
+The [focused handoff](../../docs/maintainers/decisions/mmorpg-engine-foundations.md) records completed near-term design slices and remaining consumer-specific questions. The source-reconciled [native runtime foundation pair](../../docs/projects/native-runtime-foundations-feature-spec.md) and [NRF tracker](../../docs/maintainers/native-runtime-foundations.md) specify four isolated candidates, preserving current NSC repairs and gates rather than duplicating them. Its [evidence map](../../docs/projects/native-runtime-foundations-evidence-and-repertoire.md) inspects the now-accessible Rust implementation and all repertoire scopes. [NSC](../../docs/maintainers/native-simulation-core.md) retains proof/conversion adoption; the [capacity owner](../../docs/product-scalability/capacity-and-economics.md#maintained-records) retains later PS/PF/PT/PD qualification.
 
 ## Unchanged boundaries
 

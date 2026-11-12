@@ -14,7 +14,7 @@ S owns only the sequential temporary work of one synchronous JSON encoding opera
 
 ## NRF-L03 — Capture-sharing scope
 
-P initially covers compatible embodied periodic SSE publications, not creator inspection, bootstrap, reconnect, command responses, different observers or different permission scopes. It shares raw facts, not complete views, tokens, deltas or disclosure leases. One current group is prepared at a time and no capture cache survives a publication pass. The restriction contains memory lifetime and authorization risk; broader reuse needs its own complete key and consumer evidence.
+P initially covers consecutive compatible embodied periodic SSE publications, not creator inspection, bootstrap, reconnect, command responses, different observers or different permission scopes. It shares raw facts, not complete views, tokens, deltas or disclosure leases. Preserve existing stream order. One current group is prepared at a time and no capture cache survives a publication pass. This contains memory lifetime, fairness and authorization risk; broader reuse needs its own complete key and consumer evidence.
 
 ## NRF-L04 — Parallel family and pool
 
@@ -24,7 +24,11 @@ Initial experimental scheduling uses one worker inline, fewer than twice the sel
 
 ## NRF-L05 — Evidence and adoption
 
-Every uncertain performance mechanism is an isolated experiment. Freeze its criterion before measurement and retain failures. J cannot claim improvement from helper counts alone; S/P cannot claim improvement by freeing still-live allocations or excluding inconvenient connections. R retains NSC's E2 criteria. Combined gains are measured rather than added arithmetically. Rejected variants and unused scaffolding are removed; no compatibility switch remains to support an earlier codebase.
+Every uncertain performance mechanism is an isolated experiment. Freeze its criterion before measurement and retain failures. [Technical section 7.4](../projects/native-runtime-foundations-tech-design.md#74-candidate-decisions-and-overall-adoption) owns the candidate-specific criteria: J must reduce complete affected-consumer CPU beyond variation without meaningful regression; S/P's new lifetime machinery must earn at least 10% complete qualifying-workload CPU reduction or close a demonstrated binding resource failure with at most 5% additional complete CPU per work unit; R retains E2's 10% benefit/5% CPU bound and tiny-scene conditions. Actual current latency, correctness and resource gates remain required.
+
+For the resource route, the candidate must complete the unchanged previously failing journey. Assess its CPU/regression guard on an additional matched journey that both control and candidate actually complete; a failed control's partial work is not the cost denominator. Without that matched cost evidence, the result remains inconclusive. This prevents a capacity success from concealing an unmeasured CPU or latency regression.
+
+J cannot claim improvement from helper counts; S/P cannot free still-live allocations or omit inconvenient connections. Combined gains are measured, not added. Criteria may be deliberately revised before a new experiment with a stated rationale, never retrospectively to turn failure into acceptance. Rejected paths and unused scaffolding are removed. No compatibility switch remains to support an earlier codebase, and individual Native-to-Native gains do not replace overall NSC adoption.
 
 ## NRF-L06 — No new gameplay approximation or scale cap
 
