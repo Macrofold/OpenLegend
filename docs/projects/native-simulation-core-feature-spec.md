@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                  | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Focused fixes and repaired held callers pass; AWS cost attribution is running before current resource and adoption qualification. | 2026-11-12   |
+| In progress | Focused fixes and repaired held callers pass; clean AWS repeats run while diagnostic copy custody is repaired before attribution. | 2026-11-12   |
 
 ## 1. Purpose and selected direction
 
