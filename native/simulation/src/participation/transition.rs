@@ -255,6 +255,17 @@ impl ParticipationCursor {
         self.outcome = Some(rule.outcome(ok));
         Ok(())
     }
+    fn materialize_edit(&self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
+        if self.finalize {
+            // Source's accepted participation edit materializes earned values.
+            // Keep their existing sensory invalidation: settling these anchors
+            // must not make cold startup withdraw unrelated current bodies.
+            // docs/save-and-load.md#continuation-and-identity
+            core.physical().settle_all_numeric_values()?;
+            core.state.physical.header.native_interval = None;
+        }
+        Ok(())
+    }
     fn write(
         &mut self,
         core: &mut CoreMutation<'_>,
@@ -598,6 +609,7 @@ impl ParticipationCursor {
                     // Source's operational absence reconciliation first adopts
                     // the current auth_exits attempt without spending a gameplay
                     // revision. The ordinary begin-exit below then owns effects.
+                    self.materialize_edit(core)?;
                     self.write(core, Some("active"), false, Some(None), None, budget)?;
                     // Exiting and active have identical Source exposure and
                     // receiver keys; this reset queues no sensory invalidation.
@@ -644,6 +656,9 @@ impl ParticipationCursor {
                     self.phase = Phase::Done;
                 }
                 Phase::Apply => {
+                    // Eligibility and any required return-standing check have
+                    // succeeded. Refusals and no-op returns never reach this.
+                    self.materialize_edit(core)?;
                     // The public transition records this semantic cause before
                     // work. A simulated deadline records it after departure.
                     self.write(core, None, true, None, None, budget)?;
