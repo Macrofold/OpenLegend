@@ -1,14 +1,12 @@
 # Research
 
-| Research status | Progress | Last updated |
-| --- | --- | --- |
-| Maintained research index | Links engine/platform studies and persistent MMORPG foundation research; the browser-first milestone remains the selected next delivery. | 2026-11-11 |
+Maintained research index, updated November 11, 2026. This index links engine/platform studies and persistent MMORPG foundation research; the browser-first milestone remains the selected next delivery.
 
 ## Persistent MMORPG engine foundations
 
 The [MMORPG foundation collection](mmorpg-engine-foundations/README.md) studies the engine assumptions that would be costly to retrofit for independent persistent worlds with 1,000–5,000 concurrent players as a research ambition. It covers current native-design coverage, physical crowds and interaction graphs, partial residency, bounded scheduling and delivery, coordinate/identity contracts, seed copies, mature storage, cloud boundaries and capacity qualification.
 
-The [focused needs-design briefs](../docs/maintainers/decisions/mmorpg-engine-foundations.md) identify minimal NOW/SOON seams, existing delivery owners, required evidence and deferred machinery. The research does not claim that population capacity, approve gameplay approximations, replace the native adoption gates or authorize runtime/cloud work.
+The [focused needs-design briefs](../docs/maintainers/decisions/mmorpg-engine-foundations.md) identify minimal NOW/SOON seams, existing delivery owners, required evidence and deferred machinery. The research does not establish that capacity, approve gameplay approximations, replace the native adoption gates or authorize runtime/cloud work.
 
 ## Current Unreal and Unity runtime mechanisms
 
