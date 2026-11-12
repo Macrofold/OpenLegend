@@ -16,6 +16,8 @@ Projects own proposed/accepted scope and delivery plans; their focused trackers 
 
 The runtime family also includes the [native simulation core](native-simulation-core-feature-spec.md): a complete Rust pipeline proof before wider conversion, then conditional cell/distributed execution. Its [tracker](../maintainers/native-simulation-core.md) owns adoption gates; current runtime optimization remains separately owned.
 
+The [native runtime foundations](native-runtime-foundations-feature-spec.md) pair specifies four conditional preparation/lifetime experiments beneath that core. Its [NRF tracker](../maintainers/native-runtime-foundations.md) preserves the proof's disposition and owns candidate eligibility and isolated comparisons.
+
 The [runtime removal recommendations](runtime-work-removal-recommendations.md) assess which routine events, memory accounts and repeated preparation to remove, with explicit gameplay tradeoffs and existing implementation owners. These remain proposals.
 
 The [Spirit and mental-status design note](spirit-and-mental-statuses-design-note.md) records the selected naming and coexistence model. [Character and map additions](character-and-map-additions-feature-spec.md) specifies Spirit, stats, more equipment slots, map markers and nicknames.

@@ -7,6 +7,6 @@ Residual choices are grouped by subject; existing subsystem trackers retain deli
 - [Creation and controls](creation-and-controls.md): residual choices linked to their delivery owners.
 - [Delivery and privacy](delivery-and-privacy.md): residual choices linked to their delivery owners.
 - [Commercial and rights](commercial-and-rights.md): residual choices linked to their delivery owners.
-- [MMORPG engine foundations](mmorpg-engine-foundations.md): focused needs-design briefs extending D22/D61 and capacity research, with existing owners and minimal consuming slices.
+- [MMORPG engine foundations](mmorpg-engine-foundations.md): source-reconciled near-term design, existing proof ownership and the remaining consumer-specific scale questions.
 
 No proposal is approved or parent acceptance closed by filing. Stable D/PS-D identifiers remain.

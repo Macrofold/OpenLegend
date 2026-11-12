@@ -1,5 +1,7 @@
 # Tracking limits and constraints
 
+The [native runtime foundation constraints](native-runtime-foundations.md) bound conditional preparation/lifetime experiments; they add no implemented gameplay or population allowance.
+
 A limit is a chosen restriction on capacity, access to supported features, selection, retention, scheduling or behavior. It need not be a number: “only search the current bag” and “one login provider” qualify. Track deliberate **no limit**, removed limits and supported-feature boundaries as well as active caps. This register is an inventory, not a mandate to expand everything.
 
 The selected first-playable design has linked inventories for [shared integration](first-playable-world.md), [survival/making](first-playable-survival.md), [camp construction](editable-shelters.md), [cooperation](first-playable-cooperation.md) and [roaming](first-playable-roaming.md). Their authored numbers are selected starting values, with runtime/player qualification still open.
