@@ -324,7 +324,14 @@ fn registry() -> &'static Mutex<Option<Arc<HostRuntime>>> {
 }
 
 fn host_error(error: HostError) -> Error {
-    failure(error.to_string())
+    // Busy is the pool's refusal before enqueue/execution, not a failed world
+    // operation. Preserve that distinction for the server's overload owner.
+    let status = if error == HostError::Busy {
+        Status::QueueFull
+    } else {
+        Status::GenericFailure
+    };
+    Error::new(status, error.to_string())
 }
 
 fn failure(reason: impl Into<String>) -> Error {

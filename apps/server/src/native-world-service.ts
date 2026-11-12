@@ -158,7 +158,7 @@ import type { LiveReadCuts } from './live-read-overlay.js';
 import type { CommitInputs } from './commit-inputs.js';
 import type { NativeCurrentWorldInstallation } from './store.js';
 import { HostWork } from './host-work.js';
-import { OverloadError, WorkLane } from './work-lane.js';
+import { isOverloadError, OverloadError, WorkLane } from './work-lane.js';
 import { NATIVE_IO_YIELD_MS, NATIVE_PUBLICATION_MS } from './native-advance-budget.js';
 import { LIVE_SAVE_INTERVAL_MS, LIVE_SAVE_MAX_AGE_MS } from './pending-world-save.js';
 import type { WorldInputOwner } from './world-input.js';
@@ -2477,7 +2477,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         kind === 'manual' &&
         !(error instanceof CheckpointBusyError) &&
         !(error instanceof AuthorityError) &&
-        !(error instanceof OverloadError)
+        !isOverloadError(error)
       )
         await this.store.saves.recordFailure(
           this.worldId,
@@ -4441,8 +4441,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           this.retentionWakeAt = undefined;
           this.retentionTask = this.nativeRetention()
             .catch((error: unknown) => {
-              if (!(error instanceof OverloadError))
-                console.error('Native retention failed.', error);
+              if (!isOverloadError(error)) console.error('Native retention failed.', error);
             })
             .finally(() => {
               this.retentionTask = undefined;

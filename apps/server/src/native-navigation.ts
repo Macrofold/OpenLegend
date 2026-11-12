@@ -1,7 +1,7 @@
 import type { NativeGeometryQueries, NativeWorld } from '@open-legend/native-simulation';
 import type { NativeGeometryProviders } from './native-geometry.js';
 import { setTimeout as delay } from 'node:timers/promises';
-import { OverloadError } from './work-lane.js';
+import { isOverloadError } from './work-lane.js';
 import {
   decodeNativeProduct,
   releaseNativeProduct,
@@ -65,7 +65,13 @@ export class NativeNavigation {
         try {
           let more = true;
           while (more && !this.closed && this.owner.available() && this.owner.world() === world) {
-            const queries = decodeNativeProduct<NativeGeometryQueries>(await read.packet());
+            const packet = await this.inLane(() =>
+              this.closed || !this.owner.available() || this.owner.world() !== world
+                ? Promise.resolve(null)
+                : read.packet(),
+            );
+            if (!packet) break;
+            const queries = decodeNativeProduct<NativeGeometryQueries>(packet);
             let answer:
               | Awaited<ReturnType<NativeGeometryProviders['prepareEntityNavigation']>>
               | undefined;
@@ -96,7 +102,7 @@ export class NativeNavigation {
       try {
         return await this.owner.inLane(operation);
       } catch (error) {
-        if (!(error instanceof OverloadError) || this.closed) throw error;
+        if (!isOverloadError(error) || this.closed) throw error;
         // Queue refusal has not consumed the opaque read/answer. As in the
         // Source coordinator, defer this publication without recomputing it.
         await delay(1000, undefined, { signal: this.stopping.signal });

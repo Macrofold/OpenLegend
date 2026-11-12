@@ -8,7 +8,7 @@ import {
 } from './native-consumer.js';
 import type { NativeWorldService } from './native-world-service.js';
 import type { NativePlayerEncoder, NativePlayerViewRequest } from './native-player-view.js';
-import { OverloadError, WorkLane } from './work-lane.js';
+import { isOverloadError, OverloadError, WorkLane } from './work-lane.js';
 import { ViewChangedError, projectPatch } from './view.js';
 
 type Stream = {
@@ -337,7 +337,7 @@ export class NativePlayerHttp {
                 await this.publish(stream);
               } catch (error) {
                 if (error instanceof ViewChangedError) continue;
-                if (error instanceof OverloadError) {
+                if (isOverloadError(error)) {
                   this.again = true;
                   continue;
                 }
@@ -349,7 +349,7 @@ export class NativePlayerHttp {
             }
           })
           .catch((error: unknown) => {
-            if (error instanceof OverloadError) this.again = true;
+            if (isOverloadError(error)) this.again = true;
             else console.error('Native player publication queue failed.', error);
           })
           .finally(() => {

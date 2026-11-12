@@ -118,7 +118,7 @@ import type { NativeRecallRuntime } from './native-recall-service.js';
 import type { NativeWorldService } from './native-world-service.js';
 import type { NativePublication } from './native-operation.js';
 import { nativePublicationActors } from './native-publication-actors.js';
-import { OverloadError } from './work-lane.js';
+import { isOverloadError } from './work-lane.js';
 import {
   readSituationQueryResponse,
   SITUATION_QUERY_INSTRUCTIONS,
@@ -1859,7 +1859,7 @@ export class NativeNpcDirector {
         dispatched,
       });
     } catch (error) {
-      if (dispatched || !(error instanceof OverloadError)) throw error;
+      if (dispatched || !isOverloadError(error)) throw error;
       // A transport's protected save barrier can temporarily defer this
       // optional cleanup. Recover the saved reservation through its existing
       // receipt-aware owner instead of turning admission pressure into a
@@ -1941,7 +1941,7 @@ export class NativeNpcDirector {
       void this.maintenance.tick(this.runs.size > 0).catch((error: unknown) => {
         // Protected gameplay work can defer optional maintenance admission;
         // only an actual preparation/storage failure stops the world writer.
-        if (!(error instanceof OverloadError)) this.service.fail(error);
+        if (!isOverloadError(error)) this.service.fail(error);
       });
       if (this.generation !== this.service.generation) {
         this.work.clear();

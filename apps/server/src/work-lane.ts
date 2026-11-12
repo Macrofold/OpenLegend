@@ -10,6 +10,22 @@ export class OverloadError extends Error {
   }
 }
 
+/** The native pool refuses before enqueueing. QueueFull alone also describes
+ * unrelated NAPI callback queues, whose failures must not become safe retries. */
+export function isOverloadError(
+  error: unknown,
+): error is
+  | OverloadError
+  | (Error & { code: 'QueueFull'; message: 'native host compute capacity is busy' }) {
+  return (
+    error instanceof OverloadError ||
+    (error instanceof Error &&
+      'code' in error &&
+      error.code === 'QueueFull' &&
+      error.message === 'native host compute capacity is busy')
+  );
+}
+
 /** Admission expires only queued work. Executing mutations always settle normally.
  * docs/performance.md#bounded-admission */
 export class WorkLane {

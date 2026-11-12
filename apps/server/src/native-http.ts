@@ -26,7 +26,7 @@ import { createClientAssets, type ClientAssets } from './client-assets.js';
 import { readAssetIndex } from './asset-configuration.js';
 import { readHttpJson } from './http-json.js';
 import { gameCookie, gameHttpLocation, readGameCookie, writeJson } from './http-boundary.js';
-import { OverloadError } from './work-lane.js';
+import { isOverloadError, OverloadError } from './work-lane.js';
 import { SHUTDOWN_DEADLINE_MS, type ShutdownReport } from './server-shutdown.js';
 import { worldInputSchema } from './world-input-schema.js';
 import { Autosaves } from './autosaves.js';
@@ -194,14 +194,14 @@ export async function createNativeGameServer(options: {
             thinking = decisions
               .considerThought()
               .catch((error: unknown) => {
-                if (!(error instanceof OverloadError)) current.fail(error);
+                if (!isOverloadError(error)) current.fail(error);
               })
               .finally(() => {
                 thinking = undefined;
               });
         })
         .catch((error: unknown) => {
-          if (error instanceof OverloadError) return;
+          if (isOverloadError(error)) return;
           console.error('Native automatic simulation failed.', error);
           current.fail(error);
         })
@@ -526,7 +526,7 @@ export async function createNativeGameServer(options: {
               await current.setConnection(transport, false, capturedScope);
             } catch (error) {
               released = false;
-              if (!(error instanceof OverloadError)) throw error;
+              if (!isOverloadError(error)) throw error;
               const retry = setTimeout(() => trackRelease(), 1000);
               retry.unref();
             }
@@ -1063,19 +1063,20 @@ export async function createNativeGameServer(options: {
           response.destroy();
           return;
         }
+        const overloaded = isOverloadError(error);
         const authority = error instanceof AuthorityError;
         const invalid =
           error instanceof z.ZodError ||
           error instanceof SyntaxError ||
           error instanceof HistoryCursorError;
-        if (error instanceof OverloadError) response.setHeader('Retry-After', '1');
+        if (overloaded) response.setHeader('Retry-After', '1');
         return writeJson(
           response,
           authority
             ? 403
             : invalid || error instanceof GameSaveError
               ? 400
-              : error instanceof OverloadError
+              : overloaded
                 ? 503
                 : 500,
           {
@@ -1086,14 +1087,12 @@ export async function createNativeGameServer(options: {
                 ? 'save'
                 : invalid
                   ? 'invalid-input'
-                  : error instanceof OverloadError
+                  : overloaded
                     ? 'busy'
                     : 'server',
-            message:
-              authority ||
-              error instanceof OverloadError ||
-              error instanceof GameSaveError ||
-              error instanceof HistoryCursorError
+            message: overloaded
+              ? new OverloadError().message
+              : authority || error instanceof GameSaveError || error instanceof HistoryCursorError
                 ? error.message
                 : invalid
                   ? 'Invalid input.'

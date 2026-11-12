@@ -1,6 +1,6 @@
 import type { AutosaveSettings, AutosaveStatus, GameSaveSummary } from '@open-legend/protocol';
 import { AUTOSAVE_DEFAULTS, CheckpointBusyError, GameSaveError } from './game-saves.js';
-import { OverloadError } from './work-lane.js';
+import { isOverloadError } from './work-lane.js';
 import type { GameRepository } from './store.js';
 import { CheckpointAllowanceError, type CheckpointAllowanceDetails } from './save-files.js';
 
@@ -178,7 +178,7 @@ export class Autosaves {
       await saves?.rotate(this.service.worldId, 'auto', this.settings.retain);
       this.outcomes.rotations++;
     } catch (error) {
-      if (error instanceof CheckpointBusyError || error instanceof OverloadError) {
+      if (error instanceof CheckpointBusyError || isOverloadError(error)) {
         this.outcomes.busy++;
         // The mutation queue refused this opportunity (a running capture normally holds the
         // opportunity in advance() instead; the capture-slot refusal is a defensive fallback).
