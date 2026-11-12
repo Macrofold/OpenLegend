@@ -209,6 +209,50 @@ impl ExposureSelection {
         let Some(pending) = state.reception.sensory.as_ref() else {
             return Ok(result);
         };
+        // A previously visible person can already be outside both pending
+        // positions' envelopes. Retest prior viewers too, or the scoped merge
+        // would retain that person without current sensory support.
+        for observer in &mut result.observers {
+            let entity = state
+                .physical
+                .entities
+                .resolve(observer.handle)
+                .ok_or(ExecutionError::MissingEntity)?;
+            for source_id in state
+                .reception
+                .visible_people
+                .as_ref()
+                .and_then(|rows| rows.get(&entity.id))
+                .into_iter()
+                .flatten()
+            {
+                if !pending.scopes.contains_key(source_id) {
+                    continue;
+                }
+                observer.affected = true;
+                mark_source(
+                    &mut observer.changed_people,
+                    source_id,
+                    &mut result.reservation,
+                )?;
+                mark_source(
+                    &mut observer.changed_detail,
+                    source_id,
+                    &mut result.reservation,
+                )?;
+                observer.objects_changed |=
+                    state
+                        .physical
+                        .entities
+                        .handle(source_id)
+                        .is_none_or(|handle| {
+                            result
+                                .objects
+                                .as_ref()
+                                .is_some_and(|objects| objects.ids.contains(&handle))
+                        });
+            }
+        }
         // The admitted vision family already bounds its radius. One shared
         // broad envelope selects observer candidates; each uses its exact range.
         let range = state
