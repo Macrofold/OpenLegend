@@ -215,6 +215,7 @@ export class PersonActor {
   private skin?: pc.Skin;
   private skinInstance?: pc.SkinInstance;
   private materials?: PersonMaterials;
+  private clay = false;
   private binding?: RevealBinding;
   private motion?: CharacterMotion;
   private contact?: PersonContact;
@@ -331,6 +332,15 @@ export class PersonActor {
     return this.meshInstances;
   }
 
+  setClay(clay: boolean): void {
+    if (this.clay === clay) return;
+    this.clay = clay;
+    const materials = this.materials;
+    if (!materials) return;
+    for (const { instance, source } of this.meshes.values())
+      instance.material = materials.material(source.materialId, clay);
+  }
+
   private clearPresentation(materials: readonly pc.StandardMaterial[] = []): void {
     if (this.binding) this.environment.presentation?.removeReveal(this.binding);
     this.binding = undefined;
@@ -408,7 +418,7 @@ export class PersonActor {
         this.upload(mesh, source);
         const instance = new pc.MeshInstance(
           mesh,
-          this.materials.material(source.materialId),
+          this.materials.material(source.materialId, this.clay),
           this.node,
         );
         instance.skinInstance = source.jointWeights ? this.skinInstance : null;
@@ -422,7 +432,7 @@ export class PersonActor {
         instance.castShadow = false;
       } else if (existing.source !== source) {
         this.upload(existing.mesh, source, existing.source);
-        existing.instance.material = this.materials.material(source.materialId);
+        existing.instance.material = this.materials.material(source.materialId, this.clay);
         existing.source = source;
       }
       width = Math.max(

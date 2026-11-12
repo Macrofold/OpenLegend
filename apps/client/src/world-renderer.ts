@@ -30,6 +30,7 @@ export interface PersonPreviewState {
 /** Plain intentions and projected geometry only; React never owns a scene node. */
 export interface PersonPreview {
   setAppearance(recipe: AppearanceRecipe, parts: readonly string[], editing: boolean): void;
+  setClay(clay: boolean): void;
   setView(view: PersonPreviewView): void;
   selectControl(id: string | undefined): void;
   rotate(radians: number): void;

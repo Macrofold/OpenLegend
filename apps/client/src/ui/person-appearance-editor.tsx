@@ -56,6 +56,7 @@ export function PersonAppearanceEditor({
   draft,
   parts,
   disabled = false,
+  clay = false,
   onPreview,
   visibleControls,
 }: {
@@ -63,6 +64,7 @@ export function PersonAppearanceEditor({
   draft: PersonAppearanceDraft;
   parts: readonly string[];
   disabled?: boolean;
+  clay?: boolean;
   onPreview(value: AppearancePreviewValidity): void;
   visibleControls?: readonly string[];
 }) {
@@ -70,6 +72,8 @@ export function PersonAppearanceEditor({
   const snapshot = useSyncExternalStore(draft.subscribe, draft.getSnapshot);
   const canvas = useRef<HTMLCanvasElement>(null);
   const renderer = useRef<PersonPreview | undefined>(undefined);
+  const clayRef = useRef(clay);
+  clayRef.current = clay;
   const callback = useRef(onPreview);
   callback.current = onPreview;
   const [state, setState] = useState<PersonPreviewState>({
@@ -130,6 +134,7 @@ export function PersonAppearanceEditor({
             });
           },
         );
+        renderer.current.setClay(clayRef.current);
         const latest = draft.getSnapshot();
         renderer.current.setAppearance(latest.recipe, partsRef.current, latest.editing);
       })
@@ -148,6 +153,9 @@ export function PersonAppearanceEditor({
       draft.cancelGesture();
     };
   }, [family, draft]);
+  useEffect(() => {
+    renderer.current?.setClay(clay);
+  }, [clay]);
   useEffect(() => {
     callback.current({ recipe: snapshot.recipe, ready: false });
     renderer.current?.setAppearance(snapshot.recipe, dressed ? parts : [], snapshot.editing);

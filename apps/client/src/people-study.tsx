@@ -54,11 +54,13 @@ function Comparison({
   wearers,
   selected,
   dressed,
+  clay,
   onDestroyed,
 }: {
   wearers: readonly StudyWearer[];
   selected: number;
   dressed: boolean;
+  clay: boolean;
   onDestroyed(report: LifetimeReport): void;
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -126,6 +128,9 @@ function Comparison({
     };
     // Other controls update the existing actors; only a new input kit replaces the scene.
   }, [wearers, onDestroyed]);
+  useEffect(() => {
+    renderer.current?.setClay(clay);
+  }, [clay, wearers, onDestroyed]);
   useEffect(() => {
     renderer.current?.setAppearance(selected, appearance(wearer, dressed), snapshot.editing);
   }, [selected, wearer, dressed, snapshot.recipe, snapshot.editing]);
@@ -311,6 +316,7 @@ function Study({ wearers }: { wearers: readonly StudyWearer[] }) {
   const [selected, setSelected] = useState(0);
   const [mode, setMode] = useState('editor');
   const [dressed, setDressed] = useState(true);
+  const [clay, setClay] = useState(false);
   const [count, setCount] = useState('four');
   const [lifetimes, setLifetimes] = useState<{ total: number; samples: LifetimeReport[] }>({
     total: 0,
@@ -352,6 +358,13 @@ function Study({ wearers }: { wearers: readonly StudyWearer[] }) {
           ]}
           onChange={setMode}
         />
+        <Button
+          variant={clay ? 'solid' : 'secondary'}
+          aria-pressed={clay}
+          onPress={() => setClay(!clay)}
+        >
+          Gray clay
+        </Button>
         {mode === 'comparison' && (
           <SelectField
             label="Characters shown"
@@ -392,6 +405,7 @@ function Study({ wearers }: { wearers: readonly StudyWearer[] }) {
           family={wearer.family}
           draft={wearer.draft}
           parts={outfitParts}
+          clay={clay}
           visibleControls={wearer.family.controls
             .filter((control) => control.maximum > control.minimum)
             .map((control) => control.id)}
@@ -402,6 +416,7 @@ function Study({ wearers }: { wearers: readonly StudyWearer[] }) {
           wearers={shown}
           selected={count === 'one' ? 0 : selected}
           dressed={dressed}
+          clay={clay}
           onDestroyed={recordLifetime}
         />
       )}
