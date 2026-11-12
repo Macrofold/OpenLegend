@@ -1,12 +1,12 @@
 # Native simulation core and adaptive execution
 
-| Status      | Current progress                                                                                | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------- | ------------ |
-| In progress | NSC03 rejects the current 128 MiB profile; final cold-cost recording and cleanup are finishing. | 2026-11-12   |
+| Status      | Current progress                                                                                                                       | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | NSC03 assessment is complete: Reject the current profile; conditional conversion and parallel/distributed qualification are unentered. | 2026-11-12   |
 
 ## 1. Purpose and selected direction
 
-The [prior trial decision](../maintainers/native-simulation-core.md#nsc03-measured-disposition--november-11-2026) rejects the 64 MiB profile. Mike selected provisional 128 MiB transient requalification; the [current NSC03 assessment](../maintainers/native-simulation-core.md#nsc03-reassessment--november-12-2026) rejects that profile after failed ordinary-play capacity. Successful adoption remains unmet; final cold-cost/resource recording is finishing.
+The [prior trial decision](../maintainers/native-simulation-core.md#nsc03-measured-disposition--november-11-2026) rejects the 64 MiB profile. Mike selected provisional 128 MiB transient requalification; the [current NSC03 assessment](../maintainers/native-simulation-core.md#nsc03-reassessment--november-12-2026) rejects that profile after failed ordinary-play capacity. Successful adoption remains unmet; the measured assessment and resource/spend recording are closed, with unavailable witnesses explicit.
 
 Make the ordinary OpenLegend opening comfortably responsive, and make additional active people and places affordable without sacrificing individual knowledge, independent characters or meaningful consequences. The intended scale is dozens and ideally hundreds of active characters, with many simultaneous players distributed through a continuous world. These are design goals, not measured capacity claims or a promise that an arbitrarily large battle fits one machine.
 

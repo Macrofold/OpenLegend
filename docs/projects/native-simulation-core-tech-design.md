@@ -1,8 +1,8 @@
 # Native simulation core — technical design
 
-| Status      | Current progress                                                                                | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------- | ------------ |
-| In progress | NSC03 rejects the current 128 MiB profile; final cold-cost recording and cleanup are finishing. | 2026-11-12   |
+| Status      | Current progress                                                                                                                       | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | NSC03 assessment is complete: Reject the current profile; conditional conversion and parallel/distributed qualification are unentered. | 2026-11-12   |
 
 Companion: [feature specification](native-simulation-core-feature-spec.md). Tasks live only in [NSC](../maintainers/native-simulation-core.md); [limits](../limits/native-simulation-core.md) owns experimental operating defaults. This is an accepted design direction with conditional adoption, not a claim that Rust or distributed execution is installed.
 
