@@ -64,6 +64,8 @@ Name what an additional resident, region or retained history contributes before 
 
 [World scale](../research/unity-unreal-runtime/06-world-streaming-and-scale.md), [networking](../research/unity-unreal-runtime/07-networking-persistence-and-replay.md), [rendering](../research/unity-unreal-runtime/08-rendering-animation-and-audio.md), and [profiling](../research/unity-unreal-runtime/10-profiling-and-verification.md) provide mechanisms and measurement distinctions. [Product scalability](projects/product-scalability-feature-spec.md) owns the selected exact calculated advancement and ordinary bounded fallback. Research about approximate populations does not change that selected promise.
 
+For persistent-world scale, use the separately dated [MMORPG foundation study](../research/mmorpg-engine-foundations/README.md) and [focused design handoff](maintainers/decisions/mmorpg-engine-foundations.md). They extend this map through [NSC01/NSC08](maintainers/native-simulation-core.md) and DG17/DG18/DG29/DG34, covering residency, dense encounters, publication and mature history without another roadmap. The handoff links existing designs and delivery owners; its sources do not extend the Unreal/Unity evidence cutoff above.
+
 ## Route each research question to its existing owner
 
 The table is a reading and ownership map. It is not a second backlog. Follow the linked tracker for current design state, implementation, dependencies and unsatisfied acceptance. The [broader coverage map](../research/unity-unreal-runtime/00-openlegend-context-and-coverage.md#6-coverage-of-the-broader-intended-product) includes the intended bodies, care, ecology, economy, institutions and alternate realities whose particular meanings are authored outside engine APIs.

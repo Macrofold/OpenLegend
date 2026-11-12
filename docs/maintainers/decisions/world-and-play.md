@@ -42,6 +42,8 @@ Scope/dependencies: Before starting-world authoring; design follow-ups and playt
 
 The [native-core design](../../projects/native-simulation-core-feature-spec.md) selects continuous same-world geography across operational cell/machine boundaries, flexible cell grouping and conditional adaptive placement; no loading screen or gameplay wall is required by that partition. This resolves the execution-boundary direction, not a mandate for one global geography across authored worlds. Exact larger distributed-family envelopes, qualified density and product congestion handling remain open under [NSC05–NSC07](../native-simulation-core.md), R06/R12 and PS05–PS07; cross-world compatible powers/travel retain their existing owners.
 
+The [foundation needs-design briefs](mmorpg-engine-foundations.md) distinguish physical density, coupled interaction scope, recipient fan-out and active working sets. They evaluate the largest feasible encounter without selecting a fixed sector cap or treating a geographical boundary as proof of independent work.
+
 Scope/dependencies: Before the affected regional/federation release; R06/R12, PS05–PS07; [coordination choices](#product-scalability-integration-choices). Original decision status: **residual choice**.
 
 ### D23 — Resource/ecology seeding
@@ -88,7 +90,11 @@ Scope/dependencies: ACT09, before a process-authoring UI is approved; preserve c
 
 ## D61 — Shared-world scale and crowd behavior
 
-Selected shared-world populations and regional priorities retain their [capacity owner](../../../archive/07-technical-architecture/data-delivery-and-scale.md#1-what-scaling-means-for-this-product). Remaining choices are supported cross-boundary mechanics and permitted clock skew before separate writers ship. Queued-away participants are not successful capacity evidence; no global per-action barrier is implied.
+Earlier qualification workloads and regional priorities retain their [capacity owner](../../../archive/07-technical-architecture/data-delivery-and-scale.md#1-what-scaling-means-for-this-product). The larger research ambition is 1,000 concurrent humans per independently evolving persistent world, potentially 5,000, plus NPC activity. Establish the largest feasible local gathering rather than select an arbitrary smaller cap. This is not measured capacity or a replacement for the smaller native proof and release gates.
+
+The [foundation needs-design briefs](mmorpg-engine-foundations.md) record current coverage, minimal NOW/SOON seams and the evidence required for further designs. Physical crowding, cheaper explicitly selected behavior and geographical locality are candidates to evaluate, not permission to weaken current outcomes or knowledge. Independent seed worlds can share immutable resources but not assume synchronized mutable histories.
+
+Remaining choices are supported cross-boundary mechanics and permitted clock skew before separate writers ship. Queued-away participants are not successful capacity evidence; no global per-action barrier is implied.
 
 [NSC](../native-simulation-core.md) specifies an initial same-clock compute-distribution experiment with exact coupled boundaries and the existing writer. It does not introduce independently committing regional storage or close the broader clock/capacity qualification.
 
