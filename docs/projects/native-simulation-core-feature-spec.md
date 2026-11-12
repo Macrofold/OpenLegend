@@ -1,8 +1,8 @@
 # Native simulation core and adaptive execution
 
-| Status      | Current progress                                                                                                                  | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Focused fixes and repaired held callers pass; clean AWS repeats run while diagnostic copy custody is repaired before attribution. | 2026-11-12   |
+| Status      | Current progress                                                                                                            | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Focused fixes pass; clean AWS repeats fail Native capacity, with attribution and separate remaining windows still required. | 2026-11-12   |
 
 ## 1. Purpose and selected direction
 

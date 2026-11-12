@@ -1,8 +1,8 @@
 # Native simulation core — technical design
 
-| Status      | Current progress                                                                                                                  | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Focused fixes and repaired held callers pass; clean AWS repeats run while diagnostic copy custody is repaired before attribution. | 2026-11-12   |
+| Status      | Current progress                                                                                                            | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Focused fixes pass; clean AWS repeats fail Native capacity, with attribution and separate remaining windows still required. | 2026-11-12   |
 
 Companion: [feature specification](native-simulation-core-feature-spec.md). Tasks live only in [NSC](../maintainers/native-simulation-core.md); [limits](../limits/native-simulation-core.md) owns experimental operating defaults. This is an accepted design direction with conditional adoption, not a claim that Rust or distributed execution is installed.
 
