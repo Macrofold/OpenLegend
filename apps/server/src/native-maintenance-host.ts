@@ -152,15 +152,17 @@ function nativeMaintenanceHost(
         read.release();
       }
     },
-    async rawDeadlines(actorId) {
-      const read = await service.publishRecall(() =>
-        NativeMaintenanceRead.capture(service.world, actorId),
-      );
-      try {
-        return await read.rawDeadlines();
-      } finally {
-        read.release();
-      }
+    rawDeadlines(actorId) {
+      return service.publishRecall(async () => {
+        const read = await NativeMaintenanceRead.capture(service.world, actorId);
+        try {
+          // Raw deadlines still read the accepted native authority. Keep that
+          // read in the same turn; an intervening candidate is private state.
+          return await read.rawDeadlines();
+        } finally {
+          read.release();
+        }
+      });
     },
     async admission(actorId, generation, purpose, requiresBody) {
       if (generation !== service.generation) return undefined;

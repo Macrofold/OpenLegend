@@ -135,6 +135,8 @@ An admitted command/pause waiting behind advancement can set one native host sto
 
 A client receives its existing public protocol, not the native internal representation. Server formatting can remain TypeScript only if it operates on the already selected capture. Menu, action preview, inspection, recall/context, authoring preview and diagnostics must not request the entire graph to recreate old domain helpers. Current source/version bindings stay server-side. Authoring enters through reviewed typed native install/edit operations, with ordinary exact pin and current-save validation.
 
+Maintenance deadline extraction is an accepted-state native read, even after its actor capture exists. The application keeps capture, raw-time extraction and read release in the same existing accepted-boundary callback; it does not carry an unprotected live read across a possible private candidate. Returned deadline data owns its independent allocation. Advisory scheduling, final current-source checks and the synchronous disclosure lease retain their existing owners.
+
 ## 5. Single-machine execution and work pooling
 
 ### 5.1 Initial scheduling algorithm
