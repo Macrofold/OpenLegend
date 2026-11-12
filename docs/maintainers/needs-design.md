@@ -224,6 +224,8 @@ Population ranges and visual seeds belong to the selected world; named people re
 
 **Done — designed, November 6, 2026 (ND39–ND42).** Mike accepted the body/wardrobe direction and requested the remaining production decisions. The [family authoring contract](../projects/people-from-parts-authoring-contract.md) and [world control definitions](../worlds/base/people-appearance.md#control-definitions) specify independent muscle/fullness/proportions, adult age samples, faces/hair, finished skin, exact recipe evaluation, fitting/motion and isolated correctness/effort/performance experiments. The scoped SAM/MHR foundation is selected for the pilot; rejected scripted/stock anatomy is excluded. Hidden MPFB use still needs Mike's choice. Remaining sculpt acceptance and measured ranges are asset qualification, not an unmade product design. AF07/AF10 and PPL05/PPL06 own assets, AF11 the reusable baker, PPL03 procedure activation and PPL04 later playable integration. No implementation or game-art acceptance is implied by design completion. [People built from parts](art/people.md).
 
+The [character-production research](../research/character-production/README.md) adds a [future coverage target](../worlds/base/people-appearance.md#future-source-and-coverage-target) for distinct mass/fullness/definition and whole-body ageing. PPL05/PPL06 own its source mapping and staged qualification; the research does not replace the current profile, resume paused work or establish a passed family. This fits DG37/ND39–ND42 rather than a new anatomy-design project.
+
 **Owners/dependencies:**
 
 - [People built from parts](art/people.md): the design tasks and the art workflow update.
@@ -946,3 +948,4 @@ Test a useful bounded outcome with feedback/debrief or trustworthy scoring, sour
 [Production workflows](../production-workflows/README.md) connect the existing art studies and V3D/INV delivery owners to in-game review. Source rights, useful-asset cost, human review and device qualification remain with those owners.
 
 Use canonical contracts and the actual selected revision's project/tracker evidence over broad statements in older proposals. Research and examples inform selection; they do not adopt features or waive acceptance. [Development save policy](../../AGENTS.md#development-save-policy), privacy/authority and existing verification requirements remain controlling for every selected extension.
+
