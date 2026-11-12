@@ -1,8 +1,8 @@
 # Native simulation core and adaptive execution
 
-| Status      | Current progress                                                                                                | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Player-read, attention and departure fixes pass focused checks; ordinary-play qualification and E2 remain open. | 2026-11-11   |
+| Status      | Current progress                                                                                                          | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Focused fixes pass, but full held gameplay exposes a receiving mismatch; resource, cost and E2 qualification remain open. | 2026-11-12   |
 
 ## 1. Purpose and selected direction
 

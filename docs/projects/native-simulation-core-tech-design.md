@@ -1,8 +1,8 @@
 # Native simulation core — technical design
 
-| Status      | Current progress                                                                                                | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Player-read, attention and departure fixes pass focused checks; ordinary-play qualification and E2 remain open. | 2026-11-11   |
+| Status      | Current progress                                                                                                          | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Focused fixes pass, but full held gameplay exposes a receiving mismatch; resource, cost and E2 qualification remain open. | 2026-11-12   |
 
 Companion: [feature specification](native-simulation-core-feature-spec.md). Tasks live only in [NSC](../maintainers/native-simulation-core.md); [limits](../limits/native-simulation-core.md) owns experimental operating defaults. This is an accepted design direction with conditional adoption, not a claim that Rust or distributed execution is installed.
 
@@ -226,6 +226,8 @@ Validate the current format, exact world pins, references, continuation bounds, 
 Retain `WorldService.restoreSave` and the [load authority transition](../save-and-load.md#loading-as-an-authority-transition): preserve the recoverable pre-load cut, apply current non-rewindable privacy/source restrictions and operational bindings, retain already-issued native identity high-water, then install the coherent candidate paused. Receipt recovery precedes new-operation eligibility; an identical previously committed request may report its result after rewind without executing again. A fresh process also reconciles the external operational ledger; missing authority cannot be treated as empty. This is not the ordinary machine handoff in section 8.2.
 
 Invalidate old input/steering/release leases, transports, private selections and timeline-bound jobs while preserving saved native action progress, selected-method associations, released projectiles/effects and recovery deadlines. Paused restored participation must not cancel supported saved work merely because transports were reset. Resume requires current control/input and ordinary participation checks. Restore the retained rate/sensory continuation and source clocks; do not turn reconciliation into a new sighting or settle an unchanged rate window. The [continuation contract](../save-and-load.md#continuation-and-identity) owns the complete rules; replace its mechanisms only with equivalent native transitions.
+
+On fresh server startup the Native header begins paused. The application reports its current manual-pause/absence/failure decision and reconciles a differing native header through its existing protected control owner before ordinary presence or clock advancement. Returning to a saved manually-unpaused world needs no artificial pause toggle. A pre-reconciliation header and service view are different stages, not evidence of continued paused simulation.
 
 Successful public participation changes settle earned numeric anchors through the existing rollback journal after eligibility succeeds, before mutating participation. Operational exit-attempt reconciliation shares that boundary; no-op/refused changes and simulated deadline transitions retain their established behavior. This prevents a completed departure from leaving anchors that cold startup would settle with broader sensory invalidation. Preserve the transition's existing semantic invalidation rather than withdrawing unrelated NPC perceptions on reopen.
 
