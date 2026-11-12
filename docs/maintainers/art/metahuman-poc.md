@@ -2,6 +2,8 @@
 
 [Feature specification](../../projects/metahuman-foundation-poc-feature-spec.md) · [Execution design](../../projects/metahuman-foundation-poc-tech-design.md) · [Limits](../../limits/metahuman-poc.md)
 
+The [character-production research](../../research/character-production/README.md) records [concrete source workflows](../../research/character-production/archive/2026/2026-11-11-strategy.md#4-the-recommended-end-to-end-workflow), distinguishing MHP10’s selected fuller-donor repair from future foundation comparisons. It does not change this proof’s sources, pause, scope or acceptance. Reuse applicable evidence for unchanged exports and runtime behavior.
+
 Implementation is authorized on `codex/metahuman-foundation-poc` from integrated local main. One provisional Vivian NPC now uses the ordinary private Main scene, appearance, equipment and save/load owners alongside the unchanged cast. The standalone two-kit reconstruction and one/four-wearer measurements retain their recorded scope; the corrected Main shadow path has a measured CPU/frame-tail cost and is not a broader performance pass. [Execution evidence](../../verification/metahuman-foundation-poc.md) owns results and limits. MHP02–MHP04 retain the masculine coverage decision; the normal art workflow and [People pilot](people.md) keep their existing selections and unfinished obligations.
 
 | ID    | Work and completion evidence                                                                                                                                                                                                                                                              | Depends on                                 | Status    |

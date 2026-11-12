@@ -14,6 +14,8 @@ The [general workflow](../../projects/art-workflow-feature-spec.md#37-repair-onl
 
 ## Research inputs
 
+The [character-production research](../../research/character-production/README.md) and [source-comparison rule](../../projects/people-from-parts-authoring-contract.md#future-source-comparisons) inform future foundation trials. PPL05/PPL06 own body and age qualification; PPL03 owns fitting, movement and procedure adoption. These proposals do not resume paused work or change MHP08–MHP10 and the PPL06 adult milestone’s selected sources, named garments or required passes.
+
 The retained [body, face, hair and garment methods](../../../art-direction/research/ai-asset-prompting/characters-and-clothing.md) and [contact/cloth methods](../../../art-direction/research/ai-asset-prompting/motion-and-visible-work.md) supply construction and inspection techniques for the accepted people contracts. The source kit is not a qualified family: its dressed assembly lacks a demonstrated complete independent body, its raw rebuild inputs are incomplete, and its 65-joint render skeleton does not meet the current 64-joint target without a deliberate compatible design. Preserve its useful fitting/material mechanisms within the accepted contracts and remaining qualification tasks below.
 
 ## Design and art workflow
