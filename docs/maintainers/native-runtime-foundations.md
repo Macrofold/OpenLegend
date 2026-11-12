@@ -40,4 +40,4 @@ No product question blocks these recipes. Benefit and eligibility remain empiric
 
 Documentation: paired content, source/consumer review, scoped research disposition, all-catalogue scope map, affected links/diff and pinned formatting. Implementation: applicable existing static checks, real consumer correctness and isolated managed-AWS comparisons in technical section 7. No new permanent test framework or cloud workload is created by filing tasks.
 
-The design task has executed no runtime, performance, cloud or paid-model work. Formatting availability and affected-link/diff results are reported at handoff; they are not implied by NRF00. No scale, live-model quality or player-enjoyment result is claimed.
+Design content, source/consumer review, affected diffs and local links/anchors have been reviewed. **Pinned Prettier 3.6.2 remains unrun:** it is not installed or cached in the execution environment. This required documentation check remains open. No runtime, performance, cloud or paid-model checks ran; isolated implementation comparisons and adoption remain unchecked above. No scale, live-model quality or player-enjoyment result is claimed.
