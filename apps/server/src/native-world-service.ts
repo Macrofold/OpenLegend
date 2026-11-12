@@ -198,6 +198,11 @@ type PlayerContext = {
   readonly scope: string;
   readonly captured: NativePlayerCapture;
   readonly cut: LiveReadCuts;
+  preparation?: {
+    readonly installation: NativeDefinitionCapture;
+    readonly setup: NativeDefinitionCapture['facts'];
+    readonly definitions: NativePlayerViewRequest['definitions'];
+  };
 };
 type NativeOperationRequest = {
   actorId?: string;
@@ -3930,7 +3935,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     await withNativeConsumerScope(() =>
       this.projection.run(async () => {
         for (let attempt = 0; ; attempt++) {
-          const context = await this.lane.run(async () => {
+          const capturedContext = await this.lane.run(async () => {
             // A protected candidate can own mutable records while its SQL wait
             // leaves this lane free. Defer before any accepted-state native read.
             this.assertAdmission(false, false);
@@ -3948,26 +3953,38 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                 this.pending.liveReadCuts(),
               );
               if (captured.facts.self.acceptedCut !== cut.sequence) throw new ViewChangedError();
-              return { scope: scopeKey(scope), captured, cut };
+              return { scope: scopeKey(scope), captured, cut, installation: this.definitions };
             } catch (error) {
               captured.release();
               throw error;
             }
           });
+          let context: PlayerContext | undefined;
           try {
-            const definitions = this.definitions.player(scope.actorId);
+            // Bind preparation to this actor's accepted attempt. A restore can
+            // retire its installation while asynchronous projection is pending.
+            if (capturedContext.installation !== this.definitions) throw new ViewChangedError();
+            const setup = capturedContext.installation.facts;
+            const definitions = capturedContext.installation.player(scope.actorId);
+            context = {
+              scope: capturedContext.scope,
+              captured: capturedContext.captured,
+              cut: capturedContext.cut,
+              preparation: { installation: capturedContext.installation, setup, definitions },
+            };
+            const readContext = context;
             await this.reads.run(context, () =>
               projectNativePlayerView({
                 owner: this,
                 capacity: this.world,
                 scope,
                 definitions,
-                map: this.definitions.facts.geometry,
+                map: setup.geometry,
                 store: this.store,
                 practiceLoader: (ids) => {
                   if (!this.store.db.readAtCut || !this.store.db.readTransaction)
                     throw new Error('Native practice reads require their actual accepted SQL cut.');
-                  return this.store.db.readAtCut(context.cut, () =>
+                  return this.store.db.readAtCut(readContext.cut, () =>
                     this.store.db.readTransaction!(() =>
                       this.store.records.activityPage(this.worldId, scope.actorId, -1, ids),
                     ),
@@ -4000,7 +4017,15 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             if (!(error instanceof ViewChangedError) || attempt !== 0) throw error;
             this.assertScope(scope);
           } finally {
-            context.captured.release();
+            const preparation = context?.preparation;
+            // Background SQL may still need this exact cut through async
+            // context, but must not retain completed projection setup.
+            if (context) context.preparation = undefined;
+            try {
+              if (preparation) releaseNativeProduct(preparation.definitions);
+            } finally {
+              capturedContext.captured.release();
+            }
           }
         }
       }),
@@ -4013,6 +4038,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     const context = this.reads.getStore();
     if (!context || context.scope !== scopeKey(scope))
       throw new Error('Native player projection requires its scoped accepted read owner.');
+    const preparation = context.preparation;
+    if (!preparation || preparation.installation !== this.definitions) throw new ViewChangedError();
     const capture = context.captured,
       facts = capture.facts,
       self = facts.self;
@@ -4032,8 +4059,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       )
       ?.accept();
     const inventory = this.inventoryReads.read(context.scope, self, this.paused);
-    const definitions = this.definitions.player(scope.actorId);
-    const installed = this.definitions.facts.definitions;
+    const definitions = preparation.definitions;
+    const installed = preparation.setup.definitions;
     const canManageSaves = this.currentScope(scope, 'save');
     return {
       ...facts,
