@@ -1,8 +1,8 @@
 # Native runtime foundations: useful work without repeated preparation
 
-| Status      | Current progress                                                                                                 | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | J passes focused correctness and cognition comparisons; isolated cost qualification and adoption remain pending. | 2026-11-12   |
+| Status      | Current progress                                                                                | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------- | ------------ |
+| In progress | J is rejected at 128 MiB and removed; S is selected next, while P/R retain unmet prerequisites. | 2026-11-12   |
 
 [Technical design](native-runtime-foundations-tech-design.md) · [Source and repertoire reconciliation](native-runtime-foundations-evidence-and-repertoire.md)
 

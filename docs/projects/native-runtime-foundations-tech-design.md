@@ -1,8 +1,8 @@
 # Native runtime foundations: technical design
 
-| Status      | Current progress                                                                                                 | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | J passes focused correctness and cognition comparisons; isolated cost qualification and adoption remain pending. | 2026-11-12   |
+| Status      | Current progress                                                                                | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------- | ------------ |
+| In progress | J is rejected at 128 MiB and removed; S is selected next, while P/R retain unmet prerequisites. | 2026-11-12   |
 
 [Feature specification](native-runtime-foundations-feature-spec.md) · [Evidence and repertoire reconciliation](native-runtime-foundations-evidence-and-repertoire.md) · [NRF work](../maintainers/native-runtime-foundations.md) · [Constraints](../limits/native-runtime-foundations.md)
 
@@ -80,7 +80,11 @@ S activates only if existing attribution identifies material temporary-wrapper c
 
 Add a private `NativeJsonScratch` bridge class through existing runtime/bridge ownership modules, created by `NativeWorld.reserveJsonScratch()`. It owns one mutable temporary `ByteReservation` and its actual wrapper/header reservation. Operations are creation with zero body bytes, synchronous `resize(bytes)`, and terminal idempotent `close()`. It has no retain, decode, source-grant, output attachment or mutation method. A closed object cannot resize or reopen.
 
+The same required capacity-only factory also belongs on `NativeHost`: current opening and checkpoint restoration genuinely encode packets before a world exists. Carry it through the actual encoding-capacity adapters and generated declarations; do not make it optional or fall back to the old encoder for Host callers. Byte-only SQL/formatter owners that never encode need no new method. The standalone `reserveNativeJsonTextWorkspace` retains its existing lifetime and shares only measurement arithmetic with the encoder; S does not pool that escaping workspace.
+
 Use the current bridge's checked safe-integer byte conversion. Fund the new owner's actual fixed carrier/header through the existing accounting method, including its real added fields; do not reuse an undersized constant by assumption. Growth uses `ByteReservation::resize` before allocation and leaves the old reservation unchanged on refusal. Shrink follows actual end of the old temporary ownership. Close releases body custody; actual wrapper/header custody lasts to destruction. Creation/growth follows the existing live-host admission boundary; cleanup remains permitted after shutdown starts. No world lock or permission read is needed merely to release capacity.
+
+For that admission check, borrow the existing host-pool closure and optional world-stopped flags through weak parent references, upgrading only for creation/positive growth. Clear those references on close; a released wrapper awaiting GC must not retain a whole parent. Host checks its existing pool closure; World additionally checks its existing stopped flag. Shrink/close need no live parent. A failed growth leaves prior body custody available for cleanup, never permission to continue with the insufficient bound. Account the complete bridge carrier, including these references and lifecycle fields, rather than only the runtime body or a previously observed consumer-header size.
 
 A private TypeScript helper owns scratch for one synchronous `encodeNativeJson` and closes it in `finally`. Initial scope is only its sequential measurement and stringify workspaces. Output Buffer/text/decoded graphs, source pins, asynchronous input borrows and socket buffers keep independent existing consumer ownership. Scratch cannot fund an escaping product or cross an await. No global pool, nested arena, manual GC or accounting reclassification is introduced.
 
