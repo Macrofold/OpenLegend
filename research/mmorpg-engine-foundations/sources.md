@@ -42,7 +42,7 @@ Describes persistent reusable relevance structures and replication lists instead
 
 [Friday Facts 421: Optimizations 2.0](https://www.factorio.com/blog/post/fff-421), July 26, 2024.
 
-Reports work removal through inactive objects and shared registrations, and a multithreading experiment limited by memory bandwidth. Useful evidence that doing less work and moving less data can matter more than adding threads. The article's gains belong to its own workloads, not OpenLegend.
+Reports inactive-object work removal, shared registrations, successful parallel control-behavior evaluation and a memory-bandwidth-limited electric-network experiment. Several changes also simplified useful player configurations. The comparison supports workload-specific decomposition and reusable operations, not a general claim for or against multicore execution. Reported gains belong to Wube's workloads, not OpenLegend.
 
 ### S07 — Wube: nonlocal dependencies
 

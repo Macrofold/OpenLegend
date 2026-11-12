@@ -4,13 +4,13 @@
 
 ## The selection rule
 
-Build a foundation now when a wrong assumption would spread through native storage, public contracts, persisted identities or every mechanic. Build a larger mechanism soon when a real playable milestone consumes it. Defer machinery whose absence can be addressed behind an already sound boundary.
+Build a foundation now when a wrong assumption would spread through native storage, public contracts, persisted identities or every mechanic. Build a larger mechanism when a real playable milestone consumes it. Defer machinery whose absence can be addressed behind an already sound boundary.
 
 The recommendation is not to pause the small-world proof until a complete MMO engine exists. Make the proof exercise the seams that would otherwise become expensive to change, while retaining its bounded feature scope. Most recommendations below extend existing owners. None establishes that the current implementation lacks every listed property.
 
 ## 1. Scoped access and partial residency
 
-**Preserve the seam now; deliver larger streaming soon.** Persistent existence, live residency and active processing are different states. A distant object may exist durably without an allocated native slot. A resident object may require no recurring work. A person with a pending commitment may require a deadline even without a human nearby.
+**Preserve scoped access during conversion; extend residency for a selected consumer.** Persistent existence, live residency and active processing are different states. A distant object may exist durably without an allocated native slot. A resident object may require no recurring work. A person with a pending commitment may require a deadline even without a human nearby.
 
 Avoid making a fully hydrated world graph the implicit argument to every operation. The native core can remain the single authority while exposing bounded owner/query access and explicit outcomes for unavailable, incomplete or not-resident inputs. Absence from a resident table must not mean that the entity never existed, a container is empty, or a remembered claim is false.
 
@@ -40,7 +40,7 @@ Count allocation, undo records, captures, output encoding, memory copies, cache 
 
 Use one bounded native compute pool per host as selected. Coordinate other CPU consumers so nested libraries, navigation workers and independent worlds do not each assume all cores are exclusively theirs. Tiny tasks remain inline. Task granularity, scratch allocation and coherent input reuse must earn their costs.
 
-Factorio's reported memory-bandwidth limitation is a useful warning that independent work can still fail to scale across more cores [S06]. Profile bytes moved and shared-cache behavior when adding threads does not help. NUMA-aware placement, SIMD, GPU offload and special allocators remain measured options, not prerequisite frameworks.
+Wube reports both successful parallel evaluation of independent read-heavy control behaviors and an electric-network experiment limited by memory bandwidth [S06]. This supports looking for safe work within an encounter, not only distributing separate places, while measuring bytes moved and shared-cache behavior. Its feature-level work removal also simplified ordinary player setups: useful combined operations can make the efficient route the natural one. Extend an existing operation only when a real consumer benefits; neither those gains nor their workload mix transfer to OpenLegend. NUMA-aware placement, SIMD, GPU offload and special allocators remain measured options, not prerequisites.
 
 Preserve deterministic effect ordering, randomness and allocation as required by the existing design. Per-worker RNG or iteration order must not make load placement change the world. Any future deterministic stream decomposition is a separate semantic change, not an incidental optimization. State precisely whether reproducibility is required within one build/hardware class or across platforms; do not promise cross-platform floating-point equivalence without evidence.
 
@@ -58,7 +58,7 @@ Fairness must cover world, participant and work class. A busy world or many chea
 
 ## 5. Recipient-first delivery and client budgets
 
-**Prepare the contract now; optimize the consumed multiplayer path soon.** Select eligible recipient scopes and changed subjects before formatting rich descriptions or serializing a complete view. Reuse compatible objective and relevance preparation, but preserve the personal projection step. Do not choose a networking algorithm that requires rebuilding one entire world representation per connected person.
+**Preserve the boundary; optimize the consumed multiplayer path.** Select eligible recipient scopes and changed subjects before formatting rich descriptions or serializing a complete view. Reuse compatible objective and relevance preparation, but preserve the personal projection step. Do not choose a networking algorithm that requires rebuilding one entire world representation per connected person.
 
 Separate physical simulation, evidence recording, publication and rendering rates. The renderer can interpolate presentation while the authoritative world keeps its own exact rules. Lower display detail is not authority to erase a required observation, change an acknowledged attack, or disclose a currently unknown identity.
 
@@ -90,7 +90,7 @@ Share immutable definitions and resources, never mutable state between world cop
 
 ## 8. Mature history and complete-cost observability
 
-**Retain existing incremental storage; qualify it soon.** Active state, personal evidence, durable history, indexes and backups have different growth rates. A six-minute fresh opening cannot establish that the same active town remains affordable after months. Queries, corrections, deletion and restoration must not require reading all lifetime history.
+**Retain incremental storage; qualify the selected history workload.** Active state, personal evidence, durable history, indexes and backups have different growth rates. A six-minute fresh opening cannot establish that the same active town remains affordable after months. Queries, corrections, deletion and restoration must not require reading all lifetime history.
 
 Measure logical bytes and physical database work, including indexes, WAL, maintenance and checkpoints [S14, S15]. Include the native encoder, TypeScript writer and host acceptance lane. A new fast core can expose the next serial bottleneck rather than eliminate it.
 
