@@ -104,6 +104,17 @@ impl NativeWorldPlayerPublication {
 #[napi]
 impl NativeWorld {
     #[napi(ts_return_type = "Promise<NativeWorldJson>")]
+    pub fn player_input<'a>(&self, env: &'a Env, bytes: BufferSlice<'_>) -> Result<Object<'a>> {
+        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        self.compute(env, move |session, _cancel, budget| {
+            let _custody = custody;
+            session
+                .player_input(&bytes)
+                .map(|value| NativeWorldJson::new(value, budget.clone()))
+                .map_err(operation_error)
+        })
+    }
+    #[napi(ts_return_type = "Promise<NativeWorldJson>")]
     pub fn player_interaction<'a>(
         &self,
         env: &'a Env,

@@ -1,8 +1,8 @@
 # Native simulation core — technical design
 
-| Status      | Current progress                                                                                                  | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Controlled/ordinary gameplay and damaged recovery pass locally; AWS memory/cost qualification and E2 remain open. | 2026-11-11   |
+| Status      | Current progress                                                                                                          | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Player-read fixes pass focused checks; retained-departure cold disclosure and 128 MiB capacity fail, with E2 unqualified. | 2026-11-11   |
 
 Companion: [feature specification](native-simulation-core-feature-spec.md). Tasks live only in [NSC](../maintainers/native-simulation-core.md); [limits](../limits/native-simulation-core.md) owns experimental operating defaults. This is an accepted design direction with conditional adoption, not a claim that Rust or distributed execution is installed.
 
@@ -170,6 +170,8 @@ Active state is mutable only through its owner. A consumer capture copies its se
 Each player projection attempt prepares its actor-scoped installed definitions once and passes that result through the existing request context to both host-field and view formatting. The context binds the actor scope, accepted capture and installation identity; an installation replacement invalidates the attempt, and a retry prepares the new installation. Temporary preparation ends with the attempt; background SQL inheriting the request context keeps its exact read cut without retaining completed projection setup. A retained comparison view independently pins its borrowed definition data, including after the old installation retires; outgoing bytes keep their separate transport ownership. This is request-local reuse, not a cross-request cache or permission grant.
 
 Capture each required bounded result once. Do not make a full immutable world every 32 ms, an `Arc` per field, or a new permanent version of every touched component for all possible future readers. Public motion can coalesce per its current protocol; distinct required speech, outcomes and correction events cannot. Release captures when their owner completes, cancels or expires. A slow client cannot pin the simulation's entire past.
+
+Steering obtains only the current physical life, alive flag and existing installed steering predicate from accepted native authority, under the saved account-to-actor binding. The view caller reuses those facts from its already captured self. An untargeted ordinary move needs that same binding without perception/history/control presentation; commands with targets retain real reference resolution. These reads grant no execution authority. Session/control/generation, input identities and renewal/expiry, elapsed debt, command epoch, receipt-first recovery and native movement admission keep their existing owners; zero-direction release remains distinct from starting nonzero steering while unavailable.
 
 Ordinary consumer captures run at an accepted boundary under the same native owner as mutation. While its mutable records contain an unaccepted candidate or preview, serve only an already captured permitted product with its original cut, or queue a new capture and request a coherent stop. Never read private in-place values as the preceding accepted world. Release the native read borrow before any await, SQL/provider call or return to Node; recheck disclosure at delivery. Mutable-world readers become one purpose-scoped asynchronous preparation followed by pure formatting, not a bridge call per helper/field. Stable world identity and already installed immutable metadata need no new capture. Count capture waiting in command/view latency; retaining a second whole accepted world is not the default remedy.
 

@@ -106,7 +106,7 @@ import { nativePrivateHistory } from './native-private-history.js';
 import { postgresTransactionOutcome } from './postgres.js';
 import { SOURCE_EDIT_PREPARATION_CAPACITY } from './history-edit.js';
 import { CheckpointBusyError, GameSaveError } from './game-saves.js';
-import { NativePlayerCapture } from './native-player-capture.js';
+import { NativePlayerCapture, type NativePlayerInputFacts } from './native-player-capture.js';
 import { NativePlayerProfiles } from './native-player-profiles.js';
 import {
   NativeNpcActionCapture,
@@ -3464,14 +3464,24 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             code: 'expired',
             message: 'This command epoch has closed. Refresh before issuing a new action.',
           };
-        const captured = await NativePlayerCapture.capture(
-          this.world,
-          scope,
-          PLAYER_EVENT_WINDOW,
-          this.geometry,
-        );
+        let captured: NativePlayerCapture | undefined;
         try {
-          const resolved = nativePlayerCommandReferences(scope, input, captured.facts);
+          let resolved: ReturnType<typeof nativePlayerCommandReferences>;
+          if (input.type === 'move' && input.targetId === undefined) {
+            // A destination needs the saved account/actor binding, not a
+            // presentation read. Actual movement remains native command policy.
+            const facts = await NativePlayerCapture.input(this.world, scope);
+            releaseNativeProduct(facts);
+            resolved = input;
+          } else {
+            captured = await NativePlayerCapture.capture(
+              this.world,
+              scope,
+              PLAYER_EVENT_WINDOW,
+              this.geometry,
+            );
+            resolved = nativePlayerCommandReferences(scope, input, captured.facts);
+          }
           // These additional request families require their actual binders;
           // the plain factory may not silently drop an executable proposal.
           if (
@@ -3550,7 +3560,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             if (receipt && this.receipts.get(id) !== receipt) releaseNativeProduct(receipt);
           }
         } finally {
-          captured.release();
+          captured?.release();
         }
       });
     } finally {
@@ -3836,13 +3846,17 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     this.notify(false);
   }
 
-  private inputState(scope: RequestScope, self: NativePlayerRead['self']) {
+  private inputState(
+    scope: RequestScope,
+    facts: Pick<NativePlayerInputFacts, 'physicalLife' | 'alive'>,
+    canSteer: boolean,
+  ) {
     const allocation = NativeInputAllocation.prepare(
       this.host,
       scope,
       this.generation,
-      self.physicalLife,
-      self.alive,
+      facts.physicalLife,
+      facts.alive,
       this.paused,
     );
     let transferred = false;
@@ -3866,7 +3880,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         allocation,
       );
       transferred = true;
-      if (!self.player.canSteer && state.steering) this.inputs.invalidateMovement(scope.actorId);
+      if (!canSteer && state.steering) this.inputs.invalidateMovement(scope.actorId);
       return state;
     } finally {
       if (!transferred) allocation.release();
@@ -3877,19 +3891,13 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       this.assertAdmission();
       this.assertScope(scope, 'play', true);
       const output = NativeInputResultAllocation.prepare(this.host);
-      let capture: NativePlayerCapture | undefined;
+      let facts: NativePlayerInputFacts | undefined;
       try {
         const now = performance.now();
         this.accountInputTime(now);
         this.inputs.expire(now, scope.actorId);
-        capture = await NativePlayerCapture.capture(
-          this.world,
-          scope,
-          PLAYER_EVENT_WINDOW,
-          this.geometry,
-        );
-        const self = capture.facts.self,
-          state = this.inputState(scope, self);
+        facts = await NativePlayerCapture.input(this.world, scope);
+        const state = this.inputState(scope, facts, facts.canSteer);
         if (this.paused)
           return output.finish({
             ok: false,
@@ -3897,18 +3905,14 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             message: 'Resume the world to move or release.',
             inputScope: { ...state.scope },
           });
-        if (!self.alive)
+        if (!facts.alive)
           return output.finish({
             ok: false,
             code: 'unavailable',
             message: 'This character cannot move now.',
             inputScope: { ...state.scope },
           });
-        if (
-          input.kind === 'steer' &&
-          (input.direction.x || input.direction.z) &&
-          !self.player.canSteer
-        )
+        if (input.kind === 'steer' && (input.direction.x || input.direction.z) && !facts.canSteer)
           return output.finish({
             ok: false,
             code: 'busy',
@@ -3919,7 +3923,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           this.inputs.update(state, input, now, this.progress.at + this.debtSeconds),
         );
       } finally {
-        capture?.release();
+        if (facts) releaseNativeProduct(facts);
         output.release();
       }
     });
@@ -4046,7 +4050,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     const controlling = this.currentScope(scope, 'play', true);
     const lifecycle = this.lifecycle();
     this.inputs.expire(performance.now(), scope.actorId);
-    const input = this.inputState(scope, self);
+    const input = this.inputState(scope, self, self.player.canSteer);
     const inputScope = nativeInputScope(this.host, input.scope);
     this.speechActors
       .prepare(

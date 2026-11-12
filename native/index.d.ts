@@ -136,6 +136,7 @@ export declare class NativeWorld {
   npcTriggerCurrent(trigger: NativeWorldNpcTrigger): Promise<boolean>;
   beginNpcIntake(request: Buffer): Promise<NativeWorldTurn>;
   beginParticipation(bytes: Buffer): Promise<NativeWorldTurn>;
+  playerInput(bytes: Buffer): Promise<NativeWorldJson>;
   playerInteraction(read: NativeWorldPlayerRead, bytes: Buffer): Promise<NativeWorldJson>;
   readPlayer(account: string, actor: string, eventWindow: number): Promise<NativeWorldPlayerRead>;
   playerPublication(

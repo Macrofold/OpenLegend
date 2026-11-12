@@ -1,8 +1,8 @@
 # Native simulation core and adaptive execution
 
-| Status      | Current progress                                                                                                  | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Controlled/ordinary gameplay and damaged recovery pass locally; AWS memory/cost qualification and E2 remain open. | 2026-11-11   |
+| Status      | Current progress                                                                                                          | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Player-read fixes pass focused checks; retained-departure cold disclosure and 128 MiB capacity fail, with E2 unqualified. | 2026-11-11   |
 
 ## 1. Purpose and selected direction
 

@@ -24,6 +24,8 @@ type NativeInteractionFacts = Omit<
 };
 
 type PlayerPacket = Pick<NativePlayerRead, 'self' | 'perception' | 'events' | 'controls'>;
+export type NativePlayerInputFacts = Pick<NativePlayerRead['self'], 'physicalLife' | 'alive'> &
+  Pick<NativePlayerRead['self']['player'], 'canSteer'>;
 
 /** The actual bridge capture, independent of operational profiles, grants and
  * request scheduling. It retains scoped native evidence through async SQL and
@@ -49,6 +51,20 @@ export class NativePlayerCapture {
   get facts(): PlayerPacket {
     if (!this.packet) throw new ViewChangedError();
     return this.packet;
+  }
+
+  /** Steering and untargeted movement need current ownership/life facts, not
+   * the player's presentation, history or control-geometry preparation. */
+  static async input(world: NativeWorld, scope: RequestScope): Promise<NativePlayerInputFacts> {
+    return freezeNativeProduct(
+      decodeNativeProduct<NativePlayerInputFacts>(
+        await withNativeJsonInput(
+          world,
+          { accountId: scope.accountId, actorId: scope.actorId },
+          (bytes) => world.playerInput(bytes),
+        ),
+      ),
+    );
   }
 
   static async capture(

@@ -9,6 +9,13 @@ use std::mem::size_of;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct PlayerInputRequest {
+    account_id: String,
+    actor_id: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct PlayerInteractionInput {
     mode: crate::simulation::InteractionMode,
     #[serde(
@@ -42,6 +49,16 @@ impl RuntimePlayerPublication {
     }
 }
 impl NativeWorldSession {
+    pub fn player_input(&self, input: &[u8]) -> Result<RuntimeJson, RuntimeError> {
+        self.require_active()?;
+        let _decode = decode_preparation(input, &self.budget)?;
+        let input: PlayerInputRequest = serde_json::from_slice(input).map_err(failure)?;
+        let simulation = self.session.accepted().map_err(failure)?;
+        let facts = simulation
+            .player_input(&input.account_id, &input.actor_id)
+            .map_err(failure)?;
+        RuntimeJson::encode(&facts, &self.budget)
+    }
     pub fn player_interaction(
         &self,
         read: &RuntimePlayerRead,

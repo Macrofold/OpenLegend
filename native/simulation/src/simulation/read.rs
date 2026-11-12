@@ -37,6 +37,16 @@ pub(crate) struct AcceptedActorRead {
     self_body_lease: Option<String>,
     _self_body_reservation: Option<ByteReservation>,
 }
+/// Exact actor predicates for server input admission. This does not capture
+/// perception/history or confer the server's live session/control authority.
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct PlayerInputState {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    physical_life: Option<u64>,
+    alive: bool,
+    can_steer: bool,
+}
 impl AcceptedActorRead {
     pub(crate) fn appraisal_read(&self) -> Option<&crate::appraisals::CapturedActorAppraisals> {
         self.appraisals.as_ref()
@@ -77,6 +87,25 @@ impl Simulation {
     ) -> Result<AcceptedActorRead, ActorReadError> {
         self.require_player_read(account_id, actor_id)?;
         self.capture_actor(actor_id, ActorReadPurpose::PlayerView, &[], budget)
+    }
+    pub(crate) fn player_input(
+        &self,
+        account_id: &str,
+        actor_id: &str,
+    ) -> Result<PlayerInputState, ActorReadError> {
+        self.require_player_read(account_id, actor_id)?;
+        let entity = self
+            .state
+            .physical
+            .entities
+            .get(actor_id)
+            .ok_or(ExecutionError::MissingActor)?;
+        let actor = entity.actor.as_ref().ok_or(ExecutionError::MissingActor)?;
+        Ok(PlayerInputState {
+            physical_life: actor.physical_life,
+            alive: actor.alive,
+            can_steer: crate::time::can_steer(&self.state, entity)?,
+        })
     }
     pub(crate) fn require_player_read(
         &self,
