@@ -2,13 +2,14 @@
 //! checks. Retaining an unused definition never enables its action family.
 //! Dynamic state cannot enter this finite owner or be changed through it.
 
-use super::rows::{take_collection, take_one, validate_map_row};
+use super::rows::{take_collection, take_one_row, validate_map_row};
 use super::{CanonicalInput, InstallError, RowImport, WorldChildren};
-use crate::host::retained_size::{HeapBytes, heap_record};
+use crate::host::retained_size::{HeapBytes, heap_record, map_storage};
 use crate::records::{InstalledRow, RecordSchema};
 use indexmap::IndexMap;
 use serde::Deserialize;
 use serde_json::Value;
+use std::mem::size_of;
 mod residency;
 
 pub(crate) enum RetainedOne {
@@ -161,8 +162,18 @@ struct Reader<'a> {
     import: &'a mut RowImport,
     children: &'a mut WorldChildren,
     schema: &'a RecordSchema,
+    budget: &'a crate::host::ByteBudget,
+    preparation: crate::host::ByteReservation,
 }
 impl Reader<'_> {
+    fn json_preparation(&self, source: &str) -> Result<crate::host::ByteReservation, InstallError> {
+        super::reserve_typed_parse::<Value>(
+            source,
+            size_of::<Value>(),
+            Some(size_of::<(usize, String, Value)>()),
+            self.budget,
+        )
+    }
     fn presence(
         &mut self,
         field: &str,
@@ -202,14 +213,19 @@ impl Reader<'_> {
             if self.children.take(field)? != Some(false) {
                 return Err(InstallError::ParentPresence);
             }
-            take_one::<Value>(self.import, table, "[\"world\"]", field, false)?;
+            take_one_row(self.import, table, "[\"world\"]", field, false)?;
             return Ok(Some(RetainedOne::Null));
         }
         let present = self.presence(field, input.as_ref())?;
-        let value = take_one::<Value>(self.import, table, "[\"world\"]", field, present)?;
+        let value = take_one_row(self.import, table, "[\"world\"]", field, present)?;
         match (value, input) {
-            (Some((row, value)), Some(input)) => {
+            (Some(row), Some(input)) => {
                 self.plain(table, &row)?;
+                let mut _parsing = self.json_preparation(&row.payload)?;
+                let value =
+                    serde_json::from_str(&row.payload).map_err(|_| InstallError::CurrentFormat)?;
+                _parsing = super::typed_parse::finish_json_parse(_parsing, &row.payload, &value)?;
+                let _verification = self.json_preparation(&input.canonical)?;
                 input.verify_json(&value)?;
                 Ok(Some(RetainedOne::Record(row)))
             }
@@ -223,11 +239,76 @@ impl Reader<'_> {
         table: &str,
         input: Option<CanonicalInput>,
     ) -> Result<Option<RetainedMap>, InstallError> {
+        let Some((rows, input)) = self.map_rows(field, table, input)? else {
+            return Ok(None);
+        };
+        // Raw row transport does not fund this temporary semantic JSON tree.
+        // Keep only completed row decodes through the independent pin check.
+        let mut decoding = self
+            .budget
+            .reserve(
+                map_storage::<String, Value>(
+                    rows.len().checked_mul(2).ok_or(InstallError::Capacity)?,
+                )
+                .and_then(|bytes| {
+                    rows.entries()
+                        .try_fold(bytes, |bytes, (id, _)| bytes.checked_add(id.len()))
+                })
+                .ok_or(InstallError::Capacity)?,
+            )
+            .map_err(|_| InstallError::Capacity)?;
+        let mut assembled = serde_json::Map::new();
+        for row in rows.rows.values() {
+            let parsing = self.json_preparation(&row.payload)?;
+            let value =
+                serde_json::from_str(&row.payload).map_err(|_| InstallError::CurrentFormat)?;
+            decoding
+                .merge(super::typed_parse::finish_json_parse(
+                    parsing,
+                    &row.payload,
+                    &value,
+                )?)
+                .map_err(|_| InstallError::Capacity)?;
+            assembled.insert(row.slot.clone(), value);
+        }
+        let _verification = self.json_preparation(&input.canonical)?;
+        input.verify_json(&Value::Object(assembled))?;
+        Ok(Some(rows))
+    }
+    // Placement and completeness have one owner, independent of each family's
+    // typed content validation. In particular, Place text must not pass through
+    // serde_json::Value before the existing JsText decoder sees its UTF16 units.
+    fn map_rows(
+        &mut self,
+        field: &str,
+        table: &str,
+        input: Option<CanonicalInput>,
+    ) -> Result<Option<(RetainedMap, CanonicalInput)>, InstallError> {
         let present = self.presence(field, input.as_ref())?;
         let collection = take_collection(self.import, table, "[\"world\"]", present, true)?;
         let Some(input) = input else { return Ok(None) };
-        let mut assembled = serde_json::Map::new();
-        let mut rows = IndexMap::with_capacity(collection.rows.len());
+        let count = collection.rows.len();
+        let backing = map_storage::<String, InstalledRow>(
+            count.checked_mul(2).ok_or(InstallError::Capacity)?,
+        )
+        .and_then(|bytes| {
+            collection
+                .rows
+                .iter()
+                .try_fold(bytes, |bytes, row| bytes.checked_add(row.slot.len()))
+        })
+        .ok_or(InstallError::Capacity)?;
+        self.preparation
+            .resize(
+                self.preparation
+                    .bytes()
+                    .checked_add(backing)
+                    .ok_or(InstallError::Capacity)?,
+            )
+            .map_err(|_| InstallError::Capacity)?;
+        let mut rows = IndexMap::new();
+        rows.try_reserve(count)
+            .map_err(|_| InstallError::Capacity)?;
         for row in collection.rows {
             validate_map_row(
                 &row,
@@ -237,18 +318,18 @@ impl Reader<'_> {
                 collection.coverage.next_ordinal,
             )?;
             self.plain(table, &row)?;
-            let value =
-                serde_json::from_str(&row.payload).map_err(|_| InstallError::CurrentFormat)?;
-            if assembled.insert(row.slot.clone(), value).is_some() {
+            if rows.contains_key(&row.slot) {
                 return Err(InstallError::DuplicateRow);
             }
             rows.insert(row.slot.clone(), row);
         }
-        input.verify_json(&Value::Object(assembled))?;
-        Ok(Some(RetainedMap {
-            rows,
-            next_ordinal: collection.coverage.next_ordinal,
-        }))
+        Ok(Some((
+            RetainedMap {
+                rows,
+                next_ordinal: collection.coverage.next_ordinal,
+            },
+            input,
+        )))
     }
 }
 
@@ -263,6 +344,8 @@ pub(crate) fn install_retained(
         import,
         children,
         schema,
+        budget,
+        preparation: budget.reserve(0).map_err(|_| InstallError::Capacity)?,
     };
     let knowledge_policy = r.one(
         "knowledgePolicy",
@@ -276,6 +359,14 @@ pub(crate) fn install_retained(
             Some(input.item_handling),
         )?
         .ok_or(InstallError::ParentPresence)?;
+    // These derived copies outlive Reader::one's comparison trees. Transfer
+    // their preparation only after the final resident owner is admitted.
+    let _item_handling_preparation = super::reserve_typed_parse::<ItemHandlingReadPolicy>(
+        item_handling.payload(),
+        size_of::<String>(),
+        None,
+        budget,
+    )?;
     let item_handling_read =
         serde_json::from_str(item_handling.payload()).map_err(|_| InstallError::CurrentFormat)?;
     let participation_policy = r.one(
@@ -283,6 +374,17 @@ pub(crate) fn install_retained(
         "config_participation",
         input.participation_policy,
     )?;
+    let _participation_preparation = participation_policy
+        .as_ref()
+        .map(|policy| {
+            super::reserve_typed_parse::<Option<ParticipationReadPolicy>>(
+                policy.payload(),
+                size_of::<usize>(),
+                None,
+                budget,
+            )
+        })
+        .transpose()?;
     let participation_read = participation_policy
         .as_ref()
         .map(|policy| serde_json::from_str(policy.payload()))
@@ -368,10 +470,10 @@ pub(crate) fn install_retained(
     if !invention.agent_locked {
         return Err(InstallError::UnsupportedFamily("autonomous-invention"));
     }
-    let places = r
-        .map("places", "definition_places", Some(input.places))?
+    let (places, places_input) = r
+        .map_rows("places", "definition_places", Some(input.places))?
         .ok_or(InstallError::ParentPresence)?;
-    let places_read = crate::reception::InstalledPlaces::install(&places, budget)?;
+    let places_read = crate::reception::InstalledPlaces::install(&places, &places_input, budget)?;
     let mut installed = RetainedDefinitions {
         _storage: None,
         knowledge_policy,

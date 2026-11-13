@@ -4,7 +4,9 @@
 use crate::geometry::GeometryMap;
 use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
 use crate::host::{ByteBudget, ByteReservation};
-use crate::install::{InstallError, RetainedMap, SpatialSettings, reserve_typed_parse};
+use crate::install::{
+    CanonicalInput, InstallError, RetainedMap, SpatialSettings, reserve_typed_parse,
+};
 use crate::simulation::PhysicalState;
 use crate::state::{Entity, Placement, SurfacePoint};
 use crate::text::JsText;
@@ -13,7 +15,7 @@ use indexmap::IndexMap;
 use serde::Deserialize;
 use std::mem::size_of;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct InstalledPlace {
     pub id: String,
@@ -27,12 +29,12 @@ pub(crate) struct InstalledPlace {
     #[serde(default, deserialize_with = "deserialize_present_option")]
     pub mechanism_fields: Option<IndexMap<String, IndexMap<String, f64>>>,
 }
-#[derive(Deserialize)]
+#[derive(Deserialize, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 enum PlaceExposureKind {
     ArriveAndSee,
 }
-#[derive(Deserialize)]
+#[derive(Deserialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct PlaceExposure {
     kind: PlaceExposureKind,
@@ -67,7 +69,11 @@ fn valid_text(text: &JsText, maximum: usize) -> bool {
     text.units_len() <= maximum && !text.trim_is_empty()
 }
 impl InstalledPlaces {
-    pub(crate) fn install(places: &RetainedMap, budget: &ByteBudget) -> Result<Self, InstallError> {
+    pub(crate) fn install(
+        places: &RetainedMap,
+        canonical: &CanonicalInput,
+        budget: &ByteBudget,
+    ) -> Result<Self, InstallError> {
         let count = places.len();
         let mut preparation = budget
             .reserve(
@@ -138,6 +144,22 @@ impl InstalledPlaces {
                 .merge(parsing)
                 .map_err(|_| InstallError::Capacity)?;
             definitions.insert(id.to_owned(), place);
+        }
+        {
+            // The independently validated canonical definitions and SQL rows
+            // must match in every typed field, including exact UTF16 text.
+            // Fund this second input's parse while the retained rows stay live.
+            let _verification = reserve_typed_parse::<IndexMap<String, InstalledPlace>>(
+                &canonical.canonical,
+                size_of::<usize>(),
+                Some(size_of::<(usize, String, InstalledPlace)>().max(size_of::<(
+                    usize,
+                    String,
+                    IndexMap<String, f64>,
+                )>())),
+                budget,
+            )?;
+            canonical.verify(&definitions)?;
         }
         // Object.values puts numeric IDs first while preserving insertion order
         // for the remaining authored definitions.
