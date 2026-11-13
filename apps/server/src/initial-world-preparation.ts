@@ -49,31 +49,63 @@ export function prepareWorldForStartup(
   fresh: boolean,
   campAssetPermissions: readonly CampAssetPermission[],
 ): SavedWorld {
-  const world = updateWorld(saved.world, (world) => {
-    world.storyPolicy ??= defaultStoryPolicy();
-    validateStoryPolicy(world.storyPolicy);
-    world.minds ??= {};
-    for (const entity of entityValues(world.entities))
-      if (hasMemory(entity)) world.minds[entity.id] ??= mindFor(world, entity.id);
-    migrateCognition(world);
-    // Explicit authored traits, including an empty list, remain unchanged.
-    initializeActorTraits(world);
-    validateSocialPolicy(world);
-    world.socialPolicy = { ...selectedSocialPolicy(world) };
-    for (const [actorId, accountId] of actorOwners) {
-      const actor = entityGet(world.entities, actorId)?.actor;
-      if (!actor) continue;
-      actor.controller = 'player';
-      world.authorship.playerAccountIds[actorId] = accountId;
-    }
-    if (fresh) {
-      initializePerception(world, []);
-      for (const entity of entityValues(world.entities)) reconcileConditions(world, entity, []);
-    }
-    world.paused = true;
-    reconcileConstructionAuthority(world, constructionPermissions);
-    reconcileCampAssetAuthority(world, campAssetPermissions);
-  });
+  const before = saved.world;
+  // Only an already initialized world can treat startup as bookkeeping. A new
+  // mind, policy, trait set or controller still needs the ordinary full barrier.
+  // docs/save-and-load.md#continuation-and-identity
+  const retainNativeValues =
+    !fresh &&
+    before.storyPolicy !== undefined &&
+    before.socialPolicy !== undefined &&
+    before.identity !== undefined &&
+    before.minds !== undefined &&
+    before.experience !== undefined &&
+    before.innerWorlds !== undefined &&
+    entityValues(before.entities).every(
+      (entity) =>
+        !hasMemory(entity) ||
+        (!!before.minds?.[entity.id] &&
+          Object.hasOwn(before.experience!.awareness, entity.id) &&
+          !!before.innerWorlds?.[entity.id] &&
+          entity.actor?.traits !== undefined),
+    ) &&
+    [...actorOwners.keys()].every((id) => {
+      const actor = entityGet(before.entities, id)?.actor;
+      return !actor || actor.controller === 'player';
+    });
+  const world = updateWorld(
+    before,
+    (world) => {
+      // Own the unchanged header before callbacks: an actual permission revocation
+      // may retire it and must never have its old progress copied back afterward.
+      if (retainNativeValues && before.nativeInterval)
+        world.nativeInterval = { ...before.nativeInterval };
+      world.storyPolicy ??= defaultStoryPolicy();
+      validateStoryPolicy(world.storyPolicy);
+      world.minds ??= {};
+      for (const entity of entityValues(world.entities))
+        if (hasMemory(entity)) world.minds[entity.id] ??= mindFor(world, entity.id);
+      migrateCognition(world);
+      // Explicit authored traits, including an empty list, remain unchanged.
+      initializeActorTraits(world);
+      validateSocialPolicy(world);
+      world.socialPolicy = { ...selectedSocialPolicy(world) };
+      for (const [actorId, accountId] of actorOwners) {
+        const actor = entityGet(world.entities, actorId)?.actor;
+        if (!actor) continue;
+        actor.controller = 'player';
+        world.authorship.playerAccountIds[actorId] = accountId;
+      }
+      if (fresh) {
+        initializePerception(world, []);
+        for (const entity of entityValues(world.entities)) reconcileConditions(world, entity, []);
+      }
+      world.paused = true;
+      reconcileConstructionAuthority(world, constructionPermissions);
+      reconcileCampAssetAuthority(world, campAssetPermissions);
+    },
+    { retainNativeValues },
+  );
   validateCurrentWorldState(world);
   // Seal this completed transition before another startup edit uses its entity
   // branches; an editable predecessor cannot certify unchanged sensory inputs.

@@ -292,13 +292,19 @@ pub(crate) fn begin_restore_metadata(
         )
     {
         next.insert(actor.clone(), account.clone());
-        if core
+        if let Some(changes_controller) = core
             .state
             .physical
             .entities
             .get(actor)
-            .is_some_and(|entity| entity.actor.is_some())
+            .and_then(|entity| entity.actor.as_ref())
+            .map(|actor| actor.controller != "player")
         {
+            // A real controller change alters automatic status participation.
+            // Account-only rebinding is metadata and keeps the saved window.
+            if changes_controller {
+                core.settle_numeric_prediction()?;
+            }
             core.physical().restore_actor_operational(actor, true)?;
         }
     }
@@ -367,9 +373,9 @@ pub(crate) fn apply_restore_archive_baseline(
             }),
         budget,
     )?;
-    // Archive/privacy bookkeeping changes no observation. Actual replayed
-    // corrections and forgetting revoke their affected evidence separately.
-    core.settle_numeric_prediction()?;
+    // Archive/privacy bookkeeping changes no mechanical inputs or observation.
+    // Keep the saved arithmetic window and sampling remainder; actual replayed
+    // corrections and forgetting settle/revoke their affected evidence separately.
     for (actor, revision) in &input.privacy_revisions {
         core.journal.experience.restore_privacy_revision(
             &mut core.state.experience,

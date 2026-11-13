@@ -49,9 +49,9 @@ impl CoreMutation<'_> {
     }
 }
 impl PhysicalMutation<'_> {
-    /// Ordinary Source startup materializes the already-earned deferred window
-    /// before its world edit. Use each existing episode's sparse journal; this
-    /// neither earns time nor charges another invocation.
+    /// A semantic edit can require every episode's already-earned values.
+    /// Use each existing episode's sparse journal; this neither earns time nor
+    /// charges another invocation. Metadata-only reopening keeps the window.
     fn settle_all_numeric_values(&mut self) -> Result<(), ExecutionError> {
         let Some(window) = self.state.pending_values.as_ref() else {
             return Ok(());

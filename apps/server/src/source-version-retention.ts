@@ -104,6 +104,9 @@ export function restoredSourceVersions(
   const world = updateWorld(
     state.world,
     (draft) => {
+      // Archive accounting changes no rate input or sampling deadline.
+      // docs/save-and-load.md#continuation-and-identity
+      if (state.world.nativeInterval) draft.nativeInterval = { ...state.world.nativeInterval };
       for (const [actorId, actor] of Object.entries(draft.experience?.temporal?.actors ?? {})) {
         const old = actor.accounts?.archives ?? zero(),
           next = selected.totals.get(actorId) ?? zero();

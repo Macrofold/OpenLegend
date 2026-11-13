@@ -113,6 +113,7 @@ import {
   defaultCoverProfile,
   materialCoverProfile,
   constructionPermissionBatch,
+  nextContributionDeadline,
   expireConstructionContributions,
   absorbConstructionPermissionBatch,
   type ConstructionPermissionChanges,
@@ -1103,13 +1104,20 @@ export class WorldService {
       // retry must not replay observations, traits, grants or starting-scene effects.
       // docs/projects/parallel-batch-07-playable-world-creation-tech-design.md
       validateCurrentWorldState(this.saved.world);
-      if (!this.saved.world.paused)
+      if (!this.saved.world.paused) {
+        const before = this.saved.world;
         this.saved = {
           ...this.saved,
-          world: updateWorld(this.saved.world, (world) => {
-            world.paused = true;
-          }),
+          world: updateWorld(
+            before,
+            (world) => {
+              if (before.nativeInterval) world.nativeInterval = { ...before.nativeInterval };
+              world.paused = true;
+            },
+            { retainNativeValues: true },
+          ),
         };
+      }
     } else {
       this.saved = prepareWorldForStartup(
         this.saved,
@@ -1125,13 +1133,14 @@ export class WorldService {
       this.saved.world.id,
       store.authority.constructionPermissions(this.saved.world.id),
     );
-    this.saved = {
-      ...this.saved,
-      world: updateWorld(this.saved.world, (world) => {
-        if (expireConstructionContributions(world, startupContributions))
-          reconcileConstructionAuthority(world, startupContributions.permissions);
-      }),
-    };
+    if (nextContributionDeadline(startupContributions) <= this.saved.world.simTime)
+      this.saved = {
+        ...this.saved,
+        world: updateWorld(this.saved.world, (world) => {
+          if (expireConstructionContributions(world, startupContributions))
+            reconcileConstructionAuthority(world, startupContributions.permissions);
+        }),
+      };
     // Startup initialization can add actor state, so use the ordinary diff once.
     const startupHistory = this.saved.world;
     if (store.history) {
@@ -1774,13 +1783,26 @@ export class WorldService {
         saved.world.id,
         this.store.authority!.constructionPermissions(saved.world.id),
       );
+      const before = saved.world;
+      const retainNativeValues = nextContributionDeadline(contributions) > before.simTime;
       saved = {
         ...saved,
-        world: updateWorld(saved.world, (world) => {
-          expireConstructionContributions(world, contributions);
-          reconcileConstructionAuthority(world, contributions.permissions);
-          reconcileCampAssetAuthority(world, this.store.authority!.campAssetPermissions(world.id));
-        }),
+        world: updateWorld(
+          before,
+          (world) => {
+            // Keep unchanged restore bookkeeping; due expiry and the authority
+            // owners still retire progress before any real work change.
+            if (retainNativeValues && before.nativeInterval)
+              world.nativeInterval = { ...before.nativeInterval };
+            expireConstructionContributions(world, contributions);
+            reconcileConstructionAuthority(world, contributions.permissions);
+            reconcileCampAssetAuthority(
+              world,
+              this.store.authority!.campAssetPermissions(world.id),
+            );
+          },
+          { retainNativeValues },
+        ),
       };
       if (contributions.effects.length)
         authorityChanges = {
@@ -3839,15 +3861,22 @@ export class WorldService {
           payload.memory?.mind_source_versions ?? [],
         );
         restored.world = restoredArchives.state.world;
-        restored.world = updateWorld(restored.world, (world) => {
-          for (const [actorId, revision] of Object.entries(
-            this.world.experience?.privacyRevisions ?? {},
-          ))
-            (world.experience!.privacyRevisions ??= {})[actorId] = Math.max(
-              revision,
-              world.experience!.privacyRevisions?.[actorId] ?? 0,
-            );
-        });
+        const privacyWorld = restored.world;
+        restored.world = updateWorld(
+          privacyWorld,
+          (world) => {
+            if (privacyWorld.nativeInterval)
+              world.nativeInterval = { ...privacyWorld.nativeInterval };
+            for (const [actorId, revision] of Object.entries(
+              this.world.experience?.privacyRevisions ?? {},
+            ))
+              (world.experience!.privacyRevisions ??= {})[actorId] = Math.max(
+                revision,
+                world.experience!.privacyRevisions?.[actorId] ?? 0,
+              );
+          },
+          { retainNativeValues: true },
+        );
         await this.prepareNativeKnownPlaces(restored.world, true);
         restored.manuallyPaused = true;
         const epoch = {
@@ -3856,10 +3885,17 @@ export class WorldService {
           token: randomUUID(),
         };
         const timeline = randomUUID();
-        restored.world = updateWorld(restored.world, (world) => {
-          world.paused = true;
-          beginTemporalReceiptEpoch(world, timeline);
-        });
+        const temporalWorld = restored.world;
+        restored.world = updateWorld(
+          temporalWorld,
+          (world) => {
+            if (temporalWorld.nativeInterval)
+              world.nativeInterval = { ...temporalWorld.nativeInterval };
+            world.paused = true;
+            beginTemporalReceiptEpoch(world, timeline);
+          },
+          { retainNativeValues: true },
+        );
         // Preserve the current world before any database write, pinned to the revision this load
         // replaces. If it cannot be written (full disk, capture limits), the load is refused and
         // the current world stays active, without a storage latch. No bypass (SB13, SL09-A).

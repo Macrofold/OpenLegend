@@ -31,10 +31,11 @@ impl StartupCursor {
             .storage
             .take()
             .ok_or(ExecutionError::InvalidCheckpoint)?;
-        core.settle_numeric_prediction()?;
         // Source current-world preparation pauses before transport/presence
         // reconciliation. This prevents a restart from becoming a fictional
         // departure and does not advance time, sequence, randomness or IDs.
+        // Merely reopening must also keep the saved earned-value window and
+        // mechanical remainder; actual semantic edits settle their own inputs.
         super::host_control::set_paused(core, true);
         Ok(CompletedStartup {
             outcome: crate::commands::Outcome {

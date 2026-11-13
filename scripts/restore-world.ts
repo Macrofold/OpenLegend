@@ -413,30 +413,47 @@ try {
     state.world = reapplyExperiencePrivacy(state.world, ledger);
     state.manuallyPaused = true;
     const timeline = randomUUID();
-    state.world = updateWorld(state.world, (world) => {
-      world.paused = true;
-      beginTemporalReceiptEpoch(world, timeline);
-    });
+    const timelineWorld = state.world;
+    state.world = updateWorld(
+      timelineWorld,
+      (world) => {
+        // A fresh receipt epoch changes no mechanical input. Own the inherited
+        // remainder before editing, so a genuine semantic edit can still clear it.
+        // docs/save-and-load.md#continuation-and-identity
+        if (timelineWorld.nativeInterval)
+          world.nativeInterval = { ...timelineWorld.nativeInterval };
+        world.paused = true;
+        beginTemporalReceiptEpoch(world, timeline);
+      },
+      { retainNativeValues: true },
+    );
     const retention = await store.prepareRetainedSourceClosure(
       state,
       true,
       tables['mind_source_versions'] ?? [],
     );
     state = retention.state;
-    state.world = updateWorld(state.world, (world) => {
-      // These markers normally survive until their exact DELETE commits.
-      // Full root replacement already deletes every predecessor block; a
-      // zero-charge empty edited marker is no retained gameplay/history.
-      for (const actor of Object.values(world.experience?.temporal?.actors ?? {}))
-        actor.pages = actor.pages.filter(
-          (page) =>
-            page.batches.length !== 0 ||
-            page.bytes !== 0 ||
-            page.count !== 0 ||
-            page.appendClosed !== true ||
-            temporalPageMutation(page) !== 'edit',
-        );
-    });
+    const retainedWorld = state.world;
+    state.world = updateWorld(
+      retainedWorld,
+      (world) => {
+        if (retainedWorld.nativeInterval)
+          world.nativeInterval = { ...retainedWorld.nativeInterval };
+        // These markers normally survive until their exact DELETE commits.
+        // Full root replacement already deletes every predecessor block; a
+        // zero-charge empty edited marker is no retained gameplay/history.
+        for (const actor of Object.values(world.experience?.temporal?.actors ?? {}))
+          actor.pages = actor.pages.filter(
+            (page) =>
+              page.batches.length !== 0 ||
+              page.bytes !== 0 ||
+              page.count !== 0 ||
+              page.appendClosed !== true ||
+              temporalPageMutation(page) !== 'edit',
+          );
+      },
+      { retainNativeValues: true },
+    );
     const hotIds = new Set(state.world.events.map((event) => event.id));
     const after = state.world.archivedEventCount
       ? {

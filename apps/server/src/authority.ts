@@ -19,6 +19,7 @@ import {
   structuralConstructionOperation,
   definitionPin,
   sameDefinitionPin,
+  materializeNativeValuesInPlace,
 } from '@open-legend/domain';
 import type { SqlDatabase } from './store.js';
 
@@ -1360,10 +1361,8 @@ export class AuthorityRepository {
     }));
   }
   async worldGrants(worldId: string): Promise<WorldGrant[]> {
-    const rows = await this.db
-      .prepare('SELECT * FROM auth_grants WHERE world_id=?')
-      .all(worldId);
-    return rows.map(row => this.grantFromRow(worldId, String(row['account_id']), row));
+    const rows = await this.db.prepare('SELECT * FROM auth_grants WHERE world_id=?').all(worldId);
+    return rows.map((row) => this.grantFromRow(worldId, String(row['account_id']), row));
   }
   /** Historical human privacy is independent of the currently selected embodiment.
    * Rebinding never transfers another human's notes or makes an abandoned character an NPC.
@@ -1383,7 +1382,14 @@ export class AuthorityRepository {
   async restoreBindings(world: WorldState): Promise<void> {
     for (const [actorId, accountId] of await this.actorOwners(world.id)) {
       const actor = entityGet(world.entities, actorId)?.actor;
-      if (actor) actor.controller = 'player';
+      if (actor && actor.controller !== 'player') {
+        // Control changes automatic status/rate eligibility. Account-only
+        // rebinding leaves the saved earned window and sampling progress intact.
+        // docs/save-and-load.md#continuation-and-identity
+        materializeNativeValuesInPlace(world);
+        delete world.nativeInterval;
+        actor.controller = 'player';
+      }
       world.authorship.playerAccountIds[actorId] = accountId;
     }
     for (const grant of await this.worldGrants(world.id)) {
@@ -1393,7 +1399,11 @@ export class AuthorityRepository {
         throw new Error(
           'The save lacks a currently bound human character; authority cannot be restored from historical state.',
         );
-      actor.controller = 'player';
+      if (actor.controller !== 'player') {
+        materializeNativeValuesInPlace(world);
+        delete world.nativeInterval;
+        actor.controller = 'player';
+      }
       world.authorship.playerAccountIds[grant.actorId] = grant.accountId;
     }
   }
