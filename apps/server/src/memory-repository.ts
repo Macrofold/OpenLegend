@@ -2544,10 +2544,13 @@ export class MemoryRepository {
     uncorrected = false,
     range?: { after?: string; placeId?: string; placeIds?: readonly string[]; limit?: number },
   ) {
+    // Indexed columns own SQL selection; the capsule remains exact JSON TEXT.
+    // jsonb would reject supported JS UTF16 words before the scoped reader.
+    // docs/save-and-load.md#current-format-validation
     const selection = (
       afterPrevious = false,
     ) => `SELECT p.world_id,p.actor_id,p.owner_id,p.owner_kind,p.owner_revision,
-      p.observed_at,p.observed_order,p.support_record_id,p.place_id AS learned_place_id,p.capsule::jsonb AS capsule,${afterPrevious ? 'previous.place_step+1' : '1'} AS place_step
+      p.observed_at,p.observed_order,p.support_record_id,p.place_id AS learned_place_id,p.capsule,${afterPrevious ? 'previous.place_step+1' : '1'} AS place_step
       FROM recall_place_capsules p CROSS JOIN LATERAL (
         SELECT r.revision,r.eligible FROM recall_sources r WHERE r.world_id=p.world_id AND r.actor_id=p.actor_id
           AND r.id=p.owner_id AND r.source_kind=p.owner_kind
@@ -2823,14 +2826,14 @@ export class MemoryRepository {
       const range = { after, placeId: options.placeId, placeIds: options.placeIds, limit: count };
       const rows = await this.db
         .prepare(
-          `${this.retainedPlaces(false, range)} SELECT ${sourceColumns},r.search_text,
+          `${this.retainedPlaces(false, range)} SELECT ${sourceColumns},r.search_text,r.place_support_payload,
             p.capsule::text AS selected_place_capsule,p.learned_place_id AS selected_place_id
           FROM retained_places p CROSS JOIN LATERAL (
-            SELECT ${sourceColumns},${this.sourceTextSql()} AS search_text FROM recall_sources r WHERE r.world_id=p.world_id AND r.actor_id=p.actor_id
+            SELECT ${sourceColumns},${this.sourceTextSql()} AS search_text,NULL::text AS place_support_payload FROM recall_sources r WHERE r.world_id=p.world_id AND r.actor_id=p.actor_id
               AND r.id=p.owner_id AND r.source_kind=p.owner_kind
             UNION ALL SELECT s.world_id,s.actor_id,p.owner_id AS id,'support' AS source_kind,s.id AS record_id,s.account_revision AS revision,
               NULL::text AS event_id,'belief' AS memory_kind,'observed' AS acquisition,NULL::text AS event_type,
-              p.observed_at AS at,0::double precision AS importance,0::bigint AS required,1::bigint AS eligible,0::bigint AS sequence,COALESCE((SELECT v->'exposure'->>'description' FROM jsonb_array_elements(s.payload::jsonb->'values') v WHERE v->>'kind'='encounter-exposure' AND v->'exposure'->>'id'=p.learned_place_id LIMIT 1),'') AS search_text
+              p.observed_at AS at,0::double precision AS importance,0::bigint AS required,1::bigint AS eligible,0::bigint AS sequence,''::text AS search_text,${options.terms ? 's.payload' : 'NULL::text'} AS place_support_payload
               FROM mind_temporal_supports s WHERE p.owner_kind='support' AND s.world_id=p.world_id AND s.id=p.support_record_id LIMIT 1
           ) r WHERE r.revision=p.owner_revision ORDER BY p.learned_place_id LIMIT ?`,
         )
@@ -2848,12 +2851,26 @@ export class MemoryRepository {
             capsule.personalSource.revision !== row['revision'])
         )
           throw new MemoryPreparationError();
+        let searchText = row['search_text'];
+        if (options.terms && row['source_kind'] === 'support') {
+          // Search the original retained words with the same admitted text
+          // decoder as hydration. PostgreSQL jsonb cannot retain JS UTF16.
+          if (typeof row['place_support_payload'] !== 'string') throw new MemoryPreparationError();
+          const support = parseSourceJson<TemporalSupportCapsule>(row['place_support_payload']);
+          const exposure = support.values.find(
+            (value) =>
+              value.kind === 'encounter-exposure' &&
+              value.exposure.kind === 'place' &&
+              value.exposure.id === capsule.placeId,
+          );
+          searchText = exposure?.kind === 'encounter-exposure' ? exposure.exposure.description : '';
+        }
         return {
           ...row,
           place_id: row['selected_place_id'],
           place_label: capsule.label,
           capsule,
-          search_text: `${capsule.label} ${row['search_text']}`,
+          search_text: `${capsule.label} ${searchText}`,
         };
       });
       if (!places.length) return places;

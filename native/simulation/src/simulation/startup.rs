@@ -31,7 +31,12 @@ impl StartupCursor {
             .storage
             .take()
             .ok_or(ExecutionError::InvalidCheckpoint)?;
-        core.materialize_world_edit()?;
+        // Settling already-earned anchors changes representation, not the
+        // observed world. Keep its scoped sensory notices, as participation
+        // does; a generic edit's blanket invalidation withdraws saved sight.
+        // docs/save-and-load.md#continuation-and-identity
+        core.physical().settle_all_numeric_values()?;
+        core.state.physical.header.native_interval = None;
         // Source current-world preparation pauses before transport/presence
         // reconciliation. This prevents a restart from becoming a fictional
         // departure and does not advance time, sequence, randomness or IDs.
