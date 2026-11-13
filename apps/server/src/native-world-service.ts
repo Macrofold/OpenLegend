@@ -59,6 +59,7 @@ import type {
   GameView,
   WorldInputUpdate,
   WorldInputResult,
+  WorldInputScope,
 } from '@open-legend/protocol';
 import type { AssetRevisionReference } from '@open-legend/assets';
 import {
@@ -197,7 +198,8 @@ export type OperationalSettings = {
 type PlayerContext = {
   readonly scope: string;
   readonly captured: NativePlayerCapture;
-  readonly cut: LiveReadCuts;
+  cut?: LiveReadCuts;
+  inputScope?: WorldInputScope;
   preparation?: {
     readonly installation: NativeDefinitionCapture;
     readonly setup: NativeDefinitionCapture['facts'];
@@ -851,6 +853,11 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     } finally {
       if (!returned) releaseNativeProduct(value);
     }
+  }
+  /** Operational jobs/usage can finish after projection. They have no gameplay
+   * read cut to inherit; awaited practice and narration keep their exact cut. */
+  withoutPlayerReadScope<T>(operation: () => T): T {
+    return this.reads.exit(operation);
   }
   private async readProfile(id: string): Promise<GameView['profile']> {
     const world = this.world;
@@ -3951,14 +3958,30 @@ export class NativeWorldService implements NativePlayerRequestOwner {
               PLAYER_EVENT_WINDOW,
               this.geometry,
             );
+            let inputScope: WorldInputScope | undefined;
             try {
               const cut = nativeScopedReadCut(
                 await captureNativeReadCut(this.world, scope.actorId),
                 this.pending.liveReadCuts(),
               );
               if (captured.facts.self.acceptedCut !== cut.sequence) throw new ViewChangedError();
-              return { scope: scopeKey(scope), captured, cut, installation: this.definitions };
+              // Only the current controller reconciles tokens, using facts
+              // from this accepted lane turn. Async projection is observational.
+              if (this.currentScope(scope, 'play', true)) {
+                this.inputs.expire(performance.now(), scope.actorId);
+                const self = captured.facts.self;
+                const input = this.inputState(scope, self, self.player.canSteer);
+                inputScope = nativeInputScope(this.host, input.scope);
+              }
+              return {
+                scope: scopeKey(scope),
+                captured,
+                cut,
+                inputScope,
+                installation: this.definitions,
+              };
             } catch (error) {
+              if (inputScope) releaseNativeProduct(inputScope);
               captured.release();
               throw error;
             }
@@ -3974,6 +3997,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
               scope: capturedContext.scope,
               captured: capturedContext.captured,
               cut: capturedContext.cut,
+              inputScope: capturedContext.inputScope,
               preparation: { installation: capturedContext.installation, setup, definitions },
             };
             const readContext = context;
@@ -3986,9 +4010,11 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                 map: setup.geometry,
                 store: this.store,
                 practiceLoader: (ids) => {
+                  const cut = readContext.cut;
+                  if (!cut) throw new ViewChangedError();
                   if (!this.store.db.readAtCut || !this.store.db.readTransaction)
                     throw new Error('Native practice reads require their actual accepted SQL cut.');
-                  return this.store.db.readAtCut(readContext.cut, () =>
+                  return this.store.db.readAtCut(cut, () =>
                     this.store.db.readTransaction!(() =>
                       this.store.records.activityPage(this.worldId, scope.actorId, -1, ids),
                     ),
@@ -4022,13 +4048,23 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             this.assertScope(scope);
           } finally {
             const preparation = context?.preparation;
-            // Background SQL may still need this exact cut through async
-            // context, but must not retain completed projection setup.
-            if (context) context.preparation = undefined;
+            const inputScope = capturedContext.inputScope;
+            capturedContext.inputScope = undefined;
+            // A settled cached Promise can retain this async context. All
+            // gameplay reads are awaited; drop their cut and completed setup.
+            if (context) {
+              context.cut = undefined;
+              context.preparation = undefined;
+              context.inputScope = undefined;
+            }
             try {
               if (preparation) releaseNativeProduct(preparation.definitions);
             } finally {
-              capturedContext.captured.release();
+              try {
+                capturedContext.captured.release();
+              } finally {
+                if (inputScope) releaseNativeProduct(inputScope);
+              }
             }
           }
         }
@@ -4047,11 +4083,9 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     const capture = context.captured,
       facts = capture.facts,
       self = facts.self;
-    const controlling = this.currentScope(scope, 'play', true);
+    const inputScope = context.inputScope;
+    const controlling = !!inputScope;
     const lifecycle = this.lifecycle();
-    this.inputs.expire(performance.now(), scope.actorId);
-    const input = this.inputState(scope, self, self.player.canSteer);
-    const inputScope = nativeInputScope(this.host, input.scope);
     this.speechActors
       .prepare(
         facts.events.accounts,
@@ -4178,6 +4212,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
               !this.restoring &&
               this.generation === lifecycle.generation &&
               this.currentScope(scope) &&
+              controlling === this.currentScope(scope, 'play', true) &&
+              (!inputScope || this.inputs.isCurrentScope(scope.actorId, inputScope)) &&
               !this.store.memories.sourceEditPending({
                 worldId: this.worldId,
                 actorId: scope.actorId,
@@ -4190,7 +4226,6 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           capture.release();
         } finally {
           releaseNativeProduct(inventory);
-          releaseNativeProduct(inputScope);
         }
       },
     };

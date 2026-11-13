@@ -48,6 +48,12 @@ export class WorldInputOwner {
   has(actorId: string): boolean {
     return this.states.has(actorId);
   }
+  /** A projection may check its captured tokens without issuing or retiring
+   * controls. Every replacement or token rotation advances this revision. */
+  isCurrentScope(actorId: string, scope: Pick<WorldInputScope, 'revision'>): boolean {
+    const state = this.states.get(actorId);
+    return !!state && state.scope.revision === scope.revision && state.isCurrent();
+  }
   state(
     actorId: string,
     identity: string,

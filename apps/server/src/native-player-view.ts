@@ -1,6 +1,6 @@
 import { isConversationEvent } from '@open-legend/domain';
 import type { NativeWorld, NativeWorldConsumer } from '@open-legend/native-simulation';
-import type { AiJobView, GameView, WorldInputScope } from '@open-legend/protocol';
+import type { AiJobView, GameView } from '@open-legend/protocol';
 import { scopeKey, type RequestScope } from './authority.js';
 import {
   attachNativeConsumer,
@@ -87,7 +87,7 @@ export interface NativePlayerRead {
   readonly player: Pick<
     GameView['player'],
     'memoryRevision' | 'inventoryReadRevision' | 'constructionRevision' | 'inputScope'
-  > & { readonly inputScope: WorldInputScope };
+  >;
   readonly placesRevision: NonNullable<GameView['cartography']>['placesRevision'];
   readonly telemetryRevision: number;
   readonly controlling: boolean;
@@ -110,6 +110,7 @@ export interface NativePlayerRead {
 }
 export interface NativePlayerRequestOwner extends PlayerAsyncOwner {
   readonly connectionLimit: number;
+  withoutPlayerReadScope<T>(operation: () => T): T;
   assertScope(scope: RequestScope): void;
   profileFor(scope: RequestScope): Promise<GameView['profile']>;
   capture(scope: RequestScope): Promise<NativePlayerRead>;
@@ -313,7 +314,11 @@ function optionalNativePlayerView<T extends object>(
   const entry: OptionalView = { deps, allocation, loading: true, retired: false };
   cache.optional[section] = entry;
   cache.loading++;
-  void loadOptionalView(owner, cache, section, entry, capacity, db, load);
+  // These operational reads can outlive the fallback view. Their async frame
+  // must not keep that view's gameplay cut after its allocation owner ends.
+  owner.withoutPlayerReadScope(
+    () => void loadOptionalView(owner, cache, section, entry, capacity, db, load),
+  );
   return fallback;
 }
 
@@ -405,6 +410,8 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
     const selectedEvents = nativePlayerEvents(self, perception, read.events, definitions);
     const conversation = selectedEvents.filter(isConversationEvent).slice(-30);
     const speechIds = playerSpeechJobIds(conversation, self.actorId);
+    // These loaders can outlive projection. Bind only operational arguments;
+    // a projection closure can also retain practice's captured gameplay cut.
     const usage = optionalNativePlayerView(
       owner,
       sections,
@@ -412,7 +419,7 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
       store.db,
       'usage',
       [read.telemetryRevision],
-      () => store.usage(budgetUsd, sections.scope.actorId),
+      store.usage.bind(store, budgetUsd, sections.scope.actorId),
       playerUsageFallback(budgetUsd),
       sources,
     );
@@ -423,7 +430,7 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
       store.db,
       'jobs',
       [read.telemetryRevision],
-      () => selectedPlayerJobs(owner, sections.scope, store),
+      selectedPlayerJobs.bind(undefined, owner, sections.scope, store),
       [],
       sources,
     );
@@ -434,7 +441,7 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
       store.db,
       'speechJobs',
       [host.historyEpoch, read.telemetryRevision, ...speechIds],
-      () => selectedSpeechReplies(store, speechIds),
+      selectedSpeechReplies.bind(undefined, store, speechIds),
       [],
       sources,
     );
@@ -533,7 +540,7 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
           retain(
             finalView,
             profile,
-            inputScope,
+            ...(inputScope ? [inputScope] : []),
             ...sources,
             ...(narrationBorrow ? [narrationBorrow] : []),
           ),
