@@ -3,6 +3,7 @@ import { nativeNpcReplyPreviewHost } from './native-npc-reply-preview.js';
 import {
   attachNativeConsumer,
   borrowNativeProduct,
+  copyNativeProduct,
   createNativeConsumerScope,
   releaseNativeProduct,
   retainNativeProduct,
@@ -1520,8 +1521,19 @@ export class NativeNpcDirector {
   private async handoff(run: Run, reason: DecisionReason, response = false): Promise<boolean> {
     if (!run.job.decision || run.controller.signal.aborted || run.receipt?.completionUncertain)
       return false;
-    const { prepare, release } = this.retainRunPreparation(run);
-    const accepted = await this.escalator.enqueue(run.job.id, reason, response, prepare, release);
+    const retained = this.retainRunPreparation(run);
+    let accepted = false;
+    try {
+      accepted = await this.escalator.enqueue(
+        run.job.id,
+        reason,
+        response,
+        retained.prepare,
+        retained.release,
+      );
+    } finally {
+      if (!accepted) retained.releaseJobPin();
+    }
     if (accepted) {
       run.handedOff = true;
       run.preparation = undefined;
@@ -1534,12 +1546,17 @@ export class NativeNpcDirector {
   private retainRunPreparation(run: Run) {
     const retained = run.preparation,
       intake = run.intake,
-      label = this.names.get(run.actorId);
+      actorId = run.actorId,
+      semanticCauseOrdinals = run.semanticCauseOrdinals,
+      label = this.names.get(actorId),
+      jobPin = borrowNativeProduct(run);
+    // Keep this closure's direct captures finite. Retained decision callbacks
+    // can still reach the primary job, so their independent pin ends last.
     let released = false;
     return {
       prepare: (job: JobRecord, signal: AbortSignal) => {
         retained?.retireRouting();
-        return this.prepareHigher(job, signal, retained, intake, run.semanticCauseOrdinals);
+        return this.prepareHigher(job, signal, retained, intake, semanticCauseOrdinals);
       },
       release: () => {
         if (released) return;
@@ -1550,13 +1567,19 @@ export class NativeNpcDirector {
           try {
             intake?.release();
           } finally {
-            if (this.names.get(run.actorId) === label) this.names.delete(run.actorId);
+            if (this.names.get(actorId) === label) this.names.delete(actorId);
             // This old label can outlive a replacement in the lookup map. Its
             // retained higher/uncertain owner, rather than that map, ends it.
-            if (label) releaseNativeProduct(label);
+            try {
+              if (label) releaseNativeProduct(label);
+            } finally {
+              jobPin?.release();
+            }
           }
         }
       },
+      // A declined handoff leaves preparation/intake with the primary run.
+      releaseJobPin: () => jobPin?.release(),
     };
   }
 
@@ -2008,6 +2031,10 @@ export class NativeNpcDirector {
             last?.watermark ?? 0,
             this.weighed.get(actorId),
           );
+        const projectionScope = createNativeConsumerScope();
+        let automaticJob: JobRecord | undefined;
+        let discoveryReserved = false;
+        let beginOwnsRecovery = false;
         let transferred = false;
         try {
           if (
@@ -2016,7 +2043,7 @@ export class NativeNpcDirector {
             !read.facts.eligible
           )
             continue;
-          const input = read.inputs();
+          const input = projectionScope.runSync(() => read.inputs());
           if (
             !captured ||
             captured.inputs.length !== input.values.length ||
@@ -2031,15 +2058,17 @@ export class NativeNpcDirector {
             continue;
           }
           const jobs = await this.service.store.getSpeechJobs(
-            read
-              .records()
+            projectionScope
+              .runSync(() => read.records())
               .filter((record) => record.eventType === 'speech')
               .map((record) => record.eventId ?? record.id),
           );
           const handled = new Set(
             [...jobs].flatMap(([id, job]) => (job.request.npcId === actorId ? [id] : [])),
           );
-          const thought = read.thought(this.service.definitions, last, handled),
+          const thought = projectionScope.runSync(() =>
+              read.thought(this.service.definitions, last, handled),
+            ),
             urgent =
               (this.work.pending(actorId)?.urgency ?? 0) >= INTAKE_LIMITS.urgent ||
               thought.preparedResult ||
@@ -2112,35 +2141,10 @@ export class NativeNpcDirector {
           }
           this.work.recordOutcome('admitted', thought.all.length);
           const id = `thought-${randomUUID()}`;
-          if (
-            thought.discovery !== undefined &&
-            !(await this.service.changeNpcIntake(actorId, generation, {
-              type: 'reserve-discovery',
-              interval: thought.discovery,
-              reservation: id,
-            }))
-          )
-            continue;
-          const attempted = {
-            fingerprint: thought.fingerprint,
-            semanticRevision: thought.semanticRevision,
-            at: this.now(),
-            ...(last?.watermark !== undefined ? { watermark: last.watermark } : {}),
-            attemptedOpportunity: thought.opportunity,
-            attemptedJobId: id,
-            ...(thought.review.key ? { reviewKey: thought.review.key } : {}),
-          };
-          if (!(await this.writeSchedule(key, attempted, generation))) {
-            if (thought.discovery !== undefined)
-              await this.settleDiscovery(actorId, id, generation, false);
-            continue;
-          }
-          const watermark = Math.min(
-            Math.max(last?.watermark ?? 0, thought.maxSequence),
-            this.service.durableIdentityThrough,
-          );
-          await this.begin(
-            {
+          // The run keeps only its finite operational record, including newly
+          // formatted trigger words, rather than the temporary thought graph.
+          automaticJob = retainNativeProduct(
+            copyNativeProduct<JobRecord>(this.service.world, {
               id,
               kind: 'thought',
               fingerprint: thought.fingerprint,
@@ -2152,7 +2156,33 @@ export class NativeNpcDirector {
               ...(thought.nativeCauses.length ? { semanticCauses: thought.nativeCauses } : {}),
               request: { text: trigger, npcId: actorId },
               createdAt: this.now(),
-            },
+            }),
+          );
+          if (thought.discovery !== undefined) {
+            discoveryReserved = await this.service.changeNpcIntake(actorId, generation, {
+              type: 'reserve-discovery',
+              interval: thought.discovery,
+              reservation: id,
+            });
+            if (!discoveryReserved) continue;
+          }
+          const attempted = {
+            fingerprint: thought.fingerprint,
+            semanticRevision: thought.semanticRevision,
+            at: this.now(),
+            ...(last?.watermark !== undefined ? { watermark: last.watermark } : {}),
+            attemptedOpportunity: thought.opportunity,
+            attemptedJobId: id,
+            ...(thought.review.key ? { reviewKey: thought.review.key } : {}),
+          };
+          if (!(await this.writeSchedule(key, attempted, generation))) continue;
+          const watermark = Math.min(
+            Math.max(last?.watermark ?? 0, thought.maxSequence),
+            this.service.durableIdentityThrough,
+          );
+          beginOwnsRecovery = true;
+          await this.begin(
+            automaticJob,
             read,
             { key, value: { ...attempted, watermark } },
             urgent,
@@ -2170,7 +2200,24 @@ export class NativeNpcDirector {
             await this.maintenance.enqueue(actorId, id, sentence, generation);
           return;
         } finally {
-          if (!transferred) read.release();
+          // The run borrowed its copied job before this root ends. The intake
+          // and queued vectors keep their separately transferred ownership.
+          try {
+            if (discoveryReserved && !beginOwnsRecovery && generation === this.service.generation) {
+              this.discoveryRecovery.add(actorId);
+              await this.reconcileDiscoveryReservations(generation);
+            }
+          } finally {
+            try {
+              if (automaticJob) releaseNativeProduct(automaticJob);
+            } finally {
+              try {
+                projectionScope.dispose();
+              } finally {
+                if (!transferred) read.release();
+              }
+            }
+          }
         }
       }
     });
@@ -2217,221 +2264,261 @@ export class NativeNpcDirector {
     discovery?: { actorId: string; reservation: string },
     semanticCauseOrdinals: readonly number[] = [],
   ): Promise<void> {
-    const facts = read.facts,
-      actorId = facts.actorId,
-      at = this.now();
-    job = { ...job, startedAt: at, queueLatencyMs: Math.max(0, at - job.createdAt) };
-    if (permitsEscalation(this.service.config))
-      job.decision = decisionRoot({
-        jobId: job.id,
-        worldId: this.service.worldId,
-        timelineId: this.service.timelineId,
-        generation: this.service.generation,
+    // Borrow before the shallow clone: the automatic caller's copied record
+    // owns its trigger strings and cause arrays independently of the intake.
+    const setupGeneration = this.service.generation;
+    let jobPin: ReturnType<typeof borrowNativeProduct> = undefined;
+    let taskStarted = false;
+    let runOwner: Run | undefined;
+    try {
+      jobPin = borrowNativeProduct(job);
+      if (job.kind === 'thought' && !jobPin)
+        throw new Error('Native automatic job has no live allocation owner.');
+      const facts = read.facts,
+        actorId = facts.actorId,
+        at = this.now(),
+        originalJob = job;
+      job = { ...job, startedAt: at, queueLatencyMs: Math.max(0, at - job.createdAt) };
+      if (permitsEscalation(this.service.config))
+        job.decision = decisionRoot({
+          jobId: job.id,
+          worldId: this.service.worldId,
+          timelineId: this.service.timelineId,
+          generation: this.service.generation,
+          actorId,
+          physicalLife: facts.physicalLife ?? 0,
+          cause:
+            job.triggerEvidenceId || job.playerSpeechEventId
+              ? { kind: 'event', id: (job.triggerEvidenceId ?? job.playerSpeechEventId)! }
+              : { kind: 'intent', id: job.id },
+          originalWatermark:
+            cursor &&
+            typeof cursor.value === 'object' &&
+            cursor.value &&
+            'watermark' in cursor.value
+              ? Number(cursor.value.watermark)
+              : 0,
+          urgency: facts.urgency,
+          ...(cursor ? { cursor } : {}),
+          acceptedAt: at,
+          groups: { q0: job.kind === 'chat' ? 'response' : 'choice' },
+          origin: decisionOrigin(this.service.config),
+          policyDigest: decisionPolicyDigest(this.service.config),
+          limits: levelLimits(this.service.config),
+        });
+      const run: Run = {
+        job,
         actorId,
         physicalLife: facts.physicalLife ?? 0,
-        cause:
-          job.triggerEvidenceId || job.playerSpeechEventId
-            ? { kind: 'event', id: (job.triggerEvidenceId ?? job.playerSpeechEventId)! }
-            : { kind: 'intent', id: job.id },
-        originalWatermark:
-          cursor && typeof cursor.value === 'object' && cursor.value && 'watermark' in cursor.value
-            ? Number(cursor.value.watermark)
-            : 0,
-        urgency: facts.urgency,
-        ...(cursor ? { cursor } : {}),
-        acceptedAt: at,
-        groups: { q0: job.kind === 'chat' ? 'response' : 'choice' },
-        origin: decisionOrigin(this.service.config),
-        policyDigest: decisionPolicyDigest(this.service.config),
-        limits: levelLimits(this.service.config),
-      });
-    const run: Run = {
-      job,
-      actorId,
-      physicalLife: facts.physicalLife ?? 0,
-      generation: this.service.generation,
-      urgent,
-      intake: read,
-      semanticCauseOrdinals,
-      controller: new AbortController(),
-      ledger: new DecisionLedger(levelLimits(this.service.config)),
-      ...(discovery ? { discovery: { ...discovery, spent: false } } : {}),
-    };
-    const queued = await read.queueInputs();
-    const labels = retainNativeProduct(queued.facts);
-    // This caller consumes only labels; the scheduling vector and envelope
-    // have independent pins and no later consumer in this run.
-    releaseNativeProduct(queued.input.values);
-    releaseNativeProduct(queued);
-    this.runs.set(job.id, run);
-    this.names.set(actorId, labels);
-    try {
-      await this.service.store.putJob(job);
-      if (job.decision) {
-        const state = job.decision;
-        run.immediateTimer = setTimeout(
-          () => void this.deferImmediate(run).catch((error) => this.service.fail(error)),
-          Math.max(
-            1,
-            Math.min(
-              state.fastPublishBy - this.now(),
-              state.fastPublishByMonotonic - performance.now(),
-            ),
-          ),
-        );
-        run.expiryTimer = setTimeout(
-          () => {
-            run.controller.abort();
-            void this.escalator.end(job.id, 'expired').catch((error) => this.service.fail(error));
-          },
-          Math.max(
-            1,
-            Math.min(
-              state.usefulUntilWall - this.now(),
-              state.usefulUntilMonotonic - performance.now(),
-            ),
-          ),
-        );
-        run.immediateTimer.unref();
-        run.expiryTimer.unref();
-      }
-      await this.log.save({
-        id: job.id,
-        kind: 'Semantic trigger',
-        ownerAccountId: job.authority?.accountId,
-        worldId: this.service.worldId,
-        actorId,
-        actorName: facts.name,
-        trigger: job.diagnosticTrigger ?? job.request.text,
-        triggerType:
-          job.diagnosticTriggerType ??
-          (job.kind === 'chat' ? 'Player speech' : 'Autonomous cognition'),
-        gameTime: this.service.simTime,
-        startedAt: new Date(at).toISOString(),
-        status: 'running',
-        disposition: 'queued',
-        input: { offeredRoutes: [0, 1, 2, 3, 4, 5], stimulus: job.request.text },
-        exchanges: [],
-      });
-    } catch (error) {
-      if (run.immediateTimer) clearTimeout(run.immediateTimer);
-      if (run.expiryTimer) clearTimeout(run.expiryTimer);
-      this.runs.delete(job.id);
-      this.names.delete(actorId);
-      releaseNativeProduct(labels);
-      if (discovery)
-        await this.settleDiscovery(actorId, discovery.reservation, run.generation, false);
-      throw error;
-    }
-    const task = this.log.withTrigger(job.id, async () => {
+        generation: this.service.generation,
+        urgent,
+        intake: read,
+        semanticCauseOrdinals,
+        controller: new AbortController(),
+        ledger: new DecisionLedger(levelLimits(this.service.config)),
+        ...(discovery ? { discovery: { ...discovery, spent: false } } : {}),
+      };
+      runOwner = run;
+      if (jobPin) retainNativeProduct(retainNativeSources(run, originalJob));
+      const queued = await read.queueInputs();
+      const labels = retainNativeProduct(queued.facts);
+      // This caller consumes only labels; the scheduling vector and envelope
+      // have independent pins and no later consumer in this run.
+      releaseNativeProduct(queued.input.values);
+      releaseNativeProduct(queued);
+      this.runs.set(job.id, run);
+      this.names.set(actorId, labels);
       try {
-        await this.decide(run);
-        if (!run.job.decision && run.job.status === 'completed' && cursor) {
-          const current = (await this.service.store.getIntegration(cursor.key)) as
-            | ActorThoughtSchedule
-            | undefined;
-          const value = cursor.value as ActorThoughtSchedule;
-          await this.writeSchedule(
-            cursor.key,
-            {
-              ...value,
-              at: this.now(),
-              watermark: Math.min(
-                Math.max(current?.watermark ?? 0, value.watermark ?? 0),
-                this.service.durableIdentityThrough,
+        await this.service.store.putJob(job);
+        if (job.decision) {
+          const state = job.decision;
+          run.immediateTimer = setTimeout(
+            () => void this.deferImmediate(run).catch((error) => this.service.fail(error)),
+            Math.max(
+              1,
+              Math.min(
+                state.fastPublishBy - this.now(),
+                state.fastPublishByMonotonic - performance.now(),
               ),
-            },
-            run.generation,
+            ),
           );
+          run.expiryTimer = setTimeout(
+            () => {
+              run.controller.abort();
+              void this.escalator.end(job.id, 'expired').catch((error) => this.service.fail(error));
+            },
+            Math.max(
+              1,
+              Math.min(
+                state.usefulUntilWall - this.now(),
+                state.usefulUntilMonotonic - performance.now(),
+              ),
+            ),
+          );
+          run.immediateTimer.unref();
+          run.expiryTimer.unref();
         }
-      } catch (error) {
-        let handoff = false;
-        if (run.job.decision && !run.controller.signal.aborted) {
-          if (run.receipt?.completionUncertain) {
-            const retained = this.retainRunPreparation(run);
-            handoff = await this.escalator.awaitPrimary(
-              run.job.id,
-              run.receipt.requestId,
-              run.preparation?.validity,
-              retained.prepare,
-              retained.release,
-            );
-            if (handoff) {
-              run.preparation = undefined;
-              run.intake = undefined;
-            }
-          } else {
-            const reason =
-              error instanceof StopJob && error.outcome === 'expired'
-                ? 'semantic-escalation'
-                : decisionFailureReason(
-                    error instanceof StopJob
-                      ? (error.outcome ?? '')
-                      : error instanceof InvalidData
-                        ? 'invalid'
-                        : '',
-                    run.failure?.reason ?? (error instanceof Error ? error.message : ''),
-                    run.receipt,
-                  );
-            if (reason)
-              handoff = await this.handoff(run, reason, job.kind === 'chat' || !!discovery);
-          }
-        }
-        if (handoff) {
-          run.handedOff = true;
-          return;
-        }
-        const cancelled = run.controller.signal.aborted;
-        await this.log.record(`${run.job.id}:failure`, 'Workflow failure', {
-          reason: error instanceof Error ? error.message : 'Unknown failure',
+        await this.log.save({
+          id: job.id,
+          kind: 'Semantic trigger',
+          ownerAccountId: job.authority?.accountId,
+          worldId: this.service.worldId,
+          actorId,
+          actorName: facts.name,
+          trigger: job.diagnosticTrigger ?? job.request.text,
+          triggerType:
+            job.diagnosticTriggerType ??
+            (job.kind === 'chat' ? 'Player speech' : 'Autonomous cognition'),
+          gameTime: this.service.simTime,
+          startedAt: new Date(at).toISOString(),
+          status: 'running',
+          disposition: 'queued',
+          input: { offeredRoutes: [0, 1, 2, 3, 4, 5], stimulus: job.request.text },
+          exchanges: [],
         });
-        await this.update(
-          run,
-          error instanceof StopJob ? error.status : cancelled ? 'cancelled' : 'failed',
-          error instanceof StopJob || error instanceof ContextBudgetError
-            ? error.message
-            : cancelled
-              ? (run.cancelReason ?? 'The request was cancelled before completion.')
-              : 'The workflow failed safely. No automatic paid retry was sent.',
-          {
-            disposition:
-              error instanceof StopJob
-                ? (error.outcome ?? error.status)
-                : error instanceof ContextBudgetError
-                  ? 'context-exceeded'
-                  : error instanceof InvalidData
-                    ? 'invalid'
-                    : cancelled
-                      ? 'cancelled'
-                      : 'failed',
-          },
-        );
-      } finally {
-        this.replyPreviews.end(run.job.id);
-        run.preparation?.dispose();
-        run.preparation = undefined;
-        run.intake?.release();
-        run.intake = undefined;
+      } catch (error) {
         if (run.immediateTimer) clearTimeout(run.immediateTimer);
         if (run.expiryTimer) clearTimeout(run.expiryTimer);
-        try {
-          if (!run.handedOff && discovery && !run.discovery?.spent)
-            await this.settleDiscovery(actorId, discovery.reservation, run.generation, false);
-        } finally {
-          // A failed operational reservation cleanup must not leave the actor
-          // permanently busy. A handed-off label stays with its real retained
-          // intake until the higher/uncertain owner releases that preparation.
-          if (this.runs.get(job.id) === run) this.runs.delete(job.id);
-          if (!run.handedOff) {
-            if (this.names.get(actorId) === labels) this.names.delete(actorId);
-            releaseNativeProduct(labels);
-          }
-          this.service.notifyTelemetry();
-        }
+        this.runs.delete(job.id);
+        this.names.delete(actorId);
+        releaseNativeProduct(labels);
+        throw error;
       }
-    });
-    this.pending.add(task);
-    void task.finally(() => this.pending.delete(task)).catch((error) => this.service.fail(error));
+      const task = this.log
+        .withTrigger(job.id, async () => {
+          try {
+            await this.decide(run);
+            if (!run.job.decision && run.job.status === 'completed' && cursor) {
+              const current = (await this.service.store.getIntegration(cursor.key)) as
+                | ActorThoughtSchedule
+                | undefined;
+              const value = cursor.value as ActorThoughtSchedule;
+              await this.writeSchedule(
+                cursor.key,
+                {
+                  ...value,
+                  at: this.now(),
+                  watermark: Math.min(
+                    Math.max(current?.watermark ?? 0, value.watermark ?? 0),
+                    this.service.durableIdentityThrough,
+                  ),
+                },
+                run.generation,
+              );
+            }
+          } catch (error) {
+            let handoff = false;
+            if (run.job.decision && !run.controller.signal.aborted) {
+              if (run.receipt?.completionUncertain) {
+                const retained = this.retainRunPreparation(run);
+                try {
+                  handoff = await this.escalator.awaitPrimary(
+                    run.job.id,
+                    run.receipt.requestId,
+                    run.preparation?.validity,
+                    retained.prepare,
+                    retained.release,
+                  );
+                } finally {
+                  if (!handoff) retained.releaseJobPin();
+                }
+                if (handoff) {
+                  run.preparation = undefined;
+                  run.intake = undefined;
+                }
+              } else {
+                const reason =
+                  error instanceof StopJob && error.outcome === 'expired'
+                    ? 'semantic-escalation'
+                    : decisionFailureReason(
+                        error instanceof StopJob
+                          ? (error.outcome ?? '')
+                          : error instanceof InvalidData
+                            ? 'invalid'
+                            : '',
+                        run.failure?.reason ?? (error instanceof Error ? error.message : ''),
+                        run.receipt,
+                      );
+                if (reason)
+                  handoff = await this.handoff(run, reason, job.kind === 'chat' || !!discovery);
+              }
+            }
+            if (handoff) {
+              run.handedOff = true;
+              return;
+            }
+            const cancelled = run.controller.signal.aborted;
+            await this.log.record(`${run.job.id}:failure`, 'Workflow failure', {
+              reason: error instanceof Error ? error.message : 'Unknown failure',
+            });
+            await this.update(
+              run,
+              error instanceof StopJob ? error.status : cancelled ? 'cancelled' : 'failed',
+              error instanceof StopJob || error instanceof ContextBudgetError
+                ? error.message
+                : cancelled
+                  ? (run.cancelReason ?? 'The request was cancelled before completion.')
+                  : 'The workflow failed safely. No automatic paid retry was sent.',
+              {
+                disposition:
+                  error instanceof StopJob
+                    ? (error.outcome ?? error.status)
+                    : error instanceof ContextBudgetError
+                      ? 'context-exceeded'
+                      : error instanceof InvalidData
+                        ? 'invalid'
+                        : cancelled
+                          ? 'cancelled'
+                          : 'failed',
+              },
+            );
+          } finally {
+            this.replyPreviews.end(run.job.id);
+            run.preparation?.dispose();
+            run.preparation = undefined;
+            run.intake?.release();
+            run.intake = undefined;
+            if (run.immediateTimer) clearTimeout(run.immediateTimer);
+            if (run.expiryTimer) clearTimeout(run.expiryTimer);
+            try {
+              if (!run.handedOff && discovery && !run.discovery?.spent)
+                await this.settleDiscovery(actorId, discovery.reservation, run.generation, false);
+            } finally {
+              // A failed operational reservation cleanup must not leave the actor
+              // permanently busy. A handed-off label stays with its real retained
+              // intake until the higher/uncertain owner releases that preparation.
+              if (this.runs.get(job.id) === run) this.runs.delete(job.id);
+              if (!run.handedOff) {
+                if (this.names.get(actorId) === labels) this.names.delete(actorId);
+                releaseNativeProduct(labels);
+              }
+              this.service.notifyTelemetry();
+            }
+          }
+        })
+        .finally(() => releaseNativeProduct(run));
+      this.pending.add(task);
+      taskStarted = true;
+      void task.finally(() => this.pending.delete(task)).catch((error) => this.service.fail(error));
+    } finally {
+      try {
+        if (!taskStarted) {
+          try {
+            if (discovery && setupGeneration === this.service.generation) {
+              // A setup failure can precede stored job/dispatch metadata. The
+              // existing recovery owner checks actual receipts before settling.
+              this.discoveryRecovery.add(discovery.actorId);
+              await this.reconcileDiscoveryReservations(setupGeneration);
+            }
+          } finally {
+            if (runOwner) releaseNativeProduct(runOwner);
+          }
+        }
+      } finally {
+        // The run and any higher/uncertain preparation own independent pins.
+        jobPin?.release();
+      }
+    }
   }
   async idle(): Promise<void> {
     while (this.pending.size) await Promise.allSettled([...this.pending]);
