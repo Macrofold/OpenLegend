@@ -69,7 +69,10 @@ export class NativeKnownPlaceSelection {
   }
 
   async select(options: Options): Promise<Page> {
-    this.assertCurrent();
+    // A synchronous native check also refuses a busy session. Join the existing
+    // accepted boundary so another capture cannot look like stale permission;
+    // keep the asynchronous SQL work outside that mutation lane.
+    await this.service.publishRecall(async () => this.assertCurrent());
     if (this.selected) throw new Error('A place reader already owns its selection.');
     this.selected = await withNativeSqlPreparation(this.world, this.service.store.db, () =>
       this.service.withActorMemoryRead(this.scope.actorId, async (cut) => {
@@ -144,7 +147,7 @@ export class NativeKnownPlaceSelection {
         return selected;
       }),
     );
-    this.assertCurrent();
+    await this.service.publishRecall(async () => this.assertCurrent());
     return this.selected;
   }
 
