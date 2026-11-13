@@ -19,6 +19,8 @@ import { DATABASE_SCHEMA, type SqlGameRepository } from './store.js';
 import { RECORD_NODES } from './world-record-schema.js';
 
 interface OpeningHeader {
+  readonly worldId: string;
+  readonly durableRevision: number;
   readonly playerActorId: string;
   readonly nextId: number;
   readonly simTime: number;
@@ -95,6 +97,8 @@ export class NativeCurrentOpening {
           try {
             opening.headerOwner = retainNativeProduct(
               copyNativeProduct(host, {
+                worldId: source.records.worldId,
+                durableRevision: source.records.durableRevision,
                 playerActorId: player.slot,
                 nextId: header.nextId,
                 simTime: header.simTime,
