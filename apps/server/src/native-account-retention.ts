@@ -31,7 +31,6 @@ import {
   releaseNativeProduct,
   retainNativeSources,
   withNativeJsonInput,
-  type NativeEncodingCapacity,
 } from './native-consumer.js';
 
 type Kind = 'awareness' | 'memory' | 'summary';
@@ -58,7 +57,7 @@ interface Candidate {
   rank: number;
   protected: boolean;
 }
-export interface RetentionCapacity extends Pick<NativeEncodingCapacity, 'reserveJsonScratch'> {
+export interface RetentionCapacity {
   reserveBytes(bytes: number): NativeWorldConsumer;
   reserveJson(bytes: Buffer): NativeWorldConsumer;
 }
@@ -115,10 +114,7 @@ export async function prepareNativeAccountRetention(
     throw new Error('Account aging requires its actual captured SQL cut.');
   const pending = pendingAt(cut, request.actorId),
     roots: NativeWorldConsumer[] = [];
-  const encoding: NativeEncodingCapacity = {
-    reserveConsumerBytes: (bytes) => capacity.reserveBytes(bytes),
-    reserveJsonScratch: () => capacity.reserveJsonScratch(),
-  };
+  const encoding = { reserveConsumerBytes: (bytes: number) => capacity.reserveBytes(bytes) };
   let selection: { selected: readonly Candidate[] } | undefined;
   try {
     // IDs/ranks/deadlines only; dependency metadata and opaque prose are not

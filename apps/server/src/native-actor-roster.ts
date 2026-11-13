@@ -3,11 +3,7 @@ import type {
   NativeWorld,
   NativeWorldConsumer,
 } from '@open-legend/native-simulation';
-import {
-  encodeNativeJson,
-  releaseNativeProduct,
-  type NativeEncodingCapacity,
-} from './native-consumer.js';
+import { encodeNativeJson, releaseNativeProduct } from './native-consumer.js';
 
 export interface NativeActorPresence {
   readonly controller: 'player' | 'npc' | 'native';
@@ -27,7 +23,7 @@ type Row = {
   readonly slot: string;
   readonly payload: string;
 };
-type Admission = NativeEncodingCapacity & Pick<NativeWorld, 'reserveConsumerJson'>;
+type Admission = Pick<NativeWorld, 'reserveConsumerBytes' | 'reserveConsumerJson'>;
 type Identity = { readonly id: string; readonly guard: NativeWorldConsumer };
 type Entry = Identity & { key?: Identity; ownsKey?: boolean };
 type ActorEntry = Entry & { readonly value?: NativeActorPresence };

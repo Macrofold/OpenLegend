@@ -1,8 +1,8 @@
 # Native runtime foundations: useful work without repeated preparation
 
-| Status      | Current progress                                                                                                                                       | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | J is rejected and removed; S's focused and held-consumer checks pass, with AWS resource/CPU/RSS qualification pending; P/R retain unmet prerequisites. | 2026-11-12   |
+| Status      | Current progress                                                                                                                | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | J and S are rejected and removed at 128 MiB; complete CPU/RSS benefit remains inconclusive, and P/R retain unmet prerequisites. | 2026-11-12   |
 
 [Technical design](native-runtime-foundations-tech-design.md) · [Source and repertoire reconciliation](native-runtime-foundations-evidence-and-repertoire.md)
 
@@ -58,7 +58,7 @@ Complete physical-region unloading is outside this implementation slice. Current
 
 **R — Ordered read-only rate preparation.** Complete a concrete NSC03/E2 candidate on the existing host pool. First serialize outer same-world bridge calls before they enter that pool (R0); then compare parallel status-rate selections (R1). This prevents a waiting worker from taking another call that blocks on its own world's held lock. Waiting requests keep existing admission and memory custody without occupying a compute worker. Results, reductions, mutations, random draws and identities retain native order. No parallel actor mutation or second scheduler service is introduced.
 
-All four are conditional because their complete benefit is unmeasured. J, S and P activate only when current attribution establishes material relevant cost. R runs under NSC03/E2's existing prerequisites, with R0 measured separately before R1. A documented rejection or not-applicable result is valid; an unmeasured implementation is not adoption. The [technical sequence](native-runtime-foundations-tech-design.md#7-experiment-sequence-and-adoption) makes each condition executable rather than leaving implementation choices implicit.
+J and S have unsuccessful dispositions under the unchanged 128 MiB profile, and their experimental implementations are removed. S passes its focused and complete held-consumer correctness checks but fails its first sustained resource case with genuine receiving-capacity refusal; the control also fails capacity. The frozen stop rule prevents later resource and matched 100-second admissions. Complete-work CPU/RSS benefit remains inconclusive; no failed-work saving or unique cause is inferred. The recipes above remain their experimental specifications, not installed APIs or authorization to repeat them. P remains pending material accepted-cut capture attribution. R retains NSC03/E2's existing prerequisites, with R0 measured separately before R1. A documented rejection or not-applicable result is valid; an unmeasured implementation is not adoption. The [technical sequence](native-runtime-foundations-tech-design.md#7-experiment-sequence-and-adoption) preserves each condition.
 
 ## 5. Foundation contracts to preserve now
 

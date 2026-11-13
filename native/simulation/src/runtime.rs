@@ -43,7 +43,7 @@ mod restore;
 mod retained_values;
 pub use handoff::RuntimeOutputHandoff;
 mod consumer;
-pub use consumer::{RuntimeConsumer, RuntimeJsonScratch};
+pub use consumer::RuntimeConsumer;
 pub(crate) use npc::HeldSourceProof;
 pub use npc::{
     RuntimeNpcPreparationStep, RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket,

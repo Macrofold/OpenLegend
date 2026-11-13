@@ -2,17 +2,9 @@ import type {
   NativeWorld,
   NativeWorldConsumer,
   NativeWorldJson,
-  NativeJsonScratch,
 } from '@open-legend/native-simulation';
 import { jsonByteLength } from '@open-legend/domain';
 import { AsyncLocalStorage } from 'node:async_hooks';
-
-/** Encoding works before installation as well as on a live World. Capacity
- * admission grants no simulation, source or disclosure authority. */
-export type NativeEncodingCapacity = Pick<
-  NativeWorld,
-  'reserveConsumerBytes' | 'reserveJsonScratch'
->;
 
 // A Buffer can disappear while its parsed strings/arrays still serve a request,
 // save or model context. Keep their separate native admission with the actual
@@ -228,7 +220,6 @@ function measureNativeJson(
   world: Pick<NativeWorld, 'reserveConsumerBytes'>,
   value: unknown,
   options: NativeJsonEncodingOptions,
-  scratch?: NativeJsonScratch,
 ) {
   const prefix = options.prefix ?? '',
     suffix = options.suffix ?? '';
@@ -236,10 +227,7 @@ function measureNativeJson(
   const flattening = 2 * jsonInputStringUnits(value);
   // Measuring uses the same live Object.keys ancestry. Disable Native cache
   // writes: persistent WeakMap/proof entries cannot borrow a temporary guard.
-  // Standalone text workspaces keep their existing owner. Only the synchronous
-  // Buffer encoder reuses its scratch across these nonoverlapping phases.
-  const measuring = scratch ? undefined : world.reserveConsumerBytes(shape + flattening + 256);
-  scratch?.resize(shape + flattening + 256);
+  const measuring = world.reserveConsumerBytes(shape + flattening + 256);
   let bytes: number,
     bodyPeak = 0;
   try {
@@ -247,8 +235,7 @@ function measureNativeJson(
     bodyPeak = jsonStringifierBodies(bytes);
     bytes += Buffer.byteLength(prefix) + Buffer.byteLength(suffix);
   } finally {
-    if (scratch) scratch.resize(0);
-    else measuring?.release();
+    measuring.release();
   }
   return { bytes, bodyPeak, shape, flattening };
 }
@@ -271,44 +258,36 @@ export function reserveNativeJsonTextWorkspace(
 /** Admit the selected JSON output before its encoder or transport Buffer
  * allocates. Existing source pins do not fund newly serialized bytes. */
 export function encodeNativeJson(
-  world: NativeEncodingCapacity,
+  world: Pick<NativeWorld, 'reserveConsumerBytes'>,
   value: unknown,
   options: NativeJsonEncodingOptions = {},
 ): Buffer {
   const prefix = options.prefix ?? '',
     suffix = options.suffix ?? '';
-  const scratch = world.reserveJsonScratch();
+  const { bytes, bodyPeak, shape, flattening } = measureNativeJson(world, value, options);
+  const output = world.reserveConsumerBytes(bytes + 32 * 8);
+  let workspace: NativeWorldConsumer | undefined;
   try {
-    const { bytes, bodyPeak, shape, flattening } = measureNativeJson(
-      world,
-      value,
-      options,
-      scratch,
-    );
-    // Preserve output-before-stringifier admission. The output and source pins
-    // never borrow scratch, which ends before any asynchronous consumption.
-    const output = world.reserveConsumerBytes(bytes + 32 * 8);
-    try {
-      scratch.resize(Math.max(4 * bytes, bodyPeak) + shape + flattening);
-      // Avoid Node's pooled small-Buffer slab: this owner funds this exact body.
-      const buffer = Buffer.allocUnsafeSlow(bytes);
-      let at = buffer.write(prefix, 0, 'utf8');
-      at += buffer.write(JSON.stringify(value), at, 'utf8');
-      buffer.write(suffix, at, 'utf8');
-      return attachNativeConsumer(buffer, output, ...(options.sources ?? []));
-    } catch (error) {
-      output.release();
-      throw error;
-    }
+    // Fund V8's complete builder/result overlap independently of the output.
+    workspace = world.reserveConsumerBytes(Math.max(4 * bytes, bodyPeak) + shape + flattening);
+    // Avoid Node's pooled small-Buffer slab: this owner funds this exact body.
+    const buffer = Buffer.allocUnsafeSlow(bytes);
+    let at = buffer.write(prefix, 0, 'utf8');
+    at += buffer.write(JSON.stringify(value), at, 'utf8');
+    buffer.write(suffix, at, 'utf8');
+    return attachNativeConsumer(buffer, output, ...(options.sources ?? []));
+  } catch (error) {
+    output.release();
+    throw error;
   } finally {
-    scratch.close();
+    workspace?.release();
   }
 }
 
 /** A bridge call borrows the actual encoded input until its native result (or
  * refusal) completes. The encoder admits its Buffer and workspace beforehand. */
 export async function withNativeJsonInput<T>(
-  world: NativeEncodingCapacity,
+  world: Pick<NativeWorld, 'reserveConsumerBytes'>,
   value: unknown,
   consume: (bytes: Buffer) => Promise<T>,
   options: NativeJsonEncodingOptions = {},
@@ -324,7 +303,7 @@ export async function withNativeJsonInput<T>(
 /** Some existing consumers require JSON text rather than a Buffer. Its UTF-16
  * backing and small envelope remain owned independently after encoding ends. */
 export function encodeNativeJsonText(
-  world: NativeEncodingCapacity,
+  world: Pick<NativeWorld, 'reserveConsumerBytes'>,
   value: unknown,
 ): { readonly text: string; readonly bytes: number } {
   const encoded = encodeNativeJson(world, value);
@@ -364,7 +343,7 @@ export async function withNativeUtf8Input<T>(
 /** A small retained report/cache entry owns its copied JSON graph, rather than
  * pinning the publication or request whose scalar fields it was built from. */
 export function copyNativeProduct<T extends object>(
-  world: NativeEncodingCapacity & Pick<NativeWorld, 'reserveConsumerJson'>,
+  world: Pick<NativeWorld, 'reserveConsumerBytes' | 'reserveConsumerJson'>,
   value: T,
 ): T {
   const encoded = encodeNativeJson(world, value);

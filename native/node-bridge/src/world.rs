@@ -10,11 +10,11 @@ use napi::{Env, JsString, Result};
 use napi_derive::napi;
 use openlegend_simulation::host::{ByteBudget, ByteReservation, CandidateFence, CandidateKey};
 use openlegend_simulation::runtime::{
-    NativeWorldSession, RuntimeActivation, RuntimeConsumer, RuntimeJson, RuntimeJsonScratch,
-    RuntimePrepared, RuntimeProvider, RuntimeSave, RuntimeSaveAcknowledgement, RuntimeStep,
+    NativeWorldSession, RuntimeActivation, RuntimeConsumer, RuntimeJson, RuntimePrepared,
+    RuntimeProvider, RuntimeSave, RuntimeSaveAcknowledgement, RuntimeStep,
 };
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex, Weak};
+use std::sync::{Arc, Mutex};
 mod account_retention;
 mod consumer;
 mod control;
@@ -119,15 +119,6 @@ impl NativeWorldJson {
 #[napi]
 pub struct NativeWorldConsumer {
     value: RuntimeConsumer,
-}
-
-/// Capacity only: this owner cannot read, mutate or publish world state.
-#[napi]
-pub struct NativeJsonScratch {
-    value: RuntimeJsonScratch,
-    host: Option<Weak<HostRuntime>>,
-    world: Option<Weak<WorldRuntime>>,
-    _reference: ByteReservation,
 }
 #[napi(object, object_from_js = false)]
 pub struct NativeWorldDecoded<'env> {

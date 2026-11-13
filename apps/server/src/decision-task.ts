@@ -17,6 +17,7 @@ import {
   type DecisionAppraisalProposal,
 } from './cognition-contracts.js';
 import type { Level1Outcome } from './level1-selection.js';
+import type { NativeWorld } from '@open-legend/native-simulation';
 import {
   admitDecisionGraph,
   decisionArrayBytes,
@@ -28,11 +29,10 @@ import {
   releaseNativeProduct,
   reserveNativeJsonTextWorkspace,
   retainNativeSources,
-  type NativeEncodingCapacity,
 } from './native-consumer.js';
 import { nativeDecisionJsonSize, nativeDecisionJsonText } from './native-decision-prompt.js';
 
-type RequestCapacity = NativeEncodingCapacity;
+type RequestCapacity = Pick<NativeWorld, 'reserveConsumerBytes'>;
 
 type WireResponse = z.infer<typeof responseSchema>;
 export type DecisionValue =

@@ -1,8 +1,8 @@
 # Native runtime foundations: technical design
 
-| Status      | Current progress                                                                                                                                       | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | J is rejected and removed; S's focused and held-consumer checks pass, with AWS resource/CPU/RSS qualification pending; P/R retain unmet prerequisites. | 2026-11-12   |
+| Status      | Current progress                                                                                                                | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | J and S are rejected and removed at 128 MiB; complete CPU/RSS benefit remains inconclusive, and P/R retain unmet prerequisites. | 2026-11-12   |
 
 [Feature specification](native-runtime-foundations-feature-spec.md) · [Evidence and repertoire reconciliation](native-runtime-foundations-evidence-and-repertoire.md) · [NRF work](../maintainers/native-runtime-foundations.md) · [Constraints](../limits/native-runtime-foundations.md)
 
@@ -69,6 +69,8 @@ Use scalar accumulators, not an allocated result object per node; the public res
 Expected saving is one structural traversal and repeated property enumeration. Exact measurement, V8 serialization, buffers and consumers remain. More complex branching or recursion can lose; helper timing alone does not justify adoption. Never reinstate the rejected ordered installation encoder or a persistent measurement cache through J.
 
 ## 3. S: one operation-local scratch reservation
+
+**Recorded disposition: rejected and removed.** S's allocation, actual HTTP/cognition and complete held generated-reply consumers pass at their preserved experimental identities. Its first managed 360-second resource case fails genuine receiving-capacity admission under the frozen 128 MiB route; the unchanged control also fails capacity. The nominal primary timer runs 359.997 seconds, but accepted progress is only 3,478.297 game-seconds after the simulation pauses at about 58 seconds. Neither arm completes the required conversations and application shutdown. Later resource and matched 100-second stages are not admitted; complete-work CPU/RSS benefit is inconclusive. The scratch API and callers are removed; the only retained runtime-source difference from control `a2d789a78a57547708eb2f55a2d6407c644611e8` is module declaration ordering in `runtime.rs`. No fallback or experimental switch remains. The recipe below is retained for its exact evidence and constraints, not as current implementation; [NRF work](../maintainers/native-runtime-foundations.md#s-correctness-checkpoint--november-12-2026) owns the full disposition and final verification. This failure does not establish that S uniquely caused the refusal.
 
 ### 3.1 Source and eligibility
 

@@ -19,7 +19,6 @@ export declare class NativeHost {
    */
   reserveConsumerBytes(bytes: number): NativeWorldConsumer;
   reserveConsumerJson(bytes: Buffer): NativeWorldConsumer;
-  reserveJsonScratch(): NativeJsonScratch;
   /** This status reads control metadata only, never tentative gameplay state. */
   status(): HostStatus;
   /**
@@ -29,16 +28,9 @@ export declare class NativeHost {
   requestShutdown(): HostStatus;
 }
 
-/** Capacity only: this owner cannot read, mutate or publish world state. */
-export declare class NativeJsonScratch {
-  resize(bytes: number): void;
-  close(): void;
-}
-
 export declare class NativeWorld {
   readAccountRetention(bytes: Buffer): Promise<NativeWorldAccountRetention>;
   beginAccountRetention(read: NativeWorldAccountRetention): Promise<NativeWorldTurn>;
-  reserveJsonScratch(): NativeJsonScratch;
   reserveConsumerBytes(bytes: number): NativeWorldConsumer;
   reserveConsumerJson(bytes: Buffer): NativeWorldConsumer;
   beginControl(bytes: Buffer): Promise<NativeWorldTurn>;

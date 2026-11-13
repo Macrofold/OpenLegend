@@ -10,7 +10,6 @@ import {
   reserveNativeJsonTextWorkspace,
   withoutNativeConsumerScope,
   type NativeJsonEncodingOptions,
-  type NativeEncodingCapacity,
 } from './native-consumer.js';
 import {
   fundNativeSourceWorkspace,
@@ -124,7 +123,7 @@ export interface NativePlayerRequestOwner extends PlayerAsyncOwner {
 }
 export interface NativePlayerViewRequest {
   readonly owner: NativePlayerRequestOwner;
-  readonly capacity: NativeEncodingCapacity & Pick<NativeWorld, 'reserveConsumerJson'>;
+  readonly capacity: Pick<NativeWorld, 'reserveConsumerBytes' | 'reserveConsumerJson'>;
   readonly scope: RequestScope;
   readonly definitions: NativePlayerViewDefinitions;
   readonly map: Parameters<typeof nativePlayerWorldView>[4]['map'];

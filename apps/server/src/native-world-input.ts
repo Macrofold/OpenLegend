@@ -10,7 +10,6 @@ import {
   nativeJsonFixedWorkspace,
   releaseNativeProduct,
   retainNativeProduct,
-  type NativeEncodingCapacity,
 } from './native-consumer.js';
 
 type Admission = Pick<NativeHost, 'reserveConsumerBytes' | 'reserveConsumerJson'>;
@@ -49,7 +48,7 @@ export class NativeInputAllocation implements WorldInputAllocation {
   ) {}
 
   static prepare(
-    budget: NativeEncodingCapacity & Pick<NativeHost, 'reserveConsumerJson'>,
+    budget: Admission,
     scope: RequestScope,
     generation: string,
     life: number | undefined,

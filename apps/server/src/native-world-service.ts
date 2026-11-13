@@ -4286,7 +4286,6 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         {
           reserveBytes: (bytes) => captured.world.reserveConsumerBytes(bytes),
           reserveJson: (bytes) => captured.world.reserveConsumerJson(bytes),
-          reserveJsonScratch: () => captured.world.reserveJsonScratch(),
         },
         this.retentionAbort.signal,
       );

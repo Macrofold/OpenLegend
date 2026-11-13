@@ -260,11 +260,6 @@ impl NativeHost {
         })
     }
 
-    #[napi]
-    pub fn reserve_json_scratch(&self) -> Result<world::NativeJsonScratch> {
-        boundary(|| world::NativeJsonScratch::reserve(&self.runtime, None))
-    }
-
     /// This status reads control metadata only, never tentative gameplay state.
     #[napi]
     pub fn status(&self) -> Result<HostStatus> {

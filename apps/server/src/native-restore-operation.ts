@@ -126,7 +126,6 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
       this.retentionCapacity = {
         reserveBytes: (bytes: number) => world.reserveConsumerBytes(bytes),
         reserveJson: (bytes: Buffer) => world.reserveConsumerJson(bytes),
-        reserveJsonScratch: () => world.reserveJsonScratch(),
       };
       this.inputsOwner = retainNativeSources(
         {
@@ -447,7 +446,6 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
       const reads = await stage.prepareReads(initial, {
         reserveBytes: (bytes) => world.reserveConsumerBytes(bytes),
         reserveJson: (bytes) => world.reserveConsumerJson(bytes),
-        reserveJsonScratch: () => world.reserveJsonScratch(),
       });
       // This is the actual private SQL installation at cut zero, inside its
       // still-open transaction. No ordinary live read can access this owner.
@@ -486,7 +484,6 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
           retentionCapacity: {
             reserveBytes: (bytes) => world.reserveConsumerBytes(bytes),
             reserveJson: (bytes) => world.reserveConsumerJson(bytes),
-            reserveJsonScratch: () => world.reserveJsonScratch(),
           },
           retentionSignal: request.signal,
           retentionSupportSourceIds: selectedRecognitionSupportReader(

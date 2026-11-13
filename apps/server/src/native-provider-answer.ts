@@ -3,11 +3,12 @@ import {
   attachNativeConsumer,
   encodeNativeJsonText,
   releaseNativeProduct,
-  type NativeEncodingCapacity,
 } from './native-consumer.js';
 
-export type NativeProviderCapacity = NativeEncodingCapacity &
-  Pick<NativeWorld, 'reserveConsumerJson'>;
+export type NativeProviderCapacity = Pick<
+  NativeWorld,
+  'reserveConsumerBytes' | 'reserveConsumerJson'
+>;
 
 export interface NativeProviderAnswer {
   readonly json: string;
