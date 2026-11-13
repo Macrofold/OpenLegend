@@ -18,6 +18,7 @@ use std::sync::{Arc, Mutex};
 mod account_retention;
 mod consumer;
 mod control;
+mod knowledge;
 mod maintenance;
 mod navigation;
 mod npc;
@@ -596,7 +597,7 @@ impl NativeWorld {
             let canonical = String::from_utf8(canonical)
                 .map_err(|_| failure("native command identity must be UTF-8 JSON"))?;
             let key = if preview {
-                session.begin_cancel_preview(&bytes, canonical)
+                session.begin_command_preview(&bytes, canonical)
             } else {
                 session.begin_command(&bytes, canonical, durable_receipt)
             }

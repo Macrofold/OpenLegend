@@ -18,6 +18,7 @@ mod account_retention;
 mod control;
 pub use account_retention::RuntimeAccountRetention;
 mod handoff;
+mod knowledge;
 mod learning;
 mod maintenance;
 pub use learning::{RuntimeActivityLearning, RuntimeActivityLearningStep};
@@ -555,7 +556,7 @@ impl NativeWorldSession {
             )
             .map_err(failure)
     }
-    pub fn begin_cancel_preview(
+    pub fn begin_command_preview(
         &mut self,
         input: &[u8],
         canonical: String,
@@ -564,7 +565,7 @@ impl NativeWorldSession {
         let _decode = decode_preparation(input, &self.budget)?;
         let command = serde_json::from_slice(input).map_err(failure)?;
         self.session
-            .begin_cancel_preview(command, canonical)
+            .begin_command_preview(command, canonical)
             .map_err(failure)
     }
     pub fn step(

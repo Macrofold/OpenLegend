@@ -2221,6 +2221,19 @@ impl PhysicalJournal {
     pub(crate) fn changes(&self) -> &[PhysicalChange] {
         &self.changes
     }
+    /// Source revisits an observer's assigned spatial fields until its owned
+    /// draft finishes. These existing keys survive kept children and disappear
+    /// with rollback; route progress and hydrated rows never write them.
+    pub(crate) fn spatially_written(&self, entity: EntityHandle) -> bool {
+        self.frames.iter().any(|frame| {
+            frame
+                .written
+                .contains(&UndoKey::Placement(entity.slot, entity.generation))
+                || frame
+                    .written
+                    .contains(&UndoKey::Heading(entity.slot, entity.generation))
+        })
+    }
     pub(crate) fn change_cursor(&self) -> PhysicalChangeCursor {
         PhysicalChangeCursor {
             at: self.changes.len(),

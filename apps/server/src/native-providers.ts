@@ -24,6 +24,11 @@ import {
 } from './native-consumer.js';
 import { withNativeSqlPreparation } from './native-source-preparation.js';
 import type { SqlDatabase } from './store.js';
+import type { MemoryRepository } from './memory-repository.js';
+import {
+  readNativeKnownPlaceEvidence,
+  type NativeKnownPlaceEvidenceRequest,
+} from './native-known-place-evidence.js';
 import type { LiveReadCutsProvider } from './live-read-overlay.js';
 import {
   readNativeHistoryEdit,
@@ -59,6 +64,7 @@ import {
 type Question = { kind: string; value: unknown };
 export interface NativeHistoryReadContext {
   readonly db: SqlDatabase;
+  readonly memories?: Pick<MemoryRepository, 'readNativeKnownPlaceCapsules'>;
   readonly liveReadCuts: LiveReadCutsProvider;
   readonly restoreView?: <T>(
     projection: NativeChangedRows,
@@ -104,6 +110,16 @@ async function prepareProviderAnswer(
 ): Promise<NativeProviderAnswer> {
   const value = question.value;
   switch (question.kind) {
+    case 'known-places': {
+      const request = value as NativeKnownPlaceEvidenceRequest;
+      const cut = history?.liveReadCuts({ worldId: request.worldId, actorId: request.actorId });
+      if (!history?.memories || !cut)
+        throw new Error('Remembered-place preparation requires its actual history owner.');
+      return encodeNativeProviderAnswer(
+        capacity,
+        await readNativeKnownPlaceEvidence(history.db, history.memories, request, cut),
+      );
+    }
     case 'restore-retention': {
       const request = value as NativeRestoreRetentionRequest & {
         readonly restoreProjection: NativeChangedRows;

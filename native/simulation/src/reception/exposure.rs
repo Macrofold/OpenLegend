@@ -2,7 +2,7 @@
 //! Preparation contains IDs only; it is neither an observation nor authority to
 //! refresh another subject's detail. See docs/performance/spatial.md.
 use super::*;
-use crate::execution::ExecutionError;
+use crate::execution::{ExecutionError, PhysicalJournal};
 use crate::host::retained_size::{heap_sum, map_storage};
 use crate::host::{ByteBudget, ByteReservation};
 use crate::simulation::SimulationState;
@@ -44,6 +44,7 @@ fn within(a: Point, b: Point, radius: f64) -> bool {
 impl ExposureSelection {
     pub(crate) fn prepare(
         state: &SimulationState,
+        physical: &PhysicalJournal,
         selected: &[EntityHandle],
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
@@ -93,11 +94,15 @@ impl ExposureSelection {
             {
                 return Err(ExecutionError::UnsupportedFamily);
             }
+            // Match sensoryDraftWrites' cumulative spatial observer scope in
+            // one unpublished operation. Current object bounds remain below;
+            // an old observer write does not dirty every object query again.
+            let observer_changed = physical.spatially_written(*handle);
             result.observers.push(ExposureObserver {
                 handle: *handle,
-                affected: all,
-                changed_detail: (!all).then(IndexSet::new),
-                changed_people: (!all).then(IndexSet::new),
+                affected: all || observer_changed,
+                changed_detail: (!(all || observer_changed)).then(IndexSet::new),
+                changed_people: (!(all || observer_changed)).then(IndexSet::new),
                 objects_changed: all,
             });
         }

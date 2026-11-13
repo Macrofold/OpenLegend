@@ -186,6 +186,16 @@ impl PreparedKnownPlaceSources {
                     let ObservationOrigin::Occurrence { event_id, .. } = &original.origin else {
                         continue;
                     };
+                    // Awareness binds its own occurrence, as known_place_capsule
+                    // does; a retained memory/summary names the original's event.
+                    let event_id = if direct.is_some() {
+                        let Some(event_id) = source.record.header().event_id.as_ref() else {
+                            continue;
+                        };
+                        event_id
+                    } else {
+                        event_id
+                    };
                     let exposed = match &direct {
                         Some(value) => value.as_ref() == Some(&selected.exposure),
                         None => original.facets.iter().any(|facet| matches!(&facet.value,

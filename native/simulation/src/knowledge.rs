@@ -14,7 +14,7 @@ pub(crate) use state::{KnowledgeCheckpoint, KnowledgeEntry, KnowledgeJournal, Kn
 mod edit;
 mod revoke;
 mod save;
-pub(crate) use edit::{CompletedKnowledgeEdit, KnowledgeEdit, edit_knowledge};
+pub(crate) use edit::{CompletedKnowledgeEdit, KnowledgeEdit, KnowledgeEditCursor, edit_knowledge};
 pub(crate) use revoke::revoke_knowledge_documents;
 
 #[derive(Debug, Deserialize)]

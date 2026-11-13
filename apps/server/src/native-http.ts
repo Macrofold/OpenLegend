@@ -999,6 +999,28 @@ export async function createNativeGameServer(options: {
             await current.publishKnownPlaces(scope, { reference }, sendNative);
             return;
           }
+          case '/api/knowledge': {
+            const value = z
+              .object({
+                worldId: requestIdSchema,
+                generation: requestIdSchema,
+                actorId: requestIdSchema,
+                subjectId: z
+                  .object({ kind: z.literal('place'), placeId: requestIdSchema })
+                  .strict(),
+                expectedRevision: sequence,
+                text: z.string(),
+                place: knownPlaceReference,
+              })
+              .strict()
+              .parse(body);
+            const result = await current.editPlaceKnowledge(value, scope);
+            try {
+              return send(200, result);
+            } finally {
+              releaseNativeProduct(result);
+            }
+          }
           case '/api/memories':
           case '/api/god/memories': {
             const { actorId, ...value } = z

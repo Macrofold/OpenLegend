@@ -15,8 +15,85 @@ pub(crate) struct CompletedKnowledgeEdit {
     storage: ByteReservation,
 }
 impl CompletedKnowledgeEdit {
+    pub(crate) fn outcome(&self) -> &Outcome {
+        &self.outcome
+    }
     pub(crate) fn into_parts(self) -> (Outcome, ByteReservation) {
         (self.outcome, self.storage)
+    }
+}
+
+/// A direct player edit uses the same writer as responses/reflection. Its
+/// supplied subject has already passed the server's retained-place selection.
+pub(crate) struct KnowledgeEditCursor {
+    actor_id: String,
+    edit: KnowledgeEdit,
+    done: bool,
+    _storage: ByteReservation,
+}
+impl KnowledgeEditCursor {
+    pub(crate) fn new(
+        actor_id: String,
+        edit: KnowledgeEdit,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let storage = budget.reserve(
+            heap_sum([
+                size_of::<Self>(),
+                actor_id.heap_bytes().ok_or(ExecutionError::Capacity)?,
+                edit.subject_id
+                    .heap_bytes()
+                    .ok_or(ExecutionError::Capacity)?,
+                edit.text.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            ])
+            .ok_or(ExecutionError::Capacity)?,
+        )?;
+        Ok(Self {
+            actor_id,
+            edit,
+            done: false,
+            _storage: storage,
+        })
+    }
+    pub(crate) fn step(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        budget: &ByteBudget,
+    ) -> Result<CompletedKnowledgeEdit, ExecutionError> {
+        if self.done {
+            return Err(ExecutionError::Invariant);
+        }
+        self.done = true;
+        let subject = self
+            .edit
+            .subject_id
+            .as_ref()
+            .ok_or(ExecutionError::Invariant)?;
+        let checkpoint = core.journal.checkpoint(core.state)?;
+        let result = edit_knowledge(
+            core,
+            &self.actor_id,
+            &self.edit,
+            std::slice::from_ref(subject),
+            &[],
+            budget,
+        );
+        match result {
+            Ok(result) => {
+                // Source's owner editor discards refused edits, including the
+                // empty accounting owners prepared by a quota refusal.
+                if result.outcome().ok {
+                    core.journal.keep(core.state, checkpoint)?;
+                } else {
+                    core.journal.rollback_to(core.state, checkpoint)?;
+                }
+                Ok(result)
+            }
+            Err(error) => {
+                core.journal.rollback_to(core.state, checkpoint)?;
+                Err(error)
+            }
+        }
     }
 }
 fn result(

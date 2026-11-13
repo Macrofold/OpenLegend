@@ -158,11 +158,13 @@ pub(crate) fn validate_installation(
     world: &crate::simulation::InstalledWorld,
 ) -> Result<(), InstallError> {
     for id in physical.entities.ordered_ids() {
-        let actor = physical
+        let entity = physical
             .entities
             .get(id)
-            .and_then(|e| e.actor.as_ref())
             .ok_or(InstallError::CurrentFormat)?;
+        let Some(actor) = entity.actor.as_ref() else {
+            continue;
+        };
         let agency = &actor.agency;
         let limits = &world.agency_limits;
         attempts::validate_installed(&agency.attempts, limits)?;

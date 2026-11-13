@@ -2596,17 +2596,29 @@ export class MemoryRepository {
    * An operator's pending edit fences disclosure, but changes native knowledge only
    * when its complete correction publishes. This index never leaves native intake. */
   async prepareNativeKnownPlaceEvidence(scope: MemoryScope) {
-    const read = () =>
-      this.db.readTransaction
-        ? this.db.readTransaction(() => this.readKnownPlaceEvidence(scope))
-        : this.db.transaction(() => this.readKnownPlaceEvidence(scope));
-    return this.scopeActorRead(scope, read);
+    return this.nativePlaceRead(scope, () => this.readKnownPlaceEvidence(scope));
+  }
+  /** Rust owns the label index. Its consumer needs the same complete canonical
+   * selection, without building an unused second index in Node. */
+  async readNativeKnownPlaceCapsules(scope: MemoryScope) {
+    return this.nativePlaceRead(scope, () => this.readKnownPlaceCapsules(scope));
+  }
+  private nativePlaceRead<T>(scope: MemoryScope, read: () => Promise<T>): Promise<T> {
+    const snapshot = () =>
+      this.db.readTransaction ? this.db.readTransaction(read) : this.db.transaction(read);
+    return this.scopeActorRead(scope, snapshot);
   }
   private async readKnownPlaceEvidence(scope: MemoryScope) {
+    return prepareKnownPlaceEvidence(await this.readKnownPlaceCapsules(scope));
+  }
+  private async readKnownPlaceCapsules(scope: MemoryScope) {
     const owner = [scope.worldId, scope.actorId, scope.generation];
     const params = [...owner, ...owner, RETRIEVAL_ROWS + 1];
-    const head = await this.db.prepare('SELECT generation FROM world_head WHERE id=1').get();
-    if (head?.['generation'] !== scope.generation) throw new MemoryPreparationError();
+    const head = await this.db
+      .prepare('SELECT world_id,generation FROM world_head WHERE id=1')
+      .get();
+    if (head?.['world_id'] !== scope.worldId || head['generation'] !== scope.generation)
+      throw new MemoryPreparationError();
     const size = await this.db
       .prepare(
         `${this.retainedPlaces(true)} SELECT COUNT(*) AS count,COALESCE(SUM(octet_length(p.capsule::text)),0) AS bytes FROM retained_places p`,
@@ -2625,7 +2637,7 @@ export class MemoryRepository {
     if (rows.length !== Number(size?.['count'] ?? 0)) throw new MemoryPreparationError();
     const capsules = rows.map((row) => {
       if (typeof row['place_capsule'] !== 'string') throw new MemoryPreparationError();
-      const capsule = JSON.parse(row['place_capsule']) as KnownPlaceCapsule;
+      const capsule = parseSourceJson<KnownPlaceCapsule>(row['place_capsule']);
       if (
         row['source_kind'] !== 'support' &&
         (!capsule.personalSource ||
@@ -2636,7 +2648,7 @@ export class MemoryRepository {
         throw new MemoryPreparationError();
       return capsule;
     });
-    return prepareKnownPlaceEvidence(capsules);
+    return capsules;
   }
 
   /** Latest eligible disclosure per item, including sources outside the resident

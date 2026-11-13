@@ -1111,6 +1111,82 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     );
   }
 
+  async editPlaceKnowledge(
+    value: {
+      worldId: string;
+      generation: string;
+      actorId: string;
+      subjectId: { kind: 'place'; placeId: string };
+      expectedRevision: number;
+      text: string;
+      place: KnownPlaceReference;
+    },
+    scope: RequestScope,
+  ): Promise<ApiResult> {
+    this.assertScope(scope, 'play', true);
+    if (value.actorId !== scope.actorId)
+      return {
+        ok: false,
+        code: 'forbidden',
+        message: 'Human-private character content is unavailable to this principal.',
+      };
+    const world = this.world;
+    const generation = this.generation;
+    const timeline = this.timelineId;
+    if (value.worldId !== this.worldId || value.generation !== generation)
+      return { ok: false, code: 'stale-world', message: 'The world changed. Reload the editor.' };
+    if (value.subjectId.placeId !== value.place.id)
+      return {
+        ok: false,
+        code: 'unpermitted-subject',
+        message: 'The knowledge subject was not supplied.',
+      };
+    const read = await NativeKnownPlaceSelection.prepare(this, world, scope);
+    try {
+      const places = await read.select({ placeId: value.place.id, limit: 1, scan: 1 });
+      const selected = requireKnownPlace(places.entries[0], value.place);
+      return await this.atAcceptedBoundary(async () => {
+        this.assertAdmission();
+        this.assertScope(scope, 'play', true);
+        if (world !== this.world || generation !== this.generation || timeline !== this.timelineId)
+          return {
+            ok: false,
+            code: 'stale-world',
+            message: 'The world changed. Reload the editor.',
+          };
+        read.assertCurrent();
+        // A retained observation grants this private note, not current physical
+        // availability. Notes remain editable while paused and after correction.
+        // docs/knowledge.md#subject-binding
+        const result = await this.acceptOutcomeInLane({
+          actorId: scope.actorId,
+          first: () =>
+            withNativeJsonInput(
+              world,
+              {
+                accountId: scope.accountId,
+                actorId: scope.actorId,
+                placeId: selected.place.id,
+                expectedRevision: value.expectedRevision,
+                text: value.text,
+              },
+              (bytes) => world.beginKnowledgeEdit(bytes),
+            ),
+          current: () =>
+            world === this.world &&
+            generation === this.generation &&
+            timeline === this.timelineId &&
+            this.currentScope(scope, 'play', true) &&
+            read.sourcesCurrent(),
+        });
+        if (!result) throw new AuthorityError('stale-scope');
+        return result;
+      });
+    } finally {
+      read.release();
+    }
+  }
+
   /** Lasting and recent history share the existing permitted page contracts;
    * every lasting body is also admitted by the native selected-source owner. */
   async publishMemoryHistory<T>(
@@ -2310,7 +2386,11 @@ export class NativeWorldService implements NativePlayerRequestOwner {
               current: () => !this.closed && request.current(),
               signal: request.signal,
               requireSuccess: request.requireSuccess,
-              history: { db: this.store.db, liveReadCuts: () => before },
+              history: {
+                db: this.store.db,
+                memories: this.store.memories,
+                liveReadCuts: () => before,
+              },
               stage: async (publication) => {
                 await request.prepareOutcome?.(publication.outcome);
                 outcomePrepared = true;
@@ -2920,7 +3000,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           current: () => !this.closed && !this.failure && request.current(),
           signal: request.signal,
           admitPublication: request.admitPublication,
-          history: { db: this.store.db, liveReadCuts: () => before },
+          history: { db: this.store.db, memories: this.store.memories, liveReadCuts: () => before },
           discard: () => {
             staged?.cancel();
             stagedActors?.release();

@@ -455,7 +455,12 @@ impl PerceptionCursor {
                         self.phase = Phase::Finish;
                         continue;
                     }
-                    let mut exposure = ExposureSelection::prepare(core.state, &readers, budget)?;
+                    let mut exposure = ExposureSelection::prepare(
+                        core.state,
+                        &core.journal.physical,
+                        &readers,
+                        budget,
+                    )?;
                     core.journal.current.set_exposure_objects(
                         &mut core.state.reception,
                         exposure.objects.take().ok_or_else(invalid)?,

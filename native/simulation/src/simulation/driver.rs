@@ -36,6 +36,8 @@ use reflection::{ReflectionReply, poll_reflection};
 
 pub(super) mod source_versions;
 use source_versions::{Finalizer as SourceVersionFinalizer, SourceVersionsAnswer};
+mod known_places;
+use known_places::{KnownPlacesAnswer, KnownPlacesPreparation};
 mod learning;
 use learning::LearningReply;
 
@@ -75,6 +77,8 @@ pub(crate) enum ProviderKind {
     SupportMembership,
     #[serde(rename = "source-versions")]
     SourceVersions,
+    #[serde(rename = "known-places")]
+    KnownPlaces,
 }
 #[derive(Debug)]
 pub(crate) enum DriveError {
@@ -298,7 +302,8 @@ impl DecodeShape {
             | ProviderKind::ActivityLearningFormat
             | ProviderKind::RestoreArchives
             | ProviderKind::RestoreRetention
-            | ProviderKind::SourceVersions => 0,
+            | ProviderKind::SourceVersions
+            | ProviderKind::KnownPlaces => 0,
             ProviderKind::Normalization => {
                 size_of::<JsText>().max(size_of::<Option<crate::language::FreeTypedActionSyntax>>())
             }
@@ -380,6 +385,7 @@ enum Answer {
     RestoreRetention(crate::experience::retention::RestoreRetentionAnswer),
     SupportMembership(crate::received::SupportMembershipAnswer),
     SourceVersions(SourceVersionsAnswer),
+    KnownPlaces(KnownPlacesAnswer),
 }
 impl Answer {
     fn decode(input: &ProviderResponse, budget: &ByteBudget) -> Result<Self, DriveError> {
@@ -388,6 +394,9 @@ impl Answer {
             DriveError::MalformedResponse
         };
         let value = match input.kind {
+            ProviderKind::KnownPlaces => {
+                Self::KnownPlaces(KnownPlacesAnswer::decode(&input.json, budget)?)
+            }
             ProviderKind::RestoreRetention => Self::RestoreRetention(
                 crate::experience::retention::RestoreRetentionAnswer::decode(&input.json, budget)?,
             ),
@@ -463,6 +472,7 @@ impl Answer {
     }
     fn binding(&self, geometry_revision: u64) -> GeometryBinding {
         match self {
+            Self::KnownPlaces(v) => v.binding,
             Self::SourceVersions(v) => v.binding,
             Self::SupportMembership(v) => v.binding,
             Self::Geometry(v) => v.binding,
@@ -489,6 +499,7 @@ impl Answer {
     }
     fn kind(&self) -> ProviderKind {
         match self {
+            Self::KnownPlaces(_) => ProviderKind::KnownPlaces,
             Self::SourceVersions(_) => ProviderKind::SourceVersions,
             Self::SupportMembership(_) => ProviderKind::SupportMembership,
             Self::Geometry(_) => ProviderKind::Geometry,
@@ -616,6 +627,7 @@ pub(crate) enum CompletedOperation {
     RecallEdit(crate::experience::CompletedRecallEdit),
     RecentRetention(crate::received::CompletedRecentRetention),
     KnowledgeRetention(crate::received::CompletedKnowledgeRetention),
+    KnowledgeEdit(crate::knowledge::CompletedKnowledgeEdit),
     AccountRetention(crate::experience::CompletedAccountRetention),
     SupportRetention(crate::received::CompletedSupportRetention),
     HostControl(super::host_control::CompletedHostControl),
@@ -636,6 +648,7 @@ impl CompletedOperation {
             Self::RecallEdit(f) => f.outcome(),
             Self::RecentRetention(r) => &r.outcome,
             Self::KnowledgeRetention(r) => &r.outcome,
+            Self::KnowledgeEdit(r) => r.outcome(),
             Self::AccountRetention(r) => &r.outcome,
             Self::SupportRetention(r) => &r.outcome,
             Self::HostControl(r) => &r.outcome,
@@ -657,6 +670,7 @@ impl CompletedOperation {
             | Self::SupportRetention(_)
             | Self::AccountRetention(_)
             | Self::KnowledgeRetention(_)
+            | Self::KnowledgeEdit(_)
             | Self::RecentRetention(_)
             | Self::HostControl(_)
             | Self::NpcIntake(_) => (None, None, None, None),
@@ -694,6 +708,7 @@ impl CompletedOperation {
             | Self::SupportRetention(_)
             | Self::AccountRetention(_)
             | Self::KnowledgeRetention(_)
+            | Self::KnowledgeEdit(_)
             | Self::RecentRetention(_)
             | Self::HostControl(_)
             | Self::NpcIntake(_) => None,
@@ -718,6 +733,7 @@ enum OperationReply {
     SupportRetention,
     NpcSources,
     SourceVersions,
+    KnownPlaces,
 }
 enum OperationCursor {
     Startup(super::startup::StartupCursor),
@@ -734,6 +750,7 @@ enum OperationCursor {
     NpcCandidates(crate::capture::NpcCandidateCursor),
     RecentRetention(crate::received::RecentRetentionCursor),
     KnowledgeRetention(crate::received::KnowledgeRetentionCursor),
+    KnowledgeEdit(crate::knowledge::KnowledgeEditCursor),
     AccountRetention(crate::experience::AccountRetentionCursor),
     SupportRetention(crate::received::SupportRetentionCursor),
     HostControl(super::host_control::HostControlCursor),
@@ -766,6 +783,7 @@ impl OperationCursor {
             | Self::SupportRetention(_)
             | Self::AccountRetention(_)
             | Self::KnowledgeRetention(_)
+            | Self::KnowledgeEdit(_)
             | Self::RecentRetention(_)
             | Self::HostControl(_)
             | Self::NpcIntake(_)
@@ -1020,6 +1038,14 @@ impl OperationCursor {
                     None => Poll::Continue,
                 })
             }
+            Self::KnowledgeEdit(cursor) => {
+                if route.is_some() || answer.is_some() {
+                    return Err(DriveError::StaleResponse);
+                }
+                Ok(Poll::Complete(DriverCompletion::Operation(
+                    CompletedOperation::KnowledgeEdit(cursor.step(core, budget)?),
+                )))
+            }
             Self::RecentRetention(cursor) => {
                 if route.is_some() || answer.is_some() {
                     return Err(DriveError::StaleResponse);
@@ -1058,6 +1084,7 @@ pub(crate) struct OperationDriver {
     completed: Option<CompletedOperation>,
     source_finalizer: Option<SourceVersionFinalizer>,
     source_versions: Option<SourceVersionsAnswer>,
+    known_places: Option<KnownPlacesPreparation>,
     _reservation: ByteReservation,
 }
 impl OperationDriver {
@@ -1148,6 +1175,13 @@ impl OperationDriver {
     ) -> Result<Self, DriveError> {
         Self::new(core, OperationCursor::KnowledgeRetention(cursor), budget)
     }
+    pub(crate) fn knowledge_edit(
+        core: &mut CoreMutation<'_>,
+        cursor: crate::knowledge::KnowledgeEditCursor,
+        budget: &ByteBudget,
+    ) -> Result<Self, DriveError> {
+        Self::new(core, OperationCursor::KnowledgeEdit(cursor), budget)
+    }
     pub(crate) fn recent_retention(
         core: &mut CoreMutation<'_>,
         cursor: crate::received::RecentRetentionCursor,
@@ -1215,6 +1249,22 @@ impl OperationDriver {
                 return Err(DriveError::Capacity);
             }
         };
+        let prepares_places = match &cursor {
+            OperationCursor::Advance(_) | OperationCursor::Response(_) => true,
+            OperationCursor::Command(command) => command.needs_known_places(),
+            _ => false,
+        };
+        let known_places = if prepares_places {
+            match KnownPlacesPreparation::prepare(core, budget) {
+                Ok(prepared) => prepared,
+                Err(error) => {
+                    cursor.abort(core)?;
+                    return Err(error);
+                }
+            }
+        } else {
+            None
+        };
         Ok(Self {
             cursor,
             pending: None,
@@ -1225,6 +1275,7 @@ impl OperationDriver {
             completed: None,
             source_finalizer: None,
             source_versions: None,
+            known_places,
             _reservation: reservation,
         })
     }
@@ -1252,6 +1303,7 @@ impl OperationDriver {
         }
         self.completed = None;
         self.source_finalizer = None;
+        self.known_places = None;
         self.pending = None;
         self.done = true;
         Ok(())
@@ -1299,6 +1351,7 @@ impl OperationDriver {
                         | ProviderKind::Sources
                         | ProviderKind::AppraisalOutcomes
                         | ProviderKind::SourceVersions
+                        | ProviderKind::KnownPlaces
                 ) {
                     return Ok(None);
                 }
@@ -1316,7 +1369,27 @@ impl OperationDriver {
         let route = input
             .as_ref()
             .and_then(|_| self.pending.as_ref().map(|(_, route)| *route));
-        let result = if self.source_finalizer.is_some() {
+        let result = if self.known_places.is_some() {
+            if route.is_some_and(|route| !matches!(route, OperationReply::KnownPlaces)) {
+                return Err(DriveError::StaleResponse);
+            }
+            let result = self
+                .known_places
+                .as_mut()
+                .expect("pending known-place preparation")
+                .poll(core, &mut answer, key, budget);
+            match result {
+                Ok(Poll::Complete(())) => {
+                    self.known_places = None;
+                    Ok(Poll::Continue)
+                }
+                Ok(Poll::Continue) => Ok(Poll::Continue),
+                Ok(Poll::Question(question, ())) => {
+                    Ok(Poll::Question(question, OperationReply::KnownPlaces))
+                }
+                Err(error) => Err(error),
+            }
+        } else if self.source_finalizer.is_some() {
             (|| {
                 let Answer::SourceVersions(value) =
                     direct(&mut answer, ProviderKind::SourceVersions)?

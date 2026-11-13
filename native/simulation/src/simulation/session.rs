@@ -661,6 +661,22 @@ impl Session {
         })();
         self.install_driver(key, journal, driver, false)
     }
+    pub(crate) fn begin_knowledge_edit(
+        &mut self,
+        actor: String,
+        edit: crate::knowledge::KnowledgeEdit,
+    ) -> Result<CandidateKey, SessionError> {
+        let (key, mut journal) = self.begin()?;
+        let driver = (|| {
+            let cursor = crate::knowledge::KnowledgeEditCursor::new(actor, edit, &self.budget)?;
+            let mut core = CoreMutation {
+                state: &mut self.simulation.state,
+                journal: &mut journal,
+            };
+            OperationDriver::knowledge_edit(&mut core, cursor, &self.budget)
+        })();
+        self.install_driver(key, journal, driver, false)
+    }
     pub(crate) fn begin_recent_retention(
         &mut self,
         actors: Vec<String>,
@@ -788,14 +804,11 @@ impl Session {
         })();
         self.install_driver(key, journal, driver, false)
     }
-    pub(crate) fn begin_cancel_preview(
+    pub(crate) fn begin_command_preview(
         &mut self,
         command: crate::commands::NativeCommand,
         canonical: String,
     ) -> Result<CandidateKey, SessionError> {
-        if !matches!(&command, crate::commands::NativeCommand::Cancel { .. }) {
-            return Err(ExecutionError::UnsupportedFamily.into());
-        }
         self.begin_command(
             command,
             canonical,

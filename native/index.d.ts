@@ -34,6 +34,7 @@ export declare class NativeWorld {
   reserveConsumerBytes(bytes: number): NativeWorldConsumer;
   reserveConsumerJson(bytes: Buffer): NativeWorldConsumer;
   beginControl(bytes: Buffer): Promise<NativeWorldTurn>;
+  beginKnowledgeEdit(bytes: Buffer): Promise<NativeWorldTurn>;
   bindConsolidationDream(
     ticket: NativeWorldConsolidationTicket,
     bytes: Buffer,

@@ -104,6 +104,9 @@ enum Progress {
     Complete(CompletedCommandOperation),
 }
 impl CommandOperation {
+    pub(crate) fn needs_known_places(&self) -> bool {
+        self.cursor.needs_known_places()
+    }
     pub(crate) fn is_complete(&self) -> bool {
         self.child.is_none() && self.reservation.is_none()
     }

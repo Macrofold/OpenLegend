@@ -162,6 +162,9 @@ fn outcome(ok: bool, code: &str, message: &str) -> Outcome {
     }
 }
 impl CommandCursor {
+    pub(crate) fn needs_known_places(&self) -> bool {
+        !self.options.preview && matches!(self.command, NativeCommand::Say { .. })
+    }
     /// Canonical command bytes come from the existing Node canonicalJson input
     /// encoder. They are the current receipt's digest, not a writable world.
     pub(crate) fn new(

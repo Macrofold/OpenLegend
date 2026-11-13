@@ -339,6 +339,22 @@ pub(crate) fn place_capsule(
 }
 
 impl ExperienceState {
+    pub(crate) fn unprepared_place_actors(
+        &self,
+    ) -> Result<impl Iterator<Item = &str>, ExperienceError> {
+        let owners = self
+            .owner_maps
+            .get(&PersonalSourceKind::Awareness)
+            .ok_or(ExperienceError::UnknownCoverage)?;
+        if !owners.coverage.complete {
+            return Err(ExperienceError::UnknownCoverage);
+        }
+        Ok(owners
+            .placements
+            .keys()
+            .map(String::as_str)
+            .filter(|actor| self.known_places(actor).is_err()))
+    }
     pub(crate) fn known_place_revision(&self, actor_id: &str) -> u64 {
         self.known_places
             .get(actor_id)
@@ -432,6 +448,13 @@ impl ExperienceJournal {
             actor_id.to_owned(),
             KnownPlacePreparation { value, revision },
         );
+        // The old prepared index must already belong to undo if final
+        // metadata settlement refuses this unaccepted replacement.
+        self.undo
+            .push(super::mutation::ExperienceUndo::KnownPlaces {
+                actor_id: actor,
+                before,
+            });
         let new_strings = state
             .known_places
             .get_key_value(actor_id)
@@ -443,11 +466,6 @@ impl ExperienceJournal {
             new_strings,
             &mut self.reservation,
         )?;
-        self.undo
-            .push(super::mutation::ExperienceUndo::KnownPlaces {
-                actor_id: actor,
-                before,
-            });
         Ok(())
     }
     pub(crate) fn invalidate_known_places(
