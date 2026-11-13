@@ -144,7 +144,9 @@ impl BodyIndex {
         }
         let root_peak = after.bytes()?;
         let next = entities.get(id).and_then(|entity| {
-            if entity.actor.is_none() || !entity.actively_participates() {
+            // Objects can be sight targets without becoming walking occupants.
+            // Each physical query retains its own actor/object eligibility.
+            if !entity.actively_participates() {
                 return None;
             }
             let body = entity.body_profile();

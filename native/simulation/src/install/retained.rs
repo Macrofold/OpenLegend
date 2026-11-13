@@ -115,6 +115,7 @@ pub(crate) struct RetainedDefinitions {
     pub recipes: RetainedMap,
     pub flight_routes: RetainedMap,
     pub places: RetainedMap,
+    pub places_read: crate::reception::InstalledPlaces,
 }
 
 /// Derived once from the same validated immutable definition body. Read-only
@@ -367,6 +368,10 @@ pub(crate) fn install_retained(
     if !invention.agent_locked {
         return Err(InstallError::UnsupportedFamily("autonomous-invention"));
     }
+    let places = r
+        .map("places", "definition_places", Some(input.places))?
+        .ok_or(InstallError::ParentPresence)?;
+    let places_read = crate::reception::InstalledPlaces::install(&places, budget)?;
     let mut installed = RetainedDefinitions {
         _storage: None,
         knowledge_policy,
@@ -457,14 +462,14 @@ pub(crate) fn install_retained(
                 Some(input.flight_routes),
             )?
             .ok_or(InstallError::ParentPresence)?,
-        places: r
-            .map("places", "definition_places", Some(input.places))?
-            .ok_or(InstallError::ParentPresence)?,
+        places,
+        places_read,
     };
     installed._storage = Some(
         budget
             .reserve_record(installed.heap_bytes().ok_or(InstallError::Capacity)?)
             .map_err(|_| InstallError::Capacity)?,
     );
+    installed.places_read.finish_install();
     Ok(installed)
 }

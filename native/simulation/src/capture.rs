@@ -15,28 +15,30 @@ use std::mem::size_of;
 mod controls;
 mod definitions;
 pub(crate) use definitions::write_installed_definitions;
-mod metadata;
 pub(crate) mod maintenance;
+mod metadata;
 mod validity;
 pub(crate) use validity::DecisionValidityWitness;
 mod navigation;
 mod npc_bindings;
 mod npc_perspectives;
-pub(crate) use npc_perspectives::{NpcPerspectiveEntity,NpcPerspectiveSnapshot};
+pub(crate) use npc_perspectives::{NpcPerspectiveEntity, NpcPerspectiveSnapshot};
 mod npc_current;
 pub(crate) mod npc_intake;
 mod npc_references;
 mod npc_subject;
 pub(crate) use npc_bindings::{
-    NpcAliasOrdinal, NpcActionOrdinal, NpcCatalogueSource, NpcPerspectiveOrdinal, NpcBindingMaps, NpcBindingPurpose, NpcBindingRead, NpcBindingSelection, prepare_ordinary_actions, npc_perspectives_current,
+    NpcActionOrdinal, NpcAliasOrdinal, NpcBindingMaps, NpcBindingPurpose, NpcBindingRead,
+    NpcBindingSelection, NpcCatalogueSource, NpcPerspectiveOrdinal, npc_perspectives_current,
+    prepare_ordinary_actions,
 };
 pub(crate) use npc_references::NpcReferenceFacts;
 mod npc_history;
 pub(crate) use npc_history::{NpcHistoricalScope, NpcHistoryPrefix};
 mod npc_sources;
 pub(crate) use npc_sources::{
-    NpcSourceRows, NpcSourceSelection, NpcPersonalSelection, NpcSourcesAnswer, NpcSourcesCursor, NpcSourcesRequest,
-    PreparedNpcSources,
+    NpcPersonalSelection, NpcSourceRows, NpcSourceSelection, NpcSourcesAnswer, NpcSourcesCursor,
+    NpcSourcesRequest, PreparedKnownPlaceSources, PreparedNpcSources,
 };
 mod npc_selection;
 pub(crate) use npc_selection::NpcObservationSelection;
@@ -285,7 +287,7 @@ pub(crate) fn capture_actor_perception(
         )
         .and_then(|n| n.checked_add(maximum_fields.checked_mul(size_of::<OwnedCurrentFacet>())?))
         .ok_or(ExecutionError::Capacity)?;
-    let reservation = budget.reserve(bytes)?;
+    let mut reservation = budget.reserve(bytes)?;
     let mut bodies = Vec::new();
     bodies
         .try_reserve_exact(count)
@@ -476,6 +478,47 @@ pub(crate) fn capture_actor_perception(
         current,
         budget,
     )?;
+    let player = player
+        .as_ref()
+        .map(|player| {
+            // A heading describes this permitted physical cut. Remembered
+            // places cannot supply an unseen current location.
+            let nearest = player.actor.world_position().and_then(|position| {
+                state
+                    .installed
+                    .retained
+                    .places_read
+                    .eligible(
+                        &state.physical,
+                        player.actor,
+                        bodies.iter().map(|body| body.source_id.as_str()),
+                    )
+                    .min_by(|a, b| {
+                        let distance = |place: &crate::reception::places::InstalledPlace| {
+                            (position.x - place.point.x).powi(2)
+                                + (position.y - place.point.y).powi(2)
+                                + (position.z - place.point.z).powi(2)
+                        };
+                        distance(a)
+                            .total_cmp(&distance(b))
+                            .then_with(|| a.id.encode_utf16().cmp(b.id.encode_utf16()))
+                    })
+            });
+            reservation.resize(
+                reservation
+                    .bytes()
+                    .checked_add(nearest.map_or(0, |place| place.label.storage_bytes()))
+                    .ok_or(ExecutionError::Capacity)?,
+            )?;
+            Ok::<_, ExecutionError>(CapturedPlayerPerception {
+                trade_terms: "none",
+                current_place_label: nearest.map(|place| place.label.clone()),
+                // Accepted read construction refuses live finiteRain before
+                // creating Simulation; keep that distinct family explicit.
+                finite_weather_cue: "absent",
+            })
+        })
+        .transpose()?;
     Ok(CapturedActorPerception {
         world_id: state.physical.header.id.clone(),
         actor_id: actor_id.to_owned(),
@@ -485,15 +528,7 @@ pub(crate) fn capture_actor_perception(
         evidence,
         geometry,
         npc_current,
-        player: player.as_ref().map(|_| CapturedPlayerPerception {
-            trade_terms: "none",
-            // Physical installation admits only actors. Source exposedPlaces
-            // requires a non-actor landmark; remembered sites cannot fill it.
-            physical_landmarks: "absent",
-            // Accepted read construction consumes SelectedInstallation, which
-            // refuses the live finiteRain family before creating Simulation.
-            finite_weather_cue: "absent",
-        }),
+        player,
         _reservation: reservation,
     })
 }

@@ -1,4 +1,10 @@
 import { memoryEntryView, memoryHistoryQuery, projectMemoryHistoryPage } from './memory-history.js';
+import { NativeKnownPlaceSelection, publishNativeKnownPlaces } from './native-known-places.js';
+import {
+  knownPlaceUnavailable,
+  requireKnownPlace,
+  type KnownPlaceReference,
+} from './known-places.js';
 import { memorySourceProof } from './memory-repository.js';
 import { nativeNpcPersonalSelection } from './native-npc-sources.js';
 import { nativeExperienceEntry } from './native-recall.js';
@@ -1067,6 +1073,42 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       this.assertAdmission();
       return NativeNpcActionCapture.capture(this.world, this.geometry, actorId, consumer, signal);
     }, signal);
+  }
+
+  publishKnownPlaces<T>(
+    scope: RequestScope,
+    request: { query?: string; cursor?: string } | { reference: KnownPlaceReference },
+    publish: (bytes: Buffer) => T,
+  ): Promise<T> {
+    return publishNativeKnownPlaces(
+      this,
+      this.world,
+      scope,
+      request,
+      async (position) => {
+        this.assertScope(scope);
+        const turn = await driveNativeOperation(
+          this.world,
+          await beginNativeCommand(
+            this.world,
+            {
+              id: randomUUID(),
+              actorId: scope.actorId,
+              humanInitiated: true,
+              type: 'move',
+              destination: position,
+            },
+            { preview: true },
+          ),
+          this.geometry,
+        );
+        if (turn.kind !== 'preview' || !turn.preview)
+          throw new Error('Native place movement preview did not close through rollback.');
+        this.assertScope(scope);
+        return decodeNativeProduct<Outcome>(turn.preview);
+      },
+      publish,
+    );
   }
 
   /** Lasting and recent history share the existing permitted page contracts;
@@ -3440,9 +3482,18 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       throw new OverloadError();
     this.receiptReaders.set(id, readers + 1);
     let selected: GameplayReceipt | undefined;
+    let placeRead: NativeKnownPlaceSelection | undefined;
+    let rememberedPlace: ReturnType<typeof requireKnownPlace> | undefined;
     try {
       const prior = this.receipts.get(id);
       selected = prior ? undefined : await this.readCommandReceipt(id);
+      // Receipt recovery stays ahead of historical preparation. A retry must
+      // not replay a committed move because its old observation was forgotten.
+      if (!prior && !selected && input.type === 'move' && input.knownPlace) {
+        placeRead = await NativeKnownPlaceSelection.prepare(this, this.world, scope);
+        const places = await placeRead.select({ placeId: input.knownPlace.id, limit: 1, scan: 1 });
+        rememberedPlace = requireKnownPlace(places.entries[0], input.knownPlace);
+      }
       return await this.lane.run(async () => {
         this.assertAdmission(false, false);
         this.assertScope(scope, 'play', true);
@@ -3471,16 +3522,20 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             code: 'expired',
             message: 'This command epoch has closed. Refresh before issuing a new action.',
           };
+        // Rust owns physical eligibility. The host additionally distinguishes
+        // deliberate pause from absence/storage/maintenance, as Source does.
+        if (this.paused && !(input.type === 'cancel' && this.pauseReason === 'manual'))
+          return { ok: false, code: 'paused', message: 'Resume the world to act.' };
         let captured: NativePlayerCapture | undefined;
         try {
           let resolved: ReturnType<typeof nativePlayerCommandReferences>;
-          if (input.type === 'move' && input.targetId === undefined) {
+          if (input.type === 'move' && input.targetId === undefined && !input.knownPlace) {
             // A destination needs the saved account/actor binding, not a
             // presentation read. Actual movement remains native command policy.
             const facts = await NativePlayerCapture.input(this.world, scope);
             releaseNativeProduct(facts);
             resolved = input;
-          } else {
+          } else if (input.targetId !== undefined || !input.knownPlace) {
             captured = await NativePlayerCapture.capture(
               this.world,
               scope,
@@ -3488,16 +3543,33 @@ export class NativeWorldService implements NativePlayerRequestOwner {
               this.geometry,
             );
             resolved = nativePlayerCommandReferences(scope, input, captured.facts);
+          } else {
+            resolved = input;
+          }
+          if (input.knownPlace) {
+            if (input.type !== 'move')
+              return {
+                ok: false,
+                code: 'invalid-command',
+                message: 'A remembered place can only select a movement destination.',
+              };
+            if (!placeRead || !rememberedPlace)
+              throw new Error('Remembered movement has no selected private source.');
+            const facts = await placeRead.facts([
+              { placeId: rememberedPlace.place.id, exposure: rememberedPlace.entry.place.exposure },
+            ]);
+            try {
+              if (rememberedPlace.place.corrected || !facts[0]?.current)
+                return { ok: false, code: 'stale-place', message: knownPlaceUnavailable };
+              const { knownPlace: _reference, ...plain } = resolved;
+              resolved = { ...plain, position: rememberedPlace.place.position };
+            } finally {
+              releaseNativeProduct(facts);
+            }
           }
           // These additional request families require their actual binders;
           // the plain factory may not silently drop an executable proposal.
-          if (
-            input.execution ||
-            input.primaryAction ||
-            input.knownPlace ||
-            input.aimPoint ||
-            input.aimBasis
-          )
+          if (input.execution || input.primaryAction || input.aimPoint || input.aimBasis)
             return {
               ok: false,
               code: 'unavailable',
@@ -3539,7 +3611,13 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             publication = await this.acceptInLane({
               actorId: scope.actorId,
               first: () => beginNativeCommand(this.world, command, { durableReceipt: true }),
-              current: () => this.currentScope(scope, 'play', true) && epoch === this.commandEpoch,
+              current: () => {
+                return (
+                  (!placeRead || placeRead.sourcesCurrent()) &&
+                  this.currentScope(scope, 'play', true) &&
+                  epoch === this.commandEpoch
+                );
+              },
               signal,
               prepareOutcome: async (outcome) => {
                 result = copyNativeOutcome(this.world, outcome);
@@ -3571,6 +3649,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         }
       });
     } finally {
+      placeRead?.release();
       if (selected) releaseNativeProduct(selected);
       const remaining = this.receiptReaders.get(id)! - 1;
       if (remaining) this.receiptReaders.set(id, remaining);

@@ -12,7 +12,7 @@ use std::sync::Arc;
 
 mod attention_work;
 mod frames;
-use super::current_residency::{CurrentOwnerPart, CurrentOwnerStorage};
+use super::current_residency::{CurrentOwnerPart, CurrentOwnerStorage, VisibilityPart};
 use attention_work::{AttentionCut, AttentionSources, AttentionWork};
 mod metadata;
 mod save;
@@ -66,7 +66,13 @@ enum CurrentUndo {
     },
     VisiblePlaces {
         observer: String,
-        prior: IndexMap<String, u64>,
+        prior: Option<(usize, IndexMap<String, u64>)>,
+        root_present: bool,
+    },
+    VisiblePlaceMember {
+        observer: String,
+        place: String,
+        prior: Option<(usize, u64)>,
     },
     Visibility {
         observer: String,
@@ -199,6 +205,8 @@ impl CurrentJournal {
             else {
                 continue;
             };
+            let part = VisibilityPart::bodies(people);
+            let allocation = state.visibility_allocation(part, observer)?;
             self.reserve_growth(observer.len() + prior.heap_bytes().ok_or_else(capacity)?)?;
             let root = if people {
                 &mut state.visible_people
@@ -215,6 +223,8 @@ impl CurrentJournal {
                 people,
                 prior,
             });
+            let after = state.visibility_allocation(part, observer)?;
+            state.settle_visibility(part, allocation, after, &mut self.reservation, false)?;
         }
         Ok(())
     }
@@ -648,12 +658,74 @@ impl CurrentJournal {
                 }
                 CurrentUndo::ExposurePrepared => state.exposure_prepared = false,
                 CurrentUndo::ExposureObjects { prior } => state.exposure_objects = prior,
-                CurrentUndo::VisiblePlaces { observer, prior } => {
-                    *state
+                CurrentUndo::VisiblePlaces {
+                    observer,
+                    prior,
+                    root_present,
+                } => {
+                    let allocation =
+                        state.visibility_allocation(VisibilityPart::Places, &observer)?;
+                    let after = prior
+                        .as_ref()
+                        .map_or(Some((0, 0)), |(_, values)| {
+                            Some((observer.capacity(), values.heap_bytes()?))
+                        })
+                        .ok_or_else(capacity)?;
+                    let rows = state.visible_places.as_mut().ok_or_else(invalid)?;
+                    rows.shift_remove(&observer);
+                    if let Some((at, prior)) = prior {
+                        if at > rows.len() {
+                            return Err(invalid());
+                        }
+                        rows.shift_insert(at, observer, prior);
+                    }
+                    if !root_present {
+                        state.visible_places = None;
+                    }
+                    state.settle_visibility(
+                        VisibilityPart::Places,
+                        allocation,
+                        after,
+                        &mut self.reservation,
+                        true,
+                    )?;
+                }
+                CurrentUndo::VisiblePlaceMember {
+                    observer,
+                    place,
+                    prior,
+                } => {
+                    let rows = state
                         .visible_places
                         .as_mut()
-                        .and_then(|r| r.get_mut(&observer))
-                        .ok_or_else(invalid)? = prior;
+                        .and_then(|root| root.get_mut(&observer))
+                        .ok_or_else(invalid)?;
+                    let before = map_storage::<String, u64>(rows.capacity())
+                        .and_then(|bytes| {
+                            bytes.checked_add(
+                                rows.get_key_value(&place)
+                                    .map_or(0, |(key, _)| key.capacity()),
+                            )
+                        })
+                        .ok_or_else(capacity)?;
+                    let key_bytes = if prior.is_some() { place.capacity() } else { 0 };
+                    rows.shift_remove(&place);
+                    if let Some((at, prior)) = prior {
+                        if at > rows.len() {
+                            return Err(invalid());
+                        }
+                        rows.shift_insert(at, place, prior);
+                    }
+                    let after = map_storage::<String, u64>(rows.capacity())
+                        .and_then(|bytes| bytes.checked_add(key_bytes))
+                        .ok_or_else(capacity)?;
+                    state.settle_visibility(
+                        VisibilityPart::Places,
+                        (0, before),
+                        (0, after),
+                        &mut self.reservation,
+                        true,
+                    )?;
                 }
                 CurrentUndo::Visibility {
                     observer,
@@ -661,6 +733,14 @@ impl CurrentJournal {
                     prior,
                     root_present,
                 } => {
+                    let part = VisibilityPart::bodies(people);
+                    let allocation = state.visibility_allocation(part, &observer)?;
+                    let after = prior
+                        .as_ref()
+                        .map_or(Some((0, 0)), |(_, values)| {
+                            Some((observer.capacity(), values.heap_bytes()?))
+                        })
+                        .ok_or_else(capacity)?;
                     let root = if people {
                         &mut state.visible_people
                     } else {
@@ -677,6 +757,13 @@ impl CurrentJournal {
                     if !root_present {
                         *root = None;
                     }
+                    state.settle_visibility(
+                        part,
+                        allocation,
+                        after,
+                        &mut self.reservation,
+                        true,
+                    )?;
                 }
                 CurrentUndo::VisualMeasurement {
                     observer,
@@ -738,6 +825,9 @@ impl CurrentJournal {
                     people,
                     prior,
                 } => {
+                    let part = VisibilityPart::bodies(people);
+                    let allocation = state.visibility_allocation(part, &observer)?;
+                    let after = (allocation.0, prior.heap_bytes().ok_or_else(capacity)?);
                     let root = if people {
                         &mut state.visible_people
                     } else {
@@ -747,6 +837,13 @@ impl CurrentJournal {
                         .as_mut()
                         .and_then(|root| root.get_mut(&observer))
                         .ok_or_else(invalid)? = prior;
+                    state.settle_visibility(
+                        part,
+                        allocation,
+                        after,
+                        &mut self.reservation,
+                        true,
+                    )?;
                 }
                 CurrentUndo::BatchStarted { observer } => {
                     self.batches

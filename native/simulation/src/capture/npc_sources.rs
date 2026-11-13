@@ -24,7 +24,9 @@ mod attribution;
 use attribution::NpcSourceAttribution;
 mod personal;
 use personal::CapturedPersonalRecord;
+mod places;
 mod rows;
+pub(crate) use places::PreparedKnownPlaceSources;
 
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

@@ -4,6 +4,43 @@ use super::*;
 use crate::encoding::RawFields;
 use serde_json::value::RawValue;
 
+impl<'de> Deserialize<'de> for EncounterExposure {
+    fn deserialize<D: serde::Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
+        let raw = Box::<RawValue>::deserialize(de)?;
+        let parse = || -> Result<Self, String> {
+            let mut fields = RawFields::parse(raw.get())?;
+            let kind: String = fields.take("kind")?;
+            let result = match kind.as_str() {
+                "place" => Self::Place {
+                    reported_by: fields.optional("reportedBy")?,
+                    id: fields.take("id")?,
+                    revision: fields.safe_integer("revision")?,
+                    label: fields.take("label")?,
+                    description: fields.take("description")?,
+                    point: fields.take("point")?,
+                    location_label: fields.take("locationLabel")?,
+                    landmark_id: fields.take("landmarkId")?,
+                    mechanism_fields: fields.optional("mechanismFields")?,
+                },
+                "inventory-item" => Self::InventoryItem {
+                    id: fields.take("id")?,
+                    definition: fields.take("definition")?,
+                    label: fields.take("label")?,
+                    description: fields.take("description")?,
+                    introduction_key: fields.take("introductionKey")?,
+                    inscription: fields.optional("inscription")?,
+                    observed_location: fields.optional("observedLocation")?,
+                    mechanism_fields: fields.optional("mechanismFields")?,
+                },
+                _ => return Err("Unknown encounter exposure kind.".into()),
+            };
+            fields.finish()?;
+            Ok(result)
+        };
+        parse().map_err(serde::de::Error::custom)
+    }
+}
+
 impl<'de> Deserialize<'de> for EventScalar {
     fn deserialize<D: serde::Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
         let raw = Box::<RawValue>::deserialize(de)?;

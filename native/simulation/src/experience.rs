@@ -108,7 +108,7 @@ pub(crate) use result::{
     prepare_activity_result,
 };
 mod columns;
-mod places;
+pub(crate) mod places;
 pub(crate) use places::KnownPlaceMutation;
 pub use places::{KnownPlaceCapsule, PlaceProvenance, PreparedKnownPlaceEvidence};
 mod owners;

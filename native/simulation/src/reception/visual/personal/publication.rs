@@ -80,6 +80,7 @@ pub(crate) struct ObserverReceptionCursor {
     batch: Option<EncounterBatch>,
     event: Option<EventCursor>,
     expected: Option<ExpectedEvent>,
+    place_event: bool,
     events: Vec<CompletedEvent>,
     reservation: Option<ByteReservation>,
 }
@@ -113,6 +114,7 @@ impl ObserverReceptionCursor {
             batch: None,
             event: None,
             expected: None,
+            place_event: false,
             events: Vec::new(),
             reservation: Some(reservation),
         })
@@ -163,6 +165,11 @@ impl ObserverReceptionCursor {
                     self.events.push(completed);
                     self.event = None;
                     self.expected = None;
+                    if std::mem::take(&mut self.place_event) {
+                        answer = Some(ObserverReceptionAnswer::Visual(
+                            PersonalVisualAnswer::PlaceComplete,
+                        ));
+                    }
                 }
                 _ => return Err(invalid().into()),
             }
@@ -183,6 +190,48 @@ impl ObserverReceptionCursor {
                     let received = match step {
                         PersonalVisualStep::Geometry(_) => return Ok(Progress::Geometry),
                         PersonalVisualStep::Language(_) => return Ok(Progress::Language),
+                        PersonalVisualStep::Place(staged) => {
+                            // Place acquisition is an immediate private account in
+                            // Source, before episode IDs and visual reception.
+                            let StagedPlace {
+                                event: staged,
+                                _reservation,
+                            } = staged;
+                            let bytes = size_of::<CompletedEvent>()
+                                .checked_add(staged.id.len())
+                                .ok_or(ExecutionError::Capacity)?;
+                            let reservation = self.reservation.as_mut().ok_or_else(invalid)?;
+                            reservation.resize(
+                                reservation
+                                    .bytes()
+                                    .checked_add(bytes)
+                                    .ok_or(ExecutionError::Capacity)?,
+                            )?;
+                            self.events
+                                .try_reserve_exact(1)
+                                .map_err(|_| ExecutionError::Capacity)?;
+                            let expected = ExpectedEvent {
+                                id: staged.id.clone(),
+                                order: staged.order,
+                                sequence: staged.sequence,
+                            };
+                            let begun = begin_staged_occurrence(core, staged, budget)?;
+                            let binding = GeometryBinding::new(
+                                self.candidate,
+                                core.state.installed.geometry.spatial.revision,
+                                core.journal.next_provider_serial()?,
+                            );
+                            self.event = Some(EventCursor::prepare(
+                                core,
+                                begun,
+                                binding,
+                                crate::events::EventAccountPlacement::Immediate,
+                                budget,
+                            )?);
+                            self.expected = Some(expected);
+                            self.place_event = true;
+                            return Ok(Progress::Event);
+                        }
                         PersonalVisualStep::Received(value) => value,
                     };
                     let bytes = received

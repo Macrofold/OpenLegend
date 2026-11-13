@@ -232,6 +232,41 @@ fn turn_sources(
 }
 #[napi]
 impl NativeWorld {
+    #[napi(ts_return_type = "Promise<void>")]
+    pub fn history_place_sources<'a>(
+        &self,
+        env: &'a Env,
+        read: &NativeWorldPrivateHistoryRead,
+        bytes: BufferSlice<'_>,
+    ) -> Result<Object<'a>> {
+        if !Weak::ptr_eq(&read.world, &Arc::downgrade(&self.world)) {
+            return Err(failure("place history belongs to another native writer"));
+        }
+        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let read = Arc::clone(&read.inner);
+        self.compute(env, move |session, _cancel, _budget| {
+            let _custody = custody;
+            let mut owner = read
+                .read
+                .try_lock()
+                .map_err(|_| failure("place history read is busy"))?;
+            if read.released.load(Ordering::Acquire) {
+                return Err(failure("place history read was released"));
+            }
+            let result = session
+                .admit_history_places(
+                    owner
+                        .as_mut()
+                        .ok_or_else(|| failure("place history read was released"))?,
+                    &bytes,
+                )
+                .map_err(operation_error);
+            if read.released.load(Ordering::Acquire) {
+                *owner = None;
+            }
+            result
+        })
+    }
     #[napi(ts_return_type = "Promise<NativeWorldPrivateHistoryRead>")]
     pub fn read_history<'a>(
         &self,

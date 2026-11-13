@@ -1,6 +1,20 @@
 //! Actual completed sight and independently acquired motion/gap continuation.
 //! Every mutation moves its prior field into the same candidate journal.
 use super::*;
+fn visibility_capacity(
+    len: usize,
+    backing: usize,
+    inserting: bool,
+) -> Result<usize, ReceivedError> {
+    if inserting && len == backing {
+        len.checked_add(1)
+            .and_then(|count| count.checked_mul(2))
+            .map(|count| count.max(4))
+            .ok_or_else(capacity)
+    } else {
+        Ok(backing)
+    }
+}
 impl CurrentJournal {
     pub(crate) fn set_exposure_objects(
         &mut self,
@@ -19,41 +33,227 @@ impl CurrentJournal {
         self.undo.push(CurrentUndo::ExposureObjects { prior });
         Ok(())
     }
-    /// The installed actor-only physical family cannot expose a place landmark.
-    /// Source still clears a previously held nonempty outward place list.
+    /// Move one old map into undo. Per-place members retain only their own
+    /// before-image across Source's incremental acquisition yields.
+    pub(in super::super) fn replace_visible_places(
+        &mut self,
+        state: &mut ReceptionState,
+        observer: &str,
+        after: IndexMap<String, u64>,
+    ) -> Result<bool, ReceivedError> {
+        let root = state.visible_places.as_ref();
+        let prior = root.and_then(|rows| rows.get_full(observer));
+        if prior.is_some_and(|(_, _, prior)| *prior == after)
+            || (prior.is_none() && after.is_empty())
+        {
+            return Ok(false);
+        }
+        let before = state.visibility_allocation(VisibilityPart::Places, observer)?;
+        let root_present = root.is_some();
+        let inserting = prior.is_none();
+        let old_capacity = root.map_or(0, IndexMap::capacity);
+        let target = visibility_capacity(root.map_or(0, IndexMap::len), old_capacity, inserting)?;
+        let parent = map_storage::<String, IndexMap<String, u64>>(target).ok_or_else(capacity)?;
+        let parent_growth = parent.saturating_sub(
+            map_storage::<String, IndexMap<String, u64>>(old_capacity).ok_or_else(capacity)?,
+        );
+        let after_bytes = after.heap_bytes().ok_or_else(capacity)?;
+        self.reserve_growth(
+            heap_sum([
+                observer.len().checked_mul(2).ok_or_else(capacity)?,
+                parent_growth,
+                before.1,
+                after_bytes,
+            ])
+            .ok_or_else(capacity)?,
+        )?;
+        state.prepare_visibility_growth(
+            VisibilityPart::Places,
+            before,
+            (observer.len(), after_bytes),
+            Some(parent),
+            &mut self.reservation,
+        )?;
+        let allocation = (|| -> Result<(), ReceivedError> {
+            if state.visible_places.is_none() {
+                let mut rows = IndexMap::new();
+                rows.try_reserve(1).map_err(|_| capacity())?;
+                state.visible_places = Some(rows);
+            } else if target > old_capacity {
+                state
+                    .visible_places
+                    .as_mut()
+                    .ok_or_else(invalid)?
+                    .try_reserve(1)
+                    .map_err(|_| capacity())?;
+            }
+            Ok(())
+        })();
+        if let Err(error) = allocation {
+            state.cancel_visibility_growth()?;
+            return Err(error);
+        }
+        let rows = state.visible_places.as_mut().ok_or_else(invalid)?;
+        let prior = rows
+            .shift_remove_full(observer)
+            .map(|(at, _, values)| (at, values));
+        if let Some((at, _)) = &prior {
+            rows.shift_insert(*at, observer.to_owned(), after);
+        } else {
+            rows.insert(observer.to_owned(), after);
+        }
+        self.undo.push(CurrentUndo::VisiblePlaces {
+            observer: observer.to_owned(),
+            prior,
+            root_present,
+        });
+        let after = state.visibility_allocation(VisibilityPart::Places, observer)?;
+        state.settle_visibility(
+            VisibilityPart::Places,
+            before,
+            after,
+            &mut self.reservation,
+            false,
+        )?;
+        Ok(true)
+    }
+    pub(in super::super) fn set_visible_place(
+        &mut self,
+        state: &mut ReceptionState,
+        observer: &str,
+        place: &str,
+        revision: u64,
+    ) -> Result<(), ReceivedError> {
+        let root = state.visible_places.as_ref();
+        if root.and_then(|rows| rows.get(observer)).is_none() {
+            let root_present = root.is_some();
+            let old_capacity = root.map_or(0, IndexMap::capacity);
+            let target = visibility_capacity(root.map_or(0, IndexMap::len), old_capacity, true)?;
+            let parent =
+                map_storage::<String, IndexMap<String, u64>>(target).ok_or_else(capacity)?;
+            let growth = parent.saturating_sub(
+                map_storage::<String, IndexMap<String, u64>>(old_capacity).ok_or_else(capacity)?,
+            );
+            self.reserve_growth(
+                heap_sum([observer.len().checked_mul(2).ok_or_else(capacity)?, growth])
+                    .ok_or_else(capacity)?,
+            )?;
+            state.prepare_visibility_growth(
+                VisibilityPart::Places,
+                (0, 0),
+                (observer.len(), 0),
+                Some(parent),
+                &mut self.reservation,
+            )?;
+            let allocation = (|| -> Result<(), ReceivedError> {
+                if state.visible_places.is_none() {
+                    let mut rows = IndexMap::new();
+                    rows.try_reserve(1).map_err(|_| capacity())?;
+                    state.visible_places = Some(rows);
+                } else if target > old_capacity {
+                    state
+                        .visible_places
+                        .as_mut()
+                        .ok_or_else(invalid)?
+                        .try_reserve(1)
+                        .map_err(|_| capacity())?;
+                }
+                Ok(())
+            })();
+            if let Err(error) = allocation {
+                state.cancel_visibility_growth()?;
+                return Err(error);
+            }
+            state
+                .visible_places
+                .as_mut()
+                .ok_or_else(invalid)?
+                .insert(observer.to_owned(), IndexMap::new());
+            self.undo.push(CurrentUndo::VisiblePlaces {
+                observer: observer.to_owned(),
+                prior: None,
+                root_present,
+            });
+            let after = state.visibility_allocation(VisibilityPart::Places, observer)?;
+            state.settle_visibility(
+                VisibilityPart::Places,
+                (0, 0),
+                after,
+                &mut self.reservation,
+                false,
+            )?;
+        }
+        let rows = state
+            .visible_places
+            .as_ref()
+            .and_then(|root| root.get(observer))
+            .ok_or_else(invalid)?;
+        if rows.get(place) == Some(&revision) {
+            return Ok(());
+        }
+        let inserting = !rows.contains_key(place);
+        let old_capacity = rows.capacity();
+        let target = visibility_capacity(rows.len(), old_capacity, inserting)?;
+        let before_member = map_storage::<String, u64>(old_capacity).ok_or_else(capacity)?;
+        let forecast = map_storage::<String, u64>(target)
+            .and_then(|bytes| bytes.checked_add(if inserting { place.len() } else { 0 }))
+            .ok_or_else(capacity)?;
+        self.reserve_growth(
+            heap_sum([
+                observer.len(),
+                place.len().checked_mul(2).ok_or_else(capacity)?,
+                forecast.saturating_sub(before_member),
+            ])
+            .ok_or_else(capacity)?,
+        )?;
+        state.prepare_visibility_growth(
+            VisibilityPart::Places,
+            (0, before_member),
+            (0, forecast),
+            None,
+            &mut self.reservation,
+        )?;
+        let rows = state
+            .visible_places
+            .as_mut()
+            .and_then(|root| root.get_mut(observer))
+            .ok_or_else(invalid)?;
+        if target > old_capacity && rows.try_reserve(1).is_err() {
+            state.cancel_visibility_growth()?;
+            return Err(capacity());
+        }
+        let prior = rows.get_full(place).map(|(at, _, value)| (at, *value));
+        rows.insert(place.to_owned(), revision);
+        let after_member = map_storage::<String, u64>(rows.capacity())
+            .and_then(|bytes| {
+                bytes.checked_add(if inserting {
+                    rows.get_key_value(place)?.0.capacity()
+                } else {
+                    0
+                })
+            })
+            .ok_or_else(capacity)?;
+        self.undo.push(CurrentUndo::VisiblePlaceMember {
+            observer: observer.to_owned(),
+            place: place.to_owned(),
+            prior,
+        });
+        state.settle_visibility(
+            VisibilityPart::Places,
+            (0, before_member),
+            (0, after_member),
+            &mut self.reservation,
+            false,
+        )?;
+        Ok(())
+    }
     pub(in super::super) fn clear_visible_places(
         &mut self,
         state: &mut ReceptionState,
         observer: &str,
     ) -> Result<bool, ReceivedError> {
-        let Some(prior) = state
-            .visible_places
-            .as_ref()
-            .and_then(|r| r.get(observer))
-            .filter(|r| !r.is_empty())
-        else {
-            return Ok(false);
-        };
-        self.reserve_growth(
-            observer
-                .len()
-                .checked_add(prior.heap_bytes().ok_or_else(capacity)?)
-                .ok_or_else(capacity)?,
-        )?;
-        let prior = std::mem::take(
-            state
-                .visible_places
-                .as_mut()
-                .and_then(|r| r.get_mut(observer))
-                .ok_or_else(invalid)?,
-        );
-        self.undo.push(CurrentUndo::VisiblePlaces {
-            observer: observer.into(),
-            prior,
-        });
-        Ok(true)
+        self.replace_visible_places(state, observer, IndexMap::new())
     }
-
     pub(crate) fn set_visibility(
         &mut self,
         state: &mut ReceptionState,
@@ -61,50 +261,85 @@ impl CurrentJournal {
         people: bool,
         after: Vec<String>,
     ) -> Result<bool, ReceivedError> {
+        let part = VisibilityPart::bodies(people);
+        let before = state.visibility_allocation(part, observer)?;
+        let root = if people {
+            state.visible_people.as_ref()
+        } else {
+            state.visible_objects.as_ref()
+        };
+        let prior = root.and_then(|rows| rows.get_full(observer));
+        if prior.is_some_and(|(_, _, prior)| *prior == after) {
+            return Ok(false);
+        }
+        let root_present = root.is_some();
+        let old_capacity = root.map_or(0, IndexMap::capacity);
+        let target =
+            visibility_capacity(root.map_or(0, IndexMap::len), old_capacity, prior.is_none())?;
+        let parent = map_storage::<String, Vec<String>>(target).ok_or_else(capacity)?;
+        let growth = parent
+            .saturating_sub(map_storage::<String, Vec<String>>(old_capacity).ok_or_else(capacity)?);
+        let after_bytes = after.heap_bytes().ok_or_else(capacity)?;
+        self.reserve_growth(
+            heap_sum([
+                observer.len().checked_mul(2).ok_or_else(capacity)?,
+                growth,
+                before.1,
+                after_bytes,
+            ])
+            .ok_or_else(capacity)?,
+        )?;
+        state.prepare_visibility_growth(
+            part,
+            before,
+            (observer.len(), after_bytes),
+            Some(parent),
+            &mut self.reservation,
+        )?;
         let root = if people {
             &mut state.visible_people
         } else {
             &mut state.visible_objects
         };
-        let root_present = root.is_some();
-        let prior = root.as_ref().and_then(|r| r.get_full(observer));
-        if prior.is_some_and(|(_, _, value)| *value == after) {
-            return Ok(false);
+        let allocation = (|| -> Result<(), ReceivedError> {
+            if root.is_none() {
+                let mut rows = IndexMap::new();
+                rows.try_reserve(1).map_err(|_| capacity())?;
+                *root = Some(rows);
+            } else if target > old_capacity {
+                root.as_mut()
+                    .ok_or_else(invalid)?
+                    .try_reserve(1)
+                    .map_err(|_| capacity())?;
+            }
+            Ok(())
+        })();
+        if let Err(error) = allocation {
+            state.cancel_visibility_growth()?;
+            return Err(error);
         }
-        let inserting = prior.is_none();
-        let growth = if inserting && root.as_ref().is_none_or(|r| r.len() == r.capacity()) {
-            map_storage::<String, Vec<String>>(root.as_ref().map_or(1, |r| r.len() + 1))
-                .ok_or_else(capacity)?
+        let root = if people {
+            &mut state.visible_people
         } else {
-            0
+            &mut state.visible_objects
         };
-        self.reserve_growth(
-            heap_sum([
-                2 * observer.len(),
-                growth,
-                after.heap_bytes().ok_or_else(capacity)?,
-                prior
-                    .map_or(Some(0), |(_, _, p)| p.heap_bytes())
-                    .ok_or_else(capacity)?,
-            ])
-            .ok_or_else(capacity)?,
-        )?;
-        let root = root.get_or_insert_with(IndexMap::new);
-        if inserting {
-            root.try_reserve(1).map_err(|_| capacity())?;
-        }
-        let prior = root.shift_remove_full(observer).map(|(at, _, p)| (at, p));
+        let rows = root.as_mut().ok_or_else(invalid)?;
+        let prior = rows
+            .shift_remove_full(observer)
+            .map(|(at, _, values)| (at, values));
         if let Some((at, _)) = &prior {
-            root.shift_insert(*at, observer.into(), after);
+            rows.shift_insert(*at, observer.to_owned(), after);
         } else {
-            root.insert(observer.into(), after);
+            rows.insert(observer.to_owned(), after);
         }
         self.undo.push(CurrentUndo::Visibility {
-            observer: observer.into(),
+            observer: observer.to_owned(),
             people,
             prior,
             root_present,
         });
+        let after = state.visibility_allocation(part, observer)?;
+        state.settle_visibility(part, before, after, &mut self.reservation, false)?;
         Ok(true)
     }
     pub(in super::super) fn set_visual_measurement(

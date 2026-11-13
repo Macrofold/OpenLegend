@@ -241,6 +241,7 @@ pub struct ReceptionState {
     pub perception_episodes: Option<IndexMap<String, IndexMap<String, String>>>,
     pub(crate) actor_knowledge: crate::knowledge::KnowledgeState,
     pub knowledge_revisions: Option<IndexMap<String, u64>>,
+    pub(crate) visibility_storage: Option<super::current_residency::VisibilityRoots>,
     pub visible_objects: Option<IndexMap<String, Vec<String>>>,
     pub visible_people: Option<IndexMap<String, Vec<String>>>,
     pub visible_places: Option<IndexMap<String, IndexMap<String, u64>>>,

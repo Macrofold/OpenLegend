@@ -13,7 +13,7 @@ import { ACTION_DESCRIPTIONS } from './action-descriptions.js';
 import { searchTerms, SEARCH_SCAN_ROWS } from './text-search.js';
 import { digest } from './store.js';
 import type { WorldService } from './world-service.js';
-import type { KnownPlaceSource } from './memory-repository.js';
+import type { KnownPlaceSource, MemoryRepository } from './memory-repository.js';
 
 export const knownPlaceReference = z
   .object({
@@ -22,12 +22,13 @@ export const knownPlaceReference = z
     revision: z.string().length(64),
   })
   .strict();
-type Reference = z.infer<typeof knownPlaceReference>;
+export type KnownPlaceReference = z.infer<typeof knownPlaceReference>;
+type Reference = KnownPlaceReference;
 const pageCursor = z.object({ fence: z.string(), after: z.string() }).strict();
-const unavailable =
+export const knownPlaceUnavailable =
   'This remembered destination cannot be used now. Refresh Known places or inspect it again when you can.';
 
-function placeView(entry: KnownPlaceSource): KnownPlaceView | undefined {
+export function knownPlaceView(entry: KnownPlaceSource): KnownPlaceView {
   const { exposure, capsule } = entry.place;
   return {
     id: exposure.id,
@@ -43,6 +44,85 @@ function placeView(entry: KnownPlaceSource): KnownPlaceView | undefined {
     position: { ...exposure.point },
     time: capsule.observedAt,
     corrected: !!entry.correctionId,
+  };
+}
+
+/** Both authorities use the same private page grammar and cursor policy. */
+export function knownPlacesQuery(
+  scope: RequestScope,
+  generation: string,
+  historyEpoch: string,
+  request: { query?: string; cursor?: string },
+) {
+  const terms = searchTerms(request.query);
+  const fence = digest([scopeKey(scope), generation, terms ?? [], historyEpoch]);
+  let after: string | undefined;
+  if (request.cursor) {
+    let cursor: z.infer<typeof pageCursor>;
+    try {
+      cursor = pageCursor.parse(JSON.parse(Buffer.from(request.cursor, 'base64url').toString()));
+    } catch {
+      throw new HistoryCursorError('This place page expired. Search or browse again.');
+    }
+    if (cursor.fence !== fence)
+      throw new HistoryCursorError('Remembered places changed. Refresh Known places.');
+    after = cursor.after;
+  }
+  return { fence, options: { after, terms, limit: 20, scan: SEARCH_SCAN_ROWS } };
+}
+
+export function projectKnownPlacesPage(
+  worldId: string,
+  generation: string,
+  selected: Awaited<ReturnType<MemoryRepository['knownPlaces']>>,
+  fence: string,
+  note: (id: string, index: number) => { readonly text: string; readonly revision: number },
+): KnownPlacesPage {
+  return {
+    ok: true,
+    worldId,
+    generation,
+    entries: selected.entries.map((entry, index) => {
+      const place = knownPlaceView(entry);
+      return { ...place, note: note(place.id, index) };
+    }),
+    next: selected.after
+      ? Buffer.from(JSON.stringify({ fence, after: selected.after })).toString('base64url')
+      : null,
+    scanLimited: selected.scanLimited,
+  };
+}
+
+export function requireKnownPlace(entry: KnownPlaceSource | undefined, reference: Reference) {
+  const place = entry && knownPlaceView(entry);
+  if (
+    !entry ||
+    !place ||
+    place.sourceId !== reference.sourceId ||
+    place.revision !== reference.revision
+  )
+    throw new HistoryCursorError(
+      'This place observation changed or was forgotten. Refresh Known places.',
+    );
+  return { entry, place };
+}
+
+export function projectKnownPlaceInspection(
+  place: KnownPlaceView,
+  reference: Reference,
+  preview: { ok: boolean; message: string },
+): KnownPlaceInspection {
+  return {
+    ok: true,
+    place,
+    moveDescription: ACTION_DESCRIPTIONS.move!,
+    move: {
+      id: 'move-to-known-place',
+      label: 'Move to last-known location',
+      command: { type: 'move', knownPlace: reference },
+      enabled: preview.ok,
+      ...(preview.ok ? {} : { reason: preview.message }),
+    },
   };
 }
 
@@ -83,52 +163,26 @@ export async function knownPlaces(
   request: { query?: string; cursor?: string },
 ): Promise<KnownPlacesPage> {
   service.assertScope(scope);
-  const terms = searchTerms(request.query),
-    prepared = await prepare(service, scope.actorId);
-  const fence = digest([
-    scopeKey(scope),
+  const prepared = await prepare(service, scope.actorId);
+  const { fence, options } = knownPlacesQuery(
+    scope,
     prepared.scope.generation,
-    terms ?? [],
     service.historyEpoch,
-  ]);
-  let after: string | undefined;
-  if (request.cursor) {
-    let cursor: z.infer<typeof pageCursor>;
-    try {
-      cursor = pageCursor.parse(JSON.parse(Buffer.from(request.cursor, 'base64url').toString()));
-    } catch {
-      throw new HistoryCursorError('This place page expired. Search or browse again.');
-    }
-    if (cursor.fence !== fence)
-      throw new HistoryCursorError('Remembered places changed. Refresh Known places.');
-    after = cursor.after;
-  }
-  const result = await prepared.repository.knownPlaces(prepared.scope, {
-    after,
-    terms,
-    limit: 20,
-    scan: SEARCH_SCAN_ROWS,
-  });
+    request,
+  );
+  const result = await prepared.repository.knownPlaces(prepared.scope, options);
   service.assertScope(scope);
   assertUnchanged(service, prepared, scope.actorId);
-  return {
-    ok: true,
-    worldId: prepared.world.id,
-    generation: prepared.generation,
-    entries: result.entries.flatMap((entry) => {
-      const place = placeView(entry);
-      const note = place
-        ? knowledgeDocument(prepared.world, scope.actorId, { kind: 'place', placeId: place.id })
-        : undefined;
-      return place
-        ? [{ ...place, note: { text: note?.text ?? '', revision: note?.revision ?? 0 } }]
-        : [];
-    }),
-    next: result.after
-      ? Buffer.from(JSON.stringify({ fence, after: result.after })).toString('base64url')
-      : null,
-    scanLimited: result.scanLimited,
-  };
+  return projectKnownPlacesPage(
+    prepared.world.id,
+    prepared.generation,
+    result,
+    fence,
+    (placeId) => {
+      const note = knowledgeDocument(prepared.world, scope.actorId, { kind: 'place', placeId });
+      return { text: note?.text ?? '', revision: note?.revision ?? 0 };
+    },
+  );
 }
 
 export async function selectedPlace(service: WorldService, actorId: string, reference: Reference) {
@@ -139,18 +193,7 @@ export async function selectedPlace(service: WorldService, actorId: string, refe
     scan: 1,
   });
   assertUnchanged(service, prepared, actorId);
-  const entry = result.entries[0],
-    place = entry && placeView(entry);
-  if (
-    !entry ||
-    !place ||
-    place.sourceId !== reference.sourceId ||
-    place.revision !== reference.revision
-  )
-    throw new HistoryCursorError(
-      'This place observation changed or was forgotten. Refresh Known places.',
-    );
-  return { entry, place };
+  return requireKnownPlace(result.entries[0], reference);
 }
 
 /** Prepare outside mutation; native admission rechecks current permissions before effects. */
@@ -166,7 +209,7 @@ export async function resolveKnownPlaceMove(
     place.corrected ||
     !currentPlaceObservation(service.world, exposure)
   )
-    return { ok: false, code: 'stale-place', message: unavailable };
+    return { ok: false, code: 'stale-place', message: knownPlaceUnavailable };
   return { position: { ...exposure.point } };
 }
 
@@ -185,17 +228,6 @@ export async function inspectKnownPlace(
     currentPlaceObservation(service.world, exposure);
   const preview = valid
     ? service.previewCommand({ type: 'move', position: place.position }, scope)
-    : { ok: false, message: unavailable };
-  return {
-    ok: true,
-    place,
-    moveDescription: ACTION_DESCRIPTIONS.move!,
-    move: {
-      id: 'move-to-known-place',
-      label: 'Move to last-known location',
-      command: { type: 'move', knownPlace: reference },
-      enabled: preview.ok,
-      ...(preview.ok ? {} : { reason: preview.message }),
-    },
-  };
+    : { ok: false, message: knownPlaceUnavailable };
+  return projectKnownPlaceInspection(place, reference, preview);
 }

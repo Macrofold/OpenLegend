@@ -126,7 +126,6 @@ impl InstalledWorld {
 pub(crate) struct PhysicalState {
     pub participation: crate::participation::ParticipationState,
     pub coaching: crate::install::ClosedCoachingState,
-    pub actor_only_families: crate::install::ActorOnlyPhysicalFamilies,
     pub header: WorldHeader,
     pub identity: IdentityState,
     pub entities: EntityStore,

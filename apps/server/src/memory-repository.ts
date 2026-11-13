@@ -1,4 +1,5 @@
 import { temporalReadSourceRevoked } from '@open-legend/domain';
+import { parseSourceJson } from './native-source-preparation.js';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import {
   admitMemoryReading,
@@ -2826,7 +2827,7 @@ export class MemoryRepository {
         await this.restoreSourceText(rows.filter((row) => row['source_kind'] !== 'support'));
       const places: PlaceRow[] = rows.map((row) => {
         if (typeof row['selected_place_capsule'] !== 'string') throw new MemoryPreparationError();
-        const capsule = JSON.parse(row['selected_place_capsule']) as KnownPlaceCapsule;
+        const capsule = parseSourceJson<KnownPlaceCapsule>(row['selected_place_capsule']);
         if (
           row['source_kind'] !== 'support' &&
           (!capsule.personalSource ||
@@ -2952,7 +2953,7 @@ export class MemoryRepository {
           .all(scope.worldId, scope.actorId, supportIds))
           supports.set(
             String(row['source_id']),
-            JSON.parse(String(row['payload'])) as TemporalSupportCapsule,
+            parseSourceJson<TemporalSupportCapsule>(String(row['payload'])),
           );
       const entries: KnownPlaceSource[] = page.map((row) => {
         if (row['source_kind'] === 'support') {

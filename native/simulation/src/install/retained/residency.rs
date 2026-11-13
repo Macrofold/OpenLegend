@@ -41,6 +41,7 @@ heap_record!(RetainedDefinitions {
     item_definitions,
     recipes,
     flight_routes,
-    places
+    places,
+    places_read
 });
 // knowledge_limits contains only closed enum/scalar fields and allocates none.

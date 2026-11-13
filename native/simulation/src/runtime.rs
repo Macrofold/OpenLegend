@@ -32,6 +32,7 @@ pub use npc_intake::{RuntimeNpcInspection, RuntimeNpcTrigger};
 mod npc_labels;
 mod participation;
 mod player;
+mod player_places;
 mod privacy;
 mod private_history;
 mod reply_preview;

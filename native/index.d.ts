@@ -136,6 +136,7 @@ export declare class NativeWorld {
   npcTriggerCurrent(trigger: NativeWorldNpcTrigger): Promise<boolean>;
   beginNpcIntake(request: Buffer): Promise<NativeWorldTurn>;
   beginParticipation(bytes: Buffer): Promise<NativeWorldTurn>;
+  playerPlaces(bytes: Buffer): Promise<NativeWorldJson>;
   playerInput(bytes: Buffer): Promise<NativeWorldJson>;
   playerInteraction(read: NativeWorldPlayerRead, bytes: Buffer): Promise<NativeWorldJson>;
   readPlayer(account: string, actor: string, eventWindow: number): Promise<NativeWorldPlayerRead>;
@@ -147,6 +148,7 @@ export declare class NativeWorld {
   ): Promise<NativeWorldPlayerPublication | null>;
   forget(bytes: Buffer): Promise<NativeWorldTurn>;
   correct(bytes: Buffer): Promise<NativeWorldTurn>;
+  historyPlaceSources(read: NativeWorldPrivateHistoryRead, bytes: Buffer): Promise<void>;
   readHistory(actorId: string, purpose: string): Promise<NativeWorldPrivateHistoryRead>;
   historySources(
     read: NativeWorldPrivateHistoryRead,

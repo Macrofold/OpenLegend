@@ -228,13 +228,43 @@ export async function readNativeNpcSources(
   request: NativeNpcSourcesRequest,
   cut: LiveReadCuts,
 ) {
-  const { origin, binding, selection } = request;
+  const bindingBytes = Buffer.byteLength(JSON.stringify({ binding: request.binding }));
+  const rows = await readNativeSourceRows(
+    db,
+    {
+      ...request,
+      acceptedCut: request.binding.baseCut,
+      maximumTransferBytes: request.maximumTransferBytes - bindingBytes,
+    },
+    cut,
+  );
+  return { binding: request.binding, ...rows };
+}
+
+/** Private place browsing reuses the exact selected-personal-row reader,
+ * without manufacturing a geometry/provider binding or requesting receipts. */
+export async function readNativePersonalSourceRows(
+  db: SqlDatabase,
+  request: Omit<NativeNpcSourcesRequest, 'binding'> & { readonly acceptedCut: number },
+  cut: LiveReadCuts,
+) {
+  if (request.selection.receipts.length || request.selection.consolidationJob !== undefined)
+    throw new Error('Private place sources require selected personal rows only.');
+  return (await readNativeSourceRows(db, request, cut)).rows;
+}
+
+async function readNativeSourceRows(
+  db: SqlDatabase,
+  request: Omit<NativeNpcSourcesRequest, 'binding'> & { readonly acceptedCut: number },
+  cut: LiveReadCuts,
+) {
+  const { origin, selection } = request;
   if (
     !db.readAtCut ||
     !db.readTransaction ||
     origin.worldId !== cut.worldId ||
     origin.generation !== cut.generation ||
-    binding.baseCut !== cut.sequence ||
+    request.acceptedCut !== cut.sequence ||
     (selection.receipts.length > 0 && origin.receiptPrefix.state !== 'known')
   )
     throw new Error('Native source preparation has no matching accepted SQL overlay.');
@@ -245,7 +275,6 @@ export async function readNativeNpcSources(
         throw new Error('Native source preparation lost its durable world witness.');
       let transfer = Buffer.byteLength(
         JSON.stringify({
-          binding,
           readSerial: origin.readSerial,
           rows: { pages: [], values: [], personal: [], parents: [] },
         }),
@@ -439,7 +468,6 @@ export async function readNativeNpcSources(
       if (selection.consolidationJob !== undefined && typeof duplicate !== 'boolean')
         throw new Error('Consolidation has no exact current summary witness.');
       const result = {
-        binding,
         readSerial: origin.readSerial,
         rows: {
           pages,

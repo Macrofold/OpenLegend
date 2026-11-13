@@ -268,7 +268,7 @@ pub(crate) fn known_place_capsule(
     };
     place_capsule(original, exposure, &awareness.event_id, personal_source)
 }
-pub(super) fn place_capsule(
+pub(crate) fn place_capsule(
     observation: &ObservationContribution,
     exposure: &EncounterExposure,
     event_id: &str,
@@ -316,7 +316,7 @@ pub(super) fn place_capsule(
     };
     Ok(Some(KnownPlaceCapsule {
         place_id: id.clone(),
-        label: label.clone().into(),
+        label: label.clone(),
         location: position.clone(),
         source: EvidenceSource {
             family: EvidenceFamily::NativeExposure,
@@ -725,7 +725,7 @@ pub(crate) fn temporal_known_place_capsules(
         }
         values.push(KnownPlaceCapsule {
             place_id: id.clone(),
-            label: label.clone().into(),
+            label: label.clone(),
             location: location.location.clone(),
             source: original.source.clone(),
             facet_ordinal: original.ordinal,

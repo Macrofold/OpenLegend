@@ -526,6 +526,7 @@ pub(crate) fn read_reception_rows(
             Some("knowledgeRevisions"),
             roots.knowledge_revisions,
         )?,
+        visibility_storage: None,
         visible_objects: nested_lists(
             import,
             "mind_visible_objects_owners",
@@ -555,6 +556,10 @@ pub(crate) fn read_reception_rows(
             roots.map_markers,
         )?,
     };
+    state.visibility_storage = Some(
+        super::current_residency::VisibilityRoots::install(&state, budget)
+            .map_err(|_| invalid())?,
+    );
     state.recognition_storage =
         Some(super::RecognitionRoots::install(&state, budget).map_err(|_| invalid())?);
     Ok(state)

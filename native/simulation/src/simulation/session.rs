@@ -393,7 +393,13 @@ impl Session {
         options: crate::commands::CommandOptions,
     ) -> Result<CandidateKey, SessionError> {
         let preview = options.preview;
-        if preview && !matches!(&command, crate::commands::NativeCommand::Cancel { .. }) {
+        if preview
+            && !matches!(
+                &command,
+                crate::commands::NativeCommand::Cancel { .. }
+                    | crate::commands::NativeCommand::Move { .. }
+            )
+        {
             return Err(ExecutionError::UnsupportedFamily.into());
         }
         let (key, mut journal) = self.begin()?;

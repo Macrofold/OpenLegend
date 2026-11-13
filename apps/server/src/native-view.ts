@@ -786,7 +786,7 @@ export interface NativePlayerActorPerception extends NativeActorPerception {
    * A positive unconverted agreement refuses at the native read owner. */
   readonly player: {
     readonly tradeTerms: 'none';
-    readonly physicalLandmarks: 'absent';
+    readonly currentPlaceLabel: string | null;
     readonly finiteWeatherCue: 'absent';
   };
 }
@@ -805,10 +805,7 @@ export function nativePlayerWorldView(
   } & Pick<GameView['clock'], 'speed' | 'baseRatio' | 'paused' | 'pauseReason'>,
 ) {
   assertPlayerControlCut(self, controls);
-  if (
-    perception.player.physicalLandmarks !== 'absent' ||
-    perception.player.finiteWeatherCue !== 'absent'
-  )
+  if (perception.player.finiteWeatherCue !== 'absent')
     throw new Error('Native player world display requires its admitted physical families.');
   const senses = self.player.senses;
   const policy = definitions.acoustics;
@@ -821,7 +818,10 @@ export function nativePlayerWorldView(
     policy,
   });
   return {
-    presentation: projectPlayerPresentation(definitions.presentation),
+    presentation: projectPlayerPresentation(
+      definitions.presentation,
+      perception.player.currentPlaceLabel ?? undefined,
+    ),
     ...(definitions.presentation?.mapArt
       ? {
           cartography: projectPlayerCartography(

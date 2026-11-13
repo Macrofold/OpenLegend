@@ -22,6 +22,7 @@ import { SqlGameRepository } from './store.js';
 import { NativeWorldService } from './native-world-service.js';
 import { NativePlayerHttp } from './native-player-http.js';
 import { commandInputSchema, requestIdSchema } from './command-input-schema.js';
+import { knownPlaceReference } from './known-places.js';
 import { createClientAssets, type ClientAssets } from './client-assets.js';
 import { readAssetIndex } from './asset-configuration.js';
 import { readHttpJson } from './http-json.js';
@@ -259,6 +260,25 @@ export async function createNativeGameServer(options: {
             message: 'Access changed. Refresh before continuing.',
           });
         writeJson(response, status, value);
+      };
+      const sendNative = (bytes: Buffer) => {
+        if (response.destroyed) return;
+        retainNativeProduct(bytes);
+        const release = () => {
+          response.off('close', release);
+          releaseNativeProduct(bytes);
+        };
+        response.once('close', release);
+        try {
+          response.writeHead(200, {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Cache-Control': 'no-store',
+          });
+          response.end(bytes, release);
+        } catch (error) {
+          release();
+          throw error;
+        }
       };
       if (requests >= config.capacity.requests) {
         response.setHeader('Retry-After', '1');
@@ -963,6 +983,22 @@ export async function createNativeGameServer(options: {
               releaseNativeProduct(result);
             }
           }
+          case '/api/known-places': {
+            const value = z
+              .object({
+                query: z.string().max(200).optional(),
+                cursor: z.string().max(3000).optional(),
+              })
+              .strict()
+              .parse(body);
+            await current.publishKnownPlaces(scope, value, sendNative);
+            return;
+          }
+          case '/api/known-places/inspect': {
+            const reference = knownPlaceReference.parse(body);
+            await current.publishKnownPlaces(scope, { reference }, sendNative);
+            return;
+          }
           case '/api/memories':
           case '/api/god/memories': {
             const { actorId, ...value } = z
@@ -980,16 +1016,7 @@ export async function createNativeGameServer(options: {
               (url.pathname === '/api/god/memories' && !config.godMode)
             )
               throw new AuthorityError('forbidden');
-            await current.publishMemoryHistory(actorId, scope, value, (bytes) => {
-              if (response.destroyed) return;
-              response.writeHead(200, {
-                'Content-Type': 'application/json; charset=utf-8',
-                'Cache-Control': 'no-store',
-              });
-              retainNativeProduct(bytes);
-              response.once('close', () => releaseNativeProduct(bytes));
-              response.end(bytes, () => releaseNativeProduct(bytes));
-            });
+            await current.publishMemoryHistory(actorId, scope, value, sendNative);
             return;
           }
           case '/api/god/correct-memory':

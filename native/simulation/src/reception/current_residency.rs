@@ -8,7 +8,9 @@ fn capacity() -> crate::received::ReceivedError {
     crate::received::ReceivedError("Current record exceeds native allowance.")
 }
 mod metadata;
+mod visibility;
 pub(super) use metadata::{CurrentOwnerPart, CurrentOwnerStorage};
+pub(super) use visibility::{VisibilityPart, VisibilityRoots};
 
 #[derive(Debug)]
 pub(crate) struct CurrentPayload {

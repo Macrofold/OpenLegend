@@ -90,13 +90,100 @@ pub(crate) struct ReceivedPersonalVisual {
 pub(crate) enum PersonalVisualAnswer {
     Geometry(GeometryAnswers),
     Language(CollationAnswer),
+    PlaceComplete,
 }
 pub(crate) enum PersonalVisualStep<'a> {
     Geometry(&'a GeometryQueries),
     Language(&'a CollationRequest),
+    Place(StagedPlace),
     Received(ReceivedPersonalVisual),
 }
+
+pub(crate) struct StagedPlace {
+    event: crate::execution::StagedOccurrence,
+    _reservation: ByteReservation,
+}
+fn stage_place(
+    core: &mut CoreMutation<'_>,
+    observer: &str,
+    place: &crate::reception::places::InstalledPlace,
+    budget: &ByteBudget,
+) -> Result<StagedPlace, ExecutionError> {
+    use crate::events::{AudienceSelection, EmissionText, EventEmissionIntent, EventScope};
+    let location = core
+        .state
+        .installed
+        .geometry
+        .spatial
+        .surfaces
+        .iter()
+        .find(|surface| surface.id == place.point.surface_id)
+        .map_or("Observed support", |surface| surface.name.as_str());
+    let _reservation = budget.reserve(
+        heap_sum([
+            size_of::<StagedPlace>(),
+            size_of::<EventEmissionIntent>(),
+            place
+                .heap_bytes()
+                .ok_or(ExecutionError::Capacity)?
+                .checked_mul(3)
+                .ok_or(ExecutionError::Capacity)?,
+            observer
+                .len()
+                .checked_mul(4)
+                .ok_or(ExecutionError::Capacity)?,
+            location
+                .len()
+                .checked_mul(2)
+                .ok_or(ExecutionError::Capacity)?,
+            crate::host::retained_size::map_storage::<String, EventScalar>(5)
+                .ok_or(ExecutionError::Capacity)?,
+            256,
+        ])
+        .ok_or(ExecutionError::Capacity)?,
+    )?;
+    let mut text = crate::text::JsText::from("I reached ");
+    text.push_text(&place.label);
+    text.push_str(". ");
+    text.push_text(&place.description);
+    let mut data = IndexMap::new();
+    data.insert("acquisition".into(), EventScalar::Boolean(true));
+    data.insert("change".into(), EventScalar::Text("onset".into()));
+    data.insert(
+        "importance".into(),
+        EventScalar::Number(place.exposure.importance),
+    );
+    data.insert("urgency".into(), EventScalar::Number(0.0));
+    let event = core.stage_event(EventEmissionIntent {
+        event_type: "encounter".into(),
+        text: EmissionText::Literal(text),
+        audience: AudienceSelection::Explicit(vec![observer.to_owned()]),
+        source_id: Some(observer.to_owned()),
+        target_id: Some(place.landmark_id.clone()),
+        data: Some(data),
+        scope: EventScope::Private,
+        origin: None,
+        exposure: Some(EncounterExposure::Place {
+            reported_by: None,
+            id: place.id.clone(),
+            revision: place.revision,
+            label: place.label.clone(),
+            description: place.description.clone(),
+            point: place.point.clone(),
+            location_label: location.into(),
+            landmark_id: place.landmark_id.clone(),
+            mechanism_fields: place.mechanism_fields.clone(),
+        }),
+    })?;
+    Ok(StagedPlace {
+        event,
+        _reservation,
+    })
+}
+
 enum Phase {
+    Selection,
+    Places,
     Physical,
     Geometry,
     Contacts,
@@ -111,6 +198,11 @@ pub(crate) struct PersonalVisualCursor {
     candidate: CandidateKey,
     people: Vec<String>,
     objects: Vec<String>,
+    ordered: Vec<String>,
+    eligible: IndexSet<String>,
+    places: Vec<(String, bool)>,
+    place_at: usize,
+    place_waiting: bool,
     geometry: Option<GeometryReceptionCursor>,
     acquired_geometry: Option<CompletedGeometryReception>,
     contacts: Vec<String>,
@@ -165,13 +257,18 @@ impl PersonalVisualCursor {
         .ok_or(ExecutionError::Capacity)?;
         let reservation = budget.reserve(bytes)?;
         Ok(Self {
-            phase: Phase::Physical,
+            phase: Phase::Selection,
             visual: None,
             sight: Some(sight),
             opportunity,
             candidate,
             people: Vec::new(),
             objects: Vec::new(),
+            ordered: Vec::new(),
+            eligible: IndexSet::new(),
+            places: Vec::new(),
+            place_at: 0,
+            place_waiting: false,
             geometry: None,
             acquired_geometry: None,
             contacts: Vec::new(),
@@ -205,6 +302,49 @@ impl PersonalVisualCursor {
         let mut answer = answer;
         loop {
             match self.phase {
+                Phase::Selection => {
+                    if answer.is_some() {
+                        return Err(invalid());
+                    }
+                    self.select_physical(core, budget)?;
+                    self.prepare_places(core)?;
+                    self.phase = Phase::Places;
+                }
+                Phase::Places => {
+                    if self.place_waiting {
+                        if !matches!(answer.take(), Some(PersonalVisualAnswer::PlaceComplete)) {
+                            return Err(invalid());
+                        }
+                        self.place_waiting = false;
+                    } else if answer.is_some() {
+                        return Err(invalid());
+                    }
+                    while self.place_at < self.places.len() {
+                        let (id, acquired) = &self.places[self.place_at];
+                        let installed = Arc::clone(&core.state.installed);
+                        let place = installed.retained.places_read.get(id).ok_or_else(invalid)?;
+                        let observer = self
+                            .sight
+                            .as_ref()
+                            .ok_or_else(invalid)?
+                            .observer()
+                            .actor_id
+                            .as_str();
+                        core.journal.current.set_visible_place(
+                            &mut core.state.reception,
+                            observer,
+                            id,
+                            place.revision,
+                        )?;
+                        self.place_at += 1;
+                        if *acquired {
+                            let staged = stage_place(core, observer, place, budget)?;
+                            self.place_waiting = true;
+                            return Ok(PersonalVisualStep::Place(staged));
+                        }
+                    }
+                    self.phase = Phase::Physical;
+                }
                 Phase::Physical => {
                     if answer.is_some() {
                         return Err(invalid());
@@ -219,10 +359,16 @@ impl PersonalVisualCursor {
                     self.phase = Phase::Geometry;
                 }
                 Phase::Geometry => {
-                    let input = answer.take().map(|a| match a {
-                        PersonalVisualAnswer::Geometry(a) => GeometryReceptionAnswer::Geometry(a),
-                        PersonalVisualAnswer::Language(a) => GeometryReceptionAnswer::Language(a),
-                    });
+                    let input = match answer.take() {
+                        Some(PersonalVisualAnswer::Geometry(a)) => {
+                            Some(GeometryReceptionAnswer::Geometry(a))
+                        }
+                        Some(PersonalVisualAnswer::Language(a)) => {
+                            Some(GeometryReceptionAnswer::Language(a))
+                        }
+                        Some(PersonalVisualAnswer::PlaceComplete) => return Err(invalid()),
+                        None => None,
+                    };
                     let result = self
                         .geometry
                         .as_mut()
@@ -325,7 +471,7 @@ impl PersonalVisualCursor {
             }
         }
     }
-    fn receive_physical(
+    fn select_physical(
         &mut self,
         core: &mut CoreMutation<'_>,
         budget: &ByteBudget,
@@ -361,15 +507,11 @@ impl PersonalVisualCursor {
                 .entities
                 .get(id)
                 .ok_or(ExecutionError::MissingEntity)?;
-            // PhysicalInstallation certified every admitted mutable entity has
-            // its real actor body. Corpses remain actors, and are read as objects.
-            let actor = entity
-                .actor
-                .as_ref()
-                .ok_or(ExecutionError::UnsupportedFamily)?;
-            if actor.alive {
+            if entity.actor.as_ref().is_some_and(|actor| actor.alive) {
                 self.people.push(id.into());
-            } else if entity.remains.is_some() {
+            } else if (entity.actor.is_none() && entity.animal.is_none())
+                || entity.remains.is_some()
+            {
                 self.objects.push(id.into());
             } else {
                 continue;
@@ -383,8 +525,6 @@ impl PersonalVisualCursor {
                 // A scoped broad sample retests changed people, not the entire
                 // prior roster. In particular, a detail-only body refresh does
                 // not itself replace the independently maintained broad list.
-                // All admitted mutable roots have actor bodies; an absent root
-                // or remains is the selected object's exposure dependency.
                 let previous = core
                     .state
                     .reception
@@ -421,35 +561,105 @@ impl PersonalVisualCursor {
                         .ordering(a)
                         .cmp(&core.state.physical.entities.ordering(b))
                 });
-                if !self.opportunity.objects_changed {
-                    if let Some(previous) = core
-                        .state
-                        .reception
-                        .visible_objects
-                        .as_ref()
-                        .and_then(|rows| rows.get(observer))
-                    {
-                        let bytes = self
-                            .reservation
-                            .as_ref()
-                            .ok_or_else(invalid)?
-                            .bytes()
-                            .checked_add(previous.heap_bytes().ok_or(ExecutionError::Capacity)?)
-                            .ok_or(ExecutionError::Capacity)?;
-                        self.reservation
-                            .as_mut()
-                            .ok_or_else(invalid)?
-                            .resize(bytes)?;
-                        self.objects.clone_from(previous);
-                    }
-                }
-                eligible.clear();
-                eligible.extend(self.people.iter().chain(&self.objects).cloned());
             }
-            self.reconcile_episodes(core, &eligible, budget)?;
-            core.journal
-                .current
-                .clear_visible_places(&mut core.state.reception, observer)?;
+            if !self.opportunity.objects_changed {
+                if let Some(previous) = core
+                    .state
+                    .reception
+                    .visible_objects
+                    .as_ref()
+                    .and_then(|rows| rows.get(observer))
+                {
+                    let bytes = self
+                        .reservation
+                        .as_ref()
+                        .ok_or_else(invalid)?
+                        .bytes()
+                        .checked_add(previous.heap_bytes().ok_or(ExecutionError::Capacity)?)
+                        .ok_or(ExecutionError::Capacity)?;
+                    self.reservation
+                        .as_mut()
+                        .ok_or_else(invalid)?
+                        .resize(bytes)?;
+                    self.objects.clone_from(previous);
+                }
+            }
+            eligible.clear();
+            eligible.extend(self.people.iter().chain(&self.objects).cloned());
+        }
+        self.ordered = ordered.into_iter().map(|(id, _)| id.to_owned()).collect();
+        self.eligible = eligible;
+        Ok(())
+    }
+    fn prepare_places(&mut self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
+        if self.opportunity.detail_only {
+            return Ok(());
+        }
+        let sight = self.sight.as_ref().ok_or_else(invalid)?;
+        let observer_id = sight.observer().actor_id.as_str();
+        let installed = Arc::clone(&core.state.installed);
+        let observer = core
+            .state
+            .physical
+            .entities
+            .get(observer_id)
+            .ok_or(ExecutionError::MissingActor)?;
+        let prior = core
+            .state
+            .reception
+            .visible_places
+            .as_ref()
+            .and_then(|root| root.get(observer_id));
+        let eligible = || {
+            installed.retained.places_read.eligible(
+                &core.state.physical,
+                observer,
+                self.objects.iter().map(String::as_str),
+            )
+        };
+        let mut count = 0usize;
+        let mut bytes = 0usize;
+        let mut changed = false;
+        for place in eligible() {
+            count = count.checked_add(1).ok_or(ExecutionError::Capacity)?;
+            bytes = heap_sum([bytes, size_of::<(String, bool)>(), place.id.len()])
+                .ok_or(ExecutionError::Capacity)?;
+            changed |= prior.and_then(|prior| prior.get(&place.id)) != Some(&place.revision);
+        }
+        if !changed && count == prior.map_or(0, IndexMap::len) {
+            return Ok(());
+        }
+        let reservation = self.reservation.as_mut().ok_or_else(invalid)?;
+        reservation.resize(
+            reservation
+                .bytes()
+                .checked_add(bytes)
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        self.places
+            .try_reserve_exact(count)
+            .map_err(|_| ExecutionError::Capacity)?;
+        self.places.extend(eligible().map(|place| {
+            (
+                place.id.clone(),
+                prior.and_then(|prior| prior.get(&place.id)) != Some(&place.revision),
+            )
+        }));
+        core.journal
+            .current
+            .clear_visible_places(&mut core.state.reception, observer_id)?;
+        Ok(())
+    }
+    fn receive_physical(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        budget: &ByteBudget,
+    ) -> Result<(), ExecutionError> {
+        let sight = self.sight.as_ref().ok_or_else(invalid)?;
+        let observer = sight.observer().actor_id.as_str();
+        let eligible = &self.eligible;
+        if !self.opportunity.detail_only {
+            self.reconcile_episodes(core, eligible, budget)?;
         }
         let mut visual = begin_visual(core, sight, None, budget)?;
         visual.collect_notices = !self.opportunity.detail_only;
@@ -562,7 +772,7 @@ impl PersonalVisualCursor {
             let current = visual.current;
             let mut detail = begin_visual(core, sight, Some(current), budget)?;
             detail.receive_losses(core, sight, Some(&requested.ids), Some(&eligible), budget)?;
-            for &(id, _) in &ordered {
+            for id in &self.ordered {
                 if requested.ids.contains(id) && eligible.contains(id) {
                     receive_subject(&mut detail, core, id, true, budget)?;
                 }

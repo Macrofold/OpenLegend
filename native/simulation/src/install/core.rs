@@ -292,6 +292,9 @@ fn assemble_selected_core(
     physical.entities.fund_installed_intents(budget)?;
     content.fund(budget)?;
     let retained = install_retained(&mut import, &mut children, retained, &schema, budget)?;
+    retained
+        .places_read
+        .validate_physical(&physical, &geometry, &spatial)?;
     physical
         .participation
         .validate_policy(retained.participation_read.as_ref(), &physical.entities)?;

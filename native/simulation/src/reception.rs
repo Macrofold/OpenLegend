@@ -39,6 +39,8 @@ pub(crate) use visual::{
     CompletedObserverReception, ObserverReceptionAnswer, ObserverReceptionCursor,
     ObserverReceptionError, ObserverReceptionStep,
 };
+pub(crate) mod places;
+pub(crate) use places::InstalledPlaces;
 mod phase;
 mod visual_source;
 pub(crate) use phase::begin_perception_phase;
@@ -533,7 +535,7 @@ pub enum ObservedItemLocation {
     },
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(
     tag = "kind",
     rename_all = "kebab-case",
@@ -547,14 +549,16 @@ pub enum EncounterExposure {
             deserialize_with = "deserialize_present_option",
             skip_serializing_if = "Option::is_none"
         )]
-        reported_by: Option<String>,
+        reported_by: Option<crate::text::JsText>,
         id: String,
         #[serde(deserialize_with = "deserialize_safe_integer")]
         revision: u64,
-        label: String,
-        description: String,
+        // Authored words retain JavaScript code units through acquisition and
+        // saved evidence, including isolated UTF-16 surrogates.
+        label: crate::text::JsText,
+        description: crate::text::JsText,
         point: crate::state::SurfacePoint,
-        location_label: String,
+        location_label: crate::text::JsText,
         landmark_id: String,
         #[serde(
             default,
@@ -1507,25 +1511,34 @@ impl EncounterExposure {
         let text = |text: &str, max| {
             !crate::encoding::js_trim(text).is_empty() && text.encode_utf16().count() <= max
         };
-        let (id, label, description, fields) = match self {
+        let js_text =
+            |text: &crate::text::JsText, max| !text.trim_is_empty() && text.units_len() <= max;
+        let (id, valid_text, fields) = match self {
             Self::Place {
                 id,
                 label,
                 description,
                 mechanism_fields,
                 ..
-            }
-            | Self::InventoryItem {
+            } => (
+                id,
+                js_text(label, 160) && js_text(description, 8000),
+                mechanism_fields,
+            ),
+            Self::InventoryItem {
                 id,
                 label,
                 description,
                 mechanism_fields,
                 ..
-            } => (id, label, description, mechanism_fields),
+            } => (
+                id,
+                text(label, 160) && text(description, 8000),
+                mechanism_fields,
+            ),
         };
         if !is_safe_record_id(id)
-            || !text(label, 160)
-            || !text(description, 8000)
+            || !valid_text
             || fields.as_ref().is_some_and(|owners| {
                 owners.iter().any(|(owner, fields)| {
                     !is_safe_record_id(owner)
@@ -1549,9 +1562,9 @@ impl EncounterExposure {
                 *revision > 0
                     && finite_point(&point.point())
                     && is_safe_record_id(&point.surface_id)
-                    && text(location_label, 160)
+                    && js_text(location_label, 160)
                     && is_safe_record_id(landmark_id)
-                    && reported_by.as_ref().is_none_or(|value| text(value, 200))
+                    && reported_by.as_ref().is_none_or(|value| js_text(value, 200))
             }
             Self::InventoryItem {
                 definition,

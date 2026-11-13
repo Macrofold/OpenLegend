@@ -60,7 +60,7 @@ impl CapturedPlayerBody {
 
 pub(super) struct PlayerReadScope<'a> {
     state: &'a SimulationState,
-    actor: &'a crate::state::Entity,
+    pub(super) actor: &'a crate::state::Entity,
     attention: BTreeMap<&'a str, bool>,
     _reservation: ByteReservation,
 }
@@ -283,6 +283,6 @@ pub(super) struct OwnPlayerView<'a> {
 #[serde(rename_all = "camelCase")]
 pub(super) struct CapturedPlayerPerception {
     pub trade_terms: &'static str,
-    pub physical_landmarks: &'static str,
+    pub current_place_label: Option<crate::text::JsText>,
     pub finite_weather_cue: &'static str,
 }

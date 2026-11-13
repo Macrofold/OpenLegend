@@ -72,7 +72,7 @@ pub(super) struct NpcPersonalScope {
     coverage: [Option<crate::experience::SourceCoverage>; 3],
 }
 impl NpcPersonalScope {
-    fn capture(state: &SimulationState, actor: &str) -> Result<Self, ExecutionError> {
+    pub(super) fn capture(state: &SimulationState, actor: &str) -> Result<Self, ExecutionError> {
         let coverage = |kind| {
             state
                 .experience

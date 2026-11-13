@@ -18,6 +18,7 @@ pub struct RuntimePrivateHistoryRead {
     history: Option<crate::experience::CapturedHistoryCuts>,
     recording_gap: Option<crate::received::CoverageGap>,
     sources: Option<crate::capture::PreparedNpcSources>,
+    places: Option<crate::capture::PreparedKnownPlaceSources>,
     candidate: Option<CandidateKey>,
     receipt_payload: Arc<AtomicBool>,
     _storage: ByteReservation,
@@ -136,6 +137,7 @@ impl NativeWorldSession {
             history,
             recording_gap,
             sources: None,
+            places: None,
             candidate: None,
             receipt_payload: Arc::new(AtomicBool::new(true)),
             _storage: storage,
@@ -152,7 +154,7 @@ impl NativeWorldSession {
         input: &[u8],
     ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
-        if read.candidate.is_some() || read.sources.is_some() {
+        if read.candidate.is_some() || read.sources.is_some() || read.places.is_some() {
             return Err(failure("history sources already selected or active"));
         }
         let _decode = decode_preparation(input, &self.budget)?;
@@ -172,6 +174,32 @@ impl NativeWorldSession {
             .map_err(failure)?;
         read.candidate = Some(key);
         Ok(key)
+    }
+    /// A Known places page supplies selected canonical source witnesses from
+    /// its retained SQL cut, not generic permission to read temporal receipts.
+    pub fn admit_history_places(
+        &self,
+        read: &mut RuntimePrivateHistoryRead,
+        input: &[u8],
+    ) -> Result<(), RuntimeError> {
+        self.require_active()?;
+        if !matches!(read.purpose, HistoryPurpose::Personal)
+            || read.candidate.is_some()
+            || read.sources.is_some()
+            || read.places.is_some()
+        {
+            return Err(failure("history places already selected or wrong purpose"));
+        }
+        let state = &self.session.accepted().map_err(failure)?.state;
+        let places = crate::capture::PreparedKnownPlaceSources::prepare(
+            state,
+            Arc::clone(&read.scope),
+            input,
+            &self.budget,
+        )
+        .map_err(failure)?;
+        read.places = Some(places);
+        Ok(())
     }
     pub fn step_history_sources(
         &mut self,
@@ -237,7 +265,7 @@ impl NativeWorldSession {
         read: &RuntimePrivateHistoryRead,
     ) -> Result<Option<RuntimePrivateHistoryPublication>, RuntimeError> {
         self.session.accepted().map_err(failure)?;
-        if read.sources.is_none() || !self.history_current(read)? {
+        if (read.sources.is_none() && read.places.is_none()) || !self.history_current(read)? {
             return Ok(None);
         }
         // Source capture custody remains with the retained read/header. This

@@ -214,13 +214,6 @@ pub(crate) struct PhysicalInstallation {
     pub story_policy_revision: Option<u64>,
     pub children: WorldChildren,
 }
-/// Installation proves every live entity belongs to an actor family. Selected
-/// creation also enforces that closure, so Source landmarkAtPlace (which rejects
-/// actors) has no eligible physical landmark. Authored map geometry is separate.
-/// This proof grants no observations, visible places or remembered names.
-pub(crate) struct ActorOnlyPhysicalFamilies {
-    _private: (),
-}
 pub(crate) struct PhysicalRoot {
     pub header: WorldHeader,
     pub identity: IdentityState,
@@ -564,7 +557,6 @@ pub(crate) fn install_physical(
     Ok(PhysicalInstallation {
         state: PhysicalState {
             participation,
-            actor_only_families: ActorOnlyPhysicalFamilies { _private: () },
             coaching,
             header,
             identity,
@@ -641,15 +633,6 @@ fn validate_entity(
     now: f64,
     purpose: super::InstallPurpose,
 ) -> Result<(), InstallError> {
-    // The declared proof's concrete writers create actors and actor corpses.
-    // Map scenery remains with its immutable geometry owner. Accepting another
-    // physical entity family here would require its actual sensory/object
-    // candidate and mutation owners, not an actor-only index fallback.
-    if entity.actor.is_none() {
-        return Err(InstallError::UnsupportedFamily(
-            "actor-less physical entities",
-        ));
-    }
     if !crate::narration::valid_name_parts(
         &entity.name,
         entity.name_form.as_deref(),
@@ -682,6 +665,9 @@ fn validate_entity(
         })
     {
         return Err(InstallError::CurrentFormat);
+    }
+    if entity.actor.is_none() {
+        validate_plain_entity(entity)?;
     }
     if let Some(values) = entity.stored_attributes() {
         for (id, state) in values {
@@ -903,6 +889,38 @@ fn validate_entity(
     }
     Ok(())
 }
+
+/// Plain installed bodies have geometry and outward identity, without an actor
+/// or an unconverted mechanical continuation. The shared component validation
+/// above still owns item/resource/heat and the other positive family refusals.
+/// Reception, private place acquisition and actual player consumers share this
+/// installed subset; positive mechanical families retain their own refusal:
+/// docs/maintainers/native-simulation-core-coverage.md#candidate-implementation-ledger
+fn validate_plain_entity(entity: &Entity) -> Result<(), InstallError> {
+    if !matches!(
+        entity.placement,
+        Some(crate::state::Placement::World { .. })
+    ) || entity.animal.is_some()
+        || entity.remains.is_some()
+        || entity.sensory_progress.is_some()
+        || entity
+            .status_effects
+            .as_ref()
+            .is_some_and(|values| !values.is_empty())
+        || entity
+            .attributes
+            .as_ref()
+            .is_some_and(|values| !values.is_empty())
+        || entity.spatial.fall_velocity.is_some()
+        || entity.spatial.local_avoidance_ready_at.is_some()
+    {
+        return Err(InstallError::UnsupportedFamily(
+            "non-plain actor-less physical entity",
+        ));
+    }
+    Ok(())
+}
+
 fn validate_body_references(
     entities: &EntityStore,
     installed: &PhysicalDefinitions<'_>,

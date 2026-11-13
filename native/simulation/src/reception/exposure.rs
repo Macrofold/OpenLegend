@@ -148,7 +148,9 @@ impl ExposureSelection {
                 .entities
                 .resolve(handle)
                 .ok_or(ExecutionError::Invariant)?;
-            if entity.physical_root() && entity.actively_participates() && entity.remains.is_some()
+            if entity.physical_root()
+                && entity.actively_participates()
+                && ((entity.actor.is_none() && entity.animal.is_none()) || entity.remains.is_some())
             {
                 if !objects.contains(&handle) {
                     if objects.len() == objects.capacity() {

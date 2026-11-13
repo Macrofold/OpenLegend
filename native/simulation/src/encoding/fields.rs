@@ -2,17 +2,40 @@
 //! Serde's tagged-enum buffer decodes every nested string eagerly, which cannot
 //! retain JavaScript's isolated UTF-16 units. No arbitrary value tree is built.
 use indexmap::IndexMap;
-use serde::de::DeserializeOwned;
+use serde::de::{DeserializeOwned, Error, MapAccess, Visitor};
+use serde::{Deserialize, Deserializer};
 use serde_json::value::RawValue;
 
 pub(crate) struct RawFields<'a> {
     fields: IndexMap<String, &'a RawValue>,
 }
+impl<'de> Deserialize<'de> for RawFields<'de> {
+    fn deserialize<D: Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
+        struct FieldsVisitor;
+        impl<'de> Visitor<'de> for FieldsVisitor {
+            type Value = RawFields<'de>;
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("a typed object with unique fields")
+            }
+            fn visit_map<A: MapAccess<'de>>(self, mut map: A) -> Result<Self::Value, A::Error> {
+                let mut fields = IndexMap::new();
+                while let Some(key) = map.next_key::<String>()? {
+                    // Match derived typed decoders: a repeated field cannot
+                    // replace an earlier permission, source or authored value.
+                    if fields.contains_key(&key) {
+                        return Err(A::Error::custom("Duplicate typed record field."));
+                    }
+                    fields.insert(key, map.next_value()?);
+                }
+                Ok(RawFields { fields })
+            }
+        }
+        de.deserialize_map(FieldsVisitor)
+    }
+}
 impl<'a> RawFields<'a> {
     pub(crate) fn parse(source: &'a str) -> Result<Self, String> {
-        Ok(Self {
-            fields: serde_json::from_str(source).map_err(|error| error.to_string())?,
-        })
+        serde_json::from_str(source).map_err(|error| error.to_string())
     }
     pub(crate) fn contains(&self, key: &str) -> bool {
         self.fields.contains_key(key)
