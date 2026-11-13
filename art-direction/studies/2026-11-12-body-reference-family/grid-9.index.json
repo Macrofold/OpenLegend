@@ -1,0 +1,510 @@
+{
+  "release": {
+    "owner": {
+      "kind": "collection",
+      "id": "art-studies"
+    },
+    "assetId": "body-reference-family-grid-9",
+    "revisionId": "grid-9-20261112-d75861e0525e",
+    "manifestSha256": "372b00a45dabcb814eee1450b5b3104634194a6fa374c7487aa4acf823ce2a1a"
+  },
+  "files": {
+    "batch-manifest.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "2f98e722e4c36dbcd1a462642a8f02d9ec5d9f86dcf1f8a5b4adfc72b6a69962",
+      "bytes": 22715,
+      "mediaType": "application/json"
+    },
+    "build-grid-sheets.jxa": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "348b8d0d0f3a1da9383eaf6464adba65b0286eea1a64290d9badc926afab385f",
+      "bytes": 10115,
+      "mediaType": "text/plain"
+    },
+    "selected-grid.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "d3347414174aa926881308ec692e8dd07b8dae2cb90729f720fb9a22104c0d93",
+      "bytes": 1649,
+      "mediaType": "application/json"
+    },
+    "candidates/c01-M050-F000.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "2b3b1bbacab502fee815cd70d66390c509537b60d572d61b003155dfb56c0e9f",
+      "bytes": 4256072,
+      "mediaType": "image/png"
+    },
+    "candidates/c02-M050-F050.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "49fda8718c005f89f6c7da649ff37ed47daf17ef8f7e56db05e8f331643f5472",
+      "bytes": 4249267,
+      "mediaType": "image/png"
+    },
+    "candidates/c03-M000-F100.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "3b8345905a65a7c6eb7ac28d3b7a4fd2a990afcf9eacb052aa95293884e50129",
+      "bytes": 5791783,
+      "mediaType": "image/png"
+    },
+    "candidates/c04-M000-F000.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "fddacbb234b678f29560546751d86f50820f2f56383c7a5543c334c4c77c6006",
+      "bytes": 5489581,
+      "mediaType": "image/png"
+    },
+    "candidates/c05-M100-F000.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "db9db56e77e3dab46263027a90ebb9b0d6bf4bc85836289bd4fb6147dfa1c404",
+      "bytes": 5326255,
+      "mediaType": "image/png"
+    },
+    "candidates/c06-M000-F050.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "c178a731d51878b284ce8ab55679df1329d48aed8c31d87c12c2633fba981a27",
+      "bytes": 5487355,
+      "mediaType": "image/png"
+    },
+    "candidates/c07-M100-F050.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "16b01d40d43a402467b488f794a9cd887d61be07bc2738a1020e7b6d074b2ca3",
+      "bytes": 4847778,
+      "mediaType": "image/png"
+    },
+    "candidates/c08-M050-F100.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "3bcd002f77e6188e60a20cc5b23907e1867a32fbe45cbfb3e21f5d03567f0714",
+      "bytes": 6144122,
+      "mediaType": "image/png"
+    },
+    "candidates/c09-M100-F100.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "5f2ba26d6df3b0931a0cdb6105fcd3fc3caf68b5b2e91890c76e4fe0151d5c1d",
+      "bytes": 5058575,
+      "mediaType": "image/png"
+    },
+    "candidates/c10-M000-F000.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "985ed4351e27b725f1b45b22f118119a4d82dcd24f38bd65609144b35a71b39c",
+      "bytes": 4530267,
+      "mediaType": "image/png"
+    },
+    "candidates/c11-M000-F050.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "c5023581d2ff821f3b46b32aec59b1dec564a6dfa1c6e3f2af7e4c2c263829fc",
+      "bytes": 4339811,
+      "mediaType": "image/png"
+    },
+    "candidates/c12-M100-F050.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "4e1f55766529e3a2d3f891e9cc3e7d33aaa0c86a59f774bac9b28b64aa05e750",
+      "bytes": 5021677,
+      "mediaType": "image/png"
+    },
+    "candidates/c13-M100-F100.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "42adba90f4f87dfee55440e525368fccae711c0f5d597ef3f1fdda2badb48124",
+      "bytes": 5334347,
+      "mediaType": "image/png"
+    },
+    "candidates/c14-M000-F000.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "d8841a32d1e0cf08540d4a5d775213109cdbb7f525f5fd1a5d6af16e47248d50",
+      "bytes": 6023511,
+      "mediaType": "image/png"
+    },
+    "candidates/c15-M050-F000.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "b7820ec720c0ab269c48efb92ecce569ca155410934949992519a53b5f4219cc",
+      "bytes": 5339350,
+      "mediaType": "image/png"
+    },
+    "candidates/c16-M100-F000.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "c3e1956b2a4d68497848b36cd3d21105e615bd3f133f23cc4bd1026d0b8377ad",
+      "bytes": 5879694,
+      "mediaType": "image/png"
+    },
+    "candidates/c17-M000-F050.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "5b5401fa2e6c3bec9506d8ac8190f38d3080d1c9799f075d4c61a4014d67eb41",
+      "bytes": 4698208,
+      "mediaType": "image/png"
+    },
+    "candidates/c18-M050-F050.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "7af3c89050c630791674fb3a4fa9ce0ae8d38f033dc139696337802904b9ea21",
+      "bytes": 5810915,
+      "mediaType": "image/png"
+    },
+    "candidates/c19-M100-F050.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "655ee7d1c852c221871d3c88c86d137f6dff89b4ee4c0877f8676f6713382f72",
+      "bytes": 5736452,
+      "mediaType": "image/png"
+    },
+    "candidates/c20-M000-F100.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "2c1dd723c1d48cf52f810b42d4e4e105fc3b2e2fc08faee2d5fd78451d90e4a0",
+      "bytes": 5208444,
+      "mediaType": "image/png"
+    },
+    "candidates/c21-M050-F100.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "f38d7cfe285df78b81f284d7490d52775a9b4ab3366b36ab221f4d734153bf5d",
+      "bytes": 6102333,
+      "mediaType": "image/png"
+    },
+    "candidates/c22-M100-F100.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "ad915a82c698afbce0c08594d68fa5970e597e712543ef961850622886ddf696",
+      "bytes": 5610562,
+      "mediaType": "image/png"
+    },
+    "jobs/c01-M050-F000.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "af1cd7743e12117be8835d745f9cfa18241bd53f63a41680d07759b9fd4dc3df",
+      "bytes": 2687,
+      "mediaType": "application/json"
+    },
+    "jobs/c02-M050-F050.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "d93f159fce2ee66a6b98b21a46fc26a4997d47d2479ccdd6253542f9ea41f8ad",
+      "bytes": 3051,
+      "mediaType": "application/json"
+    },
+    "jobs/c03-M000-F100.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "6f0caf1f3e09da322b7a4bd137cb10e26b7a55dc9c7dc56bfa7bc7fea179c84c",
+      "bytes": 3313,
+      "mediaType": "application/json"
+    },
+    "jobs/c04-M000-F000.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "d572a11bb868ff4e8d092e8d5d1f5f5b49b366ec5cd1ad2bf54241f78946fb6c",
+      "bytes": 2934,
+      "mediaType": "application/json"
+    },
+    "jobs/c05-M100-F000.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "4334206aaeacd6a7f71769657df18fc6ea39652aa24769547cedc1f123cb4648",
+      "bytes": 3122,
+      "mediaType": "application/json"
+    },
+    "jobs/c06-M000-F050.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "6c40cdc5fef37ed753d696498b76294d408011cc7d68ca94ddf1c102b02df75f",
+      "bytes": 3057,
+      "mediaType": "application/json"
+    },
+    "jobs/c07-M100-F050.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "ccd8c7cbdf193934c3c2c9deaefa14c060d9de21236cf0adf79bf070d203a7d1",
+      "bytes": 3190,
+      "mediaType": "application/json"
+    },
+    "jobs/c08-M050-F100.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "be297084d754c8f97dd55202fc89a3af94d366293c8196817df01c0ef1cb532a",
+      "bytes": 3207,
+      "mediaType": "application/json"
+    },
+    "jobs/c09-M100-F100.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "680bb32818c8beff56b84cf2a05adb601a786a44a556bdc75e1b23e0ada4d929",
+      "bytes": 3275,
+      "mediaType": "application/json"
+    },
+    "jobs/c10-M000-F000.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "984212d9b4b3a7e3bb9e2bc9eddeedb9b522363f9e1aa60dda5d4ec44fac238b",
+      "bytes": 2773,
+      "mediaType": "application/json"
+    },
+    "jobs/c11-M000-F050.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "ed2220ed40131ef82322d5b9fbee4b031612e178d4523fdaef37e91faf32737d",
+      "bytes": 2786,
+      "mediaType": "application/json"
+    },
+    "jobs/c12-M100-F050.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "0a5caee0efb9633b15af7d1a0c71be49fab35ccaebb45e121a2f953a5ba5343d",
+      "bytes": 2663,
+      "mediaType": "application/json"
+    },
+    "jobs/c13-M100-F100.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "34f08b6445d6f1849a738de7c42d4409282ea6887492d2ce85d88c7981312ec6",
+      "bytes": 3352,
+      "mediaType": "application/json"
+    },
+    "jobs/c14-M000-F000.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "726922b9920ed16e48a6ab281d0d3a72eaac4b7cbfe9863a7520c84a924a9243",
+      "bytes": 2524,
+      "mediaType": "application/json"
+    },
+    "jobs/c15-M050-F000.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "05e4e0461dcc90f607d8caff86f11aca7f318c3504a6b44f486d4ecb69b20dfa",
+      "bytes": 2507,
+      "mediaType": "application/json"
+    },
+    "jobs/c16-M100-F000.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "2ccad39f17dec57b5516a5077914d3260ec91f620b4eba9a4974df5497cb31b5",
+      "bytes": 2526,
+      "mediaType": "application/json"
+    },
+    "jobs/c17-M000-F050.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "fd4be3f7e6653598504067c00ca37079130c3bd18de23486d5c344cf7ca1a01e",
+      "bytes": 2472,
+      "mediaType": "application/json"
+    },
+    "jobs/c18-M050-F050.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "a708091791fc382487bd9fb2a5cf5abca4ec07fa53ee4fb76ba15b96baef181f",
+      "bytes": 2477,
+      "mediaType": "application/json"
+    },
+    "jobs/c19-M100-F050.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "866cf86e8c8e5f7baa92a231f14a35cf7a97ae4a5953fc99cd7dd68a2764a7d8",
+      "bytes": 2495,
+      "mediaType": "application/json"
+    },
+    "jobs/c20-M000-F100.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "41447946a8a5f3bf2c5b5944f8ecc5b1cc85ffe9b4fd129c4262a6edd0da8c8c",
+      "bytes": 2514,
+      "mediaType": "application/json"
+    },
+    "jobs/c21-M050-F100.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "1d23a547893c4c6b09fa6f74ff08d158fc28dd11af7bb5c59f1b9c0b1ecca24d",
+      "bytes": 2487,
+      "mediaType": "application/json"
+    },
+    "jobs/c22-M100-F100.job.json": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "07da8a6b7f1904b035023e454b02ef37c6ac1da749d05d02f932897a79f81282",
+      "bytes": 2502,
+      "mediaType": "application/json"
+    },
+    "prompts/c01-M050-F000.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "62735a961ad132f9ca61d7cea6061ea26a72f0511c0057e5318e30061c621c02",
+      "bytes": 1575,
+      "mediaType": "text/plain"
+    },
+    "prompts/c02-M050-F050.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "be959ff052083f4aa18cc1cde1533a65f11ce1243aedd332bd47e80f5630943d",
+      "bytes": 1939,
+      "mediaType": "text/plain"
+    },
+    "prompts/c03-M000-F100.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "f957ed843da54ba4f9d7c21c5864d286317b8c615bf4559c9ec19e5c1101394e",
+      "bytes": 2201,
+      "mediaType": "text/plain"
+    },
+    "prompts/c04-M000-F000.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "1d0cecc334ebe438a4e83aa85cf1f84b93baab3381d3c5f9e9ed71aebe6cf03e",
+      "bytes": 1806,
+      "mediaType": "text/plain"
+    },
+    "prompts/c05-M100-F000.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "60afa4054a5a26a15c2a3925a96eb12101b60b8efa87f65cdeb97a603d32d650",
+      "bytes": 1995,
+      "mediaType": "text/plain"
+    },
+    "prompts/c06-M000-F050.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "4d40501593adde2d9258fdda851982c41774049c010118995f246bc6590aed1e",
+      "bytes": 1925,
+      "mediaType": "text/plain"
+    },
+    "prompts/c07-M100-F050.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "9e289f83fa44a5028cabd70dc03f6e6d283f0080fbc92a19986fe4b03647d2bf",
+      "bytes": 2063,
+      "mediaType": "text/plain"
+    },
+    "prompts/c08-M050-F100.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "294c722d093bbfaa207490f5f0f14602e95b00f5327b044499002bf135b42463",
+      "bytes": 2079,
+      "mediaType": "text/plain"
+    },
+    "prompts/c09-M100-F100.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "7f94c9db6d15f5be099c5c30995370fc31ef68f6f55a501124ac9a57ef1c5a44",
+      "bytes": 2147,
+      "mediaType": "text/plain"
+    },
+    "prompts/c10-M000-F000.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "e2236ca0044d1eab0054ef02bbd79d00c1c6c525d8fea56ea1203da6cd6b50b2",
+      "bytes": 1646,
+      "mediaType": "text/plain"
+    },
+    "prompts/c11-M000-F050.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "921818f0acdbc3fa5cb2191696e25b27317f8b5a25858f018a04685fda73aa6c",
+      "bytes": 1657,
+      "mediaType": "text/plain"
+    },
+    "prompts/c12-M100-F050.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "0e4371fda9e265763f9a63e2ce6183686f35fc5fdd2dd07d80816e10c00edd39",
+      "bytes": 1536,
+      "mediaType": "text/plain"
+    },
+    "prompts/c13-M100-F100.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "de36d660bb58aec7ebb2b82dc07f42ffb8e411a991624fbc88b7892f040fc827",
+      "bytes": 1903,
+      "mediaType": "text/plain"
+    },
+    "prompts/c14-M000-F000.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "80af42cee13f93bdb8c4aa42132a551a24f4834fe2d99cfde3cd7cb6237e52a8",
+      "bytes": 1395,
+      "mediaType": "text/plain"
+    },
+    "prompts/c15-M050-F000.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "990006fc03e52fd266455dc416c7c6002e37a6acbc0c56078a6bcde6a5124fb8",
+      "bytes": 1378,
+      "mediaType": "text/plain"
+    },
+    "prompts/c16-M100-F000.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "f2125eb75d918ebb8c4e1c7935c99a1f9f663e37f961819b541b6f7be27e7599",
+      "bytes": 1397,
+      "mediaType": "text/plain"
+    },
+    "prompts/c17-M000-F050.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "b09fa646562dea4a1de186a71664e4ec28defd12e5ae71395dd49bbc33f3b114",
+      "bytes": 1343,
+      "mediaType": "text/plain"
+    },
+    "prompts/c18-M050-F050.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "8328f7ab12d4b3e2fd24c20b48a38bc544caef60b7fcd7e0ed8b79446fb353aa",
+      "bytes": 1349,
+      "mediaType": "text/plain"
+    },
+    "prompts/c19-M100-F050.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "534a7bc7cb73f91e3eb1c8fef088e3293cb90966e56480c71013eff4b13c9d54",
+      "bytes": 1366,
+      "mediaType": "text/plain"
+    },
+    "prompts/c20-M000-F100.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "6a6427d13f052fa43c90506f11e48af118c097fbedf2d1e8a85aec1740d4e011",
+      "bytes": 1386,
+      "mediaType": "text/plain"
+    },
+    "prompts/c21-M050-F100.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "0ae45f4773021b8f9b6fdfc39f5b6b017eda9b93d9a2263394dd9f5efd47bb5b",
+      "bytes": 1358,
+      "mediaType": "text/plain"
+    },
+    "prompts/c22-M100-F100.prompt.txt": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "f00d6e4e9d5ccda9f7b88463ee1c427043b738cf9eef36d3f8b66605dc33d7ad",
+      "bytes": 1374,
+      "mediaType": "text/plain"
+    },
+    "review/grid-3x3-front-profile.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "143ce760235ffd1bfe897b654333c9eac439be31c650adcb6ada8ebdd8e51f79",
+      "bytes": 8772461,
+      "mediaType": "image/png"
+    },
+    "review/grid-3x3-turnarounds.png": {
+      "boundary": "art-studies",
+      "accessDomain": "curated-private",
+      "sha256": "d75861e0525ec252c119df45a7f3147e8ebe05609233effb28ccf867455d3aa4",
+      "bytes": 12514473,
+      "mediaType": "image/png"
+    }
+  }
+}
