@@ -139,13 +139,19 @@ export class NativeMaintenanceRead {
     this.facts;
     return decodeNativeProduct<MindFiles>(await this.native.details());
   }
-  async rawDeadlines(): Promise<readonly number[]> {
+  async earliestRawDeadline(after: number): Promise<number> {
     this.facts;
     const times = decodeNativeProduct<number[]>(await this.native.rawTimes());
-    return retainNativeSources(
-      times.map((at) => at + EXPERIENCE_LIMITS.rawHours * 3600),
-      times,
-    );
+    try {
+      let earliest = Infinity;
+      for (const at of times) {
+        const deadline = at + EXPERIENCE_LIMITS.rawHours * 3600;
+        if (deadline > after) earliest = Math.min(earliest, deadline);
+      }
+      return earliest;
+    } finally {
+      releaseNativeProduct(times);
+    }
   }
   release(): void {
     if (this.product) releaseNativeProduct(this.product);

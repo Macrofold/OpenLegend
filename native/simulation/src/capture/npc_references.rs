@@ -71,11 +71,30 @@ impl NpcReferenceFacts {
         )?;
         let mut bodies = Vec::with_capacity(read.perception.bodies.len());
         for (ordinal, body) in read.perception.bodies.iter().enumerate() {
-            let _copy =
-                budget.reserve(body.subject.heap_bytes().ok_or(ExecutionError::Capacity)?)?;
+            // A received plain object has an entity notepad subject without
+            // person recognition; anonymous actors and corpses keep their
+            // actual association. This still uses the acquired body ordinal.
+            // docs/identity-and-references.md#contract
+            let plain_body = body.subject.is_none()
+                && state
+                    .physical
+                    .entities
+                    .get(&body.source_id)
+                    .is_some_and(|entity| entity.actor.is_none());
+            let _copy = budget.reserve(
+                body.subject
+                    .heap_bytes()
+                    .and_then(|n| n.checked_add(if plain_body { body.source_id.len() } else { 0 }))
+                    .ok_or(ExecutionError::Capacity)?,
+            )?;
             let subject = body
                 .subject
                 .clone()
+                .or_else(|| {
+                    plain_body.then(|| ObserverSubject::Entity {
+                        entity_id: body.source_id.clone(),
+                    })
+                })
                 .map(|subject| subject_fact(state, actor, &names, subject, budget))
                 .transpose()?;
             let (selected, _copy) = names.capture_current_body_subjects(&body.source_id, budget)?;

@@ -75,7 +75,10 @@ export function prepareWorldForStartup(
     reconcileCampAssetAuthority(world, campAssetPermissions);
   });
   validateCurrentWorldState(world);
-  return { ...saved, world };
+  // Seal this completed transition before another startup edit uses its entity
+  // branches; an editable predecessor cannot certify unchanged sensory inputs.
+  // docs/save-and-load.md#continuation-and-identity
+  return { ...saved, world: freezeWorld(world, { completedTransition: true }) };
 }
 
 /** Prepare the exact native starting world before its destination publishes a receipt.
@@ -105,7 +108,6 @@ export async function prepareCreatedWorld(
     false,
     [],
   );
-  freezeWorld(savedWorld.world);
   const readiness = await prepareOpeningReadiness(candidate, savedWorld.world);
   return {
     savedWorld,

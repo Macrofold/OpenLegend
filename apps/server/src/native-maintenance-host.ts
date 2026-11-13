@@ -2,7 +2,11 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import type { HttpPublication } from '@open-legend/network';
 import type { ExecutionLease } from './cognition-execution.js';
 import { CognitionMaintenance } from './cognition-maintenance.js';
-import type { MaintenanceAdmission, MaintenanceHost } from './maintenance-host.js';
+import type {
+  MaintenanceActor,
+  MaintenanceAdmission,
+  MaintenanceHost,
+} from './maintenance-host.js';
 import type { NativeNpcMaintenancePorts } from './native-npc-director.js';
 import type { NativeWorldService } from './native-world-service.js';
 import type { NativeRecallRuntime } from './native-recall-service.js';
@@ -12,7 +16,12 @@ import { dispatchEmbedding } from './embedding-dispatch.js';
 import { nativeActivityLearning } from './native-activity-learning.js';
 import { prepareNativeMaintenanceReflection } from './native-maintenance-reflection.js';
 import { prepareNativeConsolidation } from './native-consolidation.js';
-import { copyNativeProduct, withNativeConsumerScope } from './native-consumer.js';
+import {
+  copyNativeProduct,
+  releaseNativeProduct,
+  retainNativeProduct,
+  withNativeConsumerScope,
+} from './native-consumer.js';
 
 /** Compose the same asynchronous scheduler/accounting owner as Source. All
  * private facts and every canonical mutation stay with actual native handles. */
@@ -146,19 +155,37 @@ function nativeMaintenanceHost(
       );
       try {
         // Scheduling consumes this finite snapshot after the native read ends.
-        // Give the returned data its own admission rather than a released borrow.
-        return copyNativeProduct(service.world, read.facts);
+        // Copy only the shared port, not the read's private queue/token arrays.
+        // Its explicit caller must also outlive any submitter's formatting scope.
+        const facts = read.facts;
+        return retainNativeProduct(
+          copyNativeProduct<MaintenanceActor>(service.world, {
+            actorId: facts.actorId,
+            name: facts.name,
+            alive: facts.alive,
+            available: facts.available,
+            reflectionSafe: facts.reflectionSafe,
+            bodyFence: facts.bodyFence,
+            hasAction: facts.hasAction,
+            activePlan: facts.activePlan,
+            simTime: facts.simTime,
+            lastReflectionAt: facts.lastReflectionAt,
+            ...(facts.dream ? { dream: facts.dream } : {}),
+            learningPending: facts.learningPending,
+          }),
+        );
       } finally {
         read.release();
       }
     },
-    rawDeadlines(actorId) {
+    releaseActorRead: (actor) => releaseNativeProduct(actor),
+    earliestRawDeadline(actorId, after) {
       return service.publishRecall(async () => {
         const read = await NativeMaintenanceRead.capture(service.world, actorId);
         try {
           // Raw deadlines still read the accepted native authority. Keep that
           // read in the same turn; an intervening candidate is private state.
-          return await read.rawDeadlines();
+          return await read.earliestRawDeadline(after);
         } finally {
           read.release();
         }

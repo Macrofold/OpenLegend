@@ -215,7 +215,7 @@ impl RestoreReconcileCursor {
                     // Source opens a default world draft for the first actual
                     // correction group or newly replayed forget operation.
                     if self.privacy.has_pending_edits(core) {
-                        core.materialize_world_edit()?;
+                        core.settle_numeric_prediction()?;
                     }
                     self.privacy_edit_materialized = true;
                 }

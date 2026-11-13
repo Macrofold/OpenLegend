@@ -367,9 +367,9 @@ pub(crate) fn apply_restore_archive_baseline(
             }),
         budget,
     )?;
-    // Source's privacy-maxima update always opens a default world draft after
-    // archive totals, even when there were no new replayed privacy operations.
-    core.materialize_world_edit()?;
+    // Archive/privacy bookkeeping changes no observation. Actual replayed
+    // corrections and forgetting revoke their affected evidence separately.
+    core.settle_numeric_prediction()?;
     for (actor, revision) in &input.privacy_revisions {
         core.journal.experience.restore_privacy_revision(
             &mut core.state.experience,

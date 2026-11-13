@@ -172,11 +172,20 @@ export function sourceMaintenanceHost(
     async actor(actorId) {
       return actorRead(service.world, actorId);
     },
-    async rawDeadlines(actorId) {
-      return [
-        ...(service.world.experience?.awareness[actorId] ?? []),
-        ...(service.world.memories[actorId] ?? []),
-      ].map((entry) => entry.at + EXPERIENCE_LIMITS.rawHours * 3600);
+    releaseActorRead() {
+      // Source snapshots contain ordinary JS values, with no allocation guard.
+    },
+    async earliestRawDeadline(actorId, after) {
+      let earliest = Infinity;
+      for (const entries of [
+        service.world.experience?.awareness[actorId],
+        service.world.memories[actorId],
+      ])
+        for (const entry of entries ?? []) {
+          const deadline = entry.at + EXPERIENCE_LIMITS.rawHours * 3600;
+          if (deadline > after) earliest = Math.min(earliest, deadline);
+        }
+      return earliest;
     },
     async admission(actorId, generation, purpose, requiresBody) {
       const actor = actorRead(service.world, actorId);

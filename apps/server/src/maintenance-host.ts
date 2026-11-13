@@ -107,7 +107,10 @@ export interface MaintenanceHost {
   refresh(work: ActorWork): Promise<void>;
   inspection(work: ActorWork, actorId: string): Promise<MaintenanceInspection>;
   actor(actorId: string): Promise<MaintenanceActor | undefined>;
-  rawDeadlines(actorId: string): Promise<readonly number[]>;
+  /** End the finite scheduling snapshot after all of its real consumers. */
+  releaseActorRead(actor: MaintenanceActor): void;
+  /** Compare against the caller's captured time, not a newer live clock. */
+  earliestRawDeadline(actorId: string, after: number): Promise<number>;
   admission(
     actorId: string,
     generation: string,

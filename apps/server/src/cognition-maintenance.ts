@@ -1,5 +1,6 @@
 import type {
   MaintenanceHost,
+  MaintenanceActor,
   MaintenanceAdmission,
   MaintenanceInspection,
 } from './maintenance-host.js';
@@ -275,42 +276,46 @@ export class CognitionMaintenance {
     if (this.host.config.jevOnly) return;
     if (!this.host.reflectionEnabled) return;
     const actor = await this.host.actor(actorId);
-    if (!actor?.alive) return;
-    const worldId = this.host.worldId,
-      actorName = actor.name;
-    const current = (await this.readSchedule(() =>
-      this.host.store.getIntegration(this.key(actorId)),
-    )) as ReflectionRequest | undefined;
-    const request = {
-      actorId,
-      origin,
-      reason,
-      at: current?.at ?? this.now(),
-    };
-    if (current?.reason === reason) return;
-    const retained = await this.writeSchedule(generation, async () => {
-      await this.host.store.putIntegration(this.key(actorId), request);
-    });
-    if (!retained) return;
-    this.work.wake(actorId);
-    const unavailable = !this.host.config.macrofoldKey
-      ? 'Reflection harness is not configured.'
-      : undefined;
-    await this.log.save({
-      id: `reflection-queued:${worldId}:${actorId}`,
-      kind: 'Reflection opportunity',
-      worldId,
-      actorId,
-      actorName,
-      trigger: 'A meaningful new experience was queued for reflection.',
-      triggerType: 'Background reflection opportunity',
-      startedAt: new Date(request.at).toISOString(),
-      status: unavailable ? 'completed' : 'running',
-      disposition: unavailable ? 'deferred' : current ? 'coalesced' : 'queued',
-      input: { origin, reason },
-      output: { reason: unavailable ?? 'Waiting for safe downtime and background capacity.' },
-      exchanges: [],
-    });
+    try {
+      if (!actor?.alive) return;
+      const worldId = this.host.worldId,
+        actorName = actor.name;
+      const current = (await this.readSchedule(() =>
+        this.host.store.getIntegration(this.key(actorId)),
+      )) as ReflectionRequest | undefined;
+      const request = {
+        actorId,
+        origin,
+        reason,
+        at: current?.at ?? this.now(),
+      };
+      if (current?.reason === reason) return;
+      const retained = await this.writeSchedule(generation, async () => {
+        await this.host.store.putIntegration(this.key(actorId), request);
+      });
+      if (!retained) return;
+      this.work.wake(actorId);
+      const unavailable = !this.host.config.macrofoldKey
+        ? 'Reflection harness is not configured.'
+        : undefined;
+      await this.log.save({
+        id: `reflection-queued:${worldId}:${actorId}`,
+        kind: 'Reflection opportunity',
+        worldId,
+        actorId,
+        actorName,
+        trigger: 'A meaningful new experience was queued for reflection.',
+        triggerType: 'Background reflection opportunity',
+        startedAt: new Date(request.at).toISOString(),
+        status: unavailable ? 'completed' : 'running',
+        disposition: unavailable ? 'deferred' : current ? 'coalesced' : 'queued',
+        input: { origin, reason },
+        output: { reason: unavailable ?? 'Waiting for safe downtime and background capacity.' },
+        exchanges: [],
+      });
+    } finally {
+      if (actor) this.host.releaseActorRead(actor);
+    }
   }
   private scheduling = false;
   private readRetryAt = 0;
@@ -400,6 +405,7 @@ export class CognitionMaintenance {
         for (const actorId of actors) {
           const initial = await this.host.actor(actorId);
           if (!initial) continue;
+          this.host.releaseActorRead(initial);
           if (this.stopped || this.host.paused || this.active) return;
           if (this.now() - times.get(actorId)! < 60000) {
             this.work.defer(actorId, times.get(actorId)! + 60000);
@@ -407,192 +413,203 @@ export class CognitionMaintenance {
           }
           const history = await this.readSchedule(() => this.host.memoryMaintenanceStatus(actorId));
           const actor = await this.host.actor(actorId);
-          if (!actor?.alive) continue;
-          const safe = actor.available,
-            reflectionSafe = actor.reflectionSafe;
-          const dream = actor.dream;
-          if (safe && !actor.hasAction && !actor.activePlan && actor.learningPending) {
-            const batch = await this.host.prepareActivityLearning(actorId);
-            if (batch.capacityBlocked) continue;
-            if (batch.candidates.length) {
-              await this.start(
-                actorId,
-                'activity-learning',
-                generation,
-                this.learnActivities.bind(this, batch),
-              );
-              return;
-            }
-            await this.host.publishActivityLearning(
-              batch,
-              [],
-              false,
-              undefined,
-              new AbortController().signal,
-            );
-          }
-          if (this.host.config.jevOnly) continue;
-          const future = [
-            (Math.floor(actor.simTime / 3600) + 1) * 3600,
-            actor.lastReflectionAt + 3600,
-            ...(dream ? [actor.simTime + dream.afterSeconds - dream.elapsedSeconds] : []),
-            ...(await this.host.rawDeadlines(actorId)),
-          ].filter((at) => at > actor.simTime);
-          if (
-            !(await inspections
-              .get(actorId)!
-              .acknowledge(future.reduce((earliest, at) => Math.min(earliest, at), Infinity)))
-          )
-            continue;
-          const dreamReady = safe && !!dream && dream.elapsedSeconds >= dream.afterSeconds;
-          const hasMemories = history.hasMemories;
-          const day = Math.floor(actor.simTime / 86400);
-          const reflectionDue =
-            reflectionSafe &&
-            reflectionTimeDueFromRead(
-              actor.simTime,
-              actor.lastReflectionAt,
-              actor.hasAction,
-              hasMemories,
-            );
-          // No source cleanup, completed dream day, new reflection or executable
-          // queued reflection means there is no maintenance metadata to inspect.
-          if (
-            !history.rawDue &&
-            !(dreamReady && day > 0) &&
-            !reflectionDue &&
-            !(safe && !actor.hasAction && this.host.config.macrofoldKey)
-          )
-            continue;
-          if (
-            reflectionDue &&
-            !(await this.readSchedule(() => this.host.store.getIntegration(this.key(actorId))))
-          )
-            await this.enqueue(
-              actorId,
-              'native-downtime',
-              'Safe idle time to reconsider remembered experience',
-              generation,
-            );
-
-          // Dream maintenance reviews a completed day in bounded, resumable partitions.
-          // It is separate from intentional idle reflection and never marks memories reflected.
-          const reviewKey = `memory-review:${this.host.worldId}:${actorId}`;
-          const savedReview = (await this.readSchedule(() =>
-            this.host.store.getIntegration(reviewKey),
-          )) as
-            | {
-                day: number;
-                completed?: boolean;
-                throughRevision?: number;
-                after?: { at: number; sequence: number; id: string };
-                failed?: boolean;
-                timeline?: string;
+          try {
+            if (!actor?.alive) continue;
+            const safe = actor.available,
+              reflectionSafe = actor.reflectionSafe;
+            const dream = actor.dream;
+            if (safe && !actor.hasAction && !actor.activePlan && actor.learningPending) {
+              const batch = await this.host.prepareActivityLearning(actorId);
+              if (batch.capacityBlocked) continue;
+              if (batch.candidates.length) {
+                await this.start(
+                  actorId,
+                  'activity-learning',
+                  generation,
+                  this.learnActivities.bind(this, batch),
+                );
+                return;
               }
-            | undefined;
-          const review =
-            savedReview?.timeline && savedReview.timeline !== this.host.timelineId
-              ? undefined
-              : savedReview;
-          const reviewDay =
-            review?.completed === false && review.failed === false ? review.day : day - 1;
-          const queued = (await this.readSchedule(() =>
-            this.host.store.getIntegration(this.key(actorId)),
-          )) as ReflectionRequest | undefined;
-          const previousKind = await this.readSchedule(() =>
-            this.host.store.getIntegration(`maintenance-kind:${this.host.worldId}:${actorId}`),
-          );
-          const prioritizeReflection =
-            reflectionSafe &&
-            !actor.hasAction &&
-            queued &&
-            previousKind === 'consolidation' &&
-            this.host.config.macrofoldKey;
-          if (
-            dreamReady &&
-            reviewDay >= 0 &&
-            (review?.day !== reviewDay ||
-              (review.completed === false && review.failed === false)) &&
-            !prioritizeReflection
-          ) {
-            const progress = review?.day === reviewDay ? review : { day: reviewDay };
-            const batch = await this.host.maintenanceBatch(actorId, 'daily', progress);
-            // A crash or failed partition cannot authorize automatic paid retry.
+              await this.host.publishActivityLearning(
+                batch,
+                [],
+                false,
+                undefined,
+                new AbortController().signal,
+              );
+            }
+            if (this.host.config.jevOnly) continue;
+            const future = [
+              (Math.floor(actor.simTime / 3600) + 1) * 3600,
+              actor.lastReflectionAt + 3600,
+              ...(dream ? [actor.simTime + dream.afterSeconds - dream.elapsedSeconds] : []),
+              await this.host.earliestRawDeadline(actorId, actor.simTime),
+            ].filter((at) => at > actor.simTime);
             if (
-              !(await this.writeSchedule(generation, () =>
-                this.host.store.putIntegration(reviewKey, {
-                  ...progress,
-                  timeline: this.host.timelineId,
-                  completed: !batch,
-                  failed: !!batch,
-                }),
-              ))
+              !(await inspections
+                .get(actorId)!
+                .acknowledge(future.reduce((earliest, at) => Math.min(earliest, at), Infinity)))
             )
-              return;
-            if (batch) {
+              continue;
+            const dreamReady = safe && !!dream && dream.elapsedSeconds >= dream.afterSeconds;
+            const hasMemories = history.hasMemories;
+            const day = Math.floor(actor.simTime / 86400);
+            const reflectionDue =
+              reflectionSafe &&
+              reflectionTimeDueFromRead(
+                actor.simTime,
+                actor.lastReflectionAt,
+                actor.hasAction,
+                hasMemories,
+              );
+            // No source cleanup, completed dream day, new reflection or executable
+            // queued reflection means there is no maintenance metadata to inspect.
+            if (
+              !history.rawDue &&
+              !(dreamReady && day > 0) &&
+              !reflectionDue &&
+              !(safe && !actor.hasAction && this.host.config.macrofoldKey)
+            )
+              continue;
+            if (
+              reflectionDue &&
+              !(await this.readSchedule(() => this.host.store.getIntegration(this.key(actorId))))
+            )
+              await this.enqueue(
+                actorId,
+                'native-downtime',
+                'Safe idle time to reconsider remembered experience',
+                generation,
+              );
+
+            // Dream maintenance reviews a completed day in bounded, resumable partitions.
+            // It is separate from intentional idle reflection and never marks memories reflected.
+            const reviewKey = `memory-review:${this.host.worldId}:${actorId}`;
+            const savedReview = (await this.readSchedule(() =>
+              this.host.store.getIntegration(reviewKey),
+            )) as
+              | {
+                  day: number;
+                  completed?: boolean;
+                  throughRevision?: number;
+                  after?: { at: number; sequence: number; id: string };
+                  failed?: boolean;
+                  timeline?: string;
+                }
+              | undefined;
+            const review =
+              savedReview?.timeline && savedReview.timeline !== this.host.timelineId
+                ? undefined
+                : savedReview;
+            const reviewDay =
+              review?.completed === false && review.failed === false ? review.day : day - 1;
+            const queued = (await this.readSchedule(() =>
+              this.host.store.getIntegration(this.key(actorId)),
+            )) as ReflectionRequest | undefined;
+            const previousKind = await this.readSchedule(() =>
+              this.host.store.getIntegration(`maintenance-kind:${this.host.worldId}:${actorId}`),
+            );
+            const prioritizeReflection =
+              reflectionSafe &&
+              !actor.hasAction &&
+              queued &&
+              previousKind === 'consolidation' &&
+              this.host.config.macrofoldKey;
+            if (
+              dreamReady &&
+              reviewDay >= 0 &&
+              (review?.day !== reviewDay ||
+                (review.completed === false && review.failed === false)) &&
+              !prioritizeReflection
+            ) {
+              const progress = review?.day === reviewDay ? review : { day: reviewDay };
+              const batch = await this.host.maintenanceBatch(actorId, 'daily', progress);
+              // A crash or failed partition cannot authorize automatic paid retry.
+              if (
+                !(await this.writeSchedule(generation, () =>
+                  this.host.store.putIntegration(reviewKey, {
+                    ...progress,
+                    timeline: this.host.timelineId,
+                    completed: !batch,
+                    failed: !!batch,
+                  }),
+                ))
+              )
+                return;
+              if (batch) {
+                await this.start(
+                  actorId,
+                  'consolidation',
+                  generation,
+                  this.consolidateReview.bind(
+                    this,
+                    actorId,
+                    batch,
+                    generation,
+                    reviewKey,
+                    reviewDay,
+                  ),
+                );
+                return;
+              }
+            }
+            const cleanupKey = `cleanup:${this.host.worldId}:${actorId}`;
+            const savedCleanup = (await this.readSchedule(() =>
+              this.host.store.getIntegration(cleanupKey),
+            )) as { hour: number; sourceDigest: string; timeline?: string } | undefined;
+            const previous =
+              savedCleanup?.timeline && savedCleanup.timeline !== this.host.timelineId
+                ? undefined
+                : savedCleanup;
+            const hour = Math.floor(actor.simTime / 3600);
+            const cleanupDue =
+              !prioritizeReflection &&
+              (previous?.hour !== hour || history.pressure || !!this.host.memoryBacklog);
+            const batch =
+              cleanupDue && history.rawDue
+                ? await this.host.maintenanceBatch(actorId, 'hourly')
+                : null;
+            if (batch && previous?.sourceDigest !== digest(batch.sources)) {
+              // Protected-only cleanup preserves exact native text and needs no thinking
+              // opportunity. Routine summarization must wait for the configured body gate.
+              if (batch.routine.length && !safe) continue;
+              if (
+                !(await this.writeSchedule(generation, () =>
+                  this.host.store.putIntegration(cleanupKey, {
+                    hour,
+                    timeline: this.host.timelineId,
+                    sourceDigest: digest(batch.sources),
+                  }),
+                ))
+              )
+                return;
               await this.start(
                 actorId,
                 'consolidation',
                 generation,
-                this.consolidateReview.bind(this, actorId, batch, generation, reviewKey, reviewDay),
+                this.consolidateOnly.bind(this, actorId, batch),
               );
               return;
             }
-          }
-          const cleanupKey = `cleanup:${this.host.worldId}:${actorId}`;
-          const savedCleanup = (await this.readSchedule(() =>
-            this.host.store.getIntegration(cleanupKey),
-          )) as { hour: number; sourceDigest: string; timeline?: string } | undefined;
-          const previous =
-            savedCleanup?.timeline && savedCleanup.timeline !== this.host.timelineId
-              ? undefined
-              : savedCleanup;
-          const hour = Math.floor(actor.simTime / 3600);
-          const cleanupDue =
-            !prioritizeReflection &&
-            (previous?.hour !== hour || history.pressure || !!this.host.memoryBacklog);
-          const batch =
-            cleanupDue && history.rawDue
-              ? await this.host.maintenanceBatch(actorId, 'hourly')
-              : null;
-          if (batch && previous?.sourceDigest !== digest(batch.sources)) {
-            // Protected-only cleanup preserves exact native text and needs no thinking
-            // opportunity. Routine summarization must wait for the configured body gate.
-            if (batch.routine.length && !safe) continue;
+            if (!reflectionSafe || actor.hasAction || !queued || !this.host.config.macrofoldKey)
+              continue;
+            const attemptKey = `reflection-attempt:${this.host.worldId}:${actorId}`;
+            const attempt = (await this.readSchedule(() =>
+              this.host.store.getIntegration(attemptKey),
+            )) as { day?: number } | undefined;
+            if (attempt?.day === day) continue;
             if (
-              !(await this.writeSchedule(generation, () =>
-                this.host.store.putIntegration(cleanupKey, {
-                  hour,
-                  timeline: this.host.timelineId,
-                  sourceDigest: digest(batch.sources),
-                }),
-              ))
+              !(await this.writeSchedule(generation, async () => {
+                await this.host.store.putIntegration(attemptKey, { day });
+                await this.host.store.putIntegration(this.key(actorId), null);
+              }))
             )
               return;
-            await this.start(
-              actorId,
-              'consolidation',
-              generation,
-              this.consolidateOnly.bind(this, actorId, batch),
-            );
+            await this.start(actorId, queued.reason, generation, this.reflect.bind(this, queued));
             return;
+          } finally {
+            if (actor) this.host.releaseActorRead(actor);
           }
-          if (!reflectionSafe || actor.hasAction || !queued || !this.host.config.macrofoldKey)
-            continue;
-          const attemptKey = `reflection-attempt:${this.host.worldId}:${actorId}`;
-          const attempt = (await this.readSchedule(() =>
-            this.host.store.getIntegration(attemptKey),
-          )) as { day?: number } | undefined;
-          if (attempt?.day === day) continue;
-          if (
-            !(await this.writeSchedule(generation, async () => {
-              await this.host.store.putIntegration(attemptKey, { day });
-              await this.host.store.putIntegration(this.key(actorId), null);
-            }))
-          )
-            return;
-          await this.start(actorId, queued.reason, generation, this.reflect.bind(this, queued));
-          return;
         }
       } finally {
         // One rejected setup cannot abandon siblings still acquiring their
@@ -739,48 +756,56 @@ export class CognitionMaintenance {
         output: { jobId: id },
       });
     const recurring = ['Hourly consolidation', 'Daily dream review'].includes(trigger);
-    const root = {
-      id,
-      worldId: this.host.worldId,
-      actorId,
-      actorName: (await this.host.actor(actorId))?.name ?? actorId,
-      trigger: recurring ? trigger : 'A queued experience is being reconsidered.',
-      triggerType:
-        trigger === 'Daily dream review'
-          ? 'Dream review'
-          : trigger === 'Hourly consolidation'
-            ? 'Memory maintenance'
-            : 'Background reflection',
-      kind: 'Semantic trigger',
-      route: recurring ? 'summary' : 'level5',
-      gameTime: this.host.simTime,
-      startedAt: new Date().toISOString(),
-      status: 'running' as const,
-      input: { origin, stimulus: trigger },
-      exchanges: [],
-    };
-    await this.log.save(root);
+    const worldId = this.host.worldId;
+    const actor = await this.host.actor(actorId);
     try {
-      await this.log.withTrigger(id, () =>
-        this.executionLease
-          ? this.host.withExecution(actorId, id, this.executionLease, () => execute(job))
-          : execute(job),
-      );
-      job.status = 'completed';
-      job.message = 'Maintenance accepted.';
-    } catch (error) {
-      job.status = this.active?.signal.aborted ? 'cancelled' : 'failed';
-      job.message = error instanceof Error ? error.message : 'Maintenance failed.';
+      // The same root supplies the terminal log after execution, so keep its
+      // actor snapshot through that final use, not only the first log write.
+      const root = {
+        id,
+        worldId,
+        actorId,
+        actorName: actor?.name ?? actorId,
+        trigger: recurring ? trigger : 'A queued experience is being reconsidered.',
+        triggerType:
+          trigger === 'Daily dream review'
+            ? 'Dream review'
+            : trigger === 'Hourly consolidation'
+              ? 'Memory maintenance'
+              : 'Background reflection',
+        kind: 'Semantic trigger',
+        route: recurring ? 'summary' : 'level5',
+        gameTime: this.host.simTime,
+        startedAt: new Date().toISOString(),
+        status: 'running' as const,
+        input: { origin, stimulus: trigger },
+        exchanges: [],
+      };
+      await this.log.save(root);
+      try {
+        await this.log.withTrigger(id, () =>
+          this.executionLease
+            ? this.host.withExecution(actorId, id, this.executionLease, () => execute(job))
+            : execute(job),
+        );
+        job.status = 'completed';
+        job.message = 'Maintenance accepted.';
+      } catch (error) {
+        job.status = this.active?.signal.aborted ? 'cancelled' : 'failed';
+        job.message = error instanceof Error ? error.message : 'Maintenance failed.';
+      } finally {
+        job.completedAt = this.now();
+        await this.host.store.putJob(job);
+        await this.log.save({
+          ...root,
+          status: job.status === 'completed' ? 'completed' : 'failed',
+          disposition: job.status,
+          completedAt: new Date().toISOString(),
+          output: { message: job.message },
+        });
+      }
     } finally {
-      job.completedAt = this.now();
-      await this.host.store.putJob(job);
-      await this.log.save({
-        ...root,
-        status: job.status === 'completed' ? 'completed' : 'failed',
-        disposition: job.status,
-        completedAt: new Date().toISOString(),
-        output: { message: job.message },
-      });
+      if (actor) this.host.releaseActorRead(actor);
     }
   }
   private async paid<T>(
@@ -942,144 +967,155 @@ export class CognitionMaintenance {
     controller: AbortController,
   ): Promise<boolean> {
     let committed = false;
-    if (this.activeAdmission)
-      this.activeAdmission.requiresBody = batch.mode === 'daily' || batch.routine.length > 0;
-    if (batch.mode === 'daily') {
-      const dream = (await this.host.actor(actorId))?.dream;
-      if (!this.activeAdmission || !dream || dream.elapsedSeconds < dream.afterSeconds)
-        throw new Error('The configured dream opportunity is no longer available.');
-      this.activeAdmission.dreamEpisode = dream.episode;
-    }
-    await this.assertAdmission();
-    await this.job(
-      actorId,
-      batch.mode === 'daily' ? 'Daily dream review' : 'Hourly consolidation',
-      `native-${batch.mode}`,
-      async (job) => {
-        const c = this.host.config;
-        const prepared = await this.host.prepareConsolidation({
-          actorId,
-          batch,
-          job,
-          admission: this.activeAdmission!,
-          signal: controller.signal,
-        });
-        try {
-          let interpretation: unknown;
-          const groups = batch.protected.map((source) => ({
-            sourceKeys: [experienceEntryKey(source)],
-            text: experienceReading(source, actorId).summary,
-          }));
-          if (batch.routine.length) {
-            const positions = new Map(
-              batch.sources.map((source, i) => [experienceEntryKey(source), i]),
-            );
-            const requests = prepared.requests;
-            for (const [index, { context, handles }] of requests.entries()) {
-              const offered = await prepared.request(index, context, handles);
-              const { schema, interpreting } = offered;
-              const request: GenerateRequest = {
-                requestId: `${job.id}:summary:${index}`,
-                actorScope: actorId,
-                execution: 'fast',
-                model: c.macrofoldKey ? c.macrofoldSummaryModel : c.summaryModel,
-                reasoningEffort: interpreting ? LEVEL_LIMITS[5].effort : 'low',
-                maxOutputTokens: CONSOLIDATION_OUTPUT_TOKENS,
-                task: 'memory_consolidation',
-                instructions:
-                  CONSOLIDATION_INSTRUCTIONS +
-                  (interpreting
-                    ? ' Optionally include interpretation to retain a useful imagined dream or private realization. All its upserted records must use source imagined. Link records to existing mind document IDs or return complete files with identity.md preserved exactly. Use only the supplied subject and source handles. Preserve all unchanged records, protected identity and active obligations; omit interpretation when unwarranted. Keep thoughts brief. Never turn dream content into witnessed facts.'
-                    : ' Omit interpretation; this request only consolidates its supplied sources.'),
-                context: offered.context,
-                schema: z.toJSONSchema(schema, { target: 'draft-7' }),
-                signal: controller.signal,
-              };
-              if (
-                Buffer.byteLength(JSON.stringify(request.context)) +
-                  Buffer.byteLength(request.instructions) >
-                500000
-              )
-                throw new Error('Consolidation context exceeds its admitted input budget.');
-              const value = schema.parse(
-                await this.paid(
-                  request.requestId,
-                  'openai',
-                  (publication) => this.client.generate<unknown>({ ...request, publication }),
-                  request.model,
-                  undefined,
-                  offered.publication,
-                ),
+    let actor: MaintenanceActor | undefined;
+    let dreamAdmission: MaintenanceAdmission | undefined;
+    try {
+      if (this.activeAdmission)
+        this.activeAdmission.requiresBody = batch.mode === 'daily' || batch.routine.length > 0;
+      if (batch.mode === 'daily') {
+        actor = await this.host.actor(actorId);
+        const dream = actor?.dream;
+        if (!this.activeAdmission || !dream || dream.elapsedSeconds < dream.afterSeconds)
+          throw new Error('The configured dream opportunity is no longer available.');
+        dreamAdmission = this.activeAdmission;
+        dreamAdmission.dreamEpisode = dream.episode;
+      }
+      await this.assertAdmission();
+      await this.job(
+        actorId,
+        batch.mode === 'daily' ? 'Daily dream review' : 'Hourly consolidation',
+        `native-${batch.mode}`,
+        async (job) => {
+          const c = this.host.config;
+          const prepared = await this.host.prepareConsolidation({
+            actorId,
+            batch,
+            job,
+            admission: this.activeAdmission!,
+            signal: controller.signal,
+          });
+          try {
+            let interpretation: unknown;
+            const groups = batch.protected.map((source) => ({
+              sourceKeys: [experienceEntryKey(source)],
+              text: experienceReading(source, actorId).summary,
+            }));
+            if (batch.routine.length) {
+              const positions = new Map(
+                batch.sources.map((source, i) => [experienceEntryKey(source), i]),
               );
-              if (value.interpretation) {
-                if (!interpreting)
-                  throw new Error(
-                    'This consolidation did not offer an interpretation publication.',
-                  );
-                interpretation = offered.interpretation(value.interpretation);
-              }
-              if (!value.feasible || !value.groups.length)
-                throw new Error(
-                  'Model declined faithful consolidation or returned no groups; original memories retained.',
-                );
-              const covered = new Set<string>();
-              let previousPosition = -1;
-              for (const group of value.groups) {
-                const groupPositions = group.sourceIds.map((handle) => {
-                  const source = handles.get(handle);
-                  if (!source || covered.has(handle))
-                    throw new Error('Consolidation returned unknown or repeated source handles.');
-                  covered.add(handle);
-                  return positions.get(experienceEntryKey(source))!;
-                });
+              const requests = prepared.requests;
+              for (const [index, { context, handles }] of requests.entries()) {
+                const offered = await prepared.request(index, context, handles);
+                const { schema, interpreting } = offered;
+                const request: GenerateRequest = {
+                  requestId: `${job.id}:summary:${index}`,
+                  actorScope: actorId,
+                  execution: 'fast',
+                  model: c.macrofoldKey ? c.macrofoldSummaryModel : c.summaryModel,
+                  reasoningEffort: interpreting ? LEVEL_LIMITS[5].effort : 'low',
+                  maxOutputTokens: CONSOLIDATION_OUTPUT_TOKENS,
+                  task: 'memory_consolidation',
+                  instructions:
+                    CONSOLIDATION_INSTRUCTIONS +
+                    (interpreting
+                      ? ' Use interpretation to retain a useful imagined dream or private realization, or return null when unwarranted. All its upserted records must use source imagined. Link records to existing mind document IDs or return complete files with identity.md preserved exactly; return files as null when unchanged. Use only the supplied subject and source handles. Preserve all unchanged records, protected identity and active obligations. Keep thoughts brief. Never turn dream content into witnessed facts.'
+                      : ' Return interpretation as null; this request only consolidates its supplied sources.'),
+                  context: offered.context,
+                  schema: z.toJSONSchema(schema, { target: 'draft-7' }),
+                  signal: controller.signal,
+                };
                 if (
-                  groupPositions.some(
-                    (position, i) =>
-                      position <= previousPosition ||
-                      (i > 0 && position !== groupPositions[i - 1]! + 1),
-                  )
+                  Buffer.byteLength(JSON.stringify(request.context)) +
+                    Buffer.byteLength(request.instructions) >
+                  500000
                 )
+                  throw new Error('Consolidation context exceeds its admitted input budget.');
+                const value = schema.parse(
+                  await this.paid(
+                    request.requestId,
+                    'openai',
+                    (publication) => this.client.generate<unknown>({ ...request, publication }),
+                    request.model,
+                    undefined,
+                    offered.publication,
+                  ),
+                );
+                if (value.interpretation) {
+                  if (!interpreting)
+                    throw new Error(
+                      'This consolidation did not offer an interpretation publication.',
+                    );
+                  interpretation = offered.interpretation(value.interpretation);
+                }
+                if (!value.feasible || !value.groups.length)
                   throw new Error(
-                    'Consolidation changed chronological order or crossed an intervening memory.',
+                    'Model declined faithful consolidation or returned no groups; original memories retained.',
                   );
-                previousPosition = groupPositions.at(-1)!;
-              }
-              if (covered.size !== handles.size)
-                throw new Error('Consolidation did not cover every routine source exactly once.');
-              groups.push(
-                ...value.groups.map((group) => ({
-                  text: group.text,
-                  sourceKeys: group.sourceIds.map((handle) => {
+                const covered = new Set<string>();
+                let previousPosition = -1;
+                for (const group of value.groups) {
+                  const groupPositions = group.sourceIds.map((handle) => {
                     const source = handles.get(handle);
-                    if (!source) throw new Error('Unknown consolidation source handle.');
-                    return experienceEntryKey(source);
-                  }),
-                })),
+                    if (!source || covered.has(handle))
+                      throw new Error('Consolidation returned unknown or repeated source handles.');
+                    covered.add(handle);
+                    return positions.get(experienceEntryKey(source))!;
+                  });
+                  if (
+                    groupPositions.some(
+                      (position, i) =>
+                        position <= previousPosition ||
+                        (i > 0 && position !== groupPositions[i - 1]! + 1),
+                    )
+                  )
+                    throw new Error(
+                      'Consolidation changed chronological order or crossed an intervening memory.',
+                    );
+                  previousPosition = groupPositions.at(-1)!;
+                }
+                if (covered.size !== handles.size)
+                  throw new Error('Consolidation did not cover every routine source exactly once.');
+                groups.push(
+                  ...value.groups.map((group) => ({
+                    text: group.text,
+                    sourceKeys: group.sourceIds.map((handle) => {
+                      const source = handles.get(handle);
+                      if (!source) throw new Error('Unknown consolidation source handle.');
+                      return experienceEntryKey(source);
+                    }),
+                  })),
+                );
+              }
+              groups.sort(
+                (a, b) =>
+                  Math.min(...a.sourceKeys.map((id) => positions.get(id)!)) -
+                  Math.min(...b.sourceKeys.map((id) => positions.get(id)!)),
               );
             }
-            groups.sort(
-              (a, b) =>
-                Math.min(...a.sourceKeys.map((id) => positions.get(id)!)) -
-                Math.min(...b.sourceKeys.map((id) => positions.get(id)!)),
-            );
+            await this.log.record(`${job.id}:coverage`, 'Consolidation coverage', {
+              mode: batch.mode,
+              sources: batch.sources.map(experienceEntryKey),
+              groups,
+            });
+            if (controller.signal.aborted || this.host.paused)
+              throw new Error('Consolidation canceled before publication.');
+            const accepted = await prepared.publish(groups, interpretation);
+            if (!accepted.ok) throw new Error(accepted.message);
+            committed = true;
+            await this.log.record(`${job.id}:publication`, 'Summary publication', {}, accepted);
+          } finally {
+            prepared.dispose();
           }
-          await this.log.record(`${job.id}:coverage`, 'Consolidation coverage', {
-            mode: batch.mode,
-            sources: batch.sources.map(experienceEntryKey),
-            groups,
-          });
-          if (controller.signal.aborted || this.host.paused)
-            throw new Error('Consolidation canceled before publication.');
-          const accepted = await prepared.publish(groups, interpretation);
-          if (!accepted.ok) throw new Error(accepted.message);
-          committed = true;
-          await this.log.record(`${job.id}:publication`, 'Summary publication', {}, accepted);
-        } finally {
-          prepared.dispose();
-        }
-      },
-    );
-    return committed;
+        },
+      );
+      return committed;
+    } finally {
+      // The episode also lives in activeAdmission through every awaited
+      // publication check inside the complete consolidation/job invocation.
+      if (dreamAdmission) delete dreamAdmission.dreamEpisode;
+      if (actor) this.host.releaseActorRead(actor);
+    }
   }
   private async learnActivities(
     batch: Awaited<ReturnType<MaintenanceHost['prepareActivityLearning']>>,

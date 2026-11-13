@@ -257,12 +257,7 @@ impl ParticipationCursor {
     }
     fn materialize_edit(&self, core: &mut CoreMutation<'_>) -> Result<(), ExecutionError> {
         if self.finalize {
-            // Source's accepted participation edit materializes earned values.
-            // Keep their existing sensory invalidation: settling these anchors
-            // must not make cold startup withdraw unrelated current bodies.
-            // docs/save-and-load.md#continuation-and-identity
-            core.physical().settle_all_numeric_values()?;
-            core.state.physical.header.native_interval = None;
+            core.settle_numeric_prediction()?;
         }
         Ok(())
     }

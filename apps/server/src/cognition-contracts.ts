@@ -152,13 +152,19 @@ export const DECISION_INSTRUCTIONS =
 export const REFLECTION_INSTRUCTIONS = `${DECISION_INSTRUCTIONS} Reflect privately on what this experience means to you. Reconsider relevant beliefs, relationships, goals and unresolved concerns, preserving contrary evidence and uncertainty. Update your lasting perspective when warranted; a routine inventory recap is not an insight. There is no listener to answer. Final presentation thoughts should express a brief private realization, concern or intention, without claiming it already happened. Return goalChanges as an empty array unless an operational intention should change. Copy supplied goal IDs and revisions for updates. Editing mind prose never changes operational goals; use typed goalChanges for create, revise, pause, resume, complete or abandon.`;
 export const REFLECTION_WORKSPACE_INSTRUCTIONS = `${REFLECTION_INSTRUCTIONS} Reflect using only the supplied context and accepted identity files in mind/*.md. Preserve identity.md exactly. Other mind files describe self-understanding only, within ten files, 500 words and 8000 UTF-8 bytes per file; they must not duplicate external knowledge. Edit knowledge through optional knowledgeChanges, and observer-specific given names through nameChanges in the final JSON; both are usually empty. Use the supplied subject tokens and document revisions. Follow the supplied knowledge policy and character limits. Rewrite or summarize to fit, preserving uncertainty. These pads hold current understanding; experienced events remain in memory. Durable scratch counts. Preserve identity.md exactly and native obligations. Do not read old sessions or other paths. Complete within eight tool operations; stop rather than repair invalid output. Return the specified JSON with one to three presentation thoughts (each at most twenty words) and goalChanges (usually empty). Return full replacement text only for changed knowledge pads. Use appraisalChanges only for supported private interpretations, usually empty. Copy supplied feeling handles/revisions, policy and cause handles, and subject tokens. For create, appraisal and expectedRevision are null; select policy, source and an optional subject. For reframe, select appraisal, expectedRevision and source; policy and subject are null. For resolve, only appraisal and expectedRevision are non-null. Qualitative values are null. Never claim a typed change in prose unless proposing it atomically. Use optional recordChanges to create, revise or remove structured interpretations linked to a returned mind file documentId (filename without .md). Copy record IDs and expectedRevision; new records use zero. Use only supplied subject and evidence handles. Preserve protected identity and active commitments; confidence and trust are subjective. A prose edit alone does not update these records. Omitted records remain. Remove or rebind unprotected records explicitly before removing their file. Do not echo identity file contents.`;
 
-function recordChangesSchema(
-  subject: z.ZodType<string> = z.string().max(120),
-  evidence: z.ZodType<string> = z.string().max(120),
-) {
+function recordChangesSchema(subjects?: string[], sources?: string[]) {
+  const subject =
+    subjects === undefined
+      ? z.string().max(120).nullable()
+      : subjects.length
+        ? z.enum(subjects as [string, ...string[]]).nullable()
+        : z.null();
+  const evidence = sources?.length ? z.enum(sources as [string, ...string[]]) : z.string().max(120);
   return z
     .array(
-      z.discriminatedUnion('operation', [
+      // Disjoint operation constants preserve the exact alternatives while
+      // emitting the providers' supported anyOf rather than oneOf.
+      z.union([
         z
           .object({
             operation: z.literal('remove'),
@@ -182,9 +188,7 @@ function recordChangesSchema(
               'reflection',
               'dream',
             ]),
-            subjectId: subject
-              .nullable()
-              .describe('An offered interpretationSubjects handle, or null.'),
+            subjectId: subject.describe('An offered interpretationSubjects handle, or null.'),
             source: z.enum(['inferred', 'imagined']),
             confidence: z.number().finite().min(0).max(1),
             trust: z.number().finite().min(-1).max(1).nullable(),
@@ -198,13 +202,14 @@ function recordChangesSchema(
                   })
                   .strict(),
               )
-              .max(16),
+              // No offered sources means no evidence entries, without a
+              // z.never/not schema that the inference dialect cannot consume.
+              .max(sources?.length === 0 ? 0 : 16),
           })
           .strict(),
       ]),
     )
-    .max(160)
-    .default([]);
+    .max(160);
 }
 export type ReflectionRecordChange = z.infer<ReturnType<typeof recordChangesSchema>>[number];
 export const reflectionSchema = z
@@ -216,7 +221,7 @@ export const reflectionSchema = z
           .object({
             kind: z.enum(['create', 'reframe', 'resolve']),
             appraisal: z.string().max(120).nullable(),
-            expectedRevision: z.number().int().positive().nullable(),
+            expectedRevision: z.number().int().min(1).nullable(),
             policy: z.string().max(120).nullable(),
             source: z.string().max(120).nullable(),
             subject: z.string().max(120).nullable(),
@@ -224,8 +229,7 @@ export const reflectionSchema = z
           })
           .strict(),
       )
-      .max(8)
-      .default([]),
+      .max(8),
     knowledgeChanges: z.array(operationSchema.shape.note.unwrap()).max(16),
     nameChanges: z.array(operationSchema.shape.name.unwrap()).max(16),
     goalChanges: z.array(operationSchema.shape.goal.unwrap()).max(8),
@@ -269,14 +273,11 @@ export const summarySchema = z
   })
   .strict();
 
-function offeredReference(handles: string[]) {
-  return handles.length ? z.enum(handles as [string, ...string[]]) : z.never();
-}
 /** Reflection and daily interpretation expose the same finite publication cut.
  * Trigger bookkeeping and physical action handles are not durable person identities. */
 export function boundReflectionSchema(subjects: string[], evidence: string[]) {
   return reflectionSchema.extend({
-    recordChanges: recordChangesSchema(offeredReference(subjects), offeredReference(evidence)),
+    recordChanges: recordChangesSchema(subjects, evidence),
   });
 }
 export function boundSummarySchema(subjects: string[], evidence: string[]) {
@@ -284,9 +285,12 @@ export function boundSummarySchema(subjects: string[], evidence: string[]) {
     interpretation: summarySchema.shape.interpretation
       .unwrap()
       .extend({
-        recordChanges: recordChangesSchema(offeredReference(subjects), offeredReference(evidence)),
+        files: summarySchema.shape.interpretation.unwrap().shape.files.unwrap().nullable(),
+        recordChanges: recordChangesSchema(subjects, evidence),
       })
-      .optional(),
+      // Strict inference requires every property. Null preserves the existing
+      // decision to offer no interpretation; it is not an empty publication.
+      .nullable(),
   });
 }
 export const LEVEL_LIMITS = {

@@ -217,8 +217,10 @@ impl RuntimeConsolidationDream {
             return Err(failure("dream interpretation has unknown fields"));
         }
         let files = match raw.shift_remove("files") {
+            // Strict inference uses null for unchanged files. Resolve against
+            // this admitted ticket, never a newer live mind or provider data.
+            Some(SqlCell::Null) | None => serde_json::from_str(&ticket.files).map_err(failure)?,
             Some(value) => value,
-            None => serde_json::from_str(&ticket.files).map_err(failure)?,
         };
         let thoughts = raw
             .shift_remove("thoughts")
