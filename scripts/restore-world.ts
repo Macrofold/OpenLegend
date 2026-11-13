@@ -2,7 +2,7 @@ import { entityKeys } from '../packages/domain/src/index.js';
 import { initializeCollisionRuntime } from '../packages/spatial/src/rapier.js';
 import { MEMORY_HISTORY_TABLES } from '../apps/server/src/memory-repository.js';
 import { HISTORY_TABLES } from '../apps/server/src/history.js';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type { CommandEpoch } from '../apps/server/src/command-receipts.js';
 import { retainHotEvents } from '../apps/server/src/hot-events.js';
 import type { WorldEvent } from '@open-legend/domain';
@@ -23,7 +23,7 @@ import {
   restoreDirectoryOwner,
   type RestoreAttempt,
 } from '../apps/server/src/operational-restore-attempt.js';
-import { recoveryFile, SAVE_FORMAT } from '../apps/server/src/game-saves.js';
+import { recoveryFile, SAVE_FORMAT, type SavePayload } from '../apps/server/src/game-saves.js';
 import { GameSaves } from '../apps/server/src/game-saves.js';
 import { SaveFiles } from '../apps/server/src/save-files.js';
 import { readConfig } from '../apps/server/src/config.js';
@@ -48,12 +48,13 @@ import { tmpdir } from 'node:os';
 // Initialize native geometry before constructing or validating recovered world state.
 await initializeCollisionRuntime();
 
-const file = process.argv[2];
-if (!file)
+const checkpointMode = process.argv[2] === '--checkpoint';
+const source = process.argv[checkpointMode ? 3 : 2];
+if (!source)
   throw new Error(
-    'Usage: restore-world.ts BACKUP_DIRECTORY. Stop the server first. This restores world state while preserving current paid attempts and privacy records.',
+    'Usage: restore-world.ts BACKUP_DIRECTORY | --checkpoint SAVE_ID. Stop the server first. Checkpoints use the target data directory. Current paid attempts, access and privacy records are preserved.',
   );
-if (!statSync(file).isDirectory())
+if (!checkpointMode && !statSync(source).isDirectory())
   throw new Error(
     'Current-format backup directory required; legacy JSON is unsupported. Source retained.',
   );
@@ -119,13 +120,50 @@ async function currentAllocationFloor(head: {
 }
 try {
   await store.ready;
-  const backup = await readOperationalBackup(file, store.db);
   const head = await store.records.head();
   if (
     head &&
     (!head.worldId || !Number.isSafeInteger(head.revision) || head.revision < 0 || !head.generation)
   )
     throw new Error('The target operational world head is unusable; restore refused.');
+  let backup: Awaited<ReturnType<typeof readOperationalBackup>> | undefined;
+  let payload: SavePayload;
+  let sourceIdentity: string;
+  if (checkpointMode) {
+    if (!head)
+      throw new Error(
+        'Checkpoint recovery requires an existing operational world head; use a complete operational backup for an empty target.',
+      );
+    // A local retained slot carries its actual target-owned asset binding. An
+    // external package cannot borrow that grant merely by presenting its UUID.
+    const files = new SaveFiles(join(config.dataDirectory, 'saves'));
+    const metadata = await files.metadata(source);
+    if (!metadata) throw new Error('The retained checkpoint is unavailable; target retained.');
+    payload = await store.saves.read(head.worldId, metadata.id);
+    sourceIdentity = createHash('sha256')
+      .update(
+        JSON.stringify(['retained-checkpoint', metadata.id, metadata.worldId, metadata.checksum]),
+      )
+      .digest('hex');
+  } else {
+    backup = await readOperationalBackup(source, store.db);
+    const backupTables = backup.tables;
+    payload = {
+      format: SAVE_FORMAT,
+      state: backup.state,
+      history: Object.fromEntries(
+        HISTORY_TABLES.map((table) => [table, backupTables[table] ?? []]),
+      ) as SavePayload['history'],
+      memory: Object.fromEntries(
+        MEMORY_HISTORY_TABLES.map((table) => [table, backupTables[table] ?? []]),
+      ) as NonNullable<SavePayload['memory']>,
+    };
+    sourceIdentity = backup.identity;
+  }
+  const tables: Record<string, Record<string, unknown>[]> = backup?.tables ?? {
+    ...payload.history,
+    ...payload.memory,
+  };
   let current: Awaited<ReturnType<SqlGameRepository['load']>> = null;
   if (head) {
     try {
@@ -140,7 +178,7 @@ try {
   // Keep the validated checkpoint separate from the restored candidate: current
   // privacy and new receipt epochs deliberately change the installed state,
   // while its original history must still validate against the captured state.
-  let state = structuredClone(backup.state);
+  let state = structuredClone(payload.state);
   validateCurrentWorldState(state.world);
   const fenceCommands = async () => {
     const key = `command-epoch:${state.world.id}`;
@@ -151,7 +189,7 @@ try {
       token: randomUUID(),
     });
   };
-  const archived = (backup.tables['history_events'] ?? []).filter(
+  const archived = (tables['history_events'] ?? []).filter(
     (row) => row['world_id'] === state.world.id,
   );
   if (
@@ -161,7 +199,7 @@ try {
     throw new Error('Backup is missing archived history; full restore refused.');
   if (head && state.world.id !== head.worldId) throw new Error('World identity mismatch.');
   let assetPrincipal: { accountId: string } | undefined;
-  const assetRestoreKey = `full-restore-asset-authority:${backup.identity}`;
+  const assetRestoreKey = `full-restore-asset-authority:${sourceIdentity}`;
   const assetRestore = (await store.getIntegration(assetRestoreKey)) as
     | { status: 'pending' | 'complete'; worldId: string; attemptId: string }
     | undefined;
@@ -250,8 +288,11 @@ try {
       'Interrupted full restore completed; independently current asset permissions verified.',
     );
   } else if (!head) {
-    const tables = BACKUP_TABLES.filter((table) => table !== 'meta');
-    for (const table of tables)
+    // Only a complete backup supplies current operational authority to a new
+    // target. The checkpoint branch already requires its existing world head.
+    if (!backup) throw new Error('Full operational backup required for an empty target.');
+    const operationTables = BACKUP_TABLES.filter((table) => table !== 'meta');
+    for (const table of operationTables)
       if (
         Number((await store.db.prepare(`SELECT COUNT(*) AS count FROM ${table}`).get())?.['count'])
       )
@@ -273,7 +314,7 @@ try {
     });
     await restoreBackupSlots(backup, config.dataDirectory, attempt.id);
     await store.db.transaction(async () => {
-      for (const table of [...tables, 'meta']) {
+      for (const table of [...operationTables, 'meta']) {
         for (const row of backup.tables[table] ?? []) {
           const columns = Object.keys(row);
           if (!columns.length || columns.some((key) => !/^[a-z_][a-z0-9_]*$/.test(key)))
@@ -346,7 +387,7 @@ try {
     if (referenced) keep = new Set([referenced]);
     // Healthy targets retain the normal pre-load checkpoint promise. A corrupt
     // gameplay target cannot honestly be published as a valid game checkpoint;
-    // SQL rollback and the unchanged source backup protect failed replacement.
+    // SQL rollback and the unchanged source package protect failed replacement.
     if (current) recoveryId = randomUUID();
     const identityFloor = current?.state.world.nextId ?? (await currentAllocationFloor(head));
     const entityIds = (
@@ -361,11 +402,11 @@ try {
       directoryOwner,
       worldId: state.world.id,
       startingRevision: head.revision,
-      saves: backup.saves ?? [],
-      preexisting: await preexistingRestoreSlots(config.dataDirectory, backup.saves ?? []),
+      saves: backup?.saves ?? [],
+      preexisting: await preexistingRestoreSlots(config.dataDirectory, backup?.saves ?? []),
       recoveryId,
     });
-    await restoreBackupSlots(backup, config.dataDirectory, attempt.id, keep);
+    if (backup) await restoreBackupSlots(backup, config.dataDirectory, attempt.id, keep);
     validateCurrentWorldState(state.world);
     state.world.nextId = Math.max(state.world.nextId, identityFloor);
     await store.authority.restoreBindings(state.world);
@@ -379,7 +420,7 @@ try {
     const retention = await store.prepareRetainedSourceClosure(
       state,
       true,
-      backup.tables['mind_source_versions'] ?? [],
+      tables['mind_source_versions'] ?? [],
     );
     state = retention.state;
     state.world = updateWorld(state.world, (world) => {
@@ -430,7 +471,7 @@ try {
       });
     }
     await store.db.transaction(async () => {
-      for (const row of backup.tables['memory_vector_cache'] ?? []) {
+      for (const row of tables['memory_vector_cache'] ?? []) {
         if (row['world_id'] !== state.world.id)
           throw new Error('Backup vector cache belongs to another world.');
         await store.db
@@ -447,24 +488,13 @@ try {
             ].map((key) => row[key]),
           );
       }
-      for (const row of backup.tables['gameplay_receipts'] ?? [])
+      for (const row of tables['gameplay_receipts'] ?? [])
         await store.db
           .prepare('INSERT INTO gameplay_receipts VALUES (?,?,?,?,?) ON CONFLICT DO NOTHING')
           .run(row['world_id'], row['id'], row['epoch'], row['expires_at'], row['payload']);
       await fenceCommands();
       // Use the normal restore contract so timeline and vector publication are fenced.
       const epoch = (await store.getIntegration(`command-epoch:${state.world.id}`)) as CommandEpoch;
-      const payload = {
-        // The backup's gameplay checkpoint is a current-format save package.
-        format: SAVE_FORMAT,
-        state: backup.state,
-        history: Object.fromEntries(
-          HISTORY_TABLES.map((table) => [table, backup.tables[table] ?? []]),
-        ) as import('../apps/server/src/game-saves.js').SavePayload['history'],
-        memory: Object.fromEntries(
-          MEMORY_HISTORY_TABLES.map((table) => [table, backup.tables[table] ?? []]),
-        ) as NonNullable<import('../apps/server/src/game-saves.js').SavePayload['memory']>,
-      };
       await store.restoreAdministrative(
         head.revision,
         state,
@@ -476,7 +506,7 @@ try {
           entityIds,
         },
         {
-          id: 'backup',
+          id: checkpointMode ? source : 'backup',
           requestId: randomUUID(),
           payload,
           epoch,
@@ -507,7 +537,7 @@ try {
     try {
       const result = await reconcileRestoreAttempt(store, config.dataDirectory, attempt);
       console.error(
-        `Restore failed before its database commit; removed ${result.removed.length} attempt-owned slot(s)${result.retained.length ? `, kept ${result.retained.join(', ')} for inspection` : ''}. The source backup is unchanged.`,
+        `Restore failed before its database commit; removed ${result.removed.length} attempt-owned slot(s)${result.retained.length ? `, kept ${result.retained.join(', ')} for inspection` : ''}. The source package is unchanged.`,
       );
     } catch (cleanupError) {
       console.error(`Restore files kept for inspection: ${String(cleanupError)}`);
