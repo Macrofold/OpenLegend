@@ -14,19 +14,16 @@ impl ParticipationState {
         entities: &EntityStore,
         budget: &ByteBudget,
     ) -> Result<Self, InstallError> {
-        let mut social = [false; 2];
-        for (index, (field, table)) in [
-            ("outings", "activity_outings"),
-            ("socialCompacts", "social_compacts"),
-        ]
-        .into_iter()
-        .enumerate()
-        {
-            social[index] = presence(children, field)?;
-            let owner = take_collection(import, table, "[\"world\"]", social[index], true)?;
-            if !owner.rows.is_empty() {
-                return Err(InstallError::UnsupportedFamily(field));
-            }
+        let compacts_present = presence(children, "socialCompacts")?;
+        let owner = take_collection(
+            import,
+            "social_compacts",
+            "[\"world\"]",
+            compacts_present,
+            true,
+        )?;
+        if !owner.rows.is_empty() {
+            return Err(InstallError::UnsupportedFamily("socialCompacts"));
         }
         let present = presence(children, "exitExposures")?;
         let rows = take_collection(import, "sim_exit_exposures", "[\"world\"]", present, true)?;
@@ -90,8 +87,7 @@ impl ParticipationState {
             .map_err(|_| InstallError::Capacity)?;
         Ok(Self {
             exposures,
-            _outings_present: social[0],
-            _compacts_present: social[1],
+            _compacts_present: compacts_present,
             budget: budget.clone(),
             storage: budget
                 .adopt_backing(construction)

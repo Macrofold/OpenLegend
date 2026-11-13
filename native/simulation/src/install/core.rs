@@ -362,7 +362,8 @@ fn assemble_selected_core(
         agency_limits: agency,
         actor_response_limits: actor_response,
     });
-    crate::plans::validate_installation(&physical, &installed)?;
+    crate::plans::validate_installation(&physical, &installed, &activity, budget)?;
+    let outings = crate::outings::OutingState::install_closed(&mut import, &mut children, budget)?;
     // Every presence below is consumed from the actual root, including empty
     // owners. Missing rows never synthesize an empty receiver or personal graph.
     let roots = ReceptionRoots {
@@ -469,6 +470,7 @@ fn assemble_selected_core(
     )?;
     appraisals.prepare_indices(budget)?;
     let state = SimulationState {
+        outings,
         records: record_ledger,
         generation: import.generation().to_owned(),
         accepted_cut,

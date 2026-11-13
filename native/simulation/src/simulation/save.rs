@@ -43,6 +43,13 @@ pub(crate) fn encode_candidate_changes(
     journal
         .responses
         .encode_changes(&state.responses, &state.records, &mut output, budget)?;
+    journal.outings.encode_changes(
+        &state.outings,
+        &state.installed.schema,
+        &state.records,
+        &mut output,
+        budget,
+    )?;
     journal.encode_reception_changes(state, &mut output, budget)?;
     crate::experience::encode_personal_changes(
         &state.experience,
@@ -198,6 +205,7 @@ pub(crate) fn encode_root_changes(
         "exitExposures",
         state.physical.participation.is_present(),
     );
+    marker(&mut body, "outings", state.outings.is_present());
     marker(
         &mut body,
         "workState",

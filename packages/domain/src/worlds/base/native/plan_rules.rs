@@ -48,6 +48,12 @@ pub(crate) struct PlanRules {
     pub control_importance: f64,
 }
 impl PlanRules {
+    /// Base's selected quantity form, matching Source validateActivityQuantity.
+    /// Repetition/frontier arithmetic is generic; these action families are not.
+    pub(crate) fn supports_activity_quantity_command(&self, command: &str) -> bool {
+        matches!(command, "eat" | "gather" | "craft")
+    }
+
     /// One pass substitutes only authored marker locations; words inserted by
     /// a person are never interpreted as another marker.
     pub(crate) fn text(&self, template: &str, fields: &[(&str, TextRef<'_>)]) -> JsText {

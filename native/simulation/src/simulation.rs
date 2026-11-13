@@ -137,6 +137,7 @@ pub(crate) struct PhysicalState {
 /// Receiver and history owners retain their independent chronology/privacy
 /// metadata. They are not reconstructed from a physical snapshot for reads.
 pub(crate) struct SimulationState {
+    pub(crate) outings: crate::outings::OutingState,
     pub records: crate::records::RecordLedger,
     pub generation: String,
     pub accepted_cut: u64,

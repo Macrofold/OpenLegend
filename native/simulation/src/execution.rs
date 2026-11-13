@@ -130,6 +130,7 @@ pub(crate) enum ActionFinish {
 }
 
 struct CandidateFrame {
+    outings: crate::outings::OutingCheckpoint,
     restore_metadata: usize,
     memory: crate::host::MemoryCheckpoint,
     knowledge: crate::knowledge::KnowledgeCheckpoint,
@@ -164,6 +165,7 @@ pub(crate) struct CandidateCheckpoint {
 /// token certifies semantic closure; Ready additionally needs complete encoded
 /// output, save/host admission and the actual current authority/input checks.
 pub(crate) struct CandidateJournal {
+    pub(crate) outings: crate::outings::OutingJournal,
     pub(crate) restore_metadata: crate::restore::MetadataJournal,
     pub knowledge: crate::knowledge::KnowledgeJournal,
     owner: Arc<()>,
@@ -194,6 +196,7 @@ pub(crate) struct CandidateJournal {
     root_experience: ExperienceCheckpoint,
     root_commands: CommandCheckpoint,
     root_knowledge: crate::knowledge::KnowledgeCheckpoint,
+    root_outings: crate::outings::OutingCheckpoint,
     root_responses: crate::response::ResponseCheckpoint,
     root_recognition: crate::worlds::InstalledRecognitionCheckpoint,
     root_cognition: crate::cognition::CognitionCheckpoint,
@@ -431,6 +434,8 @@ impl CandidateJournal {
         let commands = CommandJournal::new(budget)?;
         let knowledge = crate::knowledge::KnowledgeJournal::new(budget)?;
         let root_knowledge = knowledge.checkpoint(&state.reception.actor_knowledge);
+        let outings = crate::outings::OutingJournal::new(budget)?;
+        let root_outings = outings.checkpoint(&state.outings);
         let root_commands = commands.checkpoint();
         let responses = crate::response::ResponseJournal::new(budget)?;
         let root_responses = responses.checkpoint();
@@ -461,6 +466,7 @@ impl CandidateJournal {
             experience,
             commands,
             knowledge,
+            outings,
             responses,
             acquisitions,
             recognition,
@@ -479,6 +485,7 @@ impl CandidateJournal {
             root_experience,
             root_commands,
             root_knowledge,
+            root_outings,
             root_responses,
             root_recognition,
             sensory_cursor,
@@ -519,6 +526,7 @@ impl CandidateJournal {
             depth: self.frames.len(),
         };
         self.frames.push(CandidateFrame {
+            outings: self.outings.checkpoint(&state.outings),
             restore_metadata: self.restore_metadata.checkpoint(),
             memory: self.memory.checkpoint()?,
             knowledge: self.knowledge.checkpoint(&state.reception.actor_knowledge),
@@ -597,6 +605,8 @@ impl CandidateJournal {
             .rollback_to(&mut state.commands, frame.commands)?;
         self.knowledge
             .rollback_to(&mut state.reception.actor_knowledge, frame.knowledge)?;
+        self.outings
+            .rollback_to(&mut state.outings, frame.outings)?;
         self.responses
             .rollback_to(&mut state.responses, frame.responses)?;
         self.experience
@@ -659,6 +669,8 @@ impl CandidateJournal {
             .rollback_to(&mut state.commands, self.root_commands)?;
         self.knowledge
             .rollback_to(&mut state.reception.actor_knowledge, self.root_knowledge)?;
+        self.outings
+            .rollback_to(&mut state.outings, self.root_outings)?;
         self.responses
             .rollback_to(&mut state.responses, self.root_responses)?;
         self.experience

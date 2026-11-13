@@ -18,6 +18,13 @@ pub mod base_recognition;
 #[path = "../../../packages/domain/src/worlds/base/native/decision_offers.rs"]
 pub(crate) mod base_decision_offers;
 
+#[path = "../../../packages/domain/src/worlds/base/native/outings.rs"]
+pub(crate) mod base_outings;
+pub(crate) use base_outings::{
+    OutingFacts as InstalledOutingFacts, OutingKind as InstalledOutingKind,
+    OutingStatus as InstalledOutingStatus, inspect as inspect_selected_outing,
+};
+
 #[path = "../../../packages/domain/src/worlds/base/native/observed.rs"]
 pub mod base_observed;
 

@@ -156,6 +156,8 @@ fn step(
 pub(crate) fn validate_installation(
     physical: &crate::simulation::PhysicalState,
     world: &crate::simulation::InstalledWorld,
+    activity_limits: &crate::activity::ActivityLimits,
+    budget: &crate::host::ByteBudget,
 ) -> Result<(), InstallError> {
     for id in physical.entities.ordered_ids() {
         let entity = physical
@@ -258,7 +260,13 @@ pub(crate) fn validate_installation(
             .into_iter()
             .flatten()
         {
-            if plan.activity.is_some() {
+            if let Some(activity) = &plan.activity {
+                activity.validate_structure(
+                    activity_limits,
+                    physical.header.sim_time,
+                    world,
+                    budget,
+                )?;
                 return Err(InstallError::UnsupportedFamily("chosen activity graph"));
             }
             if !is_safe_record_id(&plan.id)

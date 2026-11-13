@@ -26,6 +26,11 @@ pub struct ExactObject {
     encoding: Arc<RawValue>,
 }
 impl ExactObject {
+    /// Borrow the actual ordered code-unit keys; consumers must not replace
+    /// them with lossy Unicode keys when validating a dynamic dictionary.
+    pub(crate) fn members(&self) -> &[(JsText, SqlCell)] {
+        &self.members
+    }
     /// Consume the actual member storage at the output boundary. No code-unit
     /// key is converted into a lossy UTF-8 property name.
     pub fn into_members(self) -> impl Iterator<Item = (JsText, SqlCell)> {
@@ -295,6 +300,17 @@ impl SqlCell {
                 .members
                 .iter()
                 .find(|(name, _)| name.as_unicode() == Some(key))
+                .map(|(_, value)| value),
+            _ => None,
+        }
+    }
+    pub(crate) fn get_text(&self, key: &JsText) -> Option<&Self> {
+        match self {
+            Self::Object(value) => key.as_unicode().and_then(|key| value.get(key)),
+            Self::ExactObject(value) => value
+                .members
+                .iter()
+                .find(|(name, _)| name == key)
                 .map(|(_, value)| value),
             _ => None,
         }

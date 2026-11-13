@@ -4,11 +4,12 @@
 use crate::activity::ResultEvidence;
 use crate::commands::{NativeCommand, Outcome};
 use crate::host::retained_size::{HeapBytes, heap_sum};
-use crate::state::UnconvertedField;
 use crate::values::{deserialize_nullable, deserialize_present_option, deserialize_safe_integer};
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
+mod activity;
 mod control;
+pub(crate) use activity::ActivityExecution;
 mod suspension;
 pub(crate) use suspension::prepare_suspension;
 mod edit;
@@ -141,7 +142,7 @@ pub(crate) struct ActorPlan {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub activity: Option<UnconvertedField>,
+    pub activity: Option<ActivityExecution>,
     pub id: String,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub revision: u64,
@@ -185,10 +186,8 @@ impl HeapBytes for PlanStep {
 }
 impl HeapBytes for ActorPlan {
     fn heap_bytes(&self) -> Option<usize> {
-        if self.activity.is_some() {
-            return None;
-        }
         heap_sum([
+            self.activity.heap_bytes()?,
             self.result_evidence.heap_bytes()?,
             self.id.heap_bytes()?,
             self.goal_id.heap_bytes()?,

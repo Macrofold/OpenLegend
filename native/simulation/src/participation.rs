@@ -19,16 +19,15 @@ pub(crate) struct ParticipationState {
     pub(super) exposures: Option<IndexMap<String, f64>>,
     // These closed facts come from complete current owners. Positive social
     // records are refused until their real reconciliation producers are joined.
-    _outings_present: bool,
     _compacts_present: bool,
     budget: ByteBudget,
     storage: ResidentReservation,
 }
 impl ParticipationState {
-    /// Installation consumed complete outing/compact owners and refused every
-    /// positive member. Selected writers do not create social episodes.
+    /// Installation consumes the separate compact owner and refuses positive
+    /// members. Outings now have their own still-closed canonical owner.
     pub(crate) fn require_closed_social(&self) {
-        let _presence = (self._outings_present, self._compacts_present);
+        let _presence = self._compacts_present;
     }
     pub(crate) fn exposures(&self) -> Option<&IndexMap<String, f64>> {
         self.exposures.as_ref()
