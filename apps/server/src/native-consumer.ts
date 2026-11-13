@@ -387,6 +387,20 @@ export function borrowNativeProduct(owner: object): { release(): void } | undefi
   };
 }
 
+/** Transfer one product to its named consumer. Independent inspections keep
+ * capacity after that consumer replaces or releases its own product. */
+export function nativeProductOwner(owner: object) {
+  retainNativeProduct(owner);
+  return {
+    release: () => releaseNativeProduct(owner),
+    borrow() {
+      const pin = borrowNativeProduct(owner);
+      if (!pin) throw new Error('Native output has no live allocation owner.');
+      return pin;
+    },
+  };
+}
+
 /** The real transport/stream owner calls this only after final consumption. */
 export function releaseNativeProduct(owner: object): void {
   const holder = holders.get(owner);

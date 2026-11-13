@@ -1,4 +1,8 @@
-import type { MaintenanceHost, MaintenanceAdmission } from './maintenance-host.js';
+import type {
+  MaintenanceHost,
+  MaintenanceAdmission,
+  MaintenanceInspection,
+} from './maintenance-host.js';
 import type { HttpPublication } from '@open-legend/network';
 import { reflectionTimeDueFromRead } from './reflection-publication.js';
 import {
@@ -382,12 +386,12 @@ export class CognitionMaintenance {
       // changed actors dirty, but admit at most one inspection per real second.
       const nextReadAt = this.now() + 1000;
       for (const id of actors) this.work.defer(id, nextReadAt);
-      const inspections = new Map(
-        await Promise.all(
-          actors.map(async (id) => [id, await this.host.inspection(this.work, id)] as const),
-        ),
-      );
+      const inspections = new Map<string, MaintenanceInspection>();
+      const reads = actors.map(async (id) => {
+        inspections.set(id, await this.host.inspection(this.work, id));
+      });
       try {
+        await Promise.all(reads);
         const times = new Map(
           await Promise.all(actors.map(async (id) => [id, await this.last(id)] as const)),
         );
@@ -591,6 +595,9 @@ export class CognitionMaintenance {
           return;
         }
       } finally {
+        // One rejected setup cannot abandon siblings still acquiring their
+        // reads. Join them before releasing every successfully returned owner.
+        await Promise.allSettled(reads);
         for (const inspection of inspections.values()) inspection.release();
       }
     } finally {

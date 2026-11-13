@@ -28,7 +28,9 @@ import {
   decodeNativeProduct,
   freezeNativeProduct,
   releaseNativeProduct,
+  retainNativeProduct,
   retainNativeSources,
+  nativeProductOwner,
   withNativeJsonInput,
 } from './native-consumer.js';
 import type { NativeActorSelf } from './native-perception.js';
@@ -137,7 +139,7 @@ export type NativeNpcInputFacts = Pick<
 };
 export interface NativeNpcQueueInputs {
   readonly facts: NativeNpcInputFacts;
-  readonly input: IntakeInputs;
+  readonly input: IntakeInputs & { owner: ReturnType<typeof nativeProductOwner> };
 }
 function intakeRequest(actorId: string, afterSequence: number, weighedThrough?: number) {
   return {
@@ -154,19 +156,42 @@ function intakeRequest(actorId: string, afterSequence: number, weighedThrough?: 
   };
 }
 async function queueInputs(read: NativeWorldNpcTrigger): Promise<NativeNpcQueueInputs> {
-  const facts = freezeNativeProduct(decodeNativeProduct<NativeNpcInputFacts>(await read.inputs()));
-  const values = retainNativeSources([...facts.values, facts.dependencyToken], facts);
-  return retainNativeSources(
-    {
-      facts,
-      input: {
-        values,
-        reasons: [...THOUGHT_INPUT_REASONS, 'state'] as const,
-        urgency: facts.urgency,
+  let facts: NativeNpcInputFacts | undefined;
+  let values: unknown[] | undefined;
+  let queued: NativeNpcQueueInputs | undefined;
+  try {
+    facts = decodeNativeProduct<NativeNpcInputFacts>(await read.inputs());
+    freezeNativeProduct(facts);
+    const inputs = retainNativeSources([...facts.values, facts.dependencyToken], facts);
+    values = inputs;
+    queued = retainNativeSources(
+      {
+        facts,
+        input: {
+          values: inputs,
+          reasons: [...THOUGHT_INPUT_REASONS, 'state'] as const,
+          urgency: facts.urgency,
+          owner: nativeProductOwner(inputs),
+        },
       },
-    },
-    facts,
-  );
+      facts,
+    );
+    // These three siblings have different consumers: the caller's facts and
+    // envelope end after refresh, while an adopted vector belongs to ActorWork.
+    retainNativeProduct(facts);
+    return retainNativeProduct(queued);
+  } catch (error) {
+    try {
+      if (queued) releaseNativeProduct(queued);
+    } finally {
+      try {
+        if (values) releaseNativeProduct(values);
+      } finally {
+        if (facts) releaseNativeProduct(facts);
+      }
+    }
+    throw error;
+  }
 }
 
 /** One actual native owner across async schedule/job reads. Its JSON is only

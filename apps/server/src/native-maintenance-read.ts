@@ -8,6 +8,7 @@ import {
   retainNativeSources,
   encodeNativeJson,
   releaseNativeProduct,
+  nativeProductOwner,
   withNativeJsonInput,
 } from './native-consumer.js';
 
@@ -89,15 +90,25 @@ export class NativeMaintenanceRead {
     if (!this.product) throw new Error('Native maintenance read was released.');
     return this.product;
   }
-  inputs(backlog: unknown, sourceRevision: unknown): IntakeInputs {
+  inputs(
+    backlog: unknown,
+    sourceRevision: unknown,
+  ): IntakeInputs & { owner: ReturnType<typeof nativeProductOwner> } {
     const facts = this.facts;
-    return {
-      values: retainNativeSources(
-        [...facts.values, facts.dependencyToken, backlog, sourceRevision],
-        facts,
-      ),
-      reasons: [],
-    };
+    const values = retainNativeSources(
+      [...facts.values, facts.dependencyToken, backlog, sourceRevision],
+      facts,
+    );
+    try {
+      return {
+        values,
+        reasons: [],
+        owner: nativeProductOwner(values),
+      };
+    } catch (error) {
+      releaseNativeProduct(values);
+      throw error;
+    }
   }
   current(admission: MaintenanceAdmission): boolean {
     const facts = this.product;

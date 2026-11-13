@@ -3981,386 +3981,399 @@ export class AiDirector {
           ![...this.activeRuns].some((run) => run.job.decision?.actorId === id) &&
           !entityGet(readWorld().entities, id)?.actor?.incapacitated,
       );
-      const generations = new Map(
-        actors.map((id) => [id, this.thoughtWork.capture(readWorld(), id)]),
-      );
-      const scheduled = new Map(
-        await Promise.all(
-          actors.map(
-            async (id) =>
-              [id, await this.readSchedule(`semantic-schedule:${worldId}:${id}`)] as const,
-          ),
-        ),
-      );
-      // `ready` already ordered characters fairly: urgent or long-waiting work, then the
-      // longest-waiting; every returned character is inspected until one is admitted.
-      if (generation !== this.service.generation) return;
-      for (const actorId of actors) {
-        const initial = entityGet(readWorld().entities, actorId)?.actor;
-        if (!initial?.alive || initial.incapacitated) continue;
-        const key = `semantic-schedule:${worldId}:${actorId}`;
-        const last = scheduled.get(actorId);
-        // Only records newer than the considered-evidence watermark, not all retained history.
-        const { records: all, maxSequence } = unseenExperiences(
-          readWorld(),
-          actorId,
-          last?.watermark ?? 0,
-          undefined,
-          // Keep everything the trigger filter below could select, plus speech for ownership.
-          (memory) =>
-            memory.importance >= 6 ||
-            memory.eventType === 'speech' ||
-            policy.significantEventTypes.includes(memory.eventType ?? ''),
-        );
-        // A directed turn owns exactly its own speech event, whatever its outcome: the
-        // autonomous path never answers it again (no automatic paid retry), while other
-        // intervening awareness stays available. Durable jobs keep this across restart.
-        // docs/memory-architecture.md#every-semantic-decision-uses-an-event-or-intent-sentence
-        const speechJobs = await this.service.store.getSpeechJobs(
-          all
-            .filter(
-              (memory) =>
-                memory.eventType === 'speech' && (memory.sequence ?? 0) > (last?.watermark ?? 0),
-            )
-            .map((memory) => memory.eventId ?? memory.id),
-        );
-        if (generation !== this.service.generation) return;
-        const entity = entityGet(readWorld().entities, actorId);
-        if (!entity?.actor?.alive || entity.actor.incapacitated) continue;
-        const actor = entity.actor;
-        const unseen = thoughtEvidenceFromRead(
-          entity.id,
-          last?.watermark ?? 0,
-          all,
-          actor.conditions,
-          (id) => {
-            const event = this.service.worldEvent(id);
-            return event
-              ? {
-                  type: event.type,
-                  actorId: event.actorId,
-                  data: event.data,
-                  responseRecorded:
-                    typeof event.data?.['responseId'] === 'string' &&
-                    !!readWorld().responseReceipts?.[event.data['responseId']],
-                }
-              : undefined;
-          },
-          new Set(
-            [...speechJobs].filter(([, job]) => job.request.npcId === entity.id).map(([id]) => id),
-          ),
-          policy.significantEventTypes,
-        );
-        const unseenIds = new Set(unseen.map((entry) => entry.eventId ?? entry.id));
-        const interruptions = this.responseInterruptions(entity.id, last?.watermark ?? 0).filter(
-          (entry) => unseenIds.has(entry.eventId),
-        );
-        const preparedResult = preparedResponseResult(readWorld(), entity.id, [...unseenIds]);
-        const nativeCauses = thoughtNativeCausesFromRead(
-          currentAttentionCues(readWorld(), entity.id),
-          selectedAttentionPolicy(readWorld()).urgentCue,
-          (key, revision, severity) =>
-            semanticCauseResolved(readWorld(), entity.id, key, revision, severity),
-        );
-        const urgent =
-          (this.thoughtWork.pending(entity.id)?.urgency ?? 0) >= INTAKE_LIMITS.urgent ||
-          preparedResult ||
-          // First enrollment has no previous change sample. Personally retained,
-          // unread danger still qualifies; never infer it from another body's state.
-          interruptions.length > 0 ||
-          nativeCauses.some((cause) => cause.severity >= INTAKE_LIMITS.urgent);
-        // Capacity refusal leaves this character's coalesced ticket and evidence
-        // untouched. Ordinary aging still orders eligible work in the same queue.
-        if (!this.canAdmit(entity.id, urgent)) continue;
-        if (!(await this.execution.primaryAvailable(urgent))) continue;
-        // Native urgency identifies the initiating experience, not just queue
-        // priority. A later incidental sighting cannot replace an actual blow
-        // as the cause sentence. Other coalesced evidence keeps its own order.
-        const urgentId = interruptions.at(-1)?.eventId;
-        const resultId = preparedResult
-          ? resultEvidenceId(actor.agency.lastResultEvidence)
-          : undefined;
-        const latest = priorityThoughtEvidence(unseen, urgentId, resultId);
-        // This is a wakeup snapshot, not a queue of memories owed future model calls.
-        // docs/memory-architecture.md#every-semantic-decision-uses-an-event-or-intent-sentence
-        // Awareness and personal-memory sequences share the native allocation counter,
-        // not the world-event counter. Never acknowledge observations beyond this saved cut.
-        const snapshotWatermark = Math.min(
-          Math.max(last?.watermark ?? 0, maxSequence),
-          this.service.durable.nextId,
-        );
-        const review = this.thoughtInputs.stimulusReview(readWorld(), entity.id);
-        if (
-          !this.thoughtWork.inspected(
-            entity.id,
-            Math.min(review.nextAt),
-            generations.get(entity.id),
-            this.service.world,
-            this.service.generation,
-          )
-        )
-          continue;
-        const nativeProtection = nativeProtectionReason(readWorld(), entity.id);
-        // These descriptions share the same permitted world and character. No
-        // await or mutation separates comparison from the initiating sentence.
-        const attributes = projectAttributes(readWorld(), entity, 'owner');
-        const concerns = attributes
-          .filter(
-            (value) =>
-              value.concern &&
-              readWorld().moduleManifest.definitions.find(
-                (definition) => definition.id === value.id,
-              )?.concern?.reconsider,
-          )
-          .map((value) => [value.id, value.concern!] as const);
-        const { fingerprint, semanticRevision } = thoughtMeaningFromRead({
-          nativeProtection,
-          agency: actor.agency,
-          techniques: readWorld().knowledge[entity.id] ?? [],
-          bodyInputs: bodyReconsiderationInputs(readWorld(), entity, 'director'),
-          bodyPolicyPin: readWorld().moduleManifest.bodyPolicyPin,
-          concerns,
-          mind: readWorld().innerWorlds?.[entity.id]?.revision,
-          knowledge: readWorld().knowledgeRevisions?.[entity.id] ?? 0,
-          policy: policy.revision,
-          reviews: review.key,
-        });
-        const meaningfulChange =
-          !!last?.semanticRevision && last.semanticRevision !== semanticRevision;
-        const newReview = !!review.key && review.key !== last?.reviewKey && !!review.due.length;
-        const discovery =
-          !latest.length &&
-          !nativeCauses.length &&
-          !meaningfulChange &&
-          !newReview &&
-          selectedAttentionPolicy(readWorld()).semantic.discovery &&
-          Object.values(attentionCandidates(readWorld(), entity.id)).some(
-            (candidate) => candidate.presentedDescription !== candidate.descriptionRevision,
-          )
-            ? discoveryInterval(readWorld(), entity.id)
-            : undefined;
-        const opportunity = thoughtOpportunityFromRead({
-          semanticRevision,
-          evidence: latest.map((memory) => memory.id),
-          nativeCauses,
-          review: newReview ? review.key : null,
-          discovery,
-        });
-        if (
-          (!latest.length &&
-            !nativeCauses.length &&
-            !meaningfulChange &&
-            !newReview &&
-            discovery === undefined) ||
-          last?.attemptedOpportunity === opportunity
-        ) {
-          this.thoughtWork.recordOutcome('unchanged', all.length);
-          if (last?.semanticRevision !== semanticRevision)
-            await this.writeSchedule(
-              key,
-              { ...last, fingerprint, semanticRevision, at: this.now() },
-              generation,
-            );
-          continue;
-        }
-        const sentence = [
-          ...latest.map((m) => m.summary),
-          `My current goal is ${currentGoal(actor)}.`,
-          ...attributes.flatMap((v) => (v.concern ? [v.concern] : [])),
-          ...attributes.flatMap((v) => (v.condition ? [`${v.name}: ${v.condition}.`] : [])),
-        ].join(' ');
-        const urgentNeed = nativeProtection;
-        const diagnosticTrigger = urgentNeed
-          ? urgentNeed
-          : latest.length
-            ? responseTrigger(
-                this.service,
-                entity.id,
-                latest[0]!.eventId ?? latest[0]!.id,
-                latest[0]!.summary,
-              )
-            : nativeCauses.length
-              ? 'I notice a newly supported change in nearby physical relations.'
-              : newReview
-                ? `I am still aware of ${observerDescription(readWorld(), entity.id, review.due[0]!, 'definite')}.`
-                : discovery !== undefined
-                  ? 'I have a free moment to consider my surroundings.'
-                  : actor.agency.plan?.status === 'blocked'
-                    ? 'My chosen work is blocked.'
-                    : 'A personally acquired goal, capability or bodily condition changed.';
-        const diagnosticTriggerType = urgentNeed
-          ? `Cognition skipped · ${urgentNeed}`
-          : latest.length
-            ? 'Autonomous cognition · New experience'
-            : nativeCauses.length
-              ? 'Autonomous cognition · Received physical relation'
-              : newReview
-                ? 'Autonomous cognition · Review'
-                : discovery !== undefined
-                  ? 'Autonomous cognition · Discovery'
-                  : 'Autonomous cognition · Meaningful change';
-        const id = `thought-${randomUUID()}`;
-        if (urgentNeed) {
-          this.thoughtWork.recordOutcome('deferred', all.length);
-          if (last?.skippedOpportunity === opportunity) continue;
-          await this.log.save({
-            id,
-            kind: 'Semantic trigger',
-            worldId: readWorld().id,
-            actorId: entity.id,
-            actorName: entity.name,
-            trigger: diagnosticTrigger,
-            triggerType: diagnosticTriggerType,
-            startedAt: new Date().toISOString(),
-            status: 'completed',
-            disposition: 'skipped',
-            route: 'level0',
-            gameTime: readWorld().simTime,
-            input: {
-              reason: urgentNeed,
-              stimulus: diagnosticTrigger,
-              coalescedContext: sentence,
-            },
-            exchanges: [],
-          });
-          // Deferred, not consumed: evidence gathered before or during sleep stays unread
-          // for the next capable opportunity. Native handling queues no paid catch-up.
-          await this.writeSchedule(
-            key,
-            {
-              fingerprint,
-              semanticRevision,
-              at: this.now(),
-              ...(last?.watermark !== undefined ? { watermark: last.watermark } : {}),
-              ...(last?.attemptedOpportunity
-                ? { attemptedOpportunity: last.attemptedOpportunity }
-                : {}),
-              skippedOpportunity: opportunity,
-              ...(review.key ? { reviewKey: review.key } : {}),
-            },
-            generation,
-          );
-          continue;
-        }
-        this.thoughtWork.recordOutcome('admitted', all.length);
-        // Discovery is one saved permission. A refused reservation cannot consume
-        // the opportunity, and a later write/preparation failure releases it.
-        if (
-          discovery !== undefined &&
-          !(await this.service.publishAttention(entity.id, generation, (current) =>
-            reserveDiscovery(current, entity.id, discovery, id),
-          ))
-        )
-          continue;
-        // Attempted, not consumed: the cursor advances only when the decision completes. A
-        // failed decision is not a debt to replay; the same opportunity is not retried and
-        // new changes create fresh opportunities that still include unread evidence.
-        if (
-          !(await this.writeSchedule(
-            key,
-            {
-              fingerprint,
-              semanticRevision,
-              at: this.now(),
-              ...(last?.watermark !== undefined ? { watermark: last.watermark } : {}),
-              attemptedOpportunity: opportunity,
-              attemptedJobId: id,
-              ...(review.key ? { reviewKey: review.key } : {}),
-            },
-            generation,
-          ))
-        ) {
-          if (discovery !== undefined)
-            await this.releaseUndispatchedDiscovery(entity.id, id, generation);
-          continue;
-        }
-        const significant = latest.some(
-          (m) =>
-            m.id === m.eventId &&
-            policy.significantEventTypes.includes(
-              m.eventType ?? this.service.worldEvent(m.id)?.type ?? '',
+      const generations = new Map<string, ReturnType<ActorWork['capture']>>();
+      try {
+        for (const id of actors) generations.set(id, this.thoughtWork.capture(readWorld(), id));
+        const scheduled = new Map(
+          await Promise.all(
+            actors.map(
+              async (id) =>
+                [id, await this.readSchedule(`semantic-schedule:${worldId}:${id}`)] as const,
             ),
+          ),
         );
-        if (significant) await this.maintenance.enqueue(entity.id, id, sentence, generation);
-        if (generation !== this.service.generation || this.stopped || this.service.paused) {
-          if (discovery !== undefined)
-            await this.releaseUndispatchedDiscovery(entity.id, id, generation);
-          return;
-        }
-        await this.begin(
-          {
-            id,
-            kind: 'thought',
-            fingerprint,
-            status: 'queued',
-            message: 'Considering a semantic event.',
-            diagnosticTrigger,
-            diagnosticTriggerType,
-            triggerEvidenceId: latest[0]?.eventId ?? latest[0]?.id,
-            stimulusEvidenceIds: latest.map((m) => m.eventId ?? m.id),
-            ...(nativeCauses.length ? { semanticCauses: nativeCauses } : {}),
-            request: { text: diagnosticTrigger, npcId: entity.id },
-            createdAt: this.now(),
-          },
-          async () => {
-            const current = await this.readSchedule(key);
-            await this.writeSchedule(
-              key,
-              {
-                fingerprint,
-                semanticRevision,
-                at: this.now(),
-                watermark: Math.min(
-                  Math.max(current?.watermark ?? 0, snapshotWatermark),
-                  this.service.durable.nextId,
-                ),
-                attemptedOpportunity: opportunity,
-                attemptedJobId: id,
-                ...(review.key ? { reviewKey: review.key } : {}),
-              },
-              generation,
+        // `ready` already ordered characters fairly: urgent or long-waiting work, then the
+        // longest-waiting; every returned character is inspected until one is admitted.
+        if (generation !== this.service.generation) return;
+        for (const actorId of actors) {
+          try {
+            const initial = entityGet(readWorld().entities, actorId)?.actor;
+            if (!initial?.alive || initial.incapacitated) continue;
+            const key = `semantic-schedule:${worldId}:${actorId}`;
+            const last = scheduled.get(actorId);
+            // Only records newer than the considered-evidence watermark, not all retained history.
+            const { records: all, maxSequence } = unseenExperiences(
+              readWorld(),
+              actorId,
+              last?.watermark ?? 0,
+              undefined,
+              // Keep everything the trigger filter below could select, plus speech for ownership.
+              (memory) =>
+                memory.importance >= 6 ||
+                memory.eventType === 'speech' ||
+                policy.significantEventTypes.includes(memory.eventType ?? ''),
             );
-          },
-          {
-            key,
-            value: {
-              fingerprint,
-              semanticRevision,
-              at: this.now(),
-              watermark: Math.min(snapshotWatermark, this.service.durable.nextId),
-              attemptedOpportunity: opportunity,
-              attemptedJobId: id,
-              ...(review.key ? { reviewKey: review.key } : {}),
-            },
-          },
-          urgent,
-          discovery !== undefined ? { actorId: entity.id, reservation: id } : undefined,
-        );
-        const trace = this.log.get(id);
-        if (trace)
-          await this.log.save({
-            ...trace,
-            input: {
-              policy: policy.revision,
-              scheduling: {
-                reason:
-                  'Current significant evidence or changed interests/state; actor-owned immediate capacity available; no actor cooldown.',
-                priorActorOpportunityAt: last?.at,
-                admittedAt: this.now(),
-                triggerGameTime: latest[0]?.at,
-                triggerAgeGameSeconds: latest[0]
-                  ? Math.max(0, readWorld().simTime - latest[0].at)
-                  : undefined,
+            // A directed turn owns exactly its own speech event, whatever its outcome: the
+            // autonomous path never answers it again (no automatic paid retry), while other
+            // intervening awareness stays available. Durable jobs keep this across restart.
+            // docs/memory-architecture.md#every-semantic-decision-uses-an-event-or-intent-sentence
+            const speechJobs = await this.service.store.getSpeechJobs(
+              all
+                .filter(
+                  (memory) =>
+                    memory.eventType === 'speech' &&
+                    (memory.sequence ?? 0) > (last?.watermark ?? 0),
+                )
+                .map((memory) => memory.eventId ?? memory.id),
+            );
+            if (generation !== this.service.generation) return;
+            const entity = entityGet(readWorld().entities, actorId);
+            if (!entity?.actor?.alive || entity.actor.incapacitated) continue;
+            const actor = entity.actor;
+            const unseen = thoughtEvidenceFromRead(
+              entity.id,
+              last?.watermark ?? 0,
+              all,
+              actor.conditions,
+              (id) => {
+                const event = this.service.worldEvent(id);
+                return event
+                  ? {
+                      type: event.type,
+                      actorId: event.actorId,
+                      data: event.data,
+                      responseRecorded:
+                        typeof event.data?.['responseId'] === 'string' &&
+                        !!readWorld().responseReceipts?.[event.data['responseId']],
+                    }
+                  : undefined;
               },
-              stimulus: diagnosticTrigger,
-              coalescedContext: sentence,
-              coalescedSources: latest.map((m) => m.id),
-              observedSinceLastOpportunity: unseen.length,
-              coalescedCount: unseen.length - latest.length,
-              offeredRoutes: [0, 1, 2, 3, 4, 5],
-            },
-          });
-        return;
+              new Set(
+                [...speechJobs]
+                  .filter(([, job]) => job.request.npcId === entity.id)
+                  .map(([id]) => id),
+              ),
+              policy.significantEventTypes,
+            );
+            const unseenIds = new Set(unseen.map((entry) => entry.eventId ?? entry.id));
+            const interruptions = this.responseInterruptions(
+              entity.id,
+              last?.watermark ?? 0,
+            ).filter((entry) => unseenIds.has(entry.eventId));
+            const preparedResult = preparedResponseResult(readWorld(), entity.id, [...unseenIds]);
+            const nativeCauses = thoughtNativeCausesFromRead(
+              currentAttentionCues(readWorld(), entity.id),
+              selectedAttentionPolicy(readWorld()).urgentCue,
+              (key, revision, severity) =>
+                semanticCauseResolved(readWorld(), entity.id, key, revision, severity),
+            );
+            const urgent =
+              (this.thoughtWork.pending(entity.id)?.urgency ?? 0) >= INTAKE_LIMITS.urgent ||
+              preparedResult ||
+              // First enrollment has no previous change sample. Personally retained,
+              // unread danger still qualifies; never infer it from another body's state.
+              interruptions.length > 0 ||
+              nativeCauses.some((cause) => cause.severity >= INTAKE_LIMITS.urgent);
+            // Capacity refusal leaves this character's coalesced ticket and evidence
+            // untouched. Ordinary aging still orders eligible work in the same queue.
+            if (!this.canAdmit(entity.id, urgent)) continue;
+            if (!(await this.execution.primaryAvailable(urgent))) continue;
+            // Native urgency identifies the initiating experience, not just queue
+            // priority. A later incidental sighting cannot replace an actual blow
+            // as the cause sentence. Other coalesced evidence keeps its own order.
+            const urgentId = interruptions.at(-1)?.eventId;
+            const resultId = preparedResult
+              ? resultEvidenceId(actor.agency.lastResultEvidence)
+              : undefined;
+            const latest = priorityThoughtEvidence(unseen, urgentId, resultId);
+            // This is a wakeup snapshot, not a queue of memories owed future model calls.
+            // docs/memory-architecture.md#every-semantic-decision-uses-an-event-or-intent-sentence
+            // Awareness and personal-memory sequences share the native allocation counter,
+            // not the world-event counter. Never acknowledge observations beyond this saved cut.
+            const snapshotWatermark = Math.min(
+              Math.max(last?.watermark ?? 0, maxSequence),
+              this.service.durable.nextId,
+            );
+            const review = this.thoughtInputs.stimulusReview(readWorld(), entity.id);
+            if (
+              !this.thoughtWork.inspected(
+                entity.id,
+                Math.min(review.nextAt),
+                generations.get(entity.id),
+                this.service.world,
+                this.service.generation,
+              )
+            )
+              continue;
+            const nativeProtection = nativeProtectionReason(readWorld(), entity.id);
+            // These descriptions share the same permitted world and character. No
+            // await or mutation separates comparison from the initiating sentence.
+            const attributes = projectAttributes(readWorld(), entity, 'owner');
+            const concerns = attributes
+              .filter(
+                (value) =>
+                  value.concern &&
+                  readWorld().moduleManifest.definitions.find(
+                    (definition) => definition.id === value.id,
+                  )?.concern?.reconsider,
+              )
+              .map((value) => [value.id, value.concern!] as const);
+            const { fingerprint, semanticRevision } = thoughtMeaningFromRead({
+              nativeProtection,
+              agency: actor.agency,
+              techniques: readWorld().knowledge[entity.id] ?? [],
+              bodyInputs: bodyReconsiderationInputs(readWorld(), entity, 'director'),
+              bodyPolicyPin: readWorld().moduleManifest.bodyPolicyPin,
+              concerns,
+              mind: readWorld().innerWorlds?.[entity.id]?.revision,
+              knowledge: readWorld().knowledgeRevisions?.[entity.id] ?? 0,
+              policy: policy.revision,
+              reviews: review.key,
+            });
+            const meaningfulChange =
+              !!last?.semanticRevision && last.semanticRevision !== semanticRevision;
+            const newReview = !!review.key && review.key !== last?.reviewKey && !!review.due.length;
+            const discovery =
+              !latest.length &&
+              !nativeCauses.length &&
+              !meaningfulChange &&
+              !newReview &&
+              selectedAttentionPolicy(readWorld()).semantic.discovery &&
+              Object.values(attentionCandidates(readWorld(), entity.id)).some(
+                (candidate) => candidate.presentedDescription !== candidate.descriptionRevision,
+              )
+                ? discoveryInterval(readWorld(), entity.id)
+                : undefined;
+            const opportunity = thoughtOpportunityFromRead({
+              semanticRevision,
+              evidence: latest.map((memory) => memory.id),
+              nativeCauses,
+              review: newReview ? review.key : null,
+              discovery,
+            });
+            if (
+              (!latest.length &&
+                !nativeCauses.length &&
+                !meaningfulChange &&
+                !newReview &&
+                discovery === undefined) ||
+              last?.attemptedOpportunity === opportunity
+            ) {
+              this.thoughtWork.recordOutcome('unchanged', all.length);
+              if (last?.semanticRevision !== semanticRevision)
+                await this.writeSchedule(
+                  key,
+                  { ...last, fingerprint, semanticRevision, at: this.now() },
+                  generation,
+                );
+              continue;
+            }
+            const sentence = [
+              ...latest.map((m) => m.summary),
+              `My current goal is ${currentGoal(actor)}.`,
+              ...attributes.flatMap((v) => (v.concern ? [v.concern] : [])),
+              ...attributes.flatMap((v) => (v.condition ? [`${v.name}: ${v.condition}.`] : [])),
+            ].join(' ');
+            const urgentNeed = nativeProtection;
+            const diagnosticTrigger = urgentNeed
+              ? urgentNeed
+              : latest.length
+                ? responseTrigger(
+                    this.service,
+                    entity.id,
+                    latest[0]!.eventId ?? latest[0]!.id,
+                    latest[0]!.summary,
+                  )
+                : nativeCauses.length
+                  ? 'I notice a newly supported change in nearby physical relations.'
+                  : newReview
+                    ? `I am still aware of ${observerDescription(readWorld(), entity.id, review.due[0]!, 'definite')}.`
+                    : discovery !== undefined
+                      ? 'I have a free moment to consider my surroundings.'
+                      : actor.agency.plan?.status === 'blocked'
+                        ? 'My chosen work is blocked.'
+                        : 'A personally acquired goal, capability or bodily condition changed.';
+            const diagnosticTriggerType = urgentNeed
+              ? `Cognition skipped · ${urgentNeed}`
+              : latest.length
+                ? 'Autonomous cognition · New experience'
+                : nativeCauses.length
+                  ? 'Autonomous cognition · Received physical relation'
+                  : newReview
+                    ? 'Autonomous cognition · Review'
+                    : discovery !== undefined
+                      ? 'Autonomous cognition · Discovery'
+                      : 'Autonomous cognition · Meaningful change';
+            const id = `thought-${randomUUID()}`;
+            if (urgentNeed) {
+              this.thoughtWork.recordOutcome('deferred', all.length);
+              if (last?.skippedOpportunity === opportunity) continue;
+              await this.log.save({
+                id,
+                kind: 'Semantic trigger',
+                worldId: readWorld().id,
+                actorId: entity.id,
+                actorName: entity.name,
+                trigger: diagnosticTrigger,
+                triggerType: diagnosticTriggerType,
+                startedAt: new Date().toISOString(),
+                status: 'completed',
+                disposition: 'skipped',
+                route: 'level0',
+                gameTime: readWorld().simTime,
+                input: {
+                  reason: urgentNeed,
+                  stimulus: diagnosticTrigger,
+                  coalescedContext: sentence,
+                },
+                exchanges: [],
+              });
+              // Deferred, not consumed: evidence gathered before or during sleep stays unread
+              // for the next capable opportunity. Native handling queues no paid catch-up.
+              await this.writeSchedule(
+                key,
+                {
+                  fingerprint,
+                  semanticRevision,
+                  at: this.now(),
+                  ...(last?.watermark !== undefined ? { watermark: last.watermark } : {}),
+                  ...(last?.attemptedOpportunity
+                    ? { attemptedOpportunity: last.attemptedOpportunity }
+                    : {}),
+                  skippedOpportunity: opportunity,
+                  ...(review.key ? { reviewKey: review.key } : {}),
+                },
+                generation,
+              );
+              continue;
+            }
+            this.thoughtWork.recordOutcome('admitted', all.length);
+            // Discovery is one saved permission. A refused reservation cannot consume
+            // the opportunity, and a later write/preparation failure releases it.
+            if (
+              discovery !== undefined &&
+              !(await this.service.publishAttention(entity.id, generation, (current) =>
+                reserveDiscovery(current, entity.id, discovery, id),
+              ))
+            )
+              continue;
+            // Attempted, not consumed: the cursor advances only when the decision completes. A
+            // failed decision is not a debt to replay; the same opportunity is not retried and
+            // new changes create fresh opportunities that still include unread evidence.
+            if (
+              !(await this.writeSchedule(
+                key,
+                {
+                  fingerprint,
+                  semanticRevision,
+                  at: this.now(),
+                  ...(last?.watermark !== undefined ? { watermark: last.watermark } : {}),
+                  attemptedOpportunity: opportunity,
+                  attemptedJobId: id,
+                  ...(review.key ? { reviewKey: review.key } : {}),
+                },
+                generation,
+              ))
+            ) {
+              if (discovery !== undefined)
+                await this.releaseUndispatchedDiscovery(entity.id, id, generation);
+              continue;
+            }
+            const significant = latest.some(
+              (m) =>
+                m.id === m.eventId &&
+                policy.significantEventTypes.includes(
+                  m.eventType ?? this.service.worldEvent(m.id)?.type ?? '',
+                ),
+            );
+            if (significant) await this.maintenance.enqueue(entity.id, id, sentence, generation);
+            if (generation !== this.service.generation || this.stopped || this.service.paused) {
+              if (discovery !== undefined)
+                await this.releaseUndispatchedDiscovery(entity.id, id, generation);
+              return;
+            }
+            await this.begin(
+              {
+                id,
+                kind: 'thought',
+                fingerprint,
+                status: 'queued',
+                message: 'Considering a semantic event.',
+                diagnosticTrigger,
+                diagnosticTriggerType,
+                triggerEvidenceId: latest[0]?.eventId ?? latest[0]?.id,
+                stimulusEvidenceIds: latest.map((m) => m.eventId ?? m.id),
+                ...(nativeCauses.length ? { semanticCauses: nativeCauses } : {}),
+                request: { text: diagnosticTrigger, npcId: entity.id },
+                createdAt: this.now(),
+              },
+              async () => {
+                const current = await this.readSchedule(key);
+                await this.writeSchedule(
+                  key,
+                  {
+                    fingerprint,
+                    semanticRevision,
+                    at: this.now(),
+                    watermark: Math.min(
+                      Math.max(current?.watermark ?? 0, snapshotWatermark),
+                      this.service.durable.nextId,
+                    ),
+                    attemptedOpportunity: opportunity,
+                    attemptedJobId: id,
+                    ...(review.key ? { reviewKey: review.key } : {}),
+                  },
+                  generation,
+                );
+              },
+              {
+                key,
+                value: {
+                  fingerprint,
+                  semanticRevision,
+                  at: this.now(),
+                  watermark: Math.min(snapshotWatermark, this.service.durable.nextId),
+                  attemptedOpportunity: opportunity,
+                  attemptedJobId: id,
+                  ...(review.key ? { reviewKey: review.key } : {}),
+                },
+              },
+              urgent,
+              discovery !== undefined ? { actorId: entity.id, reservation: id } : undefined,
+            );
+            const trace = this.log.get(id);
+            if (trace)
+              await this.log.save({
+                ...trace,
+                input: {
+                  policy: policy.revision,
+                  scheduling: {
+                    reason:
+                      'Current significant evidence or changed interests/state; actor-owned immediate capacity available; no actor cooldown.',
+                    priorActorOpportunityAt: last?.at,
+                    admittedAt: this.now(),
+                    triggerGameTime: latest[0]?.at,
+                    triggerAgeGameSeconds: latest[0]
+                      ? Math.max(0, readWorld().simTime - latest[0].at)
+                      : undefined,
+                  },
+                  stimulus: diagnosticTrigger,
+                  coalescedContext: sentence,
+                  coalescedSources: latest.map((m) => m.id),
+                  observedSinceLastOpportunity: unseen.length,
+                  coalescedCount: unseen.length - latest.length,
+                  offeredRoutes: [0, 1, 2, 3, 4, 5],
+                },
+              });
+            return;
+          } finally {
+            const captured = generations.get(actorId);
+            generations.delete(actorId);
+            captured?.release();
+          }
+        }
+      } finally {
+        for (const captured of generations.values()) captured?.release();
       }
     });
   }

@@ -99,70 +99,97 @@ export class NativeMaintenanceIntake {
       const read = await service.publishRecall(() =>
         NativeMaintenanceRead.capture(service.world, id),
       );
+      let input: ReturnType<NativeMaintenanceRead['inputs']> | undefined;
+      let offered = false;
       try {
         if (generation !== service.generation) return;
         if (!read.facts.enrolled) {
           work.retire(id);
           continue;
         }
+        input = read.inputs(backlog, service.store.memories.actorRevision(id));
+        offered = true;
         work.refreshCaptured(
           service.worldId,
           generation,
           [
             {
               id,
-              input: read.inputs(backlog, service.store.memories.actorRevision(id)),
+              input,
             },
           ],
           false,
         );
       } finally {
-        read.release();
+        try {
+          if (!offered) input?.owner.release();
+        } finally {
+          read.release();
+        }
       }
     }
   }
   async inspection(work: ActorWork, actorId: string): Promise<MaintenanceInspection> {
     const capture = work.captureRead(actorId);
-    const read = await this.service.publishRecall(() =>
-      NativeMaintenanceRead.capture(this.service.world, actorId),
-    );
-    const backlog = this.memoryBacklog(),
-      revision = this.service.store.memories.actorRevision(actorId);
-    const inputs = read.inputs(backlog, revision).values;
-    const sameInputs = (captured: WorkRead | undefined) =>
-      !!captured &&
-      captured.inputs.length === inputs.length &&
-      captured.inputs.every((value, index) => Object.is(value, inputs[index]));
-    const admission: MaintenanceAdmission = {
-      actorId,
-      generation: read.facts.generation,
-      fence: read.facts.bodyFence,
-      purpose: 'maintenance',
-      requiresBody: false,
+    let readOwner: NativeMaintenanceRead | undefined;
+    let input: ReturnType<NativeMaintenanceRead['inputs']> | undefined;
+    const release = () => {
+      try {
+        input?.owner.release();
+      } finally {
+        try {
+          readOwner?.release();
+        } finally {
+          capture?.release();
+        }
+      }
     };
-    return {
-      acknowledge: (nextSimAt) =>
-        this.service.publishRecall(async () => {
-          const gate = await read.publication(this.service.world, admission);
-          try {
-            return work.inspectedRead(
-              actorId,
-              nextSimAt,
-              capture,
-              this.service.generation,
-              () =>
-                !!gate?.isCurrent() &&
-                read.native.inputsCurrent() &&
-                sameInputs(capture) &&
-                backlog === this.memoryBacklog() &&
-                revision === this.service.store.memories.actorRevision(actorId),
-            );
-          } finally {
-            gate?.release();
-          }
-        }),
-      release: () => read.release(),
-    };
+    try {
+      const read = (readOwner = await this.service.publishRecall(() =>
+        NativeMaintenanceRead.capture(this.service.world, actorId),
+      ));
+      const backlog = this.memoryBacklog(),
+        revision = this.service.store.memories.actorRevision(actorId);
+      input = read.inputs(backlog, revision);
+      const inputs = input.values;
+      const sameInputs = (captured: WorkRead | undefined) =>
+        !!captured &&
+        captured.inputs.length === inputs.length &&
+        captured.inputs.every((value, index) => Object.is(value, inputs[index]));
+      const admission: MaintenanceAdmission = {
+        actorId,
+        generation: read.facts.generation,
+        fence: read.facts.bodyFence,
+        purpose: 'maintenance',
+        requiresBody: false,
+      };
+      return {
+        acknowledge: (nextSimAt) =>
+          this.service.publishRecall(async () => {
+            const gate = await read.publication(this.service.world, admission);
+            try {
+              return work.inspectedRead(
+                actorId,
+                nextSimAt,
+                capture,
+                this.service.generation,
+                () =>
+                  !!gate?.isCurrent() &&
+                  read.native.inputsCurrent() &&
+                  sameInputs(capture) &&
+                  backlog === this.memoryBacklog() &&
+                  revision === this.service.store.memories.actorRevision(actorId),
+              );
+            } finally {
+              gate?.release();
+            }
+          }),
+        release,
+      };
+    } catch (error) {
+      release();
+      throw error;
+    }
   }
   clear(): void {
     this.unsubscribe();

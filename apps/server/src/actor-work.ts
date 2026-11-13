@@ -49,6 +49,8 @@ export interface WorkRead {
   scope: string;
   inputs: readonly unknown[];
   reasons: ReadonlySet<IntakeReason>;
+  /** End this inspection's independent hold, including after a stale result. */
+  release(): void;
 }
 
 export interface WorkCapture extends WorkRead {
@@ -62,11 +64,18 @@ export interface IntakeInputs {
   values: unknown[];
   reasons: readonly IntakeReason[];
   urgency?: number;
+  /** Optional allocation custody, not evidence or permission. Offering this
+   * sample transfers its owner to the queue, including an unchanged sample. */
+  owner?: {
+    release(): void;
+    borrow(): { release(): void };
+  };
 }
 
 interface Work {
   order: number;
   inputs: unknown[];
+  inputOwner?: IntakeInputs['owner'];
   dirty: boolean;
   wallAt: number;
   simAt: number;
@@ -138,6 +147,7 @@ export class ActorWork {
   /** Release captured private inputs and deadline membership on shutdown or
    * population replacement; counters and generation allocation remain monotonic. */
   clear(): void {
+    for (const ticket of this.tickets.values()) ticket.inputOwner?.release();
     this.tickets.clear();
     this.readyIds.clear();
     this.wallDeadlines.clear();
@@ -199,45 +209,58 @@ export class ActorWork {
     const now = this.clock();
     for (const sample of samples) {
       const { id, input: next } = sample;
-      present.add(id);
-      const ticket = this.tickets.get(id);
-      if (!ticket) {
-        this.tickets.set(id, {
-          order: ++this.nextOrder,
-          inputs: next.values,
-          dirty: true,
-          dirtySince: now,
-          wallAt: 0,
-          simAt: Infinity,
-          generation: ++this.nextGeneration,
-          reasons: new Set(['state']),
-          urgency: next.urgency ?? 0,
-          durabilityTicket: this.durability?.capture(),
-        });
-        this.readyIds.add(id);
-        this.stats.wakes.state++;
-        continue;
-      }
-      let changed = next.values.length !== ticket.inputs.length;
-      for (let i = 0; i < next.values.length; i++)
-        if (next.values[i] !== ticket.inputs[i]) {
-          changed = true;
-          this.note(ticket, next.reasons[i] ?? 'state');
+      let adopted = false;
+      try {
+        present.add(id);
+        const ticket = this.tickets.get(id);
+        if (!ticket) {
+          this.tickets.set(id, {
+            order: ++this.nextOrder,
+            inputs: next.values,
+            inputOwner: next.owner,
+            dirty: true,
+            dirtySince: now,
+            wallAt: 0,
+            simAt: Infinity,
+            generation: ++this.nextGeneration,
+            reasons: new Set(['state']),
+            urgency: next.urgency ?? 0,
+            durabilityTicket: this.durability?.capture(),
+          });
+          adopted = true;
+          this.readyIds.add(id);
+          this.stats.wakes.state++;
+          continue;
         }
-      if (sample.dependenciesCurrent === false) {
-        changed = true;
-        this.note(ticket, 'state');
-      }
-      if (changed) {
-        // Keep the first owed cut while wakes coalesce. The paid dispatch
-        // boundary separately waits for its finalized evidence cut.
-        if (!ticket.dirty || ticket.durabilityTicket === undefined)
-          ticket.durabilityTicket = this.durability?.capture();
-        ticket.inputs = next.values;
-        ticket.urgency = Math.max(ticket.urgency, next.urgency ?? 0);
-        this.markDirty(ticket, now);
-        ticket.generation = ++this.nextGeneration;
-        this.schedule(id, ticket);
+        let changed = next.values.length !== ticket.inputs.length;
+        for (let i = 0; i < next.values.length; i++)
+          if (next.values[i] !== ticket.inputs[i]) {
+            changed = true;
+            this.note(ticket, next.reasons[i] ?? 'state');
+          }
+        if (sample.dependenciesCurrent === false) {
+          changed = true;
+          this.note(ticket, 'state');
+        }
+        if (changed) {
+          // Keep the first owed cut while wakes coalesce. The paid dispatch
+          // boundary separately waits for its finalized evidence cut.
+          if (!ticket.dirty || ticket.durabilityTicket === undefined)
+            ticket.durabilityTicket = this.durability?.capture();
+          ticket.inputs = next.values;
+          const previousOwner = ticket.inputOwner;
+          ticket.inputOwner = next.owner;
+          adopted = true;
+          if (previousOwner !== next.owner) previousOwner?.release();
+          ticket.urgency = Math.max(ticket.urgency, next.urgency ?? 0);
+          this.markDirty(ticket, now);
+          ticket.generation = ++this.nextGeneration;
+          this.schedule(id, ticket);
+        }
+      } finally {
+        // A fresh equal vector has no later consumer. A held inspection has
+        // its own borrow, so ending a replaced ticket cannot invalidate it.
+        if (!adopted && next.owner !== this.tickets.get(id)?.inputOwner) next.owner?.release();
       }
     }
     if (profilingEnabled()) countMetric(`intake.${this.label}.inputScans`, present.size);
@@ -260,10 +283,12 @@ export class ActorWork {
   }
 
   retire(id: string): void {
+    const ticket = this.tickets.get(id);
     this.tickets.delete(id);
     this.readyIds.delete(id);
     this.wallDeadlines.delete(id);
     this.simDeadlines.delete(id);
+    ticket?.inputOwner?.release();
   }
 
   private schedule(id: string, ticket: Work): void {
@@ -352,33 +377,39 @@ export class ActorWork {
   }
   captureRead(id: string): WorkRead | undefined {
     const ticket = this.tickets.get(id);
-    return ticket && this.scope
-      ? {
-          generation: ticket.generation,
-          scope: this.scope,
-          inputs: ticket.inputs,
-          reasons: new Set(ticket.reasons),
-        }
-      : undefined;
+    if (!ticket || !this.scope) return undefined;
+    const pin = ticket.inputOwner?.borrow();
+    try {
+      return {
+        generation: ticket.generation,
+        scope: this.scope,
+        inputs: ticket.inputs,
+        reasons: new Set(ticket.reasons),
+        release: () => pin?.release(),
+      };
+    } catch (error) {
+      pin?.release();
+      throw error;
+    }
   }
   capture(world: WorldState, id: string): WorkCapture | undefined {
-    const ticket = this.tickets.get(id);
-    return ticket && this.scope
-      ? {
-          generation: ticket.generation,
-          scope: this.scope,
-          // Wake on semantic bands/visible membership, not every pose or need-rate
-          // update anywhere in the world. Action admission keeps its full fences.
-          dependencies: actorDependencies(world, id, this.scope).filter(
-            (dependency) =>
-              dependency.kind !== 'existence' &&
-              !(dependency.kind === 'membership' && dependency.family === 'spatial-candidates'),
-          ),
-          inputs: ticket.inputs,
-          reasons: new Set(ticket.reasons),
-          world: new WeakRef(world),
-        }
-      : undefined;
+    const read = this.captureRead(id);
+    if (!read) return undefined;
+    try {
+      return Object.assign(read, {
+        // Wake on semantic bands/visible membership, not every pose or need-rate
+        // update anywhere in the world. Action admission keeps its full fences.
+        dependencies: actorDependencies(world, id, read.scope).filter(
+          (dependency) =>
+            dependency.kind !== 'existence' &&
+            !(dependency.kind === 'membership' && dependency.family === 'spatial-candidates'),
+        ),
+        world: new WeakRef(world),
+      });
+    } catch (error) {
+      read.release();
+      throw error;
+    }
   }
 
   /** A completed read acknowledges only its captured inputs, never a newer wake.

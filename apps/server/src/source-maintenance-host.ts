@@ -163,7 +163,9 @@ export function sourceMaintenanceHost(
           return work.inspected(actorId, nextSimAt, captured, service.world, service.generation);
         },
         release() {
+          const owner = captured;
           captured = undefined;
+          owner?.release();
         },
       };
     },

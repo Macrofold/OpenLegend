@@ -3115,24 +3115,37 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       if (input.claim) {
         const claim = input.claim;
         admission = await withNativeConsumerScope(async () => {
-          const own = (await NativeNpcIntake.refresh(this.world, actorId)).facts,
-            actor = this.actors.get(actorId);
-          const facts: DecisionClaimFacts = {
-            worldId: this.worldId,
-            timelineId: this.timelineId,
-            generation: this.generation,
-            policyDigest: decisionPolicyDigest(this.config),
-            at: own.at,
-            physicalLife: own.physicalLife ?? 0,
-            actorEligible:
-              !!actor?.alive &&
-              !actor.incapacitated &&
-              actor.controller === 'npc' &&
-              actor.cognition !== false &&
-              !own.actionsBlocked,
-          };
-          if (!decisionClaimCurrentFromRead(job, claim, facts)) throw new DecisionClaimLost();
-          return facts;
+          const queued = await NativeNpcIntake.refresh(this.world, actorId);
+          try {
+            const own = queued.facts,
+              actor = this.actors.get(actorId);
+            const facts: DecisionClaimFacts = {
+              worldId: this.worldId,
+              timelineId: this.timelineId,
+              generation: this.generation,
+              policyDigest: decisionPolicyDigest(this.config),
+              at: own.at,
+              physicalLife: own.physicalLife ?? 0,
+              actorEligible:
+                !!actor?.alive &&
+                !actor.incapacitated &&
+                actor.controller === 'npc' &&
+                actor.cognition !== false &&
+                !own.actionsBlocked,
+            };
+            if (!decisionClaimCurrentFromRead(job, claim, facts)) throw new DecisionClaimLost();
+            return facts;
+          } finally {
+            try {
+              queued.input.owner.release();
+            } finally {
+              try {
+                releaseNativeProduct(queued);
+              } finally {
+                releaseNativeProduct(queued.facts);
+              }
+            }
+          }
         });
       } else if (!['generating', 'queued', 'judging'].includes(job.status) && !job.responseReady) {
         throw new DecisionClaimLost();

@@ -1904,49 +1904,61 @@ export class NativeNpcDirector {
       const read = await this.service.publishRecall(() =>
         NativeNpcIntake.refresh(this.service.world, actorId, this.weighed.get(actorId)),
       );
-      const reservation =
-        read.facts.discovery?.state === 'reserved' ? read.facts.discovery.reservation : undefined;
-      if (!reservation) {
+      try {
+        const reservation =
+          read.facts.discovery?.state === 'reserved' ? read.facts.discovery.reservation : undefined;
+        if (!reservation) {
+          this.discoveryRecovery.delete(actorId);
+          continue;
+        }
+        if ([...this.runs.values()].some((run) => run.discovery?.reservation === reservation))
+          continue;
+        const attempts = await this.service.store.decisionAttempts(reservation);
+        const dispatched = attempts.some((attempt) =>
+          attempt.receipt
+            ? attempt.receipt.dispatched || attempt.receipt.completionUncertain
+            : attempt.dispatchIntent,
+        );
+        const job = dispatched ? undefined : await this.service.store.getJob(reservation);
+        if (
+          job?.decision &&
+          ['higher', 'waiting-primary'].includes(job.decision.phase) &&
+          job.decision.generation === generation &&
+          job.decision.timelineId === this.service.timelineId
+        )
+          continue;
+        if (
+          !(await this.service.changeNpcIntake(actorId, generation, {
+            type: 'settle-discovery',
+            reservation,
+            dispatched,
+          }))
+        )
+          continue;
         this.discoveryRecovery.delete(actorId);
-        continue;
-      }
-      if ([...this.runs.values()].some((run) => run.discovery?.reservation === reservation))
-        continue;
-      const attempts = await this.service.store.decisionAttempts(reservation);
-      const dispatched = attempts.some((attempt) =>
-        attempt.receipt
-          ? attempt.receipt.dispatched || attempt.receipt.completionUncertain
-          : attempt.dispatchIntent,
-      );
-      const job = dispatched ? undefined : await this.service.store.getJob(reservation);
-      if (
-        job?.decision &&
-        ['higher', 'waiting-primary'].includes(job.decision.phase) &&
-        job.decision.generation === generation &&
-        job.decision.timelineId === this.service.timelineId
-      )
-        continue;
-      if (
-        !(await this.service.changeNpcIntake(actorId, generation, {
-          type: 'settle-discovery',
-          reservation,
-          dispatched,
-        }))
-      )
-        continue;
-      this.discoveryRecovery.delete(actorId);
-      if (!dispatched) {
-        const key = `semantic-schedule:${this.service.worldId}:${actorId}`;
-        const schedule = (await this.service.store.getIntegration(key)) as
-          | ActorThoughtSchedule
-          | undefined;
-        if (schedule?.attemptedJobId === reservation) {
-          const {
-            attemptedOpportunity: _opportunity,
-            attemptedJobId: _job,
-            ...remaining
-          } = schedule;
-          await this.writeSchedule(key, remaining, generation);
+        if (!dispatched) {
+          const key = `semantic-schedule:${this.service.worldId}:${actorId}`;
+          const schedule = (await this.service.store.getIntegration(key)) as
+            | ActorThoughtSchedule
+            | undefined;
+          if (schedule?.attemptedJobId === reservation) {
+            const {
+              attemptedOpportunity: _opportunity,
+              attemptedJobId: _job,
+              ...remaining
+            } = schedule;
+            await this.writeSchedule(key, remaining, generation);
+          }
+        }
+      } finally {
+        try {
+          read.input.owner.release();
+        } finally {
+          try {
+            releaseNativeProduct(read);
+          } finally {
+            releaseNativeProduct(read.facts);
+          }
         }
       }
     }
@@ -1991,18 +2003,32 @@ export class NativeNpcDirector {
         const read = await this.service.publishRecall(() =>
           NativeNpcIntake.refresh(this.service.world, id, this.weighed.get(id)),
         );
-        if (!read.facts.enrolled) {
-          this.work.retire(id);
-          this.weighed.delete(id);
-          continue;
+        let offered = false;
+        try {
+          if (!read.facts.enrolled) {
+            this.work.retire(id);
+            this.weighed.delete(id);
+            continue;
+          }
+          offered = true;
+          this.work.refreshCaptured(
+            this.service.worldId,
+            generation,
+            [{ id, input: read.input }],
+            false,
+          );
+          this.weighed.set(id, read.facts.awarenessThrough);
+        } finally {
+          try {
+            if (!offered) read.input.owner.release();
+          } finally {
+            try {
+              releaseNativeProduct(read);
+            } finally {
+              releaseNativeProduct(read.facts);
+            }
+          }
         }
-        this.work.refreshCaptured(
-          this.service.worldId,
-          generation,
-          [{ id, input: read.input }],
-          false,
-        );
-        this.weighed.set(id, read.facts.awarenessThrough);
       }
       const ready = this.work.ready(
         this.now(),
@@ -2025,18 +2051,19 @@ export class NativeNpcDirector {
                 ...previous,
                 watermark: Math.min(previous.watermark, this.service.durableIdentityThrough),
               };
-        const captured = this.work.captureRead(actorId),
-          read = await this.service.captureNpcIntake(
-            actorId,
-            last?.watermark ?? 0,
-            this.weighed.get(actorId),
-          );
         const projectionScope = createNativeConsumerScope();
+        const captured = this.work.captureRead(actorId);
+        let readOwner: NativeNpcIntake | undefined;
         let automaticJob: JobRecord | undefined;
         let discoveryReserved = false;
         let beginOwnsRecovery = false;
         let transferred = false;
         try {
+          const read = (readOwner = await this.service.captureNpcIntake(
+            actorId,
+            last?.watermark ?? 0,
+            this.weighed.get(actorId),
+          ));
           if (
             generation !== this.service.generation ||
             !read.facts.enrolled ||
@@ -2049,12 +2076,21 @@ export class NativeNpcDirector {
             captured.inputs.length !== input.values.length ||
             captured.inputs.some((value, index) => value !== input.values[index])
           ) {
-            this.work.refreshCaptured(
-              this.service.worldId,
-              generation,
-              [{ id: actorId, input: (await read.queueInputs()).input }],
-              false,
-            );
+            const queued = await read.queueInputs();
+            try {
+              this.work.refreshCaptured(
+                this.service.worldId,
+                generation,
+                [{ id: actorId, input: queued.input }],
+                false,
+              );
+            } finally {
+              try {
+                releaseNativeProduct(queued);
+              } finally {
+                releaseNativeProduct(queued.facts);
+              }
+            }
             continue;
           }
           const jobs = await this.service.store.getSpeechJobs(
@@ -2214,7 +2250,11 @@ export class NativeNpcDirector {
               try {
                 projectionScope.dispose();
               } finally {
-                if (!transferred) read.release();
+                try {
+                  if (!transferred) readOwner?.release();
+                } finally {
+                  captured?.release();
+                }
               }
             }
           }
@@ -2324,7 +2364,7 @@ export class NativeNpcDirector {
       const labels = retainNativeProduct(queued.facts);
       // This caller consumes only labels; the scheduling vector and envelope
       // have independent pins and no later consumer in this run.
-      releaseNativeProduct(queued.input.values);
+      queued.input.owner.release();
       releaseNativeProduct(queued);
       this.runs.set(job.id, run);
       this.names.set(actorId, labels);
