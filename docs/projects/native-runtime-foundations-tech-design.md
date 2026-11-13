@@ -1,16 +1,16 @@
 # Native runtime foundations: technical design
 
-| Status      | Current progress                                                                                                                | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | J and S are rejected and removed at 128 MiB; complete CPU/RSS benefit remains inconclusive, and P/R retain unmet prerequisites. | 2026-11-12   |
+| Status      | Current progress                                                                                                                      | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Fresh 2 GiB controls, J/S reconsideration and justified P/R implementation are authorized; earlier profile failures remain preserved. | 2026-11-13   |
 
 [Feature specification](native-runtime-foundations-feature-spec.md) · [Evidence and repertoire reconciliation](native-runtime-foundations-evidence-and-repertoire.md) · [NRF work](../maintainers/native-runtime-foundations.md) · [Constraints](../limits/native-runtime-foundations.md)
 
 ## 1. Integration contract and source baseline
 
-Use `Macrofold/OpenLegend` at `d9544ae5d017e697bfcfe2a38c71bb8569ad14f6` as this design's inspection baseline, not as an instruction to discard newer implementation. Before changing a named owner, compare its current implementation and recorded NSC disposition against the evidence map. Reuse a satisfying implementation instead of reimplementing this description. Preserve the completed NSC03 rejection and its unqualified correctness/resource gates; this design does not reopen the finished assessment or authorize new implementation.
+Use `Macrofold/OpenLegend` at `d9544ae5d017e697bfcfe2a38c71bb8569ad14f6` as this design's inspection baseline, not as an instruction to discard newer implementation. Before changing a named owner, compare its current implementation and recorded NSC disposition against the evidence map. Reuse a satisfying implementation instead of reimplementing this description. Preserve the completed 64/128 MiB assessments and unqualified evidence. Mike's November 13 continuation authorizes fresh 2 GiB controls, these remaining candidates and the later designed NSC stages; earlier failures do not halt that work or become results for the new profile.
 
-This document supplies narrow mechanisms beneath the existing [native-core architecture](native-simulation-core-tech-design.md). NSC owns the proof, recorded repairs, attribution and E2 acceptance. NRF owns these four candidate recipes and their disposition. If further implementation is separately authorized, use the applicable recipe through its existing semantic owner; do not create a second implementation or campaign. One change, one owner and one experiment record are sufficient even when both trackers link it.
+This document supplies narrow mechanisms beneath the existing [native-core architecture](native-simulation-core-tech-design.md). NSC owns the proof, recorded repairs, attribution, E2 and later conversion/cell/distribution stages. NRF owns these four candidate recipes and their disposition. Use the applicable recipe through its existing semantic owner; do not create a second implementation or campaign. One change, one owner and one experiment record are sufficient even when both trackers link it.
 
 Names introduced below are proposed private implementation names, not claims that those APIs already exist. Reuse an equivalent current helper when its lifetime and behavior match. Keep helpers beside their first real consumer; no new package, service or generic execution language is required.
 
@@ -20,7 +20,7 @@ Names introduced below are proposed private implementation names, not claims tha
 
 `NativeDefinitionCapture` already captures and freezes immutable installed definitions for one native installation. Per-attempt player projection is a different operation; do not mistake its remaining cost for an absent installation cache. `AcceptedAdvanceContinuation` already carries actual accepted forecast/group preparation across a matching cut and explicitly rebinds the fresh journal. A second broad preparation cache could duplicate or weaken that mechanism.
 
-Leave the repaired narrow movement read, one-definition preparation, selected-payload encoding and moved attention undo paths in the common baseline. Do not change the authored clock, sampling cadence, storage schedule, resource profile or model behavior to make an experiment pass.
+Leave the repaired narrow movement read, one-definition preparation, selected-payload encoding, moved attention undo and later read-lifetime/control fixes in the common baseline. Establish the explicitly selected 2 GiB control first. Within each isolated comparison keep that profile, authored clock, sampling cadence, storage schedule and model behavior identical; do not change them to manufacture an optimization gain.
 
 ### 1.2 Complete execution scopes, not cold checks everywhere
 
@@ -64,19 +64,19 @@ Use scalar accumulators, not an allocated result object per node; the public res
 2. Implement the traversal and update `measureNativeJson` only. Delete replaced helpers after callers use the new owner; no world/network interface changes.
 3. Exercise the real encoder with prefix/suffix, exact bytes, escaping, non-ASCII and isolated UTF-16, numeric edge representations, optional fields, arrays and repeated immutable children. Preserve the existing supported-input domain.
 4. Verify genuine pre-serialization refusal, serializer failure cleanup, explicit retry and independently held output through actual callers, including the cognition-boundary comparison in section 7.2.
-5. Run isolated J qualification under section 7, separately from S. Remove the candidate on rejection and retain its measured disposition.
+5. Run isolated J qualification under section 7, separately from S. Apply NRF-L05's evaluation policy; retain the measured disposition and remove a specifically rejected candidate without halting the remaining implementation.
 
 Expected saving is one structural traversal and repeated property enumeration. Exact measurement, V8 serialization, buffers and consumers remain. More complex branching or recursion can lose; helper timing alone does not justify adoption. Never reinstate the rejected ordered installation encoder or a persistent measurement cache through J.
 
 ## 3. S: one operation-local scratch reservation
 
-**Recorded disposition: rejected and removed.** S's allocation, actual HTTP/cognition and complete held generated-reply consumers pass at their preserved experimental identities. Its first managed 360-second resource case fails genuine receiving-capacity admission under the frozen 128 MiB route; the unchanged control also fails capacity. The nominal primary timer runs 359.997 seconds, but accepted progress is only 3,478.297 game-seconds after the simulation pauses at about 58 seconds. Neither arm completes the required conversations and application shutdown. Later resource and matched 100-second stages are not admitted; complete-work CPU/RSS benefit is inconclusive. The scratch API and callers are removed; the only retained runtime-source difference from control `a2d789a78a57547708eb2f55a2d6407c644611e8` is module declaration ordering in `runtime.rs`. No fallback or experimental switch remains. The recipe below is retained for its exact evidence and constraints, not as current implementation; [NRF work](../maintainers/native-runtime-foundations.md#s-correctness-checkpoint--november-12-2026) owns the full disposition and final verification. This failure does not establish that S uniquely caused the refusal.
+**Recorded 128 MiB disposition: rejected and removed.** S's allocation, actual HTTP/cognition and complete held generated-reply consumers pass at their preserved experimental identities. Its first managed 360-second resource case fails genuine receiving-capacity admission under the frozen 128 MiB route; the unchanged control also fails capacity. The nominal primary timer runs 359.997 seconds, but accepted progress is only 3,478.297 game-seconds after the simulation pauses at about 58 seconds. Neither arm completes the required conversations and application shutdown. The old stop rule prevents later resource and matched 100-second admissions; complete-work CPU/RSS benefit is inconclusive. The scratch API and callers were removed; the only retained runtime-source difference from control `a2d789a78a57547708eb2f55a2d6407c644611e8` at that removal is module declaration ordering in `runtime.rs`. No fallback or experimental switch remains. The recipe is now authorized for 2 GiB reconsideration against a fresh equal-profile control, with current caller changes reconciled first. [NRF work](../maintainers/native-runtime-foundations.md#s-correctness-checkpoint--november-12-2026) preserves the historical disposition and verification. The old failure establishes neither S-specific causation nor its benefit at 2 GiB.
 
 ### 3.1 Source and eligibility
 
 `RuntimeConsumer` in `native/simulation/src/runtime/consumer.rs` has a shared body reservation and an independently charged reference/header reservation. `release` clears the body; the wrapper header can remain until JavaScript collection. `ByteReservation::resize`, `split_off` and `merge` already exist in `host/budget.rs`. Sequential temporary reservations currently create distinct wrapper lifetimes.
 
-S activates only if existing attribution identifies material temporary-wrapper churn or released-header retention in an actual encoding path. It is not an assumed solution to 128 MiB exhaustion. Unknown residual bytes remain unknown; do not lower a bound because it looks conservative.
+Reuse the existing actual wrapper/header attribution and resolve any current-owner gap before reinstating S. It is not an assumed solution to capacity exhaustion, and a larger common allowance is not an S gain. Unknown residual bytes remain unknown; do not lower a bound because it looks conservative.
 
 ### 3.2 Narrow API and ownership
 
@@ -174,7 +174,7 @@ P can lose by prolonging a large capture, worsening latency or adding machinery 
 
 R implements a candidate for NSC03/E2, not a second multicore project. First consumer: `time/prediction.rs::MechanicalForecast::prepare_selected`, currently calling `status/rates.rs::prepare_status_rates` over selected ordered status participants. That function reads installed policy, entity/episode bindings and earned values, evaluates ordered predicates and produces rate/periodic selections.
 
-Before implementing R0 or extracting the evaluator, use existing attribution to establish a credible complete-path benefit from this particular phase on the selected workload. Compare its critical-path contribution with E2's target, including unavoidable serial work and the proposed dispatch/preflight costs; aggregate CPU share alone does not predict latency. If even an optimistic removal of the phase cannot meet the intended benefit, record R as not activated and leave E2 open for a separately justified family. Do not inflate status definitions or change gameplay merely to make this candidate qualify. Missing attribution remains pending work, not an evidence-backed rejection.
+Before implementing R0 or extracting the evaluator, resolve this phase's actual critical-path attribution on the selected workload. Include unavoidable serial work and proposed dispatch/preflight costs; aggregate CPU share alone does not predict latency. Use E2's numerical target for evaluation, not an automatic non-activation rule. A concrete demonstration that the phase offers no useful benefit for the added complexity can reject this particular candidate while E2 continues through a justified family; missing attribution must be resolved rather than left pending because 128 MiB failed. Do not inflate status definitions or change gameplay to manufacture work.
 
 `StatusRead::evaluate_with_charge` already separates evaluation from charging. The metered route charges one Tests unit per visited predicate, including short circuit. WorkMeters is candidate-owned; rollback never refunds attempted work. Retain those semantics without a copied world, universal graph or independent random streams.
 
@@ -262,7 +262,7 @@ R settles this candidate, not the theoretical multicore limit. Another family ne
 
 **Crowd physics/fidelity:** current support, clearance and ordered movement remain. The occupancy/avoidance-versus-pushing comparison remains with DG18/spatial owners. No load-triggered blindness, weaker defense or invented memory. Transparent compute partitioning is distinct from gameplay separation.
 
-**Memory allowance:** preserve actual current proof profile and separate resident/pending-save accounting. Simultaneous-owner attribution and correctness/resource repair stay with NSC. No bigger allowance, reduced evidence, forced GC or new general priority-budget system is selected to hide a failure.
+**Memory allowance:** the explicit current profile is 2 GiB through the existing trusted host configuration, with separate resident/pending-save accounting. Use fresh equal-profile controls; preserve all earlier failure scopes. Simultaneous-owner attribution and correctness/resource repair stay with NSC. Reaching 2 GiB calls for actual live-owner attribution and repair, not reduced evidence, forced GC, disabled admission or a new general priority-budget system.
 
 ## 7. Experiment sequence and adoption
 
@@ -272,9 +272,9 @@ NRF01 consumes existing NSC profiling/failures. Use latest integrated code for b
 
 Pin the actual executed module closure as well as regular source bytes. Use the existing workspace-binding guard to verify that direct fixture imports and bare package imports resolve through the intended frozen snapshot, with coherent inward workspace links in both arms. Record and recheck those links with the source identities; byte-identical files reached through a second package root can own distinct module-local registration and preparation state. Historical evidence with a different link topology retains that exact scope and cannot substitute for a fresh coherent control. This extends the existing source/dependency freeze, not the simulation contract or the verification framework.
 
-Each candidate records its material targeted cost, actual consumer and fixed adoption criterion before execution. Missing attribution means not activated, not a speculative implementation mandate. Correctness repairs proceed under their existing owner; do not mix them into an optimization comparison and infer causation.
+Each candidate records its targeted cost, actual consumer and evaluation targets before execution. Resolve missing attribution through the existing bounded owners; do not blindly build a disproved premise or treat missing evidence as a permanent disposition. Correctness repairs proceed under their existing owner and become common baseline before isolated optimization comparisons; do not mix them into a claimed single-change gain.
 
-J and S are independently eligible after their consumer is stable. P waits for reconnect/busy correctness and multi-connection attribution. R retains NSC03/E2's preceding complete-proof gate and section 5.1's benefit screen. Its serial extraction, R0 dispatch change and R1 parallelism each have a separate before/after; the complete R comparison includes all three costs. J need not precede S, and neither is a prerequisite for multicore design. Integrate only separately qualified changes, then check actual lifetime interactions.
+Establish reliable sustained gameplay and complete held consumers at 2 GiB, repairing outstanding save/shutdown/recovery and lifetime defects, then reconsider J and S independently through their stable actual consumers. P follows current reconnect/busy correctness and accepted-cut compatible-capture attribution. R follows reliable one-worker execution and section 5.1's actual benefit attribution; the old 128 MiB failure is not its stop gate. Its serial extraction, R0 dispatch change and R1 parallelism each have a separate before/after, and the complete R comparison includes all three costs. Complete, review and check each coherent batch, then run its isolated AWS comparison before another optimization batch. J need not precede S, and neither is a prerequisite for multicore design. Integrate justified changes and check their actual lifetime interactions.
 
 ### 7.2 Required correctness
 
@@ -298,11 +298,11 @@ J/S use the actual ordinary two-conversation/movement/save journey. P adds equiv
 
 ### 7.4 Candidate decisions and overall adoption
 
-[NRF-L05](../limits/native-runtime-foundations.md#nrf-l05--evidence-and-adoption) owns quantitative candidate criteria and the matched-work denominator. Freeze the selected route before timing. J's small consolidation must improve the complete affected consumer; S/P's extra lifetime machinery must earn a substantial gain or close a demonstrated binding resource failure. R uses E2 for its complete dispatch-plus-compute candidate, not merely its fastest kernel. R0 may have measured prerequisite cost without being a standalone speedup; it is adopted with R only when the complete result qualifies, unless independently justified by an existing repair owner.
+[NRF-L05](../limits/native-runtime-foundations.md#nrf-l05--evidence-and-adoption) owns evaluation targets and the matched-work denominator. Freeze the selected question before timing. Measure J's complete affected consumer, S/P's complete lifetime/resource effects and R's complete dispatch-plus-compute candidate rather than its fastest kernel. Numerical targets guide investigation; they do not stop the designed implementation. R0's prerequisite cost remains included and needs the complete R result or an independent existing repair justification, rather than a standalone speedup claim.
 
-A later revised criterion must be explicitly selected before a new experiment and cannot relabel old failed evidence. Current NSC E1/E2/resource/latency decisions remain separate; a Native-to-Native improvement does not establish Rust's advantage over Source.
+A later revised target or profile must be explicitly selected before a new experiment and cannot relabel old failed evidence. The November 13 policy and 2 GiB profile apply to fresh controls; earlier NSC/NRF decisions keep their recorded scopes. A Native-to-Native improvement does not establish Rust's advantage over Source.
 
-Record adopt, reject, inconclusive or not activated with source/workload evidence. Inconclusive does not authorize broad rollout. Remove rejected paths, temporary switches and unused helpers; preserve evidence in the actual owner. An adopted algorithm may deliberately keep an inline strategy, but not an old-engine compatibility backend or second authority.
+Record adopt, reject, inconclusive or not activated with source/workload evidence. Inconclusive evidence is not a performance claim or rollout qualification. Repair or revert material regressions in the specific change and continue other work; neutral simpler correct code may remain, while complexity needs justification. Remove rejected paths, temporary switches and unused helpers and preserve their evidence. An adopted algorithm may deliberately keep an inline strategy, but not an old-engine compatibility backend or second authority.
 
 After combining adopted changes, run the smallest complete affected journey and combined cost/resource comparison necessary to expose interactions. Do not add isolated percentages. Reconcile actual coverage, limits, contracts and tasks. Broad population, mature-world and enjoyment qualification remains with PF/PS/PT/PD and first-playable owners.
 
@@ -310,7 +310,7 @@ After combining adopted changes, run the smallest complete affected journey and 
 
 No new product ruling is required for the selected experiments. Their eligibility and measured benefit are open empirical results, not unspecified algorithms. Do not change pushing, sensing, unattended service or player admission to obtain a pass.
 
-Design completion covers these four recipes, R's dispatch prerequisite and section 1's preservation decisions. General physical streaming, new crowd behavior, alternative authoritative clocks and distributed persistence are not claimed designed here. The [research handoff](../maintainers/decisions/mmorpg-engine-foundations.md) retains their existing owners and residual scopes.
+This design covers these four recipes, R's dispatch prerequisite and section 1's preservation decisions. The continuing implementation also includes the existing NSC supported-game conversion, cell/interaction ownership, distributed custody, adaptive grouping and adoption cleanup stages through their own designs. This does not commission speculative physical streaming, new crowd laws, alternative authoritative clocks or an undesigned database. The [research handoff](../maintainers/decisions/mmorpg-engine-foundations.md) retains the other owners and residual scopes.
 
 ## Maintained records
 
