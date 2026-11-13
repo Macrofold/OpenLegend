@@ -6,7 +6,7 @@
 
 An artist supplies strong visual targets for a deliberately sampled body space. Image generation supplies consistent construction views; Meshy supplies detailed donor geometry; fitting transfers that geometry onto the selected canonical topology; the existing compiler/evaluator turns corresponding shapes into editable recipes. The visible target remains beside the work at every stage. A few measurements or a prose description cannot replace it.
 
-The first delivery is one adult masculine family at a fixed apparent age, stature and structural frame, with independent **muscle mass, fullness and definition**. It includes a replaceable canonical head, complete underlying anatomy, separate close-fitting baseline coverage, and the **same existing premade Peacock shirt** working across every qualified recipe and motion. It includes source-to-runtime comparisons and reconstruction evidence, not only attractive stills. No custom tunic, hair library, new viewer, character-creator UI, engine replacement or production selection belongs to this unit.
+The first delivery is one adult masculine family at a fixed apparent age, stature and structural frame, with two independent body sliders: **muscle mass and fullness**. How clearly the muscles show [follows from those two](#muscle-relief-follows-from-the-two-sliders) and has no slider of its own. It includes a replaceable canonical head, complete underlying anatomy, separate close-fitting baseline coverage, and the **same existing premade Peacock shirt** working across every qualified recipe and motion. It includes source-to-runtime comparisons and reconstruction evidence, not only attractive stills. No custom tunic, hair library, new viewer, character-creator UI, engine replacement or production selection belongs to this unit.
 
 Later stages add an independently authored feminine body, adult age responses, structural/proportion controls and approved younger ranges. These are explicit staged deliverables, not capabilities implied by a successful masculine grid. The body workflow leaves face identity, facial sliders, skin finish, hair/beard/brows and a full wardrobe with their existing owners. One neutral head is sufficient for body qualification; it is insufficient for whole-character or adult-face-age acceptance.
 
@@ -27,13 +27,13 @@ Before any production run, resolve these fields in the existing [study record](s
 | Input                   | Required value and authority                                                                                                                                                                                                                                                                       |
 | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Task and stopping point | Design/concepts, donor production, family qualification or integration; do not infer the next stage from a successful prior one.                                                                                                                                                                   |
-| Selected body           | Exact accepted reference views, source recipe, canonical family revision and complete editable body. For the first Peacock comparison, preserve mass/fullness/definition `50/0/100` and its approved waist/lower-rib silhouette. The paused hand-shaped fuller candidate is not an accepted donor. |
+| Selected body           | Exact accepted reference views, source recipe, canonical family revision and complete editable body. For the first Peacock comparison, preserve mass/fullness `50/0`, its approved muscle relief and waist/lower-rib silhouette. The paused hand-shaped fuller candidate is not an accepted donor. |
 | Reference roles         | Identify which image governs anatomy, which governs style and which is diagnostic. Armour and beard do not govern hidden torso or jaw volume. A donor cannot silently overrule the approved concept.                                                                                               |
 | Fixed quantities        | Apparent age, physical stature, neutral skeleton/frame, head identity, skin/presentation, pose, camera and lighting. Read the actual reference stature from the selected family; do not infer centimetres from image size.                                                                         |
 | Runtime context         | Exact current family/compiler/renderer revision, same named shirt and motion sources, existing browser budgets and current admitted appearance/spatial owners.                                                                                                                                     |
 | Cost/access             | Remaining cumulative task allowance, current provider price for the actual operation, permitted source rights and private archive destination. A row count is not permission to spend for that many jobs.                                                                                          |
 
-Use the [paused study](../../../art-direction/studies/2026-11-11-peacock-full-transfer/README.md), [production strategy](../../research/character-production/archive/2026/2026-11-11-strategy.md), [art lessons](../../research/art-production/lessons-needs-design.md) and current [world direction](../../../art-direction/decisions.md) as inputs. This workflow adopts the strategy's source-led 2 → 4 → 12 experiment, not an unqualified promise that twelve shapes cover all people.
+Use the [paused study](../../../art-direction/studies/2026-11-11-peacock-full-transfer/README.md), [production strategy](../../research/character-production/archive/2026/2026-11-11-strategy.md), [art lessons](../../research/art-production/lessons-needs-design.md) and current [world direction](../../../art-direction/decisions.md) as inputs. This workflow adopts the strategy's staged, source-led experiment with two body sliders: 2 → 6 fitted bodies. It is not an unqualified promise that six shapes cover all people.
 
 ## 3. Controls: independent inputs, interacting anatomy
 
@@ -41,7 +41,7 @@ Use normalized values `0…1` in manifests; percentages are display labels. They
 
 **Author 0% and 100% as visibly extreme, plausible ends of every continuous appearance slider.** Each endpoint should read as an outlier for that trait within the supported family when compared with typical interior values at the same scale, pose and lighting. Most characters should use interior values for every slider. Reserve exact endpoints for deliberately extreme characters and qualification cases. Judge each slider with the other inputs held fixed, so an extreme on one axis does not depend on moving another axis to its limit.
 
-For fullness, 0% reads distinctly lean and 100% reads unmistakably full across the torso, hips and seat, upper arms and thighs, with natural transitions into the rest of the body. A rounded abdomen on an otherwise athletic silhouette is an intermediate appearance. Use matched front, profile and rear views to establish that range before fitting. At fixed fullness, muscle mass spans slight to exceptionally muscular and definition spans very soft to strongly delineated relief for that body. Keep the plausible combinations specified below.
+For fullness, 0% reads distinctly lean and 100% reads unmistakably full across the torso, hips and seat, upper arms and thighs, with natural transitions into the rest of the body. A rounded abdomen on an otherwise athletic silhouette is an intermediate appearance. Use matched front, profile and rear views to establish that range before fitting. At fixed fullness, muscle mass spans slight to exceptionally muscular. Keep the plausible combinations specified below.
 
 | Control                  | What changes                                                                                                       | What remains protected; interaction                                                                                                                                                              |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -50,9 +50,8 @@ For fullness, 0% reads distinctly lean and 100% reads unmistakably full across t
 | Stature                  | Uniform final anatomical height after shape evaluation.                                                            | Scale anatomy, rest rig and attachments exactly once from the soles; exclude hair/shoes from crown height. Use existing spatial admission for actual physical stature.                           |
 | Structural breadth       | Shoulder span, ribcage breadth/depth and pelvic frame.                                                             | Changes relevant internal landmarks; does not set tissue mass or fullness. In the existing bundled profile this is `breadth`, not the historical `frame` key.                                    |
 | Local structural breadth | `shoulderBreadth`, `hipBreadth` and any later explicitly authored regional structure.                              | Residual adjustment over the selected structural breadth, with measured physical limits. Do not represent the same deformation twice.                                                            |
-| Muscle mass              | Muscle-group volume across torso, shoulders, arms, seat and legs.                                                  | Fixed stature and bone frame for this first grid. A large, lean muscular person remains possible.                                                                                                |
+| Muscle mass              | Muscle-group volume across torso, shoulders, arms, seat and legs, with the muscle relief natural to that volume.   | Fixed stature and bone frame for this first grid. A large, lean muscular person remains possible.                                                                                                |
 | Fullness                 | Adipose volume/distribution across neck/trunk/back/waist/seat/upper and lower limbs, as appropriate to the source. | Fixed bone landmarks for tissue-only changes. The visible shoulder width can increase even though skeletal shoulder span stays fixed. Fat arms belong here, not in a bigger-biceps-only control. |
-| Definition               | Shape of muscle bellies and separations at the selected mass, fullness and age; maps for fine detail.              | Does not turn a slender body into a large lifter. High fullness attenuates visible relief through authored interactions, without silently rewriting the requested definition value.              |
 | Local soft anatomy       | `belly`, chest/breast volume and shape, supported regional refinements.                                            | Residual over global fullness/mass. A chest control is not a substitute for ribcage or pectoral mass. No isolated extrusion with a hard border.                                                  |
 | Proportions              | Leg/trunk ratio, arm/neck/head length, neck girth and qualified local dimensions.                                  | Length controls move joints and preserve declared total-height compensation. Fixed total stature does not permit arbitrary incompatible limb sums.                                               |
 | Pigment/finish           | Skin/eye pigment, supported marks and maps.                                                                        | Material-only changes reuse geometry/rig/fits. Do not infer ancestry, identity or capability.                                                                                                    |
@@ -62,21 +61,29 @@ The [bundled profile](../../worlds/base/people-appearance.md#control-definitions
 
 **Global breadth at 100% and shoulder refinement at 0% can coexist** if that combination is inside the family's qualified envelope: the latter means the narrow residual relative to the broad structure, not the globally narrowest possible shoulders. Publish the resulting joint span and outer surface span separately. Controls are independently settable inputs, not a promise that their visible effects are disjoint. Evaluate a recipe deterministically from neutral data; never accumulate edits onto the last displayed body. Invalid combinations need a clear unsupported-range result, not an invisible clamp that changes another slider.
 
+### Muscle relief follows from the two sliders
+
+Muscle relief is how clearly the muscle shapes and the grooves between them show on the surface. It has no slider. Each authored body carries the relief natural to its build: more muscle makes the shapes larger and clearer, and more fullness covers and softens them. A lean body shows its muscles, a full body shows soft forms, and a full muscular body stays visibly different from a full body with little muscle.
+
+The cost of a third slider is the reason. A separate definition slider doubles the bodies to source and fit, from six to twelve, while the [earlier proof](../../../art-direction/studies/2026-11-11-peacock-muscle-definition/README.md) measured its effect at about 1–5 mm of surface relief with waist, ribs, pelvis and seat unchanged. High fullness mutes relief in any case, and reference images could not reliably show the same build with less relief.
+
+Two results follow. How cut a lean body looks is set by how its lean reference is drawn; the approved Peacock sheet sets that for the first family. A lean but smooth body at the same muscle and fullness is not a supported recipe; a little fullness softens the surface and also thickens the body slightly. A surface-only relief strength in skin shading would need no extra bodies; it is untested and not part of this workflow.
+
 ### Example qualification recipes
 
 These recipes sample endpoints and their interactions. Ordinary character presets should use interior values. The selected lean Peacock recipe is a pinned transfer reference.
 
-| Illustrative appearance       | Mass | Fullness | Definition |
-| ----------------------------- | ---: | -------: | ---------: |
-| Slender, little relief        |    0 |        0 |          0 |
-| Wiry                          |    0 |        0 |        100 |
-| Selected lean athletic source |   50 |        0 |        100 |
-| Moderate, softer build        |   50 |       50 |          0 |
-| Large lean musculature        |  100 |        0 |        100 |
-| Fuller, moderate musculature  |   50 |      100 |          0 |
-| Strong and full               |  100 |      100 |         50 |
+| Illustrative appearance       | Mass | Fullness |
+| ----------------------------- | ---: | -------: |
+| Slender                       |    0 |        0 |
+| Selected lean athletic source |   50 |        0 |
+| Large lean musculature        |  100 |        0 |
+| Moderate, softer build        |   50 |       50 |
+| Very full, little muscle      |    0 |      100 |
+| Fuller, moderate musculature  |   50 |      100 |
+| Strong and full               |  100 |      100 |
 
-Low definition alone does not mean fat. Increasing muscle mass alone must not create an expanded ribcage ledge or breast-like isolated chest extrusion. Fullness must not leave fit arms, legs and back attached to a rectangular belly. Definitions are source-relative, not stereotypes about gender or age.
+Little muscle does not mean fat, and fullness does not remove muscle. Increasing muscle mass alone must not create an expanded ribcage ledge or breast-like isolated chest extrusion. Fullness must not leave fit arms, legs and back attached to a rectangular belly. Builds are source-relative, not stereotypes about gender or age.
 
 ## 4. Sampling plan and model counts
 
@@ -87,32 +94,30 @@ For one adult base/age/frame, the review matrix is the full Cartesian product:
 ```text
 mass      = [0, 0.5, 1]
 fullness  = [0, 0.5, 1]
-definition= [0, 0.5, 1]
-27 recipe coordinates; stable row ID: M{000|050|100}-F{000|050|100}-D{000|050|100}
+9 recipe coordinates; stable row ID: M{000|050|100}-F{000|050|100}
 ```
 
 Plan all rows before production. Each has an intended reference or explicitly unaccepted synthesized comparison, source status, geometry status and shirt/motion result. Generate reference sheets as consistent variants of an accepted anchor, with reference inputs retained. Do not assume a label in a prompt makes a measurable 50% anatomical midpoint.
 
 ### Stages and advancement
 
-| Stage                              |              Independent supports | Work and exit                                                                                                                                                                                                                                                                                                                                                                                                  |
-| ---------------------------------- | --------------------------------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A: usable lean/full pair           |                           2 total | Existing accepted `50/0/100` and new `50/100/100`; identical skeleton, stature, age and pose. Establish whole-body source fidelity, correspondence and natural motion. Repair input mismatch before fitting a whole grid.                                                                                                                                                                                      |
-| B: definition interaction          |                           4 total | Add `50/0/0` and `50/100/0`. Qualify both definition sweeps and their fullness interpolation. High-fullness/high-definition is a strong full body, not exposed cut abs painted over fat.                                                                                                                                                                                                                       |
-| C: mass interaction                |                          12 total | Add mass 0 and 100, each at all four fullness/definition endpoint combinations. Compile the complete core volume and compare all 27 reference coordinates.                                                                                                                                                                                                                                                     |
-| D: systematic refinement if needed | 21, then at most 27 grid supports | If the fullness midpoint plane fails, author all nine `F=.5` supports across the 3×3 mass/definition grid, rather than chasing individual failed combinations. If remaining definition midpoints fail, add the six missing `D=.5,F∈{0,1}` supports. All 27 are then independently sourced. This is a bounded escalation requiring available budget and a demonstrated error; do not generate it automatically. |
+| Stage                          | Independent supports | Work and exit                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------ | -------------------: | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A: usable lean/full pair       |              2 total | Existing accepted `50/0` and new `50/100`; identical skeleton, stature, age and pose. Establish whole-body source fidelity, correspondence and natural motion. Repair input mismatch before fitting a whole grid.                                                                                                                 |
+| B: mass interaction            |              6 total | Add mass 0 and 100, each at fullness 0 and 100. Compile the complete core surface and compare all nine reference coordinates. A full, heavily muscled body is strong and full with soft surfaces, not cut abdominal blocks painted over fat.                                                                                      |
+| C: fullness midpoint if needed |              9 total | If the half-fullness row fails against its references, author all three `F=.5` supports across mass, rather than chasing individual failed combinations. All nine coordinates are then independently sourced. This is a bounded escalation requiring available budget and a demonstrated error; do not generate it automatically. |
 
-Only 12 of the 27 initial validation shapes are independent supports. For the other fifteen, the initial evaluator synthesizes the shape; independent reference art judges whether that interpolation is believable and faithful. Synthetic midpoint geometry is not independent validation evidence. A source image that cannot be made mutually consistent stays unresolved, not a target the fitter must distort itself to satisfy.
+Only six of the nine initial validation shapes are independent supports. For the three half-fullness coordinates, the initial evaluator synthesizes the shape; independent reference art judges whether that interpolation is believable and faithful. Synthetic midpoint geometry is not independent validation evidence. A source image that cannot be made mutually consistent stays unresolved, not a target the fitter must distort itself to satisfy.
 
-The first 12-shape experiment preserves MHP10's **30 recipes and 24 sweeps**. Its 30 are `M∈{0,.5,1}`, `F∈{0,1}`, `D∈{0,.25,.5,.75,1}`. The 27-point grid shares 18 of those recipes, giving **39 unique static recipes**. The six definition paths hold `M∈{0,.5,1},F∈{0,1}`; the nine fullness paths hold `M,D∈{0,.5,1}`; the nine mass paths hold `F,D∈{0,.5,1}`. Sweep the remaining axis over its complete range. Inspect quarter-fullness/quarter-mass observations from the recordings; do not replace the accepted check set with a smaller chart.
+The six-support experiment uses MHP10's check set: **nine static recipes and six sweeps**. The nine recipes are the grid coordinates, six supports and three interpolated half-fullness bodies. The three fullness paths hold `M∈{0,.5,1}`; the three mass paths hold `F∈{0,.5,1}`. Sweep the other slider over its complete range. Inspect quarter-fullness and quarter-mass observations from the recordings; do not replace this check set with a smaller chart.
 
 ### Age, base, height and the larger matrix
 
-The example `3 ages × 2 bases × 3 mass × 3 fullness × 3 definition` is **162 reference/validation coordinates**, not a requirement for 162 unique Meshy meshes. It also omits teen transitions, structural/proportion controls and head identity; therefore it does not establish complete coverage by itself.
+The example `3 ages × 2 bases × 3 mass × 3 fullness` is **54 reference/validation coordinates**, not a requirement for 54 unique Meshy meshes. It also omits teen transitions, structural/proportion controls and head identity; therefore it does not establish complete coverage by itself.
 
-After MHP10, use the existing **adult milestone at ages 30 and 75 with midpoint 52.5**, two independently authored bases, four specified physique recipes per age and eight age sweeps. Its 24 comparisons remain required. Expand a new age's 12-shape volume only if authorized for that broader range; an age slider backed only by neutral body aging is insufficient.
+After MHP10, use the existing **adult milestone at ages 30 and 75 with midpoint 52.5**, two independently authored bases, four specified physique recipes per age and eight age sweeps. Its 24 comparisons remain required. Expand a new age's six-shape set only if authorized for that broader range; an age slider backed only by neutral body aging is insufficient.
 
-The broader bundled target still names adult anchors **18, 35, 60 and 80**. Do not silently replace those with the proof's 30/75 samples or claim their range from it. At twelve supports per adult anchor, two bases and four anchors imply **96 corresponding body supports**, before structural residuals or required corrections; the associated 27-point grids contain **216 evaluations**. This is a planning count, not a quality guarantee or spending request. Accepted supports may be reused where exactly compatible. The proof ages need their own evidence rather than relabeling an older shape's age.
+The broader bundled target still names adult anchors **18, 35, 60 and 80**. Do not silently replace those with the proof's 30/75 samples or claim their range from it. At six supports per adult anchor, two bases and four anchors imply **48 corresponding body supports**, before structural residuals or required corrections; the associated nine-point grids contain **72 evaluations**. This is a planning count, not a quality guarantee or spending request. Accepted supports may be reused where exactly compatible. The proof ages need their own evidence rather than relabeling an older shape's age.
 
 Height alone does not require another donor grid: uniform scaling and existing contact/admission checks cover the declared stature range. Structural breadth and local proportions require their own authored response targets and interaction qualification; never multiply every axis into a blind full Cartesian production run. For each added control, define its neutral/endpoint sources, affected regions/landmarks and interaction rows before the batch, then check the global physique corners most likely to stress it. This is a planned coverage matrix, not ad hoc user testing.
 
@@ -138,7 +143,7 @@ Asset: construction reference for ONE adult fantasy-game body, not final clothin
 Reference images: [exact approved sheet, anatomy authority; optional style reference].
 Preserve: [apparent age], [stature/relative proportions], neutral skeletal frame,
 canonical bald replaceable head, pose, camera scale and lighting of the selected anchor.
-Change only physique to [mass/fullness/definition coordinate and its visual brief].
+Change only physique to [mass/fullness coordinate and its visual brief].
 Show straight front, true side and straight rear at one scale and floor line.
 [State the canonical limb angles and how the side torso remains visible.]
 Keep neutral pelvis/spine and natural waist, ribcage and seat transitions.
@@ -147,7 +152,8 @@ Coverage: opaque white medieval linen close-fitting braies/cloth wrap, sufficien
 front/back coverage, minimal fabric bulk, no thick hems, modern elastic or hanging flap.
 Neutral soft studio illumination, clear surface forms, no blur or depth of field;
 bare feet, complete head/feet in frame, no armour, hair, beard, jewellery or props.
-Do not turn low definition into low muscle mass or fullness into belly-only swelling.
+Show the muscle relief natural to this build: clear on a lean body, softened by fullness.
+Do not turn fullness into belly-only swelling.
 ```
 
 A generation tool may reject an otherwise nonsexual construction request. Record the refusal and stop that rejected route; do not repeatedly rewrite to evade it. A more-covered output is a distinct silhouette reference, not fulfillment of the anatomy requirement. Obtain a permitted suitable source through an authorized alternative before donor production. Store the actual model ID if exposed; a built-in tool that hides it is recorded as **model not exposed**, never guessed from another API's default.
@@ -158,7 +164,7 @@ Use the existing [tool route](tools.md) and check its current operation/model/op
 
 Inspect raw untextured geometry: do the muscles exist as surface volume, or only as painted shadows? Are the side and rear coherent? Reject melted hands, contradictory joints, missing limbs and fused cloth that materially controls the intended body region. Close-fitting linen still produces clothing-shaped geometry: mark covered pelvis surfaces **unknown/inferred**, retain complete canonical anatomy there and fit separate baseline cloth. Do not shrinkwrap the body onto the outer surface of shorts and call that anatomy. Hidden-region exclusion must be visible in coverage/error reports, not a way to omit failed regions from acceptance.
 
-Use the same body source to derive the paired low-definition/high-definition views when possible, but independently inspect both. Adding smoothing to one mesh is not automatically a valid low-definition donor; it may erase muscle volume or alter waist/limbs. The visual brief governs.
+Each donor carries the muscle relief its reference shows. Smoothing a mesh is not a valid way to make a softer build; it may erase muscle volume or alter waist and limbs. The visual brief governs.
 
 ## 6. Measurements and whole-body acceptance
 
@@ -217,7 +223,7 @@ A wholly Meshy-derived topology could also support reuse if someone builds and q
 
 The preserved `2026-11-11-peacock-full-transfer/study/transfer/transfer.py` is diagnostic starting code, not a general body fitter. Inspection finds source-specific absolute-height bands, radial charts, knee/axilla exclusions, manual pelvis/seat offsets and smoothing. Replaying those constants on a fuller or feminine donor would carry the old assumptions into the new body. Reuse its coordinate/import and comparison work only where valid; do not promote its artistic offsets as universal anatomy.
 
-The first implementation step is to parameterize correspondence from each registered source's anatomical landmarks and region labels, with the excluded and retained areas explicit in the study manifest. Keep source-surface queries and canonical topology separate. A radial chart is usable only where a section is a single outward surface about its declared centre; undercuts, axillae, crotch and concavities need constrained surface correspondence instead of interpolating missing ray hits into invented skin. Compare the resulting fit to the complete accepted donor before admitting it as the reusable batch method. Do not automate the failed regional masks across twelve sources.
+The first implementation step is to parameterize correspondence from each registered source's anatomical landmarks and region labels, with the excluded and retained areas explicit in the study manifest. Keep source-surface queries and canonical topology separate. A radial chart is usable only where a section is a single outward surface about its declared centre; undercuts, axillae, crotch and concavities need constrained surface correspondence instead of interpolating missing ray hits into invented skin. Compare the resulting fit to the complete accepted donor before admitting it as the reusable batch method. Do not automate the failed regional masks across six sources.
 
 The stage-A fit experiment must choose and record one reproducible working correspondence recipe before batch expansion: exact existing tool/script revision, landmark pairs/curves, region eligibility, source exclusions, smoothing/projection settings, convergence/stop result and measured residuals. It must preserve accepted large forms, including waist corrections, when recovering detail; reprojecting the original narrow donor after that correction is a regression. If existing permitted tooling cannot pass the pair, report the specific failure and compare an established non-rigid wrapping route before building a new solver. New tool purchase or a foundation change requires its own decision. There is no claim that a generic production fitter is already implemented.
 
@@ -229,24 +235,24 @@ The reusable offline conversion described here is **proposed tooling**, not an a
 
 Input: one base/age/frame's corresponding body positions for the selected support coordinates, identical topology/UVs, reference stature/pose, source records and region confidence. Validate these invariants before subtracting meshes. Output: a neutral body, ordinary bipolar target pairs, interaction correctives with named drivers, provenance and reconstruction results for every input coordinate. Baseline coverage and shirt remain independent parts.
 
-The study's `M/F/D` symbols are coordinate labels, not new runtime recipe keys. The build record maps each once to the selected family's existing declared control ID; refuse missing or duplicate mappings. Resolve physical reference units and all other neutral control values from that exact family descriptor. A third-party tool's native muscle slider value is never silently used as the normalized OpenLegend value.
+The study's `M/F` symbols are coordinate labels, not new runtime recipe keys. The build record maps each once to the selected family's existing declared control ID; refuse missing or duplicate mappings. Resolve physical reference units and all other neutral control values from that exact family descriptor. A third-party tool's native muscle slider value is never silently used as the normalized OpenLegend value.
 
-For twelve supports, first fill the 27-node grid by bilinear interpolation in fullness/definition within each fixed mass slice. These filled nodes are derived, not independently authored. If later supports replace a derived node, recompute the whole target decomposition from the new grid; never stack an old correction onto a revised neutral.
+For six supports, first fill the nine-node grid by linear interpolation in fullness at each fixed mass. These filled nodes are derived, not independently authored. If later supports replace a derived node, recompute the whole target decomposition from the new grid; never stack an old correction onto a revised neutral.
 
 ### Exact decomposition
 
-Let `S(m,f,d)` be corresponding positions at grid nodes, and `B=S(.5,.5,.5)`. The neutral is the grid centre, **not** the lean Peacock source recipe. The source must reconstruct at `(m=.5,f=0,d=1)`.
+Let `S(m,f)` be corresponding positions at grid nodes, and `B=S(.5,.5)`. The neutral is the grid centre, **not** the lean Peacock source recipe. The source must reconstruct at `(m=.5,f=0)`.
 
-For each nonempty subset `A` of `{mass,fullness,definition}` and each selection of endpoint sides `s∈{0,1}` on those axes:
+For each nonempty subset `A` of `{mass,fullness}` and each selection of endpoint sides `s∈{0,1}` on those axes:
 
 ```text
-x = [.5,.5,.5] with coordinates in A set to s
+x = [.5,.5] with coordinates in A set to s
 C[A,s] = S(x) - B
           - sum(C[T, s restricted to T] for every nonempty proper subset T of A)
-process subsets in increasing size (single axes, pairs, triple)
+process subsets in increasing size (single axes, then the pair)
 ```
 
-Store single-axis `C` as that control's negative/positive targets. Store pair/triple `C` as existing corrective records whose drivers name the corresponding negative/positive excursions. The evaluator already uses:
+Store single-axis `C` as that control's negative/positive targets. Store pair `C` as existing corrective records whose drivers name the corresponding negative/positive excursions. The evaluator already uses:
 
 ```text
 negative(v) = max(1 - 2*v, 0)
@@ -254,19 +260,19 @@ positive(v) = max(2*v - 1, 0)
 P(recipe) = B + sum(product(driver excursions) * C)
 ```
 
-This reproduces the 27 grid nodes and piecewise trilinear interpolation between them. It needs at most **6 single-axis + 12 pair + 8 triple arrays = 26 arrays** for one mesh/base/age. At a recipe only one side of each axis is active: at most three single, three pair and one triple contributions. The current evaluator may scan additional inactive metadata; do not describe storage as seven arrays. Alias identical frame endpoint arrays for a single base rather than duplicating them.
+This reproduces the nine grid nodes and piecewise bilinear interpolation between them. It needs at most **4 single-axis + 4 pair arrays = 8 arrays** for one mesh/base/age. At a recipe only one side of each axis is active: at most two single contributions and one pair contribution. The current evaluator may scan additional inactive metadata; do not describe storage as three arrays. Alias identical frame endpoint arrays for a single base rather than duplicating them.
 
-Do not omit triple interactions merely because pair corrections are easier: a fuller muscular body with low relief may need a mass×fullness×definition residual. Remove exact-zero targets freely; approximate pruning requires a separately measured error/cost experiment. Preserve neutral subtraction and operation order through float32 compilation.
+Do not omit the pair interactions: a full muscular body is not the sum of a muscular change and a full change, and its softened relief lives in the mass×fullness residual. Remove exact-zero targets freely; approximate pruning requires a separately measured error/cost experiment. Preserve neutral subtraction and operation order through float32 compilation.
 
 ### What interpolation proves
 
 Corresponding vertices move continuously; it does **not** follow that the intermediate anatomy is plausible. Misaligned abdominal groups can create doubled borders, dents or sliding muscle insertions; an endpoint may be good while its midpoint fails. Registration and the independent midpoint references test this. Do not blame linear interpolation for an incorrectly fitted endpoint or accept a midpoint solely because its number is 50%.
 
-Before asset qualification, reconstruct every support, every grid node and at least the fixed interior points `(M,F,D)` with each component `.25` or `.75` (eight points). Compare the compiler/native/browser outputs to a direct trilinear reference calculation with the same target data. Then run the broader visual/garment matrix. Algebraic agreement establishes implementation correctness; the visual references establish whether the function is a good body model.
+Before asset qualification, reconstruct every support, every grid node and at least the fixed interior points `(M,F)` with each component `.25` or `.75` (four points). Compare the compiler/native/browser outputs to a direct bilinear reference calculation with the same target data. Then run the broader visual/garment matrix. Algebraic agreement establishes implementation correctness; the visual references establish whether the function is a good body model.
 
 ### Structural and age additions
 
-Tissue-only M/F/D targets keep internal joints fixed. Structural breadth and length targets use the existing internal landmark controls and rebuild rest joints/binds. Preserve height compensation and avoid applying a second bone scale after geometry already changed.
+Tissue-only M/F targets keep internal joints fixed. Structural breadth and length targets use the existing internal landmark controls and rebuild rest joints/binds. Preserve height compensation and avoid applying a second bone scale after geometry already changed.
 
 At age anchor `a`, derive its own neutral `B_a` and coefficients `C_a`. Keep neutral-age `B_0,C_0`; supply age samples `B_a-B_0` and age-conditioned response corrections `C_a-C_0`, driven by the same excursions. Blend adjacent anchors using the same age weights. Applying `C_a` on top of `C_0` would double the response. Age-related changes include torso/limb shape and fat/muscle distribution, not only skin maps.
 
@@ -282,11 +288,11 @@ Retain complete torso/pelvis under baseline cloth. Coverage has its own geometry
 
 ## 10. The shirt is part of acceptance
 
-Use the exact existing Peacock premade shirt source, its material data and the maintained animation sources. Keep source rights and source-specific construction intact. Body fidelity is checked before dependent fitting, but final task completion requires the shirt on **every tested body variation**, including intermediate fullness, mass and definition. A correct naked-body graph with a broken shirt is not a completed body-system proof.
+Use the exact existing Peacock premade shirt source, its material data and the maintained animation sources. Keep source rights and source-specific construction intact. Body fidelity is checked before dependent fitting, but final task completion requires the shirt on **every tested body variation**, including intermediate fullness and mass. A correct naked-body graph with a broken shirt is not a completed body-system proof.
 
 1. Evaluate final body and structural landmarks, rebuild its bind pose if needed, then fit coverage and shirt. Use the current surface/bridge/rigid part owners; no per-frame nearest-surface fit or new collision system.
 2. For a soft shirt, preserve canonical triangle/barycentric bindings and surface-frame offsets. Constrain source binding by body region/side. Inspect neckline, shoulders, axillae, sleeves, chest, abdomen, back and hem. A tight local offset can amplify a body ledge; fixing the body and garment are separate diagnoses.
-3. Keep intentional ease rather than wrapping the cloth onto every abdominal groove. A bridge support can span a loose hem; rigid plates need their own later sizing/attachment contract. Fit against final mass/fullness/definition, even if definition usually causes a smaller adjustment. There is no blanket promise that definition cannot affect clothing.
+3. Keep intentional ease rather than wrapping the cloth onto every abdominal groove. A bridge support can span a loose hem; rigid plates need their own later sizing/attachment contract. Fit against the final evaluated surface, including its muscle relief. A few millimetres of relief can cause breakthroughs at the chest, abdomen or sleeves even when broad measurements barely change.
 4. Where a demonstrated shape needs a correction, use the existing part corrective mechanism with named drivers. A changed canonical binding requires re-derived skin weights; applying stale weights after changing the support triangle is invalid. Test armhole/elbow and pelvis/hem motion before expanding the batch.
 5. Inspect with body-hiding masks **off**. Check contact through rest, raised arms, Idle, Walk, Run and start/stop. Remove/reapply shirt and confirm body/coverage restoration. Masks may optimize genuinely covered surfaces only after unmasked fit passes; they cannot hide penetration at openings or repair an anatomy gap.
 6. Compare source animation, retargeted export and actual game renderer for backward elbows, shoulder twist, foot sliding or knee issues. Preserve quaternion-sign continuity, joint rest-axis mapping, weights and normal/seam fixes already in the maintained path. Do not widen gait unnaturally to avoid arm contact or claim a new raw FBX fixed a runtime interpolation bug without chain comparison.
@@ -322,7 +328,7 @@ Keep source-only records outside Git with the assets. A small study manifest rec
 | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Existing art CLI and study tools                  | Provider requests, task recovery, source preservation, capture orchestration and build entry points. Inspect current help rather than invent commands. Add one reusable batch operation only if necessary.                                                   |
 | `scripts/art/people.py` / adjacent offline helper | Proposed corresponding-grid validation, target decomposition and reconstruction report; reuse coordinate conversion, family compilation, bind helpers and float32 conventions. A focused helper is appropriate if the existing module would become unwieldy. |
-| `apps/client/src/characters/person-family.ts`     | Existing excursion evaluation, coupled targets, age responses, dependency reuse, landmarks and fitting. The M/F/D grid needs data, not a parallel solver. Structural-age support is a separate identified gap.                                               |
+| `apps/client/src/characters/person-family.ts`     | Existing excursion evaluation, coupled targets, age responses, dependency reuse, landmarks and fitting. The M/F grid needs data, not a parallel solver. Structural-age support is a separate identified gap.                                                 |
 | Family/part package                               | Topology, target arrays, control definitions, age/frame records, fit supports, qualified ranges and exact source provenance. Geometry arrays are assets, not world-authoring code.                                                                           |
 | Bundled world                                     | Select permitted anatomical bases, apparent age/stature ranges, presets, coverage and equipment policy. Human age labels, medieval clothing and gender presentation are not engine-wide enums.                                                               |
 | Existing domain/server authority                  | Validate and save admitted appearance/equipment recipes, enforce physical stature/placement and project permitted data. No client authority, provider call, random regeneration or cognition rule belongs in shape evaluation.                               |
@@ -337,7 +343,7 @@ Rendering and slider evaluation primarily cost the **player's client CPU/GPU and
 
 Retain current proof budgets: **40,000 triangles, 2,048 maximum texture edge, 8,388,608 total texture pixels, eight materials, 64 joints, four influences and 16 MiB encoded GLB** for the governed output. The 16 MiB is an existing payload constraint, not a limit imposed by MetaHuman, a GPU-memory estimate or a reason to erase source anatomy. Do not apply it to the sum of an offline donor archive or quietly raise it. Compiled family data also needs its own measured transfer/residency report.
 
-A dense position target costs `12 × vertexCount` bytes in float32 before metadata/encoding. At 20,000 vertices, 26 arrays are 6.24 MB decimal for one body/base/age, excluding the neutral, normals, skin, shirt, head and textures. More age samples can multiply storage. Sparse/pruned/compressed targets or selective age loading are later measured optimizations, not assumptions used to hide the initial cost. Assets should be shared per family; report actual per-actor shaped buffer costs separately.
+A dense position target costs `12 × vertexCount` bytes in float32 before metadata/encoding. At 20,000 vertices, eight arrays are 1.92 MB decimal for one body/base/age, excluding the neutral, normals, skin, shirt, head and textures. More age samples can multiply storage. Sparse/pruned/compressed targets or selective age loading are later measured optimizations, not assumptions used to hide the initial cost. Assets should be shared per family; report actual per-actor shaped buffer costs separately.
 
 ### Experiment register for implementation
 
@@ -346,7 +352,7 @@ These extend the existing [E1–E7 qualification](../../projects/people-from-par
 | Experiment                      | Isolate the change                                                                                               | Before/after evidence and fail condition                                                                                                                                               |
 | ------------------------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Reference-led whole-body fit    | Same donor, canonical topology, rig, cameras and renderer; vary only fitting method/settings.                    | Regional shape/relief errors, full silhouette, artifact count, effort and runtime reduction loss. Fail if improved torso relief sacrifices waist, neck, limbs or posterior shape.      |
-| Grid-to-target conversion       | Same corresponding input grid; direct trilinear reference versus compiled/native/browser evaluation.             | Reconstruction tolerance, all supports/interior points, edit-order/reset equality and untouched target hashes. Fail on double-applied neutral/age responses or mismatched coordinates. |
+| Grid-to-target conversion       | Same corresponding input grid; direct bilinear reference versus compiled/native/browser evaluation.              | Reconstruction tolerance, all supports/interior points, edit-order/reset equality and untouched target hashes. Fail on double-applied neutral/age responses or mismatched coordinates. |
 | Additional support targets      | Same renderer, materials, triangles, joints and clips; compare qualified reduced target set versus expanded set. | Transfer bytes, decoded residency, setup and slider p50/p95, steady-state renderer CPU/GPU where available, allocations/draws. Separate anatomy improvement from target-count cost.    |
 | Runtime mesh/detail reduction   | Same high master and recipe; change one topology mapping or normal-map choice at a time.                         | Surface/relief fidelity and actual-renderer appearance versus bytes/pixels/triangles. Fail on lost sculpted muscle forms or changed neck correspondence.                               |
 | Shirt fit/weights               | Freeze body and motion; change binding, fit correction or weights separately.                                    | Unmasked penetrations/clearance, sleeve/hem shape, motion and setup cost across required recipes. Then verify the accepted fix with the full body grid.                                |
@@ -375,9 +381,9 @@ Archive original prompts, returned images, raw donors, corresponding masters, me
 Execute in order when the body implementation is authorized:
 
 1. Resolve exact selected sources, family/shirt/motion revisions, task allowance, current code and fixed recipe conditions. Record previous rejected outputs and protected successful measurements.
-2. Prepare the 27-row reference/coverage plan and stage-A pair. Generate/inspect body views, preserve exact prompts, and obtain the required source-pair selection. If generation cannot supply usable anatomy, report that blocker before Meshy spend.
+2. Prepare the nine-row reference/coverage plan and stage-A pair. Generate/inspect body views, preserve exact prompts, and obtain the required source-pair selection. If generation cannot supply usable anatomy, report that blocker before Meshy spend.
 3. Generate only missing stage-A donors. Compare raw geometry to references. Register, fit complete usable anatomy to the canonical mesh and retain uncertainty masks. Pass whole-body geometry and natural motion before multiplying donors.
-4. Add stage-B definition endpoints, then stage-C mass endpoints, preserving approved shapes. Implement/qualify the reusable offline target conversion and reconstruct every source. Review the full 27-grid and the retained 30/24 check set. Escalate support planes only for measured interpolation failure with available authorization/budget.
+4. Add the stage-B mass endpoints, preserving approved shapes. Implement/qualify the reusable offline target conversion and reconstruct every source. Review the full nine-coordinate grid and its nine-recipe/six-sweep check set. Escalate to the stage-C half-fullness supports only for measured interpolation failure with available authorization/budget.
 5. Fit separate baseline coverage and the same premade shirt. Qualify unmasked clothing and natural motion throughout all required rows/sweeps; removal/restoration must reveal complete anatomy. Diagnose any failure along the source/export/runtime chain.
 6. Run the isolated performance/correctness comparisons for actual changed components. Preserve current world/cognition authority and production art selection. Export and rebuild with Unreal closed.
 7. Present references, matched body comparisons, complete grid, clips and fit/cost matrix before asking final art acceptance. State demonstrated behavior, visible defects, unsupported cases and exact reusable outputs separately.
@@ -387,7 +393,7 @@ Execute in order when the body implementation is authorized:
 
 ### Decisions still requiring evidence or a later task
 
-- Twelve supports may suffice, or the bounded plane additions may be necessary. The experiment decides; no upfront source count guarantees robustness.
+- Six supports may suffice, or the bounded half-fullness row may be necessary. The experiment decides; no upfront source count guarantees robustness.
 - The first valid lean/full source pair must be selected before batch Meshy production. A provider refusal or inconsistent sheet remains unresolved source work, not an excuse to use the rejected hand-shaped fuller body.
 - The feminine direction starts from the selected [Jessa athletic source study](../../../art-direction/studies/2026-11-11-jessa-meshy-body/README.md), whose canonical fit remains unqualified; a petite/curvier target needs its own approved reference and corresponding shape. Do not silently substitute a default Vivian body, or assume stature alone creates those proportions. Final selection remains with that stage's owner.
 - Adult 30/75 proof targets, the broader 18/35/60/80 design and future younger overlaps have distinct qualification obligations. The required source/landmark work must be planned before claiming each range.

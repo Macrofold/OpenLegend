@@ -2,7 +2,7 @@
 
 | Status       | Current progress                                                                                                                                                                          | Last updated |
 | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Needs design | Lessons and proposed safeguards are captured for incorporation into existing art workflows; this document does not adopt new tools, expand an active proof or establish asset acceptance. | 2026-11-11   |
+| Needs design | Lessons and proposed safeguards are captured for incorporation into existing art workflows; this document does not adopt new tools, expand an active proof or establish asset acceptance. | 2026-11-12   |
 
 ## Purpose and authority
 
@@ -220,7 +220,7 @@ The user-facing controls should describe coherent changes, not implementation ar
 | Segment proportions        | Leg/torso ratio, arm length, neck length, head size and supported regional dimensions.               | Changes joints, reach, collar/sleeve/trouser fit and locomotion; define compensation when total stature stays fixed.                                            |
 | Muscle mass                | Volume and development of muscle groups.                                                             | Needs believable insertions and regional transitions; does not automatically mean increased skeletal rib width.                                                 |
 | Fullness                   | Fat/soft-tissue volume and regional distribution.                                                    | Must affect supported trunk, arm, leg, neck/face and pelvic regions coherently; influences visible relief and garment ease.                                     |
-| Definition                 | Visibility and geometric relief of muscular forms at the selected mass/fullness/age.                 | Must remain anatomically located; high fullness may attenuate relief without erasing all form.                                                                  |
+| Muscle relief              | Geometric relief of muscular forms. It follows mass, fullness and age; it is not a control.          | Must remain anatomically located; high fullness may attenuate relief without erasing all form.                                                                  |
 | Local anatomy              | Supported chest/breast, belly, neck or other regional adjustments.                                   | Overlaps broader controls; avoid double deformation and identify required interaction corrections.                                                              |
 | Face identity/features     | An identity preset and supported shape edits.                                                        | Preserve eyes, mouth, seam, expressions and fitted facial parts.                                                                                                |
 | Skin/eyes                  | Pigment, marks and supported material variation.                                                     | Do not silently change physique or abilities; maintain head/body continuity and material-region isolation.                                                      |
@@ -239,7 +239,7 @@ Independent sources must first be registered so corresponding vertices describe 
 
 Evaluate combinations from a defined canonical state rather than repeatedly modifying an already edited mesh. Control deltas need explicit reference shapes; subtracting the wrong neutral can count frame or age changes twice. Edit order, repeated changes, reset and reload should resolve to the same intended geometry. A shape correction fixes a specific interaction; it should not become an unexplained global patch.
 
-Logical independence means users can request mass, fullness and definition separately. It does not require their visible effects to be anatomically uncoupled. A full, muscular body and a full, low-muscle body should differ; a full body need not expose the same grooves as a lean body at the same nominal definition. Explain this behavior rather than pretending three unrestricted additive offsets always suffice.
+Logical independence means users can request mass and fullness separately. It does not require their visible effects to be anatomically uncoupled. A full, muscular body and a full, low-muscle body should differ; a full body need not expose the same grooves as a lean body with the same muscle. Explain this behavior rather than pretending two unrestricted additive offsets always suffice.
 
 ### Fullness is a distribution, not a belly expansion
 
@@ -255,7 +255,7 @@ A muscular older adult is not a younger muscular body with wrinkles, gray hair a
 
 Examine changes in thoracic/abdominal profile, shoulder and upper-arm volume, chest or breast support, waist/seat distribution, thigh contours, neck tissue and facial orbital/cheek/jaw volumes. These are regions to reference and author, not a mandatory stereotyped aging deformation. Child and adolescent proportions likewise involve skull-to-body ratio, limb/trunk relationships and maturation of torso/pelvis, not merely shrinking an adult. A single generic age displacement cannot be assumed to preserve the intended variety across those changes.
 
-Author age anchors on corresponding body/head representations, including relevant structural landmarks, joints, fit supports and surface data. Describe the response of fullness, mass and definition relative to each age anchor, rather than layering an adult response blindly onto every age. Blend neighboring bases and their corresponding response data consistently. Use targeted interaction correctives where evidence shows defects; shared data is acceptable only where its result remains appropriate.
+Author age anchors on corresponding body/head representations, including relevant structural landmarks, joints, fit supports and surface data. Describe the response of fullness and mass, with their muscle relief, relative to each age anchor, rather than layering an adult response blindly onto every age. Blend neighboring bases and their corresponding response data consistently. Use targeted interaction correctives where evidence shows defects; shared data is acceptable only where its result remains appropriate.
 
 This does not require one unique sculpt for every Cartesian combination. It also does not justify promising a tiny fixed number of sources before evaluating the combinations. Base shapes, response targets, correctives, LODs, material maps and garment-fit data are different authored costs.
 
@@ -279,7 +279,7 @@ The later suggested 30/75 adult anchors, their 52.5 midpoint and contrasting phy
 
 Continuous bodies can support continuous clothing through corresponding garment targets, body-surface/cage bindings, rig adjustments and needed corrections. This is a plausible production approach, not a guarantee that any garment fits any imaginable body. Define the released body envelope and layer combinations, then qualify the garment across them.
 
-Fit after all relevant body geometry—including definition and age interactions—has been evaluated. The assumption that definition never changes clothing is unsafe whenever it changes the physical surface. A few millimeters of additional relief can produce chest, abdomen or sleeve breakthroughs even when broad measurements barely change. If definition is purely a normal-map effect, it does not move the fitting surface; document which representation is used.
+Fit after all relevant body geometry—including muscle relief and age interactions—has been evaluated. The assumption that muscle relief never changes clothing is unsafe whenever it changes the physical surface. A few millimeters of additional relief can produce chest, abdomen or sleeve breakthroughs even when broad measurements barely change. If relief is purely a normal-map effect, it does not move the fitting surface; document which representation is used.
 
 Share the source garment and its fitting method across tested bodies. Disconnected hand-fixed copies may demonstrate attractive outfits but not a reusable system. Reuse does not forbid authored size/shape corrections or variants; it requires explicit inputs, coherent selection/evaluation and truthful limits.
 
@@ -329,7 +329,7 @@ A perspective image cannot uniquely determine hidden depth or circumference. An 
 | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
 | Does the torso match?                | Chest/lower-rib/waist/pelvis widths and depths at named stations; front/back silhouettes; sagittal profile; region-to-region transitions. | Equal chest circumference means equal physique.                              |
 | Are muscles retained?                | Regional surface sections, peak/trough placement, local relief depth and shaded form at fixed pose/light.                                 | A matching silhouette or increased normal contrast proves a sculpt transfer. |
-| Does fullness affect the whole body? | Upper-arm/forearm/thigh/calf sections, trunk/seat distribution and softened divisions at fixed mass/definition.                           | Increased waist size proves convincing fat distribution.                     |
+| Does fullness affect the whole body? | Upper-arm/forearm/thigh/calf sections, trunk/seat distribution and softened divisions at fixed mass.                                      | Increased waist size proves convincing fat distribution.                     |
 | Is the neck correct?                 | Join positions and surrounding shape, normals/weights, head alignment and motion views.                                                   | Near-zero seam gap proves acceptable anatomy.                                |
 | Is transfer accurate?                | Bidirectional regional surface error, visible residual locations and excluded-region inventory.                                           | A small global average proves every identity feature matches.                |
 | Does clothing fit?                   | Exterior coverage, openings, clearance and deformation in named poses and continuous motion.                                              | One rest pose or a few successful probes qualify the garment.                |
@@ -433,7 +433,7 @@ Track the shared cumulative budget, uncertain commitments, provider costs and ma
 
 Use distinct statements for created, technically checked, visually reviewed, owner-selected, archived, integrated and qualified for specified use. A design document, a working editor, a native render and an actual gameplay check are different evidence levels. A rendered comparison in the actual engine still does not prove authoritative equipment/save/load behavior unless those paths were exercised.
 
-For an adjustable family, list qualified body bases, age spans, controls/ranges, combinations, garments/layers, motion and renderer conditions. A 30-recipe matrix with mass at 0/50/100%, fullness at 0/100% and definition at 0/25/50/75/100% is useful for those three controls; it leaves intermediate fullness, age, additional bases and other controls to separate sweeps/qualification. Sampling must match the promise, including interacting extremes and known problem intervals.
+For an adjustable family, list qualified body bases, age spans, controls/ranges, combinations, garments/layers, motion and renderer conditions. A nine-recipe grid with mass and fullness each at 0/50/100% is useful for those two controls; it leaves quarter steps, age, additional bases and other controls to separate sweeps/qualification. Sampling must match the promise, including interacting extremes and known problem intervals.
 
 Report demonstrated results, visible defects, unqualified cases and actual blockers separately. Do not postpone showing existing visuals until a polishing campaign ends. Label provisional outputs clearly, and distinguish what the user can review now from what still needs work. Do not require the reader to infer meaning from a cryptic diagnostic link.
 

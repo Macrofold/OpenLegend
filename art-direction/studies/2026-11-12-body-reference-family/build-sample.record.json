@@ -1,0 +1,379 @@
+{
+  "scope": "Reference concept sheets for five builds of the adult masculine grid: two typical builds and three extremes. Concept references only; no donor, fit or runtime work.",
+  "coordinateNote": "The sheets were made on 2026-11-12 while the grid had three sliders (muscle mass, fullness, definition; 27 rows). Mike retired the definition slider the same day. Each candidate's 'row' is the original three-slider label used in its prompt; 'coordinate' is its place on the current nine-coordinate muscle mass/fullness grid.",
+  "workingFolder": "~/Documents/ChatGPT/OpenLegend-art/2026-11-12-body-reference-family/study/build-sample-20261112/",
+  "archive": {
+    "index": "build-sample.index.json",
+    "collection": "art-studies",
+    "accessDomain": "curated-private",
+    "assetId": "body-reference-family-build-sample",
+    "revisionId": "build-sample-20261112-6fc669c6689f",
+    "manifestSha256": "e5dfd916a03e7573611ea55e30ef8b394818f160ee376dafd4ecf32757cf2cc3",
+    "files": 31,
+    "bytes": 68481540,
+    "permittedUses": ["private-study", "offline", "recovery"],
+    "publishedOn": "2026-11-12",
+    "restoreCheck": "fresh temporary workspace; all 31 files matched the index by SHA-256 and byte count"
+  },
+  "anchor": {
+    "recipe": "M050-F000-D100",
+    "coordinate": "M050-F000",
+    "sha256": "003a013911bc90ed768396432ee64fc9199c9c7a3efd9812d9a461af7ebd5cc1",
+    "role": "approved lean Peacock sheet: governs frame, pose, layout, scale and head size",
+    "frontProjectionPercentOfStature": {
+      "frontOuterShoulderSpan": 23.1,
+      "frontUpperTrunk@0.74": 27.26,
+      "frontWaist@0.65": 13.63,
+      "frontTrunkMax0.50-0.66": 19.15,
+      "frontUpperArm@0.69": 4.47,
+      "frontForearmMax0.52-0.60": 4.27,
+      "frontThigh@0.34": 6.04,
+      "frontCalfMax0.15-0.24": 7.08,
+      "profileSpanMax0.50-0.70": 12.5,
+      "profileChestSpan@0.74": 13.12
+    }
+  },
+  "tool": {
+    "platform": "Higgsfield CLI 1.2.2",
+    "operation": "seedream_v5_pro",
+    "resolution": "2k",
+    "aspectRatio": "3:2",
+    "creditsPerJob": 2.5
+  },
+  "selectedFive": {
+    "M000-F000-D000": "c09",
+    "M050-F000-D050": "c07",
+    "M050-F050-D050": "c08",
+    "M100-F000-D100": "c04",
+    "M000-F100-D000": "c05"
+  },
+  "currentGrid": {
+    "M000-F000": "c09",
+    "M100-F000": "c04",
+    "M000-F100": "c05",
+    "M050-F050": "c08",
+    "M050-F000": "approved lean anchor; c07 is the same build with softer relief",
+    "withoutSheet": [
+      "M050-F100",
+      "M100-F100",
+      "M000-F050",
+      "M100-F050"
+    ]
+  },
+  "sharedPrompt": {
+    "opening": "Make one technical reference sheet for the same adult male historical-game character in the supplied three-view anatomy reference. Change only his physique as described below. Keep his head size, neck length, skeletal shoulder width and pelvic frame, ribcage skeleton, limb lengths, crown height and sole line, mature apparent age of about thirty, skin tone and neutral upright alignment exactly as in the reference. Use a clean bald neutral head with no beard, because the face is separate.",
+    "closing": "Use an opaque white close-fitting medieval linen braies garment from the natural hips through mid-thigh, smoothly covering the pelvis, with modest complete coverage and minimal surface folds. Bare feet. No accessories. Show three full figures on one plain neutral grey studio background, no captions: left is straight front, middle is a true right side profile facing right, right is straight back. The three panels share exact crown height, floor line and camera scale, the same as the reference sheet. Use the relaxed low A-pose of the reference, with arms symmetrically angled out and straight, legs slightly separated, soft knees and neutral pelvis. In the side view the arm hangs straight at the middle of the depth of the torso, so the complete front outline of chest and abdomen and the complete rear outline of back and seat stay visible. Keep full hands and feet visible in each panel. Equal soft neutral lighting and orthographic construction, no stylized perspective, lenses, depth of field, beauty effects or rim light.",
+    "c08Opening": "Two reference sheets are supplied. Image 1 is the lean anatomy reference: it governs the pose, three-view layout, camera scale, skeleton, head size, limb lengths, skin tone and muscle mass. Image 2 shows the heaviest build of the same character family and is supplied only to show what maximum body fat looks like. Make one technical reference sheet for the same adult male historical-game character whose body fat is halfway between image 1 and image 2. Keep his head size, neck length, skeletal shoulder width and pelvic frame, ribcage skeleton, limb lengths, crown height and sole line, mature apparent age of about thirty and neutral upright alignment exactly as in image 1. Use a clean bald neutral head with no beard, because the face is separate.",
+    "note": "Each prompt is opening + physiqueBrief + closing. c08 uses c08Opening and names the references image 1 and image 2 in the closing."
+  },
+  "candidates": [
+    {
+      "id": "c01",
+      "row": "M050-F050-D050",
+      "coordinate": "M050-F050",
+      "role": "normal: average",
+      "parent": null,
+      "jobId": "afb6c9b7-2453-4921-89e8-b47356692f65",
+      "createdAt": "2026-11-12T19:35:31.684237Z",
+      "referenceInputs": [
+        "approved lean anchor"
+      ],
+      "sheetSha256": "89946852e8edc43d80879578a2e7ced70b03a43e5564e1dde05ea5fe4df74592",
+      "sheetBytes": 5355955,
+      "sheetPx": [
+        2496,
+        1664
+      ],
+      "promptSha256": "3a81de3561eb043356c313bf5ddb00da55265d9bfb8406300fcea8f7a2403c29",
+      "physiqueBrief": "Physique: an average, ordinary man with moderate musculature, moderate body fat and moderate, softened relief. He has the same muscle mass as the reference under a clearly visible but modest, even layer of soft tissue: a slightly soft waist and flanks, a gently rounded abdomen with no bulging belly and no abdominal blocks, a chest whose broad shape is readable without a cut lower edge, softly rounded shoulders and arms, an ordinary seat, and moderately full thighs and calves. Large forms are readable but softened: at most a faint centre line on the abdomen, with no cut separations, striations or veins. He reads at a glance as a typical healthy adult who does ordinary physical work, neither athletic nor heavy. His bones, joints, head size and height stay the same as the reference.",
+      "selection": "superseded by c08: fullness reads about one eighth of the way from the lean anchor to c05",
+      "frontProjectionPercentOfStature": {
+        "frontOuterShoulderSpan": 25.9,
+        "frontUpperTrunk@0.74": 27.31,
+        "frontWaist@0.65": 14.49,
+        "frontTrunkMax0.50-0.66": 19.29,
+        "frontUpperArm@0.69": 4.55,
+        "frontForearmMax0.52-0.60": 4.36,
+        "frontThigh@0.34": 6.15,
+        "frontCalfMax0.15-0.24": 7.05,
+        "profileSpanMax0.50-0.70": 13.05,
+        "profileChestSpan@0.74": 13.37
+      }
+    },
+    {
+      "id": "c02",
+      "row": "M050-F000-D050",
+      "coordinate": "M050-F000",
+      "role": "normal: lean, ordinarily fit",
+      "parent": null,
+      "jobId": "d812262f-7936-4a6b-aef2-bfc1ca21976b",
+      "createdAt": "2026-11-12T19:35:31.035176Z",
+      "referenceInputs": [
+        "approved lean anchor"
+      ],
+      "sheetSha256": "23d7fded5a070c83ee1d42836acc97edb5b2b103e7c666b968702b6083cd4e7e",
+      "sheetBytes": 5284934,
+      "sheetPx": [
+        2496,
+        1664
+      ],
+      "promptSha256": "e4a2deaa8ced0dec983764fb1aa5d364a958f6312cb16d48d21a3307cfc31282",
+      "physiqueBrief": "Physique: a lean, ordinarily fit man with moderate musculature, low body fat and moderate, softened relief. He has the same muscle mass and the same low body fat as the reference, so the same silhouette, narrow waist and flat abdomen. Change only how sharply the muscles show on the surface: halfway between the hard cut definition of the reference and a smooth surface. The abdominal rows, obliques, serratus, pectoral edge, deltoid and arm separations and leg muscles are present as gentle shallow forms with soft transitions, without deep grooves, striations or prominent veins. He reads as a slim, healthy working man, not a dehydrated athlete. His bones, joints, head size and height stay the same as the reference.",
+      "selection": "superseded by c07: abdominal blocks and serratus stay hard-cut",
+      "frontProjectionPercentOfStature": {
+        "frontOuterShoulderSpan": 25.77,
+        "frontUpperTrunk@0.74": 27.5,
+        "frontWaist@0.65": 13.72,
+        "frontTrunkMax0.50-0.66": 19.23,
+        "frontUpperArm@0.69": 4.55,
+        "frontForearmMax0.52-0.60": 3.72,
+        "frontThigh@0.34": 5.96,
+        "frontCalfMax0.15-0.24": 6.92,
+        "profileSpanMax0.50-0.70": 13.03,
+        "profileChestSpan@0.74": 13.16
+      }
+    },
+    {
+      "id": "c03",
+      "row": "M000-F000-D000",
+      "coordinate": "M000-F000",
+      "role": "extreme: slender",
+      "parent": null,
+      "jobId": "a0ad0d3b-606a-4aff-93b4-b282f0be5cc8",
+      "createdAt": "2026-11-12T19:35:31.379957Z",
+      "referenceInputs": [
+        "approved lean anchor"
+      ],
+      "sheetSha256": "6c34b37f4cc113285883053c43e9b71e83f3f6bbb3b2025c7e6233af7d175292",
+      "sheetBytes": 5726854,
+      "sheetPx": [
+        2496,
+        1664
+      ],
+      "promptSha256": "cb4e660705e1542a94bf52e404e86b90bd3ddb7bdf7522a95c92193939b8f804",
+      "physiqueBrief": "Physique: a slender man with slight musculature, low body fat and very soft, smooth relief. He has much less muscle than the reference everywhere: a small flat chest, small rounded shoulders, thin upper arms and forearms, a narrow straight back, a small seat, slim thighs and slim calves. He has no added body fat: a flat abdomen and narrow waist, with lightly visible collarbones and lower rib edge. The surface is smooth and undefined: no abdominal blocks, no cut lines between muscles, no veins or striations, only broad gentle forms. He is healthy and upright, an ordinary slight adult, not gaunt, frail, starved, elderly or adolescent. His outer silhouette is clearly narrower than the reference at the shoulders, arms, chest and legs, while his bones, joints, head size and height stay the same as the reference.",
+      "selection": "superseded by c06 and c09: limb and trunk widths match the lean anchor",
+      "frontProjectionPercentOfStature": {
+        "frontOuterShoulderSpan": 25.77,
+        "frontUpperTrunk@0.74": 27.3,
+        "frontWaist@0.65": 13.39,
+        "frontTrunkMax0.50-0.66": 19.2,
+        "frontUpperArm@0.69": 4.46,
+        "frontForearmMax0.52-0.60": 4.34,
+        "frontThigh@0.34": 5.99,
+        "frontCalfMax0.15-0.24": 6.95,
+        "profileSpanMax0.50-0.70": 13.24,
+        "profileChestSpan@0.74": 13.04
+      }
+    },
+    {
+      "id": "c04",
+      "row": "M100-F000-D100",
+      "coordinate": "M100-F000",
+      "role": "extreme: heavily muscled, cut",
+      "parent": null,
+      "jobId": "18c62584-09b2-4f7f-b53c-c1d06b2701e0",
+      "createdAt": "2026-11-12T19:35:30.730149Z",
+      "referenceInputs": [
+        "approved lean anchor"
+      ],
+      "sheetSha256": "fb9c5c3a4c4faedb63876eac03c222b8e25a7fcd2429a6401731d5099a67bf43",
+      "sheetBytes": 5789624,
+      "sheetPx": [
+        2496,
+        1664
+      ],
+      "promptSha256": "700181d7da82823d4e5562aa88b27d06457e565e915ef430490503efcb7b4da0",
+      "physiqueBrief": "Physique: an exceptionally muscular man with low body fat and strongly delineated relief. He has far more muscle than the reference everywhere, in natural proportion: very large rounded deltoids, thick deep pectorals, high trapezius, very wide thick lats tapering to a lean waist, heavy biceps, triceps and forearms, deep abdominal rows and obliques, clear serratus, large powerful glutes, massive quadriceps and hamstrings, and large calves. There are deep clean separations between every muscle group, with visible striations and surface veins on the arms, shoulders and thighs. He reads at a glance as the most muscular man in the region, a champion strongman or heavyweight wrestler, anatomically plausible and not a cartoon superhero. His outer silhouette is much broader than the reference through muscle alone, while his bones, joints, head size and height stay the same as the reference.",
+      "selection": "agent-recommended for the five; Mike's acceptance pending",
+      "frontProjectionPercentOfStature": {
+        "frontOuterShoulderSpan": 33.25,
+        "frontUpperTrunk@0.74": 35.71,
+        "frontWaist@0.65": 16.06,
+        "frontTrunkMax0.50-0.66": 21.62,
+        "frontUpperArm@0.69": 7.71,
+        "frontForearmMax0.52-0.60": 7.27,
+        "frontThigh@0.34": 7.52,
+        "frontCalfMax0.15-0.24": 8.66,
+        "profileSpanMax0.50-0.70": 15.94,
+        "profileChestSpan@0.74": 16.57
+      }
+    },
+    {
+      "id": "c05",
+      "row": "M000-F100-D000",
+      "coordinate": "M000-F100",
+      "role": "extreme: very full, soft",
+      "parent": null,
+      "jobId": "b0bf3e2f-6713-4f08-a418-b30e09b1ffed",
+      "createdAt": "2026-11-12T19:35:30.420398Z",
+      "referenceInputs": [
+        "approved lean anchor"
+      ],
+      "sheetSha256": "1a00ced68e7a592cc9555c9136a6903c335257e287e2ff7230c2819331493246",
+      "sheetBytes": 5904586,
+      "sheetPx": [
+        2496,
+        1664
+      ],
+      "promptSha256": "36bd4a017a97ecc9cec5cc9f296dedb2f8bb5f059fb5e19ae0c9dbc3225560bc",
+      "physiqueBrief": "Physique: an unmistakably fat man with slight musculature and very soft, smooth relief. He carries much more body fat than the reference over the whole body, coherently distributed: a large, round, heavy abdomen that projects well forward and to the sides, deep soft flanks, a soft full chest, a thicker soft neck, a padded upper back with soft rolls at the flanks and lower back, wide hips and a large full seat, thick soft upper arms and fuller forearms, heavy thighs that meet at the inner thigh, and soft full knees and calves. There is little muscle underneath: no visible muscle shapes, cut lines, abdominal blocks or veins anywhere, and every transition is smooth, rounded and continuous. He reads at a glance as a very heavy man, clearly an outlier in a crowd, natural and dignified, not a caricature. The fullness shows equally in the front, side and back views, never as a belly attached to lean limbs. His bones, joints, head size and height stay the same as the reference.",
+      "selection": "agent-recommended for the five; Mike's acceptance pending",
+      "frontProjectionPercentOfStature": {
+        "frontOuterShoulderSpan": 29.18,
+        "frontUpperTrunk@0.74": 30.78,
+        "frontWaist@0.65": 20.82,
+        "frontTrunkMax0.50-0.66": 23.78,
+        "frontUpperArm@0.69": 6.56,
+        "frontForearmMax0.52-0.60": 5.72,
+        "frontThigh@0.34": 9.06,
+        "frontCalfMax0.15-0.24": 9.19,
+        "profileSpanMax0.50-0.70": 19.66,
+        "profileChestSpan@0.74": 17.6
+      }
+    },
+    {
+      "id": "c06",
+      "row": "M000-F000-D000",
+      "coordinate": "M000-F000",
+      "role": "extreme: slender",
+      "parent": "c03",
+      "jobId": "728cf415-07a9-4415-adff-3e716e5815a5",
+      "createdAt": "2026-11-12T19:40:46.242734Z",
+      "referenceInputs": [
+        "approved lean anchor"
+      ],
+      "sheetSha256": "560f9902590c804087b745b3fc713a7f0ca9c1fbb5f9916065e847cc7186d1a5",
+      "sheetBytes": 5654699,
+      "sheetPx": [
+        2496,
+        1664
+      ],
+      "promptSha256": "5a028be5125493aeb467d00dd180284698106c45cb7de90da246c0dd12a57952",
+      "physiqueBrief": "Physique: a markedly thin, slightly built man, the least muscular build this character family allows, with low body fat and a smooth, undefined surface. This is a large visible change from the reference, not a subtle one. His upper arms are only about two thirds as thick as in the reference and are nearly straight, with no bulging biceps or triceps; his forearms and wrists are thin. His deltoids are small and flat, so his shoulders slope and his outline at the shoulders is clearly narrower. His chest is flat and shallow with no pectoral mass. His back is narrow with no flared lats, so the sides of the torso run almost straight from armpit to waist instead of tapering in a V. His seat is small and flat. His thighs and calves are thin, about three quarters as thick as in the reference, with a clear gap between the thighs. He has no extra body fat: a flat abdomen and narrow waist. The skin surface is smooth and soft: no abdominal blocks, no grooves between muscles and no veins; only the collarbones, a faint lower rib edge and the knees show as gentle bony landmarks. He is a healthy adult who has never done heavy physical work, like a scribe or clerk, standing upright; not gaunt, starved, sick, elderly or adolescent. His bones, joints, head size and height stay the same as the reference.",
+      "selection": "unselected milder alternative to c09: softer surface, limb widths still match the anchor",
+      "frontProjectionPercentOfStature": {
+        "frontOuterShoulderSpan": 26.04,
+        "frontUpperTrunk@0.74": 17.49,
+        "frontWaist@0.65": 13.47,
+        "frontTrunkMax0.50-0.66": 18.06,
+        "frontUpperArm@0.69": 4.4,
+        "frontForearmMax0.52-0.60": 4.28,
+        "frontThigh@0.34": 5.93,
+        "frontCalfMax0.15-0.24": 6.89,
+        "profileSpanMax0.50-0.70": 13.17,
+        "profileChestSpan@0.74": 12.98
+      }
+    },
+    {
+      "id": "c07",
+      "row": "M050-F000-D050",
+      "coordinate": "M050-F000",
+      "role": "normal: lean, ordinarily fit",
+      "parent": "c02",
+      "jobId": "be701a73-3ed2-4ff9-8257-c590a6a92142",
+      "createdAt": "2026-11-12T19:40:44.958394Z",
+      "referenceInputs": [
+        "approved lean anchor"
+      ],
+      "sheetSha256": "96e4ad38bdb8e997ade1c19372c03021b14f8379f088196d387d2382af72f887",
+      "sheetBytes": 5261716,
+      "sheetPx": [
+        2496,
+        1664
+      ],
+      "promptSha256": "528221acd48e1330aa4fa75484b13731e06719034ae6d6838a5dde56e1f4e5c0",
+      "physiqueBrief": "Physique: a slim, ordinarily fit man with the same moderate muscle mass and the same low body fat as the reference, but with much softer muscle definition. Keep the silhouette, limb thickness, narrow waist and flat abdomen of the reference. Change the surface: remove the hard cut look. The abdomen is flat and smooth, with only a faint vertical centre line and a faint outline of the upper abdominals, without distinct blocks. There are no serratus ridges on the ribs, no hard lower pectoral edge, no deep grooves around the deltoids, biceps, triceps, quadriceps or calves, and no prominent veins or striations. Muscle shapes read as broad, gently rounded volumes with soft, gradual transitions, as on a slim man who is fit from daily walking and field work but would not be called ripped. Do not add body fat or a belly, and do not shrink the muscles. His bones, joints, head size and height stay the same as the reference.",
+      "selection": "agent-recommended for the five; Mike's acceptance pending",
+      "frontProjectionPercentOfStature": {
+        "frontOuterShoulderSpan": 25.85,
+        "frontUpperTrunk@0.74": 27.45,
+        "frontWaist@0.65": 13.73,
+        "frontTrunkMax0.50-0.66": 19.18,
+        "frontUpperArm@0.69": 4.55,
+        "frontForearmMax0.52-0.60": 4.17,
+        "frontThigh@0.34": 6.03,
+        "frontCalfMax0.15-0.24": 6.99,
+        "profileSpanMax0.50-0.70": 12.9,
+        "profileChestSpan@0.74": 13.16
+      }
+    },
+    {
+      "id": "c08",
+      "row": "M050-F050-D050",
+      "coordinate": "M050-F050",
+      "role": "normal: average",
+      "parent": "c01",
+      "jobId": "e909c1d0-c855-4b3f-b71f-342685ae87cf",
+      "createdAt": "2026-11-12T19:40:49.044633Z",
+      "referenceInputs": [
+        "approved lean anchor",
+        "c05"
+      ],
+      "sheetSha256": "c9c627470075230b4ec8b3945d9affd807c408a59be86be9c568d216387b3bdf",
+      "sheetBytes": 7032374,
+      "sheetPx": [
+        2496,
+        1664
+      ],
+      "promptSha256": "3b713aca22abaedc79c65517865a2bf04af7d908a48f0197d02d75d0ce9ad42c",
+      "physiqueBrief": "Physique: a stocky, heavy-set ordinary man with moderate musculature, a middle amount of body fat and moderate, softened relief. He is halfway between the two references everywhere. His waist is clearly thicker than in image 1, with soft flanks and a soft rounded belly that curves forward but does not hang over the waistband and is far smaller than in image 2. His chest is soft and slightly full without hanging. His upper arms, forearms, thighs and calves are visibly thicker and softer than in image 1 but clearly slimmer than in image 2. His seat and hips are moderately full, and his back is smooth and padded without rolls. The muscle mass of image 1 remains underneath: broad shoulders and solid arms and legs still read. Relief is moderate: no abdominal blocks, cut lines or veins, but the broad shapes of chest, shoulders and thighs remain readable. He reads as a solid, well-fed man of ordinary strength, neither athletic nor obese.",
+      "selection": "agent-recommended for the five; Mike's acceptance pending",
+      "frontProjectionPercentOfStature": {
+        "frontOuterShoulderSpan": 28.36,
+        "frontUpperTrunk@0.74": 21.7,
+        "frontWaist@0.65": 18.1,
+        "frontTrunkMax0.50-0.66": 18.84,
+        "frontUpperArm@0.69": 5.78,
+        "frontForearmMax0.52-0.60": 4.54,
+        "frontThigh@0.34": 7.21,
+        "frontCalfMax0.15-0.24": 7.59,
+        "profileSpanMax0.50-0.70": 16.03,
+        "profileChestSpan@0.74": 15.39
+      }
+    },
+    {
+      "id": "c09",
+      "row": "M000-F000-D000",
+      "coordinate": "M000-F000",
+      "role": "extreme: slender",
+      "parent": "c03",
+      "jobId": "d761ca45-0c92-4315-9396-ea0f7ac1b349",
+      "createdAt": "2026-11-12T19:43:50.79837Z",
+      "referenceInputs": [
+        "approved lean anchor"
+      ],
+      "sheetSha256": "a2a26882395597c582ca38669583b9674e36e496b05a968856ed878f7be6aa17",
+      "sheetBytes": 5525219,
+      "sheetPx": [
+        2496,
+        1664
+      ],
+      "promptSha256": "4eaab27205f5a17ff5948ae30ce6f8cc832c5e7d9b6072980e90d2b092f091a8",
+      "physiqueBrief": "Physique: a lanky, spindly-limbed man with very little muscle, low body fat and a smooth, undefined surface: the thinnest build this character family allows. Redraw the body outline; do not reuse the athletic outline of the reference. Compared with the reference, every limb is much thinner: the upper arm is a slim straight tube barely wider than the elbow, with no biceps or triceps bulge; the forearm tapers thinly to a narrow wrist; the thigh is barely wider than the knee and the two thighs stand well apart; the calf is a slim straight line with almost no bulge. The shoulder points are bony and narrow with no rounded deltoid cap, so the figure is visibly narrower across the shoulders. The chest is flat, shallow and narrow, the back has no flare, and the sides of the torso run straight down to a narrow waist. The seat is small and flat. The surface is smooth and soft-looking, with no abdominal blocks, no muscle grooves and no veins; only collarbones, a faint rib edge, elbows and knees show. He looks like a healthy, upright, bookish young clerk who has never lifted anything heavy; his face stays about thirty years old and well, not hollow, gaunt, starved, sick or aged. His bones, joints, head size and height stay the same as the reference.",
+      "selection": "agent-recommended for the five; Mike's acceptance pending",
+      "frontProjectionPercentOfStature": {
+        "frontOuterShoulderSpan": 23.53,
+        "frontUpperTrunk@0.74": 15.28,
+        "frontWaist@0.65": 12.4,
+        "frontTrunkMax0.50-0.66": 16.94,
+        "frontUpperArm@0.69": 3.32,
+        "frontForearmMax0.52-0.60": 3.52,
+        "frontThigh@0.34": 5.24,
+        "frontCalfMax0.15-0.24": 6.07,
+        "profileSpanMax0.50-0.70": 12.53,
+        "profileChestSpan@0.74": 11.76
+      }
+    }
+  ],
+  "measurementMethod": "Background-difference silhouette per panel; values are percent of that panel's crown-to-sole span. Two-dimensional projections; no 3D inference. Rows are height fractions above the sole.",
+  "cost": {
+    "jobs": 9,
+    "credits": 22.5,
+    "balanceBefore": 112.75,
+    "balanceAfter": 77.75,
+    "otherSessionCreditsInSameWindow": 12.5,
+    "usd": "about $0.88-1.10 at the Plus plan value of $0.039-0.049 per credit",
+    "note": "A separate agent session ran five Seedream jobs on the same account between 19:38 and 19:40 UTC for the same request (working folder concepts-5-sample/). Those 12.5 credits and outputs are not part of this record."
+  }
+}
