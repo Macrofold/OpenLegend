@@ -13,6 +13,7 @@ import {
 } from './known-places.js';
 import { NativePrivateHistoryCapture } from './native-history-capture.js';
 import {
+  borrowNativeProduct,
   decodeNativeProduct,
   encodeNativeJson,
   releaseNativeProduct,
@@ -74,79 +75,91 @@ export class NativeKnownPlaceSelection {
     // keep the asynchronous SQL work outside that mutation lane.
     await this.service.publishRecall(async () => this.assertCurrent());
     if (this.selected) throw new Error('A place reader already owns its selection.');
-    this.selected = await withNativeSqlPreparation(this.world, this.service.store.db, () =>
-      this.service.withActorMemoryRead(this.scope.actorId, async (cut) => {
-        const selected = await this.service.store.memories.knownPlaces(
-          {
-            worldId: this.service.worldId,
-            actorId: this.scope.actorId,
-            generation: this.service.generation,
-          },
-          options,
-        );
-        this.selected = selected;
-        this.formatting = this.world.reserveConsumerBytes(
-          16 * jsonByteLength(selected, { cache: false }) + 20 * 512,
-        );
-        // The selected evidence and its source rows use this original read cut,
-        // including pending writes. A later save ACK must not move the boundary.
-        const personal = new Map(
-          selected.entries.flatMap(({ place }) =>
-            place.capsule.personalSource
-              ? [
-                  [
-                    JSON.stringify([
-                      place.capsule.personalSource.kind,
-                      place.capsule.personalSource.id,
-                      place.capsule.personalSource.revision,
-                    ]),
-                    { reference: place.capsule.personalSource },
-                  ] as const,
-                ]
-              : [],
-          ),
-        );
-        const personalRows = await readNativePersonalSourceRows(
-          this.service.store.db,
-          {
-            origin: this.capture.facts.scope,
-            acceptedCut: cut.sequence,
-            selection: { receipts: [], personal: [...personal.values()] },
-            maximumTransferBytes: PERSONAL_EVIDENCE_PREPARATION.bytes,
-          },
-          cut,
-        );
-        const ids = [
-          ...new Set(
-            selected.entries
-              .filter(({ place }) => !place.capsule.personalSource)
-              .map(({ memory }) => memory.id),
-          ),
-        ];
-        const supports = ids.length
-          ? (
-              await this.service.store.db
-                .prepare(
-                  'SELECT * FROM mind_temporal_supports WHERE world_id=? AND actor_id=? AND source_id=ANY(?::text[]) ORDER BY position,id',
-                )
-                .all(cut.worldId, this.scope.actorId, ids)
-            ).map((row) => nativeCurrentRow('mind_temporal_supports', row))
-          : [];
+    this.selected = await withNativeSqlPreparation(this.world, this.service.store.db, async () => {
+      let cutPins: ReturnType<typeof borrowNativeProduct>;
+      try {
+        const prepared = await this.service.withActorMemoryRead(this.scope.actorId, async (cut) => {
+          const selected = await this.service.store.memories.knownPlaces(
+            {
+              worldId: this.service.worldId,
+              actorId: this.scope.actorId,
+              generation: this.service.generation,
+            },
+            options,
+          );
+          this.selected = selected;
+          this.formatting = this.world.reserveConsumerBytes(
+            16 * jsonByteLength(selected, { cache: false }) + 20 * 512,
+          );
+          // The selected evidence and its source rows use this original read cut,
+          // including pending writes. A later save ACK must not move the boundary.
+          const personal = new Map(
+            selected.entries.flatMap(({ place }) =>
+              place.capsule.personalSource
+                ? [
+                    [
+                      JSON.stringify([
+                        place.capsule.personalSource.kind,
+                        place.capsule.personalSource.id,
+                        place.capsule.personalSource.revision,
+                      ]),
+                      { reference: place.capsule.personalSource },
+                    ] as const,
+                  ]
+                : [],
+            ),
+          );
+          const personalRows = await readNativePersonalSourceRows(
+            this.service.store.db,
+            {
+              origin: this.capture.facts.scope,
+              acceptedCut: cut.sequence,
+              selection: { receipts: [], personal: [...personal.values()] },
+              maximumTransferBytes: PERSONAL_EVIDENCE_PREPARATION.bytes,
+            },
+            cut,
+          );
+          const ids = [
+            ...new Set(
+              selected.entries
+                .filter(({ place }) => !place.capsule.personalSource)
+                .map(({ memory }) => memory.id),
+            ),
+          ];
+          const supports = ids.length
+            ? (
+                await this.service.store.db
+                  .prepare(
+                    'SELECT * FROM mind_temporal_supports WHERE world_id=? AND actor_id=? AND source_id=ANY(?::text[]) ORDER BY position,id',
+                  )
+                  .all(cut.worldId, this.scope.actorId, ids)
+              ).map((row) => nativeCurrentRow('mind_temporal_supports', row))
+            : [];
+          // Keep this exact cut's bodies admitted after its SQL transaction
+          // closes, until the native source owner has consumed the witnesses.
+          cutPins = borrowNativeProduct(cut);
+          if (!cutPins) throw new Error('Native place sources lost their read-cut owner.');
+          return { selected, personalRows, supports };
+        });
+        // NPC source preparation can hold the native lane while awaiting the
+        // SQL reader. Release that reader before acquiring the reverse edge.
         await this.service.publishRecall(async () => {
           this.assertCurrent();
           await withNativeJsonInput(
             this.world,
             {
-              places: selected.entries.map(({ place }) => place),
-              personalRows,
-              supports,
+              places: prepared.selected.entries.map(({ place }) => place),
+              personalRows: prepared.personalRows,
+              supports: prepared.supports,
             },
             (bytes) => this.world.historyPlaceSources(this.capture.read, bytes),
           );
         });
-        return selected;
-      }),
-    );
+        return prepared.selected;
+      } finally {
+        cutPins?.release();
+      }
+    });
     await this.service.publishRecall(async () => this.assertCurrent());
     return this.selected;
   }
