@@ -21,6 +21,9 @@ body:has(.people-study) {
   align-items: end;
   margin-block: var(--space-4);
 }
+.people-study-export {
+  width: min(100%, 27rem);
+}
 .people-study-comparison {
   display: block;
   width: 100%;

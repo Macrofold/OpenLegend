@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { createRoot } from 'react-dom/client';
+import { isRepositoryAssetPath } from '@open-legend/assets';
 import { validateAppearanceFamily } from '@open-legend/domain/appearance';
 import { resolveAppearanceRecipe, type AppearanceFamilyDefinition } from '@open-legend/protocol';
 import { readAssetJson } from './asset-files';
@@ -29,16 +30,106 @@ interface StudyWearer {
 
 type LifetimeReport = NonNullable<ReturnType<PersonStudyScene['destroy']>>;
 
-// Four explicit family/preset pairs choose the review wearers. Repeated family
-// paths share one definition read; the same scene can compare baked references
-// without introducing a separate actor. Exact release/permission reads still own access.
+interface StudySelection {
+  familyPaths: string[];
+  presetIds: string[];
+  outfitParts: string[];
+}
+
+interface StudyExport {
+  definitionPath: string;
+  label: string;
+  createdAt: string;
+  presets: string[];
+  parts: string[];
+}
+
+// Exact family/preset links can also be used without a catalog.
 const parameters = new URLSearchParams(location.search);
-const familyPaths = parameters.getAll('family');
-const presetIds = parameters.getAll('preset');
-const outfitParts = parameters.getAll('part');
+const catalogPath = parameters.get('catalog');
 const profiling = parameters.get('profile') === '1';
 
-function appearance(wearer: StudyWearer, dressed: boolean) {
+const exportDate = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'America/New_York',
+});
+
+function readExportCatalog(value: unknown): StudyExport[] {
+  if (!Array.isArray(value) || !value.length)
+    throw new Error('The selected export catalog has no exports.');
+  const paths = new Set<string>();
+  const exports = value.map((entry: unknown) => {
+    if (typeof entry !== 'object' || entry === null || Array.isArray(entry))
+      throw new Error('The selected export catalog contains an invalid entry.');
+    const { definitionPath, label, createdAt, presets, parts } = entry as Record<string, unknown>;
+    if (
+      !isRepositoryAssetPath(definitionPath) ||
+      paths.has(definitionPath) ||
+      typeof label !== 'string' ||
+      !label.trim() ||
+      typeof createdAt !== 'string' ||
+      !Number.isFinite(Date.parse(createdAt)) ||
+      !Array.isArray(presets) ||
+      presets.length !== 4 ||
+      !presets.every((preset): preset is string => typeof preset === 'string' && !!preset) ||
+      !Array.isArray(parts) ||
+      parts.length > 8 ||
+      !parts.every((part): part is string => typeof part === 'string' && !!part)
+    )
+      throw new Error('The selected export catalog contains an invalid entry.');
+    paths.add(definitionPath);
+    return { definitionPath, label, createdAt, presets, parts };
+  });
+  return exports.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+}
+
+function exportUrl(entry: StudyExport): URL {
+  const url = new URL(location.href);
+  for (const key of ['family', 'preset', 'part']) url.searchParams.delete(key);
+  for (const preset of entry.presets) {
+    url.searchParams.append('family', entry.definitionPath);
+    url.searchParams.append('preset', preset);
+  }
+  for (const part of entry.parts) url.searchParams.append('part', part);
+  return url;
+}
+
+function ExportPicker({
+  catalog,
+  familyPaths,
+}: {
+  catalog: readonly StudyExport[];
+  familyPaths: readonly string[];
+}) {
+  const path = familyPaths[0];
+  const selected =
+    path && familyPaths.every((family) => family === path)
+      ? catalog.find((entry) => entry.definitionPath === path)
+      : undefined;
+  return (
+    <div className="people-study-export">
+      <SelectField
+        label="Body export"
+        value={selected?.definitionPath ?? null}
+        placeholder="Choose an export"
+        toggleLabel="Show body exports"
+        placement="bottom start"
+        options={catalog.map((entry) => ({
+          id: entry.definitionPath,
+          label: `${entry.label} (${exportDate.format(new Date(entry.createdAt))})`,
+        }))}
+        onChange={(path) => {
+          if (path === selected?.definitionPath) return;
+          const entry = catalog.find((candidate) => candidate.definitionPath === path);
+          if (entry) location.assign(exportUrl(entry).href);
+        }}
+      />
+    </div>
+  );
+}
+
+function appearance(wearer: StudyWearer, parts: readonly string[]) {
   const { compiled, compiledPath } = wearer.family;
   if (!compiled || !compiledPath) throw new Error('This collection has no compiled character kit.');
   return {
@@ -46,7 +137,7 @@ function appearance(wearer: StudyWearer, dressed: boolean) {
     definition: wearer.family,
     compiled,
     compiledPath,
-    parts: dressed ? outfitParts : [],
+    parts,
   };
 }
 
@@ -54,12 +145,14 @@ function Comparison({
   wearers,
   selected,
   dressed,
+  outfitParts,
   clay,
   onDestroyed,
 }: {
   wearers: readonly StudyWearer[];
   selected: number;
   dressed: boolean;
+  outfitParts: readonly string[];
   clay: boolean;
   onDestroyed(report: LifetimeReport): void;
 }) {
@@ -91,7 +184,7 @@ function Comparison({
     setStatus('Preparing comparison…');
     const scene = new PersonStudyScene(
       canvas.current,
-      wearers.map((entry) => appearance(entry, dressed)),
+      wearers.map((entry) => appearance(entry, dressed ? outfitParts : [])),
       () => {
         const states = scene.diagnostics().wearers;
         const error = states.find((state) => state.error)?.error;
@@ -132,17 +225,21 @@ function Comparison({
     renderer.current?.setClay(clay);
   }, [clay, wearers, onDestroyed]);
   useEffect(() => {
-    renderer.current?.setAppearance(selected, appearance(wearer, dressed), snapshot.editing);
-  }, [selected, wearer, dressed, snapshot.recipe, snapshot.editing]);
+    renderer.current?.setAppearance(
+      selected,
+      appearance(wearer, dressed ? outfitParts : []),
+      snapshot.editing,
+    );
+  }, [selected, wearer, dressed, outfitParts, snapshot.recipe, snapshot.editing]);
   useEffect(() => {
     wearers.forEach((entry, index) =>
       renderer.current?.setAppearance(
         index,
-        appearance(entry, dressed),
+        appearance(entry, dressed ? outfitParts : []),
         entry.draft.getSnapshot().editing,
       ),
     );
-  }, [wearers, dressed]);
+  }, [wearers, dressed, outfitParts]);
   return (
     <>
       <div className="people-study-toolbar">
@@ -312,7 +409,15 @@ function Comparison({
   );
 }
 
-function Study({ wearers }: { wearers: readonly StudyWearer[] }) {
+function Study({
+  wearers,
+  catalog,
+  selection: { familyPaths, presetIds, outfitParts },
+}: {
+  wearers: readonly StudyWearer[];
+  catalog: readonly StudyExport[];
+  selection: StudySelection;
+}) {
   const [selected, setSelected] = useState(0);
   const [mode, setMode] = useState('editor');
   const [dressed, setDressed] = useState(true);
@@ -341,8 +446,14 @@ function Study({ wearers }: { wearers: readonly StudyWearer[] }) {
           Adjust body and face proportions, then compare clothing and movement at a shared scale.
           These choices do not change game abilities.
         </p>
+        {!!catalog.length && (
+          <p className="ol-caption">
+            Save your appearance file to keep edits before switching exports.
+          </p>
+        )}
       </header>
       <div className="people-study-toolbar">
+        {!!catalog.length && <ExportPicker catalog={catalog} familyPaths={familyPaths} />}
         <SelectField
           label="Character to edit"
           value={String(selected)}
@@ -416,6 +527,7 @@ function Study({ wearers }: { wearers: readonly StudyWearer[] }) {
           wearers={shown}
           selected={count === 'one' ? 0 : selected}
           dressed={dressed}
+          outfitParts={outfitParts}
           clay={clay}
           onDestroyed={recordLifetime}
         />
@@ -425,11 +537,29 @@ function Study({ wearers }: { wearers: readonly StudyWearer[] }) {
 }
 
 function LoadStudy() {
-  const [wearers, setWearers] = useState<StudyWearer[]>();
+  const [loaded, setLoaded] = useState<{ wearers: StudyWearer[]; selection: StudySelection }>();
+  const [catalog, setCatalog] = useState<StudyExport[]>([]);
   const [error, setError] = useState('');
   useEffect(() => {
     const request = new AbortController();
     void (async () => {
+      const exports = catalogPath
+        ? readExportCatalog(await readAssetJson<unknown>(catalogPath, request.signal))
+        : [];
+      if (request.signal.aborted) return;
+      setCatalog(exports);
+      // Opening the catalog alone selects the newest export and immediately
+      // pins the exact paths so a copied link keeps showing the same body.
+      let selected = parameters;
+      const latest = exports[0];
+      if (latest && !['family', 'preset', 'part'].some((key) => parameters.has(key))) {
+        const url = exportUrl(latest);
+        history.replaceState(history.state, '', url);
+        selected = url.searchParams;
+      }
+      const familyPaths = selected.getAll('family');
+      const presetIds = selected.getAll('preset');
+      const outfitParts = selected.getAll('part');
       if (familyPaths.length !== 4 || presetIds.length !== 4 || outfitParts.length > 8)
         throw new Error(
           'Open this study with four selected family/preset pairs and optional outfit parts.',
@@ -461,7 +591,8 @@ function LoadStudy() {
           draft: createPersonAppearanceDraft(family, result.recipe),
         };
       });
-      if (!request.signal.aborted) setWearers(next);
+      if (!request.signal.aborted)
+        setLoaded({ wearers: next, selection: { familyPaths, presetIds, outfitParts } });
     })().catch((problem: unknown) => {
       if (request.signal.aborted) return;
       request.abort();
@@ -474,11 +605,15 @@ function LoadStudy() {
       <main className="people-study">
         <h1>Character study unavailable</h1>
         <p role="alert">{error}</p>
-        <p>Check the selected asset release and your access, then reopen the study.</p>
+        {catalog.length ? (
+          <ExportPicker catalog={catalog} familyPaths={[]} />
+        ) : (
+          <p>Check the selected asset release and your access, then reopen the study.</p>
+        )}
       </main>
     );
-  return wearers ? (
-    <Study wearers={wearers} />
+  return loaded ? (
+    <Study {...loaded} catalog={catalog} />
   ) : (
     <main className="people-study">
       <h1>Character foundation study</h1>
