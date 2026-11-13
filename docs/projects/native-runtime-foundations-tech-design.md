@@ -1,8 +1,8 @@
 # Native runtime foundations: technical design
 
-| Status      | Current progress                                                                                                                           | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | J is rejected and removed; S is implemented with focused checks, pending held-reply and AWS qualification; P/R retain unmet prerequisites. | 2026-11-12   |
+| Status      | Current progress                                                                                                                                       | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | J is rejected and removed; S's focused and held-consumer checks pass, with AWS resource/CPU/RSS qualification pending; P/R retain unmet prerequisites. | 2026-11-12   |
 
 [Feature specification](native-runtime-foundations-feature-spec.md) · [Evidence and repertoire reconciliation](native-runtime-foundations-evidence-and-repertoire.md) · [NRF work](../maintainers/native-runtime-foundations.md) · [Constraints](../limits/native-runtime-foundations.md)
 
@@ -267,6 +267,8 @@ R settles this candidate, not the theoretical multicore limit. Another family ne
 ### 7.1 Establish the control once
 
 NRF01 consumes existing NSC profiling/failures. Use latest integrated code for both arms, including accepted A/B/C repairs. Pin source/addon/Node/toolchain, definitions, input schedule, clock, actual participants, provider fixtures, publication/save policies and allowance. Uncommitted owner reports are context until their source/evidence is available.
+
+Pin the actual executed module closure as well as regular source bytes. Use the existing workspace-binding guard to verify that direct fixture imports and bare package imports resolve through the intended frozen snapshot, with coherent inward workspace links in both arms. Record and recheck those links with the source identities; byte-identical files reached through a second package root can own distinct module-local registration and preparation state. Historical evidence with a different link topology retains that exact scope and cannot substitute for a fresh coherent control. This extends the existing source/dependency freeze, not the simulation contract or the verification framework.
 
 Each candidate records its material targeted cost, actual consumer and fixed adoption criterion before execution. Missing attribution means not activated, not a speculative implementation mandate. Correctness repairs proceed under their existing owner; do not mix them into an optimization comparison and infer causation.
 

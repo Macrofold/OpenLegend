@@ -1,8 +1,8 @@
 # Native runtime foundations: useful work without repeated preparation
 
-| Status      | Current progress                                                                                                                           | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | J is rejected and removed; S is implemented with focused checks, pending held-reply and AWS qualification; P/R retain unmet prerequisites. | 2026-11-12   |
+| Status      | Current progress                                                                                                                                       | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | J is rejected and removed; S's focused and held-consumer checks pass, with AWS resource/CPU/RSS qualification pending; P/R retain unmet prerequisites. | 2026-11-12   |
 
 [Technical design](native-runtime-foundations-tech-design.md) · [Source and repertoire reconciliation](native-runtime-foundations-evidence-and-repertoire.md)
 
