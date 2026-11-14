@@ -380,6 +380,12 @@ impl PlanControlCursor {
         loop {
             match self.phase {
                 Phase::Begin => {
+                    if let Some(plan) = &self.actor(core)?.agency.plan {
+                        super::activity::require_supported_activity(plan)?;
+                    }
+                    if let Some(plan) = self.actor(core)?.agency.suspended_plan() {
+                        super::activity::require_supported_activity(plan)?;
+                    }
                     self.phase = match self.kind {
                         PlanControlKind::DiscardSuspended => Phase::DiscardReport,
                         PlanControlKind::Suspend => Phase::SuspendEnd,

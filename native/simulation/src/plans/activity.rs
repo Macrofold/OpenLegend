@@ -1,8 +1,8 @@
 //! Full saved activity envelope. Canonical AST children follow the existing
 //! activity/learning/models.rs representation; they are structurally checked
 //! here without inventing a second learned-method normalizer or executor.
-//! Positive plan installation/edit/clone is still refused until real command,
-//! acquisition, current support and receipt consumers are joined.
+//! Positive installation/execution stays refused until command, acquisition,
+//! current support and receipt consumers join; exact undo is separate authority.
 use crate::commands::{CooperationBinding, PurposeBinding};
 use crate::host::ByteBudget;
 use crate::host::retained_size::{HeapBytes, heap_sum};
@@ -14,6 +14,14 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::mem::size_of;
+mod bind;
+mod copy;
+mod frontier;
+pub(crate) use bind::bind_single_invoke;
+pub(crate) use frontier::{
+    SingleInvoke, append_single_invoke, cancel_single_invoke, record_single_result,
+    require_supported_activity,
+};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

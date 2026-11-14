@@ -17,8 +17,12 @@ impl CommandEncoding {
     pub(super) fn decode(source: &str) -> Result<Self, serde_json::Error> {
         // This existing scalar/JSON codec preserves UTF16, number spelling under
         // JSON.stringify and JS property enumeration, including nested records.
-        // The complete command schema is validated before this bounded encoding.
+        // This preserves transport; typed command and installed-world admission
+        // remain with their semantic owners before anything can execute.
         let cell: SqlCell = serde_json::from_str(source)?;
+        Self::from_cell(&cell)
+    }
+    pub(super) fn from_cell(cell: &SqlCell) -> Result<Self, serde_json::Error> {
         let fields = cell
             .as_object()
             .expect("A validated command is an object")

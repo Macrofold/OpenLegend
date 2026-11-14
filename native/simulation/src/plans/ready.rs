@@ -341,11 +341,7 @@ impl PlanReadyCursor {
                         self.phase = Phase::Complete;
                         continue;
                     };
-                    if plan.activity.is_some()
-                        || plan.steps.iter().any(|s| s.activity_key.is_some())
-                    {
-                        return Err(ExecutionError::UnsupportedFamily);
-                    }
+                    super::activity::require_supported_activity(plan)?;
                     let orphan = plan
                         .steps
                         .iter()
@@ -415,6 +411,27 @@ impl PlanReadyCursor {
                             })
                     {
                         self.phase = Phase::Complete;
+                        continue;
+                    }
+                    if !plan.steps.iter().any(|s| s.status == StepStatus::Queued)
+                        && let Some(execution) = &plan.activity
+                    {
+                        // Only unfold after the actual ordinary prefix. The
+                        // selected single Move finishes through finishAction;
+                        // empty-active standalone graphs need their separate
+                        // Source completion report before becoming supported.
+                        if execution.pending_single_invoke()?.is_none() {
+                            return Err(ExecutionError::UnsupportedFamily);
+                        }
+                        let (id, _identity) = execution.single_step_id(&plan.id, &self.budget)?;
+                        let (command, _storage) = super::activity::bind_single_invoke(
+                            execution,
+                            &self.actor,
+                            &id,
+                            &core.state.installed,
+                            &self.budget,
+                        )?;
+                        super::activity::append_single_invoke(core, &self.actor, command)?;
                         continue;
                     }
                     let Some(next) = plan.steps.iter().find(|s| s.status == StepStatus::Queued)

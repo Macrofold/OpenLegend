@@ -151,7 +151,8 @@ impl ActivityDisplayCursor {
     ) -> Result<Self, ExecutionError> {
         if matches!(
             command,
-            NativeCommand::Cancel { .. }
+            NativeCommand::Outing { .. }
+                | NativeCommand::Cancel { .. }
                 | NativeCommand::WithdrawAttempt { .. }
                 | NativeCommand::InspectInventory { .. }
                 | NativeCommand::InspectActivities { .. }
@@ -393,7 +394,8 @@ impl ActivityDisplayCursor {
                 distance: *distance,
             },
             NativeCommand::Strike { .. } => Command::Strike { purpose },
-            NativeCommand::Cancel { .. }
+            NativeCommand::Outing { .. }
+            | NativeCommand::Cancel { .. }
             | NativeCommand::WithdrawAttempt { .. }
             | NativeCommand::InspectInventory { .. }
             | NativeCommand::InspectActivities { .. } => {

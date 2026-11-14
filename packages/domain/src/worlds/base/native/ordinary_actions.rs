@@ -71,6 +71,7 @@ pub(crate) struct OrdinaryActionRules {
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub version: u64,
     pub plan: plan_rules::PlanRules,
+    pub travel: super::base_outings::TravelRules,
     pub participation: ParticipationRules,
     pub audience_milestone: AudienceMilestone,
     pub invalid_command: ActionMessage,

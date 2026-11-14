@@ -1,6 +1,9 @@
 /** The bundled world's ordinary chosen-work reports. The agency mechanism and
  * compiled ordinary family consume these same words and account importance. */
 export const BASE_PLAN_RULES = {
+  // The first compiled requested-activity slice binds this existing family;
+  // Source's general activity executor still consumes its full catalogue.
+  requestedMovementFamily: 'move',
   invalidIdentity: {
     code: 'invalid-plan',
     message: 'Plan and child identities must be valid and unique.',

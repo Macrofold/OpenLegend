@@ -27,9 +27,9 @@ pub(crate) fn finish_plan_action(
     }) else {
         return Ok(());
     };
-    if plan.activity.is_some() || plan.steps[index].activity_key.is_some() {
-        return Err(ExecutionError::UnsupportedFamily);
-    }
+    let activity_step = plan.steps[index].activity_key.is_some();
+    let activity = plan.activity.is_some();
+    super::activity::require_supported_activity(plan)?;
     if evidence.is_none()
         && core
             .state
@@ -82,8 +82,18 @@ pub(crate) fn finish_plan_action(
         .heap_bytes()
         .and_then(|bytes| bytes.checked_mul(2))
         .and_then(|bytes| bytes.checked_add(result.heap_bytes()?))
+        .and_then(|bytes| {
+            bytes.checked_add(if activity && !activity_step && !result.ok {
+                result.message.heap_bytes()?
+            } else {
+                0
+            })
+        })
         .ok_or(ExecutionError::Capacity)?;
     core.physical().reserve_plan_growth(growth)?;
+    if activity_step {
+        super::activity::record_single_result(core, actor, index, &result)?;
+    }
     {
         let mut physical = core.physical();
         physical
@@ -101,6 +111,14 @@ pub(crate) fn finish_plan_action(
             .as_mut()
             .ok_or(ExecutionError::Invariant)?;
         let ok = result.ok;
+        // An ordinary queued prefix may fail after an activity was attached.
+        // It blocks that activity without creating a primitive output entry.
+        if !ok
+            && !activity_step
+            && let Some(execution) = &mut plan.activity
+        {
+            execution.reason = Some(result.message.clone());
+        }
         plan.steps[index].outcome = Some(result);
         plan.steps[index].status = if ok {
             StepStatus::Completed
@@ -110,9 +128,13 @@ pub(crate) fn finish_plan_action(
         plan.status = if !ok {
             PlanStatus::Blocked
         } else if plan
-            .steps
-            .iter()
-            .all(|step| matches!(step.status, StepStatus::Completed | StepStatus::Cancelled))
+            .activity
+            .as_ref()
+            .is_none_or(|execution| execution.pending.is_empty())
+            && plan
+                .steps
+                .iter()
+                .all(|step| matches!(step.status, StepStatus::Completed | StepStatus::Cancelled))
         {
             PlanStatus::Completed
         } else {

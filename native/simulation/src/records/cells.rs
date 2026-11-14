@@ -112,6 +112,12 @@ impl ExactObject {
         if at != bytes.len() {
             return Err(invalid());
         }
+        Self::from_members(members, source.len())
+    }
+    fn from_members(
+        mut members: Vec<(JsText, SqlCell)>,
+        capacity_hint: usize,
+    ) -> Result<Self, serde_json::Error> {
         // Normalize once with the same scalar codec as ordinary cells. A map
         // key serializer cannot represent an isolated unit, so emit its already
         // validated quoted scalar directly into the immutable derived encoding.
@@ -126,7 +132,7 @@ impl ExactObject {
                 (None, None) => std::cmp::Ordering::Equal,
             }
         });
-        let mut json = String::with_capacity(source.len());
+        let mut json = String::with_capacity(capacity_hint);
         json.push('{');
         for (index, (key, value)) in members.iter().enumerate() {
             if index != 0 {
@@ -177,6 +183,26 @@ impl PartialEq for SqlCell {
     }
 }
 impl SqlCell {
+    /// Consume trusted unique members whose body, map and encoding workspace
+    /// the semantic caller has admitted. Preserve exact JavaScript keys without
+    /// building an otherwise unused encoding for an ordinary Unicode object.
+    pub(crate) fn from_text_members(
+        members: Vec<(JsText, Self)>,
+    ) -> Result<Self, serde_json::Error> {
+        if members.iter().all(|(key, _)| key.as_unicode().is_some()) {
+            let mut object = IndexMap::with_capacity(members.len());
+            for (key, value) in members {
+                let JsText::Unicode(key) = key else {
+                    unreachable!("Unicode membership was checked before consuming members");
+                };
+                object.insert(key, value);
+            }
+            Ok(Self::Object(object))
+        } else {
+            ExactObject::from_members(members, 0).map(Self::ExactObject)
+        }
+    }
+
     /// An admitted copy must not grow an IndexMap's dense backing to its hidden
     /// hash capacity, as the ordinary IndexMap Clone implementation can do.
     /// Keep each copied backing within the original HeapBytes allowance.

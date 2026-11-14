@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct PlanRules {
+    pub requested_movement_family: String,
     pub invalid_identity: ActionMessage,
     pub stale_plan: ActionMessage,
     pub invalid_goal: ActionMessage,
@@ -48,6 +49,12 @@ pub(crate) struct PlanRules {
     pub control_importance: f64,
 }
 impl PlanRules {
+    /// Select the compiled requested-movement branch using the same authored
+    /// fact installed with Source's ordinary-plan rules, never an engine list.
+    pub(crate) fn supports_requested_movement(&self, family: &str) -> bool {
+        family == self.requested_movement_family
+    }
+
     /// Base's selected quantity form, matching Source validateActivityQuantity.
     /// Repetition/frontier arithmetic is generic; these action families are not.
     pub(crate) fn supports_activity_quantity_command(&self, command: &str) -> bool {

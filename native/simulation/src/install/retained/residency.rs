@@ -16,6 +16,16 @@ heap_record!(ItemHandlingReadPolicy {
     actor_body_profiles
 });
 heap_record!(ParticipationReadPolicy { safe_return_anchor });
+heap_record!(SharedPhysicalSlots {});
+heap_record!(SocialOfferReadMessages {
+    incoming,
+    outgoing,
+    pair
+});
+heap_record!(SocialOfferReadPolicy {
+    cooperation,
+    messages
+});
 heap_record!(RetainedDefinitions {
     knowledge_policy,
     item_handling,
@@ -23,6 +33,7 @@ heap_record!(RetainedDefinitions {
     gathering_policy,
     work_batch_policy,
     social_offer_policy,
+    social_offer_read,
     hearth_definitions,
     assembly_families,
     construction_profile,

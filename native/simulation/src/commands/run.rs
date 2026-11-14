@@ -888,7 +888,8 @@ impl CommandCursor {
                             }
                             self.phase = Phase::Interrupt;
                         }
-                        NativeCommand::Follow { .. }
+                        NativeCommand::Outing { .. }
+                        | NativeCommand::Follow { .. }
                         | NativeCommand::Strike { .. }
                         | NativeCommand::InspectInventory { .. }
                         | NativeCommand::InspectActivities { .. } => {

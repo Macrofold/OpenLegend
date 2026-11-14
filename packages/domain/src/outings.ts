@@ -469,7 +469,8 @@ export function prepareOuting(
       (command.destinationId !== undefined &&
         (!isSafeRecordId(command.destinationId) || command.destination !== undefined)) ||
       (command.purpose !== undefined &&
-        (typeof command.purpose !== 'string' || command.purpose.length > 120))
+        (typeof command.purpose !== 'string' ||
+          command.purpose.length > BASE_OUTING.maxPurposeCharacters))
     )
       return outcome(false, 'invalid-command', BASE_OUTING.messages.terms);
     const problem = outingInvitationProblem(world, command.actorId, command.recipientId);

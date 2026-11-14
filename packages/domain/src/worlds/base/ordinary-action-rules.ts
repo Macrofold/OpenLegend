@@ -1,4 +1,5 @@
 import { BASE_PLAYTEST_AUDIENCE_MILESTONE } from './playtest-event-rule.js';
+import { BASE_TRAVEL_RULES } from './travel-policy.js';
 import { BASE_PLAN_RULES } from './plan-rules.js';
 import { BASE_PARTICIPATION_PRESENTATION } from './participation.js';
 
@@ -8,6 +9,7 @@ export const BASE_ORDINARY_ACTION_RULES = {
   id: 'wilderness:ordinary-action-rules',
   version: 1,
   plan: BASE_PLAN_RULES,
+  travel: BASE_TRAVEL_RULES,
   participation: BASE_PARTICIPATION_PRESENTATION,
   audienceMilestone: BASE_PLAYTEST_AUDIENCE_MILESTONE,
   invalidCommand: {

@@ -263,9 +263,12 @@ impl PlanResumeCursor {
                         self.phase = Phase::Done;
                         continue;
                     };
-                    if paused.activity.is_some()
-                        || paused.steps.iter().any(|s| s.activity_key.is_some())
-                    {
+                    super::activity::require_supported_activity(paused)?;
+                    // Source's actual resume-work command preflights the first
+                    // remaining leaf before ending an intervention. No Native
+                    // command caller supplies that boundary yet; automatic
+                    // return still uses the ordinary readiness/command owner.
+                    if matches!(self.mode, ResumeMode::Choice { .. }) && paused.activity.is_some() {
                         return Err(ExecutionError::UnsupportedFamily);
                     }
                     if let ResumeMode::Choice { id, revision } = &self.mode {
@@ -349,10 +352,18 @@ impl PlanResumeCursor {
                         .paused
                         .as_ref()
                         .ok_or(ExecutionError::Invariant)?
-                        .steps
-                        .iter()
-                        .find(|s| s.status == StepStatus::Queued)
-                        .and_then(|s| s.command.envelope().purpose.as_ref())
+                        .activity
+                        .as_ref()
+                        .and_then(|a| a.request.as_ref())
+                        .map(|r| &r.name)
+                        .or_else(|| {
+                            self.paused
+                                .as_ref()
+                                .and_then(|p| {
+                                    p.steps.iter().find(|s| s.status == StepStatus::Queued)
+                                })
+                                .and_then(|s| s.command.envelope().purpose.as_ref())
+                        })
                         .map_or(Some(rules.paused_work_name.len()), HeapBytes::heap_bytes)
                         .ok_or(ExecutionError::Capacity)?;
                     self.reserve(name_bytes)?;
@@ -360,10 +371,18 @@ impl PlanResumeCursor {
                         self.paused
                             .as_ref()
                             .ok_or(ExecutionError::Invariant)?
-                            .steps
-                            .iter()
-                            .find(|s| s.status == StepStatus::Queued)
-                            .and_then(|s| s.command.envelope().purpose.as_ref())
+                            .activity
+                            .as_ref()
+                            .and_then(|a| a.request.as_ref())
+                            .map(|r| &r.name)
+                            .or_else(|| {
+                                self.paused
+                                    .as_ref()
+                                    .and_then(|p| {
+                                        p.steps.iter().find(|s| s.status == StepStatus::Queued)
+                                    })
+                                    .and_then(|s| s.command.envelope().purpose.as_ref())
+                            })
                             .cloned()
                             .unwrap_or_else(|| rules.paused_work_name.clone().into()),
                     );
@@ -384,7 +403,26 @@ impl PlanResumeCursor {
                                 .iter()
                                 .position(|s| s.status == StepStatus::Queued)
                         });
-                        if let Some(index) = index {
+                        if self.paused.as_ref().is_some_and(|p| p.activity.is_some()) {
+                            let reason = match reason {
+                                Reason::Goal => rules.inactive_goal_reason.as_str(),
+                                Reason::Target => rules.changed_target_reason.as_str(),
+                            };
+                            let bytes = rules
+                                .resume_refused_prefix
+                                .len()
+                                .checked_add(reason.len())
+                                .ok_or(ExecutionError::Capacity)?;
+                            core.physical().reserve_plan_growth(bytes)?;
+                            let mut message = String::with_capacity(bytes);
+                            message.push_str(&rules.resume_refused_prefix);
+                            message.push_str(reason);
+                            self.paused
+                                .as_mut()
+                                .and_then(|p| p.activity.as_mut())
+                                .ok_or(ExecutionError::Invariant)?
+                                .reason = Some(message.into());
+                        } else if let Some(index) = index {
                             let reason = match reason {
                                 Reason::Goal => rules.inactive_goal_reason.as_str(),
                                 Reason::Target => rules.changed_target_reason.as_str(),

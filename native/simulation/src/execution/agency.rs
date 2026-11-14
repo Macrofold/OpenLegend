@@ -78,12 +78,12 @@ impl PhysicalMutation<'_> {
                 .ok_or(ExecutionError::MissingActor)?
                 .agency
                 .plan;
-            let heap = plan.heap_bytes().ok_or(ExecutionError::UnsupportedFamily)?;
+            let heap = plan.heap_bytes().ok_or(ExecutionError::Capacity)?;
             self.journal.reserve(
                 heap.checked_add(2 * size_of::<Undo>())
                     .ok_or(ExecutionError::Capacity)?,
             )?;
-            let before = plan.as_ref().map(ActorPlan::clone_ordinary).transpose()?;
+            let before = plan.as_ref().map(ActorPlan::clone_for_undo);
             self.journal.retain(
                 key,
                 Undo::AgencyPlan {
@@ -121,17 +121,14 @@ impl PhysicalMutation<'_> {
                 .agency;
             let paused = &agency.suspended;
             let order = agency.order;
-            let heap = paused
-                .heap_bytes()
-                .ok_or(ExecutionError::UnsupportedFamily)?;
+            let heap = paused.heap_bytes().ok_or(ExecutionError::Capacity)?;
             self.journal.reserve(
                 heap.checked_add(2 * size_of::<Undo>())
                     .ok_or(ExecutionError::Capacity)?,
             )?;
             let before = paused
                 .as_ref()
-                .map(|p| p.as_ref().map(ActorPlan::clone_ordinary).transpose())
-                .transpose()?;
+                .map(|p| p.as_ref().map(ActorPlan::clone_for_undo));
             self.journal.retain(
                 key,
                 Undo::AgencySuspended {

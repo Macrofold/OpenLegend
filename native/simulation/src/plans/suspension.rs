@@ -76,6 +76,7 @@ pub(crate) fn prepare_suspension(
             .map(|_| rules.not_chosen_plan.outcome(false));
         return Ok(prepared);
     };
+    super::activity::require_supported_activity(plan)?;
     if actor.agency.suspended_plan().is_some() {
         prepared.outcome = Some(rules.already_paused.outcome(false));
         return Ok(prepared);

@@ -117,6 +117,10 @@ heap_record!(PurposeBinding {
 impl HeapBytes for NativeCommand {
     fn heap_bytes(&self) -> Option<usize> {
         match self {
+            Self::Outing {
+                envelope,
+                parameters,
+            } => heap_sum([envelope.heap_bytes()?, parameters.heap_bytes()?]),
             Self::Move {
                 envelope,
                 destination,
@@ -151,7 +155,10 @@ impl HeapBytes for NativeCommand {
                 envelope,
                 expected_action_id,
             } => heap_sum([envelope.heap_bytes()?, expected_action_id.heap_bytes()?]),
-            Self::WithdrawAttempt { envelope, attempt_id } => heap_sum([envelope.heap_bytes()?, attempt_id.heap_bytes()?]),
+            Self::WithdrawAttempt {
+                envelope,
+                attempt_id,
+            } => heap_sum([envelope.heap_bytes()?, attempt_id.heap_bytes()?]),
             Self::Follow {
                 envelope,
                 target_id,

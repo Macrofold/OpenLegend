@@ -351,13 +351,13 @@ impl PlanEditCursor {
                         self.refuse(&rules.invalid_command)?;
                         continue;
                     }
-                    if current.is_some_and(|plan| {
-                        plan.activity.is_some()
-                            || plan.steps.iter().any(|step| step.activity_key.is_some())
-                    }) || actor.agency.suspended_plan().is_some_and(|plan| {
-                        plan.activity.is_some()
-                            || plan.steps.iter().any(|step| step.activity_key.is_some())
-                    }) || self.input.commands.iter().any(|command| {
+                    if let Some(plan) = current {
+                        super::activity::require_supported_activity(plan)?;
+                    }
+                    if let Some(plan) = actor.agency.suspended_plan() {
+                        super::activity::require_supported_activity(plan)?;
+                    }
+                    if self.input.commands.iter().any(|command| {
                         command.envelope().cooperation.is_some()
                             || command.envelope().combat_help_id.is_some()
                             || matches!(

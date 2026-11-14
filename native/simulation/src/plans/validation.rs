@@ -91,7 +91,8 @@ pub(crate) fn valid_command(
                     .as_ref()
                     .is_none_or(|v| acoustics.volume(v).is_some())
         }
-        NativeCommand::Cancel { .. }
+        NativeCommand::Outing { .. }
+        | NativeCommand::Cancel { .. }
         | NativeCommand::WithdrawAttempt { .. }
         | NativeCommand::Follow { .. }
         | NativeCommand::Strike { .. }

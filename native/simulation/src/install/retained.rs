@@ -131,8 +131,42 @@ pub(crate) struct ItemHandlingReadPolicy {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct SocialOfferReadPolicy {
+    pub pending_seconds: f64,
     pub incoming: u64,
     pub outgoing: u64,
+    pub one_pending_per_pair: bool,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_option"
+    )]
+    pub cooperation: Option<SharedPhysicalSlots>,
+    pub messages: SocialOfferReadMessages,
+}
+#[derive(Debug, Deserialize)]
+// Travel consumes only the installed cooperation policy's presence for its
+// shared physical slot. Its other fields remain in the canonical policy owner.
+pub(crate) struct SharedPhysicalSlots {}
+#[derive(Debug, Deserialize)]
+pub(crate) struct SocialOfferReadMessages {
+    pub incoming: crate::text::JsText,
+    pub outgoing: crate::text::JsText,
+    pub pair: crate::text::JsText,
+}
+impl SocialOfferReadPolicy {
+    fn valid(&self) -> bool {
+        self.pending_seconds.is_finite()
+            && self.pending_seconds > 0.0
+            && [self.incoming, self.outgoing]
+                .iter()
+                .all(|n| *n > 0 && *n <= crate::identity::MAX_SAFE_INTEGER)
+            && [
+                &self.messages.incoming,
+                &self.messages.outgoing,
+                &self.messages.pair,
+            ]
+            .iter()
+            .all(|text| !text.trim_is_empty() && text.units_len() <= 1000)
+    }
 }
 impl ItemHandlingReadPolicy {
     pub(crate) fn can_handle(&self, profile: &str) -> bool {
@@ -445,6 +479,17 @@ pub(crate) fn install_retained(
         "config_social_offers",
         input.social_offer_policy,
     )?;
+    let _social_offer_preparation = social_offer_policy
+        .as_ref()
+        .map(|policy| {
+            super::reserve_typed_parse::<Option<SocialOfferReadPolicy>>(
+                policy.payload(),
+                size_of::<String>(),
+                None,
+                budget,
+            )
+        })
+        .transpose()?;
     let social_offer_read = social_offer_policy
         .as_ref()
         .map(|policy| {
@@ -453,6 +498,12 @@ pub(crate) fn install_retained(
         })
         .transpose()?
         .flatten();
+    if social_offer_read
+        .as_ref()
+        .is_some_and(|policy| !policy.valid())
+    {
+        return Err(InstallError::CurrentFormat);
+    }
     let invention_policy = r
         .one(
             "inventionPolicy",

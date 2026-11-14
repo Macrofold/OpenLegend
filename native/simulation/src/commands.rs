@@ -11,6 +11,8 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 mod encoding;
 use encoding::CommandEncoding;
+mod outings_input;
+pub(crate) use outings_input::OutingParameters;
 
 mod invocation;
 mod preparation;
@@ -42,7 +44,7 @@ pub(crate) struct CooperationBinding {
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub revision: u64,
 }
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct PurposeBinding {
     pub definition: DefinitionPin,
@@ -51,6 +53,25 @@ pub(crate) struct PurposeBinding {
     #[serde(serialize_with = "crate::encoding::serialize_js_map")]
     pub roles: IndexMap<String, String>,
     pub source_ids: Vec<String>,
+}
+impl Clone for PurposeBinding {
+    fn clone(&self) -> Self {
+        // IndexMap::clone can grow dense backing beyond the admitted
+        // source HeapBytes. Keep every command and activity copy within it.
+        let mut roles = IndexMap::with_capacity(self.roles.capacity());
+        roles.extend(
+            self.roles
+                .iter()
+                .map(|(role, id)| (role.clone(), id.clone())),
+        );
+        Self {
+            definition: self.definition.clone(),
+            id: self.id.clone(),
+            description: self.description.clone(),
+            roles,
+            source_ids: self.source_ids.clone(),
+        }
+    }
 }
 impl PurposeBinding {
     fn valid(&self) -> bool {
@@ -86,6 +107,58 @@ pub(crate) struct CommandEnvelope {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub chosen_purpose: Option<PurposeBinding>,
 }
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct CommandHeaders {
+    id: String,
+    actor_id: String,
+    #[serde(default, deserialize_with = "deserialize_present_option")]
+    cooperation: Option<CooperationBinding>,
+    #[serde(default, deserialize_with = "deserialize_present_option")]
+    combat_help_id: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_present_option")]
+    human_initiated: Option<bool>,
+    #[serde(default, deserialize_with = "deserialize_present_option")]
+    purpose: Option<crate::text::JsText>,
+    #[serde(default, deserialize_with = "deserialize_present_option")]
+    chosen_purpose: Option<PurposeBinding>,
+}
+impl CommandHeaders {
+    fn valid(&self) -> bool {
+        is_safe_record_id(&self.id)
+            && is_safe_record_id(&self.actor_id)
+            && !self.human_initiated.is_some_and(|value| !value)
+            && self
+                .combat_help_id
+                .as_ref()
+                .is_none_or(|id| is_safe_record_id(id))
+            && self
+                .cooperation
+                .as_ref()
+                .is_none_or(|binding| is_safe_record_id(&binding.id))
+            && self
+                .purpose
+                .as_ref()
+                .is_none_or(|value| !value.trim_is_empty() && value.units_len() <= 120)
+            && self
+                .chosen_purpose
+                .as_ref()
+                .is_none_or(PurposeBinding::valid)
+    }
+    fn envelope(self, encoding: CommandEncoding) -> CommandEnvelope {
+        CommandEnvelope {
+            encoding,
+            id: self.id,
+            actor_id: self.actor_id,
+            cooperation: self.cooperation,
+            combat_help_id: self.combat_help_id,
+            human_initiated: self.human_initiated,
+            purpose: self.purpose,
+            chosen_purpose: self.chosen_purpose,
+        }
+    }
+}
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum StatusOperation {
@@ -101,6 +174,10 @@ pub(crate) enum SpeechTargetRole {
 
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum NativeCommand {
+    Outing {
+        envelope: CommandEnvelope,
+        parameters: OutingParameters,
+    },
     Move {
         envelope: CommandEnvelope,
         destination: SurfacePoint,
@@ -171,29 +248,28 @@ optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:b
 impl<'de> Deserialize<'de> for NativeCommand {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let raw = Box::<serde_json::value::RawValue>::deserialize(deserializer)?;
+        #[derive(Deserialize)]
+        struct Tag {
+            #[serde(rename = "type")]
+            kind: String,
+        }
+        let tag: Tag = serde_json::from_str(raw.get()).map_err(serde::de::Error::custom)?;
+        if tag.kind == crate::worlds::base_outings::travel_command_type() {
+            return outings_input::decode(raw.get()).map_err(serde::de::Error::custom);
+        }
         let input: CommandInput =
             serde_json::from_str(raw.get()).map_err(serde::de::Error::custom)?;
         use serde::de::Error;
-        if !is_safe_record_id(&input.id)
-            || !is_safe_record_id(&input.actor_id)
-            || input.human_initiated.is_some_and(|value| !value)
-            || input
-                .combat_help_id
-                .as_ref()
-                .is_some_and(|id| !is_safe_record_id(id))
-            || input
-                .cooperation
-                .as_ref()
-                .is_some_and(|binding| !is_safe_record_id(&binding.id))
-            || input
-                .purpose
-                .as_ref()
-                .is_some_and(|value| value.trim_is_empty() || value.units_len() > 120)
-            || input
-                .chosen_purpose
-                .as_ref()
-                .is_some_and(|value| !value.valid())
-        {
+        let headers = CommandHeaders {
+            id: input.id,
+            actor_id: input.actor_id,
+            cooperation: input.cooperation,
+            combat_help_id: input.combat_help_id,
+            human_initiated: input.human_initiated,
+            purpose: input.purpose,
+            chosen_purpose: input.chosen_purpose,
+        };
+        if !headers.valid() {
             return Err(D::Error::custom("Invalid selected native command binding."));
         }
         let discovery_fields = input.distance.is_some()
@@ -251,16 +327,8 @@ impl<'de> Deserialize<'de> for NativeCommand {
             || input.resting_place_id.is_some()
             || input.resting_bay.is_some()
             || input.expected_action_id.is_some();
-        let envelope = CommandEnvelope {
-            encoding: CommandEncoding::decode(raw.get()).map_err(D::Error::custom)?,
-            id: input.id,
-            actor_id: input.actor_id,
-            cooperation: input.cooperation,
-            combat_help_id: input.combat_help_id,
-            human_initiated: input.human_initiated,
-            purpose: input.purpose,
-            chosen_purpose: input.chosen_purpose,
-        };
+        let envelope =
+            headers.envelope(CommandEncoding::decode(raw.get()).map_err(D::Error::custom)?);
         match input.kind.as_str() {
             "withdraw-attempt"
                 if !discovery_extras
@@ -399,7 +467,8 @@ impl NativeCommand {
     }
     fn envelope_mut(&mut self) -> &mut CommandEnvelope {
         match self {
-            Self::Move { envelope, .. }
+            Self::Outing { envelope, .. }
+            | Self::Move { envelope, .. }
             | Self::Say { envelope, .. }
             | Self::StatusEffect { envelope, .. }
             | Self::Cancel { envelope, .. }
@@ -418,7 +487,8 @@ impl NativeCommand {
     }
     pub(crate) fn envelope(&self) -> &CommandEnvelope {
         match self {
-            Self::Move { envelope, .. }
+            Self::Outing { envelope, .. }
+            | Self::Move { envelope, .. }
             | Self::Say { envelope, .. }
             | Self::StatusEffect { envelope, .. }
             | Self::Cancel { envelope, .. }
@@ -431,6 +501,7 @@ impl NativeCommand {
     }
     pub(crate) fn kind(&self) -> &'static str {
         match self {
+            Self::Outing { .. } => crate::worlds::base_outings::travel_command_type(),
             Self::Move { .. } => "move",
             Self::Say { .. } => "say",
             Self::StatusEffect { .. } => "status-effect",
@@ -445,7 +516,8 @@ impl NativeCommand {
     pub(crate) fn discovery_only(&self) -> bool {
         matches!(
             self,
-            Self::Follow { .. }
+            Self::Outing { .. }
+                | Self::Follow { .. }
                 | Self::Strike { .. }
                 | Self::InspectInventory { .. }
                 | Self::InspectActivities { .. }

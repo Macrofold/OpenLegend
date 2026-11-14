@@ -9,7 +9,13 @@ use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 mod activity;
 mod control;
+mod encoding;
+mod requested;
 pub(crate) use activity::ActivityExecution;
+pub(crate) use requested::{
+    RequestedActivityAnswer, RequestedActivityCursor, RequestedActivityInput,
+    RequestedActivityStart, RequestedActivityStep,
+};
 mod suspension;
 pub(crate) use suspension::prepare_suspension;
 mod edit;
@@ -86,43 +92,23 @@ pub enum PlanMode {
     Interrupt,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct PlanStep {
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub activity_key: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_present_option")]
+    pub activity_key: Option<crate::text::JsText>,
     pub id: String,
     pub command: NativeCommand,
     // Source's ordinary plan constructors write these bindings after command.
     // The decision signature consumes the ordered plan without reformatting it.
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(default, deserialize_with = "deserialize_present_option")]
     pub target_episodes: Option<IndexMap<String, Option<String>>>,
     pub status: StepStatus,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(default, deserialize_with = "deserialize_present_option")]
     pub action_id: Option<String>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(default, deserialize_with = "deserialize_present_option")]
     pub outcome: Option<Outcome>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_present_option",
-        skip_serializing_if = "Option::is_none"
-    )]
+    #[serde(default, deserialize_with = "deserialize_present_option")]
     pub result_evidence: Option<ResultEvidence>,
 }
 
@@ -152,22 +138,49 @@ pub(crate) struct ActorPlan {
     pub steps: Vec<PlanStep>,
 }
 
-impl ActorPlan {
-    /// Only the installed ordinary family can take a bounded before-image.
-    /// Activity graphs must enter their own real owner before being mutable.
-    pub(crate) fn clone_ordinary(&self) -> Result<Self, crate::execution::ExecutionError> {
-        if self.activity.is_some() || self.steps.iter().any(|step| step.activity_key.is_some()) {
-            return Err(crate::execution::ExecutionError::UnsupportedFamily);
-        }
-        Ok(Self {
+impl Clone for PlanStep {
+    fn clone(&self) -> Self {
+        // The physical journal admits the source heap before making an inverse.
+        // Match the existing SqlCell bounded-copy rule for ordered map backing.
+        let target_episodes = self.target_episodes.as_ref().map(|targets| {
+            let mut copied = IndexMap::with_capacity(targets.capacity());
+            copied.extend(
+                targets
+                    .iter()
+                    .map(|(key, value)| (key.clone(), value.clone())),
+            );
+            copied
+        });
+        Self {
+            activity_key: self.activity_key.clone(),
+            id: self.id.clone(),
+            command: self.command.clone(),
+            target_episodes,
+            status: self.status,
+            action_id: self.action_id.clone(),
+            outcome: self.outcome.clone(),
             result_evidence: self.result_evidence.clone(),
-            activity: None,
+        }
+    }
+}
+
+impl ActorPlan {
+    /// The physical journal admits the complete body before copying it. Keeping
+    /// the execution envelope here also preserves a suspended activity exactly;
+    /// executable-family admission belongs to the plan and command owners.
+    pub(crate) fn clone_for_undo(&self) -> Self {
+        Self {
+            result_evidence: self.result_evidence.clone(),
+            activity: self
+                .activity
+                .as_ref()
+                .map(ActivityExecution::clone_for_undo),
             id: self.id.clone(),
             revision: self.revision,
             goal_id: self.goal_id.clone(),
             status: self.status,
             steps: self.steps.clone(),
-        })
+        }
     }
 }
 

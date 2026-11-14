@@ -2,6 +2,10 @@
 use super::plan_rules::*;
 use super::*;
 use crate::host::retained_size::heap_record;
+use crate::worlds::base_outings::{
+    TravelCompanyLabels, TravelMessages, TravelOperation, TravelParticipantCapability, TravelRules,
+    TravelTemplates,
+};
 heap_record!(ActionMessage { code, message });
 heap_record!(ParticipationRules {
     changed_refresh,
@@ -24,6 +28,7 @@ heap_record!(OrdinaryActionRules {
     id,
     version,
     plan,
+    travel,
     participation,
     audience_milestone,
     invalid_command,
@@ -77,6 +82,7 @@ heap_record!(OrdinaryActionRules {
     movement_arrival_event
 });
 heap_record!(PlanRules {
+    requested_movement_family,
     invalid_identity,
     stale_plan,
     invalid_goal,
@@ -117,6 +123,73 @@ heap_record!(PlanRules {
     refused_result,
     result_importance,
     control_importance
+});
+
+impl crate::host::retained_size::HeapBytes for TravelOperation {
+    fn heap_bytes(&self) -> Option<usize> {
+        Some(0)
+    }
+}
+impl crate::host::retained_size::HeapBytes for TravelParticipantCapability {
+    fn heap_bytes(&self) -> Option<usize> {
+        Some(0)
+    }
+}
+heap_record!(TravelCompanyLabels { visible, hidden });
+heap_record!(TravelTemplates {
+    purpose,
+    accept_idle,
+    accept_replace,
+    decline,
+    withdraw,
+    context,
+    travel_name,
+    point_name,
+    invited_proposer,
+    invited_proposer_purpose,
+    invited_recipient,
+    invited_recipient_purpose,
+    accepted,
+    arrived,
+    ended
+});
+heap_record!(TravelMessages {
+    person,
+    nearby,
+    terms,
+    limit,
+    pending,
+    destination,
+    busy,
+    changed,
+    route,
+    unavailable,
+    invited,
+    accepted,
+    declined,
+    left,
+    expired,
+    interrupted,
+    finished,
+    company,
+    separated
+});
+heap_record!(TravelRules {
+    family,
+    kind,
+    event_type,
+    agreement_family,
+    participant_capability,
+    operations,
+    max_purpose_characters,
+    label,
+    leave_label,
+    companion_prefix,
+    agreement_description,
+    description,
+    company_labels,
+    templates,
+    messages
 });
 
 crate::install::definition_layout!(OrdinaryActionRules; arrays [String]; maps [String]);

@@ -8,6 +8,14 @@ use crate::records::SqlCell;
 use crate::values::{is_safe_record_id, is_safe_record_text};
 use indexmap::IndexMap;
 
+#[path = "outings/travel.rs"]
+mod travel;
+pub(crate) use travel::{
+    TravelCompanyLabels, TravelDestination, TravelInput, TravelInputError, TravelMessages,
+    TravelOperation, TravelParticipantCapability, TravelRules, TravelTemplates,
+    travel_command_type,
+};
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum OutingKind {
     Travel,
