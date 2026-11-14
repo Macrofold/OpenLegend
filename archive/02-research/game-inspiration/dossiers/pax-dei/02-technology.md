@@ -16,17 +16,17 @@ The official technical FAQ describes this hierarchy:
 | Zone | Smaller area run by a dedicated Unreal server. |
 | Zone instance | Overflow simulation; players cannot interact across instances. |
 
-The FAQ says connections transfer between adjacent zone servers, generally seamlessly, but players and NPCs are not visible across zone boundaries. Overflow instances merge when population falls. Its old introduction estimates 7,000 players per shard; a later answer says approximately 14,000 **plot owners**. Neither is a verified current simultaneous-player benchmark. Its approximately 150-player zone threshold should likewise be treated as a published architectural figure, not a November 2026 service guarantee. [Official technical FAQ, undated](https://playpaxdei.com/en-us/faq/tech)
+The FAQ describes zone transfers without player/NPC visibility across boundaries; overflow instances later merge. Its older figures are approximately 7,000 players per shard and 150 per zone; a newer answer says approximately 14,000 **plot owners**. These are different measures, not a current concurrency benchmark. [Official technical FAQ, undated](https://playpaxdei.com/en-us/faq/tech)
 
 **Interpretation:** there are three distinct scaling problems: how many accounts have a home, how many people are online across a world, and how many people occupy one contested location. Solving one does not solve the others. A huge landmass can accommodate many persistent homes without supporting a huge single battle.
 
 ## 2. Buildings use a different replication path from ordinary gameplay
 
-Mainframe's **27 September 2024** building article documented approximately 400,000 pieces in its busiest home valleys, roughly 30 MB of building-state data per valley, 24 home valleys per world, and approximately 10,000 new pieces weekly in a valley. Those are historical measurements. The stated 500,000-piece comfort range and planned million-piece capacity were not proof that the latter had shipped.
+Mainframe's **27 September 2024** article reported approximately 400,000 building pieces in its busiest valleys, 30 MB of building-state data per valley, 24 valleys/world, and 10,000 added pieces weekly in a valley. Its comfort estimate was 500,000 pieces; one million was a future target. It also cited 150–200 players per Unreal server. These figures are historical.
 
-Instead of ordinary Unreal replication for buildings, Mainframe used a custom service called **Repli**. Clients and servers received an initial zone snapshot, then building events through gRPC streams. A placement request passed through server and backend authorization, committed to the world database, and was distributed to relevant clients and servers; structural integrity was then evaluated.
+Custom **Repli** replaced ordinary Unreal building replication: an initial snapshot, then gRPC events. Placement proceeded through server/backend authorization, database commit, and distribution to clients/servers, followed by structural-integrity evaluation. Changes crossed overflow instances.
 
-Rendering used spatial area managers and instanced static meshes. Interactive furnishings streamed near the player; distant lights used cheaper representations. Creation, physics, and integrity work were spread across frames. The same article described 150–200 players per Unreal server and real-time building changes across overflow instances. [Official building-system explanation](https://playpaxdei.com/en-us/news/behind-the-scenes/tech-insights-our-building-system)
+Presentation used spatial area managers, instanced static meshes, nearby furnishing streams, cheaper distant lights, and work spread across frames. [Official building-system explanation](https://playpaxdei.com/en-us/news/behind-the-scenes/tech-insights-our-building-system)
 
 **Engineering interpretation:** a permanent wall is mostly stored geometry and ownership until something changes. A fighting character needs frequent state updates, collision work, and decisions. Giving both the same simulation or network treatment wastes resources. The useful pattern is separating durable state, active simulation, and presentation while retaining a clear authority for each mutation.
 
@@ -62,7 +62,7 @@ The support article last updated **3 October 2025** describes token-maintained p
 
 One detail in that support page is stale: it restricts recovery to the original world **and zone**. R48 changed ordinary expired-plot recovery to any zone in the same world, with Lyonesse excepted. This is why support text should be reconciled with newer patch notes rather than treated as timeless. [R48 patch notes](https://playpaxdei.com/en-us/news/patch-notes/r48-patch-notes)
 
-A separate support page updated **8 April 2026** describes one Grace-funded plot per server region, renewable through earned in-game currency; it has manual rather than automatic renewal. Thus a paid subscription is not the only way to maintain any land. R49 also removed expiration dates from unused plot tokens. Token expiration and an occupied plot's upkeep deadline are different concepts. [Grace plot support](https://support.playpaxdei.com/hc/en-us/articles/32383547755037-What-is-a-Grace-Plot) · [R49 patch notes](https://playpaxdei.com/en-us/news/patch-notes/r49-saddle-up-patch-notes-version-49-17-7689-build-177689)
+A separate support page updated **8 April 2026** describes one Grace-funded plot per server region, renewable through earned in-game currency; it has manual rather than automatic renewal. Thus a paid subscription is not the only way to maintain any land. By October 2026, unused plot tokens no longer expired; the anniversary announcement already described that change as live. Token expiration and an occupied plot's upkeep deadline are different concepts. [Grace plot support](https://support.playpaxdei.com/hc/en-us/articles/32383547755037-What-is-a-Grace-Plot) · [October anniversary announcement](https://playpaxdei.com/en-us/news/information/pax-dei-turns-one-horses-and-a-special-anniversary-boost-are-coming)
 
 **Interpretation:** persistent construction requires decisions about absent players, scarce desirable locations, returning players, and abandoned clutter. The same policy can improve settlement availability while making an owner's break from the game feel costly. Persistence is a retention asset only when players trust its rules and regard the required upkeep as fair.
 
@@ -70,11 +70,11 @@ A separate support page updated **8 April 2026** describes one Grace-funded plot
 
 Mainframe announced a completed migration from **Amazon RDS PostgreSQL to PostgreSQL-compatible Amazon Aurora on 31 March 2025**, citing reliability, failover and scaling benefits. The migration required two maintenance breaks. This establishes the database technology publicly; it does not reveal schema design, isolation levels or per-world database allocation. [Official database migration account](https://playpaxdei.com/en-us/news/behind-the-scenes/tech-insights-migration-update-upgrading-from-amazon-rds-postgres-to-amazon)
 
-An infrastructure-partner case study, available at the research cut-off but not clearly dated on its page, describes Mainframe moving from EC2, Python, Postgres, and manually operated Unreal servers toward containers, Kubernetes, mostly Rust/Go backend services, messaging, and custom zone orchestration. Reducing server startup from minutes to seconds enabled zones to start when players entered.
+The undated i3D.net case study describes EC2/Python/Postgres and manual Unreal-server operation evolving into containers, Kubernetes, mostly Rust/Go services, messaging, and custom zone orchestration. Startup fell from minutes to seconds.
 
-The resulting production arrangement combines **i3D.net dedicated bare-metal game servers with AWS services**. AWS remains useful for APIs, databases, S3 and EFS; dedicated infrastructure receives game-server workloads preferentially, with AWS available for overflow or operational needs. The vendor reports a **60–70% reduction in game-server infrastructure costs**, not total infrastructure, payroll, or development cost. No absolute bill or independently audited savings calculation is supplied. [i3D.net case study featuring Mainframe's Director of Cloud Services](https://www.i3d.net/customer-stories/how-mainframe-reduced-game-server-costs/)
+It describes **dedicated i3D.net game servers with AWS services**, preferring dedicated capacity while retaining AWS overflow. APIs, databases, S3 and EFS remained on AWS. The vendor reports **60–70% lower game-server infrastructure costs**; it supplies neither an absolute bill nor independent verification. This is a component-cost claim, not a total-development-cost reduction. [i3D.net case study featuring Mainframe's Director of Cloud Services](https://www.i3d.net/customer-stories/how-mainframe-reduced-game-server-costs/)
 
-This is relevant to Open Legend without prescribing the same stack. Elastic rental is useful when load is uncertain. Persistent, predictable compute can justify a different purchasing model later. The economic question is measured utilization, memory/CPU demand, operational labor, and reliability—not whether “cloud” or “bare metal” is inherently better.
+**Engineering interpretation:** elastic rental is useful when load is uncertain. Persistent, predictable compute can justify a different purchasing model later. The economic question is measured utilization, memory/CPU demand, operational labor, and reliability. These considerations do not prescribe the same stack for Open Legend.
 
 Permanence also does not require every region's detailed simulation to run continuously. Stored world state can outlive an individual simulation process. However, stopping empty zones requires explicitly deciding how time, production, NPC activity, and other ongoing processes advance while nobody is present. Pax Dei's public materials do not specify all those semantics.
 
@@ -108,24 +108,17 @@ For Open Legend, the hypothesis worth retaining is that players need easy ways t
 
 ## 10. Modding, private servers, and player-created content
 
-The official technical FAQ welcomes non-cheating third-party programs/add-ons but says proper support is unavailable. This does not establish a scripting API, mod kit, client-mod compatibility contract, or player-hostable server distribution. [Official add-on position](https://playpaxdei.com/en-us/faq/tech)
+The FAQ welcomes non-cheating add-ons but offers no proper support. This establishes no mod-kit or player-hosted-server contract. [Official add-on position](https://playpaxdei.com/en-us/faq/tech)
 
 This research did not locate a sufficiently current primary statement resolving private-server availability or future commitments. Historical secondary articles say private servers were unavailable and unplanned, but they are not used here to establish a permanent technical prohibition. Generic Nexus site news appearing under a Pax Dei category is also not evidence of a functioning Pax Dei mod ecosystem.
 
 Native player construction, clan organization, role-play, and self-organized events are different from modifying executable game rules. Open Legend should compare those creative affordances separately: a world can have substantial user-created places and social stories without exposing its engine to mods.
 
-## 11. Open Legend hypotheses to investigate, not adopted requirements
+## 11. Connection to Open Legend's research agenda
 
-1. **Make one community work before multiplying worlds.** Test whether a small settlement provides useful work, relationships and visible consequences when only a few humans are online. Population dilution can undermine a social game before its maximum server capacity matters.
-2. **Define what remains shared under load.** For any proposed instance or shard boundary, specify buildings, ownership, doors, inventories, NPC identities, combat, scarce resources and history separately. A single word such as “persistent” cannot carry that contract.
-3. **Protect consequential encounters from accidental evasion.** If conflict is central, decide whether travel limits, queues, reserved capacity, smaller objectives or separate connected communities preserve the intended stakes. Do not assume overflow instances are neutral infrastructure.
-4. **Design persistence around return, absence and trust.** Test the experience of leaving for several weeks and returning. Decide what survives, what can be contested, what can decay, and how neighboring players understand those changes.
-5. **Separate accumulated state from active work.** Measure stored entities, visible entities, simulated entities and AI decisions independently. A large saved world should not automatically imply frequent expensive reasoning for everything in it.
-6. **Measure mature settlements.** Benchmark the places players actually build densely, including interaction and navigation. Empty terrain or synthetic entity counts alone cannot demonstrate a playable town.
-7. **Use author-directed generation where it saves repetition.** Preserve human decisions about meaningful geography, routes, tensions and landmarks. Generated detail is valuable when it makes those choices cheaper to realize.
-8. **Keep the technological proof separate from the product proof.** Pax Dei demonstrates that many of these mechanics are achievable. That does not establish that their combination creates enough motivation, accessibility, or economic value for a particular audience.
+The essential architecture distinction is between **lasting state, active simulation, and shared encounters**. A house can persist while its doors, opponents, and scarce resources follow different interaction boundaries. Achieving one kind of continuity does not establish the others.
 
-These are research consequences, not proposed implementation tickets or changes to Open Legend's accepted architecture. The parent dossier should reconcile the useful ones with existing design owners before promoting them into project requirements.
+Product hypotheses and proposed tests are consolidated in **05-openlegend-lessons.md**. This chapter records evidence and engineering implications; it does not adopt a runtime architecture or implementation requirements for Open Legend.
 
 ## Sources, dates, and access limits
 

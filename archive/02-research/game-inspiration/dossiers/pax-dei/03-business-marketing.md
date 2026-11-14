@@ -23,7 +23,7 @@ Mainframe formed in April 2019 with thirteen founders. Its history describes tal
 | June 18, 2024 | Paid Early Access began. Mainframe openly described the game as alpha and incomplete, promised at least a year of EA, and said live players were needed to develop its social systems. [EA introduction](https://playpaxdei.com/en-us/news/early-access/introducing-pax-dei-early-access) |
 | May 6, 2025 | Restructuring reduced the studio from 60 to 43 staff: 17 roles, about 28%. Mainframe warned updates would take longer. [Reporting quoting official statement](https://www.mmorpg.com/news/pax-dei-studio-mainframe-industries-lays-off-over-a-quarter-of-staff-in-restructuring-2000134870) |
 | October 2025 | Original launcher retired October 1; those customers received Steam keys. Servers closed October 6; founders returned October 14; public 1.0 launched October 16. The launch wiped characters, buildings, skills, and inventory; Mainframe promised no further wipes after 1.0. [Official schedule](https://playpaxdei.com/en-us/news/1-0/pax-dei-1-0-schedule-and-details) |
-| 2026 | Development continued. By the first anniversary the studio reported progression, inventory, building, PvP, and returner improvements; the latest news lists live R49 patches through November. Current patches must be checked before repeating earlier missing-feature complaints. [Anniversary](https://playpaxdei.com/en-us/news/information/pax-dei-turns-one-horses-and-a-special-anniversary-boost-are-coming), [latest updates](https://playpaxdei.com/en-us/news) |
+| 2026 | Development continued, with live R49 patches through November. Current mechanics and reception are examined in chapters 01, 02, and 04. [Latest updates](https://playpaxdei.com/en-us/news) |
 
 **Interpretation:** roughly five years from studio formation to EA and six-and-a-half to 1.0 demonstrates the integration burden of a persistent MMO. It does not identify how much time or money belonged specifically to graphics, networking, content, or gameplay redesign. An indie team should not assume AI-assisted production removes those integration costs.
 
@@ -46,15 +46,11 @@ Finnish company-information provider Asiakastieto reports the following for **Ma
 
 These are entity-level database figures, not directly inspected audited statements or a Pax Dei lifetime revenue tally. The site's displayed 2025 margin does not reconcile arithmetically with its own revenue and operating-loss amounts; do not reproduce that percentage. [Asiakastieto financial summary](https://www.asiakastieto.fi/yritykset/fi/mainframe-industries-oy/29977288/taloustiedot)
 
-Separately, Deloitte's 2025 Technology Fast 50 Finland report shows Mainframe's 2024 revenue as **€2.660 million** and EBITDA margin as **−247%**. Its company chart on printed page 19 was inspected visually. This is a different figure and profit measure; its reconciliation with the entity database is unavailable. Do not average the revenue numbers, add them together, or treat EBITDA and operating loss as interchangeable. Both independently indicate serious historical losses relative to revenue. Neither establishes present cash runway or the remaining investor commitment. [Deloitte report, p.19](https://www.epressi.com/media/userfiles/161771/1761740621/deloitte-technology-fast-50-finland-2025.pdf)
+Separately, Deloitte's 2025 Technology Fast 50 Finland report shows Mainframe's 2024 revenue as **€2.660 million** and EBITDA margin as **−247%**. Its company chart on printed page 19 was inspected visually. This is a different figure and profit measure; its reconciliation with the entity database is unavailable. Do not average the revenue numbers, add them together, or treat EBITDA and operating loss as interchangeable. Both presentations show substantial historical losses, although they may draw on overlapping company records. Neither establishes present cash runway or the remaining investor commitment. [Deloitte report, p.19](https://www.epressi.com/media/userfiles/161771/1761740621/deloitte-technology-fast-50-finland-2025.pdf)
 
-### Third-party game revenue estimates
+### Game revenue remains unresolved
 
-The accessible Video Game Insights developer page labels lifetime Steam revenue at approximately **$4.2 million**. This is a modeled Steam figure, not publisher reporting; its freshness and treatment of founder upgrades are not established. [VGI/Sensor Tower developer listing](https://app.sensortower.com/vgi/developer/1515316/mainframe-industries)
-
-Other public estimators produce substantially different numbers: GamesBerry showed about $9.3 million gross, while RageQuit showed a $6.9–18 million range derived from reviews and pricing. These are **competing models, not additional revenue**. They do not justify a single confidently stated lifetime-sales figure. [GamesBerry](https://gamesberry.app/game/pax-dei), [RageQuit methodology-labelled listing](https://ragequit.gg/steam-charts/pax-dei/)
-
-Material missing inputs include direct sales, Epic purchases, Microsoft contract terms, refunds, discounts, founder-pack mix, plot-token sales, premium conversion, renewals, and publisher revenue allocation. Launcher migration also means a Steam account or review need not correspond to a new Steam purchase. The most defensible commercial conclusion uses financing, company-loss indicators, staffing cuts, developer admissions, and retention together.
+Public Steam-sales models disagree and lack sufficiently clear scope and update dates to establish a reliable game-revenue figure; their outputs are recorded only in the low-confidence appendix below. Material missing inputs include direct sales, Epic purchases, Microsoft contract terms, refunds, discounts, founder-pack mix, plot-token sales, premium conversion, renewals, and publisher revenue allocation. Launcher migration also means a Steam account or review need not correspond to a new Steam purchase. The commercial assessment therefore relies on disclosed financing, company-loss indicators, staffing cuts, developer admissions, and retention together.
 
 ## 4. How the monetization evolved
 
@@ -113,17 +109,21 @@ Pax Dei won Finnish Game of the Year 2024, announced in May 2025 following an in
 
 We did not find campaign spend, acquisition cost, wishlist-to-sale conversion, publisher terms, or current subscriber counts. The record establishes substantial exposure and repeated reactivation attempts. It does not establish whether more advertising would have solved the problem.
 
-## 6. Decisions Open Legend should take from this
+## 6. Open Legend implications
 
-These are proposed lessons, not changes to accepted Open Legend contracts:
+The [Open Legend synthesis](05-openlegend-lessons.md) consolidates proposed decisions and validation criteria. The business-specific questions are whether retained customers support the actual cost structure, whether acquisition produces those customers at an affordable cost, and whether ordinary players can reproduce the experience shown in organized marketing events. Customer lifetime value, acquisition cost, and conversion from events into lasting participation remain unresolved in Pax Dei's public record.
 
-- **Validate paid return behavior before pursuing mass exposure.** People liking a pitch, matching a persona, or joining a free test is weaker evidence than choosing to return and pay.
-- **Make the marketed experience reproducible.** A compelling creator event should expose a loop ordinary players can enter without a celebrity organizer.
-- **Protect the first major launch.** EA creates lasting expectations; 1.0 does not restore novelty automatically.
-- **State persistence obligations early.** Explain upkeep, absence, recovery, relocation, and termination in terms players understand before they invest emotionally.
-- **Budget for the audience actually retained.** A niche can work with appropriate costs; large financing and a prestige presentation impose a larger commercial burden.
-- **Separate onboarding from world size.** Connect newcomers to meaningful communities and activity before acquiring enough players to fill a vast map.
-- **Use a coherent art promise.** Pax Dei demonstrates that impressive visuals can attract attention without resolving progression, social, and economic problems. Open Legend still needs appealing presentation; it need not copy the same rendering target.
+## Appendix: low-confidence commercial estimates
+
+These are outputs observed on third-party pages, **not verified revenue, a combined range, or independent company disclosures**. Retrieval during this research does not establish when each model was last updated. They are excluded from the chapter's financial conclusion.
+
+| Provider | Displayed modeled output | Material limitation |
+|---|---:|---|
+| [VGI / Sensor Tower developer listing](https://app.sensortower.com/vgi/developer/1515316/mainframe-industries) | Approximately $4.2 million lifetime Steam revenue | Update date and treatment of founder upgrades were not established. |
+| [GamesBerry](https://gamesberry.app/game/pax-dei) | Approximately $9.3 million gross | Model scope, freshness, and reconciliation with other estimates were not established. |
+| [RageQuit](https://ragequit.gg/steam-charts/pax-dei/) | Its own $6.9–18 million range | Review-and-pricing model; the page also displayed a problematic release date. |
+
+Do not add these values, infer an encompassing revenue range, or compare one directly with company operating loss to calculate project recoupment.
 
 ## Evidence register and access limits
 

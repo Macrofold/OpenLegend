@@ -4,19 +4,19 @@ Research cutoff: 14 November 2026. This is a qualitative evidence review, not a 
 
 ## What the reception actually establishes
 
-Pax Dei has a demonstrably appealing building-and-belonging experience, alongside persistent disagreement about whether its surrounding game makes the required investment worthwhile. People who dislike its progression often still praise the world and building. Its defenders frequently acknowledge the same grind and weak combat but value a slower, creative, social experience enough to keep playing. The evidence supports a mismatch between some ambitions, delivered loops, and player expectations; it does not establish that persistent shared worlds lack an audience.
+Pax Dei has a demonstrably appealing building-and-belonging experience, alongside persistent disagreement about whether its surrounding game makes the required investment worthwhile. Several selected critical accounts still praise the world and building. Supporters in this sample also acknowledge grind and weak combat while valuing a slower, creative, social experience enough to keep playing. The evidence supports a mismatch between some ambitions, delivered loops, and player expectations; it does not establish that persistent shared worlds lack an audience.
 
-The direct Steam page retrieved for this run displayed **54% positive among 4,467 English reviews**, and **69% positive among 79 recent reviews over the preceding 30 days**, both labeled Mixed. These denominators are differently scoped: English cumulative versus the displayed recent sample. Neither is a survey of all owners or active players. Numbers change; preserve this retrieval snapshot rather than combine it with an aggregator's incompatible total. [Direct Steam store](https://store.steampowered.com/app/1995520/Pax_Dei/).
+The direct Steam page retrieved for this run displayed **54% positive among 4,467 cumulative English reviews, labeled Mixed**, and **70% positive among 80 recent reviews over the preceding 30 days, labeled Mostly Positive**. These denominators are differently scoped: English cumulative versus the displayed recent sample. Neither is a survey of all owners or active players. Numbers change; preserve this retrieval snapshot rather than combine it with an aggregator's incompatible total. [Direct Steam store](https://store.steampowered.com/app/1995520/Pax_Dei/).
 
 ### Changes that prevent a fair dossier from freezing the game in 2024
 
 The developer's August 2025 retrospective acknowledged underestimating how often even clan members played alone, overly interdependent professions, inadequate initial combat, and insufficient market usability. It describes substantial reworking rather than defending every original assumption. Its 2025 year-end retrospective separately acknowledged progression, mid-game engagement, cadence, and premium-expectation concerns. These admissions strengthen the diagnosis, but they are not retention measurements. [Journey so far](https://playpaxdei.com/en-us/news/information/pax-dei-the-journey-so-far); [2025 retrospective](https://playpaxdei.com/en-us/news/information/pax-dei-2025-developer-retrospective).
 
-By the research cutoff, achievements, progression adjustments, improved material recovery, archery expansion, more PvP objectives, decorations, and numerous inventory improvements had arrived. **Horses shipped on 22 October 2026 in R49.** Criticisms saying that mounts remain absent are now historical. Unused Plot Tokens no longer expire, but this is different from permanent ownership after a token is spent. The anniversary communication also acknowledges that returning players may have lost their former land. [Official update index](https://playpaxdei.com/en-us/news); [First-anniversary retrospective](https://playpaxdei.com/en-us/news/information/pax-dei-turns-one-horses-and-a-special-anniversary-boost-are-coming).
+By the research cutoff, achievements, progression adjustments, improved material recovery, archery expansion, more PvP objectives, decorations, and numerous inventory improvements had arrived. **Horses shipped on 22 October 2026 in R49.** Criticisms saying that mounts remain absent are now historical. Unused Plot Tokens no longer expire, but this is different from permanent ownership after a token is spent. The anniversary communication also acknowledges that returning players may have lost their former land. [R49 release notes](https://playpaxdei.com/en-us/news/game-updates/saddle-up-r49-release-notes); [First-anniversary retrospective](https://playpaxdei.com/en-us/news/information/pax-dei-turns-one-horses-and-a-special-anniversary-boost-are-coming).
 
 ## Written-review evidence matrix
 
-Access grades: **A** means the substantive written review body was read through the web retrieval tool; **B** means indexed text or an incomplete body was available; **C** means content could not be inspected. This is an access label, not a quality score. The six A-grade reviews below span four independent outlets. Three are one reviewer's evolving experience, so they are useful longitudinal evidence, not three independent votes.
+Access grades: **A** means the substantive written review body was read through the web retrieval tool; **B** means indexed text or an incomplete body was available; **C** means content could not be inspected. This is an access label, not a quality score. The six A-grade articles below comprise **five distinct review works across four principal authors and four outlets**: Bradford's two-part 1.0 review counts as one work. His earlier EA review adds longitudinal evidence, not another independent reviewer.
 
 | Review and version | Actual access / disclosed exposure | What worked | What failed or remained uncertain |
 | --- | --- | --- | --- |
@@ -27,9 +27,9 @@ Access grades: **A** means the substantive written review body was read through 
 | Joseph Bradford, MMORPG.com, 5 November 2025, 1.0 review in progress, part 2 | **A**, full main review read; **25 hours** disclosed; unscored; friends had moved to another game | Atmosphere, environmental discovery, visiting player creations, distinct weapon types | High gathering costs, crafting failure, unsatisfying combat feedback, network/performance frustrations, insufficient support for useful trade. The author corrected an initial failure to notice the existing market browser; do not repeat his original claim that it did not exist. [Review](https://www.mmorpg.com/reviews/pax-dei-review-in-progress-part-2-grind-grind-grind-2000136514) |
 | TheInnkeeper, Roleplay Inn, 10 November 2025, post-1.0 independent enthusiast review | **A**, full main review read; no verified playtime; **3/5** overall; smaller outlet with less-established editorial authority | Creative freedom from overlapping and freely placing construction parts; attractive gathering/building; considered subscription pricing reasonable | Thin combat/content, crafting output without buyers or useful disposal, weak permissions and social tools. Some factual observations are superseded or contestable, including market discovery and later transportation changes. [Review](https://www.roleplayinn.com/pax-dei-review/) |
 
-An additional positive professional perspective comes from Andrea Shearon's **27 December 2025 PC Gamer feature**: hundreds of hours spent because building an attractive castle in a world others could visit remained compelling, despite sparse visitors, awkward travel, rubberbanding, and a weak economy. Its full Pax Dei section was read, but it is a short year-end assessment, not a seventh full standalone review. [Feature](https://www.pcgamer.com/games/survival-crafting/it-was-a-good-year-for-survival-crafting-sickos-and-ill-be-playing-some-of-these-well-into-2026/).
+An additional positive professional perspective comes from Andrea Shearon's **27 December 2025 PC Gamer feature**: hundreds of hours spent because building an attractive castle in a world others could visit remained compelling, despite sparse visitors, awkward travel, rubberbanding, and a weak economy. Its full Pax Dei section was read, but it is a short year-end assessment, not an additional full standalone review. [Feature](https://www.pcgamer.com/games/survival-crafting/it-was-a-good-year-for-survival-crafting-sickos-and-ill-be-playing-some-of-these-well-into-2026/).
 
-Additional discovery limits: PCGamesN's 30 June 2024 impressions were indexed but direct retrieval was restricted (**B**, not counted toward six complete reviews). MassivelyOP's 30 April 2024 alpha hands-on returned its opening and indexed excerpts before subsequent requests were forbidden (**B**, not counted). Neither inaccessible body was reconstructed. No video was treated as watched from its title or description. [PCGamesN](https://www.pcgamesn.com/pax-dei/impressions); [MassivelyOP](https://massivelyop.com/2024/04/30/fight-or-kite-pax-deis-alpha-is-equal-parts-survival-gameplay-and-grind-fueled-crafting/).
+Additional discovery limits: PCGamesN's 30 June 2024 impressions were indexed but direct retrieval was restricted (**B**, not counted toward the five distinct fully read review works). MassivelyOP's 30 April 2024 alpha hands-on returned its opening and indexed excerpts before subsequent requests were forbidden (**B**, not counted). Neither inaccessible body was reconstructed. No video was treated as watched from its title or description. [PCGamesN](https://www.pcgamesn.com/pax-dei/impressions); [MassivelyOP](https://massivelyop.com/2024/04/30/fight-or-kite-pax-deis-alpha-is-equal-parts-survival-gameplay-and-grind-fueled-crafting/).
 
 ## Steam qualitative sample ledger
 
@@ -58,7 +58,7 @@ The strongest benefit is more specific than generic base building. Players creat
 
 ### Work can be satisfying when it has a chosen destination
 
-Slow progression is not uniformly disliked. Some enjoy routine gathering, planning a workshop, arranging production, and seeing a desired structure become possible. The objection is frequently to *unrewarding* repetition or a disappointing destination, rather than any duration of effort. A design response that simply accelerates everything could remove accomplishment for the audience already being served.
+Slow progression is not uniformly disliked. Some enjoy routine gathering, planning a workshop, arranging production, and seeing a desired structure become possible. An objection recurring in the selected assessments concerns *unrewarding* repetition or a disappointing destination, rather than any duration of effort. A design response that simply accelerates everything could remove accomplishment for the audience already being served.
 
 ### Social coordination changes the experience
 
@@ -66,7 +66,7 @@ The same material requirements can feel like a shared project in a functioning g
 
 ### Beauty is substantive value
 
-The professional assessments and the selected positive and negative reviews agree unusually often about environmental appeal. Landscapes, coherent architecture, and the satisfaction of making an attractive home are reasons some people continue playing. The correct lesson is not that graphics are irrelevant. It is that visual attraction and meaningful ongoing activity are separate dimensions, with both contributing to the promise.
+Praise for environmental appeal recurs across the selected professional assessments and positive and negative player reviews. Landscapes, coherent architecture, and the satisfaction of making an attractive home are reasons some people continue playing. The correct lesson is not that graphics are irrelevant. It is that visual attraction and meaningful ongoing activity are separate dimensions, with both contributing to the promise.
 
 ## Why people leave, hesitate, or turn against it
 
@@ -104,22 +104,9 @@ Three 2026 observations keep the historical review corpus honest:
 
 The official October changes and these reactions establish that the current game is different. They do not establish the size or durability of any retention improvement.
 
-## Causal hypotheses worth carrying into Open Legend
+## Open Legend implications
 
-The following are design hypotheses inferred from the evidence. They are not claims that Pax Dei's internal analytics proved a cause of churn.
-
-| Hypothesis | What would support it | What could weaken it | Open Legend implication |
-| --- | --- | --- | --- |
-| Players stop when progression no longer opens experiences they value | Cohort drop-off around similar craft tiers; exits citing low payoff | Players retain well at those tiers and churn mainly on technical failure | Test the next wanted objective after a home and first competence, not only tutorial completion. |
-| Isolation makes an otherwise enjoyable social loop fail | Comparable newcomers retain better near active neighbors or after useful reciprocal interaction | Solitary players retain equally well after accounting for preference | Seed and measure meaningful local contact; do not equate world population with community. |
-| Crafting volume outpaces useful demand | Unsold goods, self-sufficient groups, weak repeat purchasing | Strong turnover and shortages in ordinary useful goods | Every production loop needs an understandable consumer or use; avoid XP-only waste as the foundation. |
-| Plot monetization amplifies churn through perceived loss | Cancellations or exits cluster around renewal and ownership confusion | Clear explanations and affordable terms do little because gameplay is the main cause | Explain continuity, absence, recovery, and costs before emotional investment. |
-| Technical friction suppresses broader appeal | Players on constrained hardware or distant servers disengage disproportionately | Similar churn among well-performing sessions | Test useful content at affordable performance levels and actual network conditions. |
-| The proposition is too dependent on a narrow audience | Retained players overwhelmingly value relaxed building while other recruits leave | Different cohorts find durable adventure, commerce, or rivalry | Select a clear initial audience and deliver a complete loop for it. |
-
-**For Open Legend, AI characters are a hypothesis about solving some of these problems, not an exemption from them.** They could provide relationships, reasons to travel, customers with needs, consequences, and activity when few humans are online. They could also supply repetitive conversation, artificial demand, unreliable objectives, or costly background simulation. The useful acceptance question is whether an ordinary play session produces a wanted goal, intelligible choice, and persistent consequence that the player cares about. A larger simulated population or more dialogue is not itself that evidence.
-
-The comparison should therefore make Open Legend more demanding about the completeness of its first small community. It should not force a premature attempt to match Pax Dei's visual expenditure, map extent, or total feature inventory. Pax Dei's positive testimony identifies things worth preserving: creative freedom, coherent beauty, helpful neighbors, visible collective work, and the pleasure of an inhabitable place.
+[Chapter 05: Open Legend lessons](05-openlegend-lessons.md) owns the proposed design responses and validation questions. This reception evidence supports investigating useful progression, local social contact, economic demand, continuity during absence, and the quality of activities beyond building. It also identifies strengths to preserve: creative freedom, coherent beauty, helpful neighbors, visible collective work, and the pleasure of inhabiting a shared place. These are hypotheses to test, not demonstrated causes of Pax Dei's population changes.
 
 ## Evidence boundaries for downstream use
 
@@ -139,7 +126,7 @@ Dates below are publication dates where visible; “snapshot” denotes content 
 | REC01 | [Steam store](https://store.steampowered.com/app/1995520/Pax_Dei/) — snapshot | Platform primary; A |
 | REC02 | [The journey so far](https://playpaxdei.com/en-us/news/information/pax-dei-the-journey-so-far) — Aug 2025, contemporaneously reported 12 Aug | Developer retrospective; A |
 | REC03 | [2025 retrospective](https://playpaxdei.com/en-us/news/information/pax-dei-2025-developer-retrospective) — year-end 2025 | Developer retrospective; A |
-| REC04 | [Official news index](https://playpaxdei.com/en-us/news) — snapshot | Developer update chronology; A |
+| REC04 | [R49 release notes](https://playpaxdei.com/en-us/news/game-updates/saddle-up-r49-release-notes) — 22 Oct 2026 | Developer release description; A |
 | REC05 | [First anniversary](https://playpaxdei.com/en-us/news/information/pax-dei-turns-one-horses-and-a-special-anniversary-boost-are-coming) — 16 Oct 2026 | Developer current-state summary; A |
 | REC06 | [PC Gamer EA hands-on](https://www.pcgamer.com/games/mmo/early-access-mmo-pax-dei-has-launched-without-its-most-exciting-features-so-it-needs-to-convince-players-to-stick-around/) — 19 Jun 2024 | Professional firsthand assessment; A |
 | REC07 | [Prima impressions](https://primagames.com/featured/pax-dei-early-impressions-a-medieval-sims) — 25/26 Jun 2024 | Professional firsthand assessment; A |
