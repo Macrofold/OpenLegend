@@ -129,6 +129,8 @@ Batch 06's [boundary review](../verification/rivals-and-contested-ground.md#worl
 
 ## EWF04 — Generic permitted inspection, context, and presentation
 
+The native choice formatter's direct selection of bundled-world activity labels has a scoped [NRF12 implementation and alternate-presentation check](../projects/native-runtime-foundations-bridge.md#nrf12--keep-executable-npc-offers-with-their-rust-owner).
+
 **Dependencies:** EWF02–EWF03. **Files:** protocol `index.ts`, server `view.ts`, `decision-context.ts`, response/context helpers, god editor projections, React condition/editor components. Coordinate CR/NC presentation owners.
 
 PW07's current native browser confirms authored labels, units, ranges, categorical/read-only presentation and actual Save through the existing editor owner. Same-authority competing editors refuse an older name edit while retaining the attempted field; explicit Discard and Refresh reads the current value. The editor remains within the observed narrow viewport at 130% UI scale, including named icon tabs, blank-input errors and reachable footer actions ([evidence](../verification/parallel-batch-01-playable-week-engineer-4.md#pw07--real-alternate-world-ui-final-pairing-pending), [editor layout guidance](../ui-ux/controls.md#accordions-tabs-and-plain-sections)). These slices strengthen the checked implementation below; they do not assert full native IME/assistive-device, private-generation or integrated survival acceptance.

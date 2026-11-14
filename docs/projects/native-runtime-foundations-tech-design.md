@@ -1,8 +1,8 @@
 # Native runtime foundations: technical design
 
-| Status      | Current progress                                                                                                         | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | The 2 GiB proof continues. The Send availability and installed warning boundaries are designed and await implementation. | 2026-11-14   |
+| Status      | Current progress                                                                                                    | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The 2 GiB repair checkpoint is measured. Shared bridge, player availability and installed warning work is designed. | 2026-11-14   |
 
 [Feature specification](native-runtime-foundations-feature-spec.md) · [Evidence and repertoire reconciliation](native-runtime-foundations-evidence-and-repertoire.md) · [NRF work](../maintainers/native-runtime-foundations.md) · [Constraints](../limits/native-runtime-foundations.md)
 
@@ -10,7 +10,7 @@
 
 Use `Macrofold/OpenLegend` at `d9544ae5d017e697bfcfe2a38c71bb8569ad14f6` as this design's inspection baseline, not as an instruction to discard newer implementation. Before changing a named owner, compare its current implementation and recorded NSC disposition against the evidence map. Reuse a satisfying implementation instead of reimplementing this description. Preserve the completed 64/128 MiB assessments and unqualified evidence. Mike's November 13 continuation authorizes fresh 2 GiB controls, these remaining candidates and the later designed NSC stages; earlier failures do not halt that work or become results for the new profile.
 
-This document supplies narrow mechanisms beneath the existing [native-core architecture](native-simulation-core-tech-design.md). NSC owns the proof, recorded repairs, attribution, E2 and later conversion/cell/distribution stages. NRF owns these four candidate recipes and their disposition. Use the applicable recipe through its existing semantic owner; do not create a second implementation or campaign. One change, one owner and one experiment record are sufficient even when both trackers link it.
+This document supplies narrow mechanisms beneath the existing [native-core architecture](native-simulation-core-tech-design.md). NSC owns the proof, recorded repairs, attribution, E2 and later conversion/cell/distribution stages. NRF owns the four original candidate recipes and the later scoped player, world-policy and shared bridge experiments. Use the applicable recipe through its existing semantic owner; do not create a second implementation or campaign. One change, one owner and one experiment record are sufficient even when both trackers link it.
 
 Names introduced below are proposed private implementation names, not claims that those APIs already exist. Reuse an equivalent current helper when its lifetime and behavior match. Keep helpers beside their first real consumer; no new package, service or generic execution language is required.
 
@@ -365,6 +365,10 @@ Both recipes are **experiments in performance and cognition equivalence**. Use t
 - **Required isolated cost measurements.** Use [§7.3](#73-required-measurements) for the managed standard 16 GiB worker, three interleaved repetitions per arm with independent databases, normal clock/GC and equal 2 GiB admission. Keep the ordinary window's movement, animal reactions, two conversations, player stream and background saves equivalent. Record the actual common opening (one player, two human NPCs, three hares and 1,246 scenery records when supported), and name any separate place/recipient fixture. Preserve failed attempts and resource/spend closure. Report server CPU including native workers once, client and exclusive PostgreSQL CPU, combined CPU per completed game-second, offered/completed time and debt, useful-view/command and save-age/durable tails, SQL calls/rows/prepared bytes, WAL/growth, concurrent RSS and reservations. Separate reconnect/cold reopen/rewind.
 - **Price the affected caller.** For NRF07 freeze a request mix from actual composer triggers; count eligible, refused and canceled separately. Open the scoped window after warmup and close after issued work settles, including aborted requests' downstream work. Divide inclusive combined window CPU by completed GETs and report latency spread alongside matched concurrent gameplay. For NRF08 price the same positive and negative utterances through receiving and saving; if warnings are rare in ordinary play, label the separate bounded window and report CPU per completed utterance. Diagnose separately from clean timings: measure visits, bridge count/emit, Node sizing/stringify/UTF-8, decode/freeze, selected patch sizing, live bodies and released headers. Use exclusive phases to avoid double counting. Reuse existing seven-family attribution before proposing another codec, index or cache.
 - **Decide for each change.** Apply [NRF-L09](../limits/native-runtime-foundations.md#nrf-l09--send-availability-and-warning-interpretation). A stale disclosure, changed valid response, lost record or double action fails correctness even when timing improves. A failed stream, stalled world or unfinished reply leaves the speed comparison unqualified. Record the actual result and scope. No new product choice blocks implementation; costs, sustainable progress and benefit to players remain empirical.
+
+## 10. Shared Rust–TypeScript bridge
+
+The [bridge implementation chapter](native-runtime-foundations-bridge.md) traces the installed interface across player publication, physical preparation, NPC cognition and scheduling, persistence, privacy and recovery. NRF09–NRF13 specify the smallest change at each shared owner, affected real callers, parked alternatives and separate comparisons. Sections 7.2 and 7.3 govern every activated experiment.
 
 ## Maintained records
 

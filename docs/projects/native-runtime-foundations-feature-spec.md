@@ -1,8 +1,8 @@
 # Native runtime foundations: useful work without repeated preparation
 
-| Status      | Current progress                                                                                                         | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | The 2 GiB proof continues. The Send availability and installed warning boundaries are designed and await implementation. | 2026-11-14   |
+| Status      | Current progress                                                                                                    | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The 2 GiB repair checkpoint is measured. Shared bridge, player availability and installed warning work is designed. | 2026-11-14   |
 
 [Technical design](native-runtime-foundations-tech-design.md) · [Source and repertoire reconciliation](native-runtime-foundations-evidence-and-repertoire.md)
 
@@ -10,7 +10,7 @@
 
 Make the current small game responsive while preserving an affordable route to a much larger persistent world. The desired return is useful invention, independent people, readable danger, cooperation and consequences worth returning to—not a count of idle entities. The [first-playable priorities](../repertoires/gameplay-priorities.md) remain the product scope.
 
-This design refines the existing resident Rust architecture. It preserves completed evidence, keeps one native mutation authority and specifies four finite candidates and their consumer boundaries. Mike's November 13 continuation authorizes their remaining work and the later designed NSC conversion, parallelism, cell and distribution stages through their existing owners. Stage dependencies remain engineering dependencies; numerical improvement targets and earlier profile failures do not halt that implementation. This does not commission every possible optimization identified by the research.
+This design refines the existing resident Rust architecture and keeps one native mutation authority. Its first four candidates address JSON preparation, scratch storage, compatible captures and ordered rate reads. Mike's November 13 continuation authorizes their remaining work and the later designed NSC conversion, parallelism, cell and distribution stages through their existing owners. Each numerical target guides its own candidate decision. An earlier profile failure does not block the other approved work. The [NSC tracker](../maintainers/native-simulation-core.md#remaining-proof-checklist) owns the repair checkpoint and review before porting more mechanics.
 
 The source baseline is `Macrofold/OpenLegend`, `codex/native-simulation-proof`, `d9544ae5d017e697bfcfe2a38c71bb8569ad14f6`. That commit integrates the research; its runtime is the preceding `d1211430d65390957baf5b0094d2cf2057950f8f` runtime. The active implementation can advance independently. The [evidence record](native-runtime-foundations-evidence-and-repertoire.md) separates inspected code, the implementation owner's additional report, hypotheses and remaining measurements.
 
@@ -61,6 +61,8 @@ Complete physical-region unloading is outside this implementation slice. Current
 J and S's removed 128 MiB experiments have inconclusive complete-work CPU/RSS benefit. Their failures and the old stopping rule remain historical evidence; S's focused and complete held-consumer correctness passes remain scoped to their recorded identities. J/S reconsideration is now authorized at 2 GiB with fresh equal-profile controls and the complete recipes. P next needs accepted-cut compatible-capture attribution, then its designed sharing where actual callers justify it. R needs rate-phase benefit attribution, serial extraction, R0 safety and R1 ordered joins in that order. Resolve missing engineering prerequisites rather than leaving work pending because the old profile failed. Numerical targets guide repair or a specific candidate's disposition; a disproved premise does not require building an optimization or end the other work. The [technical sequence](native-runtime-foundations-tech-design.md#7-experiment-sequence-and-adoption) retains the exact ownership and evidence requirements.
 
 ## 5. Foundation contracts to preserve now
+
+**Shared Rust–TypeScript work.** While someone walks and an NPC considers what to do, the server should spend its time on the actual physical queries, the NPC's permitted evidence and the changes that need saving. The [shared bridge design](native-runtime-foundations-bridge.md) covers local preparation answers, database reads, accepted rows, executable offers and NPC wakeups. Compare the same movements, private choices and saved consequences for each proposed reduction. Timing and memory benefits remain experimental.
 
 **Existence, residency, activity and publication are different.** Internal calculation may assume a complete supported execution scope; every field access need not gain a new tri-state lookup. Loading/query boundaries must distinguish missing resident data from a proved absent entity, and prepare required data before entering mutation. Do not add a generic storage abstraction to all native operations.
 
