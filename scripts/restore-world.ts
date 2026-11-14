@@ -7,7 +7,7 @@ import type { CommandEpoch } from '../apps/server/src/command-receipts.js';
 import { retainHotEvents } from '../apps/server/src/hot-events.js';
 import type { WorldEvent } from '@open-legend/domain';
 import { statSync } from 'node:fs';
-import { isDeepStrictEqual } from 'node:util';
+import { sameRecoveredSavedWorld } from '../apps/server/src/recovery-state-comparison.js';
 import {
   readOperationalBackup,
   restoreBackupSlots,
@@ -279,7 +279,7 @@ try {
     if (
       !current ||
       installed?.worldId !== state.world.id ||
-      !isDeepStrictEqual(current.state, expected)
+      !sameRecoveredSavedWorld(current.state, expected)
     )
       throw new Error('The target changed after its interrupted full restore; source retained.');
     await finishAssetAuthority();
@@ -361,7 +361,7 @@ try {
     });
     install.state = 'committed';
     current = await store.load();
-    if (!current || !isDeepStrictEqual(current.state, state))
+    if (!current || !sameRecoveredSavedWorld(current.state, state))
       throw new Error('Restored world recovery digest mismatch.');
     // Slow file/SQL restoration remains quarantined. Refresh independent authority
     // only now, then activate in a short transaction; a crash before it stays closed.
@@ -542,7 +542,7 @@ try {
     }
     await store.recoverInterruptedWork();
     const recovered = await store.load();
-    if (!recovered || !isDeepStrictEqual(recovered.state, state))
+    if (!recovered || !sameRecoveredSavedWorld(recovered.state, state))
       throw new Error('Restore recovery digest mismatch.');
     console.log('World restored paused; present-day spending and forgetting retained.');
   }

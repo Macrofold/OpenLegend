@@ -5,6 +5,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { cpus, loadavg, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
+import { sameRecoveredSavedWorld } from '../apps/server/src/recovery-state-comparison.js';
 import { execFileSync } from 'node:child_process';
 import {
   createWorld,
@@ -310,7 +311,8 @@ try {
     const fixtureSetupMs = performance.now() - fixtureAt;
     let revision = await measure('initialCommit', () => store.commit(0, state));
     const restored = await measure('initialRecovery', () => store.load());
-    const recoveredExactly = isDeepStrictEqual(restored?.state, JSON.parse(JSON.stringify(state)));
+    const recoveredExactly =
+      !!restored && sameRecoveredSavedWorld(restored.state, JSON.parse(JSON.stringify(state)));
     if (!restored || !recoveredExactly) throw new Error('Recovery changed canonical source data.');
     const active = await measure('activeRecovery', () => store.load(true));
     if (!active) throw new Error('Missing active world.');
