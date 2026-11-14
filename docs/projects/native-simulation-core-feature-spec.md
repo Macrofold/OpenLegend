@@ -1,8 +1,8 @@
 # Native simulation core and adaptive execution
 
-| Status      | Current progress                                                                                                       | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The 2 GiB continuation includes reliable gameplay and the remaining conversion, parallel, cell and distributed stages. | 2026-11-13   |
+| Status      | Current progress                                                                                             | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Selected repair callers pass; isolated batch measurements and broader supported-game conversion remain open. | 2026-11-14   |
 
 ## 1. Purpose and selected direction
 
