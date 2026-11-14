@@ -552,6 +552,7 @@ const tradeFamily = (alias: string) => `${alias}.agreement_key LIKE '${tradeAgre
 // Agreement keys are already validated selection metadata. Guard the cast
 // itself: SQL may evaluate a projection before another WHERE condition, and
 // unrelated agreement bodies can contain exact text JSONB cannot represent.
+// docs/performance/storage.md#storage-execution
 const tradeTerms = (alias: string) =>
   `(CASE WHEN ${tradeFamily(alias)} THEN (${alias}.payload::jsonb #>> '{eventData,agreement}')::jsonb END)`;
 const tradeKeys = (alias: string) => `(
@@ -2845,7 +2846,7 @@ export class MemoryRepository {
         (d.terms->>'createdAt')::double precision AS disclosed_at
         FROM jsonb_to_recordset(?::jsonb) q(item_id TEXT,keys JSONB,incoming JSONB,outgoing JSONB)
         CROSS JOIN LATERAL (
-          SELECT a.payload,a.actor_id FROM mind_awareness a
+          SELECT a.payload,a.actor_id,a.agreement_key FROM mind_awareness a
           WHERE ${retainedTradeSource('a')} AND ${tradeKeys('a')} @> q.keys
             AND (${tradeTerms('a')} @> q.incoming OR ${tradeTerms('a')} @> q.outgoing)
           ORDER BY a.position DESC LIMIT 1
