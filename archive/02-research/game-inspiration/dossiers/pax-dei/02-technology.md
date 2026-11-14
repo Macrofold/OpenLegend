@@ -118,7 +118,7 @@ Native player construction, clan organization, role-play, and self-organized eve
 
 The essential architecture distinction is between **lasting state, active simulation, and shared encounters**. A house can persist while its doors, opponents, and scarce resources follow different interaction boundaries. Achieving one kind of continuity does not establish the others.
 
-Product hypotheses and proposed tests are consolidated in **05-openlegend-lessons.md**. This chapter records evidence and engineering implications; it does not adopt a runtime architecture or implementation requirements for Open Legend.
+Product hypotheses and proposed tests are consolidated in the [Open Legend synthesis](05-openlegend-lessons.md). This chapter records evidence and engineering implications; it does not adopt a runtime architecture or implementation requirements for Open Legend.
 
 ## Sources, dates, and access limits
 

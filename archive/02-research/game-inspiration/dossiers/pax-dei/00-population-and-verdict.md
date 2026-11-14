@@ -66,6 +66,8 @@ For example, Mainframe reported more than **90,000 active players across platfor
 
 **Assessment: a product with a committed audience, significant commercial pressure, and unresolved prospects—not a demonstrated large commercial success, and not an established shutdown.**
 
+Later 2026 activity also recovered partly from its midyear lows. The more favorable recent review snapshot in [chapter 04](04-reception.md) is encouraging, although neither signal yet establishes durable recovery or profitability.
+
 The stronger evidence for pressure is the combination of population history, reported staffing reduction, company financial indicators, and the team's own scope and funding statements. [Business evidence](03-business-marketing.md) records each source, date, and accounting boundary. None supplies the current all-platform payer count, complete cost base, or cash position needed for a definitive profitability calculation.
 
 “Successful” also needs a denominator. A small audience can sustain a modestly staffed game with controlled service costs, reliable recurring purchases, and manageable development obligations. The same audience can be insufficient for a much larger production organization and the expectations attached to substantial external financing. There is no universal minimum concurrency that makes an MMO viable.

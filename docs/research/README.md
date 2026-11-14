@@ -8,6 +8,7 @@ Research informs decisions; it grants no implementation or spending authority. C
 - [Player appreciation of game music](player-music-appreciation/README.md): player feedback, comparative cases, source evidence and limits; no selected music direction.
 
 - [Character model selection](character-models/selection.md): proposed Cognition Lab panel, pinned research, current hosted candidates and evidence limits; no executed quality ranking.
+- [Pax Dei case study](../../archive/02-research/game-inspiration/dossiers/pax-dei.md): persistent construction, sharding, reception, commercial evidence and implications through existing Open Legend owners.
 - [Cross-game learning](../../archive/02-research/game-inspiration/synthesis/README.md): maintained synthesis at its established path; design proposals retain their own authority.
 - [Engine and runtime applications](../engine-research-guide.md): connects the [engine studies](../../research/README.md) to existing design questions, subsystem owners and evaluation work.
 - [Existing source research](../../archive/02-research/): historical sources indexed in place, read only for a relevant question.
