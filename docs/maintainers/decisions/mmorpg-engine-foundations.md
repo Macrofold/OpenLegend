@@ -48,6 +48,8 @@ Preserve direct interactions, threats and commitments. World-authored attention 
 
 **Equivalent periodic capture reuse: Done — designed as P.** It shares real captured facts only; each recipient retains its own full view, scope, tokens, final disclosure lease, baseline and transport. It is not general shared-view caching or a new join protocol.
 
+**Distinct observers on the Native live stream — Done — designed.** [NRF14](../native-runtime-foundations.md#multiplayer-update-delivery) covers bounded overlap, private ordered baselines, slow readers and two- through fifty-player delivery evidence. Implementation, remote-browser latency and crowd qualification remain open.
+
 Multiplayer/projection/client, PF11 and PS04/DG18/DG29 retain broader delivery. Select actual eligible scopes before rich formatting; preserve personal names, stale detail, correction and permission. Existing bounded baseline/delta, reliable effects, replaceable presentation and resynchronization owners remain. A late joiner or slow/reconnecting client must obtain permitted current state without full-world serialization or replayed commands. Rendering omission does not remove authoritative bodies or grant knowledge. Network, browser and privacy evidence remain separate from socket count.
 
 ## Capture lifetimes, overload and fair resource admission

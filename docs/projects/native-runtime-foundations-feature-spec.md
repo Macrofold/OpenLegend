@@ -1,8 +1,8 @@
 # Native runtime foundations: useful work without repeated preparation
 
-| Status      | Current progress                                                                                                    | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The 2 GiB repair checkpoint is measured. Shared bridge, player availability and installed warning work is designed. | 2026-11-14   |
+| Status      | Current progress                                                                                                                        | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The 2 GiB repair checkpoint is measured. Bridge, player availability, warning and independent multiplayer publication work is designed. | 2026-11-14   |
 
 [Technical design](native-runtime-foundations-tech-design.md) · [Source and repertoire reconciliation](native-runtime-foundations-evidence-and-repertoire.md)
 
@@ -102,6 +102,14 @@ Imagine warning a companion before taking the riverside approach to the [toll to
 - Keep the public packet, complete-permitted-view, model and storage contracts intact. Last-use release and allocation admission still apply when a scoped reader, a reply or a slow socket outlives the original request. Preserve the current human-visible detail. Compare each experiment independently. Actual play cost, sustained progress and human enjoyment require different evidence.
 
 The warning seam completes the selected interpretation-design slice of [ND16](../maintainers/needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech). The wider hearing and media work has separate owners. This extends the four existing foundation experiments with two localized delivery tasks. [NRF work](../maintainers/native-runtime-foundations.md#send-availability-and-installed-warning-work) owns their sequencing and acceptance.
+
+## 9. Seeing another player act
+
+A companion steps out from cover. A player with sight of the companion should see the movement promptly enough to react. A bystander who heard a warning may know something different, and a player behind cover may learn nothing. In a festival the same rule lets witnesses remember different encounters. Each receives the current view earned by their character and allowed by their session. These scenarios exercise the [existing repertoires](native-runtime-foundations-evidence-and-repertoire.md#repertoire-review-all-28-catalogue-scopes). They introduce no shared omniscient audience, new sensing distance or combat rule.
+
+Ordinary actions take effect in the live world. The acting player's command response, that player's first displayed movement, an observer's first displayed movement, and the database confirmation are distinct outcomes. The server pushes permitted changes over each connected client's HTTP event stream. A returning player gets their current permitted view. A slow reader can skip intermediate presentation frames and recover current state. Accepted actions, receipts and personally acquired history keep their existing owners and chronology.
+
+**Designed, awaiting implementation and measurement.** Try overlapping independent players' view preparation within the current host resource budget. Preserve ordered delivery to each player, a responsive single-player session and an independent login/reconnect path. The initial evidence must cover two independently controlled players reacting to the same movement, then a bounded crowd including a slow reader. Record whether a human can actually follow and respond to the other player's motion separately from server timings. [Implementation recipe](native-runtime-foundations-tech-design.md#11-multiplayer-update-delivery) · [NRF14](../maintainers/native-runtime-foundations.md#multiplayer-update-delivery).
 
 ## Maintained records
 

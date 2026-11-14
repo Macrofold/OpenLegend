@@ -131,6 +131,8 @@ Define the finite operating/funding horizon, expiry/resume behavior and reactiva
 
 **Required design output:** a single resource/lifetime map for native jobs, ready work, geometry preparation, SQL lanes, inference/context work, captures/undo buffers, output queues, maintenance and world startup/recovery. Record owner and scope, admission point, byte/count/age measurement, cancellation/completion release, fairness and overflow behavior. Identify real cross-owner holes and place their designs with existing owners; do not copy every subsystem limit into a second table of operational truth.
 
+**MSF06 delivery slice — Done — designed.** [NRF14](native-runtime-foundations.md#multiplayer-update-delivery) specifies steady Native player publication, resource lifetimes and resynchronization during overlapping reads. The broader aggregate capacity map, hosted promises and other service lifecycles remain open.
+
 Distinguish simulation, personal evidence and public publication. Share only target-independent preparation. Define bounded slow-consumer reset/resync through current protocol owners, preserving occurrence/receipt/revocation semantics and current permission. Current-view reconstruction must not require a full-world export or lifetime history load. Clarify aggregate AI budgets beyond per-character limits and reserve actual capacity for accepted work, saving and reclamation.
 
 **Must preserve:** no new admission success is inferred from queue insertion; no timeout frees resources still in use; no stale context publishes private evidence; no duplicate paid request; no dropped accepted effect; optional failure does not masquerade as storage corruption; fairness does not reorder already-admitted causality.
