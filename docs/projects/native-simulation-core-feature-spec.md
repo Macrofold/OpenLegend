@@ -1,8 +1,8 @@
 # Native simulation core and adaptive execution
 
-| Status      | Current progress                                                                                             | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Selected repair callers pass; isolated batch measurements and broader supported-game conversion remain open. | 2026-11-14   |
+| Status      | Current progress                                                                                         | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Repair callers pass; failed controls leave relative CPU impact inconclusive and broader conversion open. | 2026-11-14   |
 
 ## 1. Purpose and selected direction
 

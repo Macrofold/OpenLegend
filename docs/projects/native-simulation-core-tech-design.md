@@ -1,8 +1,8 @@
 # Native simulation core — technical design
 
-| Status      | Current progress                                                                                             | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Selected repair callers pass; isolated batch measurements and broader supported-game conversion remain open. | 2026-11-14   |
+| Status      | Current progress                                                                                         | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Repair callers pass; failed controls leave relative CPU impact inconclusive and broader conversion open. | 2026-11-14   |
 
 Companion: [feature specification](native-simulation-core-feature-spec.md). Tasks live only in [NSC](../maintainers/native-simulation-core.md); [limits](../limits/native-simulation-core.md) owns operating defaults. This is the authorized implementation direction, not a claim that the full conversion or distributed execution is installed or qualified.
 
