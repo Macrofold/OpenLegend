@@ -136,10 +136,10 @@ impl PreparedMovementTerms {
                         .as_deref()
                         .is_some_and(|id| history.privacy.revoked(id))
             });
-            // This derived canonical flag includes awareness kind, exact
-            // memory retention, string agreement and personalAgreement=true.
+            // current_record owns canonical identity/ordinal validation. An
+            // array slot is placement, not the event/source identity. This
+            // derived flag also proves memory retention and a string agreement.
             if header.reference != selected.reference
-                || record.slot() != header.reference.id
                 || !header.personal_agreement
                 || selected.first_position > record.position()
                 || selected.first_position >= coverage.next_ordinal

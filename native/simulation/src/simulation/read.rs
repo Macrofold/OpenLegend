@@ -2,7 +2,8 @@
 //! their genuine evidence/byte custody; there is no writable TypeScript world.
 use super::{Simulation, SimulationState};
 use crate::capture::{
-    ActorReadPurpose, CapturedActorPerception, capture_actor_perception, write_actor_self,
+    ActorReadPurpose, CapturedActorPerception, capture_actor_perception,
+    require_supported_known_agreement_read, write_actor_self,
 };
 use crate::execution::ExecutionError;
 use crate::host::{ByteBudget, ByteReservation, CandidatePhase};
@@ -308,6 +309,9 @@ impl Simulation {
             .get(actor_id)
             .ok_or(ExecutionError::MissingActor)?;
         let actor = entity.actor.as_ref().ok_or(ExecutionError::MissingActor)?;
+        if matches!(purpose, ActorReadPurpose::NpcDecision) {
+            require_supported_known_agreement_read(state, actor_id)?;
+        }
         let (self_body_lease, self_body_reservation) =
             if matches!(purpose, ActorReadPurpose::PlayerView) {
                 let scope = crate::reception::CurrentBodyReadScope::prepare(

@@ -92,28 +92,8 @@ impl<'a> PlayerReadScope<'a> {
             .experience
             .optional_collection(actor_id, PersonalSourceKind::Awareness)?
         {
-            let privacy = &state
-                .experience
-                .actor(actor_id)
-                .ok_or(ExecutionError::Invariant)?
-                .privacy;
-            let law = state.installed.account_law();
-            if collection.may_have_current_trade_terms()?
-                && collection.records().any(|record| {
-                    let header = record.header();
-                    header.agreement_body
-                        && (header.personal_agreement
-                            || header
-                                .event_type
-                                .as_deref()
-                                .is_some_and(|event| law.agreement_event(event)))
-                        && header
-                            .event_id
-                            .as_ref()
-                            .is_some_and(|id| !privacy.revoked(id))
-                })
-            {
-                return Err(ExecutionError::UnsupportedFamily);
+            if collection.may_have_current_trade_terms()? {
+                require_supported_known_agreement_read(state, actor_id)?;
             }
         }
         let attention = state

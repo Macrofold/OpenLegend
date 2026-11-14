@@ -75,6 +75,46 @@ pub(crate) enum ActorReadPurpose {
     NpcDecision,
 }
 
+/// Unported agreement consumers must not replace personally received terms
+/// with an empty menu/context. This checks known selected records only; cold
+/// historical completeness remains with each caller's coverage contract.
+pub(crate) fn require_supported_known_agreement_read(
+    state: &SimulationState,
+    actor_id: &str,
+) -> Result<(), ExecutionError> {
+    let Some(collection) = state
+        .experience
+        .optional_collection(actor_id, crate::experience::PersonalSourceKind::Awareness)?
+    else {
+        return Ok(());
+    };
+    if !collection.has_known_agreement_body() {
+        return Ok(());
+    }
+    let privacy = &state
+        .experience
+        .actor(actor_id)
+        .ok_or(ExecutionError::Invariant)?
+        .privacy;
+    let law = state.installed.account_law();
+    if collection.records().any(|record| {
+        let header = record.header();
+        header.agreement_body
+            && (header.personal_agreement
+                || header
+                    .event_type
+                    .as_deref()
+                    .is_some_and(|event| law.agreement_event(event)))
+            && header
+                .event_id
+                .as_ref()
+                .is_some_and(|id| !privacy.revoked(id))
+    }) {
+        return Err(ExecutionError::UnsupportedFamily);
+    }
+    Ok(())
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct PreferredName {

@@ -888,6 +888,8 @@ fn header(
             .get("resolved")
             .and_then(Value::as_bool)
             .unwrap_or(false);
+    // header_input projects opaque agreement text to a string-presence bool;
+    // it does not decode or substitute the acquired JSON/UTF-16 body here.
     let agreement_body = kind == PersonalSourceKind::Awareness
         && body.get("retentionClass").and_then(Value::as_str) == Some("memory")
         && body
@@ -1177,6 +1179,9 @@ impl PersonalSourceCollection {
     pub(crate) fn install_current_selection(&mut self, open_heads: bool, sensory: bool) {
         self.current_open_heads_selected = open_heads;
         self.sensory_selected = sensory;
+    }
+    pub(crate) fn has_known_agreement_body(&self) -> bool {
+        self.agreement_body_count != 0
     }
     /// An active cold read selects every eligible open agreement head in the
     /// same SQL union as this resident tail. It does not make all old awareness
