@@ -1,36 +1,19 @@
 import type { NativeWorld } from '@open-legend/native-simulation';
-import {
-  attachNativeConsumer,
-  encodeNativeJsonText,
-  releaseNativeProduct,
-} from './native-consumer.js';
+import { encodeNativeJson } from './native-consumer.js';
 
 export type NativeProviderCapacity = Pick<
   NativeWorld,
   'reserveConsumerBytes' | 'reserveConsumerJson'
 >;
 
-export interface NativeProviderAnswer {
-  readonly json: string;
-}
+export type NativeProviderAnswer = Buffer;
 
-/** Encodes a local provider answer to UTF-8, then decodes it to an independently
- * funded JS string. Byte-taking continuations encode that string again. The
- * temporary buffer and workspace end here. The caller releases the answer when
- * its provider turn settles, independently of the question and any SQL rows. */
+/** Emits the local continuation's UTF-8 answer once under its own admission.
+ * The caller retains this Buffer until the native answer settles, then releases
+ * it independently of the question and SQL inputs. The worker copies its input. */
 export function encodeNativeProviderAnswer(
   capacity: NativeProviderCapacity,
   value: unknown,
 ): NativeProviderAnswer {
-  const encoded = encodeNativeJsonText(capacity, value);
-  let allocation;
-  try {
-    allocation = capacity.reserveConsumerBytes(256);
-    return attachNativeConsumer({ json: encoded.text }, allocation, encoded);
-  } catch (error) {
-    allocation?.release();
-    throw error;
-  } finally {
-    releaseNativeProduct(encoded);
-  }
+  return encodeNativeJson(capacity, value);
 }

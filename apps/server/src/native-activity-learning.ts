@@ -13,7 +13,6 @@ import {
   decodeNativeProduct,
   releaseNativeProduct,
   retainNativeSources,
-  withNativeUtf8Input,
   withNativeJsonInput,
 } from './native-consumer.js';
 
@@ -37,9 +36,7 @@ export async function prepareNativeActivityLearning(
       const answer = await answerNativeProvider(world, turn.provider, geometry, history);
       try {
         const provider = turn.provider;
-        turn = await withNativeUtf8Input(world, answer.json, (bytes) =>
-          world.answerActivityLearning(native, provider, bytes),
-        );
+        turn = await world.answerActivityLearning(native, provider, answer);
       } finally {
         releaseNativeProduct(answer);
       }

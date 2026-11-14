@@ -517,13 +517,19 @@ export async function readNativeRestoreRetention(
     );
     signal?.throwIfAborted();
     const json = JSON.stringify({ binding: request.binding, phase: request.phase, data });
+    const bytes = Buffer.byteLength(json);
     if (
       !Number.isSafeInteger(request.maximumTransferBytes) ||
       request.maximumTransferBytes <= 0 ||
-      Buffer.byteLength(json) > request.maximumTransferBytes
+      bytes > request.maximumTransferBytes
     )
       throw new Error('Restore account reply exceeds its actual transfer allowance.');
-    answer = { json };
+    // SQL admission keeps the measured string/workspace alive through this
+    // write. The outgoing Buffer has distinct backing, admitted only after the
+    // exact transfer check; the native worker owns a separate copy on handoff.
+    roots.push(capacity.reserveBytes(bytes + 256));
+    answer = Buffer.allocUnsafeSlow(bytes);
+    answer.write(json, 0, 'utf8');
     // These admissions already fund SQL decoding, selected formatting and its
     // serialized reply. Move them to the result consumed by world.answer.
     while (roots.length) attachNativeConsumer(answer, roots.shift()!);

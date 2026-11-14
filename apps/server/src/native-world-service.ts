@@ -103,7 +103,6 @@ import {
   retainNativeSources,
   withNativeConsumerScope,
   withNativeJsonInput,
-  withNativeUtf8Input,
   withoutNativeConsumerScope,
 } from './native-consumer.js';
 import { NativePendingSave, type NativePendingPrefix } from './native-pending-save.js';
@@ -1465,9 +1464,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           try {
             signal.throwIfAborted();
             const provider = turn.provider;
-            turn = await withNativeUtf8Input(this.world, answer.json, (bytes) =>
-              this.world.answerConsolidationSources(ticket, provider, bytes),
-            );
+            turn = await this.world.answerConsolidationSources(ticket, provider, answer);
           } finally {
             releaseNativeProduct(answer);
           }

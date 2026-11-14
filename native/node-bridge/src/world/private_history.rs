@@ -379,7 +379,7 @@ impl NativeWorld {
         read: &NativeWorldPrivateHistoryRead,
         key: NativeCandidateKey,
         provider: &NativeWorldProvider,
-        answer: String,
+        answer: BufferSlice<'_>,
     ) -> Result<Object<'a>> {
         if !Weak::ptr_eq(&read.world, &Arc::downgrade(&self.world)) {
             return Err(failure("history read belongs to another native writer"));
@@ -387,11 +387,7 @@ impl NativeWorld {
         let key = key.try_into()?;
         let read = Arc::clone(&read.inner);
         let provider = Arc::clone(&provider.inner);
-        let storage = self
-            .host
-            .bytes
-            .reserve(answer.capacity())
-            .map_err(operation_error)?;
+        let (bytes, storage) = input(answer.as_ref(), &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
             let _storage = storage;
             let mut owner = read
@@ -404,6 +400,8 @@ impl NativeWorld {
             let value = owner
                 .as_mut()
                 .ok_or_else(|| failure("recent history read was released"))?;
+            let answer = String::from_utf8(bytes)
+                .map_err(|_| failure("native history answer must be UTF-8 JSON"))?;
             let result = turn_sources(
                 session,
                 value,

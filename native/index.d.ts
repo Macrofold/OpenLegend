@@ -160,7 +160,7 @@ export declare class NativeWorld {
     read: NativeWorldPrivateHistoryRead,
     key: NativeCandidateKey,
     provider: NativeWorldProvider,
-    answer: string,
+    answer: Buffer,
   ): Promise<NativeWorldNpcTurn>;
   cancelHistorySources(read: NativeWorldPrivateHistoryRead): Promise<void>;
   historyPublication(

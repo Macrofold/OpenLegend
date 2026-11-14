@@ -1,8 +1,8 @@
 # Native runtime foundations: technical design
 
-| Status      | Current progress                                                                                                                        | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The 2 GiB repair checkpoint is measured. Bridge, player availability, warning and independent multiplayer publication work is designed. | 2026-11-14   |
+| Status      | Current progress                                                                                       | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | The first bridge answer change is written; real-caller and isolated cost qualification remain pending. | 2026-11-14   |
 
 [Feature specification](native-runtime-foundations-feature-spec.md) · [Evidence and repertoire reconciliation](native-runtime-foundations-evidence-and-repertoire.md) · [NRF work](../maintainers/native-runtime-foundations.md) · [Constraints](../limits/native-runtime-foundations.md)
 

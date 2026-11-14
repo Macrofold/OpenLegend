@@ -206,7 +206,7 @@ export function formatNativeProvider(
   try {
     return encodeNativeProviderAnswer(capacity, prepare(question.kind, value));
   } finally {
-    // The encoder owns the fully independent JSON string before any formatter
+    // The encoder owns independent UTF-8 bytes before any formatter
     // result, borrowed input, temporary array or text reservation ends.
     preparation.release();
   }

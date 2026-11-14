@@ -20,7 +20,6 @@ import {
   releaseNativeProduct,
   retainNativeProduct,
   withNativeConsumerScope,
-  withNativeUtf8Input,
 } from './native-consumer.js';
 import { withNativeSqlPreparation } from './native-source-preparation.js';
 import type { SqlDatabase } from './store.js';
@@ -282,9 +281,7 @@ export async function driveNativeOperation(
       try {
         if (signal?.aborted) throw signal.reason ?? new Error('Native request was canceled.');
         const { key, provider } = turn;
-        turn = await withNativeUtf8Input(world, answer.json, (bytes) =>
-          world.answer(key, provider!, bytes),
-        );
+        turn = await world.answer(key, provider!, answer);
       } finally {
         releaseNativeProduct(answer);
       }
@@ -336,9 +333,7 @@ async function driveNativeNpcPreparation(
       try {
         signal?.throwIfAborted();
         const { key, provider } = turn;
-        turn = await withNativeUtf8Input(world, answer.json, (bytes) =>
-          world.answerNpcPreparation(read, key, provider!, bytes),
-        );
+        turn = await world.answerNpcPreparation(read, key, provider!, answer);
       } finally {
         releaseNativeProduct(answer);
       }
