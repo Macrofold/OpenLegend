@@ -25,7 +25,7 @@ This is why the dossier keeps historical criticism, subsequent changes and curre
 | If you want to understand… | Read |
 | --- | --- |
 | What players do, how careers and towns fit together, objects, progression, failure, lore and concrete situations | [1. Systems and world](bitcraft-online/01-systems-and-world.md) |
-| What people love, dislike, return for or leave over; five written review perspectives, Steam accounts and participation trends | [2. Reception](bitcraft-online/02-reception.md) |
+| What people love, dislike, return for or leave over; five written review perspectives, counted recent Steam themes and participation trends | [2. Reception](bitcraft-online/02-reception.md), [103-review evidence](bitcraft-online/steam-review-evidence-2026-11-14.md) |
 | Studio history, financing, monetization reversals, sales uncertainty, marketing, art/audio/UI and community tools | [3. Production and business](bitcraft-online/03-production-and-business.md) |
 | The real stack, public source, local transactions, persistence, subscriptions, region handoff, scalability limits and failure reports | [4. Technology and scale](bitcraft-online/04-technology-and-scale.md) |
 | What OpenLegend can use, which comparisons fail, and where the lessons belong in existing design/work | [5. OpenLegend applications](bitcraft-online/05-openlegend-lessons.md) |
@@ -61,8 +61,8 @@ The developers' launch and reconnect investigations reveal problems that raw act
 ## Evidence and confidence
 
 - Five substantive independent-site written review/impression bodies were read, spanning alpha and Early Access. These are not five mature 1.0 reviews.
-- Contrasting helpful Steam reviews and player discussions are a purposive qualitative sample, not a representative survey.
-- The Steam snapshot is 69% positive from 2,731 English reviews and 52% from 101 recent reviews, both Mixed. The recent window includes prelaunch time; it is not a 1.0-only score.
+- Historical helpful Steam reviews and player discussions are a purposive qualitative sample. A separate [complete returned recent-window query](bitcraft-online/steam-review-evidence-2026-11-14.md) codes 103 reviews: 53 recommending and 50 not recommending, with overlapping praise/criticism themes. Neither describes all players.
+- The original Steam store capture is 69% positive from 2,731 English reviews and 52% from 101 recent reviews, both Mixed. The later API query has its own filters and denominator. Both windows include prelaunch time; neither is a 1.0-only score.
 - BitCraft server source was inspected at the November 13 release commit 85c972d8d9433560fb51a906424b74b7958ddf99. Source behavior is distinguished from live deployment configuration and personally reproduced results.
 - The newer OpenLegend native-core documents were read separately at a66a67e179ec9dfb7d6ea32aceb37de853cacc06. Their rejected proof profile and unentered later gates are preserved; those branch contents were not merged.
 - No direct gameplay, independent load measurement, actual hosting-cost analysis or soundtrack audition occurred. Detailed original lore texts, the graphical roadmap and the art-director transcript had stated access limits.

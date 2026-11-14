@@ -12,7 +12,7 @@
 
 ## Completion and outputs
 
-**Full dossier complete; requested follow-up review in progress.** R01–R14 are substantively addressed; the conditional R15 applicability finding is **uncertain / a popular full-game mod ecosystem was not established**, with the checked routes and evidence limits documented. The November 14 follow-up is reviewing benefit versus burden, connecting selected evidence to existing design/work owners, and coding the complete retrieved recent Steam-review window. It does not certify inaccessible sources, private financials, future 1.0 outcomes, gameplay reproduction or a whole-library reconciliation.
+**Complete, including the requested November 14 follow-up review and recent-review breakdown.** R01–R14 are substantively addressed; the conditional R15 applicability finding is **uncertain / a popular full-game mod ecosystem was not established**, with the checked routes and evidence limits documented. The follow-up reviewed benefit versus burden, connected selected evidence to existing design/work owners, and coded the complete retrieved recent Steam-review window. Completion does not certify inaccessible sources, private financials, future 1.0 outcomes, gameplay reproduction or a whole-library reconciliation.
 
 | Owner | Contents |
 | --- | --- |
@@ -22,6 +22,7 @@
 | [3. Production and business](dossiers/bitcraft-online/03-production-and-business.md) | Origins, financing, release chronology, pricing and monetization changes, commercial evidence/judgment, marketing, art/UI/music, community tools and R15 screen. |
 | [4. Technology and scale](dossiers/bitcraft-online/04-technology-and-scale.md) | Version-pinned server inspection, topology, transactions, transfers, persistence, scheduled simulation, subscriptions, privacy, current platform versus game capabilities, incidents, licensing and operating-cost limits. |
 | [5. OpenLegend applications](dossiers/bitcraft-online/05-openlegend-lessons.md) | Concrete interpretations, prerequisites, counterpoints, constructed examples and routes to existing design/work owners. |
+| [Recent Steam-review evidence](dossiers/bitcraft-online/steam-review-evidence-2026-11-14.md) | Fixed-window query, overlapping theme counts and compact authored coding ledger for all 103 returned reviews; distinct from the original qualitative sample and store snapshot. |
 
 Substantive checkpoints were committed at [6080f62](https://github.com/Macrofold/OpenLegend/commit/6080f62a43e503979d786cf9c2e597facb142427), [50432f8](https://github.com/Macrofold/OpenLegend/commit/50432f8dceafa808209d0b9103f8b42bb2ea66cd), [91ace5c](https://github.com/Macrofold/OpenLegend/commit/91ace5ca12db0b04f156ab0f30f05ac2d6b5b224), and [e43cc37](https://github.com/Macrofold/OpenLegend/commit/e43cc37d85eecbc8920fc0a5d638b3eff2a3ed7e). The last contains the complete chapter set and navigation. Subsequent final review corrections and this completion record are committed on the same branch; the final handoff identifies its exact head.
 
@@ -42,7 +43,7 @@ The [requirements](research-requirements.md) and [economics/engagement amendment
 | R09 — Production | Production/technology: prototype origin, studio/funding/team milestones, alpha/release sequence, actual tools, public source, iteration and concrete operational failures. |
 | R10 — Marketing and distribution | Production: reveal promise, free preview/Next Fest, competition-driven scheduling, creator programme, Twitch incentives, storefront and short-notice 1.0 launch. No attribution percentages invented. |
 | R11 — Commercial and participation context | Production's evidence table and economic judgment; reception's correctly defined reviews/concurrency. Reported 100,000 copies and company financing remain distinct. Total receipts/profit are not estimable from the searched evidence; missing inputs and alternative explanations are recorded. |
-| R12 — Reception | Five independent-site written bodies plus helpful contrasting Steam accounts and further direct commentary. Dates, exposure, historical changes, fun/repetition/replay/abandonment mechanisms and counterpoints remain explicit. |
+| R12 — Reception | Five independent-site written bodies, helpful historical Steam accounts and further direct commentary, plus all 103 results of a separate recent-window query. Recommendation, specific praise/criticism, time, source selection and overlapping themes remain distinct. |
 | R13 — Transfer and limits | Applications chapter and technical disposition connect lessons to existing OpenLegend owners, preserve the current art direction, and retain the rejected native-proof result. No stack migration, feature backlog or pricing choice is adopted. |
 | R14 — Evidence and navigation | Adjacent citations, dated annotated registers, reading/viewing routes, spoiler scope, pinned source, access limits, preservation statement and reviewed relative links. G189 roster and existing navigation updated. |
 | R15 — Conditional modding | Production: official policy/source-publication scope, companion APIs and data-access issues; searches of mod routes did not establish a popular full-game mod ecosystem. A fabricated ranked mod catalogue or unsupported full deep dive is not substituted. |
@@ -52,7 +53,7 @@ The [requirements](research-requirements.md) and [economics/engagement amendment
 ### Reception and commercial evidence
 
 - The five principal written bodies come from **Try Hard Guides, MMORPG.com, Wccftech, The Tank Club and Bits N' Pixels**. They span alpha and Early Access and different exposure depths; they are not five mature 1.0 reviews. Developer-guided observations and accompanying interview promises are separated.
-- Steam accounts were selected for contrasting, substantive explanations. They are a purposive qualitative sample, not a random survey or prevalence estimate. Specific allegations remain attributed rather than verified facts.
+- Historical Steam accounts were selected for contrasting, substantive explanations. They are a purposive qualitative sample, not a random survey or prevalence estimate. The later fixed-window coding has its own evidence owner below. Specific allegations remain attributed rather than verified facts.
 - Freeze the November 14 Steam capture: **69% positive of 2,731 English reviews** and **52% of 101 recent reviews**. Different SteamDB aggregates and capture times are retained separately. Recent reviews include prelaunch time.
 - Monthly concurrency is not cohort retention, daily users, distinct humans, income or technical capacity. June 2025 is a partial launch month; launch-return activity does not establish a lasting recovery.
 - The release is one day old at this cut. The old and new worlds, inherited cosmetics and fresh gameplay progress have different continuity rules. The old F2P promise, paid functional empire design and cascading refined-material chain have been superseded in important respects.
@@ -76,7 +77,19 @@ A lightweight documentation check verified new/changed relative paths and headin
 
 ## Behavior changes and decisions
 
-Research documentation only. Added G189 and the six-file dossier, this scoped record and navigation. Findings are proposals with version/evidence boundaries; no runtime, world rule, approved art direction, pricing, licensing choice, native-core status or architecture contract changed. Existing owners receive comparison links rather than a duplicate implementation tracker.
+Research and focused documentation integration only. Added G189, the dossier and review evidence, this scoped record and navigation. Findings are proposals with version/evidence boundaries; no runtime, world rule, approved art direction, pricing, licensing choice, native-core status or architecture contract changed. Existing owners receive concise evidence links and observation examples rather than a duplicate implementation tracker.
+
+### Requested follow-up review — November 14
+
+Reviewed the complete six-file dossier, affected navigation, prior chat takeaways and relevant existing design/work coverage. The needs-design register already covers the relevant competence/home, cooperation, continuing-life, economy, participation and service questions. No new design pair, ND item or implementation task was justified.
+
+Three small integrations sharpen existing work: the [playtest plan](../../../docs/projects/first-playable-playtest-plan.md#step-4--observe-distinct-player-journeys) distinguishes active attention, elapsed result and required returns; [continuing lives §6.4](../../../docs/projects/continuing-lives-feature-spec.md#64-time-away-should-create-context-not-a-compulsory-chore-bill) considers a contributor leaving without fabricated replacement labor; and [workload qualification](../../../docs/product-scalability/capacity-and-economics.md#10-qualification-workloads) includes relevant ordinary interfaces/actions and join/reconnect paths. Existing FPV, PS and subsystem ownership and unfinished evidence remain unchanged.
+
+Softened a universal property/cooperation claim and removed wording that could impose every BitCraft incident on every later qualification. Added the first complete-month concurrency comparison from the previous chat. Preserved the important counterexample that forcing more active inputs can remove valued quiet play, alongside a positive trading-without-gathering example. Other useful prior chat points were already recorded.
+
+The new Steam query returns 103 unique reviews, 53 recommending and 50 not, with exact bounds and filters in its evidence owner. All bodies were coded. An independent reviewer checked every ID/metadata/count and 17 selected bodies; this was not a second complete recoding. Two ambiguous classifications were corrected: accepted cooperation costs were not treated as dissatisfaction, and older objections retained beneath a positive edit were excluded from current criticism totals. Raw API output remains outside Git; the authored ledger preserves review links, dates, codes and concise paraphrases. Counts cannot establish prevalence among all players or the cause of the earlier 101-review score.
+
+The integration checkpoint is [dd9ee24](https://github.com/Macrofold/OpenLegend/commit/dd9ee24a1d995b81b6f9ca8099e39c141c983ac9); final evidence, completion and review corrections follow on the same branch. Content/link and affected-diff review are the applicable checks; no runtime or automated test suite was needed or run.
 
 ## Open decisions/questions
 
@@ -84,5 +97,5 @@ None blocks this research pass. Long-term 1.0 retention, exact finances, dense-r
 
 ## Remaining work in this session
 
-Finish the recent Steam-review coding and independent spot check, record the final findings and review disposition, verify affected links/diff, and commit the completed follow-up. The earlier full dossier remains complete; the new review request is not yet complete. Merging into main is not part of the request.
+None after the final completion commit and branch verification. The research and requested review are ready for integration review; merging into main is not part of the request.
 

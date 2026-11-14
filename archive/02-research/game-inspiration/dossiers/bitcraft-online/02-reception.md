@@ -6,13 +6,13 @@
 
 ## Assessment
 
-BitCraft's strongest attraction is the opportunity to become useful to other people in a place that visibly changes through their shared work. Its strongest recurring criticism is that the same dependence can become repetitive labor, compulsory administration or stalled progression when a player wants a smaller life or a community loses members. Positive and negative accounts often describe the same systems and sometimes come from players with hundreds or thousands of recorded hours. [S1] [S2] [R1]
+Across the historical gameplay-focused accounts, BitCraft's strongest attraction is the opportunity to become useful to other people in a place that visibly changes through their shared work. A recurring criticism is that the same dependence can become repetitive labor, compulsory administration or stalled progression when a player wants a smaller life or a community loses members. Positive and negative accounts often describe the same systems and sometimes come from players with hundreds or thousands of recorded hours. [S1] [S2] [R1] The separate [recent-review count](steam-review-evidence-2026-11-14.md) shows that development/release trust and readiness dominate the current negative recommendation themes; the historical gameplay sample alone cannot explain the recent score.
 
 This makes BitCraft a particularly relevant comparison for OpenLegend. The transferable question is whether a persistent world supports satisfying lives at different scales and levels of commitment. Counting professions, recipes or hours played does not answer that question. The detailed OpenLegend application is maintained in [the lessons chapter](05-openlegend-lessons.md).
 
 ## Evidence and sampling method
 
-This chapter draws on five substantive, first-person written review or impression bodies from five independent sites; two supplementary editorial perspectives; contrasting helpful Steam reviews; player discussions across 2025–2026; primary announcements; and public Steam concurrency trackers. The sample was selected to expose mechanisms, audience differences and counterexamples. It is **qualitative evidence, not a representative survey or a coded census of reviews**.
+The historical study draws on five substantive, first-person written review or impression bodies from five independent sites; two supplementary editorial perspectives; contrasting helpful Steam reviews; player discussions across 2025–2026; primary announcements; and public Steam concurrency trackers. Those accounts were selected to expose mechanisms, audience differences and counterexamples. They are **qualitative evidence, not a representative survey**. The additional [103-review recent-window analysis](steam-review-evidence-2026-11-14.md) counts every record returned for its stated query; its scope and interpretation limits are separate from that earlier selection.
 
 The research did not include hands-on gameplay, a controlled performance test or access to private moderation records. Helpful-review ordering favors older and strongly expressed opinions. Reddit threads attract self-selected participants. Recorded playtime can include idling and additional accounts, and does not establish satisfaction or active attention. Contemporary official changes establish what the developer says it shipped or intends; they do not establish the resulting player experience.
 
@@ -42,6 +42,16 @@ SteamCharts reports the following monthly average concurrent Steam users. The se
 | October 2026 | 394.31 |
 
 For a game organized around shared production, the distribution of these users matters alongside the total: a viable settlement and a struggling region can coexist. Concurrent counts cannot establish distinct human population, daily or monthly active users, cohort retention, economic participation or revenue. Long idle sessions and multiple accounts are especially relevant confounders in this case. [R4] [R7]
+
+## Recent Steam reviews: what the split contains
+
+A subsequent November 14 API capture returned **103 reviews created within the fixed October 15–November 14 window: 53 recommending and 50 not recommending** (51.46% positive). It includes all languages, Steam purchases only and Steam's off-topic filter. This is a second snapshot, not a correction of the earlier displayed 52% of 101. All returned bodies were read and coded; the [evidence record](steam-review-evidence-2026-11-14.md) owns the exact query, definitions, full theme tables and per-review ledger.
+
+Among the 53 recommending reviews, the most frequent specific praise is **community/cooperation (18), relaxed or self-paced play (16), and productive activities or roles (13)**. Among the 50 non-recommending reviews, the leading criticism is **development direction/communication/trust/release handling (28), unfinished release readiness (22), and grind/time/repetition/passivity (17)**. These themes overlap; 31 negative reviews mention development/release handling or readiness. Counts describe explicit mentions, not mutually exclusive causes or the opinions of all players.
+
+The disagreements matter as much as the ranking. Six negative reviews criticize lost idle options or increased input demands; simply making every activity more active would miss their preference. Four negative reviews still praise the community, and a reviewer can accept paid entry while objecting to its announcement. One positive account describes earning through trading/refining without gathering. These contrasting cases are preserved in the [interpretation and examples](steam-review-evidence-2026-11-14.md#interpretation-and-concrete-examples).
+
+**Timing limit:** 92 of the 103 reviews were created on or after November 10 UTC, when launch was announced; only 24 were created at or after the November 13 opening. The window mostly captures launch-period reaction and prior Early Access experience. It cannot establish mature 1.0 reception or the causal contribution of each complaint to the score.
 
 ## Written review and impression matrix
 
