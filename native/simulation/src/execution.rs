@@ -33,10 +33,10 @@ mod agency;
 mod attributes;
 mod body;
 mod conditions;
-mod practice;
 mod participation;
-mod restore;
+mod practice;
 mod rates;
+mod restore;
 mod routes;
 mod save;
 mod semantic;
@@ -590,7 +590,8 @@ impl CandidateJournal {
             return Err(ExecutionError::InvalidCheckpoint);
         }
         let frame = self.frames.pop().ok_or(ExecutionError::InvalidCheckpoint)?;
-        self.restore_metadata.rollback_to(state,frame.restore_metadata)?;
+        self.restore_metadata
+            .rollback_to(state, frame.restore_metadata)?;
         self.encounters.rollback_to(frame.encounters);
         self.acquisitions.rollback_to(frame.acquisitions)?;
         state.appraisals.rollback_to(frame.appraisals)?;
@@ -654,7 +655,7 @@ impl CandidateJournal {
         &mut self,
         state: &mut SimulationState,
     ) -> Result<(), ExecutionError> {
-        self.restore_metadata.rollback_to(state,0)?;
+        self.restore_metadata.rollback_to(state, 0)?;
         self.encounters.rollback_all()?;
         self.acquisitions.rollback_all()?;
         state.appraisals.rollback_to(self.root_appraisals)?;
@@ -1079,7 +1080,9 @@ impl From<IdentityExhausted> for ExecutionError {
 
 #[derive(Clone, Debug)]
 pub(crate) enum PhysicalChange {
-    Participation { entity_id: String },
+    Participation {
+        entity_id: String,
+    },
     Membership {
         entity_id: String,
         before: Option<Point>,
@@ -1255,7 +1258,11 @@ struct WindowClock {
     binding_count: u64,
 }
 enum Undo {
-    RestoreActor { entity: EntityHandle, controller: String, inspection: Option<crate::state::InventoryInspection> },
+    RestoreActor {
+        entity: EntityHandle,
+        controller: String,
+        inspection: Option<crate::state::InventoryInspection>,
+    },
     Participation {
         entity: EntityHandle,
         before: Option<crate::state::Participation>,
@@ -1562,7 +1569,7 @@ impl PhysicalJournal {
                 .ok_or(ExecutionError::InvalidCheckpoint)?;
             frame
                 .written
-                .try_reserve(key_capacity - frame.written.len())
+                .try_reserve_exact(key_capacity - frame.written.len())
                 .map_err(|_| ExecutionError::Capacity)?;
         }
         Ok(())
@@ -1652,7 +1659,7 @@ impl PhysicalJournal {
             let parent = &mut self.frames[parent_index];
             parent
                 .written
-                .try_reserve(capacity - parent.written.len())
+                .try_reserve_exact(capacity - parent.written.len())
                 .map_err(|_| ExecutionError::Capacity)?;
         }
         Ok(())
@@ -1675,8 +1682,11 @@ impl PhysicalJournal {
             UndoKey::AgencyPlaces(slot, generation),
             UndoKey::ResultEvidence(slot, generation),
         ];
-        (keys.iter().find(|candidate| frame.written.contains(*candidate)) == Some(key))
-            .then_some(EntityHandle { slot, generation })
+        (keys
+            .iter()
+            .find(|candidate| frame.written.contains(*candidate))
+            == Some(key))
+        .then_some(EntityHandle { slot, generation })
     }
     fn settle_agency_frame(
         state: &mut PhysicalState,
@@ -1760,24 +1770,54 @@ impl PhysicalJournal {
                     state.coaching.present = before;
                 }
                 Undo::Participation { entity, before } => {
-                    state.entities.resolve_mut(entity).and_then(|e| e.actor.as_mut())
-                        .ok_or(ExecutionError::Invariant)?.participation = before;
-                    state.entities.settle_participation_memory(entity, &mut self.reservation, true)?;
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
+                        .participation = before;
+                    state.entities.settle_participation_memory(
+                        entity,
+                        &mut self.reservation,
+                        true,
+                    )?;
                 }
-                Undo::Contact { entity, subject, before: (position, value) } => {
-                    state.entities.resolve_mut(entity).and_then(|e| e.actor.as_mut())
-                        .and_then(|actor| actor.contacts.as_mut()).ok_or(ExecutionError::Invariant)?
+                Undo::Contact {
+                    entity,
+                    subject,
+                    before: (position, value),
+                } => {
+                    state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .and_then(|actor| actor.contacts.as_mut())
+                        .ok_or(ExecutionError::Invariant)?
                         .shift_insert(position, subject, value);
                 }
-                Undo::ExitExposure { actor, before, root_present } => {
+                Undo::ExitExposure {
+                    actor,
+                    before,
+                    root_present,
+                } => {
                     let rows = &mut state.participation.exposures;
                     if let Some((position, deadline)) = before {
-                        rows.as_mut().ok_or(ExecutionError::Invariant)?.shift_insert(position, actor, deadline);
-                    } else if let Some(rows) = rows { rows.shift_remove(&actor); }
-                    if !root_present { *rows = None; }
+                        rows.as_mut()
+                            .ok_or(ExecutionError::Invariant)?
+                            .shift_insert(position, actor, deadline);
+                    } else if let Some(rows) = rows {
+                        rows.shift_remove(&actor);
+                    }
+                    if !root_present {
+                        *rows = None;
+                    }
                     state.participation.settle_restored(&mut self.reservation)?;
                 }
-                Undo::AgencyPlaces { entity, before, order } => {
+                Undo::AgencyPlaces {
+                    entity,
+                    before,
+                    order,
+                } => {
                     let agency = &mut state
                         .entities
                         .resolve_mut(entity)
@@ -1787,7 +1827,11 @@ impl PhysicalJournal {
                     agency.places = before;
                     agency.order = order;
                 }
-                Undo::AgencySuspended { entity, before, order } => {
+                Undo::AgencySuspended {
+                    entity,
+                    before,
+                    order,
+                } => {
                     let agency = &mut state
                         .entities
                         .resolve_mut(entity)
@@ -2103,12 +2147,30 @@ impl PhysicalJournal {
                         .spatial
                         .heading = before;
                 }
-                Undo::RestoreActor { entity, controller, inspection } => {
-                    let actor = state.entities.resolve_mut(entity).and_then(|e|e.actor.as_mut()).ok_or(ExecutionError::Invariant)?;
-                    actor.controller=controller;actor.inventory_inspection=inspection;
-                    state.entities.settle_operational_memory(entity,&mut self.reservation,true)?;
-                    let id=state.entities.resolve(entity).ok_or(ExecutionError::Invariant)?.id.as_str();
-                    state.bodies.refresh(&state.entities,id)?;
+                Undo::RestoreActor {
+                    entity,
+                    controller,
+                    inspection,
+                } => {
+                    let actor = state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|e| e.actor.as_mut())
+                        .ok_or(ExecutionError::Invariant)?;
+                    actor.controller = controller;
+                    actor.inventory_inspection = inspection;
+                    state.entities.settle_operational_memory(
+                        entity,
+                        &mut self.reservation,
+                        true,
+                    )?;
+                    let id = state
+                        .entities
+                        .resolve(entity)
+                        .ok_or(ExecutionError::Invariant)?
+                        .id
+                        .as_str();
+                    state.bodies.refresh(&state.entities, id)?;
                 }
                 Undo::Health { entity, before } => {
                     state
@@ -2118,7 +2180,11 @@ impl PhysicalJournal {
                         .ok_or(ExecutionError::Invariant)?
                         .health = before
                 }
-                Undo::ResultEvidence { entity, before, order } => {
+                Undo::ResultEvidence {
+                    entity,
+                    before,
+                    order,
+                } => {
                     let agency = &mut state
                         .entities
                         .resolve_mut(entity)

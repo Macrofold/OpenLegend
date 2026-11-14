@@ -140,13 +140,19 @@ impl IdentityDirectory {
             .map_err(|_| capacity())?;
         }
         if target > self.records.capacity() {
+            // Ordinary reserve rounds the entry buffer up to the hash table's
+            // capacity. Keep this explicit pre-admitted target exact instead.
             if self
                 .records
-                .try_reserve(target - self.records.len())
+                .try_reserve_exact(target - self.records.len())
                 .is_err()
             {
-                // A failed allocator changed no record. Release the unused
-                // forecast instead of keeping an inflated resident counter.
+                // IndexMap can grow its index before the entry allocation
+                // fails. An empty partial map must drop that hidden buffer
+                // before its zero-capacity backing is settled.
+                if self.records.is_empty() {
+                    self.records = IndexMap::new();
+                }
                 self.storage
                     .resize(
                         heap_sum([
@@ -163,15 +169,8 @@ impl IdentityDirectory {
                 return Err(capacity());
             }
         }
-        let before = self
-            .records
-            .shift_remove_full(key)
-            .map(|(position, _, value)| (position, value));
-        if let Some((position, value)) = after {
-            self.records.shift_insert(position, key.to_owned(), value);
-        }
-        self.values_bytes = values_bytes;
-        self.keys_bytes = keys_bytes;
+        // Refuse an unfunded layout before changing a canonical value; its
+        // journal has no before-image until this operation returns.
         let actual = heap_sum([
             values_bytes,
             keys_bytes,
@@ -182,6 +181,15 @@ impl IdentityDirectory {
         if actual > self.storage.bytes() {
             return Err(capacity());
         }
+        let before = self
+            .records
+            .shift_remove_full(key)
+            .map(|(position, _, value)| (position, value));
+        if let Some((position, value)) = after {
+            self.records.shift_insert(position, key.to_owned(), value);
+        }
+        self.values_bytes = values_bytes;
+        self.keys_bytes = keys_bytes;
         self.storage.resize(actual).map_err(|_| capacity())?;
         Ok(before)
     }

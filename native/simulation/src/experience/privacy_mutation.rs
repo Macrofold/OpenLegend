@@ -7,7 +7,9 @@ use crate::host::retained_size::{map_storage, tree_node_bound};
 use std::mem::size_of;
 
 pub(super) enum PrivacyUndo {
-    CreatedActor { actor:String },
+    CreatedActor {
+        actor: String,
+    },
     Revision {
         actor: String,
         before: Option<u64>,
@@ -26,7 +28,8 @@ pub(super) enum PrivacyUndo {
 impl PrivacyUndo {
     pub(super) fn actor(&self) -> &str {
         match self {
-            Self::CreatedActor { actor } | Self::Revision { actor, .. }
+            Self::CreatedActor { actor }
+            | Self::Revision { actor, .. }
             | Self::Forgotten { actor, .. }
             | Self::Correction { actor, .. } => actor,
         }
@@ -39,9 +42,18 @@ impl PrivacyUndo {
         let metadata = super::residency::MetadataBefore::capture(state, self.actor())?;
         match self {
             Self::CreatedActor { actor } => {
-                let value=state.actors.shift_remove(&actor).ok_or(ExperienceError::ForeignOwner)?;
-                if !value.sources.is_empty()||value.privacy.revision.is_some()||!value.privacy.forgotten.is_empty()||!value.privacy.corrections.is_empty(){return Err(ExperienceError::StaleHydration)}
-                state.settle_metadata(metadata,&actor,actor.len(),0,funding)?;
+                let value = state
+                    .actors
+                    .shift_remove(&actor)
+                    .ok_or(ExperienceError::ForeignOwner)?;
+                if !value.sources.is_empty()
+                    || value.privacy.revision.is_some()
+                    || !value.privacy.forgotten.is_empty()
+                    || !value.privacy.corrections.is_empty()
+                {
+                    return Err(ExperienceError::StaleHydration);
+                }
+                state.settle_metadata(metadata, &actor, actor.len(), 0, funding)?;
             }
             Self::Revision { actor, before } => {
                 state
@@ -214,6 +226,9 @@ impl ExperienceJournal {
         };
         privacy.forgotten.push(id.to_owned());
         privacy.forgotten_index.insert(id.to_owned());
+        // Settlement is fallible; retain the inverse before it can refuse.
+        self.undo
+            .push(super::mutation::ExperienceUndo::Privacy(operation));
         let new_strings = privacy
             .forgotten
             .last()
@@ -221,8 +236,6 @@ impl ExperienceJournal {
             .and_then(|n| n.checked_add(privacy.forgotten_index.get(id)?.capacity()))
             .ok_or(ExperienceError::Capacity)?;
         state.settle_metadata(metadata, actor, 0, new_strings, &mut self.reservation)?;
-        self.undo
-            .push(super::mutation::ExperienceUndo::Privacy(operation));
         Ok(true)
     }
     pub(super) fn set_correction(
@@ -300,9 +313,14 @@ impl ExperienceJournal {
         if target > privacy.corrections.capacity() {
             if privacy
                 .corrections
-                .try_reserve(target - privacy.corrections.len())
+                .try_reserve_exact(target - privacy.corrections.len())
                 .is_err()
             {
+                // The index may have grown before the entry allocation failed.
+                // A still-empty map can drop it before zero backing is settled.
+                if privacy.corrections.is_empty() {
+                    privacy.corrections = indexmap::IndexMap::new();
+                }
                 state.settle_metadata(
                     metadata,
                     actor,
@@ -329,6 +347,9 @@ impl ExperienceJournal {
         } else {
             privacy.corrections.shift_remove(id);
         }
+        // Settlement is fallible; retain the inverse before it can refuse.
+        self.undo
+            .push(super::mutation::ExperienceUndo::Privacy(operation));
         let new_strings = correction_bytes(privacy, id)?;
         state.settle_metadata(
             metadata,
@@ -337,8 +358,6 @@ impl ExperienceJournal {
             new_strings,
             &mut self.reservation,
         )?;
-        self.undo
-            .push(super::mutation::ExperienceUndo::Privacy(operation));
         Ok(true)
     }
     pub(super) fn changed_privacy_actors(&self) -> impl Iterator<Item = &str> {
