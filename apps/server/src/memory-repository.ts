@@ -99,6 +99,7 @@ import type {
   ExperienceEntry,
   ExperienceSummary,
   MemoryRecord,
+  PerceivedItemOffer,
 } from '@open-legend/domain';
 import {
   EXPERIENCE_LIMITS,
@@ -545,21 +546,29 @@ export interface TradeDisclosurePosition {
   position: number;
   ordinal: number;
 }
+const itemOfferFamily: PerceivedItemOffer['family'] = 'item-offer';
+const tradeAgreementPrefix = JSON.stringify([itemOfferFamily]).slice(0, -1) + ',';
+const tradeFamily = (alias: string) => `${alias}.agreement_key LIKE '${tradeAgreementPrefix}%'`;
+// Agreement keys are already validated selection metadata. Guard the cast
+// itself: SQL may evaluate a projection before another WHERE condition, and
+// unrelated agreement bodies can contain exact text JSONB cannot represent.
 const tradeTerms = (alias: string) =>
-  `((${alias}.payload::jsonb #>> '{eventData,agreement}')::jsonb)`;
+  `(CASE WHEN ${tradeFamily(alias)} THEN (${alias}.payload::jsonb #>> '{eventData,agreement}')::jsonb END)`;
 const tradeKeys = (alias: string) => `(
   jsonb_path_query_array(${tradeTerms(alias)},'$.offererId') ||
   jsonb_path_query_array(${tradeTerms(alias)},'$.recipientId') ||
   jsonb_path_query_array(${tradeTerms(alias)},'$.offered[*].itemId') ||
   jsonb_path_query_array(${tradeTerms(alias)},'$.requested[*].itemId'))`;
 const retainedTradeSource = (alias: string) => `${alias}.world_id=? AND ${alias}.actor_id=?
-  AND (SELECT generation FROM world_head WHERE id=1)=? AND ${alias}.agreement_key IS NOT NULL
-  AND ${alias}.payload::jsonb #> '{eventData,personalAgreement}'='true'::jsonb
+  AND (SELECT generation FROM world_head WHERE id=1)=? AND ${tradeFamily(alias)}
+  AND CASE WHEN ${tradeFamily(alias)}
+    THEN ${alias}.payload::jsonb #> '{eventData,personalAgreement}'='true'::jsonb
+    ELSE FALSE END
   AND NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=${alias}.world_id AND f.actor_id=${alias}.actor_id AND f.source_id=${alias}.source_id)
   AND NOT EXISTS (SELECT 1 FROM mind_corrections c WHERE c.world_id=${alias}.world_id AND c.actor_id=${alias}.actor_id AND c.source_id=${alias}.source_id)`;
 const tradeParties = (actorId: string, personId: string) => ({
-  incoming: { family: 'item-offer', offererId: personId, recipientId: actorId },
-  outgoing: { family: 'item-offer', offererId: actorId, recipientId: personId },
+  incoming: { family: itemOfferFamily, offererId: personId, recipientId: actorId },
+  outgoing: { family: itemOfferFamily, offererId: actorId, recipientId: personId },
 });
 function retainedTradeLot(row: Record<string, unknown>): KnownTradeLot {
   const lot: unknown = JSON.parse(String(row['lot']));
@@ -1738,7 +1747,7 @@ export class MemoryRepository {
     // for each exact read before vacuum; ordinary observations are excluded.
     await this.db.exec(`CREATE INDEX IF NOT EXISTS mind_trade_disclosure_keys ON mind_awareness
       USING GIN ((${tradeKeys('mind_awareness')}) jsonb_path_ops) WITH (fastupdate=off)
-      WHERE agreement_key IS NOT NULL`);
+      WHERE ${tradeFamily('mind_awareness')}`);
     await this.db.exec(`
       CREATE TABLE IF NOT EXISTS memory_vectors (
         world_id TEXT NOT NULL,actor_id TEXT NOT NULL,generation TEXT NOT NULL,source_id TEXT NOT NULL,
