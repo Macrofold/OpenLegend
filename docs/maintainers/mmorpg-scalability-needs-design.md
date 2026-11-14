@@ -87,6 +87,8 @@ Include a complete boundary inventory for caches, SQL joins/keys, delayed respon
 
 - [ ] Reconcile cost, dependency and influence coverage for each actually supported native family through the existing conversion/admission inventory.
 
+**Selected slice designed.** The [composer read and warning interpretation](../projects/native-runtime-foundations-tech-design.md#9-send-availability-and-installed-warning-interpretation) identify the actual player roles, per-observer work, permitted inputs, ordered effect and resource owners for these two paths. [NRF07–08](native-runtime-foundations.md#send-availability-and-installed-warning-work) own their implementation and measurement. MSF04 remains open for the other supported native families.
+
 **Why now:** authored laws and new mechanics can accidentally introduce global scans, unbounded subscriptions, invalidation storms or follow-on work that defeats locality despite a compact native core. Catch the contract gap while converting the owner, not after many families assume cheap global access.
 
 **Existing coverage:** NSC already has dirty/due selection, conservative scopes, deterministic phases and a complete caller/field conversion inventory. `packages/domain/src/native-work.ts` already combines several work-demand and installed-footprint classes. Existing dependency invalidation and native work remain authoritative. This record must not duplicate those designs or create a universal dynamic scheduler.

@@ -716,6 +716,8 @@ Preserve committed-word/transcript timing, partial listener eligibility, recogni
 
 ### ND16 — Hearing and communication beyond direct-path speech
 
+**Installed ordinary-warning interpretation: Done — designed.** The [player scenario](../projects/native-runtime-foundations-feature-spec.md#8-choosing-whom-to-address-and-what-a-warning-means) and [technical recipe](../projects/native-runtime-foundations-tech-design.md#93-nrf08--put-grounded-warning-meaning-behind-the-installed-policy) assign bundled-world meaning to installed policy and personal proof/chronology to reception. [NRF08](native-runtime-foundations.md#send-availability-and-installed-warning-work) owns delivery and comparison. This resolves the narrow native ownership question within ND16. New communication channels, media and broader PP/SPK qualification remain under their existing entries.
+
 **Selected visual evidence producer: Done — designed.** [VG](vision-and-gaze.md) specifies only physically available visual facets and their actual support times for A. A retains recognition, accumulation and remembered knowledge; B supplies no unseen equipment/face update through a current voice. Runtime and the hearing/communication remainder remain open.
 
 **Selected stealth/hearing boundary: Done — shared design.** [SA00](stealth-awareness.md) and [A/C contracts](../projects/stealth-awareness-tech-design.md#shared-contracts) replace reliable unfamiliar-first-hearing identity with familiarity, actual evidence quality and selected base-world Perception. Words, names, association and location remain independent; physical receivers need no autobiography, and source occurrence order differs from actual acquired evidence. C's physical-sound design is specified; SPK/ACS runtime delivery remains open.
