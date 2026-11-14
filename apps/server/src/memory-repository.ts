@@ -2687,10 +2687,12 @@ export class MemoryRepository {
     const pattern = prefix.replace(/[\\%_]/g, '\\$&') + '%';
     return this.db.readAtCut(cut, () =>
       this.snapshot(scope, async () => {
+        // SQL retention_class is AccountClass (these notices can be required),
+        // not the canonical retentionClass checked after admitted hydration.
         const candidates = `FROM mind_awareness a
           WHERE a.world_id=? AND a.actor_id=?
           AND (SELECT generation FROM world_head WHERE id=1)=?
-          AND a.retention_class='memory' AND a.agreement_key LIKE ? ESCAPE '\\'
+          AND a.agreement_key LIKE ? ESCAPE '\\'
           AND NOT EXISTS (SELECT 1 FROM mind_forgotten f
             WHERE f.world_id=a.world_id AND f.actor_id=a.actor_id AND f.source_id=a.source_id)
           AND NOT EXISTS (SELECT 1 FROM mind_corrections c
