@@ -18,6 +18,11 @@ import {
 export type NativePrivateHistoryPacket =
   | { readonly purpose: 'personal'; readonly scope: NativeNpcHistoricalScope }
   | {
+      readonly purpose: 'movements';
+      readonly scope: NativeNpcHistoricalScope;
+      readonly movementFamily: string;
+    }
+  | {
       readonly purpose: 'recent';
       readonly scope: NativeNpcHistoricalScope;
       readonly history: Pick<NativeHistoryInput, 'worldId' | 'generation' | 'baseCut' | 'cuts'>;
@@ -33,7 +38,11 @@ export class NativePrivateHistoryCapture {
     private packetValue: NativePrivateHistoryPacket | undefined,
   ) {}
 
-  static async capture(world: NativeWorld, actorId: string, purpose: 'recent' | 'personal') {
+  static async capture(
+    world: NativeWorld,
+    actorId: string,
+    purpose: 'recent' | 'personal' | 'movements',
+  ) {
     const read = await world.readHistory(actorId, purpose);
     try {
       return new NativePrivateHistoryCapture(
@@ -51,7 +60,7 @@ export class NativePrivateHistoryCapture {
     return this.packetValue;
   }
   tailRequest() {
-    if (this.facts.purpose === 'personal') return;
+    if (this.facts.purpose !== 'recent') return;
     const { scope } = this.facts;
     return scope.receiptPrefix.state === 'pending'
       ? {

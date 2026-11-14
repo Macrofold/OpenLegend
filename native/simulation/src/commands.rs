@@ -2,7 +2,7 @@
 //! protocol and binder retain their existing owner; unsupported input does not
 //! acquire a generic JSON execution path or silently lose optional parameters.
 
-use crate::state::SurfacePoint;
+use crate::state::RecordedSurfacePoint;
 use crate::values::{
     DefinitionPin, deserialize_present_option, deserialize_present_safe_integer,
     deserialize_safe_integer, is_safe_record_id,
@@ -180,7 +180,7 @@ pub(crate) enum NativeCommand {
     },
     Move {
         envelope: CommandEnvelope,
-        destination: SurfacePoint,
+        destination: RecordedSurfacePoint,
     },
     Say {
         envelope: CommandEnvelope,
@@ -243,7 +243,7 @@ macro_rules! optional {
         }
     }
 }
-optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:SurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String);
+optional!(cooperation:CooperationBinding,combat_help_id:String,human_initiated:bool,purpose:crate::text::JsText,chosen_purpose:PurposeBinding,destination:RecordedSurfacePoint,text:crate::text::JsText,target_id:String,target_role:SpeechTargetRole,self_introduction:crate::text::JsText,volume:String,definition_id:String,operation:StatusOperation,facing_heading:f64,resting_place_id:String,expected_action_id:String,distance:f64,weapon_item_id:String,auto_equip:bool,after:i64,method_after:u64,attempt_id:String);
 
 impl<'de> Deserialize<'de> for NativeCommand {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {

@@ -195,10 +195,16 @@ fn assemble_selected_core(
         activity_display_bytes,
         native_response,
         personal_evidence_preparation,
+        experience,
         mind,
         agency,
         actor_response,
     } = settings;
+    if !experience.protected_importance.is_finite()
+        || !(0.0..=10.0).contains(&experience.protected_importance)
+    {
+        return Err(InstallError::CurrentFormat.into());
+    }
     let encounter_batch_entries = usize::try_from(encounter_batch_entries)
         .ok()
         .filter(|n| *n > 0)
@@ -287,9 +293,6 @@ fn assemble_selected_core(
         },
         budget,
     )?;
-    physical.entities.fund_installed_actions(budget)?;
-    physical.entities.fund_installed_goals(budget)?;
-    physical.entities.fund_installed_intents(budget)?;
     content.fund(budget)?;
     let retained = install_retained(&mut import, &mut children, retained, &schema, budget)?;
     retained
@@ -358,6 +361,7 @@ fn assemble_selected_core(
         time_epsilon,
         response_settings: native_response,
         personal_evidence_preparation,
+        experience_settings: experience,
         mind_limits: mind,
         agency_limits: agency,
         actor_response_limits: actor_response,

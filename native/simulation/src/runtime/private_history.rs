@@ -10,6 +10,7 @@ use std::sync::atomic::AtomicBool;
 enum HistoryPurpose {
     Recent,
     Personal,
+    Movements,
 }
 
 pub struct RuntimePrivateHistoryRead {
@@ -19,6 +20,9 @@ pub struct RuntimePrivateHistoryRead {
     recording_gap: Option<crate::received::CoverageGap>,
     sources: Option<crate::capture::PreparedNpcSources>,
     places: Option<crate::capture::PreparedKnownPlaceSources>,
+    movements: Option<crate::capture::PreparedMovementTerms>,
+    personal_cut: Option<crate::capture::NpcPersonalScope>,
+    movement_family: Option<String>,
     candidate: Option<CandidateKey>,
     receipt_payload: Arc<AtomicBool>,
     _storage: ByteReservation,
@@ -48,6 +52,8 @@ impl RuntimePrivateHistoryRead {
             history: Option<H>,
             #[serde(skip_serializing_if = "Option::is_none")]
             recording_gap: &'a Option<crate::received::CoverageGap>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            movement_family: &'a Option<String>,
         }
         RuntimeJson::encode(
             &Packet {
@@ -55,6 +61,7 @@ impl RuntimePrivateHistoryRead {
                 scope: &self.scope,
                 history: self.history.as_ref().map(|history| history.value()),
                 recording_gap: &self.recording_gap,
+                movement_family: &self.movement_family,
             },
             budget,
         )
@@ -64,6 +71,14 @@ impl RuntimePrivateHistoryRead {
             self.sources
                 .as_ref()
                 .ok_or_else(|| failure("history sources unavailable"))?,
+            budget,
+        )
+    }
+    pub fn movements(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
+        RuntimeJson::encode(
+            self.movements
+                .as_ref()
+                .ok_or_else(|| failure("movement terms unavailable"))?,
             budget,
         )
     }
@@ -78,6 +93,7 @@ impl NativeWorldSession {
         let purpose = match purpose {
             "recent" => HistoryPurpose::Recent,
             "personal" => HistoryPurpose::Personal,
+            "movements" => HistoryPurpose::Movements,
             _ => return Err(failure("unknown history purpose")),
         };
         let serial = self
@@ -94,7 +110,7 @@ impl NativeWorldSession {
                     serial,
                     &self.budget,
                 ),
-                HistoryPurpose::Personal => {
+                HistoryPurpose::Personal | HistoryPurpose::Movements => {
                     crate::capture::NpcHistoricalScope::capture_history_personal(
                         state,
                         actor,
@@ -116,17 +132,35 @@ impl NativeWorldSession {
                 )
                 .map_err(failure)?,
             ),
-            HistoryPurpose::Personal => None,
+            HistoryPurpose::Personal | HistoryPurpose::Movements => None,
         };
-        let recording_gap = state
-            .temporal
-            .actor(actor)
-            .and_then(|actor| actor.header().recording_gap.clone());
+        let personal_cut = matches!(purpose, HistoryPurpose::Movements)
+            .then(|| crate::capture::NpcPersonalScope::capture(state, actor))
+            .transpose()
+            .map_err(failure)?;
+        let family = matches!(purpose, HistoryPurpose::Movements).then_some(
+            state
+                .installed
+                .ordinary_actions
+                .value()
+                .travel
+                .agreement_family
+                .as_str(),
+        );
+        let recording_gap = (!matches!(purpose, HistoryPurpose::Movements))
+            .then(|| {
+                state
+                    .temporal
+                    .actor(actor)
+                    .and_then(|actor| actor.header().recording_gap.clone())
+            })
+            .flatten();
         let storage = self
             .budget
             .reserve(
                 size_of::<RuntimePrivateHistoryRead>()
                     .checked_add(RuntimeNpcRead::receipt_liveness_backing_bytes())
+                    .and_then(|n| n.checked_add(family.map_or(0, str::len)))
                     .ok_or_else(|| failure("capacity"))?,
             )
             .map_err(failure)?;
@@ -138,6 +172,9 @@ impl NativeWorldSession {
             recording_gap,
             sources: None,
             places: None,
+            movements: None,
+            personal_cut,
+            movement_family: family.map(str::to_owned),
             candidate: None,
             receipt_payload: Arc::new(AtomicBool::new(true)),
             _storage: storage,
@@ -154,7 +191,11 @@ impl NativeWorldSession {
         input: &[u8],
     ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
-        if read.candidate.is_some() || read.sources.is_some() || read.places.is_some() {
+        if read.candidate.is_some()
+            || read.sources.is_some()
+            || read.places.is_some()
+            || read.movements.is_some()
+        {
             return Err(failure("history sources already selected or active"));
         }
         let _decode = decode_preparation(input, &self.budget)?;
@@ -164,6 +205,7 @@ impl NativeWorldSession {
             || match read.purpose {
                 HistoryPurpose::Recent => !selection.personal.is_empty(),
                 HistoryPurpose::Personal => !selection.receipts.is_empty(),
+                HistoryPurpose::Movements => true,
             }
         {
             return Err(failure("history sources do not match the captured purpose"));
@@ -187,6 +229,7 @@ impl NativeWorldSession {
             || read.candidate.is_some()
             || read.sources.is_some()
             || read.places.is_some()
+            || read.movements.is_some()
         {
             return Err(failure("history places already selected or wrong purpose"));
         }
@@ -199,6 +242,37 @@ impl NativeWorldSession {
         )
         .map_err(failure)?;
         read.places = Some(places);
+        Ok(())
+    }
+    /// The read's original personal coverage is captured before SQL. Its
+    /// repository answer may outlive save acknowledgement; never recapture a
+    /// newer cut here and mislabel it as the selection's original boundary.
+    pub fn admit_history_movements(
+        &self,
+        read: &mut RuntimePrivateHistoryRead,
+        input: &[u8],
+    ) -> Result<(), RuntimeError> {
+        self.require_active()?;
+        if !matches!(read.purpose, HistoryPurpose::Movements)
+            || read.candidate.is_some()
+            || read.sources.is_some()
+            || read.places.is_some()
+            || read.movements.is_some()
+        {
+            return Err(failure("movement terms already selected or wrong purpose"));
+        }
+        let state = &self.session.accepted().map_err(failure)?.state;
+        let terms = crate::capture::PreparedMovementTerms::prepare(
+            state,
+            Arc::clone(&read.scope),
+            read.personal_cut
+                .as_ref()
+                .ok_or_else(|| failure("movement terms have no original personal cut"))?,
+            input,
+            &self.budget,
+        )
+        .map_err(failure)?;
+        read.movements = Some(terms);
         Ok(())
     }
     pub fn step_history_sources(
@@ -265,7 +339,9 @@ impl NativeWorldSession {
         read: &RuntimePrivateHistoryRead,
     ) -> Result<Option<RuntimePrivateHistoryPublication>, RuntimeError> {
         self.session.accepted().map_err(failure)?;
-        if (read.sources.is_none() && read.places.is_none()) || !self.history_current(read)? {
+        if (read.sources.is_none() && read.places.is_none() && read.movements.is_none())
+            || !self.history_current(read)?
+        {
             return Ok(None);
         }
         // Source capture custody remains with the retained read/header. This

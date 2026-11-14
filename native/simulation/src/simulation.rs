@@ -84,6 +84,7 @@ pub(crate) struct InstalledWorld {
     pub time_epsilon: f64,
     pub response_settings: crate::install::ResponseSettings,
     pub personal_evidence_preparation: crate::install::PersonalEvidencePreparationSettings,
+    pub experience_settings: crate::install::ExperienceSettings,
     pub mind_limits: crate::cognition::MindLimits,
     pub agency_limits: crate::plans::AgencyLimits,
     pub actor_response_limits: crate::response::ResponseLimits,

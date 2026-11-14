@@ -37,8 +37,9 @@ mod npc_history;
 pub(crate) use npc_history::{NpcHistoricalScope, NpcHistoryPrefix};
 mod npc_sources;
 pub(crate) use npc_sources::{
-    NpcPersonalSelection, NpcSourceRows, NpcSourceSelection, NpcSourcesAnswer, NpcSourcesCursor,
-    NpcSourcesRequest, PreparedKnownPlaceSources, PreparedNpcSources,
+    NpcPersonalScope, NpcPersonalSelection, NpcSourceRows, NpcSourceSelection, NpcSourcesAnswer,
+    NpcSourcesCursor, NpcSourcesRequest, PreparedKnownPlaceSources, PreparedMovementTerms,
+    PreparedNpcSources,
 };
 mod npc_selection;
 pub(crate) use npc_selection::NpcObservationSelection;

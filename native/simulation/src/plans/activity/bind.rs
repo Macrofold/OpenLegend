@@ -56,8 +56,8 @@ pub(crate) fn bind_single_invoke(
     let destination = execution
         .bindings
         .get_text(argument)
-        .filter(|value| value.object_len() == Some(4))
         .ok_or(ExecutionError::UnsupportedFamily)?;
+    super::point(destination, true).map_err(|_| ExecutionError::UnsupportedFamily)?;
     let command = BoundMove {
         id,
         actor_id: actor,

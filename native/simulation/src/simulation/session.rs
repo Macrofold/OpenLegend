@@ -1026,7 +1026,7 @@ impl Session {
                     );
                     let publication = PreparedPublication::prepare(
                         &mut self.simulation.state,
-                        &preparing.journal,
+                        &mut preparing.journal,
                         &mut self.save,
                         &self.simulation.fence,
                         key,

@@ -117,7 +117,6 @@ impl ActivityExecution {
         let point = value
             .bindings
             .get_text(role)
-            .filter(|point| point.object_len() == Some(4))
             .ok_or(ExecutionError::UnsupportedFamily)?;
         super::point(point, true).map_err(|_| ExecutionError::UnsupportedFamily)?;
         // captureActivityTargets traverses actual command entity fields. A

@@ -413,13 +413,14 @@ impl TypedGroundingCursor {
         }
         .ok_or(ExecutionError::Capacity)?;
         let bytes = destination
+            .physical()
             .heap_bytes()
             .and_then(|n| n.checked_add(label_bytes))
             .ok_or(ExecutionError::Capacity)?;
         self.grow(bytes)?;
         let item = &mut self.items[self.index];
         let destination = match item.command.as_ref().ok_or(ExecutionError::Invariant)? {
-            NativeCommand::Move { destination, .. } => destination.clone(),
+            NativeCommand::Move { destination, .. } => destination.physical().clone(),
             _ => return Err(ExecutionError::Invariant),
         };
         item.prepared = Some(match item.syntax {

@@ -160,7 +160,26 @@ impl PhysicalMutation<'_> {
             .ok_or(ExecutionError::MissingEntity)?;
         let key = UndoKey::AgencyHistory(handle.slot, handle.generation);
         let first = self.journal.first(&key)?;
-        self.journal.reserve(2 * size_of::<Undo>())?;
+        // The old Vec moves into the inverse. Its own admission must survive
+        // the later canonical backing shrink, just like a copied plan inverse.
+        let before_bytes = if first {
+            self.state
+                .entities
+                .resolve(handle)
+                .and_then(|e| e.actor.as_ref())
+                .ok_or(ExecutionError::MissingActor)?
+                .agency
+                .history
+                .heap_bytes()
+                .ok_or(ExecutionError::Capacity)?
+        } else {
+            0
+        };
+        self.journal.reserve(
+            before_bytes
+                .checked_add(2 * size_of::<Undo>())
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
         let actor = self
             .state
             .entities

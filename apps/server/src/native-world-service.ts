@@ -84,7 +84,11 @@ import type { AppConfig } from './config.js';
 import { DATABASE_SCHEMA, digest, type SqlGameRepository } from './store.js';
 import { NativeCurrentOpening } from './native-current-opening.js';
 import { NativeDefinitionCapture } from './native-definition-capture.js';
-import { captureNativeReadCut, nativeScopedReadCut } from './native-read-cut.js';
+import {
+  captureNativeReadCut,
+  captureNativeScopedReadCut,
+  nativeScopedReadCut,
+} from './native-read-cut.js';
 import {
   captureNativeRetainedValues,
   type NativeRetainedValues,
@@ -1055,8 +1059,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         // mental/history read still share their exact initial accepted cut.
         if (choices) await capture.prepareChoices(this.world, this.geometry, choiceOptions);
         else choiceOptions.signal?.throwIfAborted();
-        const cut = nativeScopedReadCut(
-          await captureNativeReadCut(this.world, actorId),
+        const cut = await captureNativeScopedReadCut(this.world, actorId, () =>
           this.pending.liveReadCuts(),
         );
         if (capture.facts.self.acceptedCut !== cut.sequence) throw new ViewChangedError();
@@ -1220,8 +1223,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           this.assertAdmission();
           if (!permitted() || !capture.read.isCurrent())
             throw new HistoryCursorError('Memories changed. Browse or search again.');
-          const cut = nativeScopedReadCut(
-            await captureNativeReadCut(world, actorId),
+          const cut = await captureNativeScopedReadCut(world, actorId, () =>
             this.pending.liveReadCuts(),
           );
           try {
@@ -1367,8 +1369,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         const inventory = await this.lane.run(async () => {
           this.assertAdmission();
           if (!permitted() || !capture.read.isCurrent()) throw new ViewChangedError();
-          const cut = nativeScopedReadCut(
-            await captureNativeReadCut(world, actorId),
+          const cut = await captureNativeScopedReadCut(world, actorId, () =>
             this.pending.liveReadCuts(),
           );
           try {
@@ -1424,8 +1425,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     await this.whenDurable();
     return this.lane.run(async () => {
       this.assertAdmission();
-      const cut = nativeScopedReadCut(
-        await captureNativeReadCut(this.world, actorId),
+      const cut = await captureNativeScopedReadCut(this.world, actorId, () =>
         this.pending.liveReadCuts(),
       );
       return prepareNativeActivityLearning(this.world, actorId, this.geometry, {
@@ -1446,8 +1446,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     return this.lane.run(async () => {
       this.assertAdmission();
       signal.throwIfAborted();
-      const cut = nativeScopedReadCut(
-        await captureNativeReadCut(this.world, actorId),
+      const cut = await captureNativeScopedReadCut(this.world, actorId, () =>
         this.pending.liveReadCuts(),
       );
       const ticket = await this.world.bindConsolidation(body, binding);
@@ -1607,17 +1606,10 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     actorId: string,
     operation: (cut: LiveReadCuts) => Promise<T>,
   ): Promise<T> {
-    const capture = async () => {
-      this.assertAdmission();
-      return nativeScopedReadCut(
-        await captureNativeReadCut(this.world, actorId),
-        this.pending.liveReadCuts(),
-      );
-    };
     // A final publisher may revalidate SQL inside its already held short lane.
     // Only its live token permits reentry; an inherited expired async context
     // must acquire the lane normally before capturing a new accepted cut.
-    const cut = await this.atAcceptedBoundary(capture);
+    const cut = await this.captureActorMemoryReadCut(actorId);
     const world = this.world;
     try {
       return await this.withMemoryRead(cut, () =>
@@ -1632,6 +1624,17 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     } finally {
       releaseNativeProduct(cut);
     }
+  }
+
+  /** Capture alongside another native reader in the same accepted turn. The
+   * caller owns this exact cut until its SQL witnesses have been consumed. */
+  captureActorMemoryReadCut(actorId: string): Promise<LiveReadCuts> {
+    return this.atAcceptedBoundary(async () => {
+      this.assertAdmission();
+      return await captureNativeScopedReadCut(this.world, actorId, () =>
+        this.pending.liveReadCuts(),
+      );
+    });
   }
 
   /** Wait only before the semantic callback starts. A protected SQL wait leaves
@@ -2367,7 +2370,13 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             this.assertScope(request.scope, request.capability, request.controlling);
           const live = this.pending.liveReadCuts();
           const before = request.actorId
-            ? nativeScopedReadCut(await captureNativeReadCut(this.world, request.actorId), live)
+            ? nativeScopedReadCut(
+                await captureNativeReadCut(this.world, request.actorId).catch((error: unknown) => {
+                  releaseNativeProduct(live);
+                  throw error;
+                }),
+                live,
+              )
             : live;
           let staged: Awaited<ReturnType<NativePendingSave['prepareProtected']>> | undefined;
           let stagedOutput: object | undefined;
@@ -2985,7 +2994,13 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       this.assertAdmission();
       const live = this.pending.liveReadCuts();
       const before = request.actorId
-        ? nativeScopedReadCut(await captureNativeReadCut(this.world, request.actorId), live)
+        ? nativeScopedReadCut(
+            await captureNativeReadCut(this.world, request.actorId).catch((error: unknown) => {
+              releaseNativeProduct(live);
+              throw error;
+            }),
+            live,
+          )
         : live;
       let staged: Awaited<ReturnType<NativePendingSave['prepare']>> | undefined;
       let stagedActors: PreparedNativeActorRoster | undefined;
@@ -3456,8 +3471,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         } else {
           // A repeated canonical command does not emit its occurrence again.
           // Read that exact accepted original through the genuine pending cut.
-          const cut = nativeScopedReadCut(
-            await captureNativeReadCut(this.world, scope.actorId),
+          const cut = await captureNativeScopedReadCut(this.world, scope.actorId, () =>
             this.pending.liveReadCuts(),
           );
           event = await this.withMemoryRead(cut, () =>
@@ -4132,8 +4146,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             );
             let inputScope: WorldInputScope | undefined;
             try {
-              const cut = nativeScopedReadCut(
-                await captureNativeReadCut(this.world, scope.actorId),
+              const cut = await captureNativeScopedReadCut(this.world, scope.actorId, () =>
                 this.pending.liveReadCuts(),
               );
               if (captured.facts.self.acceptedCut !== cut.sequence) throw new ViewChangedError();
@@ -4466,8 +4479,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             releaseNativeProduct(request);
             return;
           }
-          const cut = nativeScopedReadCut(
-            await captureNativeReadCut(world, actorId),
+          const cut = await captureNativeScopedReadCut(world, actorId, () =>
             this.pending.liveReadCuts(),
           );
           if (cut.sequence !== request.acceptedCut) throw new ViewChangedError();

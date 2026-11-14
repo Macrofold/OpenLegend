@@ -91,6 +91,10 @@ impl NativeWorldPrivateHistoryRead {
     pub fn sources<'a>(&self, env: &'a Env) -> Result<Object<'a>> {
         self.product(env, RuntimePrivateHistoryRead::sources)
     }
+    #[napi(ts_return_type = "Promise<NativeWorldJson>")]
+    pub fn movements<'a>(&self, env: &'a Env) -> Result<Object<'a>> {
+        self.product(env, RuntimePrivateHistoryRead::movements)
+    }
     #[napi]
     pub fn is_current(&self) -> bool {
         if self.inner.released.load(Ordering::Acquire) {
@@ -230,6 +234,47 @@ fn turn_sources(
         }
     }
 }
+impl NativeWorld {
+    fn admit_history_sources<'a>(
+        &self,
+        env: &'a Env,
+        read: &NativeWorldPrivateHistoryRead,
+        bytes: BufferSlice<'_>,
+        admit: fn(
+            &NativeWorldSession,
+            &mut RuntimePrivateHistoryRead,
+            &[u8],
+        ) -> std::result::Result<(), openlegend_simulation::runtime::RuntimeError>,
+    ) -> Result<Object<'a>> {
+        if !Weak::ptr_eq(&read.world, &Arc::downgrade(&self.world)) {
+            return Err(failure("private history belongs to another native writer"));
+        }
+        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let read = Arc::clone(&read.inner);
+        self.compute(env, move |session, _cancel, _budget| {
+            let _custody = custody;
+            let mut owner = read
+                .read
+                .try_lock()
+                .map_err(|_| failure("private history read is busy"))?;
+            if read.released.load(Ordering::Acquire) {
+                return Err(failure("private history read was released"));
+            }
+            let result = admit(
+                session,
+                owner
+                    .as_mut()
+                    .ok_or_else(|| failure("private history read was released"))?,
+                &bytes,
+            )
+            .map_err(operation_error);
+            if read.released.load(Ordering::Acquire) {
+                *owner = None;
+            }
+            result
+        })
+    }
+}
 #[napi]
 impl NativeWorld {
     #[napi(ts_return_type = "Promise<void>")]
@@ -239,33 +284,21 @@ impl NativeWorld {
         read: &NativeWorldPrivateHistoryRead,
         bytes: BufferSlice<'_>,
     ) -> Result<Object<'a>> {
-        if !Weak::ptr_eq(&read.world, &Arc::downgrade(&self.world)) {
-            return Err(failure("place history belongs to another native writer"));
-        }
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
-        let read = Arc::clone(&read.inner);
-        self.compute(env, move |session, _cancel, _budget| {
-            let _custody = custody;
-            let mut owner = read
-                .read
-                .try_lock()
-                .map_err(|_| failure("place history read is busy"))?;
-            if read.released.load(Ordering::Acquire) {
-                return Err(failure("place history read was released"));
-            }
-            let result = session
-                .admit_history_places(
-                    owner
-                        .as_mut()
-                        .ok_or_else(|| failure("place history read was released"))?,
-                    &bytes,
-                )
-                .map_err(operation_error);
-            if read.released.load(Ordering::Acquire) {
-                *owner = None;
-            }
-            result
-        })
+        self.admit_history_sources(env, read, bytes, NativeWorldSession::admit_history_places)
+    }
+    #[napi(ts_return_type = "Promise<void>")]
+    pub fn history_movement_sources<'a>(
+        &self,
+        env: &'a Env,
+        read: &NativeWorldPrivateHistoryRead,
+        bytes: BufferSlice<'_>,
+    ) -> Result<Object<'a>> {
+        self.admit_history_sources(
+            env,
+            read,
+            bytes,
+            NativeWorldSession::admit_history_movements,
+        )
     }
     #[napi(ts_return_type = "Promise<NativeWorldPrivateHistoryRead>")]
     pub fn read_history<'a>(

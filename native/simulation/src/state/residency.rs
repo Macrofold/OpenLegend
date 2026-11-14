@@ -3,7 +3,7 @@
 //! covers semantic continuation; remaining physical components join this owner.
 use super::*;
 use crate::execution::ExecutionError;
-use crate::host::retained_size::{HeapBytes, heap_record};
+use crate::host::retained_size::{HeapBytes, heap_record, heap_sum};
 use crate::host::{ByteBudget, ByteReservation, ResidentReservation};
 mod authored;
 mod status;
@@ -42,6 +42,7 @@ pub(super) struct EntityMetadata {
     _authored: ResidentReservation,
     values: status::ValueStorage,
     semantic: usize,
+    agency: usize,
     participation: usize,
     operational: usize,
     storage: ResidentReservation,
@@ -50,6 +51,7 @@ pub(super) struct EntityMetadata {
 impl EntityMetadata {
     pub(super) fn new(entity: &Entity, budget: &ByteBudget) -> Result<Self, ExecutionError> {
         let semantic = semantic_bytes(entity)?;
+        let agency = agency_bytes(entity)?;
         let participation = participation_bytes(entity)?;
         let operational = operational_bytes(entity)?;
         Ok(Self {
@@ -57,11 +59,13 @@ impl EntityMetadata {
             _authored: budget
                 .reserve_record(authored::bytes(entity).ok_or(ExecutionError::Capacity)?)?,
             semantic,
+            agency,
             participation,
             operational,
             storage: budget.reserve_backing(
                 semantic
-                    .checked_add(participation)
+                    .checked_add(agency)
+                    .and_then(|n| n.checked_add(participation))
                     .and_then(|n| n.checked_add(operational))
                     .ok_or(ExecutionError::Capacity)?,
             )?,
@@ -97,7 +101,65 @@ fn semantic_bytes(entity: &Entity) -> Result<usize, ExecutionError> {
         .ok_or(ExecutionError::Capacity)
 }
 
+fn agency_bytes(entity: &Entity) -> Result<usize, ExecutionError> {
+    entity
+        .actor
+        .as_ref()
+        .map_or(Some(0), |actor| {
+            // Semantic continuation, goals and pending intentions already have
+            // their own resident owners. These remaining buffers move through
+            // the physical candidate journal before joining this backing.
+            heap_sum([
+                actor.agency.plan.heap_bytes()?,
+                actor.agency.suspended.heap_bytes()?,
+                actor.agency.history.heap_bytes()?,
+                actor.agency.places.heap_bytes()?,
+                actor.agency.last_result_evidence.heap_bytes()?,
+            ])
+        })
+        .ok_or(ExecutionError::Capacity)
+}
+
 impl EntityStore {
+    pub(crate) fn settle_agency_memory(
+        &mut self,
+        handle: EntityHandle,
+        from: &mut ByteReservation,
+        restoring: bool,
+    ) -> Result<(), ExecutionError> {
+        let slot = self
+            .slots
+            .get_mut(handle.slot)
+            .filter(|slot| slot.generation == handle.generation)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let after = agency_bytes(slot.entity.as_ref().ok_or(ExecutionError::MissingEntity)?)?;
+        let metadata = slot
+            .metadata_storage
+            .as_mut()
+            .ok_or(ExecutionError::Invariant)?;
+        let total = metadata
+            .storage
+            .bytes()
+            .checked_sub(metadata.agency)
+            .and_then(|n| n.checked_add(after))
+            .ok_or(ExecutionError::Capacity)?;
+        if total > metadata.storage.bytes() {
+            let growth = from.split_off(total - metadata.storage.bytes())?;
+            if restoring {
+                metadata
+                    .budget
+                    .restore_backing(&mut metadata.storage, growth)?;
+            } else {
+                metadata
+                    .budget
+                    .fund_backing(&mut metadata.storage, growth)?;
+            }
+        }
+        metadata.storage.resize(total)?;
+        metadata.agency = after;
+        Ok(())
+    }
+
     pub(crate) fn settle_operational_memory(
         &mut self,
         handle: EntityHandle,

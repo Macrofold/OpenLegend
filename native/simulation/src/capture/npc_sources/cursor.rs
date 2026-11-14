@@ -65,14 +65,14 @@ impl NpcSourcesAnswer {
 /// This is the actual Sources preparation cut; it never advances the older
 /// temporal receipt prefix or turns personal sequence into a universal clock.
 #[derive(Clone)]
-pub(super) struct NpcPersonalScope {
+pub(crate) struct NpcPersonalScope {
     pub(super) at: f64,
     pub(super) identity_through: u64,
     pub(super) accepted_cut: u64,
     coverage: [Option<crate::experience::SourceCoverage>; 3],
 }
 impl NpcPersonalScope {
-    pub(super) fn capture(state: &SimulationState, actor: &str) -> Result<Self, ExecutionError> {
+    pub(crate) fn capture(state: &SimulationState, actor: &str) -> Result<Self, ExecutionError> {
         let coverage = |kind| {
             state
                 .experience

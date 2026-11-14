@@ -9,6 +9,7 @@ use crate::host::retained_size::{HeapBytes, heap_sum};
 use crate::host::{ByteBudget, CandidateKey};
 use crate::native_refuge::RefugeRoute;
 use crate::native_response::{LocomotionMode, NativeLocomotion};
+use crate::state::SurfacePoint;
 use std::mem::size_of;
 
 impl HeapBytes for NativeMovementInput {
@@ -160,7 +161,7 @@ pub(crate) fn begin_native_movement(
             purpose: None,
             chosen_purpose: None,
         },
-        destination: route.candidate.point.clone(),
+        destination: route.candidate.point.clone().into(),
     };
     let binding = NativeLocomotion {
         profile: pin.clone(),

@@ -9,6 +9,8 @@ mod action_storage;
 mod agency;
 mod goal_storage;
 mod intent_storage;
+mod recorded_surface_point;
+pub use recorded_surface_point::RecordedSurfacePoint;
 mod residency;
 use crate::identity::MAX_SAFE_INTEGER;
 use crate::values::{
@@ -774,7 +776,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub destination: Option<SurfacePoint>,
+    pub destination: Option<RecordedSurfacePoint>,
     pub path: Vec<SurfacePoint>,
     #[serde(
         default,
@@ -941,7 +943,7 @@ impl Action {
     }
     pub(crate) fn movement(
         id: String,
-        destination: SurfacePoint,
+        destination: RecordedSurfacePoint,
         path: Vec<SurfacePoint>,
         approaching: bool,
         navigation: Option<NavigationPending>,

@@ -52,7 +52,7 @@ pub(crate) struct PreparedPublication {
 impl PreparedPublication {
     pub(crate) fn prepare(
         state: &mut SimulationState,
-        journal: &CandidateJournal,
+        journal: &mut CandidateJournal,
         save: &mut SaveJournal,
         fence: &Arc<CandidateFence>,
         key: CandidateKey,

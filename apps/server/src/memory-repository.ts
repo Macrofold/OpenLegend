@@ -1,5 +1,6 @@
 import { temporalReadSourceRevoked } from '@open-legend/domain';
-import { parseSourceJson } from './native-source-preparation.js';
+import { fundNativeSourceWorkspace, parseSourceJson } from './native-source-preparation.js';
+import type { LiveReadCuts } from './live-read-overlay.js';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import {
   admitMemoryReading,
@@ -21,7 +22,7 @@ import {
   objectIndexEntriesAfter,
   type ObjectIndexNode,
 } from '@open-legend/domain';
-import { nativeText } from '@open-legend/domain';
+import { jsonByteLength, nativeText } from '@open-legend/domain';
 import {
   newTemporalSourceWatch,
   temporalWatchChanges,
@@ -2652,6 +2653,96 @@ export class MemoryRepository {
       return capsule;
     });
     return capsules;
+  }
+
+  /** Complete received agreement heads at the caller's original accepted cut.
+   * The existing key also covers non-personal agreement events, so hydrate the
+   * bounded family subset before applying the exact personal flag. Never infer
+   * this list from the open-head startup selection or the live social owner.
+   * packages/domain/src/personal-social.ts#personallyReceived */
+  async personalAgreementSources(
+    scope: MemoryScope,
+    cut: LiveReadCuts,
+    options: { family: string; maximumTransferBytes: number },
+  ): Promise<
+    Array<{
+      row: Record<string, unknown>;
+      firstPosition: number;
+      reference: PersonalSourceRef;
+    }>
+  > {
+    if (!this.db.readAtCut || cut.worldId !== scope.worldId || cut.generation !== scope.generation)
+      throw new MemoryPreparationError();
+    const prefix = JSON.stringify([options.family]).slice(0, -1) + ',';
+    const pattern = prefix.replace(/[\\%_]/g, '\\$&') + '%';
+    return this.db.readAtCut(cut, () =>
+      this.snapshot(scope, async () => {
+        const candidates = `FROM mind_awareness a
+          WHERE a.world_id=? AND a.actor_id=?
+          AND (SELECT generation FROM world_head WHERE id=1)=?
+          AND a.retention_class='memory' AND a.agreement_key LIKE ? ESCAPE '\\'
+          AND NOT EXISTS (SELECT 1 FROM mind_forgotten f
+            WHERE f.world_id=a.world_id AND f.actor_id=a.actor_id AND f.source_id=a.source_id)
+          AND NOT EXISTS (SELECT 1 FROM mind_corrections c
+            WHERE c.world_id=a.world_id AND c.actor_id=a.actor_id AND c.source_id=a.source_id)`;
+        const params = [...this.params(scope), pattern];
+        // These are the existing complete-preparation limits, not retention
+        // limits. The SQL adapter separately admits the real raw-row transfer.
+        const size = await this.db
+          .prepare(
+            `SELECT COUNT(*) AS count,COALESCE(SUM(octet_length(a.payload)),0) AS bytes ${candidates}`,
+          )
+          .get(...params);
+        const count = Number(size?.['count'] ?? 0);
+        if (
+          count > RETRIEVAL_ROWS ||
+          Number(size?.['bytes'] ?? 0) > Math.min(RETRIEVAL_BYTES, options.maximumTransferBytes)
+        )
+          throw new MemoryPreparationError();
+        const rows = await this.db
+          .prepare(`SELECT a.* ${candidates} ORDER BY a.position,a.id`)
+          .all(...params);
+        if (rows.length !== count) throw new MemoryPreparationError();
+        fundNativeSourceWorkspace(2 * 256 + rows.length * (3 * 256 + 7 * 512));
+        const selected = new Map<
+          string,
+          { row: Record<string, unknown>; firstPosition: number; reference: PersonalSourceRef }
+        >();
+        for (const row of rows) {
+          if (typeof row['payload'] !== 'string') throw new MemoryPreparationError();
+          const entry = parseSourceJson<Awareness>(row['payload']);
+          if (
+            entry.retentionClass !== 'memory' ||
+            entry.eventData?.personalAgreement !== true ||
+            typeof entry.eventData.agreement !== 'string'
+          )
+            continue;
+          const key = row['agreement_key'],
+            id = row['source_id'],
+            revision = row['account_revision'],
+            position = Number(row['position']);
+          if (
+            typeof key !== 'string' ||
+            typeof id !== 'string' ||
+            typeof revision !== 'string' ||
+            !Number.isSafeInteger(position) ||
+            position < 0
+          )
+            throw new MemoryPreparationError();
+          // Map replacement selects the latest awareness position without
+          // moving this agreement's first eligible insertion position.
+          selected.set(key, {
+            row,
+            firstPosition: selected.get(key)?.firstPosition ?? position,
+            reference: { kind: 'awareness', id, revision },
+          });
+        }
+        const result = [...selected.values()];
+        if (jsonByteLength(result, { cache: false }) > options.maximumTransferBytes)
+          throw new MemoryPreparationError();
+        return result;
+      }),
+    );
   }
 
   /** Latest eligible disclosure per item, including sources outside the resident

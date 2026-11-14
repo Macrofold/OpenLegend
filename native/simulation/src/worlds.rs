@@ -21,6 +21,8 @@ pub(crate) mod base_decision_offers;
 #[path = "../../../packages/domain/src/worlds/base/native/outings.rs"]
 pub(crate) mod base_outings;
 pub(crate) use base_outings::{
+    MovementTerms as InstalledMovementTerms, MovementTermsKind as InstalledMovementTermsKind,
+    MovementTermsStatus as InstalledMovementTermsStatus,
     OutingFacts as InstalledOutingFacts, OutingKind as InstalledOutingKind,
     OutingStatus as InstalledOutingStatus, inspect as inspect_selected_outing,
 };

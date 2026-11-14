@@ -21,6 +21,7 @@ import {
 } from './world-modules.js';
 import type { WorldState } from './types.js';
 import { PERSONAL_EVIDENCE_PREPARATION } from './experience-source.js';
+import { EXPERIENCE_LIMITS } from './experience.js';
 import { MIND_LIMITS } from './mind.js';
 import { AGENCY_LIMITS } from './agency.js';
 import { AUTOMATIC_ENCOUNTER_BATCH_ENTRIES } from './event-batch-limits.js';
@@ -83,6 +84,7 @@ export const nativeSetupSettings = immutableDataSnapshot({
   activityDisplayBytes: ACTIVITY_DISPLAY_BYTES,
   nativeResponse: NATIVE_RESPONSE_LIMITS,
   personalEvidencePreparation: PERSONAL_EVIDENCE_PREPARATION,
+  experience: { protectedImportance: EXPERIENCE_LIMITS.protectedImportance },
   mind: MIND_LIMITS,
   agency: AGENCY_LIMITS,
   encounterBatchEntries: AUTOMATIC_ENCOUNTER_BATCH_ENTRIES,

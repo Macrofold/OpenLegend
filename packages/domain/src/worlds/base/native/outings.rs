@@ -10,6 +10,12 @@ use indexmap::IndexMap;
 
 #[path = "outings/travel.rs"]
 mod travel;
+#[path = "outings/personal_terms.rs"]
+mod personal_terms;
+pub(crate) use personal_terms::{MovementTerms, MovementTermsKind, MovementTermsStatus};
+#[path = "outings/travel_notice.rs"]
+mod travel_notice;
+pub(crate) use travel_notice::{TravelNoticeCause, TravelNoticeEnding, TravelNoticePreparation};
 #[path = "outings/travel_accept.rs"]
 mod travel_accept;
 #[path = "outings/travel_work.rs"]

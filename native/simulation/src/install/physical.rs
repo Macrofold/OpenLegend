@@ -149,6 +149,13 @@ pub(crate) struct PersonalEvidencePreparationSettings {
 }
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct ExperienceSettings {
+    /// The Source account-retention owner supplies this once. Native event
+    /// producers must not copy its protection threshold as another default.
+    pub protected_importance: f64,
+}
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct NativeSetupSettings {
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub encounter_batch_entries: u64,
@@ -164,6 +171,7 @@ pub(crate) struct NativeSetupSettings {
     pub activity_display_bytes: u64,
     pub native_response: ResponseSettings,
     pub personal_evidence_preparation: PersonalEvidencePreparationSettings,
+    pub experience: ExperienceSettings,
     pub mind: crate::cognition::MindLimits,
     pub agency: crate::plans::AgencyLimits,
     pub actor_response: crate::response::ResponseLimits,

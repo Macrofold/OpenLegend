@@ -335,8 +335,8 @@ impl CandidateJournal {
         self.acquisitions.require_closed()
     }
     pub(crate) fn prepare_release(
-        &self,
-        state: &SimulationState,
+        &mut self,
+        state: &mut SimulationState,
         candidate: CandidateKey,
     ) -> Result<PreparedJournalRelease, ExecutionError> {
         self.require_closed_operations()?;
@@ -346,6 +346,7 @@ impl CandidateJournal {
         {
             return Err(ExecutionError::InvalidCheckpoint);
         }
+        self.physical.settle_agency_memory(&mut state.physical)?;
         Ok(PreparedJournalRelease {
             owner: self.owner.clone(),
             candidate,
@@ -1656,6 +1657,54 @@ impl PhysicalJournal {
         }
         Ok(())
     }
+    fn agency_handle(frame: &Frame, key: &UndoKey) -> Option<EntityHandle> {
+        let (slot, generation) = match key {
+            UndoKey::AgencyPlan(slot, generation)
+            | UndoKey::AgencySuspended(slot, generation)
+            | UndoKey::AgencyHistory(slot, generation)
+            | UndoKey::AgencyPlaces(slot, generation)
+            | UndoKey::ResultEvidence(slot, generation) => (*slot, *generation),
+            _ => return None,
+        };
+        // Existing sparse write keys suffice. A fixed precedence visits each
+        // actor once without another dirty registry or a repeated plan scan.
+        let keys = [
+            UndoKey::AgencyPlan(slot, generation),
+            UndoKey::AgencySuspended(slot, generation),
+            UndoKey::AgencyHistory(slot, generation),
+            UndoKey::AgencyPlaces(slot, generation),
+            UndoKey::ResultEvidence(slot, generation),
+        ];
+        (keys.iter().find(|candidate| frame.written.contains(*candidate)) == Some(key))
+            .then_some(EntityHandle { slot, generation })
+    }
+    fn settle_agency_frame(
+        state: &mut PhysicalState,
+        frame: &Frame,
+        reservation: &mut ByteReservation,
+        restoring: bool,
+    ) -> Result<(), ExecutionError> {
+        for key in &frame.written {
+            let Some(handle) = Self::agency_handle(frame, key) else {
+                continue;
+            };
+            // A root inverse may already have removed a body created within
+            // that candidate, including its whole metadata allocation owner.
+            if restoring && state.entities.resolve(handle).is_none() {
+                continue;
+            }
+            state
+                .entities
+                .settle_agency_memory(handle, reservation, restoring)?;
+        }
+        Ok(())
+    }
+    fn settle_agency_memory(&mut self, state: &mut PhysicalState) -> Result<(), ExecutionError> {
+        let [frame] = self.frames.as_slice() else {
+            return Err(ExecutionError::InvalidCheckpoint);
+        };
+        Self::settle_agency_frame(state, frame, &mut self.reservation, false)
+    }
     pub(crate) fn keep(&mut self, checkpoint: PhysicalCheckpoint) -> Result<(), ExecutionError> {
         self.prepare_keep(checkpoint)?;
         let child = self.frames.pop().ok_or(ExecutionError::InvalidCheckpoint)?;
@@ -2188,6 +2237,11 @@ impl PhysicalJournal {
                 Undo::Work(undo) => state.work.rollback(undo)?,
             }
         }
+        // Only root publication settles this aggregate backing. A child
+        // rollback must not adopt its parent's still-tentative plan buffers.
+        if frame.serial == 0 {
+            Self::settle_agency_frame(state, &frame, &mut self.reservation, true)?;
+        }
         self.changes.truncate(frame.changes_start);
         frame.clock.restore(state);
         // A rejected private candidate issued nothing. High-water preservation
@@ -2469,7 +2523,30 @@ impl PhysicalMutation<'_> {
         }
         let key = UndoKey::ResultEvidence(handle.slot, handle.generation);
         let first = self.journal.first(&key)?;
-        self.journal.reserve(size_of::<Undo>() * 2)?;
+        let before_bytes = if first {
+            self.state
+                .entities
+                .resolve(handle)
+                .and_then(|e| e.actor.as_ref())
+                .ok_or(ExecutionError::MissingActor)?
+                .agency
+                .last_result_evidence
+                .heap_bytes()
+                .ok_or(ExecutionError::Capacity)?
+        } else {
+            0
+        };
+        // Producers keep their construction guards. This setter additionally
+        // owns the moved incoming value and first inverse until publication
+        // transfers canonical custody; no caller-specific scope may end it.
+        self.journal.reserve(
+            heap_sum([
+                2 * size_of::<Undo>(),
+                before_bytes,
+                evidence.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            ])
+            .ok_or(ExecutionError::Capacity)?,
+        )?;
         self.journal
             .undo
             .try_reserve(1)

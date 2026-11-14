@@ -37,6 +37,12 @@ impl ExactObject {
         self.members.into_iter()
     }
     fn decode(source: &str) -> Result<Self, serde_json::Error> {
+        Self::from_members(Self::decode_members(source, &[])?, source.len())
+    }
+    fn decode_members(
+        source: &str,
+        unique: &[&str],
+    ) -> Result<Vec<(JsText, SqlCell)>, serde_json::Error> {
         let invalid = || {
             serde_json::Error::io(std::io::Error::new(
                 std::io::ErrorKind::InvalidData,
@@ -44,6 +50,9 @@ impl ExactObject {
             ))
         };
         let bytes = source.as_bytes();
+        if bytes.first() != Some(&b'{') {
+            return Err(invalid());
+        }
         let mut at = 1usize;
         let whitespace = |at: &mut usize| {
             while bytes
@@ -53,7 +62,7 @@ impl ExactObject {
                 *at += 1;
             }
         };
-        let mut members: Vec<(JsText, SqlCell)> = Vec::new();
+        let mut members: IndexMap<JsText, SqlCell> = IndexMap::new();
         loop {
             whitespace(&mut at);
             if bytes.get(at) == Some(&b'}') {
@@ -91,10 +100,13 @@ impl ExactObject {
             let value = stream.next().ok_or_else(invalid)??;
             at += stream.byte_offset();
             let value = serde_json::from_str(value.get())?;
-            if let Some((_, prior)) = members.iter_mut().find(|(prior, _)| prior == &key) {
+            if let Some(prior) = members.get_mut(&key) {
+                if key.as_unicode().is_some_and(|key| unique.contains(&key)) {
+                    return Err(invalid());
+                }
                 *prior = value;
             } else {
-                members.push((key, value));
+                members.insert(key, value);
             }
             whitespace(&mut at);
             match bytes.get(at) {
@@ -112,7 +124,7 @@ impl ExactObject {
         if at != bytes.len() {
             return Err(invalid());
         }
-        Self::from_members(members, source.len())
+        Ok(members.into_iter().collect())
     }
     fn from_members(
         mut members: Vec<(JsText, SqlCell)>,
@@ -183,6 +195,16 @@ impl PartialEq for SqlCell {
     }
 }
 impl SqlCell {
+    /// Reuse the exact-key scanner for a typed record that admits extra
+    /// properties but must retain duplicate rejection for its known fields.
+    /// Ordinary objects need no cached whole-object encoding at this boundary.
+    pub(crate) fn decode_object_members(
+        source: &str,
+        unique: &[&str],
+    ) -> Result<Vec<(JsText, Self)>, serde_json::Error> {
+        ExactObject::decode_members(source, unique)
+    }
+
     /// Consume trusted unique members whose body, map and encoding workspace
     /// the semantic caller has admitted. Preserve exact JavaScript keys without
     /// building an otherwise unused encoding for an ordinary Unicode object.

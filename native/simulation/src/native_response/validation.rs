@@ -310,7 +310,10 @@ pub(crate) fn validate_native_response(
                     || episode.movement.as_ref().is_none_or(|movement| {
                         movement.kind != MovementKind::Action || movement.id != action.id
                     })
-                    || action.destination.as_ref() != Some(&refuge.point)
+                    || action
+                        .destination
+                        .as_ref()
+                        .is_none_or(|point| point != &refuge.point)
                     || binding.profile != episode.profile_pin
                     || binding.locomotion != episode.locomotion
                 {

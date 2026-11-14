@@ -39,6 +39,21 @@ export async function captureNativeReadCut(world: NativeWorld, actorId: string) 
   );
 }
 
+/** Admit the pending half only after the native capture completes. A refusal
+ * constructing that half must also release the already admitted native body. */
+export async function captureNativeScopedReadCut(
+  world: NativeWorld,
+  actorId: string,
+  pending: () => LiveReadCuts,
+): Promise<LiveReadCuts> {
+  const captured = await captureNativeReadCut(world, actorId);
+  try {
+    return nativeScopedReadCut(captured, pending());
+  } finally {
+    releaseNativeProduct(captured);
+  }
+}
+
 /** Join real pre-Ready accepted products with the save owner's current scoped
  * page preview. A missing/stale Node publication cannot become an empty SQL
  * overlay merely because the durable database still contains older rows. */

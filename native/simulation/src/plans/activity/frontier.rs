@@ -203,10 +203,7 @@ fn command_matches(
         && envelope.cooperation == invocation.execution.cooperation
         && envelope.combat_help_id == invocation.execution.combat_help_id
         && envelope.human_initiated == invocation.execution.human_initiated
-        && point.get("x").and_then(SqlCell::as_f64) == Some(destination.x)
-        && point.get("y").and_then(SqlCell::as_f64) == Some(destination.y)
-        && point.get("z").and_then(SqlCell::as_f64) == Some(destination.z)
-        && point.get("surfaceId").and_then(SqlCell::as_str) == Some(destination.surface_id.as_str())
+        && destination.matches_cell(point)
 }
 
 /// Append the real bound leaf, without dispatch, result/evidence creation or a

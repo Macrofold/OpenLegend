@@ -221,8 +221,10 @@ export function validatePersonalSocial(
       !isSafeRecordId(record.recipientId) ||
       ![record.proposerId, record.recipientId].includes(actorId) ||
       record.proposerId === record.recipientId ||
-      !['travel', 'combat-help'].includes(String(record.kind)) ||
-      !['pending', 'traveling', 'helping', 'ended'].includes(String(record.status)) ||
+      typeof record.kind !== 'string' ||
+      !['travel', 'combat-help'].includes(record.kind) ||
+      typeof record.status !== 'string' ||
+      !['pending', 'traveling', 'helping', 'ended'].includes(record.status) ||
       typeof record.ownArrived !== 'boolean' ||
       !hasRecordFields(record.destination, ['label'], record.kind === 'travel' ? ['point'] : []) ||
       typeof record.destination.label !== 'string' ||
@@ -273,7 +275,8 @@ export function validatePersonalSocial(
       !Array.isArray(record.descriptions.requested) ||
       record.descriptions.requested.length !== record.requested.length ||
       (record.cause !== undefined && typeof record.cause !== 'string') ||
-      !['pending', 'ended'].includes(String(record.status)) ||
+      typeof record.status !== 'string' ||
+      !['pending', 'ended'].includes(record.status) ||
       (record.status === 'ended') !== (typeof record.cause === 'string') ||
       (record.constructionUse !== undefined &&
         (record.offered.length !== 1 ||

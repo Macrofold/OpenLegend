@@ -290,7 +290,7 @@ impl MoveAdvanceCursor {
                                 .ok_or(ExecutionError::Capacity)?,
                         )?;
                         let mut path = Vec::with_capacity(1);
-                        path.push(destination.clone());
+                        path.push(destination.physical().clone());
                         RoutePlan::Reached {
                             path,
                             length: 0.0,
@@ -590,7 +590,7 @@ impl MoveAdvanceCursor {
                         surface_id: surface.into(),
                     };
                     let body = entity.body_profile().into_owned();
-                    let to = to.clone();
+                    let to = to.physical().clone();
                     self.binding.serial = core.journal.next_provider_serial()?;
                     let mut queries = GeometryQueries::new(self.binding);
                     if blind {

@@ -5,7 +5,10 @@ use super::{PhysicalDefinitions, validate_body_references, validate_entity};
 use crate::host::{ByteBudget, ByteReservation};
 use crate::install::rows;
 use crate::install::{InstallError, RowImport};
-use crate::state::{Entity, EntityStore, WorkState};
+use crate::state::{
+    Action, ActorAgency, Entity, EntityStore, Goal, RecordedSurfacePoint, RememberedPlace,
+    ResolvedSemanticCause, SurfacePoint, WorkState, Yield,
+};
 use crate::values::NativeValueWindow;
 use crate::values::{AttributeState, StatusInstance};
 use indexmap::IndexMap;
@@ -375,9 +378,9 @@ fn entity(import: &mut RowImport, value: &mut RawRecord, id: &str) -> Result<(),
         plain,
     )
 }
-// Only these typed leaf allocations belong to this owner. Other entity raw
+// Only these typed role allocations belong to this owner. Other entity raw
 // assembly/typed fields retain their separate admission obligations.
-type ValueDecode = [Option<ByteReservation>; 3];
+type ValueDecode = [Option<ByteReservation>; 5];
 fn value_decode(value: &RawRecord, budget: &ByteBudget) -> Result<ValueDecode, InstallError> {
     fn attributes(
         raw: Option<&RawValue>,
@@ -398,8 +401,12 @@ fn value_decode(value: &RawRecord, budget: &ByteBudget) -> Result<ValueDecode, I
     struct ActorAttributes<'a> {
         #[serde(borrow)]
         attributes: Option<&'a RawValue>,
+        #[serde(borrow)]
+        action: Option<&'a RawValue>,
+        #[serde(borrow)]
+        agency: Option<&'a RawValue>,
     }
-    // Borrow this one child. Unknown actor fields are skipped by the JSON
+    // Borrow only these children. Unknown actor fields are skipped by the JSON
     // deserializer rather than materialized into another actor/value graph.
     let actor = value
         .get("actor")
@@ -407,6 +414,60 @@ fn value_decode(value: &RawRecord, budget: &ByteBudget) -> Result<ValueDecode, I
         .map(|raw| {
             serde_json::from_str::<ActorAttributes<'_>>(raw.get())
                 .map_err(|_| InstallError::CurrentFormat)
+        })
+        .transpose()?;
+    let point_entry = RecordedSurfacePoint::decode_map_entry_bytes()
+        .ok_or(InstallError::Capacity)?;
+    let action = actor
+        .as_ref()
+        .and_then(|actor| actor.action)
+        .filter(|raw| raw.get().trim() != "null")
+        .map(|raw| {
+            crate::install::reserve_typed_parse::<Action>(
+                raw.get(),
+                [
+                    size_of::<SurfacePoint>(),
+                    size_of::<Yield>(),
+                    size_of::<Value>(),
+                    size_of::<crate::records::SqlCell>(),
+                    size_of::<(crate::text::JsText, crate::records::SqlCell)>(),
+                ]
+                .into_iter()
+                .max()
+                .unwrap_or(0),
+                Some(point_entry.max(size_of::<(usize, String, Value)>())),
+                budget,
+            )
+        })
+        .transpose()?;
+    let agency = actor
+        .as_ref()
+        .and_then(|actor| actor.agency)
+        .filter(|raw| raw.get().trim() != "null")
+        .map(|raw| {
+            crate::install::reserve_typed_parse::<ActorAgency>(
+                raw.get(),
+                [
+                    size_of::<Goal>(),
+                    // A step's complete command carrier also bounds the
+                    // smaller pending activity frame (cell + scalar clocks).
+                    size_of::<crate::plans::PlanStep>(),
+                    size_of::<crate::plans::PendingIntent>(),
+                    size_of::<RememberedPlace>(),
+                    size_of::<crate::records::SqlCell>(),
+                    size_of::<(crate::text::JsText, crate::records::SqlCell)>(),
+                ]
+                .into_iter()
+                .max()
+                .unwrap_or(0),
+                Some(
+                    point_entry
+                        .max(size_of::<(usize, String, ResolvedSemanticCause)>())
+                        .max(size_of::<(usize, String, Option<String>)>())
+                        .max(size_of::<(usize, String, String)>()),
+                ),
+                budget,
+            )
         })
         .transpose()?;
     let statuses = value
@@ -429,6 +490,8 @@ fn value_decode(value: &RawRecord, budget: &ByteBudget) -> Result<ValueDecode, I
         attributes(value.get("attributes").map(|raw| &**raw), budget)?,
         attributes(actor.as_ref().and_then(|actor| actor.attributes), budget)?,
         statuses,
+        action,
+        agency,
     ])
 }
 pub(super) fn install_entities(
@@ -510,6 +573,17 @@ pub(super) fn install_entities(
     validate_body_references(&entities, installed, now)?;
     entities
         .fund_entity_metadata(budget)
+        .map_err(|_| InstallError::Capacity)?;
+    // Keep semantic preparation alive until these independently retained
+    // action/goal/intent buffers have their actual persistent custodians.
+    entities
+        .fund_installed_actions(budget)
+        .map_err(|_| InstallError::Capacity)?;
+    entities
+        .fund_installed_goals(budget)
+        .map_err(|_| InstallError::Capacity)?;
+    entities
+        .fund_installed_intents(budget)
         .map_err(|_| InstallError::Capacity)?;
     drop(value_storage);
     Ok(entities)

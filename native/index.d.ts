@@ -150,6 +150,7 @@ export declare class NativeWorld {
   forget(bytes: Buffer): Promise<NativeWorldTurn>;
   correct(bytes: Buffer): Promise<NativeWorldTurn>;
   historyPlaceSources(read: NativeWorldPrivateHistoryRead, bytes: Buffer): Promise<void>;
+  historyMovementSources(read: NativeWorldPrivateHistoryRead, bytes: Buffer): Promise<void>;
   readHistory(actorId: string, purpose: string): Promise<NativeWorldPrivateHistoryRead>;
   historySources(
     read: NativeWorldPrivateHistoryRead,
@@ -339,6 +340,7 @@ export declare class NativeWorldPrivateHistoryPublication {
 export declare class NativeWorldPrivateHistoryRead {
   packet(): Promise<NativeWorldJson>;
   sources(): Promise<NativeWorldJson>;
+  movements(): Promise<NativeWorldJson>;
   isCurrent(): boolean;
   release(): void;
 }
