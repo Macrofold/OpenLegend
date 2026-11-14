@@ -582,6 +582,10 @@ export class NativeNpcCapture {
     );
   }
 
+  /** Resolves the NPC's offered actions through native and local providers, then
+   * serializes, copies, decodes and freezes the catalog, including command bodies.
+   * Use candidates() for later consumers of the same read and selection. This
+   * capture holds the prepared catalog until release. */
   async prepareChoices(
     world: NativeWorld,
     geometry: NativeGeometryProviders,

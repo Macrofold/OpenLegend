@@ -67,6 +67,9 @@ function comparisonKeys(value: unknown, shared?: unknown): number {
   return slots(count) + nested;
 }
 
+/** Sizes the later patch comparison by walking both views, including nested
+ * entity and event fields. Only call this after ruling out no output and a
+ * mandatory reset. The bound applies to this exact pair of views. */
 function patchWorkspace(previous: GameView, next: GameView): number {
   const oldEntities = previous.entities.length,
     newEntities = next.entities.length;
@@ -319,6 +322,9 @@ export class NativePlayerHttp {
     }
   }
 
+  /** Coalesces world notifications. Once the publication window opens, the next
+   * pass can enter the work queue immediately. It prepares a fresh permitted
+   * view for each writable stream in turn, so later streams can wait on earlier ones. */
   private schedule(): void {
     if (this.closed || this.wake || !this.streams.size) return;
     if (this.running) {

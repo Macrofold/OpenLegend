@@ -1011,8 +1011,11 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     );
   }
 
-  /** One native mental capture and its actual pending SQL overlay are acquired
-   * together. Callers retain this finite read owner through context preparation. */
+  /** Captures this NPC's facts and normally prepares its action choices. A missing
+   * receipt tail requires SQL and a second capture at the same accepted state.
+   * Even with choices disabled, this packs the actor's unsaved temporal rows and
+   * pins pending publications. Release the capture and database cut independently
+   * after each one's last use. */
   captureNpc(
     actorId: string,
     requiredAppraisals: readonly AppraisalScope[],

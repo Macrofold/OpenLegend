@@ -14,9 +14,10 @@ export interface NativeProviderAnswer {
   readonly json: string;
 }
 
-/** Provider continuations consume JSON text through their existing typed
- * boundary. Its new string owns its storage independently of the question or
- * SQL rows. The temporary encoder Buffer and V8 workspace end here. */
+/** Encodes a local provider answer to UTF-8, then decodes it to an independently
+ * funded JS string. Byte-taking continuations encode that string again. The
+ * temporary buffer and workspace end here. The caller releases the answer when
+ * its provider turn settles, independently of the question and any SQL rows. */
 export function encodeNativeProviderAnswer(
   capacity: NativeProviderCapacity,
   value: unknown,

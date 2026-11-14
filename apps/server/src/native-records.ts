@@ -2,8 +2,10 @@ import type { NativeChangedRows, NativeSaveRows } from '@open-legend/native-simu
 import { RECORD_NODES, RECORD_PARENTS } from './world-record-schema.js';
 import type { RecordChanges } from './world-records.js';
 
-/** Convert one final immutable native save prefix to the existing writer's transport.
- * Payload strings and column values stay encoded; this never reconstructs a world.
+/** Each call builds table lookups, checks every written row, and filters deletes
+ * covered by a parent cascade. The lookups borrow the input's encoded rows.
+ * Readers of the same immutable product can reuse its lookups while they hold
+ * its owner. A final save prefix can combine several accepted publications.
  * docs/projects/native-simulation-core-tech-design.md#62-direct-changed-record-saving */
 export function nativeRecordChanges(changes: NativeChangedRows): RecordChanges {
   const writes = new Map(Object.entries(changes.writes));

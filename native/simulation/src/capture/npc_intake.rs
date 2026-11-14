@@ -62,6 +62,10 @@ impl NpcIntakeCapture {
         }
         self.semantic_causes.copy_all(budget)
     }
+    /// Acknowledging a queued reason requires current evidence for this NPC.
+    /// After the identity, life and controller checks, each call rebuilds both
+    /// the detailed inspection and queue packets to compare their underlying
+    /// inputs. An earlier verdict can go stale before acknowledgement.
     pub(crate) fn current(
         &self,
         state: &SimulationState,
