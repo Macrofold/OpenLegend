@@ -8,6 +8,12 @@ The [MMORPG foundation collection](mmorpg-engine-foundations/README.md) studies 
 
 The [focused needs-design briefs](../docs/maintainers/decisions/mmorpg-engine-foundations.md) identify minimal NOW/SOON seams, existing delivery owners, required evidence and deferred machinery. The research does not establish that capacity, approve gameplay approximations, replace the native adoption gates or authorize runtime/cloud work.
 
+## Foundations for persistent MMORPG scale
+
+The [MMORPG foundations collection](mmorpg-foundations/README.md) investigates which engine contracts should be established now or soon to avoid expensive rework as OpenLegend grows into a simulation-heavy persistent world. It covers independent seed copies, large coordinates, sparse physical residency, dependency and work bounds, autonomous-world service, disclosure-safe delivery, long-lived data, recovery and complete-path qualification. Its evidence cutoff is **2026-11-09**.
+
+Start with the [baseline and existing coverage](mmorpg-foundations/01-baseline-and-existing-coverage.md), then the [sequencing and qualification guide](mmorpg-foundations/08-sequencing-and-qualification.md). The [focused needs-design register](../docs/maintainers/mmorpg-scalability-needs-design.md) routes six preparation areas into existing owners without duplicating NSC/BK/PF/PS/NET/PD implementation queues. The [native-core design and staged experiments](../docs/maintainers/native-simulation-core.md) remain authoritative for that work. Research recommendations do not claim implementation, measured capacity, a changed release target or infrastructure adoption.
+
 ## Current Unreal and Unity runtime mechanisms
 
 The [Unreal/Unity runtime research collection](unity-unreal-runtime/README.md) studies current engine systems across simulation, perception, AI, navigation, physics, data/concurrency, world scale, networking/persistence, rendering/animation/audio, content/tools/UI/platforms, profiling, gameplay frameworks, environmental systems, code execution, and recent primary research. Its evidence cutoff is **2026-10-23**.
