@@ -13,7 +13,7 @@
 
 ## Current progress
 
-**In progress.** Parallel research is covering product/world/business, player reception, and actual architecture. The final dossier will give each subject one evidence owner, include concrete worked situations and source/version limits, and connect findings to existing OpenLegend design owners without generating a speculative implementation backlog.
+**In progress.** The entry, reception, source-inspected technology and OpenLegend application chapters are drafted and committed as substantive checkpoints. Systems/world and production/business chapters are being finalized, with a bounded current-code mechanics pass. Final navigation, complete requirement/link review and the completion record remain.
 
 Verified findings that materially set this pass's scope:
 
@@ -26,8 +26,8 @@ Verified findings that materially set this pass's scope:
 ## Remaining work in this research pass
 
 - Complete the mechanics, named examples, lore, career/economy loops, failure/return boundaries and art/audio/interface account.
-- Read and synthesize at least five substantive written reviews from independent outlets when available, plus contrasting accessible Steam/player testimony; preserve historical and present-version differences.
-- Reconcile actual server source, platform capabilities, incidents, persistence, region transitions, client subscriptions, NPC execution and unverified scale/cost claims.
+- Finish the final cross-chapter review of the completed five-written-review and Steam/player evidence, preserving historical and present-version differences.
+- Incorporate the bounded inventory/crafting/combat mechanics check; the technical chapter already covers version-pinned source, persistence, transitions, subscriptions, NPC execution and scale limits.
 - Complete commercial observations and a defensible estimate or explicit not-estimable finding, separating game receipts from company financing and database business.
 - Screen popular modding applicability; distinguish in-game construction, community data tools and released source from full-game mod support.
 - Write the dossier and OpenLegend comparison, update existing research navigation/roster, review every applicable requirement and affected link, and commit final output.
