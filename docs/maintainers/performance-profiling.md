@@ -20,6 +20,8 @@ The tools preserve ordinary request acceptance/refusal even when optional report
 
 **Use the full PostgreSQL-backed server as the primary production-performance baseline.** Include the real timer, command admission and durable acknowledgement, history projection, SSE, and representative cognition/maintenance load with paid dispatch disabled. Record database version/topology, actual workload, cold versus warm behavior, achieved simulation speed, debt, latency and memory. Native-only profiles remain useful for isolating engine CPU costs, but do not establish whole-server capacity.
 
+Follow the shared [reporting format](../performance/measurement.md#reporting-results) for summaries: lead with CPU as a percentage of one core and achieved game speed relative to the intended rate, and include median, average and p95 with their measurement scope.
+
 PostgreSQL is required locally and in production. All database-dependent profiling uses owned disposable PostgreSQL databases. Historical SQLite measurements remain evidence of the version exercised, not current backend acceptance.
 
 The full-server script accepts an explicit `OPEN_LEGEND_PROFILE_POSTGRES_URL` for a loopback PostgreSQL service. It creates a uniquely named database and owns loopback/local-cookie authentication with paid providers disabled; it never inherits a developer’s federated login, resets the administrative database or uses `OPEN_LEGEND_DATABASE_URL`. Missing the profiling URL fails clearly. The PostgreSQL history-only comparison remains repository-path evidence, not full-server qualification. Use [PF00/PF11](performance.md) and the [AR integration tracker](action-reconciliation.md) for remaining work; a working profiler does not complete capacity acceptance.
