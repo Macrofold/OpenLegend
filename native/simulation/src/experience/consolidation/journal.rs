@@ -6,6 +6,7 @@ impl ExperienceJournal {
         &mut self,
         state: &mut ExperienceState,
         record: Arc<PersonalSourceRecord>,
+        schema: &crate::records::RecordSchema,
     ) -> Result<(), ExperienceError> {
         let actor = &record.header.actor_id;
         let kind = record.header.reference.kind;
@@ -16,7 +17,12 @@ impl ExperienceJournal {
             if prior.row_id != record.row_id
                 || prior.position != record.position
                 || prior.payload != record.payload
-                || prior.columns != record.columns
+                || !super::super::columns::same_source_columns(
+                    kind,
+                    &prior.columns,
+                    &record.columns,
+                    schema,
+                )
             {
                 return Err(ExperienceError::StaleHydration);
             }

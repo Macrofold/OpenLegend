@@ -959,6 +959,7 @@ impl PrivacyPreparationCursor {
                         kind,
                         rows,
                         &meaning,
+                        &installed.schema,
                         budget,
                     )?;
                 }

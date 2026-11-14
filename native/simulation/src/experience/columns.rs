@@ -6,6 +6,35 @@ use crate::attention::AccountRecordingLaw;
 use crate::reception::{EventScalar, EvidenceParticipant, ObserverSubject, SensoryFacet};
 use crate::records::{RecordEncodingError, RecordSchema};
 
+/// PostgreSQL maintains the current agreement-head index when privacy changes;
+/// it is not part of an immutable acquired source's body/revision. Every other
+/// indexed cell stays exact, and neither record is rewritten during hydration.
+pub(super) fn same_source_columns(
+    kind: PersonalSourceKind,
+    before: &[crate::records::SqlCell],
+    incoming: &[crate::records::SqlCell],
+    schema: &RecordSchema,
+) -> bool {
+    if kind != PersonalSourceKind::Awareness {
+        return before == incoming;
+    }
+    let Ok(layout) = schema.layout(kind.table()) else {
+        return false;
+    };
+    before.len() == layout.columns.len()
+        && incoming.len() == layout.columns.len()
+        && layout.columns.iter().zip(before.iter().zip(incoming)).all(
+            |(column, (before, incoming))| {
+                if column == "agreement_head" {
+                    matches!(before.as_u64(), Some(0 | 1))
+                        && matches!(incoming.as_u64(), Some(0 | 1))
+                } else {
+                    before == incoming
+                }
+            },
+        )
+}
+
 fn add_subject(ids: &mut IndexSet<String>, subject: Option<&ObserverSubject>) {
     if let Some(ObserverSubject::Individual { individual_id }) = subject {
         ids.insert(individual_id.clone());

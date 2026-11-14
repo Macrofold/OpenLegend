@@ -10,6 +10,7 @@ impl ExperienceJournal {
         kind: PersonalSourceKind,
         rows: Vec<InstalledRow>,
         meaning: &impl PersonalEvidenceMeaning,
+        schema: &crate::records::RecordSchema,
         budget: &crate::host::ByteBudget,
     ) -> Result<(), ExperienceError> {
         for row in rows {
@@ -28,7 +29,7 @@ impl ExperienceJournal {
                 .ok_or(ExperienceError::ForeignOwner)?
                 .to_owned();
             let record = PersonalSourceRecord::install(kind, &actor_id, row, meaning, budget)?;
-            self.load_selected_record(state, Arc::new(record))?;
+            self.load_selected_record(state, Arc::new(record), schema)?;
         }
         Ok(())
     }
@@ -38,6 +39,7 @@ impl ExperienceJournal {
         &mut self,
         state: &mut ExperienceState,
         record: Arc<PersonalSourceRecord>,
+        schema: &crate::records::RecordSchema,
     ) -> Result<(), ExperienceError> {
         let actor_id = &record.header.actor_id;
         let kind = record.header.reference.kind;
@@ -60,7 +62,12 @@ impl ExperienceJournal {
                 || prior.slot != record.slot
                 || prior.position != record.position
                 || prior.payload != record.payload
-                || prior.columns != record.columns
+                || !super::columns::same_source_columns(
+                    kind,
+                    &prior.columns,
+                    &record.columns,
+                    schema,
+                )
             {
                 return Err(ExperienceError::StaleHydration);
             }

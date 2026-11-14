@@ -352,9 +352,11 @@ impl AccountRetentionRead {
         // Preparation already admitted these exact bodies; move them into the
         // canonical working collection through the shared residency-only owner.
         for record in &records {
-            core.journal
-                .experience
-                .load_selected_record(&mut core.state.experience, Arc::clone(record))?;
+            core.journal.experience.load_selected_record(
+                &mut core.state.experience,
+                Arc::clone(record),
+                &core.state.installed.schema,
+            )?;
         }
         if !records.is_empty() {
             // Source expireExperience filters all three lists even if only one

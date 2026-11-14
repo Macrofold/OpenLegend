@@ -495,6 +495,7 @@ impl PreparedConsolidation {
             core.journal.experience.load_consolidation_source(
                 &mut core.state.experience,
                 Arc::clone(&source.record),
+                &core.state.installed.schema,
             )?;
         }
         core.journal.experience.ensure_collection(
