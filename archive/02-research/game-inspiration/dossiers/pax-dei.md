@@ -15,3 +15,11 @@ This case studies Mainframe Industries' PC social sandbox MMO, from June 18, 202
 ## Completion boundary
 
 The [scoped research record](../research-progress-pax-dei-2026-11-14.md) owns remaining work. This checkpoint is not a completed dossier. Detailed technology, gameplay/lore, business/marketing, reception and Open Legend implications are being researched and reviewed before completion.
+
+## Detailed chapters at this checkpoint
+
+- [Technology and persistence](pax-dei/02-technology.md)
+- [Development, financing and marketing](pax-dei/03-business-marketing.md)
+- [Reviews and player reception](pax-dei/04-reception.md)
+
+These substantive drafts await the final cross-chapter evidence and coverage review.
