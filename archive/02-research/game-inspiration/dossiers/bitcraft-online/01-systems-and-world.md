@@ -121,7 +121,7 @@ The current store still presents terraforming, roads, bridges, boats, hauling an
 
 The housing design describes an early problem: requiring residents to share everything supported small trusted groups but made inviting strangers harder. Private homes and controlled access were introduced to preserve personal ownership within a larger shared settlement. Interiors can occupy more space than the exterior suggests while keeping a distinct address in the common world. This supports density without making every player use a different copy of the same neighborhood. The historical ambition of towns with hundreds of residents is not evidence of a demonstrated population or workload. [Claiming your slice of the world](https://bitcraftonline.com/news/claiming-your-slice-of-the-world).
 
-**Assessment:** cooperation scales socially only when people can help without surrendering control of all their possessions. Permission design is therefore part of the gameplay, not merely an administrative safeguard.
+**Assessment:** protecting some personal control can make it easier to invite people beyond an established trusted group. Permission design is therefore part of the gameplay, not merely an administrative safeguard.
 
 ### What changed immediately before 1.0
 

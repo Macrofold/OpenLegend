@@ -182,6 +182,8 @@ The product should avoid treating every real-world hour away as social neglect o
 
 Real obligations still matter. If the character actually accepted a delivery before departure and the world's disclosed clock continues, its handling follows that contract. The authoring and acceptance flow must make this clear. An obligation may be deferred, delegated, fulfilled or broken only through its supported rules and actual decisions.
 
+Where work depends on other participants, an absence or departure can change its scope, invite trade or another willing contributor, or justify stopping; only supported alternatives and actual resources count. Observe whether the remaining player has worthwhile choices or merely inherits the missing labor. [BitCraft's community-dependence comparison](../../archive/02-research/game-inspiration/dossiers/bitcraft-online/05-openlegend-lessons.md#4-cooperation-should-tolerate-absence-and-departures).
+
 ## 7. Quiet-community initiative
 
 ### 7.1 Quiet does not mean empty

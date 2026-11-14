@@ -106,7 +106,7 @@ For OpenLegend, preserve separate server-owned permissions for perception, remem
 
 The team described missing optimizations in trade-finder/waystone queries that scanned enormous row volumes; bots had not opened those interfaces or followed the tutorial. Mob-monitor disconnects and undeliverable-message logging exposed stdout-lock contention, increasing reducer latency and feeding more disconnects. An apparent improvement from rolling back had been random, while that rollback removed optimizations relevant to real players' crafting. [T32]
 
-**OpenLegend application:** workload realism matters more than raw actor count. Include public interfaces, crafting bursts, discovery, trade, reconnects and dense-area observation in any later qualification. Keep expensive logging/telemetry out of critical locks, and compare latency distributions and profiles before crediting a rollback. These are proposed qualification cases; this dossier does not claim they have been run in OpenLegend.
+**OpenLegend application:** workload realism matters more than raw actor count. When qualifying the affected paths, use realistic mixtures such as interfaces, crafting, discovery, reconnects and dense-area observation. Keep expensive logging/telemetry out of critical locks, and compare latency distributions and profiles before crediting a rollback. These are proposed qualification cases; this dossier does not claim they have been run in OpenLegend.
 
 ### August 14, 2026 reconnect investigation
 

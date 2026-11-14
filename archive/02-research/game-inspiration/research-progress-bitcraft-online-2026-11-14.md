@@ -12,7 +12,7 @@
 
 ## Completion and outputs
 
-**Complete for this authorized BitCraft Online research pass.** R01–R14 are substantively addressed; the conditional R15 applicability finding is **uncertain / a popular full-game mod ecosystem was not established**, with the checked routes and evidence limits documented. Completion means the scoped research and documentation are reviewed and committed. It does not certify inaccessible sources, private financials, future 1.0 outcomes, gameplay reproduction or a whole-library reconciliation.
+**Full dossier complete; requested follow-up review in progress.** R01–R14 are substantively addressed; the conditional R15 applicability finding is **uncertain / a popular full-game mod ecosystem was not established**, with the checked routes and evidence limits documented. The November 14 follow-up is reviewing benefit versus burden, connecting selected evidence to existing design/work owners, and coding the complete retrieved recent Steam-review window. It does not certify inaccessible sources, private financials, future 1.0 outcomes, gameplay reproduction or a whole-library reconciliation.
 
 | Owner | Contents |
 | --- | --- |
@@ -84,5 +84,5 @@ None blocks this research pass. Long-term 1.0 retention, exact finances, dense-r
 
 ## Remaining work in this session
 
-None after the final completion commit and branch verification. This research is ready for integration review; merging into main was not part of the request.
+Finish the recent Steam-review coding and independent spot check, record the final findings and review disposition, verify affected links/diff, and commit the completed follow-up. The earlier full dossier remains complete; the new review request is not yet complete. Merging into main is not part of the request.
 
