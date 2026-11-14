@@ -2,6 +2,8 @@
 
 **Research snapshot: 14 November 2026.** Full-game study of Clockwork Labs' BitCraft Online, Steam app 3454650, with additional depth on persistent-world architecture and relevance to OpenLegend. Earlier alpha and Early Access behavior is distinguished from the new 1.0 release.
 
+**Spoiler scope:** broad setting, named Travelers, progression, discovery activities and failure/recovery mechanics.
+
 [Research record and coverage](../research-progress-bitcraft-online-2026-11-14.md) · [Roster](../research-roster.md) · [Dossier index](README.md) · [Research requirements](../research-requirements.md)
 
 ## The finding to start with

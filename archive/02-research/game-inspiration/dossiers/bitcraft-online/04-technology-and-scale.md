@@ -32,6 +32,19 @@ BitCraft is unusually useful to OpenLegend because its server source is public a
 
 A useful concrete flow is: player requests an action → region module checks authority and gameplay preconditions → transaction updates relevant rows → subscription engine identifies affected clients → SDK applies row changes locally → client presents the result. An inter-region operation additionally enters an explicit transfer protocol. [T10] [T14] [T16] [T17]
 
+The following is a simplified ownership diagram derived from the inspected modules and relay protocol, not a production-host map. Each regional module owns local mutations; shared changes and handoffs cross explicit boundaries. [T05] [T12] [T16] [T17]
+
+```mermaid
+flowchart TD
+    A["Unity client A"] -->|Commands| R1["Region A: rules and state"]
+    R1 -->|Subscription changes| A
+    B["Unity client B"] -->|Commands| R2["Region B: rules and state"]
+    R2 -->|Subscription changes| B
+    R1 <-->|Transfer messages| L["Relay"]
+    R2 <-->|Transfer messages| L
+    G["Global module: shared records"] <-->|Shared updates| L
+```
+
 ### Source reading: regional handoff is substantial application logic
 
 At the pinned 1.0 commit, `inter_module/mod.rs` accumulates shared updates and writes destination-addressed message rows. `reducers.rs` validates the relay caller, records the last processed message identifier per sender, handles duplicate messages, and processes completion/errors. `transfer_player.rs` packages numerous player-owned components, removes them from the originating region, recreates them on the destination, and reinserts the player at the original location when the destination reports an error. It also stages part of the process in a separate scheduled transaction for correct client behavior. [T12] [T16] [T17]

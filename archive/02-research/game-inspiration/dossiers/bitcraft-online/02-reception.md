@@ -35,7 +35,7 @@ SteamCharts reports the following monthly average concurrent Steam users. The se
 
 | Month | Average concurrent Steam users |
 |---|---:|
-| June 2025 | 3,124.57 |
+| June 2025 — partial launch month | 3,124.57 |
 | January 2026 | 530.96 |
 | March 2026 | 1,829.07 |
 | October 2026 | 394.31 |
