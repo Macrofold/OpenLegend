@@ -370,6 +370,8 @@ Both recipes are **experiments in performance and cognition equivalence**. Use t
 
 The [bridge implementation chapter](native-runtime-foundations-bridge.md) traces the installed interface across player publication, physical preparation, NPC cognition and scheduling, persistence, privacy and recovery. NRF09–NRF13 specify the smallest change at each shared owner, affected real callers, parked alternatives and separate comparisons. Sections 7.2 and 7.3 govern every activated experiment.
 
+The [NRF15 decoder recipe](native-runtime-foundations-bridge.md#nrf15--release-parser-workspace-after-decoding) assigns parse-only and surviving storage through the real handoff. [NRF16](native-runtime-foundations-bridge.md#nrf16--attribute-attention-and-geometry-reservations) measures whether receiving scratch or geometry answers hold material excess capacity before selecting a repair. Both use the existing profile and [memory comparison](native-runtime-foundations-bridge.md#memory-comparison). The unresolved engineering questions are which parser allocations can safely expire on this engine, which owner actually limits play, and what each isolated change costs. Each recipe identifies the evidence that resolves its question.
+
 ## 11. Multiplayer update delivery
 
 ### Current path and experiment boundary
