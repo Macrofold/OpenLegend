@@ -4,6 +4,8 @@
 
 ## Start here
 
+- **[BitCraft Online — G189](dossiers/bitcraft-online.md):** persistent careers and communities, player praise and criticism, the November 2026 release and business-model changes, source-inspected server architecture, scaling limits and [OpenLegend applications](dossiers/bitcraft-online/05-openlegend-lessons.md); [scoped evidence and coverage](research-progress-bitcraft-online-2026-11-14.md).
+
 - **[Outward — G188](dossiers/outward.md):** expedition preparation, ordinary-person progression, survival, defeat stories, cooperative travel, lore, player reception, production, commercial evidence and modding; [scoped evidence and progress](research-progress-outward-2026-11-07.md).
 
 - **[Chrono Trigger — G187](dossiers/chrono-trigger.md) and [Clair Obscur: Expedition 33 — G77](dossiers/clair-obscur-expedition-33.md):** full-game reference research covering mechanics, authored histories, party identity, pleasure and frustration, production, commercial evidence and community creation. The [November 6–7 record](research-progress-chrono-trigger-expedition-33-2026-11-06.md) records both completed dossiers and their evidence limits; the [narrative](synthesis/quests-narrative-and-consequences.md) and [pacing](synthesis/pacing-difficulty-and-replay-variety.md) guides compare their lessons.

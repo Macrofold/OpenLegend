@@ -6,6 +6,10 @@
 
 Each dossier owns its mechanics, worked interactions, source annotations, edition boundaries, review disagreements and access limitations. Read those qualifications before extracting a pattern.
 
+## BitCraft Online — November 2026 addition
+
+[BitCraft Online — G189](bitcraft-online.md) covers ordinary work, progression, settlements, lore, reception, business, production and community tools, with a separate [source-inspected technical chapter](bitcraft-online/04-technology-and-scale.md). Its [OpenLegend applications](bitcraft-online/05-openlegend-lessons.md) connect the evidence to existing owners. Alpha/EA criticism, newly shipped 1.0 changes and unproven long-term outcomes remain distinct; the [scoped record](../research-progress-bitcraft-online-2026-11-14.md) owns coverage and limitations.
+
 ## Outward — November 2026 addition
 
 [Outward — G188](outward.md) follows the complete preparation, expedition and return experience: systems and lore; player praise, criticism and abandonment; production, marketing and commercial evidence; and community modding. The [Open Legend applications](outward/04-openlegend-lessons.md) connect the findings to existing owners. Original, DLC, Definitive Edition and platform differences remain explicit; the [scoped record](../research-progress-outward-2026-11-07.md) owns completion and evidence limits.

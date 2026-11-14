@@ -64,7 +64,7 @@ No verified current per-region player ceiling, busy-city capacity curve, represe
 
 ## 4. Persistence and simulation when players are absent
 
-SpacetimeDB's commit log records ordered committed changes and supports recovery. Documentation distinguishes transaction execution from durability: buffering and fsync policy matter. In 2.0, confirmed reads became the default so subscription changes and successful results wait for durability; opting out trades that guarantee for latency. Do not assume BitCraft uses either mode without its client/configuration. [T20] [T21]
+SpacetimeDB's commit log records ordered committed changes and supports recovery. Documentation distinguishes transaction execution from durability: buffering and fsync policy matter. In 2.0, confirmed reads became the default so subscription updates and SQL results wait for durability; opting out trades that guarantee for latency. Do not assume BitCraft's exact mode without its client/configuration. [T20] [T21]
 
 The public game source gives concrete examples of ongoing world processing:
 
@@ -73,7 +73,7 @@ The public game source gives concrete examples of ongoing world processing:
 - The module initializes separate scheduled agents for regeneration, hunger, rent, claims, trade sessions, growth and cleanup. This is a family of different-rate activities, not evidence for one expensive universal tick. [T24]
 - The inspected NPC loop runs every 300 seconds, manages traveler populations and ruin occupancy, relocates travelers and refreshes offers. The separate mob manager is responsible for AI entity control; server endpoints include batched enemy movement. [T25] [T26] [T13]
 
-These findings support continuing time-based world processes independently of an observer. They do **not** show OpenLegend-style rich autonomous people with private autobiographical memory, needs, social interpretation, LLM deliberation or continuously detailed simulation everywhere. The term `agent` in this repository is often a scheduled maintenance system. A 300-second traveler loop also does not mean all NPC/mob actions happen only every five minutes.
+These findings support continuing time-based world processes independently of an observer while the region and its scheduler are running. They do not establish how an unloaded or stopped region is advanced or caught up. They do **not** show OpenLegend-style rich autonomous people with private autobiographical memory, needs, social interpretation, LLM deliberation or continuously detailed simulation everywhere. The term `agent` in this repository is often a scheduled maintenance system. A 300-second traveler loop also does not mean all NPC/mob actions happen only every five minutes.
 
 For OpenLegend, the promising idea is to separate semantics from update frequency. A crop can retain its deadline, a shop its stock and orders, and a traveler its commitments without continuously reconstructing every representation. Whether an activity can safely advance from timestamps or lower detail depends on interactions and knowledge consequences. BitCraft provides mechanisms to study; it does not settle those semantics for our game.
 

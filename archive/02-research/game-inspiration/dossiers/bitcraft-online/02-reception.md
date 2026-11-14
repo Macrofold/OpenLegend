@@ -6,7 +6,7 @@
 
 ## Assessment
 
-BitCraft's strongest attraction is the opportunity to become useful to other people in a place that visibly changes through their shared work. Its strongest recurring criticism is that the same dependence can become repetitive labor, compulsory administration or stalled progression when a player wants a smaller life or a community loses members. Positive and negative accounts often describe the same systems and sometimes come from players with hundreds or thousands of recorded hours. [S1] [S2][R1]
+BitCraft's strongest attraction is the opportunity to become useful to other people in a place that visibly changes through their shared work. Its strongest recurring criticism is that the same dependence can become repetitive labor, compulsory administration or stalled progression when a player wants a smaller life or a community loses members. Positive and negative accounts often describe the same systems and sometimes come from players with hundreds or thousands of recorded hours. [S1] [S2] [R1]
 
 This makes BitCraft a particularly relevant comparison for OpenLegend. The transferable question is whether a persistent world supports satisfying lives at different scales and levels of commitment. Counting professions, recipes or hours played does not answer that question. The detailed OpenLegend application is maintained in [the lessons chapter](05-openlegend-lessons.md).
 
@@ -183,7 +183,7 @@ All sources were accessed during the November 14, 2026 research run. Publication
 ### Quantitative sources
 
 - **[Q1]** Steam store. Fixed English/recent review snapshot; changing live page and language scope matter.
-- **[Q2]** SteamDB.info charts. Dated concurrency maximum and separate review aggregate; proprietary adjusted score differs from raw positive percentage.
+- **[Q2]** SteamDB.info charts. Dated concurrency maximum and separate review aggregate; SteamDB’s adjusted score differs from raw positive percentage.
 - **[Q3]** SteamCharts. Monthly averages and timestamped launch sample; sampled concurrency, not human retention.
 - **[Q4]** Metacritic critic index. Retrieved review count only; not a substantive play account.
 

@@ -21,7 +21,7 @@ OpenLegend's ambitions extend beyond that comparison. Its root contract describe
 
 ## 2. Careers should create useful relationships and different decisions
 
-**Observation.** The reception sample includes a hunter who valued delivering useful materials to other specialists, and a smith who enjoyed contributing to an empire. It also includes people who found different professions too similar in their repeated actions. Both accounts can be true: a role can have meaningful social output and dull execution. [Player evidence](02-reception.md#what-the-broader-player-sample-says) · [Written-review matrix](02-reception.md#five-substantive-written-reviewsimpressions--bodies-read).
+**Observation.** The reception sample includes a hunter who valued delivering useful materials to other specialists, and a smith who enjoyed contributing to an empire. It also includes people who found different professions too similar in their repeated actions. Both accounts can be true: a role can have meaningful social output and dull execution. [Player evidence](02-reception.md#recurring-mechanisms-and-counterpoints) · [Written-review matrix](02-reception.md#written-review-and-impression-matrix).
 
 **Proposed OpenLegend lesson.** Evaluate a career by what it changes for people, and by the judgments it asks the player to make. A skill name, experience counter and ingredient list are insufficient. The satisfying loop is an intention, an informed choice, an outcome someone can use, and a reason to care about the next opportunity.
 
@@ -33,7 +33,7 @@ This is a candidate example, not a statement that all those actions already exis
 
 ## 3. Preserve a satisfying small life as capability grows
 
-**Observation.** BitCraft's historical small-lodge complaint is particularly relevant: the player wanted expertise and an identifiable place, while advancement pushed them toward a large, broadly equipped settlement. The new Homestead route responds to that tension, but its late arrival does not prove that the tension has disappeared. [Small-specialist evidence and current response](02-reception.md#historical-criticism--current-response--unresolved-question).
+**Observation.** BitCraft's historical small-lodge complaint is particularly relevant: the player wanted expertise and an identifiable place, while advancement pushed them toward a large, broadly equipped settlement. The new Homestead route responds to that tension, but its late arrival does not prove that the tension has disappeared. [Small-specialist evidence and current response](02-reception.md#historical-criticism-and-the-10-response).
 
 **Proposed OpenLegend lesson.** Let growth increase possibilities, competence and the importance of relationships without automatically increasing the amount of property or administration the player must manage. Larger settlements can enable genuinely different ambitions. They need not be the compulsory upgrade path for a successful individual.
 
@@ -72,7 +72,7 @@ Existing [continuing-life activity contracts](../../../../../docs/projects/conti
 
 ## 6. Make geographical friction earn its cost
 
-BitCraft's transport and regional trade provide a useful test: does moving goods create route choice, preparation, risk, conversation and valued infrastructure, or merely handling? Players disagree about difficult terrain because some enjoy solving it while others experience repeated vehicle manipulation. [Travel debate](02-reception.md#what-the-broader-player-sample-says).
+BitCraft's transport and regional trade provide a useful test: does moving goods create route choice, preparation, risk, conversation and valued infrastructure, or merely handling? Players disagree about difficult terrain because some enjoy solving it while others experience repeated vehicle manipulation. [Travel debate](02-reception.md#recurring-mechanisms-and-counterpoints).
 
 **Proposed OpenLegend lesson.** A river crossing should matter because water, load, weather, tools and people change the available choices. If a bridge makes a route easier, that improvement can become a meaningful public contribution. Repeatedly opening containers or resummoning vehicles solely to work around controls does not become valuable because the world is persistent.
 
