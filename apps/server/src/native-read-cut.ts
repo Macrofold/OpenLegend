@@ -39,8 +39,10 @@ export async function captureNativeReadCut(world: NativeWorld, actorId: string) 
   );
 }
 
-/** Admit the pending half only after the native capture completes. A refusal
- * constructing that half must also release the already admitted native body. */
+/** Packs the actor's unsaved temporal rows in Rust and pins pending publications
+ * in Node. Reuse the cut for indexed reads of this actor at the same accepted
+ * state. Its owner releases it after the last read, even if a save finishes first.
+ * Admit the pending half second and release the native capture if that fails. */
 export async function captureNativeScopedReadCut(
   world: NativeWorld,
   actorId: string,

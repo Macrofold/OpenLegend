@@ -8,7 +8,9 @@ description: >-
 
 # Bound work and preserve meaning
 
-Before choosing an algorithm, identify who calls it, how often, what grows, and whether work is repeated across objects, requests, observers, or frames. Separate setup from recurring cost. Use existing semantic owners and query helpers; avoid accidental full scans, repeated copies, and nested preparation. A bounded result does not prove bounded work.
+Before choosing an algorithm and when reviewing it, trace one complete operation through its callers and nested helpers. Identify who fetches, scans, serializes, copies or transfers data, which results callers use, and where those costs repeat across requests, objects, observers or frames. Separate setup from recurring cost and identify what grows with the input. A bounded result does not prove bounded work.
+
+Use existing semantic owners and query helpers. When several stages need the same preparation, do it at the first actual use and pass the result while its inputs, permissions and lifetime still match. A freshness check may require a new read even within the same operation. [Document hidden work at the helper's definition](../../../AGENTS.md#document-shared-helpers).
 
 Select eligible candidates and only the fields or proof the caller consumes before expensive preparation. Use exact lookups for known identities and share target-independent work within a compatible read. Use existing indexes first. Add caches, indexes, workers, hierarchy, or batching for a demonstrated cost or clear task requirement, not speculative scale. Reuse must preserve permissions, actual dependencies, current-format restoration, ordering, and bounded retention; derived preparation is never another authority.
 
