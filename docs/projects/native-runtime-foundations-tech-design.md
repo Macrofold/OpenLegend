@@ -1,8 +1,8 @@
 # Native runtime foundations: technical design
 
-| Status      | Current progress                                                                                       | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | The first bridge answer change is written; real-caller and isolated cost qualification remain pending. | 2026-11-14   |
+| Status  | Current progress                                                                          | Last updated |
+| ------- | ----------------------------------------------------------------------------------------- | ------------ |
+| Blocked | Selected byte-answer callers pass; PostgreSQL setup and AWS login block remaining checks. | 2026-11-14   |
 
 [Feature specification](native-runtime-foundations-feature-spec.md) · [Evidence and repertoire reconciliation](native-runtime-foundations-evidence-and-repertoire.md) · [NRF work](../maintainers/native-runtime-foundations.md) · [Constraints](../limits/native-runtime-foundations.md)
 
