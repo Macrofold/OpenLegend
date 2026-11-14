@@ -1978,16 +1978,14 @@ fn actor_problem(
     {
         return Err(ExecutionError::UnsupportedFamily);
     }
-    if command.envelope().cooperation.is_some()
-        || command.envelope().combat_help_id.is_some()
-        || [actor.agency.plan.as_ref(), actor.agency.suspended_plan()]
-            .into_iter()
-            .flatten()
-            .any(|plan| {
-                plan.activity.is_some() || plan.steps.iter().any(|step| step.activity_key.is_some())
-            })
-    {
+    if command.envelope().cooperation.is_some() || command.envelope().combat_help_id.is_some() {
         return Err(ExecutionError::UnsupportedFamily);
+    }
+    for plan in [actor.agency.plan.as_ref(), actor.agency.suspended_plan()]
+        .into_iter()
+        .flatten()
+    {
+        crate::plans::require_supported_activity(plan)?;
     }
     if !entity.actively_participates() {
         return Ok(Some(ordinary.inactive.outcome(false)));

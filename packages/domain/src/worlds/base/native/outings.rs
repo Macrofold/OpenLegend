@@ -10,10 +10,21 @@ use indexmap::IndexMap;
 
 #[path = "outings/travel.rs"]
 mod travel;
+#[path = "outings/travel_accept.rs"]
+mod travel_accept;
+#[path = "outings/travel_work.rs"]
+mod travel_work;
 pub(crate) use travel::{
-    TravelCompanyLabels, TravelDestination, TravelInput, TravelInputError, TravelMessages,
-    TravelOperation, TravelParticipantCapability, TravelRules, TravelTemplates,
+    TravelActivityRules, TravelCompanyLabels, TravelDestination, TravelInput, TravelInputError,
+    TravelMessages, TravelOperation, TravelParticipantCapability, TravelRules, TravelTemplates,
     travel_command_type,
+};
+pub(crate) use travel_accept::{
+    TravelAcceptAnswer, TravelAcceptCursor, TravelAcceptStep, TravelAcceptance,
+};
+pub(crate) use travel_work::{
+    TravelWorkRefusal, travel_able, travel_requested_input, travel_work_preview,
+    travel_work_problem,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -567,7 +578,7 @@ fn terms(v: &SqlCell, targets: &mut Vec<String>) -> Check {
     }
     Ok(())
 }
-pub(crate) fn inspect(v: &SqlCell) -> Check<OutingFacts> {
+pub(crate) fn inspect(v: &SqlCell, movement_purpose_max: u64) -> Check<OutingFacts> {
     id(v, "id")?;
     count(v, "revision", 1)?;
     let actors = participants(v)?;
@@ -590,7 +601,9 @@ pub(crate) fn inspect(v: &SqlCell) -> Check<OutingFacts> {
                 return Err(());
             }
             if let Some(p) = v.get("purpose") {
-                if p.as_text().is_none_or(|s| s.units_len() > 120) {
+                if p.as_text()
+                    .is_none_or(|s| s.units_len() as u64 > movement_purpose_max)
+                {
                     return Err(());
                 }
             }

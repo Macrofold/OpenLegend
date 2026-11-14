@@ -45,6 +45,15 @@ pub(crate) struct TravelCompanyLabels {
 }
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct TravelActivityRules {
+    pub root: SqlCell,
+    pub destination_role: String,
+    pub proposer_suffix: String,
+    pub recipient_suffix: String,
+    pub preview_id: String,
+}
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct TravelTemplates {
     pub purpose: String,
     pub accept_idle: String,
@@ -84,6 +93,10 @@ pub(crate) struct TravelMessages {
     pub finished: String,
     pub company: String,
     pub separated: String,
+    pub unobserved_work_end: String,
+    pub remembered_ending_event: String,
+    pub remembered_ended: String,
+    pub accepted_physical_slot: String,
 }
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -96,6 +109,7 @@ pub(crate) struct TravelRules {
     pub operations: Vec<TravelOperation>,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub max_purpose_characters: u64,
+    pub activity: TravelActivityRules,
     pub label: String,
     pub leave_label: String,
     pub companion_prefix: String,

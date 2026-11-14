@@ -10,6 +10,36 @@ pub(crate) struct SuspensionPreparation {
     pub restart: Option<(usize, String)>,
     pub storage: ByteReservation,
 }
+pub(crate) enum ActionPauseRefusal {
+    State,
+    Attack,
+    Materials,
+}
+
+/// Offer feasibility needs the action's safe pause boundary without the later
+/// plan restart-ID check. Actual suspension consumes this same classification.
+pub(crate) fn action_pause_refusal(
+    action: Option<&crate::state::Action>,
+) -> Result<Option<ActionPauseRefusal>, ExecutionError> {
+    let Some(action) = action else {
+        return Ok(None);
+    };
+    if action.kind == "status-effect" {
+        return Ok(Some(ActionPauseRefusal::State));
+    }
+    if action.strike_phase.is_some() {
+        return Ok(Some(ActionPauseRefusal::Attack));
+    }
+    if action.stage == "working" && !action.consumed.is_empty() {
+        return Ok(Some(ActionPauseRefusal::Materials));
+    }
+    // New action families must join their committed-work law before admission;
+    // an unknown action cannot be guessed safely pausable by an offer reader.
+    if action.kind != "move" || action.has_unconverted_fields() {
+        return Err(ExecutionError::UnsupportedFamily);
+    }
+    Ok(None)
+}
 pub(crate) fn prepare_suspension(
     core: &CoreMutation<'_>,
     actor_id: &str,
@@ -87,37 +117,26 @@ pub(crate) fn prepare_suspension(
         prepared.outcome = Some(rules.not_chosen_plan.outcome(false));
         return Ok(prepared);
     }
-    if let Some(action) = &actor.action {
-        let reason = if action.kind == "status-effect" {
-            Some(rules.pause_state.as_str())
-        } else if action.strike_phase.is_some() {
-            Some(rules.pause_attack.as_str())
-        } else if action.stage == "working" && !action.consumed.is_empty() {
-            Some(rules.pause_materials.as_str())
-        } else {
-            None
+    if let Some(reason) = action_pause_refusal(actor.action.as_ref())? {
+        let reason = match reason {
+            ActionPauseRefusal::State => &rules.pause_state,
+            ActionPauseRefusal::Attack => &rules.pause_attack,
+            ActionPauseRefusal::Materials => &rules.pause_materials,
         };
-        if let Some(reason) = reason {
-            prepared.outcome = Some(Outcome {
-                ok: false,
-                code: "cannot-pause".into(),
-                message: reason.into(),
-                spent: None,
-                outputs: None,
-                recipe_id: None,
-                item_id: None,
-                entity_id: None,
-                goal_id: None,
-                plan_id: None,
-                action_id: None,
-            });
-            return Ok(prepared);
-        }
-        // No selected writer can create another action kind. Its unpausable
-        // semantics must join this owner before that physical family admits.
-        if action.kind != "move" || action.has_unconverted_fields() {
-            return Err(ExecutionError::UnsupportedFamily);
-        }
+        prepared.outcome = Some(Outcome {
+            ok: false,
+            code: "cannot-pause".into(),
+            message: reason.as_str().into(),
+            spent: None,
+            outputs: None,
+            recipe_id: None,
+            item_id: None,
+            entity_id: None,
+            goal_id: None,
+            plan_id: None,
+            action_id: None,
+        });
+        return Ok(prepared);
     }
     if let Some((index, step)) = running {
         let id = format!("{}:r{}", step.id, plan.revision);

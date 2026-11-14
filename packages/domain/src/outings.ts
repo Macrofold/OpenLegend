@@ -269,18 +269,12 @@ function travelCommand(
   return {
     type: 'compose',
     // Authored actor identities can already occupy the full record-ID allowance.
-    id: `${trip.id}:${actorId === trip.proposerId ? 'proposer' : 'recipient'}`,
+    id: `${trip.id}:${actorId === trip.proposerId ? BASE_OUTING.activity.proposerSuffix : BASE_OUTING.activity.recipientSuffix}`,
     actorId,
     name: BASE_OUTING.travelName(trip.destination.label),
     mode,
-    root: {
-      kind: 'invoke',
-      key: 'travel',
-      name: BASE_OUTING.travelName(trip.destination.label),
-      command: 'move',
-      args: { destination: { role: 'destination' } },
-    },
-    bindings: { destination: cloneValue(trip.destination.point) },
+    root: BASE_OUTING.activity.root(BASE_OUTING.travelName(trip.destination.label)),
+    bindings: { [BASE_OUTING.activity.destinationRole]: cloneValue(trip.destination.point) },
   };
 }
 function workProblem(
@@ -312,9 +306,9 @@ function workProblem(
   )
     return outcome(false, 'outing-busy', BASE_OUTING.messages.busy);
   const available = nativeOperationAvailable(world, {
-    id: 'outing-preview',
+    id: BASE_OUTING.activity.previewId,
     actorId,
-    type: 'move',
+    type: BASE_OUTING.activity.movementFamily,
     destination: trip.destination.point,
   });
   if (!available.ok) return outcome(false, 'outing-route', BASE_OUTING.messages.route);
@@ -748,9 +742,7 @@ function closeOuting(
         endingActorId === actorId ||
         cause === 'expired' ||
         mutualSocialReception(world, actorId, otherId),
-      reason = received
-        ? BASE_OUTING.messages[cause]
-        : 'The previously chosen work is no longer available. The other person’s current choices are unknown.';
+      reason = received ? BASE_OUTING.messages[cause] : BASE_OUTING.messages.unobservedWorkEnd;
     const previousGeneration = actor.planGeneration;
     const planId = trip.plans?.[actorId];
     if (planId && actor.agency.suspended?.id === planId) discardSuspended(world, actor, actorId);
@@ -874,7 +866,7 @@ export function executeOuting(
       world,
       events,
       'outing',
-      'You ended your own participation in the last received travel or help terms. The other person’s current choices remain unknown.',
+      BASE_OUTING.messages.rememberedEndingEvent,
       actor,
       undefined,
       {
@@ -885,11 +877,7 @@ export function executeOuting(
       },
       'private',
     );
-    return outcome(
-      true,
-      'outing-ended',
-      'Your remembered participation ended; completed effects remain.',
-    );
+    return outcome(true, 'outing-ended', BASE_OUTING.messages.rememberedEnded);
   }
   const trip = prepared.trip;
   if (trip.kind === 'cooperate') return executeCooperation(world, command, trip, events, context);
@@ -1178,7 +1166,8 @@ export function validateOutings(world: WorldState): void {
       ) ||
       (trip.kind === 'travel' && !isSafeRecordId(trip.destination.point.surfaceId)) ||
       (trip.purpose !== undefined &&
-        (typeof trip.purpose !== 'string' || trip.purpose.length > 120)) ||
+        (typeof trip.purpose !== 'string' ||
+          trip.purpose.length > BASE_OUTING.maxPurposeCharacters)) ||
       (trip.destination.entityId !== undefined &&
         (!isSafeRecordId(trip.destination.entityId) ||
           typeof trip.destination.placement !== 'string')) ||
@@ -1369,11 +1358,7 @@ function cooperationSlotProblem(
   for (const id of ids)
     for (const trip of actorOutings(world, id))
       if (trip.id !== excluding && trip.status !== 'pending')
-        return outcome(
-          false,
-          'cooperation-limit',
-          'A person already has accepted physical cooperation; leave it before accepting another.',
-        );
+        return outcome(false, 'cooperation-limit', BASE_OUTING.messages.acceptedPhysicalSlot);
 }
 function cooperationCurrent(world: WorldState, trip: CooperationEpisode): boolean {
   const policy = world.socialOfferPolicy,

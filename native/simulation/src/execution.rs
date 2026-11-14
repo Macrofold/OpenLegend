@@ -748,14 +748,11 @@ impl CoreMutation<'_> {
             .get(actor_id)
             .and_then(|e| e.actor.as_ref())
             .ok_or(ExecutionError::MissingActor)?;
-        if actor.agency.plan.as_ref().is_some_and(|plan| {
-            plan.activity.is_some() || plan.steps.iter().any(|step| step.activity_key.is_some())
-        }) || actor
-            .agency
-            .suspended_plan()
-            .is_some_and(|plan| plan.activity.is_some())
+        for plan in [actor.agency.plan.as_ref(), actor.agency.suspended_plan()]
+            .into_iter()
+            .flatten()
         {
-            return Err(ExecutionError::UnsupportedFamily);
+            crate::plans::require_supported_activity(plan)?;
         }
         self.journal.physical.reserve(
             actor_id.len()

@@ -17,11 +17,13 @@ use std::mem::size_of;
 mod bind;
 mod copy;
 mod frontier;
+mod initial;
 pub(crate) use bind::bind_single_invoke;
 pub(crate) use frontier::{
     SingleInvoke, append_single_invoke, cancel_single_invoke, record_single_result,
     require_supported_activity,
 };
+pub(crate) use initial::RequestedActivityInitialError;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

@@ -36,11 +36,11 @@ impl OutingJournal {
             present: state.is_present(),
         }
     }
-    // Private until a real caller joins all current-world eligibility/links.
-    // Each caller must own a CandidateJournal checkpoint: the shared candidate
+    // The current-world family owner must check eligibility and links before
+    // replacement. Each caller owns a CandidateJournal checkpoint: the candidate
     // ledger restores newly admitted pins after this semantic undo, including
     // refusal before a row change (execution.rs rollback_to/rollback_all).
-    fn replace(
+    pub(super) fn replace(
         &mut self,
         state: &mut OutingState,
         id: &str,

@@ -333,15 +333,11 @@ impl MechanicalForecast {
             if action.kind == "status-effect" {
                 continue;
             }
-            if action.kind != "move"
-                || action.has_unconverted_fields()
-                || actor
-                    .agency
-                    .plan
-                    .as_ref()
-                    .is_some_and(|plan| plan.activity.is_some())
-            {
+            if action.kind != "move" || action.has_unconverted_fields() {
                 return Err(ExecutionError::UnsupportedFamily);
+            }
+            if let Some(plan) = &actor.agency.plan {
+                crate::plans::require_supported_activity(plan)?;
             }
             if installed
                 .capabilities

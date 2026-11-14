@@ -14,6 +14,7 @@ impl OutingRecord {
     pub(super) fn prepare(
         body: SqlCell,
         mut allocation: ByteReservation,
+        installed: &crate::simulation::InstalledWorld,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         let body_bytes = body.heap_bytes().ok_or(ExecutionError::Capacity)?;
@@ -25,8 +26,15 @@ impl OutingRecord {
                 .and_then(|n| n.checked_add(8192))
                 .ok_or(ExecutionError::Capacity)?,
         )?;
-        let facts =
-            crate::worlds::inspect_selected_outing(&body).map_err(|_| ExecutionError::Invariant)?;
+        let facts = crate::worlds::inspect_selected_outing(
+            &body,
+            installed
+                .ordinary_actions
+                .value()
+                .travel
+                .max_purpose_characters,
+        )
+        .map_err(|_| ExecutionError::Invariant)?;
         let keys = index::OutingKeys::new(&facts)?;
         let bytes = heap_sum([
             body_bytes,

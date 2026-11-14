@@ -11,13 +11,15 @@ mod activity;
 mod control;
 mod encoding;
 mod requested;
-pub(crate) use activity::ActivityExecution;
+pub(crate) use activity::{
+    ActivityExecution, RequestedActivityInitialError, require_supported_activity,
+};
 pub(crate) use requested::{
     RequestedActivityAnswer, RequestedActivityCursor, RequestedActivityInput,
     RequestedActivityStart, RequestedActivityStep,
 };
 mod suspension;
-pub(crate) use suspension::prepare_suspension;
+pub(crate) use suspension::{action_pause_refusal, prepare_suspension};
 mod edit;
 mod finish;
 pub(crate) use finish::finish_plan_action;

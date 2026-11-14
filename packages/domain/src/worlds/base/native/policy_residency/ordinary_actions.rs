@@ -2,9 +2,10 @@
 use super::plan_rules::*;
 use super::*;
 use crate::host::retained_size::heap_record;
+use crate::records::SqlCell;
 use crate::worlds::base_outings::{
-    TravelCompanyLabels, TravelMessages, TravelOperation, TravelParticipantCapability, TravelRules,
-    TravelTemplates,
+    TravelActivityRules, TravelCompanyLabels, TravelMessages, TravelOperation,
+    TravelParticipantCapability, TravelRules, TravelTemplates,
 };
 heap_record!(ActionMessage { code, message });
 heap_record!(ParticipationRules {
@@ -136,6 +137,13 @@ impl crate::host::retained_size::HeapBytes for TravelParticipantCapability {
     }
 }
 heap_record!(TravelCompanyLabels { visible, hidden });
+heap_record!(TravelActivityRules {
+    root,
+    destination_role,
+    proposer_suffix,
+    recipient_suffix,
+    preview_id
+});
 heap_record!(TravelTemplates {
     purpose,
     accept_idle,
@@ -172,7 +180,11 @@ heap_record!(TravelMessages {
     interrupted,
     finished,
     company,
-    separated
+    separated,
+    unobserved_work_end,
+    remembered_ending_event,
+    remembered_ended,
+    accepted_physical_slot
 });
 heap_record!(TravelRules {
     family,
@@ -182,6 +194,7 @@ heap_record!(TravelRules {
     participant_capability,
     operations,
     max_purpose_characters,
+    activity,
     label,
     leave_label,
     companion_prefix,
@@ -192,4 +205,4 @@ heap_record!(TravelRules {
     messages
 });
 
-crate::install::definition_layout!(OrdinaryActionRules; arrays [String]; maps [String]);
+crate::install::definition_layout!(OrdinaryActionRules; arrays [String, SqlCell]; maps [String, SqlCell]);

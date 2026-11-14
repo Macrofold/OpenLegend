@@ -16,6 +16,7 @@ use index::OutingIndex;
 mod install;
 mod journal;
 pub(crate) use journal::{OutingCheckpoint, OutingJournal};
+mod mutation;
 mod save;
 
 pub(crate) struct OutingState {

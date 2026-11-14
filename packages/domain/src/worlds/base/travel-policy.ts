@@ -1,4 +1,26 @@
 import type { SurfacePoint } from '@open-legend/spatial';
+import { BASE_PLAN_RULES } from './plan-rules.js';
+
+const destinationRole = 'destination';
+const movementFamily = BASE_PLAN_RULES.requestedMovementFamily;
+const travelActivityRoot = (name: string) => ({
+  kind: 'invoke' as const,
+  key: 'travel',
+  name,
+  command: movementFamily,
+  args: { destination: { role: destinationRole } },
+});
+
+// This actual Source constructor also emits the compiled root template. Keep
+// its property order: the bound command is retained as precise action evidence.
+const travelActivity = {
+  root: travelActivityRoot,
+  movementFamily,
+  destinationRole,
+  proposerSuffix: 'proposer',
+  recipientSuffix: 'recipient',
+  previewId: 'outing-preview',
+} as const;
 
 // Number spelling remains JavaScript's existing formatter. These word-only
 // combinators also expose literal templates to the compiled selected family.
@@ -13,11 +35,12 @@ const contextWords = (
   `Outing with ${companion}: ${place}; ${distance} metres straight-line distance from me; ${status}. ${company}.`;
 
 /** The bundled world's travel words and finite input facts, with no runtime
- * domain imports. Source and its compiled selected family consume this owner.
+ * world-state dependencies. Source and its compiled selected family consume this owner.
  * docs/worlds/base/social.md#voluntary-outings */
 export const BASE_TRAVEL_POLICY = {
   family: 'base:outing-invite',
   maxPurposeCharacters: 120,
+  activity: travelActivity,
   label: 'Invite to travel',
   leaveLabel: 'Leave outing',
   companionPrefix: ' Outing companion: ',
@@ -68,6 +91,13 @@ export const BASE_TRAVEL_POLICY = {
     company: 'saw the outing companion again. This observation grants no control over them.',
     separated:
       'lost sight of the outing companion. Their location is unknown. The agreed destination is unchanged; continuing there or leaving remains a choice.',
+    unobservedWorkEnd:
+      'The previously chosen work is no longer available. The other person’s current choices are unknown.',
+    rememberedEndingEvent:
+      'You ended your own participation in the last received travel or help terms. The other person’s current choices remain unknown.',
+    rememberedEnded: 'Your remembered participation ended; completed effects remain.',
+    acceptedPhysicalSlot:
+      'A person already has accepted physical cooperation; leave it before accepting another.',
   },
 } as const;
 
@@ -85,6 +115,13 @@ export const BASE_TRAVEL_RULES = {
   participantCapability: 'memory',
   operations: ['invite', 'accept', 'decline', 'leave'],
   maxPurposeCharacters: BASE_TRAVEL_POLICY.maxPurposeCharacters,
+  activity: {
+    root: BASE_TRAVEL_POLICY.activity.root(BASE_TRAVEL_POLICY.travelName('{place}')),
+    destinationRole: BASE_TRAVEL_POLICY.activity.destinationRole,
+    proposerSuffix: BASE_TRAVEL_POLICY.activity.proposerSuffix,
+    recipientSuffix: BASE_TRAVEL_POLICY.activity.recipientSuffix,
+    previewId: BASE_TRAVEL_POLICY.activity.previewId,
+  },
   label: BASE_TRAVEL_POLICY.label,
   leaveLabel: BASE_TRAVEL_POLICY.leaveLabel,
   companionPrefix: BASE_TRAVEL_POLICY.companionPrefix,

@@ -66,6 +66,24 @@ pub(crate) struct RequestedActivityCursor {
 }
 
 impl RequestedActivityCursor {
+    pub(crate) fn geometry_request(&self) -> Option<&GeometryQueries> {
+        self.choice
+            .as_ref()
+            .and_then(CommandChoiceCursor::geometry_request)
+    }
+    pub(crate) fn display_cursor(&mut self) -> Option<&mut ActivityDisplayCursor> {
+        self.choice
+            .as_mut()
+            .and_then(CommandChoiceCursor::display_cursor)
+    }
+    pub(crate) fn personal(
+        &self,
+    ) -> Result<&crate::activity::PendingActivityResult, ExecutionError> {
+        self.control
+            .as_ref()
+            .ok_or(ExecutionError::Invariant)?
+            .personal()
+    }
     pub(crate) fn new(
         input: RequestedActivityInput,
         binding: GeometryBinding,
