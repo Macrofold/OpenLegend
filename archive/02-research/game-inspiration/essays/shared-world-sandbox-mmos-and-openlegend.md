@@ -6,9 +6,9 @@
 
 Mike asks which of nine shared-world sandboxes succeed, what players actually value and reject, how graphics affect the experience, and whether OpenLegend's documented vision gives people a compelling reason to choose it despite a smaller team and graphics budget.
 
-The completed SEED, Stars Reach, Wurm Online, Star Wars Galaxies: Restoration, Foxhole, Mortal Online 2 and Haven & Hearth cases already rule out an easy answer. Autonomous characters, remembered relationships, useful occupations, persistent landscapes and unexpected player inventions all have serious competitors. OpenLegend has a plausible opportunity in how these elements connect during an embodied adventure. A distinctive feature list, commercial demand and a reliably distinctive playable experience are three separate claims.
+The completed SEED, Stars Reach, Wurm Online, Star Wars Galaxies: Restoration, Foxhole, Mortal Online 2, Haven & Hearth and Life is Feudal: MMO cases already rule out an easy answer. Autonomous characters, remembered relationships, useful occupations, persistent landscapes and unexpected player inventions all have serious competitors. OpenLegend has a plausible opportunity in how these elements connect during an embodied adventure. A distinctive feature list, commercial demand and a reliably distinctive playable experience are three separate claims.
 
-The other two dossier passes and the final comparative judgment remain unfinished at this checkpoint. These preliminary findings are preserved so a restart cannot turn incomplete research into a completed market assessment.
+The Boundless dossier and final comparative judgment remain unfinished at this checkpoint. These preliminary findings are preserved so a restart cannot turn incomplete research into a completed market assessment.
 
 ## Use the actual OpenLegend vision
 
@@ -22,7 +22,7 @@ The [current art direction](../../../../art-direction/decisions.md#current-direc
 
 Current capability must remain separate from ambition. The main-branch [README](../../../../README.md) documents an active game pause when all human connections leave. The [continuing-lives design](../../../../docs/projects/continuing-lives-feature-spec.md) is a delivery target, not proof that a continuously operating, large-scale MMO already exists.
 
-## What the first seven cases establish
+## What the first eight cases establish
 
 ### SEED competes directly on people
 
@@ -83,6 +83,16 @@ The [Haven & Hearth dossier](../dossiers/haven-and-hearth.md) is particularly re
 A [current newcomer account](https://www.havenandhearth.com/forum/viewtopic.php?p=979652) values the presentation and discoveries but nearly leaves when mining rules become unintelligible. The implication is a design distinction: mystery can encourage investigation; missing actionable information can interrupt it. Independent inhabitants could help make knowledge situated and discoverable, provided their advice and actions are reliable.
 
 The small founding team and long continuity are encouraging precedents for original production. A [2016 founder statement](https://www.havenandhearth.com/forum/viewtopic.php?f=39&t=52550) also makes the economic boundary clear: dedication can keep development alive while income fails to fund the desired effort. That historical shortfall is not a finding about current profit. OpenLegend should learn from the achieved depth without treating years of personal commitment as a free resource.
+
+### Life is Feudal exposes social access and trust as product requirements
+
+The [Life is Feudal: MMO dossier](../dossiers/life-is-feudal-mmo.md) separates the restored subscription game from the distinct free-to-play Arden. The publisher [described its development focus](https://ltg.com/news/2025/qa-session-season-1-approaches-answers) as Arden and seasons while retaining the subscription audience. Their rules, reviews and participation should not be combined into one supposedly continuous product history.
+
+Its strongest lesson concerns access to the payoff. Collective construction can express skill, cooperation and belonging. The same production requirements can leave a newcomer dependent on finding an organization before doing something they value. The evidence does not show that removing every dependency would preserve the appeal.
+
+A [2024 firsthand evaluation](https://roundtablecoop.com/reviews/life-is-feudal-mmo-review-now-back-on-steam/) enjoyed learning and community help while expressing doubt about paying to continue. That makes a useful commercial distinction: liking a session is not the same as preferring the recurring commitment over available alternatives.
+
+Service restructuring also makes trust part of persistent-world design. Players invest in a particular place, not an abstract promise that some server will remain online. OpenLegend should communicate what continuity means and make useful participation reachable. Autonomous residents could support that goal, but merely supplying labor would not reproduce a guild's voluntary human recognition.
 
 ## How to compare success without manufacturing a league table
 
