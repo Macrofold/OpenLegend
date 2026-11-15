@@ -34,3 +34,52 @@ On the exact repaired application, an unheld normal-clock trace crosses a tempor
 Forgetting the selected speech after the generation check prevents transport and saves a terminal `stale` outcome. That raw fixture retains an exit 1 from expecting the earlier route-stage label `cancelled`. A separate reader verifies the exact generation outcome from the unchanged evidence. Explicit player cancellation still records `cancelled`. Both negatives settle one certain undispatched generation receipt, apply no reply, survive cold reopening and continue ordinary movement. All owned local databases and processes were reclaimed. Type, production build/assets, network and format checks pass.
 
 Sealed caller evidence `nrf-chat-generation-repair-callers-20261115/manifest.json` has 96 payloads, SHA-256 `0dc4d87169812e265dedb5274ec8fc871b1de889edb58a23c92557d77bd3fee8`. Earlier exact repaired attempts are in `nrf-chat-generation-repair-preliminary-20261115/manifest.json`, SHA-256 `8a9f63b3a985ca62b087d14d0d5d5d920fb1b37077f9d6435c765cb38eeac8a1`. Local traces establish caller behavior. They supply no speed measurements.
+
+A bounded follow-up holds the real local check at two boundaries while automatic play continues. Three eligible accepted turns advance the broad actor revision. Two changes occur before the first failed fence comparison. Two exact revalidations pass for the same generation intent and the final synchronous check allows one generation transport. Replaying the request ID returns its existing job and `event-3983` remains the unique reply after cold reopening. Resumed movement is visibly accepted and durably saved. All 86 observed owners release, with no surviving process or database. Evidence `nrf-chat-generation-two-refreshes-20261115/manifest.json`, SHA-256 `ec8e63bc08446afd6b30945256ce28d0904b597f0490ada6c02629593435a032`.
+
+## Repaired ordinary changed-record comparison
+
+All six runs in campaign `b76cb52d-a048-4bbf-91d5-4fe0012ee5f2` complete the same ordinary workloads and pass the independent input, process and complete-work audit. Each accepts 560 movement commands and saves both actual replies once. The original controlled fixture, clock, warmup, population, transient profile and save schedule are unchanged. The adjacent arms `3952a8fc…` and `77542853…` share the later NPC repair and differ only in whether the ordinary invalidator reuses its candidate's prepared rows. The frozen plan SHA-256 is `be347a1a667819f1c2ca4b6b71790800a13c45842544e84d3849a2343538545c`.
+
+**Retain ordinary reuse.** It removes one complete candidate adaptation and reduces median server-plus-PostgreSQL CPU by **2.02%** on this opening. Every candidate combined CPU observation is below the control range. Movement and durability latency remain close and the observed maximum end-of-window debt belongs to a control run. This experiment shows an end-to-end CPU effect for the application change. It does not assign the difference to a particular database operation.
+
+The CPU and game-speed statistics are median / average / nearest-rank p95 across three whole-window observations in each arm. Latencies pool individual witnessed observations across the three runs.
+
+| Metric                                                |                     Control |                 Candidate |
+| ----------------------------------------------------- | --------------------------: | ------------------------: |
+| Server CPU, % of one core                             |       39.78 / 39.68 / 39.97 |     38.97 / 38.89 / 38.98 |
+| Exclusive PostgreSQL CPU, % of one core               |          2.01 / 2.02 / 2.06 |        1.97 / 1.96 / 2.02 |
+| Client CPU, % of one core                             |          0.91 / 0.90 / 0.91 |        0.89 / 0.89 / 0.89 |
+| Server + PostgreSQL CPU, % of one core                |       41.78 / 41.70 / 42.03 |     40.94 / 40.85 / 41.00 |
+| Complete CPU with client, % of one core               |       42.69 / 42.60 / 42.94 |     41.82 / 41.74 / 41.89 |
+| Achieved game speed, % of intended rate               | 100.002 / 100.003 / 100.014 | 99.997 / 99.997 / 100.000 |
+| Server + PostgreSQL CPU, ms per completed game-second |          6.96 / 6.95 / 7.01 |        6.82 / 6.81 / 6.83 |
+| HTTP command response, ms                             |       15.69 / 18.54 / 34.54 |     15.67 / 18.75 / 34.88 |
+| First affected view, ms                               |       45.58 / 48.34 / 76.26 |     45.39 / 48.74 / 74.15 |
+| First changed movement, ms                            |       60.52 / 62.28 / 97.66 |     59.12 / 61.92 / 96.96 |
+| Command to durable acknowledgement, ms                |   552.97 / 549.74 / 1019.22 | 553.14 / 549.27 / 1012.63 |
+| Sampled unsaved age, ms                               |    514.64 / 512.54 / 976.92 |  510.24 / 512.27 / 979.16 |
+| Save capture, ms                                      |          0.57 / 0.64 / 1.14 |        0.56 / 0.64 / 1.11 |
+| Save repository phase, ms                             |       16.63 / 17.22 / 25.32 |     16.39 / 16.69 / 24.28 |
+| Save acknowledgement, ms                              |          1.10 / 1.28 / 2.12 |        1.05 / 1.24 / 1.99 |
+
+Server + PostgreSQL CPU ranges across runs are 41.30–42.03% and 40.62–41.00% of one core. Median change −2.02%.
+
+Across the six runs, every eligible steady command has its response, view, movement and durability witnesses. Control and candidate median SQL calls are 12,230 and 11,998. Medians for prepared rows and payload are 31,328 / 55.68 MiB and 31,496 / 56.24 MiB, respectively. WAL medians are 39.77 and 39.51 MiB and database growth medians are 14.23 and 14.32 MiB. The observed SQL, WAL and growth ranges overlap.
+
+Sampled concurrent memory peaks are 1,434.57–1,487.13 MiB for the control and 1,474.95–1,481.21 MiB for the candidate. Lifetime transient reservation peaks span 253.76–317.81 MiB across both arms. All runs reach zero reported jobs and resident and pending-save bytes at shutdown. Unclassified transient charges span 2.70–48.46 MiB. Neither concurrent RSS nor these final observations identify a settled memory floor.
+
+### Individual repaired ordinary runs
+
+CPU is each whole-window average as a percentage of one logical core. Game speed uses the actual window duration at the authored 60× rate. Inferred offered time is completed time plus the change in debt. Each row describes one attempt.
+
+| Run  | Server % | Exclusive PG % | Client % | Server + PG % | Game speed % | Server + PG CPU ms/game-s | Game seconds completed / intended / inferred offered | Debt start / end, s | Full-run commands | Conversations         |
+| ---- | -------- | -------------- | -------- | ------------- | ------------ | ------------------------- | ---------------------------------------------------- | ------------------- | ----------------- | --------------------- |
+| 01-A | 39.29    | 2.01           | 0.89     | 41.30         | 100.002      | 6.88                      | 21600.34 / 21599.81 / 21600.34                       | 0.00 / 0.00         | 560/560           | completed / completed |
+| 02-B | 38.73    | 1.89           | 0.89     | 40.62         | 100.000      | 6.77                      | 21600.06 / 21600.01 / 21600.06                       | 0.00 / 0.00         | 560/560           | completed / completed |
+| 03-B | 38.98    | 2.02           | 0.89     | 41.00         | 99.997       | 6.83                      | 21599.12 / 21599.86 / 21599.12                       | 0.00 / 0.00         | 560/560           | completed / completed |
+| 04-A | 39.78    | 2.00           | 0.91     | 41.78         | 100.014      | 6.96                      | 21602.74 / 21599.62 / 21599.66                       | 3.08 / 0.00         | 560/560           | completed / completed |
+| 05-B | 38.97    | 1.97           | 0.88     | 40.94         | 99.995       | 6.82                      | 21598.62 / 21599.76 / 21598.62                       | 0.00 / 0.00         | 560/560           | completed / completed |
+| 06-A | 39.97    | 2.06           | 0.91     | 42.03         | 99.993       | 7.01                      | 21598.35 / 21599.84 / 21601.41                       | 0.00 / 3.06         | 560/560           | completed / completed |
+
+All collections and the read-only settlement are sealed in `nrf11-ordinary-repaired-aws-20261115/manifest.json`, SHA-256 `6af4896a5406a54a72614fbf03d7310f2def59d7f40059ba167cb8a86a469ad4` (171 payloads, 436,863,666 bytes). Worker generation 414 is stopped and reusable. The controller settles **$0.490827**, comprising $0.249036 compute, $0.225336 operations and $0.016455 retained storage. It releases $0.329444 and has no remaining hold. Continuing accounted spend at settlement is **$21.909829 of $50**. External Jev spend remains $0.
