@@ -10,11 +10,10 @@ impl NativeWorld {
         env: &'a Env,
         bytes: BufferSlice<'_>,
     ) -> Result<Object<'a>> {
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            let _custody = custody;
             let key = session
-                .begin_knowledge_edit(&bytes)
+                .begin_knowledge_edit(bytes.bytes())
                 .map_err(operation_error)?;
             turn(session, key, None, cancel, budget)
         })

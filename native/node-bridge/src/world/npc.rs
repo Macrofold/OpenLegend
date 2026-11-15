@@ -26,9 +26,8 @@ impl NativeWorld {
             return Err(failure("NPC naming read belongs to another native writer"));
         }
         let read = Arc::clone(&read.inner);
-        let (request, custody) = input(&request, &self.host.bytes)?;
+        let request = input(&request, &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            let _custody = custody;
             let mut owner = read
                 .read
                 .try_lock()
@@ -41,7 +40,7 @@ impl NativeWorld {
                     owner
                         .as_mut()
                         .ok_or_else(|| failure("NPC naming read was released"))?,
-                    &request,
+                    request.bytes(),
                 )
                 .map_err(operation_error)?;
             if read.released.load(Ordering::Acquire) || cancel.requested() {
@@ -64,29 +63,28 @@ impl NativeWorld {
             return Err(failure("NPC response belongs to another native writer"));
         }
         let ticket = Arc::clone(&ticket.inner);
-        let (response, custody) = input(&response, &self.host.bytes)?;
+        let response = input(&response, &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            let _custody = custody;
-            let response = String::from_utf8(response)
-                .map_err(|_| failure("native response must be UTF-8 JSON"))?;
-            let mut owner = ticket
-                .ticket
-                .try_lock()
-                .map_err(|_| failure("native NPC response is busy or unavailable"))?;
-            if ticket.released.load(Ordering::Acquire) {
-                return Err(failure("native NPC response was released"));
-            }
-            let result = session.begin_npc_response(&mut owner, &response, protected);
-            let released = ticket.released.load(Ordering::Acquire);
-            if owner.is_none() {
-                ticket.released.store(true, Ordering::Release);
-            }
-            let key = result.map_err(operation_error)?;
-            if released {
-                session.cancel(key).map_err(operation_error)?;
-                return Err(failure("native NPC response was released"));
-            }
-            turn(session, key, None, cancel, budget)
+            response.with_utf8("native response must be UTF-8 JSON", |response| {
+                let mut owner = ticket
+                    .ticket
+                    .try_lock()
+                    .map_err(|_| failure("native NPC response is busy or unavailable"))?;
+                if ticket.released.load(Ordering::Acquire) {
+                    return Err(failure("native NPC response was released"));
+                }
+                let result = session.begin_npc_response(&mut owner, &response, protected);
+                let released = ticket.released.load(Ordering::Acquire);
+                if owner.is_none() {
+                    ticket.released.store(true, Ordering::Release);
+                }
+                let key = result.map_err(operation_error)?;
+                if released {
+                    session.cancel(key).map_err(operation_error)?;
+                    return Err(failure("native NPC response was released"));
+                }
+                turn(session, key, None, cancel, budget)
+            })
         })
     }
 }
@@ -415,9 +413,8 @@ fn begin_preparation<'a>(
         return Err(failure("NPC read belongs to another native writer"));
     }
     let read = Arc::clone(&read.inner);
-    let (request, custody) = input(&request, &world.host.bytes)?;
+    let request = input(&request, &world.host.bytes)?;
     world.compute(env, move |session, cancel, budget| {
-        let _custody = custody;
         let mut owner = read
             .read
             .try_lock()
@@ -429,8 +426,10 @@ fn begin_preparation<'a>(
             .as_mut()
             .ok_or_else(|| failure("native NPC read was released"))?;
         let key = match kind {
-            PreparationKind::Candidates => session.begin_npc_candidates(read_owner, &request),
-            PreparationKind::Sources => session.begin_npc_sources(read_owner, &request),
+            PreparationKind::Candidates => {
+                session.begin_npc_candidates(read_owner, request.bytes())
+            }
+            PreparationKind::Sources => session.begin_npc_sources(read_owner, request.bytes()),
         }
         .map_err(operation_error)?;
         let result = preparation_turn(session, read_owner, key, None, cancel, budget);
@@ -458,9 +457,8 @@ impl NativeWorld {
             return Err(failure("NPC response belongs to another native writer"));
         }
         let ticket = Arc::clone(&ticket.inner);
-        let (request, custody) = input(&request, &self.host.bytes)?;
+        let request = input(&request, &self.host.bytes)?;
         self.compute(env, move |session, cancel, _budget| {
-            let _custody = custody;
             let mut owner = ticket
                 .ticket
                 .try_lock()
@@ -473,7 +471,7 @@ impl NativeWorld {
                     owner
                         .as_mut()
                         .ok_or_else(|| failure("native NPC response was released"))?,
-                    &request,
+                    request.bytes(),
                 )
                 .map_err(operation_error)
         })
@@ -543,9 +541,8 @@ impl NativeWorld {
             return Err(failure("NPC read belongs to another native writer"));
         }
         let read = Arc::clone(&read.inner);
-        let (request, input_custody) = input(&request, &self.host.bytes)?;
+        let request = input(&request, &self.host.bytes)?;
         self.compute(env, move |session, _cancel, budget| {
-            let _input_custody = input_custody;
             let owner = read
                 .read
                 .try_lock()
@@ -561,7 +558,7 @@ impl NativeWorld {
                     owner
                         .as_ref()
                         .ok_or_else(|| failure("native NPC read was released"))?,
-                    &request,
+                    request.bytes(),
                 )
                 .map_err(operation_error)?;
             drop(owner);
@@ -641,9 +638,8 @@ impl NativeWorld {
         let actions = actions.map(|read| Arc::clone(&read.inner));
         let trigger = trigger.map(|trigger| Arc::clone(&trigger.inner));
         let host = Arc::clone(&self.host);
-        let (request, input_custody) = input(&request, &self.host.bytes)?;
+        let request = input(&request, &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            let _input_custody = input_custody;
             let mut original = first
                 .read
                 .try_lock()
@@ -701,7 +697,7 @@ impl NativeWorld {
                 .bind_npc_response(
                     &mut original,
                     &mut current,
-                    &request,
+                    request.bytes(),
                     trigger_read.as_ref().and_then(|owner| owner.as_ref()),
                     action_read.as_mut().map(|read| &mut **read),
                 )
@@ -746,9 +742,8 @@ impl NativeWorld {
             return Err(failure("NPC read belongs to another native writer"));
         }
         let read = Arc::clone(&read.inner);
-        let (request, custody) = input(&request, &self.host.bytes)?;
+        let request = input(&request, &self.host.bytes)?;
         self.compute(env, move |session, _cancel, budget| {
-            let _custody = custody;
             let owner = read
                 .read
                 .try_lock()
@@ -761,7 +756,7 @@ impl NativeWorld {
                     owner
                         .as_ref()
                         .ok_or_else(|| failure("native NPC read was released"))?,
-                    &request,
+                    request.bytes(),
                 )
                 .map(|value| NativeWorldJson::new(value, budget.clone()))
                 .map_err(operation_error)
@@ -800,9 +795,8 @@ impl NativeWorld {
         let key = key.try_into()?;
         let read = Arc::clone(&read.inner);
         let provider = Arc::clone(&provider.inner);
-        let (answer, custody) = input(&answer, &self.host.bytes)?;
+        let answer = input(&answer, &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            let _custody = custody;
             let mut owner = read
                 .read
                 .try_lock()
@@ -813,16 +807,17 @@ impl NativeWorld {
             let read_owner = owner
                 .as_mut()
                 .ok_or_else(|| failure("native NPC read was released"))?;
-            let answer = String::from_utf8(answer)
-                .map_err(|_| failure("native provider answer must be UTF-8 JSON"))?;
-            let result = preparation_turn(
-                session,
-                read_owner,
-                key,
-                Some((&provider, answer)),
-                cancel,
-                budget,
-            );
+            let result =
+                answer.with_utf8("native provider answer must be UTF-8 JSON", |answer| {
+                    Ok(preparation_turn(
+                        session,
+                        read_owner,
+                        key,
+                        Some((&provider, answer)),
+                        cancel,
+                        budget,
+                    ))
+                })?;
             if read.released.load(Ordering::Acquire) {
                 session
                     .cancel_npc_preparation(read_owner)
@@ -835,13 +830,12 @@ impl NativeWorld {
     }
     #[napi(ts_return_type = "Promise<NativeWorldNpcRead>")]
     pub fn read_npc<'a>(&self, env: &'a Env, request: BufferSlice<'_>) -> Result<Object<'a>> {
-        let (request, custody) = input(&request, &self.host.bytes)?;
+        let request = input(&request, &self.host.bytes)?;
         let host = Arc::clone(&self.host);
         let world = Arc::downgrade(&self.world);
         self.compute(env, move |session, _cancel, _budget| {
-            let _custody = custody;
             let read_custody = read_wrapper_custody(_budget)?;
-            let read = session.read_npc(&request).map_err(operation_error)?;
+            let read = session.read_npc(request.bytes()).map_err(operation_error)?;
             Ok(NativeWorldNpcRead {
                 inner: Arc::new(NpcReadRuntime {
                     payload: read.receipt_liveness(),

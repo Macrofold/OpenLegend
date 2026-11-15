@@ -374,7 +374,34 @@ where
     }
     Ok(promise)
 }
-fn input(bytes: &[u8], budget: &ByteBudget) -> Result<(Vec<u8>, ByteReservation)> {
+/// One copied bridge input stays funded through queued destruction, borrowed
+/// parsing and synchronous UTF-8 handoff. Field order is deliberate: backing
+/// ends before its charge, including when work is refused before invocation.
+struct Input {
+    bytes: Vec<u8>,
+    custody: ByteReservation,
+}
+impl Input {
+    fn bytes(&self) -> &[u8] {
+        &self.bytes
+    }
+    /// Move the same backing into a String while the original charge spans the
+    /// actual synchronous consumer. Any retained input must have its independent
+    /// Runtime admission before that consumer returns.
+    fn with_utf8<T>(
+        self,
+        message: &'static str,
+        consume: impl FnOnce(String) -> Result<T>,
+    ) -> Result<T> {
+        let Self { bytes, custody } = self;
+        let _custody = custody;
+        let text = String::from_utf8(bytes).map_err(|_| failure(message))?;
+        consume(text)
+    }
+}
+/// Admit and copy the caller's bytes before dispatch. The worker can use the
+/// copy even if JavaScript changes or releases its buffer after returning.
+fn input(bytes: &[u8], budget: &ByteBudget) -> Result<Input> {
     let mut custody = budget
         .reserve(bytes.len())
         .map_err(|e| failure(e.to_string()))?;
@@ -382,7 +409,7 @@ fn input(bytes: &[u8], budget: &ByteBudget) -> Result<(Vec<u8>, ByteReservation)
     custody
         .resize(bytes.capacity())
         .map_err(|e| failure(e.to_string()))?;
-    Ok((bytes, custody))
+    Ok(Input { bytes, custody })
 }
 fn turn(
     session: &mut NativeWorldSession,
@@ -461,18 +488,17 @@ impl NativeHost {
         restoring: bool,
     ) -> Result<Object<'a>> {
         boundary(|| {
-            let (bytes, custody) = input(&bytes, &self.runtime.bytes)?;
+            let bytes = input(&bytes, &self.runtime.bytes)?;
             let host = Arc::clone(&self.runtime);
             dispatch(env, &self.runtime, None, move |cancel| {
-                let _custody = custody;
                 let session = if restoring {
                     NativeWorldSession::install_restore(
-                        &bytes,
+                        bytes.bytes(),
                         &database_schema,
                         host.bytes.clone(),
                     )
                 } else {
-                    NativeWorldSession::install(&bytes, &database_schema, host.bytes.clone())
+                    NativeWorldSession::install(bytes.bytes(), &database_schema, host.bytes.clone())
                 }
                 .map_err(operation_error)?;
                 let world = Arc::new(WorldRuntime {
@@ -571,11 +597,10 @@ impl NativeWorld {
         maximum_intervals: u32,
         bytes: BufferSlice<'_>,
     ) -> Result<Object<'a>> {
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            let _custody = custody;
             let key = session
-                .begin_advance(seconds, maximum_intervals as usize, &bytes)
+                .begin_advance(seconds, maximum_intervals as usize, bytes.bytes())
                 .map_err(operation_error)?;
             turn(session, key, None, cancel, budget)
         })
@@ -589,20 +614,18 @@ impl NativeWorld {
         preview: bool,
         durable_receipt: bool,
     ) -> Result<Object<'a>> {
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
-        let (canonical, canonical_custody) = input(&canonical, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
+        let canonical = input(&canonical, &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            let _custody = custody;
-            let _canonical_custody = canonical_custody;
-            let canonical = String::from_utf8(canonical)
-                .map_err(|_| failure("native command identity must be UTF-8 JSON"))?;
-            let key = if preview {
-                session.begin_command_preview(&bytes, canonical)
-            } else {
-                session.begin_command(&bytes, canonical, durable_receipt)
-            }
-            .map_err(operation_error)?;
-            turn(session, key, None, cancel, budget)
+            canonical.with_utf8("native command identity must be UTF-8 JSON", |canonical| {
+                let key = if preview {
+                    session.begin_command_preview(bytes.bytes(), canonical)
+                } else {
+                    session.begin_command(bytes.bytes(), canonical, durable_receipt)
+                }
+                .map_err(operation_error)?;
+                turn(session, key, None, cancel, budget)
+            })
         })
     }
     #[napi(ts_return_type = "Promise<NativeWorldTurn>")]
@@ -615,12 +638,11 @@ impl NativeWorld {
     ) -> Result<Object<'a>> {
         let key = key.try_into()?;
         let provider = Arc::clone(&provider.inner);
-        let (bytes, custody) = input(json.as_ref(), &self.host.bytes)?;
+        let bytes = input(json.as_ref(), &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            let _custody = custody;
-            let json = String::from_utf8(bytes)
-                .map_err(|_| failure("native provider answer must be UTF-8 JSON"))?;
-            turn(session, key, Some((&provider, json)), cancel, budget)
+            bytes.with_utf8("native provider answer must be UTF-8 JSON", |json| {
+                turn(session, key, Some((&provider, json)), cancel, budget)
+            })
         })
     }
     #[napi(ts_return_type = "Promise<boolean>")]

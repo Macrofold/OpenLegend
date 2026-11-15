@@ -244,12 +244,11 @@ impl NativeWorld {
         if !Weak::ptr_eq(&read.world, &Arc::downgrade(&self.world)) {
             return Err(failure("maintenance read belongs to another native writer"));
         }
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         let read = Arc::clone(&read.inner);
         let host = Arc::clone(&self.host);
         let world = Arc::downgrade(&self.world);
         self.compute(env, move |session, _cancel, budget| {
-            let _custody = custody;
             let owner = read
                 .read
                 .try_lock()
@@ -275,7 +274,7 @@ impl NativeWorld {
                     owner
                         .as_ref()
                         .ok_or_else(|| failure("maintenance read was released"))?,
-                    &bytes,
+                    bytes.bytes(),
                 )
                 .map_err(operation_error)?;
             if read.released.load(Ordering::Acquire) {
@@ -344,9 +343,8 @@ impl NativeWorld {
         }
         let owner = Arc::clone(&ticket.inner);
         let provider = Arc::clone(&provider.inner);
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            let _custody = custody;
             let mut ticket = owner
                 .ticket
                 .try_lock()
@@ -360,10 +358,16 @@ impl NativeWorld {
             let key = read
                 .candidate_key()
                 .ok_or_else(|| failure("consolidation source question is no longer active"))?;
-            let json =
-                String::from_utf8(bytes).map_err(|_| failure("provider answer is not UTF-8"))?;
-            let output =
-                preparation_turn(session, read, key, Some((&provider, json)), cancel, budget);
+            let output = bytes.with_utf8("provider answer is not UTF-8", |json| {
+                Ok(preparation_turn(
+                    session,
+                    read,
+                    key,
+                    Some((&provider, json)),
+                    cancel,
+                    budget,
+                ))
+            })?;
             if owner.released.load(Ordering::Acquire) {
                 session
                     .cancel_consolidation_sources(read)
@@ -437,9 +441,8 @@ impl NativeWorld {
         let interpretation = interpretation
             .map(|bytes| input(&bytes, &self.host.bytes))
             .transpose()?;
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            let _custody = custody;
             let interpretation = interpretation;
             let mut ticket = owner
                 .ticket
@@ -466,9 +469,9 @@ impl NativeWorld {
             let key = session
                 .begin_consolidation(
                     &mut ticket,
-                    &bytes,
+                    bytes.bytes(),
                     dream_owner.as_ref().and_then(|owner| owner.as_ref()),
-                    interpretation.as_ref().map(|(bytes, _)| bytes.as_slice()),
+                    interpretation.as_ref().map(|input| input.bytes()),
                 )
                 .map_err(operation_error)?;
             let released = owner.released.swap(true, Ordering::AcqRel)

@@ -96,9 +96,8 @@ impl NativeWorld {
             return Err(failure("navigation read belongs to another writer"));
         }
         let read = Arc::clone(&read.inner);
-        let (answer, custody) = input(&answer, &self.host.bytes)?;
+        let answer = input(&answer, &self.host.bytes)?;
         self.compute(env, move |session, cancel, _budget| {
-            let _custody = custody;
             let mut owner = read
                 .read
                 .try_lock()
@@ -111,7 +110,7 @@ impl NativeWorld {
                 owner
                     .as_mut()
                     .ok_or_else(|| failure("navigation read was consumed"))?,
-                &answer,
+                answer.bytes(),
             );
             let released = read.released.load(Ordering::Acquire) || cancel.requested();
             if released || !matches!(result, Ok(true)) {

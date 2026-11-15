@@ -249,10 +249,9 @@ impl NativeWorld {
         if !Weak::ptr_eq(&read.world, &Arc::downgrade(&self.world)) {
             return Err(failure("private history belongs to another native writer"));
         }
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         let read = Arc::clone(&read.inner);
         self.compute(env, move |session, _cancel, _budget| {
-            let _custody = custody;
             let mut owner = read
                 .read
                 .try_lock()
@@ -265,7 +264,7 @@ impl NativeWorld {
                 owner
                     .as_mut()
                     .ok_or_else(|| failure("private history read was released"))?,
-                &bytes,
+                bytes.bytes(),
             )
             .map_err(operation_error);
             if read.released.load(Ordering::Acquire) {
@@ -345,9 +344,8 @@ impl NativeWorld {
             return Err(failure("history read belongs to another native writer"));
         }
         let read = Arc::clone(&read.inner);
-        let (input, storage) = input(&input_bytes, &self.host.bytes)?;
+        let input = input(&input_bytes, &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            let _storage = storage;
             let mut owner = read
                 .read
                 .try_lock()
@@ -359,7 +357,7 @@ impl NativeWorld {
                 .as_mut()
                 .ok_or_else(|| failure("recent history read was released"))?;
             let key = session
-                .begin_history_sources(value, &input)
+                .begin_history_sources(value, input.bytes())
                 .map_err(operation_error)?;
             let result = turn_sources(session, value, key, None, cancel, budget);
             if read.released.load(Ordering::Acquire) {
@@ -387,9 +385,8 @@ impl NativeWorld {
         let key = key.try_into()?;
         let read = Arc::clone(&read.inner);
         let provider = Arc::clone(&provider.inner);
-        let (bytes, storage) = input(answer.as_ref(), &self.host.bytes)?;
+        let bytes = input(answer.as_ref(), &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            let _storage = storage;
             let mut owner = read
                 .read
                 .try_lock()
@@ -400,16 +397,16 @@ impl NativeWorld {
             let value = owner
                 .as_mut()
                 .ok_or_else(|| failure("recent history read was released"))?;
-            let answer = String::from_utf8(bytes)
-                .map_err(|_| failure("native history answer must be UTF-8 JSON"))?;
-            let result = turn_sources(
-                session,
-                value,
-                key,
-                Some((&provider, answer)),
-                cancel,
-                budget,
-            );
+            let result = bytes.with_utf8("native history answer must be UTF-8 JSON", |answer| {
+                Ok(turn_sources(
+                    session,
+                    value,
+                    key,
+                    Some((&provider, answer)),
+                    cancel,
+                    budget,
+                ))
+            })?;
             if read.released.load(Ordering::Acquire) {
                 session
                     .cancel_history_sources(value)

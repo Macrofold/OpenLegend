@@ -167,12 +167,11 @@ impl NativeWorld {
         env: &'a Env,
         bytes: BufferSlice<'_>,
     ) -> Result<Object<'a>> {
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         self.compute(env, move |session, _cancel, budget| {
-            let _custody = custody;
             Ok(NativeWorldJson::new(
                 session
-                    .maintenance_pressure(&bytes)
+                    .maintenance_pressure(bytes.bytes())
                     .map_err(operation_error)?,
                 budget.clone(),
             ))
@@ -180,11 +179,10 @@ impl NativeWorld {
     }
     #[napi(ts_return_type = "Promise<NativeWorldMaintenanceRead>")]
     pub fn read_maintenance<'a>(&self, env: &'a Env, bytes: BufferSlice<'_>) -> Result<Object<'a>> {
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         let host = Arc::clone(&self.host);
         let world = Arc::downgrade(&self.world);
         self.compute(env, move |session, _cancel, budget| {
-            let _custody = custody;
             let storage = budget
                 .reserve(
                     std::mem::size_of::<MaintenanceOwner>()
@@ -192,7 +190,9 @@ impl NativeWorld {
                         + 2 * std::mem::size_of::<usize>(),
                 )
                 .map_err(operation_error)?;
-            let read = session.read_maintenance(&bytes).map_err(operation_error)?;
+            let read = session
+                .read_maintenance(bytes.bytes())
+                .map_err(operation_error)?;
             Ok(NativeWorldMaintenanceRead {
                 inner: Arc::new(MaintenanceOwner {
                     read: Mutex::new(Some(read)),
@@ -211,7 +211,7 @@ impl NativeWorld {
         read: &NativeWorldMaintenanceRead,
         bytes: BufferSlice<'_>,
     ) -> Result<Object<'a>> {
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         if !Weak::ptr_eq(&read.world, &Arc::downgrade(&self.world)) {
             return Err(failure("maintenance read belongs to another native writer"));
         }
@@ -230,9 +230,8 @@ impl NativeWorld {
             let storage = budget
                 .reserve(std::mem::size_of::<NativeWorldMaintenancePublication>())
                 .map_err(operation_error)?;
-            let _custody = custody;
             let publication = session
-                .maintenance_publication(value, &bytes)
+                .maintenance_publication(value, bytes.bytes())
                 .map_err(operation_error)?;
             drop(owner);
             if read.released.load(Ordering::Acquire) {
@@ -251,11 +250,10 @@ impl NativeWorld {
         env: &'a Env,
         bytes: BufferSlice<'_>,
     ) -> Result<Object<'a>> {
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            let _custody = custody;
             let key = session
-                .begin_support_retention(&bytes)
+                .begin_support_retention(bytes.bytes())
                 .map_err(operation_error)?;
             turn(session, key, None, cancel, budget)
         })
@@ -266,11 +264,10 @@ impl NativeWorld {
         env: &'a Env,
         bytes: BufferSlice<'_>,
     ) -> Result<Object<'a>> {
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            let _custody = custody;
             let key = session
-                .begin_knowledge_retention(&bytes)
+                .begin_knowledge_retention(bytes.bytes())
                 .map_err(operation_error)?;
             turn(session, key, None, cancel, budget)
         })
@@ -281,11 +278,10 @@ impl NativeWorld {
         env: &'a Env,
         bytes: BufferSlice<'_>,
     ) -> Result<Object<'a>> {
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            let _custody = custody;
             let key = session
-                .begin_recent_retention(&bytes)
+                .begin_recent_retention(bytes.bytes())
                 .map_err(operation_error)?;
             turn(session, key, None, cancel, budget)
         })

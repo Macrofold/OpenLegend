@@ -186,14 +186,13 @@ impl NativeWorld {
                 "reply preview read belongs to another native writer",
             ));
         }
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         let read = Arc::clone(
             read.inner
                 .as_ref()
                 .ok_or_else(|| failure("reply preview read was released"))?,
         );
         self.compute(env, move |session, _cancel, budget| {
-            let _custody = custody;
             let mut owner = read
                 .read
                 .try_lock()
@@ -206,7 +205,7 @@ impl NativeWorld {
                 .take()
                 .ok_or_else(|| failure("reply preview read was consumed or released"))?;
             let value = session
-                .finish_reply_preview(selected, &bytes)
+                .finish_reply_preview(selected, bytes.bytes())
                 .map_err(operation_error)?;
             if read.released.load(Ordering::Acquire) {
                 return Err(failure("reply preview read was released"));

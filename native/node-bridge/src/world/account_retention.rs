@@ -27,7 +27,7 @@ impl NativeWorldAccountRetention {
     }
     #[napi(ts_return_type = "Promise<void>")]
     pub fn load<'a>(&self, env: &'a Env, bytes: BufferSlice<'_>) -> Result<Object<'a>> {
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         let owner = Arc::clone(&self.inner);
         let budget = self.host.bytes.clone();
         let world = self
@@ -35,7 +35,6 @@ impl NativeWorldAccountRetention {
             .upgrade()
             .ok_or_else(|| failure("retention world stopped"))?;
         dispatch(env, &self.host, None, move |_cancel| {
-            let _custody = custody;
             let mut read = owner
                 .read
                 .try_lock()
@@ -47,7 +46,7 @@ impl NativeWorldAccountRetention {
             let result = read
                 .as_mut()
                 .ok_or_else(|| failure("retention read was consumed"))?
-                .load(&bytes, &budget)
+                .load(bytes.bytes(), &budget)
                 .map_err(operation_error);
             if owner.released.load(Ordering::Acquire) {
                 *read = None;
@@ -65,11 +64,7 @@ impl NativeWorldAccountRetention {
     }
 }
 impl NativeWorldAccountRetention {
-    fn product<'a>(
-        &self,
-        env: &'a Env,
-        input: Option<(Vec<u8>, ByteReservation)>,
-    ) -> Result<Object<'a>> {
+    fn product<'a>(&self, env: &'a Env, input: Option<Input>) -> Result<Object<'a>> {
         let owner = Arc::clone(&self.inner);
         let budget = self.host.bytes.clone();
         let world = self
@@ -89,10 +84,7 @@ impl NativeWorldAccountRetention {
                 .as_mut()
                 .ok_or_else(|| failure("retention read was consumed"))?;
             let result = match input {
-                Some((bytes, custody)) => {
-                    let _custody = custody;
-                    value.select(&bytes, &budget)
-                }
+                Some(input) => value.select(input.bytes(), &budget),
                 None => value.packet(&budget),
             }
             .map_err(operation_error);
@@ -117,16 +109,15 @@ impl NativeWorld {
         env: &'a Env,
         bytes: BufferSlice<'_>,
     ) -> Result<Object<'a>> {
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         let host = Arc::clone(&self.host);
         let world = Arc::downgrade(&self.world);
         self.compute(env, move |session, _cancel, budget| {
-            let _custody = custody;
             let storage = budget
                 .reserve(size_of::<RetentionOwner>() + size_of::<NativeWorldAccountRetention>())
                 .map_err(operation_error)?;
             let read = session
-                .read_account_retention(&bytes)
+                .read_account_retention(bytes.bytes())
                 .map_err(operation_error)?;
             Ok(NativeWorldAccountRetention {
                 inner: Arc::new(RetentionOwner {

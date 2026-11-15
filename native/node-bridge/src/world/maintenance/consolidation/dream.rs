@@ -39,9 +39,8 @@ impl NativeWorld {
             return Err(failure("dream belongs to another native writer"));
         }
         let ticket = Arc::clone(&ticket.inner);
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         self.compute(env, move |session, _cancel, budget| {
-            let _custody = custody;
             let owner = ticket
                 .ticket
                 .try_lock()
@@ -66,7 +65,7 @@ impl NativeWorld {
                     owner
                         .as_ref()
                         .ok_or_else(|| failure("consolidation ticket was released"))?,
-                    &bytes,
+                    bytes.bytes(),
                 )
                 .map_err(operation_error)?;
             if ticket.released.load(Ordering::Acquire) {

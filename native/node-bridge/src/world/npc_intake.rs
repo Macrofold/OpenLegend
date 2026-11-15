@@ -95,10 +95,9 @@ impl NativeWorld {
         env: &'a Env,
         request: BufferSlice<'_>,
     ) -> Result<Object<'a>> {
-        let (request, custody) = input(&request, &self.host.bytes)?;
+        let request = input(&request, &self.host.bytes)?;
         let host = Arc::clone(&self.host);
         self.compute(env, move |session, _cancel, budget| {
-            let _custody = custody;
             let storage = budget
                 .reserve(
                     std::mem::size_of::<TriggerOwner>()
@@ -107,7 +106,7 @@ impl NativeWorld {
                 )
                 .map_err(operation_error)?;
             let read = session
-                .read_npc_trigger(&request)
+                .read_npc_trigger(request.bytes())
                 .map_err(operation_error)?;
             Ok(NativeWorldNpcTrigger {
                 inner: Arc::new(TriggerOwner {
@@ -190,11 +189,10 @@ impl NativeWorld {
         env: &'a Env,
         request: BufferSlice<'_>,
     ) -> Result<Object<'a>> {
-        let (request, custody) = input(&request, &self.host.bytes)?;
+        let request = input(&request, &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            let _custody = custody;
             let key = session
-                .begin_npc_intake(&request)
+                .begin_npc_intake(request.bytes())
                 .map_err(operation_error)?;
             turn(session, key, None, cancel, budget)
         })

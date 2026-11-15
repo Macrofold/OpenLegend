@@ -5,19 +5,21 @@ use super::*;
 impl NativeWorld {
     #[napi(ts_return_type = "Promise<NativeWorldTurn>")]
     pub fn forget<'a>(&self, env: &'a Env, bytes: BufferSlice<'_>) -> Result<Object<'a>> {
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            let _custody = custody;
-            let key = session.begin_forget(&bytes).map_err(operation_error)?;
+            let key = session
+                .begin_forget(bytes.bytes())
+                .map_err(operation_error)?;
             turn(session, key, None, cancel, budget)
         })
     }
     #[napi(ts_return_type = "Promise<NativeWorldTurn>")]
     pub fn correct<'a>(&self, env: &'a Env, bytes: BufferSlice<'_>) -> Result<Object<'a>> {
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            let _custody = custody;
-            let key = session.begin_correct(&bytes).map_err(operation_error)?;
+            let key = session
+                .begin_correct(bytes.bytes())
+                .map_err(operation_error)?;
             turn(session, key, None, cancel, budget)
         })
     }

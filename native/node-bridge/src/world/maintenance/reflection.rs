@@ -113,13 +113,12 @@ impl NativeWorld {
         {
             return Err(failure("reflection scopes belong to another native writer"));
         }
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         let host = Arc::clone(&self.host);
         let body_read = Arc::clone(&body_read.inner);
         let workspace_read = Arc::clone(&workspace_read.inner);
         let npc = Arc::clone(&npc.inner);
         self.compute(env, move |session, _cancel, budget| {
-            let _custody = custody;
             let storage = budget
                 .reserve(
                     size_of::<ReflectionOwner>()
@@ -155,7 +154,7 @@ impl NativeWorld {
                 .as_ref()
                 .ok_or_else(|| failure("maintenance body read was released"))?;
             let ticket = if Arc::ptr_eq(&body_read, &workspace_read) {
-                session.bind_reflection(body, body, &mut owner, &bytes)
+                session.bind_reflection(body, body, &mut owner, bytes.bytes())
             } else {
                 let workspace = workspace_read
                     .read
@@ -167,7 +166,7 @@ impl NativeWorld {
                         .as_ref()
                         .ok_or_else(|| failure("maintenance workspace read was released"))?,
                     &mut owner,
-                    &bytes,
+                    bytes.bytes(),
                 )
             }
             .map_err(operation_error)?;
@@ -239,9 +238,8 @@ impl NativeWorld {
             return Err(failure("reflection belongs to another native writer"));
         }
         let ticket = Arc::clone(&ticket.inner);
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            let _custody = custody;
             let mut owner = ticket
                 .ticket
                 .try_lock()
@@ -250,7 +248,7 @@ impl NativeWorld {
                 return Err(failure("reflection ticket was released"));
             }
             let key = session
-                .begin_reflection(&mut owner, &bytes)
+                .begin_reflection(&mut owner, bytes.bytes())
                 .map_err(operation_error)?;
             let released = ticket.released.load(Ordering::Acquire);
             ticket.released.store(true, Ordering::Release);

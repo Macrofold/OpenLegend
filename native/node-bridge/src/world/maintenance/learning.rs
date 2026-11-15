@@ -163,11 +163,10 @@ impl NativeWorld {
         env: &'a Env,
         request: BufferSlice<'_>,
     ) -> Result<Object<'a>> {
-        let (request, custody) = input(&request, &self.host.bytes)?;
+        let request = input(&request, &self.host.bytes)?;
         let host = Arc::clone(&self.host);
         let world = Arc::downgrade(&self.world);
         self.compute(env, move |session, cancel, budget| {
-            let _input = custody;
             if cancel.requested() {
                 return Err(failure("learning preparation was canceled"));
             }
@@ -179,7 +178,7 @@ impl NativeWorld {
                 )
                 .map_err(operation_error)?;
             let read = session
-                .prepare_activity_learning(&request)
+                .prepare_activity_learning(request.bytes())
                 .map_err(operation_error)?;
             Ok(NativeWorldActivityLearningBatch {
                 inner: Arc::new(LearningOwner {
@@ -237,9 +236,8 @@ impl NativeWorld {
         }
         let batch = Arc::clone(&batch.inner);
         let provider = Arc::clone(&provider.inner);
-        let (answer, custody) = input(&answer, &self.host.bytes)?;
+        let answer = input(&answer, &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            let _input = custody;
             let mut owner = batch
                 .read
                 .try_lock()
@@ -250,9 +248,16 @@ impl NativeWorld {
             let read = owner
                 .as_mut()
                 .ok_or_else(|| failure("learning batch was released"))?;
-            let answer = String::from_utf8(answer)
-                .map_err(|_| failure("native provider answer must be UTF-8 JSON"))?;
-            let result = prepare_turn(session, read, Some((&provider, answer)), cancel, budget);
+            let result =
+                answer.with_utf8("native provider answer must be UTF-8 JSON", |answer| {
+                    Ok(prepare_turn(
+                        session,
+                        read,
+                        Some((&provider, answer)),
+                        cancel,
+                        budget,
+                    ))
+                })?;
             if batch.released.load(Ordering::Acquire) {
                 session
                     .cancel_activity_learning(read)
@@ -281,9 +286,8 @@ impl NativeWorld {
         }
         let batch = Arc::clone(&batch.inner);
         let admission = admission.map(|read| Arc::clone(&read.inner));
-        let (request, custody) = input(&request, &self.host.bytes)?;
+        let request = input(&request, &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            let _input = custody;
             let owner = batch
                 .read
                 .try_lock()
@@ -318,7 +322,7 @@ impl NativeWorld {
                     owner
                         .as_ref()
                         .ok_or_else(|| failure("learning batch was released"))?,
-                    &request,
+                    request.bytes(),
                     admitted,
                 )
                 .map_err(operation_error)?;
@@ -340,12 +344,11 @@ impl NativeWorld {
         env: &'a Env,
         request: BufferSlice<'_>,
     ) -> Result<Object<'a>> {
-        let (request, custody) = input(&request, &self.host.bytes)?;
+        let request = input(&request, &self.host.bytes)?;
         self.compute(env, move |session, _cancel, budget| {
-            let _input = custody;
             Ok(NativeWorldJson::new(
                 session
-                    .acquired_activity_signatures(&request)
+                    .acquired_activity_signatures(request.bytes())
                     .map_err(operation_error)?,
                 budget.clone(),
             ))

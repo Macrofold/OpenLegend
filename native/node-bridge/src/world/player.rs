@@ -56,10 +56,9 @@ impl NativeWorldPlayerRead {
     }
     #[napi(ts_return_type = "Promise<void>")]
     pub fn finish_controls<'a>(&self, env: &'a Env, bytes: BufferSlice<'_>) -> Result<Object<'a>> {
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         self.compute(env, move |read, budget| {
-            let _custody = custody;
-            read.finish_controls(&bytes, budget)
+            read.finish_controls(bytes.bytes(), budget)
                 .map_err(operation_error)
         })
     }
@@ -105,22 +104,20 @@ impl NativeWorldPlayerPublication {
 impl NativeWorld {
     #[napi(ts_return_type = "Promise<NativeWorldJson>")]
     pub fn player_places<'a>(&self, env: &'a Env, bytes: BufferSlice<'_>) -> Result<Object<'a>> {
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         self.compute(env, move |session, _cancel, budget| {
-            let _custody = custody;
             session
-                .player_places(&bytes)
+                .player_places(bytes.bytes())
                 .map(|value| NativeWorldJson::new(value, budget.clone()))
                 .map_err(operation_error)
         })
     }
     #[napi(ts_return_type = "Promise<NativeWorldJson>")]
     pub fn player_input<'a>(&self, env: &'a Env, bytes: BufferSlice<'_>) -> Result<Object<'a>> {
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         self.compute(env, move |session, _cancel, budget| {
-            let _custody = custody;
             session
-                .player_input(&bytes)
+                .player_input(bytes.bytes())
                 .map(|value| NativeWorldJson::new(value, budget.clone()))
                 .map_err(operation_error)
         })
@@ -135,10 +132,9 @@ impl NativeWorld {
         if !Weak::ptr_eq(&read.world, &Arc::downgrade(&self.world)) {
             return Err(failure("player read belongs to another native writer"));
         }
-        let (bytes, custody) = input(&bytes, &self.host.bytes)?;
+        let bytes = input(&bytes, &self.host.bytes)?;
         let read = Arc::clone(&read.inner);
         self.compute(env, move |session, _cancel, budget| {
-            let _custody = custody;
             let owner = read
                 .read
                 .try_lock()
@@ -151,7 +147,7 @@ impl NativeWorld {
                     owner
                         .as_ref()
                         .ok_or_else(|| failure("native player read was released"))?,
-                    &bytes,
+                    bytes.bytes(),
                 )
                 .map_err(operation_error)?;
             if read.released.load(Ordering::Acquire) {
