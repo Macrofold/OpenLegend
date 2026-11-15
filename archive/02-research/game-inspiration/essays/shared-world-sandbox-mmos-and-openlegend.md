@@ -16,7 +16,7 @@ OpenLegend's [gameplay priorities](../../../../docs/repertoires/gameplay-priorit
 
 Peaceful work, companionship and beauty can be satisfying purposes. They coexist with danger and difficult expeditions. The research should not narrow this into a mandatory settlement-management game, a conversation simulator, or an exclusively gentle social world. Nor should every successful camp have to become a city. A player may choose a modest life and enjoy having achieved it.
 
-The [selected language](../../../06-marketing/language-and-elevator-pitches.md) distinguishes the playable game from the wider engine and creator proposition. The chosen line, “Create a world by playing it. Share what you discover,” remains in place. This essay interprets its competitive burden; it does not silently replace accepted copy.
+The [selected language](../../../06-marketing/language-and-elevator-pitches.md) distinguishes the playable game from the wider engine and creator proposition. The endorsed line, “Create a world by playing it. Share what you discover,” remains among the selected wording. This essay interprets its competitive burden; it does not silently replace accepted copy.
 
 The [current art direction](../../../../art-direction/decisions.md#current-direction-at-a-glance) requires believable grounded stylization and rejects visible facets, blockiness and toy proportions. A smaller production budget does not authorize an unrelated low-poly style. The [creative brief](../../../../art-direction/final-board/creative-brief.md) connects beauty to actual people, materials, lighting, weather and world state.
 
@@ -30,7 +30,7 @@ The [SEED dossier](../dossiers/seed.md) establishes substantial overlap with aut
 
 SEED's player-managed society and OpenLegend's intended direct adventure have different centers of play. That difference may matter more than either technology label. The test is whether a player wants to be in OpenLegend because of what they actually do there.
 
-The reception sample contains both useful social roles and burdensome administration. Conversational expressiveness cannot compensate for characters that need constant rescue, invent guidance, repeat empty friendliness or fail to help carry out a chosen activity. Its funding and staffing establish production investment, not sales success. Steam's absent review corpus does not mean there are no standalone players.
+The reception sample contains both useful social roles and burdensome administration. In the frustrated accounts, conversational expressiveness did not reliably offset characters needing rescue, invented guidance, empty friendliness or difficulty carrying out a chosen activity. Its funding and staffing establish production investment, not sales success. Steam's absent review corpus does not mean there are no standalone players.
 
 ### Stars Reach competes directly on embodied systemic freedom
 
@@ -62,6 +62,8 @@ The distinction would be weak if ordinary play consisted mainly of gathering, fi
 
 This is a target experience, not a report that these outcomes already occur reliably. Nor is adding every competitor's successful system a sensible response. More professions, bigger maps and more simulated inhabitants also increase explanation, art, balancing, moderation and operating work.
 
+There is an important counterargument: human cooperation carries another person's voluntary attention, reputation and recognition of shared authorship. AI inhabitants might improve availability without supplying that same value. A lonely player's criticism does not establish demand for an AI substitute. OpenLegend should examine whether its inhabitants complement human play and provide an independently enjoyable experience; it should not assume that a populated-looking world solves the social problem.
+
 ## Graphics: protect desire to inhabit the world
 
 The research does not support dismissing graphics as a superficial concern. Style preference, asset quality, animation, atmosphere, readability and responsiveness can fail independently. A person may like a stylized landscape while disliking unfinished faces, stiff movement or a confusing interface.
@@ -77,6 +79,8 @@ The [first-playable validation owner](../../../../docs/maintainers/first-playabl
 [CP10](../../../../docs/maintainers/first-playable-cooperation.md#cp10--whole-episodes-and-player-value) already asks whether players understand and benefit from particular people's voluntary cooperation, recall a shared occurrence and make a later choice affected by it. It explicitly retains repetitive begging, excessive administration, stalls and meaningless friendship claims as failures. Those are unusually close to the competitive risks found here.
 
 [Invention work](../../../../docs/maintainers/inventions-and-world-evolution.md) separates native authored methods, admitted new definitions and broader live-generation quality. The commercial question belongs to [CO01 and its decision brief](../../../../docs/projects/initial-commercial-offer-decision-brief.md), including real operating costs and the distinction between the game and creator offer.
+
+Passing the existing cooperation and first-playable gates would establish valuable behavior, not competitive preference. SEED overlaps with independence and memory; Stars Reach and Wurm already support meaningful shared activity and lasting places. The separate question is whether relevant players prefer OpenLegend's connected experience enough to choose it. That belongs in existing audience/commercial learning, rather than being inferred from technical acceptance or a memorable NPC anecdote.
 
 No new implementation backlog is needed to make these findings actionable. The final essay will connect all nine competitors to these existing decisions after the remaining dossiers are complete.
 
