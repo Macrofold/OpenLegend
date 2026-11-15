@@ -962,6 +962,7 @@ export class NativeNpcDirector {
       if (!input.sourcesCurrent())
         throw new StopJob('stale', 'The selected personal evidence changed before dispatch.');
     };
+    if (run.job.kind === 'chat') run.revalidateJudgmentSource = input.revalidate;
     const policy = this.service.definitions.facts.definitions.cognitionPolicy;
     const finish = (build: () => NativeDecisionRouting) =>
       admitDecisionGraph(this.service.world, decisionObjectBytes(5), build);
@@ -1144,6 +1145,7 @@ export class NativeNpcDirector {
       if (!(await prepared.current()))
         throw new StopJob('stale', 'The selected personal evidence changed before dispatch.');
     };
+    if (run.job.kind === 'chat') run.revalidateJudgmentSource = run.validateJudgmentSource;
     run.temporalSourcesCurrent = prepared.sourcesCurrent;
     const policy = this.service.definitions.facts.definitions.cognitionPolicy,
       generationAvailable =

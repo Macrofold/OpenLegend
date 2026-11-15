@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from 'node:util';
 import { indentedContextTextBytes } from './response-context.js';
 import {
   experienceSourceKey,
@@ -62,6 +63,8 @@ import {
 import { contextSections, type SharedModelExperience } from './perceived-context.js';
 import { fitActionCandidates } from './decision-context.js';
 import { decisionActivityFactsFromRead } from './decision-activity-facts.js';
+import { StopJob } from './decision-dispatch.js';
+import { ViewChangedError } from './player-view-async.js';
 import { ContextBudgetError, CONTEXT_BYTE_LIMIT } from './context.js';
 import {
   nativeDecisionPrompt,
@@ -138,6 +141,7 @@ export interface NativeDecisionRouteInput {
   actionRequest(purpose: 'actions' | 'choose-action'): Omit<JudgeRequest, 'requestId' | 'signal'>;
   refreshActions(): Promise<void>;
   sourcesCurrent(): boolean;
+  revalidate(): Promise<void>;
   publish: Parameters<Judge>[1];
 }
 
@@ -240,7 +244,7 @@ async function prepareOwnedDecision(
   const assertCurrent = () => {
     signal.throwIfAborted();
     if (generation !== service.generation || !fence.current())
-      throw new Error('Personal evidence changed during native decision preparation.');
+      throw new StopJob('stale', 'Personal evidence changed during native decision preparation.');
   };
   const sourcesCurrent = () =>
     generation === service.generation && fence.current() && !signal.aborted;
@@ -364,7 +368,7 @@ async function prepareOwnedDecision(
       observations,
     );
     situation.bindHistory(selectedResults);
-    await admitNativeSituationHistory(service, original, situation, signal);
+    const admittedHistory = await admitNativeSituationHistory(service, original, situation, signal);
     const recentWorkResults = selectedResults.entries.length
       ? temporalHistoryForModel(situation.presentation, actorId, selectedResults, situation.frame)
       : undefined;
@@ -531,23 +535,24 @@ async function prepareOwnedDecision(
     const commitments = original
       .sources()
       .flatMap((source) => source.personal)
-      .filter((source) => source.reference.kind === 'memory')
-      .map((source) => source.value as import('@open-legend/domain').MemoryRecord)
-      .filter(
-        (memory) =>
+      .filter((source) => {
+        if (source.reference.kind !== 'memory') return false;
+        const memory = source.value as import('@open-legend/domain').MemoryRecord;
+        return (
           memory.obligation &&
           !memory.resolved &&
           ['active', 'overdue'].includes(memory.obligation.status) &&
-          !(original.facts.self.npc.forgotten ?? []).includes(memory.id),
-      );
-    baseContext['commitments'] = commitments.map(
-      (memory) =>
-        `${memory.summary}${
-          memory.obligation?.dueAt !== undefined
-            ? ` Due in ${Math.max(0, memory.obligation.dueAt - original.facts.self.at)} game seconds.`
-            : ''
-        }`,
-    );
+          !(original.facts.self.npc.forgotten ?? []).includes(memory.id)
+        );
+      });
+    baseContext['commitments'] = commitments.map(({ value }) => {
+      const memory = value as import('@open-legend/domain').MemoryRecord;
+      return `${memory.summary}${
+        memory.obligation?.dueAt !== undefined
+          ? ` Due in ${Math.max(0, memory.obligation.dueAt - original.facts.self.at)} game seconds.`
+          : ''
+      }`;
+    });
     const requiredRecallBytes = () =>
       candidates
         .filter((candidate) => candidate.required)
@@ -576,7 +581,8 @@ async function prepareOwnedDecision(
     ) =>
       withNativeConsumerScope(async () => {
         original.guardPerspectives(selectedPerspectives());
-        if (!(await historyCurrent())) throw new Error('Native decision sources changed.');
+        if (!(await historyCurrent()))
+          throw new StopJob('stale', 'Native decision sources changed.');
         const valid = await sql(() =>
           repository.validatePreparation(
             scope,
@@ -587,8 +593,10 @@ async function prepareOwnedDecision(
         const covered = compactedSources ?? validity.usedCache?.value.sources;
         const coverage =
           !covered || (await sql(() => repository.currentCompactionSources(scope, covered)));
-        if (!valid || !coverage) throw new Error('Selected speech or recall sources changed.');
-        if (!(await historyCurrent())) throw new Error('Native decision sources changed.');
+        if (!valid || !coverage)
+          throw new StopJob('stale', 'Selected speech or recall sources changed.');
+        if (!(await historyCurrent()))
+          throw new StopJob('stale', 'Native decision sources changed.');
       });
     const projectedConversation = await conversationOwner.run(() =>
       buildNativeConversationContext({
@@ -735,9 +743,15 @@ async function prepareOwnedDecision(
         },
       };
     });
-    const selectedProofs = [
+    const selectedProofs: CurrentMemorySource[] = [
       ...recalled.selectedSources(selection.selected),
       ...retainedEvidence.map(memorySourceProof),
+      ...commitments.map(({ reference, through }) => ({
+        sourceKind: reference.kind,
+        id: reference.id,
+        revision: reference.revision,
+        ...(through ? { through: { id: through.id, revision: through.revision } } : {}),
+      })),
     ];
     rememberedPerspectives = recallPerspectives.select(
       selection.selected
@@ -1102,6 +1116,28 @@ async function prepareOwnedDecision(
                 actionRequest,
                 refreshActions,
                 sourcesCurrent,
+                revalidate: async () => {
+                  try {
+                    await conversationCheck(false, selectedProofs);
+                    // Routing precedes response-ticket issuance. Recheck admitted
+                    // receipt members alongside account revisions and perspectives.
+                    if (
+                      admittedHistory.length &&
+                      !isDeepStrictEqual(
+                        admittedHistory,
+                        await admitNativeSituationHistory(service, original, situation, signal),
+                      )
+                    )
+                      throw new StopJob(
+                        'stale',
+                        'Selected native decision chronology became unavailable.',
+                      );
+                  } catch (error) {
+                    if (error instanceof ViewChangedError)
+                      throw new StopJob('stale', 'Native decision sources changed.');
+                    throw error;
+                  }
+                },
                 publish: publishHistory,
               }),
             )

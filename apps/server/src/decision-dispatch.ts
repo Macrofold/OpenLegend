@@ -40,6 +40,9 @@ export interface DispatchRun {
   generatedBy?: string;
   cancelReason?: string;
   validateJudgmentSource?: () => Promise<void>;
+  /** Recheck the retained request's exact evidence. Only an owner that can
+   * validate the already rendered input can recover a changed read fence. */
+  revalidateJudgmentSource?: () => Promise<void>;
   discovery?: { actorId: string; reservation: string; spent: boolean };
 }
 /** Application owners provide actual source/authority and pause checks. This host
@@ -86,22 +89,23 @@ export async function dispatchDecision<R extends DispatchRun, T>(
   // or retarget this wait as unrelated physical publications arrive.
   await host.whenDurable(evidenceThrough);
   const sourceActorId = host.current(run);
-  if (
-    sourceAccess !==
-      host.store.memories?.sourceAccessRevision({
-        worldId: host.worldId,
-        actorId: sourceActorId,
-      }) ||
-    host.store.memories?.sourceEditPending({
-      worldId: host.worldId,
-      actorId: sourceActorId,
-    })
-  )
+  const sourceAccessCurrent = () => {
+    const scope = { worldId: host.worldId, actorId: sourceActorId };
+    return (
+      sourceAccess === host.store.memories?.sourceAccessRevision(scope) &&
+      !host.store.memories?.sourceEditPending(scope)
+    );
+  };
+  if (!sourceAccessCurrent())
     throw new StopJob('failed', 'The character’s evidence changed before dispatch.', 'stale');
-  const sourceCurrent = host.privateReadFence(
-    sourceActorId,
-    () => host.current(run) === sourceActorId,
-  );
+  const captureSourceFence = () =>
+    host.privateReadFence(sourceActorId, () => host.current(run) === sourceActorId);
+  let sourceCurrent = captureSourceFence();
+  const revalidateSource = run.revalidateJudgmentSource;
+  const nonReceptionRevision = revalidateSource
+    ? host.store.memories?.actorNonReceptionRevision(sourceActorId)
+    : undefined;
+  let revalidated = false;
   // This selected strategy declares both dependent calls in advance. Its
   // original useful lifetime still fences every dispatch/commit via current();
   // a stage transition neither renews that clock nor funds a fallback.
@@ -220,6 +224,22 @@ export async function dispatchDecision<R extends DispatchRun, T>(
         host.current(run);
         await run.validateJudgmentSource?.();
         host.current(run);
+        if (
+          revalidateSource &&
+          !revalidated &&
+          !sourceCurrent() &&
+          nonReceptionRevision !== undefined &&
+          nonReceptionRevision === host.store.memories?.actorNonReceptionRevision(sourceActorId) &&
+          sourceAccessCurrent()
+        ) {
+          // This is local validation of the same rendered request and dispatch
+          // intent. Capture before checking so another change still refuses at
+          // transport, and never renew the authorization across a source edit.
+          revalidated = true;
+          const nextFence = captureSourceFence();
+          await revalidateSource();
+          sourceCurrent = nextFence;
+        }
         if (!sourceCurrent())
           throw new StopJob('stale', 'The character’s evidence changed before dispatch.');
         if (

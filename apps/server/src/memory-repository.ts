@@ -1015,6 +1015,7 @@ export class MemoryRepository {
     { revision: number; reset: number; rows: Record<string, unknown>[] }
   >();
   private actorRevisions: ObjectIndexNode<number> | undefined;
+  private actorNonReceptionRevisions: ObjectIndexNode<number> | undefined;
   private actorRevisionReset = 0;
   private readonly canonicalSourceFences = new Set<CanonicalSourceWatch>();
   private readonly pendingSourceEdits = new Map<string, number>();
@@ -1389,6 +1390,15 @@ export class MemoryRepository {
   actorRevision(actorId: string): number {
     return objectIndexGet(this.actorRevisions, actorId) ?? 0;
   }
+  /** A retained NPC request may revalidate after receiving new recognition or
+   * temporal support. Other private edits and unknown scopes retain the broad
+   * dispatch refusal even when the selected history is still readable. */
+  actorNonReceptionRevision(actorId: string): number {
+    return Math.max(
+      this.actorRevisionReset,
+      objectIndexGet(this.actorNonReceptionRevisions, actorId) ?? 0,
+    );
+  }
   actorChangesSince(revision?: number): { revision: number; actors?: ReadonlySet<string> } {
     return {
       revision: this.publicationRevision,
@@ -1572,7 +1582,7 @@ export class MemoryRepository {
   }
   private publishSourceChanges(worldId: string, changes: RecordChanges, restored = false) {
     this.invalidateSourceReads(worldId, changes, restored);
-    const actors = new Set<string>();
+    const actors = new Map<string, boolean>();
     let unknownScope = changes.deletes.has('data_world') || changes.deletes.has('world_settings');
     // Current reception and attention are not retained memory. Their own grants
     // fence live reads; retained accounts, receipts and corrections invalidate here.
@@ -1581,16 +1591,19 @@ export class MemoryRepository {
       !table.startsWith('mind_perception_') &&
       !/^mind_(exposure|visible_objects|visible_people|visible_places)(?:_owners)?$/.test(table) &&
       !/^mind_temporal_(state|actors|pages|segments)$/.test(table);
-    const mark = (id: string) => {
+    const mark = (id: string, receptionOnly: boolean) => {
       const path = JSON.parse(id) as string[];
       const actor = path[path[1] === 'experience' ? (path[2] === 'temporal' ? 4 : 3) : 2];
-      if (actor) actors.add(actor);
+      if (actor) actors.set(actor, (actors.get(actor) ?? true) && receptionOnly);
       else unknownScope = true;
     };
-    for (const [table, rows] of changes.writes)
-      if (affectsMemory(table)) for (const row of rows) mark(row.id);
+    for (const [table, rows] of changes.writes) {
+      if (!affectsMemory(table)) continue;
+      const receptionOnly = table === 'mind_recognition' || table === 'mind_temporal_supports';
+      for (const row of rows) mark(row.id, receptionOnly);
+    }
     for (const [table, ids] of changes.deletes)
-      if (affectsMemory(table)) for (const id of ids) mark(id);
+      if (affectsMemory(table)) for (const id of ids) mark(id, false);
     if (
       restored ||
       unknownScope ||
@@ -1607,6 +1620,7 @@ export class MemoryRepository {
 
       this.scheduleDerived();
       this.actorRevisions = undefined;
+      this.actorNonReceptionRevisions = undefined;
     }
     if (restored || unknownScope || changes.deletes.has('experience_state')) {
       this.placeReset++;
@@ -1627,8 +1641,15 @@ export class MemoryRepository {
       changes.deletes.has('experience_state')
     )
       this.actorRevisionReset = this.publicationRevision;
-    for (const actor of actors)
+    for (const [actor, receptionOnly] of actors) {
       this.actorRevisions = objectIndexSet(this.actorRevisions, actor, this.publicationRevision);
+      if (!receptionOnly)
+        this.actorNonReceptionRevisions = objectIndexSet(
+          this.actorNonReceptionRevisions,
+          actor,
+          this.publicationRevision,
+        );
+    }
   }
 
   async initialize() {

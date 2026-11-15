@@ -25,6 +25,7 @@ import {
   joinNativeDecisionText,
 } from './native-decision-prompt.js';
 import { CONTEXT_BYTE_LIMIT, ContextBudgetError } from './context.js';
+import { StopJob } from './decision-dispatch.js';
 import { attachNativeConsumer } from './native-consumer.js';
 import {
   admitDecisionGraph,
@@ -34,14 +35,15 @@ import {
   decisionRecordEntries,
 } from './native-decision-allocation.js';
 
-/** Select the exact represented members, including genuine fieldless receipts.
- * A full physical receipt would grant more than the supplied context contains. */
+/** Read and admit the exact represented members, including genuine fieldless
+ * receipts, against the retained native capture and current scoped SQL. The
+ * returned members share the capture's lifetime. */
 export async function admitNativeSituationHistory(
   service: NativeWorldService,
   original: NativeNpcCapture,
   situation: CapturedSituation,
   signal: AbortSignal,
-): Promise<void> {
+) {
   const history = await service.prepareNpcSources(
     original,
     {
@@ -54,7 +56,8 @@ export async function admitNativeSituationHistory(
     signal,
   );
   if (history.unavailableReceipts.length)
-    throw new Error('Selected native decision chronology became unavailable.');
+    throw new StopJob('stale', 'Selected native decision chronology became unavailable.');
+  return history.receipts;
 }
 
 /** One genuine read-only continuation, before any response application. It
