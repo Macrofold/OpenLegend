@@ -1,8 +1,8 @@
 # Native runtime foundations: technical design
 
-| Status      | Current progress                                                                                               | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Command admission passes focused callers; stale conversations leave its isolated cost comparison inconclusive. | 2026-11-14   |
+| Status      | Current progress                                                                       | Last updated |
+| ----------- | -------------------------------------------------------------------------------------- | ------------ |
+| In progress | Copied input custody passes its real callers; its isolated cost comparison is running. | 2026-11-14   |
 
 [Feature specification](native-runtime-foundations-feature-spec.md) · [Evidence and repertoire reconciliation](native-runtime-foundations-evidence-and-repertoire.md) · [NRF work](../maintainers/native-runtime-foundations.md) · [Constraints](../limits/native-runtime-foundations.md)
 
