@@ -10,8 +10,8 @@ SEED and Stars Reach have full source-grounded passes researched and reviewed. T
 
 | Subject | Output | State |
 | --- | --- | --- |
-| SEED | [Dossier](dossiers/seed.md) | Researched and reviewed; committed with this checkpoint |
-| Stars Reach | [Dossier](dossiers/stars-reach.md) | Researched and reviewed; committed with this checkpoint |
+| SEED | [Dossier](dossiers/seed.md) | Complete; [dossier commit](https://github.com/Macrofold/OpenLegend/commit/8775600f1404fe9d6996cfccb13f8136ca2060ea), citation clarification 45fc466 |
+| Stars Reach | [Dossier](dossiers/stars-reach.md) | Complete; [dossier commit](https://github.com/Macrofold/OpenLegend/commit/140025985e24113ae819740f0e4869da57acfc64) |
 | Wurm Online | dossiers/wurm-online.md | Next |
 | Star Wars Galaxies: Restoration | dossiers/star-wars-galaxies-restoration.md | Pending |
 | Foxhole | dossiers/foxhole.md | Pending |
