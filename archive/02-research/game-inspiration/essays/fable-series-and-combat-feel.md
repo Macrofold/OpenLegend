@@ -46,6 +46,20 @@ The larger pattern is **adventure returning to ordinary life**. An outing can pr
 
 That does not mean importing a universal good/evil meter. A known deed, a rumor, an individual's memory and global fame are different things. The useful research question is which person knows what happened, how they learned it, and why it changes their response. The sequel's independent dossier will supply the comparison with its dog, family and changed economic structure.
 
+### Wider series context
+
+The following entries supply context, not additional full-game completion claims.
+
+| Entry | What changes, and why the distinction matters |
+| --- | --- |
+| **Fable III (2010)** | Moves from revolution to governing. Lead designer Josh Atkins describes promises colliding with responsibility, deliberately abrupt calendar pressure, and property upkeep intended to demand attention. The Road to Rule and streamlined interactions are this game's decisions; do not attribute them to I/II. His explanation that many earlier features went unused is creator testimony without published adoption data. [SC01] |
+| **Fable Heroes (2012)** | The official launch description offers up to four players cooperative/competitive arcade fighting for coins and unlocks. Its party rules are distinct from Fable II's co-op. [SC02] |
+| **Fable: The Journey (2012)** | The official demo requires Kinect and emphasizes magic, travel, protecting a steed and puzzles. Gesture-tracking concerns would be a different control problem from the earlier controller games. [SC03] |
+| **Fable Legends — cancelled** | Planned four heroes against a player-controlled villain, with AI filling vacancies. Its later free-to-play proposal included rotating heroes and purchasable currency. Microsoft stopped development on March 7, 2016 and proposed Lionhead's closure; completed closure was confirmed April 29. Plans and beta development are not a shipped mainline sequel or demonstrated commercial result. [SC04][SC05][SC06][SC07] |
+| **Playground's Fable** | The official FAQ establishes a new continuity and reimagined Albion, not a continuation of the Lionhead trilogy. Returning names do not establish identical history or systems. [RB01] |
+
+**Interpretation:** the franchise has explored personal transformation, domestic life, political responsibility and several different forms of action. A criticism becomes more useful when it names the particular promise being lost or changed. Familiar creatures and jokes can survive new controls, but familiarity alone cannot establish that the interaction is satisfying.
+
 ## 3. The supplied criticism: provenance and fair use
 
 Mike supplied an untimestamped reaction transcript, `Pasted text(9).txt`, read in full. Its SHA-256 is `287dfb44d08fb8042024d57fb08e13dbac8dd73b3cd3ead19cd95f1f6a3552fc`. It contains a reaction to an inner satirical video and names Fleekazoid. The supplied text does not establish an original URL, date or exact speaker mapping.
@@ -122,10 +136,10 @@ All sources below were inspected on November 14, 2026 local date. Developer stat
 
 | ID | Source / URL | Date and type | Read / scope |
 | --- | --- | --- | --- |
-| RB01 | https://www.fablethegame.com/news/fable-faq | Originally Jan 22, 2026; continuously updated official FAQ | Relevant full sections: customization, separate development team, single player, release/platforms.. |
+| RB01 | https://www.fablethegame.com/news/fable-faq | Originally Jan 22, 2026; continuously updated official FAQ | Relevant full sections: customization, separate development team, single player, release/platforms. |
 | RB02 | https://www.xbox.com/en-us/games/fable | Current official product page | Full product/release listing. |
 | RB03 | https://news.xbox.com/en-us/2026/08/26/fable-combat-first-demo-explained/ | Aug 26, 2026, Joe Skrebels; publisher-owned hands-on report | Complete substantive combat body read. |
-| RB04 | https://news.xbox.com/en-us/2026/11/13/fable-deep-dive-into-new-gameplay-with-playground-games-official-xbox-podcast/ | Nov 13, 2026, official developer podcast | Relevant written transcript including combat and story pacing read; footage not viewed.. |
+| RB04 | https://news.xbox.com/en-us/2026/11/13/fable-deep-dive-into-new-gameplay-with-playground-games-official-xbox-podcast/ | Nov 13, 2026, official developer podcast | Relevant written transcript including combat and story pacing read; footage not viewed. |
 | RB05 | https://www.cgmagonline.com/articles/previews/gamescom-2026-fables/ | Sep 4, 2026, Dayna Eileen; original hands-on + interviews | Complete substantive body read. |
 | RB06 | https://www.windowscentral.com/gaming/xbox/fable-preview | Aug 31, 2026, Jennifer Young; original hands-on | Combat and progression sections read, not entire article. |
 | RB07 | https://www.esrb.org/ratings/41285/fable/ | Current primary rating; exact publication date not shown | Full rating summary read; platform IDs distinguish reboot. |
@@ -134,16 +148,28 @@ All sources below were inspected on November 14, 2026 local date. Developer stat
 | RB10 | https://news.xbox.com/en-us/2026/06/10/fable-living-population-details-explained-xbox-games-showcase-2026/ | Jun 10, 2026, Dan Greer, lead game designer | Full substantive body read. Developer announcement; no executed verification. |
 | RB11 | https://www.youtube.com/watch?v=2aHsqE3DoJQ | Feb 2, 2026, FLEEKAZOID | Metadata only, candidate source. |
 | RB12 | https://www.youtube.com/watch?v=l0EeUOCxnwU | Feb 9, 2026, Asmongold TV | Metadata only, candidate outer reaction. |
-| RB13 | https://news.xbox.com/en-us/2026/01/22/fable-interview-overview-details-developer-direct-2026/ | Jan 22, 2026, Joe Skrebels interviewing Ralph Fulton | Relevant full combat/reputation/customization/comedy sections read. Stale autumn release claim not adopted.. |
+| RB13 | https://news.xbox.com/en-us/2026/01/22/fable-interview-overview-details-developer-direct-2026/ | Jan 22, 2026, Joe Skrebels interviewing Ralph Fulton | Relevant full combat/reputation/customization/comedy sections read. Stale autumn release claim not adopted. |
 | RB14 | https://www.pcgamer.com/games/rpg/new-4-minute-fable-gameplay-trailer-shows-a-game-that-doesnt-look-much-like-fable/ | Nov 12, 2026, Andy Chalk; original trailer commentary | Full substantive article read. |
 | RB15 | https://blog.playstation.com/2026/08/28/a-new-look-at-fables-style-weaving-combat/ | Aug 28, 2026, William Kennedy, associate director | Complete body read; primary combat goals and choice of intensity, not independent feel evidence. |
 | RB16 | https://news.xbox.com/en-us/2026/09/09/fable-how-playground-games-is-building-albion-for-a-new-generation-official-xbox-podcast/ | Sep 9, 2026; official podcast | Demo and feel discussion transcript read; no video playback. |
-| RB17 | https://www.gamesradar.com/games/rpg/fables-combat-shows-a-lot-of-promise-but-im-glad-its-not-launching-this-year/ | Aug 27, 2026, Jasmine Gould-Wilson; original hands-on | Complete substantive body read; date verified by the publisher listing.  |
-| RB18 | https://playday.one/2026/08/27/fable-preview-hands-on/ | Aug 27, 2026, Jon "Sikamikanico" Clarke; original hands-on | Direct open 403; full substantive indexed article read in indexed retrieval; date verified by the publisher homepage. Distinguish live Bowerstone demo watched from combat personally played. |
+| RB17 | https://www.gamesradar.com/games/rpg/fables-combat-shows-a-lot-of-promise-but-im-glad-its-not-launching-this-year/ | Aug 27, 2026, Jasmine Gould-Wilson; original hands-on | Complete substantive body read; date verified by the publisher listing. |
+| RB18 | https://playday.one/2026/08/27/fable-preview-hands-on/ | Aug 27, 2026, Jon "Sikamikanico" Clarke; original hands-on | Direct open 403; full substantive article read in indexed retrieval; date verified by the publisher homepage. Distinguish live Bowerstone demo watched from combat personally played. |
 | GF01 | https://www.gamedeveloper.com/audio/improving-the-combat-impact-of-action-games | Apr 28, 2005, Jiesang Song; developer-authored technical essay | Relevant animation/reaction/freeze/recovery/camera sections read. |
-| GF02 | https://www.jasondeheras.com/gamedesign/2021/4/23/how-do-3rd-person-melee-combat-games-communicate-game-and-hit-feel | Page dated Apr 26, 2021; combat designer's own analysis | Written animation, reaction, sound, freeze, pause and camera sections read; embedded footage not watched.. |
+| GF02 | https://www.jasondeheras.com/gamedesign/2021/4/23/how-do-3rd-person-melee-combat-games-communicate-game-and-hit-feel | Page dated Apr 26, 2021; combat designer's own analysis | Written animation, reaction, sound, freeze, pause and camera sections read; embedded footage not watched. |
 | GF03 | https://blog.playstation.com/2022/10/04/game-developers-explain-what-makes-god-of-war-2018s-combat-tick/ | Oct 4, 2022; directly attributed developer comments | Relevant Tokuda, Wohlwend, Smektala and Sato passages read. |
-| GF05 | https://arxiv.org/abs/2208.06155 | Aug 12, 2022, Zhonghao Lin, Haihan Duan, Zikai Alex Wen, Wei Cai; original research | Abstract, approach, feature/result and limitations portions read. Observational/text-classifier study, not randomized experiment.. |
+| GF05 | https://arxiv.org/abs/2208.06155 | Aug 12, 2022, Zhonghao Lin, Haihan Duan, Zikai Alex Wen, Wei Cai; original research | Abstract, approach, feature/result and limitations portions read. Observational/text-classifier study, not randomized experiment. |
+
+### Broader-series sources
+
+| ID | Source | Date / type | Read and boundary |
+| --- | --- | --- | --- |
+| SC01 | https://gameinformer.com/b/features/archive/2010/11/20/afterwords-fable-iii | November 20, 2010; Jeff Cork directly interviewing lead designer Josh Atkins | Complete substantive Q&A read, including final calendar answer. Post-release creator explanation; no underlying usage data supplied. |
+| SC02 | https://news.xbox.com/en-us/2012/05/02/arcade-fable-heroes/ | May 2, 2012; Xbox official launch listing | Complete substantive text read. Historical launch description, not current price/availability. |
+| SC03 | https://news.xbox.com/en-us/2012/09/17/demo-fable-the-journey/ | September 17, 2012; Xbox official demo listing | Complete substantive text read. Explicit Kinect requirement; no gameplay reproduced. |
+| SC04 | https://news.xbox.com/en-us/2014/06/11/games-fable-legends-e3/?ver=3.7.1 | June 11, 2014; Xbox official design/demo account | Complete substantive indexed body read. Embedded video not watched; planned hero/villain/AI roles. |
+| SC05 | https://news.xbox.com/en-us/2015/02/26/games-fable-legends-free-to-play/ | February 26, 2015; Xbox official business-model announcement | Complete substantive written body read. Future model, not a delivered commercial result. |
+| SC06 | https://news.xbox.com/en-us/2016/03/07/microsoft-studios-changes-uk-denmark/ | March 7, 2016; Hanno Lemke, Microsoft Studios Europe | Full announcement read. Development cessation and proposed closure, not completed closure. |
+| SC07 | https://www.pcgamer.com/lionhead-is-officially-no-more/ | April 29, 2016; Andy Chalk, contemporary reporting | Full substantive body read. Reproduces Microsoft's direct statement to Eurogamer; linked original https://www.eurogamer.net/articles/2016-04-29-fable-developer-lionhead-closes-down-today failed retrieval. Linked employee tweet page exposed no text. This is a preserved primary statement through secondary reporting. |
 
 [RB01]: https://www.fablethegame.com/news/fable-faq
 [RB02]: https://www.xbox.com/en-us/games/fable
@@ -167,4 +193,12 @@ All sources below were inspected on November 14, 2026 local date. Developer stat
 [GF02]: https://www.jasondeheras.com/gamedesign/2021/4/23/how-do-3rd-person-melee-combat-games-communicate-game-and-hit-feel
 [GF03]: https://blog.playstation.com/2022/10/04/game-developers-explain-what-makes-god-of-war-2018s-combat-tick/
 [GF05]: https://arxiv.org/abs/2208.06155
+
+[SC01]: https://gameinformer.com/b/features/archive/2010/11/20/afterwords-fable-iii
+[SC02]: https://news.xbox.com/en-us/2012/05/02/arcade-fable-heroes/
+[SC03]: https://news.xbox.com/en-us/2012/09/17/demo-fable-the-journey/
+[SC04]: https://news.xbox.com/en-us/2014/06/11/games-fable-legends-e3/?ver=3.7.1
+[SC05]: https://news.xbox.com/en-us/2015/02/26/games-fable-legends-free-to-play/
+[SC06]: https://news.xbox.com/en-us/2016/03/07/microsoft-studios-changes-uk-denmark/
+[SC07]: https://www.pcgamer.com/lionhead-is-officially-no-more/
 

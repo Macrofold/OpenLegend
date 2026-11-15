@@ -13,9 +13,11 @@ Apply [R01–R14 and conditional R15](research-requirements.md), including the [
 | Subject | State | Remaining scope |
 | --- | --- | --- |
 | G189 — Fable (2004), The Lost Chapters, Anniversary | Complete | [Full R01–R14 and applicable R15 dossier](dossiers/fable.md), independently reviewed. Eight substantive reviews, a bounded 31-card Steam sample, primary production/commercial evidence and PC creation coverage. Limits are explicit. |
-| G190 — Fable II | Queued within this authorized assignment | Begin the independent full pass after G189 is reviewed and committed. |
+| G190 — Fable II | In progress | [Independent dossier](dossiers/fable-ii.md) under assembly. Began after G189 completion commit `17c13cac238ee54e19f46fde05f3c860542d2af3`; mechanics and reception sources are being integrated. |
 | Series comparison and combat-feel study | In progress | [Combat diagnosis, reboot claim audit and existing-owner application](essays/fable-series-and-combat-feel.md) drafted; complete the sequel comparison after G190. |
 | Navigation and final review | In progress | Link both completed dossiers, compare their lessons, verify affected documentation and commit final output. |
+
+**G189 completion:** [reviewed dossier and combat-study commit](https://github.com/Macrofold/OpenLegend/commit/17c13cac238ee54e19f46fde05f3c860542d2af3). Subsequent G190 research began only after that checkpoint.
 
 ## Input provenance and evidence boundaries
 
