@@ -10,7 +10,7 @@ import type { NativePublication } from './native-operation.js';
 import type { SqlGameRepository } from './store.js';
 import { mergeHistoryProjection, type HistoryProjection } from './history-preparation.js';
 import { nativeAppendHistoryProjection } from './native-history.js';
-import { nativeRecordChanges, nativeSaveCut } from './native-records.js';
+import { nativeRecordChanges, nativeSaveCut, withNativeTemporalEdits } from './native-records.js';
 import {
   attachNativeConsumer,
   createNativeConsumerScope,
@@ -26,6 +26,7 @@ import {
 } from './source-version-retention.js';
 
 type Cut = ReturnType<typeof nativeSaveCut>;
+type PrepareHistory = (changes: NativePendingPublication['changes']) => Promise<HistoryProjection>;
 export interface NativePendingPublication {
   readonly publication: NativePublication;
   readonly history: HistoryProjection;
@@ -102,7 +103,7 @@ export class NativePendingSave {
     versions: SourceVersionPlan,
     receipts: readonly GameplayReceipt[] = [],
     outcomes: CommitInputs['outcomes'] = [],
-    projectedHistory?: HistoryProjection,
+    prepareHistory?: PrepareHistory,
   ) {
     const { progress } = publication;
     if (
@@ -120,13 +121,11 @@ export class NativePendingSave {
         // The current/durable progress report has its own service lifetime. Ending
         // this queue node at ACK must not release that report's independent pin.
         retainNativeProduct(retainNativeSources(publication.progress, publication));
-        const history = retainNativeSources(
-          projectedHistory
-            ? { ...projectedHistory }
-            : nativeAppendHistoryProjection(publication.history),
-          publication,
-          ...(projectedHistory ? [projectedHistory] : []),
-        );
+        // The callback runs inside this continuing owner. Its returned history
+        // needs neither a second envelope nor the caller's independent pin.
+        const history = prepareHistory
+          ? await prepareHistory(changes)
+          : retainNativeSources(nativeAppendHistoryProjection(publication.history), publication);
         const value = retainNativeSources(
           {
             publication,
@@ -174,10 +173,9 @@ export class NativePendingSave {
    * and SQL projection are already owned by that exact private native cut;
    * accepting only installs the prepared node and the same prefix pointer. */
   async prepareProtected(
-    budget: Pick<NativeWorld, 'reserveConsumerBytes'>,
     publication: NativePublication,
     versions: SourceVersionPlan,
-    history: HistoryProjection,
+    prepareHistory: PrepareHistory,
     privacy: ExperiencePrivacy,
     outcomes: CommitInputs['outcomes'] = [],
   ) {
@@ -186,51 +184,40 @@ export class NativePendingSave {
     if (!publication.protectedSave)
       throw new Error('Protected native publication has no held complete SQL prefix.');
     const protectedSave = publication.protectedSave;
-    const prepared = await this.prepare(publication, versions, [], outcomes, history);
-    const owner = createNativeConsumerScope();
+    const prepared = await this.prepare(publication, versions, [], outcomes, prepareHistory);
     try {
-      return await owner.run(async () => {
-        const temporal = publication.privacyChange
-          ? nativeTemporalPageEdits(
-              budget,
-              nativeRecordChanges(protectedSave.changes),
-              publication.temporalPredecessors,
-              publication,
-            )
-          : undefined;
-        if (temporal) {
-          prepared.value.changes.temporalEdits = temporal;
-          retainNativeSources(prepared.value.changes, publication, temporal);
-        }
-        const prefix = await this.projectPrefix(
-          retainNativeSources(protectedSave, publication),
-          [prepared.value],
-          privacy,
-          publication.progress.throughCut,
-          temporal,
-        );
-        const releasePrefix = this.prefixOwners.get(prefix)!;
-        this.prefixOwners.set(prefix, () => {
-          releasePrefix();
-          owner.dispose();
-        });
-        return {
-          value: prepared.value,
-          prefix,
-          cancel: () => {
-            prepared.cancel();
-            this.prefixOwners.get(prefix)?.();
-          },
-          accept: () => {
-            if (this.prefix)
-              throw new Error('Protected native save prefix was displaced before acceptance.');
-            prepared.accept();
-            this.prefix = prefix;
-          },
-        };
-      });
+      const prefix = await this.projectPrefix(
+        retainNativeSources(protectedSave, publication),
+        [prepared.value],
+        privacy,
+        publication.progress.throughCut,
+        publication.privacyChange
+          ? (changes) =>
+              nativeTemporalPageEdits(
+                this.budget,
+                changes,
+                publication.temporalPredecessors,
+                publication,
+              )
+          : undefined,
+      );
+      return {
+        value: prepared.value,
+        prefix,
+        cancel: () => {
+          prepared.cancel();
+          this.prefixOwners.get(prefix)?.();
+        },
+        accept: () => {
+          if (this.prefix)
+            throw new Error('Protected native save prefix was displaced before acceptance.');
+          // Install the covering prefix in the same synchronous turn. Live
+          // readers only see the prefix's temporal revoke data for this cut.
+          prepared.accept();
+          this.prefix = prefix;
+        },
+      };
     } catch (error) {
-      owner.dispose();
       prepared.cancel();
       throw error;
     }
@@ -313,19 +300,21 @@ export class NativePendingSave {
     pending: Iterable<NativePendingPublication>,
     privacy: ExperiencePrivacy,
     through: number,
-    temporalEdits?: readonly PendingTemporalPage[],
+    prepareTemporalEdits?: (changes: Cut['changes']) => readonly PendingTemporalPage[],
   ): Promise<NativePendingPrefix> {
     const owner = createNativeConsumerScope();
     try {
       return await owner.run(async () => {
         if (this.store.records.needsHotPrune)
           throw new Error('Native save requires its installed hot-history projection.');
-        const cut = retainNativeSources(nativeSaveCut(rows), rows);
-        if (temporalEdits) {
-          cut.changes.temporalEdits = temporalEdits;
-          retainNativeSources(cut.changes, rows, temporalEdits);
-          retainNativeSources(cut, rows, cut.changes);
-        }
+        const adapted = nativeSaveCut(rows);
+        const temporalEdits = prepareTemporalEdits?.(adapted.changes);
+        const changes = temporalEdits
+          ? withNativeTemporalEdits(this.budget, adapted.changes, temporalEdits, rows)
+          : undefined;
+        const cut = changes
+          ? retainNativeSources({ ...adapted, changes }, rows, changes)
+          : retainNativeSources(adapted, rows);
         if (
           cut.worldId !== this.binding.worldId ||
           cut.generation !== this.binding.generation ||
@@ -394,11 +383,10 @@ export class NativePendingSave {
             receipts: [...receipts.values()],
             getSources: this.store.memories.captureSources(cut.worldId, cut.changes, plan),
           },
-          rows,
+          cut,
           history,
           privacy,
           ...receipts.values(),
-          ...(temporalEdits ? [temporalEdits] : []),
         );
         this.prefixOwners.set(prefix, () => owner.dispose());
         return prefix;

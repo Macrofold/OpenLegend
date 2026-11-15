@@ -25,7 +25,7 @@ import {
   encodeNativeJson,
   releaseNativeProduct,
 } from './native-consumer.js';
-import { nativeRecordChanges } from './native-records.js';
+import { nativeRecordChanges, withNativeTemporalEdits } from './native-records.js';
 import { nativeTemporalPageEdits } from './native-temporal-edits.js';
 import { nativeRestoredHistory } from './native-private-history.js';
 import { driveNativeOperation } from './native-providers.js';
@@ -51,6 +51,7 @@ import { SOURCE_RETENTION_CLOSURE_ROUNDS } from './source-version-retention.js';
 import type { OperationalSettings } from './native-world-service.js';
 import type { CommandEpoch } from './command-receipts.js';
 import type { NativeMilestones } from './native-milestones.js';
+import type { RecordChanges } from './world-records.js';
 
 /** One inactive native preparation and its genuine Ready fence stay owned
  * through the outer SQL outcome. Neither rejection nor activation fabricates
@@ -89,6 +90,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
     store: SqlGameRepository,
     timeline: string,
     epoch: CommandEpoch,
+    changes: RecordChanges,
     history: Awaited<ReturnType<typeof nativeRestoredHistory>>,
     backgroundSearchAdmission: () => boolean,
     currentRetained: (world: NativeWorld) => NativeRetainedValues | undefined,
@@ -96,7 +98,6 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
     this.publicationOwner = publication;
     const restored = publication.restore;
     this.installationOwner = retainNativeSources(restored.installation, publication);
-    const changes = retainNativeSources(nativeRecordChanges(restored.changes), publication);
     let temporal: ReturnType<typeof nativeTemporalPageEdits> | undefined;
     try {
       this.epochOwner = epoch;
@@ -113,8 +114,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
         publication,
       );
       this.temporalEdits = temporal;
-      changes.temporalEdits = temporal;
-      retainNativeSources(changes, publication, temporal);
+      changes = withNativeTemporalEdits(world, changes, temporal, publication);
       this.archivesOwner = retainNativeSources(
         publication.restoreMetadata.keptArchives,
         publication,
@@ -504,7 +504,14 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
         publication.restore.revision !== stage.revision
       )
         throw new Error('Native restore output does not bind the staged checkpoint.');
-      history = await nativeRestoredHistory(publication, request.checkpointPrivacy, store.db, cut);
+      const changes = nativeRecordChanges(publication.restore.changes);
+      history = await nativeRestoredHistory(
+        publication,
+        changes,
+        request.checkpointPrivacy,
+        store.db,
+        cut,
+      );
       result = new NativeRestorePreparation(
         world,
         definitions,
@@ -517,6 +524,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
         store,
         request.timeline,
         request.epoch,
+        changes,
         history,
         request.backgroundSearchAdmission,
         request.currentRetained,
