@@ -4680,10 +4680,12 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     // prefix was acknowledged. A clean durable owner still has to close.
     if (this.failure && !this.committedPrefix && (this.pending.inFlight || this.pending.dirty))
       throw this.failure;
+    let captureStarted = false;
     this.save = withoutNativeConsumerScope(() =>
       (async () => {
         const prefix = await this.lane.run(
           async () => {
+            captureStarted = true;
             if (this.committedPrefix) return this.committedPrefix.prefix;
             if (this.pending.inFlight) return this.pending.inFlight;
             if (!this.pending.dirty) return undefined;
@@ -4729,6 +4731,10 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         );
       })()
         .catch((error: unknown) => {
+          // Queue refusal before capture leaves the original work eligible for
+          // the next ordinary save. Errors during capture, SQL or ACK still latch.
+          // docs/projects/bookkeeping-simplification-runtime-design.md#62-accept-buffer-save
+          if (!captureStarted && error instanceof OverloadError) throw error;
           this.failure = error instanceof Error ? error : new Error(String(error));
           this.notify(false);
           throw error;
