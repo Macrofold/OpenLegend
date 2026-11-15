@@ -76,8 +76,8 @@ async function selectRole<T>(
 
 /** Read the player's accepted facts twice around the allowance query. Each read
  * uses one service turn and the deciding turn hands off independently owned
- * bytes synchronously. The HTTP send must retain bytes if its transport queues
- * them. See native-runtime-foundations-tech-design.md §9.2. */
+ * bytes synchronously. The HTTP send reports whether it took custody through
+ * drain or close. See native-runtime-foundations-tech-design.md §9.2. */
 export async function publishNativePlayerInteractionAvailability(request: {
   mode: 'speak' | 'act';
   targetId: string | undefined;
@@ -89,7 +89,7 @@ export async function publishNativePlayerInteractionAvailability(request: {
   operational: () => Operational & { generation: string };
   budgetAvailable: (actor: string, allowance: number, ceiling: number) => Promise<boolean>;
   admit: (payer: string) => boolean;
-  send: (bytes: Buffer) => void;
+  send: (bytes: Buffer) => boolean;
 }): Promise<void> {
   const { scope, signal, mode, config } = request;
   const { accountId, actorId } = scope;
@@ -119,13 +119,14 @@ export async function publishNativePlayerInteractionAvailability(request: {
   ) => {
     const send = (value: PlayerInteractionAvailability, controlling: boolean) => {
       const bytes = encodeNativeJson(world, value);
+      let transferred = false;
       try {
         const latest = current(world, generation);
         if (controlling && !latest.controlling) return false;
-        request.send(bytes);
+        transferred = request.send(bytes);
         return true;
       } finally {
-        releaseNativeProduct(bytes);
+        if (!transferred) releaseNativeProduct(bytes);
       }
     };
     if (!send(result, facts.controlling)) {

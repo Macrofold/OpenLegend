@@ -262,7 +262,7 @@ export async function createNativeGameServer(options: {
         writeJson(response, status, value);
       };
       const sendNative = (bytes: Buffer) => {
-        if (response.destroyed) return;
+        if (response.destroyed) return false;
         retainNativeProduct(bytes);
         const release = () => {
           response.off('close', release);
@@ -275,6 +275,7 @@ export async function createNativeGameServer(options: {
             'Cache-Control': 'no-store',
           });
           response.end(bytes, release);
+          return true;
         } catch (error) {
           release();
           throw error;

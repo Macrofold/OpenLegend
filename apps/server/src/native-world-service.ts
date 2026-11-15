@@ -1730,7 +1730,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     targetId: string | undefined,
     scope: RequestScope,
     signal: AbortSignal,
-    send: (bytes: Buffer) => void,
+    send: (bytes: Buffer) => boolean,
   ): Promise<void> {
     return publishNativePlayerInteractionAvailability({
       mode,
