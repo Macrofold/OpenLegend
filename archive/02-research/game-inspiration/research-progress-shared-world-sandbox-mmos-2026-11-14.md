@@ -6,15 +6,15 @@ Research and documentation only. The task compares actual activities, player pra
 
 ## Current progress
 
-SEED, Stars Reach and Wurm Online have full source-grounded passes researched, reviewed and committed. The other six titles and final cross-game comparison remain unfinished. This is a truthful research checkpoint, not completion of the assignment.
+SEED, Stars Reach, Wurm Online and SWG: Restoration have full source-grounded passes researched, reviewed and committed. The other five titles and final cross-game comparison remain unfinished. This is a truthful research checkpoint, not completion of the assignment.
 
 | Subject | Output | State |
 | --- | --- | --- |
 | SEED | [Dossier](dossiers/seed.md) | Complete; [dossier commit](https://github.com/Macrofold/OpenLegend/commit/8775600f1404fe9d6996cfccb13f8136ca2060ea), citation clarification 45fc466 |
 | Stars Reach | [Dossier](dossiers/stars-reach.md) | Complete; [dossier commit](https://github.com/Macrofold/OpenLegend/commit/140025985e24113ae819740f0e4869da57acfc64) |
 | Wurm Online | [Dossier](dossiers/wurm-online.md) | Complete; [dossier commit](https://github.com/Macrofold/OpenLegend/commit/dd258dbe80a9094286f87478ed0b060127e80072) |
-| Star Wars Galaxies: Restoration | dossiers/star-wars-galaxies-restoration.md | Next |
-| Foxhole | dossiers/foxhole.md | Pending |
+| Star Wars Galaxies: Restoration | [Dossier](dossiers/star-wars-galaxies-restoration.md) | Complete; [dossier commit](https://github.com/Macrofold/OpenLegend/commit/16ba029b06ad927da9dad088239fdc6c6e60cea5) |
+| Foxhole | dossiers/foxhole.md | Next |
 | Mortal Online 2 | dossiers/mortal-online-2.md | Pending |
 | Haven & Hearth | dossiers/haven-and-hearth.md | Pending |
 | Life is Feudal: MMO | dossiers/life-is-feudal-mmo.md | Pending |
