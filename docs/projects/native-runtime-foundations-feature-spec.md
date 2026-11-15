@@ -1,8 +1,8 @@
 # Native runtime foundations: useful work without repeated preparation
 
-| Status      | Current progress                                                                                                         | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Command admission repair passes focused callers; its isolated cost comparison follows the inconclusive byte-answer runs. | 2026-11-14   |
+| Status      | Current progress                                                                                               | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Command admission passes focused callers; stale conversations leave its isolated cost comparison inconclusive. | 2026-11-14   |
 
 [Technical design](native-runtime-foundations-tech-design.md) · [Source and repertoire reconciliation](native-runtime-foundations-evidence-and-repertoire.md)
 
