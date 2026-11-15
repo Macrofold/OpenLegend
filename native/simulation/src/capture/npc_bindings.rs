@@ -177,7 +177,7 @@ pub(crate) struct NpcBindingSelection {
     pub evidence: Vec<NpcPersonalEvidence>,
     pub entities: Vec<NpcEntityAlias>,
     pub identities: Vec<NpcSubjectAlias>,
-    pub knowledge: Vec<NpcSubjectAlias>,
+    pub knowledge: Vec<NpcAliasOrdinal>,
     pub observations: Vec<NpcObservationAlias>,
     pub current: Vec<NpcAliasOrdinal>,
     pub receipts: Vec<NpcReceiptAlias>,
@@ -793,36 +793,44 @@ impl NpcBindingMaps {
         entity_ids.extend(entity_references.values().cloned());
         let mut identity_references = IndexMap::with_capacity(selection.identities.len());
         let mut knowledge_references = IndexMap::with_capacity(selection.knowledge.len());
-        for (selected, target, knowledge) in [
-            (&selection.identities, &mut identity_references, false),
-            (&selection.knowledge, &mut knowledge_references, true),
-        ] {
-            for selected in selected {
-                let fact = read.subject(&selected.source).ok_or_else(invalid)?;
-                let interpretation =
-                    !knowledge && matches!(selected.source, NpcSubjectOrdinal::MindRecord { .. });
-                if knowledge
-                    && matches!(
-                        selected.source,
-                        NpcSubjectOrdinal::ReceivedBodyEntity { .. }
-                    )
-                    || !interpretation
-                        && matches!(fact.subject, ObserverSubject::Individual { .. })
-                        && (!fact.identity_present || fact.seed_only)
-                    || knowledge
-                        && matches!(fact.subject, ObserverSubject::Entity { .. })
-                        && fact.canonical_id.as_deref() != Some(actor)
-                        && !fact.current_communication
-                {
-                    return Err(invalid());
-                }
-                reserve(
-                    &mut storage,
-                    selected.alias.len()
-                        + fact.subject.heap_bytes().ok_or(ExecutionError::Capacity)?,
-                )?;
-                insert(target, &selected.alias, fact.subject.clone())?;
+        for selected in &selection.identities {
+            let fact = read.subject(&selected.source).ok_or_else(invalid)?;
+            let interpretation = matches!(selected.source, NpcSubjectOrdinal::MindRecord { .. });
+            if !interpretation
+                && matches!(fact.subject, ObserverSubject::Individual { .. })
+                && (!fact.identity_present || fact.seed_only)
+            {
+                return Err(invalid());
             }
+            reserve(
+                &mut storage,
+                selected.alias.len() + fact.subject.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            )?;
+            insert(
+                &mut identity_references,
+                &selected.alias,
+                fact.subject.clone(),
+            )?;
+        }
+        // Existing personal documents confer only note-edit references.
+        // Losing current communication must not remove that document grant.
+        // docs/knowledge.md#subject-binding
+        for selected in &selection.knowledge {
+            let fact = read
+                .references
+                .knowledge
+                .get(selected.ordinal)
+                .filter(|fact| fact.has_notepad_text())
+                .ok_or_else(invalid)?;
+            reserve(
+                &mut storage,
+                selected.alias.len() + fact.subject.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            )?;
+            insert(
+                &mut knowledge_references,
+                &selected.alias,
+                fact.subject.clone(),
+            )?;
         }
         let mut situation = ResponseSituation {
             privacy_revision: original.privacy_revision,

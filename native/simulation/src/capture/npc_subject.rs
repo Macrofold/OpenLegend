@@ -32,6 +32,13 @@ pub(crate) struct NpcSubjectFact {
     #[serde(skip)]
     _storage: ByteReservation,
 }
+impl NpcSubjectFact {
+    /// A captured personal document can stay editable after recognition ends.
+    pub(super) fn has_notepad_text(&self) -> bool {
+        self.note_characters > 0
+    }
+}
+
 pub(crate) fn subject_fact(
     state: &SimulationState,
     actor: &str,

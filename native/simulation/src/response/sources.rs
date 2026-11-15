@@ -440,7 +440,19 @@ pub(super) fn knowledge(
         None
     };
     let identity_reference = reference.and_then(|key| bindings.input.identity_references.get(key));
+    // The document-only alias can resolve a long subject absent from both
+    // entity and identity maps. Fund the resolved subject, typed edit key
+    // and one permitted-subject entry before copying any of them.
+    let note_bytes = note_reference
+        .map_or(Some(0), |subject| {
+            subject
+                .heap_bytes()?
+                .checked_mul(3)?
+                .checked_add(size_of::<KnowledgeSubject>())
+        })
+        .ok_or(ExecutionError::Capacity)?;
     let bytes = heap_sum([
+        note_bytes,
         operation
             .data
             .heap_bytes()

@@ -174,10 +174,8 @@ export interface NativeNpcBindingSelection {
     readonly alias: string;
     readonly source: NativeNpcSubjectOrdinal;
   }[];
-  readonly knowledge: readonly {
-    readonly alias: string;
-    readonly source: NativeNpcSubjectOrdinal;
-  }[];
+  /** Ordinals name existing documents in the refreshed read, never a current target. */
+  readonly knowledge: readonly NativeNpcAliasOrdinal[];
   readonly observations: readonly {
     readonly alias: string;
     readonly source:

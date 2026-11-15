@@ -235,10 +235,14 @@ export function nativeResponseSelection(input: {
       alias,
       source: subject(value, alias),
     })),
-    knowledge: Object.entries(input.knowledge).map(([alias, value]) => ({
-      alias,
-      source: subject(value, alias),
-    })),
+    knowledge: Object.entries(input.knowledge).map(([alias, value]) => {
+      const key = subjectKey(value);
+      const ordinal = metadata.knowledge.findIndex(
+        (fact) => fact.noteCharacters > 0 && subjectKey(fact.subject) === key,
+      );
+      if (ordinal < 0) throw new Error('The native notepad reference has no originating document.');
+      return { alias, ordinal };
+    }),
     observations,
     current: received,
     receipts,
