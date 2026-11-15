@@ -10,13 +10,15 @@ The term often combines several different complaints. Diagnose the observable in
 
 | Problem | What the player experiences | Useful question |
 | --- | --- | --- |
-| Excessive durability | Many successful attacks produce another copy of the same exchange. | Is the opponent creating new decisions, or merely requiring more repetitions? |
+| Excessive durability | The encounter repeats a successful exchange after it has stopped feeling worthwhile. | Is repetition still satisfying, or does survival only prolong an already-solved exchange? |
 | Weak impact | Contact changes a number but scarcely changes what the player sees or hears. | Can the player recognize contact, the struck material and the actual result? |
 | Floaty movement | Feet slide, bodies glide or rotate, and weapon reach does not agree with the apparent contact. | Do movement, reach, collision, recoil and recovery describe one coherent event? |
 | Sluggish or uncertain control | An attack occurs late, targets the wrong opponent, or appears not to register. | Was the action received, accepted, still preparing, unavailable, committed or cancelled? |
 | Repetitive opposition | Different enemies invite the same safe action and never change the player's plan. | What makes spacing, defense, timing, target choice or disengagement matter? |
 
 This vocabulary is the researcher's diagnostic synthesis, not a standardized scientific scale. A durable opponent can feel satisfying when exchanges change the fight. A fragile opponent can feel poor when contact is unconvincing. Reducing every health value, increasing blood or adding camera shake will not solve all five problems.
+
+Repeated execution can be enjoyable through rhythm, mastery or earned power; an easy encounter may be part of that payoff. The concern is repetition that outlasts its appeal, not a requirement for a new tactical decision on every hit.
 
 **Constructed illustration:** imagine three nearly identical sword swings shaving a bar while the opponent stands unaffected. Compare an exchange in which the first swing rings against a raised shield, the next committed action creates an opening, and a subsequent clean contact produces a legible consequence. The difference is understandable cause and effect. This example does not prescribe three hits, a guard-break mechanic, or a currently implemented OpenLegend outcome.
 
@@ -34,7 +36,7 @@ An observational study of impact feel examines player comments and nineteen feed
 
 1. **Control:** I can form an intention, express it, and understand what the game accepted.
 2. **Contact:** movement, sound and visible consequences make the event comprehensible.
-3. **Opposition:** the outcome changes what I should do next often enough to sustain interest.
+3. **Opposition:** the encounter sustains interest through satisfying execution, meaningful decisions or both.
 
 A polished contact effect cannot rescue an action directed at the wrong target. Responsive controls cannot create lasting variety if one tactic solves every encounter. Meaningful tactics can still feel unpleasant when the interface hides commitment or refuses inputs without explanation. This is why an ability list alone cannot establish good combat.
 
@@ -146,6 +148,19 @@ If later changes are justified, vary the suspected cause separately where practi
 **Hit-stop remains unselected.** A shared world's authoritative time must not pause because one player lands a blow. Even a local animation hold can misrepresent moving bodies and collision. Any future presentation accent needs to remain consistent with the existing timing/contact owners; being client-local does not settle that question.
 
 The existing documentation records correctness and performance work but leaves independent, uncoached enjoyment open. This dossier supplies better questions for that observation; it does not certify fun, competitive fairness or hardware accessibility from document inspection. No additional needs-design entry, implementation task or acceptance gate is created.
+
+### Accomplishment, company and a life worth returning to
+
+The positive lessons in §2 also have existing design and work owners. Use these routes when that work is selected; their actual scope and evidence status remain with the linked owners.
+
+| Experience to strengthen | Existing design and work | Useful application |
+| --- | --- | --- |
+| Useful company becomes wanted company | [Voluntary cooperation](../../../../docs/projects/first-playable-cooperation-feature-spec.md#why-this-should-be-worth-doing), [CP10](../../../../docs/maintainers/first-playable-cooperation.md#cp10--whole-episodes-and-player-value) and [CE05](../../../../docs/maintainers/character-experience.md#ce05--integrated-character-quality-and-complete-cost-qualification). | Distinguish a useful contribution, pleasant company and choosing to meet again. Quiet companionship, refusal and a capable solo route remain worthwhile; adding a dog or an affection score is not the lesson. |
+| An accomplishment matters at home or on a later visit | [Useful expedition rewards](../../../../docs/worlds/base/rewarding-expeditions.md#rewards-worth-using), [AV01](../../../../docs/maintainers/parallel-batch-05-adventure-defense-and-home.md#av01--rewarding-expeditions), [CF05's lasting aftermath](../../../../docs/maintainers/parallel-batch-06-rivals-and-contested-ground.md#cf05--a-contested-ruin-and-a-victory-that-lasts) and [FPV07](../../../../docs/maintainers/first-playable-validation.md#fpv07--danger-unscripted-contact-and-returning-play). | Follow an existing discovery into a wanted use, or return to a place whose opportunities actually changed. A peaceful capability can matter here; another combat bonus, quest chain or generalized economy is unnecessary. |
+| Consequences belong to particular people | [Different interpretations of one event](../../../../docs/projects/compelling-characters-feature-spec.md#ce-f07--the-same-event-means-different-things-to-different-people) and [CP07's later social evidence](../../../../docs/maintainers/first-playable-cooperation.md#cp07--revocable-alliance-ceasefire-and-after-conflict-evidence). | Let a shared occurrence inform a later choice through that person's knowledge and values. Public fame, testimony, inference and personal experience remain distinct; neither affection nor forgiveness is automatic. |
+| Success opens a chosen life | [Continuing player value](../../../../docs/repertoires/gameplay-priorities.md#keep-play-worthwhile-as-players-learn-and-return), [economy selection guidance](../../../../docs/repertoires/economy-logistics.md#selection-guidance) and [existing FPV observations](../../../../docs/maintainers/first-playable-validation.md#fpv06--observe-survival-building-and-character-choice). | Wealth or efficiency can legitimately retire chores and free time for a wanted craft, exploration, company or a satisfying modest life. Judge the remaining appeal before proposing extra sinks, upkeep or scarcity to preserve early jobs. |
+
+These are ways to use existing connected activities and interpret their results. They add no feature, observation programme or acceptance criterion. The established [player-learning plan](../../../../docs/projects/first-playable-playtest-plan.md#step-4--observe-distinct-player-journeys) already follows useful rewards, remembered interactions, freely chosen continuation and satisfied stopping.
 
 ## 6. Sources and access boundaries
 
