@@ -19,7 +19,7 @@ Repository instructions were read from `Macrofold/OpenLegend`, `main`, at base c
 - Dedicated technology study of shards, zones, overflow, persistent construction, Repli, environmental limits, property expiry, infrastructure, rendering and operational failures.
 - Studio development and financing, entity financial indicators, explicitly uncertain modeled revenue, pricing, creator campaigns, audience research, distribution and trials.
 - Complete June 2024–October 2026 monthly Steam-average series, current snapshot boundaries, and distinctions between concurrency, period-active users, owners, payers, revenue and profit.
-- Six substantive written review articles representing five distinct review works from four principal reviewers/outlets; a separate enthusiast perspective, eight contrasting helpful Steam reviews, and recent community context with access limits.
+- Six substantive written review articles representing five distinct review works from four principal reviewers/outlets; a separate professional year-end perspective, eight contrasting helpful Steam reviews, and recent community context with access limits.
 - Open Legend implications routed through existing first-playable, character, cooperation, shelter, agreement, continuity, travel, art, validation and commercial owners.
 
 ## Verification and preservation
@@ -40,7 +40,7 @@ The study is not a hands-on playtest, representative sentiment survey, complete 
 
 The [supplied-source ledger](dossiers/pax-dei/04-reception.md#supplied-video-and-comment-evidence) incorporates Mike's short transcript, two attached long transcripts and the related comment capture. Distinct additions concern day-two handling and music, incidental visits after easier market discovery, and reluctance to risk useful equipment. Existing economic, social, visual and ownership conclusions retain their weight; current official sources qualify disputed pricing and chronology. Proposed observations link to existing owners without new tasks, specifications or priorities. Original metrics retain their dates.
 
-The scoped update was reviewed for duplication, provenance, historical/current-state distinctions and internal links. No runtime behavior or accepted requirement changed; runtime tests were not required.
+Full-dossier review retained the balanced gameplay, technology and reception findings, qualified the Steam launch comparison for distribution changes/downtime, corrected aggregate activity versus retention wording, the Grace renewal interval and the supplementary review classification, and narrowed the development-duration inference. The [application map](dossiers/pax-dei/05-openlegend-lessons.md#10-continue-through-existing-owners) now reaches specific existing tasks and their acceptance concerns. Existing design/needs coverage was sufficient; no additional specification, task, acceptance gate or priority change was justified. The complete affected diff and internal links were reviewed. No runtime behavior or accepted requirement changed; runtime tests were not required.
 
 ## Remaining work
 

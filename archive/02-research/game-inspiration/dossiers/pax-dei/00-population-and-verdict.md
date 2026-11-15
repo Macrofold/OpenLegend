@@ -46,6 +46,8 @@ Source: [Steam Charts](https://steamcharts.com/app/1995520), retrieved November 
 
 Early Access began **June 18, 2024**, followed by **1.0 on October 16, 2025**. These dates matter when interpreting the two expansions in attention. [Official launch schedule](https://playpaxdei.com/en-us/news/1-0/pax-dei-1-0-schedule-and-details)
 
+The two launches also changed which players the Steam series could count. The original launcher retired on October 1, 2025 and its founders received Steam keys, while Epic and PC Game Pass supplied other access routes at 1.0. The Steam rise may therefore reflect migration and reactivation as well as new demand, in unknown proportions. October 2025's calendar window also spans the October 6–14 server shutdown; it is not a full month of continuously available live play. These qualifications do not erase the subsequent decline. [Official transition details](https://playpaxdei.com/en-us/news/1-0/pax-dei-1-0-schedule-and-details)
+
 ## 2. What each metric answers
 
 | Metric | Useful question | What it cannot establish alone |

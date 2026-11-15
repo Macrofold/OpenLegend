@@ -25,7 +25,7 @@ Mainframe formed in April 2019 with thirteen founders. Its history describes tal
 | October 2025 | Original launcher retired October 1; those customers received Steam keys. Servers closed October 6; founders returned October 14; public 1.0 launched October 16. The launch wiped characters, buildings, skills, and inventory; Mainframe promised no further wipes after 1.0. [Official schedule](https://playpaxdei.com/en-us/news/1-0/pax-dei-1-0-schedule-and-details) |
 | 2026 | Development continued, with live R49 patches through November. Current mechanics and reception are examined in chapters 01, 02, and 04. [Latest updates](https://playpaxdei.com/en-us/news) |
 
-**Interpretation:** roughly five years from studio formation to EA and six-and-a-half to 1.0 demonstrates the integration burden of a persistent MMO. It does not identify how much time or money belonged specifically to graphics, networking, content, or gameplay redesign. An indie team should not assume AI-assisted production removes those integration costs.
+**Interpretation:** roughly five years from studio formation to EA and six-and-a-half to 1.0 illustrates the long delivery horizon of this attempt. It does not identify how much time or money belonged specifically to graphics, networking, content, or gameplay redesign. An indie team should not assume AI-assisted production removes those integration costs.
 
 ## 3. Funding, revenue, and actual cost: separate quantities
 
@@ -50,13 +50,13 @@ Separately, Deloitte's 2025 Technology Fast 50 Finland report shows Mainframe's 
 
 ### Game revenue remains unresolved
 
-Public Steam-sales models disagree and lack sufficiently clear scope and update dates to establish a reliable game-revenue figure; their outputs are recorded only in the low-confidence appendix below. Material missing inputs include direct sales, Epic purchases, Microsoft contract terms, refunds, discounts, founder-pack mix, plot-token sales, premium conversion, renewals, and publisher revenue allocation. Launcher migration also means a Steam account or review need not correspond to a new Steam purchase. The commercial assessment therefore relies on disclosed financing, company-loss indicators, staffing cuts, developer admissions, and retention together.
+Public Steam-sales models disagree and lack sufficiently clear scope and update dates to establish a reliable game-revenue figure; their outputs are recorded only in the low-confidence appendix below. Material missing inputs include direct sales, Epic purchases, Microsoft contract terms, refunds, discounts, founder-pack mix, plot-token sales, premium conversion, renewals, and publisher revenue allocation. Launcher migration also means a Steam account or review need not correspond to a new Steam purchase. The commercial assessment therefore relies on disclosed financing, company-loss indicators, staffing cuts, developer admissions, and sustained Steam activity together.
 
 ## 4. How the monetization evolved
 
 The 2024 Founder packs were priced at $39.99, $59.99, and $99.99. Higher tiers supplied more land access during EA and additional perks. Crucially, a June 2024 developer clarification already described a likely recurring fee after EA and stated that founders' permanent entitlements did not mean permanently free plot upkeep. The exact future prices were unresolved. Therefore, “subscriptions appeared with no warning” is inaccurate; uncertainty and changing details were real. [Contemporary pack coverage](https://www.mmorpg.com/features/pax-dei-will-enter-early-access-on-june-18th-aims-to-develop-mmo-alongside-its-players-2000131748), [developer clarification](https://steamcommunity.com/app/1995520/discussions/0/4331979689561092729/)
 
-Current core pricing is **$29.99/€29.99 once**, including permanent game access, two character slots, and an initial premium month with one plot token. A subscription is optional. A player can maintain one plot using 400 Grace, the in-game currency, and can build cooperatively under another owner's permissions. [Official monetization FAQ](https://playpaxdei.com/en-us/faq/1-0-monetization)
+Current core pricing is **$29.99/€29.99 once**, including permanent game access, two character slots, and an initial premium month with one plot token. A subscription is optional. A player can maintain one plot per server region for a month using 400 Grace, the in-game currency, and can build cooperatively under another owner's permissions. [Official monetization FAQ](https://playpaxdei.com/en-us/faq/1-0-monetization); [Grace-plot rules](https://support.playpaxdei.com/hc/en-us/articles/32383547755037-What-is-a-Grace-Plot)
 
 | Optional monthly plan | Published USD/EUR price |
 |---|---:|
