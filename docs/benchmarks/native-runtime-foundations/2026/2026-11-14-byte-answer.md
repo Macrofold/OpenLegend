@@ -80,7 +80,7 @@ Overlapping windows and whole waited lifetime below are separate, never additive
 
 Native transient peak above is the lifetime reservation high-water mark, not physical RAM. RSS entries are independently sampled peaks; the concurrent column is the maximum actual concurrent sum and is nonunique. Final pending bytes are unclassified ShutdownPending residue. All six final jobs/resident/save counters are 0 and unpoisoned; that does not establish complete cleanup.
 
-Save capture/repository/ACK/start-to-ACK distributions, overlapping drain and whole waited process CPU, offered/completed/debt, exact missingness, selected source/build identities and failure messages are retained in descriptive.json. Whole waited application/client CPU includes startup, warmup, both windows and cleanup; never add it to a window. All three failed waited commands/wrappers exited 1 without timeout or lingering group; their independent application-exit field is unavailable. Actual final saves completed. Wrapper exit, shutdown and required gameplay completion are distinct.
+Save capture/repository/ACK/start-to-ACK distributions, overlapping drain and whole waited process CPU, offered/completed/debt, exact missingness, selected source/build identities and failure messages are retained in descriptive.json. Whole waited application/client CPU includes startup, warmup, both windows and cleanup; never add it to a window. The wrappers for all three failed cases exited 1 without timeout or a lingering group; their independent application-exit field is unavailable. Actual final saves completed. Wrapper exit, shutdown and required gameplay completion are distinct.
 
 No application, database, compiler, cloud or provider was run by this extraction.
 

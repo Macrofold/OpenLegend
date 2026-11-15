@@ -1,8 +1,8 @@
 # Native runtime foundations: technical design
 
-| Status      | Current progress                                                                                                   | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Byte-answer caller checks pass within recorded scope; failed gameplay leaves the isolated comparison inconclusive. | 2026-11-14   |
+| Status      | Current progress                                                                                                         | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Command admission repair passes focused callers; its isolated cost comparison follows the inconclusive byte-answer runs. | 2026-11-14   |
 
 [Feature specification](native-runtime-foundations-feature-spec.md) · [Evidence and repertoire reconciliation](native-runtime-foundations-evidence-and-repertoire.md) · [NRF work](../maintainers/native-runtime-foundations.md) · [Constraints](../limits/native-runtime-foundations.md)
 
