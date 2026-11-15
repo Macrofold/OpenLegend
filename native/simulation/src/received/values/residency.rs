@@ -51,17 +51,32 @@ pub(crate) enum PreparedValueResidency {
     },
 }
 impl ReceivedValues {
+    pub(crate) fn residency_undo_is_empty(&self) -> bool {
+        self.undo.is_empty()
+    }
+
+    /// Prepare the resident map from the projected complete reference closure.
+    /// A private restore can borrow hydrated sources while their inverses still
+    /// belong to its pending transaction. Only its accepted cut may apply this
+    /// projection, after settlement has discarded those inverses.
     pub(crate) fn prepare_residency(
         &self,
         references: &std::collections::BTreeSet<String>,
         budget: &ByteBudget,
+        restore_preparation: bool,
     ) -> Result<PreparedValueResidency, ReceivedError> {
         let error = || {
             ReceivedError(
                 "Received residency requires its complete current reference closure and allowance.",
             )
         };
-        if !self.undo.is_empty() {
+        if !self.undo.is_empty()
+            && (!restore_preparation
+                || self
+                    .undo
+                    .iter()
+                    .any(|entry| !matches!(entry, ReceivedValuesUndo::SourceLoaded(_))))
+        {
             return Err(error());
         }
         if references.iter().any(|id| !self.sources.contains_key(id)) {

@@ -56,7 +56,7 @@ impl SavedTemporalResidency {
         state: &SimulationState,
         budget: &ByteBudget,
     ) -> Result<PreparedTemporalResidency, ExecutionError> {
-        self.prepare_apply_at(state, state.accepted_cut, budget)
+        self.prepare_apply_at(state, state.accepted_cut, budget, false)
     }
     /// Whole-world restoration has a genuine privately prepared next cut. Its
     /// placement is admitted before SQL commits and applied only after that
@@ -72,13 +72,14 @@ impl SavedTemporalResidency {
         {
             return Err(invalid());
         }
-        self.prepare_apply_at(state, proposed_cut, budget)
+        self.prepare_apply_at(state, proposed_cut, budget, true)
     }
     fn prepare_apply_at(
         &self,
         state: &SimulationState,
         accepted_cut: u64,
         budget: &ByteBudget,
+        restore_preparation: bool,
     ) -> Result<PreparedTemporalResidency, ExecutionError> {
         if self.world_id != state.physical.header.id
             || self.generation != state.generation
@@ -332,7 +333,9 @@ impl SavedTemporalResidency {
             references.insert(id.to_owned());
         });
         let values = match &state.reception.received_values {
-            Some(values) => Some(values.prepare_residency(&references, budget)?),
+            Some(values) => {
+                Some(values.prepare_residency(&references, budget, restore_preparation)?)
+            }
             None if references.is_empty() => None,
             None => return Err(invalid()),
         };
@@ -391,6 +394,11 @@ impl PreparedTemporalResidency {
                 .keys()
                 .any(|id| !state.temporal.actors.contains_key(id))
             || self.values.is_some() != state.reception.received_values.is_some()
+            || state
+                .reception
+                .received_values
+                .as_ref()
+                .is_some_and(|values| !values.residency_undo_is_empty())
         {
             return Err((invalid(), self));
         }
