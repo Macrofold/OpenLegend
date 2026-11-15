@@ -6,7 +6,7 @@ Research and documentation only. The task compares actual activities, player pra
 
 ## Current progress
 
-SEED, Stars Reach, Wurm Online, SWG: Restoration, Foxhole, Mortal Online 2, Haven & Hearth and Life is Feudal: MMO have full source-grounded passes researched, reviewed and committed. Boundless and the final cross-game comparison remain unfinished. This is a truthful research checkpoint, not completion of the assignment.
+All nine games have full source-grounded passes researched, reviewed and committed. Final cross-game synthesis and navigation review remain in progress; the individual dossiers are complete.
 
 | Subject | Output | State |
 | --- | --- | --- |
@@ -18,7 +18,7 @@ SEED, Stars Reach, Wurm Online, SWG: Restoration, Foxhole, Mortal Online 2, Have
 | Mortal Online 2 | [Dossier](dossiers/mortal-online-2.md) | Complete; [dossier commit](https://github.com/Macrofold/OpenLegend/commit/7748ba6a42cc88df55eeb557f9493188209e72c8) |
 | Haven & Hearth | [Dossier](dossiers/haven-and-hearth.md) | Complete; [dossier commit](https://github.com/Macrofold/OpenLegend/commit/4a21eb74cfdcfe73ad56005cb8f544270cdb1bf8) |
 | Life is Feudal: MMO | [Dossier](dossiers/life-is-feudal-mmo.md) | Complete; [dossier commit](https://github.com/Macrofold/OpenLegend/commit/d5e131ad8016813ec25f284e282fd33ab6aef7a8) |
-| Boundless | dossiers/boundless.md | Next |
+| Boundless | [Dossier](dossiers/boundless.md) | Complete; [dossier commit](https://github.com/Macrofold/OpenLegend/commit/371e0b762af3292f1901cbd66a4a7758eb3d622b) |
 
 ## Method and evidence boundaries
 
@@ -34,7 +34,7 @@ OpenLegend comparison uses its actual main-branch priorities, opening/cooperatio
 
 ## Completion gates
 
-- [ ] All nine dossiers substantively cover the applicable research requirements and are committed.
+- [x] All nine dossiers substantively cover the applicable research requirements and are committed.
 - [ ] Comparative success table preserves metric, platform, edition and date boundaries.
 - [ ] Player appeal, rejection, graphics and OpenLegend overlap are addressed concretely.
 - [ ] Comparison is checked against existing design/art/positioning owners, without speculative backlog expansion.
