@@ -1,6 +1,6 @@
 # Enjoyable real-time combat within a larger life
 
-**Creative direction and research candidates — October 24, 2026.** Mike wants Open Legend to have satisfying real-time combat while remaining a game about inhabiting, exploring and changing a world. Combat should enrich that life; it should not become the compulsory center of every activity. These notes capture that preference and ideas inspired by Emberville, Diablo and Elden Ring. They do not select new runtime mechanics, timing values or implementation work.
+**Creative direction and research candidates — November 14, 2026.** Mike wants Open Legend to have satisfying real-time combat while remaining a game about inhabiting, exploring and changing a world. Combat should enrich that life; it should not become the compulsory center of every activity. These notes capture that preference and ideas inspired by Emberville, Diablo, Elden Ring and Fable. They do not select new runtime mechanics, timing values or implementation work.
 
 Open Legend is not intended to be a hack-and-slash game. Mike admires Diablo's craft in that genre and wants to learn which aspects of enjoyable real-time combat could serve Open Legend's broader ambitions.
 
@@ -39,6 +39,16 @@ The [combat study](../../archive/02-research/game-inspiration/dossiers/elden-rin
 
 Follow the combat questions through the already selected execution work and ASE12's ordinary-tap, deliberate-release, tracking and retreat observations. Physical contact, cover and bodily movement continue to govern results; good timing does not guarantee a hit or grant immunity. Optional execution skill should add expressive choices while competent ordinary actions and peaceful accomplishments remain worthwhile. These hypotheses add no separate combat mechanics, delivery project or acceptance gate.
 
+## What Fable makes worth investigating
+
+The [Fable series and combat-feel study](../../archive/02-research/game-inspiration/essays/fable-series-and-combat-feel.md) separates five complaints often called “spongey”: excessive repetition before defeat, weak impact, floaty motion, uncertain control response and opponents that offer too few changing decisions. Mike wants these criticisms to inform satisfying combat within Open Legend's larger life.
+
+Use that distinction to sharpen the existing ASE12 observation. Can an uncoached player understand whether an input was accepted, why contact hit, missed or was defended, and what useful action comes next? Check ordinary attacks and optional timing separately, then whether tracking and retreat remain interesting after the interaction is learned. A player calling an opponent a sponge should prompt a concrete follow-up about which part felt wrong.
+
+A successful contact needs truthful feedback; it need not always interrupt the opponent. Actual contact, defense, injury and recovery still determine consequences. Similarly, prompt local acknowledgment must remain distinct from admission, commitment and an observed hit. Preserve the selected admitted early release without adding a hidden queue of unavailable attacks. The study selects no hit-stop, compulsory stagger, new health model, combo system or additional acceptance gate.
+
+The broader Fable hypothesis is that adventure can remain meaningful on returning to ordinary life: an achievement changes a place, a relationship or what someone can use. The full dossiers distinguish those connections from shallow reputation meters and dominant tactics. Their criticism does not establish a final verdict on the unreleased reboot, and no Open Legend play observation was conducted for this research.
+
 ## Principles to explore
 
 ### Read the danger, choose an action, understand the result
@@ -70,3 +80,5 @@ A hypothetical encounter might end with a rescued traveler, a defended campsite,
 ## Questions for future play
 
 Can a player tell why an attack succeeded or failed? Does moving change their options? Do weapons feel different before numerical upgrades? Is the ordinary action satisfying without optional timing? Can someone leave danger and resume a worthwhile life? These questions can guide later ordinary play with the selected combat work; no gameplay, latency or enjoyment measurements were performed for this research.
+
+

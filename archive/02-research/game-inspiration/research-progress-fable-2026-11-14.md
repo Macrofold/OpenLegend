@@ -12,9 +12,9 @@ Apply [R01–R14 and conditional R15](research-requirements.md), including the [
 
 | Subject | State | Remaining scope |
 | --- | --- | --- |
-| G189 — Fable (2004), The Lost Chapters, Anniversary | In progress | [Mechanics, lore and presentation drafted](dossiers/fable.md). Finish encounter detail, reception/player evidence, production/economics/modding and full review. |
+| G189 — Fable (2004), The Lost Chapters, Anniversary | Complete | [Full R01–R14 and applicable R15 dossier](dossiers/fable.md), independently reviewed. Eight substantive reviews, a bounded 31-card Steam sample, primary production/commercial evidence and PC creation coverage. Limits are explicit. |
 | G190 — Fable II | Queued within this authorized assignment | Begin the independent full pass after G189 is reviewed and committed. |
-| Series comparison and combat-feel study | In progress | Reconcile transcript claims against dated official evidence; develop practical hypotheses through existing OpenLegend owners. |
+| Series comparison and combat-feel study | In progress | [Combat diagnosis, reboot claim audit and existing-owner application](essays/fable-series-and-combat-feel.md) drafted; complete the sequel comparison after G190. |
 | Navigation and final review | In progress | Link both completed dossiers, compare their lessons, verify affected documentation and commit final output. |
 
 ## Input provenance and evidence boundaries
@@ -33,3 +33,4 @@ Apply [R01–R14 and conditional R15](research-requirements.md), including the [
 ## Completion standard
 
 Each game needs substantive R01–R14 coverage, an explicit R15 finding, edition-specific source attribution, concrete situations, at least five actual written reviews where available, direct player evidence and truthful commercial limitations. Completion additionally requires reviewed links/navigation and committed output. A source-access or unpublished-finance limit is reported precisely; an unresearched category is not relabeled complete.
+
