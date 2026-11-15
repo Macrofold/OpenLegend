@@ -4,6 +4,18 @@
 
 Use the concrete example to find a study, then read its limitations and counterexamples. Prefer comparing two different solutions to the same design problem over copying the most spectacular isolated feature.
 
+## Persistent careers, communities and shared-world scale
+
+| Question | Named reference or interaction | Read |
+| --- | --- | --- |
+| When does ordinary work make someone feel useful? | BitCraft hunters, smiths and public crafting jobs; output ownership differs from labor contribution. | [Systems](../dossiers/bitcraft-online/01-systems-and-world.md), [contrasting accounts](../dossiers/bitcraft-online/02-reception.md) |
+| Can a small specialist stay small as they improve? | Historical hunting-lodge criticism and the newly introduced Homestead route. | [Reception and release boundary](../dossiers/bitcraft-online/02-reception.md) |
+| Can one profession support different levels of attention? | Fishing traps, communal schools, rare catches and active trophy encounters. | [Systems and situations](../dossiers/bitcraft-online/01-systems-and-world.md) |
+| What happens when other contributors stop playing? | Town attrition and remaining specialists taking on extra work. | [Player evidence](../dossiers/bitcraft-online/02-reception.md), [proposed OpenLegend applications](../dossiers/bitcraft-online/05-openlegend-lessons.md) |
+| Does a larger world solve a crowded location? | Independent regional databases, local transactions and explicit player transfers. | [Technology and scale](../dossiers/bitcraft-online/04-technology-and-scale.md) |
+| What can synthetic load miss? | Trade/waystone interfaces, real crafting, logging feedback and stale reconnects. | [Production failures](../dossiers/bitcraft-online/04-technology-and-scale.md#6-the-most-valuable-failures-to-learn-from) |
+| When does cosmetic monetization affect competitive goals? | Premium empire funding replaced by gameplay-earned energy. | [Business-model evolution](../dossiers/bitcraft-online/03-production-and-business.md) |
+
 ## Preparing, undertaking and recovering from an expedition
 
 | Question | Named reference or interaction | Read |

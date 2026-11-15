@@ -10,6 +10,10 @@ Each dossier owns its mechanics, worked interactions, source annotations, editio
 
 [Fable — G189](fable.md) distinguishes the original, The Lost Chapters and Anniversary. [Fable II — G190](fable-ii.md) studies its separate combat, dog, family, economy, world and expansion rules. The [series and combat-feel comparison](../essays/fable-series-and-combat-feel.md) diagnoses “spongey” combat, evaluates the supplied reboot criticism against dated evidence, and connects the findings to existing Open Legend work. The [scoped record](../research-progress-fable-2026-11-14.md) owns completion and evidence limits.
 
+## BitCraft Online — November 2026 addition
+
+[BitCraft Online — G191](bitcraft-online.md) covers ordinary work, progression, settlements, lore, reception, business, production and community tools, with a separate [source-inspected technical chapter](bitcraft-online/04-technology-and-scale.md). Its [OpenLegend applications](bitcraft-online/05-openlegend-lessons.md) connect the evidence to existing owners. Alpha/EA criticism, newly shipped 1.0 changes and unproven long-term outcomes remain distinct; the [scoped record](../research-progress-bitcraft-online-2026-11-14.md) owns coverage and limitations.
+
 ## Outward — November 2026 addition
 
 [Outward — G188](outward.md) follows the complete preparation, expedition and return experience: systems and lore; player praise, criticism and abandonment; production, marketing and commercial evidence; and community modding. The [Open Legend applications](outward/04-openlegend-lessons.md) connect the findings to existing owners. Original, DLC, Definitive Edition and platform differences remain explicit; the [scoped record](../research-progress-outward-2026-11-07.md) owns completion and evidence limits.

@@ -108,7 +108,7 @@ For example, rolling back World A after an export while World B keeps the receiv
 | Budget-limited long relationships                                                          | Whether affordable NPCs remain coherent, responsive, and distinct                        |
 | Popular official and coordinated worldwide event                                           | Queue fairness, important-character cost, and broad access to meaningful participation   |
 
-Numbers used to size experiments are workload inputs, not advertised capacities. Measure tails, cost, backlog, correctness, and player-visible quality together. A million synthetic idle entities is not acceptance for a million concurrent players. Native-only performance does not establish full network, model, storage, or client capacity.
+Numbers used to size experiments are workload inputs, not advertised capacities. Measure tails, cost, backlog, correctness, and player-visible quality together. A million synthetic idle entities is not acceptance for a million concurrent players. Exercise the ordinary inspection/inventory, state-changing action and join/reconnect paths relevant to the selected workload; [BitCraft's production incidents](../../archive/02-research/game-inspiration/dossiers/bitcraft-online/04-technology-and-scale.md#6-the-most-valuable-failures-to-learn-from) show how omitted ordinary operations can dominate load or invalidate recovery. Native-only performance does not establish full network, model, storage, or client capacity.
 
 ## 11. Go/no-go criteria
 
