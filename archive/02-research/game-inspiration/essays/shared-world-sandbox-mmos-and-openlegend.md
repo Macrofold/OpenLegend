@@ -6,9 +6,9 @@
 
 Mike asks which of nine shared-world sandboxes succeed, what players actually value and reject, how graphics affect the experience, and whether OpenLegend's documented vision gives people a compelling reason to choose it despite a smaller team and graphics budget.
 
-The completed SEED, Stars Reach, Wurm Online, Star Wars Galaxies: Restoration, Foxhole and Mortal Online 2 cases already rule out an easy answer. Autonomous characters, remembered relationships, useful occupations, persistent landscapes and unexpected player inventions all have serious competitors. OpenLegend has a plausible opportunity in how these elements connect during an embodied adventure. A distinctive feature list, commercial demand and a reliably distinctive playable experience are three separate claims.
+The completed SEED, Stars Reach, Wurm Online, Star Wars Galaxies: Restoration, Foxhole, Mortal Online 2 and Haven & Hearth cases already rule out an easy answer. Autonomous characters, remembered relationships, useful occupations, persistent landscapes and unexpected player inventions all have serious competitors. OpenLegend has a plausible opportunity in how these elements connect during an embodied adventure. A distinctive feature list, commercial demand and a reliably distinctive playable experience are three separate claims.
 
-The other three dossier passes and the final comparative judgment remain unfinished at this checkpoint. These preliminary findings are preserved so a restart cannot turn incomplete research into a completed market assessment.
+The other two dossier passes and the final comparative judgment remain unfinished at this checkpoint. These preliminary findings are preserved so a restart cannot turn incomplete research into a completed market assessment.
 
 ## Use the actual OpenLegend vision
 
@@ -22,7 +22,7 @@ The [current art direction](../../../../art-direction/decisions.md#current-direc
 
 Current capability must remain separate from ambition. The main-branch [README](../../../../README.md) documents an active game pause when all human connections leave. The [continuing-lives design](../../../../docs/projects/continuing-lives-feature-spec.md) is a delivery target, not proof that a continuously operating, large-scale MMO already exists.
 
-## What the first six cases establish
+## What the first seven cases establish
 
 ### SEED competes directly on people
 
@@ -76,6 +76,14 @@ The reception evidence also separates wanted risk from blocked opportunity. Stro
 
 For presentation, a [starter-area account](https://massivelyop.com/2022/01/26/fight-or-kite-starting-a-journey-in-mortal-online-2/) found a missing skinning animation disruptive to embodiment. It is a dated observation, but a useful design question: does the player's action have a convincing visible response? Environmental detail cannot answer that by itself.
 
+### Haven & Hearth already makes a modest life into an absorbing world
+
+The [Haven & Hearth dossier](../dossiers/haven-and-hearth.md) is particularly relevant to the intended opening: establishing a hearth, gaining practical competence, shaping a home and discovering how a place works already constitute a substantial game. Its interdependent quality, food, study and production systems make small improvements useful. Their existence rules out claiming the basic home–exploration–making loop as OpenLegend's exclusive territory.
+
+A [current newcomer account](https://www.havenandhearth.com/forum/viewtopic.php?p=979652) values the presentation and discoveries but nearly leaves when mining rules become unintelligible. The implication is a design distinction: mystery can encourage investigation; missing actionable information can interrupt it. Independent inhabitants could help make knowledge situated and discoverable, provided their advice and actions are reliable.
+
+The small founding team and long continuity are encouraging precedents for original production. A [2016 founder statement](https://www.havenandhearth.com/forum/viewtopic.php?f=39&t=52550) also makes the economic boundary clear: dedication can keep development alive while income fails to fund the desired effort. That historical shortfall is not a finding about current profit. OpenLegend should learn from the achieved depth without treating years of personal commitment as a free resource.
+
 ## How to compare success without manufacturing a league table
 
 The final comparison will preserve five separate questions:
@@ -98,6 +106,8 @@ The distinction would be weak if ordinary play consisted mainly of gathering, fi
 
 This is a target experience, not a report that these outcomes already occur reliably. Nor is adding every competitor's successful system a sensible response. More professions, bigger maps and more simulated inhabitants also increase explanation, art, balancing, moderation and operating work.
 
+Availability and independence can also conflict. A resident with competing purposes may create waiting, gatekeeping or negotiation overhead. A resident who always accommodates the player loses much of the independence being promised. The design needs intelligible boundaries, useful alternative actions and the freedom to proceed alone, so an understandable refusal can create an interesting choice without blocking the session. This is a central product tradeoff, not just a problem of improving dialogue.
+
 There is an important counterargument: human cooperation carries another person's voluntary attention, reputation and recognition of shared authorship. AI inhabitants might improve availability without supplying that same value. A lonely player's criticism does not establish demand for an AI substitute. OpenLegend should examine whether its inhabitants complement human play and provide an independently enjoyable experience; it should not assume that a populated-looking world solves the social problem.
 
 ### What a convincing demonstration would contain
@@ -107,6 +117,8 @@ The existing [demonstration structure](../../../06-marketing/positioning-and-cop
 Consider an illustrative target episode: the player has a camp and wants to reach a useful expedition site. A resident knows part of the route but has a competing purpose. Their willingness and contribution change the preparation. The player invents an admitted alternative within the game's supported capabilities, makes the actual object and uses it. An encounter permits an intelligible choice among cooperation, negotiation, avoidance or fighting. Returning brings a real benefit to the home or a particular person, and a later visit reflects what happened.
 
 This is a proposed arrangement of the existing vision, **not a claim of an implemented or naturally observed complete session**. It does not authorize arbitrary generated mechanics or require every resident to agree. Learning an existing method and making a genuine new invention remain different outcomes. The episode matters only if its native effects work and ordinary people enjoy and understand it.
+
+A well-authored RPG quest could deliver much of this episode too. That is a serious benchmark. OpenLegend's approach must add worthwhile unscripted variation, agency or consequences, at acceptable cost and reliability. One attractive story does not establish that autonomy and invention were necessary to produce it, or that their implementation is preferable to a more tightly authored alternative.
 
 Several weaker results could resemble success in a curated video. A resident might simply repeat a remembered fact without changing any decision. A supposedly invented tool might be an existing item with different prose. A later scene might be manually arranged instead of following from play. Or the systems might work correctly while a newcomer finds the process tedious. Those possibilities are why existing implementation evidence, uncoached play and comparative preference must remain separate.
 
@@ -121,6 +133,8 @@ This proposition also competes for attention with single-player and cooperative 
 The research does not support dismissing graphics as a superficial concern. Style preference, asset quality, animation, atmosphere, readability and responsiveness can fail independently. A person may like a stylized landscape while disliking unfinished faces, stiff movement or a confusing interface.
 
 For OpenLegend, the relevant question is whether people want to spend time looking at and acting in its particular world. Coherent light, a recognisable person, convincing motion and a place shaped by use can support that desire with bounded scope. A low asset count can be a production decision; it is not automatically an appealing aesthetic.
+
+This differentiation may shift production expense rather than remove it. Personal relationships concentrate attention on characters and their actions; practical invention requires understandable effects and dependable validation. Fewer locations can still carry demanding animation, feedback, simulation and operating requirements. The proposed focus is potentially distinctive for a small team, but its economic advantage remains unproved.
 
 No conversion experiment in this pass isolates the sales effect of graphics. Reviews can identify barriers and pleasures, but cannot calculate how many people rejected a store page without purchasing. Surviving communities therefore do not prove that visual shortcomings were commercially harmless.
 
