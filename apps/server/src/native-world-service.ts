@@ -10,7 +10,7 @@ import { nativeNpcPersonalSelection } from './native-npc-sources.js';
 import { nativeExperienceEntry } from './native-recall.js';
 import { copyNativeOutcome } from './native-outcome.js';
 import { nativeMilestoneUpdates } from './native-milestones.js';
-import { nativeRecordChanges } from './native-records.js';
+import type { RecordChanges } from './world-records.js';
 import { readNativeResidentPressure } from './native-maintenance-read.js';
 import { namePhrase, type Named } from '@open-legend/language';
 import { decisionObjectBytes, decisionTextBytes } from './native-decision-allocation.js';
@@ -830,16 +830,15 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       throw error;
     }
   }
-  private publishAccepted(publication: NativePublication): void {
-    // Protected publication has already committed before its native settlement.
-    // Ordinary pending edits must fence detached sources immediately; the SQL
-    // notification later deduplicates these exact payloads through this cut.
-    if (this.pending.durableMark().through < publication.progress.throughCut)
-      this.store.memories.accepted(
-        this.worldId,
-        nativeRecordChanges(publication.records),
-        publication.progress.throughCut,
-      );
+  private publishAccepted(
+    publication: NativePublication,
+    changes: RecordChanges | undefined,
+  ): void {
+    // Ordinary candidates reuse their pre-Ready row adapter to fence detached
+    // sources immediately. Protected publication is already durable and passes
+    // no pending edits. SQL later deduplicates these exact payloads through this cut.
+    if (changes && this.pending.durableMark().through < publication.progress.throughCut)
+      this.store.memories.accepted(this.worldId, changes, publication.progress.throughCut);
     this.store.memories.retentionArchivesAccepted(this.worldId, publication.sourceVersions);
     for (const listener of this.publicationListeners) {
       try {
@@ -2512,7 +2511,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             if (result.staged) {
               await this.acknowledgeCommitted();
               if (result.publication.privacyChange) this.privacyEpoch++;
-              this.publishAccepted(result.publication);
+              this.publishAccepted(result.publication, undefined);
               this.notify(result.publication.events.length !== 0);
               this.scheduleRetention();
             } else if (
@@ -3070,7 +3069,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             this.failure = error instanceof Error ? error : new Error(String(error));
             throw error;
           }
-          this.publishAccepted(publication);
+          this.publishAccepted(publication, accepted.value.value.changes);
           this.notify(publication.events.length !== 0);
           this.scheduleSave();
           this.scheduleRetention();
