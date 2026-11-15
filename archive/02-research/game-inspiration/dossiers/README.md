@@ -6,6 +6,10 @@
 
 Each dossier owns its mechanics, worked interactions, source annotations, edition boundaries, review disagreements and access limitations. Read those qualifications before extracting a pattern.
 
+## Shared-world sandbox MMOs — November 2026
+
+The [nine-game scoped record](../research-progress-shared-world-sandbox-mmos-2026-11-14.md) links the full dossiers for SEED, Stars Reach, Wurm Online, SWG: Restoration, Foxhole, Mortal Online 2, Haven & Hearth, Life is Feudal: MMO and Boundless. The [comparative essay](../essays/shared-world-sandbox-mmos-and-openlegend.md) connects player experience, graphics, success evidence and OpenLegend positioning.
+
 ## Outward — November 2026 addition
 
 [Outward — G188](outward.md) follows the complete preparation, expedition and return experience: systems and lore; player praise, criticism and abandonment; production, marketing and commercial evidence; and community modding. The [Open Legend applications](outward/04-openlegend-lessons.md) connect the findings to existing owners. Original, DLC, Definitive Edition and platform differences remain explicit; the [scoped record](../research-progress-outward-2026-11-07.md) owns completion and evidence limits.
@@ -75,3 +79,4 @@ Companions: [GM adjudication and simulation research](../mechanics/dungeons-and-
 **Does a convenience preserve the interesting decision?** Read the reviews and version histories beside the mechanics: saving, encounter controls, growth boosts, equipment information and timed-input support alter different costs. A launch complaint is not proof that every later version behaves the same way.
 
 For broader entry points, use the [interaction lookup](../mechanics/interaction-lookup.md), [comparative map](../essays/comparative-map.md) and [evidence interpretation](../essays/how-to-interpret-the-evidence.md). For completion status, commits and remaining whole-library gates, return to the [progress ledger](../research-progress.md). The separate [D&D packet status](../games/dungeons-and-dragons.md#evidence-and-completion-status) covers the additive tabletop expansion.
+

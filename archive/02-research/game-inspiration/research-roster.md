@@ -275,3 +275,21 @@ Mike requested a full dossier on the released game, player praise and criticism,
 ## November 7 Outward addition
 
 Mike requested a full Outward dossier covering major systems, lore, player praise and criticism, reviews, production, marketing, commercial outcomes and transferable lessons. G188 applies R01–R14, the economics/enjoyment/lore/creation amendment and the conditional R15 modding investigation. The [dossier](dossiers/outward.md) and [scoped record](research-progress-outward-2026-11-07.md) own this pass. Original, DLC and Definitive Edition rules remain distinct; sequel announcements do not establish original-game behavior. This addition preserves earlier subjects, queued work and packet-wide evidence limits.
+
+## November 14 shared-world sandbox MMO addition
+
+Nine independent full-game passes are authorized in the [scoped record](research-progress-shared-world-sandbox-mmos-2026-11-14.md). Exact title/filename identities avoid compounding overlapping global G-number allocations in parallel research branches; no earlier identity or status is changed.
+
+| Subject | Planned dossier | Edition boundary |
+| --- | --- | --- |
+| SEED | dossiers/seed.md | Klang game, app 2938800; standalone release versus Steam |
+| Stars Reach | dossiers/stars-reach.md | Playable Worlds game; testing versus released outcome |
+| Wurm Online | dossiers/wurm-online.md | Official Online service; Wurm Unlimited separate |
+| Star Wars Galaxies: Restoration | dossiers/star-wars-galaxies-restoration.md | Restoration community server; original SWG and other servers distinguished |
+| Foxhole | dossiers/foxhole.md | Persistent war service and current update boundaries |
+| Mortal Online 2 | dossiers/mortal-online-2.md | Sequel; original Mortal Online excluded |
+| Haven & Hearth | dossiers/haven-and-hearth.md | Current game, legacy era and clients distinguished |
+| Life is Feudal: MMO | dossiers/life-is-feudal-mmo.md | Original, relaunched and later service models separated; Your Own distinct |
+| Boundless | dossiers/boundless.md | Shared service; platforms and player-owned worlds distinguished |
+
+
