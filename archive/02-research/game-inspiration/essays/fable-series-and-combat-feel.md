@@ -38,13 +38,30 @@ An observational study of impact feel examines player comments and nineteen feed
 
 A polished contact effect cannot rescue an action directed at the wrong target. Responsive controls cannot create lasting variety if one tactic solves every encounter. Meaningful tactics can still feel unpleasant when the interface hides commitment or refuses inputs without explanation. This is why an ability list alone cannot establish good combat.
 
-## 2. What the original Fable contributes
+## 2. What Fable and Fable II contribute
 
-The first dossier supports two lessons that belong together. Accessible switching among melee, ranged and magic gives players expressive options; dominant protection/recovery or area-damage combinations can flatten those options into a routine. Reviewers admired the adventure, humor and changing hero while disagreeing about challenge, targeting, length and depth. These are distinct dimensions of quality, not a single nostalgia verdict. See [combat](../dossiers/fable.md#3-combat-equipment-and-magic) and [review evidence](../dossiers/fable.md#10-what-critics-and-players-actually-valued).
+Both games connect an adventure to a recognizable life: fighting changes the hero, rewards support possessions and relationships, and returning to town gives achievements another context. II extends that promise while changing several rules. The [Fable dossier](../dossiers/fable.md) and [Fable II dossier](../dossiers/fable-ii.md) own the detailed mechanics, edition boundaries and source evidence.
 
-The larger pattern is **adventure returning to ordinary life**. An outing can produce a trophy, which supports a performance before townspeople and then becomes part of a home. Clothes, reputation and relationships make the adventurer recognizable outside battle. For OpenLegend, the interesting hypothesis is that an accomplishment remains useful or meaningful after its immediate reward.
+| Dimension | Fable / TLC / Anniversary | Fable II |
+| --- | --- | --- |
+| **Combat and magic** | Melee, bows/crossbows and a broad, mana-funded spell repertoire; blocking, rolling and Flourishes create openings. Powerful protection and control combinations can overwhelm resistance. | A dedicated button for each discipline supports quick melee/gun/magic combinations. Magic spends charging time rather than mana; exposure while charging creates a decision, though strong control spells can make that decision easy. |
+| **Failure** | Resurrection Phials avert defeat in standard rules; otherwise reloading can lose progress, with saving rules differing by edition. PC Anniversary's Heroic mode removes phials. | Automatic revival keeps the adventure moving, with scars and lost uncollected experience; a phial prevents those consequences. More forgiving failure changes pressure without determining whether contact feels satisfying. |
+| **Identity** | A male hero develops a visible biography through growth, alignment, scars and appearance. Clothing combines presentation with protection. | Adds male/female choice and separates good/evil from purity/corruption. Clothing frees appearance from armor defense. Neither game's visible biography establishes detailed memories in every observer. |
+| **Dog and family** | Marriage, a home and social performances support a domestic role; no companion dog or player parenthood. | The dog joins exploration and fighting; children and family support expand domestic commitments. These create opportunities for attachment, whose strength depends on the player. |
+| **Money and changed places** | Quest rewards, trade and locally collected rent fund equipment, homes and display. | Repeatable jobs and accumulating property income support expansion of wealth. Selected decisions alter places: investing in Westcliff changes what the hero returns to after the Spire. These are authored consequences, not evidence of a complete simulated economy. |
+| **Playing together** | Single player. | Co-op adds a henchman inside the host's world, with a shared camera and unequal ownership. It enables company while limiting independent identity and movement. |
 
-That does not mean importing a universal good/evil meter. A known deed, a rumor, an individual's memory and global fame are different things. The useful research question is which person knows what happened, how they learned it, and why it changes their response. The sequel's independent dossier will supply the comparison with its dog, family and changed economic structure.
+### Shared strengths, different limits
+
+The [original's reception](../dossiers/fable.md#10-what-critics-and-players-actually-valued) and [II's reception evidence](../dossiers/fable-ii.md) support separating **energy and impact from challenge**. Critics could enjoy fluid combinations, gun sound or expressive movement while finding enemies easy, money abundant or one tactic dominant. Accessible fighting can be pleasurable; a long list of possible moves does not establish that opponents reward using them.
+
+Both games also invite players to supply meanings beyond what the rules recognize. Dressing as a particular kind of hero, treating a spouse lovingly or inventing a personal code can matter deeply even when responses depend on coarse scores. That imaginative contribution is valuable, but it should not be described as demonstrated personal memory. Likewise, reviewers disagreed about the dog's emotional force. Adding a companion, a family or a dramatic loss does not guarantee attachment.
+
+### Three high-value lessons for OpenLegend
+
+1. **Make ordinary action satisfying before expanding the repertoire.** Use the existing combat owners and observation work in §5 to distinguish accepted intent, legible contact and worthwhile opposition. Extra damage, stronger effects and harsher defeat address different problems.
+2. **Let accomplishments matter after the encounter.** A useful object, a changed place or a response from someone who could know the deed can connect adventure to home and community. Preserve the difference between public fame, rumor and individual knowledge.
+3. **Build attachment through repeated useful interaction.** Study what players willingly return to and what they miss. Treat affection, expressive variety and economic temptation as outcomes to observe; do not assume a feature's presence creates them or add new acceptance gates here.
 
 ### Wider series context
 
