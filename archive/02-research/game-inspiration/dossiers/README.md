@@ -6,6 +6,10 @@
 
 Each dossier owns its mechanics, worked interactions, source annotations, edition boundaries, review disagreements and access limitations. Read those qualifications before extracting a pattern.
 
+## Fable and Fable II — November 2026 research
+
+[Fable — G189](fable.md) distinguishes the original, The Lost Chapters and Anniversary. [Fable II — G190](fable-ii.md) studies its separate combat, dog, family, economy, world and expansion rules. The [series and combat-feel comparison](../essays/fable-series-and-combat-feel.md) diagnoses “spongey” combat, evaluates the supplied reboot criticism against dated evidence, and connects the findings to existing Open Legend work. The [scoped record](../research-progress-fable-2026-11-14.md) owns completion and evidence limits.
+
 ## Outward — November 2026 addition
 
 [Outward — G188](outward.md) follows the complete preparation, expedition and return experience: systems and lore; player praise, criticism and abandonment; production, marketing and commercial evidence; and community modding. The [Open Legend applications](outward/04-openlegend-lessons.md) connect the findings to existing owners. Original, DLC, Definitive Edition and platform differences remain explicit; the [scoped record](../research-progress-outward-2026-11-07.md) owns completion and evidence limits.
