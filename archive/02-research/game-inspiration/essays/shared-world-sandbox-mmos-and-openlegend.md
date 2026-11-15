@@ -6,9 +6,9 @@
 
 Mike asks which of nine shared-world sandboxes succeed, what players actually value and reject, how graphics affect the experience, and whether OpenLegend's documented vision gives people a compelling reason to choose it despite a smaller team and graphics budget.
 
-The completed SEED and Stars Reach cases already rule out an easy answer. Autonomous characters, remembered relationships, useful occupations, persistent landscapes and unexpected player inventions all have serious competitors. OpenLegend has a plausible opportunity in how these elements connect during an embodied adventure. A distinctive feature list, commercial demand and a reliably distinctive playable experience are three separate claims.
+The completed SEED, Stars Reach and Wurm Online cases already rule out an easy answer. Autonomous characters, remembered relationships, useful occupations, persistent landscapes and unexpected player inventions all have serious competitors. OpenLegend has a plausible opportunity in how these elements connect during an embodied adventure. A distinctive feature list, commercial demand and a reliably distinctive playable experience are three separate claims.
 
-The other seven dossier passes and the final comparative judgment remain unfinished at this checkpoint. These preliminary findings are preserved so a restart cannot turn incomplete research into a completed market assessment.
+The other six dossier passes and the final comparative judgment remain unfinished at this checkpoint. These preliminary findings are preserved so a restart cannot turn incomplete research into a completed market assessment.
 
 ## Use the actual OpenLegend vision
 
@@ -22,7 +22,7 @@ The [current art direction](../../../../art-direction/decisions.md#current-direc
 
 Current capability must remain separate from ambition. The main-branch [README](../../../../README.md) documents an active game pause when all human connections leave. The [continuing-lives design](../../../../docs/projects/continuing-lives-feature-spec.md) is a delivery target, not proof that a continuously operating, large-scale MMO already exists.
 
-## What the first two cases establish
+## What the first three cases establish
 
 ### SEED competes directly on people
 
@@ -39,6 +39,14 @@ The [Stars Reach dossier](../dossiers/stars-reach.md) covers direct adventure, a
 Its strongest contrasting accounts concern purpose. One player sees unfinished tools and lonely work. Another joins a human society and discovers useful work, local identity and shared projects. A system becomes meaningful partly through the people and desired outcomes connected to it. That is an interpretation of the [reception evidence](../dossiers/stars-reach.md#reception-interesting-worlds-difficult-entry), not a measured causal effect.
 
 OpenLegend's particular inhabitants could help provide intelligible local life before a newcomer finds the right human organization. They must do more than explain a task. Their own decisions, knowledge, commitments and practical contributions need to change the adventure.
+
+### Wurm establishes a paying niche and the burden of attachment
+
+The [Wurm dossier](../dossiers/wurm-online.md) establishes persistent ownership and meaningful skilled work as serious prior art. Its operator reported approximately SEK 2.1 million in November 2024 sales, while current group reporting shows financial pressure; these support neither dismissing it as dead nor declaring it consistently profitable. [Game disclosure](https://www.mfn.se/cis/a/game-chest-group/gamechest-okad-forsaljning-och-fler-spelare-for-wurm-online-5f8ef835.iframe) · [Group report](https://www.mfn.se/a/game-chest-group/kvartalsrapport-2-2026)
+
+The useful distinction is between effort that gives something value and procedure that delays any wanted result. Historical reviewers and current player accounts disagree because goals, available time and social access differ. A slower pace may be the desired experience. OpenLegend should make quiet inhabitation enjoyable in its own right, alongside adventure, rather than treating every minute without a new unlock as failure.
+
+Wurm also shows that a persistent place can carry human memories without AI memory. The prospective contribution is richer encounters with particular inhabitants, not the invention of a world with history. Care can motivate return and also create unwanted obligation. Test voluntary desire to revisit separately from time spent protecting earlier investment.
 
 ## How to compare success without manufacturing a league table
 
@@ -63,6 +71,22 @@ The distinction would be weak if ordinary play consisted mainly of gathering, fi
 This is a target experience, not a report that these outcomes already occur reliably. Nor is adding every competitor's successful system a sensible response. More professions, bigger maps and more simulated inhabitants also increase explanation, art, balancing, moderation and operating work.
 
 There is an important counterargument: human cooperation carries another person's voluntary attention, reputation and recognition of shared authorship. AI inhabitants might improve availability without supplying that same value. A lonely player's criticism does not establish demand for an AI substitute. OpenLegend should examine whether its inhabitants complement human play and provide an independently enjoyable experience; it should not assume that a populated-looking world solves the social problem.
+
+### What a convincing demonstration would contain
+
+The existing [demonstration structure](../../../06-marketing/positioning-and-copy.md#hero-demo-concept) connects a goal, obstacle, choice, working invention, independent response, payoff and later consequence. That is a stronger competitive communication unit than a list of systems.
+
+Consider an illustrative target episode: the player has a camp and wants to reach a useful expedition site. A resident knows part of the route but has a competing purpose. Their willingness and contribution change the preparation. The player invents an admitted alternative within the game's supported capabilities, makes the actual object and uses it. An encounter permits an intelligible choice among cooperation, negotiation, avoidance or fighting. Returning brings a real benefit to the home or a particular person, and a later visit reflects what happened.
+
+This is a proposed arrangement of the existing vision, **not a claim of an implemented or naturally observed complete session**. It does not authorize arbitrary generated mechanics or require every resident to agree. Learning an existing method and making a genuine new invention remain different outcomes. The episode matters only if its native effects work and ordinary people enjoy and understand it.
+
+Several weaker results could resemble success in a curated video. A resident might simply repeat a remembered fact without changing any decision. A supposedly invented tool might be an existing item with different prose. A later scene might be manually arranged instead of following from play. Or the systems might work correctly while a newcomer finds the process tedious. Those possibilities are why existing implementation evidence, uncoached play and comparative preference must remain separate.
+
+### Who might prefer the combination
+
+My provisional audience hypothesis is players who want direct adventure and an inhabitable shared world, value personal continuity and useful creativity, and would appreciate interesting local lives without needing a large human organization to supply every opportunity. Some may prefer company with fewer scheduling demands; others may care principally about human cooperation. The sample does not establish the size or willingness to pay of either audience.
+
+This proposition also competes for attention with single-player and cooperative adventures, not only the nine MMOs. Being unusual within this comparison is not a claim of worldwide originality. A smaller world must offer a positive reason to choose it that outweighs less content, a smaller human community and any presentation limitations.
 
 ## Graphics: protect desire to inhabit the world
 
