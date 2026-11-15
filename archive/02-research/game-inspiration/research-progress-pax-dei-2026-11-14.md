@@ -36,6 +36,12 @@ No verified project development budget, complete game revenue/profit account, cu
 
 The study is not a hands-on playtest, representative sentiment survey, complete video review, or causal attribution of departures. Those are evidence limits, not unfinished categories in this scoped dossier. Research findings and proposed tests do not become accepted Open Legend requirements.
 
+## Supplementary testimony — November 15, 2026
+
+The [supplied-source ledger](dossiers/pax-dei/04-reception.md#supplied-video-and-comment-evidence) incorporates Mike's short transcript, two attached long transcripts and the related comment capture. Distinct additions concern day-two handling and music, incidental visits after easier market discovery, and reluctance to risk useful equipment. Existing economic, social, visual and ownership conclusions retain their weight; current official sources qualify disputed pricing and chronology. Proposed observations link to existing owners without new tasks, specifications or priorities. Original metrics retain their dates.
+
+The scoped update was reviewed for duplication, provenance, historical/current-state distinctions and internal links. No runtime behavior or accepted requirement changed; runtime tests were not required.
+
 ## Remaining work
 
 None in the requested research scope. Future refreshes should check new releases and current metrics explicitly rather than overwrite the dated record.

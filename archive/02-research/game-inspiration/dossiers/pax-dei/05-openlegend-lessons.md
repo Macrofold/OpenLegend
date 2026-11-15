@@ -34,6 +34,8 @@ A constructed illustration: a player helps complete a shelter; a resident later 
 
 The alternative hypothesis deserves equal respect: players may care more about building expression, discovery, or companionship than a utility consequence. Study what they voluntarily pursue rather than deciding in advance that only instrumental actions count.
 
+A historical organizer's [market-browsing account](04-reception.md#supplied-video-and-comment-evidence) adds one useful question: when finding goods becomes easier, what still makes a visit worthwhile? Preserve positive reasons to meet rather than treating inconvenient search as a social feature.
+
 ## 4. Design interdependence around ordinary availability
 
 A role can be meaningful because another person needs it. It can also become a dependency trap: progress stops whenever a particular specialist is offline, or the player must learn every profession to avoid that interruption.
@@ -81,6 +83,8 @@ The inference should stop there. Comparing production budgets does not establish
 A revealing study would let a new player encounter a small, representative place and its people without a developer's explanation of the intended future. Do they understand what they can do? Do the characters' actions matter to their choices? Do they remember an event or person? Do they choose another session? These questions help distinguish a compelling experience from interest in the concept of AI.
 
 Do not excuse confusing UI, poor feedback, unstable performance, or visually inconsistent assets by calling the project a prototype indefinitely. Those problems can prevent a fair test of the premise. Equally, do not expand asset scope simply to imitate the surface of a much larger production.
+
+The [supplied day-two account](04-reception.md#supplied-video-and-comment-evidence) makes the existing questions concrete: can a newcomer understand symbols and complete a supported storage/crafting trip, and does the soundscape help them enjoy ordinary activity? Use the existing [inventory owner](../../../../../docs/ui-ux/inventory.md) and [whole-scene audio review](../../../../../docs/production-workflows/audio-and-feedback.md#5-mix-and-inspect-in-the-whole-scene) when those experiences are selected. Matching-item deposit and proximity crafting are not declared delivered or approved by this comparison. The historical reluctance to risk magic equipment similarly fits [Step 4's existing question about the cost of trying supported alternatives](../../../../../docs/projects/first-playable-playtest-plan.md#step-4--observe-distinct-player-journeys); it adds no acceptance gate.
 
 ## 9. Learn from marketing without confusing reach with demand
 

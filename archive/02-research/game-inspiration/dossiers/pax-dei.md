@@ -1,6 +1,6 @@
 # Pax Dei — persistent places, social purpose, and sustainable scope
 
-**G189 · Full research dossier · Evidence cutoff: November 14, 2026.**
+**G189 · Full research dossier · Core evidence cutoff: November 14, 2026.** [Supplementary player testimony received November 15](pax-dei/04-reception.md#supplied-video-and-comment-evidence) is integrated separately; population and financial snapshots retain their original dates.
 
 Mainframe Industries' social sandbox MMO is an especially relevant case for Open Legend: persistent construction, human-built communities, crafting and exchange, shared geography, and an ambitious promise of a world made meaningful by its inhabitants. This study covers Early Access, the commercial release, and subsequent updates through the cutoff.
 

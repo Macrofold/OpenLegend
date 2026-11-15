@@ -1,6 +1,6 @@
 # Pax Dei: reception, gameplay, and retention evidence
 
-Research cutoff: 14 November 2026. This is a qualitative evidence review, not a representative player survey. Review scores, praise, complaints, developer acknowledgments, and causal interpretations have different evidentiary weight.
+Base research cutoff: 14 November 2026; supplementary supplied testimony received 15 November is identified below. This is a qualitative evidence review, not a representative player survey. Review scores, praise, complaints, developer acknowledgments, and causal interpretations have different evidentiary weight.
 
 ## What the reception actually establishes
 
@@ -103,6 +103,29 @@ Three 2026 observations keep the historical review corpus honest:
 - **2 November 2026:** indexed excerpts from a discussion of continued play described horses, roads, inventory capacity, achievements, and public events positively; other commenters still reported sparse places and unwanted surplus crafts. Only search-returned excerpts were available, so this is weak, illustrative evidence rather than an audited thread or proof of a recovery. [Thread](https://www.reddit.com/r/PaxDei/comments/1xlk14v/what_keeps_you_playing/).
 
 The official October changes and these reactions establish that the current game is different. They do not establish the size or durability of any retention improvement.
+
+## Supplied video and comment evidence
+
+Supplementary inputs received **15 November 2026** comprise three spoken accounts and one related comment-page capture. All supplied text was read; original footage was not viewed. These inputs neither refresh the earlier metrics nor increase the count of independent written reviews.
+
+| ID | Supplied source | Provenance and weight |
+| --- | --- | --- |
+| REC20 | [Day-two impressions short](https://www.youtube.com/shorts/mA1_T1KI1xA), transcript supplied directly in chat | First-person praise and friction, including listening preferences. Creator, publication date, build and device context unverified. |
+| REC21 | `Pasted text (3).txt`: self-described 2,000-hour player and clan organizer discussing PAXcast and the Order of the Blood Brothers | Author, original URL, date and reported community sizes unverified; not counted as an additional independent reviewer. The account places itself more than nine months into Early Access with a 2025 release still ahead, so its feature absences are historical. |
+| REC22 | TimonHub, [“This Is How a Beautiful MMO Fumbled Everything – Pax Dei”](https://www.youtube.com/watch?v=-I74rRQbPJc): `Pasted text(10).txt` plus `Pasted text (2)(1).txt` | The latter is the same video's page/comments, not another transcript. Title/author and thumbnail video ID match the [Steam video listing](https://steamcommunity.com/app/1995520/videos/); direct YouTube retrieval was unavailable. Publication date unverified; relative-age labels are not converted into dates. Comments are self-selected responses to this framing, not a representative sample or a second independent review. |
+
+The useful refinements are specific to reported experiences:
+
+| Reported observation | Bounded interpretation |
+| --- | --- |
+| **REC20: everyday handling can defeat initial attraction.** The speaker admires player-built houses, initially mistaking them for developer work, but is already doubtful about staying on day two. Unexplained map symbols, finding materials, sorting, and repeatedly retrieving chest contents for crafting make routine play laborious. The desired comparison is depositing only matching items into an established storage chest and keeping it orderly. | Observe a complete gathering → storage → crafting trip and whether unfamiliar symbols require outside help. This is evidence of one player's friction, not an audit proving that particular conveniences are absent in the current build. |
+| **REC20: music exists but contributes little for this listener.** Raising the music setting still left the score difficult to notice and, to the speaker, too static; they considered supplying their own playlist. | Separate audibility, musical appeal and comfort during routine play. One account cannot isolate composition from mix, device/settings or taste, and does not justify universally louder or continuous music. |
+| **REC21: easier market discovery reportedly reduced casual visits.** The organizer describes fewer browsing visits and spontaneous roleplay after players could inspect zone-wide listings, while acknowledging the convenience. | Ask what gives visiting a settlement positive value once finding goods becomes easier. This does not establish a population effect, a feature chronology relative to other reviews, or a reason to preserve frustrating shopping. |
+| **REC21: expensive loss can hide available combat variety.** The speaker reports players leaving valuable magic equipment at home for full-loot PvP because replacing it takes too much work. | Distinguish abilities available on paper from approaches players feel able to use. This historical anecdote sharpens an existing recovery/experimentation question; it is not current balance evidence. |
+
+Most remaining material **corroborates existing sections**: scarce complementary suppliers (the organizer's glass-vial/alchemy example), many artisans but few buyers, discarded leveling output, empty settlements, and weak social tools. Preserve the counterevidence too: REC21 credits friendships with making the game personally worthwhile while advising new buyers to wait; REC22's comments include enjoyable building, chosen grind, active neighborhoods, and disagreement over fees. These are different experiences, not additional votes for a single failure explanation.
+
+The supplied cash-only-rent framing is not adopted: the existing [monetization history](03-business-marketing.md#4-how-the-monetization-evolved) and [official Grace-plot guidance](https://support.playpaxdei.com/hc/en-us/articles/32383547755037-What-is-a-Grace-Plot) establish an earned-currency route, with upkeep still relevant. REC22's May-2024/Steam-arrival account also yields to the [documented chronology](03-business-marketing.md#2-studio-scale-and-development-chronology): Early Access began 18 June 2024 with Steam and a dedicated launcher; [launcher retirement](https://playpaxdei.com/en-us/news/1-0/pax-dei-1-0-head-start-now-live-for-founders) was a later event. Neither creator's proposed fixes, developer-motive claims, revenue estimates nor engine explanations become established findings or Open Legend requirements.
 
 ## Open Legend implications
 

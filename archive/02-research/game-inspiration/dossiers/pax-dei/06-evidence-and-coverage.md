@@ -10,6 +10,8 @@ Current implementation, historical implementation, announced intentions, persona
 
 The review corpus contains **six substantive written articles representing five review works from four principal reviewers and four outlets**, including a two-part review and a longitudinal revisit. A separate enthusiast feature adds another firsthand perspective. The [reception chapter](04-reception.md) records the work, author, date, version, positive findings, criticisms, and access quality. Eight contrasting helpful Steam reviews are an intentionally selected qualitative sample, not a random survey; indexed recent community discussions add context with weaker access.
 
+Supplementary transcripts and the related comment capture received **15 November 2026** are documented once in the [supplied-source ledger](04-reception.md#supplied-video-and-comment-evidence). Their text was read, not their footage; unknown publication dates, historical feature claims, self-selected comments and unverified author independence retain explicit limits. This addition does not refresh the November 14 population, commercial or review snapshots or change the written-review count.
+
 ## 2. Coverage against the repository standard
 
 | Requirement | Substantive coverage |
