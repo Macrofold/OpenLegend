@@ -12,7 +12,7 @@ Apply [R01–R14 and conditional R15](research-requirements.md), including the [
 
 | Subject | State | Remaining scope |
 | --- | --- | --- |
-| G189 — Fable (2004), The Lost Chapters, Anniversary | In progress | Finish edition-aware mechanics/lore, five substantive reviews and player evidence, production/economics/modding, source checks and dossier commit. |
+| G189 — Fable (2004), The Lost Chapters, Anniversary | In progress | [Mechanics, lore and presentation drafted](dossiers/fable.md). Finish encounter detail, reception/player evidence, production/economics/modding and full review. |
 | G190 — Fable II | Queued within this authorized assignment | Begin the independent full pass after G189 is reviewed and committed. |
 | Series comparison and combat-feel study | In progress | Reconcile transcript claims against dated official evidence; develop practical hypotheses through existing OpenLegend owners. |
 | Navigation and final review | In progress | Link both completed dossiers, compare their lessons, verify affected documentation and commit final output. |
