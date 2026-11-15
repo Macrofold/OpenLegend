@@ -6,9 +6,9 @@
 
 Mike asks which of nine shared-world sandboxes succeed, what players actually value and reject, how graphics affect the experience, and whether OpenLegend's documented vision gives people a compelling reason to choose it despite a smaller team and graphics budget.
 
-The completed SEED, Stars Reach, Wurm Online, Star Wars Galaxies: Restoration, Foxhole, Mortal Online 2, Haven & Hearth and Life is Feudal: MMO cases already rule out an easy answer. Autonomous characters, remembered relationships, useful occupations, persistent landscapes and unexpected player inventions all have serious competitors. OpenLegend has a plausible opportunity in how these elements connect during an embodied adventure. A distinctive feature list, commercial demand and a reliably distinctive playable experience are three separate claims.
+The nine completed cases rule out an easy answer. Autonomous characters, remembered relationships, useful occupations, persistent landscapes and unexpected player inventions all have serious competitors. OpenLegend has a plausible opportunity in how these elements connect during an embodied adventure. A distinctive feature list, commercial demand and a reliably distinctive playable experience are three separate claims.
 
-The Boundless dossier and final comparative judgment remain unfinished at this checkpoint. These preliminary findings are preserved so a restart cannot turn incomplete research into a completed market assessment.
+The individual dossier passes are complete; the final comparative judgment and navigation review remain in progress at this checkpoint. These preliminary findings are preserved so a restart cannot turn an unfinished synthesis into a completed market assessment.
 
 ## Use the actual OpenLegend vision
 
@@ -22,7 +22,7 @@ The [current art direction](../../../../art-direction/decisions.md#current-direc
 
 Current capability must remain separate from ambition. The main-branch [README](../../../../README.md) documents an active game pause when all human connections leave. The [continuing-lives design](../../../../docs/projects/continuing-lives-feature-spec.md) is a delivery target, not proof that a continuously operating, large-scale MMO already exists.
 
-## What the first eight cases establish
+## What the nine cases establish
 
 ### SEED competes directly on people
 
@@ -93,6 +93,16 @@ Its strongest lesson concerns access to the payoff. Collective construction can 
 A [2024 firsthand evaluation](https://roundtablecoop.com/reviews/life-is-feudal-mmo-review-now-back-on-steam/) enjoyed learning and community help while expressing doubt about paying to continue. That makes a useful commercial distinction: liking a session is not the same as preferring the recurring commitment over available alternatives.
 
 Service restructuring also makes trust part of persistent-world design. Players invest in a particular place, not an abstract promise that some server will remain online. OpenLegend should communicate what continuity means and make useful participation reachable. Autonomous residents could support that goal, but merely supplying labor would not reproduce a guild's voluntary human recognition.
+
+### Boundless joins visual authorship to the cost of maintaining a world
+
+The [Boundless dossier](../dossiers/boundless.md) shows how appearance can motivate action. A [detailed player account](https://store.steampowered.com/app/324510/?cc=uk&l=english) connects the search for a desired material palette with travel and encounters with other people's creations. Art can generate a goal and a reason to trade, beyond making an already chosen activity look attractive.
+
+Human participation also supplies destinations and infrastructure. A shop, route or remarkable building acquires value through someone choosing to create and sustain it. Autonomous residents could complement that activity, but a world full of available services would not automatically reproduce its social authorship.
+
+The economic evidence is unusually direct: in [June 2025](https://forum.playboundless.com/t/please-opensource-the-game/68160?page=8), an operator's developer reported losses and connected costs to continuously simulated worlds. It is dated testimony, not an audited November 2026 result. [October 2026 maintenance](https://forum.playboundless.com/t/maintenance-today/69528) establishes continued service, which is a different claim from financial health or expanding development.
+
+For OpenLegend, a persistent living world requires both a compelling reason to inhabit it and a cost structure that can support its commitments. A small, appealing place is a sensible proposition to test; neither its appeal nor its affordability follows merely from reducing its area.
 
 ## How to compare success without manufacturing a league table
 
