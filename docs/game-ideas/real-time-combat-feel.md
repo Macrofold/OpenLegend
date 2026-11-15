@@ -81,4 +81,3 @@ A hypothetical encounter might end with a rescued traveler, a defended campsite,
 
 Can a player tell why an attack succeeded or failed? Does moving change their options? Do weapons feel different before numerical upgrades? Is the ordinary action satisfying without optional timing? Can someone leave danger and resume a worthwhile life? These questions can guide later ordinary play with the selected combat work; no gameplay, latency or enjoyment measurements were performed for this research.
 
-

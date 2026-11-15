@@ -2,7 +2,7 @@
 
 **Research date:** November 14, 2026, America/New_York. **Scope:** companion analysis for the independent Fable and Fable II dossiers, with a dated assessment of the upcoming reboot criticism supplied by Mike. This is research and proposed application, not a hands-on review or an accepted change to OpenLegend's combat.
 
-The [original-game dossier](../dossiers/fable.md) covers Fable, The Lost Chapters and Anniversary. The [scoped research record](../research-progress-fable-2026-11-14.md) owns completion of both games and this comparison. The sequel comparison is completed after its independent source pass.
+The [original-game dossier](../dossiers/fable.md) covers Fable, The Lost Chapters and Anniversary. The [scoped research record](../research-progress-fable-2026-11-14.md) owns completion of both games and this comparison.
 
 ## 1. What “spongey” can mean
 

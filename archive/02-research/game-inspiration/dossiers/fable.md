@@ -9,7 +9,7 @@ This is source research and analysis, not a hands-on play report or accepted Ope
 ## 1. Edition boundaries and player promise
 
 - **Fable (2004, Xbox)**: a single-player, third-person action RPG about becoming a recognizable hero or villain in Albion. The childhood prologue leads to Guild training and adult quests; identity is expressed through acts, combat specialization, clothes, hair, tattoos, reputation, relationships and bodily changes. The playable protagonist is male; it is not a freeform face/body creator. Do not import the later sequel's female hero, dog, firearms, children, jobs or co-op. The official Anniversary FAQ explicitly confirms retained male-only and single-player boundaries. [M01][M02]
-- **The Lost Chapters (2005, Windows/Xbox; later Mac port)** expands the original adventure; it is not a separate sequel. Added missions occur within the old journey and after its former ending. Dene Carter identifies the Northern Wastes, more supporting-Hero material, new items/expressions, summoners and additional comic activities. [M03][M04]
+- **The Lost Chapters (2005, Windows/Xbox; later Mac port)** expands the original adventure; it is not a separate sequel. Added missions occur within the old journey and after its former ending. Dene Carter identifies the Northern Wastes, more supporting-Hero material, new items/expressions, summoners and additional comic activities. [M03][M04][M35]
 - **Anniversary (2014)** remasters the TLC-inclusive game. Producer Craig Oman says retaining its systems/core experience was deliberate. It changes presentation, controls and saving, rather than supplying the later sequel's rules. Original and Fable 2/3-inspired controller mappings are both documented. [M01][M05]
 - **PC Anniversary Heroic** is a meaningful rules variant: no resurrection phials, more damaging enemies, worse resale returns, costlier/less effective recovery, and weaker/more expensive Physical Shield/Enflame. Later official patches further adjusted Slow Time and potions. Do not generalize its difficulty to the original, TLC, or Xbox 360 Anniversary. [M02][M06]
 
@@ -387,6 +387,10 @@ The relevant bodies/sections were read November 14, 2026. Prima is licensed guid
 [E5]: https://www.gamebanshee.com/fable/equipment/legendaryweapons.php
 [E6]: https://www.gamebanshee.com/fable/walkthrough/thehiddensword.php
 [E7]: https://www.gamebanshee.com/fable/walkthrough/mapthenorthernwastes.php
+
+- **M35 — Feral Interactive Mac release announcement, preserved by GameBanshee, March 13, 2008**, relevant indexed press-release text read; supports the later Mac port, not current macOS compatibility. https://www.gamebanshee.com/news/86817-fable-the-lost-chapters-coming-to-mac.html.
+
+[M35]: https://www.gamebanshee.com/news/86817-fable-the-lost-chapters-coming-to-mac.html
 
 
 

@@ -13,9 +13,9 @@ Apply [R01–R14 and conditional R15](research-requirements.md), including the [
 | Subject | State | Remaining scope |
 | --- | --- | --- |
 | G189 — Fable (2004), The Lost Chapters, Anniversary | Complete | [Full R01–R14 and applicable R15 dossier](dossiers/fable.md), independently reviewed. Eight substantive reviews, a bounded 31-card Steam sample, primary production/commercial evidence and PC creation coverage. Limits are explicit. |
-| G190 — Fable II | In progress | [Independent dossier](dossiers/fable-ii.md) under assembly. Began after G189 completion commit `17c13cac238ee54e19f46fde05f3c860542d2af3`; mechanics and reception sources are being integrated. |
-| Series comparison and combat-feel study | In progress | [Combat diagnosis, reboot claim audit and existing-owner application](essays/fable-series-and-combat-feel.md) drafted; complete the sequel comparison after G190. |
-| Navigation and final review | In progress | Link both completed dossiers, compare their lessons, verify affected documentation and commit final output. |
+| G190 — Fable II | Complete | [Full R01–R14 dossier and explicit R15 screen](dossiers/fable-ii.md), independently reviewed. Seven core base-game reviews, two expansion reviews, four direct-player posts and nine selected replies. Modding popularity remains uncertain; substantive tooling is documented. |
+| Series comparison and combat-feel study | Complete | [Cross-game comparison, diagnostic framework, dated reboot claim audit and existing-owner application](essays/fable-series-and-combat-feel.md). Wider entries are scoped context, not additional full dossiers. |
+| Navigation and final review | Complete | Both dossiers, the comparison, roster and reading routes reviewed. Creative hypotheses are linked through the existing combat-feel note and ASE12; no additional implementation or needs-design task was created. |
 
 **G189 completion:** [reviewed dossier and combat-study commit](https://github.com/Macrofold/OpenLegend/commit/17c13cac238ee54e19f46fde05f3c860542d2af3). Subsequent G190 research began only after that checkpoint.
 
@@ -35,4 +35,12 @@ Apply [R01–R14 and conditional R15](research-requirements.md), including the [
 ## Completion standard
 
 Each game needs substantive R01–R14 coverage, an explicit R15 finding, edition-specific source attribution, concrete situations, at least five actual written reviews where available, direct player evidence and truthful commercial limitations. Completion additionally requires reviewed links/navigation and committed output. A source-access or unpublished-finance limit is reported precisely; an unresearched category is not relabeled complete.
+
+## Delivery and review
+
+G189 was completed and committed before the independent G190 pass began. Both dossiers received full content/coverage review, including edition boundaries, constructed examples, source access, player disagreements and commercial uncertainty. Final review corrected ambiguous reward wording, preserved all pre-existing navigation content and reconciled source aliases.
+
+This documentation-only assignment adds no runtime mechanics, world rules or automated test suite. Verification covers the affected documentation, introduced relative links/source references, preserved prior content and the committed branch state. The existing independent enjoyment observation under ASE12 remains future project work, not completed gameplay evidence from this research. No new needs-design entry is needed because the relevant combat questions already have current owners.
+
+**Remaining work in this scoped research assignment:** none. Private financials, exact unmeasured combat timings, the transcript's unverified video provenance and the reboot's final delivered quality remain evidence limits, not promises of unseen testing.
 

@@ -277,3 +277,4 @@ Mike requested a full dossier on the released game, player praise and criticism,
 ## November 7 Outward addition
 
 Mike requested a full Outward dossier covering major systems, lore, player praise and criticism, reviews, production, marketing, commercial outcomes and transferable lessons. G188 applies R01–R14, the economics/enjoyment/lore/creation amendment and the conditional R15 modding investigation. The [dossier](dossiers/outward.md) and [scoped record](research-progress-outward-2026-11-07.md) own this pass. Original, DLC and Definitive Edition rules remain distinct; sequel announcements do not establish original-game behavior. This addition preserves earlier subjects, queued work and packet-wide evidence limits.
+
