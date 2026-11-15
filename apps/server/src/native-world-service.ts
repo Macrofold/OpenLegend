@@ -3560,7 +3560,9 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   }
 
   /** Recovery precedes target preparation: a lost body lease cannot turn an
-   * already accepted request into a second execution with another target. */
+   * already accepted request into a second execution with another target.
+   * Both turns wait at the accepted boundary while a routine checkpoint/save
+   * barrier finishes; semantic work runs once with its existing scope checks. */
   async command(
     commandId: string,
     input: CommandInput,
@@ -3575,11 +3577,11 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         code: 'invalid-command',
         message: 'Command IDs cannot use the reserved gameplay namespace.',
       };
-    await this.lane.run(async () => {
+    await this.atAcceptedBoundary(async () => {
       this.assertAdmission(false, false);
       this.assertScope(scope, 'play', true);
       await this.refreshCommandEpoch();
-    });
+    }, signal);
     const generation = this.generation,
       timeline = this.timelineId;
     const id = `gameplay:${scope.accountId}:${epoch}:${digest(commandId)}`;
@@ -3601,7 +3603,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         const places = await placeRead.select({ placeId: input.knownPlace.id, limit: 1, scan: 1 });
         rememberedPlace = requireKnownPlace(places.entries[0], input.knownPlace);
       }
-      return await this.lane.run(async () => {
+      return await this.atAcceptedBoundary(async () => {
         this.assertAdmission(false, false);
         this.assertScope(scope, 'play', true);
         if (generation !== this.generation || timeline !== this.timelineId)
@@ -3754,7 +3756,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         } finally {
           captured?.release();
         }
-      });
+      }, signal);
     } finally {
       placeRead?.release();
       if (selected) releaseNativeProduct(selected);
