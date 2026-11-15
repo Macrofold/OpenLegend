@@ -68,7 +68,7 @@ impl NativeWorldSession {
     pub fn step_activity_learning(
         &mut self,
         read: &mut RuntimeActivityLearning,
-        answer: Option<(&RuntimeProvider, String)>,
+        answer: Option<(&RuntimeProvider, RuntimeProviderInput)>,
     ) -> Result<RuntimeActivityLearningStep, RuntimeError> {
         let key = read
             .key

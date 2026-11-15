@@ -11,7 +11,7 @@ use napi_derive::napi;
 use openlegend_simulation::host::{ByteBudget, ByteReservation, CandidateFence, CandidateKey};
 use openlegend_simulation::runtime::{
     NativeWorldSession, RuntimeActivation, RuntimeConsumer, RuntimeJson, RuntimePrepared,
-    RuntimeProvider, RuntimeSave, RuntimeSaveAcknowledgement, RuntimeStep,
+    RuntimeProvider, RuntimeProviderInput, RuntimeSave, RuntimeSaveAcknowledgement, RuntimeStep,
 };
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
@@ -398,6 +398,15 @@ impl Input {
         let text = String::from_utf8(bytes).map_err(|_| failure(message))?;
         consume(text)
     }
+
+    /// Give the runtime the existing charge for this answer's same backing.
+    /// Invalid UTF-8 drops the bytes before the charge; a valid answer keeps
+    /// both together until the runtime consumes or refuses the continuation.
+    fn into_provider_answer(self, message: &'static str) -> Result<RuntimeProviderInput> {
+        let Self { bytes, custody } = self;
+        let text = String::from_utf8(bytes).map_err(|_| failure(message))?;
+        Ok(RuntimeProviderInput::new(text, custody))
+    }
 }
 /// Admit and copy the caller's bytes before dispatch. The worker can use the
 /// copy even if JavaScript changes or releases its buffer after returning.
@@ -414,7 +423,7 @@ fn input(bytes: &[u8], budget: &ByteBudget) -> Result<Input> {
 fn turn(
     session: &mut NativeWorldSession,
     key: CandidateKey,
-    answer: Option<(&RuntimeProvider, String)>,
+    answer: Option<(&RuntimeProvider, RuntimeProviderInput)>,
     cancel: &Cancellation,
     budget: &ByteBudget,
 ) -> Result<NativeWorldTurn> {
@@ -640,9 +649,8 @@ impl NativeWorld {
         let provider = Arc::clone(&provider.inner);
         let bytes = input(json.as_ref(), &self.host.bytes)?;
         self.compute(env, move |session, cancel, budget| {
-            bytes.with_utf8("native provider answer must be UTF-8 JSON", |json| {
-                turn(session, key, Some((&provider, json)), cancel, budget)
-            })
+            let answer = bytes.into_provider_answer("native provider answer must be UTF-8 JSON")?;
+            turn(session, key, Some((&provider, answer)), cancel, budget)
         })
     }
     #[napi(ts_return_type = "Promise<boolean>")]

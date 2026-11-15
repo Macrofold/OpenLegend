@@ -200,7 +200,7 @@ fn turn_sources(
     session: &mut NativeWorldSession,
     read: &mut RuntimePrivateHistoryRead,
     key: CandidateKey,
-    answer: Option<(&RuntimeProvider, String)>,
+    answer: Option<(&RuntimeProvider, RuntimeProviderInput)>,
     cancel: &Cancellation,
     budget: &ByteBudget,
 ) -> Result<NativeWorldNpcTurn> {
@@ -397,16 +397,15 @@ impl NativeWorld {
             let value = owner
                 .as_mut()
                 .ok_or_else(|| failure("recent history read was released"))?;
-            let result = bytes.with_utf8("native history answer must be UTF-8 JSON", |answer| {
-                Ok(turn_sources(
-                    session,
-                    value,
-                    key,
-                    Some((&provider, answer)),
-                    cancel,
-                    budget,
-                ))
-            })?;
+            let answer = bytes.into_provider_answer("native history answer must be UTF-8 JSON")?;
+            let result = turn_sources(
+                session,
+                value,
+                key,
+                Some((&provider, answer)),
+                cancel,
+                budget,
+            );
             if read.released.load(Ordering::Acquire) {
                 session
                     .cancel_history_sources(value)

@@ -21,7 +21,7 @@ pub struct NativeWorldActivityLearningTurn {
 fn prepare_turn(
     session: &mut NativeWorldSession,
     read: &mut RuntimeActivityLearning,
-    answer: Option<(&RuntimeProvider, String)>,
+    answer: Option<(&RuntimeProvider, RuntimeProviderInput)>,
     cancel: &Cancellation,
     budget: &ByteBudget,
 ) -> Result<NativeWorldActivityLearningTurn> {
@@ -248,16 +248,9 @@ impl NativeWorld {
             let read = owner
                 .as_mut()
                 .ok_or_else(|| failure("learning batch was released"))?;
-            let result =
-                answer.with_utf8("native provider answer must be UTF-8 JSON", |answer| {
-                    Ok(prepare_turn(
-                        session,
-                        read,
-                        Some((&provider, answer)),
-                        cancel,
-                        budget,
-                    ))
-                })?;
+            let answer =
+                answer.into_provider_answer("native provider answer must be UTF-8 JSON")?;
+            let result = prepare_turn(session, read, Some((&provider, answer)), cancel, budget);
             if batch.released.load(Ordering::Acquire) {
                 session
                     .cancel_activity_learning(read)

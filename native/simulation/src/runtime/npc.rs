@@ -429,7 +429,7 @@ impl NativeWorldSession {
         &mut self,
         read: &mut RuntimeNpcRead,
         key: CandidateKey,
-        answer: Option<(&RuntimeProvider, String)>,
+        answer: Option<(&RuntimeProvider, RuntimeProviderInput)>,
     ) -> Result<RuntimeNpcPreparationStep, RuntimeError> {
         if read.candidate_key != Some(key)
             || !(self.session.is_npc_candidates(key) || self.session.is_npc_sources(key))

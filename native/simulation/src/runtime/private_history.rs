@@ -279,7 +279,7 @@ impl NativeWorldSession {
         &mut self,
         read: &mut RuntimePrivateHistoryRead,
         key: CandidateKey,
-        answer: Option<(&RuntimeProvider, String)>,
+        answer: Option<(&RuntimeProvider, RuntimeProviderInput)>,
     ) -> Result<RuntimeNpcPreparationStep, RuntimeError> {
         if read.candidate != Some(key) || !self.session.is_npc_sources(key) {
             return Err(failure("history source preparation is stale"));

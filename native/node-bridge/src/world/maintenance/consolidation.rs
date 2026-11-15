@@ -18,7 +18,7 @@ fn preparation_turn(
     session: &mut NativeWorldSession,
     ticket: &mut RuntimeConsolidationTicket,
     key: CandidateKey,
-    answer: Option<(&RuntimeProvider, String)>,
+    answer: Option<(&RuntimeProvider, RuntimeProviderInput)>,
     cancel: &Cancellation,
     budget: &ByteBudget,
 ) -> Result<NativeWorldNpcTurn> {
@@ -358,16 +358,15 @@ impl NativeWorld {
             let key = read
                 .candidate_key()
                 .ok_or_else(|| failure("consolidation source question is no longer active"))?;
-            let output = bytes.with_utf8("provider answer is not UTF-8", |json| {
-                Ok(preparation_turn(
-                    session,
-                    read,
-                    key,
-                    Some((&provider, json)),
-                    cancel,
-                    budget,
-                ))
-            })?;
+            let answer = bytes.into_provider_answer("provider answer is not UTF-8")?;
+            let output = preparation_turn(
+                session,
+                read,
+                key,
+                Some((&provider, answer)),
+                cancel,
+                budget,
+            );
             if owner.released.load(Ordering::Acquire) {
                 session
                     .cancel_consolidation_sources(read)

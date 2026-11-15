@@ -102,16 +102,38 @@ fn decode_preparation(bytes: &[u8], budget: &ByteBudget) -> Result<ByteReservati
         .ok_or_else(|| failure("capacity"))?;
     budget.reserve(bound).map_err(failure)
 }
+/// The bridge transfers the existing charge for its copied UTF-8 allocation.
+/// Field order keeps the String funded through its actual destruction, including
+/// stale-question and malformed-answer refusal. This input grants no authority.
+pub struct RuntimeProviderInput {
+    json: String,
+    custody: ByteReservation,
+}
+impl RuntimeProviderInput {
+    /// The caller already admitted and owns this String's backing. Its actual
+    /// capacity and host budget are checked at the continuation boundary below.
+    pub fn new(json: String, custody: ByteReservation) -> Self {
+        Self { json, custody }
+    }
+}
+
 fn provider_response(
-    answer: Option<(&RuntimeProvider, String)>,
+    answer: Option<(&RuntimeProvider, RuntimeProviderInput)>,
     budget: &ByteBudget,
 ) -> Result<Option<ProviderResponse>, RuntimeError> {
     answer
-        .map(|(ticket, json)| {
+        .map(|(ticket, input)| {
             let question = ticket.question()?;
-            let custody = budget.reserve(json.capacity()).map_err(failure)?;
-            ProviderResponse::new(question.kind(), question.binding(), json, custody)
-                .map_err(failure)
+            if !budget.owns(&input.custody) {
+                return Err(failure("provider answer belongs to another native budget"));
+            }
+            ProviderResponse::new(
+                question.kind(),
+                question.binding(),
+                input.json,
+                input.custody,
+            )
+            .map_err(failure)
         })
         .transpose()
 }
@@ -571,7 +593,7 @@ impl NativeWorldSession {
     pub fn step(
         &mut self,
         key: CandidateKey,
-        answer: Option<(&RuntimeProvider, String)>,
+        answer: Option<(&RuntimeProvider, RuntimeProviderInput)>,
     ) -> Result<RuntimeStep, RuntimeError> {
         if self.session.is_npc_candidates(key) || self.session.is_npc_sources(key) {
             return Err(failure("NPC discovery requires its originating read"));

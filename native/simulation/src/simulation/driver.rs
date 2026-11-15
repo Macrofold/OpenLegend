@@ -213,15 +213,18 @@ impl ProviderResponse {
         json: String,
         reservation: ByteReservation,
     ) -> Result<Self, DriveError> {
-        if reservation.bytes() < json.capacity() {
-            return Err(DriveError::Capacity);
-        }
-        Ok(Self {
+        // Construct the ordered owner before any refusal can return. Its JSON
+        // backing must be destroyed before the transferred charge is released.
+        let response = Self {
             kind,
             binding,
             json,
             _reservation: reservation,
-        })
+        };
+        if response._reservation.bytes() < response.json.capacity() {
+            return Err(DriveError::Capacity);
+        }
+        Ok(response)
     }
 }
 #[derive(Deserialize)]

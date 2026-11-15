@@ -217,7 +217,7 @@ fn preparation_turn(
     session: &mut NativeWorldSession,
     read: &mut RuntimeNpcRead,
     key: CandidateKey,
-    answer: Option<(&RuntimeProvider, String)>,
+    answer: Option<(&RuntimeProvider, RuntimeProviderInput)>,
     cancel: &Cancellation,
     budget: &ByteBudget,
 ) -> Result<NativeWorldNpcTurn> {
@@ -807,17 +807,16 @@ impl NativeWorld {
             let read_owner = owner
                 .as_mut()
                 .ok_or_else(|| failure("native NPC read was released"))?;
-            let result =
-                answer.with_utf8("native provider answer must be UTF-8 JSON", |answer| {
-                    Ok(preparation_turn(
-                        session,
-                        read_owner,
-                        key,
-                        Some((&provider, answer)),
-                        cancel,
-                        budget,
-                    ))
-                })?;
+            let answer =
+                answer.into_provider_answer("native provider answer must be UTF-8 JSON")?;
+            let result = preparation_turn(
+                session,
+                read_owner,
+                key,
+                Some((&provider, answer)),
+                cancel,
+                budget,
+            );
             if read.released.load(Ordering::Acquire) {
                 session
                     .cancel_npc_preparation(read_owner)

@@ -177,7 +177,7 @@ impl NativeWorldSession {
         &mut self,
         ticket: &mut RuntimeConsolidationTicket,
         key: CandidateKey,
-        answer: Option<(&RuntimeProvider, String)>,
+        answer: Option<(&RuntimeProvider, RuntimeProviderInput)>,
     ) -> Result<RuntimeNpcPreparationStep, RuntimeError> {
         if ticket.candidate != Some(key) || !self.session.is_npc_sources(key) {
             return Err(failure("consolidation source preparation is stale"));
