@@ -585,10 +585,26 @@ export async function createNativeGameServer(options: {
             .object({ mode: z.enum(['speak', 'act']), targetId: requestIdSchema.optional() })
             .strict()
             .parse(Object.fromEntries(url.searchParams));
-          return send(
-            200,
-            await current.playerInteractionAvailability(value.mode, value.targetId, scope),
-          );
+          const stop = new AbortController();
+          const disconnected = () => {
+            if (!response.writableFinished) stop.abort();
+          };
+          request.once('aborted', disconnected);
+          response.once('close', disconnected);
+          if (response.destroyed) disconnected();
+          try {
+            await current.publishPlayerInteractionAvailability(
+              value.mode,
+              value.targetId,
+              scope,
+              stop.signal,
+              sendNative,
+            );
+          } finally {
+            request.off('aborted', disconnected);
+            response.off('close', disconnected);
+          }
+          return;
         }
         if (request.method !== 'POST')
           return send(404, { ok: false, code: 'route', message: 'Unknown API route.' });

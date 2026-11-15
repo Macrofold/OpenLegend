@@ -8,7 +8,7 @@ use crate::capture::{
 use crate::execution::ExecutionError;
 use crate::host::{ByteBudget, ByteReservation, CandidatePhase};
 mod interaction;
-pub(crate) use interaction::InteractionMode;
+pub(crate) use interaction::{AvailabilityRole, AvailabilitySubjects, InteractionMode};
 
 #[derive(Debug)]
 pub(crate) enum ActorReadError {

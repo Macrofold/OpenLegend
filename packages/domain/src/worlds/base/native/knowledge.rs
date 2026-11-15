@@ -7,7 +7,9 @@ use serde::{Deserialize, Serialize};
 
 #[path = "knowledge/communications.rs"]
 mod communications;
-pub(crate) use communications::{CommunicationSubject, RememberedCommunications};
+pub(crate) use communications::{
+    CommunicationSubject, RememberedCommunicationIds, RememberedCommunications,
+};
 #[path = "knowledge/attribution.rs"]
 mod attribution;
 pub(crate) use attribution::CapturedAttributionIdentities;
@@ -579,20 +581,11 @@ impl<'a> PersonalNameReader<'a> {
         Ok(self.observer_id == id || self.current_body_identity(id)?.is_some())
     }
     pub(crate) fn can_address_remembered_subject(&self, id: &str) -> bool {
-        self.entities
-            .get(id)
-            .is_some_and(|entity| entity.actor.is_some())
-            && (self.observer_id == id
-                || self.identities().is_some_and(|identities| {
-                    identities.values().any(|identity| {
-                        identity.seed_only != Some(true)
-                            && identity.canonical_id.as_deref() == Some(id)
-                            && identity
-                                .individual_id
-                                .as_ref()
-                                .is_some_and(|individual| !individual.is_empty())
-                    })
-                }))
+        if self.observer_id == id {
+            self.is_communication_actor(id)
+        } else {
+            self.is_remembered_communication_subject(id)
+        }
     }
     pub(crate) fn can_remember_subject(&self, id: &str) -> Result<bool, ReceivedError> {
         if self

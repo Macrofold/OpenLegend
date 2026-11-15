@@ -15,85 +15,77 @@ export interface PlayerInteractionFacts {
   readonly recipientName?: string;
 }
 
-/** One ordinary Send gate, shared across simulation implementations. The paid
- * execution owner still reserves its actual dispatch after this availability
- * read; checking an allowance never invokes or retries a model. */
-export async function playerInteractionAvailability(request: {
-  readonly mode: 'speak' | 'act';
-  readonly config: AppConfig;
-  readonly read: () => PlayerInteractionFacts | Promise<PlayerInteractionFacts>;
-  readonly budgetAvailable: (
-    actorId: string,
-    allowance: number,
-    ceiling: number,
-  ) => Promise<boolean>;
-  readonly admit?: (actorId: string) => boolean;
-}): Promise<PlayerInteractionAvailability> {
-  const unavailable = (
-    facts: PlayerInteractionFacts,
-    code: string,
-    reason: string,
-  ): PlayerInteractionAvailability => ({
-    available: false,
-    code,
-    reason,
-    reply: false,
-    ...(facts.controlling && facts.recipientName ? { recipientName: facts.recipientName } : {}),
-  });
-  const current = (facts: PlayerInteractionFacts): PlayerInteractionAvailability | undefined => {
-    if (!facts.controlling)
-      return unavailable(facts, 'control', 'Resume control of your character to send.');
-    if (facts.paused)
-      return unavailable(
-        facts,
-        'paused',
-        facts.pauseReason === 'storage'
-          ? 'Saving must recover before sending.'
-          : facts.pauseReason === 'maintenance'
-            ? 'Sending is unavailable during maintenance.'
-            : 'Resume the world to send.',
-      );
-    if (!facts.actorAvailable)
-      return unavailable(
-        facts,
-        'actor-unavailable',
-        request.mode === 'speak'
-          ? 'Your character cannot speak now.'
-          : 'Your character cannot act now.',
-      );
-    if (!facts.recipientAvailable)
-      return unavailable(
-        facts,
-        'invalid-recipient',
-        'Choose a known person or a person currently in sight.',
-      );
-    const config = request.config;
-    if (
-      config.jevOnly ||
-      !(config.macrofoldKey || config.jevKey) ||
-      !(config.macrofoldKey || config.llmKey) ||
-      config.budgetUsd <= 0
-    )
-      return unavailable(
-        facts,
-        'ai-unavailable',
-        'Speak and Act need configured character AI and an allowance.',
-      );
-  };
-  const initial = request.read();
-  const before = initial instanceof Promise ? await initial : initial;
-  const refusal = current(before);
-  if (refusal) return refusal;
-  const funded = await request.budgetAvailable(
-    before.fundingActorId,
-    interactiveAllowance(request.config),
-    request.config.budgetUsd,
-  );
-  const latest = request.read();
-  const after = latest instanceof Promise ? await latest : latest;
-  const changed = current(after);
+type PlayerInteractionMode = 'speak' | 'act';
+
+const unavailable = (
+  facts: PlayerInteractionFacts,
+  code: string,
+  reason: string,
+): PlayerInteractionAvailability => ({
+  available: false,
+  code,
+  reason,
+  reply: false,
+  ...(facts.controlling && facts.recipientName ? { recipientName: facts.recipientName } : {}),
+});
+
+/** Evaluate the current gameplay and configuration prerequisites. Pure so a
+ * reader can send a refusal inside its authorized turn. */
+export function playerInteractionRefusal(
+  mode: PlayerInteractionMode,
+  config: AppConfig,
+  facts: PlayerInteractionFacts,
+): PlayerInteractionAvailability | undefined {
+  if (!facts.controlling)
+    return unavailable(facts, 'control', 'Resume control of your character to send.');
+  if (facts.paused)
+    return unavailable(
+      facts,
+      'paused',
+      facts.pauseReason === 'storage'
+        ? 'Saving must recover before sending.'
+        : facts.pauseReason === 'maintenance'
+          ? 'Sending is unavailable during maintenance.'
+          : 'Resume the world to send.',
+    );
+  if (!facts.actorAvailable)
+    return unavailable(
+      facts,
+      'actor-unavailable',
+      mode === 'speak' ? 'Your character cannot speak now.' : 'Your character cannot act now.',
+    );
+  if (!facts.recipientAvailable)
+    return unavailable(
+      facts,
+      'invalid-recipient',
+      'Choose a known person or a person currently in sight.',
+    );
+  if (
+    config.jevOnly ||
+    !(config.macrofoldKey || config.jevKey) ||
+    !(config.macrofoldKey || config.llmKey) ||
+    config.budgetUsd <= 0
+  )
+    return unavailable(
+      facts,
+      'ai-unavailable',
+      'Speak and Act need configured character AI and an allowance.',
+    );
+}
+
+/** Decide with fresh facts after funding settles. Admission only checks current
+ * scheduler capacity; it does not schedule or reserve a paid job. */
+export function fundedPlayerInteractionAvailability(
+  mode: PlayerInteractionMode,
+  config: AppConfig,
+  after: PlayerInteractionFacts,
+  payer: string,
+  funded: boolean,
+  admit?: (actorId: string) => boolean,
+): PlayerInteractionAvailability {
+  const changed = playerInteractionRefusal(mode, config, after);
   if (changed) return changed;
-  if (before.fundingActorId !== after.fundingActorId)
+  if (payer !== after.fundingActorId)
     return unavailable(after, 'stale', 'The selected interaction changed. Refresh it.');
   if (!funded)
     return unavailable(
@@ -101,7 +93,7 @@ export async function playerInteractionAvailability(request: {
       'ai-unavailable',
       'Speak and Act need an available character AI allowance.',
     );
-  if (request.admit && !request.admit(before.fundingActorId))
+  if (admit && !admit(payer))
     return unavailable(
       after,
       'busy',
@@ -114,4 +106,38 @@ export async function playerInteractionAvailability(request: {
     reason: null,
     reply: after.reply,
   };
+}
+
+/** One ordinary Send gate for callers that already own an in-lane capture.
+ * The paid execution owner still reserves its actual dispatch separately. */
+export async function playerInteractionAvailability(request: {
+  readonly mode: PlayerInteractionMode;
+  readonly config: AppConfig;
+  readonly read: () => PlayerInteractionFacts | Promise<PlayerInteractionFacts>;
+  readonly budgetAvailable: (
+    actorId: string,
+    allowance: number,
+    ceiling: number,
+  ) => Promise<boolean>;
+  readonly admit?: (actorId: string) => boolean;
+}): Promise<PlayerInteractionAvailability> {
+  const initial = request.read();
+  const before = initial instanceof Promise ? await initial : initial;
+  const refusal = playerInteractionRefusal(request.mode, request.config, before);
+  if (refusal) return refusal;
+  const funded = await request.budgetAvailable(
+    before.fundingActorId,
+    interactiveAllowance(request.config),
+    request.config.budgetUsd,
+  );
+  const latest = request.read();
+  const after = latest instanceof Promise ? await latest : latest;
+  return fundedPlayerInteractionAvailability(
+    request.mode,
+    request.config,
+    after,
+    before.fundingActorId,
+    funded,
+    request.admit,
+  );
 }

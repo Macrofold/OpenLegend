@@ -16,6 +16,23 @@ struct PlayerInputRequest {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct PlayerAvailabilitySubjectsRequest {
+    account_id: String,
+    actor_id: String,
+    kind: crate::simulation::AvailabilitySubjects,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct PlayerAvailabilityRequest {
+    account_id: String,
+    actor_id: String,
+    mode: crate::simulation::InteractionMode,
+    role: crate::simulation::AvailabilityRole,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct PlayerInteractionInput {
     mode: crate::simulation::InteractionMode,
     #[serde(
@@ -58,6 +75,43 @@ impl NativeWorldSession {
             .player_input(&input.account_id, &input.actor_id)
             .map_err(failure)?;
         RuntimeJson::encode(&facts, &self.budget)
+    }
+    /// Prepare only the scoped namespace used by the current token. This list
+    /// is temporary; the caller retains just the selected role across SQL.
+    pub fn player_availability_subjects(&self, input: &[u8]) -> Result<RuntimeJson, RuntimeError> {
+        self.require_active()?;
+        let _decode = decode_preparation(input, &self.budget)?;
+        let input: PlayerAvailabilitySubjectsRequest =
+            serde_json::from_slice(input).map_err(failure)?;
+        let simulation = self.session.accepted().map_err(failure)?;
+        match input.kind {
+            crate::simulation::AvailabilitySubjects::Body => {
+                let (contacts, _custody) = simulation
+                    .player_availability_contacts(&input.account_id, &input.actor_id, &self.budget)
+                    .map_err(failure)?;
+                RuntimeJson::encode(&contacts, &self.budget)
+            }
+            crate::simulation::AvailabilitySubjects::Person => {
+                let people = simulation
+                    .player_availability_people(&input.account_id, &input.actor_id, &self.budget)
+                    .map_err(failure)?;
+                RuntimeJson::encode(&people.ids, &self.budget)
+            }
+        }
+    }
+    /// Re-prove exactly the chosen role and serialize the current decisions.
+    /// No actor presentation, new acquisition, or command execution is needed.
+    pub fn player_availability(&self, input: &[u8]) -> Result<Option<RuntimeJson>, RuntimeError> {
+        self.require_active()?;
+        let _decode = decode_preparation(input, &self.budget)?;
+        let input: PlayerAvailabilityRequest = serde_json::from_slice(input).map_err(failure)?;
+        let simulation = self.session.accepted().map_err(failure)?;
+        let facts = simulation
+            .player_availability(&input.account_id, &input.actor_id, input.mode, &input.role)
+            .map_err(failure)?;
+        facts
+            .map(|facts| RuntimeJson::encode(&facts, &self.budget))
+            .transpose()
     }
     pub fn player_interaction(
         &self,
