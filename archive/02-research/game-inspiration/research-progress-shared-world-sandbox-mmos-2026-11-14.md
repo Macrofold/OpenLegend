@@ -6,14 +6,14 @@ Research and documentation only. The task compares actual activities, player pra
 
 ## Current progress
 
-SEED and Stars Reach have full source-grounded passes researched and reviewed. The other seven titles and final cross-game comparison remain unfinished. This is a truthful research checkpoint, not completion of the assignment.
+SEED, Stars Reach and Wurm Online have full source-grounded passes researched, reviewed and committed. The other six titles and final cross-game comparison remain unfinished. This is a truthful research checkpoint, not completion of the assignment.
 
 | Subject | Output | State |
 | --- | --- | --- |
 | SEED | [Dossier](dossiers/seed.md) | Complete; [dossier commit](https://github.com/Macrofold/OpenLegend/commit/8775600f1404fe9d6996cfccb13f8136ca2060ea), citation clarification 45fc466 |
 | Stars Reach | [Dossier](dossiers/stars-reach.md) | Complete; [dossier commit](https://github.com/Macrofold/OpenLegend/commit/140025985e24113ae819740f0e4869da57acfc64) |
-| Wurm Online | dossiers/wurm-online.md | Next |
-| Star Wars Galaxies: Restoration | dossiers/star-wars-galaxies-restoration.md | Pending |
+| Wurm Online | [Dossier](dossiers/wurm-online.md) | Complete; [dossier commit](https://github.com/Macrofold/OpenLegend/commit/dd258dbe80a9094286f87478ed0b060127e80072) |
+| Star Wars Galaxies: Restoration | dossiers/star-wars-galaxies-restoration.md | Next |
 | Foxhole | dossiers/foxhole.md | Pending |
 | Mortal Online 2 | dossiers/mortal-online-2.md | Pending |
 | Haven & Hearth | dossiers/haven-and-hearth.md | Pending |
