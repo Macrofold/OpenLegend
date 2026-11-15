@@ -6,9 +6,9 @@
 
 Mike asks which of nine shared-world sandboxes succeed, what players actually value and reject, how graphics affect the experience, and whether OpenLegend's documented vision gives people a compelling reason to choose it despite a smaller team and graphics budget.
 
-The completed SEED, Stars Reach, Wurm Online, Star Wars Galaxies: Restoration and Foxhole cases already rule out an easy answer. Autonomous characters, remembered relationships, useful occupations, persistent landscapes and unexpected player inventions all have serious competitors. OpenLegend has a plausible opportunity in how these elements connect during an embodied adventure. A distinctive feature list, commercial demand and a reliably distinctive playable experience are three separate claims.
+The completed SEED, Stars Reach, Wurm Online, Star Wars Galaxies: Restoration, Foxhole and Mortal Online 2 cases already rule out an easy answer. Autonomous characters, remembered relationships, useful occupations, persistent landscapes and unexpected player inventions all have serious competitors. OpenLegend has a plausible opportunity in how these elements connect during an embodied adventure. A distinctive feature list, commercial demand and a reliably distinctive playable experience are three separate claims.
 
-The other four dossier passes and the final comparative judgment remain unfinished at this checkpoint. These preliminary findings are preserved so a restart cannot turn incomplete research into a completed market assessment.
+The other three dossier passes and the final comparative judgment remain unfinished at this checkpoint. These preliminary findings are preserved so a restart cannot turn incomplete research into a completed market assessment.
 
 ## Use the actual OpenLegend vision
 
@@ -22,7 +22,7 @@ The [current art direction](../../../../art-direction/decisions.md#current-direc
 
 Current capability must remain separate from ambition. The main-branch [README](../../../../README.md) documents an active game pause when all human connections leave. The [continuing-lives design](../../../../docs/projects/continuing-lives-feature-spec.md) is a delivery target, not proof that a continuously operating, large-scale MMO already exists.
 
-## What the first five cases establish
+## What the first six cases establish
 
 ### SEED competes directly on people
 
@@ -65,6 +65,16 @@ Its firsthand accounts connect ordinary work to visible help and human recogniti
 The design lesson is to connect effort to a wanted consequence while scrutinizing the cost of supplying it. OpenLegend should ask whether an invention, expedition or resident's contribution changes something the player values. More production stages alone do not establish greater depth. Nor does replacing a human contributor with automation preserve the same social experience automatically.
 
 Foxhole also shows why presentation deserves deliberate scope decisions. Its developer's [foliage discussion](https://www.moddb.com/games/foxhole/news/devblog-anti-tank-rifle-foliage-art-and-more) treats readability at the gameplay camera as a design problem. OpenLegend's personal relationships imply different visual priorities, but the discipline of testing the actual view transfers.
+
+### Mortal Online 2 combines real demand with demanding access to value
+
+The [Mortal Online 2 dossier](../dossiers/mortal-online-2.md) finds historical paid demand alongside recent company losses. Its [first-half 2026 report](https://news.cision.com/se/star-vault/r/halvarsrapport-2026-01-01-till-2026-06-30-star-vault-ab--publ--556709-1169,c4384172) predates July's expansion, so it cannot establish that expansion's financial outcome. Company results, Steam participation and the whole service's subscribers remain different measures.
+
+A [recent dungeon account](https://www.reddit.com/r/MMORPG/comments/1vttid7/the_art_of_exploration_and_organic_progression_in/) describes discovery prompting new skills and a return expedition. That satisfying sequence is already competitive territory. Learning an existing technique, configuring authored components and inventing a genuinely new usable method are distinct forms of creation; OpenLegend must show what its own form adds to play.
+
+The reception evidence also separates wanted risk from blocked opportunity. Strong loss can make preparation and allies meaningful, while discouraging experimentation or use of valued equipment. A particular player's appetite for that tradeoff is not the whole audience's preference. OpenLegend should preserve its documented danger and adventure while observing whether consequences generate wanted next decisions or merely postpone the experience.
+
+For presentation, a [starter-area account](https://massivelyop.com/2022/01/26/fight-or-kite-starting-a-journey-in-mortal-online-2/) found a missing skinning animation disruptive to embodiment. It is a dated observation, but a useful design question: does the player's action have a convincing visible response? Environmental detail cannot answer that by itself.
 
 ## How to compare success without manufacturing a league table
 
