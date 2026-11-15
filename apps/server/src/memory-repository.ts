@@ -1390,9 +1390,9 @@ export class MemoryRepository {
   actorRevision(actorId: string): number {
     return objectIndexGet(this.actorRevisions, actorId) ?? 0;
   }
-  /** A retained NPC request may revalidate after receiving new recognition or
-   * temporal support. Other private edits and unknown scopes retain the broad
-   * dispatch refusal even when the selected history is still readable. */
+  /** A retained Native NPC request may revalidate after ordinary recognition
+   * or temporal-support updates. Other private edits and unknown scopes keep
+   * the broad dispatch refusal even when the selected history is readable. */
   actorNonReceptionRevision(actorId: string): number {
     return Math.max(
       this.actorRevisionReset,
@@ -1564,8 +1564,18 @@ export class MemoryRepository {
       )
         watch.retention.archivesChanged = true;
   }
-  accepted(worldId: string, changes: RecordChanges, through: number): void {
-    this.publishSourceChanges(worldId, this.publicationChanges(worldId, changes, true, through));
+  accepted(
+    worldId: string,
+    changes: RecordChanges,
+    through: number,
+    origin: 'native' | 'source' = 'source',
+  ): void {
+    this.publishSourceChanges(
+      worldId,
+      this.publicationChanges(worldId, changes, true, through),
+      false,
+      origin,
+    );
   }
   acceptedSettled(worldId: string, through: number): void {
     for (const [key, marker] of this.acceptedSourceRows)
@@ -1580,7 +1590,12 @@ export class MemoryRepository {
       restored,
     );
   }
-  private publishSourceChanges(worldId: string, changes: RecordChanges, restored = false) {
+  private publishSourceChanges(
+    worldId: string,
+    changes: RecordChanges,
+    restored = false,
+    acceptedOrigin?: 'native' | 'source',
+  ) {
     this.invalidateSourceReads(worldId, changes, restored);
     const actors = new Map<string, boolean>();
     let unknownScope = changes.deletes.has('data_world') || changes.deletes.has('world_settings');
@@ -1602,8 +1617,15 @@ export class MemoryRepository {
       const receptionOnly = table === 'mind_recognition' || table === 'mind_temporal_supports';
       for (const row of rows) mark(row.id, receptionOnly);
     }
-    for (const [table, ids] of changes.deletes)
-      if (affectsMemory(table)) for (const id of ids) mark(id, false);
+    for (const [table, ids] of changes.deletes) {
+      if (!affectsMemory(table)) continue;
+      // Ordinary Native receiving can rotate these support rows. Keep all
+      // exact source invalidations above, and allow the retained request to
+      // prove its still-current sources again. Protected SQL edits take the
+      // separate committed path and do not receive this classification.
+      const receptionOnly = acceptedOrigin === 'native' && table === 'mind_temporal_supports';
+      for (const id of ids) mark(id, receptionOnly);
+    }
     if (
       restored ||
       unknownScope ||

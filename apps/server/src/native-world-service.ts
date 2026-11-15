@@ -839,7 +839,12 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     // sources immediately. Protected publication is already durable and passes
     // no pending edits. SQL later deduplicates these exact payloads through this cut.
     if (changes && this.pending.durableMark().through < publication.progress.throughCut)
-      this.store.memories.accepted(this.worldId, changes, publication.progress.throughCut);
+      this.store.memories.accepted(
+        this.worldId,
+        changes,
+        publication.progress.throughCut,
+        'native',
+      );
     this.store.memories.retentionArchivesAccepted(this.worldId, publication.sourceVersions);
     for (const listener of this.publicationListeners) {
       try {

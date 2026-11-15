@@ -105,7 +105,7 @@ export async function dispatchDecision<R extends DispatchRun, T>(
   const nonReceptionRevision = revalidateSource
     ? host.store.memories?.actorNonReceptionRevision(sourceActorId)
     : undefined;
-  let revalidated = false;
+  let remainingRevalidations = 2;
   // This selected strategy declares both dependent calls in advance. Its
   // original useful lifetime still fences every dispatch/commit via current();
   // a stage transition neither renews that clock nor funds a fallback.
@@ -224,24 +224,24 @@ export async function dispatchDecision<R extends DispatchRun, T>(
         host.current(run);
         await run.validateJudgmentSource?.();
         host.current(run);
-        if (
-          revalidateSource &&
-          !revalidated &&
-          !sourceCurrent() &&
-          nonReceptionRevision !== undefined &&
-          nonReceptionRevision === host.store.memories?.actorNonReceptionRevision(sourceActorId) &&
-          sourceAccessCurrent()
-        ) {
-          // This is local validation of the same rendered request and dispatch
-          // intent. Capture before checking so another change still refuses at
-          // transport, and never renew the authorization across a source edit.
-          revalidated = true;
+        while (!sourceCurrent()) {
+          if (
+            !revalidateSource ||
+            remainingRevalidations === 0 ||
+            nonReceptionRevision === undefined ||
+            nonReceptionRevision !==
+              host.store.memories?.actorNonReceptionRevision(sourceActorId) ||
+            !sourceAccessCurrent()
+          )
+            throw new StopJob('stale', 'The character’s evidence changed before dispatch.');
+          // Retain the original dispatch intent and its model input. A second
+          // compatible change can land during the first exact check. Capture
+          // before each check and require that same fence at transport.
+          remainingRevalidations--;
           const nextFence = captureSourceFence();
           await revalidateSource();
           sourceCurrent = nextFence;
         }
-        if (!sourceCurrent())
-          throw new StopJob('stale', 'The character’s evidence changed before dispatch.');
         if (
           run.job.decision &&
           !run.preparedResponse &&
