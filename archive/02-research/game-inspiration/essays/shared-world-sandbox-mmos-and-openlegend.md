@@ -6,9 +6,9 @@
 
 Mike asks which of nine shared-world sandboxes succeed, what players actually value and reject, how graphics affect the experience, and whether OpenLegend's documented vision gives people a compelling reason to choose it despite a smaller team and graphics budget.
 
-The completed SEED, Stars Reach and Wurm Online cases already rule out an easy answer. Autonomous characters, remembered relationships, useful occupations, persistent landscapes and unexpected player inventions all have serious competitors. OpenLegend has a plausible opportunity in how these elements connect during an embodied adventure. A distinctive feature list, commercial demand and a reliably distinctive playable experience are three separate claims.
+The completed SEED, Stars Reach, Wurm Online, Star Wars Galaxies: Restoration and Foxhole cases already rule out an easy answer. Autonomous characters, remembered relationships, useful occupations, persistent landscapes and unexpected player inventions all have serious competitors. OpenLegend has a plausible opportunity in how these elements connect during an embodied adventure. A distinctive feature list, commercial demand and a reliably distinctive playable experience are three separate claims.
 
-The other six dossier passes and the final comparative judgment remain unfinished at this checkpoint. These preliminary findings are preserved so a restart cannot turn incomplete research into a completed market assessment.
+The other four dossier passes and the final comparative judgment remain unfinished at this checkpoint. These preliminary findings are preserved so a restart cannot turn incomplete research into a completed market assessment.
 
 ## Use the actual OpenLegend vision
 
@@ -22,7 +22,7 @@ The [current art direction](../../../../art-direction/decisions.md#current-direc
 
 Current capability must remain separate from ambition. The main-branch [README](../../../../README.md) documents an active game pause when all human connections leave. The [continuing-lives design](../../../../docs/projects/continuing-lives-feature-spec.md) is a delivery target, not proof that a continuously operating, large-scale MMO already exists.
 
-## What the first three cases establish
+## What the first five cases establish
 
 ### SEED competes directly on people
 
@@ -47,6 +47,24 @@ The [Wurm dossier](../dossiers/wurm-online.md) establishes persistent ownership 
 The useful distinction is between effort that gives something value and procedure that delays any wanted result. Historical reviewers and current player accounts disagree because goals, available time and social access differ. A slower pace may be the desired experience. OpenLegend should make quiet inhabitation enjoyable in its own right, alongside adventure, rather than treating every minute without a new unlock as failure.
 
 Wurm also shows that a persistent place can carry human memories without AI memory. The prospective contribution is richer encounters with particular inhabitants, not the invention of a world with history. Care can motivate return and also create unwanted obligation. Test voluntary desire to revisit separately from time spent protecting earlier investment.
+
+### Restoration makes ordinary life and human service valuable
+
+The [Restoration dossier](../dossiers/star-wars-galaxies-restoration.md) concerns the particular fan service, not every version of Star Wars Galaxies. Its independent accounts value surveying, making, visiting cities and encountering other people's activities. That is evidence for enjoying inhabitation, rather than needing every session to produce a dramatic personal triumph. [Contemporary firsthand account](https://www.pcgamer.com/games/mmo/i-want-mmos-to-waste-our-time-again/)
+
+Its [Doctor redesign](https://swgr.org/post/doctors-and-a-living-galaxy.7787/) exposes a tension between automated availability and meaningful human participation. OpenLegend should preserve that distinction when evaluating its autonomous inhabitants. Efficient service, companionship, another person's recognition and shared authorship are different benefits. It may deliver some strongly without replacing all of them.
+
+The inherited commercial world, established fiction and volunteer work also matter to comparison. A modest operating budget for maintaining that service cannot establish the cost of creating an original world, attracting its audience and paying its contributors. The case supports learning from social design while keeping production economics separate.
+
+### Foxhole connects individual action to an intelligible shared purpose
+
+The [Foxhole dossier](../dossiers/foxhole.md) provides a strong original-game demand example. Steam Charts records roughly 1,704 average concurrent players in October 2026, following a much larger February expansion month. These demonstrate durable participation, not unique customer counts or verified profit. [Dated concurrency series](https://steamcharts.com/app/505460)
+
+Its firsthand accounts connect ordinary work to visible help and human recognition. The [historical LOGI letter](https://logiunion.com/archive/openletter/) also documents how cumulative logistics overhead can make that work frustrating. Later changes matter; the old dispute does not establish that every complaint remains current.
+
+The design lesson is to connect effort to a wanted consequence while scrutinizing the cost of supplying it. OpenLegend should ask whether an invention, expedition or resident's contribution changes something the player values. More production stages alone do not establish greater depth. Nor does replacing a human contributor with automation preserve the same social experience automatically.
+
+Foxhole also shows why presentation deserves deliberate scope decisions. Its developer's [foliage discussion](https://www.moddb.com/games/foxhole/news/devblog-anti-tank-rifle-foliage-art-and-more) treats readability at the gameplay camera as a design problem. OpenLegend's personal relationships imply different visual priorities, but the discipline of testing the actual view transfers.
 
 ## How to compare success without manufacturing a league table
 
