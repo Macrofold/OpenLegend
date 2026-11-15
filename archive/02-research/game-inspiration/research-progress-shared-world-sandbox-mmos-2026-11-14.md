@@ -6,7 +6,7 @@ Research and documentation only. The task compares actual activities, player pra
 
 ## Current progress
 
-All nine games have full source-grounded passes researched, reviewed and committed. Final cross-game synthesis and navigation review remain in progress; the individual dossiers are complete.
+**Complete.** All nine games have full source-grounded passes researched, reviewed and committed. The final comparative essay, success-evidence table, OpenLegend differentiation analysis and navigation review are complete. The research cutoff is November 14, 2026, America/New_York; retrieval and final verification continued into November 15 UTC.
 
 | Subject | Output | State |
 | --- | --- | --- |
@@ -35,10 +35,20 @@ OpenLegend comparison uses its actual main-branch priorities, opening/cooperatio
 ## Completion gates
 
 - [x] All nine dossiers substantively cover the applicable research requirements and are committed.
-- [ ] Comparative success table preserves metric, platform, edition and date boundaries.
-- [ ] Player appeal, rejection, graphics and OpenLegend overlap are addressed concretely.
-- [ ] Comparison is checked against existing design/art/positioning owners, without speculative backlog expansion.
-- [ ] Navigation, source citations, local links and complete affected diff are reviewed.
+- [x] Comparative success table preserves metric, platform, edition and date boundaries.
+- [x] Player appeal, rejection, graphics and OpenLegend overlap are addressed concretely.
+- [x] Comparison is checked against existing design/art/positioning owners, without speculative backlog expansion.
+- [x] Navigation, source citations, local links and complete affected diff are reviewed.
+
+## Verification and handoff
+
+Each full dossier received a primary read and focused review before its commit. The final essay received independent mechanics/vision, reception/differentiation and business/presentation reviews; no actionable findings remain. Its success table separates full-month Steam averages from short-window peaks, standalone/console participation, historical sales, donations, company accounts and game-specific financial evidence.
+
+All task-added relative links resolve against available files and the fetched repository inventory. The final essay's five heading anchors and the other locally available linked anchors were checked. The three existing navigation files were compared with the actual base-commit contents; the complete affected diff is scoped to nine dossiers, the essay, this ledger and those three navigation files. No tool-reference leaks or unfinished task placeholders remain.
+
+The research retains substantive evidence gaps rather than disguising them as completed observation: some games lack five independent current full reviews; current game-only profits and all-platform populations are often undisclosed; no firsthand gameplay or comparative OpenLegend visual benchmark was performed. These limits are recorded per dossier and in the essay. They are not uncompleted deliverables in this batch.
+
+This documentation-only change does not alter gameplay, accepted art direction, selected marketing copy or commercial scope. Runtime/model tests and scale qualification are outside the change; source, scope, link and prose review supply the relevant verification. The existing first-playable, cooperation, invention, art and commercial owners retain the proposed follow-through. No requested work remains in this session.
 
 The [comparison](essays/shared-world-sandbox-mmos-and-openlegend.md) owns cross-game interpretation. No game tests, gameplay claims, model-quality qualification or scale benchmarks are performed by this research. Earlier queued subjects and historical packet-wide audit gates are outside this assignment.
 

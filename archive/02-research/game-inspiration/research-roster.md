@@ -278,18 +278,16 @@ Mike requested a full Outward dossier covering major systems, lore, player prais
 
 ## November 14 shared-world sandbox MMO addition
 
-Nine independent full-game passes are authorized in the [scoped record](research-progress-shared-world-sandbox-mmos-2026-11-14.md). Exact title/filename identities avoid compounding overlapping global G-number allocations in parallel research branches; no earlier identity or status is changed.
+Nine independent full-game passes and their [comparative essay](essays/shared-world-sandbox-mmos-and-openlegend.md) are complete; the [scoped record](research-progress-shared-world-sandbox-mmos-2026-11-14.md) preserves commits and evidence limits. Exact title/filename identities avoid compounding overlapping global G-number allocations in parallel research branches; no earlier identity or status is changed.
 
-| Subject | Planned dossier | Edition boundary |
+| Subject | Dossier | Edition boundary |
 | --- | --- | --- |
-| SEED | dossiers/seed.md | Klang game, app 2938800; standalone release versus Steam |
-| Stars Reach | dossiers/stars-reach.md | Playable Worlds game; testing versus released outcome |
-| Wurm Online | dossiers/wurm-online.md | Official Online service; Wurm Unlimited separate |
-| Star Wars Galaxies: Restoration | dossiers/star-wars-galaxies-restoration.md | Restoration community server; original SWG and other servers distinguished |
-| Foxhole | dossiers/foxhole.md | Persistent war service and current update boundaries |
-| Mortal Online 2 | dossiers/mortal-online-2.md | Sequel; original Mortal Online excluded |
-| Haven & Hearth | dossiers/haven-and-hearth.md | Current game, legacy era and clients distinguished |
-| Life is Feudal: MMO | dossiers/life-is-feudal-mmo.md | Original, relaunched and later service models separated; Your Own distinct |
-| Boundless | dossiers/boundless.md | Shared service; platforms and player-owned worlds distinguished |
-
-
+| SEED | [seed.md](dossiers/seed.md) | Klang game, app 2938800; standalone release versus future Steam |
+| Stars Reach | [stars-reach.md](dossiers/stars-reach.md) | Playable Worlds paid early access since August 2026; earlier testing and future plans distinguished |
+| Wurm Online | [wurm-online.md](dossiers/wurm-online.md) | Official Online service; Wurm Unlimited separate |
+| Star Wars Galaxies: Restoration | [star-wars-galaxies-restoration.md](dossiers/star-wars-galaxies-restoration.md) | Restoration community server; original SWG and other servers distinguished |
+| Foxhole | [foxhole.md](dossiers/foxhole.md) | War-bounded persistence, current released updates and future announcements distinguished |
+| Mortal Online 2 | [mortal-online-2.md](dossiers/mortal-online-2.md) | Sequel; Myrland/Sarducaa and Steam/Epic boundaries; original Mortal Online excluded |
+| Haven & Hearth | [haven-and-hearth.md](dossiers/haven-and-hearth.md) | Modern game, parallel worlds, legacy era and clients distinguished |
+| Life is Feudal: MMO | [life-is-feudal-mmo.md](dossiers/life-is-feudal-mmo.md) | Restored subscription MMO and separate free-to-play Arden; Your Own excluded |
+| Boundless | [boundless.md](dossiers/boundless.md) | Shared public service, rented Sovereign/Creative worlds and temporary Exoworlds; testing features separate |

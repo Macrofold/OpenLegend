@@ -4,7 +4,7 @@
 
 ## Start here
 
-- **[Shared-world sandbox MMOs](research-progress-shared-world-sandbox-mmos-2026-11-14.md):** nine full-game passes and a [comparison of player appeal, graphics, commercial outcomes and OpenLegend positioning](essays/shared-world-sandbox-mmos-and-openlegend.md). The scoped record owns completion.
+- **[Shared-world sandbox MMOs](research-progress-shared-world-sandbox-mmos-2026-11-14.md):** nine completed full-game dossiers and a [comparison of player appeal, graphics, commercial outcomes and OpenLegend positioning](essays/shared-world-sandbox-mmos-and-openlegend.md). The scoped record links the individual commits and evidence limits.
 
 - **[Outward — G188](dossiers/outward.md):** expedition preparation, ordinary-person progression, survival, defeat stories, cooperative travel, lore, player reception, production, commercial evidence and modding; [scoped evidence and progress](research-progress-outward-2026-11-07.md).
 
@@ -244,4 +244,3 @@ The existing engineering, product, and world-design owners remain authoritative 
 ## Supplementary Dungeons & Dragons studies
 
 The [tabletop research hub](games/dungeons-and-dragons.md) distinguishes the [2024 revision](dossiers/dungeons-and-dragons-2024.md), [v.3.5](dossiers/dungeons-and-dragons-3-5.md), [GM adjudication](mechanics/dungeons-and-dragons-adjudication.md), and [complete-SRD systems study](mechanics/dungeons-and-dragons-srd-systems.md). The related [world dossier](../worldbuilding/worlds/29-dungeons-and-dragons.md) and [planes and lived-magic supplement](../worldbuilding/dungeons-and-dragons-planes-and-lived-magic.md) retain setting, edition and source-access distinctions. These additions do not renumber the existing game roster or claim exhaustive source review.
-
