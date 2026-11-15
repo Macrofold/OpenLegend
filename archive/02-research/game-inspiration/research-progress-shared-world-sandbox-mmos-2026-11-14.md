@@ -6,7 +6,7 @@ Research and documentation only. The task compares actual activities, player pra
 
 ## Current progress
 
-SEED, Stars Reach, Wurm Online, SWG: Restoration, Foxhole, Mortal Online 2 and Haven & Hearth have full source-grounded passes researched, reviewed and committed. The other two titles and final cross-game comparison remain unfinished. This is a truthful research checkpoint, not completion of the assignment.
+SEED, Stars Reach, Wurm Online, SWG: Restoration, Foxhole, Mortal Online 2, Haven & Hearth and Life is Feudal: MMO have full source-grounded passes researched, reviewed and committed. Boundless and the final cross-game comparison remain unfinished. This is a truthful research checkpoint, not completion of the assignment.
 
 | Subject | Output | State |
 | --- | --- | --- |
@@ -17,8 +17,8 @@ SEED, Stars Reach, Wurm Online, SWG: Restoration, Foxhole, Mortal Online 2 and H
 | Foxhole | [Dossier](dossiers/foxhole.md) | Complete; [dossier commit](https://github.com/Macrofold/OpenLegend/commit/0a9dec3a89d7a53c7c96b3ab83fba8062a4253af) |
 | Mortal Online 2 | [Dossier](dossiers/mortal-online-2.md) | Complete; [dossier commit](https://github.com/Macrofold/OpenLegend/commit/7748ba6a42cc88df55eeb557f9493188209e72c8) |
 | Haven & Hearth | [Dossier](dossiers/haven-and-hearth.md) | Complete; [dossier commit](https://github.com/Macrofold/OpenLegend/commit/4a21eb74cfdcfe73ad56005cb8f544270cdb1bf8) |
-| Life is Feudal: MMO | dossiers/life-is-feudal-mmo.md | Next |
-| Boundless | dossiers/boundless.md | Pending |
+| Life is Feudal: MMO | [Dossier](dossiers/life-is-feudal-mmo.md) | Complete; [dossier commit](https://github.com/Macrofold/OpenLegend/commit/d5e131ad8016813ec25f284e282fd33ab6aef7a8) |
+| Boundless | dossiers/boundless.md | Next |
 
 ## Method and evidence boundaries
 
