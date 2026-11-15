@@ -12,6 +12,7 @@ import {
   decodeNativeProduct,
   freezeNativeProduct,
   releaseNativeProduct,
+  retainNativeSources,
   withNativeJsonInput,
 } from './native-consumer.js';
 
@@ -60,15 +61,19 @@ export class NativePrivateHistoryCapture {
     return this.packetValue;
   }
   tailRequest() {
-    if (this.facts.purpose !== 'recent') return;
-    const { scope } = this.facts;
+    const packet = this.facts;
+    if (packet.purpose !== 'recent') return;
+    const { scope } = packet;
     return scope.receiptPrefix.state === 'pending'
-      ? {
-          actorId: scope.actorId,
-          physicalLife: scope.receiptPrefix.physicalLife,
-          epoch: scope.receiptPrefix.epoch,
-          tailRevision: scope.receiptPrefix.tailRevision,
-        }
+      ? retainNativeSources(
+          {
+            actorId: scope.actorId,
+            physicalLife: scope.receiptPrefix.physicalLife,
+            epoch: scope.receiptPrefix.epoch,
+            tailRevision: scope.receiptPrefix.tailRevision,
+          },
+          packet,
+        )
       : undefined;
   }
   async prepareSources(

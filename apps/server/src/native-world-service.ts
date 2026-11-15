@@ -139,7 +139,7 @@ import {
   type NativeAccountRetentionRequest,
 } from './native-account-retention.js';
 import { LiveReadRevisionError } from './live-read-overlay.js';
-import { readNativeTemporalTail } from './native-temporal-tail.js';
+import { resolveNativeReceiptTail } from './native-temporal-tail.js';
 import { SUPPORT_MEMBERSHIP_PREPARATION } from './retention-cleanup.js';
 import { RETENTION_MIN_DELAY_MS } from './retention-deadlines.js';
 import { playerInteractionAvailability } from './player-interaction.js';
@@ -1036,16 +1036,13 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         const tail = capture.receiptTailRequest();
         if (tail) {
           const before = capture.facts.self.acceptedCut;
-          const captured = await captureNativeReadCut(this.world, actorId);
-          if (captured.acceptedCut !== before) throw new ViewChangedError();
-          const answer = await readNativeTemporalTail(
+          await resolveNativeReceiptTail(
+            this.world,
             this.store.db,
-            captured,
-            this.pending.liveReadCuts(),
+            actorId,
+            before,
+            () => this.pending.liveReadCuts(),
             tail,
-          );
-          await withNativeJsonInput(this.world, answer, (bytes) =>
-            this.world.resolveReceiptTail(bytes),
           );
           capture.release();
           capture = await NativeNpcCapture.capture(
@@ -1054,7 +1051,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             requiredAppraisals,
             consumer,
           );
-          if (capture.facts.self.acceptedCut !== before || capture.receiptTailRequest())
+          const { facts } = capture;
+          if (facts.self.acceptedCut !== before || facts.perception.npcCurrent.receiptTailRequest)
             throw new ViewChangedError();
         }
         // Tail resolution changes derived metadata only. Choice setup and the
@@ -1308,25 +1306,21 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           const tail = read.tailRequest();
           if (tail) {
             const before = read.facts.scope.acceptedCut;
-            const cut = await captureNativeReadCut(world, actorId);
-            if (cut.acceptedCut !== before) {
-              releaseNativeProduct(cut);
-              throw new ViewChangedError();
-            }
-            const answer = await readNativeTemporalTail(
+            await resolveNativeReceiptTail(
+              world,
               this.store.db,
-              cut,
-              this.pending.liveReadCuts(),
+              actorId,
+              before,
+              () => this.pending.liveReadCuts(),
               tail,
             );
-            try {
-              await withNativeJsonInput(world, answer, (bytes) => world.resolveReceiptTail(bytes));
-            } finally {
-              releaseNativeProduct(answer);
-            }
             read.release();
             read = await NativePrivateHistoryCapture.capture(world, actorId, 'recent');
-            if (read.facts.scope.acceptedCut !== before || read.tailRequest())
+            const { facts } = read;
+            if (
+              facts.scope.acceptedCut !== before ||
+              (facts.purpose === 'recent' && facts.scope.receiptPrefix.state === 'pending')
+            )
               throw new ViewChangedError();
           }
           return read;

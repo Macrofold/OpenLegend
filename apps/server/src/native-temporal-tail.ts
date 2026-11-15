@@ -1,6 +1,12 @@
+import type { NativeWorld } from '@open-legend/native-simulation';
 import type { LiveReadCuts } from './live-read-overlay.js';
-import { releaseNativeProduct, retainNativeSources } from './native-consumer.js';
-import { nativeScopedReadCut, type NativeActorReadCut } from './native-read-cut.js';
+import { releaseNativeProduct, withNativeJsonInput } from './native-consumer.js';
+import {
+  captureNativeReadCut,
+  nativeScopedReadCut,
+  type NativeActorReadCut,
+} from './native-read-cut.js';
+import { ViewChangedError } from './player-view-async.js';
 import type { SqlDatabase } from './store.js';
 
 export interface NativeTemporalTailRequest {
@@ -10,20 +16,35 @@ export interface NativeTemporalTailRequest {
   readonly tailRevision: number;
 }
 
-/** An unclosed partial restore can lack its physical last-page witness. Read
- * that indexed metadata at the same SQL+accepted-unsaved cut. Explicit recent
- * retirement and unsaved empty edits stay with the native page-presence owner;
- * this lookup does not replace those states with historical SQL membership. */
-export async function readNativeTemporalTail(
+/** An unclosed partial restore can lack its physical last-page witness. In the
+ * caller's existing accepted turn, pin the same actor's native and pending-save
+ * rows, select the indexed SQL tail and resolve it once through Rust. This
+ * adopts the funded request and releases it and the read before recapture.
+ * Explicit retirement and unsaved empty edits stay with the page owner. */
+export async function resolveNativeReceiptTail(
+  world: NativeWorld,
   db: SqlDatabase,
-  captured: NativeActorReadCut,
-  pending: LiveReadCuts,
+  actorId: string,
+  acceptedCut: number,
+  pending: () => LiveReadCuts,
   request: NativeTemporalTailRequest,
-) {
-  if (request.actorId !== captured.actorId || !db.readAtCut || !db.readTransaction)
-    throw new Error('Native receipt tail requires its scoped accepted history read.');
-  const cut = nativeScopedReadCut(captured, pending);
+): Promise<void> {
+  let captured: NativeActorReadCut | undefined;
+  let cut: LiveReadCuts | undefined;
+  const releaseRead = () => {
+    const read = cut;
+    cut = undefined;
+    if (read) releaseNativeProduct(read);
+    releaseNativeProduct(request);
+  };
   try {
+    captured = await captureNativeReadCut(world, actorId);
+    if (captured.acceptedCut !== acceptedCut) throw new ViewChangedError();
+    if (request.actorId !== captured.actorId || !db.readAtCut || !db.readTransaction)
+      throw new Error('Native receipt tail requires its scoped accepted history read.');
+    const { worldId, generation, identityThrough } = captured;
+    cut = nativeScopedReadCut(captured, pending());
+    captured = undefined;
     const row = await db.readAtCut(cut, () =>
       db.readTransaction!(() =>
         db
@@ -32,7 +53,7 @@ export async function readNativeTemporalTail(
            WHERE world_id=? AND actor_id=?
            ORDER BY first_batch_order DESC,first_entry DESC,first_member DESC,id DESC LIMIT 1`,
           )
-          .get(captured.worldId, request.actorId),
+          .get(worldId, request.actorId),
       ),
     );
     let tail: { batchOrder: number; entryIndex: number } | null = null;
@@ -50,25 +71,25 @@ export async function readNativeTemporalTail(
       if (
         !Number.isSafeInteger(tail.batchOrder) ||
         tail.batchOrder < 0 ||
-        tail.batchOrder >= captured.identityThrough ||
+        tail.batchOrder >= identityThrough ||
         !Number.isSafeInteger(tail.entryIndex) ||
         tail.entryIndex < 0
       )
         throw new Error('Native receipt tail is outside its accepted identity cut.');
     }
-    return retainNativeSources(
-      {
-        worldId: captured.worldId,
-        generation: captured.generation,
-        acceptedCut: captured.acceptedCut,
-        identityThrough: captured.identityThrough,
-        request,
-        tail,
+    await withNativeJsonInput(
+      world,
+      { worldId, generation, acceptedCut, identityThrough, request, tail },
+      (bytes) => {
+        // The admitted bytes now own the input; no decoded cut is needed
+        // during native settlement.
+        releaseRead();
+        return world.resolveReceiptTail(bytes);
       },
-      cut,
-      request,
     );
   } finally {
-    releaseNativeProduct(cut);
+    // The pending half can refuse before the join adopts the native capture.
+    if (captured) releaseNativeProduct(captured);
+    releaseRead();
   }
 }
