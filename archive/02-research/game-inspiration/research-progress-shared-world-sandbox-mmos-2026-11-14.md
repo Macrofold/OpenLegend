@@ -6,13 +6,13 @@ Research and documentation only. The task compares actual activities, player pra
 
 ## Current progress
 
-SEED's full source-grounded pass is researched and reviewed. The other eight titles and final cross-game comparison remain unfinished. This is a truthful research checkpoint, not completion of the assignment.
+SEED and Stars Reach have full source-grounded passes researched and reviewed. The other seven titles and final cross-game comparison remain unfinished. This is a truthful research checkpoint, not completion of the assignment.
 
 | Subject | Output | State |
 | --- | --- | --- |
 | SEED | [Dossier](dossiers/seed.md) | Researched and reviewed; committed with this checkpoint |
-| Stars Reach | dossiers/stars-reach.md | Next |
-| Wurm Online | dossiers/wurm-online.md | Pending |
+| Stars Reach | [Dossier](dossiers/stars-reach.md) | Researched and reviewed; committed with this checkpoint |
+| Wurm Online | dossiers/wurm-online.md | Next |
 | Star Wars Galaxies: Restoration | dossiers/star-wars-galaxies-restoration.md | Pending |
 | Foxhole | dossiers/foxhole.md | Pending |
 | Mortal Online 2 | dossiers/mortal-online-2.md | Pending |
