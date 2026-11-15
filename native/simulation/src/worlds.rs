@@ -22,9 +22,9 @@ pub(crate) mod base_decision_offers;
 pub(crate) mod base_outings;
 pub(crate) use base_outings::{
     MovementTerms as InstalledMovementTerms, MovementTermsKind as InstalledMovementTermsKind,
-    MovementTermsStatus as InstalledMovementTermsStatus, OutingFacts as InstalledOutingFacts,
-    OutingKind as InstalledOutingKind, OutingStatus as InstalledOutingStatus,
-    inspect as inspect_selected_outing,
+    MovementTermsStatus as InstalledMovementTermsStatus,
+    OutingFacts as InstalledOutingFacts, OutingKind as InstalledOutingKind,
+    OutingStatus as InstalledOutingStatus, inspect as inspect_selected_outing,
 };
 
 #[path = "../../../packages/domain/src/worlds/base/native/observed.rs"]
@@ -103,9 +103,7 @@ pub(crate) use base_knowledge::{
     CapturedAttributionIdentities, CapturedNames, OwnedPersonalName,
     PersonalName as InstalledPersonalName, PersonalNameReader as InstalledPersonalNameReader,
 };
-pub(crate) use base_knowledge::{
-    CommunicationSubject, RememberedCommunicationIds, RememberedCommunications,
-};
+pub(crate) use base_knowledge::{CommunicationSubject, RememberedCommunications};
 
 pub(crate) use base_recognition::{
     IndividualPruneMode, held_support_aliases as selected_held_support_aliases,

@@ -123,34 +123,6 @@ impl NativeWorld {
         })
     }
     #[napi(ts_return_type = "Promise<NativeWorldJson>")]
-    pub fn player_availability_subjects<'a>(
-        &self,
-        env: &'a Env,
-        bytes: BufferSlice<'_>,
-    ) -> Result<Object<'a>> {
-        let bytes = input(&bytes, &self.host.bytes)?;
-        self.compute(env, move |session, _cancel, budget| {
-            session
-                .player_availability_subjects(bytes.bytes())
-                .map(|value| NativeWorldJson::new(value, budget.clone()))
-                .map_err(operation_error)
-        })
-    }
-    #[napi(ts_return_type = "Promise<NativeWorldJson | null>")]
-    pub fn player_availability<'a>(
-        &self,
-        env: &'a Env,
-        bytes: BufferSlice<'_>,
-    ) -> Result<Object<'a>> {
-        let bytes = input(&bytes, &self.host.bytes)?;
-        self.compute(env, move |session, _cancel, budget| {
-            session
-                .player_availability(bytes.bytes())
-                .map(|value| value.map(|value| NativeWorldJson::new(value, budget.clone())))
-                .map_err(operation_error)
-        })
-    }
-    #[napi(ts_return_type = "Promise<NativeWorldJson>")]
     pub fn player_interaction<'a>(
         &self,
         env: &'a Env,

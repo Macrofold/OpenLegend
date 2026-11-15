@@ -21,9 +21,7 @@ use crate::work::{InstalledWorkPolicy, WorkBook};
 use indexmap::IndexMap;
 use std::sync::Arc;
 mod read;
-pub(crate) use read::{
-    AcceptedActorRead, ActorReadError, AvailabilityRole, AvailabilitySubjects, InteractionMode,
-};
+pub(crate) use read::{AcceptedActorRead, ActorReadError, InteractionMode};
 mod save;
 pub(crate) use save::{encode_candidate_changes, encode_root_changes};
 mod publication;

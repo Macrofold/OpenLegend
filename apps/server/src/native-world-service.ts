@@ -144,7 +144,6 @@ import { SUPPORT_MEMBERSHIP_PREPARATION } from './retention-cleanup.js';
 import { RETENTION_MIN_DELAY_MS } from './retention-deadlines.js';
 import { playerInteractionAvailability } from './player-interaction.js';
 import { nativePlayerCommandReferences } from './native-player-command.js';
-import { publishNativePlayerInteractionAvailability } from './native-player-interaction.js';
 import { ordinaryPlayerCommand } from './ordinary-player-command.js';
 import {
   clearNativePlayerViewCache,
@@ -1730,46 +1729,18 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     };
   }
 
-  publishPlayerInteractionAvailability(
+  playerInteractionAvailability(
     mode: 'speak' | 'act',
     targetId: string | undefined,
     scope: RequestScope,
-    signal: AbortSignal,
-    send: (bytes: Buffer) => boolean,
-  ): Promise<void> {
-    return publishNativePlayerInteractionAvailability({
+  ) {
+    return playerInteractionAvailability({
       mode,
-      targetId,
-      scope,
-      signal,
       config: this.config,
-      turn: (operation) => this.lane.run(operation),
-      world: () => this.world,
-      operational: () => {
-        if (this.restoring) throw new ViewChangedError();
-        this.assertScope(scope);
-        // Only the deciding reads need presence; binding and handoff checks
-        // need current authority without traversing the presence owners.
-        let pauseReason: NativeWorldService['pauseReason'] | undefined;
-        const reason = () => {
-          if (pauseReason === undefined) pauseReason = this.pauseReason;
-          return pauseReason;
-        };
-        return {
-          generation: this.generation,
-          controlling: this.currentScope(scope, 'play', true),
-          get paused() {
-            return reason() !== null;
-          },
-          get pauseReason() {
-            return reason();
-          },
-        };
-      },
+      read: () => this.lane.run(() => this.interactionFacts(mode, targetId, scope)),
       budgetAvailable: (actor, allowance, ceiling) =>
         this.store.budgetAvailable(actor, allowance, ceiling),
       admit: (actor) => this.playerInteractionAdmission?.(actor) ?? true,
-      send,
     });
   }
 
@@ -1777,17 +1748,28 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     mode: 'speak' | 'act',
     targetId: string | undefined,
     scope: RequestScope,
-    capture: NativePlayerCapture,
+    existing?: NativePlayerCapture,
   ) {
     if (this.restoring) throw new ViewChangedError();
     this.assertScope(scope);
-    const facts = await capture.interaction(mode, targetId);
-    return {
-      ...facts,
-      controlling: this.currentScope(scope, 'play', true),
-      paused: this.paused,
-      pauseReason: this.pauseReason,
-    };
+    const capture =
+      existing ??
+      (await NativePlayerCapture.capture(this.world, scope, PLAYER_EVENT_WINDOW, this.geometry));
+    try {
+      const target =
+        targetId && !existing
+          ? nativePlayerCommandReferences(scope, { type: 'say', targetId }, capture.facts).targetId
+          : targetId;
+      const facts = await capture.interaction(mode, target);
+      return {
+        ...facts,
+        controlling: this.currentScope(scope, 'play', true),
+        paused: this.paused,
+        pauseReason: this.pauseReason,
+      };
+    } finally {
+      if (!existing) capture.release();
+    }
   }
 
   get pauseReason(): 'manual' | 'away' | 'storage' | 'maintenance' | null {
@@ -3712,12 +3694,10 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             };
           if ('ok' in command) return command;
           if (command.type === 'say') {
-            const speechCapture = captured;
-            if (!speechCapture) throw new Error('Native speech requires its selected player read.');
             const available = await playerInteractionAvailability({
               mode: 'speak',
               config: this.config,
-              read: () => this.interactionFacts('speak', command.targetId, scope, speechCapture),
+              read: () => this.interactionFacts('speak', command.targetId, scope, captured),
               budgetAvailable: (actor, allowance, ceiling) =>
                 this.store.budgetAvailable(actor, allowance, ceiling),
               admit: (actor) => this.playerInteractionAdmission?.(actor) ?? true,

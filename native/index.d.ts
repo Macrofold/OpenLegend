@@ -139,8 +139,6 @@ export declare class NativeWorld {
   beginParticipation(bytes: Buffer): Promise<NativeWorldTurn>;
   playerPlaces(bytes: Buffer): Promise<NativeWorldJson>;
   playerInput(bytes: Buffer): Promise<NativeWorldJson>;
-  playerAvailabilitySubjects(bytes: Buffer): Promise<NativeWorldJson>;
-  playerAvailability(bytes: Buffer): Promise<NativeWorldJson | null>;
   playerInteraction(read: NativeWorldPlayerRead, bytes: Buffer): Promise<NativeWorldJson>;
   readPlayer(account: string, actor: string, eventWindow: number): Promise<NativeWorldPlayerRead>;
   playerPublication(
