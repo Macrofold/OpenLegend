@@ -28,21 +28,32 @@ pub(crate) struct NpcIntakeCapture {
     request: NpcIntakeReadRequest,
     world: String,
     generation: String,
-    life: Option<u64>,
+    read: NpcIntakePackets,
+    witness: NpcIntakeWitness,
+}
+struct NpcIntakeWitness {
     tokens: Vec<String>,
     dependencies: String,
     inspection: String,
+    _storage: ByteReservation,
+}
+struct NpcIntakePackets {
+    life: Option<u64>,
     semantic_causes: crate::reception::CapturedSemanticCauses,
     json: String,
     inputs_json: String,
     _storage: ByteReservation,
 }
+enum IntakeOutput {
+    Witness,
+    Packets,
+}
 impl NpcIntakeCapture {
     pub(crate) fn json(&self) -> &str {
-        &self.json
+        &self.read.json
     }
     pub(crate) fn inputs_json(&self) -> &str {
-        &self.inputs_json
+        &self.read.inputs_json
     }
     pub(crate) fn copy_semantic_causes_for(
         &self,
@@ -56,16 +67,16 @@ impl NpcIntakeCapture {
         if self.world != world
             || self.generation != generation
             || self.request.actor_id != actor
-            || self.life.unwrap_or(0) != life
+            || self.read.life.unwrap_or(0) != life
         {
             return Err(ExecutionError::InvalidCheckpoint);
         }
-        self.semantic_causes.copy_all(budget)
+        self.read.semantic_causes.copy_all(budget)
     }
     /// Acknowledging a queued reason requires current evidence for this NPC.
-    /// After the identity, life and controller checks, each call rebuilds both
-    /// the detailed inspection and queue packets to compare their underlying
-    /// inputs. An earlier verdict can go stale before acknowledgement.
+    /// After identity, life and controller checks, rebuild the three exact
+    /// witnesses from the original request's selection. This path has no
+    /// outgoing packet. An earlier verdict can go stale before acknowledgement.
     pub(crate) fn current(
         &self,
         state: &SimulationState,
@@ -82,17 +93,16 @@ impl NpcIntakeCapture {
                         && entity.actor.as_ref().is_some_and(|actor| {
                             actor.alive
                                 && actor.controller == "npc"
-                                && actor.physical_life == self.life
+                                && actor.physical_life == self.read.life
                         })
                 })
         {
             return Ok(false);
         }
-        let _copy = budget.reserve(self.request.actor_id.len())?;
-        let current = capture(state, self.request.clone(), budget)?;
-        Ok(self.tokens == current.tokens
-            && self.dependencies == current.dependencies
-            && self.inspection == current.inspection)
+        let (current, _) = prepare(state, &self.request, IntakeOutput::Witness, budget)?;
+        Ok(self.witness.tokens == current.tokens
+            && self.witness.dependencies == current.dependencies
+            && self.witness.inspection == current.inspection)
     }
 }
 struct Headers<'a>(Option<&'a crate::experience::PersonalSourceCollection>);
@@ -336,6 +346,22 @@ pub(crate) fn capture(
     request: NpcIntakeReadRequest,
     budget: &ByteBudget,
 ) -> Result<NpcIntakeCapture, ExecutionError> {
+    let (witness, read) = prepare(state, &request, IntakeOutput::Packets, budget)?;
+    Ok(NpcIntakeCapture {
+        world: state.physical.header.id.clone(),
+        generation: state.generation.clone(),
+        request,
+        read: read.ok_or(ExecutionError::Invariant)?,
+        witness,
+    })
+}
+
+fn prepare(
+    state: &SimulationState,
+    request: &NpcIntakeReadRequest,
+    output: IntakeOutput,
+    budget: &ByteBudget,
+) -> Result<(NpcIntakeWitness, Option<NpcIntakePackets>), ExecutionError> {
     let id = request.actor_id.as_str();
     let entity = state
         .physical
@@ -792,6 +818,12 @@ pub(crate) fn capture(
         budget,
     )?;
     token_storage.merge(inspection_storage)?;
+    let witness = NpcIntakeWitness {
+        tokens,
+        dependencies,
+        inspection,
+        _storage: token_storage,
+    };
 
     let (prepared_result, _result_storage) = result::capture(state, actor, id, budget)?;
     let product = Product {
@@ -828,8 +860,8 @@ pub(crate) fn capture(
                 capabilities.cognition
             }),
         conditions: &actor.conditions,
-        values: &tokens,
-        dependency_token: &dependencies,
+        values: &witness.tokens,
+        dependency_token: &witness.dependencies,
         awareness_through: unseen.awareness_through,
         urgency: unseen.urgency,
         unseen: Unseen {
@@ -868,6 +900,9 @@ pub(crate) fn capture(
         events: &events,
         prepared_result,
     };
+    if matches!(output, IntakeOutput::Witness) {
+        return Ok((witness, None));
+    }
     let inputs_length =
         json_record_len(&InputProduct(&product)).map_err(|_| ExecutionError::Invariant)?;
     let mut inputs_storage = budget.reserve(
@@ -900,21 +935,17 @@ pub(crate) fn capture(
             + request.actor_id.capacity()
             + size_of::<NpcIntakeCapture>(),
     )?;
-    storage.merge(token_storage)?;
     storage.merge(inputs_storage)?;
-    Ok(NpcIntakeCapture {
-        world: state.physical.header.id.clone(),
-        generation: state.generation.clone(),
-        life: actor.physical_life,
-        request,
-        tokens,
-        dependencies,
-        inspection,
-        semantic_causes: attention.semantic_causes,
-        json,
-        inputs_json,
-        _storage: storage,
-    })
+    Ok((
+        witness,
+        Some(NpcIntakePackets {
+            life: actor.physical_life,
+            semantic_causes: attention.semantic_causes,
+            json,
+            inputs_json,
+            _storage: storage,
+        }),
+    ))
 }
 struct Classifications<'a>(&'a [(&'a str, &'a str, Option<&'a str>)], bool);
 impl Serialize for Classifications<'_> {
