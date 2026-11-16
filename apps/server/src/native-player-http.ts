@@ -6,17 +6,34 @@ import {
   releaseNativeProduct,
   retainNativeProduct,
 } from './native-consumer.js';
+import { decisionJsonGraphBytes, decisionObjectBytes } from './native-decision-allocation.js';
 import type { NativeWorldService } from './native-world-service.js';
 import type { NativePlayerEncoder, NativePlayerViewRequest } from './native-player-view.js';
-import { isOverloadError, OverloadError, WorkLane } from './work-lane.js';
+import { isOverloadError, OverloadError } from './work-lane.js';
 import { ViewChangedError, projectPatch } from './view.js';
 
 type Stream = {
   readonly response: ServerResponse;
+  readonly sequence: number;
+  readonly abort: AbortController;
+  readonly memory: { release(): void };
+  readonly disconnected: () => void;
+  readonly onClose: () => void;
+  readonly onDrain: () => void;
   scope: RequestScope;
+  scopeKey: string;
   view?: GameView;
+  claimed: number;
+  due: boolean;
+  busy: boolean;
   blocked: boolean;
   timeout?: ReturnType<typeof setTimeout>;
+};
+type Scan = {
+  readonly iterator: IterableIterator<Stream>;
+  readonly through: number;
+  readonly target: number;
+  visited: number;
 };
 type Execution = Pick<
   NativePlayerViewRequest,
@@ -134,12 +151,16 @@ function patchWorkspace(previous: GameView, next: GameView): number {
  * prepared payload after the actor's knowledge or authority changed. */
 export class NativePlayerHttp {
   private readonly streams = new Map<ServerResponse, Stream>();
-  private readonly lane: WorkLane;
+  private readonly periodic = new Set<Promise<void>>();
+  private readonly requests = new Set<Promise<void>>();
+  private readonly retirement = new AbortController();
   private readonly unsubscribe: () => void;
   private readonly heartbeat: ReturnType<typeof setInterval>;
   private wake?: ReturnType<typeof setTimeout>;
-  private running?: Promise<void>;
-  private again = false;
+  private scan?: Scan;
+  private requested = false;
+  private notification = 0;
+  private sequence = 0;
   private nextPublicationAt = 0;
   private closed = false;
 
@@ -147,12 +168,15 @@ export class NativePlayerHttp {
     private readonly service: NativeWorldService,
     private readonly execution: Execution,
   ) {
-    this.lane = new WorkLane('native.http.projection', service.config.capacity.requests);
-    this.unsubscribe = service.subscribe(() => this.schedule());
+    this.unsubscribe = service.subscribe(() => {
+      this.notification++;
+      this.schedule();
+    });
     this.heartbeat = setInterval(() => {
       for (const stream of this.streams.values()) {
         if (!this.current(stream)) continue;
-        if (stream.response.headersSent) this.write(stream, Buffer.from(': heartbeat\n\n'));
+        if (stream.response.headersSent && !stream.blocked)
+          this.write(stream, Buffer.from(': heartbeat\n\n'));
       }
     }, 15_000);
     this.heartbeat.unref();
@@ -163,26 +187,38 @@ export class NativePlayerHttp {
   }
 
   async state(scope: RequestScope, response: ServerResponse): Promise<void> {
-    await this.service.publishPlayer(
-      scope,
-      (view, encode) => {
-        if (response.destroyed || this.closed) return;
-        const bytes = encode(view);
-        response.writeHead(200, {
-          'Content-Type': 'application/json; charset=utf-8',
-          'Cache-Control': 'no-store',
-        });
-        retainNativeProduct(bytes);
-        const release = transportRelease(response, bytes);
-        try {
-          response.end(bytes, release);
-        } catch (error) {
-          release();
-          throw error;
-        }
-      },
-      this.execution,
-    );
+    if (response.destroyed || this.closed) return;
+    await this.track(async () => {
+      const connection = new AbortController();
+      const disconnected = () => connection.abort(new ViewChangedError());
+      response.once('close', disconnected);
+      const signal = AbortSignal.any([connection.signal, this.retirement.signal]);
+      try {
+        await this.service.publishPlayer(
+          scope,
+          (view, encode) => {
+            if (signal.aborted || response.destroyed || response.writableEnded) return;
+            const bytes = encode(view);
+            response.writeHead(200, {
+              'Content-Type': 'application/json; charset=utf-8',
+              'Cache-Control': 'no-store',
+            });
+            retainNativeProduct(bytes);
+            const release = transportRelease(response, bytes);
+            try {
+              response.end(bytes, release);
+            } catch (error) {
+              release();
+              throw error;
+            }
+          },
+          this.execution,
+          signal,
+        );
+      } finally {
+        response.off('close', disconnected);
+      }
+    });
   }
 
   /** The request owner first installs the real transport/presence connection.
@@ -194,63 +230,121 @@ export class NativePlayerHttp {
     disconnected: () => void,
   ): Promise<void> {
     if (this.closed || this.streams.size >= this.service.connectionLimit) throw new OverloadError();
+    if (response.destroyed) return;
     this.service.assertScope(scope);
-    const stream: Stream = { response, scope, blocked: false };
+    // The scheduler record/scope outlives individual views and may remain
+    // locally active after disconnect. Payloads have their own admission.
+    const memory = this.service.world.reserveConsumerBytes(
+      decisionObjectBytes(36) + decisionJsonGraphBytes(scope),
+    );
+    const stream: Stream = {
+      response,
+      sequence: ++this.sequence,
+      abort: new AbortController(),
+      memory,
+      disconnected,
+      scope,
+      scopeKey: scopeKey(scope),
+      claimed: this.notification,
+      due: false,
+      busy: true,
+      blocked: false,
+      onClose: () => this.drop(stream),
+      onDrain: () => {
+        if (!this.registered(stream)) return;
+        clearTimeout(stream.timeout);
+        stream.timeout = undefined;
+        stream.blocked = false;
+        stream.due = true;
+        this.pending(stream);
+      },
+    };
     this.streams.set(response, stream);
-    response.once('close', () => {
-      this.drop(stream);
-      disconnected();
+    response.once('close', stream.onClose);
+    response.on('drain', stream.onDrain);
+    await this.track(async () => {
+      try {
+        // Initial headers and reset bytes leave with the same native
+        // publication authorization as subsequent stream updates.
+        await this.publish(stream);
+      } catch (error) {
+        this.drop(stream);
+        throw error;
+      } finally {
+        this.settled(stream);
+      }
     });
-    response.on('drain', () => {
-      if (!this.streams.has(response)) return;
-      clearTimeout(stream.timeout);
-      stream.timeout = undefined;
-      stream.blocked = false;
-      this.schedule();
-    });
+  }
+
+  private async track(operation: () => Promise<void>): Promise<void> {
+    const task = operation();
+    this.requests.add(task);
     try {
-      // Initial headers and reset bytes are handed off in the same real native
-      // publication callback; no earlier unfenced snapshot opens the stream.
-      await this.publish(stream);
-    } catch (error) {
-      this.drop(stream);
-      throw error;
+      await task;
+    } finally {
+      this.requests.delete(task);
     }
   }
 
-  private drop(stream: Stream): void {
-    clearTimeout(stream.timeout);
-    this.streams.delete(stream.response);
+  private clearBaseline(stream: Stream): void {
     if (stream.view) releaseNativeProduct(stream.view);
     stream.view = undefined;
   }
 
+  private registered(stream: Stream): boolean {
+    return this.streams.get(stream.response) === stream;
+  }
+
+  private drop(stream: Stream): void {
+    if (!this.registered(stream)) return;
+    this.streams.delete(stream.response);
+    stream.abort.abort(new ViewChangedError());
+    clearTimeout(stream.timeout);
+    stream.timeout = undefined;
+    stream.response.off('close', stream.onClose);
+    stream.response.off('drain', stream.onDrain);
+    this.clearBaseline(stream);
+    if (!stream.busy) stream.memory.release();
+    stream.disconnected();
+  }
+
   private current(stream: Stream): boolean {
-    if (this.closed || stream.response.destroyed) {
+    if (!this.registered(stream)) return false;
+    if (this.closed || stream.response.destroyed || stream.response.writableEnded) {
       this.drop(stream);
       return false;
     }
     if (!this.service.currentScope(stream.scope)) {
-      if (stream.blocked) stream.response.destroy();
-      else stream.response.end('event: access-changed\ndata: {}\n\n');
-      this.drop(stream);
+      try {
+        if (stream.blocked) stream.response.destroy();
+        else stream.response.end('event: access-changed\ndata: {}\n\n');
+      } finally {
+        this.drop(stream);
+      }
       return false;
     }
     return true;
   }
 
-  private write(stream: Stream, bytes: Buffer): void {
-    if (stream.blocked || stream.response.destroyed) {
+  private write(stream: Stream, bytes: Buffer): boolean {
+    const { response } = stream;
+    if (
+      !this.registered(stream) ||
+      stream.blocked ||
+      response.destroyed ||
+      response.writableEnded
+    ) {
       releaseNativeProduct(bytes);
-      return;
+      return false;
     }
-    const release = transportRelease(stream.response, bytes);
+    const release = transportRelease(response, bytes);
     try {
-      if (!stream.response.write(bytes, release)) {
+      if (!response.write(bytes, release) && this.registered(stream)) {
         stream.blocked = true;
-        stream.timeout = setTimeout(() => stream.response.destroy(), 30_000);
+        stream.timeout = setTimeout(() => response.destroy(), 30_000);
         stream.timeout.unref();
       }
+      return true;
     } catch (error) {
       release();
       throw error;
@@ -259,21 +353,21 @@ export class NativePlayerHttp {
 
   private async publish(stream: Stream): Promise<void> {
     if (!this.current(stream) || stream.blocked) return;
-    const current = this.service.refreshScope(stream.scope);
-    if (scopeKey(current) !== scopeKey(stream.scope)) {
-      stream.scope = current;
-      if (stream.view) releaseNativeProduct(stream.view);
-      stream.view = undefined;
+    const scope = this.service.refreshScope(stream.scope);
+    const key = scopeKey(scope);
+    if (key !== stream.scopeKey) {
+      stream.scope = scope;
+      stream.scopeKey = key;
+      this.clearBaseline(stream);
     }
     await this.service.publishPlayer(
       stream.scope,
       (view, encode) => {
-        if (!this.current(stream) || stream.blocked) return;
+        if (!this.current(stream) || stream.blocked || stream.scopeKey !== key) return;
         // A privacy boundary jumps directly to a newly permitted reset. It
         // never emits a patch containing earlier forgotten private content.
         const prior = stream.view?.historyEpoch === view.historyEpoch ? stream.view : undefined;
-        if (prior?.revision === view.revision && scopeKey(stream.scope) === view.access?.scope)
-          return;
+        if (prior?.revision === view.revision && key === view.access?.scope) return;
         const message =
           (prior && this.patchBytes(prior, view, encode)) ??
           encode(view, { prefix: 'event: reset\ndata: ', suffix: '\n\n' });
@@ -286,12 +380,20 @@ export class NativePlayerHttp {
           });
           stream.response.flushHeaders();
         }
-        retainNativeProduct(message);
-        this.write(stream, message);
-        if (stream.view) releaseNativeProduct(stream.view);
-        stream.view = retainNativeProduct(view);
+        // Transfer only this response's view before writing, then install it
+        // as the patch baseline only if the active stream really queued it.
+        const next = retainNativeProduct(view);
+        try {
+          retainNativeProduct(message);
+          if (!this.write(stream, message) || !this.registered(stream)) return;
+          this.clearBaseline(stream);
+          stream.view = next;
+        } finally {
+          if (stream.view !== next) releaseNativeProduct(next);
+        }
       },
       this.execution,
+      stream.abort.signal,
     );
   }
 
@@ -322,67 +424,133 @@ export class NativePlayerHttp {
     }
   }
 
-  /** Coalesces world notifications. Once the publication window opens, the next
-   * pass can enter the work queue immediately. It prepares a fresh permitted
-   * view for each writable stream in turn, so later streams can wait on earlier ones. */
-  private schedule(): void {
-    if (this.closed || this.wake || !this.streams.size) return;
-    if (this.running) {
-      this.again = true;
+  /** Keep one real notification (or one explicit drain/retry) pending for
+   * each stream. Completing a publication never creates new demand.
+   * docs/projects/native-runtime-foundations-tech-design.md#11-multiplayer-update-delivery */
+  private pending(stream: Stream): void {
+    if (
+      !this.registered(stream) ||
+      stream.busy ||
+      stream.blocked ||
+      (!stream.due && stream.claimed >= this.notification)
+    )
       return;
-    }
+    const scan = this.scan;
+    if (
+      scan &&
+      stream.sequence > scan.visited &&
+      stream.sequence <= scan.through &&
+      (stream.due || stream.claimed < scan.target)
+    )
+      return;
+    this.schedule();
+  }
+
+  private settled(stream: Stream): void {
+    stream.busy = false;
+    if (this.registered(stream)) this.pending(stream);
+    else stream.memory.release();
+  }
+
+  private schedule(): void {
+    if (this.closed || !this.streams.size) return;
+    this.requested = true;
+    this.arm();
+  }
+
+  private arm(): void {
+    if (this.closed || this.wake || this.scan || !this.requested || !this.streams.size) return;
     this.wake = setTimeout(
       () => {
         this.wake = undefined;
+        if (this.closed || !this.streams.size) return;
+        this.requested = false;
         this.nextPublicationAt = performance.now() + 50;
-        this.running = this.lane
-          .run(async () => {
-            for (const stream of this.streams.values()) {
-              if (this.closed) break;
-              try {
-                await this.publish(stream);
-              } catch (error) {
-                if (error instanceof ViewChangedError) continue;
-                if (isOverloadError(error)) {
-                  this.again = true;
-                  continue;
-                }
-                if (!(error instanceof AuthorityError))
-                  console.error('Native player publication failed.', error);
-                stream.response.destroy();
-                this.drop(stream);
-              }
-            }
-          })
-          .catch((error: unknown) => {
-            if (isOverloadError(error)) this.again = true;
-            else console.error('Native player publication queue failed.', error);
-          })
-          .finally(() => {
-            this.running = undefined;
-            if (this.again) {
-              this.again = false;
-              this.schedule();
-            }
-          });
+        const target = this.notification;
+        if (this.streams.size === 1 && this.periodic.size < this.service.playerProjectionWidth) {
+          const stream = this.streams.values().next().value;
+          if (stream) this.claim(stream, target);
+          return;
+        }
+        this.scan = { iterator: this.streams.values(), through: this.sequence, target, visited: 0 };
+        this.pump();
       },
       Math.max(0, this.nextPublicationAt - performance.now()),
     );
     this.wake.unref();
   }
 
+  private pump(): void {
+    const scan = this.scan;
+    if (!scan || this.closed) return;
+    while (this.periodic.size < this.service.playerProjectionWidth) {
+      // Advance before launching. The Map iterator excludes removed streams;
+      // the cutoff keeps connections registered later in their own bootstrap.
+      const step = scan.iterator.next();
+      if (step.done || step.value.sequence > scan.through) {
+        this.scan = undefined;
+        this.arm();
+        return;
+      }
+      const stream = step.value;
+      scan.visited = stream.sequence;
+      this.claim(stream, scan.target);
+    }
+  }
+
+  private claim(stream: Stream, target: number): void {
+    if (
+      !this.current(stream) ||
+      stream.busy ||
+      stream.blocked ||
+      (!stream.due && stream.claimed >= target)
+    )
+      return;
+    stream.claimed = target;
+    stream.due = false;
+    stream.busy = true;
+    const task = this.publish(stream)
+      .catch((error: unknown) => {
+        if (!this.registered(stream) || error instanceof ViewChangedError) return;
+        if (isOverloadError(error)) {
+          stream.due = true;
+          return;
+        }
+        if (!(error instanceof AuthorityError))
+          console.error('Native player publication failed.', error);
+        stream.response.destroy();
+        this.drop(stream);
+      })
+      .finally(() => {
+        this.periodic.delete(task);
+        this.settled(stream);
+        this.pump();
+      });
+    this.periodic.add(task);
+  }
+
   async close(): Promise<void> {
+    let endError: unknown;
     if (!this.closed) {
       this.closed = true;
+      this.retirement.abort(new ViewChangedError());
       clearTimeout(this.wake);
       clearInterval(this.heartbeat);
       this.unsubscribe();
+      this.scan = undefined;
       for (const stream of this.streams.values()) {
-        stream.response.end();
-        this.drop(stream);
+        try {
+          if (stream.blocked) stream.response.destroy();
+          else stream.response.end();
+        } catch (error) {
+          endError ??= error;
+          stream.response.destroy();
+        } finally {
+          this.drop(stream);
+        }
       }
     }
-    await this.running;
-    await this.lane.idle();
+    await Promise.allSettled([...this.periodic, ...this.requests]);
+    if (endError) throw endError;
   }
 }
