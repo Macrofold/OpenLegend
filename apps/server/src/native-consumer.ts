@@ -300,25 +300,25 @@ export async function withNativeJsonInput<T>(
   }
 }
 
-/** Some existing consumers require JSON text rather than a Buffer. Its UTF-16
- * backing and small envelope remain owned independently after encoding ends. */
+/** Admit the exact JSON text required by prompt consumers. Its UTF-16 backing
+ * and small envelope remain owned independently of the stringify workspace. */
 export function encodeNativeJsonText(
   world: Pick<NativeWorld, 'reserveConsumerBytes'>,
   value: unknown,
 ): { readonly text: string; readonly bytes: number } {
-  const encoded = encodeNativeJson(world, value);
-  let allocation: NativeWorldConsumer | undefined;
+  const { bytes, bodyPeak, shape, flattening } = measureNativeJson(world, value, {});
+  const output = world.reserveConsumerBytes(2 * bytes + 512);
+  let workspace: NativeWorldConsumer | undefined;
   try {
-    allocation = world.reserveConsumerBytes(2 * encoded.length + 512);
-    return attachNativeConsumer(
-      { text: encoded.toString('utf8'), bytes: encoded.length },
-      allocation,
-    );
+    workspace = world.reserveConsumerBytes(Math.max(4 * bytes, bodyPeak) + shape + flattening);
+    const text = JSON.stringify(value);
+    if (text === undefined) throw new Error('Native JSON encoding requires a JSON value.');
+    return attachNativeConsumer({ text, bytes }, output);
   } catch (error) {
-    allocation?.release();
+    output.release();
     throw error;
   } finally {
-    releaseNativeProduct(encoded);
+    workspace?.release();
   }
 }
 
