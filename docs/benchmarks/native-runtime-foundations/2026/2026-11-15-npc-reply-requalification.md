@@ -22,6 +22,8 @@ The authenticated creator withdraws the first request's selected speech while it
 
 The ten local attempts, including incomplete held cases and failed assertions, retain their source, fixtures, cleanup and raw witnesses in `nrf-chat-stale-caller-20261115/manifest.json`, SHA-256 `d025f0f83c87f0f6d2d86c713fbb76bf751ca5e5773d2142bc78102aaf3b5f6c`. Type checking, production build and asset verification, affected formatting and network boundaries pass on the exact repair. External Jev cost is $0.
 
+The later [changed-row comparison](2026-11-15-availability-and-row-adapters.md#shared-npc-repair-after-overlapping-evidence-changes) reproduces a distinct generation refusal after ordinary support retirement lands during the first exact check. It records the follow-on repair and verification, separate from the revision measured below.
+
 ## Frozen managed comparison
 
 All three managed arms contain the same five-file NPC repair. The executable patch applied to each arm is byte-identical to `5ec7e28003e5ba1cbd093597143402620d982cea` and each previous adjacent executable difference is preserved. The comparisons are A+ versus B+ for the remembered-note binding and B+ versus C+ for autosave admission. The three B+ runs serve both comparisons. The previous paused note comparison remains separate, and this campaign does not isolate CPU attributable to the common NPC repair.

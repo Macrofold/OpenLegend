@@ -1,8 +1,8 @@
 # Native runtime foundations: useful work without repeated preparation
 
-| Status      | Current progress                                                                                        | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The native answer reservation transfer passes its selected callers; its isolated comparison is running. | 2026-11-14   |
+| Status      | Current progress                                                                                                                            | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The NPC reply repair and ordinary changed-row reuse pass the selected gameplay checks, and both separate experiment decisions are recorded. | 2026-11-15   |
 
 [Technical design](native-runtime-foundations-tech-design.md) · [Source and repertoire reconciliation](native-runtime-foundations-evidence-and-repertoire.md)
 
