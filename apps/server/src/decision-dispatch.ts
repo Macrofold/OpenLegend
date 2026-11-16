@@ -12,6 +12,13 @@ import {
   type LedgerCategory,
 } from './cognition-budget.js';
 import { DECISION_MODEL, undispatchedReceipt } from './decision-state.js';
+import type {
+  DecisionAttemptEvidence,
+  DecisionDependencyFailure,
+  DecisionFailureStage,
+  DecisionRefusalReporter,
+  DecisionStopEvidence,
+} from './decision-failure.js';
 
 /** `outcome` keeps provider refusal, unavailability, invalid output, uncertain completion and
  * budget refusal distinct in job results and traces; the job status stays coarse. */
@@ -20,6 +27,7 @@ export class StopJob extends Error {
     readonly status: 'failed' | 'cancelled' | 'stale',
     message: string,
     readonly outcome?: string,
+    readonly evidence?: DecisionStopEvidence,
   ) {
     super(message);
   }
@@ -39,6 +47,10 @@ export interface DispatchRun {
   failure?: { outcome: string; reason: string };
   generatedBy?: string;
   cancelReason?: string;
+  /** The Native director persists one bounded terminal record, not per-check logs. */
+  trackTerminalEvidence?: true;
+  failureStage?: DecisionFailureStage;
+  attemptEvidence?: DecisionAttemptEvidence;
   validateJudgmentSource?: () => Promise<void>;
   /** Recheck the retained request's exact evidence. Only an owner that can
    * validate the already rendered input can recover a changed read fence. */
@@ -59,7 +71,11 @@ export interface DecisionDispatchHost<R extends DispatchRun> {
   current(run: R): string;
   durabilityTicket(): number;
   whenDurable(ticket: number): Promise<unknown>;
-  privateReadFence(actorId: string, permitted: () => boolean): () => boolean;
+  privateReadFence(
+    actorId: string,
+    permitted: () => boolean,
+    report?: DecisionRefusalReporter,
+  ): () => boolean;
   awaitResume(run: R, responseReady?: boolean): Promise<void>;
   update(run: R, status: JobRecord['status'], message: string): Promise<void>;
   attemptBudget(run: R): Parameters<GameRepository['reserve']>[6];
@@ -78,6 +94,18 @@ export async function dispatchDecision<R extends DispatchRun, T>(
   dispatch: (requestId: string, publication: HttpPublication) => Promise<AiResult<T>>,
   meter?: DecisionMeter,
 ): Promise<T> {
+  const track = run.trackTerminalEvidence;
+  const callerStage = run.failureStage;
+  if (track) {
+    run.failureStage = 'durability';
+    run.attemptEvidence = {
+      stage: suffix,
+      provider,
+      transportStarted: false,
+      responseArrived: false,
+      providerReceiptSettled: false,
+    };
+  }
   const evidenceActor = host.current(run);
   const sourceAccess = host.store.memories?.sourceAccessRevision({
     worldId: host.worldId,
@@ -89,37 +117,77 @@ export async function dispatchDecision<R extends DispatchRun, T>(
   // or retarget this wait as unrelated physical publications arrive.
   await host.whenDurable(evidenceThrough);
   const sourceActorId = host.current(run);
-  const sourceAccessCurrent = () => {
+  const sourceAccessFailure = (): DecisionDependencyFailure | undefined => {
     const scope = { worldId: host.worldId, actorId: sourceActorId };
-    return (
-      sourceAccess === host.store.memories?.sourceAccessRevision(scope) &&
-      !host.store.memories?.sourceEditPending(scope)
-    );
+    if (sourceAccess !== host.store.memories?.sourceAccessRevision(scope))
+      return { condition: 'source-access-revision', dependency: sourceActorId };
+    if (host.store.memories?.sourceEditPending(scope))
+      return { condition: 'source-edit-pending', dependency: sourceActorId };
   };
-  if (!sourceAccessCurrent())
-    throw new StopJob('failed', 'The character’s evidence changed before dispatch.', 'stale');
+  const accessFailure = sourceAccessFailure();
+  if (accessFailure)
+    throw new StopJob('failed', 'The character’s evidence changed before dispatch.', 'stale', {
+      ...accessFailure,
+      category: 'invalidated',
+      stage: 'durability',
+    });
+  let fenceFailure: DecisionDependencyFailure | undefined;
   const captureSourceFence = () =>
-    host.privateReadFence(sourceActorId, () => host.current(run) === sourceActorId);
+    host.privateReadFence(
+      sourceActorId,
+      () => host.current(run) === sourceActorId,
+      track
+        ? (failure) => {
+            fenceFailure = failure;
+          }
+        : undefined,
+    );
   let sourceCurrent = captureSourceFence();
   const revalidateSource = run.revalidateJudgmentSource;
   const nonReceptionRevision = revalidateSource
     ? host.store.memories?.actorNonReceptionRevision(sourceActorId)
     : undefined;
+  const rejectFence = (
+    stage: 'dispatch-source' | 'dispatch-publication',
+    category: DecisionStopEvidence['category'],
+    revalidation: NonNullable<DecisionStopEvidence['revalidation']>,
+    failure = fenceFailure,
+  ) =>
+    new StopJob('stale', 'The character’s evidence changed before dispatch.', undefined, {
+      condition: 'private-read-fence',
+      ...failure,
+      category,
+      stage,
+      revalidation,
+    });
+  const assertImmediateDeadline = (message = 'The immediate dispatch deadline passed.') => {
+    const state = run.job.decision;
+    if (!state || run.preparedResponse) return;
+    const wall = host.now();
+    const monotonic = performance.now();
+    const deadline =
+      wall >= state.fastPublishBy
+        ? { condition: 'immediate-wall-deadline', expected: state.fastPublishBy, current: wall }
+        : monotonic >= state.fastPublishByMonotonic
+          ? {
+              condition: 'immediate-monotonic-deadline',
+              expected: state.fastPublishByMonotonic,
+              current: monotonic,
+            }
+          : undefined;
+    if (deadline)
+      throw new StopJob('failed', message, 'expired', {
+        ...deadline,
+        category: 'refused',
+        stage: run.failureStage ?? 'admission',
+      });
+  };
   let remainingRevalidations = 2;
   // This selected strategy declares both dependent calls in advance. Its
   // original useful lifetime still fences every dispatch/commit via current();
   // a stage transition neither renews that clock nor funds a fallback.
-  if (
-    run.job.decision &&
-    !run.preparedResponse &&
-    (host.now() >= run.job.decision.fastPublishBy ||
-      performance.now() >= run.job.decision.fastPublishByMonotonic)
-  )
-    throw new StopJob(
-      'failed',
-      'No new immediate inference was started after the one-second boundary.',
-      'expired',
-    );
+  if (track) run.failureStage = 'admission';
+  assertImmediateDeadline('No new immediate inference was started after the one-second boundary.');
   const lease = await host.execution.primary(run.urgent);
   if (!lease)
     throw new StopJob('failed', 'The primary model execution slot is occupied.', 'capacity');
@@ -207,48 +275,58 @@ export async function dispatchDecision<R extends DispatchRun, T>(
             : 'Preparing a detailed decision. This may take about a minute.',
     );
     host.current(run);
-    if (run.job.decision && !run.preparedResponse) {
-      if (
-        host.now() >= run.job.decision.fastPublishBy ||
-        performance.now() >= run.job.decision.fastPublishByMonotonic
-      )
-        throw new StopJob('failed', 'The immediate dispatch deadline passed.', 'expired');
-    }
+    assertImmediateDeadline();
+    if (track) run.failureStage = 'dispatch-intent';
     dispatchIntent = true;
     if (!(await host.store.markDecisionDispatch(id))) {
-      throw new StopJob('failed', 'This model request already has dispatch intent.', 'uncertain');
+      throw new StopJob('failed', 'This model request already has dispatch intent.', 'uncertain', {
+        condition: 'dispatch-intent-already-recorded',
+        category: 'validity-unresolved',
+        stage: 'dispatch-intent',
+      });
     }
     let sourceFailure: unknown;
+    const refreshFence = async (stage: 'dispatch-source' | 'dispatch-publication') => {
+      do {
+        if (!revalidateSource || nonReceptionRevision === undefined)
+          throw rejectFence(stage, 'validity-unresolved', 'unavailable');
+        if (!remainingRevalidations) throw rejectFence(stage, 'validity-unresolved', 'exhausted');
+        const currentNonReception = host.store.memories?.actorNonReceptionRevision(sourceActorId);
+        if (nonReceptionRevision !== currentNonReception)
+          throw rejectFence(stage, 'invalidated', 'refused', {
+            condition: 'non-reception-revision',
+            dependency: sourceActorId,
+            expected: nonReceptionRevision,
+            current: currentNonReception,
+          });
+        const access = sourceAccessFailure();
+        if (access) throw rejectFence(stage, 'invalidated', 'refused', access);
+        // Bind each exact check before yielding. The same finite allowance covers
+        // both preflight changes and an ordinary reception update crossing publication.
+        remainingRevalidations--;
+        const nextFence = captureSourceFence();
+        try {
+          await revalidateSource();
+        } catch (error) {
+          if (error instanceof StopJob && error.evidence)
+            throw new StopJob(error.status, error.message, error.outcome, {
+              ...error.evidence,
+              stage,
+              revalidation: 'refused',
+            });
+          throw error;
+        }
+        sourceCurrent = nextFence;
+      } while (!sourceCurrent());
+    };
     const validate = async () => {
+      if (track) run.failureStage = 'dispatch-source';
       try {
         host.current(run);
         await run.validateJudgmentSource?.();
         host.current(run);
-        while (!sourceCurrent()) {
-          if (
-            !revalidateSource ||
-            remainingRevalidations === 0 ||
-            nonReceptionRevision === undefined ||
-            nonReceptionRevision !==
-              host.store.memories?.actorNonReceptionRevision(sourceActorId) ||
-            !sourceAccessCurrent()
-          )
-            throw new StopJob('stale', 'The character’s evidence changed before dispatch.');
-          // Retain the original dispatch intent and its model input. A second
-          // compatible change can land during the first exact check. Capture
-          // before each check and require that same fence at transport.
-          remainingRevalidations--;
-          const nextFence = captureSourceFence();
-          await revalidateSource();
-          sourceCurrent = nextFence;
-        }
-        if (
-          run.job.decision &&
-          !run.preparedResponse &&
-          (host.now() >= run.job.decision.fastPublishBy ||
-            performance.now() >= run.job.decision.fastPublishByMonotonic)
-        )
-          throw new StopJob('failed', 'The immediate dispatch deadline passed.', 'expired');
+        if (!sourceCurrent()) await refreshFence('dispatch-source');
+        assertImmediateDeadline();
       } catch (error) {
         sourceFailure = error;
         throw error;
@@ -257,19 +335,41 @@ export async function dispatchDecision<R extends DispatchRun, T>(
     const publication: HttpPublication = async (start) => {
       try {
         await validate();
-        return await host.publication(run, () => {
-          host.current(run);
-          if (!sourceCurrent())
-            throw new StopJob('stale', 'The character’s evidence changed before dispatch.');
-          if (
-            run.job.decision &&
-            !run.preparedResponse &&
-            (host.now() >= run.job.decision.fastPublishBy ||
-              performance.now() >= run.job.decision.fastPublishByMonotonic)
-          )
-            throw new StopJob('failed', 'The immediate dispatch deadline passed.', 'expired');
-          return start();
-        });
+        if (track) run.failureStage = 'dispatch-publication';
+        for (;;) {
+          let crossed: StopJob | undefined;
+          try {
+            return await host.publication(run, () => {
+              host.current(run);
+              if (!sourceCurrent()) {
+                const refusal = rejectFence(
+                  'dispatch-publication',
+                  'validity-unresolved',
+                  'publication-crossed',
+                );
+                if (fenceFailure?.condition === 'actor-private-revision') crossed = refusal;
+                throw refusal;
+              }
+              assertImmediateDeadline();
+              sourceFailure = undefined;
+              if (track) {
+                run.failureStage = 'provider';
+                if (run.attemptEvidence) {
+                  // Only the actual network receipt can confirm that transport began.
+                  run.attemptEvidence.transportStarted = 'unknown';
+                  run.attemptEvidence.responseArrived = 'unknown';
+                }
+              }
+              return start();
+            });
+          } catch (error) {
+            if (!crossed || error !== crossed) throw error;
+            // The first publication failed before start(). Its native disclosure
+            // lease has ended. Refresh the same rendered request here, outside
+            // that lease, then reacquire the actual final publication boundary.
+            await refreshFence('dispatch-publication');
+          }
+        }
       } catch (error) {
         sourceFailure = error;
         throw error;
@@ -290,7 +390,25 @@ export async function dispatchDecision<R extends DispatchRun, T>(
     );
     const accountingStartedAt = new Date().toISOString();
     result.receipt = normalizeReceiptCost(result.receipt);
+    if (track) run.failureStage = 'provider-receipt';
+    if (run.attemptEvidence) {
+      const reachedPublication = run.attemptEvidence.transportStarted !== false;
+      const received =
+        result.outcome === 'value' ||
+        (reachedPublication && result.receipt.httpStatus !== undefined);
+      // Intermediary rejection can prove an HTTP response without proving
+      // model invocation. An unrelated metadata response made before the
+      // inference publication cannot witness that inference's transport.
+      run.attemptEvidence.responseArrived = received;
+      run.attemptEvidence.transportStarted =
+        result.receipt.dispatched || received
+          ? true
+          : reachedPublication && result.receipt.completionUncertain
+            ? 'unknown'
+            : false;
+    }
     await host.store.settle(id, result.receipt);
+    if (run.attemptEvidence) run.attemptEvidence.providerReceiptSettled = true;
     completed = true;
     run.receipt = result.receipt;
     run.failure =
@@ -302,6 +420,11 @@ export async function dispatchDecision<R extends DispatchRun, T>(
         'failed',
         'The original provider execution is still uncertain; no world effect or second request was allowed.',
         'uncertain',
+        {
+          condition: 'provider-completion-uncertain',
+          category: 'provider-failed',
+          stage: 'provider',
+        },
       );
     await host.log.record(
       `${id}:accounting`,
@@ -343,12 +466,20 @@ export async function dispatchDecision<R extends DispatchRun, T>(
                 deployment_unavailable: 'resource-unavailable',
               } as Record<string, string>
             )[result.receipt.providerErrorCode ?? ''] ?? result.outcome),
+        {
+          condition: result.outcome,
+          category: result.outcome === 'cancelled' ? 'cancelled' : 'provider-failed',
+          stage: 'provider',
+        },
       );
     if (provider === 'openai') run.generatedBy = result.receipt.model;
+    if (track) run.failureStage = callerStage;
     return result.value;
   } finally {
-    if (reservedId && !dispatchIntent)
+    if (reservedId && !dispatchIntent) {
       await host.store.settle(reservedId, undispatchedReceipt(reservedId, provider, host.now()));
+      if (run.attemptEvidence) run.attemptEvidence.providerReceiptSettled = true;
+    }
     if (dispatchIntent && !completed && reservedId) lease?.uncertain(reservedId);
     lease?.release();
   }

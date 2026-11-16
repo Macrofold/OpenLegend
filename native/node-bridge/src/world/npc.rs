@@ -123,23 +123,26 @@ enum NpcPublicationOwner {
 }
 #[napi]
 pub struct NativeWorldNpcPublication {
-    inner: Option<RuntimeNpcPublication>,
-    owner: NpcPublicationOwner,
+    lease: Option<(RuntimeNpcPublication, NpcPublicationOwner)>,
+    refusal: Option<&'static str>,
     _custody: openlegend_simulation::host::ByteReservation,
 }
 #[napi]
 impl NativeWorldNpcPublication {
     #[napi]
     pub fn is_current(&self) -> bool {
-        self.inner.is_some()
-            && !match &self.owner {
-                NpcPublicationOwner::Read(read) => read.released.load(Ordering::Acquire),
-                NpcPublicationOwner::Response(ticket) => ticket.released.load(Ordering::Acquire),
-            }
+        self.lease.as_ref().is_some_and(|(_, owner)| match owner {
+            NpcPublicationOwner::Read(read) => !read.released.load(Ordering::Acquire),
+            NpcPublicationOwner::Response(ticket) => !ticket.released.load(Ordering::Acquire),
+        })
+    }
+    #[napi]
+    pub fn refusal(&self) -> Option<String> {
+        self.refusal.map(str::to_owned)
     }
     #[napi]
     pub fn release(&mut self) {
-        self.inner = None;
+        self.lease = None;
     }
 }
 
@@ -530,7 +533,7 @@ impl NativeWorld {
         })
     }
 
-    #[napi(ts_return_type = "Promise<NativeWorldNpcPublication | null>")]
+    #[napi(ts_return_type = "Promise<NativeWorldNpcPublication>")]
     pub fn npc_history_publication<'a>(
         &self,
         env: &'a Env,
@@ -562,15 +565,19 @@ impl NativeWorld {
                 )
                 .map_err(operation_error)?;
             drop(owner);
-            Ok(publication.map(|inner| NativeWorldNpcPublication {
-                inner: Some(inner),
-                owner: NpcPublicationOwner::Read(read),
+            let (lease, refusal) = match publication {
+                Ok(inner) => (Some((inner, NpcPublicationOwner::Read(read))), None),
+                Err(reason) => (None, Some(reason)),
+            };
+            Ok(NativeWorldNpcPublication {
+                lease,
+                refusal,
                 _custody: custody,
-            }))
+            })
         })
     }
 
-    #[napi(ts_return_type = "Promise<NativeWorldNpcPublication | null>")]
+    #[napi(ts_return_type = "Promise<NativeWorldNpcPublication>")]
     pub fn npc_response_publication<'a>(
         &self,
         env: &'a Env,
@@ -599,11 +606,15 @@ impl NativeWorld {
                 )
                 .map_err(operation_error)?;
             drop(owner);
-            Ok(publication.map(|inner| NativeWorldNpcPublication {
-                inner: Some(inner),
-                owner: NpcPublicationOwner::Response(ticket),
+            let (lease, refusal) = match publication {
+                Ok(inner) => (Some((inner, NpcPublicationOwner::Response(ticket))), None),
+                Err(reason) => (None, Some(reason)),
+            };
+            Ok(NativeWorldNpcPublication {
+                lease,
+                refusal,
                 _custody: custody,
-            }))
+            })
         })
     }
 

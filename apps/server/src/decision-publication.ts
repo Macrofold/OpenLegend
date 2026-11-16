@@ -1,3 +1,4 @@
+import type { DecisionAttemptEvidence, DecisionRefusalReporter } from './decision-failure.js';
 import { entityGet, type Outcome, type WorldState } from '@open-legend/domain';
 import { DECISION_LIMITS, DecisionClaimLost, type DecisionState } from './decision-state.js';
 import type { JobRecord, GameRepository } from './store.js';
@@ -15,6 +16,7 @@ export interface DecisionPublication {
   receiptId: string;
   groups: Record<string, { operations: string[]; continued?: boolean }>;
   final: boolean;
+  attemptEvidence?: DecisionAttemptEvidence;
   now: () => number;
   /** Observation only, set after the owning transaction acknowledges durable publication. */
   deliveredAt?: number;
@@ -88,30 +90,102 @@ export function decisionClaimCurrentFromRead(
   job: JobRecord | undefined,
   claim: DecisionPublication,
   facts: DecisionClaimFacts,
+  report?: DecisionRefusalReporter,
 ): job is JobRecord & { decision: DecisionState } {
   const state = job?.decision;
-  if (
-    !state ||
-    state.revision !== claim.expectedRevision ||
-    state.phase === 'closed' ||
-    state.policyDigest !== facts.policyDigest ||
-    !facts.actorEligible ||
-    facts.physicalLife !== state.physicalLife ||
-    state.worldId !== facts.worldId ||
-    state.timelineId !== facts.timelineId ||
-    state.generation !== facts.generation ||
-    claim.now() >= (state.higher?.publishBy ?? state.usefulUntilWall) ||
-    performance.now() >= (state.higher?.publishByMonotonic ?? state.usefulUntilMonotonic) ||
-    (state.usefulUntilSim !== undefined && facts.at >= state.usefulUntilSim)
-  )
+  if (!state || state.phase === 'closed') {
+    report?.({
+      condition: state ? 'decision-already-closed' : 'decision-state-unavailable',
+      dependency: claim.rootJobId,
+    });
     return false;
-  return (
-    Object.keys(claim.groups).length > 0 &&
-    Object.keys(claim.groups).every((key) => {
-      const group = state.groups[key];
-      return group?.state === 'open' && group.attemptId === claim.attemptId;
-    })
-  );
+  }
+  if (state.revision !== claim.expectedRevision) {
+    report?.({
+      condition: 'decision-revision',
+      expected: claim.expectedRevision,
+      current: state.revision,
+      dependency: claim.rootJobId,
+    });
+    return false;
+  }
+  if (state.policyDigest !== facts.policyDigest) {
+    report?.({
+      condition: 'model-policy',
+      expected: state.policyDigest,
+      current: facts.policyDigest,
+    });
+    return false;
+  }
+  if (!facts.actorEligible) {
+    report?.({ condition: 'response-actor-ineligible', dependency: state.actorId });
+    return false;
+  }
+  if (facts.physicalLife !== state.physicalLife) {
+    report?.({
+      condition: 'actor-physical-life',
+      expected: state.physicalLife,
+      current: facts.physicalLife,
+      dependency: state.actorId,
+    });
+    return false;
+  }
+  for (const field of ['worldId', 'timelineId', 'generation'] as const)
+    if (state[field] !== facts[field]) {
+      report?.({ condition: 'response-' + field, expected: state[field], current: facts[field] });
+      return false;
+    }
+  const wall = claim.now(),
+    wallLimit = state.higher?.publishBy ?? state.usefulUntilWall;
+  if (wall >= wallLimit) {
+    report?.({ condition: 'response-wall-deadline', expected: wallLimit, current: wall });
+    return false;
+  }
+  const monotonic = performance.now(),
+    monotonicLimit = state.higher?.publishByMonotonic ?? state.usefulUntilMonotonic;
+  if (monotonic >= monotonicLimit) {
+    report?.({
+      condition: 'response-monotonic-deadline',
+      expected: monotonicLimit,
+      current: monotonic,
+    });
+    return false;
+  }
+  if (state.usefulUntilSim !== undefined && facts.at >= state.usefulUntilSim) {
+    report?.({
+      condition: 'response-game-deadline',
+      expected: state.usefulUntilSim,
+      current: facts.at,
+    });
+    return false;
+  }
+  const keys = Object.keys(claim.groups);
+  if (!keys.length) {
+    report?.({ condition: 'response-no-claimed-groups', dependency: claim.rootJobId });
+    return false;
+  }
+  for (const key of keys) {
+    const group = state.groups[key];
+    if (group?.state !== 'open') {
+      report?.({
+        condition: 'response-claim-group-state',
+        dependency: key,
+        expected: 'open',
+        current: group?.state ?? 'missing',
+      });
+      return false;
+    }
+    if (group.attemptId !== claim.attemptId) {
+      report?.({
+        condition: 'response-claim-attempt',
+        dependency: key,
+        expected: claim.attemptId,
+        current: group.attemptId,
+      });
+      return false;
+    }
+  }
+  return true;
 }
 
 /** Called only from the world commit's operationalChange transaction. */
@@ -218,6 +292,18 @@ export async function finishDecisionPublicationFromRead(
       result: {
         disposition: resolved ? 'resolved' : pending ? 'native-rejection' : 'partially-resolved',
         outcome,
+        ...(!pending && !resolved && claim.attemptEvidence
+          ? {
+              failure: {
+                stage: 'response-application',
+                condition: outcome.code,
+                category: 'refused',
+                attempt: claim.attemptEvidence,
+                effectsApplied: Object.values(receipt?.components ?? {}).some((part) => part.ok),
+                responseReceiptApplied: !!receipt,
+              },
+            }
+          : {}),
         ...(claim.attemptId === job.id &&
         (now >= state.fastPublishBy || performance.now() >= state.fastPublishByMonotonic)
           ? { source: 'late-primary' }

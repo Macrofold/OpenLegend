@@ -1,3 +1,4 @@
+import type { DecisionRefusalReporter, DecisionResponseEvidence } from './decision-failure.js';
 import { memoryEntryView, memoryHistoryQuery, projectMemoryHistoryPage } from './memory-history.js';
 import { NativeKnownPlaceSelection, publishNativeKnownPlaces } from './native-known-places.js';
 import {
@@ -783,22 +784,65 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       changed();
     });
   }
-  privateReadFence(actorId: string, permitted: () => boolean): () => boolean {
+  privateReadFence(
+    actorId: string,
+    permitted: () => boolean,
+    report?: DecisionRefusalReporter,
+  ): () => boolean {
     const worldId = this.worldId,
       generation = this.generation,
       sourceRevision = this.store.memories.actorRevision(actorId);
     const scope = { worldId, actorId };
     const revision = this.store.memories.sourceAccessRevision(scope);
-    return () =>
-      !this.closed &&
-      !this.restoring &&
-      !this.failure &&
-      this.worldId === worldId &&
-      this.generation === generation &&
-      sourceRevision === this.store.memories.actorRevision(actorId) &&
-      revision === this.store.memories.sourceAccessRevision(scope) &&
-      !this.store.memories.sourceEditPending(scope) &&
-      permitted();
+    return () => {
+      if (this.closed || this.restoring || this.failure) {
+        report?.({
+          condition: this.closed
+            ? 'service-closed'
+            : this.restoring
+              ? 'restore-pending'
+              : 'service-failed',
+          dependency: actorId,
+        });
+        return false;
+      }
+      const currentWorld = this.worldId;
+      if (currentWorld !== worldId) {
+        report?.({ condition: 'world-id', expected: worldId, current: currentWorld });
+        return false;
+      }
+      const currentGeneration = this.generation;
+      if (currentGeneration !== generation) {
+        report?.({
+          condition: 'world-generation',
+          expected: generation,
+          current: currentGeneration,
+        });
+        return false;
+      }
+      const currentSource = this.store.memories.actorRevision(actorId);
+      if (currentSource !== sourceRevision) {
+        report?.({
+          condition: 'actor-private-revision',
+          dependency: actorId,
+          expected: sourceRevision,
+          current: currentSource,
+          observedCut: this.acceptedCut,
+        });
+        return false;
+      }
+      if (revision !== this.store.memories.sourceAccessRevision(scope)) {
+        report?.({ condition: 'source-access-revision', dependency: actorId });
+        return false;
+      }
+      if (this.store.memories.sourceEditPending(scope)) {
+        report?.({ condition: 'source-edit-pending', dependency: actorId });
+        return false;
+      }
+      if (permitted()) return true;
+      report?.({ condition: 'read-permission', dependency: actorId });
+      return false;
+    };
   }
   /** Accepted sparse changes only. Consumers retain their own finite trigger
    * reads; they never subscribe to a second writable actor/world graph. */
@@ -1719,12 +1763,23 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     });
   }
 
-  publishNpcHistory<T>(capture: NativeNpcCapture, start: () => T): Promise<{ result: T }> {
+  publishNpcHistory<T>(
+    capture: NativeNpcCapture,
+    start: () => T,
+    report?: DecisionRefusalReporter,
+  ): Promise<{ result: T }> {
     return this.publishRecall(async () => {
       this.assertNpcCapture(capture);
+      const actorId = capture.facts.self.actorId;
       const publication = await capture.historyPublication(this.world);
       try {
-        if (!publication?.isCurrent()) throw new ViewChangedError();
+        if (!publication?.isCurrent()) {
+          report?.({
+            condition: publication?.refusal() ?? 'native-history-publication-released',
+            dependency: actorId,
+          });
+          throw new ViewChangedError();
+        }
         // Wrapping the result deliberately starts, but never awaits, provider
         // work while this actual historical disclosure lease is held.
         return { result: start() };
@@ -3124,26 +3179,57 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     readonly current: () => boolean;
     readonly signal: AbortSignal;
     readonly claim?: DecisionPublication;
+    readonly onAccepted?: (evidence: DecisionResponseEvidence) => void;
+    readonly reportRefusal?: DecisionRefusalReporter;
   }): Promise<ApiResult> {
     const actorId = input.actorId;
     if (input.claim && input.claim.receiptId !== input.responseId)
       throw new Error('Decision publication and native response identities differ.');
     let authority: RequestScope | undefined;
     let admission: DecisionClaimFacts | undefined;
-    const current = () =>
-      input.generation === this.generation &&
-      !input.signal.aborted &&
-      !this.paused &&
-      input.current() &&
-      (!authority || this.currentScope(authority, 'play', true));
+    const report = input.reportRefusal;
+    const current = () => {
+      if (input.generation !== this.generation) {
+        report?.({
+          condition: 'world-generation',
+          expected: input.generation,
+          current: this.generation,
+        });
+        return false;
+      }
+      if (input.signal.aborted || this.paused) {
+        report?.({
+          condition: input.signal.aborted ? 'response-cancelled' : 'response-world-paused',
+        });
+        return false;
+      }
+      if (!input.current()) return false;
+      if (authority && !this.currentScope(authority, 'play', true)) {
+        report?.({ condition: 'response-request-authority', dependency: actorId });
+        return false;
+      }
+      return true;
+    };
     const first = async () => {
-      const job = await this.store.getJob(input.claim?.rootJobId ?? input.responseId);
-      if (
-        !job ||
-        job.request.npcId !== actorId ||
-        (job.authority && !this.currentScope(job.authority, 'play', true))
-      )
+      const jobId = input.claim?.rootJobId ?? input.responseId;
+      const job = await this.store.getJob(jobId);
+      if (!job) {
+        report?.({ condition: 'response-job-unavailable', dependency: jobId });
         throw new DecisionClaimLost();
+      }
+      if (job.request.npcId !== actorId) {
+        report?.({
+          condition: 'response-job-actor',
+          dependency: jobId,
+          expected: actorId,
+          current: job.request.npcId,
+        });
+        throw new DecisionClaimLost();
+      }
+      if (job.authority && !this.currentScope(job.authority, 'play', true)) {
+        report?.({ condition: 'response-request-authority', dependency: actorId });
+        throw new DecisionClaimLost();
+      }
       authority = job.authority;
       if (input.claim) {
         const claim = input.claim;
@@ -3166,7 +3252,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                 actor.cognition !== false &&
                 !own.actionsBlocked,
             };
-            if (!decisionClaimCurrentFromRead(job, claim, facts)) throw new DecisionClaimLost();
+            if (!decisionClaimCurrentFromRead(job, claim, facts, report))
+              throw new DecisionClaimLost();
             return facts;
           } finally {
             try {
@@ -3181,6 +3268,11 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           }
         });
       } else if (!['generating', 'queued', 'judging'].includes(job.status) && !job.responseReady) {
+        report?.({
+          condition: 'response-job-not-pending',
+          dependency: job.id,
+          current: job.status,
+        });
         throw new DecisionClaimLost();
       }
       if (!current()) throw new DecisionClaimLost();
@@ -3194,6 +3286,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     const resultOwner = createNativeConsumerScope();
     let publication: NativePublication | undefined;
     let result: Outcome | undefined;
+    let acceptedReceipt: DecisionResponseEvidence | undefined;
     const prepareOutcome = (outcome: Outcome) =>
       resultOwner.run(async () => {
         result = copyNativeOutcome(this.world, outcome);
@@ -3221,19 +3314,30 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             const receipt = JSON.parse(receiptRow.payload) as NonNullable<
               WorldState['responseReceipts']
             >[string];
+            if (input.onAccepted)
+              acceptedReceipt = {
+                effectsApplied: Object.values(receipt.components).some((part) => part.ok),
+                responseReceiptApplied: true,
+              };
             await finishDecisionPublicationFromRead(
               this.store,
               claim,
               publication.outcome,
               receipt,
               (job, proposed) =>
-                decisionClaimCurrentFromRead(job, proposed, {
-                  ...admission!,
-                  policyDigest: decisionPolicyDigest(this.config),
-                }),
+                decisionClaimCurrentFromRead(
+                  job,
+                  proposed,
+                  {
+                    ...admission!,
+                    policyDigest: decisionPolicyDigest(this.config),
+                  },
+                  report,
+                ),
             );
           },
         });
+        if (acceptedReceipt) input.onAccepted?.(acceptedReceipt);
         if (claim.startedMonotonic !== undefined) {
           claim.deliveredAt = claim.now();
           claim.deliveredElapsedMs = Math.max(0, performance.now() - claim.startedMonotonic);
@@ -3248,6 +3352,21 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         signal: input.signal,
         outcomes: (publication) => [{ id: input.responseId, outcome: publication.outcome }],
       });
+      if (publication && input.onAccepted) {
+        const receiptRow = (publication.records.writes['response_receipts'] ?? []).find(
+          (row) => row.slot === input.responseId,
+        );
+        let effectsApplied: DecisionResponseEvidence['effectsApplied'] = 'unknown';
+        if (result?.ok) {
+          effectsApplied = input.response.operations.length ? 'unknown' : false;
+        } else if (receiptRow) {
+          const receipt = JSON.parse(receiptRow.payload) as NonNullable<
+            WorldState['responseReceipts']
+          >[string];
+          effectsApplied = Object.values(receipt.components).some((part) => part.ok);
+        }
+        input.onAccepted({ effectsApplied, responseReceiptApplied: !!receiptRow });
+      }
       return (
         (publication && retainNativeProduct(result!)) ?? {
           ok: false,

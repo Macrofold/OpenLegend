@@ -1,3 +1,4 @@
+import type { DecisionRefusalReporter } from './decision-failure.js';
 import {
   canonicalJson,
   selectReceivedReceiptMembers,
@@ -37,6 +38,7 @@ export function retainTemporalSelectionWatch(
   aliases: Iterable<string>,
   maximumBytes: number,
   semanticSources: readonly EvidenceSource[],
+  report?: DecisionRefusalReporter,
 ): boolean {
   const personalSources = new Map(watch.personalSources);
   for (const source of semanticSources) {
@@ -49,9 +51,25 @@ export function retainTemporalSelectionWatch(
     if (!table) continue;
     const key = JSON.stringify([table, source.observer.actorId, source.id]),
       old = personalSources.get(key);
-    if (old !== undefined && old !== source.revision) return false;
-    if (watch.personalEdits.has(key) && watch.personalEdits.get(key) !== source.revision)
+    if (old !== undefined && old !== source.revision) {
+      report?.({
+        condition: 'temporal-account-conflicting-revisions',
+        dependency: source.id,
+        expected: old,
+        current: source.revision,
+      });
       return false;
+    }
+    const edited = watch.personalEdits.get(key);
+    if (watch.personalEdits.has(key) && edited !== source.revision) {
+      report?.({
+        condition: 'temporal-account-edited-before-binding',
+        dependency: source.id,
+        expected: source.revision,
+        current: edited ?? 'missing',
+      });
+      return false;
+    }
     personalSources.set(key, String(source.revision));
   }
   const retainedAliases = new Set([...watch.aliases, ...aliases]);
@@ -74,7 +92,14 @@ export function retainTemporalSelectionWatch(
   for (const id of retainedAliases) bytes += Buffer.byteLength(id) + 8;
   for (const [key, revision] of personalSources)
     bytes += Buffer.byteLength(key) + Buffer.byteLength(revision);
-  if (bytes + watch.editBytes > maximumBytes) return false;
+  if (bytes + watch.editBytes > maximumBytes) {
+    report?.({
+      condition: 'temporal-selection-capacity',
+      expected: maximumBytes,
+      current: bytes + watch.editBytes,
+    });
+    return false;
+  }
   watch.aliases = retainedAliases;
   watch.selections = retained;
   watch.bytes = bytes;
@@ -112,13 +137,21 @@ export function temporalWatchChanges(
   actorId: string,
   changes: RecordChanges,
   maximumBytes: number,
+  report?: DecisionRefusalReporter,
 ): boolean {
   for (const table of ['mind_forgotten', 'mind_corrections'])
     for (const row of changes.writes.get(table) ?? []) {
       const path = JSON.parse(row.id) as string[];
       if (path[3] !== actorId) continue;
       const source = table === 'mind_forgotten' ? JSON.parse(row.payload) : path.at(-1);
-      if (typeof source === 'string' && watch.aliases.has(source)) return false;
+      if (typeof source === 'string' && watch.aliases.has(source)) {
+        report?.({
+          condition:
+            table === 'mind_forgotten' ? 'temporal-source-forgotten' : 'temporal-source-corrected',
+          dependency: source,
+        });
+        return false;
+      }
     }
   for (const intent of changes.temporalEdits ?? []) {
     if (!intent.before || intent.before.actorId !== actorId) continue;
@@ -128,8 +161,13 @@ export function temporalWatchChanges(
         before &&
         (intent.deleted ||
           canonicalJson(before) !== canonicalJson(logicalProjection(intent.after, selection)))
-      )
+      ) {
+        report?.({
+          condition: intent.deleted ? 'temporal-receipt-removed' : 'temporal-receipt-changed',
+          dependency: selection.receipt.id,
+        });
         return false;
+      }
     }
   }
   // Only a typed personal-source dependency selects this revision fence.
@@ -137,7 +175,14 @@ export function temporalWatchChanges(
   // wrapper: routine account conversion/expiry cannot revoke dated input.
   const rememberEdit = (key: string, revision: string | undefined) => {
     if (!watch.personalEdits.has(key)) watch.editBytes += Buffer.byteLength(key) + 128;
-    if (watch.bytes + watch.editBytes > maximumBytes) return false;
+    if (watch.bytes + watch.editBytes > maximumBytes) {
+      report?.({
+        condition: 'temporal-edit-capacity',
+        expected: maximumBytes,
+        current: watch.bytes + watch.editBytes,
+      });
+      return false;
+    }
     watch.personalEdits.set(key, revision);
     return true;
   };
@@ -151,18 +196,33 @@ export function temporalWatchChanges(
       if (path[ownerAt] !== actorId) continue;
       const revision = personalAccountRevision(row.payload),
         expected = watch.personalSources.get(key);
-      if (!rememberEdit(key, revision) || (expected !== undefined && revision !== expected))
+      if (!rememberEdit(key, revision)) return false;
+      if (expected !== undefined && revision !== expected) {
+        report?.({
+          condition: 'temporal-account-revision',
+          dependency: row.slot,
+          expected,
+          current: revision,
+        });
         return false;
+      }
     }
     for (const id of changes.deletes.get(table) ?? []) {
       if (changes.expired?.get(table)?.includes(id)) continue;
       const path = JSON.parse(id) as string[],
         key = JSON.stringify([table, path[ownerAt], path.at(-1)]);
-      if (
-        path[ownerAt] === actorId &&
-        (!rememberEdit(key, undefined) || watch.personalSources.has(key))
-      )
+      if (path[ownerAt] !== actorId) continue;
+      if (!rememberEdit(key, undefined)) return false;
+      const expected = watch.personalSources.get(key);
+      if (expected !== undefined) {
+        report?.({
+          condition: 'temporal-account-removed',
+          dependency: path.at(-1),
+          expected,
+          current: 'missing',
+        });
         return false;
+      }
     }
   }
   return true;

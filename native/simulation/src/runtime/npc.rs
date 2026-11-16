@@ -169,32 +169,39 @@ impl NativeWorldSession {
         &self,
         read: &RuntimeNpcRead,
         input: &[u8],
-    ) -> Result<Option<RuntimeNpcPublication>, RuntimeError> {
+    ) -> Result<Result<RuntimeNpcPublication, &'static str>, RuntimeError> {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let request: NpcPublicationRequest = serde_json::from_slice(input).map_err(failure)?;
         let simulation = self.session.accepted().map_err(failure)?;
-        if read.candidate_key.is_some()
-            || !read.historical_scope.still_permitted(&simulation.state)
-            || !crate::capture::npc_perspectives_current(
-                &simulation.state,
-                &read.read.perception.actor_id,
-                &read.perspectives,
-                &request.perspectives,
-                &self.budget,
-            )
-            .map_err(failure)?
-            || !npc_consumer_current(
-                &simulation.state,
-                &read.read.perception.actor_id,
-                &request.consumer,
-                None,
-            )
-            .map_err(failure)?
-        {
-            return Ok(None);
+        if read.candidate_key.is_some() {
+            return Ok(Err("native-history-uses-candidate"));
         }
-        Ok(Some(RuntimeNpcPublication {
+        if !read.historical_scope.still_permitted(&simulation.state) {
+            return Ok(Err("native-history-scope"));
+        }
+        if !crate::capture::npc_perspectives_current(
+            &simulation.state,
+            &read.read.perception.actor_id,
+            &read.perspectives,
+            &request.perspectives,
+            &self.budget,
+        )
+        .map_err(failure)?
+        {
+            return Ok(Err("native-history-perspectives"));
+        }
+        if !npc_consumer_current(
+            &simulation.state,
+            &read.read.perception.actor_id,
+            &request.consumer,
+            None,
+        )
+        .map_err(failure)?
+        {
+            return Ok(Err("native-history-consumer"));
+        }
+        Ok(Ok(RuntimeNpcPublication {
             _lease: self.session.fence().begin_publication().map_err(failure)?,
         }))
     }
@@ -202,11 +209,11 @@ impl NativeWorldSession {
     pub fn npc_response_publication(
         &self,
         ticket: &RuntimeNpcResponseTicket,
-    ) -> Result<Option<RuntimeNpcPublication>, RuntimeError> {
+    ) -> Result<Result<RuntimeNpcPublication, &'static str>, RuntimeError> {
         use crate::response::ResponseValidityRoute;
         self.require_active()?;
         if !ticket.publication_available() {
-            return Ok(None);
+            return Ok(Err("native-response-ticket"));
         }
         let state = &self.session.accepted().map_err(failure)?.state;
         let actor_id = &ticket.current.read.perception.actor_id;
@@ -214,22 +221,29 @@ impl NativeWorldSession {
         // Paused/participating/response-body checks belong to the actual
         // response effect owner; source-only reflection has its own native
         // maintenance admission and must not inherit a chat/action gate here.
-        if !ticket.original.historical_scope.still_permitted(state)
-            || !ticket.current.historical_scope.still_permitted(state)
-            || ticket
-                .original
-                .sources
-                .iter()
-                .any(|source| !source.scope.still_permitted(state))
-            || !npc_consumer_current(
-                state,
-                actor_id,
-                ticket.bindings.consumer.as_str(),
-                Some(&ticket.decision_id),
-            )
-            .map_err(failure)?
+        if !ticket.original.historical_scope.still_permitted(state) {
+            return Ok(Err("native-response-original-history"));
+        }
+        if !ticket.current.historical_scope.still_permitted(state) {
+            return Ok(Err("native-response-current-history"));
+        }
+        if ticket
+            .original
+            .sources
+            .iter()
+            .any(|source| !source.scope.still_permitted(state))
         {
-            return Ok(None);
+            return Ok(Err("native-response-additional-history"));
+        }
+        if !npc_consumer_current(
+            state,
+            actor_id,
+            ticket.bindings.consumer.as_str(),
+            Some(&ticket.decision_id),
+        )
+        .map_err(failure)?
+        {
+            return Ok(Err("native-response-consumer"));
         }
         if !ticket
             .original
@@ -240,7 +254,7 @@ impl NativeWorldSession {
             .required_outcomes_current(state, actor_id, &self.budget)
             .map_err(failure)?
         {
-            return Ok(None);
+            return Ok(Err("native-response-original-outcomes"));
         }
         let witness = ticket
             .current
@@ -262,29 +276,38 @@ impl NativeWorldSession {
                 .required_outcomes_current(state, actor_id, &self.budget),
         }
         .map_err(failure)?;
-        if !current
-            || !crate::capture::npc_perspectives_current(
-                state,
-                actor_id,
-                &ticket.original.perspectives,
-                &ticket.bindings.perspectives,
-                &self.budget,
-            )
-            .map_err(failure)?
-            || !ticket
-                .bindings
-                .appraisals
-                .as_ref()
-                .map(|appraisals| {
-                    appraisals.current(state, &ticket.current.read, actor_id, &self.budget)
-                })
-                .transpose()
-                .map_err(failure)?
-                .unwrap_or(true)
-        {
-            return Ok(None);
+        if !current {
+            return Ok(Err(match ticket.bindings.validity {
+                ResponseValidityRoute::Decision => "native-response-decision-witness",
+                ResponseValidityRoute::PreparedResponse => "native-response-prepared-witness",
+                ResponseValidityRoute::Source => "native-response-source-witness",
+            }));
         }
-        Ok(Some(RuntimeNpcPublication {
+        if !crate::capture::npc_perspectives_current(
+            state,
+            actor_id,
+            &ticket.original.perspectives,
+            &ticket.bindings.perspectives,
+            &self.budget,
+        )
+        .map_err(failure)?
+        {
+            return Ok(Err("native-response-perspectives"));
+        }
+        if !ticket
+            .bindings
+            .appraisals
+            .as_ref()
+            .map(|appraisals| {
+                appraisals.current(state, &ticket.current.read, actor_id, &self.budget)
+            })
+            .transpose()
+            .map_err(failure)?
+            .unwrap_or(true)
+        {
+            return Ok(Err("native-response-appraisals"));
+        }
+        Ok(Ok(RuntimeNpcPublication {
             _lease: self.session.fence().begin_publication().map_err(failure)?,
         }))
     }

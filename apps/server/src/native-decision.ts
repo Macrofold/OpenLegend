@@ -64,6 +64,11 @@ import { contextSections, type SharedModelExperience } from './perceived-context
 import { fitActionCandidates } from './decision-context.js';
 import { decisionActivityFactsFromRead } from './decision-activity-facts.js';
 import { StopJob } from './decision-dispatch.js';
+import type {
+  DecisionDependencyFailure,
+  DecisionFailureStage,
+  DecisionRefusalReporter,
+} from './decision-failure.js';
 import { ViewChangedError } from './player-view-async.js';
 import { ContextBudgetError, CONTEXT_BYTE_LIMIT } from './context.js';
 import {
@@ -140,7 +145,7 @@ export interface NativeDecisionRouteInput {
   activityRequests: ReturnType<typeof decisionActivityFactsFromRead>['activityRequests'];
   actionRequest(purpose: 'actions' | 'choose-action'): Omit<JudgeRequest, 'requestId' | 'signal'>;
   refreshActions(): Promise<void>;
-  sourcesCurrent(): boolean;
+  sourceFailure(): DecisionDependencyFailure | undefined;
   revalidate(): Promise<void>;
   publish: Parameters<Judge>[1];
 }
@@ -245,39 +250,80 @@ async function prepareOwnedDecision(
   const fence = repository.captureTemporalSourceFence(scope, signal);
   const bodies = new MemoryReadCache();
   const sql = <T>(operation: () => Promise<T>) => service.withActorMemoryRead(actorId, operation);
-  const assertCurrent = () => {
-    signal.throwIfAborted();
-    if (generation !== service.generation || !fence.current())
-      throw new StopJob('stale', 'Personal evidence changed during native decision preparation.');
+  const stopSource = (
+    stage: DecisionFailureStage,
+    failure: DecisionDependencyFailure,
+    message = 'The selected personal evidence is no longer available.',
+  ) =>
+    new StopJob('stale', message, undefined, {
+      stage,
+      dependency: actorId,
+      ...failure,
+      category: failure.condition.endsWith('-capacity') ? 'validity-unresolved' : 'invalidated',
+    });
+  const sourceFailure = (): DecisionDependencyFailure | undefined => {
+    const latest = service.generation;
+    if (generation !== latest)
+      return { condition: 'world-generation', expected: generation, current: latest };
+    return fence.failure();
   };
-  const sourcesCurrent = () =>
-    generation === service.generation && fence.current() && !signal.aborted;
-  const historyCurrent = async () => {
-    assertCurrent();
-    // Issuance moves the actual reads into the ticket. Checks after that move
-    // must use its owner, rather than a consumed read handle.
-    if (ticket || reflectionTicket) return currentTicket();
-    const { result } = await service.publishNpcHistory(original, () => true);
-    assertCurrent();
+  const assertCurrent = (stage: DecisionFailureStage = 'preparation') => {
+    signal.throwIfAborted();
+    const failure = sourceFailure();
+    if (failure) throw stopSource(stage, failure);
+  };
+  const historyCurrent = async (stage: DecisionFailureStage = 'preparation') => {
+    assertCurrent(stage);
+    // Issuance moves the reads into their ticket. A consumed view cannot
+    // establish the currentness of that ticket or its retained proof.
+    if (ticket || reflectionTicket)
+      return currentTicket((failure) => {
+        throw stopSource(stage, failure);
+      }, stage);
+    const { result } = await service.publishNpcHistory(
+      original,
+      () => true,
+      (failure) => {
+        throw stopSource(stage, failure);
+      },
+    );
+    assertCurrent(stage);
     return result;
   };
   const publishHistory = <T>(start: () => T) =>
-    service.publishNpcHistory(original, () => {
-      assertCurrent();
-      return withoutNativeConsumerScope(start);
-    });
+    service.publishNpcHistory(
+      original,
+      () => {
+        assertCurrent('dispatch-publication');
+        return withoutNativeConsumerScope(start);
+      },
+      (failure) => {
+        throw stopSource('dispatch-publication', failure);
+      },
+    );
   const judge = (request: Omit<JudgeRequest, 'requestId' | 'signal'>) =>
     input.judge(request, publishHistory);
-  const currentTicket = async () => {
-    assertCurrent();
-    if (reflectionTicket) return reflectionTicket.sourcesCurrent();
+  const currentTicket = async (
+    report?: DecisionRefusalReporter,
+    stage: DecisionFailureStage = 'preparation',
+  ) => {
+    assertCurrent(stage);
+    if (reflectionTicket) {
+      const current = reflectionTicket.sourcesCurrent();
+      if (!current) report?.({ condition: 'native-reflection-sources' });
+      return current;
+    }
     if (!ticket) throw new Error('Native decision has no issued response ticket.');
     return service.publishRecall(async () => {
       const publication = await service.world.npcResponsePublication(ticket!);
       try {
-        return (
-          publication !== null && publication.isCurrent() && fence.current() && !signal.aborted
-        );
+        if (!publication?.isCurrent()) {
+          report?.({ condition: publication?.refusal() ?? 'native-response-publication-released' });
+          return false;
+        }
+        const failure = sourceFailure();
+        if (failure) report?.(failure);
+        return !failure && !signal.aborted;
       } finally {
         publication?.release();
       }
@@ -580,25 +626,32 @@ async function prepareOwnedDecision(
     const conversationCheck = async (
       _flush = true,
       additionalSources: CurrentMemorySource[] = [],
+      stage: DecisionFailureStage = 'preparation',
     ) =>
       withNativeConsumerScope(async () => {
         original.guardPerspectives(selectedPerspectives());
-        if (!(await historyCurrent()))
-          throw new StopJob('stale', 'Native decision sources changed.');
+        if (!(await historyCurrent(stage)))
+          throw stopSource(stage, { condition: 'native-history-publication' });
+        const refuse = (failure: DecisionDependencyFailure) => {
+          throw stopSource(stage, failure);
+        };
         const valid = await sql(() =>
           repository.validatePreparation(
             scope,
             { sequence: 0, sources: validity.boundSources },
             additionalSources,
+            refuse,
           ),
         );
+        if (!valid) throw stopSource(stage, { condition: 'selected-account-unavailable' });
         const covered = compactedSources ?? validity.usedCache?.value.sources;
-        const coverage =
-          !covered || (await sql(() => repository.currentCompactionSources(scope, covered)));
-        if (!valid || !coverage)
-          throw new StopJob('stale', 'Selected speech or recall sources changed.');
-        if (!(await historyCurrent()))
-          throw new StopJob('stale', 'Native decision sources changed.');
+        if (
+          covered &&
+          !(await sql(() => repository.currentCompactionSources(scope, covered, refuse)))
+        )
+          throw stopSource(stage, { condition: 'selected-compaction-unavailable' });
+        if (!(await historyCurrent(stage)))
+          throw stopSource(stage, { condition: 'native-history-publication' });
       });
     const projectedConversation = await conversationOwner.run(() =>
       buildNativeConversationContext({
@@ -627,7 +680,7 @@ async function prepareOwnedDecision(
         ...(input.compact
           ? {
               generate: async (...args: Parameters<ConversationGenerate>) => {
-                await historyCurrent();
+                await historyCurrent('preparation');
                 return input.compact!({ ...args[0], publication: publishHistory }, args[1]);
               },
             }
@@ -707,7 +760,7 @@ async function prepareOwnedDecision(
       throw new ContextBudgetError(
         'Complete accepted inner world and required context exceed the input budget.',
       );
-    await historyCurrent();
+    await historyCurrent('preparation');
     const selection = await selectNativeRecall({
       ...input,
       mode: input.mode === 'reflection' ? 'ordinary' : input.mode,
@@ -1115,10 +1168,10 @@ async function prepareOwnedDecision(
                 >['activityRequests'],
                 actionRequest,
                 refreshActions,
-                sourcesCurrent,
+                sourceFailure,
                 revalidate: async () => {
                   try {
-                    await conversationCheck(false, selectedProofs);
+                    await conversationCheck(false, selectedProofs, 'dispatch-source');
                     // Routing precedes response-ticket issuance. Recheck admitted
                     // receipt members alongside account revisions and perspectives.
                     if (
@@ -1128,13 +1181,19 @@ async function prepareOwnedDecision(
                         await admitNativeSituationHistory(service, original, situation, signal),
                       )
                     )
-                      throw new StopJob(
-                        'stale',
+                      throw stopSource(
+                        'dispatch-source',
+                        { condition: 'selected-chronology-members' },
                         'Selected native decision chronology became unavailable.',
                       );
                   } catch (error) {
                     if (error instanceof ViewChangedError)
-                      throw new StopJob('stale', 'Native decision sources changed.');
+                      throw new StopJob('stale', 'Native decision sources changed.', undefined, {
+                        stage: 'dispatch-source',
+                        condition: 'chronology-read-unavailable',
+                        category: 'validity-unresolved',
+                        revalidation: 'unavailable',
+                      });
                     throw error;
                   }
                 },
@@ -1403,6 +1462,19 @@ async function prepareOwnedDecision(
     let retainedContext = context;
     let retainedOffers = offersAtStart;
 
+    const readCurrent = async (stage: DecisionFailureStage, report?: DecisionRefusalReporter) => {
+      if (!ticket && !reflectionTicket) return false;
+      return owner.run(() =>
+        withNativeConsumerScope(async () => {
+          await conversationCheck(false, selectedProofs, stage);
+          if (appraisalCurrent && !(await appraisalCurrent())) {
+            report?.({ condition: 'selected-appraisal-source' });
+            return false;
+          }
+          return currentTicket(report, stage);
+        }),
+      );
+    };
     const prepared = retainNativeSources(
       {
         routingFailure,
@@ -1475,7 +1547,7 @@ async function prepareOwnedDecision(
         })),
         addressedSpeech,
         speechTrigger,
-        sourcesCurrent,
+        sourceFailure,
         get routing() {
           requireContext();
           return routing;
@@ -1532,18 +1604,23 @@ async function prepareOwnedDecision(
         validity: nativeDecisionValidity(now, service.definitions),
         preparedValidity: nativePreparedResponseValidity(now),
         awarenessSequence: retainedConversation.awarenessSequence,
-        async current() {
-          if (!ticket && !reflectionTicket) return false;
-          return owner.run(() =>
-            withNativeConsumerScope(async () => {
-              await conversationCheck(false, selectedProofs);
-              return (!appraisalCurrent || (await appraisalCurrent())) && (await currentTicket());
-            }),
-          );
+        current: () => readCurrent('preparation'),
+        async assertValid(stage: DecisionFailureStage) {
+          if (
+            !(await readCurrent(stage, (failure) => {
+              throw stopSource(stage, failure);
+            }))
+          )
+            throw new StopJob('stale', 'The decision has no current response ticket.', undefined, {
+              stage,
+              condition: 'native-response-ticket-unavailable',
+              category: 'validity-unresolved',
+              revalidation: 'unavailable',
+            });
         },
         async publish<T>(start: () => T): Promise<{ result: T }> {
           return owner.run(async () => {
-            await conversationCheck(false, selectedProofs);
+            await conversationCheck(false, selectedProofs, 'dispatch-publication');
             return service.publishRecall(async () => {
               if (!ticket && !reflectionTicket)
                 throw new Error('Native decision has no issued response ticket.');
@@ -1552,9 +1629,14 @@ async function prepareOwnedDecision(
                 : await service.world.npcResponsePublication(ticket!);
               try {
                 requireContext();
-                assertCurrent();
+                assertCurrent('dispatch-publication');
                 if (!publication?.isCurrent())
-                  throw new Error('The native response became stale before dispatch.');
+                  throw stopSource('dispatch-publication', {
+                    condition: reflectionTicket
+                      ? 'native-reflection-publication'
+                      : ((publication && 'refusal' in publication ? publication.refusal() : null) ??
+                        'native-response-publication-released'),
+                  });
                 const result = withoutNativeConsumerScope(start);
                 // Actual local provider consumption, rather than cancellation
                 // time, closes the leases on both originating owners.

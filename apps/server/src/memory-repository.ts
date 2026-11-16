@@ -1,3 +1,4 @@
+import type { DecisionDependencyFailure, DecisionRefusalReporter } from './decision-failure.js';
 import { temporalReadSourceRevoked } from '@open-legend/domain';
 import { fundNativeSourceWorkspace, parseSourceJson } from './native-source-preparation.js';
 import type { LiveReadCuts } from './live-read-overlay.js';
@@ -664,6 +665,7 @@ export interface CanonicalSourceFence {
   release(): void;
 }
 export interface TemporalSourceFence extends CanonicalSourceFence {
+  failure(): DecisionDependencyFailure | undefined;
   validate(
     selections: readonly TemporalHistorySelection['entries'][number][],
     currentWindow: () => TemporalHistoryWindow,
@@ -676,6 +678,7 @@ interface CanonicalSourceWatch {
   expected: ReadonlyMap<string, string>;
   valid: boolean;
   temporal?: TemporalSourceWatch;
+  temporalFailure?: DecisionDependencyFailure;
   /** Exact storage timeline for finite detached temporal inputs. */
   temporalGeneration?: string;
   retention?: {
@@ -1256,6 +1259,9 @@ export class MemoryRepository {
     this.canonicalSourceFences.add(fence);
     const release = () => {
       fence.valid = false;
+      fence.temporalFailure ??= {
+        condition: signal?.aborted ? 'temporal-watch-aborted' : 'temporal-watch-released',
+      };
       temporal.aliases.clear();
       temporal.personalSources.clear();
       temporal.personalEdits.clear();
@@ -1269,8 +1275,15 @@ export class MemoryRepository {
     if (signal?.aborted) release();
     let pending: Promise<boolean> | undefined;
     let validatedInput: string | undefined;
+    const failure = () =>
+      !fence.valid
+        ? (fence.temporalFailure ?? { condition: 'temporal-watch-invalidated' })
+        : this.sourceEditPending(scope)
+          ? { condition: 'source-edit-pending', dependency: scope.actorId }
+          : undefined;
     return {
-      current: () => fence.valid && !this.sourceEditPending(scope),
+      current: () => !failure(),
+      failure,
       release,
       validate: async (selections, currentWindow) => {
         while (pending) await pending;
@@ -1282,6 +1295,12 @@ export class MemoryRepository {
             temporal.observerPhysicalLife !== physicalLife)
         ) {
           fence.valid = false;
+          fence.temporalFailure = {
+            condition: 'temporal-observer-life',
+            dependency: scope.actorId,
+            expected: temporal.observerPhysicalLife,
+            current: physicalLife,
+          };
           return false;
         }
         // Bind the current request owner once; old receipts keep their own life.
@@ -1289,7 +1308,15 @@ export class MemoryRepository {
         temporal.observerPhysicalLife ??= physicalLife;
         const input = digest(selections);
         if (input === validatedInput) return true;
-        const work = this.validateTemporalSelections(scope, selections, currentWindow, temporal);
+        const work = this.validateTemporalSelections(
+          scope,
+          selections,
+          currentWindow,
+          temporal,
+          (failure) => {
+            fence.temporalFailure ??= failure;
+          },
+        );
         pending = work;
         try {
           const valid =
@@ -1297,8 +1324,15 @@ export class MemoryRepository {
             fence.valid &&
             !this.sourceEditPending(scope) &&
             currentWindow().physicalLife === temporal.observerPhysicalLife;
-          if (!valid) fence.valid = false;
-          else validatedInput = input;
+          if (!valid) {
+            fence.temporalFailure ??= failure() ?? {
+              condition: 'temporal-observer-life',
+              dependency: scope.actorId,
+              expected: temporal.observerPhysicalLife,
+              current: currentWindow().physicalLife,
+            };
+            fence.valid = false;
+          } else validatedInput = input;
           return valid;
         } finally {
           if (pending === work) pending = undefined;
@@ -1343,13 +1377,25 @@ export class MemoryRepository {
       if (fence.worldId !== worldId) continue;
       if (restored || changes.deletes.has('data_world')) {
         fence.valid = false;
+        if (fence.temporal)
+          fence.temporalFailure ??= {
+            condition: restored ? 'temporal-world-restored' : 'temporal-world-deleted',
+          };
         continue;
       }
       if (fence.retention) continue;
       if (fence.temporal) {
         if (
           fence.valid &&
-          !temporalWatchChanges(fence.temporal, fence.actorId, changes, RETRIEVAL_BYTES)
+          !temporalWatchChanges(
+            fence.temporal,
+            fence.actorId,
+            changes,
+            RETRIEVAL_BYTES,
+            (failure) => {
+              fence.temporalFailure ??= failure;
+            },
+          )
         )
           fence.valid = false;
         continue;
@@ -1891,6 +1937,7 @@ export class MemoryRepository {
     selections: readonly TemporalHistorySelection['entries'][number][],
     currentWindow: () => TemporalHistoryWindow,
     watch: TemporalSourceWatch,
+    report: DecisionRefusalReporter,
   ): Promise<boolean> {
     // The private history reader already admitted and detached these exact
     // entries at its source boundary. Rehydrating them here adds no authority,
@@ -1902,8 +1949,10 @@ export class MemoryRepository {
         ({ receipt, values }) =>
           receipt.actorId !== scope.actorId || receipt.facets.length !== values.length,
       )
-    )
+    ) {
+      report({ condition: 'temporal-selection-shape-or-capacity' });
       return false;
+    }
     const subjects = new Set(
       selections.flatMap(({ receipt }) => [receipt.subject, ...(receipt.contextSubjects ?? [])]),
     );
@@ -1912,7 +1961,10 @@ export class MemoryRepository {
       semanticSources: EvidenceSource[] = [];
     for (const selection of selections) {
       const receipt = selection.receipt;
-      if (temporalReadSourceRevoked(context.disclosure, scope.actorId, receipt.id)) return false;
+      if (temporalReadSourceRevoked(context.disclosure, scope.actorId, receipt.id)) {
+        report({ condition: 'temporal-receipt-revoked', dependency: receipt.id });
+        return false;
+      }
       for (const alias of temporalReceiptAliases(receipt, context.sources, context.disclosure))
         aliases.add(alias);
       for (const [at, facet] of receipt.facets.entries()) {
@@ -1929,30 +1981,49 @@ export class MemoryRepository {
         if (value.kind !== 'personal-account' && value.kind !== 'action-result')
           for (const dependency of sensoryFacetDependencies(value))
             semanticSources.push(dependency.source);
-        if (!temporalFacetEligible(context.disclosure, scope.actorId, facet, value)) return false;
+        if (!temporalFacetEligible(context.disclosure, scope.actorId, facet, value)) {
+          report({
+            condition: 'temporal-facet-ineligible',
+            dependency: receipt.id,
+            expected: facet.memberIndex,
+          });
+          return false;
+        }
         for (const alias of temporalValueDependencyAliases(value, context.disclosure))
           aliases.add(alias);
       }
     }
+    for (const alias of aliases)
+      if (temporalReadSourceRevoked(context.disclosure, scope.actorId, alias)) {
+        report({ condition: 'temporal-source-revoked', dependency: alias });
+        return false;
+      }
+    // Install before the SQL await so an edit during the generation check cannot
+    // escape this existing finite registry. No history row is pinned.
     if (
-      [...aliases].some((alias) =>
-        temporalReadSourceRevoked(context.disclosure, scope.actorId, alias),
+      !retainTemporalSelectionWatch(
+        watch,
+        selections,
+        aliases,
+        RETRIEVAL_BYTES,
+        semanticSources,
+        report,
       )
     )
       return false;
-    // Install before the SQL await so an edit during the generation check cannot
-    // escape this existing finite registry. No history row is pinned.
-    if (!retainTemporalSelectionWatch(watch, selections, aliases, RETRIEVAL_BYTES, semanticSources))
+    return this.snapshot(scope, async () => {
+      const row = await this.db
+        .prepare('SELECT generation FROM world_head WHERE world_id=?')
+        .get(scope.worldId);
+      const generation = row?.['generation'];
+      if (generation === scope.generation) return true;
+      report({
+        condition: 'temporal-storage-generation',
+        expected: scope.generation,
+        current: typeof generation === 'string' ? generation : 'missing',
+      });
       return false;
-    return this.snapshot(
-      scope,
-      async () =>
-        (
-          await this.db
-            .prepare('SELECT generation FROM world_head WHERE world_id=?')
-            .get(scope.worldId)
-        )?.['generation'] === scope.generation,
-    );
+    });
   }
   /** Called before current rows change, inside their transaction. Retired/corrected
    * source versions preserve provenance for future consolidation policies.
@@ -3346,25 +3417,39 @@ export class MemoryRepository {
   }
   /** Derived speech may keep exact retired observer originals. A changed current
    * record, correction, forgetting or generation never validates an older cache. */
-  async currentCompactionSources(scope: MemoryScope, sources: PersonalSourceRef[]) {
-    if (sources.length > RETRIEVAL_ROWS) return false;
+  async currentCompactionSources(
+    scope: MemoryScope,
+    sources: PersonalSourceRef[],
+    report?: DecisionRefusalReporter,
+  ) {
+    if (sources.length > RETRIEVAL_ROWS) {
+      report?.({
+        condition: 'compaction-source-capacity',
+        expected: RETRIEVAL_ROWS,
+        current: sources.length,
+      });
+      return false;
+    }
     if (!sources.length) return true;
     const batchSize = 300;
     const read = async () => {
-      let matched = 0;
       for (let offset = 0; offset < sources.length; offset += batchSize) {
-        const rows = await this.db
+        // Any unavailable exact original invalidates the compaction. Return one
+        // actual failed proof rather than materializing all successful IDs.
+        const failure = await this.db
           .prepare(
-            `SELECT q.id FROM jsonb_to_recordset(?::jsonb) AS q(kind TEXT,id TEXT,revision TEXT)
+            `SELECT q.id,q.revision,r.revision AS current_revision
+          FROM jsonb_to_recordset(?::jsonb) AS q(kind TEXT,id TEXT,revision TEXT)
           LEFT JOIN recall_sources r ON r.world_id=? AND r.actor_id=? AND r.source_kind=q.kind AND r.id=q.id
-          WHERE (SELECT generation FROM world_head WHERE id=1)=?
+          WHERE ((SELECT generation FROM world_head WHERE id=1)=?
             AND (r.revision=q.revision OR (r.id IS NULL AND EXISTS (
               SELECT 1 FROM mind_source_versions v WHERE v.world_id=? AND v.actor_id=?
                 AND v.source_kind=q.kind AND v.source_id=q.id AND v.revision=q.revision)))
             AND NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=? AND f.actor_id=? AND f.source_id=q.id)
-            AND NOT EXISTS (SELECT 1 FROM mind_corrections c WHERE c.world_id=? AND c.actor_id=? AND c.source_id=q.id)`,
+            AND NOT EXISTS (SELECT 1 FROM mind_corrections c WHERE c.world_id=? AND c.actor_id=? AND c.source_id=q.id))
+            IS NOT TRUE LIMIT 1`,
           )
-          .all(
+          .get(
             JSON.stringify(sources.slice(offset, offset + batchSize)),
             scope.worldId,
             scope.actorId,
@@ -3376,9 +3461,20 @@ export class MemoryRepository {
             scope.worldId,
             scope.actorId,
           );
-        matched += rows.length;
+        if (failure) {
+          report?.({
+            condition: 'selected-compaction-source',
+            dependency: String(failure['id']),
+            expected: String(failure['revision']),
+            current:
+              typeof failure['current_revision'] === 'string'
+                ? failure['current_revision']
+                : 'missing-active-row',
+          });
+          return false;
+        }
       }
-      return matched === sources.length;
+      return true;
     };
     return sources.length > batchSize ? this.snapshot(scope, read) : this.actorRead(scope, read);
   }
@@ -4355,8 +4451,15 @@ export class MemoryRepository {
   /** Check exact source content and retention, not truth. A corrected original
    * may remain disputed chronology; fact grants and new narration still apply
    * its correction status through their own semantic owners. */
-  async current(scope: MemoryScope, sources: CurrentMemorySource[]): Promise<boolean> {
-    if (this.sourceEditPending(scope)) return false;
+  async current(
+    scope: MemoryScope,
+    sources: CurrentMemorySource[],
+    report?: DecisionRefusalReporter,
+  ): Promise<boolean> {
+    if (this.sourceEditPending(scope)) {
+      report?.({ condition: 'source-edit-pending', dependency: scope.actorId });
+      return false;
+    }
     const inherited = sources.filter((source) => source.through);
     const current: CurrentMemorySource[] = [
       ...sources.filter((source) => !source.through),
@@ -4370,17 +4473,22 @@ export class MemoryRepository {
           receipts.map((source) => source.id),
         );
         const byId = new Map(selected.map((entry) => [entry.memory.id, entry]));
-        if (
-          receipts.some((source) => {
-            const now = byId.get(source.id);
-            return (
-              !now?.receipt ||
-              now.revision !== source.revision ||
-              JSON.stringify(now.receipt) !== JSON.stringify(source.receipt)
-            );
-          })
-        )
-          return false;
+        for (const source of receipts) {
+          const now = byId.get(source.id);
+          if (!now?.receipt || now.revision !== source.revision) {
+            report?.({
+              condition: 'selected-receipt-revision',
+              dependency: source.id,
+              expected: source.revision,
+              current: now?.revision ?? 'missing',
+            });
+            return false;
+          }
+          if (JSON.stringify(now.receipt) !== JSON.stringify(source.receipt)) {
+            report?.({ condition: 'selected-receipt-binding', dependency: source.id });
+            return false;
+          }
+        }
       }
       const canonical = current.filter((source) => !source.receipt);
       for (let offset = 0; offset < canonical.length; offset += 500) {
@@ -4396,12 +4504,18 @@ export class MemoryRepository {
             row['revision'],
           ]),
         );
-        if (
-          batch.some(
-            (source) => versions.get(sourceKey(source.sourceKind, source.id)) !== source.revision,
-          )
-        )
-          return false;
+        for (const source of batch) {
+          const revision = versions.get(sourceKey(source.sourceKind, source.id));
+          if (revision !== source.revision) {
+            report?.({
+              condition: 'selected-account-revision',
+              dependency: source.id,
+              expected: source.revision,
+              current: typeof revision === 'string' ? revision : 'missing',
+            });
+            return false;
+          }
+        }
       }
       // These are server-retained capabilities from originals(), not client-selected
       // parent claims. Exact unchanged parents preserve the admitted coverage relation.
@@ -4414,8 +4528,16 @@ export class MemoryRepository {
             ]),
           ).values(),
         ];
-        if ((await this.originalRows(scope, references, false)).length !== references.length)
+        const originals = await this.originalRows(scope, references, false);
+        if (originals.length !== references.length) {
+          report?.({
+            condition: 'selected-inherited-original-unavailable',
+            dependency: scope.actorId,
+            expected: references.length,
+            current: originals.length,
+          });
           return false;
+        }
       }
       return true;
     };
@@ -4428,6 +4550,7 @@ export class MemoryRepository {
     scope: MemoryScope,
     conversation: { sequence: number; sources: ConversationSource[] } | undefined,
     sources: CurrentMemorySource[],
+    report?: DecisionRefusalReporter,
   ): Promise<boolean> {
     const selected = new Map<string, CurrentMemorySource>();
     for (const source of [
@@ -4439,10 +4562,19 @@ export class MemoryRepository {
       ...sources,
     ]) {
       const key = sourceKey(source.sourceKind, source.id);
-      if (selected.has(key) && selected.get(key)!.revision !== source.revision) return false;
+      const previous = selected.get(key);
+      if (previous !== undefined && previous.revision !== source.revision) {
+        report?.({
+          condition: 'selected-account-conflicting-revisions',
+          dependency: source.id,
+          expected: previous.revision,
+          current: source.revision,
+        });
+        return false;
+      }
       selected.set(key, source);
     }
-    return this.current(scope, [...selected.values()]);
+    return this.current(scope, [...selected.values()], report);
   }
 
   async coverage(scope: MemoryScope, model: MemoryModel) {

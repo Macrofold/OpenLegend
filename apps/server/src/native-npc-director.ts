@@ -1,3 +1,10 @@
+import type {
+  DecisionDependencyFailure,
+  DecisionStopEvidence,
+  DecisionResponseEvidence,
+} from './decision-failure.js';
+import { ViewChangedError } from './player-view-async.js';
+import { MemoryPreparationError } from './memory-repository.js';
 import { NpcReplyPreviews } from './npc-reply-preview.js';
 import { nativeNpcReplyPreviewHost } from './native-npc-reply-preview.js';
 import {
@@ -148,7 +155,8 @@ interface Run extends DispatchRun {
   generation: string;
   controller: AbortController;
   handedOff?: boolean;
-  invalidated?: boolean;
+  interruption?: StopJob;
+  responseEvidence?: DecisionResponseEvidence;
   preparation?: Preparation;
   intake?: NativeNpcIntake;
   semanticCauseOrdinals: readonly number[];
@@ -156,7 +164,7 @@ interface Run extends DispatchRun {
   level1?: Level1Outcome;
   immediateTimer?: ReturnType<typeof setTimeout>;
   expiryTimer?: ReturnType<typeof setTimeout>;
-  temporalSourcesCurrent?: () => boolean;
+  temporalSourceFailure?: () => DecisionDependencyFailure | undefined;
 }
 const bytes = (value: unknown) =>
   value === undefined
@@ -416,8 +424,8 @@ export class NativeNpcDirector {
       for (const run of this.runs.values()) {
         try {
           this.current(run);
-        } catch {
-          run.invalidated = !service.paused;
+        } catch (error) {
+          if (error instanceof StopJob) run.interruption ??= error;
           run.controller.abort();
         }
       }
@@ -633,50 +641,126 @@ export class NativeNpcDirector {
           ![...this.runs.values()].some((run) => run.actorId === actorId)))
     );
   }
+  private stopCurrent(
+    run: Run,
+    evidence: DecisionDependencyFailure,
+    message: string,
+    status: 'stale' | 'cancelled' = 'stale',
+    outcome?: string,
+    category: DecisionStopEvidence['category'] = status === 'cancelled'
+      ? 'cancelled'
+      : 'invalidated',
+  ): never {
+    throw new StopJob(status, message, outcome, {
+      stage: run.failureStage ?? 'preparation',
+      dependency: run.actorId,
+      ...evidence,
+      category,
+    });
+  }
   private current(run: Run): string {
-    if (run.generation !== this.service.generation)
-      throw new StopJob('cancelled', 'This request was cancelled before completion.');
+    if (run.interruption) throw run.interruption;
+    const service = this.service;
+    const generation = service.generation;
+    if (run.generation !== generation)
+      this.stopCurrent(
+        run,
+        { condition: 'world-generation', expected: run.generation, current: generation },
+        'This request was cancelled before completion.',
+        'cancelled',
+        undefined,
+        'invalidated',
+      );
     if (
       this.stopped ||
-      run.invalidated ||
+      run.cancelReason ||
       run.controller.signal.aborted ||
-      (this.service.paused && (run.job.kind === 'thought' || !!run.job.decision))
+      (service.paused && (run.job.kind === 'thought' || !!run.job.decision))
     )
-      throw new StopJob(
-        run.invalidated ? 'stale' : 'cancelled',
+      this.stopCurrent(
+        run,
+        {
+          condition: run.cancelReason
+            ? 'player-cancelled'
+            : this.stopped
+              ? 'server-closed'
+              : service.paused
+                ? 'game-paused'
+                : 'workflow-aborted',
+        },
         run.cancelReason ??
           (this.stopped
             ? 'This request was cancelled when the server closed.'
-            : this.service.paused
+            : service.paused
               ? 'This request was cancelled when the game paused.'
               : 'This request was cancelled before completion.'),
+        'cancelled',
       );
-    const state = run.job.decision,
-      actor = this.service.npcActor(run.actorId);
-    if (run.temporalSourcesCurrent && !run.temporalSourcesCurrent())
-      throw new StopJob('stale', 'The selected personal evidence changed or expired.');
-    if (
-      state &&
-      (this.now() >= state.usefulUntilWall ||
-        performance.now() >= state.usefulUntilMonotonic ||
-        state.policyDigest !== decisionPolicyDigest(this.service.config) ||
-        state.timelineId !== this.service.timelineId ||
-        (state.usefulUntilSim !== undefined && this.service.simTime >= state.usefulUntilSim))
-    )
-      throw new StopJob(
-        'stale',
-        'This decision expired or its approved model settings changed.',
-        'expired',
+    const state = run.job.decision;
+    const actor = service.npcActor(run.actorId);
+    const sourceFailure = run.temporalSourceFailure?.();
+    if (sourceFailure)
+      this.stopCurrent(run, sourceFailure, 'The selected personal evidence changed or expired.');
+    if (state) {
+      const wall = this.now();
+      const monotonic = performance.now();
+      const policy = decisionPolicyDigest(service.config);
+      const timeline = service.timelineId;
+      const sim = service.simTime;
+      const ended =
+        wall >= state.usefulUntilWall
+          ? { condition: 'useful-wall-deadline', expected: state.usefulUntilWall, current: wall }
+          : monotonic >= state.usefulUntilMonotonic
+            ? {
+                condition: 'useful-monotonic-deadline',
+                expected: state.usefulUntilMonotonic,
+                current: monotonic,
+              }
+            : state.policyDigest !== policy
+              ? { condition: 'model-policy', expected: state.policyDigest, current: policy }
+              : state.timelineId !== timeline
+                ? { condition: 'world-timeline', expected: state.timelineId, current: timeline }
+                : state.usefulUntilSim !== undefined && sim >= state.usefulUntilSim
+                  ? {
+                      condition: 'useful-game-deadline',
+                      expected: state.usefulUntilSim,
+                      current: sim,
+                    }
+                  : undefined;
+      if (ended)
+        this.stopCurrent(
+          run,
+          ended,
+          'This decision expired or its approved model settings changed.',
+          'stale',
+          'expired',
+        );
+    }
+    const actorChange = !actor?.alive
+      ? { condition: actor ? 'actor-dead' : 'actor-absent' }
+      : actor.controller !== 'npc'
+        ? { condition: 'actor-controller', expected: 'npc', current: actor.controller }
+        : actor.physicalLife !== run.physicalLife
+          ? {
+              condition: 'actor-physical-life',
+              expected: run.physicalLife,
+              current: actor.physicalLife,
+            }
+          : run.job.authority && !service.currentScope(run.job.authority, 'play', true)
+            ? { condition: 'request-authority' }
+            : undefined;
+    if (!actor || actorChange)
+      return this.stopCurrent(
+        run,
+        actorChange ?? { condition: 'actor-absent' },
+        'The actor or world changed; the result was not applied.',
       );
-    if (
-      !actor?.alive ||
-      actor.controller !== 'npc' ||
-      actor.physicalLife !== run.physicalLife ||
-      (run.job.authority && !this.service.currentScope(run.job.authority, 'play', true))
-    )
-      throw new StopJob('stale', 'The actor or world changed; the result was not applied.');
     if (run.job.kind === 'thought' && (actor.incapacitated || !actor.cognition))
-      throw new StopJob('stale', 'Native urgent needs superseded semantic work.');
+      this.stopCurrent(
+        run,
+        { condition: actor.incapacitated ? 'actor-incapacitated' : 'actor-cognition-unavailable' },
+        'Native urgent needs superseded semantic work.',
+      );
     return run.actorId;
   }
   private async awaitResume(run: Run, responseReady = false): Promise<void> {
@@ -742,7 +826,8 @@ export class NativeNpcDirector {
         current: (active) => this.current(active),
         durabilityTicket: () => service.durabilityTicket(),
         whenDurable: (ticket) => service.whenDurable(ticket),
-        privateReadFence: (actor, permitted) => service.privateReadFence(actor, permitted),
+        privateReadFence: (actor, permitted, report) =>
+          service.privateReadFence(actor, permitted, report),
         awaitResume: (active, ready) => this.awaitResume(active, ready),
         update: (active, status, message) => this.update(active, status, message),
         attemptBudget: () => undefined,
@@ -752,6 +837,13 @@ export class NativeNpcDirector {
             throw new StopJob(
               'stale',
               'The model request has no retained source publication owner.',
+              undefined,
+              {
+                condition: 'publication-owner-unavailable',
+                stage: 'dispatch-publication',
+                category: 'validity-unresolved',
+                revalidation: 'unavailable',
+              },
             );
           return publication(() => {
             this.current(active);
@@ -957,10 +1049,11 @@ export class NativeNpcDirector {
   ): Promise<NativeDecisionRouting> {
     // The route is already paid work while the rest of preparation is being
     // built. The existing bounded run subscription must see source withdrawal.
-    run.temporalSourcesCurrent = input.sourcesCurrent;
+    run.temporalSourceFailure = input.sourceFailure;
     run.validateJudgmentSource = async () => {
-      if (!input.sourcesCurrent())
-        throw new StopJob('stale', 'The selected personal evidence changed before dispatch.');
+      const failure = input.sourceFailure();
+      if (failure)
+        this.stopCurrent(run, failure, 'The selected personal evidence changed before dispatch.');
     };
     if (run.job.kind === 'chat') run.revalidateJudgmentSource = input.revalidate;
     const policy = this.service.definitions.facts.definitions.cognitionPolicy;
@@ -1142,11 +1235,10 @@ export class NativeNpcDirector {
       throw error;
     }
     run.validateJudgmentSource = async () => {
-      if (!(await prepared.current()))
-        throw new StopJob('stale', 'The selected personal evidence changed before dispatch.');
+      await prepared.assertValid('dispatch-source');
     };
     if (run.job.kind === 'chat') run.revalidateJudgmentSource = run.validateJudgmentSource;
-    run.temporalSourcesCurrent = prepared.sourcesCurrent;
+    run.temporalSourceFailure = prepared.sourceFailure;
     const policy = this.service.definitions.facts.definitions.cognitionPolicy,
       generationAvailable =
         !this.service.config.jevOnly &&
@@ -1344,7 +1436,7 @@ export class NativeNpcDirector {
               run.controller === previewController &&
               !previewController.signal.aborted &&
               !run.cancelReason &&
-              !run.invalidated &&
+              !run.interruption &&
               run.generation === this.service.generation &&
               previewHistoryEpoch === this.service.historyEpoch &&
               this.service.npcActor(run.actorId)?.physicalLife === run.physicalLife,
@@ -1435,12 +1527,15 @@ export class NativeNpcDirector {
     }
     this.current(run);
     await this.awaitResume(run, true);
-    if (!(await prepared.current()))
-      throw new StopJob('stale', 'The selected personal evidence changed before publication.');
+    run.failureStage = 'response-validation';
+    await prepared.assertValid('response-validation');
     const claim = run.job.decision
       ? this.claim(run.job, response, run.job.id, run.job.id)
       : undefined;
+    if (claim) claim.attemptEvidence = run.attemptEvidence;
     preview?.admitting();
+    run.failureStage = 'response-application';
+    let applicationRefusal: DecisionStopEvidence | undefined;
     const outcome = await this.service.applyNpcResponse({
       actorId: run.actorId,
       responseId: run.job.id,
@@ -1452,11 +1547,22 @@ export class NativeNpcDirector {
         try {
           this.current(run);
           return true;
-        } catch {
+        } catch (error) {
+          if (error instanceof StopJob && error.evidence) applicationRefusal ??= error.evidence;
           return false;
         }
       },
       claim,
+      reportRefusal: (failure) => {
+        applicationRefusal ??= {
+          ...failure,
+          stage: 'response-application',
+          category: 'invalidated',
+        };
+      },
+      onAccepted: (evidence) => {
+        run.responseEvidence = evidence;
+      },
     });
     try {
       await preview?.settle();
@@ -1468,13 +1574,44 @@ export class NativeNpcDirector {
           claim.deliveredAt,
           claim.deliveredElapsedMs,
         );
-      if (run.job.decision) run.job = (await this.service.store.getJob(run.job.id)) ?? run.job;
-      else
-        await this.update(run, outcome.ok ? 'completed' : 'failed', outcome.message, {
+      if (run.job.decision) {
+        run.job = (await this.service.store.getJob(run.job.id)) ?? run.job;
+        if (outcome.ok || (await this.handoff(run, 'native-rejection', true))) return;
+        // A pre-commit refusal has no transaction-owned terminal job. Close
+        // that still-pending owner unless the existing escalation policy took it.
+        if (run.job.decision?.phase === 'closed') return;
+      }
+      const failure = run.interruption?.evidence ?? applicationRefusal;
+      const status = outcome.ok
+        ? 'completed'
+        : failure?.category === 'cancelled' || run.cancelReason
+          ? 'cancelled'
+          : outcome.code === 'stale-publication'
+            ? 'stale'
+            : 'failed';
+      await this.update(
+        run,
+        status,
+        outcome.ok ? outcome.message : (run.interruption?.message ?? outcome.message),
+        {
           disposition: outcome.ok ? 'resolved' : 'native-rejection',
           outcome,
-        });
-      if (!outcome.ok && (await this.handoff(run, 'native-rejection', true))) return;
+          ...(!outcome.ok
+            ? {
+                failure: {
+                  stage: 'response-application',
+                  condition: outcome.code,
+                  category:
+                    outcome.code === 'stale-publication' ? 'validity-unresolved' : 'refused',
+                  ...failure,
+                  ...(run.attemptEvidence ? { attempt: run.attemptEvidence } : {}),
+                  effectsApplied: run.responseEvidence?.effectsApplied ?? false,
+                  responseReceiptApplied: run.responseEvidence?.responseReceiptApplied ?? false,
+                },
+              }
+            : {}),
+        },
+      );
     } finally {
       // SQL and diagnostics have consumed/copied the report; a handoff has
       // captured its own stored job. This caller returns no borrowed outcome.
@@ -1816,7 +1953,7 @@ export class NativeNpcDirector {
         const end =
           status === 'cancelled'
             ? 'cancelled'
-            : status === 'stale'
+            : status === 'stale' || disposition === 'stale'
               ? 'stale'
               : status === 'completed'
                 ? 'abstained'
@@ -2358,6 +2495,7 @@ export class NativeNpcDirector {
         semanticCauseOrdinals,
         controller: new AbortController(),
         ledger: new DecisionLedger(levelLimits(this.service.config)),
+        trackTerminalEvidence: true,
         ...(discovery ? { discovery: { ...discovery, spent: false } } : {}),
       };
       runOwner = run;
@@ -2489,29 +2627,56 @@ export class NativeNpcDirector {
               run.handedOff = true;
               return;
             }
+            const cause = run.interruption ?? error;
+            const stopped = cause instanceof StopJob ? cause : undefined;
             const cancelled = run.controller.signal.aborted;
-            await this.log.record(`${run.job.id}:failure`, 'Workflow failure', {
-              reason: error instanceof Error ? error.message : 'Unknown failure',
-            });
+            const disposition = stopped
+              ? (stopped.outcome ?? stopped.status)
+              : cause instanceof ContextBudgetError
+                ? 'context-exceeded'
+                : cause instanceof InvalidData
+                  ? 'invalid'
+                  : cancelled
+                    ? 'cancelled'
+                    : 'failed';
+            const unavailable =
+              cause instanceof ViewChangedError || cause instanceof MemoryPreparationError;
+            const failure = stopped?.evidence ?? {
+              stage: run.failureStage ?? 'preparation',
+              condition:
+                cause instanceof ViewChangedError
+                  ? 'publication-view-unavailable'
+                  : cause instanceof MemoryPreparationError
+                    ? 'current-personal-read-unavailable'
+                    : disposition === 'failed'
+                      ? 'operation-failed'
+                      : disposition,
+              category:
+                cancelled || stopped?.status === 'cancelled'
+                  ? 'cancelled'
+                  : unavailable || stopped?.status === 'stale'
+                    ? 'validity-unresolved'
+                    : 'refused',
+              ...(unavailable ? { revalidation: 'unavailable' } : {}),
+            };
             await this.update(
               run,
-              error instanceof StopJob ? error.status : cancelled ? 'cancelled' : 'failed',
-              error instanceof StopJob || error instanceof ContextBudgetError
-                ? error.message
+              stopped?.status ?? (cancelled ? 'cancelled' : 'failed'),
+              stopped || cause instanceof ContextBudgetError
+                ? cause instanceof Error
+                  ? cause.message
+                  : 'The request stopped.'
                 : cancelled
                   ? (run.cancelReason ?? 'The request was cancelled before completion.')
                   : 'The workflow failed safely. No automatic paid retry was sent.',
               {
-                disposition:
-                  error instanceof StopJob
-                    ? (error.outcome ?? error.status)
-                    : error instanceof ContextBudgetError
-                      ? 'context-exceeded'
-                      : error instanceof InvalidData
-                        ? 'invalid'
-                        : cancelled
-                          ? 'cancelled'
-                          : 'failed',
+                disposition,
+                failure: {
+                  ...failure,
+                  ...(run.attemptEvidence ? { attempt: run.attemptEvidence } : {}),
+                  effectsApplied: run.responseEvidence?.effectsApplied ?? false,
+                  responseReceiptApplied: run.responseEvidence?.responseReceiptApplied ?? false,
+                },
               },
             );
           } finally {

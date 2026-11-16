@@ -111,10 +111,8 @@ export declare class NativeWorld {
   npcHistoryPublication(
     read: NativeWorldNpcRead,
     request: Buffer,
-  ): Promise<NativeWorldNpcPublication | null>;
-  npcResponsePublication(
-    ticket: NativeWorldNpcResponseTicket,
-  ): Promise<NativeWorldNpcPublication | null>;
+  ): Promise<NativeWorldNpcPublication>;
+  npcResponsePublication(ticket: NativeWorldNpcResponseTicket): Promise<NativeWorldNpcPublication>;
   bindNpcResponse(
     original: NativeWorldNpcRead,
     current: NativeWorldNpcRead,
@@ -292,6 +290,7 @@ export declare class NativeWorldNpcInspection {
 
 export declare class NativeWorldNpcPublication {
   isCurrent(): boolean;
+  refusal(): string | null;
   release(): void;
 }
 
