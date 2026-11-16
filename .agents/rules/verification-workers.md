@@ -18,6 +18,14 @@ If a matching maintained runner is unavailable, use an already authorized task-o
 
 ## Procedure with a matching maintained runner
 
+### Parallel comparisons and reuse
+
+Run independent ready experiments concurrently on separate standard workers within the live pool cap and shared task budget. Keep each experiment's interleaved control/candidate repetitions together on its assigned worker, with exclusive processes/PostgreSQL and fresh case databases. Use the delivered runner's supported concurrency and affinity controls; confirm capacity and claims before dispatch. A single comparison's isolation does not require serializing other experiments. Coordinate admissions through one task owner, preserve frozen plans, and report concrete capacity, dependency or budget limits when they require serial execution. After verified cleanup, admit a ready successor through the controller without waiting for the idle-stop delay; pending stop/start operations still block claims, and accounting reservations remain until settled.
+
+Reuse qualified tools and build artifacts under the [build identity contract](../../docs/projects/verification-workers-tech-design.md#verified-build-reuse). The separately delivered runner can be used before its branch is integrated here. Missing cache support is tracked in [VW02](../../docs/maintainers/verification-workers.md#delivery-order); a slow preparation step does not authorize an ad-hoc runner or a relaxed source check.
+
+### Run lifecycle
+
 1. **Plan.** Select the existing check, workload, immutable source, required pass/measurement, timeout, output allowance and cost. Prepare inputs before claiming. For performance use the [profiling procedure](../../docs/maintainers/performance-profiling.md); applicable browser/live-playtest procedures remain. A worker grants no extra tests or paid AI.
 2. **Admit and claim.** Review project/Region, source, machine and deadline. Reserve a cloud allocation within the shared task budget; other work cannot spend that allocation too. The controller admits against it and atomically claims the whole worker, including PostgreSQL, for the experiment only. Busy callers wait boundedly or do independent work; no private replacement bypasses the pool cap.
 3. **Prepare.** Resume the claimed worker; only the allocator provisions missing capacity within budget. Verify environment/source hashes, checkout-local workspace dependencies, a fresh database, free disk and no foreign workload. Run Git-inventory checks against the exact versioned checkout before packaging; managed source archives contain no `.git`. Reuse tools/cache, never another game's state. Report checkout changes under the root rule.

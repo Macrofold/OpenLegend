@@ -10,6 +10,8 @@ Where completion depends on the distinction, identify required behavior, measure
 
 Choose the sequence for this task. Check high-risk assumptions early when they threaten real resources or substantial dependent work. Otherwise build connected behavior before expensive overlapping verification. Permissions, private knowledge, saving, and committed consequences remain protected; merely touching those topics does not mandate immediate tests or production hardening.
 
+Parallelize independent authorized implementation and verification when useful work is ready. Use subagents when available and permitted, with bounded file ownership and one integration owner for shared files, generated outputs and commits. Keep provisional optimizations independently reviewable against a common repaired baseline until their dispositions are known; share accepted prerequisites explicitly. Continue independent work during builds and remote runs. Coordinate expensive checks under [worker scheduling](verification-workers.md#parallel-comparisons-and-reuse), and serialize only actual dependencies or competing resources.
+
 ## Implement through existing owners
 
 Work through dependencies in coherent units. Reuse semantic owners and helpers; trace affected callers, lifecycle, saved effects, and player/character views. Keep world rules and content in the world's definitions. Add abstraction for shared meaning or an accepted requirement, not speculative expansion.
@@ -29,5 +31,7 @@ Before expensive work, reuse or check only needed prerequisites and establish it
 For long-running work, maintain one compact current-progress section in its existing owner: unfinished scope, decisions, next action, evidence links, and owned resources or unresolved spending. Replace stale content; [Documentation](documentation.md) owns detailed evidence and filing. Small tasks need no new progress file. After compaction, use that summary and current changes instead of reconstructing the full history. Compaction or a safety commit does not restart base selection or qualification.
 
 At coherent checkpoints and before handoff, apply [documentation reconciliation](documentation.md#reconcile-documentation) to affected contracts, tasks and navigation alongside remaining checks. Follow root commit rules and [Rebase](../skills/openlegend-rebase/SKILL.md) history protections; a safety commit does not trigger verification or documentation.
+
+When handing off a bounded batch within a larger project, identify the batch's dispositions and link the outstanding parent scope. A review pause names the stopping point without implying that the next named experiment is the only remaining work.
 
 Complete all available authorized work through integration, review fixes, and required checks. A phase is a checkpoint, not a stopping point. Once agreed obligations are satisfied, finish. Report genuine blockers precisely without substituting fixtures for independent character or human evidence, claiming completion, or inventing extra work. Follow [root handoff, spending, and merge rules](../../AGENTS.md#completion-and-handoff--every-task).

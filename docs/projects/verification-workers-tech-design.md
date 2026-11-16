@@ -1,8 +1,8 @@
 # Reusable verification workers — technical design
 
-| Status      | Current progress                                                                                      | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | The operational contract is designed; infrastructure, runner and lifecycle qualification remain open. | 2026-11-05   |
+| Status      | Current progress                                                                                   | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The separately delivered runner is in use; local integration and verified build reuse remain open. | 2026-11-15   |
 
 ## Owners and minimal architecture
 
@@ -85,6 +85,16 @@ The source packager streams a compressed archive and manifest from an exact comm
 
 Upload once to a private run/source prefix; verify the archive and extracted manifest on the worker and before/after execution. Reject links resolving workspace packages outside that source root using the existing guard. Prefer a source manifest accepted by the profiler rather than reconstructing synthetic Git objects just to satisfy provenance checks. If a tool genuinely needs Git, use a real exact detached checkout. Reconcile existing profiler source checks in VW03; do not weaken provenance or pretend a copied directory is a Git checkout. Any manifest/tooling replacement needs actual mismatch-refusal evidence.
 
+### Verified build reuse
+
+Extend the existing preparation owner to reuse pinned tool installations and immutable build outputs across repetitions. The [recorded setup cost](../maintainers/verification-workers.md#native-campaign-setup-evidence--november-15-2026) motivates this target; the exercised native build helper still prepares every case.
+
+Key reuse by the complete build inputs: source closure including build scripts/generated inputs, dependency locks and resolved build dependencies, compiler/linker and toolchain identity, target/ABI, profile/features/flags and build-affecting environment. Record the inputs and artifact checksums in a build manifest. A TypeScript-only change may reuse a native artifact only when that complete native input identity matches; the executing application's source manifest still identifies its own revision. Verify generated declarations/loader compatibility and current workspace bindings on each use.
+
+Build missing entries under an exclusive claim and publish them only after successful build and interface checks. An interrupted, corrupt or mismatched entry is unavailable and requires a fresh build. Stage verified outputs into each fresh workspace without allowing a case to mutate cached artifacts. Keep game state, databases, secrets and process-local caches scoped to the case. Use the existing bounded EBS cache, declared artifact allowance and disk-headroom checks, with pruning outside measurements. No separate cache service is needed.
+
+Record hit/miss, original build identity, validation time and bytes reused alongside each run's current source/environment. Reuse does not manufacture a new build receipt. Preserve declared cold/warm conditions and warmup equally in both arms. VW02 closes this target through actual build/hit/mismatch/interruption callers and a matched cold/reuse end-to-end measurement, including preparation CPU/time, artifact fidelity, completed gameplay and cleanup.
+
 ### Network and execution boundary
 
 Use the selected project's suitable subnet with outbound internet access; the default is a public IPv4/Internet Gateway route and a dedicated security group with **no inbound rules**, not a new NAT gateway or endpoint fleet. Record and budget IPv4 cost; reuse an existing qualified egress arrangement when available. SSM initiates [outbound HTTPS connections](https://docs.aws.amazon.com/systems-manager/latest/userguide/setup-create-vpc.html); allow required HTTPS, DNS and time synchronization, use HTTPS package mirrors, and keep game/PostgreSQL listeners on loopback. Do not change shared network rules to make setup work. The deployment template must explicitly supply this connectivity rather than assume a private subnet has internet access.
@@ -115,7 +125,7 @@ Before release, upload case outputs under the registered worker/run prefix, seal
 
 `collect` verifies downloaded checksums outside Git and records destination/manifest acknowledgement; an approved durable archive can acknowledge collection instead. Required artifacts are excluded from automatic expiry until acknowledged; optional output and staged source can expire after seven days. Use [tag-filtered lifecycle eligibility](https://aws.amazon.com/blogs/storage/simplify-your-data-lifecycle-by-using-object-tags-with-amazon-s3-lifecycle/), not unconditional bucket expiry. Adding eligibility to an already old object can make it expire immediately; preserve the destination first. No Object Lock, old-save migration or indefinite retention of every trace is needed. Missing required collection retains its cost commitment and a visible recovery item; stop compute, preserve the sole copy, and resolve retention before its reserved storage term ends. Delete EBS only once required payloads are verified elsewhere. Keep financial receipts/uncertain operations; retire other closed metadata with collected evidence. Never commit signed artifact URLs or private payloads; public documentation/source links are unaffected.
 
-No prior run established the complete setup-stage timings. Historical one-off bootstrap or profiler durations are not promises for this workflow. [AWS stop/start](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Stop_Start.html) retains EBS but can change host/public address; a restarted machine is not necessarily the identical physical benchmark host. Record measured hardware and environment on every claim and use fresh matched comparisons when that matters.
+The [native campaign audit](../maintainers/verification-workers.md#native-campaign-setup-evidence--november-15-2026) attributes recorded preparation time; complete cold/warm reuse qualification remains open in VW02–VW03. Historical durations do not promise a saving. [AWS stop/start](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Stop_Start.html) retains EBS but can change host/public address; a restarted machine is not necessarily the identical physical benchmark host. Record measured hardware and environment on every claim and use fresh matched comparisons when that matters.
 
 ## Implementation and review boundaries
 
@@ -127,4 +137,4 @@ Deliver lifecycle, then reuse, then profiler/browser integration under [VW01–V
 - Behavior: [Feature specification](verification-workers-feature-spec.md).
 - Operational limits: [defaults above](#operational-defaults); no gameplay limits or save migration are introduced.
 - Current policy and use: [Verification](../../.agents/rules/verification.md), [worker instructions](../../.agents/rules/verification-workers.md), [AWS access](../../.agents/rules/aws.md).
-- Open design decisions: None. Concurrent shared-host execution, FIFO scheduling, GPU fleets, hibernation and automatic image/build-cache pipelines are excluded unless measurements establish a need and further work is authorized.
+- Open design decisions: None. Verified artifact reuse is an accepted target in VW02. Concurrent shared-host execution, FIFO scheduling, GPU fleets, hibernation and automatic image pipelines remain outside this design. Live capacity and deployment qualification are checked through the delivered runner before dispatch.
