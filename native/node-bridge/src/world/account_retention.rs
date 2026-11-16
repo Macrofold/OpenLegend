@@ -34,7 +34,7 @@ impl NativeWorldAccountRetention {
             .world
             .upgrade()
             .ok_or_else(|| failure("retention world stopped"))?;
-        dispatch(env, &self.host, None, move |_cancel| {
+        dispatch(env, &self.host, move |_cancel| {
             let mut read = owner
                 .read
                 .try_lock()
@@ -71,7 +71,7 @@ impl NativeWorldAccountRetention {
             .world
             .upgrade()
             .ok_or_else(|| failure("retention world stopped"))?;
-        dispatch(env, &self.host, None, move |_cancel| {
+        dispatch(env, &self.host, move |_cancel| {
             let mut read = owner
                 .read
                 .try_lock()
@@ -110,9 +110,9 @@ impl NativeWorld {
         bytes: BufferSlice<'_>,
     ) -> Result<Object<'a>> {
         let bytes = input(&bytes, &self.host.bytes)?;
-        let host = Arc::clone(&self.host);
         let world = Arc::downgrade(&self.world);
-        self.compute(env, move |session, _cancel, budget| {
+        self.compute_in_world(env, move |session, _cancel, budget, host, _world| {
+            let host = Arc::clone(host);
             let storage = budget
                 .reserve(size_of::<RetentionOwner>() + size_of::<NativeWorldAccountRetention>())
                 .map_err(operation_error)?;

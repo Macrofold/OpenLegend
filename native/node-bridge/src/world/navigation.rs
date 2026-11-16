@@ -21,7 +21,7 @@ impl NativeWorldNavigationRead {
     pub fn packet<'a>(&self, env: &'a Env) -> Result<Object<'a>> {
         let read = Arc::clone(&self.inner);
         let budget = self.host.bytes.clone();
-        dispatch(env, &self.host, None, move |_cancel| {
+        dispatch(env, &self.host, move |_cancel| {
             let mut owner = read
                 .read
                 .try_lock()
@@ -59,9 +59,9 @@ impl Drop for NativeWorldNavigationRead {
 impl NativeWorld {
     #[napi(ts_return_type = "Promise<NativeWorldNavigationRead | null>")]
     pub fn read_navigation<'a>(&self, env: &'a Env, actor: String) -> Result<Object<'a>> {
-        let host = Arc::clone(&self.host);
         let world = Arc::downgrade(&self.world);
-        self.compute(env, move |session, cancel, budget| {
+        self.compute_in_world(env, move |session, cancel, budget, host, _world| {
+            let host = Arc::clone(host);
             let custody = budget
                 .reserve(
                     std::mem::size_of::<NavigationRuntime>()

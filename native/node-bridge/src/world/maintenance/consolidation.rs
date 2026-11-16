@@ -83,7 +83,7 @@ impl NativeWorldConsolidationTicket {
     pub fn packet<'a>(&self, env: &'a Env) -> Result<Object<'a>> {
         let owner = Arc::clone(&self.inner);
         let budget = self.host.bytes.clone();
-        dispatch(env, &self.host, None, move |_cancel| {
+        dispatch(env, &self.host, move |_cancel| {
             let ticket = owner
                 .ticket
                 .try_lock()
@@ -110,7 +110,7 @@ impl NativeWorldConsolidationTicket {
             .world
             .upgrade()
             .ok_or_else(|| failure("consolidation world stopped"))?;
-        dispatch(env, &self.host, Some(Arc::clone(&world)), move |_cancel| {
+        dispatch_world(env, &self.host, &world, move |_host, world, _cancel| {
             let session = world
                 .session
                 .lock()
@@ -169,9 +169,10 @@ impl NativeWorldConsolidationTicket {
             world.fence.poison();
             return;
         };
-        let failed = Arc::clone(&world);
-        let submitted = self.host.pool.submit(
-            move |_cancel| {
+        let submitted = submit_world(
+            &self.host,
+            &world,
+            move |_host, world, _cancel| {
                 let _custody = custody;
                 let mut session = world.session.lock().map_err(|_| {
                     world.fence.poison();
@@ -191,7 +192,6 @@ impl NativeWorldConsolidationTicket {
                 Ok(())
             },
             move |_result| {},
-            move || failed.fence.poison(),
         );
         if submitted.is_err() {
             if let Some(world) = self.world.upgrade() {
@@ -246,9 +246,9 @@ impl NativeWorld {
         }
         let bytes = input(&bytes, &self.host.bytes)?;
         let read = Arc::clone(&read.inner);
-        let host = Arc::clone(&self.host);
         let world = Arc::downgrade(&self.world);
-        self.compute(env, move |session, _cancel, budget| {
+        self.compute_in_world(env, move |session, _cancel, budget, host, _world| {
+            let host = Arc::clone(host);
             let owner = read
                 .read
                 .try_lock()

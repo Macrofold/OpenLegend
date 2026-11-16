@@ -102,6 +102,39 @@ impl Drop for WorkPermit {
     }
 }
 
+pub(crate) struct WorkAdmission {
+    cancellation: Cancellation,
+    permit: WorkPermit,
+}
+impl WorkAdmission {
+    pub(crate) fn run<T>(
+        self,
+        work: impl FnOnce(&Cancellation) -> Result<T, HostError>,
+        complete: impl FnOnce(Result<T, HostError>),
+        poison: impl Fn(),
+    ) {
+        let Self {
+            cancellation,
+            permit: _permit,
+        } = self;
+        let result = if cancellation.requested() {
+            Ok(Err(HostError::Cancelled))
+        } else {
+            catch_unwind(AssertUnwindSafe(|| work(&cancellation)))
+        };
+        let result = match result {
+            Ok(result) => result,
+            Err(_) => {
+                let _ = catch_unwind(AssertUnwindSafe(&poison));
+                Err(HostError::Poisoned)
+            }
+        };
+        if catch_unwind(AssertUnwindSafe(|| complete(result))).is_err() {
+            let _ = catch_unwind(AssertUnwindSafe(poison));
+        }
+    }
+}
+
 struct Control {
     pool: Option<ThreadPool>,
     joins: Vec<JoinHandle<()>>,
@@ -196,9 +229,58 @@ impl HostPool {
             .map_err(|_| HostError::SynchronizationFailed)
     }
 
-    /// Only owned inputs enter this job. A job must complete its scoped parallel
-    /// ranges and rollback before returning; detached rayon jobs are forbidden.
-    /// `poison` marks the affected world, rather than poisoning unrelated worlds.
+    /// Waiting outer calls own the same host permit as runnable calls. A
+    /// caller that waits outside Rayon must schedule or drop that permit.
+    pub(crate) fn admit(&self) -> Result<WorkAdmission, HostError> {
+        if self.closing.load(Ordering::Acquire) {
+            return Err(HostError::Closed);
+        }
+        let control = self
+            .control
+            .lock()
+            .map_err(|_| HostError::SynchronizationFailed)?;
+        if self.closing.load(Ordering::Acquire) || control.pool.is_none() {
+            return Err(HostError::Closed);
+        }
+        let mut count = self
+            .activity
+            .count
+            .lock()
+            .map_err(|_| HostError::SynchronizationFailed)?;
+        if *count >= self.max_outstanding {
+            return Err(HostError::Busy);
+        }
+        *count += 1;
+        Ok(WorkAdmission {
+            cancellation: Cancellation {
+                requested: Arc::new(AtomicBool::new(false)),
+                host_closing: Arc::clone(&self.closing),
+            },
+            permit: WorkPermit {
+                activity: Arc::clone(&self.activity),
+            },
+        })
+    }
+
+    pub(crate) fn capacity(&self) -> usize {
+        self.max_outstanding
+    }
+
+    /// The closure owns an existing WorkAdmission. Shutdown cannot retire the
+    /// registry while that permit is live, even after admission has closed.
+    pub(crate) fn schedule(&self, work: impl FnOnce() + Send + 'static) {
+        self.control
+            .lock()
+            .unwrap_or_else(|error| error.into_inner())
+            .pool
+            .as_ref()
+            .expect("admitted work keeps the host pool alive")
+            .spawn(work);
+    }
+
+    /// Only owned inputs enter this job. Complete scoped ranges and rollback
+    /// before returning. Detached Rayon work can outlive neither the admission
+    /// nor its captured inputs.
     pub fn submit<T, F, C, P>(
         &self,
         work: F,
@@ -211,53 +293,9 @@ impl HostPool {
         C: FnOnce(Result<T, HostError>) + Send + 'static,
         P: Fn() + Send + 'static,
     {
-        if self.closing.load(Ordering::Acquire) {
-            return Err(HostError::Closed);
-        }
-        let control = self
-            .control
-            .lock()
-            .map_err(|_| HostError::SynchronizationFailed)?;
-        if self.closing.load(Ordering::Acquire) {
-            return Err(HostError::Closed);
-        }
-        let pool = control.pool.as_ref().ok_or(HostError::Closed)?;
-        let mut count = self
-            .activity
-            .count
-            .lock()
-            .map_err(|_| HostError::SynchronizationFailed)?;
-        if *count >= self.max_outstanding {
-            return Err(HostError::Busy);
-        }
-        *count += 1;
-        drop(count);
-        let cancellation = Cancellation {
-            requested: Arc::new(AtomicBool::new(false)),
-            host_closing: Arc::clone(&self.closing),
-        };
-        let job_cancellation = cancellation.clone();
-        let permit = WorkPermit {
-            activity: Arc::clone(&self.activity),
-        };
-        pool.spawn(move || {
-            let _permit = permit;
-            let result = if job_cancellation.requested() {
-                Ok(Err(HostError::Cancelled))
-            } else {
-                catch_unwind(AssertUnwindSafe(|| work(&job_cancellation)))
-            };
-            let result = match result {
-                Ok(result) => result,
-                Err(_) => {
-                    let _ = catch_unwind(AssertUnwindSafe(&poison));
-                    Err(HostError::Poisoned)
-                }
-            };
-            if catch_unwind(AssertUnwindSafe(|| complete(result))).is_err() {
-                let _ = catch_unwind(AssertUnwindSafe(poison));
-            }
-        });
+        let admitted = self.admit()?;
+        let cancellation = admitted.cancellation.clone();
+        self.schedule(move || admitted.run(work, complete, poison));
         Ok(cancellation)
     }
 

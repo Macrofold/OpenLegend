@@ -184,11 +184,12 @@ impl NativeWorldNpcResponseTicket {
             world.fence.poison();
             return;
         };
-        let failed = Arc::clone(&world);
         // Release can race a finite compute call holding this mutex. Drop the
         // real payload after that call rather than retaining it until JS GC.
-        let submitted = self.host.pool.submit(
-            move |_cancel| {
+        let submitted = submit_world(
+            &self.host,
+            &world,
+            move |_host, world, _cancel| {
                 let _custody = custody;
                 let mut owner = ticket.ticket.lock().map_err(|_| {
                     world.fence.poison();
@@ -198,7 +199,6 @@ impl NativeWorldNpcResponseTicket {
                 Ok(())
             },
             move |_result| {},
-            move || failed.fence.poison(),
         );
         if submitted.is_err() {
             if let Some(world) = self.world.upgrade() {
@@ -278,7 +278,7 @@ impl NativeWorldNpcRead {
     ) -> Result<Object<'a>> {
         let read = Arc::clone(&self.inner);
         let budget = self.host.bytes.clone();
-        dispatch(env, &self.host, None, move |_cancel| {
+        dispatch(env, &self.host, move |_cancel| {
             let owner = read
                 .read
                 .try_lock()
@@ -363,12 +363,13 @@ impl NativeWorldNpcRead {
             world.fence.poison();
             return;
         };
-        let failed = Arc::clone(&world);
         // A release between provider questions must unwind the real private
         // candidate, even when the caller never sends another answer. The same
         // serialized writer owns cancellation; no Node cleanup mutates state.
-        let submitted = self.host.pool.submit(
-            move |_cancel| {
+        let submitted = submit_world(
+            &self.host,
+            &world,
+            move |_host, world, _cancel| {
                 let _custody = custody;
                 let mut session = world.session.lock().map_err(|_| {
                     world.fence.poison();
@@ -388,7 +389,6 @@ impl NativeWorldNpcRead {
                 Ok(())
             },
             move |_result| {},
-            move || failed.fence.poison(),
         );
         if submitted.is_err() {
             if let Some(world) = self.world.upgrade() {
@@ -488,8 +488,8 @@ impl NativeWorld {
             return Err(failure("NPC response belongs to another native writer"));
         }
         let ticket = Arc::clone(&ticket.inner);
-        let host = Arc::clone(&self.host);
-        self.compute(env, move |session, cancel, budget| {
+        self.compute_in_world(env, move |session, cancel, budget, host, _world| {
+            let host = Arc::clone(host);
             let mut owner = ticket
                 .ticket
                 .try_lock()
@@ -637,9 +637,9 @@ impl NativeWorld {
         let fresh = Arc::clone(&current.inner);
         let actions = actions.map(|read| Arc::clone(&read.inner));
         let trigger = trigger.map(|trigger| Arc::clone(&trigger.inner));
-        let host = Arc::clone(&self.host);
         let request = input(&request, &self.host.bytes)?;
-        self.compute(env, move |session, cancel, budget| {
+        self.compute_in_world(env, move |session, cancel, budget, host, _world| {
+            let host = Arc::clone(host);
             let mut original = first
                 .read
                 .try_lock()
@@ -830,9 +830,9 @@ impl NativeWorld {
     #[napi(ts_return_type = "Promise<NativeWorldNpcRead>")]
     pub fn read_npc<'a>(&self, env: &'a Env, request: BufferSlice<'_>) -> Result<Object<'a>> {
         let request = input(&request, &self.host.bytes)?;
-        let host = Arc::clone(&self.host);
         let world = Arc::downgrade(&self.world);
-        self.compute(env, move |session, _cancel, _budget| {
+        self.compute_in_world(env, move |session, _cancel, _budget, host, _world| {
+            let host = Arc::clone(host);
             let read_custody = read_wrapper_custody(_budget)?;
             let read = session.read_npc(request.bytes()).map_err(operation_error)?;
             Ok(NativeWorldNpcRead {

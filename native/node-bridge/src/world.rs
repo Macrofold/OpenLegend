@@ -17,6 +17,8 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 mod account_retention;
 mod consumer;
+mod dispatch;
+use dispatch::{SerialDispatch, submit_world};
 mod control;
 mod knowledge;
 mod maintenance;
@@ -54,6 +56,7 @@ fn operation_error(error: impl std::fmt::Debug) -> napi::Error {
 pub(crate) struct WorldRuntime {
     world_id: String,
     session: Mutex<Option<NativeWorldSession>>,
+    dispatch: SerialDispatch,
     fence: Arc<CandidateFence>,
     stopped: AtomicBool,
     active: AtomicBool,
@@ -330,43 +333,76 @@ pub struct NativeWorld {
 }
 
 type Resolver<T> = Box<dyn FnOnce(Env) -> Result<T> + Send>;
-fn dispatch<'a, T, F>(
-    env: &'a Env,
-    host: &Arc<HostRuntime>,
-    world: Option<Arc<WorldRuntime>>,
-    work: F,
-) -> Result<Object<'a>>
+type RunningWorld<'a> = (&'a Arc<HostRuntime>, &'a Arc<WorldRuntime>);
+
+fn dispatch<'a, T, F>(env: &'a Env, host: &Arc<HostRuntime>, work: F) -> Result<Object<'a>>
 where
     T: ToNapiValue + Send + 'static,
     F: FnOnce(&Cancellation) -> Result<T> + Send + 'static,
 {
+    dispatch_using(env, host, None, move |_, cancel| work(cancel))
+}
+fn dispatch_world<'a, T, F>(
+    env: &'a Env,
+    host: &Arc<HostRuntime>,
+    world: &Arc<WorldRuntime>,
+    work: F,
+) -> Result<Object<'a>>
+where
+    T: ToNapiValue + Send + 'static,
+    F: FnOnce(&Arc<HostRuntime>, &Arc<WorldRuntime>, &Cancellation) -> Result<T> + Send + 'static,
+{
+    dispatch_using(env, host, Some(world), move |scope, cancel| {
+        let (host, world) = scope.expect("world operations have a scoped runner");
+        work(host, world, cancel)
+    })
+}
+fn dispatch_using<'a, T, F>(
+    env: &'a Env,
+    host: &Arc<HostRuntime>,
+    world: Option<&Arc<WorldRuntime>>,
+    work: F,
+) -> Result<Object<'a>>
+where
+    T: ToNapiValue + Send + 'static,
+    F: FnOnce(Option<RunningWorld<'_>>, &Cancellation) -> Result<T> + Send + 'static,
+{
+    let input_bytes = if world.is_some() {
+        0
+    } else {
+        std::mem::size_of::<F>()
+    };
     let permit = host
         .bytes
-        .reserve(std::mem::size_of::<F>() + std::mem::size_of::<T>())
+        .reserve(input_bytes + std::mem::size_of::<T>())
         .map_err(|error| failure(error.to_string()))?;
     let (deferred, promise) = env.create_deferred::<T, Resolver<T>>()?;
     let deferred = Arc::new(Mutex::new(Some(deferred)));
     let completion = Arc::clone(&deferred);
-    let submitted = host.pool.submit(
-        move |cancel| Ok(work(cancel)),
-        move |result| {
-            if let Some(deferred) = completion.lock().unwrap_or_else(|e| e.into_inner()).take() {
-                match result {
-                    Ok(Ok(value)) => deferred.resolve(Box::new(move |_env| {
-                        let _permit = permit;
-                        Ok(value)
-                    })),
-                    Ok(Err(error)) => deferred.reject(error),
-                    Err(error) => deferred.reject(host_error(error)),
-                }
+    let complete = move |result| {
+        if let Some(deferred) = completion.lock().unwrap_or_else(|e| e.into_inner()).take() {
+            match result {
+                Ok(Ok(value)) => deferred.resolve(Box::new(move |_env| {
+                    let _permit = permit;
+                    Ok(value)
+                })),
+                Ok(Err(error)) => deferred.reject(error),
+                Err(error) => deferred.reject(host_error(error)),
             }
-        },
-        move || {
-            if let Some(world) = &world {
-                world.fence.poison();
-            }
-        },
-    );
+        }
+    };
+    let submitted = match world {
+        Some(world) => submit_world(
+            host,
+            world,
+            move |host, world, cancel| Ok(work(Some((host, world)), cancel)),
+            complete,
+        ),
+        None => host
+            .pool
+            .submit(move |cancel| Ok(work(None, cancel)), complete, || {})
+            .map(|_| ()),
+    };
     if let Err(error) = submitted {
         if let Some(deferred) = deferred.lock().unwrap_or_else(|e| e.into_inner()).take() {
             deferred.reject(host_error(error));
@@ -499,7 +535,7 @@ impl NativeHost {
         boundary(|| {
             let bytes = input(&bytes, &self.runtime.bytes)?;
             let host = Arc::clone(&self.runtime);
-            dispatch(env, &self.runtime, None, move |cancel| {
+            dispatch(env, &self.runtime, move |cancel| {
                 let session = if restoring {
                     NativeWorldSession::install_restore(
                         bytes.bytes(),
@@ -514,6 +550,8 @@ impl NativeHost {
                     world_id: session.world_id().map_err(operation_error)?.to_owned(),
                     fence: session.fence(),
                     session: Mutex::new(Some(session)),
+                    dispatch: SerialDispatch::new(&host.bytes, host.pool.capacity())
+                        .map_err(host_error)?,
                     stopped: AtomicBool::new(false),
                     active: AtomicBool::new(false),
                 });
@@ -538,14 +576,12 @@ impl NativeWorld {
     #[napi(ts_return_type = "Promise<void>")]
     pub fn activate<'a>(&self, env: &'a Env, receipt: String) -> Result<Object<'a>> {
         let receipt: RuntimeActivation = serde_json::from_str(&receipt).map_err(operation_error)?;
-        let host = Arc::clone(&self.host);
-        let world = Arc::clone(&self.world);
-        self.compute(env, move |session, _cancel, _budget| {
+        self.compute_in_world(env, move |session, _cancel, _budget, host, world| {
             let worlds = host
                 .worlds
                 .lock()
                 .map_err(|_| failure("native world registry unavailable"))?;
-            activation_available(&world, &worlds)?;
+            activation_available(world, &worlds)?;
             session.activate(receipt).map_err(operation_error)?;
             world.active.store(true, Ordering::Release);
             Ok(())
@@ -560,13 +596,27 @@ impl NativeWorld {
             + Send
             + 'static,
     {
-        let world = Arc::clone(&self.world);
-        let budget = self.host.bytes.clone();
-        dispatch(env, &self.host, Some(Arc::clone(&world)), move |cancel| {
-            // Admitted worker work serializes with brief Node currentness reads.
-            // Only synchronous Node callers must refuse rather than block; this
-            // guard ends before any provider/SQL wait or deferred resolution.
-            // docs/projects/native-simulation-core-tech-design.md#61-stable-consumer-products-without-a-permanent-immutable-world-graph
+        self.compute_in_world(env, move |session, cancel, budget, _, _| {
+            work(session, cancel, budget)
+        })
+    }
+
+    fn compute_in_world<'a, T, F>(&self, env: &'a Env, work: F) -> Result<Object<'a>>
+    where
+        T: ToNapiValue + Send + 'static,
+        F: FnOnce(
+                &mut NativeWorldSession,
+                &Cancellation,
+                &ByteBudget,
+                &Arc<HostRuntime>,
+                &Arc<WorldRuntime>,
+            ) -> Result<T>
+            + Send
+            + 'static,
+    {
+        dispatch_world(env, &self.host, &self.world, move |host, world, cancel| {
+            // The dispatcher excludes every other world operation. Synchronous
+            // disclosure still only borrows the mutex for its immediate check.
             let mut owner = world
                 .session
                 .lock()
@@ -574,7 +624,7 @@ impl NativeWorld {
             let session = owner
                 .as_mut()
                 .ok_or_else(|| failure("native writer is stopped"))?;
-            work(session, cancel, &budget)
+            work(session, cancel, &host.bytes, host, world)
         })
     }
 }
@@ -701,9 +751,7 @@ impl NativeWorld {
     }
     #[napi(ts_return_type = "Promise<void>")]
     pub fn finish_stop<'a>(&self, env: &'a Env) -> Result<Object<'a>> {
-        let world = Arc::clone(&self.world);
-        let host = Arc::clone(&self.host);
-        dispatch(env, &self.host, Some(Arc::clone(&world)), move |_cancel| {
+        dispatch_world(env, &self.host, &self.world, move |host, world, _cancel| {
             let mut owner = world
                 .session
                 .lock()
@@ -719,7 +767,7 @@ impl NativeWorld {
             host.worlds
                 .lock()
                 .map_err(|_| failure("native world registry unavailable"))?
-                .retain(|registered| !Arc::ptr_eq(registered, &world));
+                .retain(|registered| !Arc::ptr_eq(registered, world));
             Ok(())
         })
     }

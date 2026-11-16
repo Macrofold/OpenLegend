@@ -22,7 +22,7 @@ impl NativeWorldPlayerRead {
     {
         let read = Arc::clone(&self.inner);
         let budget = self.host.bytes.clone();
-        dispatch(env, &self.host, None, move |_cancel| {
+        dispatch(env, &self.host, move |_cancel| {
             let mut owner = read
                 .read
                 .try_lock()
@@ -164,9 +164,9 @@ impl NativeWorld {
         actor: String,
         event_window: u32,
     ) -> Result<Object<'a>> {
-        let host = Arc::clone(&self.host);
         let world = Arc::downgrade(&self.world);
-        self.compute(env, move |session, _cancel, _budget| {
+        self.compute_in_world(env, move |session, _cancel, _budget, host, _world| {
+            let host = Arc::clone(host);
             let read = session
                 .read_player(&account, &actor, event_window as usize)
                 .map_err(operation_error)?;

@@ -111,7 +111,7 @@ impl NativeWorldMaintenanceRead {
     pub fn packet<'a>(&self, env: &'a Env) -> Result<Object<'a>> {
         let read = Arc::clone(&self.inner);
         let budget = self.host.bytes.clone();
-        dispatch(env, &self.host, None, move |_cancel| {
+        dispatch(env, &self.host, move |_cancel| {
             let owner = read
                 .read
                 .try_lock()
@@ -180,9 +180,9 @@ impl NativeWorld {
     #[napi(ts_return_type = "Promise<NativeWorldMaintenanceRead>")]
     pub fn read_maintenance<'a>(&self, env: &'a Env, bytes: BufferSlice<'_>) -> Result<Object<'a>> {
         let bytes = input(&bytes, &self.host.bytes)?;
-        let host = Arc::clone(&self.host);
         let world = Arc::downgrade(&self.world);
-        self.compute(env, move |session, _cancel, budget| {
+        self.compute_in_world(env, move |session, _cancel, budget, host, _world| {
+            let host = Arc::clone(host);
             let storage = budget
                 .reserve(
                     std::mem::size_of::<MaintenanceOwner>()
@@ -295,7 +295,7 @@ impl NativeWorldMaintenanceRead {
             .ok_or_else(|| failure("maintenance world stopped"))?;
         let read = Arc::clone(&self.inner);
         let budget = self.host.bytes.clone();
-        dispatch(env, &self.host, None, move |_cancel| {
+        dispatch_world(env, &self.host, &world, move |_host, world, _cancel| {
             if world.stopped() || !world.active.load(Ordering::Acquire) {
                 return Err(failure("maintenance world stopped"));
             }

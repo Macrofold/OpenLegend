@@ -22,14 +22,12 @@ impl NativeWorld {
     ) -> Result<Object<'a>> {
         let key = key.try_into()?;
         let receipt: RuntimeActivation = serde_json::from_str(&receipt).map_err(operation_error)?;
-        let host = Arc::clone(&self.host);
-        let world = Arc::clone(&self.world);
-        self.compute(env, move |session, _cancel, _budget| {
+        self.compute_in_world(env, move |session, _cancel, _budget, host, world| {
             let worlds = host
                 .worlds
                 .lock()
                 .map_err(|_| failure("native world registry unavailable"))?;
-            activation_available(&world, &worlds)?;
+            activation_available(world, &worlds)?;
             session
                 .activate_restored(key, receipt)
                 .map_err(operation_error)?;

@@ -51,7 +51,7 @@ impl NativeWorldPrivateHistoryRead {
     ) -> Result<Object<'a>> {
         let read = Arc::clone(&self.inner);
         let budget = self.host.bytes.clone();
-        dispatch(env, &self.host, None, move |_cancel| {
+        dispatch(env, &self.host, move |_cancel| {
             let owner = read
                 .read
                 .try_lock()
@@ -165,9 +165,10 @@ impl NativeWorldPrivateHistoryRead {
             return;
         };
         let read = Arc::clone(&self.inner);
-        let failed = Arc::clone(&world);
-        let submitted = self.host.pool.submit(
-            move |_cancel| {
+        let submitted = submit_world(
+            &self.host,
+            &world,
+            move |_host, world, _cancel| {
                 let _storage = storage;
                 let mut session = world.session.lock().map_err(|_| {
                     world.fence.poison();
@@ -187,7 +188,6 @@ impl NativeWorldPrivateHistoryRead {
                 Ok(())
             },
             move |_result| {},
-            move || failed.fence.poison(),
         );
         if submitted.is_err() {
             if let Some(world) = self.world.upgrade() {
@@ -306,7 +306,6 @@ impl NativeWorld {
         actor_id: String,
         purpose: String,
     ) -> Result<Object<'a>> {
-        let host = Arc::clone(&self.host);
         let world = Arc::downgrade(&self.world);
         let input_storage = self
             .host
@@ -318,7 +317,8 @@ impl NativeWorld {
                     .ok_or_else(|| failure("capacity"))?,
             )
             .map_err(operation_error)?;
-        self.compute(env, move |session, _cancel, budget| {
+        self.compute_in_world(env, move |session, _cancel, budget, host, _world| {
+            let host = Arc::clone(host);
             let _input_storage = input_storage;
             let storage = budget.reserve(
                 size_of::<HistoryOwner>().checked_sub(size_of::<RuntimePrivateHistoryRead>())

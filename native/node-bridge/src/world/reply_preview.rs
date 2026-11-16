@@ -57,7 +57,7 @@ impl NativeWorldReplyPreviewRead {
                 .ok_or_else(|| failure("reply preview read was released"))?,
         );
         let budget = self.host.bytes.clone();
-        dispatch(env, &self.host, None, move |_cancel| {
+        dispatch(env, &self.host, move |_cancel| {
             let mut owner = read
                 .read
                 .try_lock()

@@ -69,9 +69,10 @@ impl NativeWorldReflectionTicket {
             return;
         };
         let ticket = Arc::clone(&self.inner);
-        let failed = Arc::clone(&world);
-        let submitted = self.host.pool.submit(
-            move |_cancel| {
+        let submitted = submit_world(
+            &self.host,
+            &world,
+            move |_host, world, _cancel| {
                 let _custody = custody;
                 let mut owner = ticket.ticket.lock().map_err(|_| {
                     world.fence.poison();
@@ -81,7 +82,6 @@ impl NativeWorldReflectionTicket {
                 Ok(())
             },
             move |_result| {},
-            move || failed.fence.poison(),
         );
         if submitted.is_err() {
             if let Some(world) = self.world.upgrade() {
@@ -114,11 +114,11 @@ impl NativeWorld {
             return Err(failure("reflection scopes belong to another native writer"));
         }
         let bytes = input(&bytes, &self.host.bytes)?;
-        let host = Arc::clone(&self.host);
         let body_read = Arc::clone(&body_read.inner);
         let workspace_read = Arc::clone(&workspace_read.inner);
         let npc = Arc::clone(&npc.inner);
-        self.compute(env, move |session, _cancel, budget| {
+        self.compute_in_world(env, move |session, _cancel, budget, host, _world| {
+            let host = Arc::clone(host);
             let storage = budget
                 .reserve(
                     size_of::<ReflectionOwner>()

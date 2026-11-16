@@ -37,7 +37,7 @@ impl NativeWorldNpcTrigger {
     fn product<'a>(&self, env: &'a Env, inputs: bool) -> Result<Object<'a>> {
         let read = Arc::clone(&self.inner);
         let budget = self.host.bytes.clone();
-        dispatch(env, &self.host, None, move |_cancel| {
+        dispatch(env, &self.host, move |_cancel| {
             let mut owner = read
                 .read
                 .try_lock()
@@ -111,8 +111,8 @@ impl NativeWorld {
         request: BufferSlice<'_>,
     ) -> Result<Object<'a>> {
         let request = input(&request, &self.host.bytes)?;
-        let host = Arc::clone(&self.host);
-        self.compute(env, move |session, _cancel, budget| {
+        self.compute_in_world(env, move |session, _cancel, budget, host, _world| {
+            let host = Arc::clone(host);
             let storage = budget
                 .reserve(
                     std::mem::size_of::<TriggerOwner>()

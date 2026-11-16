@@ -72,7 +72,7 @@ impl NativeWorldActivityLearningBatch {
     pub fn packet<'a>(&self, env: &'a Env) -> Result<Object<'a>> {
         let read = Arc::clone(&self.inner);
         let budget = self.host.bytes.clone();
-        dispatch(env, &self.host, None, move |cancel| {
+        dispatch(env, &self.host, move |cancel| {
             let owner = read
                 .read
                 .try_lock()
@@ -121,12 +121,13 @@ impl NativeWorldActivityLearningBatch {
             world.fence.poison();
             return;
         };
-        let failed = Arc::clone(&world);
         // A release between provider questions must unwind the real private
         // candidate, even when the caller never sends another answer. The same
         // serialized writer owns cancellation; no Node cleanup mutates state.
-        let submitted = self.host.pool.submit(
-            move |_cancel| {
+        let submitted = submit_world(
+            &self.host,
+            &world,
+            move |_host, world, _cancel| {
                 let _custody = custody;
                 let mut session = world.session.lock().map_err(|_| {
                     world.fence.poison();
@@ -146,7 +147,6 @@ impl NativeWorldActivityLearningBatch {
                 Ok(())
             },
             move |_result| {},
-            move || failed.fence.poison(),
         );
         if submitted.is_err() {
             if let Some(world) = self.world.upgrade() {
@@ -164,9 +164,9 @@ impl NativeWorld {
         request: BufferSlice<'_>,
     ) -> Result<Object<'a>> {
         let request = input(&request, &self.host.bytes)?;
-        let host = Arc::clone(&self.host);
         let world = Arc::downgrade(&self.world);
-        self.compute(env, move |session, cancel, budget| {
+        self.compute_in_world(env, move |session, cancel, budget, host, _world| {
+            let host = Arc::clone(host);
             if cancel.requested() {
                 return Err(failure("learning preparation was canceled"));
             }
