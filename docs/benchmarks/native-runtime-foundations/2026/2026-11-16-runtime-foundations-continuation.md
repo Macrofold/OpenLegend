@@ -251,3 +251,126 @@ Values are control / candidate medians across three equivalent primary windows. 
 | Check NPC freshness without packet encoding | 12,245 / 12,137 | 13,736 / 13,205 | 31,320 / 31,114 | 55.70 / 54.82 | 39.90 / 38.49 |       14.12 / 14.09 |   1,420.03 / 1,387.99 |       285.49 / 291.68 |
 
 Across these four qualified cohorts the paired observations end essentially debt-free. Completed and offered game time, each case's latency and phase spread, SQL/bytes, unclassified shutdown custody, startup and full process accounting remain in the separately collected case records. Startup, the steady window and the whole service envelope overlap differently and are never added together.
+
+## Compatible player captures
+
+P changes the acquisition of immutable raw capture facts within a serial publication pass. Each HTTP/SSE recipient keeps its own preparation, accepted database read cut, authorization and encoding. The control is `ee9192b8a30f4e8c16c42dd5e1d87e699637db0e`; the candidate is `dee4e502694dc5b4a7010a9670bf3b329583f01c` on the isolated local capture-sharing branch. Both use the retained serial stream scheduler. Width-two delivery is absent.
+
+Actual caller diagnostics show two compatible updates borrowing one capture at the same accepted cut, with fresh capture after accepted progress and zero sharing between distinct accounts. They exercise first-recipient disconnect, one fresh retry, retry exhaustion, current recipient refusal, an independently held transport plus drain, logout before disclosure and exact PostgreSQL continuation. The held-reply scenario finishes and saves the authorized reply and selected note. Clean timing inputs have no diagnostic group-hit counter. Completed views and movement witnesses are retained per recipient.
+
+| Connection pattern                                            | Managed campaign                       | Qualified control / candidate |
+| ------------------------------------------------------------- | -------------------------------------- | ----------------------------: |
+| One stream                                                    | `e5486573-57c1-4003-a06d-cfaf34da5c16` |                     3/3 / 3/3 |
+| Two streams, same player and scope                            | `36fbcd74-46fd-4634-b6f0-3b8f8ce81765` |                     3/3 / 3/3 |
+| Two streams, distinct players                                 | `c2daf24c-26cd-41a4-9584-c088f97ac663` |                     3/3 / 3/3 |
+| Three streams, compatible pair separated by a distinct player | `f51cf0de-3dbc-4239-bb4e-fbbc8aa71c6f` |                     3/3 / 3/3 |
+
+Each case uses 360 seconds of warm steady gameplay with 560 accepted movement commands across the entire schedule, two permitted controlled NPC replies confirmed by PostgreSQL, and one-second autosaves. The single and compatible cases use the common six-body opening. The distinct and interleaved cases add a second player and keep both human NPCs, three hares and 1,246 scenery records. The mover has 539 qualifying movement receipts per run within the measured window. Each source runs three times in interleaved order on one standard worker with separately initialized databases.
+
+The initial single-stream campaign `f70037b4-f89b-482f-917e-d674dfc3f77c` fails during source upload; none of its jobs starts. The first compatible and interleaved campaigns `e7397ede-df25-40a6-b71f-67cc8f06e948` and `5a0794a2-6b25-4dcf-b01b-bd6464b003bf` stop after both first-pair streams exceed the diagnostic client witness allowance at 512 actions. Both source archives stay unchanged. The successors use the primary client's existing 2,048-witness allowance for the compatible observer and pass an independent 600-action actual stream check before admission. The earlier attempts retain their failed scores.
+
+**Decision: reject P.** With distinct scopes, server CPU rises from a median 57.65% to 62.61% of one core. The candidate range of 62.19–65.14% exceeds the control range of 57.49–58.54%. Complete CPU including client and PostgreSQL rises 8.31%, while both arms sustain the intended clock. Distinct streams deliver 6,971–7,008 post-warmup views per run in the control and 6,945–6,978 in the candidate. The no-hit regression stays after accounting for this delivered work. The look-ahead and acquisition changes remain attributable only at the experiment level. The retained serial publisher keeps independent capture acquisition. The two compatible streams also raise median complete CPU by 7.22%, and mixed streams raise it by 9.14%. Every candidate run exceeds the control CPU range in each of the three multi-stream cohorts. The single-stream increase of 4.97% has overlapping ranges. There is no binding capacity failure in these cohorts. Lower reservation peaks in the multi-stream cases therefore supply no separate resource qualification.
+
+Values are median / arithmetic mean / nearest-rank p95. CPU and game speed summarize three independent steady windows per arm. Latencies pool the actual movement and save witnesses. Batches with incomplete work have no aggregate comparison.
+
+| Connection pattern | Metric                                     |                     Control |             Capture sharing |
+| ------------------ | ------------------------------------------ | --------------------------: | --------------------------: |
+| Single             | Server CPU % of one core                   |       38.36 / 38.13 / 39.70 |       40.47 / 39.72 / 40.66 |
+| Single             | Exclusive PostgreSQL CPU % of one core     |          1.96 / 1.88 / 1.96 |          1.89 / 1.86 / 1.98 |
+| Single             | Client CPU % of one core                   |          0.89 / 0.90 / 0.93 |          0.87 / 0.87 / 0.88 |
+| Single             | Combined CPU % of one core                 |       41.20 / 40.91 / 42.59 |       43.25 / 42.45 / 43.51 |
+| Single             | Game speed, % of intended                  |   99.997 / 99.998 / 100.001 | 100.005 / 100.003 / 100.006 |
+| Single             | Combined CPU, ms per completed game-second |          6.87 / 6.82 / 7.10 |          7.21 / 7.08 / 7.25 |
+| Compatible         | Server CPU % of one core                   |       55.65 / 55.64 / 55.66 |       59.98 / 60.25 / 61.01 |
+| Compatible         | Exclusive PostgreSQL CPU % of one core     |          1.94 / 1.94 / 1.99 |          1.96 / 1.92 / 1.96 |
+| Compatible         | Client CPU % of one core                   |          1.30 / 1.30 / 1.31 |          1.31 / 1.30 / 1.31 |
+| Compatible         | Combined CPU % of one core                 |       58.89 / 58.88 / 58.90 |       63.15 / 63.47 / 64.28 |
+| Compatible         | Game speed, % of intended                  |  100.000 / 99.998 / 100.004 |    99.993 / 99.993 / 99.994 |
+| Compatible         | Combined CPU, ms per completed game-second |          9.82 / 9.81 / 9.82 |       10.53 / 10.58 / 10.71 |
+| Distinct           | Server CPU % of one core                   |       57.65 / 57.90 / 58.54 |       62.61 / 63.31 / 65.14 |
+| Distinct           | Exclusive PostgreSQL CPU % of one core     |          2.34 / 2.33 / 2.41 |          2.44 / 2.45 / 2.48 |
+| Distinct           | Client CPU % of one core                   |          1.15 / 1.16 / 1.17 |          1.17 / 1.20 / 1.29 |
+| Distinct           | Combined CPU % of one core                 |       61.14 / 61.38 / 62.12 |       66.22 / 66.97 / 68.90 |
+| Distinct           | Game speed, % of intended                  | 100.004 / 100.004 / 100.012 | 100.007 / 100.004 / 100.007 |
+| Distinct           | Combined CPU, ms per completed game-second |       10.19 / 10.23 / 10.35 |       11.04 / 11.16 / 11.48 |
+| Interleaved        | Server CPU % of one core                   |       68.42 / 68.32 / 68.90 |       74.99 / 74.86 / 75.17 |
+| Interleaved        | Exclusive PostgreSQL CPU % of one core     |          2.11 / 2.14 / 2.27 |          2.10 / 2.16 / 2.28 |
+| Interleaved        | Client CPU % of one core                   |          1.39 / 1.39 / 1.40 |          1.40 / 1.40 / 1.41 |
+| Interleaved        | Combined CPU % of one core                 |       72.07 / 71.84 / 72.41 |       78.66 / 78.41 / 78.66 |
+| Interleaved        | Game speed, % of intended                  | 100.004 / 100.005 / 100.010 | 100.003 / 100.004 / 100.009 |
+| Interleaved        | Combined CPU, ms per completed game-second |       12.01 / 11.97 / 12.07 |       13.11 / 13.07 / 13.11 |
+
+| Connection pattern | Pooled latency, ms                 |                    Control |            Capture sharing |
+| ------------------ | ---------------------------------- | -------------------------: | -------------------------: |
+| Single             | Response to movement command       |      15.26 / 18.43 / 35.84 |      15.26 / 17.80 / 35.33 |
+| Single             | First visible movement             |      60.88 / 61.44 / 93.82 |      59.50 / 60.68 / 96.33 |
+| Single             | Command to durable acknowledgement | 548.78 / 542.69 / 1,015.62 | 549.42 / 546.47 / 1,013.76 |
+| Single             | Unsaved age                        |   508.73 / 511.51 / 978.22 |   511.42 / 513.39 / 979.07 |
+| Single             | Save capture                       |         0.55 / 0.64 / 1.16 |         0.53 / 0.65 / 1.22 |
+| Single             | Save repository                    |      16.37 / 16.68 / 24.88 |      16.47 / 16.85 / 24.89 |
+| Single             | Save acknowledgement               |         0.98 / 1.23 / 2.01 |         0.98 / 1.19 / 1.94 |
+| Compatible         | Response to movement command       |      17.01 / 20.75 / 39.81 |      17.16 / 20.98 / 42.00 |
+| Compatible         | First visible movement             |      61.12 / 63.09 / 99.11 |      63.78 / 65.25 / 97.57 |
+| Compatible         | Command to durable acknowledgement | 559.03 / 556.02 / 1,027.67 | 560.73 / 560.16 / 1,028.84 |
+| Compatible         | Unsaved age                        |   514.87 / 514.64 / 981.46 |   517.08 / 515.78 / 983.50 |
+| Compatible         | Save capture                       |         0.58 / 0.73 / 1.44 |         0.58 / 0.79 / 1.37 |
+| Compatible         | Save repository                    |      17.69 / 18.21 / 28.73 |      18.41 / 19.01 / 30.12 |
+| Compatible         | Save acknowledgement               |         1.13 / 1.33 / 2.14 |         1.15 / 1.48 / 2.47 |
+| Distinct           | Response to movement command       |      18.12 / 23.02 / 44.62 |      18.32 / 23.87 / 48.99 |
+| Distinct           | First visible movement             |      64.16 / 67.03 / 98.90 |     63.42 / 67.49 / 102.58 |
+| Distinct           | Command to durable acknowledgement | 570.28 / 567.49 / 1,036.63 | 578.56 / 571.35 / 1,040.98 |
+| Distinct           | Unsaved age                        |   521.96 / 520.41 / 989.85 |   524.50 / 521.10 / 989.56 |
+| Distinct           | Save capture                       |         0.67 / 0.78 / 1.45 |         0.69 / 0.84 / 1.54 |
+| Distinct           | Save repository                    |      20.99 / 21.59 / 33.20 |      21.51 / 22.04 / 34.29 |
+| Distinct           | Save acknowledgement               |         1.24 / 1.44 / 2.60 |         1.28 / 1.51 / 3.49 |
+| Interleaved        | Response to movement command       |      19.34 / 23.77 / 47.29 |      19.49 / 23.85 / 48.20 |
+| Interleaved        | First visible movement             |     64.82 / 67.82 / 103.11 |     64.66 / 67.57 / 103.34 |
+| Interleaved        | Command to durable acknowledgement | 573.33 / 565.60 / 1,031.19 | 570.58 / 568.38 / 1,036.96 |
+| Interleaved        | Unsaved age                        |   522.24 / 520.70 / 989.00 |   522.11 / 518.74 / 987.77 |
+| Interleaved        | Save capture                       |         0.63 / 0.76 / 1.43 |         0.62 / 0.82 / 1.47 |
+| Interleaved        | Save repository                    |      20.55 / 21.06 / 34.17 |      21.22 / 21.67 / 34.15 |
+| Interleaved        | Save acknowledgement               |         1.24 / 1.37 / 2.57 |         1.20 / 1.41 / 3.98 |
+
+Each entry in the database and memory table gives the control / candidate median in the steady window. The source reports retain all distributions and the separately measured normal-save drain.
+
+| Connection pattern | SQL calls       |   Returned rows |   Prepared rows |  Prepared MiB |       WAL MiB | DB growth MiB | Sampled concurrent MiB |
+| ------------------ | --------------- | --------------: | --------------: | ------------: | ------------: | ------------: | ---------------------: |
+| Single             | 12,124 / 12,058 | 13,490 / 13,162 | 31,337 / 31,317 | 55.10 / 55.40 | 39.03 / 38.94 | 14.28 / 14.14 |    1,450.23 / 1,406.34 |
+| Compatible         | 12,717 / 12,229 | 14,317 / 13,332 | 31,392 / 31,142 | 55.48 / 55.01 | 39.55 / 38.97 | 14.12 / 13.95 |    1,431.82 / 1,424.51 |
+| Distinct           | 12,884 / 13,050 | 15,038 / 15,168 | 44,408 / 44,344 | 83.72 / 84.02 | 51.40 / 50.95 | 17.23 / 17.02 |    1,491.90 / 1,522.79 |
+| Interleaved        | 13,530 / 13,160 | 15,175 / 15,134 | 44,925 / 44,253 | 84.49 / 83.40 | 51.85 / 50.32 | 17.44 / 16.90 |    1,583.50 / 1,537.88 |
+
+All four cohorts progress roughly 21,600 game-seconds per primary window. The compatible control's largest closing debt is 3.01 game-seconds, the rest are effectively zero at that boundary. Median transient reserve peaks in MiB are 260.33 / 276.78 for single, 339.30 / 278.77 for compatible, 327.34 / 275.65 for distinct and 390.51 / 305.16 for interleaved. Each case separately accounts for resident and pending-save peaks and the later drain. A lower reserve peak does not imply a lower actual memory peak. Interleaved candidate concurrent memory reaches 1,984.8 MiB in one run compared with 1,606.1 MiB for the highest control.
+
+## Ordered status-rate work
+
+The first possible bounded parallel family is the installed status-rate forecast. The disposable probe binds each measured invocation to its enclosing accepted operation. It includes accepted advances without a forecast and counts useful eligible ranges separately from serial forecast work, reception and the rest of each operation. The ordinary corrected campaign `eef814c8-b4e3-4334-9730-1c4f9a4bcd16` interleaves the uninstrumented serial reference and the diagnostic. Both execute serially. The control uses `ee9192b8a30f4e8c16c42dd5e1d87e699637db0e`; the diagnostics use `4ae5dbb8c7394ed9e65fbf6e3426f4d050493b0d`, with instrumented Native source `5d2ae4e45f1df7abd4251944d28a1084b575e8e4cd233c416a7d7d86de953008`. The first plan `7c1d0516-e71d-4a55-b99e-b8cfb0e948fe` fails its artifact-name contract and is canceled. Its successor freezes the corrected artifact names.
+
+All six ordinary runs complete 560 moves, two permitted replies and final persistence, with effectively zero ending debt. The ordinary figures summarize three steady windows per arm as median / arithmetic mean / nearest-rank p95.
+
+| Metric                                     |        Clean serial control |         Instrumented serial |
+| ------------------------------------------ | --------------------------: | --------------------------: |
+| Server CPU, % of one core                  |    38.644 / 38.738 / 39.170 |    38.898 / 38.870 / 39.191 |
+| Exclusive PostgreSQL CPU, % of one core    |       1.812 / 1.819 / 1.838 |       1.804 / 1.802 / 1.816 |
+| Client CPU, % of one core                  |       0.944 / 0.947 / 0.952 |       0.953 / 0.952 / 0.957 |
+| Combined CPU, % of one core                |    41.394 / 41.503 / 41.934 |    41.659 / 41.624 / 41.960 |
+| Game speed, % of intended rate             | 100.006 / 100.006 / 100.007 | 100.002 / 100.001 / 100.006 |
+| Combined CPU, ms per completed game-second |       6.898 / 6.917 / 6.989 |       6.943 / 6.937 / 6.994 |
+
+The complete CPU ranges overlap. Across three complete traces, 7,247–7,316 operations advance the clock per run and 5,475–5,551 of those have no forecast. Leaf work is 19.776–20.519 ms over each window, within 103.063–104.409 ms of forecast work and over 33 seconds of total advancing-operation time. Whole-advance p95 runs from 12.431 to 13.232 ms. Ideal width two and three yield at most 0.03508% and 0.04914% improvement in p95, with modeled whole-operation capacity gains of at most 0.02935% and 0.03853%. No width-four batch qualifies in this opening.
+
+Across 1,617 movement receipts per arm, HTTP response is 15.73 / 18.45 / 34.88 ms in the clean control and 15.59 / 18.44 / 35.26 ms with diagnostics. First visible movement is 63.00 / 62.93 / 96.70 ms and 62.78 / 62.89 / 97.50 ms. Durable acknowledgement is 546.81 / 548.00 / 1,013.81 ms and 548.79 / 544.37 / 1,015.18 ms. Median sampled concurrent memory is 1,426.94 and 1,441.55 MiB. The corresponding median PostgreSQL counts are 11,998 and 11,992 calls, 13,170 and 13,426 returned rows, and 31,432 and 31,515 prepared rows. Prepared data is 58,234,386 and 58,324,511 bytes. WAL grows by 40,883,048 and 40,938,384 bytes, with database growth of 14,671,872 and 14,860,288 bytes. These observations characterize the diagnostic overhead and variation. Both runtime arms execute serially.
+
+A separate diagnostic on the qualified 25-participant opening, `ead2c8d2-4db5-4f7f-a9b4-e085e67c06c5`, completes all 72 expected observer receipts, saves all three measured moves and exits cleanly. The 30 physical actors include the three hares and two human NPCs. Of 644 measured progressing operations, 498 have no forecast. The forecasts evaluate 5,130 selected status leaves across 171 calls, visiting 10,260 tests and yielding 9,747 rates. The measured eligible leaf work is 15.131 ms inside 55.623 ms of total forecast work. The p95 whole advancing operation takes 232.428 ms. Even with zero overhead, perfect immediate width-two, width-three or width-four division could reduce p95 by at most 0.00310%, 0.00413% or 0.00465% respectively. The best modeled whole-operation capacity increase is 0.02952%. This single diagnostic does not quantify instrumentation overhead in the crowded workload.
+
+**Decision: leave this family serial.** Its actual pure read work offers negligible completion benefit even under optimistic scheduling. Preflight, outcome storage, dispatch and contended joining would add work. There is no production serial extraction, outer dispatch experiment or bounded parallel candidate. Broader E2 depends on a supported family with material safely divisible work.
+
+## Collection, worker state and cost
+
+All 25 managed campaigns in this continuation reached settled state. The private campaign archive at `/Users/mzw/.codex/verification/OpenLegend/native-runtime-foundations/nrf-continuation-results-20261116/manifest.json` binds the admitted manifests, terminal collection indexes, verified reductions and read-only resource receipt. Its manifest SHA-256 is `96e6c734569a8fc6181de38767e41d09d026ef44a04ff99a5078043ac8088f1f`. Failed, interrupted and unstarted attempts remain in their original collections. The first single-stream admission fails at upload and has a controller receipt without a started job. The final two sharing campaigns settle at $0.474568 and $0.466805, respectively. The task's terminal check at 08:16:11 UTC verifies zero active holds, released ephemeral slots and a stopped standard retained worker available at generation 433. The unrelated quarantined slot retains its prior state.
+
+The new campaigns charge **$9.662002** in the controller and release **$15.260814** of reserved capacity across admissions. The cumulative controller charge is $31.535183. Including $1.016709 already accounted outside the controller, estimated task use is **$32.551892 of $50**. These are task estimates and reconciled controller entries. Controlled providers cost $0.
+
+Managed affinity keeps repetitions on a single worker within each comparison. Independent ready comparisons run on separate workers. The initial upload throttle delays one admission, and the two compatible-witness failures require new frozen fixture cohorts. The runner reuses source/package preparation as supported. It rebuilds release artifacts for each case. [VW02](../../../maintainers/verification-workers.md#delivery-order) retains the measured build-preparation cost and the verified-build-reuse work.
+
+This batch settles the specific Native candidates. The overall 2 GiB [NSC03 decision](../../../maintainers/native-simulation-core.md#nsc03-continuation-disposition--november-16-2026) remains inconclusive against Source. Remaining evidence includes the exact trigger of recurring pre-dispatch cognition refusals, attributions for crowded publication, equivalent retained Source work, the stricter latest-world witness and normal-GC settling. The next mechanic remains outside this batch.
