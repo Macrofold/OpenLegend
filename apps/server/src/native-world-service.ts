@@ -343,12 +343,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     this.speechActors = new NativeSpeechActors(host, PLAYER_EVENT_WINDOW * this.connectionLimit);
     this.provider = definitions.geometry();
     this.lane = new WorkLane('native.mutation', config.capacity.requests);
-    this.projection = new WorkLane(
-      'native.projection',
-      config.capacity.requests,
-      undefined,
-      this.playerProjectionWidth,
-    );
+    this.projection = new WorkLane('native.projection', config.capacity.requests);
     this.navigation = new NativeNavigation({
       world: () => this.world,
       geometry: () => this.geometry,
@@ -4139,24 +4134,17 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     });
   }
 
-  get playerProjectionWidth(): number {
-    return Math.min(2, this.config.capacity.requests);
-  }
-
   /** Capture SQL's actual accepted overlay and the native disclosure token in
    * one mutation-lane turn. Async formatting then leaves that lane available. */
   async publishPlayer(
     scope: RequestScope,
     publish: NativePlayerViewRequest['publish'],
     execution: Pick<NativePlayerViewRequest, 'executionSource' | 'jevConfigured' | 'llmConfigured'>,
-    signal?: AbortSignal,
   ): Promise<void> {
-    const key = scopeKey(scope);
     await withNativeConsumerScope(() =>
-      this.projection.runScoped(key, signal, async () => {
+      this.projection.run(async () => {
         for (let attempt = 0; ; attempt++) {
           const capturedContext = await this.lane.run(async () => {
-            signal?.throwIfAborted();
             // A protected candidate can own mutable records while its SQL wait
             // leaves this lane free. Defer before any accepted-state native read.
             this.assertAdmission(false, false);
@@ -4183,7 +4171,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                 inputScope = nativeInputScope(this.host, input.scope);
               }
               return {
-                scope: key,
+                scope: scopeKey(scope),
                 captured,
                 cut,
                 inputScope,
@@ -4197,7 +4185,6 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           });
           let context: PlayerContext | undefined;
           try {
-            signal?.throwIfAborted();
             // Bind preparation to this actor's accepted attempt. A restore can
             // retire its installation while asynchronous projection is pending.
             if (capturedContext.installation !== this.definitions) throw new ViewChangedError();
@@ -4237,7 +4224,6 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                 publish: (view, encode) => {
                   const reference = view.presentationRelease;
                   try {
-                    if (signal?.aborted) return;
                     return publish(
                       retainNativeSources(
                         view,
@@ -4255,7 +4241,6 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             );
             return;
           } catch (error) {
-            signal?.throwIfAborted();
             if (!(error instanceof ViewChangedError) || attempt !== 0) throw error;
             this.assertScope(scope);
           } finally {

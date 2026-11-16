@@ -26,31 +26,24 @@ export function isOverloadError(
   );
 }
 
-interface PendingWork {
-  start(): void;
-  rejectQueued(error: unknown): void;
-  maintenance: boolean;
-  progress: boolean;
-  queuedAt: number;
-  scope?: string;
-}
-
 /** Admission expires only queued work. Executing mutations always settle normally.
  * docs/performance.md#bounded-admission */
 export class WorkLane {
-  private pending: PendingWork[] = [];
+  private pending: {
+    start: () => void;
+    expire: () => void;
+    maintenance: boolean;
+    progress: boolean;
+    queuedAt: number;
+  }[] = [];
   private foregroundBatches = 0;
-  private running = 0;
-  private readonly activeScopes?: Set<string>;
+  private running = false;
   private waiters: (() => void)[] = [];
   constructor(
     private readonly name: string,
     private readonly maximum = 256,
     readonly waitMs = 5000,
-    private readonly width = 1,
-  ) {
-    if (width > 1) this.activeScopes = new Set();
-  }
+  ) {}
   get depth() {
     return this.pending.length;
   }
@@ -71,29 +64,6 @@ export class WorkLane {
     maintenance = false,
     progress = false,
   ): Promise<T> {
-    return this.enqueue(operation, waitMs, maintenance, progress);
-  }
-
-  /** The player projection lane holds one slot per exact request scope through
-   * completion. A canceled waiter leaves the queue without starting; once
-   * admitted the operation owns its slot through settlement and cleanup. */
-  runScoped<T>(
-    scope: string,
-    signal: AbortSignal | undefined,
-    operation: () => T | Promise<T>,
-  ): Promise<T> {
-    return this.enqueue(operation, this.waitMs, false, false, scope, signal);
-  }
-
-  private enqueue<T>(
-    operation: () => T | Promise<T>,
-    waitMs: number,
-    maintenance: boolean,
-    progress: boolean,
-    scope?: string,
-    signal?: AbortSignal,
-  ): Promise<T> {
-    if (signal?.aborted) return Promise.reject(signal.reason);
     if (this.pending.length >= this.maximum || waitMs <= 0)
       return Promise.reject(new OverloadError());
     const queuedAt = performance.now();
@@ -102,18 +72,12 @@ export class WorkLane {
     // Preserve request/diagnostic/transaction contexts across the queue boundary.
     const run = AsyncLocalStorage.bind(operation);
     return new Promise<T>((resolve, reject) => {
-      const canceled = () => entry.rejectQueued(signal?.reason);
-      const cleanup = () => {
-        clearTimeout(timer);
-        signal?.removeEventListener('abort', canceled);
-      };
-      const entry: PendingWork = {
+      const entry = {
         maintenance,
         progress,
         queuedAt,
-        scope,
         start: () => {
-          cleanup();
+          clearTimeout(timer);
           const admittedAt = performance.now();
           const waited = admittedAt - queuedAt;
           const measuredWait = elapsedTiming(measured, admittedAt);
@@ -121,72 +85,45 @@ export class WorkLane {
           // Timers cannot fire during synchronous native work; check age on admission too.
           if (waited > waitMs) {
             reject(new OverloadError());
-            this.finish(scope);
+            this.finish();
             return;
           }
           Promise.resolve()
-            .then(
-              signal
-                ? () => {
-                    signal.throwIfAborted();
-                    return run();
-                  }
-                : run,
-            )
+            .then(run)
             .then(resolve, reject)
-            .finally(() => this.finish(scope));
+            .finally(() => this.finish());
         },
-        rejectQueued: (error) => {
+        expire: () => {
           const index = this.pending.indexOf(entry);
           if (index < 0) return;
           this.pending.splice(index, 1);
-          cleanup();
-          reject(error);
-          if (this.activeScopes) this.pump();
+          reject(new OverloadError());
         },
       };
-      const timer = setTimeout(() => entry.rejectQueued(new OverloadError()), waitMs);
+      const timer = setTimeout(entry.expire, waitMs);
       timer.unref();
-      signal?.addEventListener('abort', canceled, { once: true });
       this.pending.push(entry);
       this.pump();
     });
   }
   private pump() {
-    if (this.activeScopes) {
-      while (this.running < this.width && this.startNext()) {
-        // Retain the active scope until its complete operation settles.
-      }
-    } else if (!this.running) this.startNext();
-    if (!this.running && !this.pending.length)
-      for (const resolve of this.waiters.splice(0)) resolve();
-  }
-  private startNext(): boolean {
-    const activeScopes = this.activeScopes;
-    const eligible = (entry: PendingWork) =>
-      entry.scope === undefined || !activeScopes?.has(entry.scope);
-    const maintenance = activeScopes
-      ? this.pending.findIndex((entry) => entry.maintenance && eligible(entry))
-      : this.pending.findIndex((entry) => entry.maintenance);
-    const foreground = activeScopes
-      ? this.pending.findIndex((entry) => !entry.maintenance && eligible(entry))
-      : this.pending.findIndex((entry) => !entry.maintenance);
+    if (this.running) return;
+    const maintenance = this.pending.findIndex((entry) => entry.maintenance);
+    const foreground = this.pending.findIndex((entry) => !entry.maintenance);
     const due =
       maintenance >= 0 &&
       (this.foregroundBatches >= 10 ||
         performance.now() - this.pending[maintenance]!.queuedAt >= 1000);
     const index = due ? maintenance : foreground >= 0 ? foreground : maintenance;
     const next = index < 0 ? undefined : this.pending.splice(index, 1)[0];
-    if (!next) return false;
-    this.foregroundBatches = next.maintenance ? 0 : this.foregroundBatches + 1;
-    this.running++;
-    if (next.scope !== undefined) activeScopes?.add(next.scope);
-    next.start();
-    return true;
+    if (next) this.foregroundBatches = next.maintenance ? 0 : this.foregroundBatches + 1;
+    if (next) {
+      this.running = true;
+      next.start();
+    } else for (const resolve of this.waiters.splice(0)) resolve();
   }
-  private finish(scope?: string) {
-    this.running--;
-    if (scope !== undefined) this.activeScopes?.delete(scope);
+  private finish() {
+    this.running = false;
     this.pump();
   }
 }
