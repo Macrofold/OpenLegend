@@ -1026,7 +1026,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   captureNpc(
     actorId: string,
     requiredAppraisals: readonly AppraisalScope[],
-    options: Parameters<NativeNpcCapture['prepareChoices']>[2] & {
+    options: Parameters<NativeNpcCapture['prepareChoices']>[3] & {
       consumer?: NativeNpcConsumer;
       choices?: false;
     } = {},
