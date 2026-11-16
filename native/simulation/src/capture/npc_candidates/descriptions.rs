@@ -195,7 +195,7 @@ impl NpcDescriptionsRequest {
             bodies: &'a [Body],
             offers: Offers<'a>,
             #[serde(rename = "activityLabels")]
-            activity_labels: &'a [activity::ActivityLabel],
+            activity_labels: &'a [crate::worlds::InstalledActivityChoiceLabel],
             definitions: D,
         }
         let binding = GeometryBinding::new(

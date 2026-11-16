@@ -7,7 +7,7 @@ import type {
   NativeWorldNpcTurn,
   NativeChangedRows,
 } from '@open-legend/native-simulation';
-import type { TemporalReadContext } from '@open-legend/domain';
+import type { ActivityChoiceFormatter, TemporalReadContext } from '@open-legend/domain';
 import type { NativeGeometryProviders } from './native-geometry.js';
 import {
   encodeNativeProviderAnswer,
@@ -82,11 +82,12 @@ export async function answerNativeProvider(
   provider: NativeWorldProvider,
   geometry: NativeGeometryProviders,
   history?: NativeHistoryReadContext,
+  activityChoiceFormatter?: ActivityChoiceFormatter,
 ): Promise<NativeProviderAnswer> {
   return withNativeConsumerScope(async () => {
     const question = retainNativeProduct(decodeNativeProduct<Question>(provider.question()));
     try {
-      const formatted = formatNativeProvider(question, capacity);
+      const formatted = formatNativeProvider(question, capacity, activityChoiceFormatter);
       if (formatted) return retainNativeProduct(formatted);
       const read = () => prepareProviderAnswer(capacity, question, geometry, history);
       const result =
@@ -300,9 +301,18 @@ export async function driveNativeNpcCandidates(
   read: NativeWorldNpcRead,
   first: NativeWorldNpcTurn,
   geometry: NativeGeometryProviders,
+  activityChoiceFormatter: ActivityChoiceFormatter,
   signal?: AbortSignal,
 ): Promise<void> {
-  return driveNativeNpcPreparation(world, read, first, geometry, signal);
+  return driveNativeNpcPreparation(
+    world,
+    read,
+    first,
+    geometry,
+    signal,
+    undefined,
+    activityChoiceFormatter,
+  );
 }
 
 export async function driveNativeNpcSources(
@@ -323,13 +333,20 @@ async function driveNativeNpcPreparation(
   geometry: NativeGeometryProviders,
   signal?: AbortSignal,
   history?: NativeHistoryReadContext,
+  activityChoiceFormatter?: ActivityChoiceFormatter,
 ): Promise<void> {
   let turn = first;
   while (turn.kind === 'provider') {
     if (!turn.provider) throw new Error('Native NPC choices have no owned provider question.');
     try {
       signal?.throwIfAborted();
-      const answer = await answerNativeProvider(world, turn.provider, geometry, history);
+      const answer = await answerNativeProvider(
+        world,
+        turn.provider,
+        geometry,
+        history,
+        activityChoiceFormatter,
+      );
       try {
         signal?.throwIfAborted();
         const { key, provider } = turn;

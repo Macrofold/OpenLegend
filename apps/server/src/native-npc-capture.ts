@@ -146,6 +146,7 @@ export class NativeNpcActionCapture {
   static async capture(
     world: NativeWorld,
     geometry: NativeGeometryProviders,
+    definitions: NativeDefinitionCapture,
     actorId: string,
     consumer: NativeNpcConsumer,
     signal?: AbortSignal,
@@ -163,7 +164,14 @@ export class NativeNpcActionCapture {
         { expandedBodyOrdinals: [], coverage: 'suggestions' },
         (bytes) => world.npcCandidates(read, bytes),
       );
-      await driveNativeNpcCandidates(world, read, first, geometry, signal);
+      await driveNativeNpcCandidates(
+        world,
+        read,
+        first,
+        geometry,
+        definitions.activityChoiceFormatter(),
+        signal,
+      );
       product = freezeNativeProduct(
         decodeNativeProduct<NativeNpcCandidates>(await read.candidates()),
       );
@@ -583,12 +591,13 @@ export class NativeNpcCapture {
   }
 
   /** Resolves the NPC's offered actions through native and local providers, then
-   * serializes, copies, decodes and freezes the catalog, including command bodies.
+   * serializes, copies, decodes and freezes the selected catalog.
    * Use candidates() for later consumers of the same read and selection. This
    * capture holds the prepared catalog until release. */
   async prepareChoices(
     world: NativeWorld,
     geometry: NativeGeometryProviders,
+    definitions: NativeDefinitionCapture,
     options: {
       readonly expandedBodyOrdinals?: readonly number[];
       readonly coverage?: 'suggestions' | 'complete-physical';
@@ -607,7 +616,14 @@ export class NativeNpcCapture {
         },
         (bytes) => world.npcCandidates(read, bytes),
       );
-      await driveNativeNpcCandidates(world, read, first, geometry, options.signal);
+      await driveNativeNpcCandidates(
+        world,
+        read,
+        first,
+        geometry,
+        definitions.activityChoiceFormatter(),
+        options.signal,
+      );
       this.preparedCandidates = freezeNativeProduct(
         decodeNativeProduct<NativeNpcCandidates>(await read.candidates()),
       );

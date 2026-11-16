@@ -1,7 +1,7 @@
 import {
-  baseActivityChoiceLabel,
   jsonByteLength,
-  type BaseActivityChoiceLabel,
+  type ActivityChoiceFormatter,
+  type ActivityChoiceLabel,
 } from '@open-legend/domain';
 import { nativeActivityDisplay } from './native-activity.js';
 import { nativeCanonicalCommand } from './native-command.js';
@@ -165,11 +165,12 @@ type TypedRequest = {
   >[];
 };
 
-/** Pure finite Source formatters, with capacity only. No world, mutation,
- * permission, SQL, provider spending or alternate wording owner enters here. */
+/** Pure finite formatters. Choice descriptions use the originating
+ * installation's wording for the finite label facts selected by Rust. */
 export function formatNativeProvider(
   question: { readonly kind: string; readonly value: unknown },
   capacity: NativeProviderCapacity,
+  activityChoiceFormatter?: ActivityChoiceFormatter,
 ): NativeProviderAnswer | undefined {
   const value = question.value;
   switch (question.kind) {
@@ -204,7 +205,10 @@ export function formatNativeProvider(
   }
   const preparation = capacity.reserveConsumerBytes(bytes);
   try {
-    return encodeNativeProviderAnswer(capacity, prepare(question.kind, value));
+    return encodeNativeProviderAnswer(
+      capacity,
+      prepare(question.kind, value, activityChoiceFormatter),
+    );
   } finally {
     // The encoder owns independent UTF-8 bytes before any formatter
     // result, borrowed input, temporary array or text reservation ends.
@@ -330,7 +334,7 @@ function preparationBytes(kind: string, value: unknown): number {
     }
     case 'choice-descriptions': {
       const input = value as NativeNpcDescriptionRead & {
-        activityLabels: readonly BaseActivityChoiceLabel[];
+        activityLabels: readonly ActivityChoiceLabel[];
       };
       let retained = array(input.offers.length) + array(input.activityLabels.length),
         longest = input.self.name.name.length + (input.self.health?.name.length ?? 0);
@@ -386,7 +390,11 @@ function preparationBytes(kind: string, value: unknown): number {
   }
 }
 
-function prepare(kind: string, value: unknown): unknown {
+function prepare(
+  kind: string,
+  value: unknown,
+  activityChoiceFormatter?: ActivityChoiceFormatter,
+): unknown {
   switch (kind) {
     case 'activity-learning-format':
       return nativeActivityLearningFormat(value as NativeActivityLearningFormatRequest);
@@ -419,16 +427,18 @@ function prepare(kind: string, value: unknown): unknown {
       };
     }
     case 'choice-descriptions': {
+      if (!activityChoiceFormatter)
+        throw new Error('Native activity choice formatting has no originating installation.');
       const request = value as NativeNpcDescriptionRead & {
         binding: unknown;
-        activityLabels: readonly BaseActivityChoiceLabel[];
+        activityLabels: readonly ActivityChoiceLabel[];
       };
       return {
         binding: request.binding,
         descriptions: formatNativeNpcCandidateDescriptions(request).map(
           (offer) => offer.description,
         ),
-        activityLabels: request.activityLabels.map(baseActivityChoiceLabel),
+        activityLabels: request.activityLabels.map(activityChoiceFormatter),
       };
     }
     case 'control': {

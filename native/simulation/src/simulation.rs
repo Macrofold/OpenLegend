@@ -74,6 +74,7 @@ pub(crate) struct InstalledWorld {
     pub observation_rules: VerifiedDefinition<crate::worlds::InstalledObservationRules>,
     pub account_rules: VerifiedDefinition<crate::worlds::InstalledAccountRules>,
     pub occurrence_rules: VerifiedDefinition<crate::worlds::InstalledOccurrenceRules>,
+    pub npc_activity_choices: crate::worlds::InstalledNpcActivityChoices,
     pub detection_support: VerifiedDefinition<crate::reception::DetectionSupportPolicy>,
     pub maximum_change_scopes: usize,
     pub movement: crate::worlds::InstalledMovementPolicy,

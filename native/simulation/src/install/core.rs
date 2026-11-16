@@ -179,7 +179,7 @@ fn assemble_selected_core(
         presentation,
     } = definitions;
     let mut root = read_physical_root(&mut import, presentation.as_ref())?;
-    crate::worlds::require_profile(&root.content.profile)?;
+    let npc_activity_choices = crate::worlds::select_npc_activity_choices(&root.content.profile)?;
     let manifest_present = child(&mut root.children, "moduleManifest", true)?;
     let statuses_present = child(&mut root.children, "statusEffectPolicy", true)?;
     let profiles_present = child(&mut root.children, "nativeResponseProfiles", false)?;
@@ -350,6 +350,7 @@ fn assemble_selected_core(
         event_appraisal_rules,
         account_rules,
         occurrence_rules,
+        npc_activity_choices,
         detection_support,
         maximum_change_scopes: usize::try_from(maximum_change_scopes)
             .map_err(|_| InstallError::CurrentFormat)?,

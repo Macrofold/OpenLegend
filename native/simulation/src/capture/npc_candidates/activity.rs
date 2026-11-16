@@ -3,15 +3,11 @@
 //! these already selected rows; it can introduce no choice or command.
 use super::*;
 use crate::text::JsText;
-use crate::worlds::base_decision_offers::ActivityChoiceKind;
+use crate::worlds::{
+    InstalledActivityChoiceKind as ActivityChoiceKind,
+    InstalledActivityChoiceLabel as ActivityLabel,
+};
 
-#[derive(Serialize)]
-#[serde(tag = "kind", rename_all = "kebab-case")]
-pub(super) enum ActivityLabel {
-    CampOwn,
-    Hands { label: JsText },
-    Person { name: crate::state::Named },
-}
 pub(super) struct NpcActivityPreparation {
     pub queries: Option<GeometryQueries>,
     reachable: Vec<usize>,
@@ -129,10 +125,12 @@ impl NpcActivityPreparation {
                     .entities
                     .get(&target.id)
                     .ok_or(ExecutionError::MissingEntity)?;
-                if !crate::worlds::base_decision_offers::activity_recipient_eligible(
-                    &core.state.installed,
-                    other,
-                )? {
+                if !core
+                    .state
+                    .installed
+                    .npc_activity_choices
+                    .recipient_eligible(&core.state.installed, other)?
+                {
                     continue;
                 }
                 let profile = crate::status::effective_body_profile(other, budget)?;
@@ -238,6 +236,7 @@ impl NpcActivityPreparation {
             .entities
             .get(actor)
             .ok_or(ExecutionError::MissingActor)?;
+        let policy = &core.state.installed.npc_activity_choices;
         for host in rules {
             match host.kind {
                 ActivityChoiceKind::Camp => {
@@ -247,7 +246,7 @@ impl NpcActivityPreparation {
                             "sourceId",
                             request,
                             Some(0.),
-                            ActivityLabel::CampOwn,
+                            policy.own_supply_label(),
                             &mut storage,
                         )?;
                     }
@@ -267,9 +266,7 @@ impl NpcActivityPreparation {
                             "instrumentId",
                             &hands.request_id,
                             None,
-                            ActivityLabel::Hands {
-                                label: hands.label.clone(),
-                            },
+                            policy.manual_instrument_label(&hands.label),
                             &mut storage,
                         )?;
                     }
@@ -301,11 +298,7 @@ impl NpcActivityPreparation {
                             (
                                 host.combat_request.as_ref(),
                                 "opponentId",
-                                crate::worlds::base_decision_offers::activity_opponent_permitted(
-                                    &core.state.installed,
-                                    observer,
-                                    other,
-                                ),
+                                policy.opponent_permitted(&core.state.installed, observer, other),
                             ),
                         ] {
                             if let Some(request) = request.filter(|_| eligible) {
@@ -324,9 +317,7 @@ impl NpcActivityPreparation {
                                     role,
                                     request,
                                     None,
-                                    ActivityLabel::Person {
-                                        name: name.name().clone(),
-                                    },
+                                    policy.person_label(name.name()),
                                     &mut storage,
                                 )?;
                             }

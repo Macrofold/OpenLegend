@@ -71,6 +71,54 @@ pub struct ActivityHandsChoice {
     pub label: crate::text::JsText,
 }
 
+/// The base activity formatter receives these facts about rows already
+/// selected by the reader. Wording remains with activity-choice-format.ts.
+#[derive(Serialize)]
+#[serde(tag = "kind", rename_all = "kebab-case")]
+pub(crate) enum ActivityChoiceLabel {
+    CampOwn,
+    Hands { label: crate::text::JsText },
+    Person { name: crate::state::Named },
+}
+
+pub(crate) struct ActivityChoicePolicy;
+
+impl ActivityChoicePolicy {
+    pub(crate) fn own_supply_label(&self) -> ActivityChoiceLabel {
+        ActivityChoiceLabel::CampOwn
+    }
+
+    pub(crate) fn manual_instrument_label(
+        &self,
+        label: &crate::text::JsText,
+    ) -> ActivityChoiceLabel {
+        ActivityChoiceLabel::Hands {
+            label: label.clone(),
+        }
+    }
+
+    pub(crate) fn person_label(&self, name: &crate::state::Named) -> ActivityChoiceLabel {
+        ActivityChoiceLabel::Person { name: name.clone() }
+    }
+
+    pub(crate) fn recipient_eligible(
+        &self,
+        installed: &crate::simulation::InstalledWorld,
+        other: &crate::state::Entity,
+    ) -> Result<bool, crate::execution::ExecutionError> {
+        activity_recipient_eligible(installed, other)
+    }
+
+    pub(crate) fn opponent_permitted(
+        &self,
+        installed: &crate::simulation::InstalledWorld,
+        observer: &crate::state::Entity,
+        other: &crate::state::Entity,
+    ) -> bool {
+        activity_opponent_permitted(installed, observer, other)
+    }
+}
+
 pub(crate) fn activity_recipient_eligible(
     installed: &crate::simulation::InstalledWorld,
     other: &crate::state::Entity,

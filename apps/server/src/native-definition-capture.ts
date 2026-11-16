@@ -6,6 +6,8 @@ import type {
 import {
   activityRequestDescriptors,
   installedActionMeanings,
+  selectedActivityChoiceFormatter,
+  type ActivityChoiceFormatter,
   type WorldState,
 } from '@open-legend/domain';
 import {
@@ -51,6 +53,7 @@ export class NativeDefinitionCapture {
     private identity: { readonly worldId: string } | undefined,
     private product: NativeInstalledDefinitions | undefined,
     private capacity: Pick<NativeWorld, 'reserveConsumerBytes'> | undefined,
+    private choices: ActivityChoiceFormatter | undefined,
   ) {}
 
   static async capture(world: NativeWorld): Promise<NativeDefinitionCapture> {
@@ -66,7 +69,12 @@ export class NativeDefinitionCapture {
         ),
       );
       identity = retainNativeProduct(copyNativeProduct(world, { worldId: installation.worldId }));
-      return new NativeDefinitionCapture(identity, product, world);
+      return new NativeDefinitionCapture(
+        identity,
+        product,
+        world,
+        selectedActivityChoiceFormatter(product.definitions),
+      );
     } catch (error) {
       if (product) releaseNativeProduct(product);
       if (identity) releaseNativeProduct(identity);
@@ -107,6 +115,11 @@ export class NativeDefinitionCapture {
     return retainNativeSources(new NativeGeometryProviders(facts.geometry, this.capacity!), facts);
   }
 
+  activityChoiceFormatter(): ActivityChoiceFormatter {
+    if (!this.choices) throw new Error('The native definition capture was released.');
+    return this.choices;
+  }
+
   /** These are the selected world's authored request and slot meanings. They
    * describe a model request; the native choice owner still admits execution. */
   actionRequirements() {
@@ -132,5 +145,6 @@ export class NativeDefinitionCapture {
     this.product = undefined;
     this.identity = undefined;
     this.capacity = undefined;
+    this.choices = undefined;
   }
 }

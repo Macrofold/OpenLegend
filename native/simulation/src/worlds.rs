@@ -1,13 +1,13 @@
 //! Selected trusted world-family composition for the explicitly scoped proof.
 //! Installation must verify the family's exact pin before using its law.
 
-/// Select the compiled world family; this is not a fallback for an unfamiliar
-/// world's laws. Family rules and words remain in their authored modules below.
-pub(crate) fn require_profile(
+/// Select this profile's compiled activity choices while validating the exact
+/// world pin. The installed owner supplies eligibility and finite label facts.
+pub(crate) fn select_npc_activity_choices(
     profile: &crate::install::WorldProfile,
-) -> Result<(), crate::install::InstallError> {
+) -> Result<InstalledNpcActivityChoices, crate::install::InstallError> {
     match (profile.id.as_str(), profile.version) {
-        ("grounded-wilderness", 1) => Ok(()),
+        ("grounded-wilderness", 1) => Ok(InstalledNpcActivityChoices),
         _ => Err(crate::install::InstallError::DefinitionBody),
     }
 }
@@ -17,6 +17,11 @@ pub mod base_recognition;
 
 #[path = "../../../packages/domain/src/worlds/base/native/decision_offers.rs"]
 pub(crate) mod base_decision_offers;
+pub(crate) use base_decision_offers::{
+    ActivityChoiceKind as InstalledActivityChoiceKind,
+    ActivityChoiceLabel as InstalledActivityChoiceLabel,
+    ActivityChoicePolicy as InstalledNpcActivityChoices, ProbeOffer as InstalledNpcProbeOffer,
+};
 
 #[path = "../../../packages/domain/src/worlds/base/native/outings.rs"]
 pub(crate) mod base_outings;

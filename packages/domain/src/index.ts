@@ -11,10 +11,6 @@ export * from './ordered-record.js';
 export { immutableDataSnapshot } from './records.js';
 export * from './world-creation.js';
 export * from './world-composition.js';
-export {
-  baseActivityChoiceLabel,
-  type BaseActivityChoiceLabel,
-} from './worlds/base/activity-choice-format.js';
 export { itemIllustration, type ItemArt } from './presentation-art.js';
 export type {
   EventCategory,

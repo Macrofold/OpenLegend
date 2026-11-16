@@ -1065,7 +1065,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         }
         // Tail resolution changes derived metadata only. This acquisition uses
         // the accepted cut; a held capture still uses its own source fences.
-        if (choices) await capture.prepareChoices(this.world, this.geometry, choiceOptions);
+        if (choices)
+          await capture.prepareChoices(this.world, this.geometry, this.definitions, choiceOptions);
         else choiceOptions.signal?.throwIfAborted();
         const { self } = capture.facts;
         if (
@@ -1087,7 +1088,14 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   captureNpcActions(actorId: string, consumer: NativeNpcConsumer, signal: AbortSignal) {
     return this.atAcceptedBoundary(() => {
       this.assertAdmission();
-      return NativeNpcActionCapture.capture(this.world, this.geometry, actorId, consumer, signal);
+      return NativeNpcActionCapture.capture(
+        this.world,
+        this.geometry,
+        this.definitions,
+        actorId,
+        consumer,
+        signal,
+      );
     }, signal);
   }
 

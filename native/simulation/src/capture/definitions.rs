@@ -43,7 +43,7 @@ pub(super) fn choice_description_definitions(installed: &InstalledWorld) -> impl
         status_effect_policy: &'a crate::status::StatusEffectPolicy,
         #[serde(skip_serializing_if = "Option::is_none")]
         native_strikes: Option<Map<'a>>,
-        probes: &'a [crate::worlds::base_decision_offers::ProbeOffer],
+        probes: &'a [crate::worlds::InstalledNpcProbeOffer],
     }
     ChoiceDefinitions {
         status_effect_policy: &installed.status_policy,

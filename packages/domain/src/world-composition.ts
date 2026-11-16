@@ -52,7 +52,11 @@ import {
   type ActivityHostDescriptor,
   type ActivityRequestDefinitionScope,
 } from './activity-hosts.js';
-import { BASE_CAMP_CHOICE_READ } from './worlds/base/activity-choice-format.js';
+import {
+  BASE_CAMP_CHOICE_READ,
+  baseActivityChoiceLabel,
+  type BaseActivityChoiceLabel,
+} from './worlds/base/activity-choice-format.js';
 import { BASE_OUTING, BASE_COMBAT_HELP } from './worlds/base/outing-policy.js';
 import type { RecipeFamilyDescriptor } from './invention-families.js';
 import { BASE_CANOPY_ACTIVITY_HOST } from './worlds/base/canopies.js';
@@ -668,6 +672,16 @@ export function selectedTradeViewTitle(world: Pick<WorldState, 'profile'>) {
 export function selectedPlayerViewRules(world: Pick<WorldState, 'profile'>) {
   selectedCreationProfileForWorld(world);
   return BASE_PLAYER_VIEW_RULES;
+}
+export type ActivityChoiceLabel = BaseActivityChoiceLabel;
+export type ActivityChoiceFormatter = (label: ActivityChoiceLabel) => string;
+
+/** Select wording for already admitted activity rows once at installation. */
+export function selectedActivityChoiceFormatter(
+  world: Pick<WorldState, 'profile'>,
+): ActivityChoiceFormatter {
+  selectedCreationProfileForWorld(world);
+  return baseActivityChoiceLabel;
 }
 export function selectedPlaytestMilestoneRules(world: Pick<WorldState, 'profile'>) {
   selectedCreationProfileForWorld(world);
