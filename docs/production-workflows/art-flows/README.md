@@ -292,7 +292,7 @@ Bring the picked candidate to the consumer's contract: clean, scale, separate pa
 3. For a supplied or selected source, make a [matched-scale comparison sheet](#matched-scale-comparison) and list remaining differences.
 4. For production packages and every new character or creature, get an [independent critique](#independent-critique) and fix concrete findings.
 
-**Stop:** decision C, Mike accepts or sends it back with reasons. Technical passes never stand in for acceptance: two mercenary iterations passed every check and were still rejected.
+**Stop:** decision C, Mike accepts or sends it back with reasons. Technical passes never stand in for acceptance: two mercenary iterations passed every check and were still rejected. When a route builds multiple support sculpts or sequential stages (such as a [body family](body-reference-family.md)), stop for Mike's explicit approval on each finished sculpt or stage boundary declared by that route before multiplying dependent work.
 
 ### Stage 7 — Preserve and hand off
 
@@ -311,7 +311,7 @@ When fidelity matters, draw the export the way its consumer draws it and place i
 For reference-matched construction, repeat this comparison at the affected component boundaries, not only after final assembly:
 
 1. Show the original, any accepted intermediate and the current result together, including the views/crops that expose the disputed feature. Match pose, projection and lighting as far as the reference permits; a painted view is not a calibrated scan. Use contours/overlays and clay views for shape, textured views for surface, and the actual consumer for conversion losses.
-2. Identify the largest visible mismatch and its owner: anatomy or contour, construction, texture/material, pose, projection or lighting. Correct that cause, render again and check both the intended improvement and previously matching features. A numeric distance or image score can aid diagnosis but cannot establish likeness.
+2. Identify the largest visible mismatch and its owner: anatomy or contour, construction, texture/material, pose, projection or lighting. Correct that cause, render again and re-inspect the **whole** result across views and regions—not just the crop that changed. A pointed-out defect shows review missed something; it is never permission to ignore the rest of the asset. A numeric distance or image score can aid diagnosis but cannot establish likeness.
 3. Advance dependent work only when its required component fidelity holds. Preserve the high-quality source; compare before/after fitting, baking and reduction against it and the original so successive approximations do not accumulate. If budget and visible fidelity conflict, expose the tradeoff instead of silently simplifying a locked feature.
 
 Scale this loop to the requested change; it imposes no fixed iteration count or unrelated views on a small repair. Completion follows the requested visual result and acceptance boundary, not the number of controls, renders or passes. User limits and genuine unresolved capabilities remain stopping conditions.

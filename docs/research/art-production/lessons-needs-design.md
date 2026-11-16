@@ -1,8 +1,8 @@
 # Art fidelity, reusable characters and visual qualification: lessons needing workflow design
 
-| Status       | Current progress                                                                                                                                                                          | Last updated |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Needs design | Lessons and proposed safeguards are captured for incorporation into existing art workflows; this document does not adopt new tools, expand an active proof or establish asset acceptance. | 2026-11-12   |
+| Status    | Current progress                                                                                                                                                                                                                                                   | Last updated |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Completed | Reusable lessons and checkpoint safeguards are incorporated into the [art workflows](../../production-workflows/art-flows/README.md) ([AF19](../../maintainers/art-direction.md#art-flow-follow-through)); asset and runtime qualification stay with their owners. | 2026-11-16   |
 
 ## Purpose and authority
 

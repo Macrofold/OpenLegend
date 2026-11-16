@@ -128,6 +128,13 @@ def admit(manifest_path, repo):
     family = read_json(family_path)
     mesh_id = manifest['meshId']
     require(mesh_id in family['meshes'], f'Unknown selected family mesh: {mesh_id}')
+    companion_ids = manifest.get('companionMeshIds', [])
+    require(
+        isinstance(companion_ids, list)
+        and len(set(companion_ids)) == len(companion_ids)
+        and all(isinstance(cid, str) and cid != mesh_id and cid in family['meshes'] for cid in companion_ids),
+        'Invalid companionMeshIds list',
+    )
     require(
         isinstance(manifest.get('referencePoseId'), str) and bool(manifest['referencePoseId']),
         'referencePoseId is required',
@@ -146,32 +153,85 @@ def admit(manifest_path, repo):
             control is not None and control['kind'] == 'bipolar' and control['bounds'] == [0, 1],
             f'Mapped controls must be existing normalized bipolar IDs: {key}',
         )
-    mesh = family['meshes'][mesh_id]
-    base = np.asarray(mesh['positions'], dtype=np.float32).reshape(-1)
-    require(base.size > 0 and base.size % 3 == 0 and np.all(np.isfinite(base)), 'Invalid canonical body positions')
-    require(
-        np.all(np.asarray(mesh['frameDelta']) == 0),
-        'Single-base conversion requires zero frameDelta; qualify separate bases independently',
-    )
-    arrays = schema_arrays(mesh)
+    all_mesh_ids = [mesh_id, *companion_ids]
+    meshes_meta = {}
+    arrays_by_mesh = {}
+    for mid in all_mesh_ids:
+        me = family['meshes'][mid]
+        m_base = np.asarray(me['positions'], dtype=np.float32).reshape(-1)
+        require(m_base.size > 0 and m_base.size % 3 == 0 and np.all(np.isfinite(m_base)), f'Invalid canonical positions: {mid}')
+        require(
+            np.all(np.asarray(me['frameDelta']) == 0),
+            f'Single-base conversion requires zero frameDelta on {mid}; qualify separate bases independently',
+        )
+        meshes_meta[mid] = (me, m_base)
+        arrays_by_mesh[mid] = schema_arrays(me)
+    mesh, base = meshes_meta[mesh_id]
     space = physical_space(family, manifest, mapping, retired)
     anchors = manifest.get('protectedAnchorVertices', [])
-    require(
-        isinstance(anchors, list)
-        and len(anchors) >= 3
-        and all(type(i) is int and 0 <= i < base.size // 3 for i in anchors),
-        'At least three valid protected anchor vertices required',
-    )
-    require(len(set(anchors)) == len(anchors), 'Duplicate protected anchor vertex')
+    require(isinstance(anchors, list), 'protectedAnchorVertices must be a list when provided')
+    if anchors:
+        require(
+            len(anchors) >= 3 and all(type(i) is int and 0 <= i < base.size // 3 for i in anchors),
+            'Explicit protectedAnchorVertices requires at least three valid vertex indices',
+        )
+        require(len(set(anchors)) == len(anchors), 'Duplicate protected anchor vertex')
     tolerance = manifest.get('toleranceMetres')
     require(
         type(tolerance) in (int, float) and math.isfinite(tolerance) and 0 < tolerance <= 0.0001,
         'Explicit reconstruction tolerance must be in (0, 0.0001] metres',
     )
 
-    supports = {}
+    def load_verified_mesh_npz(rec_path, mid):
+        me, m_base = meshes_meta[mid]
+        expected_arrays = arrays_by_mesh[mid]
+        with np.load(rec_path, allow_pickle=False) as data:
+            require(
+                'positions' in data and 'physicalSpaceJson' in data and 'topology' in data,
+                f'Support missing geometry/physical-space metadata ({mid}): {rec_path}',
+            )
+            ps_doc = dict(json.loads(str(data['physicalSpaceJson'].item())))
+            if 'meshId' in ps_doc:
+                require(ps_doc.pop('meshId') == mid, f'Support meshId mismatch ({mid}): {rec_path}')
+            require(
+                ps_doc == space,
+                f'Physical space, pose, rig or neutral control mismatch ({mid}): {rec_path}',
+            )
+            require(str(data['topology'].item()) == me['topology'], f'Topology identity mismatch ({mid}): {rec_path}')
+            for name, expected in expected_arrays.items():
+                require(name in data, f'Missing correspondence array {name} ({mid}): {rec_path}')
+                raw_arr = np.asarray(data[name])
+                if name in ('triangles', 'sourceVertexIndices', 'renderTriangles', 'jointIndices'):
+                    require(
+                        raw_arr.dtype.kind in 'iu'
+                        and np.all(raw_arr >= 0)
+                        and np.all(raw_arr <= np.iinfo(expected.dtype).max),
+                        f'Invalid or overflowing topology/skin index array ({mid}): {name}',
+                    )
+                actual = raw_arr.astype(expected.dtype).reshape(-1)
+                require(
+                    actual.shape == expected.shape and np.array_equal(actual, expected),
+                    f'Correspondence mismatch {name} ({mid}): {rec_path}',
+                )
+            extra = (
+                set(data.files)
+                & {'uvs', 'sourceVertexIndices', 'renderTriangles', 'jointIndices', 'jointWeights'}
+                - set(expected_arrays)
+            )
+            require(not extra, f'Unexpected correspondence arrays ({mid}): {sorted(extra)}')
+            raw_pos = np.asarray(data['positions'])
+            require(
+                raw_pos.dtype.kind in 'fiu' and raw_pos.size == m_base.size and np.all(np.isfinite(raw_pos)),
+                f'Invalid or nonfinite support positions ({mid}): {rec_path}',
+            )
+            pos_f32 = raw_pos.astype(np.float32).reshape(-1)
+            require(np.all(np.isfinite(pos_f32)), f'Positions overflow float32 ({mid}): {rec_path}')
+            return pos_f32.copy()
+
+    supports_by_mesh = {mid: {} for mid in all_mesh_ids}
     sources = []
     anchor_ref = None
+    raw_items = {}
     for item in manifest.get('supports', []):
         coordinate = item.get('coordinate')
         require(
@@ -181,47 +241,83 @@ def admit(manifest_path, repo):
             f'Support coordinate must contain two grid fractions in {NODES}: {coordinate}',
         )
         c = (float(coordinate[0]), float(coordinate[1]))
-        require(c not in supports, f'Duplicate coordinate: {c}')
+        require(c not in supports_by_mesh[mesh_id], f'Duplicate coordinate: {c}')
         p = resolve_record(item, manifest_path.parent)
-        with np.load(p, allow_pickle=False) as data:
-            require(
-                'positions' in data and 'physicalSpaceJson' in data and 'topology' in data,
-                f'Support missing geometry/physical-space metadata: {p}',
-            )
-            require(
-                json.loads(str(data['physicalSpaceJson'].item())) == space,
-                f'Physical space, pose, rig or neutral control mismatch: {p}',
-            )
-            require(str(data['topology'].item()) == mesh['topology'], f'Topology identity mismatch: {p}')
-            for name, expected in arrays.items():
-                require(name in data, f'Missing correspondence array {name}: {p}')
-                raw_arr = np.asarray(data[name])
-                if name in ('triangles', 'sourceVertexIndices', 'renderTriangles', 'jointIndices'):
-                    require(
-                        raw_arr.dtype.kind in 'iu'
-                        and np.all(raw_arr >= 0)
-                        and np.all(raw_arr <= np.iinfo(expected.dtype).max),
-                        f'Invalid or overflowing topology/skin index array: {name}',
-                    )
-                actual = raw_arr.astype(expected.dtype).reshape(-1)
-                require(
-                    actual.shape == expected.shape and np.array_equal(actual, expected),
-                    f'Correspondence mismatch {name}: {p}',
-                )
-            extra = (
-                set(data.files)
-                & {'uvs', 'sourceVertexIndices', 'renderTriangles', 'jointIndices', 'jointWeights'}
-                - set(arrays)
-            )
-            require(not extra, f'Unexpected correspondence arrays: {sorted(extra)}')
-            raw_pos = np.asarray(data['positions'])
-            require(
-                raw_pos.dtype.kind in 'fiu' and raw_pos.size == base.size and np.all(np.isfinite(raw_pos)),
-                f'Invalid or nonfinite support positions: {p}',
-            )
-            positions = raw_pos.astype(np.float32).reshape(-1)
-            require(np.all(np.isfinite(positions)), f'Positions overflow float32: {p}')
-            pts_anchor = positions.reshape(-1, 3)[anchors].astype(np.float64)
+        positions = load_verified_mesh_npz(p, mesh_id)
+        supports_by_mesh[mesh_id][c] = positions
+
+        comp_records = item.get('companionMeshes', {})
+        require(isinstance(comp_records, dict), f'companionMeshes must be an object at {c}')
+        require(
+            set(comp_records) == set(companion_ids),
+            f'Coordinate {c} companionMeshes keys {sorted(comp_records)} must match companionMeshIds {sorted(companion_ids)}',
+        )
+        comp_hashes = {}
+        for cid in companion_ids:
+            crec = comp_records[cid]
+            if crec.get('canonicalMesh') is True:
+                supports_by_mesh[cid][c] = meshes_meta[cid][1].copy()
+                comp_hashes[cid] = 'canonical-family-positions'
+            else:
+                cp = resolve_record(crec, manifest_path.parent)
+                supports_by_mesh[cid][c] = load_verified_mesh_npz(cp, cid)
+                comp_hashes[cid] = crec['sha256']
+        raw_items[c] = (item, p, comp_hashes)
+
+    wanted = expected_coords(mode)
+    require(
+        set(supports_by_mesh[mesh_id]) == wanted,
+        f'Expected exact {mode}-support coordinate set; missing={sorted(wanted - set(supports_by_mesh[mesh_id]))}; extra={sorted(set(supports_by_mesh[mesh_id]) - wanted)}',
+    )
+
+    # Validate coupled 1D physical invariants (sole floor minY, crown stature maxY, welded collar seam) across all supports
+    ref_coord = (0.5, 0.0) if (0.5, 0.0) in supports_by_mesh[mesh_id] else sorted(supports_by_mesh[mesh_id])[0]
+    ref_body_pts = supports_by_mesh[mesh_id][ref_coord].reshape(-1, 3).astype(np.float64)
+    ref_sole_y = float(ref_body_pts[:, 1].min())
+    static_head_pts = (
+        np.asarray(family['meshes']['headSkin']['positions'], dtype=np.float64).reshape(-1, 3)
+        if 'headSkin' in family['meshes'] and 'headSkin' not in companion_ids
+        else None
+    )
+
+    def crown_y_for(coord):
+        b_y = float(supports_by_mesh[mesh_id][coord].reshape(-1, 3)[:, 1].max())
+        if 'headSkin' in companion_ids:
+            h_y = float(supports_by_mesh['headSkin'][coord].reshape(-1, 3)[:, 1].max())
+            return max(b_y, h_y)
+        if static_head_pts is not None:
+            return max(b_y, float(static_head_pts[:, 1].max()))
+        return b_y
+
+    ref_crown_y = crown_y_for(ref_coord)
+    stature_tol = max(float(tolerance), 1e-4)
+    require(
+        abs((ref_crown_y - ref_sole_y) - float(family['referenceStatureMetres'])) <= stature_tol,
+        f'Reference support crown-to-sole span {ref_crown_y - ref_sole_y} m != referenceStatureMetres {family["referenceStatureMetres"]} m',
+    )
+
+    for c in sorted(supports_by_mesh[mesh_id]):
+        item, p, comp_hashes = raw_items[c]
+        b_pts = supports_by_mesh[mesh_id][c].reshape(-1, 3).astype(np.float64)
+        sole_err = abs(float(b_pts[:, 1].min()) - ref_sole_y)
+        crown_err = abs(crown_y_for(c) - ref_crown_y)
+        require(sole_err <= tolerance, f'Sole plane Y drifted {sole_err} m at {c}: {p}')
+        require(crown_err <= tolerance, f'Crown stature Y drifted {crown_err} m at {c}: {p}')
+
+        seam_err = 0.0
+        for seam in family.get('seams', []):
+            bm, hm = seam.get('bodyMesh', mesh_id), seam.get('headMesh', 'headSkin')
+            if bm in supports_by_mesh and hm in supports_by_mesh:
+                p_bm = supports_by_mesh[bm][c].reshape(-1, 3).astype(np.float64)
+                p_hm = supports_by_mesh[hm][c].reshape(-1, 3).astype(np.float64)
+                sb = np.asarray(seam['bodyVertices'], dtype=np.int64)
+                sh = np.asarray(seam['headVertices'], dtype=np.int64)
+                seam_err = max(seam_err, float(np.max(np.linalg.norm(p_bm[sb] - p_hm[sh], axis=1))))
+        require(seam_err <= tolerance, f'Seam gap {seam_err} m exceeds tolerance at {c}')
+
+        anchor_error = 0.0
+        if anchors:
+            pts_anchor = b_pts[anchors]
             if anchor_ref is None:
                 require(
                     np.linalg.matrix_rank(pts_anchor - pts_anchor[0], tol=1e-7) >= 2,
@@ -230,22 +326,23 @@ def admit(manifest_path, repo):
                 anchor_ref = pts_anchor
             anchor_error = float(np.max(np.linalg.norm(pts_anchor - anchor_ref, axis=1)))
             require(anchor_error <= tolerance, f'Protected physical anchors moved {anchor_error} m: {p}')
-            supports[c] = positions.copy()
-            sources.append(
-                {
-                    'coordinate': list(c),
-                    'path': str(p),
-                    'sha256': item['sha256'],
-                    'protectedAnchorMaxErrorMetres': anchor_error,
-                    'status': item.get('sourceStatus', 'unspecified'),
-                }
-            )
-    wanted = expected_coords(mode)
-    require(
-        set(supports) == wanted,
-        f'Expected exact {mode}-support coordinate set; missing={sorted(wanted - set(supports))}; extra={sorted(set(supports) - wanted)}',
-    )
-    return manifest, family, mesh, supports, sources, space
+
+        src_entry = {
+            'coordinate': list(c),
+            'path': str(p),
+            'sha256': item['sha256'],
+            'solePlaneDriftMetres': sole_err,
+            'crownStatureDriftMetres': crown_err,
+            'collarSeamMaxGapMetres': seam_err,
+            'status': item.get('sourceStatus', 'unspecified'),
+        }
+        if anchors:
+            src_entry['protectedAnchorMaxErrorMetres'] = anchor_error
+        if comp_hashes:
+            src_entry['companionMeshes'] = comp_hashes
+        sources.append(src_entry)
+
+    return manifest, family, meshes_meta, supports_by_mesh, sources, space
 
 
 def fill_grid(supports, mode):
@@ -373,52 +470,100 @@ def piecewise_bilinear(grid, coordinate):
 
 
 def run_compile(manifest_path, output, repo):
-    manifest, family, mesh, supports, sources, space = admit(manifest_path, repo)
+    manifest, family, meshes_meta, supports_by_mesh, sources, space = admit(manifest_path, repo)
     owner, owner_path = load_people_owner(repo)
     output = owner.external_output(str(output))
     require(not output.exists(), f'Output already exists; choose a fresh directory: {output}')
     mode = manifest['supportMode']
     mapping = manifest['axisControls']
-    control_order = [c for c in family['controls'] if c in mapping.values()]
-    grid, derived = fill_grid(supports, mode)
-    neutral, targets, bindings, correctives = decompose_two_slider(grid, mapping, control_order)
-
     mesh_id = manifest['meshId']
-    patch = {
-        'positions': neutral.tolist(),
-        'frameDelta': np.zeros_like(neutral).tolist(),
-        'targets': {k: v.tolist() for k, v in targets.items()},
-        'correctives': correctives,
-    }
-    evaluation_family = {'meshes': {mesh_id: patch}, 'controls': {}, 'ageSamples': {}}
-    for control in control_order:
-        evaluation_family['controls'][control] = {'kind': 'bipolar', 'targets': {mesh_id: bindings[control]}}
+    companion_ids = manifest.get('companionMeshIds', [])
+    all_mesh_ids = [mesh_id, *companion_ids]
+    control_order = [c for c in family['controls'] if c in mapping.values()]
 
+    grids_by_mesh = {}
+    patches_by_mesh = {}
+    control_targets = {c: {} for c in control_order}
+    derived = []
+    for idx_m, mid in enumerate(all_mesh_ids):
+        grid_m, derived_m = fill_grid(supports_by_mesh[mid], mode)
+        if idx_m == 0:
+            derived = derived_m
+        neutral_m, targets_m, bindings_m, correctives_m = decompose_two_slider(grid_m, mapping, control_order)
+        grids_by_mesh[mid] = grid_m
+        patches_by_mesh[mid] = {
+            'positions': neutral_m.tolist(),
+            'frameDelta': np.zeros_like(neutral_m).tolist(),
+            'targets': {k: v.tolist() for k, v in targets_m.items()},
+            'correctives': correctives_m,
+        }
+        for c, b in bindings_m.items():
+            control_targets[c][mid] = b
+
+    evaluation_family = {
+        'meshes': copy.deepcopy(patches_by_mesh),
+        'controls': {c: {'kind': 'bipolar', 'targets': copy.deepcopy(control_targets[c])} for c in control_order},
+        'ageSamples': {},
+    }
+
+    supports_primary = supports_by_mesh[mesh_id]
+    grid_primary = grids_by_mesh[mesh_id]
     if mode == 2:
         grid_points = [(0.5, 0.0), (0.5, 0.5), (0.5, 1.0)]
         interior_points = [(0.5, 0.25), (0.5, 0.75)]
     else:
-        grid_points = sorted(grid)
+        grid_points = sorted(grid_primary)
         interior_points = list(itertools.product((0.25, 0.75), repeat=2))
 
     cases = []
-    for label, pts in [('support', sorted(supports)), ('grid', grid_points), ('interior', interior_points)]:
+    max_eval_seam_gap = 0.0
+    for label, pts in [('support', sorted(supports_primary)), ('grid', grid_points), ('interior', interior_points)]:
         for point in pts:
             recipe = {'controls': {mapping['mass']: point[0], mapping['fullness']: point[1]}}
-            actual = owner.evaluate_mesh(evaluation_family, mesh_id, recipe, 0.0, 30.0, {'meshId': '__none__'})
-            expected = supports[point] if label == 'support' else piecewise_bilinear(grid, point)
-            error = float(
-                np.max(np.linalg.norm((actual.astype(np.float64) - expected.astype(np.float64)).reshape(-1, 3), axis=1))
-            )
-            cases.append(
-                {
-                    'kind': label,
-                    'coordinate': list(point),
-                    'maxPositionErrorMetres': error,
-                    'pass': error <= manifest['toleranceMetres'],
-                }
-            )
+            eval_pts = {}
+            max_err_point = 0.0
+            err_by_mesh = {}
+            for mid in all_mesh_ids:
+                actual = owner.evaluate_mesh(evaluation_family, mid, recipe, 0.0, 30.0, {'meshId': '__none__'})
+                expected = supports_by_mesh[mid][point] if label == 'support' else piecewise_bilinear(grids_by_mesh[mid], point)
+                err_m = float(
+                    np.max(np.linalg.norm((actual.astype(np.float64) - expected.astype(np.float64)).reshape(-1, 3), axis=1))
+                )
+                eval_pts[mid] = actual.reshape(-1, 3).astype(np.float64)
+                err_by_mesh[mid] = err_m
+                max_err_point = max(max_err_point, err_m)
 
+            seam_gap_pt = 0.0
+            for seam in family.get('seams', []):
+                bm, hm = seam.get('bodyMesh', mesh_id), seam.get('headMesh', 'headSkin')
+                if bm in eval_pts and hm in eval_pts:
+                    sb = np.asarray(seam['bodyVertices'], dtype=np.int64)
+                    sh = np.asarray(seam['headVertices'], dtype=np.int64)
+                    seam_gap_pt = max(
+                        seam_gap_pt,
+                        float(np.max(np.linalg.norm(eval_pts[bm][sb] - eval_pts[hm][sh], axis=1))),
+                    )
+            max_eval_seam_gap = max(max_eval_seam_gap, seam_gap_pt)
+
+            case_rec = {
+                'kind': label,
+                'coordinate': list(point),
+                'maxPositionErrorMetres': max_err_point,
+                'pass': max_err_point <= manifest['toleranceMetres'] and seam_gap_pt <= manifest['toleranceMetres'],
+            }
+            if companion_ids:
+                case_rec['meshErrorsMetres'] = err_by_mesh
+                case_rec['collarSeamMaxGapMetres'] = seam_gap_pt
+            cases.append(case_rec)
+
+    primary_patch = patches_by_mesh[mesh_id]
+    companion_patches = {
+        cid: {
+            'leanAnchorPositions': supports_by_mesh[cid][0.5, 0.0].tolist(),
+            'mesh': patches_by_mesh[cid],
+        }
+        for cid in companion_ids
+    }
     report = {
         'scope': 'Two-slider corresponding-grid decomposition and native people.evaluate_mesh algebraic check; visual, garment, motion and renderer qualification remain separate.',
         'manifestSha256': sha256_file(manifest_path),
@@ -426,14 +571,17 @@ def run_compile(manifest_path, output, repo):
         'ownerPath': str(owner_path),
         'ownerSha256': sha256_file(owner_path),
         'supportMode': mode,
+        'meshId': mesh_id,
+        'companionMeshIds': companion_ids,
         'axisControls': mapping,
         'retiredControls': manifest.get('retiredControls', []),
-        'vertexCount': neutral.size // 3,
+        'vertexCount': len(primary_patch['positions']) // 3,
+        'companionVertexCounts': {cid: len(patches_by_mesh[cid]['positions']) // 3 for cid in companion_ids},
         'neutralCoordinate': [0.5, 0.5],
         'derivedGridCoordinates': derived,
-        'targetArrays': len(targets),
-        'targetNames': sorted(targets),
-        'correctiveRecords': len(correctives),
+        'targetArrays': len(primary_patch['targets']),
+        'targetNames': sorted(primary_patch['targets']),
+        'correctiveRecords': len(primary_patch['correctives']),
         'singleBaseFramePairs': 'Each pair aliases the same target ID at both frame endpoints.',
         'operationOrder': control_order,
         'floatStorage': 'float32; sequential float32 rounding matched to people.evaluate_mesh and person-family.ts',
@@ -441,20 +589,23 @@ def run_compile(manifest_path, output, repo):
         'sources': sources,
         'checks': cases,
         'maximumErrorMetres': max(c['maxPositionErrorMetres'] for c in cases),
+        'maximumCollarSeamGapMetres': max_eval_seam_gap,
         'allPassed': all(c['pass'] for c in cases),
         'toleranceMetres': manifest['toleranceMetres'],
     }
-    require(report['allPassed'], f'Reconstruction tolerance failed; maximum {report["maximumErrorMetres"]} m')
+    require(report['allPassed'], f'Reconstruction/seam tolerance failed; maxError={report["maximumErrorMetres"]} m, seam={max_eval_seam_gap} m')
     output.mkdir(parents=True)
     payload = {
         'kind': 'body-support-grid-mesh-patch',
         'supportMode': mode,
         'meshId': mesh_id,
+        'companionMeshIds': companion_ids,
         'axisControls': mapping,
         'retiredControls': manifest.get('retiredControls', []),
-        'leanAnchorPositions': supports[0.5, 0.0].tolist(),
-        'mesh': patch,
-        'controlTargets': {c: {mesh_id: b} for c, b in bindings.items()},
+        'leanAnchorPositions': supports_primary[0.5, 0.0].tolist(),
+        'mesh': primary_patch,
+        'companionPatches': companion_patches,
+        'controlTargets': control_targets,
     }
     (output / 'mesh-patch.json').write_text(json.dumps(payload, separators=(',', ':'), allow_nan=False) + '\n')
     (output / 'reconstruction.json').write_text(json.dumps(report, indent=2, allow_nan=False) + '\n')
@@ -463,11 +614,13 @@ def run_compile(manifest_path, output, repo):
             {
                 'output': str(output),
                 'supportMode': mode,
+                'meshes': all_mesh_ids,
                 'vertices': report['vertexCount'],
                 'targetArrays': report['targetArrays'],
                 'correctives': report['correctiveRecords'],
                 'checks': len(cases),
                 'maximumErrorMetres': report['maximumErrorMetres'],
+                'maximumCollarSeamGapMetres': max_eval_seam_gap,
                 'allPassed': report['allPassed'],
             }
         )
@@ -491,8 +644,99 @@ def rebase_surface_binding(owner, binding, old_lean_support, expected_lean_garme
     return updated
 
 
+def build_head_to_support_transfer(lean_head_pts, head_triangles, lean_body_pts, support_head_pts):
+    """Map HeadLOD2 rows of PeacockBodyLOD1HeadLOD2Support onto headSkin triangles (pinning collar-seam vertices to bodySkin)."""
+    from mathutils import Vector
+    from mathutils.bvhtree import BVHTree
+
+    n_sup = len(support_head_pts)
+    tris = np.asarray(head_triangles, dtype=np.int64).reshape(-1, 3)
+    bvh = BVHTree.FromPolygons(lean_head_pts.tolist(), tris.tolist(), all_triangles=True)
+    tri_idx = np.zeros(n_sup, dtype=np.int64)
+    bary = np.zeros((n_sup, 3), dtype=np.float64)
+    for i, pt in enumerate(support_head_pts):
+        loc, _, f_idx, _ = bvh.find_nearest(Vector(pt.tolist()))
+        require(f_idx is not None and loc is not None, f'Failed to project support head vertex {i}')
+        tri_idx[i] = int(f_idx)
+        a, b, c = lean_head_pts[tris[int(f_idx)]]
+        v0, v1, v2 = b - a, c - a, np.asarray(loc, dtype=np.float64) - a
+        d00, d01, d11 = float(v0 @ v0), float(v0 @ v1), float(v1 @ v1)
+        d20, d21 = float(v2 @ v0), float(v2 @ v1)
+        denom = d00 * d11 - d01 * d01
+        if abs(denom) > 1e-14:
+            v = float(np.clip((d11 * d20 - d01 * d21) / denom, 0.0, 1.0))
+            w = float(np.clip((d00 * d21 - d01 * d20) / denom, 0.0, 1.0 - v))
+            bary[i] = (1.0 - v - w, v, w)
+        else:
+            bary[i] = (1.0, 0.0, 0.0)
+
+    d_body = np.linalg.norm(support_head_pts[:, None, :] - lean_body_pts[None, :, :], axis=2)
+    body_near = np.argmin(d_body, axis=1)
+    is_seam = d_body[np.arange(n_sup), body_near] < 1e-4
+
+    def transfer_delta(head_delta_pts, body_delta_pts):
+        tri_corners = head_delta_pts[tris[tri_idx]].astype(np.float64)
+        out_d = np.einsum('ni,nij->nj', bary, tri_corners)
+        if np.any(is_seam):
+            out_d[is_seam] = body_delta_pts[body_near[is_seam]].astype(np.float64)
+        return out_d.astype(np.float32)
+
+    return transfer_delta
+
+
+def rewrite_mesh_grid_shape_keys(bpy_obj, obj_spec, base_pts_gltf, target_arrays_gltf, correctives, retired_controls):
+    """Update Basis and grid_* shape keys while rebasing and preserving any unrelated existing shape keys (e.g. face presets)."""
+    vcount = len(bpy_obj.data.vertices)
+    native_base = gltf_to_blender(base_pts_gltf).reshape(-1)
+    old_base = np.zeros(vcount * 3, dtype=np.float32)
+    preserved = []
+    old_targets_map = dict(obj_spec.get('targets', {}))
+    drop_keys = {'Basis', 'GridZeroOrigin'} | {k for k in old_targets_map if k.startswith('grid_')}
+    for k in ('definitionSoft', 'definitionToned', 'fullnessLow', 'fullnessHigh', 'massLow', 'massHigh', 'corrective_fullnessDefinition'):
+        drop_keys.add(k)
+
+    if bpy_obj.data.shape_keys:
+        bpy_obj.data.shape_keys.key_blocks[0].data.foreach_get('co', old_base)
+        for kb in bpy_obj.data.shape_keys.key_blocks[1:]:
+            if kb.name not in drop_keys:
+                arr = np.zeros(vcount * 3, dtype=np.float32)
+                kb.data.foreach_get('co', arr)
+                preserved.append((kb.name, arr - old_base))
+        bpy_obj.shape_key_clear()
+
+    basis_key = bpy_obj.shape_key_add(name='Basis', from_mix=False)
+    basis_key.data.foreach_set('co', native_base)
+    bpy_obj.data.vertices.foreach_set('co', native_base)
+
+    new_targets_map = {'zero': None}
+    for pres_name, pres_delta in preserved:
+        sk = bpy_obj.shape_key_add(name=pres_name, from_mix=False)
+        sk.relative_key = basis_key
+        sk.data.foreach_set('co', (native_base + pres_delta).astype(np.float32))
+        new_targets_map[pres_name] = pres_name
+
+    if target_arrays_gltf:
+        zero_key = bpy_obj.shape_key_add(name='GridZeroOrigin', from_mix=False)
+        zero_key.data.foreach_set('co', np.zeros(vcount * 3, dtype=np.float32))
+        for t_name, delta_gltf in sorted(target_arrays_gltf.items()):
+            sk = bpy_obj.shape_key_add(name=t_name, from_mix=False)
+            sk.relative_key = zero_key
+            sk.data.foreach_set('co', gltf_to_blender(delta_gltf).reshape(-1))
+            new_targets_map[t_name] = t_name
+
+    obj_spec['targets'] = new_targets_map
+    existing_corr = [
+        c
+        for c in obj_spec.get('metadata', {}).get('correctives', [])
+        if all(d['control'] not in retired_controls for d in c['drivers'])
+        and not any(str(t).startswith('grid_') or t == 'corrective_fullnessDefinition' for t in c.get('targets', []))
+    ]
+    obj_spec.setdefault('metadata', {})['correctives'] = [*existing_corr, *copy.deepcopy(correctives)]
+    bpy_obj.data.update()
+
+
 def run_assemble_kit(args):
-    """Run inside Blender (--python body-grid.py -- assemble-kit ...) to rebase bodySkin, shirt support, and garments."""
+    """Run inside Blender (--python body-grid.py -- assemble-kit ...) to rebase bodySkin, head/submeshes, shirt support, and garments."""
     import bpy
     from mathutils import Matrix
 
@@ -506,6 +750,8 @@ def run_assemble_kit(args):
     mapping = patch_doc['axisControls']
     retired = set(patch_doc.get('retiredControls', []))
     body_id = patch_doc['meshId']
+    companion_ids = patch_doc.get('companionMeshIds', [])
+    companion_patches = patch_doc.get('companionPatches', {})
     lean_body = np.asarray(patch_doc['leanAnchorPositions'], dtype=np.float32).reshape(-1, 3)
     neutral_body = np.asarray(patch_doc['mesh']['positions'], dtype=np.float32).reshape(-1, 3)
     target_arrays = {
@@ -557,7 +803,6 @@ def run_assemble_kit(args):
         cov_kit = args.coverage_kit.resolve()
         cov_desc = read_json(cov_kit / 'descriptor.json')
         shorts_fit_src = cov_desc['family']['parts']['studioShorts']['pieces'][0]['fit']
-        # Evaluate expected lean shorts from R4 witness binding on lean_body
         expected_lean_shorts = owner.surface_points(
             lean_body,
             shorts_fit_src['triangles'],
@@ -574,11 +819,43 @@ def run_assemble_kit(args):
         shorts_fit_src = source_desc['family']['parts']['studioShorts']['pieces'][0]['fit']
         expected_lean_shorts = owner.points(src_state['canonicalPositions']['studioShorts']).copy()
 
-    # Build new neutral shirt support (first len(lean_body) rows = neutral_body, remainder = unchanged head support rows)
+    # Build new neutral & target arrays for PeacockBodyLOD1HeadLOD2Support (both body rows AND HeadLOD2 collar/head rows!)
     neutral_shirt_support = old_lean_shirt_support.copy()
     neutral_shirt_support[: len(lean_body)] = neutral_body
     lean_shirt_support = old_lean_shirt_support.copy()
     lean_shirt_support[: len(lean_body)] = lean_body
+
+    head_target_arrays = {}
+    transfer_head_to_sup = None
+    if 'headSkin' in companion_patches:
+        hp_entry = companion_patches['headSkin']
+        lean_head = np.asarray(hp_entry['leanAnchorPositions'], dtype=np.float32).reshape(-1, 3)
+        neutral_head = np.asarray(hp_entry['mesh']['positions'], dtype=np.float32).reshape(-1, 3)
+        head_target_arrays = {
+            k: np.asarray(v, dtype=np.float32).reshape(-1, 3) for k, v in hp_entry['mesh']['targets'].items()
+        }
+        head_tris = np.asarray(source_compiled['meshes']['headSkin']['triangles'], dtype=np.int64).reshape(-1, 3)
+        transfer_head_to_sup = build_head_to_support_transfer(
+            lean_head.astype(np.float64),
+            head_tris,
+            lean_body.astype(np.float64),
+            old_lean_shirt_support[len(lean_body) :].astype(np.float64),
+        )
+        neutral_shirt_support[len(lean_body) :] = (
+            old_lean_shirt_support[len(lean_body) :]
+            + transfer_head_to_sup(neutral_head - lean_head, neutral_body - lean_body)
+        )
+
+    all_sup_target_names = sorted(set(target_arrays) | set(head_target_arrays))
+    support_target_arrays = {}
+    for t_name in all_sup_target_names:
+        sup_d = np.zeros_like(old_lean_shirt_support, dtype=np.float32)
+        b_d = target_arrays.get(t_name, np.zeros_like(lean_body, dtype=np.float32))
+        sup_d[: len(lean_body)] = b_d
+        if transfer_head_to_sup is not None:
+            h_d = head_target_arrays.get(t_name, np.zeros_like(lean_head, dtype=np.float32))
+            sup_d[len(lean_body) :] = transfer_head_to_sup(h_d, b_d)
+        support_target_arrays[t_name] = sup_d
 
     new_desc = copy.deepcopy(source_desc)
     new_family = new_desc['family']
@@ -608,11 +885,18 @@ def run_assemble_kit(args):
 
     support_id = 'PeacockBodyLOD1HeadLOD2Support'
     for ctrl_id, mesh_map in patch_doc['controlTargets'].items():
-        pair = mesh_map[body_id]
-        new_family['controls'][ctrl_id]['targets'] = {
-            body_id: copy.deepcopy(pair),
-            support_id: copy.deepcopy(pair),
+        targets_entry = {
+            body_id: copy.deepcopy(mesh_map[body_id]),
+            support_id: copy.deepcopy(mesh_map[body_id]),
         }
+        for cid in companion_ids:
+            if cid in mesh_map:
+                targets_entry[cid] = copy.deepcopy(mesh_map[cid])
+                # Ensure support_id binds non-zero target names if headSkin has non-zero targets where bodySkin was zero
+                for side_name, pair in mesh_map[cid].items():
+                    if targets_entry[support_id][side_name] == ['grid_zero', 'grid_zero'] and pair != ['grid_zero', 'grid_zero']:
+                        targets_entry[support_id][side_name] = copy.deepcopy(pair)
+        new_family['controls'][ctrl_id]['targets'] = targets_entry
 
     # Rebase studioShorts and proofShirt bindings so M050-F000 reproduces exact lean garments and neutral Basis matches
     new_shorts_fit = rebase_surface_binding(owner, shorts_fit_src, lean_body, expected_lean_shorts)
@@ -650,34 +934,35 @@ def run_assemble_kit(args):
             for m in NODES
         ]
 
-    # Open source family.blend and rewrite shape keys cleanly on bodySkin and PeacockBodyLOD1HeadLOD2Support
+    # Open source family.blend and rewrite shape keys cleanly on bodySkin, shirt support, and companion meshes
     bpy.ops.wm.open_mainfile(filepath=str(source_kit / 'family.blend'), load_ui=False)
-    for asset_id, base_pts in ((body_id, neutral_body), (support_id, neutral_shirt_support)):
+    support_correctives = copy.deepcopy(patch_doc['mesh']['correctives'])
+    if 'headSkin' in companion_patches:
+        seen_corr = {
+            (tuple((d['control'], d['side']) for d in c['drivers']), tuple(c['targets'])) for c in support_correctives
+        }
+        for hc in companion_patches['headSkin']['mesh']['correctives']:
+            sig = (tuple((d['control'], d['side']) for d in hc['drivers']), tuple(hc['targets']))
+            if sig not in seen_corr:
+                support_correctives.append(copy.deepcopy(hc))
+                seen_corr.add(sig)
+    mesh_updates = [
+        (body_id, neutral_body, target_arrays, patch_doc['mesh']['correctives']),
+        (support_id, neutral_shirt_support, support_target_arrays, support_correctives),
+    ]
+    for cid in companion_ids:
+        cp_entry = companion_patches[cid]
+        cp_neutral = np.asarray(cp_entry['mesh']['positions'], dtype=np.float32).reshape(-1, 3)
+        cp_targets = {
+            k: np.asarray(v, dtype=np.float32).reshape(-1, 3) for k, v in cp_entry['mesh']['targets'].items()
+        }
+        mesh_updates.append((cid, cp_neutral, cp_targets, cp_entry['mesh']['correctives']))
+
+    for asset_id, base_pts, t_arrays, corr_list in mesh_updates:
         obj_spec = new_desc['objects'][asset_id]
         obj = bpy.data.objects[obj_spec['object']]
         require(obj.matrix_world == Matrix.Identity(4), f'{asset_id} non-identity matrix_world')
-        vcount = len(obj.data.vertices)
-        if obj.data.shape_keys:
-            obj.shape_key_clear()
-        basis_key = obj.shape_key_add(name='Basis', from_mix=False)
-        native_base = gltf_to_blender(base_pts).reshape(-1)
-        basis_key.data.foreach_set('co', native_base)
-        obj.data.vertices.foreach_set('co', native_base)
-
-        zero_key = obj.shape_key_add(name='GridZeroOrigin', from_mix=False)
-        zero_key.data.foreach_set('co', np.zeros(vcount * 3, dtype=np.float32))
-
-        new_targets_map = {'zero': None}
-        for t_name, delta_gltf in sorted(target_arrays.items()):
-            sk = obj.shape_key_add(name=t_name, from_mix=False)
-            sk.relative_key = zero_key
-            full_delta = np.zeros((vcount, 3), dtype=np.float32)
-            full_delta[: len(lean_body)] = gltf_to_blender(delta_gltf)
-            sk.data.foreach_set('co', full_delta.reshape(-1))
-            new_targets_map[t_name] = t_name
-        obj_spec['targets'] = new_targets_map
-        obj_spec.setdefault('metadata', {})['correctives'] = copy.deepcopy(patch_doc['mesh']['correctives'])
-        obj.data.update()
+        rewrite_mesh_grid_shape_keys(obj, obj_spec, base_pts, t_arrays, corr_list, retired)
 
     # Update studioShorts Basis and optional R4 weights; prune any retired-control correctives on garments
     shorts_obj = bpy.data.objects[new_desc['objects']['studioShorts']['object']]
