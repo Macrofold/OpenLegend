@@ -596,8 +596,14 @@ impl RuntimeNpcRead {
             .candidates
             .as_ref()
             .ok_or_else(|| failure("NPC choices are unavailable"))?;
-        let (encoded, _custody) = candidates.write_json(budget).map_err(failure)?;
-        RuntimeJson::join(&[encoded.as_bytes()], budget)
+        let (encoded, custody) = candidates.write_json(budget).map_err(failure)?;
+        // This standalone packet already owns the complete wire encoding.
+        // Moving the backing keeps its existing reservation through export.
+        Ok(RuntimeJson {
+            bytes: encoded.into_bytes(),
+            custody,
+            handoff: None,
+        })
     }
     pub fn latest_sources_packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
         #[derive(serde::Serialize)]
