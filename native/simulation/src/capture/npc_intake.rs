@@ -47,6 +47,12 @@ struct NpcIntakePackets {
 enum IntakeOutput {
     Witness,
     Packets,
+    Queue,
+}
+enum PreparedIntake {
+    Witness(NpcIntakeWitness),
+    Packets(NpcIntakeWitness, NpcIntakePackets),
+    Queue(String, ByteReservation),
 }
 impl NpcIntakeCapture {
     pub(crate) fn json(&self) -> &str {
@@ -99,7 +105,11 @@ impl NpcIntakeCapture {
         {
             return Ok(false);
         }
-        let (current, _) = prepare(state, &self.request, IntakeOutput::Witness, budget)?;
+        let PreparedIntake::Witness(current) =
+            prepare(state, &self.request, IntakeOutput::Witness, budget)?
+        else {
+            return Err(ExecutionError::Invariant);
+        };
         Ok(self.witness.tokens == current.tokens
             && self.witness.dependencies == current.dependencies
             && self.witness.inspection == current.inspection)
@@ -275,51 +285,47 @@ struct Unseen<'a> {
     interruptions: &'a [crate::experience::intake::IntakeSource<'a>],
     trigger_awareness: &'a [crate::experience::intake::TriggerAwareness<'a>],
 }
-// The persistent wake queue owns only these tiny facts. It must not retain the
-// consumer allowance for rich personal records that were never kept by it.
-struct InputProduct<'a>(&'a Product<'a>);
-impl Serialize for InputProduct<'_> {
-    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        use serde::ser::SerializeMap;
-        let value = self.0;
-        let mut out = s.serialize_map(None)?;
-        out.serialize_entry("worldId", value.world_id)?;
-        out.serialize_entry("generation", value.generation)?;
-        out.serialize_entry("acceptedCut", &value.accepted_cut)?;
-        out.serialize_entry("at", &value.at)?;
-        out.serialize_entry("actorId", value.actor_id)?;
-        out.serialize_entry("name", value.name)?;
-        out.serialize_entry("physicalLife", &value.physical_life)?;
-        out.serialize_entry("eligible", &value.eligible)?;
-        out.serialize_entry("enrolled", &value.enrolled)?;
-        out.serialize_entry("controller", value.controller)?;
-        out.serialize_entry("alive", &value.alive)?;
-        out.serialize_entry("incapacitated", &value.incapacitated)?;
-        out.serialize_entry("cognition", &value.cognition)?;
-        out.serialize_entry("actionsBlocked", &value.actions_blocked)?;
-        out.serialize_entry("speechBlocked", &value.speech_blocked)?;
-        out.serialize_entry("values", value.values)?;
-        out.serialize_entry("dependencyToken", value.dependency_token)?;
-        out.serialize_entry("awarenessThrough", &value.awareness_through)?;
-        out.serialize_entry("urgency", &value.urgency)?;
-        #[derive(Serialize)]
-        struct Discovery<'a> {
-            state: &'a str,
-            #[serde(skip_serializing_if = "Option::is_none")]
-            reservation: Option<&'a str>,
-        }
-        if let Some(semantic) = value.semantic {
-            out.serialize_entry(
-                "discovery",
-                &Discovery {
-                    state: &semantic.discovery,
-                    reservation: semantic.reservation.as_deref(),
-                },
-            )?;
-        }
-
-        out.end()
-    }
+// The persistent queue owns these facts independently of any full inspection.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct InputProduct<'a> {
+    world_id: &'a str,
+    generation: &'a str,
+    accepted_cut: u64,
+    at: f64,
+    actor_id: &'a str,
+    name: &'a crate::text::JsText,
+    physical_life: Option<u64>,
+    eligible: bool,
+    enrolled: bool,
+    controller: &'a str,
+    alive: bool,
+    incapacitated: bool,
+    cognition: bool,
+    actions_blocked: bool,
+    speech_blocked: bool,
+    values: &'a [String],
+    dependency_token: &'a str,
+    awareness_through: u64,
+    urgency: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    discovery: Option<Discovery<'a>>,
+}
+#[derive(Serialize)]
+struct Discovery<'a> {
+    state: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    reservation: Option<&'a str>,
+}
+fn encode_inputs(
+    input: &InputProduct<'_>,
+    budget: &ByteBudget,
+) -> Result<(String, ByteReservation), ExecutionError> {
+    let length = json_record_len(input).map_err(|_| ExecutionError::Invariant)?;
+    let mut storage = budget.reserve(length.checked_mul(2).ok_or(ExecutionError::Capacity)?)?;
+    let text = json_record(input).map_err(|_| ExecutionError::Invariant)?;
+    storage.resize(text.capacity())?;
+    Ok((text, storage))
 }
 fn raw(text: &str) -> Result<&RawValue, ExecutionError> {
     serde_json::from_str(text).map_err(|_| ExecutionError::Invariant)
@@ -346,14 +352,30 @@ pub(crate) fn capture(
     request: NpcIntakeReadRequest,
     budget: &ByteBudget,
 ) -> Result<NpcIntakeCapture, ExecutionError> {
-    let (witness, read) = prepare(state, &request, IntakeOutput::Packets, budget)?;
+    let PreparedIntake::Packets(witness, read) =
+        prepare(state, &request, IntakeOutput::Packets, budget)?
+    else {
+        return Err(ExecutionError::Invariant);
+    };
     Ok(NpcIntakeCapture {
         world: state.physical.header.id.clone(),
         generation: state.generation.clone(),
         request,
-        read: read.ok_or(ExecutionError::Invariant)?,
+        read,
         witness,
     })
+}
+
+/// Read only the automatic queue's compact product at this accepted cut.
+pub(crate) fn capture_queue_inputs(
+    state: &SimulationState,
+    request: &NpcIntakeReadRequest,
+    budget: &ByteBudget,
+) -> Result<(String, ByteReservation), ExecutionError> {
+    match prepare(state, request, IntakeOutput::Queue, budget)? {
+        PreparedIntake::Queue(text, storage) => Ok((text, storage)),
+        _ => Err(ExecutionError::Invariant),
+    }
 }
 
 fn prepare(
@@ -361,7 +383,7 @@ fn prepare(
     request: &NpcIntakeReadRequest,
     output: IntakeOutput,
     budget: &ByteBudget,
-) -> Result<(NpcIntakeWitness, Option<NpcIntakePackets>), ExecutionError> {
+) -> Result<PreparedIntake, ExecutionError> {
     let id = request.actor_id.as_str();
     let entity = state
         .physical
@@ -381,13 +403,6 @@ fn prepare(
         &state.installed.cognition.significant_event_types,
         budget,
     )?;
-    let attributes = project_attributes(
-        entity,
-        &state.installed.attributes,
-        state.physical.pending_values.as_ref(),
-        AttributeAudience::Owner,
-        budget,
-    )?;
     let attention = crate::reception::capture_attention_read(state, id, budget)?;
     let policy = state
         .installed
@@ -395,23 +410,16 @@ fn prepare(
         .as_ref()
         .map(|policy| &policy.value().background_thinking);
     let count = policy.map_or(0, |policy| policy.reconsideration_inputs.len());
-    let visible_count = [
-        &state.reception.visible_people,
-        &state.reception.visible_objects,
-    ]
-    .into_iter()
-    .filter_map(|root| root.as_ref().and_then(|root| root.get(id)))
-    .map(Vec::len)
-    .sum::<usize>();
     let current = state
         .reception
         .perception_evidence
         .as_ref()
         .and_then(|owners| owners.get(id));
     let current_count = current.map_or(0, |owner| owner.current.len());
+    let queue_only = matches!(output, IntakeOutput::Queue);
+    let reconsideration_bytes = size_of::<Reconsideration<'_>>() * if queue_only { 1 } else { 2 };
     let bytes = count
-        .checked_mul(2 * size_of::<Reconsideration<'_>>())
-        .and_then(|n| n.checked_add(visible_count.checked_mul(size_of::<Stimulus<'_>>())?))
+        .checked_mul(reconsideration_bytes)
         .and_then(|n| {
             n.checked_add(current_count.checked_mul(size_of::<(&str, &str, Option<&str>)>())?)
         })
@@ -425,27 +433,11 @@ fn prepare(
                     .checked_mul(size_of::<&str>())?,
             )
         })
-        .and_then(|n| {
-            n.checked_add(
-                attributes
-                    .rows()
-                    .len()
-                    .checked_mul(size_of::<(&str, &crate::text::JsText)>())?,
-            )
-        })
-        .and_then(|n| {
-            n.checked_add(
-                unseen
-                    .records
-                    .len()
-                    .checked_mul(size_of::<EventMetadata<'_>>())?,
-            )
-        })
         .ok_or(ExecutionError::Capacity)?;
     let _scratch = budget.reserve(bytes)?;
     let read = state.installed.status_read(&state.physical);
     let mut reconsideration = Vec::with_capacity(count);
-    let mut director_inputs = Vec::with_capacity(count);
+    let mut director_inputs = Vec::with_capacity(if queue_only { 0 } else { count });
     if let Some(policy) = policy {
         for input in &policy.reconsideration_inputs {
             let value = read
@@ -455,7 +447,7 @@ fn prepare(
                 key: &input.key,
                 value,
             });
-            if input.director {
+            if input.director && !queue_only {
                 director_inputs.push(Reconsideration {
                     key: &input.key,
                     value,
@@ -517,25 +509,6 @@ fn prepare(
             }
         }
     }
-    let mut concerns = Vec::with_capacity(attributes.rows().len());
-    for attribute in attributes.rows() {
-        if state
-            .installed
-            .attributes
-            .get(&attribute.id)
-            .is_some_and(|definition| {
-                definition
-                    .value()
-                    .concern
-                    .as_ref()
-                    .is_some_and(|concern| concern.reconsider)
-            })
-        {
-            if let Some(text) = &attribute.concern {
-                concerns.push((attribute.id.as_str(), text));
-            }
-        }
-    }
     let scope = CurrentBodyReadScope::prepare(
         &state.reception,
         &state.physical.entities,
@@ -573,121 +546,6 @@ fn prepare(
         }
     }
     classifications.sort_unstable_by(|a, b| crate::encoding::js_property_cmp(a.0, b.0));
-    let names = InstalledPersonalNameReader::prepare(
-        &state.physical,
-        &state.reception,
-        &state.installed,
-        &state.experience,
-        id,
-    )?;
-    let _stimulus_index_storage = budget.reserve(
-        crate::host::retained_size::tree_node_bound::<&str, f64>()
-            .and_then(|n| {
-                crate::host::retained_size::tree_node_bound::<&str, ()>()
-                    .and_then(|wanted| n.checked_add(wanted))
-            })
-            .and_then(|n| n.checked_mul(visible_count))
-            .ok_or(ExecutionError::Capacity)?,
-    )?;
-    let wanted = [
-        &state.reception.visible_people,
-        &state.reception.visible_objects,
-    ]
-    .into_iter()
-    .filter_map(|root| root.as_ref().and_then(|root| root.get(id)))
-    .flatten()
-    .map(String::as_str)
-    .collect::<std::collections::BTreeSet<_>>();
-    let mut changed_at = std::collections::BTreeMap::new();
-    for record in state
-        .experience
-        .optional_collection(id, PersonalSourceKind::Awareness)?
-        .into_iter()
-        .flat_map(|collection| collection.records())
-        .rev()
-    {
-        let header = record.header();
-        if header.event_type.as_deref() != Some("encounter")
-            || header.outward_change.as_deref() != Some("detail")
-        {
-            continue;
-        }
-        if let Some(target) = header
-            .evidence_target_id
-            .as_deref()
-            .filter(|id| wanted.contains(id))
-        {
-            changed_at.entry(target).or_insert(header.at);
-        }
-        if changed_at.len() == wanted.len() {
-            break;
-        }
-    }
-    let mut stimuli = Vec::with_capacity(visible_count);
-    for source in [
-        &state.reception.visible_people,
-        &state.reception.visible_objects,
-    ]
-    .into_iter()
-    .filter_map(|root| root.as_ref().and_then(|root| root.get(id)))
-    .flatten()
-    {
-        let Some(subject) = state.physical.entities.get(source) else {
-            continue;
-        };
-        let seen = state
-            .reception
-            .perception_episodes
-            .as_ref()
-            .and_then(|owners| owners.get(id))
-            .and_then(|episodes| episodes.get(source))
-            .and_then(|episode| episode.split(':').nth(1))
-            .and_then(|at| at.parse::<f64>().ok())
-            .filter(|at| at.is_finite())
-            .unwrap_or(state.physical.header.sim_time);
-        // Source uses the latest resident detail notice, never hidden clocks.
-        let changed = changed_at.get(source.as_str()).copied().unwrap_or(seen);
-        stimuli.push(Stimulus {
-            source_id: source,
-            states: state
-                .installed
-                .observation_rules
-                .value()
-                .outward_states(subject),
-            since: seen.max(changed),
-            label: names.observer_name(source)?,
-        });
-    }
-    let mut events = Vec::with_capacity(unseen.records.len());
-    for source in &unseen.records {
-        if let Some(original) = source.event_id.and_then(|event| {
-            state
-                .occurrences
-                .hot()
-                .find(|hot| hot.event().event().id == event)
-        }) {
-            let event = original.event().event();
-            let response_recorded = event.data.as_ref().and_then(|data| data.get("responseId")).is_some_and(|value| matches!(value, crate::reception::EventScalar::Text(id) if id.as_unicode().is_some_and(|id| state.responses.get(id).is_some())));
-            events.push(EventMetadata {
-                id: &event.id,
-                kind: &event.event_type,
-                actor_id: event.actor_id.as_deref(),
-                data: EventData(event.data.as_ref()),
-                response_recorded,
-            });
-        }
-    }
-    let purpose_bytes = actor
-        .agency
-        .plan
-        .as_ref()
-        .map_or(0, |plan| plan.id.len())
-        .max(actor.action.as_ref().map_or(0, |action| action.id.len()))
-        .checked_mul(6)
-        .and_then(|n| n.checked_add(64))
-        .ok_or(ExecutionError::Capacity)?;
-    let _purpose_storage = budget.reserve(purpose_bytes)?;
-    let purpose = crate::execution::occupied_purpose(actor)?;
     let goal_bytes = actor
         .agency
         .goals
@@ -807,6 +665,217 @@ fn prepare(
         budget,
     )?;
     token_storage.merge(dependency_storage)?;
+    let enrolled = actor.alive
+        && state
+            .minds
+            .minds
+            .as_ref()
+            .is_some_and(|minds| minds.contains_key(id));
+    let input = InputProduct {
+        world_id: &state.physical.header.id,
+        generation: &state.generation,
+        accepted_cut: state.accepted_cut,
+        at: state.physical.header.sim_time,
+        actor_id: id,
+        name: &entity.name,
+        physical_life: actor.physical_life,
+        eligible: enrolled && !actor.incapacitated,
+        enrolled,
+        controller: &actor.controller,
+        alive: actor.alive,
+        incapacitated: actor.incapacitated,
+        cognition: actor
+            .capabilities
+            .as_ref()
+            .map_or(actor.controller != "native", |c| c.cognition),
+        actions_blocked,
+        speech_blocked: state
+            .installed
+            .capabilities
+            .capability_blocked(Some(entity), "speech")?,
+        values: &tokens,
+        dependency_token: &dependencies,
+        awareness_through: unseen.awareness_through,
+        urgency: unseen.urgency,
+        discovery: actor.agency.semantic.as_ref().map(|semantic| Discovery {
+            state: &semantic.discovery,
+            reservation: semantic.reservation.as_deref(),
+        }),
+    };
+    if queue_only {
+        let (text, storage) = encode_inputs(&input, budget)?;
+        return Ok(PreparedIntake::Queue(text, storage));
+    }
+
+    let attributes = project_attributes(
+        entity,
+        &state.installed.attributes,
+        state.physical.pending_values.as_ref(),
+        AttributeAudience::Owner,
+        budget,
+    )?;
+    let visible_count = [
+        &state.reception.visible_people,
+        &state.reception.visible_objects,
+    ]
+    .into_iter()
+    .filter_map(|root| root.as_ref().and_then(|root| root.get(id)))
+    .map(Vec::len)
+    .sum::<usize>();
+    let presentation_bytes = visible_count
+        .checked_mul(size_of::<Stimulus<'_>>())
+        .and_then(|n| {
+            n.checked_add(
+                attributes
+                    .rows()
+                    .len()
+                    .checked_mul(size_of::<(&str, &crate::text::JsText)>())?,
+            )
+        })
+        .and_then(|n| {
+            n.checked_add(
+                unseen
+                    .records
+                    .len()
+                    .checked_mul(size_of::<EventMetadata<'_>>())?,
+            )
+        })
+        .ok_or(ExecutionError::Capacity)?;
+    let _presentation_storage = budget.reserve(presentation_bytes)?;
+    let mut concerns = Vec::with_capacity(attributes.rows().len());
+    for attribute in attributes.rows() {
+        if state
+            .installed
+            .attributes
+            .get(&attribute.id)
+            .is_some_and(|definition| {
+                definition
+                    .value()
+                    .concern
+                    .as_ref()
+                    .is_some_and(|concern| concern.reconsider)
+            })
+        {
+            if let Some(text) = &attribute.concern {
+                concerns.push((attribute.id.as_str(), text));
+            }
+        }
+    }
+    let names = InstalledPersonalNameReader::prepare(
+        &state.physical,
+        &state.reception,
+        &state.installed,
+        &state.experience,
+        id,
+    )?;
+    let _stimulus_index_storage = budget.reserve(
+        crate::host::retained_size::tree_node_bound::<&str, f64>()
+            .and_then(|n| {
+                crate::host::retained_size::tree_node_bound::<&str, ()>()
+                    .and_then(|wanted| n.checked_add(wanted))
+            })
+            .and_then(|n| n.checked_mul(visible_count))
+            .ok_or(ExecutionError::Capacity)?,
+    )?;
+    let wanted = [
+        &state.reception.visible_people,
+        &state.reception.visible_objects,
+    ]
+    .into_iter()
+    .filter_map(|root| root.as_ref().and_then(|root| root.get(id)))
+    .flatten()
+    .map(String::as_str)
+    .collect::<std::collections::BTreeSet<_>>();
+    let mut changed_at = std::collections::BTreeMap::new();
+    for record in state
+        .experience
+        .optional_collection(id, PersonalSourceKind::Awareness)?
+        .into_iter()
+        .flat_map(|collection| collection.records())
+        .rev()
+    {
+        let header = record.header();
+        if header.event_type.as_deref() != Some("encounter")
+            || header.outward_change.as_deref() != Some("detail")
+        {
+            continue;
+        }
+        if let Some(target) = header
+            .evidence_target_id
+            .as_deref()
+            .filter(|id| wanted.contains(id))
+        {
+            changed_at.entry(target).or_insert(header.at);
+        }
+        if changed_at.len() == wanted.len() {
+            break;
+        }
+    }
+    let mut stimuli = Vec::with_capacity(visible_count);
+    for source in [
+        &state.reception.visible_people,
+        &state.reception.visible_objects,
+    ]
+    .into_iter()
+    .filter_map(|root| root.as_ref().and_then(|root| root.get(id)))
+    .flatten()
+    {
+        let Some(subject) = state.physical.entities.get(source) else {
+            continue;
+        };
+        let seen = state
+            .reception
+            .perception_episodes
+            .as_ref()
+            .and_then(|owners| owners.get(id))
+            .and_then(|episodes| episodes.get(source))
+            .and_then(|episode| episode.split(':').nth(1))
+            .and_then(|at| at.parse::<f64>().ok())
+            .filter(|at| at.is_finite())
+            .unwrap_or(state.physical.header.sim_time);
+        // Source uses the latest resident detail notice, never hidden clocks.
+        let changed = changed_at.get(source.as_str()).copied().unwrap_or(seen);
+        stimuli.push(Stimulus {
+            source_id: source,
+            states: state
+                .installed
+                .observation_rules
+                .value()
+                .outward_states(subject),
+            since: seen.max(changed),
+            label: names.observer_name(source)?,
+        });
+    }
+    let mut events = Vec::with_capacity(unseen.records.len());
+    for source in &unseen.records {
+        if let Some(original) = source.event_id.and_then(|event| {
+            state
+                .occurrences
+                .hot()
+                .find(|hot| hot.event().event().id == event)
+        }) {
+            let event = original.event().event();
+            let response_recorded = event.data.as_ref().and_then(|data| data.get("responseId")).is_some_and(|value| matches!(value, crate::reception::EventScalar::Text(id) if id.as_unicode().is_some_and(|id| state.responses.get(id).is_some())));
+            events.push(EventMetadata {
+                id: &event.id,
+                kind: &event.event_type,
+                actor_id: event.actor_id.as_deref(),
+                data: EventData(event.data.as_ref()),
+                response_recorded,
+            });
+        }
+    }
+    let purpose_bytes = actor
+        .agency
+        .plan
+        .as_ref()
+        .map_or(0, |plan| plan.id.len())
+        .max(actor.action.as_ref().map_or(0, |action| action.id.len()))
+        .checked_mul(6)
+        .and_then(|n| n.checked_add(64))
+        .ok_or(ExecutionError::Capacity)?;
+    let _purpose_storage = budget.reserve(purpose_bytes)?;
+    let purpose = crate::execution::occupied_purpose(actor)?;
     // Queue wake inputs intentionally omit semantic bookkeeping. The later
     // inspection also protects the actual resolved causes and receipt metadata
     // used by this read, so it cannot acknowledge an obsolete opportunity.
@@ -818,52 +887,30 @@ fn prepare(
         budget,
     )?;
     token_storage.merge(inspection_storage)?;
-    let witness = NpcIntakeWitness {
-        tokens,
-        dependencies,
-        inspection,
-        _storage: token_storage,
-    };
 
     let (prepared_result, _result_storage) = result::capture(state, actor, id, budget)?;
     let product = Product {
-        world_id: &state.physical.header.id,
-        generation: &state.generation,
-        accepted_cut: state.accepted_cut,
-        at: state.physical.header.sim_time,
-        actor_id: id,
-        name: &entity.name,
-        eligible: actor.alive
-            && !actor.incapacitated
-            && state
-                .minds
-                .minds
-                .as_ref()
-                .is_some_and(|minds| minds.contains_key(id)),
-        enrolled: actor.alive
-            && state
-                .minds
-                .minds
-                .as_ref()
-                .is_some_and(|minds| minds.contains_key(id)),
-        physical_life: actor.physical_life,
+        world_id: input.world_id,
+        generation: input.generation,
+        accepted_cut: input.accepted_cut,
+        at: input.at,
+        actor_id: input.actor_id,
+        name: input.name,
+        eligible: input.eligible,
+        enrolled: input.enrolled,
+        physical_life: input.physical_life,
         identity_through: state.physical.identity.next_id(),
-        controller: &actor.controller,
-        alive: actor.alive,
-        incapacitated: actor.incapacitated,
+        controller: input.controller,
+        alive: input.alive,
+        incapacitated: input.incapacitated,
         participating: entity.actively_participates(),
         has_memory: entity.has_memory(),
-        cognition: actor
-            .capabilities
-            .as_ref()
-            .map_or(actor.controller != "native", |capabilities| {
-                capabilities.cognition
-            }),
+        cognition: input.cognition,
         conditions: &actor.conditions,
-        values: &witness.tokens,
-        dependency_token: &witness.dependencies,
-        awareness_through: unseen.awareness_through,
-        urgency: unseen.urgency,
+        values: input.values,
+        dependency_token: input.dependency_token,
+        awareness_through: input.awareness_through,
+        urgency: input.urgency,
         unseen: Unseen {
             records: &unseen.records,
             max_sequence: unseen.max_sequence,
@@ -876,11 +923,8 @@ fn prepare(
         },
         attention: raw(&attention.json)?,
         protection_labels: &protection_labels,
-        actions_blocked,
-        speech_blocked: state
-            .installed
-            .capabilities
-            .capability_blocked(Some(entity), "speech")?,
+        actions_blocked: input.actions_blocked,
+        speech_blocked: input.speech_blocked,
         semantic: actor.agency.semantic.as_ref(),
         opportunity: Opportunity {
             body_inputs: &director_inputs,
@@ -901,18 +945,14 @@ fn prepare(
         prepared_result,
     };
     if matches!(output, IntakeOutput::Witness) {
-        return Ok((witness, None));
+        return Ok(PreparedIntake::Witness(NpcIntakeWitness {
+            tokens,
+            dependencies,
+            inspection,
+            _storage: token_storage,
+        }));
     }
-    let inputs_length =
-        json_record_len(&InputProduct(&product)).map_err(|_| ExecutionError::Invariant)?;
-    let mut inputs_storage = budget.reserve(
-        inputs_length
-            .checked_mul(2)
-            .ok_or(ExecutionError::Capacity)?,
-    )?;
-    let inputs_json =
-        json_record(&InputProduct(&product)).map_err(|_| ExecutionError::Invariant)?;
-    inputs_storage.resize(inputs_json.capacity())?;
+    let (inputs_json, inputs_storage) = encode_inputs(&input, budget)?;
     let length = json_record_len(&product).map_err(|_| ExecutionError::Invariant)?;
     let mut storage = budget.reserve(
         length
@@ -936,15 +976,20 @@ fn prepare(
             + size_of::<NpcIntakeCapture>(),
     )?;
     storage.merge(inputs_storage)?;
-    Ok((
-        witness,
-        Some(NpcIntakePackets {
+    Ok(PreparedIntake::Packets(
+        NpcIntakeWitness {
+            tokens,
+            dependencies,
+            inspection,
+            _storage: token_storage,
+        },
+        NpcIntakePackets {
             life: actor.physical_life,
             semantic_causes: attention.semantic_causes,
             json,
             inputs_json,
             _storage: storage,
-        }),
+        },
     ))
 }
 struct Classifications<'a>(&'a [(&'a str, &'a str, Option<&'a str>)], bool);

@@ -132,6 +132,7 @@ export declare class NativeWorld {
     answer: Buffer,
   ): Promise<NativeWorldNpcTurn>;
   readNpc(request: Buffer): Promise<NativeWorldNpcRead>;
+  readNpcQueueInputs(request: Buffer): Promise<NativeWorldJson>;
   readNpcTrigger(request: Buffer): Promise<NativeWorldNpcTrigger>;
   inspectNpcTrigger(trigger: NativeWorldNpcTrigger): Promise<NativeWorldNpcInspection | null>;
   npcTriggerCurrent(trigger: NativeWorldNpcTrigger): Promise<boolean>;

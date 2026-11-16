@@ -1,7 +1,11 @@
 import { formatResponseTrigger, type ResponseTriggerRead } from './response-trigger-format.js';
 import { gameTime } from './recall.js';
 import { namePhrase, type Named } from '@open-legend/language';
-import type { NativeWorld, NativeWorldNpcTrigger } from '@open-legend/native-simulation';
+import type {
+  NativeWorld,
+  NativeWorldJson,
+  NativeWorldNpcTrigger,
+} from '@open-legend/native-simulation';
 import {
   EXPERIENCE_LIMITS,
   STIMULUS_POLICY,
@@ -155,12 +159,12 @@ function intakeRequest(actorId: string, afterSequence: number, weighedThrough?: 
     },
   };
 }
-async function queueInputs(read: NativeWorldNpcTrigger): Promise<NativeNpcQueueInputs> {
+async function queueInputs(read: () => Promise<NativeWorldJson>): Promise<NativeNpcQueueInputs> {
   let facts: NativeNpcInputFacts | undefined;
   let values: unknown[] | undefined;
   let queued: NativeNpcQueueInputs | undefined;
   try {
-    facts = decodeNativeProduct<NativeNpcInputFacts>(await read.inputs());
+    facts = decodeNativeProduct<NativeNpcInputFacts>(await read());
     freezeNativeProduct(facts);
     const inputs = retainNativeSources([...facts.values, facts.dependencyToken], facts);
     values = inputs;
@@ -234,20 +238,15 @@ export class NativeNpcIntake {
     actorId: string,
     weighedThrough?: number,
   ): Promise<NativeNpcQueueInputs> {
-    const read = await withNativeJsonInput(
-      world,
-      intakeRequest(actorId, 0, weighedThrough),
-      (bytes) => world.readNpcTrigger(bytes),
+    return queueInputs(() =>
+      withNativeJsonInput(world, intakeRequest(actorId, 0, weighedThrough), (bytes) =>
+        world.readNpcQueueInputs(bytes),
+      ),
     );
-    try {
-      return await queueInputs(read);
-    } finally {
-      read.release();
-    }
   }
   async queueInputs(): Promise<NativeNpcQueueInputs> {
     this.facts;
-    return queueInputs(this.read);
+    return queueInputs(() => this.read.inputs());
   }
   get facts(): NativeNpcIntakeFacts {
     if (!this.product) throw new Error('The native thought intake read was released.');

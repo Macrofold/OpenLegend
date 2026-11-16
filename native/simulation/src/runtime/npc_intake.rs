@@ -72,6 +72,20 @@ impl NativeWorldSession {
             crate::capture::npc_intake::capture(state, request, &self.budget).map_err(failure)?;
         Ok(RuntimeNpcTrigger { read })
     }
+    pub fn read_npc_queue_inputs(&self, input: &[u8]) -> Result<RuntimeJson, RuntimeError> {
+        self.require_active()?;
+        let _decode = decode_preparation(input, &self.budget)?;
+        let request = serde_json::from_slice(input).map_err(failure)?;
+        let state = &self.session.accepted().map_err(failure)?.state;
+        let (text, custody) =
+            crate::capture::npc_intake::capture_queue_inputs(state, &request, &self.budget)
+                .map_err(failure)?;
+        Ok(RuntimeJson {
+            bytes: text.into_bytes(),
+            custody,
+            handoff: None,
+        })
+    }
     pub fn npc_trigger_current(&self, trigger: &RuntimeNpcTrigger) -> Result<bool, RuntimeError> {
         self.require_active()?;
         let state = &self.session.accepted().map_err(failure)?.state;

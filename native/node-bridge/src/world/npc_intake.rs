@@ -89,6 +89,21 @@ impl Drop for NativeWorldNpcTrigger {
 }
 #[napi]
 impl NativeWorld {
+    #[napi(ts_return_type = "Promise<NativeWorldJson>")]
+    pub fn read_npc_queue_inputs<'a>(
+        &self,
+        env: &'a Env,
+        request: BufferSlice<'_>,
+    ) -> Result<Object<'a>> {
+        let request = input(&request, &self.host.bytes)?;
+        self.compute(env, move |session, _cancel, budget| {
+            let product = session
+                .read_npc_queue_inputs(request.bytes())
+                .map_err(operation_error)?;
+            Ok(NativeWorldJson::new(product, budget.clone()))
+        })
+    }
+
     #[napi(ts_return_type = "Promise<NativeWorldNpcTrigger>")]
     pub fn read_npc_trigger<'a>(
         &self,
