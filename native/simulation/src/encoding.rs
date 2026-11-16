@@ -67,10 +67,19 @@ impl serde_json::ser::Formatter for JsFormatter {
 /// Value bodies use `json_value` so integer-property enumeration stays exact.
 pub fn json_record<T: Serialize + ?Sized>(record: &T) -> Result<String, serde_json::Error> {
     let mut bytes = Vec::new();
-    let mut serializer = serde_json::Serializer::with_formatter(&mut bytes, JsFormatter::default());
-    record.serialize(&mut serializer)?;
+    write_json_record(record, &mut bytes)?;
     // serde_json only emits UTF-8. Avoid a second parse or payload re-encoding.
     Ok(String::from_utf8(bytes).expect("JSON serializer emitted non-UTF-8 data"))
+}
+
+pub(crate) fn write_json_record<T: Serialize + ?Sized>(
+    record: &T,
+    writer: impl io::Write,
+) -> Result<(), serde_json::Error> {
+    record.serialize(&mut serde_json::Serializer::with_formatter(
+        writer,
+        JsFormatter::default(),
+    ))
 }
 
 pub fn json_value(value: &Value) -> Result<String, serde_json::Error> {

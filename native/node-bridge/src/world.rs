@@ -468,7 +468,9 @@ fn turn(
         if cancel.requested() {
             session.fence().request_stop();
         }
-        let step = session.step(key, answer.take()).map_err(operation_error)?;
+        let step = session
+            .step(key, answer.take(), cancel.publication_ranges())
+            .map_err(operation_error)?;
         let mut result = NativeWorldTurn {
             key: key.into(),
             kind: String::new(),

@@ -16,6 +16,7 @@ use std::sync::{Arc, Weak};
 static NEXT_GENERATION: AtomicU64 = AtomicU64::new(1);
 mod account_retention;
 mod control;
+mod publication_ranges;
 pub use account_retention::RuntimeAccountRetention;
 mod handoff;
 mod knowledge;
@@ -594,6 +595,7 @@ impl NativeWorldSession {
         &mut self,
         key: CandidateKey,
         answer: Option<(&RuntimeProvider, RuntimeProviderInput)>,
+        publication_ranges: bool,
     ) -> Result<RuntimeStep, RuntimeError> {
         if self.session.is_npc_candidates(key) || self.session.is_npc_sources(key) {
             return Err(failure("NPC discovery requires its originating read"));
@@ -647,21 +649,20 @@ impl NativeWorldSession {
                 let restore = self.session.prepared_restore_facts(key).map_err(failure)?;
                 let output = (|| {
                     let handoff = RuntimeOutputHandoff::new(&self.budget)?;
-                    let mut output = RuntimeJson::encode(
-                        &Products {
-                            operation,
-                            history,
-                            notices,
-                            records,
-                            personal_predecessors,
-                            temporal_predecessors,
-                            source_versions,
-                            protected_save,
-                            progress,
-                            restore,
-                        },
-                        &self.budget,
-                    )?;
+                    let products = Products {
+                        operation,
+                        history,
+                        notices,
+                        records,
+                        personal_predecessors,
+                        temporal_predecessors,
+                        source_versions,
+                        protected_save,
+                        progress,
+                        restore,
+                    };
+                    let mut output =
+                        publication_ranges::encode(&products, &self.budget, publication_ranges)?;
                     output.handoff = Some(handoff.clone());
                     Ok::<_, RuntimeError>((output, handoff))
                 })();
@@ -819,13 +820,29 @@ struct Products<'a> {
     progress: crate::simulation::session::PreparedReadProgress<'a>,
     restore: Option<crate::simulation::session::PreparedRestoreFacts<'a>>,
 }
-impl Serialize for Products<'_> {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
+impl Products<'_> {
+    fn serialize_before_records<M: SerializeMap>(&self, map: &mut M) -> Result<(), M::Error> {
         map.serialize_entry("outcome", self.operation.outcome())?;
         map.serialize_entry("events", &Events(self.operation))?;
         map.serialize_entry("history", &self.history.value())?;
-        map.serialize_entry("notices", self.notices)?;
+        map.serialize_entry("notices", self.notices)
+    }
+
+    fn serialize_after_records<M: SerializeMap>(&self, map: &mut M) -> Result<(), M::Error> {
+        map.serialize_entry("personalPredecessors", &self.personal_predecessors.value())?;
+        map.serialize_entry("temporalPredecessors", &self.temporal_predecessors.value())?;
+        map.serialize_entry("sourceVersions", self.source_versions)?;
+        if let Some(prefix) = self.protected_save.filter(|_| self.restore.is_none()) {
+            map.serialize_entry("protectedSave", prefix)?;
+        }
+        map.serialize_entry("progress", &self.progress)?;
+        privacy::serialize(self.operation, map)
+    }
+}
+impl Serialize for Products<'_> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut map = serializer.serialize_map(None)?;
+        self.serialize_before_records(&mut map)?;
         if let Some(restore) = &self.restore {
             map.serialize_entry("restore", restore)?;
             if let CompletedOperation::Restore(operation) = self.operation {
@@ -834,14 +851,7 @@ impl Serialize for Products<'_> {
         } else {
             map.serialize_entry("records", self.records)?;
         }
-        map.serialize_entry("personalPredecessors", &self.personal_predecessors.value())?;
-        map.serialize_entry("temporalPredecessors", &self.temporal_predecessors.value())?;
-        map.serialize_entry("sourceVersions", self.source_versions)?;
-        if let Some(prefix) = self.protected_save.filter(|_| self.restore.is_none()) {
-            map.serialize_entry("protectedSave", prefix)?;
-        }
-        map.serialize_entry("progress", &self.progress)?;
-        privacy::serialize(self.operation, &mut map)?;
+        self.serialize_after_records(&mut map)?;
         map.end()
     }
 }
