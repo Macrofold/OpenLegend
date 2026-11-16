@@ -79,9 +79,11 @@ fn cell_workspace(cell: &SqlCell) -> Option<usize> {
             let local = if indexed == 0 {
                 0
             } else {
+                // Vec may briefly own both the old allocation and the
+                // doubled capacity while growing its filtered result.
                 indexed
                     .max(4)
-                    .checked_mul(2 * std::mem::size_of::<(u32, &String, &SqlCell)>())?
+                    .checked_mul(3 * std::mem::size_of::<(u32, &String, &SqlCell)>())?
             };
             let nested = fields
                 .values()
