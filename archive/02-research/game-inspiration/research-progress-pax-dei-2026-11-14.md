@@ -50,6 +50,8 @@ Existing CE/CP/SH/INV/PS/PT/FPV/CO owners cover the design questions, so no new 
 
 Mike's concurrency/subscriber question is recorded in chapter 03 with seven historical game comparisons, source definitions, rejected misleading inputs and an account-hours calculation. The approximate 5× peak / 10× average starting scenarios are not an industry median or an estimate of Pax Dei payers. Its original commercial uncertainty remains visible.
 
+Independent review checked the actual integration diff and numerical definitions. The 114 relative links in the Pax Dei packet and added navigation/owner links resolve against the committed repository tree; all 25 referenced anchors were checked. All 191 existing roster rows remain unchanged. Only research, navigation and four existing design/work-owner files changed; no runtime tests or gameplay qualification were run for this documentation task.
+
 ## Remaining work
 
 None in the requested research scope. Future refreshes should check new releases and current metrics explicitly rather than overwrite the dated record.

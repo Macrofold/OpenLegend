@@ -198,7 +198,7 @@ Read [requirements](research-requirements.md), [earlier research progress](resea
 | G191 | BitCraft Online | `bitcraft-online.md` | November 14, 2026 full-game study: alpha, Early Access, EA2 and November 13 version 1.0; careers, persistent communities, player reception, production/business, public server source and scaling. [Scoped record](research-progress-bitcraft-online-2026-11-14.md). |
 | G192 | Pax Dei | `pax-dei.md` | November 14, 2026 full-game study: persistent building, social purpose, sharding and technology, reception, production, commercial evidence and marketing. [Scoped record](research-progress-pax-dei-2026-11-14.md). |
 
-These rows preserve the complete earlier 47-subject commitment and every subsequent requested addition through G191. Incidental inspirations inside a source are not silently counted as completed dossiers or substituted for a requested subject. If recovery identifies another actual requested case, add it explicitly without deleting one of these. Inspect the full earlier material and the applicable mechanics study before each authorized pass; research missing categories rather than duplicating complete existing sections.
+These rows preserve the complete earlier 47-subject commitment and every subsequent requested addition through G192. Incidental inspirations inside a source are not silently counted as completed dossiers or substituted for a requested subject. If recovery identifies another actual requested case, add it explicitly without deleting one of these. Inspect the full earlier material and the applicable mechanics study before each authorized pass; research missing categories rather than duplicating complete existing sections.
 
 ## September 26 mechanics-corpus expansion scope
 
