@@ -2431,20 +2431,25 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                 }
                 assertPrivacyContinuation(privacy, this.privacy);
                 const versions = publication.sourceVersions;
-                const prepared = await this.pending.prepareProtected(
+                const history = await nativePrivateHistory(
                   publication,
-                  versions,
-                  (changes) =>
-                    nativePrivateHistory(
-                      publication,
-                      changes,
-                      this.privacy,
-                      privacy,
-                      this.store.db,
-                      before,
-                    ),
+                  this.privacy,
                   privacy,
+                  this.store.db,
+                  before,
                 );
+                let prepared: Awaited<ReturnType<NativePendingSave['prepareProtected']>>;
+                try {
+                  prepared = await this.pending.prepareProtected(
+                    this.world,
+                    publication,
+                    versions,
+                    history,
+                    privacy,
+                  );
+                } finally {
+                  releaseNativeProduct(history);
+                }
                 staged = prepared;
                 const output = {
                   prepared,

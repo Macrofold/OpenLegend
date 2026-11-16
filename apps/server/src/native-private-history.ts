@@ -5,6 +5,7 @@ import { nativeAppendHistoryProjection } from './native-history.js';
 import type { NativePublication } from './native-operation.js';
 import type { LiveReadCuts } from './live-read-overlay.js';
 import type { SqlDatabase } from './store.js';
+import { nativeRecordChanges } from './native-records.js';
 import { RECORD_NODES } from './world-record-schema.js';
 import { retainNativeSources } from './native-consumer.js';
 import type { NativeRestorePublication } from './native-restore.js';
@@ -15,18 +16,17 @@ import type { RecordChanges } from './world-records.js';
  * never reconstructs personal collections or reads unrelated memory prose. */
 export async function nativePrivateHistory(
   publication: NativePublication,
-  changes: RecordChanges,
   beforePrivacy: ExperiencePrivacy,
   privacy: ExperiencePrivacy,
   db: SqlDatabase,
   beforeCut: LiveReadCuts,
 ): Promise<HistoryProjection> {
+  const projection = nativeAppendHistoryProjection(publication.history);
   const change = publication.privacyChange;
-  if (!change)
-    return retainNativeSources(nativeAppendHistoryProjection(publication.history), publication);
+  if (!change) return retainNativeSources(projection, publication);
   return privacyHistory(
     publication,
-    changes,
+    nativeRecordChanges(publication.records),
     [change.actorId],
     beforePrivacy,
     privacy,
@@ -40,7 +40,6 @@ export async function nativePrivateHistory(
  * transaction. Only the genuine reconciliation delta may revoke or add them. */
 export function nativeRestoredHistory(
   publication: NativeRestorePublication,
-  changes: RecordChanges,
   beforePrivacy: ExperiencePrivacy,
   db: SqlDatabase,
   beforeCut: LiveReadCuts,
@@ -51,7 +50,16 @@ export function nativeRestoredHistory(
     ...Object.keys(privacy.corrections),
     ...publication.personalPredecessors.map((row) => row.actorId),
   ]);
-  return privacyHistory(publication, changes, actors, beforePrivacy, privacy, db, beforeCut, true);
+  return privacyHistory(
+    publication,
+    nativeRecordChanges(publication.restore.changes),
+    actors,
+    beforePrivacy,
+    privacy,
+    db,
+    beforeCut,
+    true,
+  );
 }
 
 async function privacyHistory(

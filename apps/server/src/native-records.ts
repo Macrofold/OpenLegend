@@ -1,12 +1,6 @@
-import type {
-  NativeChangedRows,
-  NativeSaveRows,
-  NativeWorld,
-} from '@open-legend/native-simulation';
+import type { NativeChangedRows, NativeSaveRows } from '@open-legend/native-simulation';
 import { RECORD_NODES, RECORD_PARENTS } from './world-record-schema.js';
 import type { RecordChanges } from './world-records.js';
-import type { PendingTemporalPage } from './temporal-page-storage.js';
-import { attachNativeConsumer } from './native-consumer.js';
 
 /** Each call builds table lookups, checks every written row, and filters deletes
  * covered by a parent cascade. The lookups borrow the input's encoded rows.
@@ -69,20 +63,6 @@ export function nativeRecordChanges(changes: NativeChangedRows): RecordChanges {
     if (remaining.length) deletes.set(table, remaining);
   }
   return { writes, deletes, rows, ...(expired.size ? { expired } : {}) };
-}
-
-/** A protected SQL writer adds exact temporal predecessors without editing the
- * shared row lookups. Admit the small wrapper and independently retain its
- * decoded rows and edit list for as long as the writer or a reader needs them.
- * docs/projects/native-runtime-foundations-bridge.md#nrf11--adapt-each-accepted-changed-row-product-once */
-export function withNativeTemporalEdits(
-  budget: Pick<NativeWorld, 'reserveConsumerBytes'>,
-  changes: RecordChanges,
-  temporalEdits: readonly PendingTemporalPage[],
-  source: object,
-): RecordChanges {
-  const storage = budget.reserveConsumerBytes(5 * 512);
-  return attachNativeConsumer({ ...changes, temporalEdits }, storage, source, temporalEdits);
 }
 
 /** Exact acknowledgement bindings travel beside the row cut. The owner keeps
