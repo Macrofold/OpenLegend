@@ -4,6 +4,8 @@
 
 ## Start here
 
+- **[Pax Dei — G192](dossiers/pax-dei.md):** persistent construction and social purpose, player praise and criticism, shard/zone/overflow technology, commercial evidence, marketing and [Open Legend applications](dossiers/pax-dei/05-openlegend-lessons.md); [scoped evidence and coverage](research-progress-pax-dei-2026-11-14.md).
+
 - **[BitCraft Online — G191](dossiers/bitcraft-online.md):** persistent careers and communities, player praise and criticism, the November 2026 release and business-model changes, source-inspected server architecture, scaling limits and [OpenLegend applications](dossiers/bitcraft-online/05-openlegend-lessons.md); [scoped evidence and coverage](research-progress-bitcraft-online-2026-11-14.md).
 
 - **[Fable — G189](dossiers/fable.md) and [Fable II — G190](dossiers/fable-ii.md):** full mechanics, lore, reception, production, commercial and creation studies. The [series and combat-feel comparison](essays/fable-series-and-combat-feel.md) explains “spongey” combat and audits the supplied reboot criticism; the [scoped record](research-progress-fable-2026-11-14.md) owns completion and evidence limits.

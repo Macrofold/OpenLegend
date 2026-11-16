@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                                                                          | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The complete Main implementation and recorded full local build/check pass are available; integrated gameplay/performance, independent-character/invention and real-participant qualification remain open. | 2026-10-24   |
+| In progress | The complete Main implementation and recorded full local build/check pass are available; integrated gameplay/performance, independent-character/invention and real-participant qualification remain open. | 2026-11-15   |
 
 **Start here:** [complete design map](../projects/first-playable-world-feature-spec.md#complete-design-map) → [required scenario](../worlds/base/playable-openings.md#first-playable-game-target) → [playtest plan](../projects/first-playable-playtest-plan.md) → the tasks below. This is the coordination owner for **DG03 / ND26**. The world document owns the experience; [gameplay priorities](../repertoires/gameplay-priorities.md) owns selection; subsystem trackers own detailed delivery. [CO01](commercial-offers.md) owns commercial adoption independently of ordinary playtesting.
 
@@ -173,5 +173,7 @@ owns the full sequence and cross-layer risk. FPV01 closes build/coverage selecti
 ## Evidence and maintenance
 
 The [playtest plan](../projects/first-playable-playtest-plan.md) owns procedure. Existing subsystem reports own their results. Create `docs/verification/first-playable-experience.md` only for actual integrated/player findings and link it from [verification](../verification.md) and here. Record revision, environment, setup, observed outcomes, costs and unrun coverage; keep participant identities, raw recordings and private traces outside the repository.
+
+The [Pax Dei case](../../archive/02-research/game-inspiration/dossiers/pax-dei/05-openlegend-lessons.md#9-learn-from-marketing-without-confusing-reach-with-demand) supports FPV05–FPV09's existing comparisons: organized showcases versus ordinary play, audience fit versus voluntary return, and enjoyment versus paid demand. It adds no separate testing campaign.
 
 Maintain task status once, in its owning tracker. The [execution brief](../../archive/02-research/indie-launch-commercials/execution-brief.md) is a navigation and decision aid, not a parallel backlog.
