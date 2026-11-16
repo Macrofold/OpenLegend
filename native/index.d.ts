@@ -183,7 +183,10 @@ export declare class NativeWorld {
   finishReplyPreview(read: NativeWorldReplyPreviewRead, bytes: Buffer): Promise<NativeWorldJson>;
   beginRestore(bytes: Buffer): Promise<NativeWorldTurn>;
   activateRestored(key: NativeCandidateKey, receipt: string): Promise<void>;
-  retainedValues(): Promise<NativeWorldJson>;
+  retainedValues(
+    acceptedCut?: number | undefined | null,
+    membershipRevision?: number | undefined | null,
+  ): Promise<NativeWorldJson | null>;
   beginStartup(): Promise<NativeWorldTurn>;
   activate(receipt: string): Promise<void>;
   definitions(): Promise<NativeWorldJson>;

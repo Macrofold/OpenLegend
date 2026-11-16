@@ -2889,7 +2889,15 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     );
   }
   private async refreshValues(): Promise<void> {
-    const retained = await captureNativeRetainedValues(this.world);
+    const before = this.retained;
+    const known =
+      before?.membershipRevision !== undefined &&
+      before.worldId === this.worldId &&
+      before.generation === this.generation
+        ? { acceptedCut: this.pending.through, membershipRevision: before.membershipRevision }
+        : undefined;
+    const retained = await captureNativeRetainedValues(this.world, known);
+    if (!retained) return;
     if (
       retained.worldId !== this.worldId ||
       retained.generation !== this.generation ||

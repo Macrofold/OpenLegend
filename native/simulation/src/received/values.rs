@@ -336,6 +336,7 @@ pub struct RetainedValue {
 #[derive(Clone, Copy, Debug)]
 pub struct ReceivedValuesCheckpoint {
     operations: usize,
+    membership_revision: u64,
 }
 
 #[derive(Debug)]
@@ -354,6 +355,7 @@ enum ReceivedValuesUndo {
 
 pub struct ReceivedValues {
     sources: IndexMap<String, SharedReceivedValue>,
+    membership_revision: u64,
     phase_at: Option<f64>,
     phase_values: BTreeMap<ValueEncoding, String>,
     undo: Vec<ReceivedValuesUndo>,
@@ -536,6 +538,7 @@ pub fn retain_received_value(
         } => {
             let mut owner = ReceivedValues {
                 sources: IndexMap::new(),
+                membership_revision: 0,
                 phase_at: None,
                 phase_values: BTreeMap::new(),
                 undo: Vec::new(),
@@ -674,8 +677,10 @@ impl ReceivedValues {
                     .ok_or(ReceivedError("Received values exceed native allowance."))?,
             )
             .map_err(|_| ReceivedError("Received values exceed native allowance."))?;
+        let membership_revision = u64::from(!sources.is_empty());
         Ok(Self {
             sources,
+            membership_revision,
             phase_at: None,
             phase_values: BTreeMap::new(),
             undo: Vec::new(),
@@ -713,8 +718,10 @@ impl ReceivedValues {
             )?;
             self.prepare_backing(1, 1)?;
             let id = value.record.id.clone();
+            let revision = self.next_membership_revision()?;
             self.undo.push(ReceivedValuesUndo::SourceLoaded(id.clone()));
             self.sources.insert(id, value);
+            self.membership_revision = revision;
         }
         Ok(())
     }
@@ -746,7 +753,22 @@ impl ReceivedValues {
     /// SQL reclamation protects the actual canonical resident members. This
     /// read exports their IDs only; it supplies neither bodies nor disclosure.
     pub(crate) fn shared_ids(&self) -> impl ExactSizeIterator<Item = &str> {
-        self.sources.keys().map(String::as_str)
+        self.resident_ids()
+    }
+
+    /// Transient revision of the actual resident key set, scoped to this
+    /// installation. Phase deduplication and borrowed records do not change it.
+    pub(crate) fn membership_revision(&self) -> u64 {
+        self.membership_revision
+    }
+
+    fn next_membership_revision(&self) -> Result<u64, ReceivedError> {
+        self.membership_revision
+            .checked_add(1)
+            .filter(|revision| *revision <= crate::identity::MAX_SAFE_INTEGER)
+            .ok_or(ReceivedError(
+                "Received-value membership revision exhausted.",
+            ))
     }
 
     pub fn shared_value_bytes(&self, id: &str) -> Option<u64> {
@@ -883,6 +905,7 @@ impl ReceivedValues {
             ValueEncoding::install(encoded, encoded_storage, record.id.capacity(), &self.budget)?;
         let id = record.id.clone();
         let added_bytes = record.bytes;
+        let revision = self.next_membership_revision()?;
         self.undo.push(ReceivedValuesUndo::SourceInsert(id.clone()));
         self.sources.insert(
             id.clone(),
@@ -894,6 +917,7 @@ impl ReceivedValues {
         let previous = self.phase_values.insert(key.clone(), id.clone());
         self.undo
             .push(ReceivedValuesUndo::PhaseInsert { key, previous });
+        self.membership_revision = revision;
         Ok(RetainedValue {
             reference: ReceivedValueReference::Shared(id),
             added_bytes,
@@ -904,6 +928,7 @@ impl ReceivedValues {
     pub fn checkpoint(&self) -> ReceivedValuesCheckpoint {
         ReceivedValuesCheckpoint {
             operations: self.undo.len(),
+            membership_revision: self.membership_revision,
         }
     }
 
@@ -941,6 +966,7 @@ impl ReceivedValues {
                 },
             }
         }
+        self.membership_revision = checkpoint.membership_revision;
         Ok(())
     }
 

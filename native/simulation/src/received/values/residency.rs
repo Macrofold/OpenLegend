@@ -48,6 +48,7 @@ pub(crate) enum PreparedValueResidency {
         sources: IndexMap<String, SharedReceivedValue>,
         backing: crate::host::ResidentReservation,
         scratch: ByteReservation,
+        membership_revision: u64,
     },
 }
 impl ReceivedValues {
@@ -85,6 +86,7 @@ impl ReceivedValues {
         if references.len() == self.sources.len() {
             return Ok(PreparedValueResidency::Unchanged);
         }
+        let membership_revision = self.next_membership_revision()?;
         let keys = references
             .iter()
             .try_fold(0usize, |n, key| n.checked_add(key.len()))
@@ -134,6 +136,7 @@ impl ReceivedValues {
             sources,
             backing,
             scratch,
+            membership_revision,
         })
     }
     pub(crate) fn apply_residency(&mut self, prepared: PreparedValueResidency) {
@@ -145,10 +148,12 @@ impl ReceivedValues {
             sources,
             backing,
             scratch,
+            membership_revision,
         } = prepared
         {
             let old = std::mem::replace(&mut self.sources, sources);
             let old_backing = std::mem::replace(&mut self.backing, backing);
+            self.membership_revision = membership_revision;
             drop(old);
             drop(old_backing);
             drop(scratch);
