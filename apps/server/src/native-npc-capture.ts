@@ -178,7 +178,7 @@ export class NativeNpcActionCapture {
             id: offer.id,
             description: offer.description,
             transition: offer.transition,
-            noIntervention: offer.command === null,
+            noIntervention: offer.hasCommand === false,
           })),
       );
       try {

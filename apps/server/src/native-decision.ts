@@ -1441,7 +1441,7 @@ async function prepareOwnedDecision(
                   ? actionCapture.noIntervention(offer.ordinal)
                   : (actionSource === 'original' ? original : now).candidates().offers[
                       offer.ordinal
-                    ]?.command === null,
+                    ]?.hasCommand === false,
               )
               .map((offer) => offer.id),
           );

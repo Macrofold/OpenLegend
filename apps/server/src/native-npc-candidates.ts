@@ -3,7 +3,6 @@ import {
   decisionOfferDescription,
   formatObservedBodyHealth,
   type ActivityView,
-  type Command,
   type Outcome,
   type ProspectiveWork,
   type WorkTransitionMode,
@@ -49,15 +48,15 @@ export type NativeNpcOfferMeaning =
       readonly hunting: boolean;
     };
 
-/** Native origin owns these commands. The formatter's output exposes only
- * descriptions and ordinals; a selected ordinal is rebound inside that owner. */
+/** Native origin owns executable commands. The bridge supplies presence for
+ * wording and retains ordinal identity for selection inside that owner. */
 export interface NativeNpcCandidates {
   readonly activity: Omit<DecisionActivityRead, 'simTime' | 'requests'>;
   readonly offers: readonly {
     readonly description: string;
     readonly id: string;
     readonly meaning: NativeNpcOfferMeaning;
-    readonly command: Readonly<Command> | null;
+    readonly hasCommand: boolean;
     readonly transition: WorkTransitionMode;
     readonly temporary?: Outcome;
     readonly nextAt?: number;
@@ -210,10 +209,7 @@ export function nativeNpcCandidateDescriptions(
             .find((attribute) => attribute.bodyHealth),
         };
       }),
-      offers: candidates.offers.map(({ command, ...offer }) => ({
-        ...offer,
-        hasCommand: !!command,
-      })),
+      offers: candidates.offers,
       definitions,
     }),
     candidates,

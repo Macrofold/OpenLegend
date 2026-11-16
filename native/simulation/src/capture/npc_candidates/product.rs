@@ -52,6 +52,9 @@ pub(crate) struct PreparedNpcOffer {
     pub description: Option<crate::text::JsText>,
     pub id: String,
     pub meaning: NpcOfferMeaning,
+    // A host deciding how to describe this offer needs only its presence.
+    // Selection binds the original command in the held Rust catalogue.
+    #[serde(rename = "hasCommand", serialize_with = "serialize_command_presence")]
     pub command: Option<NativeCommand>,
     pub transition: WorkTransitionMode,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -61,6 +64,17 @@ pub(crate) struct PreparedNpcOffer {
     #[serde(skip)]
     pub(super) _storage: ByteReservation,
 }
+
+fn serialize_command_presence<S>(
+    command: &Option<NativeCommand>,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
+where
+    S: serde::Serializer,
+{
+    serializer.serialize_bool(command.is_some())
+}
+
 pub(crate) struct PreparedNpcCandidates {
     pub(super) offers: Vec<PreparedNpcOffer>,
     pub(super) selection: NpcObservationSelection,
