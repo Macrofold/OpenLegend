@@ -95,6 +95,44 @@ export class NativePendingSave {
     return this.prefix;
   }
 
+  /** Check the writer's heads and counters without packing any actor rows.
+   * Enqueue and acknowledgement maintain contiguous links. Indexed readers
+   * still need their independently owned original SQL cut.
+   * docs/projects/native-runtime-foundations-bridge.md#nrf10--prepare-database-snapshots-for-their-actual-readers */
+  matchesAcceptedProgress(
+    current: NativePublication['progress'],
+    durable: NativePublication['progress'],
+  ): boolean {
+    if (
+      current.worldId !== this.binding.worldId ||
+      current.generation !== this.binding.generation ||
+      current.throughCut !== this.accepted ||
+      durable.worldId !== this.binding.worldId ||
+      durable.generation !== this.binding.generation ||
+      durable.throughCut !== this.durable ||
+      this.durable > this.accepted
+    )
+      return false;
+    if (this.head) {
+      if (
+        !this.tail ||
+        this.head.value.publication.progress.baseCut !== this.durable ||
+        this.tail.value.publication.progress.throughCut !== this.accepted
+      )
+        return false;
+    } else if (this.tail || this.accepted !== this.durable) return false;
+
+    const prefix = this.prefix?.cut;
+    return (
+      !prefix ||
+      (prefix.worldId === this.binding.worldId &&
+        prefix.generation === this.binding.generation &&
+        prefix.baseRevision === this.revision &&
+        prefix.throughCut > this.durable &&
+        prefix.throughCut <= this.accepted)
+    );
+  }
+
   /** All fallible projection and the next queue node are prepared before Ready.
    * Acceptance then installs only this already-created immutable node. */
   async prepare(

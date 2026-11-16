@@ -1015,10 +1015,9 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   }
 
   /** Captures this NPC's facts and normally prepares its action choices. A missing
-   * receipt tail requires SQL and a second capture at the same accepted state.
-   * Even with choices disabled, this packs the actor's unsaved temporal rows and
-   * pins pending publications. Release the capture and database cut independently
-   * after each one's last use. */
+   * receipt tail reads SQL and recaptures at the same accepted state. Indexed
+   * callers elsewhere own their full original read cuts independently.
+   * Release this capture after its final consumer. */
   captureNpc(
     actorId: string,
     requiredAppraisals: readonly AppraisalScope[],
@@ -1059,15 +1058,20 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           if (facts.self.acceptedCut !== before || facts.perception.npcCurrent.receiptTailRequest)
             throw new ViewChangedError();
         }
-        // Tail resolution changes derived metadata only. Choice setup and the
-        // mental/history read still share their exact initial accepted cut.
+        // Tail resolution changes derived metadata only. This acquisition uses
+        // the accepted cut; a held capture still uses its own source fences.
         if (choices) await capture.prepareChoices(this.world, this.geometry, choiceOptions);
         else choiceOptions.signal?.throwIfAborted();
-        const cut = await captureNativeScopedReadCut(this.world, actorId, () =>
-          this.pending.liveReadCuts(),
-        );
-        if (capture.facts.self.acceptedCut !== cut.sequence) throw new ViewChangedError();
-        return { capture, cut };
+        const { self } = capture.facts;
+        if (
+          self.actorId !== actorId ||
+          self.worldId !== this.worldId ||
+          self.generation !== this.generation ||
+          self.acceptedCut !== this.progress.throughCut ||
+          !this.pending.matchesAcceptedProgress(this.progress, this.durableProgress)
+        )
+          throw new ViewChangedError();
+        return capture;
       } catch (error) {
         capture.release();
         throw error;

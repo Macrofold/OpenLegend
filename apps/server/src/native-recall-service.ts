@@ -143,7 +143,7 @@ export async function retrieveNativeRecall(input: {
         if (!rows.length) return [];
         // Notes can change during indexed/embedding work. This is a genuine
         // current capture, not a current-world facade or a global-cut veto.
-        noteCapture = (await service.captureNpc(actorId, [])).capture;
+        noteCapture = await service.captureNpc(actorId, []);
         const notes = noteCapture.facts.self.knowledge ?? {};
         return rows.flatMap((row) => (notes[row.id]?.revision === row.revision ? [row.id] : []));
       },

@@ -220,11 +220,15 @@ async function prepareOwnedDecision(
   const generation = service.generation;
   const repository = service.store.memories;
   if (!repository) throw new Error('Native decisions require indexed personal storage.');
-  const start = await service.captureNpc(actorId, input.requiredAppraisals, {
+  const original = await service.captureNpc(actorId, input.requiredAppraisals, {
     signal,
     consumer: input.consumer,
   });
-  const original = start.capture;
+  const sourceGeneration = original.facts.self.generation;
+  if (sourceGeneration !== generation) {
+    original.release();
+    throw new StopJob('stale', 'Personal evidence changed during native decision preparation.');
+  }
   const conversationOwner = createNativeConsumerScope();
   const conversationPresentationOwner = createNativeConsumerScope();
   let current: NativeNpcCapture | undefined;
@@ -236,7 +240,7 @@ async function prepareOwnedDecision(
   const scope: MemoryScope = {
     worldId: service.worldId,
     actorId,
-    generation: start.cut.generation,
+    generation: sourceGeneration,
   };
   const fence = repository.captureTemporalSourceFence(scope, signal);
   const bodies = new MemoryReadCache();
@@ -501,15 +505,13 @@ async function prepareOwnedDecision(
     );
     if (speech.unavailablePersonal.length)
       throw new Error('Selected native speech or cached source changed during preparation.');
-    conversationCurrent = (
-      await conversationOwner.run(() =>
-        service.captureNpc(actorId, input.requiredAppraisals, {
-          signal,
-          consumer: input.consumer,
-          choices: false,
-        }),
-      )
-    ).capture;
+    conversationCurrent = await conversationOwner.run(() =>
+      service.captureNpc(actorId, input.requiredAppraisals, {
+        signal,
+        consumer: input.consumer,
+        choices: false,
+      }),
+    );
     // The labels and their identity cut share one accepted service turn, like
     // Source's synchronous conversation projection after its SQL admission.
     const { presentation, conversationPerspectives } = await service.publishRecall(async () => {
@@ -759,12 +761,10 @@ async function prepareOwnedDecision(
         .flatMap((candidate) => candidate.entityIds),
     );
     await conversationCheck(false, selectedProofs);
-    current = (
-      await service.captureNpc(actorId, input.requiredAppraisals, {
-        signal,
-        consumer: input.consumer,
-      })
-    ).capture;
+    current = await service.captureNpc(actorId, input.requiredAppraisals, {
+      signal,
+      consumer: input.consumer,
+    });
     const now = current;
     const currentFacts = [
       ...now.recallEntities(),
