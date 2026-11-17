@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                   | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The separately delivered runner is in use; local integration and verified build reuse remain open. | 2026-11-15   |
+| In progress | The separately delivered runner is in use; local integration and verified build reuse remain open. | 2026-11-16   |
 
 ## Owners and minimal architecture
 
@@ -50,7 +50,7 @@ The following is the interface to implement, not available commands. `pnpm verif
 | `deadlineSeconds`, `outputLimitBytes`, `diskLimitBytes` | Whole-run wall deadline, combined capture-output cap and observed run-disk budget. Defaults: 3,600 s, 256 MiB and 16 GiB, subject to free-space/headroom checks; explicit larger diagnostics need admission. The final cleanup allowance is unavailable to measured work.                                                                                                                            |
 | `requiredArtifacts`, `acceptance`                       | Artifact names that must be collected before expiry; the existing task's required pass versus measurement and actual-work indicators. Default required artifacts are the result, source/environment manifests, timeline and completion receipt; profiles/logs are retained too and can be promoted to required for diagnosis. No new universal game-performance target.                              |
 
-Validate the plan once at admission; freeze its hash, source manifests and exact command/configuration per case. An execution change requires a new run. Public overrides follow the tool's supported settings and cannot replace the owned database or enable paid AI; credentials use separate secret references, never plans/logs. Each response includes run/worker/generation, phase, deadline, outcome (`completed`, `failed`, `interrupted` or `not-started`, absent while running), artifact locations and estimated/reserved/uncertain cost. Preserve check, setup, transport, timeout, resource-limit and cleanup failures distinctly. A completed process is not an acceptance pass: report acceptance separately as passed, failed, measurement-only or unassessed. Busy expiry before claim is not-started and releases unused compute reservation while retaining actual staging/storage costs.
+Plan comparison order and shared controls under [experiment planning](../performance/measurement.md#planning-comparisons). Validate the plan once at admission; freeze its hash, source manifests and exact command/configuration per case. An execution change requires a new run. Public overrides follow the tool's supported settings and cannot replace the owned database or enable paid AI; credentials use separate secret references, never plans/logs. Each response includes run/worker/generation, phase, deadline, outcome (`completed`, `failed`, `interrupted` or `not-started`, absent while running), artifact locations and estimated/reserved/uncertain cost. Preserve check, setup, transport, timeout, resource-limit and cleanup failures distinctly. A completed process is not an acceptance pass: report acceptance separately as passed, failed, measurement-only or unassessed. Busy expiry before claim is not-started and releases unused compute reservation while retaining actual staging/storage costs.
 
 Persist these small records in the coordination table. Admission/status queries inspect the bounded slot registry and exact run/task keys, never scan run history:
 
@@ -130,6 +130,8 @@ The [native campaign audit](../maintainers/verification-workers.md#native-campai
 ## Implementation and review boundaries
 
 Deliver lifecycle, then reuse, then profiler/browser integration under [VW01–VW04](../maintainers/verification-workers.md), the sole owner of fault cases and acceptance. Pure controller/runner checks do not qualify live IAM, stop/start, recovery or graphics. Use existing checks and controlled disposable scenarios, not a new test suite or agent-specific repair script. A poor measurement needs attribution, not a claimed pass or unbounded optimization campaign. No migration of temporary task wrappers/environments or production game deployment is required.
+
+Develop runner changes in a separate checkout from the copy serving active campaigns, with assigned file ownership and one integration owner. Do not replace the runner or deployment serving an active campaign; preserve its frozen inputs. Coordinate deployment changes and paid admissions through the task's resource owner.
 
 ## Maintained records
 
