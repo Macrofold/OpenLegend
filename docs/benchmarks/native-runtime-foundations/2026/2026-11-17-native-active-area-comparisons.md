@@ -18,6 +18,8 @@ Each comparison uses the same physical managed `m7i.xlarge` for three interleave
 | NPC publication validity | Candidate 3/3               |    39.23 / 39.34 / 39.57 |           2.07 / 2.04 / 2.08 | 100.000 / 100.002 / 100.008 |
 | Same-world dispatch      | Control 3/3                 |    38.82 / 38.83 / 39.45 |           1.94 / 1.90 / 1.97 | 100.004 / 100.005 / 100.011 |
 | Same-world dispatch      | Candidate 3/3               |    38.96 / 39.95 / 42.74 |           1.87 / 1.91 / 1.99 | 100.003 / 100.002 / 100.004 |
+| Reflection readiness     | Control 3/3                 |    34.21 / 34.09 / 35.11 |           1.71 / 1.72 / 1.76 | 100.002 / 100.001 / 100.005 |
+| Reflection readiness     | Candidate 3/3               |    34.47 / 34.67 / 35.94 |           1.69 / 1.69 / 1.70 | 100.004 / 100.005 / 100.010 |
 
 | Comparison               | Arm       | Load-client CPU % of one core | Complete CPU ms / completed game-second |   Command response ms | First visible movement ms | Command to durable acknowledgement ms |
 | ------------------------ | --------- | ----------------------------: | --------------------------------------: | --------------------: | ------------------------: | ------------------------------------: |
@@ -31,6 +33,8 @@ Each comparison uses the same physical managed `m7i.xlarge` for three interleave
 | NPC publication validity | Candidate |            0.93 / 0.93 / 0.93 |                   7.041 / 7.053 / 7.080 | 15.24 / 18.30 / 34.33 |     62.11 / 62.59 / 94.91 |             551.78 / 548.46 / 1019.67 |
 | Same-world dispatch      | Control   |            0.93 / 0.93 / 0.94 |                   6.922 / 6.943 / 7.055 | 15.71 / 18.28 / 35.27 |     60.37 / 61.35 / 95.59 |             547.39 / 546.35 / 1016.08 |
 | Same-world dispatch      | Candidate |            0.92 / 0.95 / 1.02 |                   6.957 / 7.135 / 7.624 | 16.06 / 19.36 / 37.34 |     60.71 / 62.91 / 99.65 |             550.25 / 549.24 / 1016.49 |
+| Reflection readiness     | Control   |            0.78 / 0.80 / 0.85 |                   6.117 / 6.102 / 6.286 | 13.87 / 16.09 / 29.96 |     60.35 / 59.91 / 95.42 |             546.79 / 541.35 / 1015.69 |
+| Reflection readiness     | Candidate |            0.82 / 0.81 / 0.85 |                   6.164 / 6.195 / 6.413 | 14.01 / 16.35 / 30.90 |     59.42 / 59.89 / 96.49 |             542.60 / 539.57 / 1006.41 |
 
 CPU per completed second includes server, client and exclusive PostgreSQL once. The latency distributions pool individual qualifying primary command observations. The accompanying JSON reductions retain sample counts and missing records separately. First visible is receipt of a scope-specific decoded SSE frame. Acknowledgement reflects the covering saved revision from the ordinary timer. Both work and resource gates apply to each run.
 
@@ -46,6 +50,8 @@ CPU per completed second includes server, client and exclusive PostgreSQL once. 
 | NPC publication validity | Candidate |            21,599.86 / 21,599.74 |                 0.0000 |           12,135 / 13,491 |      31,623 / 56.12 |             39.56 / 14.20 |                      1,407.64 / 256.58 |
 | Same-world dispatch      | Control   |            21,599.77 / 21,600.64 |                 0.0000 |           12,300 / 13,730 |      31,420 / 55.66 |             38.98 / 14.28 |                      1,421.97 / 248.66 |
 | Same-world dispatch      | Candidate |            21,599.80 / 21,600.45 |                 0.0000 |           12,028 / 13,085 |      31,117 / 54.97 |             38.53 / 13.95 |                      1,421.84 / 209.93 |
+| Reflection readiness     | Control   |            21,599.86 / 21,600.28 |                 0.0000 |           11,906 / 13,005 |      31,329 / 55.33 |             38.90 / 13.87 |                      1,419.34 / 260.48 |
+| Reflection readiness     | Candidate |            21,599.83 / 21,600.67 |                 0.0000 |           11,452 / 12,306 |      31,204 / 55.22 |             38.49 / 13.95 |                      1,403.41 / 247.23 |
 
 These supporting values are medians across qualifying windows. Concurrent RAM sums sampled application/client RSS and exclusive PostgreSQL memory at the same instant. Shared pages may be counted more than once. Reservation peaks track separate bytes admitted by Native. Prepared JSON bytes, SQL socket traffic, WAL and actual database growth remain separate. Setup, closing save drain and shutdown stay separate from the steady window. The held windows below use different manual offers.
 
@@ -56,6 +62,9 @@ These supporting values are medians across qualifying windows. Concurrent RAM su
 | Shared-value protection  | `63cc944468facd6bc41f0811abf03dfd002f131b` → `79f8839b61ad5845f151dd743faaf74bdfb4f109` | `16ef2fdc-74f9-4d90-bf4b-6ac0f1c45a75` |                      -0.40% |                 7.845–7.875 → 7.786–7.859 |
 | NPC publication validity | `245e3d3fbd2a65a5958788974b6f96b797afdb16` → `79f8839b61ad5845f151dd743faaf74bdfb4f109` | `1e976555-9662-47a7-a5e7-a4e68302d797` |                      -0.84% |                 7.010–7.142 → 7.038–7.080 |
 | Same-world dispatch      | `babd12ef5dab1536aba827fc446a66706bf5d592` → `939de951b04a0230c085a570b13f4113a9068caa` | `ec38d333-009a-45d7-9975-12f40fa47032` |                      +0.51% |                 6.851–7.055 → 6.823–7.624 |
+| Reflection readiness     | `f89fd9cf34a31a11530ed67fdbd6156a75b9453d` → `07c83475fbaa6e0c606ae9e8e299a61bd30f39ed` | `01445f4d-c339-47cd-97f3-8a6362b6bb6a` |                      +0.77% |                 5.905–6.286 → 6.009–6.413 |
+
+Reflection readiness also completes all six qualified runs. Each direct-only control records four generating and two failed job transitions. The candidate records two generating and zero failed. The local dispatch witnesses establish which extra jobs were unconfigured reflections. Both arms save their two human replies. Combined CPU per completed game-second rises 0.77% by median, with overlapping repeat ranges. Keep the readiness gate because it avoids impossible work and preserves its queued opportunity until an operator configures a Worker.
 
 All five original comparisons complete six qualified runs each. Their complete CPU ranges overlap and the individual pairs move in both directions. This leaves the CPU effect inconclusive for each change. Keep the choice transfer and direct text path because they remove a copy or encode/decode round trip. Keep the shared-value protection lookup because the actual caller confirms it skips repeated full membership exports while preserving exact read custody. Keep the NPC check because it repairs a reproduced refusal and keeps genuine invalidation. Keep same-world dispatch as the tested prerequisite for safe nested work. None of these reasons depends on a whole-opening speedup.
 
@@ -71,7 +80,7 @@ For the integrated NPC-validity candidate, 1,044 complete autosave traces show w
 | Commit return to acknowledgement start     |          0.05 / 1.28 / 6.50 |
 | Acknowledgement                            |          0.97 / 1.19 / 2.12 |
 
-The one-second policy explains most of the command-to-durable interval. Repository work is the largest traced phase after save starts. The interval containing synchronous row encoding, decoded transfer and save preparation sums to 0.615–0.623 seconds across a 360-second run. It bounds the coordination benefit of moving that interval in this opening. It does not isolate encoding CPU or waiting at larger populations. These results do not warrant changing the save schedule or making commands wait for durability.
+The one-second policy explains most of the command-to-durable interval. Repository work is the largest traced phase after save starts. The interval containing synchronous row encoding, decoded transfer and save preparation sums to 0.615–0.623 seconds across a 360-second run. It bounds the coordination benefit of moving that interval in this opening. Encoding CPU and larger-population waiting remain unattributed.
 
 ## Two-worker held replies
 
