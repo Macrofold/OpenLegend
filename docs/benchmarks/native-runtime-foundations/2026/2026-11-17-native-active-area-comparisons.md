@@ -204,6 +204,23 @@ Client CPU medians are 0.94% and 0.95% of one core and are counted once in compl
 
 The collector verifies all six runs. The temporary instance terminated and the $1.121308 hold settled at $0.468874 estimated use, releasing $0.652434. The full reductions and immutable evidence references are under `native-active-batch-20261116/conversation-wait-ordinary-20261117/manifest.json`, SHA-256 `60608608e4b71866eb3f9536bc9a5b6accb318bd51070c187939d6bbb9cf325f`. Additional and cumulative Jev cost is $0.
 
+### Historical width comparison with bounded wait
+
+Campaign `4b05a0fd-e402-4975-9976-e5a16996fde9` completes and qualifies all 18 runs with independent databases on the same retained standard 16 GiB worker. It freezes `a0f653af6…` (Native `8096eb7c…`) with the previous one-ordinary/two-immediate policy and the same bounded wait on both widths. Each pocket completes all 346 moves and 74 presence renewals, and both scheduled replies save once. The failed nine runs in the [original campaign](#independent-active-areas) remain in that earlier record.
+
+| Active pockets | Native workers | Server CPU % of one core | Exclusive PostgreSQL CPU % of one core |    Game speed % of intended | Complete CPU ms / game-second | First visible p95 ms |
+| -------------: | -------------: | -----------------------: | -------------------------------------: | --------------------------: | ----------------------------: | -------------------: |
+|              1 |              1 |    39.76 / 39.53 / 39.82 |                     2.30 / 2.32 / 2.42 | 100.003 / 100.004 / 100.008 |         7.156 / 7.110 / 7.167 |                92.88 |
+|              1 |              2 |    39.32 / 39.32 / 40.18 |                     2.13 / 2.19 / 2.36 |   99.995 / 99.997 / 100.002 |         7.046 / 7.054 / 7.224 |                90.32 |
+|              2 |              1 |    64.79 / 64.09 / 65.60 |                     3.96 / 3.86 / 4.11 |   99.962 / 99.974 / 100.006 |      11.702 / 11.570 / 11.872 |               112.54 |
+|              2 |              2 |    66.46 / 66.29 / 66.83 |                     3.92 / 3.94 / 4.03 |    99.980 / 99.961 / 99.993 |      11.968 / 11.949 / 12.060 |               113.92 |
+|              4 |              1 |    99.38 / 99.45 / 99.72 |                     7.67 / 7.82 / 8.17 |    99.989 / 99.963 / 99.995 |      18.185 / 18.239 / 18.360 |               333.76 |
+|              4 |              2 | 100.95 / 100.89 / 101.05 |                     8.33 / 8.18 / 8.73 |   99.979 / 99.980 / 100.000 |      18.569 / 18.529 / 18.585 |               329.89 |
+
+Each cell reports median / average / nearest-rank p95 over three 360-second steady windows except pooled first visible p95. Nine otherwise accepted and durably witnessed movements lack an independently identifiable frame at four pockets, width one. At four pockets, width two reduces the pooled first visible p95 by 1.16%, raises median complete CPU per game-second by 2.11% (all three adjacent pairs increase), and raises median concurrent RAM from 2,505 to 2,622 MiB. No bracket meets the 10% E2 benefit gate on this policy. Full client, command, save, memory, SQL, progress and per-run data remain in the sealed reduction. This old-policy result does not decide the current width comparison.
+
+The collector verifies all 342 artifacts. The retained worker is stopped, and its $2.104249 hold settles at $1.112710 estimated use, releasing $0.991539. The `native-active-batch-20261116/wait-only-active-width-20261117/SHA256SUMS` digest is `9e735774618cef9f0a73f7745a5c5a64bb7f96cc8365d89dcd4ea7fc7cb3e9fe`. Additional and cumulative Jev cost is $0.
+
 ### Observer exposure parallelism screen
 
 The separate instrumented four-pocket run `fd8334cb-e8f4-4669-a385-823c4492f7d3` completes the normal workload. App source is `6cb7f5dfa…`, Native source is `4bc004e1…`, and the release runs on the standard 16 GiB managed worker. In the 359.997-second primary window it completes 21,600.129 game seconds. The Rust scan checks prior-visible roster entries against dirty sources before ordered reception. Across 737 measured cuts it visits 31 / 34.92 / 59 entries and finds 9 / 10.36 / 20 hits per cut (median / average / p95). The leaf, including ordered marks, costs 15.837 ms elapsed in total; across 7,446 accepted advancing operations it costs 0 / 0.0021 / 0.0141 ms per operation, compared with 7.780 / 13.533 / 42.770 ms for the enclosing accepted Advance.
