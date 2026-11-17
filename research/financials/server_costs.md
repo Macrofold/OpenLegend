@@ -8,7 +8,9 @@
 
 **The baseline has no additional fleet reserve (`b = 1`).** The assumed players-per-instance capacity already allows for local contention and responsiveness. Adding another reserve for those same bursts would count the same allowance twice. The separate 32% reserve (`b = 1.32`) remains an optional sensitivity case for independently justified fleet needs.
 
-At five simultaneous players per instance, 60 play-hours per subscriber and ideal scaling, baseline compute is **$1.67 per paying subscriber per 30-day month at $100/instance-month**, or **$2.42 at the benchmark machine's $0.2016/hour reference price**. Keeping the middle forecast's peak fleet running all month instead costs **$5.52 per subscriber-month at 10,000 subscribers** at that hourly rate. The optional 32% reserve raises the reference-rate figures to **$3.19 elastic / $7.29 fixed**. The earlier **$2.20** figure applies only to the optional-reserve case at $100/instance-month. These figures exclude database storage, external AI and other separately billed services.
+At five simultaneous players per instance, 60 play-hours per subscriber and ideal scaling, baseline compute is **$2.42 per paying subscriber per 30-day month** on the measured AWS `m7i.xlarge`, priced at **$0.2016/hour ($145.152 for 720 hours)**. Keeping the middle forecast's peak fleet running all month instead costs **$5.52 per subscriber-month at 10,000 subscribers**. The optional 32% reserve raises those figures to **$3.19 elastic / $7.29 fixed**. These figures exclude database storage, external AI and other separately billed services.
+
+The [priced hardware shortlist](#priced-hardware-shortlist) compares actual named AWS and Google Cloud machines. ARM, newer x86 and higher-RAM machines could improve cost per supported workload; none has an OpenLegend capacity qualification in this research. **Real machine prices do not make the assumed 5/10/15-player capacities measured facts.**
 
 The principal unknowns are supported players per instance, the cost of worlds without connected players, and how much capacity the persistent-world architecture can actually release as demand falls. These unknowns matter more than the arithmetic's displayed decimal places.
 
@@ -167,7 +169,39 @@ These are sensitivity cases, not confidence intervals. Baseline fleet sizing use
 
 ## Converting demand to compute cost
 
-The reference price is **$0.2016 per instance-hour**, or **$145.152 per 720-hour month**, for on-demand Linux `m7i.xlarge` in Ohio. The [public regional price compilation](https://cloudparity.io/pricing/aws/m7i.xlarge) lists that rate for `us-east-2`; it corroborates the historical project rate. It is a reference input, not a contracted quote. This review could not retrieve AWS's underlying live price-list endpoint, so reprice through the [AWS EC2 pricing owner](https://aws.amazon.com/ec2/pricing/on-demand/) before purchasing. The supplied research's **$100/month is an illustrative alternative**, not the price of this benchmark machine. No claim of equivalent performance on a cheaper machine follows.
+The reference price is **$0.2016 per instance-hour**, or **$145.152 per 720-hour month**, for on-demand Linux `m7i.xlarge` in Ohio. AWS's Price List API returned that rate on November 17, 2026: Ohio SKU `6A8DNG8MWDXC7U23`, catalog version `20261114012926`, published November 14, effective November 1. This is a public list price, not an account-specific contract. [Official Ohio catalog](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/20261114012926/us-east-2/index.json).
+
+### Priced hardware shortlist
+
+All prices below are **Linux on-demand USD/hour**, with monthly equivalents calculated as **hourly price × 720**. AWS uses shared tenancy in **Northern Virginia (`us-east-1`)**; the reference `m7i.xlarge` also has the same verified price in Ohio. Google Cloud uses **Iowa (`us-central1`)**. These regions do not imply equivalent player latency. Rates exclude disks, transfer and other separately billed services; the [GameLift comparison](#managed-hosting-and-bandwidth) has a different billing boundary.
+
+AWS rates were retrieved directly through its Price List API on November 17, from catalog version `20261114012926`. Google rates match the official pricing page's indexed rows checked on November 17; those rows were crawled about one month earlier, so their freshness is less certain. The supplied _Server Economics and Infrastructure Recommendations_ used 730-hour months; all amounts here use 720. Recheck regional availability, quotas and prices before purchasing. Sources: [AWS regional catalog](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/20261114012926/us-east-1/index.json), [Google published prices](https://cloud.google.com/products/compute/pricing/general-purpose?hl=en).
+
+| Provider / machine                    | Processor                             | vCPU / physical cores | RAM, GiB |     USD/hour | USD/720 hours |
+| ------------------------------------- | ------------------------------------- | --------------------: | -------: | -----------: | ------------: |
+| AWS `m7i.xlarge` — measured reference | Intel Sapphire Rapids, x86            |                 4 / 2 |       16 |     $0.20160 |       $145.15 |
+| AWS `c6g.2xlarge`                     | Graviton2, ARM                        |                 8 / 8 |       16 |     $0.27200 |       $195.84 |
+| AWS `c7g.2xlarge`                     | Graviton3, ARM                        |                 8 / 8 |       16 |     $0.29000 |       $208.80 |
+| AWS `c8g.2xlarge`                     | Graviton4, ARM                        |                 8 / 8 |       16 |     $0.31904 |       $229.71 |
+| AWS `c9g.2xlarge`                     | Graviton5, ARM                        |                 8 / 8 |       16 |     $0.34776 |       $250.39 |
+| AWS `m8g.2xlarge`                     | Graviton4, ARM                        |                 8 / 8 |       32 |     $0.35904 |       $258.51 |
+| AWS `c8a.2xlarge`                     | AMD Zen 5, x86                        |                 8 / 8 |       16 |     $0.43108 |       $310.38 |
+| AWS `m8azn.xlarge`                    | AMD Zen 5, x86; high-frequency option |                 4 / 4 |       16 |     $0.41292 |       $297.30 |
+| Google `n4a-highcpu-8`                | Axion, ARM                            |                 8 / 8 |       16 |     $0.25984 |       $187.08 |
+| Google `n4a-standard-8`               | Axion, ARM                            |                 8 / 8 |       32 |     $0.30800 |       $221.76 |
+| Google `c4a-highcpu-8`                | Axion, ARM                            |                 8 / 8 |       16 |     $0.30304 |       $218.19 |
+| Google `t2d-standard-8`               | AMD Milan, x86                        |                 8 / 8 |       32 |    $0.337968 |       $243.34 |
+| Google `c4d-highcpu-8`                | AMD Turin, x86                        |                 8 / 4 |       15 | $0.317928224 |       $228.91 |
+
+**A vCPU is not a comparable amount of work across these machines.** With default CPU settings, `m7i.xlarge` exposes two hardware threads on each of two physical cores. The listed ARM machines, C8a, M8azn and T2D expose one thread per core; C4D exposes two. Core designs also differ. Neither equal vCPU counts nor equal physical-core counts establish equal throughput or response latency. Physical-core counts do not mean dedicated tenancy. Sources: [AWS CPU options](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cpu-options-supported-instances-values.html), [C8a specifications](https://aws.amazon.com/ec2/instance-types/c8a/), [Google vCPU definitions](https://docs.cloud.google.com/docs/compute-area/vcpus).
+
+The consequential comparisons are:
+
+- **ARM versus x86:** C8g/C9g and N4A/C4A are candidates for better workload-per-dollar, with C8a as a modern x86 comparison and C6g/C7g as cheaper older alternatives. OpenLegend's Linux ARM64 build, native dependencies and actual gameplay performance remain unqualified here; no vendor performance percentage is applied to our measurements.
+- **RAM versus compute-only sizing:** M8g doubles C8g's RAM for **$28.80 more per 720 hours (12.54%)**. N4A standard doubles N4A highcpu RAM for **$34.68 more (18.53%)**. Extra RAM is valuable if it admits more useful work or reduces costly reads; otherwise it is unused capacity. Active world state, PostgreSQL, independent consumers and runtime overhead all compete for it.
+- **Newer or faster cores:** C9g costs **9.00% more than C8g**. Under the same utilization and other costs, it must deliver more than 9.00% additional useful throughput to lower compute cost per unit of work. M8azn is a candidate for an expensive serial calculation that other cores cannot accelerate, not an established economical default.
+
+### Calculation method
 
 Use **`b = 1` for the baseline** and `b = 1.32` only for the explicitly labeled optional scenario. For an ideal fleet that tracks demand continuously, ignoring whole-instance rounding:
 
@@ -189,23 +223,28 @@ Monthly VM compute cost = fixed instance count × 720 × P
 
 ### Capacity and price sensitivity
 
-All rows assume **60 hours per subscriber-month** and **ideal elastic capacity**. The baseline is **`b = 1`: no additional fleet reserve**. Each assumed capacity already includes its own per-instance operating allowance. None is a qualified deployment limit.
+All rows assume **60 hours per subscriber-month** and **ideal elastic capacity**. Baseline **`b = 1` adds no fleet reserve**; each `K` already includes its per-instance operating allowance. The first table uses only the measured machine's actual price: **AWS `m7i.xlarge`, $0.2016/hour**. None of the capacities is qualified.
 
-| Assumed simultaneous players/instance, `K` | Baseline compute/subscriber-month at $100/instance-month | Baseline compute/subscriber-month at $0.2016/instance-hour | Baseline monthly compute for 10,000 subscribers at $0.2016/hour |
-| ------------------------------------------ | -------------------------------------------------------: | ---------------------------------------------------------: | --------------------------------------------------------------: |
-| 3: lower capacity case                     |                                                    $2.78 |                                                      $4.03 |                                                      $40,320.00 |
-| 5: current discussion assumption           |                                                **$1.67** |                                                  **$2.42** |                                                  **$24,192.00** |
-| 10: higher capacity case                   |                                                    $0.83 |                                                      $1.21 |                                                      $12,096.00 |
-| 15: higher capacity case                   |                                                    $0.56 |                                                      $0.81 |                                                       $8,064.00 |
+| Assumed simultaneous players/instance, `K` | Baseline USD/subscriber-month | Baseline monthly USD for 10,000 subscribers | Optional 32% reserve, USD/subscriber-month |
+| ------------------------------------------ | ----------------------------: | ------------------------------------------: | -----------------------------------------: |
+| 3: lower capacity case                     |                         $4.03 |                                  $40,320.00 |                                      $5.32 |
+| 5: current discussion assumption           |                     **$2.42** |                              **$24,192.00** |                                      $3.19 |
+| 10: higher capacity case                   |                         $1.21 |                                  $12,096.00 |                                      $1.60 |
+| 15: higher capacity case                   |                         $0.81 |                                   $8,064.00 |                                      $1.06 |
 
-The optional **`b = 1.32`** case adds 32% to the unrounded elastic baseline, only if a separate fleet requirement justifies that reserve:
+The following alternatives use their actual prices above and the **same hypothetical 5/10/15 players per whole instance**, not per core. They show what a measured capacity would imply economically; they do not predict that capacity. All cells are **baseline VM compute USD per subscriber-month**, with no extra reserve:
 
-| Assumed simultaneous players/instance, `K` | Optional-reserve compute/subscriber-month at $100/instance-month | Optional-reserve compute/subscriber-month at $0.2016/instance-hour |
-| ------------------------------------------ | ---------------------------------------------------------------: | -----------------------------------------------------------------: |
-| 3                                          |                                                            $3.67 |                                                              $5.32 |
-| 5                                          |                                                            $2.20 |                                                              $3.19 |
-| 10                                         |                                                            $1.10 |                                                              $1.60 |
-| 15                                         |                                                            $0.73 |                                                              $1.06 |
+| Machine                                        | If `K = 5` | If `K = 10` | If `K = 15` |
+| ---------------------------------------------- | ---------: | ----------: | ----------: |
+| AWS `m7i.xlarge` — measured hardware reference |      $2.42 |       $1.21 |       $0.81 |
+| AWS `c8g.2xlarge` — ARM, 16 GiB                |      $3.83 |       $1.91 |       $1.28 |
+| AWS `c9g.2xlarge` — newer ARM, 16 GiB          |      $4.17 |       $2.09 |       $1.39 |
+| AWS `m8g.2xlarge` — ARM, 32 GiB                |      $4.31 |       $2.15 |       $1.44 |
+| AWS `c8a.2xlarge` — x86, 16 GiB                |      $5.17 |       $2.59 |       $1.72 |
+| Google `n4a-highcpu-8` — ARM, 16 GiB           |      $3.12 |       $1.56 |       $1.04 |
+| Google `n4a-standard-8` — ARM, 32 GiB          |      $3.70 |       $1.85 |       $1.23 |
+
+For 10,000 subscribers, multiply an **unrounded** per-subscriber result by 10,000. For example, C8g at hypothetical `K = 10` costs **$19,142.40/month**, versus **$24,192.00** for M7i at hypothetical `K = 5`. This is a conditional comparison, not an observed saving. To beat that M7i case on elastic compute alone, C8g needs at least **8** supported simultaneous players, M8g **9**, C8a **11**, or N4A highcpu **7**. The threshold follows `K_alternative > 5 × P_alternative / 0.2016`; each alternative must meet the same gameplay and service requirements. The optional reserve multiplies unrounded elastic costs by 1.32 only when independently justified.
 
 For `K = 5` at the reference rate:
 
@@ -237,7 +276,26 @@ For comparison, the **optional 32% additional fleet reserve (`b = 1.32`)** produ
 
 Under ideal scaling, changing only the shape or height of the peak while preserving monthly player-hours changes the largest fleet required, but not the instance-hours formula. It changes cost when capacity must remain running, cannot be placed efficiently, or needs advance provisioning. The “divide peak cost by three” shortcut from the supplied research works only for its chosen rounded 250-slot capacity versus 83.33 average CCU, before a continuous extra reserve. Do not divide by three after already calculating cost from player-hours.
 
-At a **hypothetical $20 gross subscription price**, the middle reference-rate baseline consumes about **12.1% of gross revenue** for elastic VM compute or **27.6%** for fixed VM compute. The optional reserve raises these to **16.0% / 36.4%**, respectively. The remaining revenue is not profit: no other operating costs or revenue deductions have been subtracted. The $20 price is an illustration, not an OpenLegend pricing decision.
+To express compute as a share of revenue, divide compute per subscriber-month by the actual subscription price. No subscription price is selected here. Revenue remaining after compute is not profit; other operating costs and revenue deductions still apply.
+
+### Managed hosting and bandwidth
+
+Managed GameLift has higher quoted instance rates than ordinary EC2, but includes eligible game-server network transfer. That can reverse the compute-only ranking. These are Northern Virginia Linux on-demand prices verified through AWS's Price List API on November 17; GameLift catalog version `20261110171128`, published November 10. [Official GameLift catalog](https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonGameLift/20261110171128/us-east-1/index.json).
+
+| Machine               | EC2 USD/hour | Managed GameLift USD/hour | EC2 USD/720 hours | GameLift USD/720 hours | GameLift instance-rate premium per 720 hours |
+| --------------------- | -----------: | ------------------------: | ----------------: | ---------------------: | -------------------------------------------: |
+| `c8g.2xlarge`, 16 GiB |     $0.31904 |                  $0.39000 |           $229.71 |                $280.80 |                                       $51.09 |
+| `m8g.2xlarge`, 32 GiB |     $0.35904 |                  $0.43800 |           $258.51 |                $315.36 |                                       $56.85 |
+
+For the same useful capacity and running hours, GameLift's included transfer offsets its C8g instance-rate premium once the **otherwise-billed eligible network transfer exceeds $51.0912 per 720 instance-hours**; the M8g threshold is **$56.8512**. These are dollar thresholds, not assumed traffic volumes. Calculate the avoided bill from actual bytes, applicable tiers and allowances. Include any differences in disk and backend charges before declaring either total cheaper. The listed GameLift products include 50 GB of instance storage; ordinary EC2 prices exclude EBS storage.
+
+AWS's policy covers generation 6 and later managed GameLift instances, on-demand and Spot, in supported regions except China. It does not make ordinary EC2/ECS traffic or separately hosted backend traffic free. [Bandwidth policy](https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-gamelift-servers-free-network-bandwidth/).
+
+Service fit remains unqualified. GameLift permits long-running sessions, but its built-in session management supports up to 200 players; larger sessions require custom management. AWS also identifies additional access work for databases in private VPC subnets and recommends custom EC2/ECS/EKS arrangements for large partitioned MMOs. Its session manager does not implement OpenLegend's world partitioning, privacy or persistence. [GameLift FAQ](https://aws.amazon.com/gamelift/servers/faqs/).
+
+Ordinary **ECS on self-managed EC2 adds no ECS orchestration fee**; EC2 and supporting services remain billable. ECS Managed Instances adds a management fee, and Fargate bills requested resources under a different price model. These are distinct hosting options, not interchangeable names for the same price. [ECS pricing](https://aws.amazon.com/ecs/pricing/). Kubernetes/Agones can schedule server processes but does not by itself distribute one authoritative world. No platform switch is adopted here.
+
+Use on-demand prices for comparable initial measurements. Commitments can reduce the cost of a demonstrated persistent baseline; they also create a payment obligation when demand falls. Spot requires demonstrated interruption/recovery handling. Unquoted bare-metal offers, blanket discount percentages and untested players-per-core claims are not forecast inputs.
 
 ## External hosting comparisons
 
@@ -251,7 +309,7 @@ The following [AWS GameLift worked examples](https://aws.amazon.com/gamelift/ser
 | Fighting game: twenty-four 2-player sessions      |              $0.741 |                        48 |                                         $0.93 |                                                 $1.22 |
 | Battle royale: four sessions averaging 30 players |              $0.823 |                       120 |                                         $0.41 |                                                 $0.54 |
 
-These are vendor examples for session games, not measured OpenLegend capacity or MMO financial statements. The formula is `P / occupied players × 60 × b`, with baseline `b = 1` or optional `b = 1.32`; inconsistent vendor summary totals are not used. Eighty players on a $533.52-per-720-hour-month VM is approximately the same capacity per dollar as fifteen on a $100 VM. Included bandwidth under eligible GameLift terms does not establish free egress for ordinary EC2 hosting.
+These are vendor examples for session games, not measured OpenLegend capacity or MMO financial statements. The formula is `P / occupied players × 60 × b`, with baseline `b = 1` or optional `b = 1.32`; inconsistent vendor summary totals are not used. Compare cost per occupied player-hour at equivalent gameplay requirements, not raw players per machine. Included bandwidth under eligible GameLift terms does not establish free egress for ordinary EC2 hosting.
 
 The supplied research also records Homecoming's **January 2020 hosting bill of $4,820.39** and **1,787 average CCU**. Dividing by `1,787 × 744` player-hours gives **$0.003626/player-hour**, or about **$0.22 per 60 hours**. This is historical donation-funded hosting, not a subscriber charge or modern MMO target. Its actual spare capacity is already in the bill; do not add a hypothetical reserve again. The [operator's finance post](https://forums.homecomingservers.com/topic/14562-february-2020-donations-finances/?comment=153662&do=findComment) and [population post](https://forums.homecomingservers.com/topic/16094-homecoming-statistics-march-2020/) are retained as source references; access returned HTTP 403 during this review, so those figures remain attributed to the supplied research rather than independently reverified here.
 
@@ -268,16 +326,19 @@ The supplied research also records Homecoming's **January 2020 hosting bill of $
 
 For a fixed world population and policy, `world CPU ≈ background CPU + incremental player-driven CPU` is a useful hypothesis to measure, not an established linear law. Crowds can create additional interactions; separated players can share world overhead. Storing a persistent object does not itself require continuously simulating it. Shared work and offline behavior must be measured under the actual authored rules.
 
+Persistent storage, resident RAM and active CPU are separate budgets. Long-lived structures and individual NPC histories can accumulate storage without requiring every record in every process's RAM or a calculation on every clock step. However, unloading data or reducing update frequency is not automatically behavior-preserving: physical interactions, private knowledge and committed consequences retain their rules. The [memory residency contract](../../docs/memory-architecture.md#residency-and-maintenance-inputs) establishes history handling, not general area streaming. Conventional world simulation uses CPU/RAM; a rendering GPU is not assumed. Model inference is a separate workload, and a shared model serving private NPC contexts does not imply one model copy per NPC.
+
 ## Replacing assumptions with evidence
 
 Keep implementation and qualification work in the existing [native-core tracker](../../docs/maintainers/native-simulation-core.md#current-implementation-batch) and [capacity research](../mmorpg-foundations/02-cost-model-and-failure-modes.md). This document owns their economic interpretation, not a parallel engineering backlog.
 
-| Unknown                                  | Evidence needed before treating it as a forecast input                                                                                                                                                                                  |
-| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Players supported per purchased instance | Complete independent active-area and crowd workloads, with fixed world population/activity, actual CPU/RAM, commands, visible delivery, saves and debt. One, two and four comparable active areas separate fixed and incremental costs. |
-| Operating utilization                    | Find the instance load at which the selected response/progression/save requirements still pass, including bursts and held consumers. Do not preselect 46% as a permanent ceiling.                                                       |
-| Monthly billed capacity                  | Establish the minimum world-service floor, actual placement constraints, startup lead time and safe consolidation behavior. Until then, keep elastic and fixed-fleet cases separate.                                                    |
-| Subscriber traffic                       | Measure paid-cohort hours, ordinary regional peaks and exceptional events with matched account definitions. Replace the 60-hour and weekend assumptions when data exists.                                                               |
-| Total service cost                       | Add observed AI usage, storage growth/retention, network and supporting services under a chosen production topology.                                                                                                                    |
+| Unknown                                  | Evidence needed before treating it as a forecast input                                                                                                                                                                                       |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Players supported per purchased instance | Complete independent active-area and crowd workloads, with fixed world population/activity, actual CPU/RAM, commands, visible delivery, saves and debt. One, two and four comparable active areas separate fixed and incremental costs.      |
+| Operating utilization                    | Find the instance load at which the selected response/progression/save requirements still pass, including bursts and held consumers. Do not preselect 46% as a permanent ceiling.                                                            |
+| Alternative hardware and host packing    | Qualify Linux ARM64 dependencies and compare complete gameplay on named machines, including PostgreSQL, RAM and several active workloads sharing a host. Measure `P / K` at matching service quality; core counts alone cannot establish it. |
+| Monthly billed capacity                  | Establish the minimum world-service floor, actual placement constraints, startup lead time and safe consolidation behavior. Until then, keep elastic and fixed-fleet cases separate.                                                         |
+| Subscriber traffic                       | Measure paid-cohort hours, ordinary regional peaks and exceptional events with matched account definitions. Replace the 60-hour and weekend assumptions when data exists.                                                                    |
+| Total service cost                       | Add observed AI usage, storage growth/retention, network and supporting services under a chosen production topology.                                                                                                                         |
 
 When updating this owner, name each workload and source revision, label measured values versus assumptions, preserve meaningful failure evidence, and recalculate all dependent tables. Report server and PostgreSQL CPU separately as percentages of one logical core, achieved game speed, and median/average/p95 with sample definitions. Link exact benchmark evidence rather than importing its full implementation history. A new optimization or a newer commit does not by itself change `K` or qualify production capacity.
