@@ -82,6 +82,65 @@ For the integrated NPC-validity candidate, 1,044 complete autosave traces show w
 
 The one-second policy explains most of the command-to-durable interval. Repository work is the largest traced phase after save starts. The interval containing synchronous row encoding, decoded transfer and save preparation sums to 0.615–0.623 seconds across a 360-second run. It bounds the coordination benefit of moving that interval in this opening. Encoding CPU and larger-population waiting remain unattributed.
 
+## Independent active areas
+
+All 18 x86-64 release runs use the same retained 16 GiB `m7i.xlarge` with independent PostgreSQL databases. Pocket counts are interleaved and each count keeps width order 1/2/2/1/2/1. One authoritative world retains 2,588 scenery records and the same 127 × 127 m terrain, with 76 m start separation. Each active pocket contributes one player, two human NPCs and three hares. Its inputs independently exercise movement, scoped movement and animal reactions, perception and history, controlled conversations, and the ordinary one-second save policy. Each offers 346 walks and 74 presence renewals including warmup plus two durable replies. A zero-active-pocket control was outside this workload.
+
+| Active pockets | Native workers | Complete runs | Server CPU % of one core | PostgreSQL CPU % of one core |       Achieved game speed % |
+| -------------: | -------------: | ------------: | -----------------------: | ---------------------------: | --------------------------: |
+|              1 |              1 |           3/3 |    36.57 / 36.75 / 37.71 |           2.26 / 2.28 / 2.46 |  100.004 / 99.999 / 100.004 |
+|              1 |              2 |           2/3 |    37.52 / 37.52 / 38.74 |           2.10 / 2.10 / 2.25 | 100.004 / 100.004 / 100.004 |
+|              2 |              1 |           2/3 |    61.13 / 61.13 / 61.19 |           3.72 / 3.72 / 3.82 |    99.997 / 99.997 / 99.999 |
+|              2 |              2 |           2/3 |    62.07 / 62.07 / 62.37 |           3.70 / 3.70 / 3.74 |    99.977 / 99.977 / 99.998 |
+|              4 |              1 |           0/3 |                — / — / — |                    — / — / — |                   — / — / — |
+|              4 |              2 |           0/3 |                — / — / — |                    — / — / — |                   — / — / — |
+
+Each value pools only the qualifying measured windows. Values are median / average / nearest-rank p95 across runs. At one sample all three values are the same. PostgreSQL is its exclusive same-host cgroup, and Native and geometry worker CPU is already part of the server process. The per-arm counts retain failed and incomplete jobs. A bracket needs all six complete equal-work repeats to compare worker widths.
+
+| Pockets | Workers | Load-client CPU % of a core | Complete CPU ms / game-second |   Command response ms | First visible movement ms | Durable acknowledgement ms |
+| ------: | ------: | --------------------------: | ----------------------------: | --------------------: | ------------------------: | -------------------------: |
+|       1 |       1 |          0.74 / 0.75 / 0.78 |         6.628 / 6.630 / 6.791 | 14.14 / 17.15 / 36.26 |     57.98 / 59.83 / 88.91 |  546.43 / 541.88 / 1012.94 |
+|       1 |       2 |          0.75 / 0.75 / 0.77 |         6.728 / 6.728 / 6.960 | 13.73 / 16.09 / 31.37 |     54.98 / 56.88 / 89.06 |   536.52 / 538.81 / 998.96 |
+|       2 |       1 |          1.27 / 1.27 / 1.28 |      11.020 / 11.020 / 11.026 | 15.31 / 21.71 / 48.11 |    67.91 / 71.00 / 110.45 |  577.05 / 569.47 / 1033.49 |
+|       2 |       2 |          1.33 / 1.33 / 1.34 |      11.185 / 11.185 / 11.241 | 15.15 / 21.44 / 46.34 |    66.13 / 70.33 / 107.18 |  560.37 / 560.69 / 1032.15 |
+|       4 |       1 |                   — / — / — |                     — / — / — |             — / — / — |                 — / — / — |                  — / — / — |
+|       4 |       2 |                   — / — / — |                     — / — / — |             — / — / — |                 — / — / — |                  — / — / — |
+
+Latencies pool the finite command samples inside the primary window. First visible is a decoded permitted SSE movement witness. A separate command could take effect without a frame uniquely attributable to it before the next input. The sealed reductions retain missing-witness and sample counts. The last column is the background-save acknowledgement for that command. Combined CPU includes the separate client and exclusive database CPU.
+
+| Pockets | Workers | Offered / completed game seconds | End debt, game seconds | SQL calls / returned rows | Prepared rows / MiB | WAL / growth MiB | Concurrent RAM / transient MiB |
+| ------: | ------: | -------------------------------: | ---------------------: | ------------------------: | ------------------: | ---------------: | -----------------------------: |
+|       1 |       1 |              21599.77 / 21600.64 |                 0.0000 |             16128 / 21776 |       34182 / 61.01 |    42.81 / 15.54 |               1803.68 / 278.88 |
+|       1 |       2 |              21599.82 / 21600.61 |                 0.0000 |             15712 / 22182 |       34143 / 60.88 |    42.59 / 15.00 |               1771.70 / 276.88 |
+|       2 |       1 |              21599.96 / 21599.34 |                 0.0000 |             23959 / 34230 |      65246 / 112.46 |    81.30 / 26.52 |               1946.54 / 322.84 |
+|       2 |       2 |              21599.79 / 21594.84 |                 0.0000 |             23670 / 33776 |      65191 / 112.96 |    81.14 / 26.63 |               1969.21 / 352.67 |
+|       4 |       1 |                            — / — |                      — |                     — / — |               — / — |            — / — |                          — / — |
+|       4 |       2 |                            — / — |                      — |                     — / — |               — / — |            — / — |                          — / — |
+
+These supporting values are per-arm medians. Reservation peaks are separately counted native bytes and concurrent RAM samples include possibly duplicated shared pages.
+
+| Incomplete attempt | Accepted / nominal moves | Scheduled replies persisted within window | Captured cause       |
+| ------------------ | -----------------------: | ----------------------------------------: | -------------------- |
+| `nsc-e2-p1-02-b`   |                  346/346 |                                       1/2 | pocket 0 chat 2 busy |
+| `nsc-e2-p2-05-b`   |                  692/692 |                                       3/4 | pocket 0 chat 2 busy |
+| `nsc-e2-p2-06-a`   |                  692/692 |                                       3/4 | pocket 0 chat 2 busy |
+| `nsc-e2-p4-01-a`   |                1384/1384 |                                       7/8 | pocket 0 chat 2 busy |
+| `nsc-e2-p4-02-b`   |                1384/1384 |                                       7/8 | pocket 0 chat 2 busy |
+| `nsc-e2-p4-03-b`   |                1384/1384 |                                       7/8 | pocket 0 chat 2 busy |
+| `nsc-e2-p4-04-a`   |                1384/1384 |                                       7/8 | pocket 0 chat 2 busy |
+| `nsc-e2-p4-05-b`   |                1384/1384 |                                       7/8 | pocket 0 chat 2 busy |
+| `nsc-e2-p4-06-a`   |                1384/1384 |                                       7/8 | pocket 0 chat 2 busy |
+
+The six four-pocket jobs accepted and covered all 1,384 scheduled moves each. All nine incomplete jobs accepted every scheduled move and reached their final durable save. Each lost the first pocket's second requested reply. The final availability poll returned available, then the POST returned `busy` before creating a conversation job or starting its provider attempt. The timing artifacts do not identify the occupied lane in each case. The separate local diagnostics witness both a world-wide ordinary cognition slot and the two-urgent-job cap, and the actual composer preserves the unsent draft. These were admission refusals; none of the nine reached the selected-source or generation stage.
+
+The completed one-worker observations on the same host show median server CPU of 36.57% with one pocket and 61.13% with two, a descriptive difference of 24.56 percentage points of one core. PostgreSQL rises from 2.26% to 3.72%, and the separate client from 0.74% to 1.27%. The two-pocket arm only qualifies two repeats, so selection effects remain. These observations mix the incremental simulation, actor cognition, view and persistence work of the added pocket. The fixed world cost and each separate component of the increment remain unidentified. In the six incomplete four-pocket windows, server CPU spans 97.10–100.89%, PostgreSQL 6.96–7.97%, and achieved game speed 99.975–100.002%. These are observed costs with seven of eight replies and provide no qualified four-pocket estimate. Small reported clock deviations reflect the measurement and acceptance boundaries.
+
+**E2 disposition — inconclusive.** Every bracket misses at least one required reply. The binary at app `79f8839b61ad5845f151dd743faaf74bdfb4f109` and Native source `8096eb7c674174783316f8093f4ce50c88539fb5d61268f9a6949a140fa6d45c` produced the measured widths. Its local caller observes both actual count/emit lanes and exact serial bytes, including allocation refusal and exact retry. The collected evidence binds each rebuilt release addon to its own hash, with input manifest `b596026faa98face7632023818ca9eb2cfc57a63e7ef7d781ba32baa8249f816` shared across the 18 runs. The current proof restores inline changed-record encoding, retaining tested per-world dispatch. The restored release passes the real held, cancellation, repeat, view-loss and 40-movement ordinary callers. The complete adoption gates remain with NSC.
+
+## Worker preparation
+
+Across the 38 ordinary and held jobs, the build phase takes 248.52 / 248.94 / 270.12 seconds in median / average / nearest-rank p95 order. Source staging takes 1.95 / 2.00 / 2.38 seconds. The 36 ordinary gameplay steps, including their own setup, warmup and drain, take 386.86 / 386.80 / 388.05 seconds. These are per-job elapsed durations. Parallel campaign phases overlap. Repeated release preparation remains the largest setup cost, and [VW02](../../../maintainers/verification-workers.md#delivery-order) owns its verified reuse.
+
 ## Two-worker held replies
 
 | Held window                        | Server CPU, % of one logical core | PostgreSQL CPU, % of one logical core | Offered game seconds | Completed game seconds | End debt, game seconds |
@@ -111,3 +170,9 @@ The runs retain two independent older-cut reads during each provider hold. The t
 The concurrent sample includes the main process, any descendants and exclusive PostgreSQL memory at the same instant. It can count shared pages more than once, and the roughly 100 ms cadence can miss shorter peaks. After the three fixed one-second normal-GC cycle settles, concurrent RAM is 661.90, 672.52 and 702.11 MiB. It falls to 576.07 MiB after provider and application close plus one second. View loss has 718.26 MiB at the fixed settle and 542.19 MiB after shutdown. These observations establish neither a stable floor nor a split between retained bodies and released wrapper headers. Both native hosts report `ShutdownPending` with zero jobs, resident and pending-save reservations. The applications exit cleanly and both disposable database cleanups pass.
 
 The repeat and view-loss cases respectively observe 1,194 and 425 SQL calls, 982 and 287 returned rows, 1,385 and 619 prepared rows, 2,595,230 and 1,156,467 prepared bytes, and 2,921,632 and 1,156,920 bytes of WAL insert growth. Calls include overflow families (647 and 237), whose owners are unclassified. All 38 artifacts for campaign `6284bbb8-5a65-4dd6-80fc-10cb578c3850` are collected. The controller and EC2 confirm the temporary instance terminated. The $0.695149 hold settled at $0.215583 estimated usage, releasing $0.479566 with zero remaining held. These two named windows provide current memory, execution and cleanup evidence for two Native workers. Comparative timing requires matched repeated runs.
+
+## Collection and accounting
+
+All 56 jobs are collected. The 36 ordinary jobs and two held-memory cases complete their selected workloads. Nine of 18 active-area jobs complete. The managed runner verifies all 333 active-area artifacts and successful process/database cleanup for the 18 jobs. The closure record confirms seven temporary workers terminated and the retained worker stopped. Collected plan, exact per-job binary and input identities, raw results and controller state stay in the private verification archive. The ordinary and held manifest `native-active-batch-20261116/managed/manifest.json` has SHA-256 `d1b8379a33af3412c11df76b518ed28d5a449a2c69331ff7ccdee985a38de4b3`. The separate active-area manifest `native-active-batch-20261116/managed-active/manifest.json` has SHA-256 `f53919e46a571d5002e04470c07d16a7c221d51918ff4e0da7457b68e5fec329`.
+
+The seven settled temporary campaigns cost $3.055705 estimated. The retained active-area campaign settles at $1.339188 estimated and releases $1.000931 of its hold. The batch therefore adds $4.394893. At 04:34:26 UTC on November 17, the controller reads $35.930076 charged and zero held. Including the previous $1.016709 outside-controller estimate, continuing task use is $36.946785 of the $100 ceiling. These are controller estimates and retained accounting, not an invoice. Additional and cumulative Jev spend is $0.
