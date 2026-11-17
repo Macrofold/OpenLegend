@@ -268,6 +268,7 @@ export class CognitionMaintenance {
   private executionLease?: ExecutionLease;
   private budgetJob?: string;
   private activeAdmission: MaintenanceAdmission | null = null;
+  private cancellationRevision = 0;
   private stopped = false;
   private unsubscribe: () => void;
   constructor(
@@ -402,6 +403,7 @@ export class CognitionMaintenance {
       this.scheduling ||
       this.active ||
       this.queuedId ||
+      this.dispatching ||
       this.stopped ||
       this.host.paused ||
       interactiveBusy
@@ -410,6 +412,12 @@ export class CognitionMaintenance {
     this.scheduling = true;
     try {
       const generation = this.host.generation;
+      const revision = this.cancellationRevision;
+      const current = () =>
+        revision === this.cancellationRevision &&
+        !this.stopped &&
+        !this.host.paused &&
+        generation === this.host.generation;
       await this.host.refresh(this.work);
       const actors = this.work.ready(this.now(), this.host.simTime);
       // Advisory maintenance need not reread SQL for every fresh sighting. Keep
@@ -452,6 +460,7 @@ export class CognitionMaintenance {
                     actorId,
                     'activity-learning',
                     generation,
+                    current,
                     this.learnActivities.bind(this, batch),
                   );
                   return;
@@ -577,6 +586,7 @@ export class CognitionMaintenance {
                   actorId,
                   'consolidation',
                   generation,
+                  current,
                   this.consolidateReview.bind(
                     this,
                     actorId,
@@ -623,6 +633,7 @@ export class CognitionMaintenance {
                 actorId,
                 'consolidation',
                 generation,
+                current,
                 this.consolidateOnly.bind(this, actorId, batch),
               );
               return;
@@ -641,7 +652,13 @@ export class CognitionMaintenance {
               }))
             )
               return;
-            await this.start(actorId, queued.reason, generation, this.reflect.bind(this, queued));
+            await this.start(
+              actorId,
+              queued.reason,
+              generation,
+              current,
+              this.reflect.bind(this, queued),
+            );
             return;
           } finally {
             if (actor) this.host.releaseActorRead(actor);
@@ -670,17 +687,20 @@ export class CognitionMaintenance {
     actorId: string,
     reason: string,
     generation: string,
+    current: () => boolean,
     execute: (controller: AbortController) => Promise<void>,
   ) {
+    if (!current()) return;
     if (!this.execution) {
-      await this.startNow(actorId, reason, generation, execute);
+      await this.startNow(actorId, reason, generation, current, execute);
       if (reason === 'activity-learning') await this.pending;
       return;
     }
     const start = async (lease: ExecutionLease) => {
+      if (!current()) return;
       this.executionLease = lease;
       const work = (async () => {
-        await this.startNow(actorId, reason, generation, execute);
+        await this.startNow(actorId, reason, generation, current, execute);
         await this.pending;
       })();
       this.dispatching = work;
@@ -709,23 +729,25 @@ export class CognitionMaintenance {
       eligibleAt: at,
       dispatchBy: at + 2000,
       metadataBytes: Buffer.byteLength(id) + Buffer.byteLength(actorId) + 128,
-      start: (lease) => {
+      start: async (lease) => {
+        if (this.queuedId !== id) return;
         this.queuedId = undefined;
-        return start(lease);
+        await start(lease);
       },
       declined: async () => {
         if (this.queuedId === id) this.queuedId = undefined;
       },
     });
-    if (!accepted) this.queuedId = undefined;
+    if (!accepted && this.queuedId === id) this.queuedId = undefined;
   }
   private async startNow(
     actorId: string,
     reason: string,
     generation: string,
+    current: () => boolean,
     execute: (controller: AbortController) => Promise<void>,
   ) {
-    if (this.stopped || generation !== this.host.generation || this.host.paused) return;
+    if (!current()) return;
     const admission = await this.host.admission(
       actorId,
       generation,
@@ -733,6 +755,12 @@ export class CognitionMaintenance {
       reason !== 'consolidation',
     );
     if (!admission) return;
+    // The descriptor may already have left the execution queue while this
+    // read was awaiting the world. A foreground cancellation still owns it.
+    if (!current()) {
+      this.host.releaseAdmission(admission);
+      return;
+    }
     const controller = new AbortController();
     this.active = controller;
     this.activeAdmission = admission;
@@ -747,12 +775,7 @@ export class CognitionMaintenance {
         );
         await this.host.store.putIntegration(key, startedAt);
       });
-      admitted =
-        recorded &&
-        !this.stopped &&
-        !controller.signal.aborted &&
-        generation === this.host.generation &&
-        !this.host.paused;
+      admitted = recorded && current() && !controller.signal.aborted;
     } finally {
       if (!admitted) {
         this.host.releaseAdmission(admission);
@@ -1386,8 +1409,11 @@ export class CognitionMaintenance {
     });
   }
   cancel(): void {
+    this.cancellationRevision++;
     this.active?.abort();
-    if (this.queuedId) void this.execution?.cancel(new Set([this.queuedId]));
+    const queued = this.queuedId;
+    this.queuedId = undefined;
+    if (queued) void this.execution?.cancel(new Set([queued]));
   }
   async close() {
     this.stopped = true;
