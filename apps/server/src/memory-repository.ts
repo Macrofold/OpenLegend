@@ -2752,17 +2752,19 @@ export class MemoryRepository {
         `${this.retainedPlaces(true)} SELECT COUNT(*) AS count,COALESCE(SUM(octet_length(p.capsule::text)),0) AS bytes FROM retained_places p`,
       )
       .get(...params);
-    if (
-      Number(size?.['count'] ?? 0) > RETRIEVAL_ROWS ||
-      Number(size?.['bytes'] ?? 0) > RETRIEVAL_BYTES
-    )
+    const count = Number(size?.['count'] ?? -1);
+    const bytes = Number(size?.['bytes'] ?? -1);
+    if (!(count >= 0 && count <= RETRIEVAL_ROWS && bytes >= 0 && bytes <= RETRIEVAL_BYTES))
       throw new MemoryPreparationError();
+    // The scoped reader already owns this snapshot. A validated empty index
+    // needs neither another selection nor the Native transfer size check.
+    if (count === 0 && bytes === 0) return [];
     const rows = await this.db
       .prepare(
         `${this.retainedPlaces(true)} SELECT p.owner_id AS id,p.owner_kind AS source_kind,p.owner_revision AS revision,p.capsule::text AS place_capsule FROM retained_places p ORDER BY p.learned_place_id`,
       )
       .all(...params);
-    if (rows.length !== Number(size?.['count'] ?? 0)) throw new MemoryPreparationError();
+    if (rows.length !== count) throw new MemoryPreparationError();
     const capsules = rows.map((row) => {
       if (typeof row['place_capsule'] !== 'string') throw new MemoryPreparationError();
       const capsule = parseSourceJson<KnownPlaceCapsule>(row['place_capsule']);
