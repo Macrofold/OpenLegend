@@ -450,6 +450,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     const operational = opening.operational;
     let definitions: NativeDefinitionCapture | undefined;
     let service: NativeWorldService | undefined;
+    let adoptedWriter = false;
     const admittedRoster = opening.actors;
     const admittedRetention = opening.retention;
     let admittedInventory: NativeInventoryReads | undefined;
@@ -542,6 +543,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             worldId === installation.worldId ? service!.retained?.ids : undefined,
           backgroundSearchAdmission: () => !service!.closed && !service!.failure,
         });
+        adoptedWriter = true;
         await world.activate(JSON.stringify(receipt));
         allocation.commit();
         const initial = await captureNativeReadCut(world, header.playerActorId);
@@ -603,6 +605,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       });
     } catch (error) {
       service?.closeAdmission();
+      if (adoptedWriter) await store.stopReceivedValueCleanup();
       service?.actors.release();
       admittedRoster?.release();
       admittedRetention?.release();
@@ -4967,6 +4970,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         throw new Error('Protected SQL settlement remains held for durable recovery.');
       await this.flush();
       while (this.pending.dirty) await this.flush();
+      await this.store.stopReceivedValueCleanup();
       this.world.closeAdmission();
       await this.world.finishStop();
       await this.provider?.close();

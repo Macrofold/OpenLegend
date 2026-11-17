@@ -684,8 +684,10 @@ export class SqlGameRepository implements GameRepository {
   private cleanupTimer?: ReturnType<typeof setTimeout>;
   private cleanupTask?: Promise<void>;
   private cleanupWorld?: string;
+  private cleanupClosed = false;
   private closing = false;
   private scheduleValueCleanup(worldId: string, delay = 5000): void {
+    if (this.cleanupClosed) return;
     this.cleanupWorld = worldId;
     if (this.closing || this.cleanupTimer || this.cleanupTask) return;
     this.cleanupTimer = withoutNativeSqlPreparation(this.db, () =>
@@ -713,6 +715,15 @@ export class SqlGameRepository implements GameRepository {
       }, delay),
     );
     this.cleanupTimer.unref();
+  }
+
+  /** Join any owned SQL collection before releasing its live protection reads. */
+  async stopReceivedValueCleanup(): Promise<void> {
+    this.cleanupClosed = true;
+    clearTimeout(this.cleanupTimer);
+    this.cleanupTimer = undefined;
+    this.cleanupWorld = undefined;
+    await this.cleanupTask;
   }
   setLiveReadCuts(provider: LiveReadCutsProvider): void {
     this.liveReadCuts = provider;
@@ -3035,8 +3046,7 @@ export class SqlGameRepository implements GameRepository {
     this.projectionListeners.clear();
     this.settlementListeners.clear();
     await this.ready.catch(() => undefined);
-    if (this.cleanupTimer) clearTimeout(this.cleanupTimer);
-    await this.cleanupTask;
+    await this.stopReceivedValueCleanup();
     try {
       await this.saves.close();
     } finally {
