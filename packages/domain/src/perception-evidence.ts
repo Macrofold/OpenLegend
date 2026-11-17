@@ -6460,20 +6460,11 @@ export function acquireOrdinaryWarning(
           track: receivedTrackKey(source.id, source.channel!),
         },
       };
+  const { claim, strength, detector } = interpretation.testimony(place.location, event.at);
   const value: SensoryFacet = {
     kind: 'claim',
-    claim: {
-      kind: 'danger',
-      where: cloneValue(place.location),
-      when: {
-        kind: 'stated-interval',
-        from: event.at,
-        through: event.at + interpretation.duration,
-        precision: 'approximate',
-      },
-      presence: 'possible',
-    },
-    strength: 'possible',
+    claim,
+    strength,
     speaker,
     wordsAsHeard: awareness.speech.segments
       .flatMap((segment) => (segment.kind === 'heard' ? [segment.text] : []))
@@ -6496,7 +6487,7 @@ export function acquireOrdinaryWarning(
       order: event.order ?? event.sequence,
     },
     modality: 'hearing',
-    detector: { id: 'native:grounded-warning', version: 1 },
+    detector,
     facets: [
       {
         role: 'testimony',

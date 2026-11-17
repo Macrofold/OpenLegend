@@ -28,13 +28,12 @@ pub(crate) use retention::{
 pub(crate) use voice::{
     VoiceReception, VoiceReceptionParts, VoiceReceptionPreparation, individual_familiarity,
 };
-#[path = "recognition/warning.rs"]
-mod warning;
-pub(crate) use warning::ordinary_warning;
 #[path = "recognition/prune.rs"]
 mod prune;
 #[path = "recognition/support_retention.rs"]
 mod support_retention;
+#[path = "recognition/warning.rs"]
+mod warning;
 pub(crate) use prune::{
     IndividualPruneMode, PreparedIndividualRetirement, maintain_restore_recognition,
     prune_observer_individuals,
@@ -57,7 +56,6 @@ pub struct RecognitionPolicy {
     pub version: u64,
     pub credit_seconds: f64,
     pub seed_seconds: f64,
-    pub warning_seconds: f64,
     pub warning: WarningRules,
     #[serde(deserialize_with = "deserialize_safe_integer")]
     pub retained_credits: u64,
@@ -75,6 +73,8 @@ pub struct WarningRules {
     pub join: String,
     pub suffix: String,
     pub delimiters: String,
+    pub seconds: f64,
+    pub detector: crate::reception::DetectorIdentity,
 }
 impl crate::install::DefinitionIdentity for RecognitionPolicy {
     fn definition_id(&self) -> &str {

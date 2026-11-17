@@ -247,6 +247,7 @@ fn assemble_selected_core(
     let account_rules = selected::<crate::worlds::InstalledAccountRules>(account_rules, budget)?;
     let name_rules = selected::<crate::worlds::InstalledPersonalNameRules>(name_rules, budget)?;
     let recognition = selected::<crate::worlds::InstalledRecognitionPolicy>(recognition, budget)?;
+    recognition.value().validate_warning()?;
     let occurrence_rules =
         selected::<crate::worlds::InstalledOccurrenceRules>(occurrence_rules, budget)?;
     let speech_action = selected::<crate::worlds::InstalledSpeechAction>(speech_action, budget)?;

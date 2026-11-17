@@ -34,7 +34,10 @@ import { validateEvidenceSource } from '../../perception-values.js';
 import {
   observationFactKey,
   type EvidenceSource,
+  type ObservationContribution,
   type ObservationFactKey,
+  type ObservedLocation,
+  type SensoryFacet,
 } from '../../perception-evidence.js';
 import type { FamiliarityRoot, FamiliarityState } from '../../attention.js';
 
@@ -95,12 +98,13 @@ export const BASE_PERCEPTION_POLICY = {
   version: 1,
   creditSeconds: 2,
   seedSeconds: 30,
-  warningSeconds: 2,
   warning: {
     prefixes: ['look out', 'watch out', 'danger'],
     join: ' at ',
     suffix: ' now',
     delimiters: '.!?;',
+    seconds: 2,
+    detector: { id: 'native:grounded-warning', version: 1 },
   },
   retainedCredits: 12,
   matchingExemplars: 4,
@@ -1388,7 +1392,7 @@ const warningClause = new RegExp(
 
 /** Match only complete actually understood clauses. A gap cannot discard a
  * negation and turn part of an utterance into a positive danger warning. */
-export function ordinaryWarningPlace(
+function ordinaryWarningPlace(
   segments: readonly import('../../speech.js').SpeechSegment[],
 ): string | undefined {
   if (!segments.length || segments.some((segment) => segment.kind !== 'heard')) return undefined;
@@ -1405,8 +1409,40 @@ export function ordinaryWarningPlace(
   return match?.[1]?.trim() || undefined;
 }
 
-export function ordinaryWarningDurationSeconds(world: WorldState): number {
-  return normalSpeedSeconds(world, BASE_PERCEPTION_POLICY.warningSeconds);
+function warningTestimony(
+  this: { duration: number },
+  place: ObservedLocation,
+  at: number,
+): Pick<Extract<SensoryFacet, { kind: 'claim' }>, 'claim' | 'strength'> &
+  Pick<ObservationContribution, 'detector'> {
+  return {
+    claim: {
+      kind: 'danger',
+      where: cloneValue(place),
+      when: {
+        kind: 'stated-interval',
+        from: at,
+        through: at + this.duration,
+        precision: 'approximate',
+      },
+      presence: 'possible',
+    },
+    strength: 'possible',
+    detector: { ...BASE_PERCEPTION_POLICY.warning.detector },
+  };
+}
+
+/** Interpret only received segments. The receiver supplies the uniquely acquired place
+ * and original occurrence time when it constructs the owned testimony. */
+export function ordinaryWarning(
+  timePolicy: Readonly<WorldState['timePolicy']>,
+  segments: readonly import('../../speech.js').SpeechSegment[],
+) {
+  const label = ordinaryWarningPlace(segments);
+  if (label === undefined) return;
+  const duration = normalSpeedSeconds({ timePolicy }, BASE_PERCEPTION_POLICY.warning.seconds);
+  if (!Number.isFinite(duration)) throw new Error('The installed warning duration must be finite.');
+  return { label, duration, testimony: warningTestimony };
 }
 
 export function validateIndividualRecognition(

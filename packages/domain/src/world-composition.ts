@@ -90,8 +90,7 @@ import type {
   PreparedResponseObservation,
 } from './prepared-responses.js';
 import {
-  ordinaryWarningPlace,
-  ordinaryWarningDurationSeconds,
+  ordinaryWarning,
   BASE_VOICE_FEATURE_FAMILY,
   BASE_PERCEPTION_POLICY,
   receivedVoiceFeatures,
@@ -403,16 +402,14 @@ export function selectedBodyIndividual(
   return ensureBodyIndividual(world, observerId, subjectId, received);
 }
 
-/** The selected world owns understood warning grammar and its stated duration. */
+/** The selected world interprets the heard segments. It constructs testimony once
+ * the receiving owner supplies the eligible place and original occurrence time. */
 export function selectedOrdinaryWarning(
   world: WorldState,
   segments: readonly import('./speech.js').SpeechSegment[],
 ) {
   selectedCreationProfileForWorld(world);
-  const label = ordinaryWarningPlace(segments);
-  return label === undefined
-    ? undefined
-    : { label, duration: ordinaryWarningDurationSeconds(world) };
+  return ordinaryWarning(world.timePolicy, segments);
 }
 
 /** A selected pin chooses linked trusted native templates. It cannot load code or

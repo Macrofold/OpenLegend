@@ -6,9 +6,6 @@ use crate::execution::{CoreMutation, ExecutionError};
 use crate::experience::Awareness;
 use crate::host::ByteBudget;
 use crate::host::retained_size::{HeapBytes, heap_sum};
-use crate::worlds::base_observed::{
-    ClaimPresence, ClaimedInterval, IntervalKind, IntervalPrecision, ObservationClaim,
-};
 use std::mem::size_of;
 fn invalid() -> ExecutionError {
     crate::received::ReceivedError("Grounded warning lacks its actually received proof.").into()
@@ -29,16 +26,20 @@ pub(crate) fn acquire_ordinary_warning(
     let Some(source) = awareness.observation.as_ref() else {
         return Ok(None);
     };
-    let Some(interpretation) = crate::worlds::base_recognition::ordinary_warning(
-        core.state.installed.recognition.value(),
-        core.state
-            .installed
-            .content
-            .time_policy
-            .normal_game_seconds_per_second,
-        &speech.segments,
-        budget,
-    )?
+    let Some(interpretation) = core
+        .state
+        .installed
+        .recognition
+        .value()
+        .interpret_heard_warning(
+            core.state
+                .installed
+                .content
+                .time_policy
+                .normal_game_seconds_per_second,
+            &speech.segments,
+            budget,
+        )?
     else {
         return Ok(None);
     };
@@ -51,13 +52,16 @@ pub(crate) fn acquire_ordinary_warning(
         .experience
         .known_places(&awareness.actor_id)
         .map_err(|_| invalid())?;
-    let mut places = known.matching(&interpretation.label);
-    let Some(place) = places.next() else {
-        return Ok(None);
+    let place = {
+        let mut places = known.matching(&interpretation.label);
+        let Some(place) = places.next() else {
+            return Ok(None);
+        };
+        if places.next().is_some() {
+            return Ok(None);
+        }
+        place
     };
-    if places.next().is_some() {
-        return Ok(None);
-    }
     let Some(observer) = core
         .state
         .physical
@@ -112,6 +116,10 @@ pub(crate) fn acquire_ordinary_warning(
             .segments
             .heap_bytes()
             .ok_or(ExecutionError::Capacity)?,
+        interpretation
+            .detector()
+            .heap_bytes()
+            .ok_or(ExecutionError::Capacity)?,
         size_of::<ObservationFactKey>() * 2 + size_of::<SupportAlias>() * 2,
     ])
     .ok_or(ExecutionError::Capacity)?;
@@ -143,18 +151,11 @@ pub(crate) fn acquire_ordinary_warning(
             id: id.clone(),
         });
     }
+    let (claim, strength, detector) = interpretation.testimony(&place.location, event.at);
+    drop(interpretation);
     let value = SensoryFacet::Claim {
-        claim: ObservationClaim::Danger {
-            location: place.location.clone(),
-            when: ClaimedInterval {
-                kind: IntervalKind::StatedInterval,
-                from: event.at,
-                through: event.at + interpretation.duration,
-                precision: IntervalPrecision::Approximate,
-            },
-            presence: ClaimPresence::Possible,
-        },
-        strength: PossibleStrength::Possible,
+        claim,
+        strength,
         speaker,
         words_as_heard: crate::text::JsText::join(
             speech.segments.iter().filter_map(|segment| match segment {
@@ -188,10 +189,7 @@ pub(crate) fn acquire_ordinary_warning(
         },
         modality: Modality::Hearing,
         channel: None,
-        detector: DetectorIdentity {
-            id: "native:grounded-warning".to_owned(),
-            version: 1,
-        },
+        detector,
         context: source.context.clone(),
         facets: vec![ObservationFacetInput {
             support: None,

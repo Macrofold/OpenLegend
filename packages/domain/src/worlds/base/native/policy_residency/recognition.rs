@@ -6,7 +6,6 @@ heap_record!(RecognitionPolicy {
     version,
     credit_seconds,
     seed_seconds,
-    warning_seconds,
     warning,
     retained_credits,
     matching_exemplars,
@@ -18,7 +17,9 @@ heap_record!(WarningRules {
     prefixes,
     join,
     suffix,
-    delimiters
+    delimiters,
+    seconds,
+    detector
 });
 
 crate::install::definition_layout!(RecognitionPolicy; arrays [String]; maps []);
