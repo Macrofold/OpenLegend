@@ -20,7 +20,7 @@ Locally buffered authoritative state lives on the server. Browser buffers hold p
 
 Detached timers and callbacks must enter a fresh mutation/authority context before queue admission. An inherited asynchronous context can otherwise mistake background work for a nested command and bypass the single writer; reuse the owner's existing context-exit boundary.
 
-For a new or changed serial stage, identify the ordering or shared resource it protects. One authoritative writer does not require independent read preparation or provider requests to execute serially. Keep ordered acceptance with its owner; parallel preparation uses appropriately owned read inputs and current-state checks before application or disclosure. Distinguish waiting on asynchronous I/O from CPU execution on separate threads.
+For a new or changed serial stage, identify the ordering or shared resource it protects. One authoritative writer does not require independent read preparation or provider requests to execute serially. Keep ordered acceptance with its owner. Parallel preparation retains the required read snapshot and input allocations through use, with existing dependency and permission checks before application or disclosure. Distinguish waiting on asynchronous I/O from CPU execution on separate threads.
 
 ## Triggered background work
 
