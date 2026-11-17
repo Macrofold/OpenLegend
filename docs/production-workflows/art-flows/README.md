@@ -318,7 +318,7 @@ Scale this loop to the requested change; it imposes no fixed iteration count or 
 
 ### Independent critique
 
-For a substantial study, a production package or a new character or creature, ask a fresh reviewer (a separate agent or person with no editing authority) to critique the actual files against the brief and the look, at intended viewing conditions: appeal, originality, fit, consistency and fidelity. Turn each confirmed finding into a fix and, where it can recur, into a check in the recipe.
+For a substantial study, a production package, a support sculpt or a new character or creature, ask a fresh reviewer (a separate read-only agent or person with no editing authority) to critique **all** rendered comparison/close-up boards and exported asset views against the brief, references and look at intended viewing conditions: appeal, originality, anatomy/proportion, surface relief, fit, consistency and fidelity. Keep the reviewer **blind to self-computed numeric pass receipts, solver code and author pass claims** so confirmation bias cannot rubber-stamp visibly broken or washed-out renders. Turn every confirmed visual finding into a source fix before asking Mike to accept, and where it can recur, into a check in the recipe.
 
 ### Ask only what changes the work
 
