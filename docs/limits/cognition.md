@@ -532,18 +532,18 @@ Original recommendation: **Replace**.
 
 ## LA231
 
-**Current — source rechecked October 15, 2026 · Restrictiveness: Safe.**
+**Current — provisional development allowance · Restrictiveness: Safe.**
 
-The scheduler admits at most **two immediate pipelines per world**, **one per
-actor** and **one ordinary pipeline**. Two urgent actors can occupy both positions.
-Urgent execution shares the existing background provider lease, preserving two
-total executions across immediate decisions, higher reasoning and maintenance.
-Deferral records timing while the running job retains its admission position;
-completion or handoff releases only its own position. Uncertain execution retains
-its actual financial lease class across restart. Controlled native coverage
-includes ordinary plus urgent, two urgent, no third slot and exact cancellation;
-complete live fairness and latency qualification remain open under
-[CTR08/CTR10](../maintainers/combat-and-threat-responses.md).
+`OPEN_LEGEND_NPC_AI_CONCURRENCY` defaults to **1,000** concurrent NPC AI jobs.
+The trusted server setting applies to immediate coordination and shared provider
+execution. The HTTP owner funds both potentially overlapping transport operations
+per job. There is one live decision
+workflow per NPC. Independent ordinary and urgent decisions can coexist without
+separate quotas or reserved positions; urgency still affects selection order.
+The setting is not measured population capacity, funding or a provider quota.
+Director, provider and memory admission can still refuse genuine contention.
+The [execution owner](ai-execution.md#de-l02--bounded-scheduling-and-context-retention)
+keeps occupied and uncertain remote leases through their actual lifetimes.
 
 Native directed Send can wait up to five seconds for an occupied immediate
 position without holding the world or cognition admission lane. The public
@@ -554,12 +554,10 @@ request ID and current control, recipient and funding. An expired wait cannot
 start speech admission; disconnect or lost authority still prevents uncommitted
 speech at settlement. No provider request is retried.
 
-**Reason / tradeoff:** One long ordinary deliberation no longer owns both immediate
-positions. Shared funding and provider capacity still limit dispatch, and each
-actor/job retains its own evidence, reservations and cancellation.
+**Reason / tradeoff:** The original one-ordinary and two-immediate limits made
+unrelated ordinary conversations compete even when provider and memory capacity
+were free. Keep actor ordering and actual resource admission at their owners.
 [Implementation starting point](../../apps/server/src/ai-director.ts).
-
-Original recommendation: **Review**.
 
 ## LA232
 

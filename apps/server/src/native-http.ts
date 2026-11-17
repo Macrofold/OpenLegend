@@ -106,7 +106,7 @@ export async function createNativeGameServer(options: {
       presentationRelease: assetIndex.release,
     });
     const current = service;
-    cognitionExecution = new CognitionExecution(store, now);
+    cognitionExecution = new CognitionExecution(store, now, config.npcAiConcurrency);
     const execution = cognitionExecution;
     const makeDirector = () =>
       new NativeNpcDirector(

@@ -16,16 +16,14 @@ Core sparse-schema delivery retains existing revision fields and meaningful work
 
 ### Admission and cancellation
 
-The director admits at most two immediate pipelines per world, one per actor
-and at most one ordinary pipeline. Urgent personal evidence can use the second
-position; two urgent actors can occupy both. A new conversation or invention
-request receives the existing busy refusal when its actor or ordinary capacity is
-occupied, preserving the player's draft. Admission never cancels another funded
-character decision. Each job owns its watcher, cancellation, preview, reservations
-and completion; deferral records timing without freeing a still-running pipeline.
-A successfully admitted human request cancels background reflection asynchronously.
-The [combat qualification](verification/combat-and-threat-responses.md) records
-controlled coverage; complete live fairness and reaction qualification remain open.
+Source and Native admit unrelated ordinary and urgent NPC decisions concurrently
+under the development allowance in [LA231](limits/cognition.md#la231). A new
+request can meet its NPC's existing decision or genuine configured contention;
+the player retains the draft if speech was refused. Each job owns its watcher,
+cancellation, preview, reservations and completion. Being admitted does not cancel
+another funded character decision. The separate optional reflection scheduler
+keeps its existing foreground-interruption policy. Historical [combat checks](verification/combat-and-threat-responses.md)
+qualify their original scheduling profile, not this allowance.
 
 Resolve the validity and authority of a replacement request before any cancellation it could cause. A request's priority alone does not establish that its replacement operation is permitted or worth discarding already admitted work. Cancellation does not make dispatched work free or create an automatic retry. [Complete-operation authorization](engine-and-world-boundaries.md#complete-operation-authorization) and [continuation](save-and-load.md#continuation-and-identity) own those boundaries; [the combat qualification](verification/rivals-and-contested-ground.md#preserve-admitted-decisions-and-qualify-the-last-ammunition--october-14-2026) records the demonstrated failure and correction.
 
@@ -295,17 +293,15 @@ An explicit configuration overrides the default, including its exact eligible or
 
 The immediate choice has a one-second budget from intake. Native behavior and compatible existing actions continue when a choice is deferred. Waiting for Luna holds neither the simulation nor a world transaction; other characters and permitted player commands can proceed. A still-useful late original answer may commit once before its original deadline; it does not trigger Luna merely for being slow. Useful-later work lasts at most 31 seconds from intake. A higher request must start within two seconds of its eligibility and finish publication within 30 seconds of that eligibility, bounded by the original deadline. Both elapsed-time and wall-clock fences apply; a simulation-time boundary may expire sooner. [DE-L01–DE-L04](limits/ai-execution.md#decision-escalation-limits) own exact limits.
 
-`CognitionExecution` permits one primary inference and 100 simultaneous background
-operations per server process, under [DE-L02](limits/ai-execution.md#de-l02--bounded-scheduling-and-context-retention).
-Urgent work prefers the shared background allowance used by reconsideration,
-paid maintenance and indexing, then primary; per-world immediate admission stays
-separate. Each uncertain attempt occupies one position after restart, and its
-definitive settlement releases only that position. Sixteen waiting reconsiderations
-retain identifiers/deadlines without copied prompts. Decision and maintenance
-classes alternate within their existing queue; admission uses trusted urgency and
-aging. Saturated executions defer without another provider or automatic retry.
-Known completed work with missing pricing frees execution capacity while keeping
-its monetary hold. The higher concurrency grants no additional spending allowance.
+`CognitionExecution` shares the configured process allowance across primary and
+background execution under [DE-L02](limits/ai-execution.md#de-l02--bounded-scheduling-and-context-retention).
+The receipt class still identifies an exact execution; it does not reserve a
+separate lane. The production HTTP owner reserves room for two operations per
+configured job because Macrofold retains the original input lease alongside its
+independent response observer. This is local custody, not a provider quota. The
+higher-model rate guard retains actual provider pacing, and paid reservations
+remain separate. A known completion with missing pricing frees execution
+capacity while keeping the monetary hold. Saturation does not buy a retry.
 
 The selected supplied-response strategy plans two sequential judgments inside the
 original useful lifetime and funding. Its one-second immediate timing can be

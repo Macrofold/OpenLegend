@@ -445,23 +445,27 @@ export class CognitionMaintenance {
             const dream = actor.dream;
             if (safe && !actor.hasAction && !actor.activePlan && actor.learningPending) {
               const batch = await this.host.prepareActivityLearning(actorId);
-              if (batch.capacityBlocked) continue;
-              if (batch.candidates.length) {
-                await this.start(
-                  actorId,
-                  'activity-learning',
-                  generation,
-                  this.learnActivities.bind(this, batch),
+              try {
+                if (batch.capacityBlocked) continue;
+                if (batch.candidates.length) {
+                  await this.start(
+                    actorId,
+                    'activity-learning',
+                    generation,
+                    this.learnActivities.bind(this, batch),
+                  );
+                  return;
+                }
+                await this.host.publishActivityLearning(
+                  batch,
+                  [],
+                  false,
+                  undefined,
+                  new AbortController().signal,
                 );
-                return;
+              } finally {
+                this.host.releaseActivityLearning(batch);
               }
-              await this.host.publishActivityLearning(
-                batch,
-                [],
-                false,
-                undefined,
-                new AbortController().signal,
-              );
             }
             if (this.host.config.jevOnly) continue;
             const future = [
@@ -668,41 +672,52 @@ export class CognitionMaintenance {
     generation: string,
     execute: (controller: AbortController) => Promise<void>,
   ) {
-    if (this.execution && reason !== 'activity-learning') {
-      const id = `maintenance-admission-${randomUUID()}`;
-      this.queuedId = id;
-      const at = this.now();
-      const accepted = this.execution.enqueue({
-        id,
-        actorId,
-        kind: 'maintenance',
-        urgency: 0,
-        eligibleAt: at,
-        dispatchBy: at + 2000,
-        metadataBytes: Buffer.byteLength(id) + Buffer.byteLength(actorId) + 128,
-        start: async (lease) => {
-          this.queuedId = undefined;
-          this.executionLease = lease;
-          const work = (async () => {
-            await this.startNow(actorId, reason, generation, execute);
-            await this.pending;
-          })();
-          this.dispatching = work;
-          try {
-            await work;
-          } finally {
-            if (this.dispatching === work) this.dispatching = undefined;
-            this.executionLease = undefined;
-          }
-        },
-        declined: async () => {
-          if (this.queuedId === id) this.queuedId = undefined;
-        },
-      });
-      if (!accepted) this.queuedId = undefined;
+    if (!this.execution) {
+      await this.startNow(actorId, reason, generation, execute);
+      if (reason === 'activity-learning') await this.pending;
       return;
     }
-    await this.startNow(actorId, reason, generation, execute);
+    const start = async (lease: ExecutionLease) => {
+      this.executionLease = lease;
+      const work = (async () => {
+        await this.startNow(actorId, reason, generation, execute);
+        await this.pending;
+      })();
+      this.dispatching = work;
+      try {
+        await work;
+      } finally {
+        if (this.dispatching === work) this.dispatching = undefined;
+        this.executionLease = undefined;
+      }
+    };
+    if (reason === 'activity-learning') {
+      // The caller already prepared the batch. Try the shared lease now instead
+      // of retaining that batch in a queue intended for small descriptors.
+      const lease = await this.execution.background();
+      if (lease) await start(lease).finally(() => lease.release());
+      return;
+    }
+    const id = `maintenance-admission-${randomUUID()}`;
+    this.queuedId = id;
+    const at = this.now();
+    const accepted = this.execution.enqueue({
+      id,
+      actorId,
+      kind: 'maintenance',
+      urgency: 0,
+      eligibleAt: at,
+      dispatchBy: at + 2000,
+      metadataBytes: Buffer.byteLength(id) + Buffer.byteLength(actorId) + 128,
+      start: (lease) => {
+        this.queuedId = undefined;
+        return start(lease);
+      },
+      declined: async () => {
+        if (this.queuedId === id) this.queuedId = undefined;
+      },
+    });
+    if (!accepted) this.queuedId = undefined;
   }
   private async startNow(
     actorId: string,

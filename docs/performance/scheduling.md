@@ -20,6 +20,8 @@ Locally buffered authoritative state lives on the server. Browser buffers hold p
 
 Detached timers and callbacks must enter a fresh mutation/authority context before queue admission. An inherited asynchronous context can otherwise mistake background work for a nested command and bypass the single writer; reuse the owner's existing context-exit boundary.
 
+For a new or changed serial stage, identify the ordering or shared resource it protects. One authoritative writer does not require independent read preparation or provider requests to execute serially. Keep ordered acceptance with its owner; parallel preparation uses appropriately owned read inputs and current-state checks before application or disclosure. Distinguish waiting on asynchronous I/O from CPU execution on separate threads.
+
 ## Triggered background work
 
 ### Narrator
@@ -90,9 +92,9 @@ World size, active population, observation density, retained history and concurr
 | Roughly 1,000× world footprint/history | Hot/cold data separation, sleeping regions where semantics permit, one worker/owner per independent world or region when measured | Worker message volume, migration/recovery and boundary semantics proven; size is not assumed to mean all entities active |
 | Thousands of concurrent actors/players | Fenced ownership and region/interest-based replication following the existing scale design                                        | Real load envelope, transfers, fairness, privacy, recovery and concentrated-crowd limits established                     |
 
-The accepted product priority is a shared world divided into regions, with independent worlds also supported. Follow the [shared-world rollout](../../archive/07-technical-architecture/data-delivery-and-scale.md#3-growth-stages-and-triggers): independently queryable records and bounded regional working sets first, then measured region CPU/storage distribution. Do not add Redis/Kafka, a generalized actor framework or one worker per creature without a consuming bottleneck. Multiple logical regions may share one writer/database until ownership and boundary interactions are qualified. Independent-world placement remains useful but does not qualify one crowded shared world. Actual audience delivery may legitimately cost proportional to the audience; no index can make thousands of real recipients free.
+The accepted product priority is a shared world divided into regions, with independent worlds also supported. Follow the [shared-world rollout](../../archive/07-technical-architecture/data-delivery-and-scale.md#3-growth-stages-and-triggers): independently queryable records and bounded regional working sets first, then measured region CPU/storage distribution. Do not add Redis/Kafka, a generalized actor framework or one worker per creature without a consuming bottleneck. Multiple logical regions may share one writer/database until ownership and boundary interactions are qualified; logical ownership does not reserve a physical core. Independent-world placement remains useful but does not qualify one crowded shared world. Actual audience delivery may legitimately cost proportional to the audience; no index can make thousands of real recipients free.
 
-Keep CPU-bound work in a worker only when it removes a measured event-loop bottleneck after work reduction. A worker holding an entire world's active state should receive intentions and send permitted deltas, not exchange whole-world snapshots with the main thread every frame. Async PostgreSQL/provider I/O does not need a worker. Optional path/serialization jobs use versioned compact inputs and have their results revalidated by the owner.
+Use CPU workers for a demonstrated CPU/latency bottleneck or explicitly required parallel computation; first check avoidable work and transfer cost. Assign independent jobs to a bounded pool according to dependencies and available capacity. A worker holding an entire world's active state should receive intentions and send permitted deltas, not exchange whole-world snapshots with the main thread every frame. Async PostgreSQL/provider I/O does not need a worker. Optional path/serialization jobs use versioned compact inputs and have their results revalidated by the owner.
 
 ## Design review and tradeoffs
 
@@ -114,9 +116,20 @@ The immediate sequence preserves authority, accepted command outcomes, protected
 
 ## Bounded admission
 
+Scope concurrency limits to the protected resource: actor ordering, host CPU/memory, provider capacity and account funding are distinct. Ordering one actor's decisions does not justify serializing unrelated actors across a world. Trace admission, queues and execution together so a hidden downstream cap does not defeat a capacity change. Apply the [limit rationale](../limits/README.md#entry-structure); queues smooth bursts without establishing sustainable capacity.
+
+When implementing or changing admission/completion guards, retain the specific internal reason and stage in existing request/job diagnostics. Correlate the request and distinguish admission refusal, provider/transport failure, invalid output, lost authority, stale dependencies and application failure. For capacity refusals include the resource, configured bound and observed use where available; use already-computed facts without extra scans or private payload dumps. Preserve the cause even when the public response is generic. Record bounded request outcomes rather than every scheduling poll. Diagnose separately whether the guard operated correctly, its restriction is appropriate and the player's request was handled acceptably.
+
 World mutation lanes admit at most 256 pending operations; each PostgreSQL read/write lane admits 512. Pending work expires after five seconds, including an age check when a blocked event loop resumes. Already executing operations and transactions finish normally. HTTP limits simultaneous API handlers to four times configured player capacity and retained request bodies to 16 MiB, in addition to existing per-request body limits. Projection queue depth follows API capacity. Publication coalesces revisions within a 50 ms window measured from the preceding publication start and yields between viewers after roughly 8 ms, so a microtask chain cannot starve socket/command I/O. Disconnect cleanup retries after one second if queue admission expires; retries are bounded by admitted transports and never replay gameplay. Rejection is explicit `busy`/HTTP 503 with Retry-After; callers must check action status before retrying an uncertain mutation. Optional/background overload does not mark storage broken or pause the world. One writer, nested transaction ownership and durable receipts remain unchanged.
 
 `OPEN_LEGEND_PLAYER_CAPACITY` defaults to 100 (configurable 1–10,000). Streams, service connections and projection caches allow three times this value, presence tracking six times, sessions max(4,096, sixteen times). These are coordinated admission settings, not measured population promises. [Verification](../verification/immediate-gameplay-limits.md#immediate-gameplay-limits) distinguishes 100 actual connected synthetic accounts from live OIDC, hosted and simulation-speed qualification.
+
+NPC model work uses the independent [development allowance](../limits/cognition.md#la231).
+Ordinary and urgent decisions share capacity while keeping one live workflow per
+NPC. Coalesced urgency and aging still choose the next eligible work; they do
+not add execution, authority or funding. An independent provider wait does not
+hold the world mutation lane. Exact source, authority and receipt checks govern
+each returned proposal before it can commit.
 
 Perception retains derived exposure inputs and prior outputs across immutable transitions. An unchanged observer/nearby-source set reuses exposure membership; changes to geometry, senses, positions, life/memory capabilities or output identity force reevaluation. Moving contacts still receive their next stationary transition. Recovery rebuilds the cache. Work metering counts actual UTF-8 event bytes; the group output allowance is 64 MB because the release-size first crowd exposure legitimately emits over 16 MB. No audience or required outcome is trimmed. The profiler refuses rejected or nonadvancing steps instead of counting them as simulation throughput.
 

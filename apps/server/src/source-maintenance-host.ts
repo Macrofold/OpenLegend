@@ -210,6 +210,7 @@ export function sourceMaintenanceHost(
     memoryMaintenanceStatus: (actorId) => service.memoryMaintenanceStatus(actorId),
     maintenanceBatch: (actorId, mode, review) => service.maintenanceBatch(actorId, mode, review),
     prepareActivityLearning: (actorId) => service.prepareActivityLearning(actorId),
+    releaseActivityLearning: () => undefined,
     async acquiredActivitySignatures(actorId) {
       return new Set(acquiredActivities(service.world, actorId).map((method) => method.signature));
     },

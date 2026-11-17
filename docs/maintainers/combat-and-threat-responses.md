@@ -250,8 +250,8 @@ Contract: [reconsideration and concurrency](../projects/combat-and-threat-respon
 
 - [ ] Connect each specified meaningful transition to ordinary intake with exact personal cause and evidence cut. Immediate harm/credible attack bypasses band stabilization; native prerequisite loss stops work independently of model timing. The existing one urgent refresh covers the whole job, including its initial two-stage attempt and its single refreshed attempt; additional blows remain pending and cannot repeatedly veto a still-valid choice after that refresh. A subsequent normally admitted opportunity waits for this job's terminal disposition; a new blow or relabelled attempt cannot reset its allowance. Actual authority, source, recognition and physical invalidity still refuses.
 - [x] Retain original finite pursuit, hold, waiting, last-seen and recovery boundaries in existing plans/activities; never renew them on restore, UI grace or routine movement. Preserve later cues while an earlier snapshot is processed.
-- [x] Extend the existing director to at most two immediate pipelines per world, one per actor and at most one ordinary pipeline, within all existing funding/provider ceilings. Use actor/job-owned callbacks, cancellation and reservations; keep native commits serialized.
-- [ ] Qualify punch-and-run, lost/reacquired sight, obstruction, actual strike result, changing protectee, new injury, pending cues, selected stopping and returning to life. Include two simultaneous actors, cancellation races, long ordinary work, no third slot and no free paid retry.
+- [x] Use actor/job-owned callbacks, cancellation and reservations; keep native commits serialized. The original two-position profile has historical caller evidence. Current admission follows [LA231](../limits/cognition.md#la231).
+- [ ] Qualify punch-and-run, lost/reacquired sight, obstruction, actual strike result, changing protectee, new injury, pending cues, selected stopping and returning to life. Include simultaneous independent actors, cancellation races, long ordinary work, genuine configured saturation and no free paid retry.
 
 ## CTR09 — Predictable contextual attack
 

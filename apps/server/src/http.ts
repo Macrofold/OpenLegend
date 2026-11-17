@@ -624,7 +624,7 @@ async function initializeGameServer(
   let wakeAfterNavigation: (() => void) | undefined;
   const navigation = new NavigationCoordinator(service, () => wakeAfterNavigation?.());
   onFailure(() => navigation.close());
-  const cognitionExecution = new CognitionExecution(store, options.now);
+  const cognitionExecution = new CognitionExecution(store, options.now, config.npcAiConcurrency);
   onFailure(() => cognitionExecution.close());
   let director = new AiDirector(
     service,

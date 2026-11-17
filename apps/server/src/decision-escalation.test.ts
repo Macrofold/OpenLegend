@@ -37,7 +37,6 @@ import { WorldService } from './world-service.js';
 import { CognitionExecution, type ExecutionLease } from './cognition-execution.js';
 import { DecisionEscalator } from './decision-escalator.js';
 import {
-  DECISION_LIMITS,
   DECISION_MODEL,
   DECISION_REASONS,
   decisionRoot,
@@ -151,6 +150,7 @@ async function harness(
     reasons?: string[];
     budget?: string;
     preset?: 'reservoir-demo';
+    concurrency?: number;
   } = {},
 ) {
   let now = 10_000;
@@ -207,7 +207,7 @@ async function harness(
       ) as AiResult<T>;
     },
   };
-  const execution = new CognitionExecution(store, () => now);
+  const execution = new CognitionExecution(store, () => now, options.concurrency ?? 4);
   const director = new AiDirector(service, client, () => now, undefined, execution);
   cleanup.push(async () => {
     await director.close();
@@ -349,11 +349,11 @@ function readerCoordinator(
   return { escalator, calls };
 }
 
-// Leave one background position for the queued blocker used by existing specimens.
-async function occupyOtherBackgroundPositions(execution: CognitionExecution): Promise<void> {
+// Leave one shared position for the queued blocker used by existing specimens.
+async function occupyAllButOneExecution(execution: CognitionExecution): Promise<void> {
   const leases: ExecutionLease[] = [];
-  for (let index = 1; index < DECISION_LIMITS.backgroundExecutions; index++) {
-    const lease = await execution.primary(true);
+  for (let index = 1; index < execution.concurrency; index++) {
+    const lease = await execution.background();
     expect(lease?.executionClass).toBe('background');
     if (lease) leases.push(lease);
   }
@@ -485,6 +485,7 @@ describe('enabled character decision reconsideration', () => {
   });
   it('E07/E26 does not escalate unknown primary completion and keeps its execution exposure', async () => {
     const h = await harness({
+      concurrency: 1,
       judge: async (request) => ({
         outcome: 'failed',
         reason: 'lost completion',
@@ -678,10 +679,11 @@ describe('enabled character decision reconsideration', () => {
       ),
     ).toHaveLength(1);
   });
-  it('E37 retains the primary execution limit after releasing the immediate coordinator', async () => {
+  it('E37 retains the execution lease after releasing the immediate coordinator', async () => {
     const entered = deferred<JudgeRequest>(),
       done = deferred<AiResult<JudgeValue>>();
     const h = await harness({
+      concurrency: 1,
       judge: async (request) => {
         entered.resolve(request);
         return done.promise;
@@ -1416,7 +1418,7 @@ describe('durable reader publication and bounded scheduling', () => {
         { escalator, calls } = readerCoordinator(h);
       const blocker = deferred<void>(),
         started = deferred<void>();
-      await occupyOtherBackgroundPositions(h.execution);
+      await occupyAllButOneExecution(h.execution);
       h.execution.enqueue({
         id: 'fixture-background-blocker',
         actorId: 'world-agent',
@@ -1771,7 +1773,7 @@ describe('durable reader publication and bounded scheduling', () => {
     await h.store.putJob({ ...job, stimulusEvidenceIds: required });
     const blocker = deferred<void>(),
       entered = deferred<void>();
-    await occupyOtherBackgroundPositions(h.execution);
+    await occupyAllButOneExecution(h.execution);
     h.execution.enqueue({
       id: 'dense-preparation-blocker',
       actorId: 'world-agent',
@@ -1809,9 +1811,10 @@ describe('durable reader publication and bounded scheduling', () => {
       prepareDecisionTask(prepared.tasks, prepared.context + padding, prepared.instructions),
     ).toThrow(/byte allowance/);
   });
-  it('E24 caps descriptors at sixteen and expires unstarted entries without preparing them', async () => {
-    const h = await harness();
-    const ids = Array.from({ length: 17 }, (_, index) => `fixture-queue-person-${index}`);
+  it('E24 bounds the waiting queue and expires unstarted entries without preparing them', async () => {
+    const h = await harness({ concurrency: 4 });
+    const capacity = h.execution.concurrency;
+    const ids = Array.from({ length: capacity + 1 }, (_, index) => `fixture-queue-person-${index}`);
     await editWorld(h.service, (world) => {
       for (const id of ids)
         entitySet(world.entities, id, {
@@ -1822,7 +1825,7 @@ describe('durable reader publication and bounded scheduling', () => {
     });
     const blocker = deferred<void>(),
       started = deferred<void>();
-    await occupyOtherBackgroundPositions(h.execution);
+    await occupyAllButOneExecution(h.execution);
     h.execution.enqueue({
       id: 'fixture-queue-blocker',
       actorId: 'world-agent',
@@ -1846,7 +1849,7 @@ describe('durable reader publication and bounded scheduling', () => {
       roots.push(root);
       await escalator.enqueue(root.id, 'abstained');
     }
-    expect(h.execution.snapshot().queuedDecisions).toBe(16);
+    expect(h.execution.snapshot().queuedDecisions).toBe(capacity);
     expect(prepare).not.toHaveBeenCalled();
     h.advance(2000);
     blocker.resolve();
@@ -1856,7 +1859,7 @@ describe('durable reader publication and bounded scheduling', () => {
     const reasons = await Promise.all(
       roots.map(async (root) => (await h.store.getJob(root.id))?.decision?.end),
     );
-    expect(reasons.filter((reason) => reason === 'expired')).toHaveLength(16);
+    expect(reasons.filter((reason) => reason === 'expired')).toHaveLength(capacity);
     expect(reasons.filter((reason) => reason === 'capacity')).toHaveLength(1);
   });
   it('E25 alternates fallback and maintenance while ordering decisions by urgency', async () => {
@@ -1882,7 +1885,7 @@ describe('durable reader publication and bounded scheduling', () => {
         },
         declined: async () => {},
       });
-    await occupyOtherBackgroundPositions(h.execution);
+    await occupyAllButOneExecution(h.execution);
     enqueue('initial-maintenance', 'maintenance', 0, true);
     await started.promise;
     enqueue('lower-urgency', 'decision', 2);
@@ -1984,7 +1987,7 @@ describe('durable reader publication and bounded scheduling', () => {
     expect(secondOldBatch, JSON.stringify(seen)).toBeGreaterThan(newcomer);
   });
   it('E26 frees a completed unpriced execution but retains its financial obligation', async () => {
-    const h = await harness(),
+    const h = await harness({ concurrency: 1 }),
       job = await admitted(h);
     const id = `${job.id}:primary`;
     await h.store.reserve(id, 'jev', 0.05, 10, NPC_ID, undefined, undefined, {
@@ -2031,15 +2034,13 @@ describe('durable reader publication and bounded scheduling', () => {
         }),
       );
     }
-    const recovered = new CognitionExecution(h.store, h.now);
+    const recovered = new CognitionExecution(h.store, h.now, 4);
     cleanup.unshift(async () => recovered.close());
     const primaryLease = await recovered.primary();
-    const background: ExecutionLease[] = [];
-    for (let index = ids.length; index < DECISION_LIMITS.backgroundExecutions; index++) {
-      const lease = await recovered.primary(true);
-      expect(lease?.executionClass).toBe('background');
-      if (lease) background.push(lease);
-    }
+    expect(primaryLease?.executionClass).toBe('primary');
+    const urgentLease = await recovered.primary(true);
+    expect(urgentLease?.executionClass).toBe('background');
+    expect(await recovered.primary()).toBeUndefined();
     expect(await recovered.primary(true)).toBeUndefined();
     await h.store.settle(ids[0]!, receipt(ids[0]!, 'openai', { estimatedCostUsd: undefined }));
     await recovered.reconcile(h.store);
@@ -2050,7 +2051,7 @@ describe('durable reader publication and bounded scheduling', () => {
       { attemptId: ids[1], executionClass: 'background' },
     ]);
     freed?.release();
-    for (const lease of background) lease.release();
+    urgentLease?.release();
     primaryLease?.release();
     expect((await h.store.usage(10, NPC_ID)).budget.spentUsd).toBe(0.09);
   });

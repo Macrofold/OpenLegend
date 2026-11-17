@@ -134,6 +134,7 @@ export interface MaintenanceHost {
     },
   ): Promise<ConsolidationBatch | null>;
   prepareActivityLearning(actorId: string): Promise<MaintenanceLearningBatch>;
+  releaseActivityLearning(batch: MaintenanceLearningBatch): void;
   acquiredActivitySignatures(actorId: string): Promise<ReadonlySet<string>>;
   publishActivityLearning(
     batch: MaintenanceLearningBatch,

@@ -57,10 +57,22 @@ export function nativeActivityLearning(
   admissionRead: (admission: MaintenanceAdmission) => NativeMaintenanceRead,
 ): Pick<
   MaintenanceHost,
-  'prepareActivityLearning' | 'acquiredActivitySignatures' | 'publishActivityLearning'
+  | 'prepareActivityLearning'
+  | 'releaseActivityLearning'
+  | 'acquiredActivitySignatures'
+  | 'publishActivityLearning'
 > {
   return {
     prepareActivityLearning: (actorId) => service.prepareActivityLearning(actorId),
+    releaseActivityLearning(batch) {
+      const native = origins.get(batch);
+      origins.delete(batch);
+      try {
+        native?.release();
+      } finally {
+        releaseNativeProduct(batch);
+      }
+    },
     acquiredActivitySignatures: (actorId) =>
       service.publishRecall(async () => {
         const product = decodeNativeProduct<readonly string[]>(

@@ -4,12 +4,12 @@ import { digest } from './content-digest.js';
 import type { CognitionLevel, LedgerCategory, LevelLimits } from './cognition-budget.js';
 
 /** Operating policy, not fictional laws. docs/limits/ai-execution.md#decision-escalation-limits */
+export const DEFAULT_NPC_AI_CONCURRENCY = 1000;
+
 export const DECISION_LIMITS = {
-  backgroundExecutions: 100,
   immediateMs: 1000,
   lifetimeMs: 30_000,
   queueMs: 2000,
-  queued: 16,
   descriptorBytes: 8192,
   inputBytes: 100_000,
   schemaBytes: 65_536,

@@ -60,6 +60,30 @@ export interface PreparedReconsideration {
 }
 type Prepare = (job: JobRecord, signal: AbortSignal) => Promise<PreparedReconsideration>;
 
+interface RateAuthority {
+  gate: OpenAiRateGate;
+  ready?: Promise<void>;
+  writes: Promise<void>;
+}
+
+// The process execution owner outlives directors replaced during a restore.
+// Their exact provider account/model shares live claims and durable observations.
+const rateAuthorities = new WeakMap<CognitionExecution, Map<string, RateAuthority>>();
+
+function rateAuthority(execution: CognitionExecution, key: string): RateAuthority {
+  let accounts = rateAuthorities.get(execution);
+  if (!accounts) {
+    accounts = new Map();
+    rateAuthorities.set(execution, accounts);
+  }
+  let authority = accounts.get(key);
+  if (!authority) {
+    authority = { gate: new OpenAiRateGate([], execution.concurrency), writes: Promise.resolve() };
+    accounts.set(key, authority);
+  }
+  return authority;
+}
+
 type DecisionScope = Pick<
   DecisionState,
   | 'worldId'
@@ -126,7 +150,7 @@ export class DecisionEscalator {
   private readonly reconciling = new Set<string>();
   private stopped = false;
   private unsubscribe: () => void;
-  private readonly rate = new OpenAiRateGate();
+  private readonly rate: RateAuthority;
   private readonly rateKey: string;
   private readonly unsubscribeSettlement: () => void;
 
@@ -141,6 +165,7 @@ export class DecisionEscalator {
     this.rateKey =
       'decision-resource:' +
       digest({ account: digest(service.config.llmKey), model: DECISION_MODEL });
+    this.rate = rateAuthority(execution, this.rateKey);
     this.unsubscribeSettlement = service.store.onSettlement(() => {
       for (const id of this.awaiting.keys())
         void this.reconcilePrimary(id).catch(() => {
@@ -148,6 +173,25 @@ export class DecisionEscalator {
         });
     });
     this.unsubscribe = service.subscribe(() => this.checkScopes());
+  }
+  private loadRate(): Promise<void> {
+    return (this.rate.ready ??= this.service.store
+      .getIntegration(this.rateKey)
+      .then((observation) => {
+        if (observation !== undefined) this.rate.gate.restore(observation);
+      })
+      .catch((error: unknown) => {
+        this.rate.ready = undefined;
+        throw error;
+      }));
+  }
+  private persistRate(): Promise<void> {
+    // Do not let a slow write of an older snapshot overwrite newer limits.
+    const write = this.rate.writes
+      .catch(() => undefined)
+      .then(() => this.service.store.putIntegration(this.rateKey, this.rate.gate.snapshot()));
+    this.rate.writes = write;
+    return write;
   }
   private scopeCheck?: Promise<void>;
   private scopesDirty = false;
@@ -500,12 +544,10 @@ export class DecisionEscalator {
     let prepared: PreparedReconsideration | undefined;
     let releaseRequest: (() => void) | undefined;
     try {
-      // A previous director can settle its last request after replacement. Read
-      // the persisted account/model observation after acquiring shared execution,
-      // so a newer worker cannot miss that known funding or capacity stop.
-      const observation = await this.service.store.getIntegration(this.rateKey);
-      if (observation !== undefined) this.rate.restore(observation);
-      const resource = this.rate.status(this.now());
+      // Once restored, a shared live gate sees new limits even while their
+      // durable write or another director's completion is still in flight.
+      await this.loadRate();
+      const resource = this.rate.gate.status(this.now());
       if (resource.blockedReason || resource.waitMs) {
         await this.end(rootId, 'resource-unavailable');
         return;
@@ -715,7 +757,7 @@ export class DecisionEscalator {
           },
           reservedUsd: allowance,
         });
-        const rateAdmission = this.rate.beforeNext(
+        const rateAdmission = this.rate.gate.beforeNext(
           jsonSize(request) + 4096 + DECISION_LIMITS.outputTokens,
           this.now(),
           attemptId,
@@ -819,10 +861,12 @@ export class DecisionEscalator {
           );
           receipt = normalizeReceiptCost(result.receipt);
           const returnedAt = this.now();
+          if (receipt.completionUncertain) lease.uncertain(attemptId);
+          this.rate.gate.observe(receipt, returnedAt);
           await this.service.store.settle(attemptId, receipt);
           ledger.settle(attemptId, receipt);
-          this.rate.release(attemptId);
           completed = true;
+          await this.persistRate();
           await this.service.mutateDecision(rootId, async (current) =>
             current.decision?.higher
               ? {
@@ -834,9 +878,6 @@ export class DecisionEscalator {
                 }
               : undefined,
           );
-          this.rate.observe(receipt, this.now());
-          await this.service.store.putIntegration(this.rateKey, this.rate.snapshot());
-          if (receipt.completionUncertain) lease.uncertain(attemptId);
           if (receipt.completionUncertain) {
             await this.end(rootId, 'uncertain');
             return;
@@ -975,7 +1016,7 @@ export class DecisionEscalator {
           undispatchedReceipt(reservedId, 'openai', this.now()),
         );
       if (dispatchIntent && !completed && reservedId) lease.uncertain(reservedId);
-      if (reservedId) this.rate.release(reservedId);
+      if (reservedId) this.rate.gate.release(reservedId);
       if (timer) clearTimeout(timer);
       this.active.delete(rootId);
       this.scopes.delete(rootId);

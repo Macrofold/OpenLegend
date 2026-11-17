@@ -291,20 +291,19 @@ export class AiDirector {
   }
   readonly replyPreviews: NpcReplyPreviews;
   private readonly immediateRuns = new Map<string, Running>();
+  private readonly immediateActors = new Map<string, Running>();
 
-  private canAdmit(actorId: string | undefined, urgent = false): boolean {
-    if (this.stopped || this.immediateRuns.size >= 2) return false;
-    if (!urgent && [...this.immediateRuns.values()].some((run) => !run.urgent)) return false;
-    return (
-      !actorId ||
-      (!this.escalator.hasActor(actorId) &&
-        ![...this.activeRuns].some((run) => this.selectedActorId(run.job) === actorId))
-    );
+  private canAdmit(actorId?: string): boolean {
+    if (this.stopped || this.immediateRuns.size >= this.service.config.npcAiConcurrency)
+      return false;
+    return !actorId || (!this.immediateActors.has(actorId) && !this.escalator.hasActor(actorId));
   }
 
   private releaseImmediate(run: Running): void {
     // A late completion cannot free a newer job's capacity or cancellation target.
     if (this.immediateRuns.get(run.job.id) === run) this.immediateRuns.delete(run.job.id);
+    const actorId = this.selectedActorId(run.job);
+    if (actorId && this.immediateActors.get(actorId) === run) this.immediateActors.delete(actorId);
   }
   private pendingWork = new Set<Promise<void>>();
   private activeRuns = new Set<Running>();
@@ -348,7 +347,7 @@ export class AiDirector {
     execution?: CognitionExecution,
   ) {
     const config = service.config;
-    const log = (this.log = new IntelligenceLog(service.store));
+    const log = (this.log = new IntelligenceLog(service.store, config.npcAiConcurrency));
     this.macrofold = new MacrofoldBackend(sourceMacrofoldHost(service), log);
     this.client = log.wrap(
       client ??
@@ -372,7 +371,8 @@ export class AiDirector {
     );
     this.narrator = new Narrator(service, this.client, log);
     this.ownsExecution = !execution;
-    this.execution = execution ?? new CognitionExecution(service.store, now);
+    this.execution =
+      execution ?? new CognitionExecution(service.store, now, config.npcAiConcurrency);
     this.recall = new RecallService(service, log, undefined, this.execution);
     this.escalator = new DecisionEscalator(
       sourceDecisionHost(service),
@@ -1726,6 +1726,7 @@ export class AiDirector {
     if (job.kind === 'chat') run.playerSpeechEventId = job.playerSpeechEventId;
     if (run.playerSpeechEventId) job.playerSpeechEventId = run.playerSpeechEventId;
     this.immediateRuns.set(job.id, run);
+    if (actorId) this.immediateActors.set(actorId, run);
     this.activeRuns.add(run);
     try {
       await this.service.store.putJob(job);
@@ -1867,21 +1868,23 @@ export class AiDirector {
         if (run.expiryTimer) clearTimeout(run.expiryTimer);
         this.replyPreviews.end(run.job.id);
         try {
-          if (run.discovery && !run.discovery.spent) {
-            // Handoff keeps the same bounded opportunity until its actual
-            // dispatch or a definitive end; it never grants another free turn.
-            if (run.handedOff) {
-              this.discoveryRecovery = undefined;
-              await this.reconcileDiscoveryReservations();
-            } else
-              await this.releaseUndispatchedDiscovery(
-                run.discovery.actorId,
-                run.discovery.reservation,
-                run.generation,
-              );
+          try {
+            if (run.discovery && !run.discovery.spent) {
+              // Handoff keeps the same bounded opportunity until its actual
+              // dispatch or a definitive end; it never grants another free turn.
+              if (run.handedOff) {
+                this.discoveryRecovery = undefined;
+                await this.reconcileDiscoveryReservations();
+              } else
+                await this.releaseUndispatchedDiscovery(
+                  run.discovery.actorId,
+                  run.discovery.reservation,
+                  run.generation,
+                );
+            }
+          } finally {
+            this.releaseImmediate(run);
           }
-          this.releaseImmediate(run);
-
           this.service.notify();
           // A fresh explicit actor choice may submit once; recovery never replays this dispatch.
           // docs/architecture.md#shared-invention-workflow
@@ -1934,9 +1937,8 @@ export class AiDirector {
       run.job = saved;
       await recordDecisionTiming(this.log, run.job, 'immediate', at);
     }
-    // Deferral records timing; the admitted pipeline still owns capacity until
-    // completion or handoff. A slow first stage cannot admit a second ordinary
-    // pipeline or evade the world's two-pipeline bound.
+    // Deferral records timing; the admitted pipeline retains its actor and
+    // capacity until completion or handoff. See LA231.
     this.service.notify();
   }
 
@@ -2643,7 +2645,7 @@ export class AiDirector {
     interruptionEvidenceIds: string[],
   ): Promise<void> {
     const actorId = this.current(run);
-    if (!(await this.execution.primaryAvailable(run.urgent)))
+    if (!(await this.execution.primaryAvailable()))
       throw new StopJob(
         'failed',
         'The fast model is still executing an earlier request; this opportunity was deferred without preparing more model input.',
@@ -3932,7 +3934,7 @@ export class AiDirector {
             'Cognition maintenance scheduling failed; simulation paused. Restart and reconcile storage.';
           this.service.notify();
         });
-      if (this.immediateRuns.size >= 2 || this.stopped || this.service.paused) return;
+      if (!this.canAdmit() || this.service.paused) return;
       const readWorld = () => this.service.world;
       const worldId = readWorld().id;
       const policy = readWorld().cognitionPolicy;
@@ -3977,8 +3979,8 @@ export class AiDirector {
         readWorld().simTime,
         (id) =>
           entityGet(readWorld().entities, id)?.actor?.controller === 'npc' &&
+          !this.immediateActors.has(id) &&
           !this.escalator.hasActor(id) &&
-          ![...this.activeRuns].some((run) => run.job.decision?.actorId === id) &&
           !entityGet(readWorld().entities, id)?.actor?.incapacitated,
       );
       const generations = new Map<string, ReturnType<ActorWork['capture']>>();
@@ -4076,8 +4078,8 @@ export class AiDirector {
               nativeCauses.some((cause) => cause.severity >= INTAKE_LIMITS.urgent);
             // Capacity refusal leaves this character's coalesced ticket and evidence
             // untouched. Ordinary aging still orders eligible work in the same queue.
-            if (!this.canAdmit(entity.id, urgent)) continue;
-            if (!(await this.execution.primaryAvailable(urgent))) continue;
+            if (!this.canAdmit(entity.id)) continue;
+            if (!(await this.execution.primaryAvailable())) continue;
             // Native urgency identifies the initiating experience, not just queue
             // priority. A later incidental sighting cannot replace an actual blow
             // as the cause sentence. Other coalesced evidence keeps its own order.

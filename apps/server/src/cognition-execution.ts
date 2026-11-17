@@ -1,4 +1,8 @@
-import { DECISION_LIMITS, type ExecutionClass } from './decision-state.js';
+import {
+  DECISION_LIMITS,
+  DEFAULT_NPC_AI_CONCURRENCY,
+  type ExecutionClass,
+} from './decision-state.js';
 import type { GameRepository } from './store.js';
 
 export interface ExecutionLease {
@@ -25,15 +29,18 @@ interface Execution {
   released: boolean;
 }
 
-/** Two bounded execution lanes shared across director replacement. No world/model policy. */
+/** Bounded process-wide provider execution shared across director replacement.
+ * Durable execution classes describe origination for accounting, not separate limits. */
 export class CognitionExecution {
   readonly ready: Promise<void>;
   private executions: Record<ExecutionClass, Set<Execution>> = {
     primary: new Set(),
     background: new Set(),
   };
+  private readonly uncertainExecutions = new Map<Execution, ExecutionClass>();
   private idleWaiters = new Set<() => void>();
   private waiting = new Map<string, Waiting>();
+  private readonly waitingDecisionActors = new Set<string>();
   private pending = new Set<Promise<void>>();
   private turn: Waiting['kind'] = 'decision';
   private timer?: ReturnType<typeof setTimeout>;
@@ -44,23 +51,23 @@ export class CognitionExecution {
   constructor(
     store: GameRepository,
     private readonly now = Date.now,
+    readonly concurrency = DEFAULT_NPC_AI_CONCURRENCY,
   ) {
+    if (!Number.isSafeInteger(concurrency) || concurrency < 1)
+      throw new Error('NPC AI concurrency must be a positive safe integer.');
     this.ready = store.occupiedDecisionSlots().then((attempts) => {
-      for (const { attemptId, executionClass } of attempts)
-        this.executions[executionClass].add({
+      for (const { attemptId, executionClass } of attempts) {
+        const entry: Execution = {
           uncertainAttempts: new Set([attemptId]),
           released: true,
-        });
+        };
+        this.executions[executionClass].add(entry);
+        this.uncertainExecutions.set(entry, executionClass);
+      }
     });
     this.unsubscribe = store.onSettlement(() => {
       void this.ready
-        .then(() =>
-          Object.values(this.executions).some((entries) =>
-            [...entries].some((entry) => entry.uncertainAttempts.size),
-          )
-            ? this.reconcile(store)
-            : undefined,
-        )
+        .then(() => (this.uncertainExecutions.size ? this.reconcile(store) : undefined))
         .catch(() => undefined);
     });
     // Reconstruction is a spending prerequisite. Observe failure immediately,
@@ -74,14 +81,12 @@ export class CognitionExecution {
   timestamp(): number {
     return this.now();
   }
-  private available(kind: ExecutionClass): boolean {
-    return (
-      this.executions[kind].size < (kind === 'primary' ? 1 : DECISION_LIMITS.backgroundExecutions)
-    );
+  private available(): boolean {
+    return this.executions.primary.size + this.executions.background.size < this.concurrency;
   }
-  async primaryAvailable(urgent = false): Promise<boolean> {
+  async primaryAvailable(): Promise<boolean> {
     await this.ready;
-    return !this.closed && (this.available('primary') || (urgent && this.available('background')));
+    return !this.closed && this.available();
   }
   snapshot() {
     const status = (kind: ExecutionClass) =>
@@ -99,7 +104,7 @@ export class CognitionExecution {
     };
   }
   private lease(kind: ExecutionClass): ExecutionLease | undefined {
-    if (this.closed || !this.available(kind)) return undefined;
+    if (this.closed || !this.available()) return undefined;
     const entry: Execution = { uncertainAttempts: new Set(), released: false };
     this.executions[kind].add(entry);
     return {
@@ -109,6 +114,7 @@ export class CognitionExecution {
       },
       uncertain: (attemptId) => {
         entry.uncertainAttempts.add(attemptId);
+        this.uncertainExecutions.set(entry, kind);
       },
       release: () => {
         if (entry.released) return;
@@ -120,25 +126,19 @@ export class CognitionExecution {
   }
   async primary(urgent = false): Promise<ExecutionLease | undefined> {
     await this.ready;
-    // Urgent work shares the background allowance with maintenance/higher work,
-    // leaving primary capacity available to one ordinary pipeline. Per-world
-    // immediate pipeline admission remains owned by the director.
-    // docs/projects/combat-and-threat-responses-tech-design.md#bounded-urgent-concurrency
-    return (urgent && this.lease('background')) || this.lease('primary');
+    return this.lease(urgent ? 'background' : 'primary');
+  }
+  async background(): Promise<ExecutionLease | undefined> {
+    await this.ready;
+    return this.lease('background');
   }
   enqueue(entry: Waiting): boolean {
     if (this.closed) return false;
     if (this.waiting.has(entry.id)) return true;
     if (
       entry.metadataBytes > DECISION_LIMITS.descriptorBytes ||
-      (entry.kind === 'maintenance' &&
-        [...this.waiting.values()].filter((item) => item.kind === 'maintenance').length >= 2) ||
-      (entry.kind === 'decision' &&
-        ([...this.waiting.values()].filter((item) => item.kind === 'decision').length >=
-          DECISION_LIMITS.queued ||
-          [...this.waiting.values()].some(
-            (item) => item.kind === 'decision' && item.actorId === entry.actorId,
-          )))
+      this.waiting.size >= this.concurrency ||
+      (entry.kind === 'decision' && this.waitingDecisionActors.has(entry.actorId))
     )
       return false;
     this.waiting.set(entry.id, {
@@ -146,8 +146,13 @@ export class CognitionExecution {
       dispatchByMonotonic:
         entry.dispatchByMonotonic ?? performance.now() + Math.max(0, entry.dispatchBy - this.now()),
     });
+    if (entry.kind === 'decision') this.waitingDecisionActors.add(entry.actorId);
     this.wake();
     return true;
+  }
+  private removeWaiting(item: Waiting) {
+    this.waiting.delete(item.id);
+    if (item.kind === 'decision') this.waitingDecisionActors.delete(item.actorId);
   }
   private track(work: Promise<void>) {
     this.pending.add(work);
@@ -167,7 +172,7 @@ export class CognitionExecution {
     this.track(
       this.pump().finally(() => {
         this.pumping = false;
-        if (this.waiting.size && this.available('background')) this.wake();
+        if (this.waiting.size && this.available()) this.wake();
       }),
     );
   }
@@ -176,31 +181,53 @@ export class CognitionExecution {
     if (this.closed) return;
     if (this.timer) clearTimeout(this.timer);
     this.timer = undefined;
-    for (const [id, item] of this.waiting) {
+    for (const item of this.waiting.values()) {
       if (this.now() < item.dispatchBy && performance.now() < item.dispatchByMonotonic!) continue;
-      this.waiting.delete(id);
+      this.removeWaiting(item);
       this.track(item.declined('expired'));
     }
-    const ordered = [...this.waiting.values()].sort(
-      (a, b) =>
-        Number(b.kind === this.turn) - Number(a.kind === this.turn) ||
-        b.urgency - a.urgency ||
-        a.eligibleAt - b.eligibleAt ||
-        (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
-    );
-    const item = ordered[0];
-    const lease = item && this.lease('background');
-    if (item && lease) {
-      this.waiting.delete(item.id);
+    // Sort the current batch once, then alternate kinds at each admitted
+    // position without revisiting the rest of the queue.
+    const ordered: Record<Waiting['kind'], Waiting[]> = { decision: [], maintenance: [] };
+    if (this.waiting.size && this.available()) {
+      for (const item of this.waiting.values()) ordered[item.kind].push(item);
+      for (const items of Object.values(ordered))
+        items.sort(
+          (a, b) =>
+            a.urgency - b.urgency ||
+            b.eligibleAt - a.eligibleAt ||
+            (a.id < b.id ? 1 : a.id > b.id ? -1 : 0),
+        );
+    }
+    while (this.available()) {
+      const other = this.turn === 'decision' ? 'maintenance' : 'decision';
+      const item = ordered[this.turn].pop() ?? ordered[other].pop();
+      if (!item) break;
+      if (this.now() >= item.dispatchBy || performance.now() >= item.dispatchByMonotonic!) {
+        this.removeWaiting(item);
+        this.track(item.declined('expired'));
+        continue;
+      }
+      const lease = this.lease('background');
+      if (!lease) break;
+      this.removeWaiting(item);
       this.turn = item.kind === 'decision' ? 'maintenance' : 'decision';
-      this.track(item.start(lease).finally(() => lease.release()));
+      this.track(
+        Promise.resolve()
+          .then(() => item.start(lease))
+          .finally(() => lease.release()),
+      );
     }
     if (this.waiting.size) {
-      const remaining = Math.min(
-        ...[...this.waiting.values()].map((value) =>
-          Math.min(value.dispatchBy - this.now(), value.dispatchByMonotonic! - performance.now()),
-        ),
-      );
+      const now = this.now(),
+        monotonic = performance.now();
+      let remaining = Infinity;
+      for (const item of this.waiting.values())
+        remaining = Math.min(
+          remaining,
+          item.dispatchBy - now,
+          item.dispatchByMonotonic! - monotonic,
+        );
       this.timer = setTimeout(() => this.wake(), Math.max(1, remaining));
       this.timer.unref();
     }
@@ -209,21 +236,20 @@ export class CognitionExecution {
   async reconcile(store: GameRepository): Promise<void> {
     // Snapshot identities before awaiting SQL: a later uncertain attempt must not
     // be released using an older read, nor may one completion free its neighbours.
-    const pending = Object.entries(this.executions).flatMap(([kind, entries]) =>
-      [...entries]
-        .filter((entry) => entry.uncertainAttempts.size)
-        .map((entry) => ({
-          kind: kind as ExecutionClass,
-          entry,
-          ids: [...entry.uncertainAttempts],
-        })),
-    );
+    const pending = [...this.uncertainExecutions].map(([entry, kind]) => ({
+      kind,
+      entry,
+      ids: [...entry.uncertainAttempts],
+    }));
     const occupied = new Set(
       (await store.occupiedDecisionSlots()).map(({ attemptId }) => attemptId),
     );
     for (const { kind, entry, ids } of pending) {
       for (const id of ids) if (!occupied.has(id)) entry.uncertainAttempts.delete(id);
-      if (entry.released && !entry.uncertainAttempts.size) this.executions[kind].delete(entry);
+      if (!entry.uncertainAttempts.size) {
+        this.uncertainExecutions.delete(entry);
+        if (entry.released) this.executions[kind].delete(entry);
+      }
     }
     this.wake();
   }
@@ -233,7 +259,7 @@ export class CognitionExecution {
   }
   async cancel(ids: ReadonlySet<string>): Promise<void> {
     const removed = [...this.waiting.values()].filter((item) => ids.has(item.id));
-    for (const item of removed) this.waiting.delete(item.id);
+    for (const item of removed) this.removeWaiting(item);
     await Promise.all(removed.map((item) => item.declined('cancelled')));
     this.wake();
   }

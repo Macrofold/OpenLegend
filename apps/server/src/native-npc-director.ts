@@ -208,6 +208,7 @@ export class NativeNpcDirector {
   private readonly ownsExecution: boolean;
   private readonly escalator: DecisionEscalator;
   private readonly runs = new Map<string, Run>();
+  private readonly actorRuns = new Map<string, Run>();
   private readonly pending = new Set<Promise<void>>();
   private readonly names = new Map<string, NativeNpcInputFacts>();
   private readonly dirty = new Set<string>();
@@ -220,7 +221,7 @@ export class NativeNpcDirector {
   private admissionTail: Promise<unknown> = Promise.resolve();
   private slotRevision = 0;
   private readonly slotWaiters = new Set<() => void>();
-  private pendingOrdinaryChats = 0;
+  private pendingCapacityChats = 0;
   private readonly unsubscribe: () => void;
   private readonly releaseAdmission: () => void;
   private readonly actorNameScope = new AsyncLocalStorage<{
@@ -256,7 +257,7 @@ export class NativeNpcDirector {
       },
     };
     this.providerAllocation = allocation;
-    this.log = new IntelligenceLog(service.store);
+    this.log = new IntelligenceLog(service.store, config.npcAiConcurrency);
     this.macrofold = new MacrofoldBackend(
       {
         get worldId() {
@@ -318,7 +319,8 @@ export class NativeNpcDirector {
       embed: (request: EmbeddingRequest) => embeddings.embed({ ...request, allocation }),
     };
     this.ownsExecution = !execution;
-    this.execution = execution ?? new CognitionExecution(service.store, now);
+    this.execution =
+      execution ?? new CognitionExecution(service.store, now, config.npcAiConcurrency);
     this.memoryIndex = nativeMemoryIndex(
       service,
       { embeddings: this.embeddings, log: this.log, execution: this.execution },
@@ -644,19 +646,16 @@ export class NativeNpcDirector {
     this.admissionTail = work.catch(() => undefined);
     return work;
   }
-  private canAdmit(actorId?: string, urgent = false): boolean {
-    return this.admissionBlocker(actorId, urgent) === undefined;
+  private canAdmit(actorId?: string): boolean {
+    return this.admissionBlocker(actorId) === undefined;
   }
-  private admissionBlocker(actorId?: string, urgent = false) {
+  private admissionBlocker(actorId?: string) {
     if (this.stopped) return 'closed';
-    if (this.runs.size >= 2) return 'immediate-limit';
-    let actorBusy = false;
-    for (const run of this.runs.values()) {
-      if (!urgent && !run.urgent) return 'ordinary-slot';
-      actorBusy ||= run.actorId === actorId;
+    if (actorId) {
+      if (this.escalator.hasActor(actorId)) return 'higher-reasoning';
+      if (this.actorRuns.has(actorId)) return 'actor-slot';
     }
-    if (actorId && this.escalator.hasActor(actorId)) return 'higher-reasoning';
-    if (actorBusy) return 'actor-slot';
+    if (this.runs.size >= this.service.config.npcAiConcurrency) return 'job-capacity';
   }
   private async admitChat(
     scope: RequestScope,
@@ -683,9 +682,9 @@ export class NativeNpcDirector {
           if (!blocked) return true;
           if (blocked === 'closed' || blocked === 'higher-reasoning') return false;
           blockedAt = this.slotRevision;
-          const sharedSlot = blocked !== 'actor-slot';
+          const sharedSlot = blocked === 'job-capacity';
           if (sharedSlot !== hasPriority) {
-            this.pendingOrdinaryChats += sharedSlot ? 1 : -1;
+            this.pendingCapacityChats += sharedSlot ? 1 : -1;
             hasPriority = sharedSlot;
           }
           return false;
@@ -705,7 +704,7 @@ export class NativeNpcDirector {
         if (expired()) return result;
       }
     } finally {
-      if (hasPriority) this.pendingOrdinaryChats--;
+      if (hasPriority) this.pendingCapacityChats--;
     }
   }
   private waitForSlot(revision: number, until: number, signal?: AbortSignal): Promise<void> {
@@ -727,6 +726,12 @@ export class NativeNpcDirector {
   private slotChanged(): void {
     this.slotRevision++;
     for (const wake of this.slotWaiters) wake();
+  }
+  private releaseRun(run: Run): void {
+    if (this.runs.get(run.job.id) !== run) return;
+    this.runs.delete(run.job.id);
+    if (this.actorRuns.get(run.actorId) === run) this.actorRuns.delete(run.actorId);
+    this.slotChanged();
   }
   private stopCurrent(
     run: Run,
@@ -1290,7 +1295,7 @@ export class NativeNpcDirector {
 
   private async decideOwned(run: Run): Promise<void> {
     this.current(run);
-    if (!(await this.execution.primaryAvailable(run.urgent)))
+    if (!(await this.execution.primaryAvailable()))
       throw new StopJob(
         'failed',
         'The fast model is still executing an earlier request; this opportunity was deferred without preparing more model input.',
@@ -2137,8 +2142,7 @@ export class NativeNpcDirector {
           this.discoveryRecovery.delete(actorId);
           continue;
         }
-        if ([...this.runs.values()].some((run) => run.discovery?.reservation === reservation))
-          continue;
+        if (this.actorRuns.get(actorId)?.discovery?.reservation === reservation) continue;
         const attempts = await this.service.store.decisionAttempts(reservation);
         const dispatched = attempts.some((attempt) =>
           attempt.receipt
@@ -2218,7 +2222,7 @@ export class NativeNpcDirector {
       }
       const generation = this.service.generation;
       await this.reconcileDiscoveryReservations(generation);
-      if (this.stopped || this.service.paused || this.runs.size >= 2) return;
+      if (this.service.paused || !this.canAdmit()) return;
       for (const id of [...this.dirty].slice(0, INTAKE_LIMITS.readsPerPass)) {
         this.dirty.delete(id);
         const actor = this.service.npcActor(id);
@@ -2261,7 +2265,7 @@ export class NativeNpcDirector {
         this.service.simTime,
         (id) =>
           !this.escalator.hasActor(id) &&
-          ![...this.runs.values()].some((run) => run.actorId === id) &&
+          !this.actorRuns.has(id) &&
           this.service.npcActor(id)?.controller === 'npc' &&
           !this.service.npcActor(id)?.incapacitated,
       );
@@ -2336,13 +2340,12 @@ export class NativeNpcDirector {
               thought.preparedResult ||
               thought.interruptions.length > 0 ||
               thought.nativeCauses.some((cause) => cause.severity >= INTAKE_LIMITS.urgent);
-          // A foreground Send waiting for an ordinary slot goes before a new
-          // optional ordinary thought. Urgent and already admitted work keeps
-          // its existing priority and capacity.
+          // At the configured job cap, a waiting Send goes before new optional
+          // ordinary thoughts. Urgent and already admitted work keep their priority.
           if (
-            (!urgent && this.pendingOrdinaryChats > 0) ||
-            !this.canAdmit(actorId, urgent) ||
-            !(await this.execution.primaryAvailable(urgent))
+            (!urgent && this.pendingCapacityChats > 0) ||
+            !this.canAdmit(actorId) ||
+            !(await this.execution.primaryAvailable())
           )
             continue;
           const inspected = await this.service.inspectNpcIntake(read, (current) =>
@@ -2601,6 +2604,7 @@ export class NativeNpcDirector {
       queued.input.owner.release();
       releaseNativeProduct(queued);
       this.runs.set(job.id, run);
+      this.actorRuns.set(actorId, run);
       this.names.set(actorId, labels);
       try {
         await this.service.store.putJob(job);
@@ -2653,8 +2657,7 @@ export class NativeNpcDirector {
       } catch (error) {
         if (run.immediateTimer) clearTimeout(run.immediateTimer);
         if (run.expiryTimer) clearTimeout(run.expiryTimer);
-        this.runs.delete(job.id);
-        this.slotChanged();
+        this.releaseRun(run);
         this.names.delete(actorId);
         releaseNativeProduct(labels);
         throw error;
@@ -2789,10 +2792,7 @@ export class NativeNpcDirector {
               // A failed operational reservation cleanup must not leave the actor
               // permanently busy. A handed-off label stays with its real retained
               // intake until the higher/uncertain owner releases that preparation.
-              if (this.runs.get(job.id) === run) {
-                this.runs.delete(job.id);
-                this.slotChanged();
-              }
+              this.releaseRun(run);
               if (!run.handedOff) {
                 if (this.names.get(actorId) === labels) this.names.delete(actorId);
                 releaseNativeProduct(labels);

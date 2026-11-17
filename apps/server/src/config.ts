@@ -1,4 +1,8 @@
-import { decisionEscalationConfigSchema, defaultDecisionEscalation } from './decision-state.js';
+import {
+  DEFAULT_NPC_AI_CONCURRENCY,
+  decisionEscalationConfigSchema,
+  defaultDecisionEscalation,
+} from './decision-state.js';
 import { z } from 'zod';
 import { accountBindingSchema } from './authority.js';
 import { readMcpConfig } from './mcp-config.js';
@@ -182,6 +186,18 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     baseRatio: 60,
     exitGraceMs: numberSetting(env, 'OPEN_LEGEND_EXIT_GRACE_SECONDS', 15, 1, 60) * 1000,
     budgetUsd: numberSetting(env, 'AI_BUDGET_USD', 50, 0, 100),
+    npcAiConcurrency: z
+      .number()
+      .int()
+      .parse(
+        numberSetting(
+          env,
+          'OPEN_LEGEND_NPC_AI_CONCURRENCY',
+          DEFAULT_NPC_AI_CONCURRENCY,
+          1,
+          Math.floor(Number.MAX_SAFE_INTEGER / 2),
+        ),
+      ),
     jevOnly: env['AI_JEV_ONLY'] === 'true',
     decisionEscalation: env['DECISION_ESCALATION_JSON']
       ? decisionEscalationConfigSchema.parse(JSON.parse(env['DECISION_ESCALATION_JSON']))

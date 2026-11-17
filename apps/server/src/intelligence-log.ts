@@ -1,4 +1,8 @@
-import { createNetworkOwner, type NetworkExchangeObserver } from '@open-legend/network';
+import {
+  createNetworkOwner,
+  type NetworkExchangeObserver,
+  type NetworkOwner,
+} from '@open-legend/network';
 import { normalizeReceiptCost } from '@open-legend/ai';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomUUID } from 'node:crypto';
@@ -6,6 +10,7 @@ import type { AiClient, GenerateRequest } from '@open-legend/ai';
 import type { IntelligenceCall } from '@open-legend/protocol';
 import type { GameRepository } from './store.js';
 import { recordBackgroundFailure } from './performance.js';
+import { DEFAULT_NPC_AI_CONCURRENCY } from './decision-state.js';
 import {
   captureDiagnosticValue,
   prepareDiagnosticRecord,
@@ -57,20 +62,27 @@ export class IntelligenceLog {
   }
   private context = new AsyncLocalStorage<ActiveCapture | undefined>();
   private captures = new Set<ActiveCapture>();
-  readonly network = createNetworkOwner({
-    role: 'server-ai',
-    capacity: 32,
-    onExchange: Object.assign(
-      (exchange: Parameters<NetworkExchangeObserver>[0]) => this.observeExchange(exchange),
-      {
-        captureContent: () => {
-          const active = this.context.getStore();
-          return !!active?.call && !this.closed;
+  readonly network: NetworkOwner;
+  constructor(
+    private store: GameRepository,
+    concurrency = DEFAULT_NPC_AI_CONCURRENCY,
+  ) {
+    this.network = createNetworkOwner({
+      role: 'server-ai',
+      // Macrofold keeps the request body's lease open while an independent
+      // observer owns the response, even when the original caller cancels.
+      capacity: 2 * concurrency,
+      onExchange: Object.assign(
+        (exchange: Parameters<NetworkExchangeObserver>[0]) => this.observeExchange(exchange),
+        {
+          captureContent: () => {
+            const active = this.context.getStore();
+            return !!active?.call && !this.closed;
+          },
         },
-      },
-    ),
-  });
-  constructor(private store: GameRepository) {}
+      ),
+    });
+  }
   private pending = new Map<string, PreparedDiagnosticRecord>();
   private retention = new DiagnosticRetention();
   private draining?: Promise<void>;
