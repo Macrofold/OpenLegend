@@ -79,7 +79,7 @@ These scenarios illustrate dependence on recurring customers and the cost base. 
 
 ### Concurrency and subscribers
 
-**November 15 follow-up; historical comparisons, not a refresh of Pax Dei's November 14 metrics.** A useful starting scenario for a subscription-required MMO is about **5 subscription accounts per ordinary peak concurrent player, or 10 per average concurrent player**. Treat 3–10× peak and 8–20× average as sensitivity assumptions, not an industry median or confidence interval. Disclosure is selective, the examples are mostly older games, and record peaks are less representative than ordinary periods.
+**November 15 follow-up; historical comparisons, not a refresh of Pax Dei's November 14 metrics.** For sensitivity checks of a subscription-required MMO, **5 subscription accounts per ordinary peak concurrent player or 10 per average concurrent player are illustrative assumptions**. Treat 3–10× peak and 8–20× average as sensitivity assumptions, not an industry median or confidence interval. Disclosure is selective, the examples are mostly older games, and record peaks are less representative than ordinary periods.
 
 The table divides each disclosed subscriber base by its stated concurrency. These are account entitlements, not necessarily unique people or monthly card renewals; timecards and bundled initial access may count. Rounded thresholds yield approximate ratios.
 

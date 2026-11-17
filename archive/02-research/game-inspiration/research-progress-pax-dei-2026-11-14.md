@@ -4,7 +4,7 @@
 
 Mike requested a full Pax Dei dossier, particularly persistent construction/environmental change, sharding, player praise and criticism, commercial outcomes, development costs, marketing and implications for Open Legend. This pass applies [R01–R14 and the conditional R15 screen](research-requirements.md) and the [economics/enjoyment/lore/creation amendment](research-economics-engagement-and-creation.md). Other game research and whole-library preservation gates remain outside this scope.
 
-The initial pass read repository instructions from `Macrofold/OpenLegend`, `main`, at `4b264b33e1f5a119fb4868565caca9b41e137039` and worked on `research/pax-dei-dossier-2026-11-14`. The November 15 review carries that branch's latest dossier (`7eeb0b94`) onto current main (`5e922be9`) through `research/pax-dei-design-integration-2026-11-15`. No merge, rebase or main-branch write is involved.
+The initial pass read repository instructions from `Macrofold/OpenLegend`, `main`, at `4b264b33e1f5a119fb4868565caca9b41e137039` and worked on `research/pax-dei-dossier-2026-11-14`. The November 15 review brought that branch's dossier (`7eeb0b94`) into `research/pax-dei-design-integration-2026-11-15`, based on `main` at `5e922be9`.
 
 ## Completion
 
@@ -48,7 +48,7 @@ The follow-up review strengthens the positive interpretation without expanding t
 
 Existing CE/CP/SH/INV/PS/PT/FPV/CO owners cover the design questions, so no new design document, needs-design entry, task ID or delivery priority was added. PT's existing shared-encounter scenario and PT04 now explicitly include gate/resource contention under load. CO and FPV gain short evidence links; other accepted designs and the newer Fable/BitCraft integrations remain intact.
 
-Mike's concurrency/subscriber question is recorded in chapter 03 with seven historical game comparisons, source definitions, rejected misleading inputs and an account-hours calculation. The approximate 5× peak / 10× average starting scenarios are not an industry median or an estimate of Pax Dei payers. Its original commercial uncertainty remains visible.
+Mike's concurrency/subscriber question is recorded in chapter 03 with seven historical game comparisons, source definitions, rejected misleading inputs and an account-hours calculation. The illustrative 5× peak / 10× average sensitivity assumptions are not an industry median or an estimate of Pax Dei payers. Its original commercial uncertainty remains visible.
 
 Independent review checked the actual integration diff and numerical definitions. The 114 relative links in the Pax Dei packet and added navigation/owner links resolve against the committed repository tree; all 25 referenced anchors were checked. All 191 existing roster rows remain unchanged. Only research, navigation and four existing design/work-owner files changed; no runtime tests or gameplay qualification were run for this documentation task.
 

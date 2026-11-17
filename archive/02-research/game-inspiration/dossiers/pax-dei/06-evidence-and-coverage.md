@@ -1,6 +1,6 @@
 # 06. Evidence method, coverage, and further reading
 
-**Scope: G192 Pax Dei only. Evidence cutoff: November 14, 2026.** [Dossier index](../pax-dei.md)
+**Scope: G192 Pax Dei only. Core evidence cutoff: November 14, 2026.** [Dossier index](../pax-dei.md)
 
 ## 1. What was researched
 
