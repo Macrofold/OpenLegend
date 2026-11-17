@@ -1,6 +1,13 @@
-import type { PlayerInteractionAvailability } from '@open-legend/protocol';
+import type { ApiResult, PlayerInteractionAvailability } from '@open-legend/protocol';
 import type { AppConfig } from './config.js';
 import { interactiveAllowance } from './cognition-budget.js';
+
+/** Only for cancellation before a speech occurrence is accepted. */
+export const chatNotSent = {
+  ok: false,
+  code: 'cancelled',
+  message: 'Your message was not sent.',
+} as const satisfies ApiResult;
 
 /** Current gameplay permission facts come from their actual Source/native
  * reader. Spending and scheduler admission remain application-owned. */

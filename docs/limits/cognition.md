@@ -545,6 +545,14 @@ includes ordinary plus urgent, two urgent, no third slot and exact cancellation;
 complete live fairness and latency qualification remain open under
 [CTR08/CTR10](../maintainers/combat-and-threat-responses.md).
 
+Native directed Send can wait up to five seconds for an occupied immediate
+position without holding the world or cognition admission lane. The public
+availability read remains advisory. Waiting Sends involving the shared cap
+take precedence over new ordinary autonomous work; urgent work and work already
+admitted keep their positions. Each new admission attempt checks the original
+request ID and current control, recipient and funding. Expiry, disconnect or
+lost authority before speech accepts no utterance; there is no provider retry.
+
 **Reason / tradeoff:** One long ordinary deliberation no longer owns both immediate
 positions. Shared funding and provider capacity still limit dispatch, and each
 actor/job retains its own evidence, reservations and cancellation.

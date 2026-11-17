@@ -143,7 +143,7 @@ import { LiveReadRevisionError } from './live-read-overlay.js';
 import { resolveNativeReceiptTail } from './native-temporal-tail.js';
 import { SUPPORT_MEMBERSHIP_PREPARATION } from './retention-cleanup.js';
 import { RETENTION_MIN_DELAY_MS } from './retention-deadlines.js';
-import { playerInteractionAvailability } from './player-interaction.js';
+import { chatNotSent, playerInteractionAvailability } from './player-interaction.js';
 import { nativePlayerCommandReferences } from './native-player-command.js';
 import { ordinaryPlayerCommand } from './ordinary-player-command.js';
 import {
@@ -3521,6 +3521,11 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     reference: string,
     volume: SpeechVolume,
     scope: RequestScope,
+    admission: {
+      readonly current: () => boolean;
+      readonly admit: (actorId: string) => boolean;
+      readonly beforeSpeech: () => void;
+    },
   ): Promise<
     | { readonly ok: false; readonly outcome: ApiResult }
     | {
@@ -3534,6 +3539,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     return this.lane.run(async () => {
       this.assertAdmission();
       this.assertScope(scope, 'play', true);
+      const cancelled = { ok: false, outcome: chatNotSent } as const;
+      if (!admission.current()) return cancelled;
       const capture = await NativePlayerCapture.capture(
         this.world,
         scope,
@@ -3553,8 +3560,9 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           read: () => this.interactionFacts('speak', resolved.targetId, scope, capture),
           budgetAvailable: (actor, allowance, ceiling) =>
             this.store.budgetAvailable(actor, allowance, ceiling),
-          admit: (actor) => this.playerInteractionAdmission?.(actor) ?? true,
+          admit: admission.admit,
         });
+        if (!admission.current()) return cancelled;
         if (!available.available)
           return {
             ok: false,
@@ -3582,12 +3590,17 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         });
         if (!command) throw new Error('Speech command factory returned no command.');
         if ('ok' in command) return { ok: false, outcome: command };
+        if (!admission.current()) return cancelled;
+        admission.beforeSpeech();
         publication = await this.acceptInLane({
           actorId: scope.actorId,
           first: () => beginNativeCommand(this.world, command),
-          current: () => this.currentScope(scope, 'play', true),
+          current: () => admission.current() && this.currentScope(scope, 'play', true),
         });
-        if (!publication) throw new AuthorityError('stale-scope');
+        if (!publication) {
+          if (!admission.current()) return cancelled;
+          throw new AuthorityError('stale-scope');
+        }
         if (!publication.outcome.ok)
           return { ok: false, outcome: retainNativeSources(publication.outcome, publication) };
         let event = [...publication.events]

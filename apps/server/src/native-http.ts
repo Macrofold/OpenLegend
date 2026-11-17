@@ -860,16 +860,24 @@ export async function createNativeGameServer(options: {
                 message:
                   'Supply a proposal of at most 12,000 characters for authoring, separately from reuse or search.',
               });
-            return send(
-              202,
-              await decisions.submitInteractive(
+            const pending = new AbortController();
+            const disconnected = () => pending.abort();
+            response.once('close', disconnected);
+            if (response.destroyed) disconnected();
+            try {
+              const result = await decisions.submitInteractive(
                 value.requestId,
                 value.text,
                 value.npcId,
                 scope,
                 value.volume,
-              ),
-            );
+                pending.signal,
+              );
+              if (!response.destroyed) return send(202, result);
+              return;
+            } finally {
+              response.off('close', disconnected);
+            }
           }
           case '/api/chat/receipt': {
             const value = z
