@@ -68,7 +68,6 @@ impl From<CapacityError> for HostError {
 pub struct Cancellation {
     requested: Arc<AtomicBool>,
     host_closing: Arc<AtomicBool>,
-    concurrent_publications: bool,
 }
 
 impl Cancellation {
@@ -78,9 +77,6 @@ impl Cancellation {
 
     pub fn requested(&self) -> bool {
         self.requested.load(Ordering::Acquire) || self.host_closing.load(Ordering::Acquire)
-    }
-    pub(crate) fn publication_ranges(&self) -> bool {
-        self.concurrent_publications
     }
 }
 
@@ -259,7 +255,6 @@ impl HostPool {
             cancellation: Cancellation {
                 requested: Arc::new(AtomicBool::new(false)),
                 host_closing: Arc::clone(&self.closing),
-                concurrent_publications: self.workers > 1,
             },
             permit: WorkPermit {
                 activity: Arc::clone(&self.activity),

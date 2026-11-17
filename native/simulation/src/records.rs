@@ -4,7 +4,6 @@
 //! Semantic native owners construct these products; this module exposes no live
 //! record setter and does not infer a new row from an unloaded predecessor.
 
-use serde::ser::SerializeMap;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -76,34 +75,14 @@ pub struct ChangedRow {
 /// Each row carries its semantic position. Independent upserts can be selected
 /// in a different transport order; the PostgreSQL schema owner supplies actual
 /// uniqueness/dependency ordering. Map iteration never chooses gameplay effects.
-#[derive(Debug, Default)]
+#[derive(Debug, Serialize, Default)]
+#[serde(rename_all = "camelCase")]
 pub struct ChangedRows {
     pub writes: BTreeMap<String, Vec<ChangedRow>>,
     pub deletes: BTreeMap<String, Vec<String>>,
     pub rows: usize,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
     pub expired: BTreeMap<String, Vec<String>>,
-}
-
-impl ChangedRows {
-    pub(crate) fn serialize_after_writes<M: SerializeMap>(
-        &self,
-        map: &mut M,
-    ) -> Result<(), M::Error> {
-        map.serialize_entry("deletes", &self.deletes)?;
-        map.serialize_entry("rows", &self.rows)?;
-        if !self.expired.is_empty() {
-            map.serialize_entry("expired", &self.expired)?;
-        }
-        Ok(())
-    }
-}
-impl Serialize for ChangedRows {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut map = serializer.serialize_map(None)?;
-        map.serialize_entry("writes", &self.writes)?;
-        self.serialize_after_writes(&mut map)?;
-        map.end()
-    }
 }
 
 /// Installation identifies unloaded owners explicitly. An omitted collection is
