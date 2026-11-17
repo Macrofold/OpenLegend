@@ -807,8 +807,8 @@ These are initial engineering targets for a named desktop and healthy same-host 
 | Metric                                                                     | Small-world target                                                                                                      |
 | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | Click to local destination/pending feedback                                | p95 within one 60 Hz frame; no network dependency                                                                       |
-| Native command received to durable result                                  | p95 ≤100 ms, p99 ≤200 ms, including admission queue and database wait                                                   |
-| Durable commit to affected player view emission                            | p95 ≤16 ms, p99 ≤33 ms under normal output load                                                                         |
+| Native ordinary command received to live HTTP response                     | p95 ≤100 ms, p99 ≤200 ms, including admission and work needed to return the authoritative live result                   |
+| Live acceptance to first affected player-view emission                     | p95 ≤16 ms, p99 ≤33 ms under normal output load                                                                         |
 | Click to first confirmed action update on local setup                      | p95 ≤150 ms, p99 ≤250 ms; also measure first changed position separately from accepted action                           |
 | Click to first changed position for an accepted, unobstructed walk         | p95 ≤200 ms, p99 ≤350 ms on the local setup; predicted pixels do not count as confirmation                              |
 | Native tick CPU at 1×                                                      | p95 ≤8 ms, p99 ≤16 ms per 50 ms batch on both fresh and mature tiny worlds                                              |
@@ -818,6 +818,8 @@ These are initial engineering targets for a named desktop and healthy same-host 
 | Idle Narrator                                                              | Zero periodic claim queries when no queued/due work exists                                                              |
 | Background contention                                                      | Optional inspection/tracing adds ≤10 ms to native command p95 at the small-world load                                   |
 | Long-session behavior                                                      | Pending queues and caches remain within declared caps; no linear per-step dependence on cold historical rows after PF08 |
+
+Report command-to-durable acknowledgement separately. Ordinary play uses the [one-second background-save opportunity and finite unsaved admission envelope](../limits/persistence.md#bks-l08--ordinary-live-acceptance-target). The live response budget applies to authoritative acceptance and its return to the player. Protected operations keep their explicit durability barriers.
 
 An injected slow database may exceed normal latency budgets. Correct behavior is bounded queues, responsive pending/paused UI and truthful durability state. Do not pass by dropping events, lowering requested speed silently, disabling relevant background load or hiding confirmed latency behind prediction.
 
