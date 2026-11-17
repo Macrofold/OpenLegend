@@ -1,6 +1,10 @@
 # Research
 
-Maintained research index, updated November 11, 2026. This index links engine/platform studies and persistent MMORPG foundation research; the browser-first milestone remains the selected next delivery.
+Maintained research index, updated November 17, 2026 (UTC). This index links server economics, engine/platform studies and persistent MMORPG foundation research; the browser-first milestone remains the selected next delivery.
+
+## Server economics
+
+[Server costs and player demand](financials/server_costs.md) is the maintained owner of subscriber/concurrency research, relevant OpenLegend performance evidence, capacity assumptions and conditional hosting-cost scenarios. It distinguishes compute per subscriber-month from continuous-player cost, and ideal elastic fleets from fleets retained at peak size. Its calculations do not establish production capacity or authorize deployment.
 
 ## Persistent MMORPG engine foundations
 

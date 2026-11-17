@@ -3,6 +3,7 @@
 Research informs decisions; it grants no implementation or spending authority. Current contracts live in [feature](../features/README.md) and [technical](../technical/README.md) owners. Active questions use the topic entries below; settled investigations use dated topic archives.
 
 - [Development-agent workflows](agent-workflows/README.md): sources, adoption rationale and unverified efficiency claims.
+- [Server costs and player demand](../../research/financials/server_costs.md): subscriber/concurrency research, measured performance context and conditional compute-cost scenarios.
 - [Gameplay and systems questions](gameplay-and-systems/README.md): scoped research questions retained from the former archive backlog, with current delivery owners.
 - [Cross-game learning](../../archive/02-research/game-inspiration/synthesis/README.md): maintained synthesis at its established path; design proposals retain their own authority.
 - [Engine and runtime applications](../engine-research-guide.md): connects the [engine studies](../../research/README.md) to existing design questions, subsystem owners and evaluation work.
