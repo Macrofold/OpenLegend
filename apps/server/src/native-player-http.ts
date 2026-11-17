@@ -192,6 +192,7 @@ export class NativePlayerHttp {
     scope: RequestScope,
     response: ServerResponse,
     disconnected: () => void,
+    signal: AbortSignal,
   ): Promise<void> {
     if (this.closed || this.streams.size >= this.service.connectionLimit) throw new OverloadError();
     this.service.assertScope(scope);
@@ -211,7 +212,7 @@ export class NativePlayerHttp {
     try {
       // Initial headers and reset bytes are handed off in the same real native
       // publication callback; no earlier unfenced snapshot opens the stream.
-      await this.publish(stream);
+      await this.publish(stream, signal);
     } catch (error) {
       this.drop(stream);
       throw error;
@@ -257,7 +258,7 @@ export class NativePlayerHttp {
     }
   }
 
-  private async publish(stream: Stream): Promise<void> {
+  private async publish(stream: Stream, openingSignal?: AbortSignal): Promise<void> {
     if (!this.current(stream) || stream.blocked) return;
     const current = this.service.refreshScope(stream.scope);
     if (scopeKey(current) !== scopeKey(stream.scope)) {
@@ -292,6 +293,7 @@ export class NativePlayerHttp {
         stream.view = retainNativeProduct(view);
       },
       this.execution,
+      openingSignal,
     );
   }
 

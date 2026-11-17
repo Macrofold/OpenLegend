@@ -538,6 +538,7 @@ export async function createNativeGameServer(options: {
             });
           const transport = randomUUID();
           const capturedScope = scope;
+          const admission = new AbortController();
           let connected = false,
             released = false,
             closed = response.destroyed;
@@ -562,18 +563,19 @@ export async function createNativeGameServer(options: {
           };
           response.once('close', () => {
             closed = true;
+            admission.abort();
             trackRelease();
           });
           pendingStreams++;
           try {
             if (closed) return;
-            await current.setConnection(transport, true, capturedScope);
+            await current.setConnection(transport, true, capturedScope, admission.signal);
             connected = true;
             if (closed) {
               await release();
               return;
             }
-            await views.connect(capturedScope, response, trackRelease);
+            await views.connect(capturedScope, response, trackRelease, admission.signal);
           } catch (error) {
             await release();
             throw error;

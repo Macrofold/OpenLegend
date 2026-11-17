@@ -210,6 +210,7 @@ type PlayerContext = {
   readonly captured: NativePlayerCapture;
   cut?: LiveReadCuts;
   inputScope?: WorldInputScope;
+  openingSignal?: AbortSignal;
   preparation?: {
     readonly installation: NativeDefinitionCapture;
     readonly setup: NativeDefinitionCapture['facts'];
@@ -2134,15 +2135,19 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     connectionId: string,
     connected: boolean,
     scope: RequestScope,
+    signal?: AbortSignal,
   ): Promise<void> {
-    await this.withSaveBarrier(undefined, 'play', () =>
+    const change = () =>
       this.lane.run(async () => {
         if (connected) {
+          signal?.throwIfAborted();
           this.assertScope(scope);
           if (this.connections.size >= this.connectionLimit)
             throw new Error('Connection capacity reached.');
           const profile = await this.profileFor(scope);
           try {
+            signal?.throwIfAborted();
+            this.assertScope(scope);
             this.connections.set(connectionId, scope);
             this.connectionPreferences.set(scope.accountId, profile.preferences.pauseWhenHidden);
           } finally {
@@ -2168,8 +2173,10 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         }
         await this.reconcileParticipationInLane();
         if (this.progress.paused !== this.paused) await this.syncPauseInLane();
-      }),
-    );
+      });
+    // Another connection may be settling a protected save. Wait outside the
+    // lane for that exact barrier before admitting a fresh transport change.
+    await this.withSaveBarrier(undefined, 'play', change, { signal });
   }
   private readonly pendingPresenceChanges = new Map<string, number>();
   private steadyPresence(scope: RequestScope): boolean {
@@ -2385,17 +2392,20 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     scope: RequestScope | undefined,
     capability: Capability,
     operation: () => Promise<T>,
+    waitForProtection?: { readonly signal?: AbortSignal },
   ): Promise<T> {
     let complete!: () => void;
     const completion = new Promise<void>((resolve) => {
       complete = resolve;
     });
-    await this.lane.run(() => {
+    const acquire = () => {
       this.assertAdmission();
       if (scope) this.assertScope(scope, capability);
       this.protectedAdmission = true;
       this.protectedCompletion = completion;
-    });
+    };
+    if (waitForProtection) await this.atAcceptedBoundary(acquire, waitForProtection.signal);
+    else await this.lane.run(acquire);
     try {
       await this.flush();
       // An older in-flight save may have acquired a newer accepted suffix
@@ -4281,11 +4291,12 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     scope: RequestScope,
     publish: NativePlayerViewRequest['publish'],
     execution: Pick<NativePlayerViewRequest, 'executionSource' | 'jevConfigured' | 'llmConfigured'>,
+    openingSignal?: AbortSignal,
   ): Promise<void> {
     await withNativeConsumerScope(() =>
       this.projection.run(async () => {
         for (let attempt = 0; ; attempt++) {
-          const capturedContext = await this.lane.run(async () => {
+          const capturedContext = await this.playerReadBoundary(openingSignal, async () => {
             // A protected candidate can own mutable records while its SQL wait
             // leaves this lane free. Defer before any accepted-state native read.
             this.assertAdmission(false, false);
@@ -4336,6 +4347,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
               captured: capturedContext.captured,
               cut: capturedContext.cut,
               inputScope: capturedContext.inputScope,
+              openingSignal,
               preparation: { installation: capturedContext.installation, setup, definitions },
             };
             const readContext = context;
@@ -4394,6 +4406,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
               context.cut = undefined;
               context.preparation = undefined;
               context.inputScope = undefined;
+              context.openingSignal = undefined;
             }
             try {
               if (preparation) releaseNativeProduct(preparation.definitions);
@@ -4410,6 +4423,12 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     );
   }
 
+  /** Initial stream publication can wait for a recoverable protected save.
+   * Established streams already defer transient refusals to their scheduler. */
+  private playerReadBoundary<T>(signal: AbortSignal | undefined, operation: () => T | Promise<T>) {
+    return signal ? this.atAcceptedBoundary(operation, signal) : this.lane.run(operation);
+  }
+
   async capture(scope: RequestScope): Promise<NativePlayerRead> {
     if (this.restoring) throw new ViewChangedError();
     this.assertScope(scope);
@@ -4422,6 +4441,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       facts = capture.facts,
       self = facts.self;
     const inputScope = context.inputScope;
+    const openingSignal = context.openingSignal;
     const controlling = !!inputScope;
     const lifecycle = this.lifecycle();
     this.speechActors
@@ -4540,13 +4560,14 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       // ownership; no withdrawal exists in this accepted physical family.
       withdrawals: [],
       publishIfPermitted: (ids, complete, current) =>
-        this.lane.run(() => {
+        this.playerReadBoundary(openingSignal, () => {
           this.assertAdmission(false, false);
           return capture.publishIfPermitted(
             ids,
             complete,
             () => ({ paused: this.paused, controlling: this.currentScope(scope, 'play', true) }),
             () =>
+              !openingSignal?.aborted &&
               !this.restoring &&
               this.generation === lifecycle.generation &&
               this.currentScope(scope) &&
