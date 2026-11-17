@@ -147,6 +147,8 @@ The existing context/history owners still preserve coherent multi-person exchang
 
 Events, permitted person-scoped server history, response-linked actions and private narration retain stable chronology, source references and pagination. The player uses the world composer, captions and Events, not a separate Talk transcript. Character plans and cooperation retain their own lifetimes. Current reply admission, retained backend preview lifecycle and retained history use their real dependencies: current control/timeline, source validity, bodily capability and the separately permitted presentation/sensory conditions.
 
+Native directed Send can briefly wait for an occupied immediate response position under [LA231](limits/cognition.md#la231), with no speech or model request accepted during the wait. The next admission uses the original request ID and checks the current permitted recipient and allowance. Already spoken words and their response receipts still use the existing recovery path if the connection goes away.
+
 ### Merging conversations
 
 Ordinary speech has no automatic group merge. A speaker addressing someone who was talking to another person does not move all three people into a new shared state or relabel their earlier history. No “Joined conversation” lifecycle notice is emitted. Existing generated/narrated source history is not another participant's knowledge.
