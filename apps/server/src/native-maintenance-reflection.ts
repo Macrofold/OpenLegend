@@ -69,9 +69,7 @@ export async function prepareNativeMaintenanceReflection(input: {
       ),
       files: () => service.publishRecall(() => workspace.files()),
       publication: (start) => prepared.publish(start),
-      async validate() {
-        if (!(await prepared.current())) throw new Error('Reflection sources changed.');
-      },
+      validate: () => prepared.assertValid('dispatch-source'),
       async publish(value) {
         const result = await service.publishMaintenance(
           'reflection',
@@ -81,9 +79,7 @@ export async function prepareNativeMaintenanceReflection(input: {
               service.world.beginReflection(ticket, bytes),
             ),
           request.signal,
-          async () => {
-            if (!(await prepared.current())) throw new Error('Reflection sources changed.');
-          },
+          () => prepared.assertValid('response-application'),
         );
         reports.add(result);
         return result;

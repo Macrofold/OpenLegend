@@ -20,6 +20,12 @@ import {
   type WorldState,
 } from '@open-legend/domain';
 import { undispatchedReceipt } from './decision-state.js';
+import { StopJob } from './decision-dispatch.js';
+import type {
+  DecisionAttemptEvidence,
+  DecisionFailureStage,
+  DecisionStopEvidence,
+} from './decision-failure.js';
 import {
   normalizeReceiptCost,
   type AiClient,
@@ -49,6 +55,19 @@ interface ReflectionRequest {
   at: number;
 }
 class MaintenanceReadFailure extends Error {}
+class MaintenanceProviderStop extends StopJob {
+  constructor(
+    outcome: Exclude<AiResult<unknown>, { outcome: 'value' }>['outcome'],
+    reason: string,
+    readonly attempt: DecisionAttemptEvidence,
+  ) {
+    super(outcome === 'cancelled' ? 'cancelled' : 'failed', `${outcome}: ${reason}`, outcome, {
+      stage: 'provider',
+      condition: `provider-${outcome}`,
+      category: outcome === 'cancelled' ? 'cancelled' : 'provider-failed',
+    });
+  }
+}
 export function availableForMaintenance(world: WorldState, actorId: string): boolean {
   const entity = entityGet(world.entities, actorId),
     actor = entity?.actor;
@@ -732,7 +751,7 @@ export class CognitionMaintenance {
     actorId: string,
     trigger: string,
     origin: string,
-    execute: (job: JobRecord) => Promise<void>,
+    execute: (job: JobRecord, boundary: (stage: DecisionFailureStage) => void) => Promise<void>,
   ) {
     const id = `maintenance-${randomUUID()}`;
     this.budgetJob = id;
@@ -782,17 +801,42 @@ export class CognitionMaintenance {
         exchanges: [],
       };
       await this.log.save(root);
+      let stage: DecisionFailureStage | undefined;
+      const work = () => execute(job, (boundary) => (stage = boundary));
       try {
         await this.log.withTrigger(id, () =>
           this.executionLease
-            ? this.host.withExecution(actorId, id, this.executionLease, () => execute(job))
-            : execute(job),
+            ? this.host.withExecution(actorId, id, this.executionLease, work)
+            : work(),
         );
         job.status = 'completed';
         job.message = 'Maintenance accepted.';
       } catch (error) {
         job.status = this.active?.signal.aborted ? 'cancelled' : 'failed';
         job.message = error instanceof Error ? error.message : 'Maintenance failed.';
+        const stopped = error instanceof StopJob ? error : undefined;
+        const cancelled = job.status === 'cancelled';
+        const failure: DecisionStopEvidence | undefined =
+          stopped?.evidence ??
+          (stage && {
+            stage,
+            condition: cancelled ? 'maintenance-aborted' : 'maintenance-operation-failed',
+            category: cancelled ? 'cancelled' : 'refused',
+          });
+        if (failure) {
+          // Preserve existing bounded source/attempt evidence without copying the
+          // private exception, context, or provider body into the job result.
+          const applied = failure.stage === 'response-application' ? 'unknown' : false;
+          job.result = {
+            disposition: stopped?.outcome ?? stopped?.status ?? job.status,
+            failure: {
+              ...failure,
+              ...(error instanceof MaintenanceProviderStop ? { attempt: error.attempt } : {}),
+              effectsApplied: applied,
+              responseReceiptApplied: applied,
+            },
+          };
+        }
       } finally {
         job.completedAt = this.now();
         await this.host.store.putJob(job);
@@ -801,7 +845,7 @@ export class CognitionMaintenance {
           status: job.status === 'completed' ? 'completed' : 'failed',
           disposition: job.status,
           completedAt: new Date().toISOString(),
-          output: { message: job.message },
+          output: { message: job.message, ...(job.result !== undefined && { result: job.result }) },
         });
       }
     } finally {
@@ -899,6 +943,7 @@ export class CognitionMaintenance {
       throw error;
     }
     let result: AiResult<T>;
+    let publicationStarted = false;
     try {
       if (this.execution && !(await this.host.store.markDecisionDispatch(id)))
         throw new Error('Maintenance dispatch was already claimed.');
@@ -911,6 +956,7 @@ export class CognitionMaintenance {
             throw new Error('Maintenance canceled before dispatch.');
           if (!sourceCurrent())
             throw new Error('The character’s evidence changed before dispatch.');
+          publicationStarted = true;
         },
         execute,
         requestedPublication,
@@ -924,7 +970,21 @@ export class CognitionMaintenance {
       this.executionLease?.uncertain(id);
       throw error;
     }
-    if (result.outcome !== 'value') throw new Error(`${result.outcome}: ${result.reason}`);
+    if (result.outcome !== 'value') {
+      const received = publicationStarted && result.receipt.httpStatus !== undefined;
+      throw new MaintenanceProviderStop(result.outcome, result.reason, {
+        stage: id.slice((this.budgetJob?.length ?? -1) + 1),
+        provider,
+        transportStarted:
+          result.receipt.dispatched || received
+            ? true
+            : publicationStarted && result.receipt.completionUncertain
+              ? 'unknown'
+              : false,
+        responseArrived: received,
+        providerReceiptSettled: true,
+      });
+    }
     if (this.host.paused || this.active?.signal.aborted)
       throw new Error('Maintenance canceled before publication.');
     await this.assertAdmission();
@@ -1194,7 +1254,8 @@ export class CognitionMaintenance {
   }
 
   private async reflect(queued: ReflectionRequest, controller: AbortController) {
-    return this.job(queued.actorId, queued.reason, queued.origin, async (job) => {
+    return this.job(queued.actorId, queued.reason, queued.origin, async (job, boundary) => {
+      boundary('preparation');
       const prepared = await this.host.prepareReflection({
         actorId: queued.actorId,
         job,
@@ -1261,7 +1322,9 @@ export class CognitionMaintenance {
           100000
         )
           throw new Error('Complete reflection context exceeds its admitted input budget.');
+        boundary('dispatch-source');
         await prepared.validate();
+        boundary('dispatch-publication');
         const value = await this.paid(
           request.requestId,
           'openai',
@@ -1273,12 +1336,14 @@ export class CognitionMaintenance {
           undefined,
           prepared.publication,
         );
+        boundary('response-validation');
         await this.log.record(`${job.id}:files`, 'Workspace publication proposal', {
           sourceSnapshot: value.revision,
           files: value.files,
           thoughts: value.thoughts,
         });
         controller.signal.throwIfAborted();
+        boundary('response-application');
         const accepted = await prepared.publish(value);
         if (!accepted.ok) throw new Error(accepted.message);
         await this.log.record(
