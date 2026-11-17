@@ -550,8 +550,9 @@ position without holding the world or cognition admission lane. The public
 availability read remains advisory. Waiting Sends involving the shared cap
 take precedence over new ordinary autonomous work; urgent work and work already
 admitted keep their positions. Each new admission attempt checks the original
-request ID and current control, recipient and funding. Expiry, disconnect or
-lost authority before speech accepts no utterance; there is no provider retry.
+request ID and current control, recipient and funding. An expired wait cannot
+start speech admission; disconnect or lost authority still prevents uncommitted
+speech at settlement. No provider request is retried.
 
 **Reason / tradeoff:** One long ordinary deliberation no longer owns both immediate
 positions. Shared funding and provider capacity still limit dispatch, and each

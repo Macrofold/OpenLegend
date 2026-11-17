@@ -500,7 +500,6 @@ export class NativeNpcDirector {
       const spoken = await this.service.speakToNpc(jobId, text, npcReference, volume, scope, {
         current,
         admit,
-        beforeSpeech: () => this.maintenance.cancel(),
       });
       if (!spoken.ok) return spoken.outcome;
       try {
@@ -522,6 +521,7 @@ export class NativeNpcDirector {
           this.service.notifyTelemetry();
           return { ok: true, code: 'spoken', message: job.message, jobId };
         }
+        this.maintenance.cancel();
         const read = await this.service.captureNpcIntake(spoken.actorId, 0);
         let transferred = false;
         try {
@@ -683,20 +683,26 @@ export class NativeNpcDirector {
           if (!blocked) return true;
           if (blocked === 'closed' || blocked === 'higher-reasoning') return false;
           blockedAt = this.slotRevision;
-          if (blocked !== 'actor-slot' && !hasPriority) {
-            this.pendingOrdinaryChats++;
-            hasPriority = true;
+          const sharedSlot = blocked !== 'actor-slot';
+          if (sharedSlot !== hasPriority) {
+            this.pendingOrdinaryChats += sharedSlot ? 1 : -1;
+            hasPriority = sharedSlot;
           }
           return false;
         };
         const result = await this.admission(async () => {
           this.service.assertScope(scope, 'play', true);
           if (!current()) return chatNotSent;
+          const noSlot = expired();
+          if (noSlot) return noSlot;
           return attempt(admit, current, expired);
         });
         if (blockedAt === undefined) return result;
         refusal = result;
         await this.waitForSlot(blockedAt, until, signal);
+        this.service.assertScope(scope, 'play', true);
+        if (!current()) return chatNotSent;
+        if (expired()) return result;
       }
     } finally {
       if (hasPriority) this.pendingOrdinaryChats--;

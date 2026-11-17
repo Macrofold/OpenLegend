@@ -3524,7 +3524,6 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     admission: {
       readonly current: () => boolean;
       readonly admit: (actorId: string) => boolean;
-      readonly beforeSpeech: () => void;
     },
   ): Promise<
     | { readonly ok: false; readonly outcome: ApiResult }
@@ -3591,7 +3590,6 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         if (!command) throw new Error('Speech command factory returned no command.');
         if ('ok' in command) return { ok: false, outcome: command };
         if (!admission.current()) return cancelled;
-        admission.beforeSpeech();
         publication = await this.acceptInLane({
           actorId: scope.actorId,
           first: () => beginNativeCommand(this.world, command),

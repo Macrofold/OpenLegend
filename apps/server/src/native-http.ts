@@ -873,8 +873,12 @@ export async function createNativeGameServer(options: {
                 value.volume,
                 pending.signal,
               );
-              if (!response.destroyed) return send(202, result);
-              return;
+              try {
+                if (!response.destroyed) return send(202, result);
+                return;
+              } finally {
+                releaseNativeProduct(result);
+              }
             } finally {
               response.off('close', disconnected);
             }
