@@ -1,5 +1,6 @@
 import { SOURCE_EDIT_PREPARATION_CAPACITY } from './history-edit.js';
 import { worldControlOutcome, worldSpeedRefusal } from './world-control-outcome.js';
+import type { DecisionRefusalReporter } from './decision-failure.js';
 import {
   recentResultEligible,
   resultEvidenceId,
@@ -3235,18 +3236,54 @@ export class WorldService {
    * Recheck immediately before disclosure, after the final await; invalidating a cache
    * alone cannot retract an already pending read. No storage read is needed here.
    * docs/memory-architecture.md#private-retrieval-fencing */
-  privateReadFence(actorId: string, permitted: () => boolean): () => boolean {
+  privateReadFence(
+    actorId: string,
+    permitted: () => boolean,
+    report?: DecisionRefusalReporter,
+  ): () => boolean {
     const worldId = this.world.id,
       generation = this.generation,
       sourceRevision = this.store.memories?.actorRevision(actorId),
-      accessRevision = this.store.memories?.sourceAccessRevision({ worldId, actorId });
-    return () =>
-      worldId === this.world.id &&
-      generation === this.generation &&
-      sourceRevision === this.store.memories?.actorRevision(actorId) &&
-      accessRevision === this.store.memories?.sourceAccessRevision({ worldId, actorId }) &&
-      !this.store.memories?.sourceEditPending({ worldId, actorId }) &&
-      permitted();
+      scope = { worldId, actorId },
+      accessRevision = this.store.memories?.sourceAccessRevision(scope);
+    return () => {
+      const currentWorld = this.world.id;
+      if (currentWorld !== worldId) {
+        report?.({ condition: 'world-id', expected: worldId, current: currentWorld });
+        return false;
+      }
+      const currentGeneration = this.generation;
+      if (currentGeneration !== generation) {
+        report?.({
+          condition: 'world-generation',
+          expected: generation,
+          current: currentGeneration,
+        });
+        return false;
+      }
+      const currentSource = this.store.memories?.actorRevision(actorId);
+      if (currentSource !== sourceRevision) {
+        report?.({
+          condition: 'actor-private-revision',
+          dependency: actorId,
+          expected: sourceRevision,
+          current: currentSource,
+          observedCut: this.durabilityTicket(),
+        });
+        return false;
+      }
+      if (accessRevision !== this.store.memories?.sourceAccessRevision(scope)) {
+        report?.({ condition: 'source-access-revision', dependency: actorId });
+        return false;
+      }
+      if (this.store.memories?.sourceEditPending(scope)) {
+        report?.({ condition: 'source-edit-pending', dependency: actorId });
+        return false;
+      }
+      if (permitted()) return true;
+      report?.({ condition: 'read-permission', dependency: actorId });
+      return false;
+    };
   }
 
   async inspectMemoryContext(actorId: string, scope = this.localScope) {

@@ -9,7 +9,8 @@ import {
   priorityThoughtEvidence,
 } from './thought-trigger.js';
 import { sourceDecisionHost } from './source-decision-host.js';
-import { dispatchDecision, StopJob } from './decision-dispatch.js';
+import { dispatchDecision, StopJob, type DispatchRun } from './decision-dispatch.js';
+import type { DecisionStopEvidence } from './decision-failure.js';
 import { sourceMacrofoldHost } from './source-macrofold-host.js';
 import { resultEvidenceId, selectedResponseExpressions } from '@open-legend/domain';
 import { nativeText } from '@open-legend/domain';
@@ -223,24 +224,17 @@ const judgeMeter = (
     schema: textBytes(request.questions),
   },
 });
-interface Running {
-  discovery?: { actorId: string; reservation: string; spent: boolean };
-  /** Admission lane, independent of later provider duration or outcome. */
-  urgent: boolean;
+interface Running extends DispatchRun {
   immediateTimer?: ReturnType<typeof setTimeout>;
   expiryTimer?: ReturnType<typeof setTimeout>;
-  receipt?: import('@open-legend/ai').AiReceipt;
-  failure?: { outcome: string; reason: string };
   handedOff?: boolean;
   validity?: string;
   decisionPreparation?: RetainedDecisionPreparation;
   validityFor?: (world: WorldState) => string;
   temporalSourcesCurrent?: () => boolean;
   releasePreparedSources?: () => void;
-  preparedResponse?: boolean;
   invalidated?: boolean;
-  /** Per-decision accounting and level limits; absent for non-decision jobs. */
-  ledger?: DecisionLedger;
+  sourceInterruption?: 'selected-personal-source' | 'player-authority' | 'player-cancelled';
   /** The resolved level-1 outcome, kept with any later failure of its escalation. */
   level1?: Level1Outcome;
   actorInvention?: {
@@ -250,14 +244,10 @@ interface Running {
     parentId?: string;
     policyRevision: number;
   };
-  job: JobRecord;
   controller: AbortController;
   generation: string;
-  generatedBy?: string;
   playerSpeechEventId?: string;
-  cancelReason?: string;
   responseWatch?: { actorId: string; afterSequence: number; attempt: number };
-  validateJudgmentSource?: () => Promise<void>;
   supersession?: { attempt: number; interruptions: ResponseInterruption[] };
 }
 const choice = (answer: JudgmentAnswer | undefined) =>
@@ -417,11 +407,13 @@ export class AiDirector {
         if (run.controller.signal.aborted) continue;
         if (run.temporalSourcesCurrent && !run.temporalSourcesCurrent()) {
           run.invalidated = true;
+          run.sourceInterruption = 'selected-personal-source';
           run.controller.abort();
           continue;
         }
         if (run?.job.authority && !service.currentScope(run.job.authority, 'play', true)) {
           run.cancelReason = 'Control or access changed.';
+          run.sourceInterruption = 'player-authority';
           run.controller.abort();
           continue;
         }
@@ -956,6 +948,7 @@ export class AiDirector {
       return { ok: false, code: 'not-running', message: 'That request is no longer running.' };
     if (!run.controller.signal.aborted) {
       run.cancelReason = 'Request cancelled.';
+      run.sourceInterruption = 'player-cancelled';
       this.replyPreviews.recheck();
       await this.update(run, run.job.status, 'Cancelling request…');
       run.controller.abort();
@@ -1549,12 +1542,31 @@ export class AiDirector {
     run.releasePreparedSources = prepared.dispose;
     run.temporalSourcesCurrent = prepared.temporalSourcesCurrent;
   }
+  private currentEvidence(
+    run: Running,
+    condition: string,
+    category: DecisionStopEvidence['category'],
+  ): DecisionStopEvidence | undefined {
+    if (!run.trackTerminalEvidence) return;
+    return {
+      condition,
+      category,
+      stage: run.failureStage ?? 'preparation',
+      dependency: this.selectedActorId(run.job),
+    };
+  }
+
   private current(run: Running): string {
     // A load abandons the request's timeline. Storage may revoke its source
     // watches before the replacement world is published; that notification is
     // not a separate in-world correction that should relabel the cancelled work.
     if (run.generation !== this.service.generation)
-      throw new StopJob('cancelled', 'This request was cancelled before completion.');
+      throw new StopJob(
+        'cancelled',
+        'This request was cancelled before completion.',
+        undefined,
+        this.currentEvidence(run, 'world-generation', 'invalidated'),
+      );
     // A later source/generation notification cannot change why an already stopped
     // request ended. In particular, resuming a loaded game never revives work
     // that was cancelled by its pause.
@@ -1572,9 +1584,22 @@ export class AiDirector {
             : this.service.paused
               ? 'This request was cancelled when the game paused.'
               : 'This request was cancelled before completion.'),
+        undefined,
+        run.sourceInterruption
+          ? this.currentEvidence(
+              run,
+              run.sourceInterruption,
+              run.sourceInterruption === 'player-cancelled' ? 'cancelled' : 'invalidated',
+            )
+          : undefined,
       );
     if (run.temporalSourcesCurrent && !run.temporalSourcesCurrent())
-      throw new StopJob('stale', 'The selected personal evidence changed or expired.');
+      throw new StopJob(
+        'stale',
+        'The selected personal evidence changed or expired.',
+        undefined,
+        this.currentEvidence(run, 'selected-personal-source', 'invalidated'),
+      );
     const decision = run.job.decision;
     if (
       decision &&
@@ -1591,7 +1616,12 @@ export class AiDirector {
         'expired',
       );
     if (run.job.authority && !this.service.currentScope(run.job.authority, 'play', true))
-      throw new StopJob('stale', 'Control or access changed; no new effects were applied.');
+      throw new StopJob(
+        'stale',
+        'Control or access changed; no new effects were applied.',
+        undefined,
+        this.currentEvidence(run, 'player-authority', 'invalidated'),
+      );
     if (run.job.kind === 'invention') {
       const scope = run.job.request.invention;
       if (
@@ -1723,7 +1753,10 @@ export class AiDirector {
         ? { ledger: new DecisionLedger(levelLimits(this.service.config)) }
         : {}),
     };
-    if (job.kind === 'chat') run.playerSpeechEventId = job.playerSpeechEventId;
+    if (job.kind === 'chat') {
+      run.playerSpeechEventId = job.playerSpeechEventId;
+      run.trackTerminalEvidence = true;
+    }
     if (run.playerSpeechEventId) job.playerSpeechEventId = run.playerSpeechEventId;
     this.immediateRuns.set(job.id, run);
     if (actorId) this.immediateActors.set(actorId, run);
@@ -1850,8 +1883,14 @@ export class AiDirector {
             // Invention results keep their own code; decisions record the distinct outcome.
             run.job.kind === 'invention'
               ? undefined
-              : known && error.outcome
-                ? { disposition: error.outcome, ...(run.level1 ? { level1: run.level1 } : {}) }
+              : known && (error.outcome || (run.trackTerminalEvidence && error.evidence))
+                ? {
+                    disposition: error.outcome ?? error.status,
+                    ...(run.level1 ? { level1: run.level1 } : {}),
+                    ...(run.trackTerminalEvidence && error.evidence
+                      ? { failure: { ...error.evidence, attempt: run.attemptEvidence } }
+                      : {}),
+                  }
                 : error instanceof ContextBudgetError
                   ? {
                       disposition: 'context-exceeded',
@@ -2082,7 +2121,8 @@ export class AiDirector {
         current: (active) => this.current(active),
         durabilityTicket: () => this.service.durabilityTicket(),
         whenDurable: (ticket) => this.service.whenDurable(ticket),
-        privateReadFence: (actorId, permitted) => this.service.privateReadFence(actorId, permitted),
+        privateReadFence: (actorId, permitted, report) =>
+          this.service.privateReadFence(actorId, permitted, report),
         awaitResume: (active, ready) => this.awaitResume(active, ready),
         update: (active, status, message) => this.update(active, status, message),
         publication: (active, start) =>
@@ -2655,6 +2695,7 @@ export class AiDirector {
     run.level1 = undefined;
     run.preparedResponse = false;
     run.validateJudgmentSource = undefined;
+    run.revalidateJudgmentSource = undefined;
     run.validity = undefined;
     run.validityFor = undefined;
     // A known spending shortfall cannot produce a decision. Skip retrieval and its
@@ -2821,6 +2862,12 @@ export class AiDirector {
     );
     this.holdPreparedSources(run, prepared);
     run.validateJudgmentSource = () => prepared.validateConversation();
+    // An ordinary reception update can move the broad private read fence
+    // while leaving the rendered conversation's exact sources current.
+    // Reuse the rendered request's validation under the existing bounded
+    // dispatch retry. Privacy and non-reception changes still refuse.
+    if (run.job.kind === 'chat')
+      run.revalidateJudgmentSource = () => prepared.validateConversation(false);
     this.current(run);
     const validity = run.job.decision ? decisionValidity(this.service.world, actorId) : undefined;
     run.validity = validity;
