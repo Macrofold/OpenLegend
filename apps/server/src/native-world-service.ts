@@ -4889,7 +4889,10 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           // the next ordinary save. Errors during capture, SQL or ACK still latch.
           // docs/projects/bookkeeping-simplification-runtime-design.md#62-accept-buffer-save
           if (!captureStarted && error instanceof OverloadError) throw error;
-          this.failure = error instanceof Error ? error : new Error(String(error));
+          if (!this.failure) {
+            this.failure = error instanceof Error ? error : new Error(String(error));
+            console.error('Native save failed.', this.failure);
+          }
           this.notify(false);
           throw error;
         })

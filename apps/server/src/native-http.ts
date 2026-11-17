@@ -172,7 +172,9 @@ export async function createNativeGameServer(options: {
     let activeTick: Promise<void> | undefined,
       clockContinuation: ReturnType<typeof setImmediate> | undefined;
     const wakeClock = () => {
-      if (stopping || loadingSave || activeTick) return;
+      // A fatal storage failure closes live admission until restart. Keep the
+      // timer for ordinary pause and absence housekeeping, without retrying it.
+      if (stopping || loadingSave || activeTick || current.storageError) return;
       if (clockContinuation) clearImmediate(clockContinuation);
       clockContinuation = undefined;
       const offeredUntil = performance.now(),
@@ -202,7 +204,7 @@ export async function createNativeGameServer(options: {
               });
         })
         .catch((error: unknown) => {
-          if (isOverloadError(error)) return;
+          if (isOverloadError(error) || current.storageError) return;
           console.error('Native automatic simulation failed.', error);
           current.fail(error);
         })
