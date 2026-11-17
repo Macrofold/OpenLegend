@@ -6,9 +6,9 @@
 
 **Five simultaneous players per 4-vCPU instance is an unverified planning assumption.** We have measured the cost of a small, active opening. We have not established the marginal cost of each additional independently active player, or qualified five such players together at the required service quality.
 
-**$2.20 means compute cost per paying subscriber per 30-day month**, under all of these assumptions: five simultaneous players per instance; $100 per instance for that entire month; 60 play-hours per subscriber; perfectly adjustable fleet capacity; and 32% additional fleet capacity above demand. It is neither the cost of serving a player continuously for a month nor the complete service cost.
+**The baseline has no additional fleet reserve (`b = 1`).** The assumed players-per-instance capacity already allows for local contention and responsiveness. Adding another reserve for those same bursts would count the same allowance twice. The separate 32% reserve (`b = 1.32`) remains an optional sensitivity case for independently justified fleet needs.
 
-Using the benchmark machine's **$0.2016/hour reference price**, the same calculation is **$3.19 per subscriber-month**. Under the research's middle traffic forecast, retaining peak capacity plus the same 32% reserve all month instead costs **$7.29 per subscriber-month at 10,000 subscribers**. Both are conditional compute scenarios. Database storage, network services, external AI and other excluded costs must still be budgeted.
+At five simultaneous players per instance, 60 play-hours per subscriber and ideal scaling, baseline compute is **$1.67 per paying subscriber per 30-day month at $100/instance-month**, or **$2.42 at the benchmark machine's $0.2016/hour reference price**. Keeping the middle forecast's peak fleet running all month instead costs **$5.52 per subscriber-month at 10,000 subscribers** at that hourly rate. The optional 32% reserve raises the reference-rate figures to **$3.19 elastic / $7.29 fixed**. The earlier **$2.20** figure applies only to the optional-reserve case at $100/instance-month. These figures exclude database storage, external AI and other separately billed services.
 
 The principal unknowns are supported players per instance, the cost of worlds without connected players, and how much capacity the persistent-world architecture can actually release as demand falls. These unknowns matter more than the arithmetic's displayed decimal places.
 
@@ -27,7 +27,7 @@ All scenario currency is USD, before taxes, discounts and credits. A modeled mon
 | Instance                                | One billable virtual machine. It is not necessarily one process, one world, one physical machine or one player.                                                                                                                     |
 | Player capacity, `K`                    | Simultaneous players supported by one instance at a specified activity, population, world complexity and service quality, after allowing for contention and local CPU/RAM needs. Every `K` in the financial tables is hypothetical. |
 | Instance price, `P`; monthly price, `M` | USD per running instance-hour; `M = 720 × P`. Storage and separately billed services are excluded.                                                                                                                                  |
-| Additional fleet multiplier, `b`        | Provisioned player capacity divided by player demand, beyond the per-instance operating allowance already embodied in `K`. The illustrated extra reserve uses `b = 1.32`.                                                           |
+| Additional fleet multiplier, `b`        | Provisioned player capacity divided by player demand, beyond the per-instance operating allowance already embodied in `K`. Baseline `b = 1` adds no fleet reserve; optional `b = 1.32` adds 32%.                                    |
 | CPU percentage of one logical core      | `100 × process CPU seconds / elapsed real seconds`. 100% occupies one logical CPU on average; 400% occupies all four logical CPUs of the benchmark instance on average.                                                             |
 | Game speed                              | Completed simulated time divided by the simulated time intended for that real duration. 100% means keeping up with the authored clock; it does not mean 100% CPU.                                                                   |
 
@@ -65,7 +65,7 @@ The earlier illustration was `5 × 0.37 / 4 = 46.25%` of total host CPU. It assu
 There are three separate capacity provisions:
 
 1. **Operating allowance inside each instance:** accommodates short bursts, serial work, contention and response-time requirements. Qualifying `K` already includes this allowance. There is no additional division by 46% in the financial formulas.
-2. **Extra fleet capacity, `b`:** covers placement inefficiency, delayed scale-up or a specifically chosen demand reserve beyond `K`. `b = 1.32` means 32% above occupied capacity, equivalent to **24.24% of provisioned capacity unoccupied**. It is not automatically required merely because `K` includes CPU headroom.
+2. **Extra fleet capacity, `b`:** the baseline is `b = 1`, without an additional allowance. The optional `b = 1.32` can represent separately justified placement inefficiency, delayed scale-up or demand reserve beyond `K`. It means 32% above occupied capacity, equivalent to **24.24% of provisioned capacity unoccupied**. It must not cover the same contention or short bursts already allowed for in `K`.
 3. **Daily and event demand:** determines how large the fleet must become. Per-instance headroom is needed while serving the peak too. It does not replace provisioning for the peak population.
 
 For **1,000 average and 3,000 peak CCU**, hypothetical `K = 5` requires 200 instances at average demand and 600 at peak, before extra fleet reserve. If the fleet cannot shrink, all 600 remain billable overnight. Adding a separate `b = 1.32` makes those counts 264 and 792. Applying that multiplier twice for the same contingency would double-count reserve. Redundancy must have a stated failure requirement; neither factor proves survival of a zone outage.
@@ -114,6 +114,33 @@ Weekend CCU(h) = 1.2 × A × f(h)
 
 The shape's daily mean is 1, maximum 2 and minimum 0.4. The modeled monthly peak is **2.27848 times whole-month average CCU**. The assumed peak is at 9 p.m.; this is not observed OpenLegend traffic.
 
+### Daily demand curve
+
+Both lines show **modeled concurrent players per 1,000 subscribers**, at 60 hours per subscriber-month. The **lower line is a weekday; the upper line is a weekend day**. The horizontal axis is local hour in the audience's principal time zone; 24 is the following midnight. Lines connect three-hour samples rounded to one decimal; the formula above defines the exact curve. Neither line includes a capacity reserve.
+
+```mermaid
+xychart-beta
+    title "Modeled daily demand per 1,000 subscribers"
+    x-axis "Local hour" [0, 3, 6, 9, 12, 15, 18, 21, 24]
+    y-axis "Concurrent players" 0 --> 200
+    line [123.9, 63.3, 34.4, 31.6, 34.4, 63.3, 123.9, 158.2, 123.9]
+    line [148.6, 75.9, 41.2, 38.0, 41.2, 75.9, 148.6, 189.9, 148.6]
+```
+
+### Weekly demand curve
+
+This representative Monday–Sunday week uses those same day profiles, with the 20% uplift on Saturday and Sunday. The axis runs from **Monday midnight (hour 0) to the next Monday midnight (hour 168)**. Day boundaries are 0, 24, 48, 72, 96, 120, 144 and 168; weekend peaks occur at hours 141 and 165. It shows demand per 1,000 subscribers, not server utilization or capacity. Lines connect three-hour samples; the model changes the weekday/weekend multiplier at midnight rather than modeling a transition. The week retains the 30-day model's normalization; its five-weekday/two-weekend mix is not identical to the month's 22/8 mix.
+
+```mermaid
+xychart-beta
+    title "Modeled weekly demand per 1,000 subscribers"
+    x-axis "Hours since Monday midnight" 0 --> 168
+    y-axis "Concurrent players" 0 --> 200
+    line [123.9, 63.3, 34.4, 31.6, 34.4, 63.3, 123.9, 158.2, 123.9, 63.3, 34.4, 31.6, 34.4, 63.3, 123.9, 158.2, 123.9, 63.3, 34.4, 31.6, 34.4, 63.3, 123.9, 158.2, 123.9, 63.3, 34.4, 31.6, 34.4, 63.3, 123.9, 158.2, 123.9, 63.3, 34.4, 31.6, 34.4, 63.3, 123.9, 158.2, 148.6, 75.9, 41.2, 38.0, 41.2, 75.9, 148.6, 189.9, 148.6, 75.9, 41.2, 38.0, 41.2, 75.9, 148.6, 189.9, 123.9]
+```
+
+### Demand values and scenario populations
+
 | Per 1,000 subscribers at 60 hours/month | Weekday CCU | Weekend CCU |
 | --------------------------------------- | ----------: | ----------: |
 | Midnight                                |         124 |         149 |
@@ -129,20 +156,20 @@ The whole-month average is **83.33 CCU**. In this curve, demand stays at or abov
 
 The following scenarios all have **10,000 subscribers**. Counts are rounded for display; calculations use unrounded values. The first three use the curve above; the final row preserves the earlier discussion's independently selected 3:1 peak/average ratio.
 
-| Scenario                                | Hours/subscriber-month | Monthly player-hours | Average CCU | Ordinary peak CCU | Peak capacity with separate 1.32 multiplier |
+| Scenario                                | Hours/subscriber-month | Monthly player-hours | Average CCU | Ordinary peak CCU | Optional peak capacity with 1.32 multiplier |
 | --------------------------------------- | ---------------------: | -------------------: | ----------: | ----------------: | ------------------------------------------: |
 | Lower playtime                          |                     36 |              360,000 |         500 |             1,139 |                                       1,504 |
 | Research middle                         |                     60 |              600,000 |      833.33 |             1,899 |                                       2,506 |
 | Higher playtime                         |                     90 |              900,000 |       1,250 |             2,848 |                                       3,759 |
 | Earlier 1,000-average / 3,000-peak case |                     72 |              720,000 |       1,000 |             3,000 |                                       3,960 |
 
-These are sensitivity cases, not confidence intervals. The middle case's roughly 2,500 capacity slots are available places, not 2,500 expected simultaneous players and not 2,500 subscribers. At 10,000 subscribers, 833 average / 1,899 peak and 1,000 average / 3,000 peak are different forecasts; do not mix their averages and peaks in one calculation.
+These are sensitivity cases, not confidence intervals. Baseline fleet sizing uses the ordinary peak column, rounded upward to whole instances in the cost calculation. The final column is the optional 32% reserve: the middle case's roughly 2,500 capacity slots are available places, not 2,500 expected simultaneous players or subscribers. At 10,000 subscribers, 833 average / 1,899 peak and 1,000 average / 3,000 peak are different forecasts; do not mix their averages and peaks in one calculation.
 
 ## Converting demand to compute cost
 
 The reference price is **$0.2016 per instance-hour**, or **$145.152 per 720-hour month**, for on-demand Linux `m7i.xlarge` in Ohio. The [public regional price compilation](https://cloudparity.io/pricing/aws/m7i.xlarge) lists that rate for `us-east-2`; it corroborates the historical project rate. It is a reference input, not a contracted quote. This review could not retrieve AWS's underlying live price-list endpoint, so reprice through the [AWS EC2 pricing owner](https://aws.amazon.com/ec2/pricing/on-demand/) before purchasing. The supplied research's **$100/month is an illustrative alternative**, not the price of this benchmark machine. No claim of equivalent performance on a cheaper machine follows.
 
-For an ideal fleet that tracks demand continuously, ignoring whole-instance rounding:
+Use **`b = 1` for the baseline** and `b = 1.32` only for the explicitly labeled optional scenario. For an ideal fleet that tracks demand continuously, ignoring whole-instance rounding:
 
 ```text
 Average running instance equivalents = b × Cavg / K
@@ -162,53 +189,69 @@ Monthly VM compute cost = fixed instance count × 720 × P
 
 ### Capacity and price sensitivity
 
-All rows assume **60 hours per subscriber-month**, **ideal elastic capacity**, and an **additional `b = 1.32`**. The capacity figures are hypothetical; they are not qualified deployment limits.
+All rows assume **60 hours per subscriber-month** and **ideal elastic capacity**. The baseline is **`b = 1`: no additional fleet reserve**. Each assumed capacity already includes its own per-instance operating allowance. None is a qualified deployment limit.
 
-| Assumed simultaneous players/instance, `K` | Compute/subscriber-month at $100/instance-month | Compute/subscriber-month at $0.2016/instance-hour | Monthly compute for 10,000 subscribers at $0.2016/hour |
-| ------------------------------------------ | ----------------------------------------------: | ------------------------------------------------: | -----------------------------------------------------: |
-| 3: lower capacity case                     |                                           $3.67 |                                             $5.32 |                                             $53,222.40 |
-| 5: current discussion assumption           |                                       **$2.20** |                                         **$3.19** |                                         **$31,933.44** |
-| 10: higher capacity case                   |                                           $1.10 |                                             $1.60 |                                             $15,966.72 |
-| 15: higher capacity case                   |                                           $0.73 |                                             $1.06 |                                             $10,644.48 |
+| Assumed simultaneous players/instance, `K` | Baseline compute/subscriber-month at $100/instance-month | Baseline compute/subscriber-month at $0.2016/instance-hour | Baseline monthly compute for 10,000 subscribers at $0.2016/hour |
+| ------------------------------------------ | -------------------------------------------------------: | ---------------------------------------------------------: | --------------------------------------------------------------: |
+| 3: lower capacity case                     |                                                    $2.78 |                                                      $4.03 |                                                      $40,320.00 |
+| 5: current discussion assumption           |                                                **$1.67** |                                                  **$2.42** |                                                  **$24,192.00** |
+| 10: higher capacity case                   |                                                    $0.83 |                                                      $1.21 |                                                      $12,096.00 |
+| 15: higher capacity case                   |                                                    $0.56 |                                                      $0.81 |                                                       $8,064.00 |
+
+The optional **`b = 1.32`** case adds 32% to the unrounded elastic baseline, only if a separate fleet requirement justifies that reserve:
+
+| Assumed simultaneous players/instance, `K` | Optional-reserve compute/subscriber-month at $100/instance-month | Optional-reserve compute/subscriber-month at $0.2016/instance-hour |
+| ------------------------------------------ | ---------------------------------------------------------------: | -----------------------------------------------------------------: |
+| 3                                          |                                                            $3.67 |                                                              $5.32 |
+| 5                                          |                                                            $2.20 |                                                              $3.19 |
+| 10                                         |                                                            $1.10 |                                                              $1.60 |
+| 15                                         |                                                            $0.73 |                                                              $1.06 |
 
 For `K = 5` at the reference rate:
 
-- Serving one occupied player-hour costs **$0.04032** before the extra fleet reserve, or **$0.0532224** with `b = 1.32` under ideal scaling.
-- A subscriber playing 60 hours costs **$2.4192** before that extra reserve, or **$3.193344** with it.
-- One player connected continuously for all 720 hours is allocated **$29.0304** before that extra reserve, or **$38.320128** with it, under the same ideal fleet model.
+- Serving one occupied player-hour costs **$0.04032 in the baseline**, or **$0.0532224** with the optional reserve under ideal scaling.
+- A subscriber playing 60 hours costs **$2.4192 in the baseline**, or **$3.193344** with the optional reserve.
+- One player connected continuously for all 720 hours is allocated **$29.0304 in the baseline**, or **$38.320128** with the optional reserve, under the same ideal fleet model.
 
 The last line allocates total fleet cost in proportion to each account's connected hours; it is not the price of a dedicated VM for one player. These figures differ because they price different amounts of service. Never use the unqualified expression “cost per player per month.”
 
 ### Traffic and deployment sensitivity at 10,000 subscribers
 
-All rows use hypothetical **`K = 5`**, **$0.2016/hour**, and **`b = 1.32`**. “Fixed” means the entire peak-plus-reserve fleet runs for all 720 hours. “Elastic” means ideal proportional scaling, without rounding or a minimum world-service floor.
+The baseline rows use hypothetical **`K = 5`**, **$0.2016/hour**, and **`b = 1`**. “Fixed” means the entire peak-sized fleet runs for all 720 hours. “Elastic” means ideal proportional scaling, without rounding or a minimum world-service floor. Average elastic instance counts are rounded for display; costs use unrounded values.
 
-| Traffic scenario                        | Elastic average instances | Elastic monthly compute | Elastic compute/subscriber-month | Fixed instances | Fixed monthly compute | Fixed compute/subscriber-month |
-| --------------------------------------- | ------------------------: | ----------------------: | -------------------------------: | --------------: | --------------------: | -----------------------------: |
-| Lower playtime                          |                       132 |              $19,160.06 |                            $1.92 |             301 |            $43,690.75 |                          $4.37 |
-| Research middle                         |                       220 |              $31,933.44 |                            $3.19 |             502 |            $72,866.30 |                          $7.29 |
-| Higher playtime                         |                       330 |              $47,900.16 |                            $4.79 |             752 |           $109,154.30 |                         $10.92 |
-| Earlier 1,000-average / 3,000-peak case |                       264 |              $38,320.13 |                            $3.83 |             792 |           $114,960.38 |                         $11.50 |
+| Traffic scenario                        | Baseline elastic average instances | Baseline elastic monthly compute | Baseline elastic compute/subscriber-month | Baseline fixed instances | Baseline fixed monthly compute | Baseline fixed compute/subscriber-month |
+| --------------------------------------- | ---------------------------------: | -------------------------------: | ----------------------------------------: | -----------------------: | -----------------------------: | --------------------------------------: |
+| Lower playtime                          |                                100 |                       $14,515.20 |                                     $1.45 |                      228 |                     $33,094.66 |                                   $3.31 |
+| Research middle                         |                             166.67 |                       $24,192.00 |                                     $2.42 |                      380 |                     $55,157.76 |                                   $5.52 |
+| Higher playtime                         |                                250 |                       $36,288.00 |                                     $3.63 |                      570 |                     $82,736.64 |                                   $8.27 |
+| Earlier 1,000-average / 3,000-peak case |                                200 |                       $29,030.40 |                                     $2.90 |                      600 |                     $87,091.20 |                                   $8.71 |
 
-Without an **additional** fleet reserve (`b = 1`), the middle scenario costs **$2.42/subscriber-month elastic** or **$5.52 fixed** (380 instances). The earlier 1,000/3,000 scenario costs **$2.90 elastic** or **$8.71 fixed** (600 instances). Removing `b` leaves intact whatever per-instance operating allowance is already included in `K`.
+For comparison, the **optional 32% additional fleet reserve (`b = 1.32`)** produces the following costs. The fixed fleet then covers peak demand plus that extra reserve throughout the month. Whole-instance rounding means its cost need not be exactly 1.32 times the rounded fixed baseline.
+
+| Traffic scenario                        | Optional-reserve elastic average instances | Optional-reserve elastic monthly compute | Optional-reserve elastic compute/subscriber-month | Optional-reserve fixed instances | Optional-reserve fixed monthly compute | Optional-reserve fixed compute/subscriber-month |
+| --------------------------------------- | -----------------------------------------: | ---------------------------------------: | ------------------------------------------------: | -------------------------------: | -------------------------------------: | ----------------------------------------------: |
+| Lower playtime                          |                                        132 |                               $19,160.06 |                                             $1.92 |                              301 |                             $43,690.75 |                                           $4.37 |
+| Research middle                         |                                        220 |                               $31,933.44 |                                             $3.19 |                              502 |                             $72,866.30 |                                           $7.29 |
+| Higher playtime                         |                                        330 |                               $47,900.16 |                                             $4.79 |                              752 |                            $109,154.30 |                                          $10.92 |
+| Earlier 1,000-average / 3,000-peak case |                                        264 |                               $38,320.13 |                                             $3.83 |                              792 |                            $114,960.38 |                                          $11.50 |
 
 Under ideal scaling, changing only the shape or height of the peak while preserving monthly player-hours changes the largest fleet required, but not the instance-hours formula. It changes cost when capacity must remain running, cannot be placed efficiently, or needs advance provisioning. The “divide peak cost by three” shortcut from the supplied research works only for its chosen rounded 250-slot capacity versus 83.33 average CCU, before a continuous extra reserve. Do not divide by three after already calculating cost from player-hours.
 
-At a **hypothetical $20 gross subscription price**, the middle reference-rate case consumes about **16.0% of gross revenue** for elastic VM compute or **36.4%** for fixed VM compute. The remaining revenue is not profit: no other operating costs or revenue deductions have been subtracted. The $20 price is an illustration, not an OpenLegend pricing decision.
+At a **hypothetical $20 gross subscription price**, the middle reference-rate baseline consumes about **12.1% of gross revenue** for elastic VM compute or **27.6%** for fixed VM compute. The optional reserve raises these to **16.0% / 36.4%**, respectively. The remaining revenue is not profit: no other operating costs or revenue deductions have been subtracted. The $20 price is an illustration, not an OpenLegend pricing decision.
 
 ## External hosting comparisons
 
 There is no established public MMO-only median for comparable server compute per subscriber. Cost per occupied player-hour at specified gameplay and service quality is more transferable than raw players per instance.
 
-The following [AWS GameLift worked examples](https://aws.amazon.com/gamelift/servers/pricing/) are recalculated using their explicit hourly price and occupied capacity, **our 60 hours and our 1.32 multiplier in place of AWS's example buffer**:
+The following [AWS GameLift worked examples](https://aws.amazon.com/gamelift/servers/pricing/) are recalculated using their explicit hourly price and occupied capacity, with **our 60 hours, no extra reserve in the baseline, and a separate optional 32% reserve**. AWS's own example buffer is replaced, not added again:
 
-| Vendor-modeled workload                           | Instance price/hour | Occupied players/instance | Compute per 60 occupied player-hours, including 1.32 |
-| ------------------------------------------------- | ------------------: | ------------------------: | ---------------------------------------------------: |
-| 5v5 shooter: eight 10-player sessions             |              $0.741 |                        80 |                                                $0.73 |
-| Fighting game: twenty-four 2-player sessions      |              $0.741 |                        48 |                                                $1.22 |
-| Battle royale: four sessions averaging 30 players |              $0.823 |                       120 |                                                $0.54 |
+| Vendor-modeled workload                           | Instance price/hour | Occupied players/instance | Baseline compute per 60 occupied player-hours | Optional-reserve compute per 60 occupied player-hours |
+| ------------------------------------------------- | ------------------: | ------------------------: | --------------------------------------------: | ----------------------------------------------------: |
+| 5v5 shooter: eight 10-player sessions             |              $0.741 |                        80 |                                         $0.56 |                                                 $0.73 |
+| Fighting game: twenty-four 2-player sessions      |              $0.741 |                        48 |                                         $0.93 |                                                 $1.22 |
+| Battle royale: four sessions averaging 30 players |              $0.823 |                       120 |                                         $0.41 |                                                 $0.54 |
 
-These are vendor examples for session games, not measured OpenLegend capacity or MMO financial statements. The formula is `P / occupied players × 60 × 1.32`; inconsistent summary totals elsewhere on the vendor page are not used. Eighty players on a $533.52-per-720-hour-month VM is approximately the same capacity per dollar as fifteen on a $100 VM. Included bandwidth under eligible GameLift terms does not establish free egress for ordinary EC2 hosting.
+These are vendor examples for session games, not measured OpenLegend capacity or MMO financial statements. The formula is `P / occupied players × 60 × b`, with baseline `b = 1` or optional `b = 1.32`; inconsistent vendor summary totals are not used. Eighty players on a $533.52-per-720-hour-month VM is approximately the same capacity per dollar as fifteen on a $100 VM. Included bandwidth under eligible GameLift terms does not establish free egress for ordinary EC2 hosting.
 
 The supplied research also records Homecoming's **January 2020 hosting bill of $4,820.39** and **1,787 average CCU**. Dividing by `1,787 × 744` player-hours gives **$0.003626/player-hour**, or about **$0.22 per 60 hours**. This is historical donation-funded hosting, not a subscriber charge or modern MMO target. Its actual spare capacity is already in the bill; do not add a hypothetical reserve again. The [operator's finance post](https://forums.homecomingservers.com/topic/14562-february-2020-donations-finances/?comment=153662&do=findComment) and [population post](https://forums.homecomingservers.com/topic/16094-homecoming-statistics-march-2020/) are retained as source references; access returned HTTP 403 during this review, so those figures remain attributed to the supplied research rather than independently reverified here.
 
