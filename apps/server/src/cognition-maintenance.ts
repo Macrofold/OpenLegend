@@ -285,6 +285,12 @@ export class CognitionMaintenance {
   private key(actorId: string) {
     return `reflection-queue:${this.host.worldId}:${actorId}`;
   }
+  private get reflectionExecutable(): boolean {
+    const { macrofoldKey, macrofoldWorkerId } = this.host.config;
+    // Reflection uses an actor Worktree. Direct inference can remain
+    // configured without a Worker and cannot execute the reflection harness.
+    return this.host.reflectionEnabled && !!macrofoldKey && !!macrofoldWorkerId;
+  }
   async enqueue(
     actorId: string,
     origin: string,
@@ -314,7 +320,7 @@ export class CognitionMaintenance {
       });
       if (!retained) return;
       this.work.wake(actorId);
-      const unavailable = !this.host.config.macrofoldKey
+      const unavailable = !this.reflectionExecutable
         ? 'Reflection harness is not configured.'
         : undefined;
       await this.log.save({
@@ -473,7 +479,10 @@ export class CognitionMaintenance {
             const dreamReady = safe && !!dream && dream.elapsedSeconds >= dream.afterSeconds;
             const hasMemories = history.hasMemories;
             const day = Math.floor(actor.simTime / 86400);
+            const dreamReviewDue = dreamReady && day > 0;
+            const reflectionExecutable = this.reflectionExecutable;
             const reflectionDue =
+              this.host.reflectionEnabled &&
               reflectionSafe &&
               reflectionTimeDueFromRead(
                 actor.simTime,
@@ -485,9 +494,9 @@ export class CognitionMaintenance {
             // queued reflection means there is no maintenance metadata to inspect.
             if (
               !history.rawDue &&
-              !(dreamReady && day > 0) &&
+              !dreamReviewDue &&
               !reflectionDue &&
-              !(safe && !actor.hasAction && this.host.config.macrofoldKey)
+              !(safe && !actor.hasAction && reflectionExecutable)
             )
               continue;
             if (
@@ -500,6 +509,10 @@ export class CognitionMaintenance {
                 'Safe idle time to reconsider remembered experience',
                 generation,
               );
+            // A due opportunity stays queued across operator reconfiguration.
+            // Without an executable harness it cannot spend the daily attempt
+            // or take priority over independent memory maintenance.
+            if (!history.rawDue && !dreamReady && !reflectionExecutable) continue;
 
             // Dream maintenance reviews a completed day in bounded, resumable partitions.
             // It is separate from intentional idle reflection and never marks memories reflected.
@@ -522,18 +535,18 @@ export class CognitionMaintenance {
                 : savedReview;
             const reviewDay =
               review?.completed === false && review.failed === false ? review.day : day - 1;
-            const queued = (await this.readSchedule(() =>
-              this.host.store.getIntegration(this.key(actorId)),
-            )) as ReflectionRequest | undefined;
-            const previousKind = await this.readSchedule(() =>
-              this.host.store.getIntegration(`maintenance-kind:${this.host.worldId}:${actorId}`),
-            );
+            const queued = reflectionExecutable
+              ? ((await this.readSchedule(() =>
+                  this.host.store.getIntegration(this.key(actorId)),
+                )) as ReflectionRequest | undefined)
+              : undefined;
             const prioritizeReflection =
               reflectionSafe &&
               !actor.hasAction &&
               queued &&
-              previousKind === 'consolidation' &&
-              this.host.config.macrofoldKey;
+              (await this.readSchedule(() =>
+                this.host.store.getIntegration(`maintenance-kind:${this.host.worldId}:${actorId}`),
+              )) === 'consolidation';
             if (
               dreamReady &&
               reviewDay >= 0 &&
@@ -610,7 +623,7 @@ export class CognitionMaintenance {
               );
               return;
             }
-            if (!reflectionSafe || actor.hasAction || !queued || !this.host.config.macrofoldKey)
+            if (!reflectionSafe || actor.hasAction || !queued || !this.reflectionExecutable)
               continue;
             const attemptKey = `reflection-attempt:${this.host.worldId}:${actorId}`;
             const attempt = (await this.readSchedule(() =>
