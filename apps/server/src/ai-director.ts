@@ -39,6 +39,8 @@ import { undispatchedReceipt } from './decision-state.js';
 import { playerActionIdentity } from './action-request-recovery.js';
 import { humanRequestId } from './human-request-id.js';
 import { CognitionExecution } from './cognition-execution.js';
+import { NpcChatAdmission, type NpcChatBlocker } from './npc-chat-admission.js';
+import { chatNotSent } from './player-interaction.js';
 import { DecisionEscalator } from './decision-escalator.js';
 import {
   prepareReconsideration,
@@ -283,17 +285,31 @@ export class AiDirector {
   private readonly immediateRuns = new Map<string, Running>();
   private readonly immediateActors = new Map<string, Running>();
 
+  private readonly chatAdmission = new NpcChatAdmission(
+    (actorId) => this.admissionBlocker(actorId),
+    (operation) => this.admission(operation),
+  );
+
   private canAdmit(actorId?: string): boolean {
-    if (this.stopped || this.immediateRuns.size >= this.service.config.npcAiConcurrency)
-      return false;
-    return !actorId || (!this.immediateActors.has(actorId) && !this.escalator.hasActor(actorId));
+    return this.admissionBlocker(actorId) === undefined;
+  }
+
+  private admissionBlocker(actorId?: string): NpcChatBlocker | undefined {
+    if (this.stopped) return 'closed';
+    if (actorId) {
+      if (this.escalator.hasActor(actorId)) return 'higher-reasoning';
+      if (this.immediateActors.has(actorId)) return 'actor-slot';
+    }
+    if (this.immediateRuns.size >= this.service.config.npcAiConcurrency) return 'job-capacity';
   }
 
   private releaseImmediate(run: Running): void {
     // A late completion cannot free a newer job's capacity or cancellation target.
-    if (this.immediateRuns.get(run.job.id) === run) this.immediateRuns.delete(run.job.id);
+    if (this.immediateRuns.get(run.job.id) !== run) return;
+    this.immediateRuns.delete(run.job.id);
     const actorId = this.selectedActorId(run.job);
     if (actorId && this.immediateActors.get(actorId) === run) this.immediateActors.delete(actorId);
+    this.chatAdmission.slotChanged();
   }
   private pendingWork = new Set<Promise<void>>();
   private activeRuns = new Set<Running>();
@@ -922,6 +938,7 @@ export class AiDirector {
     authority = this.service.localScope,
     volume: SpeechVolume = 'normal',
     mode?: 'workshop',
+    signal?: AbortSignal,
   ): Promise<ApiResult> {
     return await this.submit(
       kind,
@@ -938,6 +955,7 @@ export class AiDirector {
       volume,
       mode,
       true,
+      signal,
     );
   }
 
@@ -971,13 +989,17 @@ export class AiDirector {
     volume: SpeechVolume = 'normal',
     mode?: 'workshop',
     publicReferences = false,
+    signal?: AbortSignal,
   ): Promise<ApiResult> {
     authority ??= initiatingActor ? undefined : this.service.localScope;
-    const admit = async () => {
-      if (authority) {
-        id = humanRequestId(authority, id);
-        // Parent and retry IDs are opaque IDs already returned by the server.
-      }
+    // Compute the original principal-bound request ID once. A new admission
+    // attempt consumes the same receipt before doing any work.
+    if (authority) id = humanRequestId(authority, id);
+    const admit = async (
+      admitChat?: (actorId?: string) => boolean,
+      current?: () => boolean,
+      expired?: () => ApiResult | undefined,
+    ) => {
       if (mode && (kind !== 'invention' || initiatingActor))
         return {
           ok: false,
@@ -1309,7 +1331,11 @@ export class AiDirector {
           'speak',
           targetId,
           authority,
+          admitChat,
         );
+        if (current && !current()) return chatNotSent;
+        const noSlot = expired?.();
+        if (noSlot) return noSlot;
         if (!available.available)
           return { ok: false, code: available.code, message: available.reason! };
       }
@@ -1404,6 +1430,17 @@ export class AiDirector {
       await this.begin(job);
       return { ok: true, code: 'queued', message: job.message, jobId: id };
     };
+    if (kind === 'chat' && authority && publicReferences && !retryOf) {
+      const scope = authority;
+      const generation = this.service.generation;
+      return this.chatAdmission.wait({
+        signal,
+        assertScope: () => this.service.assertScope(scope, 'play', true),
+        current: () => !signal?.aborted && !this.stopped && generation === this.service.generation,
+        trySend: (admitChat, current, expired) =>
+          this.service.authorized(scope, 'play', true, () => admit(admitChat, current, expired)),
+      });
+    }
     return this.admission(() =>
       authority ? this.service.authorized(authority, 'play', true, admit) : admit(),
     );
@@ -4125,7 +4162,8 @@ export class AiDirector {
               nativeCauses.some((cause) => cause.severity >= INTAKE_LIMITS.urgent);
             // Capacity refusal leaves this character's coalesced ticket and evidence
             // untouched. Ordinary aging still orders eligible work in the same queue.
-            if (!this.canAdmit(entity.id)) continue;
+            if ((!urgent && this.chatAdmission.hasCapacityWaiter) || !this.canAdmit(entity.id))
+              continue;
             if (!(await this.execution.primaryAvailable())) continue;
             // Native urgency identifies the initiating experience, not just queue
             // priority. A later incidental sighting cannot replace an actual blow
@@ -4512,6 +4550,7 @@ export class AiDirector {
   }
   async close(): Promise<void> {
     this.stopped = true;
+    this.chatAdmission.slotChanged();
     this.releasePlayerInteractionAdmission();
     this.replyPreviews.close();
     for (const run of this.activeRuns) run.controller.abort();

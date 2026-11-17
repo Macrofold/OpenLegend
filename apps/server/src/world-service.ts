@@ -6973,6 +6973,7 @@ export class WorldService {
     mode: 'speak' | 'act',
     targetId?: string,
     scope = this.localScope,
+    admit = (actorId: string) => this.playerInteractionAdmission?.(actorId) ?? true,
   ): Promise<PlayerInteractionAvailability> {
     await this.ready;
     return playerInteractionAvailability({
@@ -7009,7 +7010,7 @@ export class WorldService {
       },
       budgetAvailable: (actor, allowance, ceiling) =>
         this.store.budgetAvailable(actor, allowance, ceiling),
-      admit: (actor) => this.playerInteractionAdmission?.(actor) ?? true,
+      admit,
     });
   }
 

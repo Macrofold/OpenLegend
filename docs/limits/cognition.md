@@ -545,7 +545,7 @@ Director, provider and memory admission can still refuse genuine contention.
 The [execution owner](ai-execution.md#de-l02--bounded-scheduling-and-context-retention)
 keeps occupied and uncertain remote leases through their actual lifetimes.
 
-Native directed Send can wait up to five seconds for an occupied immediate
+Directed Send in Source and Native can wait up to five seconds for an occupied immediate
 position without holding the world or cognition admission lane. The public
 availability read remains advisory. Waiting Sends involving the shared cap
 take precedence over new ordinary autonomous work; urgent work and work already

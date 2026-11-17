@@ -45,6 +45,7 @@ import type { HttpPublication } from '@open-legend/network';
 import { humanRequestId } from './human-request-id.js';
 import type { RequestScope } from './authority.js';
 import { chatNotSent } from './player-interaction.js';
+import { NpcChatAdmission, type NpcChatBlocker } from './npc-chat-admission.js';
 import { randomUUID } from 'node:crypto';
 import {
   activeGoalTexts,
@@ -167,8 +168,6 @@ interface Run extends DispatchRun {
   expiryTimer?: ReturnType<typeof setTimeout>;
   temporalSourceFailure?: () => DecisionDependencyFailure | undefined;
 }
-// The HTTP request is still uncommitted throughout this wait. See LA231.
-const CHAT_ADMISSION_WAIT_MS = 5_000;
 const bytes = (value: unknown) =>
   value === undefined
     ? 0
@@ -219,9 +218,10 @@ export class NativeNpcDirector {
   private stopped = false;
   private closing?: Promise<void>;
   private admissionTail: Promise<unknown> = Promise.resolve();
-  private slotRevision = 0;
-  private readonly slotWaiters = new Set<() => void>();
-  private pendingCapacityChats = 0;
+  private readonly chatAdmission = new NpcChatAdmission(
+    (actorId) => this.admissionBlocker(actorId),
+    (operation) => this.admission(operation),
+  );
   private readonly unsubscribe: () => void;
   private readonly releaseAdmission: () => void;
   private readonly actorNameScope = new AsyncLocalStorage<{
@@ -467,76 +467,83 @@ export class NativeNpcDirector {
       authority: scope,
       conversationId: undefined,
     });
-    return this.admitChat(scope, signal, async (admit, current, expired) => {
-      const previous = await this.service.store.getJob(jobId);
-      this.service.assertScope(scope, 'play', true);
-      if (previous)
-        return previous.fingerprint === fingerprint
-          ? {
-              ok: !['failed', 'cancelled', 'stale'].includes(previous.status),
-              code: previous.status,
-              message: previous.message,
-              jobId,
-              jobStatus: previous.status,
-            }
-          : {
-              ok: false,
-              code: 'idempotency-conflict',
-              message: 'That request ID was already used for different input.',
-            };
-      if (!current()) return chatNotSent;
-      const noSlot = expired();
-      if (noSlot) return noSlot;
-      if (!npcReference)
-        return {
-          ok: false,
-          code: 'resident-unavailable',
-          message: 'Select a person for this conversation.',
-        };
-      if (!admit())
-        return {
-          ok: false,
-          code: 'busy',
-          message: 'Another request is already in progress. You can keep gathering and surviving.',
-        };
-      const spoken = await this.service.speakToNpc(jobId, text, npcReference, volume, scope, {
-        current,
-        admit,
-      });
-      if (!spoken.ok) return spoken.outcome;
-      try {
-        const job: JobRecord = {
-          authority: scope,
-          id: jobId,
-          kind: 'chat',
-          fingerprint,
-          status: spoken.heard ? 'queued' : 'completed',
-          playerSpeechEventId: spoken.eventId,
-          message: spoken.heard
-            ? `${spoken.recipientName} is considering your words.`
-            : 'Spoken. No conversational reply was requested.',
-          request: { text, volume, npcId: spoken.actorId },
-          createdAt: this.now(),
-        };
-        if (!spoken.heard) {
-          await this.service.store.putJob(job);
-          this.service.notifyTelemetry();
-          return { ok: true, code: 'spoken', message: job.message, jobId };
-        }
-        this.maintenance.cancel();
-        const read = await this.service.captureNpcIntake(spoken.actorId, 0);
-        let transferred = false;
+    const generation = this.service.generation;
+    return this.chatAdmission.wait({
+      signal,
+      assertScope: () => this.service.assertScope(scope, 'play', true),
+      current: () => !signal?.aborted && !this.stopped && generation === this.service.generation,
+      trySend: async (admit, current, expired) => {
+        const previous = await this.service.store.getJob(jobId);
+        this.service.assertScope(scope, 'play', true);
+        if (previous)
+          return previous.fingerprint === fingerprint
+            ? {
+                ok: !['failed', 'cancelled', 'stale'].includes(previous.status),
+                code: previous.status,
+                message: previous.message,
+                jobId,
+                jobStatus: previous.status,
+              }
+            : {
+                ok: false,
+                code: 'idempotency-conflict',
+                message: 'That request ID was already used for different input.',
+              };
+        if (!current()) return chatNotSent;
+        const noSlot = expired();
+        if (noSlot) return noSlot;
+        if (!npcReference)
+          return {
+            ok: false,
+            code: 'resident-unavailable',
+            message: 'Select a person for this conversation.',
+          };
+        if (!admit())
+          return {
+            ok: false,
+            code: 'busy',
+            message:
+              'Another request is already in progress. You can keep gathering and surviving.',
+          };
+        const spoken = await this.service.speakToNpc(jobId, text, npcReference, volume, scope, {
+          current,
+          admit,
+        });
+        if (!spoken.ok) return spoken.outcome;
         try {
-          this.work.wake(spoken.actorId, { reason: 'directed-speech' });
-          await this.begin(job, read);
-          transferred = true;
+          const job: JobRecord = {
+            authority: scope,
+            id: jobId,
+            kind: 'chat',
+            fingerprint,
+            status: spoken.heard ? 'queued' : 'completed',
+            playerSpeechEventId: spoken.eventId,
+            message: spoken.heard
+              ? `${spoken.recipientName} is considering your words.`
+              : 'Spoken. No conversational reply was requested.',
+            request: { text, volume, npcId: spoken.actorId },
+            createdAt: this.now(),
+          };
+          if (!spoken.heard) {
+            await this.service.store.putJob(job);
+            this.service.notifyTelemetry();
+            return { ok: true, code: 'spoken', message: job.message, jobId };
+          }
+          this.maintenance.cancel();
+          const read = await this.service.captureNpcIntake(spoken.actorId, 0);
+          let transferred = false;
+          try {
+            this.work.wake(spoken.actorId, { reason: 'directed-speech' });
+            await this.begin(job, read);
+            transferred = true;
+          } finally {
+            if (!transferred) read.release();
+          }
+          return { ok: true, code: 'queued', message: job.message, jobId };
         } finally {
-          if (!transferred) read.release();
+          releaseNativeProduct(spoken);
         }
-        return { ok: true, code: 'queued', message: job.message, jobId };
-      } finally {
-        releaseNativeProduct(spoken);
-      }
+      },
     });
   }
   /** A deliberate retry reuses authored speech and buys only a new reply. */
@@ -649,7 +656,7 @@ export class NativeNpcDirector {
   private canAdmit(actorId?: string): boolean {
     return this.admissionBlocker(actorId) === undefined;
   }
-  private admissionBlocker(actorId?: string) {
+  private admissionBlocker(actorId?: string): NpcChatBlocker | undefined {
     if (this.stopped) return 'closed';
     if (actorId) {
       if (this.escalator.hasActor(actorId)) return 'higher-reasoning';
@@ -657,81 +664,11 @@ export class NativeNpcDirector {
     }
     if (this.runs.size >= this.service.config.npcAiConcurrency) return 'job-capacity';
   }
-  private async admitChat(
-    scope: RequestScope,
-    signal: AbortSignal | undefined,
-    attempt: (
-      admit: (actorId?: string) => boolean,
-      current: () => boolean,
-      expired: () => ApiResult | undefined,
-    ) => Promise<ApiResult>,
-  ): Promise<ApiResult> {
-    const until = performance.now() + CHAT_ADMISSION_WAIT_MS;
-    const generation = this.service.generation;
-    const current = () =>
-      !signal?.aborted && !this.stopped && generation === this.service.generation;
-    let hasPriority = false;
-    let refusal: ApiResult | undefined;
-    const expired = () => (refusal && performance.now() >= until ? refusal : undefined);
-    try {
-      for (;;) {
-        let blockedAt: number | undefined;
-        const admit = (actorId?: string) => {
-          if (expired() || !current()) return false;
-          const blocked = this.admissionBlocker(actorId);
-          if (!blocked) return true;
-          if (blocked === 'closed' || blocked === 'higher-reasoning') return false;
-          blockedAt = this.slotRevision;
-          const sharedSlot = blocked === 'job-capacity';
-          if (sharedSlot !== hasPriority) {
-            this.pendingCapacityChats += sharedSlot ? 1 : -1;
-            hasPriority = sharedSlot;
-          }
-          return false;
-        };
-        const result = await this.admission(async () => {
-          this.service.assertScope(scope, 'play', true);
-          if (!current()) return chatNotSent;
-          const noSlot = expired();
-          if (noSlot) return noSlot;
-          return attempt(admit, current, expired);
-        });
-        if (blockedAt === undefined) return result;
-        refusal = result;
-        await this.waitForSlot(blockedAt, until, signal);
-        this.service.assertScope(scope, 'play', true);
-        if (!current()) return chatNotSent;
-        if (expired()) return result;
-      }
-    } finally {
-      if (hasPriority) this.pendingCapacityChats--;
-    }
-  }
-  private waitForSlot(revision: number, until: number, signal?: AbortSignal): Promise<void> {
-    const remaining = until - performance.now();
-    if (revision !== this.slotRevision || remaining <= 0 || signal?.aborted || this.stopped)
-      return Promise.resolve();
-    return new Promise((resolve) => {
-      const wake = () => {
-        clearTimeout(timer);
-        signal?.removeEventListener('abort', wake);
-        this.slotWaiters.delete(wake);
-        resolve();
-      };
-      const timer = setTimeout(wake, remaining);
-      signal?.addEventListener('abort', wake, { once: true });
-      this.slotWaiters.add(wake);
-    });
-  }
-  private slotChanged(): void {
-    this.slotRevision++;
-    for (const wake of this.slotWaiters) wake();
-  }
   private releaseRun(run: Run): void {
     if (this.runs.get(run.job.id) !== run) return;
     this.runs.delete(run.job.id);
     if (this.actorRuns.get(run.actorId) === run) this.actorRuns.delete(run.actorId);
-    this.slotChanged();
+    this.chatAdmission.slotChanged();
   }
   private stopCurrent(
     run: Run,
@@ -2343,7 +2280,7 @@ export class NativeNpcDirector {
           // At the configured job cap, a waiting Send goes before new optional
           // ordinary thoughts. Urgent and already admitted work keep their priority.
           if (
-            (!urgent && this.pendingCapacityChats > 0) ||
+            (!urgent && this.chatAdmission.hasCapacityWaiter) ||
             !this.canAdmit(actorId) ||
             !(await this.execution.primaryAvailable())
           )
@@ -2832,7 +2769,7 @@ export class NativeNpcDirector {
   close(): Promise<void> {
     return (this.closing ??= (async () => {
       this.stopped = true;
-      this.slotChanged();
+      this.chatAdmission.slotChanged();
       const previews = this.replyPreviews.close();
       this.releaseAdmission();
       this.unsubscribe();

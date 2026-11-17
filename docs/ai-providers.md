@@ -18,8 +18,10 @@ Core sparse-schema delivery retains existing revision fields and meaningful work
 
 Source and Native admit unrelated ordinary and urgent NPC decisions concurrently
 under the development allowance in [LA231](limits/cognition.md#la231). A new
-request can meet its NPC's existing decision or genuine configured contention;
-the player retains the draft if speech was refused. Each job owns its watcher,
+request can meet its NPC's existing decision or genuine configured contention.
+A directed Send can wait briefly for its own admission, with no speech or model
+request accepted during the wait. The player retains the draft if speech was refused.
+Each job owns its watcher,
 cancellation, preview, reservations and completion. Being admitted does not cancel
 another funded character decision. The separate optional reflection scheduler
 keeps its existing foreground-interruption policy. Historical [combat checks](verification/combat-and-threat-responses.md)

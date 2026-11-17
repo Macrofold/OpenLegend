@@ -3859,11 +3859,16 @@ async function initializeGameServer(
             case '/api/chat':
             case '/api/invent': {
               const value = interaction.parse(body);
-              return send(
-                response,
-                202,
-                await director.submitInteractive(
-                  url.pathname === '/api/chat' ? 'chat' : 'invention',
+              const chat = url.pathname === '/api/chat';
+              const pending = new AbortController();
+              const disconnect = () => pending.abort();
+              if (chat) {
+                response.once('close', disconnect);
+                if (response.destroyed) disconnect();
+              }
+              try {
+                const outcome = await director.submitInteractive(
+                  chat ? 'chat' : 'invention',
                   value.requestId,
                   value.text,
                   value.npcId,
@@ -3872,8 +3877,14 @@ async function initializeGameServer(
                   value.candidate,
                   scope,
                   value.volume,
-                ),
-              );
+                  undefined,
+                  chat ? pending.signal : undefined,
+                );
+                if (!response.destroyed) return send(response, 202, outcome);
+                return;
+              } finally {
+                if (chat) response.off('close', disconnect);
+              }
             }
             default:
               return send(response, 404, {
