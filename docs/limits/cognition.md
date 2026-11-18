@@ -545,12 +545,16 @@ Director, provider and memory admission can still refuse genuine contention.
 The [execution owner](ai-execution.md#de-l02--bounded-scheduling-and-context-retention)
 keeps occupied and uncertain remote leases through their actual lifetimes.
 
-The directed-reply availability read can report that Send is eligible when
-the actual request can use its existing bounded wait. The read reserves no
-place. An explicit directed Send can wait up to five seconds for an occupied
-position without holding the world or cognition admission lane. A same-NPC
-waiter precedes new ordinary jobs for that NPC. A waiter at the shared cap
-precedes new ordinary jobs using that cap. Existing jobs and urgent work keep
+The directed-reply availability read can report that Send is eligible to wait.
+The read reserves no place. An explicit directed Send can wait for the addressed
+NPC's occupied position within the player's existing 30-second mutation request
+envelope. A wait for the shared job cap has a five-second deadline. Both deadlines
+start at the original admission and the wait holds neither the world nor
+cognition admission lane. Other NPCs' slot changes leave a still-occupied
+resident's waiter asleep.
+
+A same-NPC waiter precedes new ordinary jobs for that NPC. A waiter at the shared
+cap precedes new ordinary jobs using that cap. Existing jobs and urgent work keep
 their positions. Each new admission attempt checks the original request ID,
 current control, recipient and funding. An expired wait cannot start speech
 admission. Disconnect or lost authority prevents uncommitted speech from

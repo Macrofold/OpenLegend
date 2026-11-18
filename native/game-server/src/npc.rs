@@ -481,7 +481,10 @@ impl Director {
         refs: Arc<ReferenceIssuer>,
         mut cancelled: watch::Receiver<bool>,
     ) -> Result<JobStart, WorldError> {
-        let until = Instant::now() + ADMISSION_WAIT;
+        let started = Instant::now();
+        let capacity_until = started + ADMISSION_WAIT;
+        let resident_until = started + USEFUL_LIFETIME;
+        let mut wait_until = capacity_until;
         let mut waiting = self.slots.waiting_send();
         let refused = |code, message| Ok(JobStart::Existing(SubmitResult::refused(code, message)));
         loop {
@@ -545,7 +548,7 @@ impl Director {
                     SpeechRefusal::Cancelled,
                 )));
             }
-            if waiting.is_waiting() && Instant::now() >= until {
+            if waiting.is_waiting() && Instant::now() >= wait_until {
                 break;
             }
             let scope = &speech.scope.scope;
@@ -563,19 +566,23 @@ impl Director {
                     )));
                 }
                 Admission::Held(mut ended) => {
+                    // A resident may finish after the shared capacity window.
+                    // Both deadlines still start at the original Send.
+                    wait_until = resident_until;
                     let wait = async {
                         let _ = ended.changed().await;
                     };
-                    if !wait_admission(until, &mut cancelled, wait).await {
+                    if !wait_admission(wait_until, &mut cancelled, wait).await {
                         break;
                     }
                     continue;
                 }
                 Admission::Capacity(mut freed) => {
+                    wait_until = capacity_until;
                     let wait = async {
                         let _ = freed.changed().await;
                     };
-                    if !wait_admission(until, &mut cancelled, wait).await {
+                    if !wait_admission(wait_until, &mut cancelled, wait).await {
                         break;
                     }
                     continue;

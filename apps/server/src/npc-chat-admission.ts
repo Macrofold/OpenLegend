@@ -2,7 +2,8 @@ import type { ApiResult } from '@open-legend/protocol';
 import { chatNotSent } from './player-interaction.js';
 
 // The HTTP request is still uncommitted throughout this wait. See LA231.
-const CHAT_ADMISSION_WAIT_MS = 5_000;
+const SHARED_ADMISSION_WAIT_MS = 5_000;
+const RESIDENT_ADMISSION_WAIT_MS = 30_000;
 export type NpcChatBlocker = 'closed' | 'higher-reasoning' | 'actor-slot' | 'job-capacity';
 const waitable = (blocked: NpcChatBlocker) =>
   blocked === 'actor-slot' || blocked === 'job-capacity';
@@ -22,7 +23,6 @@ interface NpcChatAttempt {
  * Only the director's synchronous blocker check can grant its own job slot.
  * The HTTP owner supplies cancellation and rechecks scope on every attempt. */
 export class NpcChatAdmission {
-  private revision = 0;
   private readonly waiters = new Set<() => void>();
   private pendingAtCapacity = 0;
   private readonly pendingActors = new Map<string, number>();
@@ -43,7 +43,8 @@ export class NpcChatAdmission {
   }
 
   async wait({ assertScope, current, signal, trySend }: NpcChatAttempt): Promise<ApiResult> {
-    const until = performance.now() + CHAT_ADMISSION_WAIT_MS;
+    const started = performance.now();
+    let until = started + SHARED_ADMISSION_WAIT_MS;
     let hasPriority = false;
     let waitingActor: string | undefined;
     const setWaitingActor = (actorId?: string) => {
@@ -60,14 +61,15 @@ export class NpcChatAdmission {
     const expired = () => (refusal && performance.now() >= until ? refusal : undefined);
     try {
       for (;;) {
-        let blockedAt: number | undefined;
+        let dependency: { actorId?: string; blocked: NpcChatBlocker } | undefined;
         const admit = (actorId?: string) => {
           if (expired() || !current()) return false;
           const blocked = this.blocker(actorId);
           if (!blocked) return true;
           if (!waitable(blocked)) return false;
-          blockedAt = this.revision;
           const sharedSlot = blocked === 'job-capacity';
+          dependency = { actorId, blocked };
+          until = started + (sharedSlot ? SHARED_ADMISSION_WAIT_MS : RESIDENT_ADMISSION_WAIT_MS);
           setWaitingActor(sharedSlot ? undefined : actorId);
           if (sharedSlot !== hasPriority) {
             this.pendingAtCapacity += sharedSlot ? 1 : -1;
@@ -82,9 +84,9 @@ export class NpcChatAdmission {
           if (noSlot) return noSlot;
           return trySend(admit, current, expired);
         });
-        if (blockedAt === undefined) return result;
+        if (!dependency) return result;
         refusal = result;
-        await this.waitForSlot(blockedAt, until, current, signal);
+        await this.waitForSlot(dependency, until, current, signal);
         assertScope();
         if (!current()) return chatNotSent;
         if (expired()) return result;
@@ -96,28 +98,31 @@ export class NpcChatAdmission {
   }
 
   private waitForSlot(
-    revision: number,
+    { actorId, blocked }: { actorId?: string; blocked: NpcChatBlocker },
     until: number,
     current: () => boolean,
     signal?: AbortSignal,
   ): Promise<void> {
     const remaining = until - performance.now();
-    if (revision !== this.revision || remaining <= 0 || !current()) return Promise.resolve();
+    if (remaining <= 0 || !current() || this.blocker(actorId) !== blocked) return Promise.resolve();
     return new Promise((resolve) => {
-      const wake = () => {
+      const finish = () => {
         clearTimeout(timer);
-        signal?.removeEventListener('abort', wake);
+        signal?.removeEventListener('abort', finish);
         this.waiters.delete(wake);
         resolve();
       };
-      const timer = setTimeout(wake, remaining);
-      signal?.addEventListener('abort', wake, { once: true });
+      // Another resident finishing does not make this request eligible.
+      const wake = () => {
+        if (!current() || this.blocker(actorId) !== blocked) finish();
+      };
+      const timer = setTimeout(finish, remaining);
+      signal?.addEventListener('abort', finish, { once: true });
       this.waiters.add(wake);
     });
   }
 
   slotChanged(): void {
-    this.revision++;
     for (const wake of this.waiters) wake();
   }
 }
