@@ -477,7 +477,7 @@ impl LiveSaves {
     /// listener stops intake before requesting the final drain. The caller
     /// owns any confirmed/refused result and joins this task during shutdown.
     pub async fn run(self: &Arc<Self>, mut stop: watch::Receiver<bool>) -> Result<(), WorldError> {
-        let mut after = Instant::now();
+        let mut retry_at = None;
         while !*stop.borrow() {
             let oldest = self
                 .pending
@@ -488,17 +488,22 @@ impl LiveSaves {
                 .map(|(at, _)| *at);
             match oldest {
                 Some(at) => {
+                    // A newer tail can already be due when the older prefix
+                    // finishes. Only a busy capture defers the next attempt.
+                    let due = (at + SAVE_INTERVAL).max(retry_at.unwrap_or(at));
                     tokio::select! {
                         _ = stop.changed() => break,
-                        _ = tokio::time::sleep_until(at.max(after) + SAVE_INTERVAL) => {},
+                        _ = tokio::time::sleep_until(due) => {},
                     }
-                    match self.flush().await {
-                        Err(WorldError::Host(openlegend_world_host::pool::HostError::Busy)) => {}
+                    retry_at = match self.flush().await {
+                        Err(WorldError::Host(openlegend_world_host::pool::HostError::Busy)) => {
+                            Some(Instant::now() + SAVE_INTERVAL)
+                        }
                         result => {
                             result?;
+                            None
                         }
-                    }
-                    after = Instant::now();
+                    };
                 }
                 None => {
                     tokio::select! {

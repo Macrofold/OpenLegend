@@ -4679,13 +4679,18 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     });
   }
 
-  private scheduleSave(): void {
+  private scheduleSave(delayOverride?: number): void {
     if (this.saveTimer || this.save || this.closed || this.failure) return;
+    const acceptedAt = this.pending.oldestAcceptedAt;
+    if (acceptedAt === undefined) return;
+    // A newer tail keeps the acceptance deadline it acquired during the write.
+    const delay =
+      delayOverride ?? Math.max(0, LIVE_SAVE_INTERVAL_MS - (performance.now() - acceptedAt));
     this.saveTimer = withoutNativeSqlPreparation(this.store.db, () =>
       setTimeout(() => {
         this.saveTimer = undefined;
         void this.flush().catch(() => this.notify(false));
-      }, LIVE_SAVE_INTERVAL_MS),
+      }, delay),
     );
     this.saveTimer.unref();
   }
@@ -4926,6 +4931,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     if (this.failure && !this.committedPrefix && (this.pending.inFlight || this.pending.dirty))
       throw this.failure;
     let captureStarted = false;
+    let captureRefused = false;
     this.save = withoutNativeConsumerScope(() =>
       (async () => {
         const prefix = await this.lane.run(
@@ -4979,7 +4985,10 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           // Queue refusal before capture leaves the original work eligible for
           // the next ordinary save. Errors during capture, SQL or ACK still latch.
           // docs/projects/bookkeeping-simplification-runtime-design.md#62-accept-buffer-save
-          if (!captureStarted && error instanceof OverloadError) throw error;
+          if (!captureStarted && error instanceof OverloadError) {
+            captureRefused = true;
+            throw error;
+          }
           if (!this.failure) {
             this.failure = error instanceof Error ? error : new Error(String(error));
             console.error('Native save failed.', this.failure);
@@ -4989,7 +4998,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         })
         .finally(() => {
           this.save = undefined;
-          if (this.pending.dirty) this.scheduleSave();
+          if (this.pending.dirty)
+            this.scheduleSave(captureRefused ? LIVE_SAVE_INTERVAL_MS : undefined);
         }),
     );
     return this.save;
