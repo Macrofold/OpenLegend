@@ -180,7 +180,7 @@ pub(super) async fn availability(
     {
         return access_failure(AccessError::Forbidden);
     }
-    let access = match scope(&state.authority, &headers, None).await {
+    let access = match read_scope(&state.authority, &headers).await {
         Ok(access) => Arc::new(access),
         Err(error) => return access_failure(error),
     };

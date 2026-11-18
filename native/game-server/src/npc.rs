@@ -195,6 +195,48 @@ impl Director {
         self.dispatch.previews()
     }
 
+    /// The selected context catalogue opens a draft only. It uses the actual
+    /// body/contact and display role, with no model or mutation admission.
+    pub(crate) async fn contact_menu(
+        &self,
+        scope: Arc<AuthorizedScope>,
+        refs: Arc<ReferenceIssuer>,
+        selected: String,
+        _request: ByteReservation,
+    ) -> Result<Option<axum::body::Bytes>, WorldError> {
+        let authority = self.authority.clone();
+        let game = self.game.clone();
+        Ok(self
+            .game
+            .world
+            .capture(move |session| {
+                let budget = game.host.budget();
+                Ok(
+                    authority.current(&scope, Capability::Play, false, |fields, _| {
+                        let target = speech::target_in_world(
+                            session,
+                            fields,
+                            &refs,
+                            Some(&selected),
+                            budget,
+                        )?;
+                        let Ok(target) = target else {
+                            return Ok(None);
+                        };
+                        let revision = session.accepted_progress()?.sequence;
+                        crate::player_http::actions::conversation(
+                            revision,
+                            &selected,
+                            &target.name,
+                            budget,
+                        )
+                        .map(Some)
+                    }),
+                )
+            })
+            .await???)
+    }
+
     /// Spending availability is a separate await. Re-read the installed
     /// actor/recipient and live control before reporting what Send can do.
     pub(crate) async fn availability(

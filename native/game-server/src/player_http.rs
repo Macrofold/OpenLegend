@@ -30,6 +30,7 @@ use openlegend_simulation::host::{ByteBudget, ByteReservation};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::{sync::Arc, time::Duration};
 use tokio::sync::Semaphore;
+pub(crate) mod actions;
 pub(crate) mod assets;
 mod dialogue;
 mod known_places;
@@ -69,6 +70,7 @@ pub(crate) fn router(
     grace: Duration,
     streams: usize,
     ai_display: crate::store::AiDisplay,
+    god_mode: bool,
     stop: tokio::sync::watch::Receiver<bool>,
 ) -> Result<Router, getrandom::Error> {
     let commands = Arc::new(PlayerCommands::new(
@@ -102,15 +104,58 @@ pub(crate) fn router(
         .route("/api/control", post(manual_clock))
         .route("/api/input", post(update_input))
         .route("/api/known-places", post(known_places::list))
+        .route("/api/actions", post(actions::menu))
         .route("/api/chat", post(dialogue::chat))
         .route("/api/chat/receipt", post(dialogue::receipt))
         .route("/api/ai/cancel", post(dialogue::cancel))
         .route(
             "/api/player-interaction/availability",
             axum::routing::get(dialogue::availability),
-        )
-        .with_state(state);
-    Ok(operations.merge(reads))
+        );
+    let operations = if god_mode {
+        operations.route("/api/god/forget-memory", post(forget_memory))
+    } else {
+        operations
+    };
+    Ok(operations.with_state(state).merge(reads))
+}
+
+async fn forget_memory(State(state): State<PlayerRoutes>, request: Request) -> Response {
+    let Ok(_slot) = state.capacity.try_acquire() else {
+        return busy();
+    };
+    let (parts, body) = request.into_parts();
+    let authorized = match scope(&state.authority, &parts.headers, None).await {
+        Ok(scope) => Arc::new(scope),
+        Err(error) => return access_failure(error),
+    };
+    let (input, _custody): (crate::privacy_edit::ForgetRequest, _) =
+        match json(&parts.headers, body, state.game.host.budget()).await {
+            Ok(input) => input,
+            Err(error) => return error,
+        };
+    let needs_inspect = input.actor_id != authorized.scope.actor_id;
+    let result = match crate::privacy_edit::forget(
+        &state.game,
+        &state.saves,
+        state.authority.clone(),
+        authorized.clone(),
+        input,
+    )
+    .await
+    {
+        Ok(outcome) => outcome,
+        Err(error) => return failed(error),
+    };
+    match state
+        .authority
+        .current_recall_operator(&authorized, needs_inspect, |_| {
+            wire::encode(&result, b"", b"", state.game.host.budget())
+        }) {
+        Ok(Ok(bytes)) => json_response(StatusCode::OK, bytes),
+        Ok(Err(_)) => busy(),
+        Err(error) => access_failure(error),
+    }
 }
 
 async fn command(State(state): State<PlayerRoutes>, request: Request) -> Response {
@@ -391,19 +436,13 @@ async fn scope_from(
     expected: Option<u64>,
     beacon: Option<&PresenceBeacon>,
 ) -> Result<AuthorizedScope, AccessError> {
-    let token = read_cookie(headers, "ol_session").ok_or(AccessError::Session)?;
-    let tab = headers
-        .get("x-ol-client")
-        .and_then(|header| header.to_str().ok())
-        .or_else(|| beacon.map(|beacon| beacon.client.as_str()))
-        .filter(|text| valid_tab(text))
-        .ok_or(AccessError::Changed)?;
-    let authorized = authority.scope(token, tab.to_owned()).await?;
-    let submitted = headers
-        .get("x-ol-scope")
-        .and_then(|header| header.to_str().ok())
-        .or_else(|| beacon.map(|beacon| beacon.scope.as_str()))
-        .ok_or(AccessError::Changed)?;
+    let authorized = session_scope(authority, headers, beacon).await?;
+    let submitted = match headers.get("x-ol-scope") {
+        Some(value) => value.to_str().map_err(|_| AccessError::Changed)?,
+        None => beacon
+            .map(|beacon| beacon.scope.as_str())
+            .ok_or(AccessError::Changed)?,
+    };
     let selected = &authorized.scope;
     if selected.key().map_err(|_| AccessError::Availability)? != submitted {
         let Some(expected) = expected else {
@@ -416,6 +455,40 @@ async fn scope_from(
         }
     }
     Ok(authorized)
+}
+
+async fn read_scope(
+    authority: &Authority,
+    headers: &HeaderMap,
+) -> Result<AuthorizedScope, AccessError> {
+    let authorized = session_scope(authority, headers, None).await?;
+    if let Some(submitted) = headers.get("x-ol-scope") {
+        let submitted = submitted.to_str().map_err(|_| AccessError::Changed)?;
+        if authorized
+            .scope
+            .key()
+            .map_err(|_| AccessError::Availability)?
+            != submitted
+        {
+            return Err(AccessError::Changed);
+        }
+    }
+    Ok(authorized)
+}
+
+async fn session_scope(
+    authority: &Authority,
+    headers: &HeaderMap,
+    beacon: Option<&PresenceBeacon>,
+) -> Result<AuthorizedScope, AccessError> {
+    let token = read_cookie(headers, "ol_session").ok_or(AccessError::Session)?;
+    let tab = headers
+        .get("x-ol-client")
+        .and_then(|header| header.to_str().ok())
+        .or_else(|| beacon.map(|beacon| beacon.client.as_str()))
+        .filter(|text| valid_tab(text))
+        .ok_or(AccessError::Changed)?;
+    authority.scope(token, tab.to_owned()).await
 }
 
 fn valid_tab(tab: &str) -> bool {

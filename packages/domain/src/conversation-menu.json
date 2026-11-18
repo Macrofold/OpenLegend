@@ -1,0 +1,7 @@
+{
+  "labelPrefix": "Speak to ",
+  "descriptionPrefix": "Open a conversation with ",
+  "descriptionSuffix": ". Ask about their experiences, discuss a plan, or offer a suggestion. You can edit your message before sending it.",
+  "category": "Social",
+  "keywords": ["chat", "speak", "conversation"]
+}

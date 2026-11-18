@@ -479,6 +479,22 @@ impl Authority {
         })
     }
 
+    /// Editing someone else's recall also needs the same currently held
+    /// inspection grant. Check both under one lease before handing off data.
+    pub(crate) fn current_recall_operator<T>(
+        &self,
+        authorized: &AuthorizedScope,
+        needs_inspect: bool,
+        use_scope: impl FnOnce(&RequestScope) -> T,
+    ) -> Result<T, AccessError> {
+        self.with_current(authorized, Capability::Create, false, |scope, grant, _| {
+            if needs_inspect && !grant.capabilities.contains(&Capability::Inspect) {
+                return Err(AccessError::Forbidden);
+            }
+            Ok(use_scope(scope))
+        })?
+    }
+
     pub(crate) fn view_access(
         &self,
         authorized: &AuthorizedScope,

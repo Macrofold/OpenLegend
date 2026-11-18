@@ -130,6 +130,7 @@ pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(
         Duration::from_secs_f64(grace),
         usize::try_from(3 * players)?,
         display,
+        setting("OPEN_LEGEND_GOD_MODE", "false")? == "true",
         http_stop.clone(),
     )
     .map_err(|_| "Could not establish per-process player reference keys")?;

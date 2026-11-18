@@ -20,11 +20,11 @@ use openlegend_world_host::{
     pool::{HostError, HostPool},
     submit_world,
 };
-use std::future::Future;
 use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, Weak};
 use std::time::Duration;
+use std::{collections::BTreeSet, future::Future};
 use tokio::sync::{Mutex as TurnLock, Semaphore, oneshot, watch};
 
 const TURN_WAIT: Duration = Duration::from_secs(5);
@@ -209,6 +209,7 @@ impl WorldHost {
             waiting: Arc::new(Semaphore::new(self.request_capacity)),
             closing: AtomicBool::new(false),
             durable,
+            pending_source_edits: Mutex::new(BTreeSet::new()),
             protected_hold: Mutex::new(None),
         });
         *writer = Arc::downgrade(&world);
@@ -234,6 +235,7 @@ pub struct HostedWorld {
     waiting: Arc<Semaphore>,
     closing: AtomicBool,
     durable: watch::Sender<u64>,
+    pending_source_edits: Mutex<BTreeSet<Arc<str>>>,
     // An unresolved SQL outcome retains the actual candidate output and prefix.
     // Normal stop cannot pretend it rejected the mutation. Recovery cold-opens
     // the published database head after the old writer exits.
@@ -266,6 +268,20 @@ pub(crate) struct NpcDisclosureTurn<'a> {
     _turn: tokio::sync::MutexGuard<'a, ()>,
 }
 
+pub(crate) struct SourceEdit {
+    world: Arc<HostedWorld>,
+    actor: Arc<str>,
+    _custody: openlegend_simulation::host::ByteReservation,
+}
+
+impl Drop for SourceEdit {
+    fn drop(&mut self) {
+        if let Ok(mut pending) = self.world.pending_source_edits.lock() {
+            pending.remove(&self.actor);
+        }
+    }
+}
+
 impl DispatchWorld<WorldHost> for HostedWorld {
     fn dispatch(&self) -> &SerialDispatch<WorldHost, Self> {
         &self.dispatch
@@ -277,6 +293,33 @@ impl DispatchWorld<WorldHost> for HostedWorld {
 }
 
 impl HostedWorld {
+    /// Reserve the actor's private edit before waiting for a durable prefix.
+    /// Outstanding dispatch may observe the refusal as soon as the edit starts.
+    pub(crate) fn begin_source_edit(
+        self: &Arc<Self>,
+        actor: &str,
+    ) -> Result<SourceEdit, WorldError> {
+        let _custody = self
+            .host
+            .budget()
+            .reserve(1024 + actor.len())
+            .map_err(HostError::from)?;
+        let mut pending = self
+            .pending_source_edits
+            .lock()
+            .map_err(|_| HostError::Poisoned)?;
+        if pending.contains(actor) {
+            return Err(HostError::Busy.into());
+        }
+        let actor: Arc<str> = Arc::from(actor);
+        pending.insert(actor.clone());
+        Ok(SourceEdit {
+            world: self.clone(),
+            actor,
+            _custody,
+        })
+    }
+
     /// Start the prepared transfer only while its native source and consumer
     /// are current. The synchronous callback must relinquish the lease
     /// before any provider, database or socket wait.
@@ -295,6 +338,13 @@ impl HostedWorld {
     ) -> Result<Result<T, NpcDisclosure>, WorldError> {
         if self.closing.load(Ordering::Acquire) {
             return Err(HostError::Closed.into());
+        }
+        let pending = self
+            .pending_source_edits
+            .lock()
+            .map_err(|_| HostError::Poisoned)?;
+        if pending.contains(ticket.actor_id()) {
+            return Ok(Err(NpcDisclosure::Refused("source-edit-pending")));
         }
         let session = match self.session.try_lock() {
             Ok(session) => session,

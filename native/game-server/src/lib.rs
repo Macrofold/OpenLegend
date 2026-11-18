@@ -26,6 +26,7 @@ pub mod player_scene;
 mod player_stream;
 mod player_view;
 mod presence;
+mod privacy_edit;
 mod provider_transport;
 mod socket;
 pub mod spatial;

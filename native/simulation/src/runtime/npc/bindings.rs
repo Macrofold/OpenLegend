@@ -46,6 +46,10 @@ pub struct RuntimeNpcResponseTicket {
 }
 
 impl RuntimeNpcResponseTicket {
+    pub fn actor_id(&self) -> &str {
+        &self.current.read.perception.actor_id
+    }
+
     pub fn receipt_liveness(&self) -> [Weak<AtomicBool>; 2] {
         [
             self.original.receipt_liveness(),

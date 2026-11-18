@@ -1,4 +1,5 @@
 import { constructionHelpPlans } from './construction.js';
+import conversationMenu from '@open-legend/domain/conversation-menu' with { type: 'json' };
 import { knownCeasefireConsequence } from '@open-legend/domain';
 import { contributionWithdrawals } from './handover-actions.js';
 import { prepareNativeInventoryActions } from '@open-legend/domain';
@@ -874,18 +875,21 @@ function nativeActionCatalogue(
         : undefined;
       // Opening remains read-only; the preference changes only after its exact
       // authenticated command receipt. No speech or physical cancellation occurs.
+      const recipientName = namePhrase(target, 'definite');
       actions.push({
         id: `talk-${target.id}`,
         label:
           preferSpeech && controls
             ? controls.speak.label
-            : `Speak to ${namePhrase(target, 'definite')}`,
-        category: 'Social',
+            : conversationMenu.labelPrefix + recipientName,
+        category: conversationMenu.category,
         description:
           preferSpeech && controls
             ? controls.speak.description
-            : `Open a conversation with ${namePhrase(target, 'definite')}. Ask about their experiences, discuss a plan, or offer a suggestion. You can edit your message before sending it.`,
-        keywords: ['chat', 'speak', 'conversation'],
+            : conversationMenu.descriptionPrefix +
+              recipientName +
+              conversationMenu.descriptionSuffix,
+        keywords: conversationMenu.keywords,
         targetId: target.id,
         enabled: true,
         intent: {
