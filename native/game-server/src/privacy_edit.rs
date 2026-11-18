@@ -2,7 +2,7 @@
 //! exact durable predecessor. SQL and accepted disclosure settle together.
 
 use crate::{
-    authority::{AccessError, Authority, AuthorizedScope, Capability},
+    authority::{AccessError, Authority, AuthorizedScope},
     boot::CurrentServer,
     live_save::LiveSaves,
     store::{PreparedPrivacyEdit, StoreError},
@@ -45,13 +45,9 @@ fn operator(
     authorized: &AuthorizedScope,
     target: &str,
 ) -> Result<String, AccessError> {
-    let owner = authority.current(authorized, Capability::Create, false, |scope, _| {
+    authority.current_recall_operator(authorized, authorized.scope.actor_id != target, |scope| {
         scope.actor_id.clone()
-    })?;
-    if owner != target {
-        authority.current(authorized, Capability::Inspect, false, |_, _| ())?;
-    }
-    Ok(owner)
+    })
 }
 
 /// The HTTP caller supplies authenticated creator scope and enables this

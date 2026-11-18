@@ -221,6 +221,13 @@ impl PrivacyProjection<'_> {
             .budget
             .reserve(wire)
             .map_err(|_| StoreError::Capacity)?;
+        // A dependent source can still be independently retained. Withdraw
+        // its historical grant only if the accepted edit actually forgot it.
+        let forgotten: Vec<&str> = sources
+            .iter()
+            .filter(|id| self.edit.forgotten.contains(id))
+            .map(String::as_str)
+            .collect();
         tx.execute(
             "WITH removed AS MATERIALIZED (
                SELECT id,source_kind FROM recall_sources WHERE world_id=$1 AND actor_id=$2
@@ -246,8 +253,10 @@ impl PrivacyProjection<'_> {
                  pending_bytes=greatest(0,pending_bytes-coalesce((SELECT sum(bytes) FROM discarded_lexical_work),0))
                WHERE world_id=$1 AND generation=$7 AND EXISTS (SELECT 1 FROM discarded_lexical_work)
              ), discarded_annotations AS (
-               DELETE FROM mind_source_annotations a USING removed d WHERE a.world_id=$1 AND a.actor_id=$2
-                 AND a.source_id=d.id AND (a.source_kind=d.source_kind OR (d.source_kind='awareness' AND a.source_kind='perspective'))
+               DELETE FROM mind_source_annotations a WHERE a.world_id=$1 AND a.actor_id=$2
+                 AND (a.source_id=ANY($8::text[]) OR EXISTS (
+                   SELECT 1 FROM removed d WHERE d.id=a.source_id
+                   AND (a.source_kind=d.source_kind OR (d.source_kind='awareness' AND a.source_kind='perspective'))))
              ), discarded_vectors AS (
                DELETE FROM memory_vectors r WHERE r.world_id=$1 AND r.actor_id=$2
                  AND (r.source_id=ANY($3::text[]) OR r.source_id IN (SELECT id FROM removed))
@@ -258,8 +267,8 @@ impl PrivacyProjection<'_> {
                DELETE FROM memory_vector_cache r WHERE r.world_id=$1 AND r.actor_id=$2
                  AND (r.source_id=ANY($3::text[]) OR r.source_id IN (SELECT id FROM removed))
              ) DELETE FROM history_perspectives r WHERE r.world_id=$1 AND r.actor_id=$2
-               AND r.event_id=ANY($3::text[])",
-            &[&world,&actor,&sources,&awareness,&memories,&summaries,&rows.generation],
+               AND (r.event_id=ANY($8::text[]) OR r.event_id IN (SELECT id FROM removed WHERE source_kind='awareness'))",
+            &[&world,&actor,&sources,&awareness,&memories,&summaries,&rows.generation,&forgotten],
         ).await?;
         if let Some(principal) = &self.edit.principal {
             tx.execute(
@@ -271,7 +280,7 @@ impl PrivacyProjection<'_> {
                  jobs AS (DELETE FROM story_jobs WHERE world_id=$1 AND owner_id=$2 AND id IN (SELECT narration_id FROM revoked)),
                  events AS (DELETE FROM story_event_sources WHERE world_id=$1 AND owner_id=$2 AND narration_id IN (SELECT narration_id FROM revoked))
                  DELETE FROM story_context_sources WHERE world_id=$1 AND owner_id=$2 AND narration_id IN (SELECT narration_id FROM revoked)",
-                &[&world,principal,&sources],
+                &[&world,principal,&forgotten],
             ).await?;
         }
         Ok(())
