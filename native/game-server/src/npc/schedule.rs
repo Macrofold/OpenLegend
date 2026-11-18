@@ -1,7 +1,11 @@
 //! Select optional model work from the native received record. Queue entries
 //! are coalesced wakeups; only the original Rust trigger and source references
 //! can authorize preparation or pay for a provider attempt.
-use super::{Director, decide::AutomaticTrigger, slots::Admission};
+use super::{
+    Director,
+    decide::AutomaticTrigger,
+    slots::{Admission, SlotPriority},
+};
 use crate::{
     authority::now_ms,
     decision_render::SchedulingPolicy,
@@ -390,7 +394,10 @@ impl Director {
         });
         let work = ready.into_iter().find(|work| {
             self.slots
-                .available(&work.observed.actor_id)
+                .available_for_background(
+                    &work.observed.actor_id,
+                    work.observed.urgency >= policy.urgent,
+                )
                 .unwrap_or(false)
         });
         if let Some(work) = work {
@@ -488,7 +495,15 @@ impl Director {
             return Ok(Some(next_at));
         }
         let id = format!("thought-{}", uuid::Uuid::new_v4());
-        let Admission::Accepted(slot) = self.slots.select(&actor, &id, None, &generation)? else {
+        let priority = if observed.urgency >= policy.urgent {
+            SlotPriority::Foreground
+        } else {
+            SlotPriority::Ordinary
+        };
+        let Admission::Accepted(slot) =
+            self.slots
+                .select(&actor, &id, None, &generation, priority)?
+        else {
             return Ok(None);
         };
         if let Some(interval) = proposal.discovery

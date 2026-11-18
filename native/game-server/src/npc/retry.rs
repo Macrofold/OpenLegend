@@ -168,6 +168,7 @@ impl Director {
                 &retry.id,
                 Some(&retry.scope.scope.account_id),
                 &retry.scope.scope.timeline_id,
+                SlotPriority::Foreground,
             )? {
                 Admission::Accepted(slot) => slot,
                 Admission::Closed => return refuse(cancelled()),

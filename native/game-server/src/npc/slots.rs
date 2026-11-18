@@ -20,7 +20,79 @@ pub(super) struct Slots {
 struct Active {
     by_actor: BTreeMap<String, Arc<Resident>>,
     by_request: BTreeMap<String, Arc<Resident>>,
+    waiting_actors: BTreeMap<String, usize>,
+    waiting_capacity: usize,
     closed: bool,
+}
+
+pub(super) enum SlotPriority<'a> {
+    Ordinary,
+    Foreground,
+    Send(&'a mut WaitingSend),
+}
+
+/// An explicit Send owns this priority only after encountering a busy slot.
+/// Releasing the HTTP attempt also releases its actor and capacity preference.
+pub(super) struct WaitingSend {
+    owner: Arc<Slots>,
+    waiting: Option<(String, bool, ByteReservation)>,
+}
+
+impl WaitingSend {
+    fn mark(&mut self, active: &mut Active, actor: &str, capacity: bool) -> Result<(), StoreError> {
+        if let Some((prior, prior_capacity, _)) = self.waiting.as_mut()
+            && prior == actor
+        {
+            if *prior_capacity != capacity {
+                if capacity {
+                    active.waiting_capacity += 1;
+                } else {
+                    active.waiting_capacity -= 1;
+                }
+                *prior_capacity = capacity;
+            }
+            return Ok(());
+        }
+        let custody = self
+            .owner
+            .budget
+            .reserve(512 + 2 * actor.len())
+            .map_err(|_| StoreError::Capacity)?;
+        self.clear(active);
+        *active.waiting_actors.entry(actor.to_owned()).or_default() += 1;
+        active.waiting_capacity += usize::from(capacity);
+        self.waiting = Some((actor.to_owned(), capacity, custody));
+        Ok(())
+    }
+
+    fn clear(&mut self, active: &mut Active) {
+        if let Some((actor, capacity, _)) = self.waiting.take() {
+            let count = active.waiting_actors.get_mut(&actor).unwrap();
+            *count -= 1;
+            if *count == 0 {
+                active.waiting_actors.remove(&actor);
+            }
+            active.waiting_capacity -= usize::from(capacity);
+        }
+    }
+
+    pub(super) fn is_waiting(&self) -> bool {
+        self.waiting.is_some()
+    }
+}
+
+impl Drop for WaitingSend {
+    fn drop(&mut self) {
+        if self.is_waiting() {
+            let owner = self.owner.clone();
+            self.clear(
+                &mut owner
+                    .active
+                    .lock()
+                    .expect("decision ordering owner poisoned"),
+            );
+        }
+    }
 }
 
 pub(super) struct DecisionSlot {
@@ -61,6 +133,7 @@ impl Slots {
         id: &str,
         account: Option<&str>,
         timeline: &str,
+        priority: SlotPriority<'_>,
     ) -> Result<Admission, StoreError> {
         let mut active = self
             .active
@@ -69,14 +142,24 @@ impl Slots {
         if active.closed {
             return Ok(Admission::Closed);
         }
-        if let Some(found) = active
+        if let Some(ended) = active
             .by_request
             .get(id)
             .or_else(|| active.by_actor.get(npc))
+            .map(|found| found.done.subscribe())
         {
-            return Ok(Admission::Held(found.done.subscribe()));
+            if let SlotPriority::Send(waiting) = priority {
+                waiting.mark(&mut active, npc, false)?;
+            }
+            return Ok(Admission::Held(ended));
         }
         if active.by_actor.len() >= self.maximum {
+            if let SlotPriority::Send(waiting) = priority {
+                waiting.mark(&mut active, npc, true)?;
+            }
+            return Ok(Admission::Capacity(self.changed.subscribe()));
+        }
+        if matches!(priority, SlotPriority::Ordinary) && active.has_waiting_send(npc) {
             return Ok(Admission::Capacity(self.changed.subscribe()));
         }
         let custody = self
@@ -100,6 +183,9 @@ impl Slots {
         active
             .by_request
             .insert(resident.id.clone(), resident.clone());
+        if let SlotPriority::Send(waiting) = priority {
+            waiting.clear(&mut active);
+        }
         Ok(Admission::Accepted(DecisionSlot {
             owner: self.clone(),
             resident,
@@ -117,13 +203,39 @@ impl Slots {
     }
 
     pub(super) fn available(&self, actor: &str) -> Result<bool, StoreError> {
+        self.available_for_background(actor, true)
+    }
+
+    /// Advisory availability for a directed Send. The actual POST owns
+    /// the bounded waiting registration and repeats current checks.
+    pub(super) fn accepting_sends(&self) -> Result<bool, StoreError> {
+        Ok(!self
+            .active
+            .lock()
+            .map_err(|_| StoreError::WriterUnavailable)?
+            .closed)
+    }
+
+    pub(super) fn waiting_send(self: &Arc<Self>) -> WaitingSend {
+        WaitingSend {
+            owner: self.clone(),
+            waiting: None,
+        }
+    }
+
+    pub(super) fn available_for_background(
+        &self,
+        actor: &str,
+        urgent: bool,
+    ) -> Result<bool, StoreError> {
         let active = self
             .active
             .lock()
             .map_err(|_| StoreError::WriterUnavailable)?;
         Ok(!active.closed
             && active.by_actor.len() < self.maximum
-            && !active.by_actor.contains_key(actor))
+            && !active.by_actor.contains_key(actor)
+            && (urgent || !active.has_waiting_send(actor)))
     }
 
     pub(super) async fn stop(&self) -> Result<(), StoreError> {
@@ -153,6 +265,12 @@ impl Slots {
                 .await
                 .map_err(|_| StoreError::WriterUnavailable)?;
         }
+    }
+}
+
+impl Active {
+    fn has_waiting_send(&self, actor: &str) -> bool {
+        self.waiting_capacity > 0 || self.waiting_actors.contains_key(actor)
     }
 }
 

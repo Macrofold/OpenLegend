@@ -545,14 +545,16 @@ Director, provider and memory admission can still refuse genuine contention.
 The [execution owner](ai-execution.md#de-l02--bounded-scheduling-and-context-retention)
 keeps occupied and uncertain remote leases through their actual lifetimes.
 
-Directed Send in Source and Native can wait up to five seconds for an occupied immediate
-position without holding the world or cognition admission lane. The public
-availability read remains advisory. Waiting Sends involving the shared cap
-take precedence over new ordinary autonomous work; urgent work and work already
-admitted keep their positions. Each new admission attempt checks the original
-request ID and current control, recipient and funding. An expired wait cannot
-start speech admission; disconnect or lost authority still prevents uncommitted
-speech at settlement. No provider request is retried.
+The directed-reply availability read can report that Send is eligible when
+the actual request can use its existing bounded wait. The read reserves no
+place. An explicit directed Send can wait up to five seconds for an occupied
+position without holding the world or cognition admission lane. A same-NPC
+waiter precedes new ordinary jobs for that NPC. A waiter at the shared cap
+precedes new ordinary jobs using that cap. Existing jobs and urgent work keep
+their positions. Each new admission attempt checks the original request ID,
+current control, recipient and funding. An expired wait cannot start speech
+admission. Disconnect or lost authority prevents uncommitted speech from
+settling. The wait does not retry provider requests.
 
 **Reason / tradeoff:** The original one-ordinary and two-immediate limits made
 unrelated ordinary conversations compete even when provider and memory capacity

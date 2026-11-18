@@ -24,7 +24,7 @@ use crate::{
 };
 use openlegend_simulation::{commands::Outcome, host::ByteReservation};
 use serde::Serialize;
-use slots::{Admission, Slots};
+use slots::{Admission, SlotPriority, Slots};
 use speech::{Speech, SpeechRefusal, Spoken};
 use std::{
     future::Future,
@@ -287,7 +287,12 @@ impl Director {
                 "Speak and Act need an available character AI allowance.",
             ));
         }
-        if !self.slots.available(&after.payer)? {
+        let can_send = if after.reply {
+            self.slots.accepting_sends()?
+        } else {
+            self.slots.available(&after.payer)?
+        };
+        if !can_send {
             return Ok(InteractionAvailability::refused(
                 "busy",
                 "Character AI is busy. Your draft is saved; check again shortly.",
@@ -477,6 +482,7 @@ impl Director {
         mut cancelled: watch::Receiver<bool>,
     ) -> Result<JobStart, WorldError> {
         let until = Instant::now() + ADMISSION_WAIT;
+        let mut waiting = self.slots.waiting_send();
         let refused = |code, message| Ok(JobStart::Existing(SubmitResult::refused(code, message)));
         loop {
             self.authority
@@ -539,12 +545,16 @@ impl Director {
                     SpeechRefusal::Cancelled,
                 )));
             }
+            if waiting.is_waiting() && Instant::now() >= until {
+                break;
+            }
             let scope = &speech.scope.scope;
             let slot = match self.slots.select(
                 &target.actor,
                 &speech.job_id,
                 Some(&scope.account_id),
                 &scope.timeline_id,
+                SlotPriority::Send(&mut waiting),
             )? {
                 Admission::Accepted(slot) => slot,
                 Admission::Closed => {
