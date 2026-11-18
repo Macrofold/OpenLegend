@@ -152,9 +152,15 @@ impl Store {
         record: Arc<AdmittedJob>,
         stopped: tokio::sync::watch::Receiver<bool>,
     ) -> Result<bool, CommitError> {
+        if *stopped.borrow() {
+            return Ok(false);
+        }
         let store = self.clone();
         self.operational(move |tx| {
             Box::pin(async move {
+                if *stopped.borrow() {
+                    return Err(StoreError::Cancelled);
+                }
                 let job = &record.job;
                 let scope = job.authority.as_ref().ok_or(StoreError::InvalidRecord)?;
                 let original = job.retry_of.as_deref().ok_or(StoreError::InvalidRecord)?;
@@ -166,12 +172,12 @@ impl Store {
                 let eligible: bool = tx
                     .query_one(
                         "SELECT COALESCE((SELECT id=$2 AND selection->>'status'='failed' FROM jobs \
-                 WHERE selection->>'kind'='chat' AND selection->>'playerSpeechEventId'=$1 \
-                 AND payload::jsonb #>> '{authority,worldId}'=$3 \
-                 AND payload::jsonb #>> '{authority,timelineId}'=$4 \
-                 AND payload::jsonb #>> '{authority,actorId}'=$5 \
-                 AND payload::jsonb #>> '{authority,accountId}'=$6 \
-                 ORDER BY created_at DESC,id DESC LIMIT 1),false)",
+             WHERE selection->>'kind'='chat' AND selection->>'playerSpeechEventId'=$1 \
+             AND payload::jsonb #>> '{authority,worldId}'=$3 \
+             AND payload::jsonb #>> '{authority,timelineId}'=$4 \
+             AND payload::jsonb #>> '{authority,actorId}'=$5 \
+             AND payload::jsonb #>> '{authority,accountId}'=$6 \
+             ORDER BY created_at DESC,id DESC LIMIT 1),false)",
                         &[
                             &speech,
                             &original,
@@ -186,11 +192,23 @@ impl Store {
                 if !eligible {
                     return Ok(false);
                 }
+                if *stopped.borrow() {
+                    return Err(StoreError::Cancelled);
+                }
                 store.write_conversation_job(tx, job).await?;
+                // The write can await a database lock after the HTTP request
+                // disconnects. Refuse until COMMIT owns the outcome.
+                if *stopped.borrow() {
+                    return Err(StoreError::Cancelled);
+                }
                 Ok(true)
             })
         })
         .await
+        .or_else(|error| match error {
+            CommitError::RolledBack(StoreError::Cancelled) => Ok(false),
+            other => Err(other),
+        })
     }
 
     pub(super) async fn write_conversation_job(

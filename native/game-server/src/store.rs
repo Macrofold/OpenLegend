@@ -75,6 +75,7 @@ pub enum StoreError {
     StaleCut,
     InvalidRecord,
     Capacity,
+    Cancelled,
     Maintenance,
     DerivedProjectionRequired,
 }
@@ -92,6 +93,7 @@ impl fmt::Display for StoreError {
             Self::StaleCut => "PostgreSQL does not match the selected world revision",
             Self::InvalidRecord => "A current PostgreSQL record is invalid",
             Self::Capacity => "PostgreSQL transfer cannot fit its allowance",
+            Self::Cancelled => "PostgreSQL operation was cancelled before commit",
             Self::Maintenance => "This server cannot open an active maintenance schedule",
             Self::DerivedProjectionRequired => {
                 "This save requires its history or personal index projection"
