@@ -1064,6 +1064,14 @@ export async function prepareDecision(
         .flatMap((candidate) => candidate.entityIds),
     );
     const rememberedAttribution = attribution(rememberedSubjects);
+    // Watch the exact selected direct sources before initial validation. The
+    // SQL check below still verifies them and refuses a changed source or cut.
+    if (includeCurrentConversation && evidenceScope && conversation.directPublicationSources)
+      publicationFence = service.store.memories?.captureConversationPublicationFence(
+        evidenceScope,
+        conversation.directPublicationSources,
+        sources,
+      );
     const validatePrepared = (flush = true) =>
       validateCapturedDecision(
         service,
@@ -1439,12 +1447,6 @@ export async function prepareDecision(
       currentObserved.visibleEntities.map((entity) => entity.id),
       actorId,
     );
-    if (includeCurrentConversation && evidenceScope && conversation.directPublicationSources)
-      publicationFence = service.store.memories?.captureConversationPublicationFence(
-        evidenceScope,
-        conversation.directPublicationSources,
-        sources,
-      );
     let receptionCurrent: (() => boolean) | undefined;
     if (publicationFence) {
       const subjects = new Set([
