@@ -265,15 +265,25 @@ impl SaveJournal {
             // suffix can be saved. A preceding deletion establishes absence.
             for (table, rows) in &mut changes.writes {
                 for row in rows {
-                    if prefix.presence(table, &row.id) == Some(true) {
-                        row.create = false;
-                    } else if prefix.presence(table, &row.id) == Some(false) {
-                        row.create = true;
-                        if row.write_columns.is_some() {
-                            return Err(SaveError::Encoding(RecordEncodingError(
-                                "A row recreated after an in-flight deletion requires its complete body.",
-                            )));
+                    match prefix.presence(table, &row.id) {
+                        Some(true) => row.create = false,
+                        Some(false) if row.write_columns.is_none() => row.create = true,
+                        Some(false) => {
+                            // A subsequent metadata write uses the recreation already
+                            // accepted into this suffix. Keep its mask so the fold
+                            // updates the same complete row and its reference closure.
+                            let recreated = self.suffix.writes.get(table).is_some_and(|rows| {
+                                rows.iter().any(|prior| {
+                                    prior.id == row.id && prior.write_columns.is_none()
+                                })
+                            });
+                            if !recreated {
+                                return Err(SaveError::Encoding(RecordEncodingError(
+                                    "A row recreated after an in-flight deletion requires its complete body.",
+                                )));
+                            }
                         }
+                        None => {}
                     }
                 }
             }
