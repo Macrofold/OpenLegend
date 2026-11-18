@@ -7,16 +7,16 @@ use serde::ser::SerializeStruct;
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(super) struct OwnSenses {
-    enabled: bool,
-    perception_blocked: bool,
-    radius: f64,
-    vision_angle: f64,
-    hearing_floor: Option<f64>,
+    pub(super) enabled: bool,
+    pub(super) perception_blocked: bool,
+    pub(super) radius: f64,
+    pub(super) vision_angle: f64,
+    pub(super) hearing_floor: Option<f64>,
 }
 pub(super) struct OwnMarker<'a> {
-    marker: &'a MapMarker,
-    note: Option<&'a crate::text::JsText>,
-    revision: u64,
+    pub(super) marker: &'a MapMarker,
+    pub(super) note: Option<&'a crate::text::JsText>,
+    pub(super) revision: u64,
 }
 impl Serialize for OwnMarker<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {

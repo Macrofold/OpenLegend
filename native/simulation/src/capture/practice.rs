@@ -8,8 +8,8 @@ use std::collections::BTreeSet;
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(super) struct PracticeRecord<'a> {
-    key: &'a str,
-    view: &'a crate::activity::ActivityView,
+    pub(super) key: &'a str,
+    pub(super) view: &'a crate::activity::ActivityView,
 }
 pub(super) fn practice_records<'a>(
     state: &'a SimulationState,

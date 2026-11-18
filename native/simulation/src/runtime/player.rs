@@ -1,9 +1,12 @@
 //! One selected player capture and its final scoped disclosure fence. No native
 //! read borrow survives a provider/SQL await; the immutable evidence owner does.
 use super::*;
-use crate::capture::{CapturedPlayerControls, PlayerControlPreparation};
+use crate::capture::{
+    CapturedPlayerControls, PlayerControlFacts, PlayerControlPreparation, PlayerPerception,
+    PlayerSelfFacts,
+};
 use crate::geometry::{GeometryAnswers, GeometryBinding};
-use crate::host::PublicationLease;
+use crate::host::{CapacityError, PublicationLease};
 use crate::simulation::AcceptedActorRead;
 use std::mem::size_of;
 
@@ -97,6 +100,40 @@ impl NativeWorldSession {
         actor: &str,
         event_window: usize,
     ) -> Result<RuntimePlayerRead, RuntimeError> {
+        self.read_player_via(account, actor, event_window, |simulation, budget| {
+            simulation
+                .read_player(account, actor, budget)
+                .map(|read| (read, ()))
+        })
+        .map(|(read, ())| read)
+    }
+
+    /// Prepare only the caller's independently funded representation of the
+    /// self fields. Other permitted evidence and the final disclosure fence
+    /// remain on exactly the same actor cut as the encoded facade.
+    pub fn read_player_direct<T>(
+        &mut self,
+        account: &str,
+        actor: &str,
+        event_window: usize,
+        prepare: impl FnOnce(PlayerSelfFacts<'_>, &ByteBudget) -> Result<T, CapacityError>,
+    ) -> Result<(RuntimePlayerRead, T), RuntimeError> {
+        self.read_player_via(account, actor, event_window, |simulation, budget| {
+            simulation.read_player_direct(account, actor, budget, prepare)
+        })
+    }
+
+    fn read_player_via<T>(
+        &mut self,
+        account: &str,
+        actor: &str,
+        event_window: usize,
+        capture: impl FnOnce(
+            &crate::simulation::Simulation,
+            &ByteBudget,
+        )
+            -> Result<(AcceptedActorRead, T), crate::simulation::ActorReadError>,
+    ) -> Result<(RuntimePlayerRead, T), RuntimeError> {
         self.require_active()?;
         let serial = self
             .next_read_serial
@@ -104,9 +141,7 @@ impl NativeWorldSession {
             .filter(|serial| *serial <= crate::identity::MAX_SAFE_INTEGER)
             .ok_or_else(|| failure("read identity exhausted"))?;
         let simulation = self.session.accepted().map_err(failure)?;
-        let read = simulation
-            .read_player(account, actor, &self.budget)
-            .map_err(failure)?;
+        let (read, prepared) = capture(simulation, &self.budget).map_err(failure)?;
         let events = simulation
             .read_player_events(account, actor, event_window, &self.budget)
             .map_err(failure)?;
@@ -140,15 +175,18 @@ impl NativeWorldSession {
         } else {
             (Some(preparation), None)
         };
-        Ok(RuntimePlayerRead {
-            account: account.to_owned(),
-            actor: actor.to_owned(),
-            read,
-            events,
-            preparation,
-            controls,
-            _custody: custody,
-        })
+        Ok((
+            RuntimePlayerRead {
+                account: account.to_owned(),
+                actor: actor.to_owned(),
+                read,
+                events,
+                preparation,
+                controls,
+                _custody: custody,
+            },
+            prepared,
+        ))
     }
     /// Called in the serialized publication lane. The returned gate excludes
     /// native acceptance only until Node's immediate operational check/send.
@@ -190,6 +228,34 @@ impl NativeWorldSession {
     }
 }
 impl RuntimePlayerRead {
+    /// Compare the scope retained by this capture without exposing its IDs or
+    /// granting current permission to disclose it.
+    pub fn belongs_to(&self, account: &str, actor: &str) -> bool {
+        self.account == account && self.actor == actor
+    }
+
+    /// Borrow this reader's independently funded accounts at its exact cut.
+    /// The original evidence remains pinned until the read ends. Pass every
+    /// selected event ID to `player_publication` for final current disclosure.
+    pub fn event_payload(&self) -> &str {
+        self.events.json()
+    }
+
+    /// Use the same completed cut as the encoded caller. Missing geometry is
+    /// an unfinished operation, never an implicitly unavailable control.
+    pub fn control_facts(&self) -> Result<&PlayerControlFacts, RuntimeError> {
+        self.controls
+            .as_ref()
+            .map(CapturedPlayerControls::facts)
+            .ok_or_else(|| failure("control geometry is still required"))
+    }
+
+    /// Borrow only the selected, ordered current contacts and their existing
+    /// evidence. No JSON, body copies or additional world lookups are involved.
+    pub fn perception(&self) -> Result<PlayerPerception<'_>, RuntimeError> {
+        PlayerPerception::new(&self.read.perception).map_err(failure)
+    }
+
     pub fn control_question(
         &self,
         budget: &ByteBudget,
@@ -240,6 +306,10 @@ impl RuntimePlayerRead {
         Ok(())
     }
     pub fn packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
+        let own = self
+            .read
+            .encoded_self()
+            .ok_or_else(|| failure("this player read supplied its self facts directly"))?;
         let controls = self
             .controls
             .as_ref()
@@ -251,7 +321,7 @@ impl RuntimePlayerRead {
         // complete encodings avoids decoding a private graph just to re-encode it.
         let parts = [
             b"{\"self\":".as_slice(),
-            self.read.own_json().as_bytes(),
+            own.as_bytes(),
             b",\"perception\":",
             perception.as_bytes(),
             b",\"events\":",

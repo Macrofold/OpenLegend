@@ -14,7 +14,12 @@ use serde::{Serialize, Serializer};
 use std::mem::size_of;
 mod controls;
 mod definitions;
+mod direct_player;
 pub(crate) use definitions::write_installed_definitions;
+pub use direct_player::{
+    PlayerActionFacts, PlayerCommunicationSubject, PlayerIdentityFacts, PlayerMapMarker,
+    PlayerObservedBody, PlayerPerception, PlayerSelfAttribution, PlayerSelfFacts,
+};
 pub(crate) mod maintenance;
 mod metadata;
 mod validity;
@@ -51,8 +56,10 @@ pub(crate) use npc_candidates::{
 mod outcomes;
 mod player;
 mod practice;
+pub use controls::PlayerControlFacts;
 pub(crate) use controls::{CapturedPlayerControls, PlayerControlPreparation};
 use player::{CapturedPlayerBody, CapturedPlayerPerception, OwnPlayerView, PlayerReadScope};
+pub use player::{ContextActionWitness, EncounterPreference};
 
 // The Source currentObservedFacetValues default is a finite presentation
 // selection, not every field of every channel in a stored contact. In
@@ -576,39 +583,6 @@ pub(crate) fn capture_actor_perception(
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct OwnIdentity<'a> {
-    id: &'a str,
-    name: &'a crate::text::JsText,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    name_form: Option<&'a str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    indefinite_article: Option<&'a str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    appearance: Option<&'a crate::text::JsText>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    species: Option<&'a str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    traits: Option<&'a [crate::state::CharacterTrait]>,
-}
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct OwnAction<'a> {
-    id: &'a str,
-    #[serde(rename = "type")]
-    kind: &'a str,
-    stage: &'a str,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    target_id: Option<&'a str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    definition_id: Option<&'a str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    attribute_id: Option<&'a str>,
-    total_seconds: f64,
-    remaining_seconds: f64,
-    preparing_navigation: bool,
-}
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
 struct OwnObserverName<'a> {
     name: crate::text::TextRef<'a>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -649,14 +623,14 @@ impl Serialize for OwnNpcMapLabels<'_> {
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct OwnActorProduct<'a> {
+pub(crate) struct OwnActorProduct<'a> {
     world_id: &'a str,
     actor_id: &'a str,
     generation: &'a str,
     accepted_cut: u64,
     at: f64,
     sequence: u64,
-    identity: OwnIdentity<'a>,
+    identity: PlayerIdentityFacts<'a>,
     observer_name: OwnObserverName<'a>,
     reference_attribution: OwnReferenceAttribution<'a>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -670,7 +644,7 @@ struct OwnActorProduct<'a> {
     attributes: &'a [crate::reception::AttributeView],
     status_effects: &'a [crate::worlds::base_observed::StatusEffectProjection],
     action_status_labels: &'a [&'a str],
-    action: Option<OwnAction<'a>>,
+    action: Option<PlayerActionFacts<'a>>,
     speech: bool,
     speech_blocked: bool,
     actions_blocked: bool,
@@ -690,15 +664,15 @@ struct OwnActorProduct<'a> {
     player: Option<OwnPlayerView<'a>>,
 }
 
-/// First-person facts for the real player/NPC formatters. Purpose controls the
-/// private mental fields; source validation stays in the native capture owner,
-/// while operational account/control permission stays in the application.
-pub(crate) fn write_actor_self(
+/// Prepare the first-person section once for either bridge output or direct
+/// projection inputs. The callback cannot retain this accepted world borrow.
+pub(crate) fn with_actor_self<T>(
     state: &SimulationState,
     actor_id: &str,
     purpose: ActorReadPurpose,
     budget: &ByteBudget,
-) -> Result<(String, ByteReservation), ExecutionError> {
+    consume: impl FnOnce(&OwnActorProduct<'_>, &ByteBudget) -> Result<T, ExecutionError>,
+) -> Result<T, ExecutionError> {
     use crate::status::{
         AttributeAudience, effective_body_profile, project_attributes, project_status_effects,
     };
@@ -827,7 +801,7 @@ pub(crate) fn write_actor_self(
         accepted_cut: state.accepted_cut,
         at: state.physical.header.sim_time,
         sequence: state.physical.header.sequence,
-        identity: OwnIdentity {
+        identity: PlayerIdentityFacts {
             id: actor_id,
             name: &entity.name,
             name_form: entity.name_form.as_deref(),
@@ -859,7 +833,7 @@ pub(crate) fn write_actor_self(
         attributes: attributes.rows(),
         status_effects: statuses.rows(),
         action_status_labels: &labels,
-        action: actor.action.as_ref().map(|action| OwnAction {
+        action: actor.action.as_ref().map(|action| PlayerActionFacts {
             id: &action.id,
             kind: &action.kind,
             stage: &action.stage,
@@ -990,6 +964,13 @@ pub(crate) fn write_actor_self(
             })
         },
     };
+    consume(&product, budget)
+}
+
+pub(crate) fn encode_actor_self(
+    product: &OwnActorProduct<'_>,
+    budget: &ByteBudget,
+) -> Result<(String, ByteReservation), ExecutionError> {
     let length =
         crate::encoding::json_record_len(&product).map_err(|_| ExecutionError::Invariant)?;
     let mut reservation = budget.reserve(

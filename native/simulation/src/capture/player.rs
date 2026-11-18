@@ -9,36 +9,36 @@ use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct EncounterPreference {
-    actor_life: u64,
-    target_id: String,
-    target_life: u64,
-    episode: Option<String>,
-    revision: u64,
-    hostile_revision: u64,
+pub struct EncounterPreference {
+    pub actor_life: u64,
+    pub target_id: String,
+    pub target_life: u64,
+    pub episode: Option<String>,
+    pub revision: u64,
+    pub hostile_revision: u64,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct ContextActionWitness {
-    module_revision: u64,
-    actor_life: Option<u64>,
-    target_life: Option<u64>,
-    encounter: Option<EncounterPreference>,
+pub struct ContextActionWitness {
+    pub module_revision: u64,
+    pub actor_life: Option<u64>,
+    pub target_life: Option<u64>,
+    pub encounter: Option<EncounterPreference>,
     // Installed live coaching/ranged records are explicitly unsupported. These
     // nulls are proven absence at their semantic owner, not unknown witnesses.
     coaching: Option<()>,
-    combat_ready: bool,
+    pub combat_ready: bool,
     ranged_ready: Option<bool>,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(super) struct CapturedPlayerBody {
-    context: ContextActionWitness,
+    pub(super) context: ContextActionWitness,
     #[serde(skip_serializing_if = "Option::is_none")]
-    attention_preference: Option<bool>,
+    pub(super) attention_preference: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    communication_id: Option<String>,
-    trade_eligible: bool,
+    pub(super) communication_id: Option<String>,
+    pub(super) trade_eligible: bool,
 }
 impl CapturedPlayerBody {
     pub(super) fn heap_bytes(&self) -> Option<usize> {

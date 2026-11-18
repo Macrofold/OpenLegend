@@ -2,11 +2,12 @@
 //! their genuine evidence/byte custody; there is no writable TypeScript world.
 use super::{Simulation, SimulationState};
 use crate::capture::{
-    ActorReadPurpose, CapturedActorPerception, capture_actor_perception,
-    require_supported_known_agreement_read, write_actor_self,
+    ActorReadPurpose, CapturedActorPerception, OwnActorProduct, PlayerSelfFacts,
+    capture_actor_perception, encode_actor_self, require_supported_known_agreement_read,
+    with_actor_self,
 };
 use crate::execution::ExecutionError;
-use crate::host::{ByteBudget, ByteReservation, CandidatePhase};
+use crate::host::{ByteBudget, ByteReservation, CandidatePhase, CapacityError};
 mod interaction;
 pub(crate) use interaction::InteractionMode;
 
@@ -28,15 +29,18 @@ pub(crate) struct AcceptedActorRead {
     pub(crate) native_validity: Option<crate::capture::DecisionValidityWitness>,
     pub accepted_cut: u64,
     pub purpose: ActorReadPurpose,
-    own_json: String,
+    own: Option<EncodedActorSelf>,
     appraisals: Option<crate::appraisals::CapturedActorAppraisals>,
     pub perception: CapturedActorPerception,
-    _own_reservation: ByteReservation,
     actor_life: u64,
     actor_alive: bool,
     actor_participating: bool,
     self_body_lease: Option<String>,
     _self_body_reservation: Option<ByteReservation>,
+}
+struct EncodedActorSelf {
+    json: String,
+    _custody: ByteReservation,
 }
 /// Exact actor predicates for server input admission. This does not capture
 /// perception/history or confer the server's live session/control authority.
@@ -53,7 +57,11 @@ impl AcceptedActorRead {
         self.appraisals.as_ref()
     }
     pub(crate) fn own_json(&self) -> &str {
-        &self.own_json
+        self.encoded_self()
+            .expect("NPC reads always have encoded first-person facts")
+    }
+    pub(crate) fn encoded_self(&self) -> Option<&str> {
+        self.own.as_ref().map(|own| own.json.as_str())
     }
     pub(crate) fn appraisals_json(&self) -> Option<&str> {
         self.appraisals
@@ -87,7 +95,24 @@ impl Simulation {
         budget: &ByteBudget,
     ) -> Result<AcceptedActorRead, ActorReadError> {
         self.require_player_read(account_id, actor_id)?;
-        self.capture_actor(actor_id, ActorReadPurpose::PlayerView, &[], budget)
+        self.capture_actor_encoded(actor_id, ActorReadPurpose::PlayerView, &[], budget)
+    }
+
+    pub(crate) fn read_player_direct<T>(
+        &self,
+        account_id: &str,
+        actor_id: &str,
+        budget: &ByteBudget,
+        prepare: impl FnOnce(PlayerSelfFacts<'_>, &ByteBudget) -> Result<T, CapacityError>,
+    ) -> Result<(AcceptedActorRead, T), ActorReadError> {
+        self.require_player_read(account_id, actor_id)?;
+        self.capture_actor(
+            actor_id,
+            ActorReadPurpose::PlayerView,
+            &[],
+            budget,
+            |product, budget| Ok((None, prepare(product.player_facts()?, budget)?)),
+        )
     }
     pub(crate) fn player_input(
         &self,
@@ -280,7 +305,7 @@ impl Simulation {
         {
             return Err(ActorReadError::Denied);
         }
-        self.capture_actor(
+        self.capture_actor_encoded(
             actor_id,
             ActorReadPurpose::NpcDecision,
             required_appraisals,
@@ -293,13 +318,43 @@ impl Simulation {
         }
         Ok(())
     }
-    fn capture_actor(
+    fn capture_actor_encoded(
         &self,
         actor_id: &str,
         purpose: ActorReadPurpose,
         required_appraisals: &[crate::appraisals::AppraisalScope],
         budget: &ByteBudget,
     ) -> Result<AcceptedActorRead, ActorReadError> {
+        self.capture_actor(
+            actor_id,
+            purpose,
+            required_appraisals,
+            budget,
+            |product, budget| {
+                let (json, custody) = encode_actor_self(product, budget)?;
+                Ok((
+                    Some(EncodedActorSelf {
+                        json,
+                        _custody: custody,
+                    }),
+                    (),
+                ))
+            },
+        )
+        .map(|(read, ())| read)
+    }
+
+    fn capture_actor<T>(
+        &self,
+        actor_id: &str,
+        purpose: ActorReadPurpose,
+        required_appraisals: &[crate::appraisals::AppraisalScope],
+        budget: &ByteBudget,
+        prepare: impl FnOnce(
+            &OwnActorProduct<'_>,
+            &ByteBudget,
+        ) -> Result<(Option<EncodedActorSelf>, T), ExecutionError>,
+    ) -> Result<(AcceptedActorRead, T), ActorReadError> {
         // The writer's serialized lane owns this borrow. The fence alone never
         // makes tentative state readable; capture cannot overlap a mutable borrow.
         let state: &SimulationState = &self.state;
@@ -340,7 +395,7 @@ impl Simulation {
             } else {
                 (None, None)
             };
-        let (own_json, reservation) = write_actor_self(state, actor_id, purpose, budget)?;
+        let (own, prepared) = with_actor_self(state, actor_id, purpose, budget, prepare)?;
         let perception = capture_actor_perception(state, actor_id, purpose, budget)?;
         let appraisals = if matches!(purpose, ActorReadPurpose::NpcDecision) {
             Some(crate::appraisals::capture_actor_appraisals(
@@ -352,28 +407,30 @@ impl Simulation {
         } else {
             None
         };
-        Ok(AcceptedActorRead {
-            native_validity: if matches!(purpose, ActorReadPurpose::NpcDecision) {
-                Some(crate::capture::DecisionValidityWitness::capture(
-                    state,
-                    actor_id,
-                    required_appraisals,
-                    budget,
-                )?)
-            } else {
-                None
+        Ok((
+            AcceptedActorRead {
+                native_validity: if matches!(purpose, ActorReadPurpose::NpcDecision) {
+                    Some(crate::capture::DecisionValidityWitness::capture(
+                        state,
+                        actor_id,
+                        required_appraisals,
+                        budget,
+                    )?)
+                } else {
+                    None
+                },
+                accepted_cut: state.accepted_cut,
+                purpose,
+                own,
+                appraisals,
+                perception,
+                actor_life: actor.physical_life.unwrap_or(0),
+                actor_alive: actor.alive,
+                actor_participating: entity.actively_participates(),
+                self_body_lease,
+                _self_body_reservation: self_body_reservation,
             },
-            accepted_cut: state.accepted_cut,
-            purpose,
-            own_json,
-            appraisals,
-            perception,
-            _own_reservation: reservation,
-            actor_life: actor.physical_life.unwrap_or(0),
-            actor_alive: actor.alive,
-            actor_participating: entity.actively_participates(),
-            self_body_lease,
-            _self_body_reservation: self_body_reservation,
-        })
+            prepared,
+        ))
     }
 }

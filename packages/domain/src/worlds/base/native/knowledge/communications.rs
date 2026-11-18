@@ -11,6 +11,11 @@ pub(crate) struct CommunicationSubject<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     description: Option<Named>,
 }
+impl CommunicationSubject<'_> {
+    pub(crate) fn projection(&self) -> (&str, Option<&crate::text::JsText>, Option<&Named>) {
+        (self.id, self.label, self.description.as_ref())
+    }
+}
 pub(crate) struct RememberedCommunications<'a> {
     pub(crate) subjects: Vec<CommunicationSubject<'a>>,
     _reservation: ByteReservation,

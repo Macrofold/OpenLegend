@@ -13,15 +13,15 @@ pub(crate) struct PlayerControlPreparation {
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct PlayerControlFacts {
-    world_id: String,
-    generation: String,
-    accepted_cut: u64,
-    actor_id: String,
-    physical_life: Option<u64>,
-    at: f64,
-    can_recover: bool,
-    preparing_navigation: bool,
+pub struct PlayerControlFacts {
+    pub world_id: String,
+    pub generation: String,
+    pub accepted_cut: u64,
+    pub actor_id: String,
+    pub physical_life: Option<u64>,
+    pub at: f64,
+    pub can_recover: bool,
+    pub preparing_navigation: bool,
 }
 pub(crate) struct CapturedPlayerControls {
     facts: PlayerControlFacts,
@@ -137,6 +137,10 @@ impl PlayerControlPreparation {
     }
 }
 impl CapturedPlayerControls {
+    pub(crate) fn facts(&self) -> &PlayerControlFacts {
+        &self.facts
+    }
+
     pub(crate) fn write_json(
         &self,
         budget: &ByteBudget,
