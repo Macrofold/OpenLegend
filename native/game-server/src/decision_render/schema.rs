@@ -301,10 +301,22 @@ fn matches_schema(schema: &Value, value: &Value) -> bool {
             return false;
         }
     }
-    match schema["type"].as_str() {
-        Some("null") => value.is_null(),
-        Some("boolean") => value.is_boolean(),
-        Some("string") => value.as_str().is_some_and(|value| {
+    match &schema["type"] {
+        Value::String(kind) => matches_type(kind, schema, value),
+        Value::Array(kinds) => kinds
+            .iter()
+            .filter_map(Value::as_str)
+            .any(|kind| matches_type(kind, schema, value)),
+        Value::Null => fields.contains_key("anyOf"),
+        _ => false,
+    }
+}
+
+fn matches_type(kind: &str, schema: &Value, value: &Value) -> bool {
+    match kind {
+        "null" => value.is_null(),
+        "boolean" => value.is_boolean(),
+        "string" => value.as_str().is_some_and(|value| {
             let length = value.chars().count();
             let pattern = schema.get("pattern").and_then(Value::as_str);
             within_count(length, &schema["minLength"], &schema["maxLength"])
@@ -321,9 +333,9 @@ fn matches_schema(schema: &Value, value: &Value) -> bool {
                     _ => false,
                 }
         }),
-        Some("integer" | "number") => value.as_f64().is_some_and(|number| {
+        "integer" | "number" => value.as_f64().is_some_and(|number| {
             number.is_finite()
-                && (schema["type"] != "integer" || number.fract() == 0.0)
+                && (kind != "integer" || number.fract() == 0.0)
                 && schema["minimum"]
                     .as_f64()
                     .is_none_or(|minimum| number >= minimum)
@@ -331,13 +343,13 @@ fn matches_schema(schema: &Value, value: &Value) -> bool {
                     .as_f64()
                     .is_none_or(|maximum| number <= maximum)
         }),
-        Some("array") => value.as_array().is_some_and(|array| {
+        "array" => value.as_array().is_some_and(|array| {
             within_count(array.len(), &schema["minItems"], &schema["maxItems"])
                 && array
                     .iter()
                     .all(|item| matches_schema(&schema["items"], item))
         }),
-        Some("object") => value.as_object().is_some_and(|object| {
+        "object" => value.as_object().is_some_and(|object| {
             let Some(properties) = schema["properties"].as_object() else {
                 return false;
             };
@@ -354,7 +366,6 @@ fn matches_schema(schema: &Value, value: &Value) -> bool {
                         .is_some_and(|child| matches_schema(child, value))
                 })
         }),
-        None => fields.contains_key("anyOf"),
         _ => false,
     }
 }
