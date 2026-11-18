@@ -85,6 +85,8 @@ This proof establishes whether the proposed foundation reduces representative co
 
 ### Subsequent gates
 
+The [Rust game server track](rust-game-server-feature-spec.md) evaluates a stand-alone application on heavy ordinary play after the selected NSC03 decision and before broader within-world multicore qualification. Its selected family work feeds NSC04. The parent full-game and distribution gates below remain open.
+
 1. **Complete and assess the foundation.** Establish reliable one-worker gameplay and deterministic bounded parallel execution, with integrated costs and semantics. Repair stalled gameplay, unfinished replies, failed saves and hung shutdown rather than treating a profile failure as completion.
 2. **Convert the supported game completely.** Move authoritative callers and current-format persistence together, retire replaced runtime paths, and qualify the actual standard opening and current native families. Do not advertise a miniature proof as the completed game.
 3. **Qualify same-machine cells and border interactions.** Support independent jobs within a busy cell as well as multiple cells. No fixed CPU per geographic cell.

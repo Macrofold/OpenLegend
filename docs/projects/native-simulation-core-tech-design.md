@@ -120,6 +120,8 @@ This leaves a small ordered stage, which is measured rather than assumed free. *
 
 ## 4. Native/application boundary
 
+This section specifies the Node-hosted proof. The separate [Rust game server design](rust-game-server-tech-design.md) reuses the same simulation with Rust application owners for a new comparison. Historical proof interfaces remain the mixed control.
+
 The [shared bridge chapter](native-runtime-foundations-bridge.md) maps the current answer, read, save and cognition products to these ownership rules. It identifies repeated preparation and synchronous save-prefix encoding that still need isolated real-caller comparisons.
 
 One long-lived native host owns the simulation instances. Node owns request scheduling, network I/O and existing repositories. NAPI-RS exports cheap enqueue/readiness methods; substantial work runs on an explicitly bounded native pool, not the Node main thread or a new unlimited libuv workload. The JS-visible object holds an opaque host handle; an asynchronous method enqueues owned inputs, never borrows a JS-owned mutable object across an await. Do not create a pool per actor, cell, request or world. The pool shares a host CPU budget with existing geometry/navigation/checkpoint workers.
