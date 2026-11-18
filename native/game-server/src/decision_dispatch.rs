@@ -17,6 +17,7 @@ use crate::{
 };
 use chrono::{SecondsFormat, Utc};
 use openlegend_simulation::{encoding::hex_bytes, runtime::RuntimeNpcResponseTicket};
+use openlegend_world_host::pool::HostError;
 use std::{
     fmt,
     sync::{
@@ -63,6 +64,7 @@ pub(crate) enum CallFailure {
     Stale(&'static str),
     Authority(AccessError),
     World(WorldError),
+    DecodeBusy,
     Transport(NetworkError),
     Refused(u16),
     Invalid,
@@ -84,6 +86,7 @@ impl fmt::Display for CallFailure {
             }
             Self::Authority(error) => error.fmt(f),
             Self::World(error) => error.fmt(f),
+            Self::DecodeBusy => f.write_str("Compute capacity remained busy for the funded reply"),
             Self::Transport(error) => error.fmt(f),
             Self::Refused(status) => write!(f, "The provider refused the request ({status})"),
             Self::Invalid => f.write_str("The provider returned an invalid response"),
@@ -433,12 +436,20 @@ impl DecisionDispatch {
                             body_received = true;
                             // Retain any observable charge even when caller
                             // cancellation wins before the gameplay effect.
-                            match self.game.host.compute(move || decode(body, &http)).await {
+                            match self
+                                .game
+                                .host
+                                .compute_before(deadline, move || decode(body, &http))
+                                .await
+                            {
                                 Ok(decoded) => {
                                     observation = Some(decoded);
                                     Ok(())
                                 }
-                                Err(error) => Err(CallFailure::World(error)),
+                                Err(WorldError::Host(HostError::Busy)) => {
+                                    Err(CallFailure::DecodeBusy.at("response-decode"))
+                                }
+                                Err(error) => Err(CallFailure::World(error).at("response-decode")),
                             }
                         }
                         Err(error) => Err(error),
@@ -503,10 +514,13 @@ impl DecisionDispatch {
             self.cancel_known_run(observer, run, &digest).await;
         }
         settled.map_err(CallFailure::Commit)?;
-        result?;
-        if *stopped.borrow_and_update() {
-            return Err(CallFailure::Cancelled);
+        if *stopped.borrow_and_update()
+            && (result.is_ok()
+                || matches!(&result, Err(error) if matches!(error.cause().1, CallFailure::DecodeBusy)))
+        {
+            return Err(CallFailure::Cancelled.at("response-decode"));
         }
+        result?;
         observation.ok_or(CallFailure::Invalid)?.value
     }
 

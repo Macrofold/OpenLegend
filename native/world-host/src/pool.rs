@@ -297,7 +297,23 @@ impl HostPool {
         C: FnOnce(Result<T, HostError>) + Send + 'static,
         P: Fn() + Send + 'static,
     {
+        self.submit_with(|| (work, complete, poison))
+    }
+
+    /// Admit one job before taking its inputs. If the pool is busy, the
+    /// caller can keep its existing owned input and no work has been queued.
+    pub fn submit_with<T, F, C, P>(
+        &self,
+        prepare: impl FnOnce() -> (F, C, P),
+    ) -> Result<Cancellation, HostError>
+    where
+        T: Send + 'static,
+        F: FnOnce(&Cancellation) -> Result<T, HostError> + Send + 'static,
+        C: FnOnce(Result<T, HostError>) + Send + 'static,
+        P: Fn() + Send + 'static,
+    {
         let admitted = self.admit()?;
+        let (work, complete, poison) = prepare();
         let cancellation = admitted.cancellation();
         self.schedule(move || admitted.run(work, complete, poison));
         Ok(cancellation)

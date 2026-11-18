@@ -26,6 +26,7 @@ use std::sync::{Arc, Mutex, Weak};
 use std::time::Duration;
 use std::{collections::BTreeSet, future::Future};
 use tokio::sync::{Mutex as TurnLock, Semaphore, oneshot, watch};
+use tokio::time::Instant;
 
 const TURN_WAIT: Duration = Duration::from_secs(5);
 pub(crate) const IO_YIELD: Duration = Duration::from_millis(8);
@@ -167,18 +168,65 @@ impl WorldHost {
     where
         T: Send + 'static,
     {
-        let (send, receive) = oneshot::channel();
-        let cancellation = self.pool.submit(
-            move |_| Ok(work()),
-            move |result| {
-                let _ = send.send(result);
-            },
-            || {},
-        )?;
-        let cancel = CancelCompute(cancellation);
-        let value = receive.await.map_err(|_| HostError::WorkerFailed)??;
-        drop(cancel);
-        Ok(value)
+        self.compute_with_wait(work, None).await
+    }
+
+    /// Keep the already funded response while waiting for a compute slot. Only
+    /// Busy before enqueue can wait. The caller holds neither a world turn nor
+    /// a pool permit while waiting, and the original response is decoded once.
+    pub(crate) async fn compute_before<T>(
+        &self,
+        deadline: Instant,
+        work: impl FnOnce() -> T + Send + 'static,
+    ) -> Result<T, WorldError>
+    where
+        T: Send + 'static,
+    {
+        self.compute_with_wait(work, Some(deadline)).await
+    }
+
+    async fn compute_with_wait<T>(
+        &self,
+        work: impl FnOnce() -> T + Send + 'static,
+        until: Option<Instant>,
+    ) -> Result<T, WorldError>
+    where
+        T: Send + 'static,
+    {
+        let mut input = Some(work);
+        loop {
+            let mut reply = None;
+            let submitted = self.pool.submit_with(|| {
+                let work = input.take().expect("admit the computation once");
+                let (send, receive) = oneshot::channel();
+                reply = Some(receive);
+                (
+                    move |_| Ok(work()),
+                    move |result| {
+                        let _ = send.send(result);
+                    },
+                    || {},
+                )
+            });
+            match submitted {
+                Ok(cancellation) => {
+                    let _cancel = CancelCompute(cancellation);
+                    let result = reply.expect("admitted computation owns its reply").await;
+                    return Ok(result.map_err(|_| HostError::WorkerFailed)??);
+                }
+                Err(HostError::Busy) => {
+                    let now = Instant::now();
+                    let deadline = until
+                        .filter(|deadline| now < *deadline)
+                        .ok_or(HostError::Busy)?;
+                    tokio::time::sleep_until((now + IO_YIELD).min(deadline)).await;
+                    if Instant::now() >= deadline {
+                        return Err(HostError::Busy.into());
+                    }
+                }
+                Err(error) => return Err(error.into()),
+            }
+        }
     }
 
     /// The store must already own the connection holding the database writer

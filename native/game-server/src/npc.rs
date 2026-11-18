@@ -743,6 +743,11 @@ impl Director {
                 "The reply could not be used.",
                 "invalid-output",
             ),
+            CallFailure::DecodeBusy => (
+                SpeechReplyStatus::Failed,
+                "The reply could not be processed in time.",
+                "decode-admission-busy",
+            ),
             CallFailure::World(_) | CallFailure::Commit(_) => (
                 SpeechReplyStatus::Failed,
                 "The reply could not be saved.",
