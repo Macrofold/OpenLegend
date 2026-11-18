@@ -170,6 +170,7 @@ impl ProviderDestination {
         }
         *request.body_mut() = Some(bytes.into());
         Ok(PreparedProviderRequest {
+            route: self.route,
             request,
             digest,
             _body: storage,
@@ -178,9 +179,10 @@ impl ProviderDestination {
 }
 
 pub(crate) struct PreparedProviderRequest {
-    pub(crate) request: Request,
+    route: ProviderRoute,
+    request: Request,
     pub(crate) digest: [u8; 32],
-    pub(crate) _body: ByteReservation,
+    _body: ByteReservation,
 }
 
 /// A response is opened within the caller's currentness lease and then
@@ -189,6 +191,7 @@ pub(crate) struct PreparedProviderRequest {
 pub(crate) struct ProviderExchange<'a> {
     response: NetworkResponse<'a>,
     limit: usize,
+    stream_allowed: bool,
     evidence: HttpEvidence,
     _request: Option<ByteReservation>,
 }
@@ -197,12 +200,16 @@ impl<'a> ProviderExchange<'a> {
     pub(crate) async fn start<E: From<NetworkError>>(
         operation: &'a NetworkOperation<'a>,
         request: PreparedProviderRequest,
-        route: ProviderRoute,
         stream: bool,
         timeout: Duration,
         authorize: impl FnOnce(&mut dyn FnMut()) -> Result<(), E>,
     ) -> Result<Self, E> {
-        let PreparedProviderRequest { request, _body, .. } = request;
+        let PreparedProviderRequest {
+            route,
+            request,
+            _body,
+            ..
+        } = request;
         Self::open(
             operation,
             request,
@@ -259,6 +266,7 @@ impl<'a> ProviderExchange<'a> {
         Ok(Self {
             response,
             limit,
+            stream_allowed: stream,
             evidence,
             _request: custody,
         })

@@ -42,7 +42,7 @@ impl<'a> InferenceEvents<'a> {
         exchange: ProviderExchange<'a>,
         budget: &ByteBudget,
     ) -> Result<Self, NetworkError> {
-        if !exchange.streaming() {
+        if !exchange.stream_allowed || !exchange.streaming() {
             return Err(NetworkError::Transfer);
         }
         let text = BoundedBody::new(exchange.limit, budget)?;
