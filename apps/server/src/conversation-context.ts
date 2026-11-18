@@ -18,6 +18,8 @@ import { memoryCandidate, captureSummaryProjector } from './recall.js';
 import { hasLinguisticSpeech } from './speech-recall.js';
 import { digest } from './store.js';
 import { ContextBudgetError } from './context.js';
+import { StopJob } from './decision-dispatch.js';
+import type { DecisionDependencyFailure } from './decision-failure.js';
 import type { SharedModelExperience } from './perceived-context.js';
 import type { WorldService } from './world-service.js';
 import {
@@ -168,6 +170,12 @@ const speechPrivacy = (state: WorldState, actorId: string) =>
     forgotten: state.experience?.forgotten[actorId] ?? [],
     corrections: state.experience?.corrections?.[actorId] ?? {},
   });
+const staleDialogue = (failure: DecisionDependencyFailure) =>
+  new StopJob('stale', 'The selected personal evidence changed or expired.', undefined, {
+    ...failure,
+    stage: 'preparation',
+    category: 'invalidated',
+  });
 function conversationValidity(
   service: WorldService,
   actorId: string,
@@ -183,14 +191,24 @@ function conversationValidity(
     if (service.generation !== generation)
       throw new Error('World restored during speech preparation.');
     if (service.world !== state.checkedWorld.deref()) {
-      if (speechPrivacy(service.world, actorId) !== privacyRevision)
-        throw new Error('Personal speech disclosure changed.');
-      if (
-        state.expectedPerspective &&
-        personalAttributionRevision(service.world, actorId, state.boundEntities) !==
-          state.expectedPerspective
-      )
-        throw new Error('Selected speech perspective changed.');
+      const currentPrivacy = speechPrivacy(service.world, actorId);
+      if (currentPrivacy !== privacyRevision)
+        throw staleDialogue({
+          condition: 'speech-disclosure-revision',
+          dependency: actorId,
+          expected: privacyRevision,
+          current: currentPrivacy,
+        });
+      if (state.expectedPerspective) {
+        const current = personalAttributionRevision(service.world, actorId, state.boundEntities);
+        if (current !== state.expectedPerspective)
+          throw staleDialogue({
+            condition: 'speech-perspective-revision',
+            dependency: actorId,
+            expected: state.expectedPerspective,
+            current,
+          });
+      }
       if (!repository || !scope) {
         const current = new Map(
           residentSpeechSources(service.world, actorId).sources.map((source) => [
@@ -198,10 +216,16 @@ function conversationValidity(
             source,
           ]),
         );
-        if (
-          state.boundSources.some((source) => current.get(source.id)?.revision !== source.revision)
-        )
-          throw new Error('Selected personal speech changed.');
+        const changed = state.boundSources.find(
+          (source) => current.get(source.id)?.revision !== source.revision,
+        );
+        if (changed)
+          throw staleDialogue({
+            condition: 'selected-personal-speech',
+            dependency: changed.id,
+            expected: changed.revision,
+            current: current.get(changed.id)?.revision ?? 'missing',
+          });
       }
       state.checkedWorld = new WeakRef(service.world);
     }
@@ -214,28 +238,85 @@ function conversationValidity(
     if (flush) await service.flushMemorySources(actorId, false);
     assertCurrent();
     if (repository && scope) {
-      for (let read = 0; read < 2; read++) {
-        const revision = repository.actorRevision(actorId),
-          nonReception = selectedCurrent && repository.actorNonReceptionRevision(actorId),
-          historyEpoch = service.historyEpoch;
-        const valid = await repository.validatePreparation(
-          scope,
-          { sequence: 0, sources: state.boundSources },
-          additionalSources,
+      // Initial dialogue is checked before the decision owns its longer-lived fence. Hold
+      // the same exact direct-account watch while SQL checks the selected turns.
+      // Ordinary recognition cannot invalidate those turns on its own.
+      // docs/memory-architecture.md#private-retrieval-fencing
+      const dialogueFence =
+        !selectedCurrent &&
+        !state.usedCache &&
+        state.boundSources.length &&
+        !additionalSources.length
+          ? repository.captureConversationPublicationFence(scope, state.boundSources, [])
+          : undefined;
+      const exactCurrent = selectedCurrent ?? dialogueFence?.current;
+      try {
+        let coherenceFailure: DecisionDependencyFailure | undefined;
+        for (let read = 0; read < 2; read++) {
+          const revision = repository.actorRevision(actorId),
+            nonReception = exactCurrent && repository.actorNonReceptionRevision(actorId),
+            historyEpoch = service.historyEpoch;
+          let sourceFailure: DecisionDependencyFailure | undefined;
+          const report = (failure: DecisionDependencyFailure) => {
+            sourceFailure ??= failure;
+          };
+          const valid = await repository.validatePreparation(
+            scope,
+            { sequence: 0, sources: state.boundSources },
+            additionalSources,
+            report,
+          );
+          const coverage =
+            !state.usedCache ||
+            (await repository.currentCompactionSources(
+              scope,
+              state.usedCache.value.sources,
+              report,
+            ));
+          assertCurrent();
+          if (!valid || !coverage)
+            throw staleDialogue({
+              condition: !valid ? 'selected-speech-or-recall' : 'selected-speech-compaction',
+              dependency: actorId,
+              ...sourceFailure,
+            });
+          const currentHistoryEpoch = service.historyEpoch;
+          const currentRevision = repository.actorRevision(actorId);
+          if (
+            currentHistoryEpoch === historyEpoch &&
+            (currentRevision === revision ||
+              (exactCurrent?.() && repository.actorNonReceptionRevision(actorId) === nonReception))
+          )
+            return;
+          coherenceFailure =
+            currentHistoryEpoch !== historyEpoch
+              ? {
+                  condition: 'speech-history-epoch',
+                  expected: historyEpoch,
+                  current: currentHistoryEpoch,
+                }
+              : {
+                  condition: 'speech-actor-revision',
+                  expected: revision,
+                  current: currentRevision,
+                };
+        }
+        throw new StopJob(
+          'failed',
+          'The workflow failed safely. No automatic paid retry was sent.',
+          undefined,
+          {
+            condition: 'speech-validation',
+            ...coherenceFailure,
+            dependency: actorId,
+            stage: 'preparation',
+            category: 'validity-unresolved',
+            revalidation: 'exhausted',
+          },
         );
-        const coverage =
-          !state.usedCache ||
-          (await repository.currentCompactionSources(scope, state.usedCache.value.sources));
-        assertCurrent();
-        if (!valid || !coverage) throw new Error('Selected speech or recall sources changed.');
-        if (
-          service.historyEpoch === historyEpoch &&
-          (repository.actorRevision(actorId) === revision ||
-            (selectedCurrent?.() && repository.actorNonReceptionRevision(actorId) === nonReception))
-        )
-          return;
+      } finally {
+        dialogueFence?.release();
       }
-      throw new Error('Personal speech changed during validation.');
     }
   };
   return { check, assertCurrent };
