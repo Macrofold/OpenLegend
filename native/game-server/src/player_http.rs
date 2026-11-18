@@ -105,6 +105,7 @@ pub(crate) fn router(
         .route("/api/control", post(manual_clock))
         .route("/api/input", post(update_input))
         .route("/api/known-places", post(known_places::list))
+        .route("/api/known-places/inspect", post(known_places::inspect))
         .route("/api/history", axum::routing::get(history::journal))
         .route("/api/actions", post(actions::menu))
         .route("/api/chat", post(dialogue::chat))

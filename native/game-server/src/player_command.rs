@@ -6,15 +6,16 @@ use crate::{
     boot::CurrentServer,
     command_epoch::{RETRY_MS, RequestIdentity},
     live_save::{AcceptedSaveInput, LiveSaves},
-    store::{AdmittedReceipt, GameplayReceipt, StoreError},
+    store::{AdmittedReceipt, GameplayReceipt, KnownPlaceViewPage, PlaceViewRequest, StoreError},
     wire,
-    world::{ApplicationStart, WorldError},
+    world::{ApplicationStart, PlayerHistoryRead, WorldError},
 };
 use axum::body::Bytes;
 use openlegend_simulation::{
     encoding::{json_record, sha256_hex},
     host::{ByteBudget, ByteReservation},
-    runtime::{RuntimeDirectOutput, RuntimeError},
+    reception::EncounterExposure,
+    runtime::{NativeWorldSession, RuntimeDirectOutput, RuntimeError},
     state::SurfacePoint,
     values::deserialize_present_option,
 };
@@ -34,7 +35,7 @@ pub(crate) struct CommandRequest {
 
 // Deliberately select only the ordinary operations whose real semantic
 // binders exist in this listener. Unknown fields cannot alter an executed
-// operation, including flags for an unimplemented gesture or known-place read.
+// operation.
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct CommandInput {
@@ -52,6 +53,106 @@ struct CommandInput {
         skip_serializing_if = "Option::is_none"
     )]
     expected_action_id: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    known_place: Option<PlaceReference>,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct PlaceReference {
+    pub(crate) id: String,
+    pub(crate) source_id: String,
+    pub(crate) revision: String,
+}
+
+impl PlaceReference {
+    pub(crate) fn valid(&self) -> bool {
+        let id = |value: &str| !value.is_empty() && value.encode_utf16().count() <= 180;
+        id(&self.id)
+            && id(&self.source_id)
+            && self.revision.len() == 64
+            && self.revision.bytes().all(|byte| byte.is_ascii_hexdigit())
+    }
+}
+
+pub(crate) const KNOWN_PLACE_UNAVAILABLE: &str = "This remembered destination cannot be used now. Refresh Known places or inspect it again when you can.";
+
+/// Own the single selected source and its independently admitted personal
+/// evidence after the SQL transaction and save can release their own pins.
+pub(crate) struct SelectedKnownPlace {
+    pub(crate) evidence: PlayerHistoryRead,
+    pub(crate) page: KnownPlaceViewPage,
+}
+
+impl SelectedKnownPlace {
+    /// Use the exact SQL snapshot selected under the tab's initial scope.
+    /// Later use requires a fresh native/source and authority check.
+    pub(crate) async fn read(
+        game: &CurrentServer,
+        authority: &Arc<Authority>,
+        scope: &Arc<AuthorizedScope>,
+        reference: &PlaceReference,
+    ) -> Result<Option<Self>, WorldError> {
+        let (selected, cut) = game
+            .world
+            .capture_known_place_view(authority.clone(), scope.clone(), 1)
+            .await?;
+        let page = game
+            .store
+            .read_known_place_view(
+                cut,
+                PlaceViewRequest {
+                    id: Some(reference.id.clone()),
+                    after: None,
+                    search: None,
+                },
+            )
+            .await?;
+        let exact = page
+            .places
+            .first()
+            .zip(page.references.first())
+            .is_some_and(|(place, source)| {
+                place.capsule.place_id == reference.id
+                    && source.source_id == reference.source_id
+                    && source.revision == reference.revision
+            });
+        if !exact {
+            return Ok(None);
+        }
+        let (evidence, page) = game.world.admit_known_place_view(selected, page).await?;
+        Ok(Some(Self { evidence, page }))
+    }
+
+    pub(crate) fn destination(
+        &self,
+        session: &NativeWorldSession,
+        scope: &RequestScope,
+    ) -> Result<Option<&SurfacePoint>, WorldError> {
+        let [place] = self.page.places.as_slice() else {
+            return Err(StoreError::InvalidRecord.into());
+        };
+        let [source] = self.page.references.as_slice() else {
+            return Err(StoreError::InvalidRecord.into());
+        };
+        let EncounterExposure::Place { point, .. } = &place.exposure else {
+            return Err(StoreError::InvalidRecord.into());
+        };
+        if source.correction.is_some() {
+            return Ok(None);
+        }
+        let current = session.with_player_place_facts(
+            &scope.account_id,
+            &scope.actor_id,
+            std::iter::once((place.capsule.place_id.as_str(), Some(&place.exposure))),
+            |facts| facts[0].current == Some(true),
+        )?;
+        Ok(current.then_some(point))
+    }
 }
 
 #[derive(Clone, Copy, Deserialize, Serialize)]
@@ -157,6 +258,17 @@ impl PlayerCommands {
             })?;
         }
         self.saves.check_admission(tokio::time::Instant::now())?;
+        let reference = facts.request.command.known_place.as_ref();
+        let remembered = reference.is_some();
+        let selected_place = match reference {
+            Some(reference) => {
+                match SelectedKnownPlace::read(&self.game, permits, &scope, reference).await {
+                    Err(WorldError::Storage(StoreError::StaleCut)) => None,
+                    value => value?,
+                }
+            }
+            None => None,
+        };
         let prepare = facts.clone();
         let begin_facts = facts.clone();
         let begin_saves = self.saves.clone();
@@ -167,6 +279,8 @@ impl PlayerCommands {
         let game = self.game.clone();
         let finish_scope = scope.clone();
         let finish_authority = permits.clone();
+        let place_world = self.game.world.clone();
+        let finish_world = place_world.clone();
         self.game.world.request_advance_publication();
         prior = self
             .game
@@ -191,7 +305,30 @@ impl PlayerCommands {
                         &begin_scope.scope.account_id,
                         &begin_scope.scope.actor_id,
                     )?;
-                    let (command, signature) = begin_facts.command(&begin_scope.scope.actor_id)?;
+                    let position = if remembered {
+                        let stale = || {
+                            ApplicationStart::Existing(ResultOwner::Refused(
+                                "stale-place",
+                                KNOWN_PLACE_UNAVAILABLE,
+                            ))
+                        };
+                        let Some(place) = selected_place.as_ref() else {
+                            return Ok(stale());
+                        };
+                        let Some(position) = place_world
+                            .with_current_player_history(world, &place.evidence, |world| {
+                                place.destination(world, &begin_scope.scope)
+                            })?
+                            .flatten()
+                        else {
+                            return Ok(stale());
+                        };
+                        Some(position)
+                    } else {
+                        begin_facts.request.command.position.as_ref()
+                    };
+                    let (command, signature) =
+                        begin_facts.command(&begin_scope.scope.actor_id, position)?;
                     Ok(ApplicationStart::Candidate(world.begin_command(
                         command.as_bytes(),
                         signature,
@@ -220,12 +357,21 @@ impl PlayerCommands {
                     Ok(ResultOwner::Accepted(stage.stage(&product, Some(receipt))?))
                 },
                 move |fence, key, _| {
-                    Ok(finish_authority.current(
+                    finish_authority.current(
                         &finish_scope,
                         Capability::Play,
                         true,
-                        |_, _| fence.settle(key, true),
-                    )??)
+                        |scope, _| {
+                            if remembered {
+                                return finish_world
+                                    .with_unedited_history(&scope.actor_id, || {
+                                        Ok(fence.settle(key, true)?)
+                                    })?
+                                    .ok_or(WorldError::ProjectionChanged);
+                            }
+                            Ok(fence.settle(key, true)?)
+                        },
+                    )?
                 },
                 move |result| {
                     if let ResultOwner::Accepted(value) = result {
@@ -259,15 +405,22 @@ impl CommandRequest {
         match command.kind {
             MoveOrCancel::Move
                 if command.expected_action_id.is_none()
-                    && command.position.as_ref().is_some_and(|point| {
-                        id(&point.surface_id)
-                            && [point.x, point.y, point.z].iter().all(|n| n.is_finite())
-                    }) =>
+                    && (command
+                        .known_place
+                        .as_ref()
+                        .is_some_and(PlaceReference::valid)
+                        && command.position.is_none()
+                        || command.known_place.is_none()
+                            && command.position.as_ref().is_some_and(|point| {
+                                id(&point.surface_id)
+                                    && [point.x, point.y, point.z].iter().all(|n| n.is_finite())
+                            })) =>
             {
                 Ok(())
             }
             MoveOrCancel::Cancel
                 if command.position.is_none()
+                    && command.known_place.is_none()
                     && command.expected_action_id.as_deref().is_none_or(id) =>
             {
                 Ok(())
@@ -329,69 +482,97 @@ impl CommandRequest {
 }
 
 impl PreparedRequest {
-    fn command(&self, actor: &str) -> Result<(String, String), WorldError> {
+    fn command(
+        &self,
+        actor: &str,
+        destination: Option<&SurfacePoint>,
+    ) -> Result<(String, String), WorldError> {
         let input = &self.request.command;
-        #[derive(Serialize)]
-        #[serde(rename_all = "camelCase")]
-        struct Operation<'a> {
-            id: &'a str,
-            actor_id: &'a str,
-            human_initiated: bool,
-            #[serde(rename = "type")]
-            kind: MoveOrCancel,
-            #[serde(skip_serializing_if = "Option::is_none")]
-            destination: Option<&'a SurfacePoint>,
-            #[serde(skip_serializing_if = "Option::is_none")]
-            expected_action_id: Option<&'a str>,
-        }
-        #[derive(Serialize)]
-        #[serde(rename_all = "camelCase")]
-        struct Point<'a> {
-            surface_id: &'a str,
-            x: f64,
-            y: f64,
-            z: f64,
-        }
-        #[derive(Serialize)]
-        #[serde(rename_all = "camelCase")]
-        struct Canonical<'a> {
-            actor_id: &'a str,
-            #[serde(skip_serializing_if = "Option::is_none")]
-            destination: Option<Point<'a>>,
-            #[serde(skip_serializing_if = "Option::is_none")]
-            expected_action_id: Option<&'a str>,
-            human_initiated: bool,
-            id: &'a str,
-            #[serde(rename = "type")]
-            kind: MoveOrCancel,
-        }
-        let operation = Operation {
-            id: &self.id,
-            actor_id: actor,
-            human_initiated: true,
-            kind: input.kind,
-            destination: input.position.as_ref(),
-            expected_action_id: input.expected_action_id.as_deref(),
-        };
-        let canonical = Canonical {
-            actor_id: actor,
-            destination: operation.destination.map(|at| Point {
-                surface_id: &at.surface_id,
-                x: at.x,
-                y: at.y,
-                z: at.z,
-            }),
-            expected_action_id: operation.expected_action_id,
-            human_initiated: true,
-            id: &self.id,
-            kind: input.kind,
-        };
-        let encode = |error| WorldError::Simulation(RuntimeError::application_refused(error));
-        Ok((
-            json_record(&operation).map_err(encode)?,
-            json_record(&canonical).map_err(encode)?,
-        ))
+        encode_operation(
+            &self.id,
+            actor,
+            input.kind,
+            destination,
+            input.expected_action_id.as_deref(),
+        )
     }
+}
+
+pub(crate) fn encode_place_preview(
+    id: &str,
+    actor: &str,
+    destination: &SurfacePoint,
+) -> Result<(String, String), WorldError> {
+    encode_operation(id, actor, MoveOrCancel::Move, Some(destination), None)
+}
+
+fn encode_operation(
+    id: &str,
+    actor: &str,
+    kind: MoveOrCancel,
+    destination: Option<&SurfacePoint>,
+    expected_action_id: Option<&str>,
+) -> Result<(String, String), WorldError> {
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Operation<'a> {
+        id: &'a str,
+        actor_id: &'a str,
+        human_initiated: bool,
+        #[serde(rename = "type")]
+        kind: MoveOrCancel,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        destination: Option<&'a SurfacePoint>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        expected_action_id: Option<&'a str>,
+    }
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Point<'a> {
+        surface_id: &'a str,
+        x: f64,
+        y: f64,
+        z: f64,
+    }
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Canonical<'a> {
+        actor_id: &'a str,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        destination: Option<Point<'a>>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        expected_action_id: Option<&'a str>,
+        human_initiated: bool,
+        id: &'a str,
+        #[serde(rename = "type")]
+        kind: MoveOrCancel,
+    }
+    let operation = Operation {
+        id,
+        actor_id: actor,
+        human_initiated: true,
+        kind,
+        destination,
+        expected_action_id,
+    };
+    let canonical = Canonical {
+        actor_id: actor,
+        destination: operation.destination.map(|at| Point {
+            surface_id: &at.surface_id,
+            x: at.x,
+            y: at.y,
+            z: at.z,
+        }),
+        expected_action_id: operation.expected_action_id,
+        human_initiated: true,
+        id,
+        kind,
+    };
+    let encode = |error| WorldError::Simulation(RuntimeError::application_refused(error));
+    Ok((
+        json_record(&operation).map_err(encode)?,
+        json_record(&canonical).map_err(encode)?,
+    ))
 }
 
 fn report(

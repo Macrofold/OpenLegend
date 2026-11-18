@@ -133,6 +133,7 @@ pub(crate) struct CartographyPolicy {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct ControlPolicy {
+    pub move_description: String,
     pub stop_label: String,
     pub stop_icon: Option<String>,
     pub stop_inactive: bool,

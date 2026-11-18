@@ -139,6 +139,18 @@ impl HostedWorld {
         selected: &PlayerHistoryRead,
         publish: impl FnOnce(&NativeWorldSession, &ByteBudget) -> Result<Bytes, WorldError>,
     ) -> Result<PlayerDisclosure, WorldError> {
+        self.disclose_history_at(authority, selected, None, publish)
+    }
+
+    /// An inspected movement preview is valid only at the accepted cut where
+    /// it ran. The original private source must still be eligible there.
+    pub(crate) fn disclose_history_at(
+        &self,
+        authority: &Authority,
+        selected: &PlayerHistoryRead,
+        preview_cut: Option<u64>,
+        publish: impl FnOnce(&NativeWorldSession, &ByteBudget) -> Result<Bytes, WorldError>,
+    ) -> Result<PlayerDisclosure, WorldError> {
         authority
             .current_view(&selected.scope, |_, _| {
                 if self.closing.load(Ordering::Acquire) {
@@ -154,13 +166,51 @@ impl HostedWorld {
                         return Err(HostError::Poisoned.into());
                     }
                 };
-                let Some(lease) = session.history_publication(&selected.read)? else {
+                if let Some(preview_cut) = preview_cut
+                    && session.accepted_progress()?.through_cut != preview_cut
+                {
                     return Ok(PlayerDisclosure::Changed);
-                };
-                let bytes = publish(&session, self.host.budget())?;
-                drop(lease);
-                Ok(PlayerDisclosure::Published(bytes))
+                }
+                Ok(self
+                    .with_current_player_history(&session, selected, |session| {
+                        publish(session, self.host.budget())
+                    })?
+                    .map_or(PlayerDisclosure::Changed, PlayerDisclosure::Published))
             })
             .map_err(WorldError::Access)?
+    }
+
+    /// Borrow the selected private proof while the existing world turn
+    /// remains held. The synchronous callback cannot move the world.
+    pub(crate) fn with_current_player_history<T>(
+        &self,
+        session: &NativeWorldSession,
+        selected: &PlayerHistoryRead,
+        consume: impl FnOnce(&NativeWorldSession) -> Result<T, WorldError>,
+    ) -> Result<Option<T>, WorldError> {
+        self.with_unedited_history(&selected.scope.scope.actor_id, || {
+            let Some(_lease) = session.history_publication(&selected.read)? else {
+                return Ok(None);
+            };
+            consume(session).map(Some)
+        })
+        .map(Option::flatten)
+    }
+
+    /// Source edits establish a refusal before their protected save obtains
+    /// the world turn. Serialize new effects and disclosure with that intent.
+    pub(crate) fn with_unedited_history<T>(
+        &self,
+        actor: &str,
+        consume: impl FnOnce() -> Result<T, WorldError>,
+    ) -> Result<Option<T>, WorldError> {
+        let pending = self
+            .pending_source_edits
+            .lock()
+            .map_err(|_| HostError::Poisoned)?;
+        if pending.contains(actor) {
+            return Ok(None);
+        }
+        consume().map(Some)
     }
 }

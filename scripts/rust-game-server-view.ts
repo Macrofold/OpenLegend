@@ -1,4 +1,5 @@
 import {
+  commandDescriptions,
   nativeActionIcon,
   selectedDailyRain,
   selectedEventPresentation,
@@ -84,6 +85,7 @@ export function rustGameServerViewPolicy(world: WorldState) {
           : undefined,
     },
     controls: {
+      moveDescription: commandDescriptions().move!,
       stopLabel: rules.stopLabel,
       stopIcon: nativeActionIcon('cancel'),
       stopInactive: selectedPlayerControlCanUseInactive(world, { type: 'cancel' }),
