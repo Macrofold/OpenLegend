@@ -6,12 +6,12 @@ use crate::{
 };
 use openlegend_simulation::{
     encoding::{json_record, sha256_hex},
-    host::ByteBudget,
+    host::{ByteBudget, ByteReservation},
     narration::{NameArticle, name_phrase, native_text},
     runtime::{NativeWorldSession, RuntimeNpcRead, RuntimeNpcResponseTicket},
     state::Named,
 };
-use serde_json::{Map, Value, json};
+use serde_json::{Value, json};
 use std::{collections::HashMap, sync::Arc};
 
 pub(super) struct Prepared {
@@ -19,10 +19,74 @@ pub(super) struct Prepared {
     pub(super) addressed: bool,
     pub(super) speech_trigger: bool,
     pub(super) route: PreparedPrompt,
-    pub(super) response: PreparedPrompt,
-    pub(super) schema: BoundSchema,
+    pub(super) context: Projection,
     pub(super) ticket: Arc<RuntimeNpcResponseTicket>,
     pub(super) frame: ReceivedFrame,
+    _projection: ByteReservation,
+}
+
+pub(super) struct Projection {
+    pub(super) fields: Value,
+    pub(super) offers: Vec<NativeOffer>,
+    refs: Vec<String>,
+    physical: Vec<String>,
+    attention: Vec<String>,
+    speaks: bool,
+    expressions: bool,
+}
+
+pub(super) struct NativeOffer {
+    pub(super) id: String,
+    pub(super) caption: String,
+    pub(super) no_intervention: bool,
+    pub(super) transition: String,
+}
+
+impl Projection {
+    pub(super) fn render_response(
+        &self,
+        game: &CurrentServer,
+        selected: &[&NativeOffer],
+        include_actions: bool,
+    ) -> Result<(PreparedPrompt, BoundSchema), CallFailure> {
+        let budget = game.host.budget();
+        let offered = selected
+            .iter()
+            .map(|offer| OfferedAction {
+                id: &offer.id,
+                description: &offer.caption,
+            })
+            .collect::<Vec<_>>();
+        let aliases = selected
+            .iter()
+            .map(|offer| offer.id.clone())
+            .collect::<Vec<_>>();
+        let fields = self.fields.as_object().ok_or(CallFailure::Invalid)?;
+        let prompt = game
+            .cognition
+            .prompt(fields, &offered, include_actions, budget)
+            .map_err(invalid)?;
+        let schema = game
+            .cognition
+            .response_schema(
+                self.speaks,
+                self.expressions,
+                true,
+                &ResponseReferences {
+                    entity: &self.refs,
+                    action: &aliases,
+                    knowledge: &[],
+                    identity: &[],
+                    physical: &self.physical,
+                    attention: &self.attention,
+                    retention: &[],
+                    appraisal: None,
+                },
+                budget,
+            )
+            .map_err(invalid)?;
+        Ok((prompt, schema))
+    }
 }
 
 pub(super) struct ReceivedFrame {
@@ -150,17 +214,25 @@ pub(super) async fn collect(
         .ok_or(CallFailure::Invalid)?;
     // The decoded capture continues to own its independent graph. Projection,
     // labels and selector records have their own allowance through binding.
-    let _projection = budget.reserve(bytes).map_err(invalid)?;
-    let (current, binding, route, response, schema, addressed, speech_trigger) = project(
+    let projection = budget.reserve(bytes).map_err(invalid)?;
+    let (binding, context, addressed, speech_trigger) = project(
         game,
         work,
-        current,
         &captured.value,
         &original_json.value,
         source_data.as_ref().map(|data| &data.value),
         evidence,
         consumer,
     )?;
+    let route = game
+        .cognition
+        .prompt(
+            context.fields.as_object().ok_or(CallFailure::Invalid)?,
+            &[],
+            false,
+            budget,
+        )
+        .map_err(invalid)?;
     ensure_running(work)?;
     let request = crate::wire::encode(&binding, b"", b"", budget).map_err(invalid)?;
     let ticket = game
@@ -173,10 +245,10 @@ pub(super) async fn collect(
         addressed,
         speech_trigger,
         route,
-        response,
-        schema,
+        context,
         ticket: Arc::new(ticket),
         frame,
+        _projection: projection,
     })
 }
 
@@ -188,32 +260,18 @@ fn capture(read: &RuntimeNpcRead, budget: &ByteBudget) -> Result<FundedJson, Cal
     )
 }
 
-#[allow(clippy::type_complexity)]
 fn project(
     game: &CurrentServer,
     work: &Work,
-    current: RuntimeNpcRead,
     facts: &Value,
     original: &Value,
     selected: Option<&Value>,
     evidence: Vec<Value>,
     consumer: &str,
-) -> Result<
-    (
-        RuntimeNpcRead,
-        Value,
-        PreparedPrompt,
-        PreparedPrompt,
-        BoundSchema,
-        bool,
-        bool,
-    ),
-    CallFailure,
-> {
+) -> Result<(Value, Projection, bool, bool), CallFailure> {
     let own = &facts["self"];
     let current_body = &facts["perception"];
     let choices = &facts["candidates"];
-    let budget = game.host.budget();
     let own_name = named(&own["observerName"], NameArticle::None)?;
     let reference_key = uuid::Uuid::new_v4().simple().to_string();
     let self_reference = alias(&reference_key, "myself", 0);
@@ -327,21 +385,18 @@ fn project(
     };
     let actor_actions = records(&choices["offers"])?;
     let mut actions = Vec::new();
-    let mut captions = Vec::new();
+    let mut offers = Vec::new();
     for (ordinal, offer) in actor_actions.iter().enumerate() {
         let id = format!("a{ordinal}");
         let caption = text(&offer["description"])?;
         actions.push(json!({"alias":id,"ordinal":ordinal,"source":"current"}));
-        captions.push((id, caption));
+        offers.push(NativeOffer {
+            id,
+            caption: caption.to_owned(),
+            no_intervention: offer["hasCommand"] == false,
+            transition: text(&offer["transition"])?.to_owned(),
+        });
     }
-    let model_actions = captions
-        .iter()
-        .map(|(id, description)| OfferedAction { id, description })
-        .collect::<Vec<_>>();
-    let action_aliases = captions
-        .iter()
-        .map(|(id, _)| id.clone())
-        .collect::<Vec<_>>();
     let speaks = own["speech"].as_bool().ok_or(CallFailure::Invalid)?;
     let expressions = own["npc"]["expressions"]
         .as_bool()
@@ -362,41 +417,26 @@ fn project(
         "knowledge":[],"references":descriptions,"situationQueries":true,
     });
     project_markers(&mut fields, &canonical, &refs);
-    let fields: &Map<String, Value> = fields.as_object().ok_or(CallFailure::Invalid)?;
-    let route = game
-        .cognition
-        .prompt(fields, &model_actions, false, budget)
-        .map_err(invalid)?;
-    let response = game
-        .cognition
-        .prompt(fields, &model_actions, true, budget)
-        .map_err(invalid)?;
-    let schema = game
-        .cognition
-        .response_schema(
-            speaks,
-            expressions,
-            true,
-            &ResponseReferences {
-                entity: &refs,
-                action: &action_aliases,
-                knowledge: &[],
-                identity: &[],
-                physical: &physical,
-                attention: &attention_aliases,
-                retention: &[],
-                appraisal: None,
-            },
-            budget,
-        )
-        .map_err(invalid)?;
     let binding = json!({"decisionId":work.job.job.id,"selection":{
         "consumer":consumer,"purpose":"decision","validity":"decision","actions":actions,
         "prototypeSource":"current","perspectives":[],"semanticCauses":[],"intents":[],
         "evidence":evidence,"entities":entities,"identities":[],"knowledge":[],
         "observations":[],"current":[],"receipts":[],"attention":attention,"presented":presented,"appraisals":null,
     }});
-    Ok((current, binding, route, response, schema, addressed, speech))
+    Ok((
+        binding,
+        Projection {
+            fields,
+            offers,
+            refs,
+            physical,
+            attention: attention_aliases,
+            speaks,
+            expressions,
+        },
+        addressed,
+        speech,
+    ))
 }
 
 fn alias(key: &str, kind: &str, index: usize) -> String {

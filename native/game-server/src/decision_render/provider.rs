@@ -268,7 +268,10 @@ pub(crate) struct JudgmentAnswer {
 }
 
 enum Answer {
-    Choice(String),
+    Choice {
+        selected: String,
+        probabilities: BTreeMap<String, f64>,
+    },
     Predicate(f64),
     Score(f64),
 }
@@ -276,7 +279,13 @@ enum Answer {
 impl JudgmentAnswer {
     pub(crate) fn choice(&self, id: &str) -> Option<&str> {
         match self.values.get(id)? {
-            Answer::Choice(choice) => Some(choice),
+            Answer::Choice { selected, .. } => Some(selected),
+            _ => None,
+        }
+    }
+    pub(crate) fn probability(&self, id: &str, choice: &str) -> Option<f64> {
+        match self.values.get(id)? {
+            Answer::Choice { probabilities, .. } => probabilities.get(choice).copied(),
             _ => None,
         }
     }
@@ -310,14 +319,19 @@ pub(crate) fn decode_judgment(
     let bytes = questions
         .iter()
         .try_fold(256usize, |total, (id, question)| {
-            let maximum = question["criteria"]
+            let keys = question["criteria"]
                 .as_object()
-                .and_then(|criteria| criteria.keys().map(String::len).max())
-                .unwrap_or_default();
+                .map_or(Some(0), |criteria| {
+                    criteria.keys().try_fold(0usize, |total, key| {
+                        total
+                            .checked_add(128)?
+                            .checked_add(key.len().checked_mul(2)?)
+                    })
+                })?;
             total
                 .checked_add(256)?
                 .checked_add(id.len())?
-                .checked_add(maximum)
+                .checked_add(keys)
         })
         .ok_or(RenderError::Capacity)?;
     let custody = budget.reserve(bytes).map_err(|_| RenderError::Capacity)?;
@@ -352,14 +366,19 @@ pub(crate) fn decode_judgment(
                     .as_object()
                     .ok_or(RenderError::Contract)?;
                 let mut best = None;
+                let mut probabilities = BTreeMap::new();
                 for key in offered.keys() {
                     let probability = finite(&answer["probabilities"][key])
                         .ok_or(RenderError::InvalidResponse)?;
                     if best.is_none_or(|(_, prior)| probability > prior) {
                         best = Some((key, probability));
                     }
+                    probabilities.insert(key.clone(), probability);
                 }
-                Answer::Choice(best.ok_or(RenderError::Contract)?.0.clone())
+                Answer::Choice {
+                    selected: best.ok_or(RenderError::Contract)?.0.clone(),
+                    probabilities,
+                }
             }
             _ => return Err(RenderError::Contract),
         };

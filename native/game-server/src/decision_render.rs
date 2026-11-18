@@ -7,6 +7,7 @@ use serde::Deserialize;
 use serde_json::{Map, Value};
 use std::collections::HashMap;
 
+mod attention;
 mod choices;
 mod prompt;
 pub(crate) mod provider;
@@ -60,6 +61,9 @@ pub(crate) struct DecisionPolicy {
     pub(crate) knowledge_instructions: String,
     pub(crate) expression_guidance: [String; 2],
     questions: Vec<QuestionSet>,
+    action_attention: [ActionAttention; 2],
+    pub(crate) choice_threshold: f64,
+    judgment_characters: [usize; 2],
     references: HashMap<String, String>,
     schemas: Vec<SchemaVariant>,
     choices: Value,
@@ -80,6 +84,13 @@ struct SchemaVariant {
     speech: bool,
     expressions: bool,
     schema: Value,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ActionAttention {
+    policy: String,
+    question: Value,
 }
 
 pub(crate) struct OfferedAction<'a> {

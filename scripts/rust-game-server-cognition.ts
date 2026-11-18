@@ -12,12 +12,17 @@ import {
   type WorldState,
 } from '../packages/domain/src/index.js';
 import {
+  JUDGMENT_MAX_CHARACTERS,
+  JUDGMENT_STATE_QUESTION_CHARACTERS,
+} from '../packages/ai/src/index.js';
+import {
   boundResponseSchema,
   COGNITION_VERSION,
   decisionAppraisalSchema,
   RESPONSE_INSTRUCTIONS,
 } from '../apps/server/src/cognition-contracts.js';
 import { CONTEXT_BYTE_LIMIT } from '../apps/server/src/context.js';
+import { decisionActionAttentionRequest } from '../apps/server/src/attention-request.js';
 import {
   formatCandidateDetails,
   formatCandidateTemporary,
@@ -28,7 +33,7 @@ import {
   SITUATION_QUERY_INSTRUCTIONS,
   situationResponseJsonSchema,
 } from '../apps/server/src/decision-situation-query.js';
-import { decisionQuestions } from '../apps/server/src/jev-questions.js';
+import { decisionQuestions, LEVEL1_POLICY } from '../apps/server/src/jev-questions.js';
 import { navigationInstructions } from '../apps/server/src/navigation-contracts.js';
 
 // These build-time tokens are replaced by request-scoped aliases issued by
@@ -180,6 +185,24 @@ export function rustGameServerDecisionPolicy(world: WorldState) {
         questions: decisionQuestions(addressed, maximum, speech, generation),
       })),
     ),
+    actionAttention: (['actions', 'choose-action'] as const).map((purpose) => {
+      const request = decisionActionAttentionRequest(
+        {},
+        [{ id: 'bound', description: 'one offered action' }],
+        purpose,
+        world.cognitionPolicy.actionGuidance,
+      );
+      const state: Record<string, unknown> = request.state;
+      const policy = state['attentionPolicy'];
+      if (typeof policy !== 'string' || request.questions['bound']?.type !== 'noul')
+        throw new Error('The installed action-attention template is unavailable.');
+      return {
+        policy,
+        question: request.questions['bound'],
+      };
+    }),
+    choiceThreshold: LEVEL1_POLICY.selectAt,
+    judgmentCharacters: [JUDGMENT_MAX_CHARACTERS, JUDGMENT_STATE_QUESTION_CHARACTERS],
     references,
     schemas,
     choices: choiceText(world),

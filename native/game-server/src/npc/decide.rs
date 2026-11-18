@@ -8,7 +8,7 @@ use crate::{
     decision_dispatch::{
         CallAuthority, CallFailure, DecisionDispatch, PreparedCall, ProviderObservation,
     },
-    decision_render::{BoundSchema, provider},
+    decision_render::{BoundSchema, OfferedAction, provider},
     live_save::LiveSaves,
     provider_transport::{
         FundedReply, HttpEvidence, ProviderDestination,
@@ -98,7 +98,14 @@ pub(super) async fn run(
     models: &Models,
     work: Work,
 ) -> Result<(), CallFailure> {
-    let prepared = prepare::collect(game, &work).await?;
+    let mut stop = work.cancellation.clone();
+    let prepared = tokio::select! {
+        biased;
+        _ = stopped(&mut stop) => return Err(CallFailure::Cancelled),
+        prepared = tokio::time::timeout_at(work.deadline,prepare::collect(game, &work)) => {
+            prepared.map_err(|_| CallFailure::Stale("decision-deadline"))?.map_err(|error| error.at("preparation"))?
+        }
+    };
     ensure_running(&work)?;
     let available = models.fast.is_some();
     let questions = game
@@ -159,29 +166,102 @@ pub(super) async fn run(
                 },
             ),
         )
-        .await?;
+        .await
+        .map_err(|error| error.at("route"))?;
     ensure_running(&work)?;
-    let (model, level) = match observed.choice("route") {
-        Some("native") => {
-            let payload = crate::wire::encode(&Operations { operations: &[] }, b"", b"", budget)
-                .map_err(|_| CallFailure::Invalid)?;
-            return super::apply::apply(
-                saves,
-                game,
-                &work.job,
-                prepared.ticket,
-                payload,
-                work.permit,
-                work.cancellation,
-            )
-            .await;
+    let selected_route = observed.choice("route").filter(|choice| {
+        observed
+            .probability("route", choice)
+            .is_some_and(|rating| rating >= 0.5)
+    });
+    let route = match selected_route {
+        None | Some("native") if available && prepared.addressed => "level2",
+        None | Some("native") => {
+            return finish_native(game, saves, work, prepared.ticket, None).await;
         }
-        Some("level2") => (models.fast.as_ref().ok_or(CallFailure::Invalid)?, 2),
-        Some("level3") => (models.complex.as_ref().ok_or(CallFailure::Invalid)?, 3),
-        Some("level4") => (models.complex.as_ref().ok_or(CallFailure::Invalid)?, 4),
-        _ => return Err(CallFailure::Invalid),
+        Some(route) => route,
     };
-    let schema = Arc::new(prepared.schema);
+    let choose = route == "level1";
+    let include_actions = choose
+        || !prepared.speech_trigger
+        || observed.choice("possibleAction") != Some("no")
+        || observed.probability("possibleAction", "no").unwrap_or(0.0) < 0.8;
+    let mut selected = Vec::new();
+    let mut escalation = 2;
+    if include_actions {
+        let accepted = action_attention(
+            game,
+            dispatch,
+            &work,
+            &prepared,
+            decision,
+            models.ceiling_micro_usd,
+            choose,
+        )
+        .await;
+        match accepted {
+            Ok(Some(rated)) => {
+                let mut best = None;
+                let threshold = if choose {
+                    game.cognition.choice_threshold
+                } else {
+                    0.5
+                };
+                for offer in &prepared.context.offers {
+                    if let Some(value) = rated
+                        .predicate(&offer.id)
+                        .filter(|value| *value >= threshold)
+                    {
+                        selected.push(offer);
+                        if best.is_none_or(|(_, rating)| value > rating) {
+                            best = Some((offer, value));
+                        }
+                    }
+                }
+                if choose && let Some((offer, _)) = best {
+                    let picked = (!offer.no_intervention).then_some(offer);
+                    return finish_native(game, saves, work, prepared.ticket, picked).await;
+                }
+            }
+            Ok(None) => {}
+            // Optional action advice can miss its budget or return no usable
+            // rating. It cannot make otherwise valid speech disappear.
+            Err(CallFailure::Invalid) if !choose => selected.extend(&prepared.context.offers),
+            Err(error) => return Err(error.at("action-attention")),
+        }
+        if choose {
+            if !available {
+                return finish_native(game, saves, work, prepared.ticket, None).await;
+            }
+            let mut best = None;
+            for level in [2, 3, 4] {
+                if let Some(value) = observed.probability("route", &format!("level{level}"))
+                    && best.is_none_or(|(_, rating)| value > rating)
+                {
+                    best = Some((level, value));
+                }
+            }
+            escalation = best.map_or(2, |(level, _)| level);
+        }
+    }
+    let level = match route {
+        "level1" => escalation,
+        "level2" => 2,
+        "level3" => 3,
+        "level4" => 4,
+        _ => return Err(CallFailure::Invalid.at("route")),
+    };
+    let model = if level == 2 {
+        models.fast.as_ref()
+    } else {
+        models.complex.as_ref()
+    }
+    .ok_or(CallFailure::Invalid.at("route"))?;
+    let (response, schema) = prepared
+        .context
+        .render_response(game, &selected, include_actions)
+        .map_err(|error| error.at("generation-preparation"))?;
+    let schema = Arc::new(schema);
     let allowance = model.amount_micro_usd.to_string();
     let id = format!("{}:attempt:0:generate", work.job.job.id);
     let instructions_bytes = game
@@ -201,7 +281,7 @@ pub(super) async fn run(
         schema_name: "npc_response",
         schema: &schema,
         instructions: &instructions,
-        prompt: prepared.response.as_str(),
+        prompt: response.as_str(),
         effort: model.effort,
         max_output_tokens: model.output_tokens,
         stream: false,
@@ -227,7 +307,7 @@ pub(super) async fn run(
                 InferenceClass::OpenAi,
                 "generate",
                 level,
-                prepared.response.as_str(),
+                response.as_str(),
                 prepared.through,
             )?,
             CallAuthority {
@@ -249,9 +329,11 @@ pub(super) async fn run(
                 }
             }),
         )
-        .await?;
+        .await
+        .map_err(|error| error.at("generate"))?;
     ensure_running(&work)?;
-    let payload = effects(parsed, &prepared.frame, budget)?;
+    let payload = effects(parsed, &prepared.frame, budget)
+        .map_err(|error| error.at("response-validation"))?;
     super::apply::apply(
         saves,
         game,
@@ -262,6 +344,131 @@ pub(super) async fn run(
         work.cancellation,
     )
     .await
+    .map_err(|error| error.at("response-application"))
+}
+
+async fn stopped(watch: &mut watch::Receiver<bool>) {
+    while !*watch.borrow() && watch.changed().await.is_ok() {}
+}
+
+async fn finish_native(
+    game: &Arc<CurrentServer>,
+    saves: &Arc<LiveSaves>,
+    work: Work,
+    ticket: Arc<openlegend_simulation::runtime::RuntimeNpcResponseTicket>,
+    choice: Option<&prepare::NativeOffer>,
+) -> Result<(), CallFailure> {
+    let transient = game
+        .host
+        .budget()
+        .reserve(4096)
+        .map_err(|_| CallFailure::Invalid)?;
+    let operations = choice.map(|offer| serde_json::json!({
+        "localId":"action","requiresAccepted":[],"talk":null,"think":null,"goal":null,"plan":null,
+        "act":{"kind":"known","mode":if offer.transition=="continue" {"enqueue"} else {&offer.transition},
+            "actionId":offer.id,"verb":null,"targetEntityId":null,"description":null},
+    }));
+    let payload = crate::wire::encode(
+        &Operations {
+            operations: operations.as_slice(),
+        },
+        b"",
+        b"",
+        game.host.budget(),
+    )
+    .map_err(|_| CallFailure::Invalid)?;
+    drop(operations);
+    drop(transient);
+    super::apply::apply(
+        saves,
+        game,
+        &work.job,
+        ticket,
+        payload,
+        work.permit,
+        work.cancellation,
+    )
+    .await
+    .map_err(|error| error.at("response-application"))
+}
+
+async fn action_attention(
+    game: &Arc<CurrentServer>,
+    dispatch: &Arc<DecisionDispatch>,
+    work: &Work,
+    prepared: &prepare::Prepared,
+    decision: &Model,
+    ceiling: u64,
+    choose: bool,
+) -> Result<Option<provider::JudgmentAnswer>, CallFailure> {
+    let budget = game.host.budget();
+    let allowance = decision.amount_micro_usd.to_string();
+    let id = format!("{}:attempt:0:action-attention", work.job.job.id);
+    let offers = prepared
+        .context
+        .offers
+        .iter()
+        .map(|offer| OfferedAction {
+            id: &offer.id,
+            description: &offer.caption,
+        })
+        .collect::<Vec<_>>();
+    let attention = Arc::new(
+        game.cognition
+            .action_attention(&prepared.context.fields, &offers, choose, budget)
+            .map_err(|_| CallFailure::Invalid)?,
+    );
+    if attention
+        .questions
+        .as_object()
+        .is_some_and(serde_json::Map::is_empty)
+    {
+        return Ok(None);
+    }
+    let judgment = provider::Judgment {
+        state: provider::JudgmentState::Structured(&attention.state),
+        questions: &attention.questions,
+    };
+    let request = provider::judgment_request(
+        &decision.destination,
+        &decision.requested,
+        decision.route(&allowance, work.deadline),
+        judgment,
+        decision.output_tokens,
+        &id,
+        budget,
+    )?;
+    let parser = budget.clone();
+    dispatch
+        .submit(
+            side(
+                work,
+                decision,
+                ceiling,
+                id,
+                request,
+                InferenceClass::Jev,
+                "action-attention",
+                1,
+                prepared.route.as_str(),
+                prepared.through,
+            )?,
+            CallAuthority {
+                source: prepared.ticket.clone(),
+                speaker: work.permit.clone(),
+            },
+            work.cancellation.clone(),
+            decoder(
+                decision.macrofold.as_ref().map(|value| value.billing),
+                budget.clone(),
+                move |output| {
+                    provider::decode_judgment(output, &attention.questions, &parser)
+                        .map(Some)
+                        .map_err(|_| CallFailure::Invalid)
+                },
+            ),
+        )
+        .await
 }
 
 fn ensure_running(work: &Work) -> Result<(), CallFailure> {
