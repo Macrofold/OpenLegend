@@ -40,6 +40,12 @@ impl BoundSchema {
         &self.value
     }
 
+    pub(crate) fn preview_root_fields(&self) -> &serde_json::Map<String, Value> {
+        self.value["properties"]
+            .as_object()
+            .expect("bound response schema has an object root")
+    }
+
     /// The body decoder and preview path use the same materialized provider
     /// schema. Converting received coordinates and current effect validation
     /// stay with the native response owner and its retained read.

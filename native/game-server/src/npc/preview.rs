@@ -18,7 +18,7 @@ use openlegend_simulation::{
     worlds::base_observed::SpeechVolume,
 };
 use serde_json::{Value, value::RawValue};
-use std::sync::Arc;
+use std::{borrow::Cow, sync::Arc};
 use tokio::sync::watch;
 
 pub(crate) struct PreviewAttempt {
@@ -81,8 +81,16 @@ impl PreviewAttempt {
             self.prefix.step = Step::Ended;
             return Ok(None);
         }
-        let Some(raw) = self.prefix.operation(prefix)? else {
-            return Ok(None);
+        let raw = match self
+            .prefix
+            .operation(prefix, self.schema.preview_root_fields())
+        {
+            Ok(Some(raw)) => raw,
+            Ok(None) => return Ok(None),
+            Err(error) => {
+                self.prefix.step = Step::Ended;
+                return Err(error);
+            }
         };
         let bytes = json_tree_allocation_bound(raw.get()).ok_or(CallFailure::Invalid)?;
         let Ok(_decoded) = budget.reserve(bytes) else {
@@ -215,10 +223,15 @@ enum Step {
 struct Prefix {
     step: Step,
     at: usize,
+    fields_seen: u64,
 }
 
 impl Prefix {
-    fn operation<'a>(&mut self, prefix: &'a [u8]) -> Result<Option<&'a RawValue>, CallFailure> {
+    fn operation<'a>(
+        &mut self,
+        prefix: &'a [u8],
+        fields: &serde_json::Map<String, Value>,
+    ) -> Result<Option<&'a RawValue>, CallFailure> {
         while let Some(rest) = prefix.get(self.at..) {
             let after_space = rest
                 .iter()
@@ -241,17 +254,35 @@ impl Prefix {
                         return Ok(None);
                     };
                     self.at += consumed;
-                    // A normal key is borrowed; escaped keys use the same
-                    // JSON parser as the final body, without rescanning data.
-                    // Ten encoded characters (with optional Unicode escapes)
-                    // cover the only key this prefix selector consumes.
-                    let key = raw.get();
-                    let operations = key == "\"operations\""
-                        || (key.len() <= 62
-                            && key.contains('\\')
-                            && serde_json::from_str::<String>(key).ok().as_deref()
-                                == Some("operations"));
-                    Step::Colon(operations)
+                    // Match the actual materialized schema, including a
+                    // query or invention slot only when this request offers it.
+                    // Ordinary keys use borrowed text. An escaped key cannot
+                    // outgrow its longest allowed representation.
+                    let key = &raw.get()[1..raw.get().len() - 1];
+                    let decoded = if key.contains('\\') {
+                        let maximum = fields.keys().map(String::len).max().unwrap_or(0) * 6;
+                        if key.len() > maximum {
+                            return Err(CallFailure::Invalid);
+                        }
+                        Cow::Owned(
+                            serde_json::from_str::<String>(raw.get())
+                                .map_err(|_| CallFailure::Invalid)?,
+                        )
+                    } else {
+                        Cow::Borrowed(key)
+                    };
+                    let ordinal = fields
+                        .keys()
+                        .position(|field| field == decoded.as_ref())
+                        .ok_or(CallFailure::Invalid)?;
+                    let bit = 1u64
+                        .checked_shl(ordinal as u32)
+                        .ok_or(CallFailure::Invalid)?;
+                    if self.fields_seen & bit != 0 {
+                        return Err(CallFailure::Invalid);
+                    }
+                    self.fields_seen |= bit;
+                    Step::Colon(decoded == "operations")
                 }
                 Step::Key => return Err(CallFailure::Invalid),
                 Step::Colon(field) if byte == b':' => {
