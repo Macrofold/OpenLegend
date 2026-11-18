@@ -6,7 +6,6 @@ use crate::store::read::admitted_query;
 use crate::store::{DurableHead, Store, StoreError, StoreResult, ordinal, sql_ordinal};
 use openlegend_simulation::received::{AccountClass, SourceVersionArchiveChange};
 use openlegend_simulation::records::SqlCell;
-use serde_json::value::RawValue;
 use std::collections::BTreeMap;
 use tokio_postgres::Transaction;
 
@@ -17,18 +16,18 @@ impl Store {
         &self,
         tx: &Transaction<'_>,
         head: &DurableHead,
-        selection: &RawValue,
+        selection: &str,
     ) -> StoreResult<()> {
         let _input = self
             .budget
             .reserve(
-                SqlCell::json_decode_bound(selection.get())
+                SqlCell::json_decode_bound(selection)
                     .and_then(|n| n.checked_mul(2))
                     .ok_or(StoreError::Capacity)?,
             )
             .map_err(|_| StoreError::Capacity)?;
         let admitted: Vec<Archive> =
-            serde_json::from_str(selection.get()).map_err(|_| StoreError::InvalidRecord)?;
+            serde_json::from_str(selection).map_err(|_| StoreError::InvalidRecord)?;
         let mut retained = BTreeMap::new();
         for row in &admitted {
             let key = [

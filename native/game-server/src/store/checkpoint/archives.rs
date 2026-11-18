@@ -102,7 +102,6 @@ impl Store {
             tx,
             prospective,
             prepared.projection(),
-            false,
             self.read_checkpoint_archives(tx, prospective, &prepared),
         )
         .await

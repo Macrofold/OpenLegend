@@ -1,8 +1,9 @@
 //! Read admission for the installed asset release. Publishing and grant changes
 //! remain with the catalog owner. This reader returns a finite scalar witness.
 
-use super::{Store, StoreError, StoreResult};
+use super::{CurrentOpening, Store, StoreError, StoreResult};
 use serde::{Deserialize, Serialize};
+use tokio_postgres::Transaction;
 
 #[derive(Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -132,10 +133,106 @@ impl Store {
                     include_str!("assets-closure.sql"),
                     include_str!("assets-retained.sql")
                 ),
-                &[&key, &release.manifest_sha256, &world_id, &reference],
+                &[
+                    &key,
+                    &release.manifest_sha256,
+                    &world_id,
+                    &reference,
+                    &"world",
+                    &world_id,
+                ],
             )
             .await?
             .ok_or(StoreError::InvalidRecord)?;
+        Ok(())
+    }
+
+    /// Restore only the currently bound release, using the chosen slot's
+    /// independently retained files if its world hold needs reconstruction.
+    /// The stopped operator supplies no new principal or asset permission.
+    pub(super) async fn recovery_asset_binding(
+        &self,
+        tx: &Transaction<'_>,
+        world: &str,
+        slot: &str,
+        opening: &CurrentOpening,
+    ) -> StoreResult<()> {
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Host<'a> {
+            #[serde(borrow)]
+            presentation_release: Option<&'a serde_json::value::RawValue>,
+        }
+        let row = opening
+            .records
+            .tables
+            .get("data_world")
+            .and_then(|rows| rows.iter().find(|row| row.id == "[]"))
+            .ok_or(StoreError::InvalidRecord)?;
+        let state: Host<'_> =
+            serde_json::from_str(&row.payload).map_err(|_| StoreError::InvalidRecord)?;
+        let Some(reference) = state.presentation_release else {
+            for table in ["asset_pins", "asset_pin_files"] {
+                tx.execute(
+                    &format!("DELETE FROM {table} WHERE owner_kind='world' AND owner_id=$1"),
+                    &[&world],
+                )
+                .await?;
+            }
+            tx.execute(
+                "DELETE FROM asset_world_bindings WHERE world_id=$1",
+                &[&world],
+            )
+            .await?;
+            return Ok(());
+        };
+        let release = AssetRevision::from_current(reference)?;
+        let key = release.key();
+        let reference = serde_json::to_value(&release).map_err(|_| StoreError::InvalidRecord)?;
+        let saved = openlegend_simulation::encoding::json_record(&[world, slot])
+            .map_err(|_| StoreError::InvalidRecord)?;
+        let retained = concat!(
+            include_str!("assets-closure.sql"),
+            include_str!("assets-retained.sql")
+        );
+        let current = tx
+            .query_opt(
+                retained,
+                &[
+                    &key,
+                    &release.manifest_sha256,
+                    &world,
+                    &reference,
+                    &"world",
+                    &world,
+                ],
+            )
+            .await?;
+        if current.is_some() {
+            return Ok(());
+        }
+        tx.query_opt(
+            retained,
+            &[
+                &key,
+                &release.manifest_sha256,
+                &world,
+                &reference,
+                &"save",
+                &saved,
+            ],
+        )
+        .await?
+        .ok_or(StoreError::StaleCut)?;
+        for table in ["asset_pins", "asset_pin_files"] {
+            tx.execute(
+                &format!("DELETE FROM {table} WHERE owner_kind='world' AND owner_id=$1"),
+                &[&world],
+            )
+            .await?;
+        }
+        tx.execute("INSERT INTO asset_pins SELECT 'world',$1,revision_key,manifest_sha256 FROM asset_pins WHERE owner_kind='save' AND owner_id=$2", &[&world,&saved]).await?;
+        tx.execute("INSERT INTO asset_pin_files SELECT 'world',$1,artifact_key,payload FROM asset_pin_files WHERE owner_kind='save' AND owner_id=$2", &[&world,&saved]).await?;
         Ok(())
     }
 

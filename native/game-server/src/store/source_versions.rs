@@ -10,7 +10,7 @@ use openlegend_simulation::host::ByteReservation;
 use openlegend_simulation::received::AccountClass;
 use openlegend_simulation::records::{ChangedRows, SqlCell};
 use openlegend_simulation::runtime::{
-    RuntimeProvider, RuntimeProviderInput, RuntimeSourceVersionRead,
+    RuntimeProvider, RuntimeProviderInput, RuntimeRecallDecoder, RuntimeSourceVersionRead,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
@@ -359,6 +359,7 @@ impl Store {
         tx: &Transaction<'_>,
         head: &super::DurableHead,
         provider: &RuntimeProvider,
+        decoder: &RuntimeRecallDecoder<'_>,
     ) -> StoreResult<RuntimeProviderInput> {
         if !provider
             .asks_source_versions()
@@ -414,11 +415,14 @@ impl Store {
                 ))
             })
             .map_err(|_| StoreError::StaleCut)??;
-        self.with_checkpoint_view(tx, head, &projection, async {
-            self.apply_checkpoint_archive_baseline(tx, head, &baseline)
-                .await?;
-            self.finish_source_versions(tx, read, false).await
-        })
+        self.with_checkpoint_recall_view(
+            tx,
+            head,
+            &projection,
+            decoder,
+            Some(&baseline),
+            self.finish_source_versions(tx, read, false),
+        )
         .await
     }
 

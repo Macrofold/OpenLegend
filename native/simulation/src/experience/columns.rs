@@ -84,15 +84,25 @@ pub(crate) fn awareness_learning_sources(
     awareness: &Awareness,
     law: &impl AccountRecordingLaw,
 ) -> Result<Vec<PersonalLearningSource>, RecordEncodingError> {
-    let mut learning = law.learning_sources(
+    account_learning_sources(
+        law,
         awareness
             .recognition
             .as_ref()
             .and_then(|recognition| recognition.learning_support.as_deref())
             .unwrap_or(&[]),
-    );
+        originals(awareness).map(Arc::as_ref),
+    )
+}
+
+pub(crate) fn account_learning_sources<'a>(
+    law: &impl AccountRecordingLaw,
+    recognition: &[String],
+    observations: impl IntoIterator<Item = &'a crate::reception::ObservationContribution>,
+) -> Result<Vec<PersonalLearningSource>, RecordEncodingError> {
+    let mut learning = law.learning_sources(recognition);
     let mut observed = IndexMap::new();
-    for observation in originals(awareness) {
+    for observation in observations {
         for field in &observation.facets {
             let sources = match &field.value {
                 SensoryFacet::Association {

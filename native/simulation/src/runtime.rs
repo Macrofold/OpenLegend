@@ -21,7 +21,7 @@ pub use control::RuntimeClock;
 mod direct_history;
 pub use direct_history::{
     HistoryAccount, HistoryCut, HistoryTemporal, RuntimeHistory, RuntimeHistoryCuts,
-    RuntimeMetadataPersistence, RuntimeRecallRead, metadata_rows,
+    RuntimeMetadataPersistence, RuntimeRecallDecoder, RuntimeRecallRead, metadata_rows,
 };
 mod handoff;
 mod knowledge;
@@ -61,7 +61,7 @@ pub use crate::capture::{
 pub use navigation::RuntimeNavigationRead;
 pub use read_cut::{RuntimeKnownPlaceRead, RuntimeNpcSourceRead, RuntimeSourceVersionRead};
 mod restore;
-pub use restore::RuntimeRestoreMembership;
+pub use restore::{RuntimeRestoreMembership, RuntimeRestorePlacement};
 mod retained_values;
 pub use crate::simulation::session::PreparedReadProgress as RuntimeProgress;
 pub use handoff::RuntimeOutputHandoff;

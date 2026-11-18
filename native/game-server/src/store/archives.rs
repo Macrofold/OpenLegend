@@ -21,12 +21,22 @@ impl Store {
         transaction: &Transaction<'_>,
         save: &RuntimeSave,
     ) -> StoreResult<()> {
-        let rows = save.rows();
         let revision = sql_ordinal(
-            rows.base_revision
+            save.rows()
+                .base_revision
                 .checked_add(1)
                 .ok_or(StoreError::StaleCut)?,
         )?;
+        self.apply_archives_at(transaction, save, revision).await
+    }
+
+    pub(super) async fn apply_archives_at(
+        &self,
+        transaction: &Transaction<'_>,
+        save: &RuntimeSave,
+        revision: i64,
+    ) -> StoreResult<()> {
+        let rows = save.rows();
         let mut merged = BTreeMap::<[&str; 4], SourceVersionArchiveChange<'_>>::new();
         let mut custody = self.budget.reserve(0).map_err(|_| StoreError::Capacity)?;
         // A sparse B-tree node per newly selected key is the current Rust

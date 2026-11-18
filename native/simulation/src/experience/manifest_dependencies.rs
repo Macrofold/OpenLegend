@@ -3,12 +3,12 @@
 use super::*;
 
 #[derive(Serialize)]
-pub(super) struct ManifestDependency {
-    source: Value,
-    ordinal: Option<u64>,
-    aliases: Vec<String>,
+pub(crate) struct ManifestDependency {
+    pub(crate) source: Value,
+    pub(crate) ordinal: Option<u64>,
+    pub(crate) aliases: Vec<String>,
 }
-pub(super) fn observation_dependencies(
+pub(crate) fn observation_dependencies(
     originals: &[&Value],
 ) -> Result<Vec<ManifestDependency>, ExperienceError> {
     let mut dependencies: IndexMap<String, (Value, Option<u64>, IndexSet<String>)> =

@@ -255,6 +255,13 @@ pub struct RuntimeRecallRead<'a> {
     pub through: u64,
     pub hard_bytes: u64,
     pub changes: &'a crate::records::ChangedRows,
+    decoder: RuntimeRecallDecoder<'a>,
+}
+
+/// The actual installed account law used by the bounded storage projection.
+/// It decodes one selected canonical body under independent temporary custody.
+pub struct RuntimeRecallDecoder<'a> {
+    pub hard_bytes: u64,
     account_law: crate::worlds::InstalledAccountLaw<'a>,
     budget: &'a crate::host::ByteBudget,
 }
@@ -272,12 +279,27 @@ impl RuntimeRecallRead<'_> {
             Option<&crate::experience::KnownPlaceCapsule>,
         ) -> T,
     ) -> Result<T, crate::experience::ExperienceError> {
+        self.decoder.with_awareness(&row.payload, revision, read)
+    }
+}
+
+impl RuntimeRecallDecoder<'_> {
+    pub fn with_awareness<T>(
+        &self,
+        payload: &str,
+        revision: &str,
+        read: impl FnOnce(
+            &crate::experience::Awareness,
+            &[crate::experience::PersonalLearningSource],
+            Option<&crate::experience::KnownPlaceCapsule>,
+        ) -> T,
+    ) -> Result<T, crate::experience::ExperienceError> {
         use crate::experience::{
             Awareness, ExperienceError, PersonalSourceKind, PersonalSourceRef,
             awareness_learning_sources,
         };
         let _parse = crate::install::reserve_typed_parse::<Awareness>(
-            &row.payload,
+            payload,
             std::mem::size_of::<crate::reception::ObservationFacet>(),
             None,
             self.budget,
@@ -286,7 +308,7 @@ impl RuntimeRecallRead<'_> {
             crate::install::InstallError::Capacity => ExperienceError::Capacity,
             _ => ExperienceError::InvalidBody("stored awareness"),
         })?;
-        let body: Awareness = serde_json::from_str(&row.payload)
+        let body: Awareness = serde_json::from_str(payload)
             .map_err(|_| ExperienceError::InvalidBody("stored awareness"))?;
         let learning = awareness_learning_sources(&body, &self.account_law)
             .map_err(|_| ExperienceError::InvalidBody("stored awareness learning"))?;
@@ -307,6 +329,87 @@ impl RuntimeRecallRead<'_> {
             None
         };
         Ok(read(&body, &learning, place.as_ref()))
+    }
+
+    /// Reuse the selected world's recognition and retained-place interpretation
+    /// for ordinary canonical memory and summary observations. The application
+    /// must hold its exact source row and any returned placement independently.
+    pub fn with_retained_observations<'a, T>(
+        &self,
+        observations: &[&'a crate::reception::ObservationContribution],
+        recognition: &[String],
+        owner: &crate::experience::PersonalSourceRef,
+        read: impl FnOnce(
+            &[crate::experience::PersonalLearningSource],
+            &[crate::experience::KnownPlaceCapsule],
+        ) -> T,
+    ) -> Result<T, crate::experience::ExperienceError> {
+        use crate::experience::{ExperienceError, account_learning_sources};
+        use crate::reception::{EncounterExposure, ObservationOrigin, SensoryFacet};
+        let learning =
+            account_learning_sources(&self.account_law, recognition, observations.iter().copied())
+                .map_err(|_| ExperienceError::InvalidBody("stored account learning"))?;
+        let mut places = indexmap::IndexMap::new();
+        for observation in observations {
+            let ObservationOrigin::Occurrence { event_id, .. } = &observation.origin else {
+                continue;
+            };
+            for field in &observation.facets {
+                let SensoryFacet::EncounterExposure {
+                    exposure: exposure @ EncounterExposure::Place { .. },
+                } = &field.value
+                else {
+                    continue;
+                };
+                let place = crate::experience::places::place_capsule(
+                    observation,
+                    exposure,
+                    event_id,
+                    Some(owner.clone()),
+                )?
+                .ok_or(ExperienceError::InvalidBody("retained place observation"))?;
+                let key = (
+                    observation.observer.actor_id.as_str(),
+                    observation.observer.physical_life,
+                    observation.id.as_str(),
+                    observation.revision,
+                    place.facet_ordinal,
+                );
+                places.insert(key, place);
+            }
+        }
+        Ok(read(&learning, &places.into_values().collect::<Vec<_>>()))
+    }
+
+    /// The finite saved manifest uses the same native observation dependency
+    /// visitor as its accepted canonical metadata. Only its selected rows may
+    /// become exact dependency placements in the stopped SQL writer.
+    pub fn with_manifest_dependencies<T>(
+        &self,
+        observations: &str,
+        read: impl FnOnce(Vec<(crate::reception::EvidenceSource, Option<u64>, Vec<String>)>) -> T,
+    ) -> Result<T, crate::experience::ExperienceError> {
+        use crate::experience::{ExperienceError, manifest_dependencies};
+        let _storage = self
+            .budget
+            .reserve(
+                crate::records::SqlCell::json_decode_bound(observations)
+                    .and_then(|bytes| bytes.checked_mul(2))
+                    .ok_or(ExperienceError::Capacity)?,
+            )
+            .map_err(|_| ExperienceError::Capacity)?;
+        let values = serde_json::from_str::<Vec<serde_json::Value>>(observations)
+            .map_err(|_| ExperienceError::InvalidBody("stored manifest observations"))?;
+        let values = values.iter().collect::<Vec<_>>();
+        let links = manifest_dependencies::observation_dependencies(&values)?
+            .into_iter()
+            .map(|row| {
+                let source = serde_json::from_value(row.source)
+                    .map_err(|_| ExperienceError::InvalidBody("stored manifest dependency"))?;
+                Ok((source, row.ordinal, row.aliases))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(read(links))
     }
 }
 
@@ -337,9 +440,32 @@ impl NativeWorldSession {
             through,
             hard_bytes: hard,
             changes,
+            decoder: RuntimeRecallDecoder {
+                hard_bytes: hard,
+                account_law: state.installed.account_law(),
+                budget: &self.budget,
+            },
+        }))
+    }
+
+    /// Lend the verified installation law to its stopped checkpoint writer.
+    /// The product grants no access to bodies: each row comes from its exact
+    /// private PostgreSQL snapshot and has a separate reader reservation.
+    pub fn checkpoint_recall_decoder(&self) -> Result<RuntimeRecallDecoder<'_>, RuntimeError> {
+        if self.active || !self.restore_installation {
+            return Err(failure(
+                "recall preparation requires its stopped checkpoint",
+            ));
+        }
+        let state = self
+            .session
+            .restore_projection_state(self.restoring)
+            .map_err(failure)?;
+        Ok(RuntimeRecallDecoder {
+            hard_bytes: derived_hard_bytes(state)?,
             account_law: state.installed.account_law(),
             budget: &self.budget,
-        }))
+        })
     }
 }
 

@@ -106,7 +106,7 @@ impl Store {
         }
     }
 
-    async fn commit(&self, transaction: Transaction<'_>) -> Result<(), CommitError> {
+    pub(super) async fn commit(&self, transaction: Transaction<'_>) -> Result<(), CommitError> {
         let mut fence = CommitFence {
             admitted: &self.admitted,
             confirmed: false,
@@ -119,7 +119,11 @@ impl Store {
         Ok(())
     }
 
-    async fn rollback(&self, transaction: Transaction<'_>, error: StoreError) -> CommitError {
+    pub(super) async fn rollback(
+        &self,
+        transaction: Transaction<'_>,
+        error: StoreError,
+    ) -> CommitError {
         match transaction.rollback().await {
             Ok(()) => CommitError::RolledBack(error),
             Err(cause) => {

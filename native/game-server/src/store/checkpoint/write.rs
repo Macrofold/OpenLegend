@@ -8,32 +8,55 @@ use crate::store::{
     CurrentOpening, DurableHead, Store, StoreError, StoreResult, durable_head, sql_ordinal,
 };
 use openlegend_simulation::records::{ChangedRows, SqlCell};
+use openlegend_simulation::runtime::RuntimeRecallDecoder;
 use serde_json::value::RawValue;
 use std::collections::{BTreeMap, BTreeSet};
 use tokio_postgres::Transaction;
 use tokio_postgres::types::Type;
 
 impl Store {
-    /// Use the candidate's actual private canonical projection for a bounded
-    /// read. End the savepoint before returning any independently funded answer.
-    /// The outer transaction owns cancellation if this future is dropped.
-    pub(crate) async fn with_checkpoint_view<R>(
+    /// Run a bounded canonical read at the actual private candidate cut.
+    /// The savepoint ends before the independently funded answer leaves.
+    pub(super) async fn with_checkpoint_projection<R>(
         &self,
         tx: &Transaction<'_>,
         prospective: &DurableHead,
         projection: &RawValue,
         consume: impl std::future::Future<Output = StoreResult<R>>,
     ) -> StoreResult<R> {
-        self.with_checkpoint_projection(tx, prospective, projection, true, consume)
+        self.checkpoint_view(tx, prospective, projection, None, None, consume)
             .await
     }
 
-    pub(super) async fn with_checkpoint_projection<R>(
+    /// Perspective and version readers require exact derived ownership when
+    /// their private canonical predecessor differs from the staged baseline.
+    pub(crate) async fn with_checkpoint_recall_view<R>(
         &self,
         tx: &Transaction<'_>,
         prospective: &DurableHead,
         projection: &RawValue,
-        needs_dependencies: bool,
+        decoder: &RuntimeRecallDecoder<'_>,
+        archives: Option<&RawValue>,
+        consume: impl std::future::Future<Output = StoreResult<R>>,
+    ) -> StoreResult<R> {
+        self.checkpoint_view(
+            tx,
+            prospective,
+            projection,
+            Some(decoder),
+            archives,
+            consume,
+        )
+        .await
+    }
+
+    async fn checkpoint_view<R>(
+        &self,
+        tx: &Transaction<'_>,
+        prospective: &DurableHead,
+        projection: &RawValue,
+        decoder: Option<&RuntimeRecallDecoder<'_>>,
+        archives: Option<&RawValue>,
         consume: impl std::future::Future<Output = StoreResult<R>>,
     ) -> StoreResult<R> {
         if durable_head(tx).await?.as_ref() != Some(prospective) {
@@ -46,9 +69,7 @@ impl Store {
         let changes: ChangedRows =
             serde_json::from_str(projection.get()).map_err(|_| StoreError::InvalidRecord)?;
         self.validate_rows(&changes)?;
-        // A dependent recall projection must be applied before a lookup uses
-        // those indexes. Keep its admission closed until that owner is joined.
-        if needs_dependencies
+        let refresh_dependencies = decoder.is_some()
             && changes
                 .writes
                 .keys()
@@ -70,15 +91,20 @@ impl Store {
                             | "mind_corrections"
                             | "mind_corrections_owners"
                     )
-                })
-        {
-            return Err(StoreError::DerivedProjectionRequired);
-        }
+                });
         let revision = sql_ordinal(prospective.revision)?;
         let world = &prospective.world_id;
         tx.batch_execute("SAVEPOINT recovery_read").await?;
         let answer = async {
             self.write_records(tx, world, revision, &changes).await?;
+            if let Some(archives) = archives {
+                self.apply_checkpoint_archive_baseline(tx, prospective, archives.get())
+                    .await?;
+            }
+            if let Some(decoder) = decoder.filter(|_| refresh_dependencies) {
+                self.rebuild_checkpoint_projections(tx, world, decoder)
+                    .await?;
+            }
             consume.await
         }
         .await;
@@ -141,6 +167,12 @@ impl Store {
             insert_checkpoint_rows(transaction, table, world, revision, rows, &self.budget).await?;
         }
         self.stage_checkpoint_history(transaction, world, history)
+            .await?;
+        let supports = candidate
+            .tables
+            .get("mind_temporal_supports")
+            .ok_or(StoreError::Schema)?;
+        self.project_checkpoint_support_places(transaction, world, supports)
             .await?;
         self.rebuild_received(transaction, world, revision).await?;
         Ok(())

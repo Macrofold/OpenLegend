@@ -2,6 +2,51 @@
 //! whole-install receipt is adopted, it cannot admit gameplay or private reads.
 use super::*;
 
+/// Exact application metadata of a prepared, still closed installation.
+pub struct RuntimeRestorePlacement<'a> {
+    pub world_id: &'a str,
+    pub generation: &'a str,
+    pub revision: u64,
+    pub accepted_cut: u64,
+    pub forgotten: &'a indexmap::IndexMap<String, Vec<String>>,
+    pub corrections: &'a indexmap::IndexMap<String, indexmap::IndexMap<String, String>>,
+    archive_baseline: &'a [crate::restore::RestoreArchive],
+    kept_archives: &'a [crate::restore::RestoreArchive],
+}
+
+impl RuntimeRestorePlacement<'_> {
+    /// Fund the two finite archive ledgers for SQL. Bodies remain in the
+    /// checkpoint writer and the actual native save plan.
+    pub fn encode_archive_placement(
+        &self,
+        budget: &ByteBudget,
+    ) -> Result<(RuntimeJson, RuntimeJson), RuntimeError> {
+        Ok((
+            RuntimeJson::encode(&self.archive_baseline, budget)?,
+            RuntimeJson::encode(&self.kept_archives, budget)?,
+        ))
+    }
+}
+
+impl RuntimePreparedProducts<'_> {
+    pub fn restored_placement(&self) -> Option<RuntimeRestorePlacement<'_>> {
+        let facts = self.restore.as_ref()?;
+        let CompletedOperation::Restore(result) = self.operation else {
+            return None;
+        };
+        Some(RuntimeRestorePlacement {
+            world_id: facts.world_id,
+            generation: facts.generation,
+            revision: facts.revision,
+            accepted_cut: facts.accepted_cut,
+            forgotten: &result.metadata.privacy.forgotten,
+            corrections: &result.metadata.privacy.corrections,
+            archive_baseline: &result.metadata.archive_baseline,
+            kept_archives: &result.metadata.kept_archives,
+        })
+    }
+}
+
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct RestoreMembershipBinding {

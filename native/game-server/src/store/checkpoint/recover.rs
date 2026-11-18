@@ -1,0 +1,715 @@
+//! The operator replaces one stopped world inside its original protected SQL
+//! transaction. Adopt the same prepared native candidate only after its result
+//! is durable. Ordinary readers never see the prospective checkpoint.
+
+use super::authority::{AcceptedPrivacy, validate_privacy};
+use super::{AdministrativeCheckpoint, read_recovery_authority, reconcile_history_positions};
+use crate::command_epoch::RequestIdentity;
+use crate::language::LanguageProvider;
+use crate::store::read::admitted_query;
+use crate::store::{
+    CommitError, DurableHead, Store, StoreError, StoreResult, durable_head, sql_ordinal,
+};
+use openlegend_simulation::encoding::json_record;
+use openlegend_simulation::host::{ByteReservation, CandidateKey};
+use openlegend_simulation::runtime::{
+    NativeWorldSession, RuntimeActivation, RuntimeDirectOutput, RuntimeDirectStep, RuntimeHistory,
+    RuntimeInstallDefinitions, RuntimeInstallSources, RuntimeJson, RuntimeProvider,
+    RuntimeProviderInput,
+};
+use serde::{Deserialize, Serialize};
+use std::path::Path;
+use std::sync::Arc;
+use tokio_postgres::Transaction;
+use uuid::Uuid;
+
+pub struct RecoveredCheckpoint {
+    pub head: DurableHead,
+    pub slot_id: String,
+    pub operation_id: String,
+    pub timeline: String,
+    pub accepted_cut: u64,
+}
+
+#[derive(Deserialize, Serialize, Eq, PartialEq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct Receipt {
+    save_id: String,
+    world_id: String,
+    generation: String,
+    timeline: String,
+    revision: u64,
+    accepted_cut: u64,
+}
+
+impl Receipt {
+    fn head(&self) -> DurableHead {
+        DurableHead {
+            world_id: self.world_id.clone(),
+            generation: self.generation.clone(),
+            revision: self.revision,
+        }
+    }
+
+    fn report(self, operation_id: &str) -> RecoveredCheckpoint {
+        RecoveredCheckpoint {
+            head: self.head(),
+            slot_id: self.save_id,
+            operation_id: operation_id.to_owned(),
+            timeline: self.timeline,
+            accepted_cut: self.accepted_cut,
+        }
+    }
+}
+
+struct FinalPlacement {
+    history: RuntimeHistory,
+    privacy: String,
+    initial_archives: RuntimeJson,
+    final_archives: RuntimeJson,
+    receipt: Receipt,
+    _storage: ByteReservation,
+}
+
+struct Adoption {
+    session: NativeWorldSession,
+    key: CandidateKey,
+    receipt: Receipt,
+}
+
+impl Store {
+    /// Check and replace the requested retained slot under the database's
+    /// unique stopped writer. A former live world is never resumed on an error.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn recover_checkpoint(
+        self: &Arc<Self>,
+        directory: &Path,
+        slot_id: &str,
+        floor_slot_id: Option<&str>,
+        operation_id: &str,
+        definitions: RuntimeInstallDefinitions,
+        definition_custody: ByteReservation,
+        language: Arc<LanguageProvider>,
+    ) -> Result<RecoveredCheckpoint, CommitError> {
+        if Uuid::parse_str(operation_id).is_err() {
+            return Err(CommitError::RolledBack(StoreError::InvalidRecord));
+        }
+        let key = format!("integration:load-request:{operation_id}");
+        let (head, prior) = self
+            .read_recovery_witness(&key)
+            .await
+            .map_err(CommitError::RolledBack)?;
+        let expected = head.ok_or(CommitError::RolledBack(StoreError::InitializationRequired))?;
+        if let Some(prior) = prior {
+            if prior.save_id != slot_id
+                || prior.world_id != expected.world_id
+                || prior.generation != expected.generation
+                || prior.revision > expected.revision
+            {
+                return Err(CommitError::RolledBack(StoreError::StaleCut));
+            }
+            return Ok(prior.report(operation_id));
+        }
+        let slot = self
+            .retained_checkpoint(
+                directory.to_owned(),
+                slot_id.to_owned(),
+                expected.world_id.clone(),
+            )
+            .await
+            .map_err(CommitError::RolledBack)?;
+        let floor = match floor_slot_id {
+            Some(floor) if floor != slot_id => Some(
+                self.retained_checkpoint(
+                    directory.to_owned(),
+                    floor.to_owned(),
+                    expected.world_id.clone(),
+                )
+                .await
+                .map_err(CommitError::RolledBack)?,
+            ),
+            _ => None,
+        };
+        self.assert_write_admission()
+            .map_err(CommitError::RolledBack)?;
+        let mut writer = self.writer.lock().await;
+        self.assert_write_admission()
+            .map_err(CommitError::RolledBack)?;
+        let tx = writer
+            .client
+            .transaction()
+            .await
+            .map_err(|error| CommitError::RolledBack(error.into()))?;
+        match receipt(&tx, &key).await {
+            Ok(Some(saved)) => {
+                if saved.save_id != slot_id
+                    || saved.world_id != expected.world_id
+                    || saved.generation != expected.generation
+                    || saved.revision > expected.revision
+                {
+                    return Err(self.rollback(tx, StoreError::StaleCut).await);
+                }
+                self.commit(tx).await?;
+                return Ok(saved.report(operation_id));
+            }
+            Ok(None) => {}
+            Err(error) => return Err(self.rollback(tx, error).await),
+        }
+        let replacement = DurableHead {
+            world_id: expected.world_id.clone(),
+            generation: Uuid::new_v4().to_string(),
+            revision: expected
+                .revision
+                .checked_add(1)
+                .ok_or(CommitError::RolledBack(StoreError::Capacity))?,
+        };
+        let timeline = Uuid::new_v4().to_string();
+        let prepared = self
+            .stage_recovery(
+                &tx,
+                &expected,
+                replacement,
+                &timeline,
+                &key,
+                slot,
+                floor.as_ref(),
+                definitions,
+                definition_custody,
+                &language,
+            )
+            .await;
+        let mut adoption = match prepared {
+            Ok(adoption) => adoption,
+            Err(error) => return Err(self.rollback(tx, error).await),
+        };
+        let commit = self.commit(tx).await;
+        drop(writer);
+        if let Err(error) = commit {
+            let expected_receipt = &adoption.receipt;
+            match self.read_recovery_witness(&key).await {
+                Ok((Some(head), Some(received)))
+                    if head == expected_receipt.head() && received == *expected_receipt => {}
+                Ok((Some(head), None)) if head == expected => {
+                    adoption
+                        .session
+                        .cancel(adoption.key)
+                        .map_err(|_| CommitError::Unknown(StoreError::StaleCut))?;
+                    return Err(CommitError::RolledBack(StoreError::StaleCut));
+                }
+                _ => return Err(error),
+            }
+        }
+        let actual = &adoption.receipt;
+        adoption
+            .session
+            .fence()
+            .settle(adoption.key, true)
+            .map_err(|_| CommitError::Unknown(StoreError::StaleCut))?;
+        adoption
+            .session
+            .activate_restored(
+                adoption.key,
+                RuntimeActivation {
+                    world_id: actual.world_id.clone(),
+                    generation: actual.generation.clone(),
+                    revision: actual.revision,
+                    accepted_cut: actual.accepted_cut,
+                },
+            )
+            .map_err(|_| CommitError::Unknown(StoreError::StaleCut))?;
+        Ok(adoption.receipt.report(operation_id))
+    }
+
+    async fn read_recovery_witness(
+        &self,
+        key: &str,
+    ) -> StoreResult<(Option<DurableHead>, Option<Receipt>)> {
+        let mut reader = self.reader.lock().await;
+        let tx = reader
+            .client
+            .build_transaction()
+            .read_only(true)
+            .isolation_level(tokio_postgres::IsolationLevel::RepeatableRead)
+            .start()
+            .await?;
+        let head = durable_head(&tx).await?;
+        let completed = receipt(&tx, key).await?;
+        tx.commit().await?;
+        Ok((head, completed))
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    async fn stage_recovery(
+        &self,
+        tx: &Transaction<'_>,
+        expected: &DurableHead,
+        replacement: DurableHead,
+        timeline: &str,
+        request_key: &str,
+        slot: AdministrativeCheckpoint,
+        floor: Option<&AdministrativeCheckpoint>,
+        definitions: RuntimeInstallDefinitions,
+        definition_custody: ByteReservation,
+        language: &LanguageProvider,
+    ) -> StoreResult<Adoption> {
+        if slot.revision > expected.revision {
+            return Err(StoreError::StaleCut);
+        }
+        let slot_id = slot.id.clone();
+        let authority = read_recovery_authority(
+            tx,
+            expected,
+            floor.or_else(|| (slot.revision == expected.revision).then_some(&slot)),
+            &self.budget,
+        )
+        .await?;
+        let current_privacy;
+        let privacy = if let Some(ledger) = &authority.ledger {
+            ledger
+        } else {
+            current_privacy = self
+                .current_recovery_privacy(tx, &expected.world_id)
+                .await?;
+            &current_privacy.0
+        };
+        let (mut opening, history) = slot.into_opening(self, replacement.clone())?;
+        self.recovery_asset_binding(tx, &replacement.world_id, &slot_id, &opening)
+            .await?;
+        reconcile_history_positions(
+            self,
+            tx,
+            expected,
+            &self.schema.checkpoint.history_position_tables,
+            self.schema.checkpoint.page,
+            &mut opening,
+        )
+        .await?;
+        self.stage_checkpoint(tx, expected, &opening, &history)
+            .await?;
+        let restore_input = self.prepare_restore_input(&authority, &history, timeline, privacy)?;
+        drop(history);
+        let mut upstream = opening.custody;
+        upstream
+            .merge(definition_custody)
+            .map_err(|_| StoreError::Capacity)?;
+        let mut session = definitions
+            .install_current_for_restore(
+                RuntimeInstallSources {
+                    records: opening.records,
+                    originals: opening.originals,
+                    cold_directories: None,
+                    working_set: None,
+                    accepted_cut: 0,
+                },
+                self.database_schema(),
+                self.budget.clone(),
+                upstream,
+            )
+            .map_err(runtime)?;
+        {
+            let decoder = session.checkpoint_recall_decoder().map_err(runtime)?;
+            self.rebuild_checkpoint_projections(tx, &replacement.world_id, &decoder)
+                .await?;
+        }
+        let key = session
+            .begin_restore(restore_input.bytes())
+            .map_err(runtime)?;
+        drop(restore_input);
+        let mut pending: Option<(RuntimeProvider, RuntimeProviderInput)> = None;
+        let ready = loop {
+            let (provider, answer) = match pending.take() {
+                Some((provider, answer)) => (Some(provider), Some(answer)),
+                None => (None, None),
+            };
+            match session
+                .step_direct(key, provider.as_ref().zip(answer), |product, budget| {
+                    let RuntimeDirectOutput::Prepared(products) = product else {
+                        return Err(
+                            openlegend_simulation::runtime::RuntimeError::application_refused(
+                                "Unexpected checkpoint preview",
+                            ),
+                        );
+                    };
+                    let placement = products.restored_placement().ok_or_else(|| {
+                        openlegend_simulation::runtime::RuntimeError::application_refused(
+                            "Missing exact checkpoint placement",
+                        )
+                    })?;
+                    if (placement.world_id, placement.generation, placement.revision)
+                        != (
+                            replacement.world_id.as_str(),
+                            replacement.generation.as_str(),
+                            replacement.revision,
+                        )
+                        || placement.accepted_cut != 1
+                    {
+                        return Err(
+                            openlegend_simulation::runtime::RuntimeError::application_refused(
+                                "Checkpoint cut changed",
+                            ),
+                        );
+                    }
+                    #[derive(Serialize)]
+                    struct Privacy<'a> {
+                        forgotten: &'a indexmap::IndexMap<String, Vec<String>>,
+                        corrections:
+                            &'a indexmap::IndexMap<String, indexmap::IndexMap<String, String>>,
+                    }
+                    let privacy = Privacy {
+                        forgotten: placement.forgotten,
+                        corrections: placement.corrections,
+                    };
+                    let length = openlegend_simulation::encoding::json_record_len(&privacy)
+                        .map_err(
+                            openlegend_simulation::runtime::RuntimeError::application_refused,
+                        )?;
+                    let bytes = length
+                        .checked_mul(2)
+                        .and_then(|n| n.checked_add(1024))
+                        .ok_or_else(|| {
+                            openlegend_simulation::runtime::RuntimeError::application_refused(
+                                "Checkpoint product exceeds allowance",
+                            )
+                        })?;
+                    let storage = budget.reserve(bytes)?;
+                    let privacy = json_record(&privacy).map_err(
+                        openlegend_simulation::runtime::RuntimeError::application_refused,
+                    )?;
+                    let (initial_archives, final_archives) =
+                        placement.encode_archive_placement(budget)?;
+                    Ok(FinalPlacement {
+                        history: products.retain_history(),
+                        privacy,
+                        initial_archives,
+                        final_archives,
+                        receipt: Receipt {
+                            save_id: slot_id.clone(),
+                            world_id: placement.world_id.to_owned(),
+                            generation: placement.generation.to_owned(),
+                            timeline: timeline.to_owned(),
+                            revision: placement.revision,
+                            accepted_cut: placement.accepted_cut,
+                        },
+                        _storage: storage,
+                    })
+                })
+                .map_err(runtime)?
+            {
+                RuntimeDirectStep::Continue => {}
+                RuntimeDirectStep::Provider(provider) => {
+                    let answer = self
+                        .answer_recovery(tx, &replacement, &session, &provider, language)
+                        .await?;
+                    pending = Some((provider, answer));
+                }
+                RuntimeDirectStep::Prepared(ready) => break ready,
+                RuntimeDirectStep::Preview(_) => return Err(StoreError::InvalidRecord),
+            }
+        };
+        let output = ready.output();
+        let save = ready.protected_save().ok_or(StoreError::StaleCut)?;
+        let rows = save.rows();
+        if (
+            rows.world_id.as_str(),
+            rows.generation.as_str(),
+            rows.base_revision,
+            rows.through_cut,
+        ) != (
+            replacement.world_id.as_str(),
+            replacement.generation.as_str(),
+            replacement.revision,
+            output.receipt.accepted_cut,
+        ) {
+            return Err(StoreError::StaleCut);
+        }
+        if output.history.accounts().next().is_some() {
+            return Err(StoreError::DerivedProjectionRequired);
+        }
+        let initial = archive_metadata(&output.initial_archives)?;
+        let final_archives = archive_metadata(&output.final_archives)?;
+        self.apply_checkpoint_archive_baseline(tx, &replacement, initial)
+            .await?;
+        self.apply_archives_at(tx, save, sql_ordinal(replacement.revision)?)
+            .await?;
+        self.write_records(
+            tx,
+            &replacement.world_id,
+            sql_ordinal(replacement.revision)?,
+            &rows.changes,
+        )
+        .await?;
+        self.project_support_places(tx, &replacement.world_id, &rows.changes)
+            .await?;
+        self.apply_checkpoint_archive_baseline(tx, &replacement, final_archives)
+            .await?;
+        self.append_originals(tx, rows, std::slice::from_ref(&output.history))
+            .await?;
+        self.finish_checkpoint_privacy(tx, &replacement, &output.privacy)
+            .await?;
+        self.rebuild_received(
+            tx,
+            &replacement.world_id,
+            sql_ordinal(replacement.revision)?,
+        )
+        .await?;
+        self.validate_received(tx, &replacement.world_id).await?;
+        {
+            let decoder = session.checkpoint_recall_decoder().map_err(runtime)?;
+            self.rebuild_checkpoint_projections(tx, &replacement.world_id, &decoder)
+                .await?;
+        }
+        self.finish_checkpoint_operations(tx, &replacement, timeline)
+            .await?;
+        let encoded = json_record(&output.receipt).map_err(|_| StoreError::InvalidRecord)?;
+        tx.execute(
+            "INSERT INTO meta (key,value) VALUES ($1,$2)",
+            &[&request_key, &encoded],
+        )
+        .await?;
+        ready.ready().map_err(runtime)?;
+        Ok(Adoption {
+            session,
+            key,
+            receipt: ready.into_output().receipt,
+        })
+    }
+
+    async fn answer_recovery(
+        &self,
+        tx: &Transaction<'_>,
+        candidate: &DurableHead,
+        session: &NativeWorldSession,
+        provider: &RuntimeProvider,
+        language: &LanguageProvider,
+    ) -> StoreResult<RuntimeProviderInput> {
+        #[derive(Deserialize)]
+        struct Request<'a> {
+            kind: &'a str,
+            value: RequestValue<'a>,
+        }
+        #[derive(Deserialize)]
+        struct RequestValue<'a> {
+            phase: Option<&'a str>,
+        }
+        enum Selection {
+            History,
+            Collation,
+            Archives,
+            Support,
+            Members,
+            Accounts,
+            Versions,
+        }
+        let selected = provider
+            .with_request(|text| {
+                let request: Request =
+                    serde_json::from_str(text).map_err(|_| StoreError::InvalidRecord)?;
+                Ok::<_, StoreError>(match (request.kind, request.value.phase) {
+                    ("history", _) => Selection::History,
+                    ("collation", _) => Selection::Collation,
+                    ("restore-archives", _) => Selection::Archives,
+                    ("support-membership", _) => Selection::Support,
+                    ("restore-retention", Some("membership")) => Selection::Members,
+                    ("restore-retention", Some("metadata" | "records")) => Selection::Accounts,
+                    ("source-versions", _) => Selection::Versions,
+                    _ => return Err(StoreError::InvalidRecord),
+                })
+            })
+            .map_err(runtime)??;
+        match selected {
+            Selection::History => {
+                let prepared = self.prepare_checkpoint_history(provider)?;
+                let decoder = session.checkpoint_recall_decoder().map_err(runtime)?;
+                self.with_checkpoint_recall_view(
+                    tx,
+                    candidate,
+                    prepared.projection(),
+                    &decoder,
+                    None,
+                    self.read_checkpoint_history(tx, candidate, &prepared),
+                )
+                .await
+            }
+            Selection::Collation => {
+                crate::operation_format::answer(provider, &self.budget, Some(language))
+                    .map_err(|_| StoreError::InvalidRecord)?
+                    .ok_or(StoreError::InvalidRecord)
+            }
+            Selection::Archives => {
+                self.answer_checkpoint_archives(tx, candidate, provider)
+                    .await
+            }
+            Selection::Support => {
+                self.answer_checkpoint_support(tx, candidate, provider)
+                    .await
+            }
+            Selection::Members => {
+                let request = provider
+                    .prepare_restore_membership(&self.budget)
+                    .map_err(runtime)?;
+                let matched = self
+                    .checkpoint_retention_membership(tx, candidate, &request)
+                    .await?;
+                session
+                    .complete_restore_membership(
+                        &request,
+                        &matched.aliases,
+                        &matched.individuals,
+                        matched.max_pages,
+                        matched.max_bytes,
+                    )
+                    .map_err(runtime)
+            }
+            Selection::Accounts => {
+                self.answer_checkpoint_account_retention(tx, candidate, provider)
+                    .await
+            }
+            Selection::Versions => {
+                let decoder = session.checkpoint_recall_decoder().map_err(runtime)?;
+                self.answer_checkpoint_source_versions(tx, candidate, provider, &decoder)
+                    .await
+            }
+        }
+    }
+
+    async fn current_recovery_privacy(
+        &self,
+        tx: &Transaction<'_>,
+        world: &str,
+    ) -> StoreResult<(AcceptedPrivacy, ByteReservation)> {
+        let mut privacy = AcceptedPrivacy {
+            forgotten: indexmap::IndexMap::new(),
+            corrections: indexmap::IndexMap::new(),
+        };
+        let (mut custody, rows) = admitted_query(
+            tx,
+            "SELECT actor_id,source_id,payload FROM mind_forgotten WHERE world_id=$1 ORDER BY parent_id,position,id",
+            &[&world], &self.budget,
+        ).await?;
+        for row in rows {
+            let actor: String = row.try_get(0)?;
+            let id: String = row.try_get(1)?;
+            let payload: String =
+                serde_json::from_str(row.try_get(2)?).map_err(|_| StoreError::InvalidRecord)?;
+            if id != payload {
+                return Err(StoreError::InvalidRecord);
+            }
+            privacy.forgotten.entry(actor).or_default().push(id);
+        }
+        let (wire, rows) = admitted_query(
+            tx,
+            "SELECT actor_id,source_id,payload FROM mind_corrections WHERE world_id=$1 ORDER BY parent_id,position,id",
+            &[&world], &self.budget,
+        ).await?;
+        for row in rows {
+            let actor: String = row.try_get(0)?;
+            let id: String = row.try_get(1)?;
+            let payload =
+                serde_json::from_str(row.try_get(2)?).map_err(|_| StoreError::InvalidRecord)?;
+            if privacy
+                .corrections
+                .entry(actor)
+                .or_default()
+                .insert(id, payload)
+                .is_some()
+            {
+                return Err(StoreError::InvalidRecord);
+            }
+        }
+        validate_privacy(&privacy)?;
+        custody.merge(wire).map_err(|_| StoreError::Capacity)?;
+        Ok((privacy, custody))
+    }
+
+    async fn finish_checkpoint_privacy(
+        &self,
+        tx: &Transaction<'_>,
+        head: &DurableHead,
+        body: &str,
+    ) -> StoreResult<()> {
+        let world = &head.world_id;
+        let key = format!("integration:privacy-ledger:{world}");
+        tx.execute("INSERT INTO meta(key,value) VALUES($1,$2) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value", &[&key, &body]).await?;
+        tx.execute(
+            "DELETE FROM history_perspectives p
+             WHERE p.world_id=$1 AND EXISTS (
+               SELECT 1 FROM mind_forgotten f WHERE f.world_id=p.world_id AND f.actor_id=p.actor_id AND f.source_id=p.event_id
+               UNION ALL
+               SELECT 1 FROM mind_corrections c WHERE c.world_id=p.world_id AND c.actor_id=p.actor_id AND (
+                 c.source_id=p.event_id OR EXISTS(SELECT 1 FROM mind_memories m WHERE m.world_id=c.world_id
+                   AND m.actor_id=c.actor_id AND m.source_id=c.source_id AND m.event_id=p.event_id)
+               ))",
+            &[world],
+        ).await?;
+        for table in [
+            "mind_source_annotations",
+            "memory_vector_cache",
+            "memory_vectors",
+        ] {
+            tx.execute(&format!(
+                "DELETE FROM {table} t USING mind_forgotten f WHERE t.world_id=$1 AND f.world_id=t.world_id
+                 AND f.actor_id=t.actor_id AND f.source_id=t.source_id"
+            ), &[world]).await?;
+        }
+        Ok(())
+    }
+
+    async fn finish_checkpoint_operations(
+        &self,
+        tx: &Transaction<'_>,
+        head: &DurableHead,
+        timeline: &str,
+    ) -> StoreResult<()> {
+        let world = &head.world_id;
+        RequestIdentity::restore(tx, world, timeline).await?;
+        tx.execute(
+            "UPDATE story_jobs SET state='cancelled' WHERE world_id=$1 AND state IN ('running','queued')",
+            &[world],
+        ).await?;
+        tx.execute(
+            "UPDATE jobs SET payload=(payload::jsonb-'playerSpeechEventId')::text,
+                    selection=selection-'playerSpeechEventId'
+             WHERE selection ? 'playerSpeechEventId'",
+            &[],
+        )
+        .await?;
+        tx.execute(
+            "DELETE FROM memory_vectors WHERE world_id=$1 AND generation<>$2",
+            &[world, &head.generation],
+        )
+        .await?;
+        // Scheduling caches can only refer to this old timeline. Provider
+        // charges, invocation receipts and independently granted accounts stay.
+        let roots = [
+            "vectors",
+            "interests",
+            "reflection-queue",
+            "semantic-schedule",
+        ]
+        .map(|kind| format!("integration:{kind}:{world}:"));
+        tx.execute("DELETE FROM meta WHERE EXISTS (SELECT 1 FROM unnest($1::text[]) q(prefix) WHERE starts_with(key,q.prefix))", &[&roots.as_slice()]).await?;
+        Ok(())
+    }
+}
+
+fn archive_metadata(value: &RuntimeJson) -> StoreResult<&str> {
+    std::str::from_utf8(value.bytes()).map_err(|_| StoreError::InvalidRecord)
+}
+
+fn runtime(error: openlegend_simulation::runtime::RuntimeError) -> StoreError {
+    if error.is_capacity() {
+        StoreError::Capacity
+    } else {
+        StoreError::InvalidRecord
+    }
+}
+
+async fn receipt(tx: &Transaction<'_>, request: &str) -> StoreResult<Option<Receipt>> {
+    tx.query_opt("SELECT value FROM meta WHERE key=$1", &[&request])
+        .await?
+        .map(|row| {
+            let payload: &str = row.try_get(0)?;
+            serde_json::from_str(payload).map_err(|_| StoreError::InvalidRecord)
+        })
+        .transpose()
+}

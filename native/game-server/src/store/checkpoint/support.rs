@@ -88,37 +88,31 @@ impl Store {
             .budget
             .reserve(workspace)
             .map_err(|_| StoreError::Capacity)?;
-        self.with_checkpoint_projection(
-            tx,
-            prospective,
-            &request.restore_projection,
-            false,
-            async {
-                let (_transfer, rows) = admitted_query(
-                    tx,
-                    &self.schema.checkpoint.support_membership,
-                    &[&request.world_id, &request.actor_id, &request.aliases],
-                    &self.budget,
-                )
-                .await?;
-                let matches = rows
-                    .iter()
-                    .map(|row| row.try_get::<_, &str>(0).map_err(StoreError::from))
-                    .collect::<StoreResult<BTreeSet<_>>>()?;
-                let retained = request
-                    .aliases
-                    .iter()
-                    .enumerate()
-                    .filter_map(|(index, alias)| matches.contains(alias.as_str()).then_some(index))
-                    .collect();
-                let answer = Answer {
-                    binding: request.binding,
-                    retained,
-                };
-                let (json, custody) = self.encode_restore_output(&answer, usize::MAX)?;
-                Ok(RuntimeProviderInput::new(json, custody))
-            },
-        )
+        self.with_checkpoint_projection(tx, prospective, &request.restore_projection, async {
+            let (_transfer, rows) = admitted_query(
+                tx,
+                &self.schema.checkpoint.support_membership,
+                &[&request.world_id, &request.actor_id, &request.aliases],
+                &self.budget,
+            )
+            .await?;
+            let matches = rows
+                .iter()
+                .map(|row| row.try_get::<_, &str>(0).map_err(StoreError::from))
+                .collect::<StoreResult<BTreeSet<_>>>()?;
+            let retained = request
+                .aliases
+                .iter()
+                .enumerate()
+                .filter_map(|(index, alias)| matches.contains(alias.as_str()).then_some(index))
+                .collect();
+            let answer = Answer {
+                binding: request.binding,
+                retained,
+            };
+            let (json, custody) = self.encode_restore_output(&answer, usize::MAX)?;
+            Ok(RuntimeProviderInput::new(json, custody))
+        })
         .await
     }
 
@@ -158,7 +152,7 @@ impl Store {
             .reserve(workspace)
             .map_err(|_| StoreError::Capacity)?;
         let (aliases, individuals) = self
-            .with_checkpoint_projection(tx, prospective, request.projection(), false, async {
+            .with_checkpoint_projection(tx, prospective, request.projection(), async {
                 let (_transfer, rows) = admitted_query(
                     tx,
                     &self.schema.checkpoint.retention_membership,

@@ -84,6 +84,45 @@ fn read_definitions(
     Ok((definitions, custody))
 }
 
+/// Recover a stopped database with the same validated installed definitions
+/// and language data as the normal listener. Opening the store owns the
+/// exclusive writer lock without installing the damaged live gameplay rows.
+pub async fn recover_checkpoint(
+    release: &Path,
+    database: Config,
+    directory: &Path,
+    slot: &str,
+    operation: &str,
+    floor: Option<&str>,
+) -> Result<serde_json::Value, BootError> {
+    let manifest = read_manifest(release)?;
+    let budget = ByteBudget::new(TRANSIENT_BYTES);
+    let (definitions, custody) = read_definitions(release, &manifest, &budget)?;
+    let language = Arc::new(LanguageProvider::open(&release.join("language"), &budget)?);
+    let store = open_store(release, &manifest, database, &budget).await?;
+    let recovered = store
+        .recover_checkpoint(
+            directory,
+            slot,
+            floor,
+            operation,
+            definitions,
+            custody,
+            language,
+        )
+        .await?;
+    drop(store);
+    Ok(serde_json::json!({
+        "worldId": recovered.head.world_id,
+        "generation": recovered.head.generation,
+        "revision": recovered.head.revision,
+        "slotId": recovered.slot_id,
+        "operationId": recovered.operation_id,
+        "timeline": recovered.timeline,
+        "acceptedCut": recovered.accepted_cut,
+    }))
+}
+
 fn read_bounded(path: &Path, maximum: usize) -> Result<Vec<u8>, BootError> {
     let file = std::fs::File::open(path)?;
     if file.metadata()?.len() > maximum as u64 {

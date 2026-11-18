@@ -137,59 +137,53 @@ impl Store {
         let limits = serde_json::from_str::<Limits>(self.restore_retention_preparation().get())
             .map_err(|_| StoreError::Schema)?
             .accounts;
-        self.with_checkpoint_projection(
-            tx,
-            prospective,
-            &question.restore_projection,
-            false,
-            async {
-                match question.phase.as_str() {
-                    "metadata" => {
-                        let data: MetadataRequest = serde_json::from_str(question.data.get())
-                            .map_err(|_| StoreError::InvalidRecord)?;
-                        if data.world_id != prospective.world_id
-                            || data.generation != prospective.generation
-                            || data.accepted_cut != 0
-                            || data.actor_id != actor
-                            || !data.at.is_finite()
-                            || data.pressured.len() > 3
-                        {
-                            return Err(StoreError::StaleCut);
-                        }
-                        provider::verify_header(
-                            self,
-                            tx,
-                            prospective,
-                            0,
-                            &question.binding,
-                            Some(data.at),
-                        )
-                        .await?;
-                        self.checkpoint_account_metadata(tx, &question, data, &limits)
-                            .await
+        self.with_checkpoint_projection(tx, prospective, &question.restore_projection, async {
+            match question.phase.as_str() {
+                "metadata" => {
+                    let data: MetadataRequest = serde_json::from_str(question.data.get())
+                        .map_err(|_| StoreError::InvalidRecord)?;
+                    if data.world_id != prospective.world_id
+                        || data.generation != prospective.generation
+                        || data.accepted_cut != 0
+                        || data.actor_id != actor
+                        || !data.at.is_finite()
+                        || data.pressured.len() > 3
+                    {
+                        return Err(StoreError::StaleCut);
                     }
-                    "records" => {
-                        let data: RecordsRequest = serde_json::from_str(question.data.get())
-                            .map_err(|_| StoreError::InvalidRecord)?;
-                        if data.actor_id != actor || !data.at.is_finite() {
-                            return Err(StoreError::StaleCut);
-                        }
-                        provider::verify_header(
-                            self,
-                            tx,
-                            prospective,
-                            0,
-                            &question.binding,
-                            Some(data.at),
-                        )
-                        .await?;
-                        self.checkpoint_account_records(tx, &question, data, &limits)
-                            .await
-                    }
-                    _ => Err(StoreError::InvalidRecord),
+                    provider::verify_header(
+                        self,
+                        tx,
+                        prospective,
+                        0,
+                        &question.binding,
+                        Some(data.at),
+                    )
+                    .await?;
+                    self.checkpoint_account_metadata(tx, &question, data, &limits)
+                        .await
                 }
-            },
-        )
+                "records" => {
+                    let data: RecordsRequest = serde_json::from_str(question.data.get())
+                        .map_err(|_| StoreError::InvalidRecord)?;
+                    if data.actor_id != actor || !data.at.is_finite() {
+                        return Err(StoreError::StaleCut);
+                    }
+                    provider::verify_header(
+                        self,
+                        tx,
+                        prospective,
+                        0,
+                        &question.binding,
+                        Some(data.at),
+                    )
+                    .await?;
+                    self.checkpoint_account_records(tx, &question, data, &limits)
+                        .await
+                }
+                _ => Err(StoreError::InvalidRecord),
+            }
+        })
         .await
     }
 

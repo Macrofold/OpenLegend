@@ -21,7 +21,7 @@ WHERE b.world_id = $3 AND b.payload::jsonb->'reference' = $4::jsonb
       SELECT 1 FROM closure c
       WHERE NOT EXISTS (
           SELECT 1 FROM asset_pins p
-          WHERE p.owner_kind = 'world' AND p.owner_id = b.world_id
+          WHERE p.owner_kind = $5 AND p.owner_id = $6
             AND p.revision_key = c.revision_key
             AND p.manifest_sha256 = c.manifest_sha256
       )
@@ -30,7 +30,7 @@ WHERE b.world_id = $3 AND b.payload::jsonb->'reference' = $4::jsonb
       SELECT 1 FROM declared_files f
       WHERE NOT EXISTS (
           SELECT 1 FROM asset_pin_files p
-          WHERE p.owner_kind = 'world' AND p.owner_id = b.world_id
+          WHERE p.owner_kind = $5 AND p.owner_id = $6
             AND p.artifact_key = concat('[',to_json(f.payload->>'boundary')::text,',',
                                              to_json(f.payload->>'accessDomain')::text,',',
                                              to_json(f.payload->>'sha256')::text,']')

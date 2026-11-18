@@ -3,8 +3,8 @@
 mod metadata;
 pub(crate) use metadata::{
     ArchiveCategory as RestoreArchiveCategory, MetadataJournal, PreparedRestoreArchives,
-    RestoreArchiveBaseline, RestoreArchivesAnswer, RestoreArchivesCursor, RestoreArchivesQuestion,
-    RestoreArchivesStep, RestoreMetadataInput, RestoreMetadataPreparation, RestoreMetadataResult,
-    RestorePrivacy, apply_restore_archive_baseline, begin_restore_metadata,
+    RestoreArchive, RestoreArchiveBaseline, RestoreArchivesAnswer, RestoreArchivesCursor,
+    RestoreArchivesQuestion, RestoreArchivesStep, RestoreMetadataInput, RestoreMetadataPreparation,
+    RestoreMetadataResult, RestorePrivacy, apply_restore_archive_baseline, begin_restore_metadata,
     finish_restore_metadata,
 };

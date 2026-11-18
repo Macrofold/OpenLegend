@@ -42,7 +42,7 @@ pub(crate) use history::{
 pub(crate) use player_events::{CapturedPlayerEvents, capture_player_events};
 pub(crate) mod consolidation;
 mod header_input;
-mod manifest_dependencies;
+pub(crate) mod manifest_dependencies;
 mod originals;
 pub(crate) use originals::CapturedPersonalOriginals;
 mod archive_source;
@@ -109,7 +109,7 @@ pub(crate) use result::{
     prepare_activity_result,
 };
 mod columns;
-pub(crate) use columns::awareness_learning_sources;
+pub(crate) use columns::{account_learning_sources, awareness_learning_sources};
 pub(crate) mod places;
 pub(crate) use places::KnownPlaceMutation;
 pub use places::{

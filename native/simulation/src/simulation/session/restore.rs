@@ -12,10 +12,10 @@ pub(super) struct RestoreAdoption {
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct PreparedRestoreFacts<'a> {
-    world_id: &'a str,
-    generation: &'a str,
-    revision: u64,
-    accepted_cut: u64,
+    pub(crate) world_id: &'a str,
+    pub(crate) generation: &'a str,
+    pub(crate) revision: u64,
+    pub(crate) accepted_cut: u64,
     identity_through: u64,
     installation: CurrentInstallation<'a>,
     retained_values: RestoreRetainedValueIds<'a>,

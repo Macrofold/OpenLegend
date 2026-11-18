@@ -26,6 +26,7 @@ mod authority;
 mod history_read;
 mod positions;
 mod provider;
+mod recover;
 mod retention;
 mod support;
 mod version_baseline;
@@ -34,6 +35,7 @@ pub(super) use authority::{AcceptedPrivacy, validate_privacy};
 pub(crate) use authority::{RecoveryAuthority, read_recovery_authority};
 pub(crate) use history_read::PreparedCheckpointHistory;
 pub(crate) use positions::reconcile_history_positions;
+pub use recover::RecoveredCheckpoint;
 
 const METADATA: usize = 16 * 1024;
 const FILE_BUFFER: usize = 64 * 1024;

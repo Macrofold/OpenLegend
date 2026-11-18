@@ -339,6 +339,20 @@ impl Session {
         Ok(&self.simulation.state)
     }
 
+    pub(crate) fn restore_projection_state(
+        &self,
+        key: Option<CandidateKey>,
+    ) -> Result<&SimulationState, SessionError> {
+        if let Some(key) = key {
+            self.simulation
+                .fence
+                .validate_phase(key, CandidatePhase::Preparing)?;
+            Ok(&self.simulation.state)
+        } else {
+            Ok(&self.accepted()?.state)
+        }
+    }
+
     pub(crate) fn ordinary_recall_rows(
         &self,
         through: u64,

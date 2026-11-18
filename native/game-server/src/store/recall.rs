@@ -20,6 +20,8 @@ use std::collections::HashSet;
 use tokio_postgres::Transaction;
 
 pub(crate) mod activity_results;
+mod checkpoint_accounts;
+mod recovery;
 
 const TABLE: &str = "mind_awareness";
 const BATCH: usize = 100;
@@ -214,8 +216,23 @@ impl Store {
         {
             return Err(StoreError::StaleCut);
         }
-        let world = save.world_id.as_str();
-        for batch in prepared.rows.chunks(BATCH) {
+        self.write_awareness_rows(
+            transaction,
+            save.world_id.as_str(),
+            prepared.hard_bytes,
+            &prepared.rows,
+        )
+        .await
+    }
+
+    async fn write_awareness_rows(
+        &self,
+        transaction: &Transaction<'_>,
+        world: &str,
+        hard_bytes: i64,
+        rows: &[AccountRow],
+    ) -> StoreResult<()> {
+        for batch in rows.chunks(BATCH) {
             let bytes = batch
                 .iter()
                 .try_fold(16384usize, |size, row| {
@@ -230,7 +247,7 @@ impl Store {
             let rows = batch.iter().map(|row| row.source.as_str());
             let input = array(rows);
             transaction
-                .query_opt(&self.schema.recall.insert, &[&input, &prepared.hard_bytes])
+                .query_opt(&self.schema.recall.insert, &[&input, &hard_bytes])
                 .await?;
             drop(input);
             Self::write_dependencies(transaction, world, batch).await?;
@@ -244,7 +261,7 @@ impl Store {
         }
         // All awareness and dependency placements are visible before the
         // common eligibility/vector closure evaluates any linked old entry.
-        for batch in prepared.rows.chunks(BATCH) {
+        for batch in rows.chunks(BATCH) {
             let bytes = batch
                 .iter()
                 .try_fold(8192usize, |size, row| {
@@ -307,6 +324,33 @@ impl Store {
             transaction.execute("INSERT INTO mind_source_dependencies SELECT * FROM
                 jsonb_populate_recordset(NULL::mind_source_dependencies,$1::text::jsonb) ON CONFLICT DO NOTHING", &[&json]).await?;
         }
+        let personal = personal
+            .into_iter()
+            .map(|(row, dependency)| {
+                let kind = match dependency.family.as_str() {
+                    "awareness" => PersonalSourceKind::Awareness,
+                    "memory" => PersonalSourceKind::Memory,
+                    "summary" => PersonalSourceKind::Summary,
+                    _ => return Err(StoreError::InvalidRecord),
+                };
+                Ok((
+                    kind,
+                    row.actor.as_str(),
+                    row.id.as_str(),
+                    dependency.id.as_str(),
+                ))
+            })
+            .collect::<StoreResult<Vec<_>>>()?;
+        Self::write_learning_dependencies(transaction, world, "awareness", &personal).await
+    }
+
+    async fn write_learning_dependencies(
+        transaction: &Transaction<'_>,
+        world: &str,
+        derived_kind: &str,
+        personal: &[(PersonalSourceKind, &str, &str, &str)],
+    ) -> StoreResult<()> {
+        let recognition = sha256_hex(b"\"recognition\"");
         for kind in [
             PersonalSourceKind::Awareness,
             PersonalSourceKind::Memory,
@@ -315,14 +359,14 @@ impl Store {
             let family = source_kind(kind);
             let selected: Vec<_> = personal
                 .iter()
-                .filter(|(_, dep)| dep.family == family)
+                .filter(|(source_kind, ..)| *source_kind == kind)
                 .collect();
             if selected.is_empty() {
                 continue;
             }
-            let actor: Vec<_> = selected.iter().map(|(row, _)| row.actor.as_str()).collect();
-            let id: Vec<_> = selected.iter().map(|(row, _)| row.id.as_str()).collect();
-            let source: Vec<_> = selected.iter().map(|(_, dep)| dep.id.as_str()).collect();
+            let actor: Vec<_> = selected.iter().map(|(_, actor, ..)| *actor).collect();
+            let id: Vec<_> = selected.iter().map(|(_, _, id, _)| *id).collect();
+            let source: Vec<_> = selected.iter().map(|(_, _, _, source)| *source).collect();
             let query = format!("WITH requested AS MATERIALIZED (
                   SELECT q.*,binding.revision FROM unnest($3::text[],$4::text[],$5::text[]) q(actor_id,derived_id,source_id)
                   CROSS JOIN LATERAL (
@@ -332,7 +376,7 @@ impl Store {
                      ORDER BY access,retired LIMIT 1
                   ) binding
                 ), placed AS (INSERT INTO mind_source_dependencies
-                   SELECT $1,actor_id,'awareness',derived_id,$2,source_id,revision,$6,-1,-1,source_id FROM requested
+                   SELECT $1,actor_id,'{derived_kind}',derived_id,$2,source_id,revision,$6,-1,-1,source_id FROM requested
                    ON CONFLICT DO NOTHING)
                 SELECT count(*) FROM requested", kind.table());
             let bound: i64 = transaction
@@ -471,7 +515,7 @@ impl AccountRow {
             source,
             dependencies,
             place: place
-                .map(|place| place_row(world, actor, id, revision, place))
+                .map(|place| place_row(world, actor, "awareness", id, revision, place))
                 .transpose()?,
         })
     }
@@ -521,16 +565,17 @@ fn array<'a>(rows: impl Iterator<Item = &'a str>) -> String {
 fn place_row(
     world: &str,
     actor: &str,
+    kind: &str,
     owner: &str,
     revision: &str,
     place: &KnownPlaceCapsule,
 ) -> StoreResult<String> {
     json_record(&serde_json::json!({
-        "world_id": world, "actor_id": actor, "owner_id": owner, "owner_kind":"awareness", "owner_revision":revision,
+        "world_id": world, "actor_id": actor, "owner_id": owner, "owner_kind":kind, "owner_revision":revision,
         "place_id":place.place_id, "observed_at":place.observed_at, "observed_order":place.observed_order,
         "source_event_id":place.source_event_id, "native_source_id":place.source.id,
         "fact_alias":personal_fact_alias(&place.source.id, place.facet_ordinal).map_err(|_| StoreError::InvalidRecord)?,
         "capsule_key":super::known_places::place_capsule_key(place)?,
-        "capsule":json_record(place).map_err(|_| StoreError::InvalidRecord)?, "account_owner_kind":"awareness",
+        "capsule":json_record(place).map_err(|_| StoreError::InvalidRecord)?, "account_owner_kind":kind,
     })).map_err(|_| StoreError::InvalidRecord)
 }

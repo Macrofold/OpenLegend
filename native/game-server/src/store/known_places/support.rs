@@ -9,7 +9,7 @@ use openlegend_simulation::experience::{
 };
 use openlegend_simulation::host::{ByteBudget, ByteReservation};
 use openlegend_simulation::reception::{EvidenceFamily, ObserverLife, SourceRevision};
-use openlegend_simulation::records::{ChangedRow, ChangedRows};
+use openlegend_simulation::records::{ChangedRows, InstalledRow, SqlCell};
 use serde::Serialize;
 use std::collections::BTreeMap;
 use tokio_postgres::Transaction;
@@ -39,20 +39,27 @@ impl PendingSupports {
             .deletes
             .get(SUPPORT_TABLE)
             .map_or(&[][..], Vec::as_slice);
-        Self::from_rows(store, Some(actor), writes, deletes)
+        Self::from_rows(
+            store,
+            Some(actor),
+            writes
+                .iter()
+                .map(|row| (row.id.as_str(), row.payload.as_str(), row.extra.as_slice())),
+            deletes,
+        )
     }
 
-    fn from_rows(
+    fn from_rows<'a>(
         store: &Store,
         actor: Option<&str>,
-        writes: &[ChangedRow],
+        writes: impl ExactSizeIterator<Item = (&'a str, &'a str, &'a [SqlCell])>,
         deletes: &[String],
     ) -> StoreResult<Self> {
         let mut result = Self {
             rows: BTreeMap::new(),
             _custody: store.budget.reserve(0).map_err(|_| StoreError::Capacity)?,
         };
-        if writes.is_empty() && deletes.is_empty() {
+        if writes.len() == 0 && deletes.is_empty() {
             return Ok(result);
         }
         let table = store
@@ -73,33 +80,28 @@ impl PendingSupports {
             column("source_id")?,
             column("account_revision")?,
         );
-        for row in writes {
-            let value = |index| {
-                row.extra
-                    .get(index)
-                    .and_then(|value: &openlegend_simulation::records::SqlCell| value.as_str())
-            };
+        for (record, payload, extra) in writes {
+            let value = |index| extra.get(index).and_then(SqlCell::as_str);
             let owner_actor = value(actor_column).ok_or(StoreError::InvalidRecord)?;
             if actor.is_some_and(|actor| owner_actor != actor) {
                 continue;
             }
             let owner = value(source_column).ok_or(StoreError::InvalidRecord)?;
             let revision = value(revision_column).ok_or(StoreError::InvalidRecord)?;
-            let bytes = row
-                .id
+            let bytes = record
                 .len()
                 .checked_add(owner.len())
                 .and_then(|bytes| bytes.checked_add(owner_actor.len()))
                 .and_then(|bytes| bytes.checked_add(revision.len()))
                 .ok_or(StoreError::Capacity)?;
             result.fund(bytes)?;
-            let capsules = stored_support_place_capsules(&row.payload, owner_actor, &store.budget)
+            let capsules = stored_support_place_capsules(payload, owner_actor, &store.budget)
                 .map_err(|error| match error {
                     ExperienceError::Capacity => StoreError::Capacity,
                     _ => StoreError::InvalidRecord,
                 })?;
             result.rows.insert(
-                row.id.clone(),
+                record.to_owned(),
                 Some(SupportPlacement {
                     actor: owner_actor.to_owned(),
                     owner: owner.to_owned(),
@@ -185,48 +187,88 @@ impl Store {
             return Ok(());
         };
         for chunk in writes.chunks(128) {
-            let pending = PendingSupports::from_rows(self, None, chunk, &[])?;
-            let mut output = SqlSupports::prepare(&self.budget, None, &pending)?;
-            let mut key = Vec::with_capacity(output.body.len());
-            let mut actor = Vec::with_capacity(output.body.len());
-            let mut record = Vec::with_capacity(output.body.len());
-            for (id, placement) in &pending.rows {
-                let Some(placement) = placement else {
-                    continue;
-                };
-                for capsule in placement.capsules.capsules() {
-                    let input = capsule_key_input(capsule);
-                    let bound = json_record_len(&input).map_err(|_| StoreError::InvalidRecord)?;
-                    output.fund(
-                        bound
-                            .checked_mul(6)
-                            .and_then(|bytes| bytes.checked_add(256))
-                            .ok_or(StoreError::Capacity)?,
-                    )?;
-                    key.push(json_record(&input).map_err(|_| StoreError::InvalidRecord)?);
-                    actor.push(placement.actor.as_str());
-                    record.push(id.as_str());
-                }
+            let pending = PendingSupports::from_rows(
+                self,
+                None,
+                chunk
+                    .iter()
+                    .map(|row| (row.id.as_str(), row.payload.as_str(), row.extra.as_slice())),
+                &[],
+            )?;
+            self.place_support_rows(transaction, world, &pending)
+                .await?;
+        }
+        Ok(())
+    }
+
+    /// Rebuild place placement from all actual installed checkpoint support
+    /// bodies. Each page borrows the current-format checkpoint storage.
+    pub(in crate::store) async fn project_checkpoint_support_places(
+        &self,
+        tx: &Transaction<'_>,
+        world: &str,
+        rows: &[InstalledRow],
+    ) -> StoreResult<()> {
+        for chunk in rows.chunks(128) {
+            let pending = PendingSupports::from_rows(
+                self,
+                None,
+                chunk
+                    .iter()
+                    .map(|row| (row.id.as_str(), row.payload.as_str(), row.extra.as_slice())),
+                &[],
+            )?;
+            self.place_support_rows(tx, world, &pending).await?;
+        }
+        Ok(())
+    }
+
+    async fn place_support_rows(
+        &self,
+        transaction: &Transaction<'_>,
+        world: &str,
+        pending: &PendingSupports,
+    ) -> StoreResult<()> {
+        let mut output = SqlSupports::prepare(&self.budget, None, pending)?;
+        let mut key = Vec::with_capacity(output.body.len());
+        let mut actor = Vec::with_capacity(output.body.len());
+        let mut record = Vec::with_capacity(output.body.len());
+        for (id, placement) in &pending.rows {
+            let Some(placement) = placement else {
+                continue;
+            };
+            for capsule in placement.capsules.capsules() {
+                let input = capsule_key_input(capsule);
+                let bound = json_record_len(&input).map_err(|_| StoreError::InvalidRecord)?;
+                output.fund(
+                    bound
+                        .checked_mul(6)
+                        .and_then(|bytes| bytes.checked_add(256))
+                        .ok_or(StoreError::Capacity)?,
+                )?;
+                key.push(json_record(&input).map_err(|_| StoreError::InvalidRecord)?);
+                actor.push(placement.actor.as_str());
+                record.push(id.as_str());
             }
+        }
+        transaction.execute(
+            "DELETE FROM recall_place_capsules WHERE world_id=$1 AND support_record_id=ANY($2::text[])",
+            &[&world, &output.hidden],
+        ).await?;
+        if !record.is_empty() {
+            // Reuse the actual prepared support arrays; the saved key and
+            // scope are the only fields for durable placement alone.
             transaction.execute(
-                "DELETE FROM recall_place_capsules WHERE world_id=$1 AND support_record_id=ANY($2::text[])",
-                &[&world, &output.hidden],
+                "INSERT INTO recall_place_capsules
+                   (world_id,actor_id,owner_id,owner_kind,owner_revision,place_id,observed_at,observed_order,
+                    source_event_id,native_source_id,fact_alias,capsule_key,capsule,account_owner_kind,support_record_id)
+                 SELECT $1,q.actor,q.owner,'support',q.revision,q.place,q.at,q.position,q.event,q.native,q.alias,q.key,q.body,NULL,q.record
+                 FROM unnest($2::text[],$3::text[],$4::text[],$5::double precision[],$6::bigint[],$7::text[],
+                             $8::text[],$9::text[],$10::text[],$11::text[],$12::text[],$13::text[])
+                 q(owner,revision,place,at,position,event,native,alias,body,key,actor,record)",
+                &[&world, &output.owner, &output.revision, &output.place, &output.at, &output.order,
+                  &output.event, &output.native, &output.alias, &output.body, &key, &actor, &record],
             ).await?;
-            if !record.is_empty() {
-                // Reuse the actual prepared support arrays; the saved key and
-                // scope are the only fields for durable placement alone.
-                transaction.execute(
-                    "INSERT INTO recall_place_capsules
-                       (world_id,actor_id,owner_id,owner_kind,owner_revision,place_id,observed_at,observed_order,
-                        source_event_id,native_source_id,fact_alias,capsule_key,capsule,account_owner_kind,support_record_id)
-                     SELECT $1,q.actor,q.owner,'support',q.revision,q.place,q.at,q.position,q.event,q.native,q.alias,q.key,q.body,NULL,q.record
-                     FROM unnest($2::text[],$3::text[],$4::text[],$5::double precision[],$6::bigint[],$7::text[],
-                                 $8::text[],$9::text[],$10::text[],$11::text[],$12::text[],$13::text[])
-                     q(owner,revision,place,at,position,event,native,alias,body,key,actor,record)",
-                    &[&world, &output.owner, &output.revision, &output.place, &output.at, &output.order,
-                      &output.event, &output.native, &output.alias, &output.body, &key, &actor, &record],
-                ).await?;
-            }
         }
         Ok(())
     }
