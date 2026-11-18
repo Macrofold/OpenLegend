@@ -52,6 +52,8 @@ The continuing shared task budget is **not reset**. Mike's November 12 chat rais
 
 ## Work and exit criteria
 
+The [stand-alone Rust server](rust-game-server.md) hands actual retained or removed callers back to NRF01–03 and NRF06. Reuse surviving control evidence and qualify changed callers in their real runtime. A new Rust host alone does not settle a Node-side experiment.
+
 - [x] **NRF00 — Select the near-term contracts and candidate recipes.** The pair distinguishes existing coverage, source-backed candidate mechanisms and deferred consumers. All 28 catalogue scopes are mapped without changing their priorities or commissioning their contents. The nine research briefs have scoped dispositions rather than a blanket completion claim. Final documentation verification is recorded below; this checkbox claims design content, not runtime delivery.
 
 - [ ] **NRF01 — Reconcile the 2 GiB control and current callers.** Prior selection and 128 MiB dispositions are complete and preserved. Pin fresh source/addon/Node/toolchain, coherent workspace closure, actual supported opening/families and equal-profile inputs. Complete sustained play, held completion/cancel/repeat, lifetime/save/shutdown/recovery repairs and missing witnesses through NSC before interpreting candidate costs. Consume existing attribution and resolve each candidate's named gap rather than duplicating profiling. **Exit:** reproducible current controls, scoped evidence reuse and justified J/S/P/R batches, with targets frozen under the revised NRF-L05 policy. Unmet evidence remains open.
