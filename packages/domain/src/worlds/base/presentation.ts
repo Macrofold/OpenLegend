@@ -6,27 +6,36 @@ import { prepareManufactureChoices } from '../../manufacture.js';
 import type { AssemblyFamily } from '../../assembly-types.js';
 import type { ItemArt } from '../../presentation-art.js';
 
+const targetActionLabels = {
+  gather: { label: 'Gathering', lowercase: true },
+  harvest: { label: 'Harvesting', lowercase: true },
+  strike: { label: 'Striking', lowercase: false },
+  hunt: { label: 'Hunting', lowercase: true },
+};
+
 /** The bundled world's observed forms choose their public presentation kind. */
+const observedBodyKinds = {
+  animal: 'animal',
+  npc: 'actor',
+  player: 'actor',
+  remains: 'remains',
+  'item-pile': 'item-pile',
+  resource: 'resource',
+  'practice-target': 'practice-target',
+} as const;
+const observedBodyFallback = 'station';
 export function baseObservedBodyKind(kind: string) {
-  return kind === 'animal'
-    ? 'animal'
-    : kind === 'npc' || kind === 'player'
-      ? 'actor'
-      : kind === 'remains'
-        ? 'remains'
-        : kind === 'item-pile'
-          ? 'item-pile'
-          : kind === 'resource'
-            ? 'resource'
-            : kind === 'practice-target'
-              ? 'practice-target'
-              : 'station';
+  return Object.hasOwn(observedBodyKinds, kind)
+    ? observedBodyKinds[kind as keyof typeof observedBodyKinds]
+    : observedBodyFallback;
 }
 
 /** The player's ordinary publication uses this world's words and action
  * families. Source and native captures feed the same finite formatter. */
 export const BASE_PLAYER_VIEW_RULES = {
   defaultAppearance: 'sprite',
+  observedBodyKinds,
+  observedBodyFallback,
   working: 'Working',
   activeState: 'Active state',
   preparingRoute: 'Preparing route',
@@ -39,6 +48,7 @@ export const BASE_PLAYER_VIEW_RULES = {
   attackNormally: 'Attack normally',
   cancelLabel: 'Cancel',
   selectedTool: 'Selected tool',
+  targetActionLabels,
   journalMovement: {
     eventType: 'action-started',
     actionType: 'move',
@@ -78,21 +88,25 @@ export interface BasePlayerWorkContext {
 }
 export function basePlayerWorkLabels(input: BasePlayerWorkContext): Record<string, string> {
   const target = input.targetName;
+  const labelTarget = (kind: keyof typeof targetActionLabels) => {
+    const { label, lowercase } = targetActionLabels[kind];
+    return target ? `${label} ${lowercase ? target.toLowerCase() : target}` : label;
+  };
   return {
     'treat-scar': input.scarLabel ?? BASE_PLAYER_VIEW_RULES.working,
     move: 'Walking',
     follow: 'Following',
     replenish: input.replenishmentLabel ?? BASE_PLAYER_VIEW_RULES.working,
     'status-effect': input.statusLabel ?? BASE_PLAYER_VIEW_RULES.activeState,
-    gather: `Gathering${target ? ` ${target.toLowerCase()}` : ''}`,
-    harvest: `Harvesting${target ? ` ${target.toLowerCase()}` : ''}`,
-    strike: `Striking${target ? ` ${target}` : ''}`,
+    gather: labelTarget('gather'),
+    harvest: labelTarget('harvest'),
+    strike: labelTarget('strike'),
     'practice-shot': 'Preparing one practice shot',
     coaching: input.waitingForFeedback
       ? 'Waiting for the other person to choose feedback'
       : 'Guided feedback',
     evade: input.evasionLabel ?? 'Moving',
-    hunt: `Hunting${target ? ` ${target.toLowerCase()}` : ''}`,
+    hunt: labelTarget('hunt'),
     aim: `${input.toolName !== undefined ? `${input.toolName}: ` : ''}${input.rangedReady ? BASE_RANGED_TEXT.readyLabel : BASE_RANGED_TEXT.aimingLabel}${target ? ` (${target})` : ''}`,
     'shoot-once': `${BASE_RANGED_TEXT.shootingLabel}${target ? ` (${target})` : ''}`,
     cook: 'Cooking',

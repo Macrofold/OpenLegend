@@ -3,6 +3,8 @@ import type { EntityView } from '@open-legend/protocol';
 import type { Named } from '@open-legend/language';
 import { permittedSourceHandle, type PersonalReferenceScope } from './entity-references.js';
 
+export const talkUnavailableReason = 'Your character cannot speak now.';
+
 export function projectObservedAppearance(
   kind: EntityView['kind'],
   detail: ObservedBodyDetails,
@@ -61,7 +63,7 @@ export function projectObservedCommunication(input: {
   return {
     canTalk: input.bodyAlive && input.playerCanSpeak,
     talkRequiresAi: input.talkRequiresAi,
-    ...(!input.playerCanSpeak ? { talkUnavailableReason: 'Your character cannot speak now.' } : {}),
+    ...(!input.playerCanSpeak ? { talkUnavailableReason } : {}),
     ...(input.communicationReference
       ? { communicationReference: input.communicationReference }
       : {}),

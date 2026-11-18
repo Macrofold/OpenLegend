@@ -8,6 +8,7 @@ use super::{
 };
 use crate::{
     execution::ExecutionError,
+    host::retained_size::HeapBytes,
     reception::{AttributeView, CapturedCurrentFacet, ObserverSubject, SensoryFacet},
     state::{ActorAgency, BodyProfile, CharacterTrait, LivingBody, Named, Participation, Point},
     text::{JsText, TextRef},
@@ -123,7 +124,139 @@ pub struct PlayerCommunicationSubject<'a> {
     pub description: Option<&'a Named>,
 }
 
+pub struct PlayerDeathFacts<'a> {
+    pub at: f64,
+    pub corpse_id: &'a str,
+    retained: &'a [crate::body::DeathPossessions],
+    left: &'a [crate::body::DeathPossessions],
+}
+
+impl<'a> PlayerDeathFacts<'a> {
+    pub fn retained(&self) -> impl ExactSizeIterator<Item = (&'a str, u64)> {
+        self.retained
+            .iter()
+            .map(|entry| (entry.name.as_str(), entry.quantity))
+    }
+    pub fn left(&self) -> impl ExactSizeIterator<Item = (&'a str, u64)> {
+        self.left
+            .iter()
+            .map(|entry| (entry.name.as_str(), entry.quantity))
+    }
+}
+
+pub struct PlayerAttemptFacts<'a> {
+    pub id: &'a str,
+    pub description: &'a JsText,
+    pub mode: &'static str,
+    pub status: &'a str,
+    pub reason: Option<&'a JsText>,
+    pub category: Option<&'a str>,
+    pub has_alternative: bool,
+}
+
 impl<'a> PlayerSelfFacts<'a> {
+    pub fn death(&self) -> Option<PlayerDeathFacts<'a>> {
+        self.pending_death.map(|death| PlayerDeathFacts {
+            at: death.at,
+            corpse_id: &death.corpse_id,
+            retained: &death.retained,
+            left: &death.left,
+        })
+    }
+    pub fn action_attempts(&self) -> impl ExactSizeIterator<Item = PlayerAttemptFacts<'a>> + '_ {
+        use crate::plans::PlanMode;
+        self.agency.attempts.iter().map(|attempt| {
+            let resolution = attempt.resolution.as_ref().map(|value| value.value());
+            PlayerAttemptFacts {
+                id: &attempt.id,
+                description: &attempt.description,
+                status: &attempt.status,
+                mode: match attempt.mode {
+                    PlanMode::Enqueue => "enqueue",
+                    PlanMode::Replace => "replace",
+                    PlanMode::Interrupt => "interrupt",
+                },
+                reason: resolution
+                    .and_then(|value| value.get("reason"))
+                    .and_then(crate::records::SqlCell::as_text),
+                category: resolution
+                    .and_then(|value| value.get("category"))
+                    .and_then(crate::records::SqlCell::as_str),
+                has_alternative: attempt.alternative.is_some(),
+            }
+        })
+    }
+
+    /// Bound the borrowed self backing that can be copied by one scoped
+    /// application scene. Installed labels and rendered activity are charged
+    /// by that scene's producer.
+    pub fn projection_bytes(&self) -> Option<usize> {
+        let names = self
+            .identity
+            .name
+            .heap_bytes()?
+            .checked_add(self.identity.appearance.map_or(0, JsText::storage_bytes))?;
+        let mut bytes = 4096_usize.checked_add(names)?;
+        for attribute in self.attributes {
+            bytes = bytes
+                .checked_add(attribute.heap_bytes()?)?
+                .checked_add(2 * std::mem::size_of::<AttributeView>())?;
+        }
+        for status in self.status_effects {
+            bytes = bytes
+                .checked_add(status.heap_bytes()?)?
+                .checked_add(std::mem::size_of::<StatusEffectProjection>())?;
+        }
+        for item in self.identity.traits.into_iter().flatten() {
+            bytes = bytes
+                .checked_add(item.heap_bytes()?)?
+                .checked_add(std::mem::size_of::<CharacterTrait>())?;
+        }
+        for marker in self.map_markers() {
+            bytes = bytes
+                .checked_add(256)?
+                .checked_add(marker.marker.id.len())?
+                .checked_add(marker.marker.icon.len())?
+                .checked_add(marker.marker.label.storage_bytes())?
+                .checked_add(marker.note.map_or(0, JsText::storage_bytes))?;
+        }
+        for subject in self.communication_subjects() {
+            bytes = bytes
+                .checked_add(256)?
+                .checked_add(subject.id.len())?
+                .checked_add(subject.label.map_or(0, JsText::storage_bytes))?
+                .checked_add(subject.description.map_or(Some(0), HeapBytes::heap_bytes)?)?;
+        }
+        if let Some(death) = self.death() {
+            bytes = bytes.checked_add(death.corpse_id.len())?;
+            for (name, _) in death.retained().chain(death.left()) {
+                bytes = bytes.checked_add(name.len())?.checked_add(64)?;
+            }
+        }
+        bytes
+            .checked_add(self.agency.attempts.heap_bytes()?)?
+            .checked_add(self.scars.map_or(Some(0), HeapBytes::heap_bytes)?)?
+            .checked_add(self.body.map_or(Some(0), HeapBytes::heap_bytes)?)
+    }
+
+    pub fn has_work(&self) -> bool {
+        use crate::plans::PlanStatus;
+        self.action.is_some()
+            || self.agency.suspended_plan().is_some()
+            || self
+                .agency
+                .plan
+                .as_ref()
+                .is_some_and(|plan| matches!(plan.status, PlanStatus::Active | PlanStatus::Blocked))
+    }
+
+    pub fn has_activity_plan(&self) -> bool {
+        self.agency
+            .plan
+            .as_ref()
+            .is_some_and(|plan| plan.activity.is_some())
+    }
+
     pub fn communication_subjects(
         &self,
     ) -> impl ExactSizeIterator<Item = PlayerCommunicationSubject<'a>> + '_ {
@@ -251,6 +384,19 @@ pub struct PlayerObservedBody<'a> {
 }
 
 impl<'a> PlayerObservedBody<'a> {
+    /// Upper bound for the independently retained public body and selected
+    /// facet values. One accepted name may also appear in a trade summary;
+    /// opaque references and fixed wire carriers use their own small bound.
+    pub fn projection_bytes(&self) -> Option<usize> {
+        let header = 1024_usize
+            .checked_add(self.name.heap_bytes()?.checked_mul(2)?)?
+            .checked_add(self.known_name.map_or(0, JsText::storage_bytes))?
+            .checked_add(self.nickname.map_or(0, JsText::storage_bytes))?;
+        self.facets().try_fold(header, |bytes, facet| {
+            bytes.checked_add(facet.value.heap_bytes()?.checked_mul(2)?)
+        })
+    }
+
     pub fn facets(&self) -> impl ExactSizeIterator<Item = &'a CapturedCurrentFacet> + '_ {
         self.current.iter().map(Arc::as_ref)
     }

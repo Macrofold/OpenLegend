@@ -286,6 +286,8 @@ export type PlayerPracticeLoader = (
   ids: string[],
 ) => Promise<readonly { readonly entry: Pick<ActivityOccurrence, 'id' | 'view' | 'revoked'> }[]>;
 
+export const practiceEvidenceHeader = 'What happened';
+
 /** The ordinary practice reader hydrates only its actual missing occurrence
  * addresses. Its caller retains and rechecks scope/privacy across this await. */
 export async function hydratePlayerPractice(
@@ -303,7 +305,7 @@ export async function hydratePlayerPractice(
     evidence: p.evidence.map((e) => ({
       ...e,
       description: recorded.has(e.occurrenceId)
-        ? renderActivity(recorded.get(e.occurrenceId)!.view, 'What happened')
+        ? renderActivity(recorded.get(e.occurrenceId)!.view, practiceEvidenceHeader)
         : e.description,
     })),
   }));
