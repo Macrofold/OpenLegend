@@ -3015,42 +3015,43 @@ export class MemoryRepository {
 
   /** Select current canonical note identities before copying or formatting their text.
    * Current exact required notes remain available independently of vector coverage. */
-  async knowledgeCandidates(scope: MemoryScope, options: MemoryModel & { query?: number[] }) {
-    return this.snapshot(scope, async () => {
-      const base = `FROM mind_knowledge_documents d WHERE d.world_id=? AND d.actor_id=?
+  private async readKnowledgeCandidates(
+    scope: MemoryScope,
+    options: MemoryModel & { query?: number[] },
+  ) {
+    const base = `FROM mind_knowledge_documents d WHERE d.world_id=? AND d.actor_id=?
         AND d.slot<>'general' AND d.text_bytes>0 AND (SELECT generation FROM world_head WHERE id=1)=?`;
-      const rows = options.query
-        ? await this.db
-            .prepare(
-              `SELECT d.slot,d.document_revision
+    const rows = options.query
+      ? await this.db
+          .prepare(
+            `SELECT d.slot,d.document_revision
         FROM mind_knowledge_documents d LEFT JOIN recall_vectors v
           ON v.scope=? AND v.model=? AND v.dimensions=? AND v.source_id='notepad:'||d.slot
           AND (CASE WHEN d.subject_kind IN ('place','map-marker') THEN v.revision::jsonb->>1 ELSE v.revision::jsonb->>0 END)=d.document_revision::text
         WHERE d.world_id=? AND d.actor_id=? AND d.slot<>'general' AND d.text_bytes>0
           AND (SELECT generation FROM world_head WHERE id=1)=?
         ORDER BY v.embedding OPERATOR(public.<=>) ?::public.vector NULLS LAST,d.slot LIMIT ${CONTEXT_CANDIDATE_LIMIT + 1}`,
-            )
-            .all(
-              personalVectorScope(scope.worldId, scope.actorId),
-              options.model,
-              options.dimensions,
-              scope.worldId,
-              scope.actorId,
-              scope.generation,
-              JSON.stringify(options.query),
-            )
-        : await this.db
-            .prepare(
-              `SELECT d.slot,d.document_revision ${base} ORDER BY d.slot LIMIT ${CONTEXT_CANDIDATE_LIMIT + 1}`,
-            )
-            .all(scope.worldId, scope.actorId, scope.generation);
-      return {
-        entries: rows
-          .slice(0, CONTEXT_CANDIDATE_LIMIT)
-          .map((row) => ({ id: String(row['slot']), revision: Number(row['document_revision']) })),
-        partial: rows.length > CONTEXT_CANDIDATE_LIMIT,
-      };
-    });
+          )
+          .all(
+            personalVectorScope(scope.worldId, scope.actorId),
+            options.model,
+            options.dimensions,
+            scope.worldId,
+            scope.actorId,
+            scope.generation,
+            JSON.stringify(options.query),
+          )
+      : await this.db
+          .prepare(
+            `SELECT d.slot,d.document_revision ${base} ORDER BY d.slot LIMIT ${CONTEXT_CANDIDATE_LIMIT + 1}`,
+          )
+          .all(scope.worldId, scope.actorId, scope.generation);
+    return {
+      entries: rows
+        .slice(0, CONTEXT_CANDIDATE_LIMIT)
+        .map((row) => ({ id: String(row['slot']), revision: Number(row['document_revision']) })),
+      partial: rows.length > CONTEXT_CANDIDATE_LIMIT,
+    };
   }
 
   /** One current retained observation per place. Filter a bounded metadata window before
@@ -4782,6 +4783,38 @@ export class MemoryRepository {
     cache?: MemoryReadCache,
   ): Promise<RetrievedMemory[]> {
     return this.snapshot(scope, () => this.readRequired(scope, ids, cache));
+  }
+
+  /** Read the bounded evidence and note identities for one recall from one
+   * actor snapshot. The caller owns its existing body cache and releases it
+   * after formatting. Embedding and current-disclosure checks stay outside. */
+  async recallCandidates(
+    scope: MemoryScope,
+    options: {
+      requiredIds: string[];
+      limit: number;
+      semantic?: MemoryModel & { query: number[] };
+      excludedIds?: string[];
+      notes: MemoryModel & { query?: number[] };
+      cache?: MemoryReadCache;
+      signal: AbortSignal;
+    },
+  ) {
+    return this.snapshot(scope, async () => {
+      options.signal.throwIfAborted();
+      const required = await this.readRequired(scope, options.requiredIds, options.cache);
+      options.signal.throwIfAborted();
+      const optional = await this.readSelection(
+        scope,
+        options.limit,
+        options.semantic,
+        options.excludedIds,
+        options.cache,
+      );
+      options.signal.throwIfAborted();
+      const notePage = await this.readKnowledgeCandidates(scope, options.notes);
+      return { required, optional, notePage };
+    });
   }
   private async readRequired(
     scope: MemoryScope,

@@ -95,8 +95,8 @@ export type NativeRecallRuntime = Omit<
 };
 
 /** The ordinary indexed retrieval and attention algorithms run on admitted
- * native facts. Each repository operation acquires its own actual SQL/pending
- * cut; no database transaction or native publication gate spans a model wait. */
+ * native facts. Coverage and candidate selection acquire their own SQL/pending
+ * cuts; no database transaction or native publication gate spans a model wait. */
 export async function retrieveNativeRecall(input: {
   service: NativeWorldService;
   original: NativeNpcCapture;
@@ -132,9 +132,7 @@ export async function retrieveNativeRecall(input: {
       },
       repository: {
         coverage: (...args) => sql(() => repository.coverage(...args)),
-        required: (...args) => sql(() => repository.required(...args)),
-        select: (...args) => sql(() => repository.select(...args)),
-        knowledgeCandidates: (...args) => sql(() => repository.knowledgeCandidates(...args)),
+        recallCandidates: (...args) => sql(() => repository.recallCandidates(...args)),
       },
       worldId: scope.worldId,
       actorId,

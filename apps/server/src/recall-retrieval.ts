@@ -7,7 +7,7 @@ import { personalVectorScope } from './vector-store.js';
 import { digest } from './content-digest.js';
 
 type SelectedSources = Awaited<ReturnType<MemoryRepository['required']>>;
-type NoteRows = Awaited<ReturnType<MemoryRepository['knowledgeCandidates']>>['entries'];
+type NoteRows = Awaited<ReturnType<MemoryRepository['recallCandidates']>>['notePage']['entries'];
 export interface RecallRetrievalRuntime extends RecallSelectionRuntime {
   readonly store: RecallSelectionRuntime['store'] & Pick<GameRepository, 'records'>;
 }
@@ -15,7 +15,7 @@ export interface RecallRetrievalRuntime extends RecallSelectionRuntime {
  * consumer supplies source formatting and current-note permission, not a world. */
 export async function retrieveRecall(input: {
   runtime: RecallRetrievalRuntime;
-  repository: Pick<MemoryRepository, 'coverage' | 'required' | 'select' | 'knowledgeCandidates'>;
+  repository: Pick<MemoryRepository, 'coverage' | 'recallCandidates'>;
   scope: MemoryScope;
   worldId: string;
   actorId: string;
@@ -121,20 +121,17 @@ export async function retrieveRecall(input: {
       }
     } else status = 'structured fallback: spending cap';
   }
-  const required = await repository.required(
-    scope,
-    [...requiredIds, ...automaticIds, ...conversationIds],
-    bodies,
-  );
-  const optional = await repository.select(
-    scope,
-    300,
-    vector
-      ? { query: vector, model: config.embeddingModel, dimensions: config.embeddingDimensions }
-      : undefined,
-    conversationSourceIds,
-    bodies,
-  );
+  const model = { model: config.embeddingModel, dimensions: config.embeddingDimensions };
+  signal.throwIfAborted();
+  const { required, optional, notePage } = await repository.recallCandidates(scope, {
+    requiredIds: [...requiredIds, ...automaticIds, ...conversationIds],
+    limit: 300,
+    semantic: vector ? { ...model, query: vector } : undefined,
+    excludedIds: conversationSourceIds,
+    notes: vector && runtime.store.vectors ? { ...model, query: vector } : model,
+    cache: bodies,
+    signal,
+  });
   signal.throwIfAborted();
   if ((await runtime.store.records?.head())?.generation !== scope.generation)
     throw new Error('World restored during memory retrieval.');
@@ -143,11 +140,6 @@ export async function retrieveRecall(input: {
       [...optional, ...required].map((source) => [experienceEntryKey(source.entry), source]),
     ).values(),
   ];
-  const notePage = await repository.knowledgeCandidates(scope, {
-    model: config.embeddingModel,
-    dimensions: config.embeddingDimensions,
-    ...(vector && runtime.store.vectors ? { query: vector } : {}),
-  });
   signal.throwIfAborted();
   if (!(await current())) throw new Error('Recall authority changed during note selection.');
   const noteIds = await currentNoteIds(notePage.entries);
