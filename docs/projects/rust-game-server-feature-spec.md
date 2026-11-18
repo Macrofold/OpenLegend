@@ -1,8 +1,8 @@
 # Rust game server
 
-| Status      | Current progress                                                                                           | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The host, current database opening and spatial port are under integration. TypeScript remains the default. | 2026-11-18   |
+| Status      | Current progress                                                                                                    | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The selected browser, gameplay and recovery journeys run without Node. Managed adoption qualification remains open. | 2026-11-18   |
 
 ## Goal
 
