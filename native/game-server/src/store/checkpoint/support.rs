@@ -7,7 +7,10 @@ use crate::store::read::admitted_query;
 use crate::store::{DurableHead, Store, StoreError, StoreResult};
 use openlegend_simulation::encoding::json_record_len;
 use openlegend_simulation::geometry::GeometryBinding;
-use openlegend_simulation::runtime::{RuntimeProvider, RuntimeProviderInput};
+use openlegend_simulation::host::ByteReservation;
+use openlegend_simulation::runtime::{
+    RuntimeProvider, RuntimeProviderInput, RuntimeRestoreMembership,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
 use std::collections::BTreeSet;
@@ -31,6 +34,25 @@ struct Answer {
     retained: Vec<usize>,
 }
 
+pub(crate) struct RetainedAccountMembership {
+    pub aliases: Vec<usize>,
+    pub individuals: Vec<usize>,
+    pub max_pages: usize,
+    pub max_bytes: usize,
+    _storage: ByteReservation,
+}
+
+#[derive(Deserialize)]
+struct RestoreLimits {
+    support: MembershipLimits,
+}
+
+#[derive(Deserialize)]
+struct MembershipLimits {
+    rows: usize,
+    bytes: usize,
+}
+
 impl Store {
     /// Read the candidate's actual staged account metadata, with no redundant
     /// recent-page or derived-index preparation for this alias-only question.
@@ -51,19 +73,9 @@ impl Store {
         {
             return Err(StoreError::StaleCut);
         }
-        #[derive(Deserialize)]
-        struct Limits {
-            support: SupportLimits,
-        }
-        #[derive(Deserialize)]
-        struct SupportLimits {
-            rows: usize,
-            bytes: usize,
-        }
-        let limits: Limits = serde_json::from_str(self.restore_retention_preparation().get())
-            .map_err(|_| StoreError::Schema)?;
+        let limits = self.restore_membership_limits()?;
         let bytes = json_record_len(&request.aliases).map_err(|_| StoreError::InvalidRecord)?;
-        if request.aliases.len() > limits.support.rows || bytes > limits.support.bytes {
+        if request.aliases.len() > limits.rows || bytes > limits.bytes {
             return Err(StoreError::Capacity);
         }
         let workspace = request
@@ -108,5 +120,100 @@ impl Store {
             },
         )
         .await
+    }
+
+    /// Return only exact canonical-account matches. The already installed
+    /// candidate independently adds recent, frontier-qualified receipt matches.
+    pub(crate) async fn checkpoint_retention_membership(
+        &self,
+        tx: &Transaction<'_>,
+        prospective: &DurableHead,
+        request: &RuntimeRestoreMembership,
+    ) -> StoreResult<RetainedAccountMembership> {
+        let (world, generation, actor, cut) = request.scope();
+        if world != prospective.world_id || generation != prospective.generation || cut != 0 {
+            return Err(StoreError::StaleCut);
+        }
+        let (aliases, individuals) = request.requested();
+        let limits = self.restore_membership_limits()?;
+        let items = aliases
+            .len()
+            .checked_add(individuals.len())
+            .ok_or(StoreError::Capacity)?;
+        let bytes = [aliases, individuals]
+            .into_iter()
+            .try_fold(0usize, |used, list| {
+                used.checked_add(json_record_len(list).ok()?)
+            })
+            .ok_or(StoreError::Capacity)?;
+        if items > limits.rows || bytes > limits.bytes {
+            return Err(StoreError::Capacity);
+        }
+        let workspace = bytes
+            .checked_mul(4)
+            .and_then(|n| n.checked_add(items.checked_mul(192)?))
+            .ok_or(StoreError::Capacity)?;
+        let mut custody = self
+            .budget
+            .reserve(workspace)
+            .map_err(|_| StoreError::Capacity)?;
+        let (aliases, individuals) = self
+            .with_checkpoint_projection(tx, prospective, request.projection(), false, async {
+                let (_transfer, rows) = admitted_query(
+                    tx,
+                    &self.schema.checkpoint.retention_membership,
+                    &[&world, &actor, &aliases, &individuals],
+                    &self.budget,
+                )
+                .await?;
+                let mut matched_aliases = BTreeSet::new();
+                let mut matched_individuals = BTreeSet::new();
+                for row in &rows {
+                    let member: &str = row.try_get(1)?;
+                    match row.try_get(0)? {
+                        "alias" => {
+                            matched_aliases.insert(member);
+                        }
+                        "individual" => {
+                            matched_individuals.insert(member);
+                        }
+                        _ => return Err(StoreError::InvalidRecord),
+                    }
+                }
+                let select = |asked: &[String], matched: BTreeSet<&str>| {
+                    asked
+                        .iter()
+                        .enumerate()
+                        .filter_map(|(index, member)| {
+                            matched.contains(member.as_str()).then_some(index)
+                        })
+                        .collect::<Vec<_>>()
+                };
+                Ok((
+                    select(aliases, matched_aliases),
+                    select(individuals, matched_individuals),
+                ))
+            })
+            .await?;
+        let retained = [aliases.capacity(), individuals.capacity()]
+            .into_iter()
+            .try_fold(size_of::<RetainedAccountMembership>(), |n, size| {
+                n.checked_add(size.checked_mul(size_of::<usize>())?)
+            })
+            .ok_or(StoreError::Capacity)?;
+        custody.resize(retained).map_err(|_| StoreError::Capacity)?;
+        Ok(RetainedAccountMembership {
+            aliases,
+            individuals,
+            max_pages: limits.rows,
+            max_bytes: limits.bytes,
+            _storage: custody,
+        })
+    }
+
+    fn restore_membership_limits(&self) -> StoreResult<MembershipLimits> {
+        serde_json::from_str::<RestoreLimits>(self.restore_retention_preparation().get())
+            .map(|limits| limits.support)
+            .map_err(|_| StoreError::Schema)
     }
 }

@@ -25,7 +25,10 @@ import { HISTORY_TABLES } from '../apps/server/src/history.js';
 import { ACCOUNT_RETENTION_PREPARATION } from '../apps/server/src/account-retention.js';
 import { SUPPORT_MEMBERSHIP_PREPARATION } from '../apps/server/src/retention-cleanup.js';
 import { SOURCE_RETENTION_CLOSURE_ROUNDS } from '../apps/server/src/source-version-retention.js';
-import { restoreSupportMembershipSql } from '../apps/server/src/retention-metadata.js';
+import {
+  restoreRetentionMembershipSql,
+  restoreSupportMembershipSql,
+} from '../apps/server/src/retention-metadata.js';
 import {
   restoreArchiveSelectionRows,
   restoreArchiveSelectionSql,
@@ -126,6 +129,7 @@ async function storageSchema(adminUrl: string) {
             archiveSelection: restoreArchiveSelectionSql('$1::text', '$2'),
             archiveRows: restoreArchiveSelectionRows,
             supportMembership: restoreSupportMembershipSql('$1', '$2', '$3'),
+            retentionMembership: restoreRetentionMembershipSql('$1', '$2', '$3', '$4'),
             historyEdit: {
               dependencies: correctionDependencySql('$1::text', '$2', '$3'),
               aliasPages: correctionAliasPagesSql('$1', '$2', '$3', '$4', '$5::text'),

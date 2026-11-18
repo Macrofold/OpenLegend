@@ -315,6 +315,30 @@ impl Session {
         CurrentInstallation::capture(&self.accepted()?.state)
     }
 
+    /// Lend only the current inactive restore candidate to its actual pending
+    /// provider. It cannot become a public accepted read before SQL adoption.
+    pub(crate) fn restore_provider_state(
+        &self,
+        key: CandidateKey,
+        provider: &Arc<ProviderQuestion>,
+    ) -> Result<&SimulationState, SessionError> {
+        self.simulation
+            .fence
+            .validate_phase(key, CandidatePhase::Preparing)?;
+        let Some(Candidate::Preparing(candidate)) = &self.candidate else {
+            return Err(FenceError::Stale.into());
+        };
+        if candidate.key != key
+            || candidate
+                .driver
+                .pending()
+                .is_none_or(|pending| !Arc::ptr_eq(provider, pending))
+        {
+            return Err(FenceError::Stale.into());
+        }
+        Ok(&self.simulation.state)
+    }
+
     pub(crate) fn ordinary_recall_rows(
         &self,
         through: u64,

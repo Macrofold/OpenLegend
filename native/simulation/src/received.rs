@@ -36,6 +36,8 @@ pub(crate) use selection::{
 mod knowledge_retention;
 mod recent;
 mod recent_residency;
+mod restore_membership;
+pub(crate) use restore_membership::{RestoreRecentSelection, restore_recent_membership};
 mod support_retention;
 pub(crate) use knowledge_retention::{CompletedKnowledgeRetention, KnowledgeRetentionCursor};
 pub(crate) use recent::{CompletedRecentRetention, RecentRetentionCursor};

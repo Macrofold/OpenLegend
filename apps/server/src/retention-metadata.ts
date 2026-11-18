@@ -94,13 +94,32 @@ function accountMembershipQueries(world: string) {
 /** A stopped native restore already owns its complete prospective rows. Use
  * the same account membership predicates and exclude all recent-page work. */
 export function restoreSupportMembershipSql(world: string, actor: string, aliases: string) {
+  return `${restoreMembershipQuery(world, actor, aliases, 'ARRAY[]')} SELECT DISTINCT unnest(aliases) FROM proofs`;
+}
+
+export function restoreRetentionMembershipSql(
+  world: string,
+  actor: string,
+  aliases: string,
+  individuals: string,
+) {
+  return `${restoreMembershipQuery(world, actor, aliases, individuals)}
+    SELECT 'alias' AS kind,unnest(aliases) AS member FROM proofs
+    UNION SELECT 'individual',unnest(individuals) FROM proofs`;
+}
+
+function restoreMembershipQuery(
+  world: string,
+  actor: string,
+  aliases: string,
+  individuals: string,
+) {
   return `WITH requested AS MATERIALIZED (
     SELECT 0 AS key,${actor}::text AS actor_id,${aliases}::text[] AS aliases,
-      ARRAY[]::text[] AS individuals,true AS awareness,true AS memories,true AS summaries,
+      ${individuals}::text[] AS individuals,true AS awareness,true AS memories,true AS summaries,
       ARRAY[]::text[] AS excluded_awareness,ARRAY[]::text[] AS excluded_memories,
       ARRAY[]::text[] AS excluded_summaries
-  ), proofs AS (${accountMembershipQueries(world).join(' UNION ALL ')})
-  SELECT DISTINCT unnest(aliases) FROM proofs`;
+  ), proofs AS (${accountMembershipQueries(world).join(' UNION ALL ')})`;
 }
 
 const indexedTables = [...accountTables, 'mind_temporal_pages', 'mind_temporal_supports'] as const;

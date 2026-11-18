@@ -54,6 +54,7 @@ pub(crate) struct CheckpointFormat {
     pub(super) archive_selection: String,
     pub(super) archive_rows: usize,
     pub(super) support_membership: String,
+    pub(super) retention_membership: String,
 }
 
 #[derive(Deserialize)]
@@ -76,6 +77,7 @@ impl CheckpointFormat {
             .checked_add(self.retention_preparation.get().len())?
             .checked_add(self.archive_selection.capacity())?
             .checked_add(self.support_membership.capacity())?
+            .checked_add(self.retention_membership.capacity())?
             .checked_add(self.history_edit.dependencies.capacity())?
             .checked_add(self.history_edit.alias_pages.capacity())?
             .checked_add(self.history_edit.addressed_pages.capacity())?;
@@ -104,6 +106,7 @@ impl CheckpointFormat {
             || self.archive_selection.is_empty()
             || self.archive_rows == 0
             || self.support_membership.is_empty()
+            || self.retention_membership.is_empty()
             || self.history_edit.dependencies.is_empty()
             || self.history_edit.alias_pages.is_empty()
             || self.history_edit.addressed_pages.is_empty()

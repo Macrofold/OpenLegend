@@ -1,7 +1,226 @@
 //! Restoration alone can reconcile an inactive installation. Until a genuine
 //! whole-install receipt is adopted, it cannot admit gameplay or private reads.
 use super::*;
+
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct RestoreMembershipBinding {
+    world_id: String,
+    generation: String,
+    actor_id: String,
+    accepted_cut: u64,
+    identity_through: u64,
+    candidate_id: u64,
+    candidate_generation: u64,
+    request_serial: u64,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RestoreMembershipData {
+    actor_id: String,
+    at: f64,
+    max_age_seconds: f64,
+    aliases: Vec<String>,
+    individual_ids: Vec<String>,
+    recent_bytes: u64,
+    recent_count: u64,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct RestoreMembershipInput {
+    binding: RestoreMembershipBinding,
+    phase: String,
+    data: RestoreMembershipData,
+    maximum_transfer_bytes: usize,
+    restore_projection: Box<serde_json::value::RawValue>,
+}
+
+/// A detached private request stays bound to the original pending ticket
+/// across the SQL membership await. Ending that ticket invalidates this read.
+pub struct RuntimeRestoreMembership {
+    provider: Weak<ProviderQuestion>,
+    input: RestoreMembershipInput,
+    _custody: ByteReservation,
+}
+
+impl RuntimeRestoreMembership {
+    pub fn scope(&self) -> (&str, &str, &str, u64) {
+        let binding = &self.input.binding;
+        (
+            &binding.world_id,
+            &binding.generation,
+            &binding.actor_id,
+            binding.accepted_cut,
+        )
+    }
+    pub fn requested(&self) -> (&[String], &[String]) {
+        (&self.input.data.aliases, &self.input.data.individual_ids)
+    }
+    pub fn projection(&self) -> &serde_json::value::RawValue {
+        &self.input.restore_projection
+    }
+}
+
+impl RuntimeProvider {
+    /// Admit only the finite inactive recent-membership request. A copied
+    /// request does not grant access to the current gameplay installation.
+    pub fn prepare_restore_membership(
+        &self,
+        budget: &ByteBudget,
+    ) -> Result<RuntimeRestoreMembership, RuntimeError> {
+        let provider = self.question()?;
+        if provider.kind() != crate::simulation::ProviderKind::RestoreRetention {
+            return Err(failure(
+                "restore membership requires its actual pending question",
+            ));
+        }
+        #[derive(Deserialize)]
+        struct Envelope {
+            value: RestoreMembershipInput,
+        }
+        let payload = provider
+            .json()
+            .ok_or_else(|| failure("missing restore membership request"))?;
+        let custody = decode_preparation(payload.as_bytes(), budget)?;
+        let Envelope { value: input } = serde_json::from_str(payload).map_err(failure)?;
+        if input.phase != "membership" || input.binding.actor_id != input.data.actor_id {
+            return Err(failure("invalid bound restore membership request"));
+        }
+        Ok(RuntimeRestoreMembership {
+            provider: Arc::downgrade(&provider),
+            input,
+            _custody: custody,
+        })
+    }
+}
+
 impl NativeWorldSession {
+    /// Join canonical-account membership from the prospective SQL cut with
+    /// exact recent membership from this full inactive candidate only.
+    pub fn complete_restore_membership(
+        &self,
+        request: &RuntimeRestoreMembership,
+        account_aliases: &[usize],
+        account_individuals: &[usize],
+        max_pages: usize,
+        max_bytes: usize,
+    ) -> Result<RuntimeProviderInput, RuntimeError> {
+        let key = self
+            .restoring
+            .filter(|_| !self.active)
+            .ok_or_else(|| failure("recent membership requires an inactive restore"))?;
+        let provider = request
+            .provider
+            .upgrade()
+            .ok_or_else(|| failure("stale restore membership provider"))?;
+        let state = self
+            .session
+            .restore_provider_state(key, &provider)
+            .map_err(failure)?;
+        let input = &request.input;
+        if state.physical.header.id != input.binding.world_id
+            || state.generation != input.binding.generation
+            || state.accepted_cut != input.binding.accepted_cut
+            || state.physical.identity.next_id() != input.binding.identity_through
+            || state.physical.header.sim_time != input.data.at
+        {
+            return Err(failure("restore membership lost its exact candidate"));
+        }
+        let actor = state
+            .temporal
+            .actor(&input.binding.actor_id)
+            .ok_or_else(|| failure("missing restore membership actor"))?;
+        if actor.recent().bytes() != input.data.recent_bytes
+            || actor.recent().count() != input.data.recent_count
+        {
+            return Err(failure(
+                "restore membership lost its exact receiving directory",
+            ));
+        }
+        let (aliases, individuals) = request.requested();
+        let items = aliases
+            .len()
+            .checked_add(individuals.len())
+            .ok_or_else(|| failure("capacity"))?;
+        let _answers = self
+            .budget
+            .reserve(items.checked_mul(32).ok_or_else(|| failure("capacity"))?)
+            .map_err(failure)?;
+        let mut alias_matches = vec![false; aliases.len()];
+        let mut individual_matches = vec![false; individuals.len()];
+        for (found, selected) in [
+            (account_aliases, &mut alias_matches),
+            (account_individuals, &mut individual_matches),
+        ] {
+            for index in found {
+                let included = selected
+                    .get_mut(*index)
+                    .ok_or_else(|| failure("invalid retained account membership index"))?;
+                if std::mem::replace(included, true) {
+                    return Err(failure("repeated retained account membership index"));
+                }
+            }
+        }
+        crate::received::restore_recent_membership(
+            crate::received::RestoreRecentSelection {
+                actor,
+                at: input.data.at,
+                max_age: input.data.max_age_seconds,
+                aliases,
+                individuals,
+                max_pages,
+                max_bytes,
+            },
+            &mut alias_matches,
+            &mut individual_matches,
+            &state.reception.received_values.as_ref(),
+            &state.installed.account_law(),
+            &self.budget,
+        )
+        .map_err(failure)?;
+        #[derive(Serialize)]
+        struct Data {
+            aliases: Vec<usize>,
+            individuals: Vec<usize>,
+        }
+        #[derive(Serialize)]
+        struct Answer<'a> {
+            binding: &'a RestoreMembershipBinding,
+            phase: &'static str,
+            data: Data,
+        }
+        let selected = |included: Vec<bool>| {
+            included
+                .into_iter()
+                .enumerate()
+                .filter_map(|(index, included)| included.then_some(index))
+                .collect()
+        };
+        let answer = Answer {
+            binding: &input.binding,
+            phase: "membership",
+            data: Data {
+                aliases: selected(alias_matches),
+                individuals: selected(individual_matches),
+            },
+        };
+        let bytes = crate::encoding::json_record_len(&answer).map_err(failure)?;
+        if bytes > input.maximum_transfer_bytes {
+            return Err(failure(
+                "restore membership answer exceeds the actual request allowance",
+            ));
+        }
+        let mut custody = self
+            .budget
+            .reserve(bytes.checked_mul(4).ok_or_else(|| failure("capacity"))?)
+            .map_err(failure)?;
+        let encoded = crate::encoding::json_record(&answer).map_err(failure)?;
+        custody.resize(encoded.capacity()).map_err(failure)?;
+        Ok(RuntimeProviderInput::new(encoded, custody))
+    }
+
     pub fn begin_restore(&mut self, bytes: &[u8]) -> Result<CandidateKey, RuntimeError> {
         if self.active || !self.restore_installation || self.restoring.is_some() {
             return Err(failure("restore requires an unused inactive installation"));

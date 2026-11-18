@@ -58,6 +58,7 @@ pub use crate::capture::{
 pub use navigation::RuntimeNavigationRead;
 pub use read_cut::{RuntimeKnownPlaceRead, RuntimeNpcSourceRead, RuntimeSourceVersionRead};
 mod restore;
+pub use restore::RuntimeRestoreMembership;
 mod retained_values;
 pub use crate::simulation::session::PreparedReadProgress as RuntimeProgress;
 pub use handoff::RuntimeOutputHandoff;
