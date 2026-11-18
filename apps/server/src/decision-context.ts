@@ -1428,6 +1428,7 @@ export async function prepareDecision(
     );
     const result = {
       temporalSourcesCurrent: sourceFence?.current ?? currentWithoutDatabase,
+      temporalSourceFailure: sourceFence?.failure,
       dispose: sourceFence?.release ?? releaseWithoutDatabase,
       situation: capturedSituation,
       readSituationHistory: readCapturedSituationHistory.bind(

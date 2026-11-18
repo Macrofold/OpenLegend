@@ -10,7 +10,7 @@ import {
 } from './thought-trigger.js';
 import { sourceDecisionHost } from './source-decision-host.js';
 import { dispatchDecision, StopJob, type DispatchRun } from './decision-dispatch.js';
-import type { DecisionStopEvidence } from './decision-failure.js';
+import type { DecisionDependencyFailure, DecisionStopEvidence } from './decision-failure.js';
 import { sourceMacrofoldHost } from './source-macrofold-host.js';
 import { resultEvidenceId, selectedResponseExpressions } from '@open-legend/domain';
 import { nativeText } from '@open-legend/domain';
@@ -234,9 +234,12 @@ interface Running extends DispatchRun {
   decisionPreparation?: RetainedDecisionPreparation;
   validityFor?: (world: WorldState) => string;
   temporalSourcesCurrent?: () => boolean;
+  temporalSourceFailure?: () => DecisionDependencyFailure | undefined;
   releasePreparedSources?: () => void;
   invalidated?: boolean;
-  sourceInterruption?: DecisionStopEvidence;
+  sourceInterruption?: StopJob;
+  /** Keep the earlier nonterminal cancellation notice ahead of final settlement. */
+  cancellationUpdate?: Promise<void>;
   /** The resolved level-1 outcome, kept with any later failure of its escalation. */
   level1?: Level1Outcome;
   actorInvention?: {
@@ -402,38 +405,81 @@ export class AiDirector {
     );
     this.unsubscribe = service.subscribe(() => {
       this.replyPreviews.recheck();
-      for (const active of this.activeRuns)
-        if (
-          !active.controller.signal.aborted &&
-          active.job.decision &&
-          (service.paused ||
-            service.generation !== active.generation ||
-            (entityGet(service.world.entities, active.job.decision.actorId)?.actor?.physicalLife ??
-              0) !== active.job.decision.physicalLife ||
-            (active.validity &&
-              active.validity !==
-                (active.validityFor?.(service.world) ??
-                  decisionValidity(service.world, active.job.decision.actorId))) ||
-            (active.job.authority && !service.currentScope(active.job.authority, 'play', true)))
-        ) {
+      for (const active of this.activeRuns) {
+        const decision = active.job.decision;
+        if (active.controller.signal.aborted || !decision) continue;
+        let failure: Omit<DecisionStopEvidence, 'stage'> | undefined;
+        if (service.paused) failure = { condition: 'game-paused', category: 'cancelled' };
+        else if (service.generation !== active.generation)
+          failure = {
+            condition: 'world-generation',
+            expected: active.generation,
+            current: service.generation,
+            category: 'invalidated',
+          };
+        else {
+          const life =
+            entityGet(service.world.entities, decision.actorId)?.actor?.physicalLife ?? 0;
+          if (life !== decision.physicalLife)
+            failure = {
+              condition: 'actor-physical-life',
+              expected: decision.physicalLife,
+              current: life,
+              category: 'invalidated',
+            };
+          else {
+            const validity =
+              active.validity &&
+              (active.validityFor?.(service.world) ??
+                decisionValidity(service.world, decision.actorId));
+            if (active.validity && active.validity !== validity)
+              failure = {
+                condition: 'prepared-decision-validity',
+                expected: active.validity,
+                current: validity,
+                category: 'invalidated',
+              };
+            else if (
+              active.job.authority &&
+              !service.currentScope(active.job.authority, 'play', true)
+            )
+              failure = { condition: 'request-authority', category: 'invalidated' };
+          }
+        }
+        if (failure) {
+          const cancelled = service.paused || failure.condition === 'world-generation';
+          this.recordInterruption(
+            active,
+            cancelled ? 'cancelled' : 'stale',
+            service.paused
+              ? 'This request was cancelled when the game paused.'
+              : 'The actor or world changed; the result was not applied.',
+            failure,
+          );
           active.invalidated = !service.paused;
           active.controller.abort();
         }
+      }
       for (const run of this.activeRuns) {
         if (run.controller.signal.aborted) continue;
-        if (run.temporalSourcesCurrent && !run.temporalSourcesCurrent()) {
+        const sourceFailure = this.selectedSourceFailure(run);
+        if (sourceFailure) {
           run.invalidated = true;
-          run.sourceInterruption ??= this.currentEvidence(
+          this.recordInterruption(
             run,
-            'selected-personal-source',
-            'invalidated',
+            'stale',
+            'The selected personal evidence changed or expired.',
+            { ...sourceFailure, category: 'invalidated' },
           );
           run.controller.abort();
           continue;
         }
         if (run?.job.authority && !service.currentScope(run.job.authority, 'play', true)) {
           run.cancelReason = 'Control or access changed.';
-          run.sourceInterruption ??= this.currentEvidence(run, 'player-authority', 'invalidated');
+          this.recordInterruption(run, 'stale', run.cancelReason, {
+            condition: 'player-authority',
+            category: 'invalidated',
+          });
           run.controller.abort();
           continue;
         }
@@ -444,11 +490,24 @@ export class AiDirector {
           );
           if (!permission.ok) {
             run.cancelReason = permission.message;
+            this.recordInterruption(run, 'stale', permission.message, {
+              condition: 'invention-permission',
+              category: 'invalidated',
+            });
             run.controller.abort();
             continue;
           }
         }
         if (service.paused && run?.job.kind === 'thought') {
+          this.recordInterruption(
+            run,
+            'cancelled',
+            'This request was cancelled when the game paused.',
+            {
+              condition: 'game-paused',
+              category: 'cancelled',
+            },
+          );
           run.controller.abort();
           continue;
         }
@@ -464,6 +523,10 @@ export class AiDirector {
           ) {
             run.cancelReason =
               'The selected character is unavailable; the pending reply was cancelled.';
+            this.recordInterruption(run, 'stale', run.cancelReason, {
+              condition: !entity?.actor?.alive ? 'actor-unavailable' : 'actor-controller',
+              category: 'invalidated',
+            });
             run.controller.abort();
             continue;
           }
@@ -477,6 +540,10 @@ export class AiDirector {
               !entity.actor.alive)
           ) {
             run.cancelReason = 'The pending reply became unavailable and was cancelled.';
+            this.recordInterruption(run, 'stale', run.cancelReason, {
+              condition: 'actor-response-unavailable',
+              category: 'invalidated',
+            });
             run.controller.abort();
             continue;
           }
@@ -968,12 +1035,19 @@ export class AiDirector {
     const run = [...this.activeRuns].find((active) => active.job.id === jobId);
     if (!run || (authority && run.job.authority?.accountId !== authority.accountId))
       return { ok: false, code: 'not-running', message: 'That request is no longer running.' };
-    if (!run.controller.signal.aborted) {
+    if (!run.controller.signal.aborted && !run.cancellationUpdate) {
       run.cancelReason = 'Request cancelled.';
-      run.sourceInterruption ??= this.currentEvidence(run, 'player-cancelled', 'cancelled');
-      this.replyPreviews.recheck();
-      await this.update(run, run.job.status, 'Cancelling request…');
-      run.controller.abort();
+      this.recordInterruption(run, 'cancelled', run.cancelReason, {
+        condition: 'player-cancelled',
+        category: 'cancelled',
+      });
+      try {
+        this.replyPreviews.recheck();
+        run.cancellationUpdate = this.update(run, run.job.status, 'Cancelling request…');
+        await run.cancellationUpdate;
+      } finally {
+        run.controller.abort();
+      }
     }
     return { ok: true, code: 'cancelling', message: 'Cancellation requested.', jobId };
   }
@@ -1574,6 +1648,7 @@ export class AiDirector {
     run.releasePreparedSources?.();
     run.releasePreparedSources = undefined;
     run.temporalSourcesCurrent = undefined;
+    run.temporalSourceFailure = undefined;
   }
   private holdPreparedSources(
     run: Running,
@@ -1582,6 +1657,13 @@ export class AiDirector {
     this.clearPreparedSources(run);
     run.releasePreparedSources = prepared.dispose;
     run.temporalSourcesCurrent = prepared.temporalSourcesCurrent;
+    run.temporalSourceFailure = prepared.temporalSourceFailure;
+  }
+  private selectedSourceFailure(run: Running): DecisionDependencyFailure | undefined {
+    if (run.temporalSourceFailure) return run.temporalSourceFailure();
+    if (run.temporalSourcesCurrent && !run.temporalSourcesCurrent())
+      return { condition: 'selected-personal-source' };
+    return undefined;
   }
   private currentEvidence(
     run: Running,
@@ -1597,7 +1679,23 @@ export class AiDirector {
     };
   }
 
+  /** Capture the first gameplay stop before aborting or awaiting persistence.
+   * This finite cause also fences untraced jobs; provider receipts stay separate. */
+  private recordInterruption(
+    run: Running,
+    status: 'cancelled' | 'stale',
+    message: string,
+    failure: Omit<DecisionStopEvidence, 'stage'>,
+  ): void {
+    run.sourceInterruption ??= new StopJob(status, message, undefined, {
+      stage: run.failureStage ?? 'preparation',
+      dependency: this.selectedActorId(run.job),
+      ...failure,
+    });
+  }
+
   private current(run: Running): string {
+    if (run.sourceInterruption) throw run.sourceInterruption;
     // A load abandons the request's timeline. Storage may revoke its source
     // watches before the replacement world is published; that notification is
     // not a separate in-world correction that should relabel the cancelled work.
@@ -1626,15 +1724,15 @@ export class AiDirector {
               ? 'This request was cancelled when the game paused.'
               : 'This request was cancelled before completion.'),
         undefined,
-        run.sourceInterruption,
       );
-    if (run.temporalSourcesCurrent && !run.temporalSourcesCurrent())
-      throw new StopJob(
-        'stale',
-        'The selected personal evidence changed or expired.',
-        undefined,
-        this.currentEvidence(run, 'selected-personal-source', 'invalidated'),
-      );
+    const sourceFailure = this.selectedSourceFailure(run);
+    if (sourceFailure) {
+      this.recordInterruption(run, 'stale', 'The selected personal evidence changed or expired.', {
+        ...sourceFailure,
+        category: 'invalidated',
+      });
+      throw run.sourceInterruption;
+    }
     const decision = run.job.decision;
     if (
       decision &&
@@ -1790,8 +1888,8 @@ export class AiDirector {
     };
     if (job.kind === 'chat') {
       run.playerSpeechEventId = job.playerSpeechEventId;
-      run.trackTerminalEvidence = true;
     }
+    if (job.kind !== 'invention') run.trackTerminalEvidence = true;
     if (run.playerSpeechEventId) job.playerSpeechEventId = run.playerSpeechEventId;
     this.immediateRuns.set(job.id, run);
     if (actorId) this.immediateActors.set(actorId, run);
@@ -1889,6 +1987,21 @@ export class AiDirector {
           const known = error instanceof StopJob;
           const cancelled = run.controller.signal.aborted;
           if (await this.escalateFailure(run, error)) return;
+          // current() rejects immediately at cancellation intent. A provider can
+          // therefore finish before the older notice is durable; preserve write
+          // order even when that notice failed and final settlement must proceed.
+          await run.cancellationUpdate?.catch(() => {});
+          // Gameplay can end on a known interruption while its dispatched
+          // provider attempt still has an uncertain financial completion.
+          const interruption = run.sourceInterruption;
+          const failure = (known ? error.evidence : undefined) ?? interruption?.evidence;
+          const status = interruption
+            ? interruption.status
+            : known
+              ? error.status
+              : cancelled
+                ? 'cancelled'
+                : 'failed';
           if (run.job.request.invention)
             run.job.invention = {
               ...run.job.invention,
@@ -1909,35 +2022,34 @@ export class AiDirector {
           });
           await this.update(
             run,
-            known ? error.status : cancelled ? 'cancelled' : 'failed',
-            known || error instanceof InventionFailure || error instanceof ContextBudgetError
-              ? error.message
-              : cancelled
-                ? (run.cancelReason ?? 'The request was cancelled before completion.')
-                : 'The workflow failed safely. No automatic paid retry was sent.',
+            status,
+            interruption
+              ? interruption.message
+              : known || error instanceof InventionFailure || error instanceof ContextBudgetError
+                ? error.message
+                : cancelled
+                  ? (run.cancelReason ?? 'The request was cancelled before completion.')
+                  : 'The workflow failed safely. No automatic paid retry was sent.',
             // Invention results keep their own code; decisions record the distinct outcome.
             run.job.kind === 'invention'
               ? undefined
-              : known && (error.outcome || (run.trackTerminalEvidence && error.evidence))
+              : interruption || (known && (error.outcome || error.evidence))
                 ? {
-                    disposition: error.outcome ?? error.status,
+                    disposition: interruption ? status : (error.outcome ?? error.status),
                     ...(run.level1 ? { level1: run.level1 } : {}),
-                    ...(run.trackTerminalEvidence && error.evidence
+                    ...(failure
                       ? {
                           failure: {
-                            ...error.evidence,
+                            ...failure,
                             attempt: run.attemptEvidence,
                             ...(run.receipt
                               ? { completionUncertain: run.receipt.completionUncertain }
                               : {}),
                           },
-                          // Cancellation of dispatched work can retain a provider
-                          // obligation alongside the known reason delivery stopped.
-                          ...(run.sourceInterruption
-                            ? { interruption: run.sourceInterruption }
-                            : {}),
                         }
                       : {}),
+                    // A provider obligation can outlive the known gameplay stop.
+                    ...(interruption?.evidence ? { interruption: interruption.evidence } : {}),
                   }
                 : error instanceof ContextBudgetError
                   ? {
@@ -2060,6 +2172,7 @@ export class AiDirector {
     if (
       run.preparedResponse ||
       !run.job.decision ||
+      run.sourceInterruption ||
       run.cancelReason ||
       run.controller.signal.aborted ||
       run.supersession
@@ -4564,7 +4677,18 @@ export class AiDirector {
     this.chatAdmission.slotChanged();
     this.releasePlayerInteractionAdmission();
     this.replyPreviews.close();
-    for (const run of this.activeRuns) run.controller.abort();
+    for (const run of this.activeRuns) {
+      this.recordInterruption(
+        run,
+        'cancelled',
+        'This request was cancelled when the server closed.',
+        {
+          condition: 'server-closed',
+          category: 'cancelled',
+        },
+      );
+      run.controller.abort();
+    }
     await this.escalator.close();
     this.unsubscribe();
     await this.admissionTail;
