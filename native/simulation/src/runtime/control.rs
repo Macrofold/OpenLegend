@@ -22,7 +22,7 @@ impl NativeWorldSession {
     /// Read saved controls and time from the same accepted world. This does
     /// not prepare a view or expose any actor.
     pub fn clock(&self) -> Result<RuntimeClock, RuntimeError> {
-        self.session.clock().map_err(failure)
+        self.session.clock().map_err(session_failure)
     }
 
     pub fn begin_control(&mut self, input: &[u8]) -> Result<CandidateKey, RuntimeError> {

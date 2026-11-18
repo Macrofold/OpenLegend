@@ -52,7 +52,7 @@ impl NativeWorldSession {
     /// affected-row hint can prepare private evidence for a non-NPC owner.
     pub fn npc_schedule_enrolled(&self, actor: &str) -> Result<bool, RuntimeError> {
         self.require_active()?;
-        let state = &self.session.accepted().map_err(failure)?.state;
+        let state = &self.session.accepted().map_err(session_failure)?.state;
         Ok(state.physical.entities.get(actor).is_some_and(|entity| {
             entity.has_memory()
                 && entity
@@ -74,7 +74,7 @@ impl NativeWorldSession {
     /// enrollment is needed on startup/replacement, not during every turn.
     pub fn npc_schedule_population(&self) -> Result<NpcSchedulePopulation, RuntimeError> {
         self.require_active()?;
-        let state = &self.session.accepted().map_err(failure)?.state;
+        let state = &self.session.accepted().map_err(session_failure)?.state;
         let actors = || {
             state
                 .physical
@@ -95,7 +95,7 @@ impl NativeWorldSession {
             })
             .and_then(|n| n.checked_add(state.physical.header.id.len() + state.generation.len()))
             .ok_or_else(|| failure("capacity"))?;
-        let custody = self.budget.reserve(size).map_err(failure)?;
+        let custody = self.budget.reserve(size)?;
         Ok(NpcSchedulePopulation {
             world: state.physical.header.id.clone(),
             generation: state.generation.clone(),

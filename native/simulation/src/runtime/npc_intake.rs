@@ -58,7 +58,7 @@ impl NativeWorldSession {
             .reserve(std::mem::size_of::<RuntimeNpcInspection>())
             .map_err(failure)?;
         let fence = self.session.fence();
-        let lease = fence.begin_publication().map_err(failure)?;
+        let lease = fence.begin_publication().map_err(fence_failure)?;
         Ok(Some(RuntimeNpcInspection {
             _lease: lease,
             fence,
@@ -69,7 +69,7 @@ impl NativeWorldSession {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let request = serde_json::from_slice(input).map_err(failure)?;
-        let state = &self.session.accepted().map_err(failure)?.state;
+        let state = &self.session.accepted().map_err(session_failure)?.state;
         let read =
             crate::capture::npc_intake::capture(state, request, &self.budget).map_err(failure)?;
         Ok(RuntimeNpcTrigger { read })
@@ -78,7 +78,7 @@ impl NativeWorldSession {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let request = serde_json::from_slice(input).map_err(failure)?;
-        let state = &self.session.accepted().map_err(failure)?.state;
+        let state = &self.session.accepted().map_err(session_failure)?.state;
         let (text, custody) =
             crate::capture::npc_intake::capture_queue_inputs(state, &request, &self.budget)
                 .map_err(failure)?;
@@ -90,13 +90,15 @@ impl NativeWorldSession {
     }
     pub fn npc_trigger_current(&self, trigger: &RuntimeNpcTrigger) -> Result<bool, RuntimeError> {
         self.require_active()?;
-        let state = &self.session.accepted().map_err(failure)?.state;
+        let state = &self.session.accepted().map_err(session_failure)?.state;
         trigger.read.current(state, &self.budget).map_err(failure)
     }
     pub fn begin_npc_intake(&mut self, input: &[u8]) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let request = serde_json::from_slice(input).map_err(failure)?;
-        self.session.begin_npc_intake(request).map_err(failure)
+        self.session
+            .begin_npc_intake(request)
+            .map_err(session_failure)
     }
 }

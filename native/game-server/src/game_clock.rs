@@ -7,7 +7,7 @@ use crate::{
     live_save::{AcceptedSaveInput, LiveSaves},
     presence::Presence,
     store::{MetadataProjection, StoreError},
-    world::{ApplicationStart, ProtectedCommit, WorldError},
+    world::{ApplicationStart, IO_YIELD, ProtectedCommit, WorldError},
     world_input::{InputSnapshot, WorldInputs},
 };
 use openlegend_simulation::{
@@ -288,11 +288,19 @@ impl GameClock {
             },
         );
         tokio::pin!(advance);
-        tokio::select! {
-            result = &mut advance => result,
-            _ = tokio::time::sleep(TICK_SLICE) => {
-                self.game.world.request_advance_publication();
-                advance.await
+        let mut publication = tokio::time::interval_at(Instant::now() + TICK_SLICE, IO_YIELD);
+        publication.set_missed_tick_behavior(MissedTickBehavior::Skip);
+        loop {
+            tokio::select! {
+                biased;
+                result = &mut advance => return result,
+                _ = publication.tick() => {
+                    // The first deadline can pass while another operation owns
+                    // the turn. Keep offering a boundary until this single
+                    // clock advance finishes, as on the pool-backed host.
+                    // docs/limits/native-work.md#nw12
+                    self.game.world.request_advance_publication();
+                }
             }
         }
     }
@@ -345,7 +353,12 @@ impl GameClock {
             let now = Instant::now();
             let elapsed = now.saturating_duration_since(previous);
             let (clock, changed) = match self.clock_with_presence().await {
-                Err(WorldError::Host(HostError::Busy)) => {
+                Err(WorldError::Host(HostError::Busy | HostError::Capacity))
+                | Err(WorldError::Fence(FenceError::Busy)) => {
+                    more = false;
+                    continue;
+                }
+                Err(WorldError::Simulation(error)) if error.is_busy() || error.is_capacity() => {
                     more = false;
                     continue;
                 }
@@ -418,7 +431,9 @@ impl GameClock {
                 Err(WorldError::ClockChanged)
                 | Err(WorldError::Host(HostError::Busy | HostError::Capacity))
                 | Err(WorldError::Fence(FenceError::Busy)) => None,
-                Err(WorldError::Simulation(error)) if error.is_capacity() => None,
+                Err(WorldError::Simulation(error)) if error.is_capacity() || error.is_busy() => {
+                    None
+                }
                 Err(error) => return Err(error),
             };
             if let Some(include_world) = routes

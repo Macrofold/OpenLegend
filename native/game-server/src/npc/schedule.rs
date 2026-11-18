@@ -229,17 +229,19 @@ impl Director {
                 _ = stop.changed() => return,
                 result = self.scheduling_pass(&inbox, &mut queue) => result,
             };
-            if let Err(error) = result
-                && !matches!(
-                    error,
-                    WorldError::Host(
-                        openlegend_world_host::pool::HostError::Busy
-                            | openlegend_world_host::pool::HostError::Capacity
-                    ) | WorldError::Storage(StoreError::Capacity | StoreError::StaleCut)
-                )
-            {
-                eprintln!("NPC scheduling stopped: {error}");
-                return;
+            match result {
+                Ok(())
+                | Err(WorldError::Host(
+                    openlegend_world_host::pool::HostError::Busy
+                    | openlegend_world_host::pool::HostError::Capacity,
+                ))
+                | Err(WorldError::Fence(openlegend_simulation::host::FenceError::Busy))
+                | Err(WorldError::Storage(StoreError::Capacity | StoreError::StaleCut)) => {}
+                Err(WorldError::Simulation(error)) if error.is_busy() || error.is_capacity() => {}
+                Err(error) => {
+                    eprintln!("NPC scheduling stopped: {error}");
+                    return;
+                }
             }
             tokio::select! {
                 _ = stop.changed() => return,

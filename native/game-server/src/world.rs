@@ -18,7 +18,7 @@ use openlegend_simulation::runtime::{
 use openlegend_world_host::{
     DispatchHost, DispatchWorld, SerialDispatch,
     pool::{HostError, HostPool},
-    submit_world,
+    try_submit_world,
 };
 use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -28,6 +28,7 @@ use std::{collections::BTreeSet, future::Future};
 use tokio::sync::{Mutex as TurnLock, Semaphore, oneshot, watch};
 
 const TURN_WAIT: Duration = Duration::from_secs(5);
+pub(crate) const IO_YIELD: Duration = Duration::from_millis(8);
 mod npc;
 mod player_history;
 pub(crate) use player_history::PlayerHistoryRead;
@@ -437,19 +438,43 @@ impl HostedWorld {
     where
         T: Send + 'static,
     {
-        let (send, receive) = oneshot::channel();
-        submit_world(
-            &self.host,
-            self,
-            move |_, world, _| {
-                let mut session = world.session.lock().map_err(|_| HostError::Poisoned)?;
-                Ok(run(&mut session))
-            },
-            move |result| {
-                let _ = send.send(result);
-            },
-        )?;
-        Ok(receive.await.map_err(|_| HostError::WorkerFailed)???)
+        let deadline = tokio::time::Instant::now() + TURN_WAIT;
+        let mut input = Some(run);
+        loop {
+            let mut reply = None;
+            let submitted = try_submit_world(&self.host, self, || {
+                let run = input
+                    .take()
+                    .expect("world application submits its call once");
+                let (send, receive) = oneshot::channel();
+                reply = Some(receive);
+                (
+                    move |_, world: &Arc<Self>, _| {
+                        let mut session = world.session.lock().map_err(|_| HostError::Poisoned)?;
+                        Ok(run(&mut session))
+                    },
+                    move |result| {
+                        let _ = send.send(result);
+                    },
+                )
+            });
+            match submitted {
+                Ok(cancellation) => {
+                    let _cancel = CancelCompute(cancellation);
+                    let result = reply.expect("admitted world call owns its reply").await;
+                    return Ok(result.map_err(|_| HostError::WorkerFailed)???);
+                }
+                Err(HostError::Busy) if tokio::time::Instant::now() < deadline => {
+                    // Only an offer refused before enqueue is retried. No
+                    // worker or native lock is held during this wait.
+                    tokio::time::sleep_until(
+                        (tokio::time::Instant::now() + IO_YIELD).min(deadline),
+                    )
+                    .await;
+                }
+                Err(error) => return Err(error.into()),
+            }
+        }
     }
 
     async fn enter(&self) -> Result<tokio::sync::MutexGuard<'_, ()>, WorldError> {
@@ -619,6 +644,13 @@ impl HostedWorld {
                 return Err(HostError::Closed.into());
             }
             if !read.belongs_to(&scope.account_id, &scope.actor_id) {
+                return Ok(PlayerDisclosure::Changed);
+            }
+            let edits = self
+                .pending_source_edits
+                .lock()
+                .map_err(|_| HostError::Poisoned)?;
+            if edits.contains(scope.actor_id.as_str()) {
                 return Ok(PlayerDisclosure::Changed);
             }
             let session = match self.session.try_lock() {

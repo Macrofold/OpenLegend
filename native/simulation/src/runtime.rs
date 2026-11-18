@@ -21,7 +21,7 @@ pub use control::RuntimeClock;
 mod direct_history;
 pub use direct_history::{
     HistoryAccount, HistoryCut, HistoryTemporal, RuntimeHistory, RuntimeHistoryCuts,
-    RuntimeMetadataPersistence, RuntimeRecallDecoder, RuntimeRecallRead, metadata_rows,
+    RuntimeMetadataPersistence, RuntimeRecallRead, metadata_rows,
 };
 mod handoff;
 mod knowledge;
@@ -82,7 +82,13 @@ pub use reply_preview::{
 #[derive(Debug)]
 pub struct RuntimeError {
     detail: String,
-    capacity: bool,
+    refusal: Refusal,
+}
+#[derive(Debug)]
+enum Refusal {
+    Capacity,
+    Busy,
+    Other,
 }
 impl RuntimeError {
     /// Preserve a trusted application's reason when it cannot stage a product
@@ -90,14 +96,19 @@ impl RuntimeError {
     pub fn application_refused(reason: impl std::fmt::Display) -> Self {
         Self {
             detail: format!("Application refused the prepared operation: {reason}"),
-            capacity: false,
+            refusal: Refusal::Other,
         }
     }
 
     /// A live host can defer work that refused byte admission before acceptance.
     /// Semantic, rollback and owner errors still stop the affected operation.
     pub fn is_capacity(&self) -> bool {
-        self.capacity
+        matches!(self.refusal, Refusal::Capacity)
+    }
+
+    /// The requested accepted boundary was temporarily occupied.
+    pub fn is_busy(&self) -> bool {
+        matches!(self.refusal, Refusal::Busy)
     }
 }
 impl std::fmt::Display for RuntimeError {
@@ -109,7 +120,7 @@ impl std::error::Error for RuntimeError {}
 impl From<crate::host::CapacityError> for RuntimeError {
     fn from(error: crate::host::CapacityError) -> Self {
         RuntimeError {
-            capacity: true,
+            refusal: Refusal::Capacity,
             ..failure(error)
         }
     }
@@ -118,11 +129,21 @@ impl From<crate::host::CapacityError> for RuntimeError {
 fn failure(error: impl std::fmt::Debug) -> RuntimeError {
     RuntimeError {
         detail: format!("Native writer refused operation: {error:?}"),
-        capacity: false,
+        refusal: Refusal::Other,
     }
 }
 
-fn advance_failure(error: crate::simulation::session::SessionError) -> RuntimeError {
+fn fence_failure(error: FenceError) -> RuntimeError {
+    if error == FenceError::Busy {
+        return RuntimeError {
+            refusal: Refusal::Busy,
+            ..failure(error)
+        };
+    }
+    failure(error)
+}
+
+fn session_failure(error: crate::simulation::SessionError) -> RuntimeError {
     use crate::commands::CommandOperationError;
     use crate::events::EventError;
     use crate::execution::ExecutionError;
@@ -135,6 +156,12 @@ fn advance_failure(error: crate::simulation::session::SessionError) -> RuntimeEr
             || matches!(error, ExecutionError::Received(error) if *error == crate::received::ReceivedError::TRANSIENT_CAPACITY)
     }
 
+    if matches!(error, SessionError::Fence(FenceError::Busy)) {
+        return RuntimeError {
+            refusal: Refusal::Busy,
+            ..failure(error)
+        };
+    }
     let capacity = match &error {
         SessionError::Drive(DriveError::Capacity) => true,
         SessionError::Execution(error)
@@ -152,7 +179,11 @@ fn advance_failure(error: crate::simulation::session::SessionError) -> RuntimeEr
         _ => false,
     };
     RuntimeError {
-        capacity,
+        refusal: if capacity {
+            Refusal::Capacity
+        } else {
+            Refusal::Other
+        },
         ..failure(error)
     }
 }
@@ -839,7 +870,7 @@ impl NativeWorldSession {
     /// Lend a finite current clock/header cut, excluding any tentative or
     /// rolled-back world. A capture can retain scalar values independently.
     pub fn accepted_progress(&self) -> Result<RuntimeProgress<'_>, RuntimeError> {
-        let state = &self.session.accepted().map_err(failure)?.state;
+        let state = &self.session.accepted().map_err(session_failure)?.state;
         Ok(RuntimeProgress {
             world_id: &state.physical.header.id,
             generation: &state.generation,
@@ -936,7 +967,7 @@ impl NativeWorldSession {
         let (action_routes, _actions) = self.navigation.prepare_actions(&self.budget)?;
         self.session
             .begin_advance(seconds, maximum_intervals, prepared, &action_routes, inputs)
-            .map_err(advance_failure)
+            .map_err(session_failure)
     }
     pub fn begin_command(
         &mut self,
@@ -1042,7 +1073,7 @@ impl NativeWorldSession {
                     policy_revision: self.history_policy_revision,
                 },
             )
-            .map_err(advance_failure)
+            .map_err(session_failure)
     }
 
     /// Drive the same candidate as the addon's step. The output callback runs

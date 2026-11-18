@@ -94,11 +94,30 @@ where
     F: FnOnce(&Arc<H>, &Arc<W>, &Cancellation) -> Result<T, HostError> + Send + 'static,
     C: FnOnce(Result<T, HostError>) + Send + 'static,
 {
+    try_submit_world(host, world, || (run, complete))
+}
+
+/// Check the existing bounded admission before taking the caller's inputs.
+/// A busy result leaves them with the caller and has run nothing. The queued
+/// work and completion take ownership only on a successful submission.
+pub fn try_submit_world<H, W, T, F, C>(
+    host: &Arc<H>,
+    world: &Arc<W>,
+    prepare: impl FnOnce() -> (F, C),
+) -> Result<Cancellation, HostError>
+where
+    H: DispatchHost,
+    W: DispatchWorld<H>,
+    T: Send + 'static,
+    F: FnOnce(&Arc<H>, &Arc<W>, &Cancellation) -> Result<T, HostError> + Send + 'static,
+    C: FnOnce(Result<T, HostError>) + Send + 'static,
+{
     let admitted = host.pool().admit()?;
     let cancellation = admitted.cancellation();
     let storage = host
         .budget()
         .reserve(size_of::<(F, C, WorkAdmission, ByteReservation)>())?;
+    let (run, complete) = prepare();
     let job: Job<H, W> = Box::new(move |host, world| {
         let _storage = storage;
         admitted.run(

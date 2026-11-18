@@ -64,7 +64,7 @@ impl ViewError {
                         | WorldError::Wire(crate::wire::WireError::Capacity)
                         | WorldError::Access(crate::authority::AccessError::Busy)
                 )
-        ) || matches!(self, Self::World(WorldError::Simulation(error)) if error.is_capacity())
+        ) || matches!(self, Self::World(WorldError::Simulation(error)) if error.is_capacity() || error.is_busy())
     }
 }
 impl fmt::Display for ViewError {
