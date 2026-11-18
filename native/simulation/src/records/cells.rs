@@ -17,6 +17,29 @@ pub enum SqlCell {
     Object(IndexMap<String, SqlCell>),
     ExactObject(ExactObject),
 }
+
+impl SqlCell {
+    /// Size the actual JSONB cell's decoder without constructing its nested
+    /// SQL value graph. The caller retains the input text independently.
+    pub fn json_decode_bound(source: &str) -> Option<usize> {
+        use crate::encoding::JsonAllocationShape;
+        use crate::host::retained_size::{heap_sum, map_storage};
+        use std::mem::size_of;
+
+        let shape = JsonAllocationShape::read(source).ok()?;
+        let member = map_storage::<String, Self>(1)?.max(map_storage::<JsText, Self>(1)?);
+        // Account separately for dense arrays, object carriers and the text
+        // decoder's temporary buffers. Text size alone misses dense numerics.
+        heap_sum([
+            shape.array_items.checked_mul(4 * size_of::<Self>())?,
+            shape.members.checked_mul(member)?,
+            shape
+                .strings
+                .checked_mul(8 * size_of::<u16>() + 2 * size_of::<usize>())?,
+            source.len().checked_mul(12)?,
+        ])
+    }
+}
 /// JavaScript permits isolated code units in property names too. Keep that
 /// uncommon finite transport case intact without changing every schema-keyed
 /// object's normal String lookup or inventing a lossy replacement name.

@@ -1,20 +1,20 @@
-//! The direct cold startup projection is valid only when the actual native
-//! producer proves no independent derived work needs to be saved.
+//! Startup and host control use this path only when the native producer has
+//! certified the candidate requires no independent derived persistence.
 
 use super::{PrefixProjection, StoreError, StoreResult};
 use openlegend_simulation::records::SaveRows;
-use openlegend_simulation::runtime::{RuntimeStartupPersistence, startup_metadata_rows};
+use openlegend_simulation::runtime::{RuntimeMetadataPersistence, metadata_rows};
 use tokio_postgres::Transaction;
 
-pub struct StartupProjection(RuntimeStartupPersistence);
+pub struct MetadataProjection(RuntimeMetadataPersistence);
 
-impl StartupProjection {
-    pub fn new(persistence: RuntimeStartupPersistence) -> Self {
+impl MetadataProjection {
+    pub fn new(persistence: RuntimeMetadataPersistence) -> Self {
         Self(persistence)
     }
 }
 
-impl PrefixProjection for StartupProjection {
+impl PrefixProjection for MetadataProjection {
     async fn before_records(
         &self,
         _transaction: &Transaction<'_>,
@@ -27,7 +27,7 @@ impl PrefixProjection for StartupProjection {
         }
         // Save capture can pack more records than the original candidate.
         // Refuse that prefix unless it also consists only of host metadata.
-        if !startup_metadata_rows(&rows.changes) {
+        if !metadata_rows(&rows.changes) {
             return Err(StoreError::InvalidRecord);
         }
         Ok(())

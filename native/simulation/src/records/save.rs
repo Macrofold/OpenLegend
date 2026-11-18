@@ -42,6 +42,13 @@ impl SavePrefix {
     pub(crate) fn temporal_residency(&self) -> &Arc<crate::received::SavedTemporalResidency> {
         &self.temporal_residency
     }
+
+    pub(crate) fn source_versions_newest_first(
+        &self,
+    ) -> impl Iterator<Item = crate::received::SourceVersionArchiveChange<'_>> {
+        std::iter::successors(self._source_versions.as_deref(), |&plan| plan.previous())
+            .flat_map(|plan| plan.value.archive_changes())
+    }
     fn presence(&self, table: &str, id: &str) -> Option<bool> {
         self.presence
             .get(table)

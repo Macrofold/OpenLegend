@@ -42,9 +42,9 @@ mod save;
 pub(crate) use residency::{PackedTemporalSave, PreparedTemporalResidency, SavedTemporalResidency};
 mod versions;
 pub(crate) use actor::ensure_temporal_actor;
+pub use versions::SourceVersionArchiveChange;
 pub(crate) use versions::{
-    SourceVersionArchiveChange, SourceVersionPlan, apply_source_version_plan,
-    reset_source_version_plan,
+    SourceVersionPlan, apply_source_version_plan, reset_source_version_plan,
 };
 mod support;
 pub(crate) use accounts::{

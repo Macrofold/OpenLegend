@@ -1,16 +1,17 @@
 //! Direct PostgreSQL ownership. One session owns the writer lock. Independently
 //! admitted readers use a fixed read-only snapshot on a separate connection.
 
+mod archives;
 mod history;
+mod metadata;
 mod read;
 mod received;
 mod schema;
-mod startup;
 mod write;
 
+pub use metadata::MetadataProjection;
 pub use read::{AdmittedReceipt, CurrentOpening, GameplayReceipt};
 pub use schema::StorageSchema;
-pub use startup::StartupProjection;
 pub use write::{CommitError, PrefixProjection};
 
 use openlegend_simulation::host::ByteBudget;

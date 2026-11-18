@@ -6,7 +6,7 @@ use super::schema::{FIXED_COLUMNS, SqlType, Table};
 use super::{Session, Store, StoreError, StoreResult, durable_head, sql_ordinal};
 use openlegend_simulation::host::{ByteBudget, ByteReservation};
 use openlegend_simulation::records::{ChangedRow, ChangedRows, SaveRows, SqlCell};
-use openlegend_simulation::runtime::RuntimeSaveAcknowledgement;
+use openlegend_simulation::runtime::{RuntimeSave, RuntimeSaveAcknowledgement};
 use sha2::{Digest, Sha256};
 use std::borrow::Cow;
 use std::fmt;
@@ -129,12 +129,34 @@ impl Store {
         }
     }
 
-    /// Hold the native prefix through SQL acknowledgement. A confirmed
-    /// rollback does not release it. Caller settles the exact native ACK after
-    /// the returned COMMIT success, before dropping its retained products.
+    /// Persist the fixed ordinary or protected prefix and its existing archive
+    /// plan. The caller retains the immutable save through COMMIT and applies
+    /// the exact returned acknowledgement before releasing its products.
+    pub async fn commit_save(
+        &self,
+        save: &RuntimeSave,
+        receipts: &[GameplayReceipt],
+        projection: &impl PrefixProjection,
+    ) -> Result<RuntimeSaveAcknowledgement, CommitError> {
+        self.commit_rows(save.rows(), Some(save), receipts, projection)
+            .await
+    }
+
+    /// Apply raw prepared rows for the direct repository checks. Runtime callers
+    /// use `commit_save` to carry the real save handle's exact archive plans.
     pub async fn commit_prefix(
         &self,
         rows: &SaveRows,
+        receipts: &[GameplayReceipt],
+        projection: &impl PrefixProjection,
+    ) -> Result<RuntimeSaveAcknowledgement, CommitError> {
+        self.commit_rows(rows, None, receipts, projection).await
+    }
+
+    async fn commit_rows(
+        &self,
+        rows: &SaveRows,
+        save: Option<&RuntimeSave>,
         receipts: &[GameplayReceipt],
         projection: &impl PrefixProjection,
     ) -> Result<RuntimeSaveAcknowledgement, CommitError> {
@@ -181,6 +203,9 @@ impl Store {
             projection
                 .before_records(&transaction, rows, revision)
                 .await?;
+            if let Some(save) = save {
+                self.apply_archives(&transaction, save).await?;
+            }
             self.write_records(&transaction, &rows.world_id, sql_revision, &rows.changes)
                 .await?;
             projection

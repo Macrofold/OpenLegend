@@ -544,7 +544,7 @@ impl RestoreArchiveBaseline {
                 return Err(E::MalformedResponse);
             }
             if let Some((next, bytes)) = change.desired {
-                if !change.has_payload {
+                if change.payload.is_none() {
                     return Err(E::MalformedResponse);
                 }
                 rows.push(RestoreArchive {

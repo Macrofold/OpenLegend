@@ -19,8 +19,8 @@ mod control;
 pub use account_retention::RuntimeAccountRetention;
 mod direct_history;
 pub use direct_history::{
-    HistoryAccount, HistoryCut, HistoryTemporal, RuntimeHistory, RuntimeStartupPersistence,
-    startup_metadata_rows,
+    HistoryAccount, HistoryCut, HistoryTemporal, RuntimeHistory, RuntimeMetadataPersistence,
+    metadata_rows,
 };
 mod handoff;
 mod knowledge;
@@ -1100,6 +1100,15 @@ impl RuntimeSave {
     /// direct SQL writer binds their existing typed cells without re-encoding.
     pub fn rows(&self) -> &crate::records::SaveRows {
         self.prefix.rows()
+    }
+
+    /// Borrow exact archived-source transitions from the same detached prefix.
+    /// Consecutive cuts may change the same version. The writer composes them
+    /// before applying the original durable predecessor in one transaction.
+    pub fn source_versions_newest_first(
+        &self,
+    ) -> impl Iterator<Item = crate::received::SourceVersionArchiveChange<'_>> {
+        self.prefix.source_versions_newest_first()
     }
 }
 

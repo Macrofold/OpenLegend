@@ -50,6 +50,16 @@ crate::host::retained_size::heap_record!(InstalledRow {
     extra
 });
 
+impl InstalledRow {
+    /// The owned bodies and indexed cells, excluding this row's inline slot.
+    /// A direct reader can release its decode workspace after transferring
+    /// this measured backing to the row's installation owner.
+    pub fn retained_bytes(&self) -> Option<usize> {
+        use crate::host::retained_size::HeapBytes;
+        self.heap_bytes()
+    }
+}
+
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ChangedRow {

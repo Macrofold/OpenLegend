@@ -65,17 +65,17 @@ pub(crate) struct SourceVersionPlan {
     changes: Vec<Change>,
 }
 
-/// Borrow only the archive metadata needed by whole-install reconciliation.
-/// The plan retains the actual immutable payload and its admission separately.
+/// Borrow an exact archived-source transition. The plan retains any immutable
+/// body and its original admission through save or restore reconciliation.
 #[derive(Clone, Copy)]
-pub(crate) struct SourceVersionArchiveChange<'a> {
+pub struct SourceVersionArchiveChange<'a> {
     pub actor_id: &'a str,
     pub kind: &'a str,
     pub id: &'a str,
     pub revision: &'a str,
     pub expected_prior: Option<(AccountClass, u64)>,
     pub desired: Option<(AccountClass, u64)>,
-    pub has_payload: bool,
+    pub payload: Option<&'a str>,
 }
 
 impl HeapBytes for Category {
@@ -117,10 +117,10 @@ impl SourceVersionPlan {
                     .desired
                     .as_ref()
                     .map(|value| (value.category.class(), value.bytes)),
-                has_payload: change
+                payload: change
                     .desired
                     .as_ref()
-                    .is_some_and(|value| value.payload.is_some()),
+                    .and_then(|value| value.payload.as_deref()),
             })
     }
     pub(crate) fn empty() -> Self {

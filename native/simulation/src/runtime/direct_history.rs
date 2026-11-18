@@ -102,11 +102,11 @@ impl RuntimeHistory {
     }
 }
 
-/// A cold startup that changes only host metadata has no history, source or
-/// privacy publication to project. The SQL writer still validates the cut.
-pub struct RuntimeStartupPersistence(RuntimeHistory);
+/// Startup or host control can certify a metadata-only transaction. The SQL
+/// writer independently validates the detached prefix against this exact cut.
+pub struct RuntimeMetadataPersistence(RuntimeHistory);
 
-impl RuntimeStartupPersistence {
+impl RuntimeMetadataPersistence {
     pub fn binding(&self) -> (&str, &str, u64) {
         (
             self.0.world_id(),
@@ -117,25 +117,42 @@ impl RuntimeStartupPersistence {
 }
 
 impl RuntimePreparedProducts<'_> {
-    pub fn metadata_startup(&self) -> Result<RuntimeStartupPersistence, super::RuntimeError> {
-        use super::CompletedOperation;
-        if !matches!(self.operation, CompletedOperation::Startup(_))
-            || self.restore.is_some()
+    pub fn metadata_startup(&self) -> Result<RuntimeMetadataPersistence, super::RuntimeError> {
+        if !matches!(self.operation, super::CompletedOperation::Startup(_))
             || self.protected_save.is_some()
+        {
+            return Err(super::failure("not a startup metadata candidate"));
+        }
+        self.metadata_persistence()
+    }
+
+    pub fn metadata_control(&self) -> Result<RuntimeMetadataPersistence, super::RuntimeError> {
+        if !matches!(self.operation, super::CompletedOperation::HostControl(_))
+            || self
+                .protected_save
+                .is_none_or(|save| !metadata_rows(&save.changes))
+        {
+            return Err(super::failure("not a protected control metadata candidate"));
+        }
+        self.metadata_persistence()
+    }
+
+    fn metadata_persistence(&self) -> Result<RuntimeMetadataPersistence, super::RuntimeError> {
+        if self.restore.is_some()
             || !self.source_versions.is_empty()
             || self.events().next().is_some()
             || self.history.originals().next().is_some()
             || self.history.accounts().next().is_some()
             || self.history.cuts().next().is_some()
-            || !startup_metadata_rows(self.records)
+            || !metadata_rows(self.records)
         {
-            return Err(super::failure("startup requires a derived projection"));
+            return Err(super::failure("candidate requires a derived projection"));
         }
-        Ok(RuntimeStartupPersistence(self.retain_history()))
+        Ok(RuntimeMetadataPersistence(self.retain_history()))
     }
 }
 
-pub fn startup_metadata_rows(rows: &crate::records::ChangedRows) -> bool {
+pub fn metadata_rows(rows: &crate::records::ChangedRows) -> bool {
     rows.deletes.is_empty()
         && rows.expired.is_empty()
         && rows

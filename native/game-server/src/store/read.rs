@@ -8,10 +8,12 @@ use openlegend_simulation::host::{ByteBudget, ByteReservation};
 use openlegend_simulation::records::{
     CurrentRecords, EntityOrdering, EntityOrderingEntry, InstalledRow, OwnerCoverage, SqlCell,
 };
+use serde::de::{DeserializeSeed, IgnoredAny, MapAccess, Visitor};
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
 use std::collections::{BTreeMap, HashMap};
 use std::future::Future;
+use std::mem::size_of;
 use std::pin::Pin;
 use tokio_postgres::types::ToSql;
 use tokio_postgres::{IsolationLevel, Row, Transaction};
@@ -160,21 +162,41 @@ impl Store {
         for table in &self.schema.tables {
             let query = current_select(table);
             let params: &[&(dyn ToSql + Sync)] = &[&head.world_id];
-            let rows =
-                admitted_query(&transaction, &query, params, &self.budget, &mut custody).await?;
-            tables.insert(
-                table.name.clone(),
-                rows.into_iter()
-                    .map(|row| installed_row(table, row))
-                    .collect::<StoreResult<Vec<_>>>()?,
-            );
+            let (_wire, rows) = admitted_query(&transaction, &query, params, &self.budget).await?;
+            grow(&mut custody, allocation::<InstalledRow>(rows.len())?)?;
+            let mut records = Vec::with_capacity(rows.len());
+            for row in rows {
+                let mut decode = self
+                    .budget
+                    .reserve(installed_row_bound(table, &row)?)
+                    .map_err(|_| StoreError::Capacity)?;
+                let record = installed_row(table, row)?;
+                let retained = record.retained_bytes().ok_or(StoreError::Capacity)?;
+                release_workspace(&mut decode, retained)?;
+                custody.merge(decode).map_err(|_| StoreError::Capacity)?;
+                records.push(record);
+            }
+            tables.insert(table.name.clone(), records);
         }
-        let (originals, expected) = {
+        let originals = {
             #[derive(Deserialize)]
             struct Pointer<'a> {
                 id: &'a str,
             }
-            let ids = tables["world_hot_events"]
+            let hot = &tables["world_hot_events"];
+            let _ids = self
+                .budget
+                .reserve(
+                    hot.iter()
+                        .try_fold(0usize, |bytes, row| {
+                            bytes
+                                .checked_add(64)?
+                                .checked_add(row.payload.len().checked_mul(4)?)
+                        })
+                        .ok_or(StoreError::Capacity)?,
+                )
+                .map_err(|_| StoreError::Capacity)?;
+            let ids = hot
                 .iter()
                 .map(|row| {
                     serde_json::from_str::<Pointer<'_>>(&row.payload)
@@ -182,21 +204,40 @@ impl Store {
                         .map_err(|_| StoreError::InvalidRecord)
                 })
                 .collect::<StoreResult<Vec<_>>>()?;
-            let originals = admitted_query(
-                &transaction,
-                "SELECT id,payload FROM history_events WHERE world_id=$1 AND id=ANY($2) ORDER BY position,id",
-                &[&head.world_id, &ids],
-                &self.budget,
-                &mut custody,
-            ).await?.into_iter().map(|row| Ok(OriginalOccurrenceInput {
-                event_id: row.try_get(0)?, payload: row.try_get(1)?,
-            })).collect::<StoreResult<_>>()?;
-            (originals, ids.len())
+            if ids.is_empty() {
+                Vec::new()
+            } else {
+                let (_wire, rows) = admitted_query(
+                    &transaction,
+                    "SELECT id,payload FROM history_events WHERE world_id=$1 AND id=ANY($2) ORDER BY position,id",
+                    &[&head.world_id, &ids],
+                    &self.budget,
+                ).await?;
+                if rows.len() != ids.len() {
+                    return Err(StoreError::InvalidRecord);
+                }
+                let body = rows.iter().try_fold(
+                    allocation::<OriginalOccurrenceInput>(rows.len())?,
+                    |bytes, row| {
+                        let id = text_bytes(row, 0)?;
+                        let payload = text_bytes(row, 1)?;
+                        bytes
+                            .checked_add(id)
+                            .and_then(|bytes| bytes.checked_add(payload))
+                            .ok_or(StoreError::Capacity)
+                    },
+                )?;
+                grow(&mut custody, body)?;
+                rows.into_iter()
+                    .map(|row| {
+                        Ok(OriginalOccurrenceInput {
+                            event_id: row.try_get(0)?,
+                            payload: row.try_get(1)?,
+                        })
+                    })
+                    .collect::<StoreResult<Vec<_>>>()?
+            }
         };
-        let originals: Vec<_> = originals;
-        if originals.len() != expected {
-            return Err(StoreError::InvalidRecord);
-        }
         transaction.commit().await?;
         let records = self.opening_records(head, tables, &mut custody)?;
         Ok(Some(CurrentOpening {
@@ -299,7 +340,7 @@ impl Store {
                 .as_str()
                 .ok_or(StoreError::InvalidRecord)
         });
-        let entity_ordering = entity_ordering(ids)?;
+        let entity_ordering = entity_ordering(ids, tables["sim_entities"].len(), custody)?;
         // Text normalizations remain owned by the prepared installation. Until
         // those supported SQL owners are linked, refuse positive saved rows.
         if !tables["sim_intentions"].is_empty() || !tables["activity_methods"].is_empty() {
@@ -333,13 +374,11 @@ impl Store {
             .isolation_level(IsolationLevel::RepeatableRead)
             .start()
             .await?;
-        let mut custody = self.budget.reserve(0).map_err(|_| StoreError::Capacity)?;
-        let mut rows = admitted_query(
+        let (mut custody, mut rows) = admitted_query(
             &transaction,
             "SELECT epoch,expires_at,payload FROM gameplay_receipts WHERE world_id=$1 AND id=$2",
             &[&world_id, &id],
             &self.budget,
-            &mut custody,
         )
         .await?;
         transaction.commit().await?;
@@ -357,6 +396,22 @@ impl Store {
         {
             return Err(StoreError::InvalidRecord);
         }
+        drop(row);
+        drop(rows);
+        let retained = [
+            size_of::<AdmittedReceipt>(),
+            receipt.id.capacity(),
+            receipt.fingerprint.capacity(),
+            receipt
+                .recovery_fingerprint
+                .as_ref()
+                .map_or(0, String::capacity),
+            receipt.result.get().len(),
+        ]
+        .into_iter()
+        .try_fold(0usize, usize::checked_add)
+        .ok_or(StoreError::Capacity)?;
+        release_workspace(&mut custody, retained)?;
         Ok(Some(AdmittedReceipt {
             receipt,
             _custody: custody,
@@ -364,24 +419,24 @@ impl Store {
     }
 }
 
-pub(crate) async fn admitted_query(
+async fn admitted_query(
     transaction: &Transaction<'_>,
     selection: &str,
     params: &[&(dyn ToSql + Sync)],
     budget: &ByteBudget,
-    custody: &mut ByteReservation,
-) -> StoreResult<Vec<Row>> {
+) -> StoreResult<(ByteReservation, Vec<Row>)> {
     let statement = format!(
         "SELECT count(*),COALESCE(sum(octet_length(row_to_json(selected)::text)),0)::bigint FROM ({selection}) selected"
     );
     let bound = transaction.query_one(&statement, params).await?;
     let count = usize::try_from(ordinal(bound.try_get(0)?)?).map_err(|_| StoreError::Capacity)?;
     if count == 0 {
-        return Ok(Vec::new());
+        let empty = budget.reserve(0).map_err(|_| StoreError::Capacity)?;
+        return Ok((empty, Vec::new()));
     }
     let bytes = usize::try_from(ordinal(bound.try_get(1)?)?).map_err(|_| StoreError::Capacity)?;
-    // Binary wire buffers, driver row descriptors, canonical row carriers and
-    // array/JSON parsing can overlap. Count expanded metadata before transfer.
+    // Wire buffers and driver row descriptors can overlap. The decoder admits
+    // shape-dependent carrier storage separately before building a Rust graph.
     let bytes = bytes
         .checked_mul(16)
         .and_then(|total| total.checked_add(count.checked_mul(1024)?))
@@ -391,8 +446,7 @@ pub(crate) async fn admitted_query(
     if rows.len() != count {
         return Err(StoreError::StaleCut);
     }
-    custody.merge(allowance).map_err(|_| StoreError::Capacity)?;
-    Ok(rows)
+    Ok((allowance, rows))
 }
 
 fn current_select(table: &Table) -> String {
@@ -402,6 +456,17 @@ fn current_select(table: &Table) -> String {
         select.push_str(&column.name);
         if matches!(column.data_type, SqlType::Json) {
             select.push_str("::text");
+        }
+    }
+    for column in &table.columns {
+        if matches!(
+            column.data_type,
+            SqlType::TextArray | SqlType::SmallIntegerArray
+        ) {
+            select.push_str(&format!(
+                ",cardinality({0})::bigint AS {0}_length,octet_length({0}::text)::bigint AS {0}_bytes",
+                column.name,
+            ));
         }
     }
     select.push_str(&format!(
@@ -424,6 +489,78 @@ fn installed_row(table: &Table, row: Row) -> StoreResult<InstalledRow> {
         payload: row.try_get(4)?,
         extra,
     })
+}
+
+fn installed_row_bound(table: &Table, row: &Row) -> StoreResult<usize> {
+    let mut bound = allocation::<SqlCell>(table.columns.len())?;
+    for index in [0, 1, 2, 4] {
+        bound = bound
+            .checked_add(text_bytes(row, index)?)
+            .ok_or(StoreError::Capacity)?;
+    }
+    let mut metric = 5 + table.columns.len();
+    for (index, column) in table.columns.iter().enumerate() {
+        let bytes = match column.data_type {
+            SqlType::Text => text_bytes(row, index + 5)?,
+            SqlType::Json => {
+                let source: Option<&str> = row.try_get(index + 5)?;
+                source
+                    .map_or(Some(0), SqlCell::json_decode_bound)
+                    .ok_or(StoreError::Capacity)?
+            }
+            SqlType::TextArray | SqlType::SmallIntegerArray => {
+                let count = unsigned_measure(row, metric)?;
+                let text = unsigned_measure(row, metric + 1)?;
+                metric += 2;
+                // Driver Vec<T> and the converted Vec<SqlCell> can coexist;
+                // reserve their growth plus the actual selected string body.
+                let element = match column.data_type {
+                    SqlType::TextArray => size_of::<String>(),
+                    _ => size_of::<i16>(),
+                };
+                count
+                    .checked_mul(4 * (size_of::<SqlCell>() + element))
+                    .and_then(|bytes| bytes.checked_add(text))
+                    .ok_or(StoreError::Capacity)?
+            }
+            _ => 0,
+        };
+        bound = bound.checked_add(bytes).ok_or(StoreError::Capacity)?;
+    }
+    Ok(bound)
+}
+
+fn allocation<T>(count: usize) -> StoreResult<usize> {
+    count
+        .checked_mul(size_of::<T>())
+        .ok_or(StoreError::Capacity)
+}
+
+fn text_bytes(row: &Row, at: usize) -> StoreResult<usize> {
+    Ok(row.try_get::<_, Option<&str>>(at)?.map_or(0, str::len))
+}
+
+fn unsigned_measure(row: &Row, at: usize) -> StoreResult<usize> {
+    let value: Option<i64> = row.try_get(at)?;
+    usize::try_from(value.unwrap_or_default()).map_err(|_| StoreError::Capacity)
+}
+
+fn grow(custody: &mut ByteReservation, extra: usize) -> StoreResult<()> {
+    custody
+        .resize(
+            custody
+                .bytes()
+                .checked_add(extra)
+                .ok_or(StoreError::Capacity)?,
+        )
+        .map_err(|_| StoreError::Capacity)
+}
+
+fn release_workspace(custody: &mut ByteReservation, retained: usize) -> StoreResult<()> {
+    if retained > custody.bytes() {
+        return Err(StoreError::Capacity);
+    }
+    custody.resize(retained).map_err(|_| StoreError::Capacity)
 }
 
 fn cell(row: &Row, at: usize, data_type: SqlType) -> StoreResult<SqlCell> {
@@ -467,20 +604,54 @@ fn child_presence(payload: &str, field: &str) -> StoreResult<bool> {
     if field == "$" {
         return Ok(payload != "null");
     }
-    let children: HashMap<&str, &RawValue> =
-        serde_json::from_str(payload).map_err(|_| StoreError::InvalidRecord)?;
-    Ok(children
-        .get(field)
-        .is_some_and(|value| value.get() != "null"))
+    struct Child<'a>(&'a str);
+    impl<'de> DeserializeSeed<'de> for Child<'_> {
+        type Value = bool;
+        fn deserialize<D: serde::Deserializer<'de>>(self, reader: D) -> Result<bool, D::Error> {
+            reader.deserialize_map(self)
+        }
+    }
+    impl<'de> Visitor<'de> for Child<'_> {
+        type Value = bool;
+        fn expecting(&self, buffer: &mut std::fmt::Formatter) -> std::fmt::Result {
+            buffer.write_str("a canonical parent record")
+        }
+        fn visit_map<M: MapAccess<'de>>(self, mut fields: M) -> Result<bool, M::Error> {
+            let mut present = false;
+            while let Some(key) = fields.next_key::<&str>()? {
+                if key == self.0 {
+                    present = fields.next_value::<&RawValue>()?.get() != "null";
+                } else {
+                    fields.next_value::<IgnoredAny>()?;
+                }
+            }
+            Ok(present)
+        }
+    }
+    let mut decoder = serde_json::Deserializer::from_str(payload);
+    let present = Child(field)
+        .deserialize(&mut decoder)
+        .map_err(|_| StoreError::InvalidRecord)?;
+    decoder.end().map_err(|_| StoreError::InvalidRecord)?;
+    Ok(present)
 }
 
 fn entity_ordering<'a>(
     ids: impl Iterator<Item = StoreResult<&'a str>>,
+    count: usize,
+    custody: &mut ByteReservation,
 ) -> StoreResult<EntityOrdering> {
     let mut next_insertion = 0;
-    let mut entries = Vec::new();
+    grow(custody, allocation::<EntityOrderingEntry>(count)?)?;
+    let mut entries = Vec::with_capacity(count);
     for id in ids {
         let id = id?;
+        // The padded key is at most 18 ASCII characters. format!'s backing
+        // can grow while it emits the fixed decimal representation.
+        grow(
+            custody,
+            id.len().checked_add(48).ok_or(StoreError::Capacity)?,
+        )?;
         let numeric = id.parse::<u32>().ok().filter(|value| {
             *value < u32::MAX
                 && (id == "0" || !id.starts_with('0'))

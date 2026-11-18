@@ -9,6 +9,11 @@ pub(crate) struct SourceVersionCustody {
     previous: Option<Arc<Self>>,
     _storage: ByteReservation,
 }
+impl SourceVersionCustody {
+    pub(super) fn previous(&self) -> Option<&Self> {
+        self.previous.as_deref()
+    }
+}
 impl Drop for SourceVersionCustody {
     fn drop(&mut self) {
         // A pending suffix may contain many small accepted plans. Release its
