@@ -139,6 +139,16 @@ impl Simulation {
         actor_id: &str,
     ) -> Result<(), ActorReadError> {
         self.require_accepted_read()?;
+        self.require_player_owner(account_id, actor_id)
+    }
+
+    /// Check the saved account binding on a previously established read
+    /// boundary, including an already-held private disclosure lease.
+    pub(crate) fn require_player_owner(
+        &self,
+        account_id: &str,
+        actor_id: &str,
+    ) -> Result<(), ActorReadError> {
         if self
             .state
             .administration

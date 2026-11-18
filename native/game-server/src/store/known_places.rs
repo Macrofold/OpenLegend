@@ -14,8 +14,10 @@ use std::borrow::Cow;
 use tokio_postgres::types::ToSql;
 
 mod support;
-use support::{PendingSupports, SqlSupports};
+mod view;
 pub(super) use support::place_capsule_key;
+use support::{PendingSupports, SqlSupports};
+pub(crate) use view::{KnownPlaceViewPage, PlaceViewRequest, PlaceViewSearch};
 
 /// Own the exact read inputs independently of the active provider or save
 /// acknowledgement. The native preparation remains the final owner of place
@@ -34,6 +36,7 @@ pub struct PreparedKnownPlaceRead {
     detached_supports: Option<PendingSupports>,
     suffix_supports: PendingSupports,
     revoked: Vec<String>,
+    history: Option<view::HistoricalFilter>,
     _custody: ByteReservation,
 }
 
@@ -54,6 +57,23 @@ impl Store {
         &self,
         read: RuntimeKnownPlaceRead<'_>,
     ) -> StoreResult<PreparedKnownPlaceRead> {
+        self.prepare_places(read, false)
+    }
+
+    /// The historical reader includes corrected originals only for their
+    /// correction notice. Its executable sibling still excludes them.
+    pub(crate) fn prepare_known_place_view_read(
+        &self,
+        read: RuntimeKnownPlaceRead<'_>,
+    ) -> StoreResult<PreparedKnownPlaceRead> {
+        self.prepare_places(read, true)
+    }
+
+    fn prepare_places(
+        &self,
+        read: RuntimeKnownPlaceRead<'_>,
+        historical: bool,
+    ) -> StoreResult<PreparedKnownPlaceRead> {
         if read.durable_cut > read.binding.base_cut
             || read
                 .in_flight_through
@@ -72,6 +92,18 @@ impl Store {
                 512 + read.actor_id.len() + read.world_id.len() + read.generation.len(),
                 |n, id| n.checked_add(48)?.checked_add(id.len().checked_mul(2)?),
             )
+            .and_then(|size| {
+                if historical {
+                    read.privacy
+                        .corrections()
+                        .values()
+                        .try_fold(size, |bytes, id| {
+                            bytes.checked_add(80)?.checked_add(id.len())
+                        })
+                } else {
+                    Some(size)
+                }
+            })
             .ok_or(StoreError::Capacity)?;
         let custody = self
             .budget
@@ -100,6 +132,11 @@ impl Store {
                 .transpose()?,
             suffix_supports: PendingSupports::prepare(self, read.actor_id, read.suffix)?,
             revoked: ids().cloned().collect(),
+            history: historical.then(|| view::HistoricalFilter {
+                forgotten_count: read.privacy.forgotten().count(),
+                corrections: read.privacy.corrections().clone(),
+                privacy_revision: read.privacy.revision(),
+            }),
             _custody: custody,
         })
     }
@@ -182,7 +219,7 @@ impl Store {
                 let sentinel = sql_ordinal(read.maximum_rows.checked_add(1).ok_or(StoreError::Capacity)?)?;
                 let older = read.detached_supports.as_ref().filter(|_| !detached_durable);
                 let overlay = SqlSupports::prepare(&budget, older, &read.suffix_supports)?;
-                let select = candidate_places(overlay.has_changes());
+                    let select = candidate_places(overlay.has_changes(), false);
                 let mut params: Vec<&(dyn ToSql + Sync)> = vec![&read.world, &read.actor, &read.revoked, &sentinel];
                 if overlay.has_changes() { params.extend(overlay.parameters()); }
                 let size = transaction.query_one(&format!(
@@ -290,7 +327,7 @@ fn validate_capsule(
 // Same indexed seek, tie order, exact current source/support and retirement
 // checks as MemoryRepository.retainedPlaces. The actor's accepted privacy
 // owner already includes the cutoff's unsaved correction/forgetting.
-fn candidate_places(support_overlay: bool) -> String {
+fn candidate_places(support_overlay: bool, history: bool) -> String {
     let hidden = if support_overlay {
         "AND (p.support_record_id IS NULL OR p.support_record_id<>ALL($5::text[]))"
     } else {
@@ -305,9 +342,15 @@ fn candidate_places(support_overlay: bool) -> String {
     } else {
         ""
     };
-    let selected = "FROM available p
-        WHERE (p.source_event_id IS NULL OR p.source_event_id<>ALL($3::text[]))
-           AND p.native_source_id<>ALL($3::text[]) AND p.fact_alias<>ALL($3::text[])";
+    let direct = if history { "$5" } else { "$3" };
+    let range = if history {
+        "AND ($6::text IS NULL OR p.place_id>$6) AND ($7::text IS NULL OR p.place_id=$7)"
+    } else {
+        ""
+    };
+    let selected = format!("FROM available p
+        WHERE (p.source_event_id IS NULL OR p.source_event_id<>ALL({direct}::text[]))
+           AND p.native_source_id<>ALL({direct}::text[]) AND p.fact_alias<>ALL({direct}::text[]) {range}");
     let order = "ORDER BY p.place_id,p.observed_at DESC,p.observed_order DESC,p.owner_id DESC,p.owner_kind DESC LIMIT 1";
     format!("WITH RECURSIVE available AS NOT MATERIALIZED (
         SELECT p.owner_id,p.owner_kind,p.owner_revision,p.place_id,p.observed_at,p.observed_order,

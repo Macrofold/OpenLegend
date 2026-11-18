@@ -324,6 +324,29 @@ impl Session {
         Ok((state, rows))
     }
 
+    /// The browser opens one independent private SQL read at the current
+    /// accepted cut. Borrow only the existing pending owners for that cut.
+    pub(crate) fn player_place_cut(
+        &self,
+    ) -> Result<
+        (
+            &SimulationState,
+            crate::records::save::SaveReadMetadata,
+            (
+                Option<&crate::records::ChangedRows>,
+                &crate::records::ChangedRows,
+            ),
+        ),
+        SessionError,
+    > {
+        let state = &self.accepted()?.state;
+        let save = self.save.read_metadata()?;
+        if state.accepted_cut != save.through_cut {
+            return Err(FenceError::Stale.into());
+        }
+        Ok((state, save, self.save.pending_read_rows()))
+    }
+
     /// Remembered-place preparation runs before the physical cursor. Match
     /// its actual preparing ticket and borrow the independently accepted
     /// save rows without exposing tentative physical or knowledge changes.

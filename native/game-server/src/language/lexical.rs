@@ -3,7 +3,10 @@
 use super::{LanguageError, LanguageProvider, symbol};
 use indexmap::IndexMap;
 use libloading::Library;
-use openlegend_simulation::host::{ByteBudget, ByteReservation};
+use openlegend_simulation::{
+    host::{ByteBudget, ByteReservation},
+    text::JsText,
+};
 use std::ffi::{c_char, c_void};
 use std::fmt::Write as _;
 
@@ -47,26 +50,6 @@ impl LexicalVector {
 }
 
 impl LanguageProvider {
-    pub(super) fn lowercase_units(
-        &self,
-        input: &[u16],
-        budget: &ByteBudget,
-    ) -> Result<(Vec<u16>, ByteReservation), LanguageError> {
-        let length = i32::try_from(input.len()).map_err(|_| LanguageError::Capacity)?;
-        transform(budget, |output, maximum, status| unsafe {
-            // Empty locale is ICU root, matching ECMAScript toLowerCase, not
-            // the service's process/user locale or toLocaleLowerCase.
-            (self.lexical.lowercase)(
-                output,
-                maximum,
-                input.as_ptr(),
-                length,
-                c"".as_ptr(),
-                status,
-            )
-        })
-    }
-
     /// Generate exactly the Source tsvector text from one admitted search body.
     /// Transient ICU work is dropped before handing the result to a SQL owner.
     pub fn lexical_vector(
@@ -74,37 +57,12 @@ impl LanguageProvider {
         input: &str,
         budget: &ByteBudget,
     ) -> Result<LexicalVector, LanguageError> {
-        use LanguageError::{Capacity, Provider};
+        use LanguageError::Capacity;
         let _input = budget
             .reserve(input.len().checked_mul(4).ok_or(Capacity)?)
             .map_err(|_| Capacity)?;
         let input = input.encode_utf16().collect::<Vec<_>>();
-        let length = i32::try_from(input.len()).map_err(|_| Capacity)?;
-        let mut status = 0;
-        // The NFKC singleton belongs to the pinned ICU library. Its immutable
-        // data can be read concurrently, with no shared collation lock.
-        let model = unsafe { (self.lexical.model)(&mut status) };
-        if status > 0 || model.is_null() {
-            return Err(Provider);
-        }
-        let (normalized, _normalized) = transform(budget, |output, maximum, status| unsafe {
-            (self.lexical.normalize)(model, input.as_ptr(), length, output, maximum, status)
-        })?;
-        let length = i32::try_from(normalized.len()).map_err(|_| Capacity)?;
-        let (lower, _lower) = transform(budget, |output, maximum, status| unsafe {
-            // Empty locale is ICU root, matching ECMAScript toLowerCase, not
-            // the service's process/user locale or toLocaleLowerCase.
-            (self.lexical.lowercase)(
-                output,
-                maximum,
-                normalized.as_ptr(),
-                length,
-                c"".as_ptr(),
-                status,
-            )
-        })?;
-        drop(normalized);
-        drop(_normalized);
+        let (lower, _lower) = self.normalized_lower(&input, budget)?;
         drop(input);
         drop(_input);
         let upper = lower
@@ -113,11 +71,9 @@ impl LanguageProvider {
             .and_then(|bytes| bytes.checked_add(4096))
             .ok_or(Capacity)?;
         let mut custody = budget.reserve(upper).map_err(|_| Capacity)?;
-        let mut chars = char::decode_utf16(lower.iter().copied()).peekable();
         let mut words = IndexMap::<String, Vec<u16>>::new();
-        let mut word = String::new();
         let mut position = 0_u16;
-        let mut add = |word: &mut String| {
+        let add = |word: &mut String| {
             // PostgreSQL's explicit lexeme length/position constraints are
             // the current Source contract, shared by every search owner.
             if !word.is_empty() && word.len() < 2047 {
@@ -129,22 +85,7 @@ impl LanguageProvider {
             }
             word.clear();
         };
-        while let Some(next) = chars.next() {
-            let next = next.map_err(|_| Provider)?;
-            if next == 'i' && matches!(chars.peek(), Some(Ok('\u{0307}'))) {
-                chars.next();
-            }
-            // ICU UCharCategory 1..=11 are exactly General Category L, M, N.
-            if matches!(unsafe { (self.lexical.category)(next as i32) }, 1..=11) {
-                word.push(next);
-            } else {
-                add(&mut word);
-            }
-        }
-        add(&mut word);
-        drop(add);
-        drop(word);
-        drop(chars);
+        self.visit_words(&lower, add);
         drop(lower);
         drop(_lower);
         let mut output = String::new();
@@ -167,6 +108,96 @@ impl LanguageProvider {
             value: output,
             _storage: custody,
         })
+    }
+
+    /// Share the pinned Source normalization with private prefix searches.
+    /// Borrow each word in turn. Neither the callback nor ICU retains it.
+    pub(crate) fn search_words(
+        &self,
+        input: &JsText,
+        budget: &ByteBudget,
+        mut consume: impl FnMut(&str),
+    ) -> Result<(), LanguageError> {
+        use LanguageError::Capacity;
+        let _input = budget
+            .reserve(input.units_len().checked_mul(2).ok_or(Capacity)?)
+            .map_err(|_| Capacity)?;
+        let input: Vec<_> = input.units().collect();
+        let (lower, _lower) = self.normalized_lower(&input, budget)?;
+        drop(input);
+        drop(_input);
+        let _word = budget
+            .reserve(lower.len().checked_mul(6).ok_or(Capacity)?)
+            .map_err(|_| Capacity)?;
+        self.visit_words(&lower, |word| {
+            if !word.is_empty() {
+                consume(word);
+            }
+            word.clear();
+        });
+        Ok(())
+    }
+
+    fn normalized_lower(
+        &self,
+        input: &[u16],
+        budget: &ByteBudget,
+    ) -> Result<(Vec<u16>, ByteReservation), LanguageError> {
+        use LanguageError::{Capacity, Provider};
+        let length = i32::try_from(input.len()).map_err(|_| Capacity)?;
+        let mut status = 0;
+        // The NFKC singleton belongs to the pinned ICU library. Its immutable
+        // data can be read concurrently, with no shared collation lock.
+        let model = unsafe { (self.lexical.model)(&mut status) };
+        if status > 0 || model.is_null() {
+            return Err(Provider);
+        }
+        let (normalized, _normalized) = transform(budget, |output, maximum, status| unsafe {
+            (self.lexical.normalize)(model, input.as_ptr(), length, output, maximum, status)
+        })?;
+        self.lowercase_units(&normalized, budget)
+    }
+
+    pub(super) fn lowercase_units(
+        &self,
+        input: &[u16],
+        budget: &ByteBudget,
+    ) -> Result<(Vec<u16>, ByteReservation), LanguageError> {
+        let length = i32::try_from(input.len()).map_err(|_| LanguageError::Capacity)?;
+        transform(budget, |output, maximum, status| unsafe {
+            // Empty locale is ICU root, matching ECMAScript toLowerCase, not
+            // the service's process/user locale or toLocaleLowerCase.
+            (self.lexical.lowercase)(
+                output,
+                maximum,
+                input.as_ptr(),
+                length,
+                c"".as_ptr(),
+                status,
+            )
+        })
+    }
+
+    fn visit_words(&self, normalized: &[u16], mut add: impl FnMut(&mut String)) {
+        let mut chars = char::decode_utf16(normalized.iter().copied()).peekable();
+        let mut word = String::new();
+        while let Some(next) = chars.next() {
+            let Ok(next) = next else {
+                // An isolated surrogate is outside Source's word categories.
+                add(&mut word);
+                continue;
+            };
+            if next == 'i' && matches!(chars.peek(), Some(Ok('\u{0307}'))) {
+                chars.next();
+            }
+            // ICU UCharCategory 1..=11 are exactly General Category L, M, N.
+            if matches!(unsafe { (self.lexical.category)(next as i32) }, 1..=11) {
+                word.push(next);
+            } else {
+                add(&mut word);
+            }
+        }
+        add(&mut word);
     }
 }
 

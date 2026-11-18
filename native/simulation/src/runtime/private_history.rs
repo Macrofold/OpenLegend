@@ -224,6 +224,48 @@ impl NativeWorldSession {
         read: &mut RuntimePrivateHistoryRead,
         input: &[u8],
     ) -> Result<(), RuntimeError> {
+        self.admit_place_selection(read, |state, scope| {
+            crate::capture::PreparedKnownPlaceSources::prepare(state, scope, input, &self.budget)
+        })
+    }
+
+    /// Attach only the purpose-bound SQL witnesses obtained by this reader.
+    /// The caller's byte owner lives through validation; native custody keeps
+    /// the exact personal/support witnesses pinned after this return.
+    pub fn admit_history_places_direct(
+        &self,
+        read: &mut RuntimePrivateHistoryRead,
+        places: &[crate::capture::RuntimeKnownPlaceWitness],
+        personal: Vec<(
+            crate::experience::PersonalSourceKind,
+            crate::records::InstalledRow,
+        )>,
+        supports: Vec<crate::records::InstalledRow>,
+        _input_storage: ByteReservation,
+    ) -> Result<(), RuntimeError> {
+        self.admit_place_selection(read, |state, scope| {
+            crate::capture::PreparedKnownPlaceSources::prepare_direct(
+                state,
+                scope,
+                places,
+                personal,
+                supports,
+                &self.budget,
+            )
+        })
+    }
+
+    fn admit_place_selection(
+        &self,
+        read: &mut RuntimePrivateHistoryRead,
+        prepare: impl FnOnce(
+            &crate::simulation::SimulationState,
+            Arc<crate::capture::NpcHistoricalScope>,
+        ) -> Result<
+            crate::capture::PreparedKnownPlaceSources,
+            crate::execution::ExecutionError,
+        >,
+    ) -> Result<(), RuntimeError> {
         self.require_active()?;
         if !matches!(read.purpose, HistoryPurpose::Personal)
             || read.candidate.is_some()
@@ -234,15 +276,55 @@ impl NativeWorldSession {
             return Err(failure("history places already selected or wrong purpose"));
         }
         let state = &self.session.accepted().map_err(failure)?.state;
-        let places = crate::capture::PreparedKnownPlaceSources::prepare(
-            state,
-            Arc::clone(&read.scope),
-            input,
-            &self.budget,
-        )
-        .map_err(failure)?;
-        read.places = Some(places);
+        read.places = Some(prepare(state, Arc::clone(&read.scope)).map_err(failure)?);
         Ok(())
+    }
+
+    /// Capture the permitted private reader and the repository's original
+    /// maintenance cut together. Only the supplied application callback may
+    /// retain selected SQL inputs. It must qualify the result before use.
+    pub fn read_player_known_places<T>(
+        &mut self,
+        account: &str,
+        actor: &str,
+        maximum_rows: u64,
+        prepare: impl FnOnce(super::RuntimeKnownPlaceRead<'_>) -> T,
+    ) -> Result<(RuntimePrivateHistoryRead, T), RuntimeError> {
+        self.session
+            .accepted()
+            .map_err(failure)?
+            .require_player_read(account, actor)
+            .map_err(failure)?;
+        let read = self.read_history(actor, "personal")?;
+        let (state, save, (detached, suffix)) = self.session.player_place_cut().map_err(failure)?;
+        let absent_privacy = crate::experience::ActorPrivacy::default();
+        let privacy = state
+            .experience
+            .actor(actor)
+            .map_or(&absent_privacy, |entry| &entry.privacy);
+        let result = prepare(super::RuntimeKnownPlaceRead {
+            binding: crate::geometry::GeometryBinding::new(
+                CandidateKey {
+                    id: 0,
+                    base_cut: state.accepted_cut,
+                    generation: self.session.operational_generation(),
+                },
+                state.installed.geometry.spatial.revision,
+                self.next_read_serial,
+            ),
+            world_id: &state.physical.header.id,
+            generation: &state.generation,
+            actor_id: actor,
+            maximum_rows,
+            maximum_bytes: state.installed.personal_evidence_preparation.bytes,
+            durable_revision: save.durable_revision,
+            durable_cut: save.durable_cut,
+            in_flight_through: save.in_flight_through,
+            privacy,
+            detached,
+            suffix,
+        });
+        Ok((read, result))
     }
     /// The read's original personal coverage is captured before SQL. Its
     /// repository answer may outlive save acknowledgement; never recapture a

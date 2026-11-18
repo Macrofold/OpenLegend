@@ -41,6 +41,7 @@ pub(crate) use npc_references::NpcReferenceFacts;
 mod npc_history;
 pub(crate) use npc_history::{NpcHistoricalScope, NpcHistoryPrefix};
 mod npc_sources;
+pub use npc_sources::RuntimeKnownPlaceWitness;
 pub(crate) use npc_sources::{
     NpcPersonalScope, NpcPersonalSelection, NpcSourceRows, NpcSourceSelection, NpcSourcesAnswer,
     NpcSourcesCursor, NpcSourcesRequest, PreparedKnownPlaceSources, PreparedMovementTerms,

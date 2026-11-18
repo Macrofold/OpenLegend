@@ -8,16 +8,16 @@ use crate::reception::{EncounterExposure, ObservationOrigin, SensoryFacet};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct PlaceSelection {
-    capsule: KnownPlaceCapsule,
-    exposure: EncounterExposure,
+pub struct RuntimeKnownPlaceWitness {
+    pub capsule: KnownPlaceCapsule,
+    pub exposure: EncounterExposure,
 }
-heap_record!(PlaceSelection { capsule, exposure });
+heap_record!(RuntimeKnownPlaceWitness { capsule, exposure });
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct PlaceSourcesRequest {
-    places: Vec<PlaceSelection>,
+    places: Vec<RuntimeKnownPlaceWitness>,
     personal_rows: NpcSourceRows,
     supports: Vec<InstalledRow>,
 }
@@ -40,7 +40,7 @@ impl PreparedKnownPlaceSources {
     ) -> Result<Self, ExecutionError> {
         let text = std::str::from_utf8(input).map_err(|_| ExecutionError::InvalidCheckpoint)?;
         let element = [
-            size_of::<PlaceSelection>(),
+            size_of::<RuntimeKnownPlaceWitness>(),
             size_of::<NpcPersonalSourceRow>(),
             size_of::<InstalledRow>(),
             size_of::<crate::records::SqlCell>(),
@@ -65,21 +65,73 @@ impl PreparedKnownPlaceSources {
         })?;
         let request: PlaceSourcesRequest =
             serde_json::from_str(text).map_err(|_| ExecutionError::InvalidCheckpoint)?;
+        Self::validate_sources(
+            state,
+            scope,
+            &request.places,
+            request.personal_rows,
+            request.supports,
+            budget,
+        )
+    }
+
+    /// The direct server already owns the exact SQL witnesses. Share their
+    /// validation with the encoded addon path without another JSON product.
+    pub(crate) fn prepare_direct(
+        state: &SimulationState,
+        scope: Arc<NpcHistoricalScope>,
+        places: &[RuntimeKnownPlaceWitness],
+        personal: Vec<(PersonalSourceKind, InstalledRow)>,
+        supports: Vec<InstalledRow>,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let _headers = budget.reserve(
+            personal
+                .len()
+                .checked_mul(size_of::<NpcPersonalSourceRow>())
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        Self::validate_sources(
+            state,
+            scope,
+            places,
+            NpcSourceRows {
+                pages: Vec::new(),
+                values: Vec::new(),
+                personal: personal
+                    .into_iter()
+                    .map(|(kind, row)| NpcPersonalSourceRow::Current { kind, row })
+                    .collect(),
+                parents: Vec::new(),
+                duplicate_summary: None,
+            },
+            supports,
+            budget,
+        )
+    }
+
+    fn validate_sources(
+        state: &SimulationState,
+        scope: Arc<NpcHistoricalScope>,
+        places: &[RuntimeKnownPlaceWitness],
+        personal_rows: NpcSourceRows,
+        support_rows: Vec<InstalledRow>,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
         if !scope.still_permitted(state)
-            || !request.personal_rows.pages.is_empty()
-            || !request.personal_rows.values.is_empty()
-            || !request.personal_rows.parents.is_empty()
-            || request.personal_rows.duplicate_summary.is_some()
+            || !personal_rows.pages.is_empty()
+            || !personal_rows.values.is_empty()
+            || !personal_rows.parents.is_empty()
+            || personal_rows.duplicate_summary.is_some()
         {
             return Err(ExecutionError::InvalidCheckpoint);
         }
         let actor = scope.actor_id.as_str();
-        let mut scratch_bytes = request
-            .places
+        let mut scratch_bytes = places
             .len()
             .checked_mul(size_of::<NpcPersonalSelection>() + size_of::<bool>())
             .ok_or(ExecutionError::Capacity)?;
-        for selected in &request.places {
+        for selected in places {
             scratch_bytes = scratch_bytes
                 .checked_add(
                     selected
@@ -90,7 +142,7 @@ impl PreparedKnownPlaceSources {
                 )
                 .ok_or(ExecutionError::Capacity)?;
         }
-        let coverage = if request.supports.is_empty() {
+        let coverage = if support_rows.is_empty() {
             None
         } else {
             Some(
@@ -111,9 +163,9 @@ impl PreparedKnownPlaceSources {
         let _scratch = budget.reserve(scratch_bytes)?;
         let mut personal = Vec::new();
         personal
-            .try_reserve_exact(request.places.len())
+            .try_reserve_exact(places.len())
             .map_err(|_| ExecutionError::Capacity)?;
-        for selected in &request.places {
+        for selected in places {
             if selected.capsule.source.observer.actor_id != actor
                 || !selected.exposure.validate()
                 || !matches!(&selected.exposure, EncounterExposure::Place { id, .. } if *id == selected.capsule.place_id)
@@ -142,7 +194,7 @@ impl PreparedKnownPlaceSources {
             Arc::clone(&scope),
             cursor::NpcPersonalScope::capture(state, actor)?,
             &selection,
-            request.personal_rows,
+            personal_rows,
             budget,
         )?;
         if !personal.unavailable_personal.is_empty()
@@ -152,9 +204,9 @@ impl PreparedKnownPlaceSources {
         }
         let mut matched = Vec::new();
         matched
-            .try_reserve_exact(request.places.len())
+            .try_reserve_exact(places.len())
             .map_err(|_| ExecutionError::Capacity)?;
-        matched.resize(request.places.len(), false);
+        matched.resize(places.len(), false);
         for source in &personal.personal {
             // An awareness account has its own exact exposure field. Retained
             // memory/summary originals instead carry encounter-exposure facets.
@@ -176,7 +228,7 @@ impl PreparedKnownPlaceSources {
                 _awareness_decode = None;
                 None
             };
-            for (index, selected) in request.places.iter().enumerate() {
+            for (index, selected) in places.iter().enumerate() {
                 if selected.capsule.personal_source.as_ref()
                     != Some(&source.record.header().reference)
                 {
@@ -224,8 +276,7 @@ impl PreparedKnownPlaceSources {
         let mut storage = budget.reserve(
             size_of::<Self>()
                 .checked_add(
-                    request
-                        .supports
+                    support_rows
                         .len()
                         .checked_mul(size_of::<(Arc<SharedMemoryPin>, Arc<SharedMemoryPin>)>())
                         .ok_or(ExecutionError::Capacity)?,
@@ -233,14 +284,13 @@ impl PreparedKnownPlaceSources {
                 .ok_or(ExecutionError::Capacity)?,
         )?;
         let mut pins = Vec::new();
-        pins.try_reserve_exact(request.supports.len())
+        pins.try_reserve_exact(support_rows.len())
             .map_err(|_| ExecutionError::Capacity)?;
         let supports = coverage
             .map(|coverage| {
-                let decode_bytes = request.supports.iter().try_fold(
+                let decode_bytes = support_rows.iter().try_fold(
                     map_storage::<String, Arc<crate::received::TemporalSupportRecord>>(
-                        request
-                            .supports
+                        support_rows
                             .len()
                             .checked_mul(2)
                             .ok_or(ExecutionError::Capacity)?,
@@ -260,7 +310,7 @@ impl PreparedKnownPlaceSources {
                 selected_coverage.complete = false;
                 Ok::<_, ExecutionError>(TemporalSupportCollection::install(
                     actor,
-                    request.supports,
+                    support_rows,
                     selected_coverage,
                     state.physical.header.sim_time,
                     state.reception.received_values.as_ref(),
@@ -276,7 +326,7 @@ impl PreparedKnownPlaceSources {
                     actor, support, budget,
                 )?;
                 let mut used = false;
-                for (index, selected) in request.places.iter().enumerate() {
+                for (index, selected) in places.iter().enumerate() {
                     if selected.capsule.personal_source.is_none()
                         && capsules.capsules().iter().any(|capsule| capsule == &selected.capsule)
                         && support.values.iter().zip(&support.receipt.facets).any(|(value, field)| {
@@ -305,7 +355,7 @@ impl PreparedKnownPlaceSources {
         // read's captured privacy revision still fences changes during waits.
         // docs/memory-architecture.md#private-retrieval-fencing
         if let Some(privacy) = state.experience.actor(actor).map(|owner| &owner.privacy) {
-            for selected in &request.places {
+            for selected in places {
                 let capsule = &selected.capsule;
                 let length = crate::encoding::json_record_len(&(
                     "perception-fact",

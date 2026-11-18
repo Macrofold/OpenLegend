@@ -29,6 +29,7 @@ use personal::CapturedPersonalRecord;
 mod places;
 mod rows;
 pub(crate) use places::PreparedKnownPlaceSources;
+pub use places::RuntimeKnownPlaceWitness;
 
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

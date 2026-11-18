@@ -476,7 +476,7 @@ fn current_select(table: &Table) -> String {
     select
 }
 
-fn installed_row(table: &Table, row: Row) -> StoreResult<InstalledRow> {
+pub(super) fn installed_row(table: &Table, row: Row) -> StoreResult<InstalledRow> {
     let mut extra = Vec::with_capacity(table.columns.len());
     for (offset, column) in table.columns.iter().enumerate() {
         extra.push(cell(&row, 5 + offset, column.data_type)?);
