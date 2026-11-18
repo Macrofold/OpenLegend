@@ -1,6 +1,7 @@
 //! Public body projection. Every personal alias, pose and detail is drawn
 //! from the selected observer's retained current facets.
 
+use super::PublicArt;
 use super::SceneError;
 use crate::player_references::PlayerReferences;
 use indexmap::IndexMap;
@@ -16,7 +17,6 @@ use openlegend_simulation::{
     },
 };
 use serde::{Deserialize, Serialize};
-use serde_json::value::RawValue;
 use std::{mem::size_of, sync::Arc};
 
 #[derive(Deserialize)]
@@ -26,9 +26,9 @@ pub struct ObservedPolicy {
     body_kinds: IndexMap<String, Arc<str>>,
     fallback_body_kind: Arc<str>,
     #[serde(default)]
-    portraits: IndexMap<String, Arc<RawValue>>,
+    portraits: IndexMap<String, PublicArt>,
     #[serde(default)]
-    item_art: IndexMap<String, Arc<RawValue>>,
+    item_art: IndexMap<String, PublicArt>,
     talk_unavailable: Arc<str>,
     trade_title: Arc<str>,
 }
@@ -40,7 +40,7 @@ pub struct PreparedContacts {
     _custody: ByteReservation,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct BodyIdentity {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -50,7 +50,7 @@ struct BodyIdentity {
     revision: u64,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct ObservedAt {
     kind: &'static str,
@@ -64,7 +64,7 @@ struct ObservedAt {
     source_reference: String,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct ObservationItems {
     items: Vec<CarriedItem>,
@@ -74,18 +74,18 @@ struct ObservationItems {
     confirmed_through: Option<f64>,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 pub struct BodySize {
     pub width: f64,
     pub height: f64,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 struct Heat {
     lit: bool,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct TradeSummary {
     scope: String,
@@ -96,14 +96,14 @@ struct TradeSummary {
     revision: String,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 struct TradeLabels {
     title: Arc<str>,
 }
 
 /// The exact ordinary `EntityView` fields backed by permitted capture families.
 /// An unknown positive storage or assembly family refuses at its owner.
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ObservedEntity {
     id: String,
@@ -123,9 +123,9 @@ pub struct ObservedEntity {
     #[serde(skip_serializing_if = "Option::is_none")]
     icon: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    art: Option<Arc<RawValue>>,
+    art: Option<PublicArt>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    portrait: Option<Arc<RawValue>>,
+    portrait: Option<PublicArt>,
     status_effects: Vec<StatusEffectProjection>,
     #[serde(skip_serializing_if = "Option::is_none")]
     attributes: Option<Vec<AttributeView>>,
@@ -435,4 +435,61 @@ fn trade_summary(
         offers: [],
         revision,
     })
+}
+
+impl ObservedEntity {
+    pub(crate) fn id(&self) -> &str {
+        &self.id
+    }
+    pub(crate) fn delta<'a>(&'a self, before: &'a Self) -> EntityFields<'a> {
+        EntityFields {
+            before,
+            after: self,
+        }
+    }
+}
+
+pub(crate) struct EntityFields<'a> {
+    before: &'a ObservedEntity,
+    after: &'a ObservedEntity,
+}
+
+impl EntityFields<'_> {
+    pub(crate) fn removed(&self) -> Vec<&'static str> {
+        use super::delta::removed;
+        let Self { before, after } = self;
+        removed!(before,after;
+            "nameForm"=>display.name_form,"indefiniteArticle"=>display.indefinite_article,
+            "identity"=>identity,"attentionPreference"=>attention_preference,"bodyPlan"=>body_plan,
+            "icon"=>icon,"art"=>art,"portrait"=>portrait,"attributes"=>attributes,"health"=>health,
+            "description"=>description,"quantity"=>quantity,"heat"=>heat,"bodyState"=>body_state,
+            "contents"=>contents,"observedCarried"=>observed_carried,"canTalk"=>can_talk,
+            "talkRequiresAi"=>talk_requires_ai,"talkUnavailableReason"=>talk_unavailable_reason,
+            "communicationReference"=>communication_reference,"trade"=>trade,
+        )
+    }
+}
+impl Serialize for EntityFields<'_> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use super::delta::fields;
+        use serde::ser::SerializeMap;
+        let Self { before, after } = self;
+        let mut map = serializer.serialize_map(None)?;
+        fields!(map,before,after;required {
+          "bodyReference"=>body_reference,"contextActionRevision"=>context_action_revision,
+          "name"=>display.name,"observation"=>observation,"kind"=>kind,"subtype"=>subtype,
+          "statusEffects"=>status_effects,"observedMoving"=>observed_moving,"position"=>position,
+          "supportSurfaceId"=>support_surface_id,"heading"=>heading,"appearance"=>appearance,
+          "radius"=>radius,"bodySize"=>body_size,"actionAnimation"=>action_animation,"status"=>status,
+        } optional {
+          "nameForm"=>display.name_form,"indefiniteArticle"=>display.indefinite_article,
+          "identity"=>identity,"attentionPreference"=>attention_preference,"bodyPlan"=>body_plan,
+          "icon"=>icon,"art"=>art,"portrait"=>portrait,"attributes"=>attributes,"health"=>health,
+          "description"=>description,"quantity"=>quantity,"heat"=>heat,"bodyState"=>body_state,
+          "contents"=>contents,"observedCarried"=>observed_carried,"canTalk"=>can_talk,
+          "talkRequiresAi"=>talk_requires_ai,"talkUnavailableReason"=>talk_unavailable_reason,
+          "communicationReference"=>communication_reference,"trade"=>trade,
+        });
+        map.end()
+    }
 }

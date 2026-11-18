@@ -49,7 +49,7 @@ impl PracticePolicy {
     }
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PracticeView {
     id: Arc<str>,
@@ -70,7 +70,7 @@ pub struct PracticeView {
     evidence: Vec<Evidence>,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 struct Evidence {
     #[serde(flatten)]
     support: ReleaseSupport,

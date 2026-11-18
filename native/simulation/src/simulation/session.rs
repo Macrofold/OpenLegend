@@ -248,6 +248,12 @@ pub(crate) struct Session {
     _reservation: ResidentReservation,
 }
 impl Session {
+    /// These application-owned settings participate in the same accepted
+    /// candidate as actor views. They do not confer access to saved assets.
+    pub(crate) fn player_view_settings(&self) -> &InstalledHostSettings {
+        &self.host
+    }
+
     /// Consumes the fully checked current selected closure. Installation and
     /// writer adoption remain private until their server transaction succeeds.
     pub(crate) fn new(
@@ -373,6 +379,32 @@ impl Session {
             return Err(FenceError::Stale.into());
         }
         Ok((save, privacy, self.save.pending_read_rows()))
+    }
+
+    /// The source planner consumes the accepted predecessor, even though
+    /// this candidate has already prepared a possible personal replacement.
+    pub(crate) fn source_versions_read(
+        &self,
+        binding: crate::geometry::GeometryBinding,
+        world: &str,
+        generation: &str,
+    ) -> Result<(crate::records::save::SaveReadMetadata, &SaveJournal), SessionError> {
+        let key = CandidateKey {
+            id: binding.candidate_id,
+            base_cut: binding.base_cut,
+            generation: binding.generation,
+        };
+        self.fence().validate_phase(key, CandidatePhase::Preparing)?;
+        let state = &self.simulation.state;
+        let save = self.save.read_metadata()?;
+        if world != state.physical.header.id
+            || generation != state.generation
+            || save.through_cut != binding.base_cut
+            || state.accepted_cut != binding.base_cut
+        {
+            return Err(FenceError::Stale.into());
+        }
+        Ok((save, &self.save))
     }
     /// Capture the actor's real unsaved page representation before any private
     /// writes. Pending non-temporal deltas/history already belong to the

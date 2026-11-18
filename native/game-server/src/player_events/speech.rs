@@ -14,7 +14,7 @@ use openlegend_simulation::{
 };
 use serde::Serialize;
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(
     tag = "kind",
     rename_all = "kebab-case",
@@ -51,7 +51,7 @@ impl Part {
     }
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(super) struct SpeechPresentation {
     acquisition: SpeechPerception,

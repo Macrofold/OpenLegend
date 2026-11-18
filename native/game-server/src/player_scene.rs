@@ -2,13 +2,27 @@
 //! bodies around them. This layer cannot read another actor's live state.
 
 use openlegend_simulation::host::CapacityError;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use serde_json::value::RawValue;
+use std::sync::Arc;
 use std::{error::Error, fmt};
 
+pub(crate) mod delta;
 mod observed;
 mod self_view;
-pub use observed::{ObservedPolicy, PreparedContacts, prepare_contacts};
-pub use self_view::{OwnPolicy, PreparedSelf, prepare_self};
+pub(crate) use observed::EntityFields;
+pub use observed::{ObservedEntity, ObservedPolicy, PreparedContacts, prepare_contacts};
+pub use self_view::{Marker, OwnPolicy, PlayerBodyView, PreparedSelf, prepare_self};
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(transparent)]
+struct PublicArt(Arc<RawValue>);
+
+impl PartialEq for PublicArt {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.0, &other.0) || self.0.get() == other.0.get()
+    }
+}
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

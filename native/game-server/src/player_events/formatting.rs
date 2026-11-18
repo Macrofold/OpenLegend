@@ -5,7 +5,7 @@ use super::{CoordinateTextRule, EventScalar, Evidence, JsText, ReferenceRole};
 use openlegend_simulation::narration::display_number;
 use serde::Serialize;
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(super) struct AttributeChange {
     attribute_id: String,

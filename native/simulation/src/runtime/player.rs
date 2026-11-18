@@ -8,6 +8,7 @@ use crate::capture::{
 use crate::geometry::{GeometryAnswers, GeometryBinding};
 use crate::host::{CapacityError, PublicationLease};
 use crate::simulation::AcceptedActorRead;
+use indexmap::IndexMap;
 use std::mem::size_of;
 
 #[derive(Deserialize)]
@@ -41,7 +42,28 @@ pub struct RuntimePlayerRead {
     preparation: Option<PlayerControlPreparation>,
     controls: Option<CapturedPlayerControls>,
     clock: RuntimeClock,
+    view_source: Option<RuntimePlayerViewSource>,
     _custody: ByteReservation,
+}
+
+/// Finite data from the same accepted read as the stand-alone view. Saved
+/// presentation presence is a requirement for the application's asset grant.
+pub struct RuntimePlayerViewSource {
+    pub history_order: u64,
+    pub privacy_revision: u64,
+    pub memory_cut: u64,
+    pub places_revision: u64,
+    pub inventory_revision: u64,
+    pub has_presentation_release: bool,
+    pub presentation_release_revision: Option<u64>,
+    milestones: IndexMap<String, bool>,
+    _custody: ByteReservation,
+}
+
+impl RuntimePlayerViewSource {
+    pub fn milestone_done(&self, id: &str) -> bool {
+        self.milestones.get(id).copied().unwrap_or(false)
+    }
 }
 
 pub use crate::simulation::PlayerInputState as RuntimePlayerInputState;
@@ -115,7 +137,7 @@ impl NativeWorldSession {
         actor: &str,
         event_window: usize,
     ) -> Result<RuntimePlayerRead, RuntimeError> {
-        self.read_player_via(account, actor, event_window, |simulation, budget| {
+        self.read_player_via(account, actor, event_window, false, |simulation, budget| {
             simulation
                 .read_player(account, actor, budget)
                 .map(|read| (read, ()))
@@ -133,7 +155,7 @@ impl NativeWorldSession {
         event_window: usize,
         prepare: impl FnOnce(PlayerSelfFacts<'_>, &ByteBudget) -> Result<T, CapacityError>,
     ) -> Result<(RuntimePlayerRead, T), RuntimeError> {
-        self.read_player_via(account, actor, event_window, |simulation, budget| {
+        self.read_player_via(account, actor, event_window, true, |simulation, budget| {
             simulation.read_player_direct(account, actor, budget, prepare)
         })
     }
@@ -143,6 +165,7 @@ impl NativeWorldSession {
         account: &str,
         actor: &str,
         event_window: usize,
+        app_view: bool,
         capture: impl FnOnce(
             &crate::simulation::Simulation,
             &ByteBudget,
@@ -162,6 +185,9 @@ impl NativeWorldSession {
             .read_player_events(account, actor, event_window, &self.budget)
             .map_err(failure)?;
         let state = &simulation.state;
+        let view_source = app_view
+            .then(|| capture_view_source(&self.session, state, actor, &self.budget))
+            .transpose()?;
         let binding = GeometryBinding::new(
             CandidateKey {
                 id: 0,
@@ -200,6 +226,7 @@ impl NativeWorldSession {
                 preparation,
                 controls,
                 clock,
+                view_source,
                 _custody: custody,
             },
             prepared,
@@ -245,6 +272,11 @@ impl NativeWorldSession {
     }
 }
 impl RuntimePlayerRead {
+    pub fn view_source(&self) -> Result<&RuntimePlayerViewSource, RuntimeError> {
+        self.view_source
+            .as_ref()
+            .ok_or_else(|| failure("application view metadata was not captured"))
+    }
     /// These controls and clock came from the accepted cut used for the view.
     pub fn clock(&self) -> RuntimeClock {
         self.clock
@@ -354,4 +386,43 @@ impl RuntimePlayerRead {
         ];
         RuntimeJson::join(&parts, budget)
     }
+}
+
+fn capture_view_source(
+    session: &crate::simulation::Session,
+    state: &crate::simulation::SimulationState,
+    actor: &str,
+    budget: &ByteBudget,
+) -> Result<RuntimePlayerViewSource, RuntimeError> {
+    use crate::host::retained_size::map_storage;
+    let host = session.player_view_settings();
+    let milestones = host
+        .actor_milestones
+        .as_ref()
+        .and_then(|rows| rows.get(actor));
+    let bytes = milestones
+        .map_or(Some(0), |rows| {
+            rows.keys()
+                .try_fold(map_storage::<String, bool>(rows.len())?, |sum, key| {
+                    sum.checked_add(key.len())
+                })
+        })
+        .ok_or_else(|| failure("capacity"))?;
+    let custody = budget.reserve(bytes).map_err(failure)?;
+    Ok(RuntimePlayerViewSource {
+        history_order: state.occurrences.next_hot_ordinal(),
+        privacy_revision: state
+            .experience
+            .actor(actor)
+            .map_or(0, |history| history.privacy.revision()),
+        // This display hint can advance with the accepted cut. It cannot
+        // substitute for the exact source/permission check on a memory read.
+        memory_cut: state.accepted_cut,
+        places_revision: state.experience.known_place_revision(actor),
+        inventory_revision: state.administration.object_membership.revision,
+        has_presentation_release: host.presentation_release.is_some(),
+        presentation_release_revision: host.presentation_release_revision,
+        milestones: milestones.cloned().unwrap_or_default(),
+        _custody: custody,
+    })
 }

@@ -85,7 +85,7 @@ struct CoordinateTextRule {
     action_types: Vec<String>,
     prefixes: Vec<String>,
 }
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Presentation {
     category: String,
@@ -270,7 +270,7 @@ impl Evidence {
     }
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct PerceivedReference {
     id: String,
@@ -281,7 +281,7 @@ struct PerceivedReference {
     live: LiveReference,
 }
 
-#[derive(Clone, Default, Serialize)]
+#[derive(Clone, Default, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct LiveReference {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -330,7 +330,7 @@ fn live_references(
     ))
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct SpokenEvent {
     #[serde(flatten)]
@@ -340,7 +340,7 @@ struct SpokenEvent {
     speaker_contact: Option<String>,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct SoundEvent {
     acquisition: openlegend_simulation::reception::SoundAcquisition,
@@ -354,7 +354,7 @@ struct SoundEvent {
     #[serde(skip_serializing_if = "Option::is_none")]
     kind: Option<openlegend_simulation::reception::SoundKind>,
 }
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 struct SoundSource {
     reference: String,
     description: openlegend_simulation::state::Named,
@@ -390,7 +390,7 @@ impl SoundEvent {
     }
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PublicEvent {
     presentation: Presentation,
@@ -417,8 +417,13 @@ pub struct PublicEvent {
     #[serde(skip_serializing_if = "Option::is_none")]
     sound: Option<SoundEvent>,
 }
+impl PublicEvent {
+    pub(crate) fn id(&self) -> &str {
+        &self.id
+    }
+}
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConversationEvent {
     id: String,
@@ -436,7 +441,7 @@ pub struct ConversationEvent {
     reply: Option<ReplyStatus>,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct ReplyStatus {
     reply_status: SpeechReplyStatus,

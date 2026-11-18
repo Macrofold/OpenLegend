@@ -1,6 +1,7 @@
 //! Own-body, movement and detector display. The application holds only the
 //! fields the ordinary browser needs after the accepted capture ends.
 
+use super::PublicArt;
 use super::{SceneError, observed::BodySize};
 use crate::player_references::PlayerReferences;
 use indexmap::IndexMap;
@@ -14,7 +15,6 @@ use openlegend_simulation::{
     worlds::base_observed::{ObservedActionAnimation, SpeechVolume, StatusEffectProjection},
 };
 use serde::{Deserialize, Serialize};
-use serde_json::value::RawValue;
 use std::sync::Arc;
 
 mod practice;
@@ -25,7 +25,7 @@ use practice::{PracticePolicy, PracticeView, project_practice};
 pub struct OwnPolicy {
     default_appearance: JsText,
     #[serde(default)]
-    portraits: IndexMap<String, Arc<RawValue>>,
+    portraits: IndexMap<String, PublicArt>,
     #[serde(default)]
     departure_notice: Option<Arc<str>>,
     acoustics: AcousticPolicy,
@@ -34,7 +34,7 @@ pub struct OwnPolicy {
     evasion_label: Option<Arc<str>>,
     #[serde(default)]
     reincarnation: Option<ReincarnationPolicy>,
-    action_wording: Arc<RawValue>,
+    action_wording: PublicArt,
     action: ActionPolicy,
     practice: PracticePolicy,
     melee: MeleePolicy,
@@ -102,7 +102,7 @@ struct ReincarnationPolicy {
     scars: Vec<Arc<ScarDefinition>>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct ScarDefinition {
     id: String,
@@ -127,7 +127,7 @@ pub struct PreparedSelf {
     _custody: ByteReservation,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PlayerBodyView {
     #[serde(flatten)]
@@ -138,7 +138,7 @@ pub struct PlayerBodyView {
     heading: f64,
     appearance: JsText,
     #[serde(skip_serializing_if = "Option::is_none")]
-    portrait: Option<Arc<RawValue>>,
+    portrait: Option<PublicArt>,
     pub knowledge_revision: u64,
     body_size: BodySize,
     attributes: Vec<AttributeView>,
@@ -167,10 +167,10 @@ pub struct PlayerBodyView {
     equipment_ports: Vec<EquipmentPort>,
     action_attempts: Vec<Attempt>,
     outings: [(); 0],
-    action_wording: Arc<RawValue>,
+    action_wording: PublicArt,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct Death {
     message: Arc<str>,
@@ -183,13 +183,13 @@ struct Death {
     left: Vec<Possession>,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 struct Possession {
     name: String,
     quantity: u64,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct Scar {
     #[serde(flatten)]
@@ -197,14 +197,14 @@ struct Scar {
     treatments_remaining: f64,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct Evasion {
     label: Arc<str>,
     ready_in: f64,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 struct AttackSource {
     kind: &'static str,
     label: Arc<str>,
@@ -214,7 +214,7 @@ struct AttackSource {
     command: StrikeCommand,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct StrikeCommand {
     #[serde(rename = "type")]
@@ -222,7 +222,7 @@ struct StrikeCommand {
     definition_id: Arc<str>,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OwnAction {
     id: String,
@@ -234,7 +234,7 @@ pub struct OwnAction {
     advancing: bool,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 struct Attempt {
     id: String,
     description: JsText,
@@ -246,7 +246,7 @@ struct Attempt {
     category: Option<String>,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct VisionGuide {
     radius: f64,
@@ -258,7 +258,7 @@ pub struct VisionGuide {
     target_heights: [f64; 3],
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HearingGuide {
     reference_radius: f64,
@@ -268,13 +268,13 @@ pub struct HearingGuide {
     ear_height: f64,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 pub struct CommunicationReference {
     id: String,
     label: JsText,
 }
 
-#[derive(Serialize)]
+#[derive(PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Marker {
     id: String,
@@ -288,6 +288,20 @@ pub struct Marker {
 }
 
 impl PreparedSelf {
+    pub(crate) fn pause_action(&mut self) {
+        if let Some(action) = self.player.action.as_mut() {
+            action.advancing = false;
+        }
+    }
+
+    pub(crate) fn inactive(&self) -> bool {
+        self.player.participation == "inactive"
+    }
+
+    pub(crate) fn has_death_review(&self) -> bool {
+        self.player.death.is_some()
+    }
+
     /// Apply only a name already selected in the same perception cut.
     /// Target text creates no contact or command authorization.
     pub fn name_action_target(
@@ -644,4 +658,47 @@ pub fn prepare_self(
 }
 fn contains(values: &[String], value: &str) -> bool {
     values.iter().any(|candidate| candidate == value)
+}
+
+impl PlayerBodyView {
+    pub(crate) fn delta<'a>(&'a self, before: &'a Self) -> BodyFields<'a> {
+        BodyFields {
+            before,
+            after: self,
+        }
+    }
+}
+
+pub(crate) struct BodyFields<'a> {
+    before: &'a PlayerBodyView,
+    after: &'a PlayerBodyView,
+}
+impl BodyFields<'_> {
+    pub(crate) fn removed(&self) -> Vec<&'static str> {
+        use super::delta::removed;
+        let Self { before, after } = self;
+        removed!(before,after;
+          "nameForm"=>name.name_form, "indefiniteArticle"=>name.indefinite_article,"portrait"=>portrait,
+          "departureNotice"=>departure_notice,"bodyState"=>body_state,"evasion"=>evasion,
+          "attackSource"=>attack_source,"traits"=>traits,
+        )
+    }
+    pub(crate) fn entries<S: serde::ser::SerializeMap>(&self, map: &mut S) -> Result<(), S::Error> {
+        use super::delta::fields;
+        let Self { before, after } = self;
+        fields!(map,before,after; required {
+          "id"=>id,"name"=>name.name,"position"=>position,"supportSurfaceId"=>support_surface_id,
+          "heading"=>heading,"appearance"=>appearance,"knowledgeRevision"=>knowledge_revision,
+          "bodySize"=>body_size,"attributes"=>attributes,"practice"=>practice,"statusEffects"=>status_effects,
+          "alive"=>alive,"hasWork"=>has_work,"life"=>life,"participation"=>participation,
+          "death"=>death,"scars"=>scars,"action"=>action,"actionAnimation"=>action_animation,
+          "inventory"=>inventory,"inventoryRevision"=>inventory_revision,"equipmentPorts"=>equipment_ports,
+          "actionAttempts"=>action_attempts,"outings"=>outings,"actionWording"=>action_wording,
+        } optional {
+          "nameForm"=>name.name_form, "indefiniteArticle"=>name.indefinite_article,"portrait"=>portrait,
+          "departureNotice"=>departure_notice,"bodyState"=>body_state,"evasion"=>evasion,
+          "attackSource"=>attack_source,"traits"=>traits,
+        });
+        Ok(())
+    }
 }
