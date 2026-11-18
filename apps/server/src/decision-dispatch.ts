@@ -88,7 +88,8 @@ export interface DecisionDispatchHost<R extends DispatchRun> {
 
 /** Sole immediate paid-request boundary for Source and native execution: fixed-cut
  * durability, spending and dispatch intent precede transport; every receipt is
- * settled, and uncertain completion retains its actual execution lease. */
+ * settled, and uncertain completion retains its actual execution lease. A caller
+ * that already bound every rendered input to a save prefix can pass that ticket. */
 export async function dispatchDecision<R extends DispatchRun, T>(
   host: DecisionDispatchHost<R>,
   run: R,
@@ -96,6 +97,7 @@ export async function dispatchDecision<R extends DispatchRun, T>(
   suffix: string,
   dispatch: (requestId: string, publication: HttpPublication) => Promise<AiResult<T>>,
   meter?: DecisionMeter,
+  evidenceThrough?: number,
 ): Promise<T> {
   const track = run.trackTerminalEvidence;
   const callerStage = run.failureStage;
@@ -114,11 +116,10 @@ export async function dispatchDecision<R extends DispatchRun, T>(
     worldId: host.worldId,
     actorId: evidenceActor,
   });
-  const evidenceThrough = host.durabilityTicket();
   // Every actual request is already rendered when this boundary is entered.
-  // Join its fixed save prefix before reserving/dispatching; never force a save
-  // or retarget this wait as unrelated physical publications arrive.
-  await host.whenDurable(evidenceThrough);
+  // Join its fixed save prefix before reserving/dispatching. Preserve an earlier
+  // caller-owned cut across its validation waits and unrelated publications.
+  await host.whenDurable(evidenceThrough ?? host.durabilityTicket());
   const sourceActorId = host.current(run);
   const sourceAccessFailure = (): DecisionDependencyFailure | undefined => {
     const scope = { worldId: host.worldId, actorId: sourceActorId };

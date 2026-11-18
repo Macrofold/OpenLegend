@@ -432,7 +432,10 @@ export async function prepareDecision(
   jobId: string,
   stimulus: string,
   requiredIds: string[],
-  judge: (r: Omit<JudgeRequest, 'requestId' | 'signal'>) => Promise<JudgeValue>,
+  judge: (
+    r: Omit<JudgeRequest, 'requestId' | 'signal'>,
+    evidenceThrough: number,
+  ) => Promise<JudgeValue>,
   signal: AbortSignal,
   budgetCeiling = service.config.budgetUsd,
   includeCurrentConversation = false,
@@ -1018,9 +1021,10 @@ export async function prepareDecision(
         `${jobId}:attempt:${attempt}`,
         candidates,
         async (request) => {
-          await awaitEvidenceCut();
+          const evidenceThrough = service.durabilityTicket();
+          await awaitEvidenceCut(evidenceThrough);
           await validateSituation();
-          return judge(request);
+          return judge(request, evidenceThrough);
         },
         signal,
         budgetCeiling,
@@ -1506,6 +1510,7 @@ export async function prepareDecision(
       replaceChosenPlan:
         actor.agency.plan?.status === 'blocked' || actor.agency.plan?.status === 'active',
       awarenessSequence,
+      evidenceThrough: preparedThrough,
       whenDurable: () => awaitEvidenceCut(preparedThrough),
       validateConversation: async (flush = true) => {
         if (flush) await awaitEvidenceCut(preparedThrough);
@@ -1663,7 +1668,10 @@ export function fitDecisionEnvelope(
 
 export async function selectDecisionActions(
   prepared: Awaited<ReturnType<typeof prepareDecision>>,
-  judge: (r: Omit<JudgeRequest, 'requestId' | 'signal'>) => Promise<JudgeValue>,
+  judge: (
+    r: Omit<JudgeRequest, 'requestId' | 'signal'>,
+    evidenceThrough: number,
+  ) => Promise<JudgeValue>,
   purpose: 'actions' | 'choose-action' = 'actions',
 ) {
   if (prepared.choiceCoverage === 'complete-required')
@@ -1685,7 +1693,9 @@ export async function selectDecisionActions(
     await prepared.whenDurable();
     await prepared.validateConversation(false);
   }
-  const judged = Object.keys(request.questions).length ? await judge(request) : { answers: {} };
+  const judged = Object.keys(request.questions).length
+    ? await judge(request, prepared.evidenceThrough)
+    : { answers: {} };
   const selected = candidates.filter((_, index) => {
     const answer = judged.answers[`a${index}`];
     return purpose === 'choose-action'
@@ -1772,6 +1782,7 @@ export function refreshDecisionActions(
   };
   return {
     ...prepared,
+    evidenceThrough: through,
     whenDurable,
     validateConversation: async (flush = true) => {
       if (flush) await whenDurable();

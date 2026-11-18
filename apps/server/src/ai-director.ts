@@ -2261,6 +2261,7 @@ export class AiDirector {
     suffix: string,
     dispatch: (requestId: string, publication: HttpPublication) => Promise<AiResult<T>>,
     meter?: Meter,
+    evidenceThrough?: number,
   ): Promise<T> {
     const director = this;
     return dispatchDecision(
@@ -2305,6 +2306,7 @@ export class AiDirector {
       suffix,
       dispatch,
       meter,
+      evidenceThrough,
     );
   }
 
@@ -2999,7 +3001,7 @@ export class AiDirector {
       run.job.id,
       stimulus,
       evidenceIds,
-      async (request) =>
+      async (request, evidenceThrough) =>
         await this.call(
           run,
           'jev',
@@ -3012,6 +3014,7 @@ export class AiDirector {
               signal: run.controller.signal,
             }),
           judgeMeter('level', request),
+          evidenceThrough,
         ),
       run.controller.signal,
       this.service.config.budgetUsd,
@@ -3091,7 +3094,7 @@ export class AiDirector {
       criteria[key] = activityRouteCriterion(descriptor);
     const offeredRoutes = Object.keys(criteria);
     const judge =
-      (suffix: string) =>
+      (suffix: string, evidenceThrough?: number) =>
       async (request: Omit<JudgeRequest, 'requestId' | 'signal'>): Promise<JudgeValue> =>
         await this.call(
           run,
@@ -3105,6 +3108,7 @@ export class AiDirector {
               signal: run.controller.signal,
             }),
           judgeMeter('level', request),
+          evidenceThrough,
         );
     // Refresh cheap feasibility after earlier provider latency, then bound candidates.
     const prepareActionBindings = async () => {
@@ -3156,12 +3160,13 @@ export class AiDirector {
       try {
         const selected = await selectDecisionActions(
           bindings.prepared,
-          async (request) => {
+          async (request, evidenceThrough) => {
             captured.offered = offeredForRating(request);
             const all = { ...request.questions, ...questions };
             validateJudgmentSize(request.state, all);
-            const answers = (await judge('route')({ state: request.state, questions: all }))
-              .answers;
+            const answers = (
+              await judge('route', evidenceThrough)({ state: request.state, questions: all })
+            ).answers;
             captured.routing = {
               answers: Object.fromEntries(
                 Object.keys(questions).flatMap((key) => {
@@ -3356,9 +3361,9 @@ export class AiDirector {
         try {
           withActions = await selectDecisionActions(
             bindings.prepared,
-            async (request) => {
+            async (request, evidenceThrough) => {
               offeredForSelection = offeredForRating(request);
-              return await judge('action-attention')(request);
+              return await judge('action-attention', evidenceThrough)(request);
             },
             route === 'level1' ? 'choose-action' : 'actions',
           );
