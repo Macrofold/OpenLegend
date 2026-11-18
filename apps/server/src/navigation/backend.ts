@@ -105,6 +105,11 @@ export class RecastPlanner {
       this.builds.push({ profile: key, ms: performance.now() - started, reason });
     return prepared;
   }
+  /** Build and export the exact tiled mesh for this profile into an independent
+   * artifact. The planner still owns the mesh/cache through `destroy()`. */
+  exportPreparedMesh(body: BodyProfile): Uint8Array {
+    return R.exportNavMesh(this.prepare(body).mesh);
+  }
   private release(p: Prepared) {
     const filter = p.query.defaultFilter;
     p.query.destroy();
