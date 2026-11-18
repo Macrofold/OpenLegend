@@ -82,6 +82,26 @@ impl CurrentServer {
     /// must then reconcile presence and hot evidence through the simulation's
     /// startup operation before exposing any player view.
     pub async fn open(release: &Path, database: Config, workers: usize) -> Result<Self, BootError> {
+        Self::open_current(release, None, database, workers).await
+    }
+
+    /// A live listener must use the checked navigation release, including when
+    /// no route was needed to cold-open the selected world.
+    pub async fn open_game(
+        release: &Path,
+        navigation: &Path,
+        database: Config,
+        workers: usize,
+    ) -> Result<Self, BootError> {
+        Self::open_current(release, Some(navigation), database, workers).await
+    }
+
+    async fn open_current(
+        release: &Path,
+        navigation: Option<&Path>,
+        database: Config,
+        workers: usize,
+    ) -> Result<Self, BootError> {
         let manifest: ReleaseManifest =
             serde_json::from_slice(&read_bounded(&release.join("manifest.json"), 4 * 1024)?)?;
         let host = WorldHost::new(workers, TRANSIENT_BYTES)?;
@@ -132,7 +152,12 @@ impl CurrentServer {
             budget.clone(),
             custody,
         )?;
-        let spatial = session.with_geometry(|map| SpatialProvider::new(map, budget))??;
+        let spatial = session.with_geometry(|map| -> Result<SpatialProvider, BootError> {
+            match navigation {
+                Some(directory) => Ok(SpatialProvider::from_release(map, directory, budget)?),
+                None => Ok(SpatialProvider::new(map, budget)?),
+            }
+        })??;
         let cut = session.accepted_progress()?;
         let verified = VerifiedOpening {
             world_id: cut.world_id.to_owned(),
@@ -143,7 +168,7 @@ impl CurrentServer {
             sequence: cut.sequence,
             paused: cut.paused,
         };
-        let world = host.adopt(session, receipt)?;
+        let world = host.adopt(session, receipt, Arc::clone(&store))?;
         Ok(Self {
             host,
             store,
@@ -153,9 +178,9 @@ impl CurrentServer {
         })
     }
 
-    /// A finite physical question crosses no JSON boundary. The installed
-    /// provider computes against its own immutable map and funds the result.
-    pub async fn answer_geometry(
+    /// Answer the operation's finite request on the shared compute pool. The
+    /// installed spatial provider takes its typed input without encoding it.
+    pub async fn answer_operation(
         &self,
         question: openlegend_simulation::runtime::RuntimeProvider,
     ) -> Result<
@@ -172,8 +197,15 @@ impl CurrentServer {
         self.host
             .compute(move || {
                 let result = question.with_geometry(|queries| spatial.compute(queries, &budget))?;
-                let (answer, custody) = result.ok_or(WorldError::ProviderKind)??.into_parts();
-                Ok((question, RuntimeProviderInput::geometry(answer, custody)?))
+                let answer = match result {
+                    Some(result) => {
+                        let (answer, custody) = result?.into_parts();
+                        RuntimeProviderInput::geometry(answer, custody)?
+                    }
+                    None => crate::operation_format::answer(&question, &budget)?
+                        .ok_or(WorldError::ProviderKind)?,
+                };
+                Ok((question, answer))
             })
             .await?
     }
