@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                     | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | A separately delivered runner is in use; repository integration and reuse qualification remain open. | 2026-11-15   |
+| In progress | A separately delivered runner is in use; repository integration and reuse qualification remain open. | 2026-11-18   |
 
 ## Purpose and scope
 
@@ -12,13 +12,13 @@ The repository already has native, PostgreSQL-backed server and browser profiler
 
 ## Selected behavior
 
-- [Verification policy](../../.agents/rules/verification.md#choose-the-execution-location) owns execution location: short static/correctness checks normally stay local; every speed test uses AWS unless Mike explicitly requests local execution. Expensive non-timing experiments and resource-heavy checks use a dedicated worker when available. The same policy owns unavailable-environment handling and the continued ban on GitHub Actions.
+- [Verification policy](../../.agents/rules/verification.md#choose-the-execution-location) selects the location for correctness checks, speed tests and disruptive local workloads. It owns the approved client-device exception, unavailable-environment handling and the ban on GitHub Actions.
 - Begin with one reusable worker and use a second for independent ready experiments within the configured cap and budget. Parallel dispatch is the default when those conditions hold. Each experiment keeps its ordered repetitions on one exclusive worker. Ten agents can share this small pool over time; concurrent experiments have separate processes and PostgreSQL. [Worker scheduling](../../.agents/rules/verification-workers.md#parallel-comparisons-and-reuse) owns admission and coordination.
 - A claim identifies a task, worktree, immutable source, experiment and deadline. It covers preparation through cleanup, including a planned sequential comparison, but not unrelated coding time. Losing the owner stops the run safely. Neither a stale tag nor an expired timestamp grants ownership.
 - Stopping retains tools and caches on encrypted EBS; it preserves no live game and needs no hibernation. Fresh installation means installing OS/toolchain/database prerequisites; reuse skips it. Pnpm reuses unchanged package content across lockfile changes while each workspace gets a validated fresh installation. Build once for matching inputs and reuse verified artifacts across repetitions under the [build identity contract](verification-workers-tech-design.md#verified-build-reuse). Cache misses or changed inputs prepare the required build before measurement.
 - Transfer a compressed, checksummed source snapshot. No push is required just to test. A cached Git fetch of an exact commit is an optional later transport only if timing demonstrates a benefit; moving-branch pulls and long-lived repository credentials are excluded.
 - One report explains setup, actual gameplay, logs and cleanup, preserving failures. Release returns after verified cleanup; it does not hold the agent for the idle-stop delay. Required results cannot expire before verified collection. Workload questions select duration; cold/warm overhead is measured, not promised.
-- Server speed, browser frame pacing and input-to-visible-response are separate outcomes. A full-game smoothness claim requires representative rendered play, not only server throughput or average FPS. Select the browser's location under Verification as well as the backend's; do not claim hardware graphics performance from a CPU worker's software renderer. Unavailable representative AWS graphics leaves that evidence open unless Mike explicitly requests a local-device measurement.
+- Server speed, browser frame pacing and input-to-visible-response are separate outcomes. A full-game smoothness claim requires representative rendered play. Select the browser device under the [machine and device policy](../../.agents/rules/verification-workers.md#standard-speed-test-worker) and record display and network conditions. A software renderer on a CPU worker cannot establish hardware graphics performance.
 
 ## Agent journeys and failure behavior
 

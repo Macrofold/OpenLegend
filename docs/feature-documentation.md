@@ -1,6 +1,6 @@
 # Feature documentation structure
 
-Use one maintained behavior owner per feature. The [design workflow](../.agents/skills/openlegend-design/SKILL.md) decides when to create paired feature-spec and technical-design files; this structure does not require retroactively splitting every established specification. Project history must link current contracts rather than duplicate them.
+Use one maintained behavior owner per feature. The [design workflow](../.agents/skills/openlegend-design/SKILL.md#feature-spec-or-technical-design-requests) decides whether to update an existing document or use a feature-spec and technical-design pair. Apply the content requirements below to the selected documents. Project history must link current contracts rather than duplicate them.
 
 Project feature specifications and technical designs follow [Project status and completion](../.agents/rules/documentation.md#project-status-and-completion). Update dates for meaningful changes, not unchanged rereads. At completion, use [contract promotion and filing](documentation-system.md#current-contracts-and-completed-projects): current contracts remain discoverable, while genuinely completed project material is filed with repaired references. Supporting evidence and navigation need no duplicate live status table.
 

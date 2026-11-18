@@ -18,7 +18,11 @@ The root `packageManager` pins pnpm for local development and verification. `pnp
 
 For a full contributor validation pass, format changed files with pinned Prettier and run `pnpm check`; it includes automated tests and a build. Unfiltered `pnpm test:browser` also runs a full automated suite. Human contributors may use the full workflow directly; delegated agents select it only when requested or justified by cross-cutting uncertainty under the linked policy; ordinary work uses focused existing checks. Honor explicit no-tests tasks. Requested coverage should prioritize meaningful resource/permission, idempotency, stale-result and restoration scenarios rather than implementation-mirroring assertions. Live-provider verification is optional for ordinary contributions and requires the account owner's bounded authorization.
 
-Use the [root completion/handoff policy](AGENTS.md#completion-and-handoff--every-task) and [PR template](.github/pull_request_template.md) for the problem, resulting behavior, decisions and actual verification/limitations. Screenshots help explain visual changes. Maintain trackers under [Documentation](.agents/rules/documentation.md#keep-maintainer-work-synchronized). Keep unrelated edits out of the patch; a contribution need not refactor the surrounding system. Validation failures follow the linked verification policy; a narrower build pass is not a green full check. Guidance changes use `pnpm guidance:check` and the [guidance-maintenance skill](.agents/skills/openlegend-guidance/SKILL.md).
+Use the [root completion/handoff policy](AGENTS.md#completion-and-handoff--every-task) and [PR template](.github/pull_request_template.md) for the problem, resulting behavior, decisions and actual verification/limitations.
+
+For a visual change, attach a screenshot to the pull request when it helps the reviewer and is safe to share. Otherwise say what you inspected, the result and why the image is absent. If no visual inspection ran, say so. Keep private player data, credentials, private saves and unlicensed assets out of attachments.
+
+Maintain trackers under [Documentation](.agents/rules/documentation.md#keep-maintainer-work-synchronized). Keep unrelated edits out of the patch; a contribution need not refactor the surrounding system. Validation failures follow the linked verification policy; a narrower build pass is not a green full check. Guidance changes use `pnpm guidance:check` and the [guidance-maintenance skill](.agents/skills/openlegend-guidance/SKILL.md).
 
 ## Trust and licensing
 

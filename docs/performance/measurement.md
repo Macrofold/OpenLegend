@@ -1,6 +1,6 @@
 # Performance measurement and interpretation
 
-Part of the [performance contract](../performance.md). Use the planning and reporting sections for comparisons. The later sections cover optional instrumentation, benchmark drivers and particular workloads. Historical results qualify only their recorded workload and revision. [Verification](../../.agents/rules/verification.md#choose-the-execution-location) selects checks and requires AWS execution for speed tests using the [standard worker](../../.agents/rules/verification-workers.md#standard-speed-test-worker), subject to Mike's explicit exceptions. This includes the short diagnostics and browser measurements below.
+Part of the [performance contract](../performance.md). Use the planning and reporting sections for comparisons. The later sections cover optional instrumentation, benchmark drivers and particular workloads. Historical results qualify only their recorded workload and revision. [Verification](../../.agents/rules/verification.md#choose-the-execution-location) selects checks and their location. Use the [standard worker and device policy](../../.agents/rules/verification-workers.md#standard-speed-test-worker) for short diagnostics and for comparisons using a separately approved graphics device.
 
 ## Planning comparisons
 

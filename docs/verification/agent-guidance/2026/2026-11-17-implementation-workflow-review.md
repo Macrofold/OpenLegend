@@ -1,6 +1,6 @@
 # How agents implement and verify changes
 
-Reviewed the implementation workflow in Macrofold/OpenLegend on local `codex/native-simulation-proof`, starting at `3c591633a4214ae5323ed10377923e8dcd21656b`. This is a review record. The linked instructions continue to own each rule. The choices below are proposals for Mike.
+Reviewed the implementation workflow in Macrofold/OpenLegend on local `codex/native-simulation-proof`, starting at `3c591633a4214ae5323ed10377923e8dcd21656b`. This is a review record. The linked instructions continue to own each rule. The tables preserve the questions from November 17. The November 18 decisions below identify their current status.
 
 ## The workflow in plain language
 
@@ -25,7 +25,17 @@ The recurring problem was scope. A command shown as an example looked like a req
 
 ## Decisions for Mike
 
-The first table contains choices that affect what an agent can safely claim, retain or spend. The second covers rules whose present cost may exceed their value. The recommendations have not been adopted.
+**November 18 decisions.** Mike adopted E2–E6, E8 and W1–W7. For E3, only Mike can reset the spending balance. E6 permits standing approval for a named client device within a stated scope. A previously recorded run alone grants no new device approval. The linked operating instructions own the adopted rules.
+
+Three questions remain open. The existing campaign keeps its original plan pending a decision.
+
+| ID  | What Mike is deciding                                                                                                                                                                                                                                                                  | Recommendation                                                                                                                                                                                                              |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| E1  | An experiment schedules three tries with the old code and three with the new. If the first two show that neither version can complete the required action because the same fixture is broken, should we spend money on the four tries that have not started?                           | Stop the affected tries after establishing the common cause. Keep the failures and resume a fair comparison after repair. A slow result or an unexplained intermittent failure is insufficient to stop.                     |
+| E7  | The 27-run plan first finds where the game spends its time. We then add detailed timers in two places. Those timers cost time themselves. By then the runs with the timers off are already finished. Do we need more alternating off/on runs to say how much the timers slow the game? | Stay within 27 for finding expensive work. Schedule extra matched runs only if a decision depends on proving that the timers themselves have acceptably low overhead.                                                       |
+| E9  | Two equally long runs can end one update apart. If both complete the same moves and saves, should the extra update alone disqualify the comparison? What if it triggers another save or a costly NPC decision?                                                                         | Record the difference. Set the allowed variation before the run. Require the promised actions in both runs. If one does substantially different work, use a matched replay before attributing its extra cost to the timers. |
+
+The following tables preserve the original choices and their rationale.
 
 ### Evidence, money and privacy
 
@@ -71,3 +81,22 @@ Four fresh Codex CLI 0.160.1 sessions used read-only shell access in this worktr
 The worker instructions now explicitly name the required reads for a design sketch. A fifth fresh session repeated the identical bootstrap prompt. It opened the relevant sections of both specifications and the task for machine preparation, then distinguished preparation from worker ownership and recovery. The worker guide's SHA-256 for that repeat was `ea4a7b2c23b5472d577d0322dffb9e70c83f15ef4894ae4461b5d7c69b37138a`. All five sessions exited successfully. The CLI hides automatically supplied instructions, so explicit reads alone cannot establish that every applicable rule loaded. The [dispatch tracker](../../../maintainers/agent-guidance.md#cg05--read-only-routing-cases) retains the broader cross-agent work.
 
 Pinned Prettier passed on the 31 changed Markdown files. The repository guidance check passed across 39 guidance documents and 14 skills. It still flags long instruction files for review. A separate check resolved 1,414 local Markdown links in the changed files, including their heading targets. The protected development save policy matched the starting revision byte for byte. No game code changed, and no game suite, paid provider experiment or AWS worker was run.
+
+## November 18 character-design routing check
+
+Five fresh read-only Codex CLI 0.160.1 sessions exercised W3. A change to a character’s motives opened both character-design documents. A proposed physical collision helper used the spatial contract without opening either character-design document. A spelling correction mentioning both subjects issued no tool calls. A choice based on a partly witnessed event initially opened the character feature spec but omitted the character technical design. Its shell started at the repository root despite a requested package start. After the instructions explicitly covered a change to the evidence used for a decision, the same prompt was repeated with a verified domain-package working directory. It opened the package instructions, both character documents and the relevant memory guidance. The repeat changed both the wording and the actual working directory, so it cannot establish which made the difference. The final engineering map’s SHA-256 was `625f821a9972d769971b1b3017fcdf8d062c325e1667301a20e8aae507743572`.
+
+## November 18 worker and display evidence
+
+The maintained worker checkout in Macrofold/OpenLegend at `0d9d2419a3a1951fdd268fc4fd4048d6a6f7efec` records three worker conditions in `docs/verification/performance/2026-10/verification-workers.md`, under “Native five-minute captures.” The table below uses those runs and their collected client and worker timelines. Each column represents one observed job. The already-running worker used a different source and host.
+
+| Time                                                                                              | Already running, source staged | Stopped, restarted | Newly created |
+| ------------------------------------------------------------------------------------------------- | -----------------------------: | -----------------: | ------------: |
+| Observed machine and controller readiness after claim                                             |                          1.7 s |             15.0 s |        50.2 s |
+| Observed time from starting source packaging until the check command started, including readiness |                         12.0 s |             34.7 s |        67.3 s |
+| Observed time from end of command to end of first collection attempt                              |                          4.0 s |              4.8 s |         4.1 s |
+| Estimated submission to first result for a **60-second command**, assuming the same outside time  |                       **76 s** |           **99 s** |     **131 s** |
+
+The stopped worker downloaded the result, but its first collection acknowledgement failed. A later collection succeeded. The estimate excludes that repair. The three observed commands took about 318 seconds each. The 60-second row estimates replacing that whole command with a shorter check, keeping other stages as observed. Queueing, compiling a different release or driving a visible browser can add further time. For example, the first case in the [November 16 snapshot campaign](../../../benchmarks/native-runtime-foundations/2026/2026-11-16-runtime-foundations-continuation.md) spent about 249 seconds building before its 21-second gameplay step.
+
+For a recorded visible-browser check, the server ran on the standard 4-vCPU, 16 GiB AWS worker. Chromium 145.0.7632.6 rendered on the Apple M1 Pro laptop through Metal at a 1920 × 1080 viewport. The worker record’s “Rendered and local capture” section distinguishes this run from the headless check. The laptop was under load and five assets failed to fetch, which limits claims about smoothness. These are existing observations. No new worker or speed test was needed to answer the setup question.

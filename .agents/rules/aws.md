@@ -42,13 +42,11 @@ Mike uses AWS's new experience with social sign-in. The OpenLegend project and s
 ### Spending and service availability
 
 - A paid plan can have a spend limit that pauses the project when exceeded. Only project owners can modify that limit. The AWS project limit and the developer's authorization for a task are separate.
-- When developing:
-  - MUST ask about spend limit status if the user reports sudden "Access Denied" errors on operations that previously worked
-  - MUST direct users to check spend status in AWS Settings > Billing
-  - MUST check if a user has upgraded their account to the paid plan
-  - For successfully created resources whose disposition the task leaves open, ask whether the user wants to keep them or clean them up to reduce future charges.
+- Before paid worker use, verify the project identity, ownership and available task budget under the [worker procedure](verification-workers.md#run-lifecycle). Routine authorized use needs no separate account-plan inquiry.
+- If access fails, inspect the service error and selected identity first. When a plan restriction or project spend limit could explain the failure, check the plan or ask Mike to confirm the project’s spend status in AWS Settings > Billing. An expired login uses the renewal procedure above.
+- For successfully created resources whose disposition the task leaves open, ask whether the user wants to keep them or clean them up to reduce future charges.
 - Use AWS Settings to set up billing, manage spend limits, retrieve invoices and pay them. Use the AWS Billing and Cost Management console for budgets and cost optimization.
-- Not all AWS services are available. If a service isn't working, do the following:
+- To investigate a possible service-plan restriction:
   1. Check the selected project's plan using `"$HOME/.local/bin/aws" freetier get-account-plan-state --profile openlegend --region us-east-2`.
   2. If `accountPlanType` is `FREE`, check the [Free Tier supported services list](https://docs.aws.amazon.com/accounts/latest/reference/supported-services-sign-up-new.html#supported-services-free-tier).
   3. If `accountPlanType` is `PAID`, check the [Paid Tier supported services list](https://docs.aws.amazon.com/accounts/latest/reference/supported-services-sign-up-new.html#supported-services-paid-plan).

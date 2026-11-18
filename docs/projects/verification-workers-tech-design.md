@@ -2,13 +2,13 @@
 
 | Status      | Current progress                                                                                   | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The separately delivered runner is in use; local integration and verified build reuse remain open. | 2026-11-16   |
+| In progress | The separately delivered runner is in use; local integration and verified build reuse remain open. | 2026-11-18   |
 
 ## Owners and minimal architecture
 
 The [feature specification](verification-workers-feature-spec.md) owns intended behavior; [agent procedure](../../.agents/rules/verification-workers.md) owns use. Keep this tooling under `scripts/verification-workers/`, exposed through `pnpm verify:worker`. `contracts.mjs` owns plans/results and boundary validation; `cli.mjs` owns preparation, heartbeats and collection; `controller.mjs` owns cloud admission/claims/lifecycle; `supervisor.mjs` owns host processes and cleanup. Source packing and artifact transfer are helpers shared by those callers, not separate services. Keep one infrastructure template and bootstrap recipe beside them. Reuse existing native/server/browser profilers, the disposable PostgreSQL helper and workspace-resolution guard; no cloud coordination belongs in domain, game server, AI or world packages.
 
-[Verification](../../.agents/rules/verification.md#choose-the-execution-location) owns execution location, including browser speed measurements and Mike's explicit local request. An unavailable managed pool does not permit a local speed-test fallback; follow the [current-availability procedure](../../.agents/rules/verification-workers.md#current-availability) without treating this design as provisioned infrastructure.
+[Verification](../../.agents/rules/verification.md#choose-the-execution-location) selects where to measure each workload, including the separate client-device path for rendered browser measurements. If the managed pool is unavailable, follow the [current-availability procedure](../../.agents/rules/verification-workers.md#current-availability). This design describes infrastructure and grants no provisioning authority.
 
 Use one small IAM-invoked Lambda controller, one DynamoDB coordination table, SSM for remote commands/private tunnels, private S3 prefixes for source/results, and an EventBridge Scheduler wakeup for recovery. The controller has reserved concurrency **one**: lifecycle operations serialize for this small pool without another queue/service. It returns after bounded control operations without waiting for boot or game completion; game execution never runs in Lambda. An instance-local supervisor owns child processes. The independent scheduled recovery and host watchdog cover loss of the developer's laptop and controller failures respectively. No Kubernetes, continuously running coordinator, fleet autoscaler or agent-specific shell harness is needed.
 

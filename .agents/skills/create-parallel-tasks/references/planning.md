@@ -90,7 +90,7 @@ Do not prescribe communication, status polling, intermediate commits exchanged t
 
 ## Complete the task definitions and design documents
 
-Use existing adequate documentation. Where material design is missing, create or strengthen the paired feature/technical design and focused maintainer records under the repository's design/documentation rules. Avoid copying full canonical contracts into every brief.
+Use existing adequate documentation. Where material design is missing, use the [design workflow](../../openlegend-design/SKILL.md#feature-spec-or-technical-design-requests) to choose the existing document or project pair. Reconcile affected maintainer records. Avoid copying full canonical contracts into every brief.
 
 Each assignment must provide or precisely reference:
 

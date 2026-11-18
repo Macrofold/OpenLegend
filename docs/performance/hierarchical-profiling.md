@@ -126,7 +126,12 @@ For selected durations maintain exact count/sum/min/max and a fixed histogram wi
 
 For sampled leaf timing, select eligible invocations with a separate deterministic measurement PRNG, never the game's RNG; count all eligible calls and timed calls. Start at probability 1, then 1/8, then 1/64 only when overhead qualification fails. Keep seeds fixed per repetition and rotate across the three repetitions. Report sampled distributions, estimated totals `eligibleCount × sampledMean` and their limitations separately from exact total duration. Never discard a slow sample because it appears to be GC. Recursion, exceptions and unfinished work have explicit outcome counters.
 
-Raw correlated traces are opt-in and bounded to 64 MiB per isolate per case, retained in typed buffers; no file output or formatting in measured callbacks. Histogram/counter recording continues after trace capacity, but omitted trace events are counted. Maximum 8 MiB per-isolate aggregate recorder allocation and 32 active timing series are initial tooling budgets, not game limits. Export after cutoff; if memory or transport limits cannot fit mandatory results, split cases instead of discarding them. A stack/token cap of 4,096 rejects further measurement tokens and reports capture incompleteness without rejecting gameplay.
+The planned recorder has two separate memory allowances per isolate (one JavaScript runtime) per case.
+
+- **8 MiB for aggregate recording.** Charge counters, histograms, active timing tokens and shared recorder bookkeeping here. Allow up to 32 active timing series.
+- **64 MiB additional for optional tracing.** Charge the trace buffers and trace-specific bookkeeping here. Reserve this memory only when tracing is enabled.
+
+The combined ceiling is **72 MiB** with tracing or **8 MiB** without it. Both allowances include their metadata. They bound recorder allocations rather than total process memory. Count omitted trace events once the trace budget is full and continue recording aggregates. At 4,096 unfinished timing tokens, decline additional tokens and record the missing coverage. Export after the measured window. Keep file output and formatting out of measured callbacks. Split cases when a required result cannot fit.
 
 ### Overhead qualification and stop rules
 

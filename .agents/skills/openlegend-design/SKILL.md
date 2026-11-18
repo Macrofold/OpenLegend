@@ -1,7 +1,7 @@
 ---
 name: openlegend-design
 description: >-
-  Create paired feature specs and technical designs, execute a project plan after chat approval,
+  Choose the scope of feature specs and technical designs, execute a project plan after chat approval,
   or design changed engine/world contracts and gameplay discoveries, rewards, knowledge or progression;
   not routine fixes or prose corrections.
 ---
@@ -24,7 +24,10 @@ Name the useful option or tradeoff the reward adds and a worthwhile stopping poi
 
 ## Feature-spec or technical-design requests
 
-A request to create either deliverable produces both, as distinct cross-linked files with the same project prefix: `docs/projects/<project>-feature-spec.md` and `docs/projects/<project>-tech-design.md`. Update an existing pair rather than create duplicates.
+Honor an explicit request for only one document or for both. When Mike asks for a feature spec or technical design without restricting the deliverables, choose by what needs deciding.
+
+- For a new capability, or a change with distinct product and engineering decisions, create or update the cross-linked pair in `docs/projects/<project>-feature-spec.md` and `docs/projects/<project>-tech-design.md`. The feature spec explains what people or characters can do. The technical design explains how the system delivers it.
+- For a small change to an established feature, update its existing document when it covers the whole change, including the affected behavior, implementation decision and how to verify it. Reconcile affected tasks and limits in their existing records. A request for a design of that change does not by itself require a second document.
 
 Follow [Feature documentation](../../../docs/feature-documentation.md) for required content and the Maintained records section linking the focused implementation tracker and feature limits/constraints inventory. Keep behavior distinct from mechanism and proposals from implemented behavior; record numerical and behavioral restrictions with reasons, restrictiveness and removed/no-limit decisions under the linked tracking rules.
 
@@ -40,7 +43,7 @@ Trace relevant ownership, units, permitted reads/writes, triggers, work bounds, 
 
 For physical mechanics, apply the [physical-interaction design checks](../../../docs/spatial-world.md#physical-interaction-design-checks) before calling the design ready. For repeated native processes, collection queries or derived caches, read [Performance](../openlegend-performance/SKILL.md) during design rather than waiting for a measured slowdown. Source inspection and paper calculations can establish a design's contracts; they do not establish runtime geometry, player usability or scaling acceptance.
 
-Challenge claimed composability with a genuinely different scenario. Localize necessary v1 specificity with its owner, limit, seam and extraction trigger instead of building an unused framework. Logical modularity does not require new packages, services or an ECS replacement.
+For a change to a reusable rule or a claim that it works across cases, apply the [contrasting-example requirement](../../../docs/engine-and-world-boundaries.md#5-a-repeatable-boundary-decision). Localize necessary v1 specificity with its owner, limit, seam and extraction trigger instead of building an unused framework. Logical modularity does not require new packages, services or an ECS replacement.
 
 When replacing a fixed world behavior with installed definitions, trace availability, parameter binding, NPC offers, player details, resource effects, reusable methods and saves to the same definition owner. Vary the contrasting example's real requirements, input/output cardinality or duration, not only its name; include shared-material requirements and stale or missing prerequisites when applicable. A generalized executor alone does not prove that downstream consumers stopped assuming the original recipe.
 
@@ -48,6 +51,6 @@ When replacing a fixed world behavior with installed definitions, trace availabi
 
 Use [root task authorization](../../../AGENTS.md#task-scope-and-authorization). Mike's chat approval of the discussed implementation plan is enough to start its approved scope. Interpret “looks good” or “yes” in light of what Mike was asked to approve. Honor qualifications such as “phase one only” or “do not implement yet.” A standalone “continue” resumes the current assignment. During design it continues design. After implementation is authorized it resumes unfinished implementation. A GitHub approval or document-status change supplies no new chat authorization.
 
-For a spec/design-only request, deliver the pair, feasible stages and open choices, if any. Reconcile affected documents, tasks and navigation under [Documentation](../../rules/documentation.md#reconcile-documentation), closing only satisfied design scope under [completion](../../rules/documentation.md#project-status-and-completion). Only after executable work is authorized, follow the [implementation workflow](../../rules/implementation.md) and [initial startup](../../../AGENTS.md#work-discipline). Reconcile actual missing/conflicting requirements and tracker coverage under [Documentation](../../rules/documentation.md#project-approval-and-current-truth), then commence implementation in the same session. Accurate plans need not be copied into several owners before coding; planning alone does not complete implementation.
+For a design-only request, deliver the document or pair selected above, feasible stages and any open choices. Reconcile affected documents, tasks and navigation under [Documentation](../../rules/documentation.md#reconcile-documentation), closing only satisfied design scope under [completion](../../rules/documentation.md#project-status-and-completion). Only after executable work is authorized, follow the [implementation workflow](../../rules/implementation.md) and [initial startup](../../../AGENTS.md#work-discipline). Reconcile actual missing/conflicting requirements and tracker coverage under [Documentation](../../rules/documentation.md#project-approval-and-current-truth), then commence implementation in the same session. Accurate plans need not be copied into several owners before coding; planning alone does not complete implementation.
 
 Use [root completion/handoff](../../../AGENTS.md#completion-and-handoff--every-task) and [Verification](../../rules/verification.md) through the full agreed scope, including user/agent surfaces; the linked documentation policy owns work IDs, dependencies and acceptance status.

@@ -39,4 +39,4 @@ For request admission, cancellation or preemption, read [admission and cancellat
 
 For conversation membership or revision-fenced continuation, also read [continuation and identity](../../../docs/save-and-load.md#continuation-and-identity); a stale-decision revision is not proof that separate physical cooperation ended.
 
-For every Jev-related report, apply [Jev cost reporting](../../rules/verification.md#jev-cost-reporting), including progress updates and explanations.
+When reporting work on Jev, apply [Jev cost reporting](../../rules/verification.md#jev-cost-reporting), including progress updates and explanations.

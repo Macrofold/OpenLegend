@@ -4,9 +4,9 @@ Read before requesting, starting, claiming or using any remote verification mach
 
 ## Standard speed-test worker
 
-Use **m7i.xlarge: 4 vCPU, 16 GiB RAM, x86_64, in `us-east-2`, project `027677879749`** for every speed test. Use the managed pool when available, through its matching maintained runner and current claim. Positively verify the actual machine/environment; select a matching available worker, never a hardcoded instance ID. Record the actual hardware and stop/start session because matching instance type alone does not establish a matched comparison.
+The standard machine for speed tests is **m7i.xlarge: 4 vCPU, 16 GiB RAM, x86_64, in `us-east-2`, project `027677879749`**. Use the managed pool when available, through its matching maintained runner and current claim. Verify the actual machine and environment. Select an available matching worker through the pool. Record the hardware and stop/start session because matching instance type alone does not establish a matched comparison.
 
-Only Mike's explicit instruction authorizes a different instance type or local speed test. If a required GPU/browser/device measurement is genuinely incompatible with this worker, report the gap and obtain his device choice; do not silently substitute another environment or claim its result replaces or is comparable to the standard baseline. Static/correctness checks retain Verification's existing location choices.
+For player-visible timing, keep the server on the standard worker. Once Mike approves a named client device, record its identity and display conditions, including browser, graphics backend, viewport and display scale. Reuse that approval for client measurements within its stated scope. Record the actual conditions each time and report client timing and network delay separately from server measurements. If no approved device applies, obtain Mike's choice or report the gap. A different server instance type or a local server speed test still needs Mike's explicit instruction. Static and correctness checks follow Verification's location rules.
 
 ## Current availability
 
