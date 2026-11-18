@@ -95,6 +95,7 @@ import {
   type NativeRetainedValues,
 } from './native-retained-values.js';
 import {
+  borrowNativeProduct,
   decodeNativeProduct,
   copyNativeProduct,
   createNativeConsumerScope,
@@ -232,6 +233,7 @@ type NativeOperationRequest = {
   signal?: AbortSignal;
   admitPublication?: (publication: NativePublication) => boolean;
   prepareOutcome?: (outcome: Outcome) => Promise<void>;
+  accountElapsed?: true;
 };
 
 /** The native handle owns gameplay and canonical rows. This service owns only
@@ -2093,7 +2095,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   private debtSeconds = 0;
   private inputAccountedThrough?: number;
   private clockAdmission: 'duration' | 'monotonic' = 'duration';
-  private preparingElapsedCut?: number;
+  private heldInputCut?: number;
   useMonotonicClock(): void {
     this.clockAdmission = 'monotonic';
   }
@@ -3185,6 +3187,13 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             accepted.value.retain();
             accepted.value.actors();
             this.inputs.prune();
+            // A continued input may account more real time during the next
+            // read. It needs the accepted time and its remaining debt together.
+            if (request.accountElapsed && publication.outcome.ok)
+              this.debtSeconds = Math.max(
+                0,
+                this.debtSeconds - (publication.progress.at - this.progress.at),
+              );
             this.replaceProgress(publication.progress);
             accepted.value.speech?.accept();
           } catch (error) {
@@ -3192,7 +3201,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             throw error;
           }
           try {
-            await this.refreshValues();
+            await this.withHeldInputCut(() => this.refreshValues());
           } catch (error) {
             this.failure = error instanceof Error ? error : new Error(String(error));
             throw error;
@@ -4169,43 +4178,45 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           this.inputs.expire(performance.now());
           const offered = Math.min(this.debtSeconds, 86400);
           if (offered < 1e-6) return false;
-          const before = this.progress.at,
-            inputs = nativeInputSnapshot(this.host, this.inputs, performance.now());
-          const world = this.world,
-            startedAt = performance.now();
-          // Node owns the deadline and waiting-work policy. The pool only sees a
-          // candidate-bound request and completes its current coherent endpoint.
-          const publicationWake = setInterval(() => {
-            if (
-              this.lane.waitingForeground ||
-              performance.now() - startedAt >= NATIVE_PUBLICATION_MS
-            )
-              world.requestAdvancePublication();
-          }, NATIVE_IO_YIELD_MS);
-          publicationWake.unref();
-          let publication: NativePublication | undefined;
-          try {
-            if (this.clockAdmission === 'monotonic') this.preparingElapsedCut = this.acceptedCut;
-            publication = await this.acceptInLane({
-              first: () =>
-                withNativeJsonInput(world, inputs, (bytes) => world.advance(offered, 4096, bytes)),
-              current: () => {
-                // Close before settlement can install a different accepted body or cut.
-                this.preparingElapsedCut = undefined;
-                return !this.paused && this.inputs.authorized(inputs, performance.now());
-              },
-              admitPublication: (value) =>
-                !(
-                  value.progress.at === before &&
-                  value.outcome.ok &&
-                  value.outcome.code === 'navigation-pending'
-                ),
-            });
-          } finally {
-            this.preparingElapsedCut = undefined;
-            clearInterval(publicationWake);
-            releaseNativeProduct(inputs);
-          }
+          const before = this.progress.at;
+          const publication = await this.withHeldInputCut(async (close) => {
+            const inputs = nativeInputSnapshot(this.host, this.inputs, performance.now());
+            const world = this.world,
+              startedAt = performance.now();
+            // Node owns the deadline and waiting-work policy. The pool only sees a
+            // candidate-bound request and completes its current coherent endpoint.
+            const publicationWake = setInterval(() => {
+              if (
+                this.lane.waitingForeground ||
+                performance.now() - startedAt >= NATIVE_PUBLICATION_MS
+              )
+                world.requestAdvancePublication();
+            }, NATIVE_IO_YIELD_MS);
+            publicationWake.unref();
+            try {
+              return await this.acceptInLane({
+                accountElapsed: true,
+                first: () =>
+                  withNativeJsonInput(world, inputs, (bytes) =>
+                    world.advance(offered, 4096, bytes),
+                  ),
+                current: () => {
+                  // Close before settlement can install a different accepted body or cut.
+                  close();
+                  return !this.paused && this.inputs.authorized(inputs, performance.now());
+                },
+                admitPublication: (value) =>
+                  !(
+                    value.progress.at === before &&
+                    value.outcome.ok &&
+                    value.outcome.code === 'navigation-pending'
+                  ),
+              });
+            } finally {
+              clearInterval(publicationWake);
+              releaseNativeProduct(inputs);
+            }
+          });
           if (!publication) return false;
           try {
             if (!publication.outcome.ok) {
@@ -4217,7 +4228,6 @@ export class NativeWorldService implements NativePlayerRequestOwner {
               return false;
             }
             const advanced = publication.progress.at - before;
-            this.debtSeconds = Math.max(0, this.debtSeconds - advanced);
             return (
               !this.paused &&
               this.debtSeconds >= 1e-6 &&
@@ -4241,6 +4251,54 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     this.failure = error instanceof Error ? error : new Error(String(error));
     this.inputs.clear();
     this.notify(false);
+  }
+
+  /** Allow existing steering to renew or stop while this lane retains the
+   * accepted cut. The caller closes the window before starting settlement. */
+  private async withHeldInputCut<T>(run: (close: () => void) => Promise<T>): Promise<T> {
+    const close = () => {
+      this.heldInputCut = undefined;
+    };
+    try {
+      if (this.clockAdmission === 'monotonic' && !this.closed && !this.protectedAdmission) {
+        const cut = this.acceptedCut;
+        this.heldInputCut = cut;
+        await this.inputs.checkHeldSteering(cut, async (owner) => {
+          const context = owner instanceof NativeInputAllocation ? owner.currentContext : undefined;
+          if (!context) return;
+          let pin: ReturnType<typeof borrowNativeProduct>;
+          try {
+            pin = borrowNativeProduct(context);
+            if (!pin) return;
+            const facts = await NativePlayerCapture.input(this.world, context.scope);
+            try {
+              return (
+                facts.canSteer &&
+                facts.alive === context.alive &&
+                facts.physicalLife === context.life
+              );
+            } finally {
+              releaseNativeProduct(facts);
+            }
+          } catch (error) {
+            if (
+              !isOverloadError(error) &&
+              !(error instanceof Error && 'code' in error && error.code === 'GenericFailure')
+            )
+              throw error;
+            // A refused native read grants no shortcut. Keep the ordinary
+            // checked input route and unrelated work available on a healthy host.
+            const status = this.host.status();
+            if (status.poisoned || status.phase !== 'Open') throw error;
+          } finally {
+            pin?.release();
+          }
+        });
+      }
+      return await run(close);
+    } finally {
+      close();
+    }
   }
 
   private inputState(
@@ -4289,7 +4347,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       input.kind === 'renew'
         ? input.movement && !input.pendingRelease
         : input.direction.x === 0 && input.direction.z === 0;
-    const cut = this.preparingElapsedCut;
+    const cut = this.heldInputCut;
     if (continuedMovement && cut !== undefined && cut === this.acceptedCut) {
       const state = this.inputs.steeringAt(scope.actorId, cut);
       if (state) {
@@ -4297,9 +4355,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         this.assertScope(scope, 'play', true);
         const output = NativeInputResultAllocation.prepare(this.host);
         try {
-          // Renew only the permitted live direction. The private advance
-          // keeps its captured finite window. Neutral removes that direction
-          // and makes its ordinary final authorization reject the old input.
+          // Renew only the permitted live direction. A private advance keeps
+          // its finite window, and neutral makes its final check refuse that input.
           const now = performance.now();
           this.accountInputTime(now);
           return output.finish(
@@ -4940,17 +4997,19 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             if (this.committedPrefix) return this.committedPrefix.prefix;
             if (this.pending.inFlight) return this.pending.inFlight;
             if (!this.pending.dirty) return undefined;
-            const save = await this.world.captureSave();
-            try {
-              return await this.pending.capture(
-                decodeNativeProduct(await save.rows()),
-                this.privacy,
-              );
-            } finally {
-              // The projected rows and native journal retain independent
-              // prefix owners. This one-use transport has finished reading.
-              save.release();
-            }
+            return this.withHeldInputCut(async () => {
+              const save = await this.world.captureSave();
+              try {
+                return await this.pending.capture(
+                  decodeNativeProduct(await save.rows()),
+                  this.privacy,
+                );
+              } finally {
+                // The projected rows and native journal retain independent
+                // prefix owners. This one-use transport has finished reading.
+                save.release();
+              }
+            });
           },
           this.lane.waitMs,
           false,

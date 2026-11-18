@@ -59,6 +59,37 @@ export class WorldInputOwner {
     const state = this.heldSteering(actorId);
     return state?.steeringCheckedCut === cut ? state : undefined;
   }
+
+  /** Refresh only live directions missing a proof at a stable accepted cut.
+   * The native caller owns the narrow read and any retained capture. */
+  async checkHeldSteering(
+    cut: number,
+    check: (owner: WorldInputAllocation) => Promise<boolean | undefined>,
+  ): Promise<void> {
+    for (const state of this.states.values()) {
+      const owner = state[allocation];
+      const steering = state.steering;
+      if (
+        !owner ||
+        !steering ||
+        steering.expiresAt <= performance.now() ||
+        state.steeringCheckedCut === cut ||
+        !state.isCurrent()
+      )
+        continue;
+      const allowed = await check(owner);
+      if (
+        allowed === undefined ||
+        this.states.get(state.actorId) !== state ||
+        state.steering !== steering ||
+        !state.isCurrent()
+      )
+        continue;
+      if (allowed) state.steeringCheckedCut = cut;
+      else this.invalidateMovement(state.actorId);
+    }
+  }
+
   /** A projection may check its captured tokens without issuing or retiring
    * controls. Every replacement or token rotation advances this revision. */
   isCurrentScope(actorId: string, scope: Pick<WorldInputScope, 'revision'>): boolean {
