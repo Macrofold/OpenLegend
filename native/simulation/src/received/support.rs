@@ -368,34 +368,35 @@ impl TemporalSupportCollection {
             .capacity()
             .checked_add(self.coverage.owner.capacity())
             .ok_or_else(error)?;
-        self.budget
-            .resize_backing(
-                &mut self.backing,
-                fixed
-                    .checked_add(
-                        map_storage::<String, Arc<TemporalSupportRecord>>(target)
-                            .ok_or_else(error)?,
-                    )
-                    .ok_or_else(error)?,
+        let growth = fixed
+            .checked_add(
+                map_storage::<String, Arc<TemporalSupportRecord>>(target).ok_or_else(error)?,
             )
-            .map_err(|_| error())?;
-        // Match the funded dense capacity. Ordinary IndexMap reservation can
-        // round this Vec up to a larger hash-table capacity after allocation.
+            .ok_or_else(error)?;
+        if growth > self.backing.bytes() {
+            self.budget
+                .resize_backing(&mut self.backing, growth)
+                .map_err(|_| error())?;
+        }
+        // IndexMap reports insertion headroom. Expired records can leave hash
+        // tombstones and reduce that number without freeing either allocation.
+        // Rehashing may restore the previous capacity in place. Preserve its
+        // backing custody until the map's actual allocation is freed.
         self.records
             .try_reserve_exact(target - self.records.len())
-            .map_err(|_| error())?;
+            .map_err(|_| ReceivedError("Retained support map allocation failed."))?;
         let actual = fixed
             .checked_add(
                 map_storage::<String, Arc<TemporalSupportRecord>>(self.records.capacity())
                     .ok_or_else(error)?,
             )
             .ok_or_else(error)?;
-        // The forecast precedes the allocator; tightening to its actual capacity
-        // cannot require capacity after the semantic map has changed.
         if actual > self.backing.bytes() {
-            return Err(error());
+            return Err(ReceivedError(
+                "Retained support map exceeded its admitted backing.",
+            ));
         }
-        self.backing.resize(actual).map_err(|_| error())
+        Ok(())
     }
     pub fn records(&self) -> impl Iterator<Item = &Arc<TemporalSupportRecord>> {
         self.records.values()
