@@ -393,11 +393,8 @@ impl Store {
         if rows == 0 {
             return Ok(BTreeMap::new());
         }
-        let mut select = "SELECT s.id,s.parent_id,s.slot,s.position,s.payload".to_owned();
-        for column in &table.columns {
-            select.push_str(",s.");
-            select.push_str(&column.name);
-        }
+        let mut select = "SELECT ".to_owned();
+        super::super::read::append_current_record_fields(&mut select, table, "s.");
         select.push_str(&format!(",{identity},{revision} {from}"));
         let output = transaction.query(&select, params).await?;
         if output.len() != rows {

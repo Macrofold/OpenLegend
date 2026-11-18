@@ -450,14 +450,8 @@ async fn admitted_query(
 }
 
 fn current_select(table: &Table) -> String {
-    let mut select = String::from("SELECT id,parent_id,slot,position,payload");
-    for column in &table.columns {
-        select.push(',');
-        select.push_str(&column.name);
-        if matches!(column.data_type, SqlType::Json) {
-            select.push_str("::text");
-        }
-    }
+    let mut select = String::from("SELECT ");
+    append_current_record_fields(&mut select, table, "");
     for column in &table.columns {
         if matches!(
             column.data_type,
@@ -474,6 +468,27 @@ fn current_select(table: &Table) -> String {
         table.name
     ));
     select
+}
+
+/// Use the canonical positional projection for any exact typed row read.
+/// Joined selectors can qualify their trusted table alias without changing
+/// how SQL JSON cells are transferred for the shared row decoder.
+pub(super) fn append_current_record_fields(select: &mut String, table: &Table, qualifier: &str) {
+    for (index, name) in ["id", "parent_id", "slot", "position", "payload"].iter().enumerate() {
+        if index != 0 {
+            select.push(',');
+        }
+        select.push_str(qualifier);
+        select.push_str(name);
+    }
+    for column in &table.columns {
+        select.push(',');
+        select.push_str(qualifier);
+        select.push_str(&column.name);
+        if matches!(column.data_type, SqlType::Json) {
+            select.push_str("::text");
+        }
+    }
 }
 
 pub(super) fn installed_row(table: &Table, row: Row) -> StoreResult<InstalledRow> {
