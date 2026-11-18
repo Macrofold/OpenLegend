@@ -23,6 +23,12 @@ const CHARACTERLESS: &str = "#characterless:";
 const TOKEN_CACHE_LIMIT: usize = 4096;
 const ACCESS_COLUMN_BYTES: i32 = 512;
 
+/// A grant without a character still carries account authority, but it may
+/// never become a gameplay actor binding.
+pub(crate) fn granted_actor(stored: &str) -> Option<&str> {
+    (!stored.starts_with(CHARACTERLESS)).then_some(stored)
+}
+
 #[derive(Debug)]
 pub enum AccessError {
     Session,
@@ -632,7 +638,7 @@ impl Authority {
         let required = |column| text(column)?.ok_or(StoreError::InvalidRecord);
         let grant = if let Some(capabilities) = text(6)? {
             let actor = required(4)?;
-            let actor_id = (!actor.starts_with(CHARACTERLESS)).then(|| actor.to_owned());
+            let actor_id = granted_actor(actor).map(str::to_owned);
             let capabilities: Vec<Capability> =
                 serde_json::from_str(capabilities).map_err(|_| StoreError::InvalidRecord)?;
             if capabilities.len() > 6
