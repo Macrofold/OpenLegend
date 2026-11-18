@@ -2709,6 +2709,8 @@ export class NativeNpcDirector {
                 failure: {
                   ...failure,
                   ...(run.attemptEvidence ? { attempt: run.attemptEvidence } : {}),
+                  // Stopping delivery does not settle a dispatched provider's completion.
+                  ...(run.receipt ? { completionUncertain: run.receipt.completionUncertain } : {}),
                   effectsApplied: run.responseEvidence?.effectsApplied ?? false,
                   responseReceiptApplied: run.responseEvidence?.responseReceiptApplied ?? false,
                 },

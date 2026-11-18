@@ -236,7 +236,7 @@ interface Running extends DispatchRun {
   temporalSourcesCurrent?: () => boolean;
   releasePreparedSources?: () => void;
   invalidated?: boolean;
-  sourceInterruption?: 'selected-personal-source' | 'player-authority' | 'player-cancelled';
+  sourceInterruption?: DecisionStopEvidence;
   /** The resolved level-1 outcome, kept with any later failure of its escalation. */
   level1?: Level1Outcome;
   actorInvention?: {
@@ -423,13 +423,17 @@ export class AiDirector {
         if (run.controller.signal.aborted) continue;
         if (run.temporalSourcesCurrent && !run.temporalSourcesCurrent()) {
           run.invalidated = true;
-          run.sourceInterruption = 'selected-personal-source';
+          run.sourceInterruption ??= this.currentEvidence(
+            run,
+            'selected-personal-source',
+            'invalidated',
+          );
           run.controller.abort();
           continue;
         }
         if (run?.job.authority && !service.currentScope(run.job.authority, 'play', true)) {
           run.cancelReason = 'Control or access changed.';
-          run.sourceInterruption = 'player-authority';
+          run.sourceInterruption ??= this.currentEvidence(run, 'player-authority', 'invalidated');
           run.controller.abort();
           continue;
         }
@@ -966,7 +970,7 @@ export class AiDirector {
       return { ok: false, code: 'not-running', message: 'That request is no longer running.' };
     if (!run.controller.signal.aborted) {
       run.cancelReason = 'Request cancelled.';
-      run.sourceInterruption = 'player-cancelled';
+      run.sourceInterruption ??= this.currentEvidence(run, 'player-cancelled', 'cancelled');
       this.replyPreviews.recheck();
       await this.update(run, run.job.status, 'Cancelling request…');
       run.controller.abort();
@@ -1622,13 +1626,7 @@ export class AiDirector {
               ? 'This request was cancelled when the game paused.'
               : 'This request was cancelled before completion.'),
         undefined,
-        run.sourceInterruption
-          ? this.currentEvidence(
-              run,
-              run.sourceInterruption,
-              run.sourceInterruption === 'player-cancelled' ? 'cancelled' : 'invalidated',
-            )
-          : undefined,
+        run.sourceInterruption,
       );
     if (run.temporalSourcesCurrent && !run.temporalSourcesCurrent())
       throw new StopJob(
@@ -1925,7 +1923,20 @@ export class AiDirector {
                     disposition: error.outcome ?? error.status,
                     ...(run.level1 ? { level1: run.level1 } : {}),
                     ...(run.trackTerminalEvidence && error.evidence
-                      ? { failure: { ...error.evidence, attempt: run.attemptEvidence } }
+                      ? {
+                          failure: {
+                            ...error.evidence,
+                            attempt: run.attemptEvidence,
+                            ...(run.receipt
+                              ? { completionUncertain: run.receipt.completionUncertain }
+                              : {}),
+                          },
+                          // Cancellation of dispatched work can retain a provider
+                          // obligation alongside the known reason delivery stopped.
+                          ...(run.sourceInterruption
+                            ? { interruption: run.sourceInterruption }
+                            : {}),
+                        }
                       : {}),
                   }
                 : error instanceof ContextBudgetError
