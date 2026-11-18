@@ -795,9 +795,14 @@ impl NativeWorldSession {
         inputs: Vec<AdmittedWorldInput>,
     ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
+        self.navigation.prune_actions(
+            &self.session.accepted().map_err(failure)?.state.physical,
+            self.session.operational_generation(),
+        );
         let (prepared, _transfer) = self.navigation.take(&self.budget)?;
+        let (action_routes, _actions) = self.navigation.prepare_actions(&self.budget)?;
         self.session
-            .begin_advance(seconds, maximum_intervals, prepared, inputs)
+            .begin_advance(seconds, maximum_intervals, prepared, &action_routes, inputs)
             .map_err(failure)
     }
     pub fn begin_command(

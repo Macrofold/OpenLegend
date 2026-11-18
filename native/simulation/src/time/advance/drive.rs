@@ -416,10 +416,18 @@ impl AdvanceCursor {
                         if blocked || self.zero_duration {
                             let child =
                                 self.child.take().ok_or(ExecutionError::InvalidCheckpoint)?;
-                            core.journal.rollback_to(core.state, child)?;
+                            if self.action_routes_resolved {
+                                // Publish completed route records while another
+                                // world wait keeps elapsed time behind the gate.
+                                core.journal.keep(core.state, child)?;
+                            } else {
+                                core.journal.rollback_to(core.state, child)?;
+                            }
                             self.outcome = Some(outcome(
                                 true,
-                                if blocked {
+                                if self.action_routes_resolved {
+                                    "route-ready"
+                                } else if blocked {
                                     "navigation-pending"
                                 } else {
                                     "unchanged"

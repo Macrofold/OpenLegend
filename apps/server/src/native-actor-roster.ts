@@ -30,9 +30,9 @@ type ActorEntry = Entry & { readonly value?: NativeActorPresence };
 type NavigationEntry = Entry & { readonly pending: boolean };
 export type PreparedNativeActorRoster = (() => void) & { release(): void };
 
-// Five hash containers plus their owning class; each admitted entry includes
+// Six hash containers plus their owning class; each admitted entry includes
 // backing-table growth slack, key/value slots and its private guard carrier.
-const containers = (slots: number) => (6 + slots) * 32 * 8;
+const containers = (slots: number) => (7 + slots) * 32 * 8;
 
 /** Only selected scheduling facts survive the opening/source transfer. Each
  * row's deep parse is temporary; a small independent JSON body owns retained
@@ -43,6 +43,7 @@ export class NativeActorRoster {
   private readonly npcs = new Set<string>();
   private readonly exposures = new Map<string, Entry>();
   private readonly navigation = new Map<string, Entry>();
+  private readonly actionNavigation = new Map<string, Entry>();
   private released = false;
   private revision = 0;
 
@@ -57,8 +58,9 @@ export class NativeActorRoster {
     rows: readonly Row[],
     exposures: readonly Pick<Row, 'slot'>[],
     episodes: readonly Row[],
+    actions: readonly Row[],
   ): NativeActorRoster {
-    const capacity = 2 * rows.length + exposures.length + episodes.length;
+    const capacity = 2 * rows.length + exposures.length + episodes.length + actions.length;
     const guard = world.reserveConsumerBytes(containers(capacity));
     let roster: NativeActorRoster | undefined;
     try {
@@ -94,6 +96,17 @@ export class NativeActorRoster {
             throw error;
           }
         } else entry.guard.release();
+      }
+      for (const row of actions) {
+        const entry = roster.readActionNavigation(row);
+        if (!entry) continue;
+        try {
+          roster.key(roster.actionNavigation, entry);
+          roster.replace(roster.actionNavigation, entry);
+        } catch (error) {
+          roster.drop(entry);
+          throw error;
+        }
       }
       return roster;
     } catch (error) {
@@ -196,18 +209,41 @@ export class NativeActorRoster {
 
   private readNavigation(row: Row): NavigationEntry {
     return this.parse<string[], NavigationEntry>(row.parent, (path) =>
-      this.parse<{ proposal?: { wait?: string } }, NavigationEntry>(row.payload, (episode) => {
-        const workspace = this.world.reserveConsumerBytes(32 * 8);
-        try {
-          return this.copy({
-            id: path[2]!,
-            pending: episode.proposal?.wait === 'entity',
-          });
-        } finally {
-          workspace.release();
-        }
-      }),
+      this.parse<{ proposal?: { wait?: string } }, NavigationEntry>(row.payload, (episode) =>
+        this.navigationEntry(path[2]!, episode.proposal?.wait === 'entity'),
+      ),
     );
+  }
+
+  private navigationEntry(id: string, pending: boolean): NavigationEntry {
+    const workspace = this.world.reserveConsumerBytes(32 * 8);
+    try {
+      return this.copy({ id, pending });
+    } finally {
+      workspace.release();
+    }
+  }
+
+  private readActionNavigation(row: Row): NavigationEntry | undefined {
+    // Current-format native rows encode this fixed property name literally.
+    // Ordinary unchanged route membership needs no decoded action graph. The
+    // positive path still reads the actual field rather than searching its value.
+    const possible = row.payload.includes('"navigation":');
+    if (!possible && !this.actionNavigation.size) return;
+    return this.parse<string[], NavigationEntry | undefined>(row.parent, (path) => {
+      const id = path[2]!;
+      if (!possible)
+        return this.actionNavigation.has(id) ? this.navigationEntry(id, false) : undefined;
+      return this.parse<{ navigation?: { failure?: string } }, NavigationEntry | undefined>(
+        row.payload,
+        ({ navigation }) => {
+          const pending = !!navigation && !navigation.failure;
+          return pending || this.actionNavigation.has(id)
+            ? this.navigationEntry(id, pending)
+            : undefined;
+        },
+      );
+    });
   }
 
   // Map/Set replacement preserves the existing insertion order and key. A
@@ -264,9 +300,10 @@ export class NativeActorRoster {
     this.live();
     return this.npcs;
   }
-  pendingNavigationIds(): Iterable<string> {
+  *pendingNavigationIds(): Iterable<string> {
     this.live();
-    return this.navigation.keys();
+    yield* this.actionNavigation.keys();
+    for (const actor of this.navigation.keys()) if (!this.actionNavigation.has(actor)) yield actor;
   }
   get exitExposureActive(): boolean {
     this.live();
@@ -284,20 +321,32 @@ export class NativeActorRoster {
       (changes.writes['sim_exit_exposures']?.length ?? 0) +
       (changes.deletes['sim_exit_exposures']?.length ?? 0) +
       (changes.writes['sim_native_response_episodes']?.length ?? 0) +
-      (changes.deletes['sim_native_response_episodes']?.length ?? 0);
-    const scratch = this.world.reserveConsumerBytes(7 * 32 * 8 + count * 2 * 8);
+      (changes.deletes['sim_native_response_episodes']?.length ?? 0) +
+      (changes.writes['sim_processes']?.length ?? 0) +
+      (changes.deletes['sim_processes']?.length ?? 0);
+    const scratch = this.world.reserveConsumerBytes(9 * 32 * 8 + count * 2 * 8);
     const actors: ActorEntry[] = [],
       added: Entry[] = [],
       removed: Entry[] = [],
       episodes: NavigationEntry[] = [],
-      removedEpisodes: Entry[] = [];
+      removedEpisodes: Entry[] = [],
+      actions: NavigationEntry[] = [],
+      removedActions: Entry[] = [];
     let capacityGuard: NativeWorldConsumer | undefined;
     let consumed = false;
     const revision = this.revision;
     const release = () => {
       if (consumed) return;
       consumed = true;
-      for (const list of [actors, added, removed, episodes, removedEpisodes]) {
+      for (const list of [
+        actors,
+        added,
+        removed,
+        episodes,
+        removedEpisodes,
+        actions,
+        removedActions,
+      ]) {
         for (const entry of list) this.drop(entry);
         list.length = 0;
       }
@@ -326,12 +375,23 @@ export class NativeActorRoster {
       }
       for (const id of changes.deletes['sim_native_response_episodes'] ?? [])
         removedEpisodes.push(this.path(id, 2));
+      for (const row of changes.writes['sim_processes'] ?? []) {
+        const entry = this.readActionNavigation(row);
+        if (!entry) continue;
+        actions.push(entry);
+        if (entry.pending) this.key(this.actionNavigation, entry);
+      }
+      if (this.actionNavigation.size)
+        for (const id of changes.deletes['sim_processes'] ?? [])
+          removedActions.push(this.path(id, 2));
       const capacity =
         2 * (this.actors.size + actors.length) +
         this.exposures.size +
         added.length +
         this.navigation.size +
-        episodes.length;
+        episodes.length +
+        this.actionNavigation.size +
+        actions.length;
       if (capacity > this.capacity)
         capacityGuard = this.world.reserveConsumerBytes(containers(capacity));
       const accept = () => {
@@ -362,9 +422,21 @@ export class NativeActorRoster {
           this.remove(this.navigation, entry.id);
           entry.guard.release();
         }
+        for (const entry of actions) {
+          if (entry.pending) this.replace(this.actionNavigation, entry);
+          else {
+            this.remove(this.actionNavigation, entry.id);
+            entry.guard.release();
+          }
+        }
+        for (const entry of removedActions) {
+          this.remove(this.actionNavigation, entry.id);
+          entry.guard.release();
+        }
         for (const entry of actors)
           if (!entry.value) {
             this.remove(this.navigation, entry.id);
+            this.remove(this.actionNavigation, entry.id);
             entry.guard.release();
           }
         this.revision++;
@@ -373,6 +445,8 @@ export class NativeActorRoster {
           removed.length =
           episodes.length =
           removedEpisodes.length =
+          actions.length =
+          removedActions.length =
             0;
         release();
       };
@@ -388,7 +462,7 @@ export class NativeActorRoster {
     this.released = true;
     this.humans.clear();
     this.npcs.clear();
-    for (const map of [this.actors, this.exposures, this.navigation]) {
+    for (const map of [this.actors, this.exposures, this.navigation, this.actionNavigation]) {
       for (const entry of map.values()) this.drop(entry);
       map.clear();
     }

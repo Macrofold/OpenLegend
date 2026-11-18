@@ -421,6 +421,7 @@ pub(crate) struct AdvanceCursor {
     events: Vec<EventBatch>,
     navigation: Vec<(EntityHandle, PendingRefugeNavigation)>,
     prepared: Vec<(String, PreparedRefugeNavigation)>,
+    action_routes_resolved: bool,
     flush: Option<Phase>,
     saved_interval: Option<NativeInterval>,
     navigation_blocked: bool,
@@ -494,6 +495,7 @@ impl AdvanceCursor {
         max_intervals: usize,
         candidate: CandidateKey,
         prepared: Vec<(String, PreparedRefugeNavigation)>,
+        action_routes: &[(&str, &crate::time::PreparedActionNavigation)],
         inputs: Vec<AdmittedWorldInput>,
         continuation: Option<&AdvanceContinuation>,
         budget: &ByteBudget,
@@ -593,6 +595,7 @@ impl AdvanceCursor {
             events: Vec::new(),
             navigation: Vec::new(),
             prepared,
+            action_routes_resolved: false,
             flush: None,
             saved_interval: None,
             navigation_blocked: false,
@@ -616,7 +619,22 @@ impl AdvanceCursor {
             result.phase = Phase::Done;
         } else {
             result.child = Some(core.journal.checkpoint(core.state)?);
-            let initialized = result.begin_navigation_gate(core, NavigationAfter::Start, budget);
+            let initialized = (|| {
+                if !result.zero_duration {
+                    for &(actor, route) in action_routes {
+                        result.action_routes_resolved |=
+                            route.apply(core, actor, candidate.generation, budget)?;
+                    }
+                }
+                if result.action_routes_resolved {
+                    // A new path changes the forecast at this same game second.
+                    // The exact stored action and accrued elapsed debt survive.
+                    result.mechanics = None;
+                    result.local_changes = None;
+                    core.state.physical.header.native_interval = None;
+                }
+                result.begin_navigation_gate(core, NavigationAfter::Start, budget)
+            })();
             if let Err(error) = initialized {
                 result.abort(core)?;
                 return Err(error);

@@ -219,6 +219,7 @@ export class NativeRestorePreparation implements NativeRestoreProjection {
         stage.source.records.tables['sim_actors'] ?? [],
         stage.source.records.tables['sim_exit_exposures'] ?? [],
         stage.source.records.tables['sim_native_response_episodes'] ?? [],
+        stage.source.records.tables['sim_processes'] ?? [],
       );
       let admittedRetention: NativeRetention | undefined;
       try {

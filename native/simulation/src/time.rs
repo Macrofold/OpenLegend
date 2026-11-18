@@ -19,7 +19,9 @@ pub use input::{AdmittedWorldInput, Direction, ReleaseInput, SteeringInput};
 pub(crate) use movement::MotionSliceCursor;
 mod advance;
 mod navigation;
-pub(crate) use navigation::action_navigation_pending;
+pub(crate) use navigation::{
+    PendingActionNavigation, PreparedActionNavigation, action_navigation_pending,
+};
 mod reconcile;
 mod sensing;
 pub(crate) use advance::{

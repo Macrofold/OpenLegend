@@ -432,6 +432,7 @@ impl Session {
         seconds: f64,
         max_intervals: usize,
         prepared: Vec<(String, crate::native_refuge::PreparedRefugeNavigation)>,
+        action_routes: &[(&str, &crate::time::PreparedActionNavigation)],
         inputs: Vec<AdmittedWorldInput>,
     ) -> Result<CandidateKey, SessionError> {
         let (key, mut journal) = self.begin()?;
@@ -452,6 +453,7 @@ impl Session {
                 max_intervals,
                 key,
                 prepared,
+                action_routes,
                 inputs,
                 continuation.as_ref(),
                 &self.budget,

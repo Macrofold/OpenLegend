@@ -153,6 +153,7 @@ export class NativeCurrentOpening {
             source.records.tables['sim_actors'] ?? [],
             source.records.tables['sim_exit_exposures'] ?? [],
             source.records.tables['sim_native_response_episodes'] ?? [],
+            source.records.tables['sim_processes'] ?? [],
           );
           opening.retentionOwner = NativeRetention.capture(
             host,

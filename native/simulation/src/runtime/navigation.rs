@@ -5,13 +5,18 @@ use super::*;
 use crate::geometry::{GeometryAnswers, GeometryBinding, GeometryQueries, RoutePlan, RouteQuery};
 use crate::native_refuge::navigation::{ProposalBinding, binding};
 use crate::native_refuge::{PendingRefugeNavigation, PreparedRefugeNavigation};
+use crate::time::{PendingActionNavigation, PreparedActionNavigation};
 use std::mem::size_of;
 
 const MAXIMUM_PREPARED: usize = 64;
 struct PreparedEntry {
     actor: String,
-    answer: PreparedRefugeNavigation,
+    answer: PreparedNavigation,
     _custody: ByteReservation,
+}
+enum PreparedNavigation {
+    Action(PreparedActionNavigation),
+    Refuge(PreparedRefugeNavigation),
 }
 pub(super) struct PreparedNavigationCache {
     entries: Vec<PreparedEntry>,
@@ -31,23 +36,98 @@ impl PreparedNavigationCache {
         &mut self,
         budget: &ByteBudget,
     ) -> Result<(Vec<(String, PreparedRefugeNavigation)>, ByteReservation), RuntimeError> {
-        let bytes = self.entries.len() * size_of::<(String, PreparedRefugeNavigation)>();
-        // AdvanceCursor admits its own transferred collection before this
-        // preparation owner is dropped. Keep actor strings funded across it.
-        let actors = self
+        let mut refuge = self
             .entries
             .iter()
+            .filter(|entry| matches!(entry.answer, PreparedNavigation::Refuge(_)));
+        let count = refuge.clone().count();
+        let bytes = count * size_of::<(String, PreparedRefugeNavigation)>();
+        // AdvanceCursor admits its own transferred collection before this
+        // preparation owner is dropped. Keep actor strings funded across it.
+        let actors = refuge
             .try_fold(bytes, |n, entry| n.checked_add(entry.actor.capacity()))
             .ok_or_else(|| failure("capacity"))?;
         let custody = budget.reserve(actors).map_err(failure)?;
-        let mut answers = Vec::with_capacity(self.entries.len());
-        for entry in self.entries.drain(..) {
-            answers.push((entry.actor, entry.answer));
+        let mut answers = Vec::with_capacity(count);
+        for entry in self.entries.extract_if(.., |entry| {
+            matches!(entry.answer, PreparedNavigation::Refuge(_))
+        }) {
+            if let PreparedNavigation::Refuge(answer) = entry.answer {
+                answers.push((entry.actor, answer));
+            }
         }
         Ok((answers, custody))
     }
+
+    pub(super) fn action_answers(&self) -> impl Iterator<Item = (&str, &PreparedActionNavigation)> {
+        self.entries.iter().filter_map(|entry| match &entry.answer {
+            PreparedNavigation::Action(answer) => Some((entry.actor.as_str(), answer)),
+            PreparedNavigation::Refuge(_) => None,
+        })
+    }
+
+    /// Admit only the borrowed input slots. Answer bodies remain with the
+    /// independent preparation until the candidate has accepted the routes.
+    pub(super) fn prepare_actions(
+        &self,
+        budget: &ByteBudget,
+    ) -> Result<(Vec<(&str, &PreparedActionNavigation)>, ByteReservation), RuntimeError> {
+        let count = self.action_answers().count();
+        let custody = budget
+            .reserve(count * size_of::<(&str, &PreparedActionNavigation)>())
+            .map_err(failure)?;
+        let mut answers = Vec::with_capacity(count);
+        answers.extend(self.action_answers());
+        // Independent route replies cannot choose the writer's change order.
+        answers.sort_unstable_by(|(left, _), (right, _)| left.cmp(right));
+        Ok((answers, custody))
+    }
+
+    pub(super) fn prune_actions(
+        &mut self,
+        physical: &crate::simulation::PhysicalState,
+        generation: u64,
+    ) {
+        self.entries.retain(|entry| match &entry.answer {
+            PreparedNavigation::Action(answer) => {
+                answer.still_pending(physical, &entry.actor, generation)
+            }
+            PreparedNavigation::Refuge(_) => true,
+        });
+    }
+
+    fn store(
+        &mut self,
+        actor: &str,
+        answer: PreparedNavigation,
+        budget: &ByteBudget,
+    ) -> Result<(), RuntimeError> {
+        let existing = self.entries.iter().position(|entry| {
+            entry.actor == actor
+                && std::mem::discriminant(&entry.answer) == std::mem::discriminant(&answer)
+        });
+        let custody = budget
+            .reserve(size_of::<PreparedEntry>() + actor.len())
+            .map_err(failure)?;
+        let entry = PreparedEntry {
+            actor: actor.into(),
+            answer,
+            _custody: custody,
+        };
+        if let Some(at) = existing {
+            self.entries[at] = entry;
+        } else {
+            // Eviction discards derived work, never a saved request or authority.
+            if self.entries.len() == MAXIMUM_PREPARED {
+                self.entries.remove(0);
+            }
+            self.entries.push(entry);
+        }
+        Ok(())
+    }
 }
 enum NavigationPhase {
+    Action(PendingActionNavigation),
     Direct {
         scope: ProposalBinding,
         queries: GeometryQueries,
@@ -69,6 +149,7 @@ impl RuntimeNavigationRead {
     /// The read keeps the exact route request and current-source binding alive.
     pub fn queries(&self) -> Result<&GeometryQueries, RuntimeError> {
         match &self.phase {
+            NavigationPhase::Action(value) => Ok(&value.queries),
             NavigationPhase::Direct { queries, .. } => Ok(queries),
             NavigationPhase::Pending(value) => Ok(value.queries()),
             NavigationPhase::Done => Err(failure("navigation preparation was consumed")),
@@ -82,6 +163,39 @@ impl NativeWorldSession {
     ) -> Result<Option<RuntimeNavigationRead>, RuntimeError> {
         self.require_active()?;
         let state = &self.session.accepted().map_err(failure)?.state;
+        let generation = self.session.operational_generation();
+        let revision = state.installed.geometry.spatial.revision;
+        self.navigation.prune_actions(&state.physical, generation);
+        let serial = self
+            .next_read_serial
+            .checked_add(1)
+            .filter(|s| *s <= crate::identity::MAX_SAFE_INTEGER)
+            .ok_or_else(|| failure("read identity exhausted"))?;
+        let key = CandidateKey {
+            id: serial,
+            base_cut: state.accepted_cut,
+            generation,
+        };
+        let request = GeometryBinding::new(key, revision, serial);
+        if !self
+            .navigation
+            .action_answers()
+            .any(|(candidate, _)| candidate == actor)
+            && let Some(pending) =
+                PendingActionNavigation::capture(&state.physical, actor, request, &self.budget)
+                    .map_err(failure)?
+        {
+            let custody = self
+                .budget
+                .reserve(size_of::<RuntimeNavigationRead>() + actor.len())
+                .map_err(failure)?;
+            self.next_read_serial = serial;
+            return Ok(Some(RuntimeNavigationRead {
+                actor: actor.into(),
+                phase: NavigationPhase::Action(pending),
+                _custody: custody,
+            }));
+        }
         if !crate::native_controller::proposal_current(&state.physical, &state.installed, actor)
             .map_err(failure)?
         {
@@ -101,15 +215,16 @@ impl NativeWorldSession {
         if proposal.wait != Some(crate::native_response::NavigationWait::Entity) {
             return Ok(None);
         }
-        let generation = self.session.operational_generation();
-        if let Some(prepared) = self
-            .navigation
-            .entries
-            .iter()
-            .find(|entry| entry.actor == actor)
+        if let Some(prepared) =
+            self.navigation
+                .entries
+                .iter()
+                .find_map(|entry| match &entry.answer {
+                    PreparedNavigation::Refuge(answer) if entry.actor == actor => Some(answer),
+                    _ => None,
+                })
         {
             if prepared
-                .answer
                 .is_current(&state.physical, actor, generation, &self.budget)
                 .map_err(failure)?
             {
@@ -160,21 +275,7 @@ impl NativeWorldSession {
                     + entity.ordinary_body_profile().id.len(),
             )
             .map_err(failure)?;
-        let serial = self
-            .next_read_serial
-            .checked_add(1)
-            .filter(|s| *s <= crate::identity::MAX_SAFE_INTEGER)
-            .ok_or_else(|| failure("read identity exhausted"))?;
-        let key = CandidateKey {
-            id: serial,
-            base_cut: state.accepted_cut,
-            generation: self.session.operational_generation(),
-        };
-        let mut queries = GeometryQueries::new(GeometryBinding::new(
-            key,
-            state.installed.geometry.spatial.revision,
-            serial,
-        ));
+        let mut queries = GeometryQueries::new(request);
         queries.routes = vec![RouteQuery::Surface {
             from: proposal.origin.clone(),
             to: candidate.point.clone(),
@@ -230,6 +331,37 @@ impl NativeWorldSession {
         answer: GeometryAnswers,
     ) -> Result<bool, RuntimeError> {
         let state = &self.session.accepted().map_err(failure)?.state;
+        if let NavigationPhase::Action(pending) = &read.phase {
+            pending.queries.validate_answers(&answer).map_err(failure)?;
+            let current = pending
+                .is_current(
+                    &state.physical,
+                    &read.actor,
+                    self.session.operational_generation(),
+                    state.installed.geometry.spatial.revision,
+                    &self.budget,
+                )
+                .map_err(failure)?;
+            let NavigationPhase::Action(pending) =
+                std::mem::replace(&mut read.phase, NavigationPhase::Done)
+            else {
+                unreachable!()
+            };
+            if current {
+                let result = answer
+                    .navigation
+                    .into_iter()
+                    .next()
+                    .ok_or_else(|| failure("missing action route answer"))?;
+                let prepared = pending.finish(result, &self.budget).map_err(failure)?;
+                self.navigation.store(
+                    &read.actor,
+                    PreparedNavigation::Action(prepared),
+                    &self.budget,
+                )?;
+            }
+            return Ok(false);
+        }
         let current = crate::native_controller::proposal_current(
             &state.physical,
             &state.installed,
@@ -270,6 +402,7 @@ impl NativeWorldSession {
                 }
             }
             NavigationPhase::Done => return Err(failure("navigation preparation was consumed")),
+            NavigationPhase::Action(_) => unreachable!(),
         }
         match std::mem::replace(&mut read.phase, NavigationPhase::Done) {
             NavigationPhase::Direct { scope, queries, .. } => {
@@ -295,33 +428,14 @@ impl NativeWorldSession {
                 if !current {
                     return Ok(false);
                 }
-                let existing = self
-                    .navigation
-                    .entries
-                    .iter()
-                    .position(|entry| entry.actor == read.actor);
-                let custody = self
-                    .budget
-                    .reserve(size_of::<PreparedEntry>() + read.actor.len())
-                    .map_err(failure)?;
-                let entry = PreparedEntry {
-                    actor: read.actor.clone(),
-                    answer: prepared,
-                    _custody: custody,
-                };
-                if let Some(at) = existing {
-                    self.navigation.entries[at] = entry;
-                } else {
-                    // Source retains at most 64 prepared animal replies. An
-                    // evicted reply is derived work, never saved authority.
-                    if self.navigation.entries.len() == MAXIMUM_PREPARED {
-                        self.navigation.entries.remove(0);
-                    }
-                    self.navigation.entries.push(entry);
-                }
+                self.navigation.store(
+                    &read.actor,
+                    PreparedNavigation::Refuge(prepared),
+                    &self.budget,
+                )?;
                 Ok(false)
             }
-            NavigationPhase::Done => unreachable!(),
+            NavigationPhase::Action(_) | NavigationPhase::Done => unreachable!(),
         }
     }
 }

@@ -10,8 +10,11 @@ use crate::host::retained_size::{HeapBytes, heap_sum};
 use crate::host::{ByteBudget, ByteReservation, CandidateKey};
 use crate::native_refuge::PreparedRefugeNavigation;
 use crate::native_response::{LocomotionMode, NavigationWait};
-use crate::state::{Entity, EntityHandle, Placement};
+use crate::state::{Action, Entity, EntityHandle, NavigationRequest, Placement};
 use std::mem::size_of;
+
+mod action;
+pub(crate) use action::{PendingActionNavigation, PreparedActionNavigation};
 
 pub(crate) fn action_navigation_pending(
     entity: &Entity,
@@ -19,25 +22,35 @@ pub(crate) fn action_navigation_pending(
     revision: u64,
     budget: &ByteBudget,
 ) -> Result<bool, ExecutionError> {
+    Ok(current_action_navigation(entity, now, revision, budget)?
+        .is_some_and(|(_, request)| request.wait.as_deref() != Some("entity")))
+}
+
+fn current_action_navigation<'a>(
+    entity: &'a Entity,
+    now: f64,
+    revision: u64,
+    budget: &ByteBudget,
+) -> Result<Option<(&'a Action, &'a NavigationRequest)>, ExecutionError> {
     let Some(actor) = &entity.actor else {
-        return Ok(false);
+        return Ok(None);
     };
     let Some(action) = &actor.action else {
-        return Ok(false);
+        return Ok(None);
     };
     let Some(pending) = &action.navigation else {
-        return Ok(false);
+        return Ok(None);
     };
     if !actor.alive
         || actor.incapacitated
         || !entity.actively_participates()
-        || pending.request.wait.as_deref() == Some("entity")
+        || !action.has_ground_motion()
         || pending
             .failure
             .as_ref()
             .is_some_and(|failure| !failure.is_empty())
     {
-        return Ok(false);
+        return Ok(None);
     }
     if action
         .native_locomotion
@@ -49,7 +62,7 @@ pub(crate) fn action_navigation_pending(
             .and_then(|animal| animal.episode.as_ref())
             .is_some_and(|episode| episode.review_at <= now && episode.proposal.is_none())
     {
-        return Ok(false);
+        return Ok(None);
     }
     let Some(Placement::World {
         position,
@@ -57,7 +70,7 @@ pub(crate) fn action_navigation_pending(
         ..
     }) = &entity.placement
     else {
-        return Ok(false);
+        return Ok(None);
     };
     let _body = entity
         .spatial
@@ -67,12 +80,13 @@ pub(crate) fn action_navigation_pending(
         .transpose()?;
     let body = entity.body_profile();
     let request = &pending.request;
-    Ok(request.geometry_revision == revision
+    let current = request.geometry_revision == revision
         && *surface == request.from.surface_id
         && crate::spatial::distance(*position, request.from.point()) < 1e-7
         && body.radius == request.body.radius
         && body.height == request.body.height
-        && body.max_slope == request.body.max_slope)
+        && body.max_slope == request.body.max_slope;
+    Ok(current.then_some((action, request)))
 }
 
 pub(super) enum NavigationGateStep<'a> {
