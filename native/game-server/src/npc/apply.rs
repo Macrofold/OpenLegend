@@ -8,7 +8,7 @@ use crate::{
     live_save::{AcceptedSaveInput, LiveSaves},
     player_events::SpeechReplyStatus,
     store::{AdmittedJob, TerminalOutcome},
-    world::ApplicationStart,
+    world::{ApplicationStart, WorldError},
 };
 use axum::body::Bytes;
 use openlegend_simulation::runtime::{RuntimeDirectOutput, RuntimeError, RuntimeNpcResponseTicket};
@@ -47,6 +47,8 @@ pub(super) async fn apply(
     let begin_permit = permit.clone();
     let staged = saves.clone();
     let accepted = saves.clone();
+    let settle_world = game.world.clone();
+    let settle_job = job.clone();
     let mut ticket = Some(Arc::try_unwrap(ticket).map_err(|_| CallFailure::Invalid)?);
     game.world.request_advance_publication();
     let applied = game
@@ -115,12 +117,12 @@ pub(super) async fn apply(
                 if *cancellation.borrow() {
                     return Ok(fence.settle(key, false)?);
                 }
+                let settle =
+                    || settle_world.settle_npc_response(&settle_job.job.request.npc_id, fence, key);
                 if let Some((authority, scope)) = permit {
-                    return Ok(authority.current(&scope, Capability::Play, true, |_, _| {
-                        fence.settle(key, true)
-                    })??);
+                    return authority.current(&scope, Capability::Play, true, |_, _| settle())?;
                 }
-                Ok(fence.settle(key, true)?)
+                settle()
             },
             move |applied| match applied {
                 Applied::Accepted { save, preview } => {
@@ -134,7 +136,10 @@ pub(super) async fn apply(
             },
         )
         .await
-        .map_err(CallFailure::World)?;
+        .map_err(|error| match error {
+            WorldError::SourceEditPending => CallFailure::Stale("source-edit-pending"),
+            other => CallFailure::World(other),
+        })?;
     match applied {
         Some(Applied::Accepted { .. } | Applied::Refused(_)) => Ok(()),
         Some(Applied::Stale("cancelled")) | None => Err(CallFailure::Cancelled),

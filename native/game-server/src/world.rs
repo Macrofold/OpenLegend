@@ -30,6 +30,7 @@ use tokio::sync::{Mutex as TurnLock, Semaphore, oneshot, watch};
 const TURN_WAIT: Duration = Duration::from_secs(5);
 mod npc;
 mod player_history;
+pub(crate) use player_history::PlayerHistoryRead;
 
 #[derive(Debug)]
 pub enum WorldError {
@@ -48,6 +49,7 @@ pub enum WorldError {
     Language(crate::language::LanguageError),
     ClockChanged,
     ProjectionChanged,
+    SourceEditPending,
 }
 
 impl std::fmt::Display for WorldError {
@@ -72,6 +74,9 @@ impl std::fmt::Display for WorldError {
                 f.write_str("The accepted clock changed before the elapsed offer")
             }
             Self::ProjectionChanged => f.write_str("The allowed player view changed"),
+            Self::SourceEditPending => {
+                f.write_str("The selected character's evidence is being edited")
+            }
         }
     }
 }
@@ -318,6 +323,25 @@ impl HostedWorld {
             actor,
             _custody,
         })
+    }
+
+    /// A protected evidence edit can announce withdrawal while a response
+    /// candidate still owns ordinary admission. Hold its marker through
+    /// this synchronous acceptance so a newly pending edit cannot race it.
+    pub(crate) fn settle_npc_response(
+        &self,
+        actor: &str,
+        fence: &CandidateFence,
+        key: CandidateKey,
+    ) -> Result<Settlement, WorldError> {
+        let pending = self
+            .pending_source_edits
+            .lock()
+            .map_err(|_| HostError::Poisoned)?;
+        if pending.contains(actor) {
+            return Err(WorldError::SourceEditPending);
+        }
+        Ok(fence.settle(key, true)?)
     }
 
     /// Start the prepared transfer only while its native source and consumer
