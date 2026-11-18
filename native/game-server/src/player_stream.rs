@@ -5,7 +5,7 @@ use crate::{
     authority::{AccessError, Authority, AuthorizedScope},
     player_view::{PreparedPlayerView, PreviousView, ViewError, ViewSelection},
     wire,
-    world::{HostedWorld, PlayerDisclosure, WorldError},
+    world::{HostedWorld, PlayerDisclosure, PlayerDisclosureTurn, WorldError},
 };
 use axum::body::Bytes;
 use http_body::{Body, Frame};
@@ -40,7 +40,7 @@ type NextFrame = Pin<Box<dyn Future<Output = Next> + Send>>;
 enum Next {
     Stop,
     Heartbeat,
-    View(Result<ViewAttempt, ViewError>),
+    View(Result<(ViewAttempt, PlayerDisclosureTurn), ViewError>),
 }
 
 pub(crate) struct PlayerStream {
@@ -91,21 +91,40 @@ impl PlayerStream {
         }
     }
 
-    fn next(&self) -> NextFrame {
+    fn next(&mut self) -> NextFrame {
         let mut stop = self.stop.clone();
         let mut revisions = self.revisions.clone();
         let after = self.after;
         let heartbeat = self.heartbeat;
         let prepare = self.prepare.clone();
-        let fresh = self.fresh_attempt;
+        let world = self.world.clone();
+        let first = self.first.take();
+        let fresh = self.fresh_attempt || self.previous.is_none();
         Box::pin(async move {
             let shutdown = async { while !*stop.borrow() && stop.changed().await.is_ok() {} };
             let view = async {
-                if !fresh && revisions.changed().await.is_err() {
-                    return Next::Stop;
-                }
-                sleep_until(after).await;
-                Next::View(prepare().await)
+                let attempt = match first {
+                    Some(first) => first,
+                    None => {
+                        if !fresh && revisions.changed().await.is_err() {
+                            return Next::Stop;
+                        }
+                        sleep_until(after).await;
+                        match prepare().await {
+                            Ok(attempt) => attempt,
+                            Err(error) => return Next::View(Err(error)),
+                        }
+                    }
+                };
+                // The successful poll hands the guard straight back to
+                // poll_frame. No await or socket drain follows acquisition.
+                Next::View(
+                    world
+                        .player_disclosure_turn()
+                        .await
+                        .map(|turn| (attempt, turn))
+                        .map_err(ViewError::World),
+                )
             };
             tokio::select! {
                 _ = shutdown => Next::Stop,
@@ -155,23 +174,17 @@ impl Body for PlayerStream {
                 self.end();
                 return Poll::Ready(None);
             }
-            let next = match self.first.take() {
-                Some(first) => Next::View(Ok(first)),
-                None => {
-                    if self.pending.is_none() {
-                        self.pending = Some(self.next());
-                    }
-                    let next = ready!(
-                        self.pending
-                            .as_mut()
-                            .expect("prepared poll")
-                            .as_mut()
-                            .poll(context)
-                    );
-                    self.pending = None;
-                    next
-                }
-            };
+            if self.pending.is_none() {
+                self.pending = Some(self.next());
+            }
+            let next = ready!(
+                self.pending
+                    .as_mut()
+                    .expect("prepared poll")
+                    .as_mut()
+                    .poll(context)
+            );
+            self.pending = None;
             match next {
                 Next::Stop => {
                     self.end();
@@ -221,11 +234,11 @@ impl Body for PlayerStream {
                     self.end();
                     return Poll::Ready(None);
                 }
-                Next::View(Ok(attempt)) => {
+                Next::View(Ok((attempt, turn))) => {
                     let offered = *self.revisions.borrow();
                     self.after = Instant::now() + VIEW_CADENCE;
                     let mut inventory = false;
-                    let result = self.world.disclose_player(
+                    let result = turn.disclose(
                         &self.authority,
                         &attempt.scope,
                         attempt.view.read(),

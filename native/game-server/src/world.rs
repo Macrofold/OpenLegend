@@ -211,7 +211,7 @@ impl WorldHost {
             session: Mutex::new(session),
             dispatch,
             fence,
-            turn: TurnLock::new(()),
+            turn: Arc::new(TurnLock::new(())),
             waiting: Arc::new(Semaphore::new(self.request_capacity)),
             closing: AtomicBool::new(false),
             durable,
@@ -237,7 +237,7 @@ pub struct HostedWorld {
     session: Mutex<NativeWorldSession>,
     dispatch: SerialDispatch<WorldHost, Self>,
     fence: Arc<CandidateFence>,
-    turn: TurnLock<()>,
+    turn: Arc<TurnLock<()>>,
     waiting: Arc<Semaphore>,
     closing: AtomicBool,
     durable: watch::Sender<u64>,
@@ -256,6 +256,34 @@ pub enum PlayerDisclosure {
     Changed,
     Unchanged,
     Published(axum::body::Bytes),
+}
+
+pub(crate) struct PlayerDisclosureTurn {
+    world: Arc<HostedWorld>,
+    _turn: tokio::sync::OwnedMutexGuard<()>,
+}
+
+impl PlayerDisclosureTurn {
+    /// Consume the turn during the body poll that acquired it. Only the
+    /// authorized result bytes leave this call for transport.
+    pub(crate) fn disclose(
+        self,
+        authority: &Authority,
+        scope: &AuthorizedScope,
+        read: &RuntimePlayerRead,
+        selected_events: &[String],
+        control_preview_cut: Option<u64>,
+        publish: impl FnOnce(bool, &ByteBudget) -> Result<Option<axum::body::Bytes>, WorldError>,
+    ) -> Result<PlayerDisclosure, WorldError> {
+        self.world.disclose_player_in_turn(
+            authority,
+            scope,
+            read,
+            selected_events,
+            control_preview_cut,
+            publish,
+        )
+    }
 }
 
 pub enum ApplicationStart<T> {
@@ -478,8 +506,12 @@ impl HostedWorld {
     }
 
     async fn enter(&self) -> Result<tokio::sync::MutexGuard<'_, ()>, WorldError> {
+        self.enter_turn(self.turn.lock()).await
+    }
+
+    async fn enter_turn<T>(&self, lock: impl Future<Output = T>) -> Result<T, WorldError> {
         let queued = self.waiting.try_acquire().map_err(|_| HostError::Busy)?;
-        let turn = tokio::time::timeout(TURN_WAIT, self.turn.lock())
+        let turn = tokio::time::timeout(TURN_WAIT, lock)
             .await
             .map_err(|_| HostError::Busy)?;
         drop(queued);
@@ -598,34 +630,22 @@ impl HostedWorld {
             .await
     }
 
-    /// Call only when the HTTP body can take its next payload. The callback
-    /// selects, encodes and hands it off synchronously. An older retained
-    /// reader, busy turn or invalidated scope never sends a prepared frame.
-    pub fn disclose_player(
-        &self,
-        authority: &Authority,
-        scope: &AuthorizedScope,
-        read: &RuntimePlayerRead,
-        selected_events: &[String],
-        control_preview_cut: Option<u64>,
-        publish: impl FnOnce(bool, &ByteBudget) -> Result<Option<axum::body::Bytes>, WorldError>,
-    ) -> Result<PlayerDisclosure, WorldError> {
-        let Ok(_turn) = self.turn.try_lock() else {
-            return Ok(PlayerDisclosure::Busy);
-        };
-        self.disclose_player_in_turn(
-            authority,
-            scope,
-            read,
-            selected_events,
-            control_preview_cut,
-            publish,
-        )
+    /// The HTTP body polls this bounded, fair wait only when it can take its
+    /// next frame. No compute worker or disclosure lease waits here.
+    pub(crate) async fn player_disclosure_turn(
+        self: Arc<Self>,
+    ) -> Result<PlayerDisclosureTurn, WorldError> {
+        self.request_advance_publication();
+        let turn = self.enter_turn(self.turn.clone().lock_owned()).await?;
+        Ok(PlayerDisclosureTurn {
+            world: self,
+            _turn: turn,
+        })
     }
 
     /// The first state response and stream headers may wait for the existing
     /// fair world turn. Final authorization and any payload still leave
-    /// synchronously. An existing stream body remains nonblocking.
+    /// synchronously.
     pub(crate) async fn first_player_disclosure(
         &self,
         authority: &Authority,
