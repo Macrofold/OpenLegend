@@ -15,6 +15,8 @@ Before running a check, decide what it must establish and where it will run. Use
 
 Explicit task instructions override the defaults in the table. For remote execution, follow the [managed-worker procedure](verification-workers.md) before starting, claiming or using a machine, including an already-running one. That procedure covers access, spending and [what to do when the managed runner is unavailable](verification-workers.md#current-availability). Ordinary focused checks stay local. Elapsed time alone does not move an untimed check to AWS.
 
+When a local build or untimed scenario could interfere with Mike's work, use his report or take one quick look at current CPU load and memory pressure, for example in Activity Monitor. Consider the Mac's responsiveness and the expected CPU, memory and disk demand of the check. Use the managed worker when the workload is known to be heavy or would compete with current work. For example, a one-minute browser check can go to AWS when it would stall an already busy Mac, even if the worker takes longer overall. A small check with no plausible interference needs no separate load inspection. A busy Mac can still be the approved browser client for measuring play under normal use.
+
 ## Select checks for the task
 
 Write new automated tests only when Mike asks. Adding a test case to an existing test file is still writing a new test. A project document, acceptance criterion or skill can require proof of an outcome without authorizing a new test. Use existing checks or a small disposable scenario through the real caller. Run checks explicitly required by the task, the affected contract or the applicable merge procedure. Select additional checks by what the change could break.

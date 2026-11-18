@@ -16,7 +16,7 @@ The [exact adoption plan](../projects/agent-workflow-efficiency/03-instruction-e
 
 ## Current work
 
-- The [implementation workflow review](../verification/agent-guidance/2026/2026-11-17-implementation-workflow-review.md) records the corrected instructions, remaining choices for Mike and the observed Codex sessions. Mike settled 13 choices on November 18. E1, E7 and E9 remain open in the review record.
+The [implementation workflow review and its 16 decisions](../verification/agent-guidance/2026/2026-11-17-implementation-workflow-review.md#decisions-for-mike) are complete. The review records the observed Codex sessions. Broader dispatch verification stays with CG05.
 
 - [ ] **CG05 — Native-agent dispatch verification.** In installed Codex, Claude Code, OpenCode and Cursor versions, inspect injected context and explicit reads for matching Jev/camera and candidate selection/paging/hydration tasks, unrelated prose mentioning them, explicit findings-only/design-only requests, new files and a package working directory. Verify the development workflow cases below as well as relevant rules without unrelated bundles or unauthorized edits. Include recovery from truncated root/scoped instruction injection across task modes. Record versions and actual behavior; self-reports and static routing are not dispatch evidence.
 
