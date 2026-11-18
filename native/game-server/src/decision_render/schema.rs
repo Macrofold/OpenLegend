@@ -54,6 +54,22 @@ impl BoundSchema {
         }
         Err(RenderError::InvalidResponse)
     }
+
+    /// A provisional first operation must be a complete, independent speech
+    /// offer using this request's own entity alias. The final response still
+    /// needs complete schema and native effect validation.
+    pub(crate) fn preview_talk<'a>(&self, operation: &'a Value, player: &str) -> Option<&'a Value> {
+        let talk = operation.get("talk")?;
+        if talk["addresseeEntityId"] != player
+            || !operation["requiresAccepted"]
+                .as_array()
+                .is_some_and(Vec::is_empty)
+            || !matches_schema(&self.value["properties"]["operations"]["items"], operation)
+        {
+            return None;
+        }
+        Some(talk)
+    }
 }
 
 impl DecisionPolicy {

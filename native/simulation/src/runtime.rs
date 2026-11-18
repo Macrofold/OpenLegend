@@ -64,7 +64,9 @@ pub use npc::{
     RuntimeNpcPreparationStep, RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket,
 };
 pub use player::{RuntimePlayerInputState, RuntimePlayerPublication, RuntimePlayerRead};
-pub use reply_preview::{RuntimeReplyPreviewPublication, RuntimeReplyPreviewRead};
+pub use reply_preview::{
+    RuntimeReplyPreviewFacts, RuntimeReplyPreviewPublication, RuntimeReplyPreviewRead,
+};
 
 #[derive(Debug)]
 pub struct RuntimeError(String);

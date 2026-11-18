@@ -39,14 +39,22 @@ pub struct RuntimeReplyPreviewRead {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct ReplyPreviewFacts<'a> {
-    world_id: &'a str,
-    generation: &'a str,
-    accepted_cut: u64,
-    eligible: bool,
-    clear: bool,
+pub struct RuntimeReplyPreviewFacts {
+    world_id: String,
+    generation: String,
+    pub accepted_cut: u64,
+    pub eligible: bool,
+    pub clear: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     speaker_name_data: Option<crate::worlds::OwnedPersonalName>,
+    #[serde(skip)]
+    _custody: ByteReservation,
+}
+
+impl RuntimeReplyPreviewFacts {
+    pub fn speaker_name(&self) -> Option<&crate::state::Named> {
+        self.speaker_name_data.as_ref().map(|name| name.name())
+    }
 }
 
 impl NativeWorldSession {
@@ -229,6 +237,23 @@ impl NativeWorldSession {
         read: RuntimeReplyPreviewRead,
         bytes: &[u8],
     ) -> Result<RuntimeJson, RuntimeError> {
+        let _decode = (!bytes.is_empty())
+            .then(|| decode_preparation(bytes, &self.budget))
+            .transpose()?;
+        let answers = (!bytes.is_empty())
+            .then(|| serde_json::from_slice(bytes).map_err(failure))
+            .transpose()?;
+        let facts = self.finish_reply_preview_direct(read, answers)?;
+        RuntimeJson::encode(&facts, &self.budget)
+    }
+
+    /// Consume the same exact query and original world cut without encoding
+    /// its input and answer just to move them between Rust owners.
+    pub fn finish_reply_preview_direct(
+        &self,
+        mut read: RuntimeReplyPreviewRead,
+        answers: Option<GeometryAnswers>,
+    ) -> Result<RuntimeReplyPreviewFacts, RuntimeError> {
         self.require_active()?;
         let simulation = self.session.accepted().map_err(failure)?;
         simulation
@@ -243,16 +268,15 @@ impl NativeWorldSession {
         }
         let mut clear = false;
         if let (Some(sound), Some(sight)) = (read.sound, read.sight) {
-            let (binding, sound_answers, sight_answers, _decode) = if read.queries.is_empty() {
-                if !bytes.is_empty() {
+            let (binding, sound_answers, sight_answers) = if read.queries.is_empty() {
+                if answers.is_some() {
                     return Err(failure("unexpected preview geometry"));
                 }
-                (read.binding, Vec::new(), Vec::new(), None)
+                (read.binding, Vec::new(), Vec::new())
             } else {
-                let decode = decode_preparation(bytes, &self.budget)?;
-                let answers: GeometryAnswers = serde_json::from_slice(bytes).map_err(failure)?;
+                let answers = answers.ok_or_else(|| failure("missing preview geometry"))?;
                 read.queries.validate_answers(&answers).map_err(failure)?;
-                (answers.binding, answers.sound, answers.sight, Some(decode))
+                (answers.binding, answers.sound, answers.sight)
             };
             let sound = sound
                 .finish_exposure(binding, &sound_answers, &read.installed.acoustics)
@@ -264,24 +288,39 @@ impl NativeWorldSession {
                 .exposure(&read.player)
                 .is_some_and(|exposure| exposure.detail == InstalledHearingDetail::Clear)
                 && sight.seen(&read.npc) == Some(true);
-        } else if !bytes.is_empty() {
+        } else if answers.is_some() {
             return Err(failure("unexpected preview geometry"));
         }
         let speaker_name_data = if clear { read.speaker_name_data } else { None };
-        RuntimeJson::encode(
-            &ReplyPreviewFacts {
-                world_id: &read.world_id,
-                generation: &read.generation,
-                accepted_cut: read.binding.base_cut,
-                eligible: read.eligible,
-                clear,
-                speaker_name_data,
-            },
-            &self.budget,
-        )
+        // The optional captured name has its own reservation. The temporary
+        // query vectors and strings end with this read, before shrinking it.
+        drop(read.queries);
+        drop(read.account);
+        drop(read.player);
+        drop(read.npc);
+        read._custody
+            .resize(
+                read.world_id.capacity()
+                    + read.generation.capacity()
+                    + size_of::<RuntimeReplyPreviewFacts>(),
+            )
+            .map_err(failure)?;
+        Ok(RuntimeReplyPreviewFacts {
+            world_id: read.world_id,
+            generation: read.generation,
+            accepted_cut: read.binding.base_cut,
+            eligible: read.eligible,
+            clear,
+            speaker_name_data,
+            _custody: read._custody,
+        })
     }
 }
 impl RuntimeReplyPreviewRead {
+    pub fn geometry(&self) -> Option<&GeometryQueries> {
+        (!self.queries.is_empty()).then_some(&self.queries)
+    }
+
     pub fn question(&self, budget: &ByteBudget) -> Result<Option<RuntimeJson>, RuntimeError> {
         if self.queries.is_empty() {
             Ok(None)

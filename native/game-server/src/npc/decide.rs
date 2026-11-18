@@ -284,6 +284,24 @@ pub(super) async fn run(
         "{} {}",
         game.cognition.response_instructions, game.cognition.query_instructions
     );
+    let preview = if model.macrofold.is_some() && prepared.addressed {
+        work.permit
+            .as_ref()
+            .zip(prepared.context.preview_player.as_ref())
+            .and_then(|((authority, scope), player)| {
+                super::preview::PreviewAttempt::new(
+                    authority.clone(),
+                    scope.clone(),
+                    work.job.clone(),
+                    work.cancellation.clone(),
+                    schema.clone(),
+                    player,
+                    budget,
+                )
+            })
+    } else {
+        None
+    };
     let generation = provider::Generation {
         schema_name: "npc_response",
         schema: &schema,
@@ -291,7 +309,7 @@ pub(super) async fn run(
         prompt: response.as_str(),
         effort: model.effort,
         max_output_tokens: model.output_tokens,
-        stream: false,
+        stream: preview.is_some(),
     };
     let request = provider::generation_request(
         &model.destination,
@@ -303,20 +321,22 @@ pub(super) async fn run(
     )?;
     let macrofold = model.macrofold.as_ref().map(|value| value.billing);
     let parse_budget = budget.clone();
+    let mut call = side(
+        &work,
+        model,
+        models.ceiling_micro_usd,
+        id,
+        request,
+        InferenceClass::OpenAi,
+        "generate",
+        level,
+        response.as_str(),
+        prepared.through,
+    )?;
+    call.preview = preview;
     let parsed = dispatch
         .submit(
-            side(
-                &work,
-                model,
-                models.ceiling_micro_usd,
-                id,
-                request,
-                InferenceClass::OpenAi,
-                "generate",
-                level,
-                response.as_str(),
-                prepared.through,
-            )?,
+            call,
             CallAuthority {
                 source: prepared.ticket.clone(),
                 speaker: work.permit.clone(),
@@ -556,6 +576,7 @@ fn side(
             .map(|route| billing_name(route.billing)),
         deadline: work.deadline,
         evidence_cut,
+        preview: None,
     })
 }
 

@@ -2,6 +2,7 @@
 //! candidate. Network model execution starts after that candidate is closed.
 
 use super::*;
+use crate::authority::{Authority, AuthorizedScope, Capability};
 use crate::boot::CurrentServer;
 use axum::body::Bytes;
 use openlegend_simulation::runtime::{
@@ -12,6 +13,30 @@ pub(crate) type BeginNpcRead =
     fn(&mut NativeWorldSession, &mut RuntimeNpcRead, &[u8]) -> Result<CandidateKey, RuntimeError>;
 
 impl HostedWorld {
+    pub(crate) async fn capture_reply_preview(
+        self: &Arc<Self>,
+        authority: Arc<Authority>,
+        scope: Arc<AuthorizedScope>,
+        npc: String,
+        volume: String,
+    ) -> Result<openlegend_simulation::runtime::RuntimeReplyPreviewRead, WorldError> {
+        let _turn = self.enter().await?;
+        self.call(move |session| {
+            Ok(authority
+                .current(&scope, Capability::Play, true, |selected, _| {
+                    session.read_reply_preview(
+                        &selected.account_id,
+                        &selected.actor_id,
+                        &npc,
+                        Some(&volume),
+                    )
+                })
+                .map_err(WorldError::Access)
+                .and_then(|read| read.map_err(WorldError::Simulation)))
+        })
+        .await?
+    }
+
     /// Read and begin the physical catalogue in one world turn. The native
     /// candidate deliberately refuses a preserved read from an older cut.
     pub(crate) async fn capture_npc_offers(

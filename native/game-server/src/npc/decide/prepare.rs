@@ -33,6 +33,7 @@ pub(super) struct Projection {
     attention: Vec<String>,
     speaks: bool,
     expressions: bool,
+    pub(super) preview_player: Option<String>,
 }
 
 pub(super) struct NativeOffer {
@@ -409,6 +410,10 @@ fn project(
     let expressions = own["npc"]["expressions"]
         .as_bool()
         .ok_or(CallFailure::Invalid)?;
+    let preview_player = work
+        .permit
+        .as_ref()
+        .and_then(|(_, scope)| canonical.get(scope.scope.actor_id.as_str()).cloned());
     let identity = identity(own, &own_name, &self_reference)?;
     let about = about_me(game, own)?;
     let body = body_text(own)?;
@@ -441,6 +446,7 @@ fn project(
             attention: attention_aliases,
             speaks,
             expressions,
+            preview_player,
         },
         addressed,
         speech,
