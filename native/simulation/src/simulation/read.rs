@@ -44,13 +44,13 @@ struct EncodedActorSelf {
 }
 /// Exact actor predicates for server input admission. This does not capture
 /// perception/history or confer the server's live session/control authority.
-#[derive(serde::Serialize)]
+#[derive(Clone, Copy, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct PlayerInputState {
+pub struct PlayerInputState {
     #[serde(skip_serializing_if = "Option::is_none")]
-    physical_life: Option<u64>,
-    alive: bool,
-    can_steer: bool,
+    pub physical_life: Option<u64>,
+    pub alive: bool,
+    pub can_steer: bool,
 }
 impl AcceptedActorRead {
     pub(crate) fn appraisal_read(&self) -> Option<&crate::appraisals::CapturedActorAppraisals> {

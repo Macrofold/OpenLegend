@@ -78,7 +78,7 @@ pub(crate) fn deserialize_safe_integer<'de, D: Deserializer<'de>>(
 
 // Missing optional fields stay absent. An explicit JSON null must not silently
 // erase a present boolean/string/record that current-format validation needs.
-pub(crate) fn deserialize_present_option<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
+pub fn deserialize_present_option<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
 where
     D: Deserializer<'de>,
     T: Deserialize<'de>,

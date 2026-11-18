@@ -2,14 +2,17 @@
 //! Compute submissions share the process pool. SQL and provider waits own
 //! their inputs and never occupy a worker.
 
-use crate::store::{CommitError, Store, StoreError};
+use crate::{
+    authority::{AccessError, Authority, AuthorizedScope, Capability},
+    store::{CommitError, Store, StoreError},
+};
 use openlegend_simulation::host::{
     ByteBudget, CandidateFence, CandidateKey, CandidatePhase, FenceError, Settlement,
 };
 use openlegend_simulation::runtime::{
     NativeWorldSession, RuntimeActivation, RuntimeDirectOutput, RuntimeDirectPrepared,
-    RuntimeDirectStep, RuntimeError, RuntimeProvider, RuntimeProviderInput, RuntimeSave,
-    RuntimeSaveAcknowledgement,
+    RuntimeDirectStep, RuntimeError, RuntimePlayerRead, RuntimeProvider, RuntimeProviderInput,
+    RuntimeSave, RuntimeSaveAcknowledgement,
 };
 use openlegend_world_host::{
     DispatchHost, DispatchWorld, SerialDispatch,
@@ -23,7 +26,6 @@ use std::sync::{Arc, Mutex, Weak};
 use std::time::Duration;
 use tokio::sync::{Mutex as TurnLock, Semaphore, oneshot};
 
-const MAX_WAITING: usize = 256;
 const TURN_WAIT: Duration = Duration::from_secs(5);
 
 #[derive(Debug)]
@@ -35,9 +37,13 @@ pub enum WorldError {
     Protected,
     Commit(CommitError),
     Storage(StoreError),
+    Access(AccessError),
+    Wire(crate::wire::WireError),
     RecoveryRequired,
     ProviderKind,
     Geometry(crate::spatial::SpatialError),
+    Language(crate::language::LanguageError),
+    ClockChanged,
 }
 
 impl std::fmt::Display for WorldError {
@@ -50,11 +56,17 @@ impl std::fmt::Display for WorldError {
             Self::Protected => f.write_str("The operation requires protected settlement"),
             Self::Commit(error) => error.fmt(f),
             Self::Storage(error) => error.fmt(f),
+            Self::Access(error) => error.fmt(f),
+            Self::Wire(error) => error.fmt(f),
             Self::RecoveryRequired => {
                 f.write_str("The protected operation is fenced pending durable recovery")
             }
             Self::ProviderKind => f.write_str("The prepared operation requires another provider"),
             Self::Geometry(error) => error.fmt(f),
+            Self::Language(error) => error.fmt(f),
+            Self::ClockChanged => {
+                f.write_str("The accepted clock changed before the elapsed offer")
+            }
         }
     }
 }
@@ -79,6 +91,12 @@ impl From<StoreError> for WorldError {
     }
 }
 
+impl From<AccessError> for WorldError {
+    fn from(error: AccessError) -> Self {
+        Self::Access(error)
+    }
+}
+
 impl From<FenceError> for WorldError {
     fn from(value: FenceError) -> Self {
         Self::Fence(value)
@@ -94,6 +112,7 @@ impl From<crate::spatial::SpatialError> for WorldError {
 pub struct WorldHost {
     pool: HostPool,
     budget: ByteBudget,
+    request_capacity: usize,
     writer: Mutex<Weak<HostedWorld>>,
 }
 
@@ -108,10 +127,18 @@ impl DispatchHost for WorldHost {
 }
 
 impl WorldHost {
-    pub fn new(workers: usize, transient_bytes: usize) -> Result<Arc<Self>, WorldError> {
+    pub fn new(
+        workers: usize,
+        transient_bytes: usize,
+        request_capacity: usize,
+    ) -> Result<Arc<Self>, WorldError> {
+        if request_capacity == 0 || request_capacity > Semaphore::MAX_PERMITS {
+            return Err(HostError::Capacity.into());
+        }
         Ok(Arc::new(Self {
             pool: HostPool::new(workers)?,
             budget: ByteBudget::new(transient_bytes),
+            request_capacity,
             writer: Mutex::new(Weak::new()),
         }))
     }
@@ -173,7 +200,7 @@ impl WorldHost {
             dispatch,
             fence,
             turn: TurnLock::new(()),
-            waiting: Arc::new(Semaphore::new(MAX_WAITING)),
+            waiting: Arc::new(Semaphore::new(self.request_capacity)),
             closing: AtomicBool::new(false),
             protected_hold: Mutex::new(None),
         });
@@ -207,6 +234,18 @@ pub struct HostedWorld {
 
 pub type ProtectedCommit<'a> =
     Pin<Box<dyn Future<Output = Result<RuntimeSaveAcknowledgement, CommitError>> + Send + 'a>>;
+
+pub enum PlayerDisclosure {
+    Busy,
+    Changed,
+    Unchanged,
+    Published(axum::body::Bytes),
+}
+
+pub enum ApplicationStart<T> {
+    Candidate(CandidateKey),
+    Existing(T),
+}
 
 impl DispatchWorld<WorldHost> for HostedWorld {
     fn dispatch(&self) -> &SerialDispatch<WorldHost, Self> {
@@ -266,6 +305,27 @@ impl HostedWorld {
         self.call(NativeWorldSession::capture_save).await
     }
 
+    /// Stage all fallible application work at the exact accepted cut before
+    /// detaching the native prefix. The caller keeps the returned products
+    /// alive across SQL and does not hold the world turn while awaiting it.
+    pub(crate) async fn capture_save_with<T>(
+        self: &Arc<Self>,
+        prepare: impl FnOnce(&NativeWorldSession) -> Result<T, WorldError> + Send + 'static,
+    ) -> Result<(RuntimeSave, T), WorldError>
+    where
+        T: Send + 'static,
+    {
+        let _turn = self.enter().await?;
+        self.call(move |session| {
+            let prepared = match prepare(session) {
+                Ok(prepared) => prepared,
+                Err(error) => return Ok(Err(error)),
+            };
+            Ok(Ok((session.capture_save()?, prepared)))
+        })
+        .await?
+    }
+
     pub async fn acknowledge(
         self: &Arc<Self>,
         receipt: RuntimeSaveAcknowledgement,
@@ -285,6 +345,89 @@ impl HostedWorld {
     {
         let _turn = self.enter().await?;
         self.call(move |session| read(session)).await
+    }
+
+    /// Capture one permitted player's exact accepted read and fund the
+    /// selected self fields before the borrowed simulation data is released.
+    pub async fn capture_player<T>(
+        self: &Arc<Self>,
+        account: String,
+        actor: String,
+        window: usize,
+        prepare: impl FnOnce(
+            openlegend_simulation::capture::PlayerSelfFacts<'_>,
+            &ByteBudget,
+        ) -> Result<T, openlegend_simulation::host::CapacityError>
+        + Send
+        + 'static,
+    ) -> Result<(openlegend_simulation::runtime::RuntimePlayerRead, T), WorldError>
+    where
+        T: Send + 'static,
+    {
+        let _turn = self.enter().await?;
+        self.call(move |session| session.read_player_direct(&account, &actor, window, prepare))
+            .await
+    }
+
+    /// Call only when the HTTP body can take its next payload. The callback
+    /// selects, encodes and hands it off synchronously. An older retained
+    /// reader, busy turn or invalidated scope never sends a prepared frame.
+    pub fn disclose_player(
+        &self,
+        authority: &Authority,
+        scope: &AuthorizedScope,
+        read: &RuntimePlayerRead,
+        selected_events: &[String],
+        publish: impl FnOnce(bool, &ByteBudget) -> Result<Option<axum::body::Bytes>, WorldError>,
+    ) -> Result<PlayerDisclosure, WorldError> {
+        let result = authority.current(scope, Capability::Play, false, |scope, controlling| {
+            if self.closing.load(Ordering::Acquire) {
+                return Err(HostError::Closed.into());
+            }
+            if !read.belongs_to(&scope.account_id, &scope.actor_id) {
+                return Ok(PlayerDisclosure::Changed);
+            }
+            let Ok(_turn) = self.turn.try_lock() else {
+                return Ok(PlayerDisclosure::Busy);
+            };
+            let session = match self.session.try_lock() {
+                Ok(session) => session,
+                Err(std::sync::TryLockError::WouldBlock) => return Ok(PlayerDisclosure::Busy),
+                Err(std::sync::TryLockError::Poisoned(_)) => return Err(HostError::Poisoned.into()),
+            };
+            let paused = session.accepted_progress()?.paused;
+            let Some(permit) =
+                session.player_publication(read, selected_events, paused, controlling)?
+            else {
+                return Ok(PlayerDisclosure::Changed);
+            };
+            let result = publish(permit.can_use_inventory(), self.host.budget())?;
+            drop(permit);
+            Ok(match result {
+                Some(bytes) => PlayerDisclosure::Published(bytes),
+                None => PlayerDisclosure::Unchanged,
+            })
+        });
+        result.map_err(WorldError::Access)?
+    }
+
+    /// The originating operation is suspended on this exact read ticket and
+    /// already owns the world turn. Only the selected accepted store inputs
+    /// are retained when the worker returns, before awaiting PostgreSQL.
+    pub(crate) async fn prepare_known_places(
+        self: &Arc<Self>,
+        question: RuntimeProvider,
+    ) -> Result<(RuntimeProvider, crate::store::PreparedKnownPlaceRead), WorldError> {
+        let store = Arc::clone(&self.store);
+        let (question, prepared) = self
+            .call(move |session| {
+                let prepared = session.with_known_place_read(&question, |read| {
+                    store.prepare_known_place_read(read)
+                })?;
+                Ok((question, prepared))
+            })
+            .await?;
+        Ok((question, prepared.ok_or(WorldError::ProviderKind)??))
     }
 
     /// Drive an ordinary operation through the simulation's real candidate.
@@ -310,12 +453,49 @@ impl HostedWorld {
             + 'static,
         S: FnOnce(&CandidateFence, CandidateKey) -> Result<Settlement, WorldError> + Send + 'static,
     {
+        self.execute_and_publish(
+            |session| Ok(ApplicationStart::Candidate(begin(session)?)),
+            answer,
+            stage,
+            |fence, key, _| settle(fence, key),
+            |_| {},
+        )
+        .await
+    }
+
+    /// Publish independently funded receipts and history under the mutation
+    /// turn. A retry cannot enter between gameplay acceptance and the live
+    /// receipt. The callback only releases or transfers already staged work.
+    pub async fn execute_and_publish<T, B, Q, A, R, S, P>(
+        self: &Arc<Self>,
+        begin: B,
+        answer: Q,
+        stage: A,
+        settle: S,
+        publish: P,
+    ) -> Result<Option<T>, WorldError>
+    where
+        T: Send + 'static,
+        B: FnOnce(&mut NativeWorldSession) -> Result<ApplicationStart<T>, WorldError>
+            + Send
+            + 'static,
+        Q: FnMut(RuntimeProvider) -> R + Send + 'static,
+        R: Future<Output = Result<(RuntimeProvider, RuntimeProviderInput), WorldError>> + Send,
+        A: Fn(RuntimeDirectOutput<'_>, &ByteBudget) -> Result<T, RuntimeError>
+            + Send
+            + Sync
+            + 'static,
+        S: FnOnce(&CandidateFence, CandidateKey, &T) -> Result<Settlement, WorldError>
+            + Send
+            + 'static,
+        P: FnOnce(&T) + Send + 'static,
+    {
         self.execute_inner(begin, answer, stage, |world, key, prepared| async move {
             if prepared.protected_save().is_some() {
                 return Err(WorldError::Protected);
             }
             prepared.ready()?;
-            let decision = settle(&world.fence, key);
+            let decision = settle(&world.fence, key, prepared.output());
             if decision.is_err() {
                 world.fence.settle(key, false)?;
             }
@@ -323,7 +503,19 @@ impl HostedWorld {
                 .call(move |session| session.finish_settlement(key))
                 .await?;
             decision?;
-            Ok(accepted.then(|| prepared.into_output()))
+            if !accepted {
+                return Ok(None);
+            }
+            let output = prepared.into_output();
+            // An application programmer error cannot turn an accepted
+            // operation into a retryable refusal with an absent receipt.
+            if std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| publish(&output))).is_err()
+            {
+                world.fence.poison();
+                world.closing.store(true, Ordering::Release);
+                return Err(HostError::Poisoned.into());
+            }
+            Ok(Some(output))
         })
         .await
     }
@@ -352,36 +544,43 @@ impl HostedWorld {
         V: FnOnce() -> Result<(), WorldError> + Send + 'static,
         C: for<'a> FnOnce(&'a T, &'a RuntimeSave) -> ProtectedCommit<'a> + Send + 'static,
     {
-        self.execute_inner(begin, answer, stage, |world, key, prepared| async move {
-            let Some(prefix) = prepared.protected_save() else {
-                world.call(move |session| session.cancel(key)).await?;
-                return Ok(Some(prepared.into_output()));
-            };
-            prepared.ready()?;
-            validate()?;
-            let acknowledgement = match commit(prepared.output(), prefix).await {
-                Ok(acknowledgement) => acknowledgement,
-                Err(error @ CommitError::RolledBack(_)) => return Err(WorldError::Commit(error)),
-                Err(CommitError::Unknown(_)) => return Err(world.hold_protected(prepared)),
-            };
-            // No fallible caller checks belong between SQL and publication.
-            let accepted = async {
-                world.fence.settle(key, true)?;
-                if !world
-                    .call(move |session| session.finish_settlement(key))
-                    .await?
-                {
-                    return Err(FenceError::Stale.into());
+        self.execute_inner(
+            |session| Ok(ApplicationStart::Candidate(begin(session)?)),
+            answer,
+            stage,
+            |world, key, prepared| async move {
+                let Some(prefix) = prepared.protected_save() else {
+                    world.call(move |session| session.cancel(key)).await?;
+                    return Ok(Some(prepared.into_output()));
+                };
+                prepared.ready()?;
+                validate()?;
+                let acknowledgement = match commit(prepared.output(), prefix).await {
+                    Ok(acknowledgement) => acknowledgement,
+                    Err(error @ CommitError::RolledBack(_)) => {
+                        return Err(WorldError::Commit(error));
+                    }
+                    Err(CommitError::Unknown(_)) => return Err(world.hold_protected(prepared)),
+                };
+                // No fallible caller checks belong between SQL and publication.
+                let accepted = async {
+                    world.fence.settle(key, true)?;
+                    if !world
+                        .call(move |session| session.finish_settlement(key))
+                        .await?
+                    {
+                        return Err(FenceError::Stale.into());
+                    }
+                    world
+                        .call(move |session| session.acknowledge(acknowledgement))
+                        .await
+                };
+                if accepted.await.is_err() {
+                    return Err(world.hold_protected(prepared));
                 }
-                world
-                    .call(move |session| session.acknowledge(acknowledgement))
-                    .await
-            };
-            if accepted.await.is_err() {
-                return Err(world.hold_protected(prepared));
-            }
-            Ok(Some(prepared.into_output()))
-        })
+                Ok(Some(prepared.into_output()))
+            },
+        )
         .await
     }
 
@@ -394,7 +593,9 @@ impl HostedWorld {
     ) -> Result<Option<T>, WorldError>
     where
         T: Send + 'static,
-        B: FnOnce(&mut NativeWorldSession) -> Result<CandidateKey, RuntimeError> + Send + 'static,
+        B: FnOnce(&mut NativeWorldSession) -> Result<ApplicationStart<T>, WorldError>
+            + Send
+            + 'static,
         Q: FnMut(RuntimeProvider) -> R + Send + 'static,
         R: Future<Output = Result<(RuntimeProvider, RuntimeProviderInput), WorldError>> + Send,
         A: Fn(RuntimeDirectOutput<'_>, &ByteBudget) -> Result<T, RuntimeError>
@@ -420,11 +621,14 @@ impl HostedWorld {
                 };
                 drop(queued);
                 if world.closing.load(Ordering::Acquire) {
+                    world.require_recovered()?;
                     return Err(HostError::Closed.into());
                 }
-                world.require_recovered()?;
                 world.store.assert_write_admission()?;
-                let key = world.call(begin).await?;
+                let key = match world.call(move |session| Ok(begin(session))).await?? {
+                    ApplicationStart::Candidate(key) => key,
+                    ApplicationStart::Existing(value) => return Ok(Some(value)),
+                };
                 let stage = Arc::new(stage);
                 let driven = async {
                     let mut supplied: Option<(RuntimeProvider, RuntimeProviderInput)> = None;
@@ -467,7 +671,7 @@ impl HostedWorld {
                     }
                 }
                 .await;
-                if driven.is_err() && !matches!(driven, Err(WorldError::RecoveryRequired)) {
+                if driven.is_err() && world.require_recovered().is_ok() {
                     world.cleanup_candidate(key).await?;
                 }
                 driven

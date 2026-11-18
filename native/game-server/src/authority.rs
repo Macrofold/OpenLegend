@@ -1,7 +1,10 @@
 //! Current account, session, grant and control checks use the existing
 //! operational tables outside gameplay checkpoints.
 
-use crate::store::{CommitError, Store, StoreError};
+use crate::{
+    command_epoch::RequestIdentity,
+    store::{CommitError, Store, StoreError},
+};
 use openlegend_simulation::host::{ByteBudget, ByteReservation};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -11,10 +14,14 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio_postgres::Row;
 use uuid::Uuid;
 
+mod control;
+pub use control::{ControlChange, ControlOperation, ControlRequest};
+
 const LOCAL_ISSUER: &str = "https://local.openlegend.invalid";
 const LOCAL_SUBJECT: &str = "local-player";
 const CHARACTERLESS: &str = "#characterless:";
 const TOKEN_CACHE_LIMIT: usize = 4096;
+const ACCESS_COLUMN_BYTES: i32 = 512;
 
 #[derive(Debug)]
 pub enum AccessError {
@@ -26,6 +33,22 @@ pub enum AccessError {
     Read(StoreError),
     Write(CommitError),
 }
+
+impl std::fmt::Display for AccessError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Session => f.write_str("No current session"),
+            Self::Forbidden => f.write_str("The current account cannot use this capability"),
+            Self::Changed => f.write_str("The request's authority changed"),
+            Self::Busy => f.write_str("Session admission is busy"),
+            Self::Availability => f.write_str("Session authority is unavailable"),
+            Self::Read(error) => error.fmt(f),
+            Self::Write(error) => error.fmt(f),
+        }
+    }
+}
+
+impl std::error::Error for AccessError {}
 
 impl From<StoreError> for AccessError {
     fn from(error: StoreError) -> Self {
@@ -82,6 +105,33 @@ impl RequestScope {
     pub fn embodied(&self) -> bool {
         self.audience == Audience::Embodied
     }
+
+    /// The existing private draft and command-recovery identity excludes page
+    /// and control changes. Neither digest provides admission or permission.
+    pub(crate) fn recovery_fields(&self) -> impl Serialize + '_ {
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Scope<'a> {
+            account_id: &'a str,
+            session_id: &'a str,
+            session_revision: u64,
+            world_id: &'a str,
+            timeline_id: &'a str,
+            grant_revision: u64,
+            actor_id: &'a str,
+            audience: Audience,
+        }
+        Scope {
+            account_id: &self.account_id,
+            session_id: &self.session_id,
+            session_revision: self.session_revision,
+            world_id: &self.world_id,
+            timeline_id: &self.timeline_id,
+            grant_revision: self.grant_revision,
+            actor_id: &self.actor_id,
+            audience: self.audience,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -93,6 +143,13 @@ pub struct WorldGrant {
     pub capabilities: Vec<Capability>,
     #[serde(skip)]
     revision: u64,
+}
+
+pub(crate) struct ViewAccess {
+    pub controlling: bool,
+    pub can_save: bool,
+    pub can_operate: bool,
+    pub local: bool,
 }
 
 struct Control {
@@ -117,6 +174,7 @@ struct Cache {
     tokens: HashMap<TokenHash, Arc<Access>>,
     revision: u64,
     revoking: HashSet<TokenHash>,
+    changing_control: HashSet<String>,
 }
 
 pub struct Authority {
@@ -159,11 +217,42 @@ fn token_hash(token: &str) -> Result<TokenHash, AccessError> {
 }
 
 fn digest_text(digest: TokenHash) -> String {
-    digest.iter().map(|b| format!("{b:02x}")).collect()
+    openlegend_simulation::encoding::hex_bytes(&digest)
 }
 
 impl Authority {
-    pub fn new(
+    pub fn session_lifetime_secs(&self) -> i64 {
+        self.duration_ms / 1000
+    }
+
+    pub(crate) fn output_budget(&self) -> &ByteBudget {
+        &self.budget
+    }
+
+    /// Bind the listener to the installed writer's durable timeline before
+    /// disclosing a private scope. Command admission owns the returned epoch.
+    pub async fn for_world(
+        store: Arc<Store>,
+        world_id: String,
+        duration: Duration,
+        session_capacity: i64,
+        local: bool,
+        budget: ByteBudget,
+    ) -> Result<(Self, RequestIdentity), AccessError> {
+        let identity = RequestIdentity::open(&store, &world_id).await?;
+        let authority = Self::new(
+            store,
+            world_id,
+            identity.timeline.clone(),
+            duration,
+            session_capacity,
+            local,
+            budget,
+        );
+        Ok((authority, identity))
+    }
+
+    fn new(
         store: Arc<Store>,
         world_id: String,
         timeline: String,
@@ -184,6 +273,7 @@ impl Authority {
                 tokens: HashMap::new(),
                 revision: 0,
                 revoking: HashSet::new(),
+                changing_control: HashSet::new(),
             }),
             changes: tokio::sync::Mutex::new(()),
         }
@@ -193,12 +283,33 @@ impl Authority {
         if !self.local {
             return Err(AccessError::Forbidden);
         }
-        self.login(LOCAL_ISSUER, LOCAL_SUBJECT).await
+        self.login(LOCAL_ISSUER, LOCAL_SUBJECT, None).await
     }
 
     /// Called only with an identity of the configured, verified issuer. The
     /// account identity and body grant come from SQL, never browser fields.
-    pub(crate) async fn login(&self, issuer: &str, subject: &str) -> Result<String, AccessError> {
+    pub(crate) async fn sign_in_verified(
+        &self,
+        issuer: &str,
+        subject: &str,
+        previous: Option<&str>,
+    ) -> Result<String, AccessError> {
+        if self.local {
+            return Err(AccessError::Forbidden);
+        }
+        self.login(issuer, subject, previous).await
+    }
+
+    async fn login(
+        &self,
+        issuer: &str,
+        subject: &str,
+        previous: Option<&str>,
+    ) -> Result<String, AccessError> {
+        let previous = previous.and_then(|token| token_hash(token).ok());
+        let _change = self.changes.lock().await;
+        let _fence = previous.map(|key| self.begin_revocation(key)).transpose()?;
+        let previous = previous.map(digest_text);
         let mut bytes = [0_u8; 32];
         getrandom::fill(&mut bytes).map_err(|_| AccessError::Availability)?;
         let token = digest_text(bytes);
@@ -245,6 +356,14 @@ impl Authority {
                         &[&uuid, &hash, &account, &expires],
                     )
                     .await?;
+                    if let Some(previous) = previous {
+                        tx.execute(
+                            "UPDATE auth_sessions SET revision=revision+1,expires_at=$1 \
+                             WHERE token_hash=$2 AND expires_at>$1",
+                            &[&now, &previous],
+                        )
+                        .await?;
+                    }
                     Ok(())
                 })
             })
@@ -305,11 +424,68 @@ impl Authority {
         authorized: &AuthorizedScope,
         capability: Capability,
         controlling: bool,
-        use_scope: impl FnOnce(&RequestScope) -> T,
+        use_scope: impl FnOnce(&RequestScope, bool) -> T,
+    ) -> Result<T, AccessError> {
+        self.with_current(authorized, capability, controlling, |scope, _, controls| {
+            use_scope(scope, controls)
+        })
+    }
+
+    pub(crate) fn view_access(
+        &self,
+        authorized: &AuthorizedScope,
+    ) -> Result<ViewAccess, AccessError> {
+        self.with_current(
+            authorized,
+            Capability::Play,
+            false,
+            |_, grant, controlling| ViewAccess {
+                controlling,
+                can_save: grant.capabilities.contains(&Capability::Save),
+                can_operate: grant.capabilities.contains(&Capability::Create)
+                    || grant.capabilities.contains(&Capability::ManageAccess),
+                local: self.local,
+            },
+        )
+    }
+
+    fn with_current<T>(
+        &self,
+        authorized: &AuthorizedScope,
+        capability: Capability,
+        controlling: bool,
+        use_scope: impl FnOnce(&RequestScope, &WorldGrant, bool) -> T,
     ) -> Result<T, AccessError> {
         let cache = self.cache.lock().map_err(|_| AccessError::Availability)?;
+        let (grant, controls) = self.selected(&cache, authorized, capability, controlling)?;
+        Ok(use_scope(&authorized.scope, grant, controls))
+    }
+
+    pub(crate) fn current_inputs<T>(
+        &self,
+        permits: &[Arc<AuthorizedScope>],
+        accept: impl FnOnce() -> T,
+    ) -> Result<T, AccessError> {
+        if permits.is_empty() {
+            return Ok(accept());
+        }
+        let cache = self.cache.lock().map_err(|_| AccessError::Availability)?;
+        for permit in permits {
+            self.selected(&cache, permit, Capability::Play, true)?;
+        }
+        Ok(accept())
+    }
+
+    fn selected<'cache>(
+        &self,
+        cache: &'cache Cache,
+        authorized: &AuthorizedScope,
+        capability: Capability,
+        controlling: bool,
+    ) -> Result<(&'cache WorldGrant, bool), AccessError> {
         let scope = &authorized.scope;
         if cache.revoking.contains(&authorized.key)
+            || cache.changing_control.contains(&scope.actor_id)
             || scope.world_id != self.world_id
             || scope.timeline_id != self.timeline
         {
@@ -330,17 +506,16 @@ impl Authority {
         {
             return Err(AccessError::Changed);
         }
-        if controlling
-            && current.control.as_ref().is_none_or(|control| {
-                control.generation != scope.control_generation
-                    || control.account_id != scope.account_id
-                    || control.session_id != scope.session_id
-                    || control.connection_id != scope.connection_id
-            })
-        {
+        let controls = current.control.as_ref().is_some_and(|control| {
+            control.generation == scope.control_generation
+                && control.account_id == scope.account_id
+                && control.session_id == scope.session_id
+                && control.connection_id == scope.connection_id
+        });
+        if controlling && !controls {
             return Err(AccessError::Changed);
         }
-        Ok(use_scope(scope))
+        Ok((grant, controls))
     }
 
     pub async fn logout(&self, token: &str) -> Result<(), AccessError> {
@@ -398,6 +573,12 @@ impl Authority {
         let hash = digest_text(key);
         let world = self.world_id.clone();
         let query_world = world.clone();
+        // Seven finite text fields and the fixed tuple/frame. The SQL guard
+        // runs before transfer, including when a damaged access row is large.
+        let _transfer = self
+            .budget
+            .reserve(8192)
+            .map_err(|_| StoreError::Capacity)?;
         let row = self.store.read_operational(move |tx| {
             Box::pin(async move {
                 Ok(tx.query_opt(
@@ -406,8 +587,12 @@ impl Authority {
                      FROM auth_sessions s \
                      LEFT JOIN auth_grants g ON g.world_id=$1 AND g.account_id=s.account_id \
                      LEFT JOIN auth_controls c ON c.world_id=g.world_id AND c.actor_id=g.actor_id \
-                     WHERE s.token_hash=$2 AND s.expires_at>$3",
-                    &[&query_world, &hash, &now_ms()],
+                     WHERE s.token_hash=$2 AND s.expires_at>$3 AND \
+                         greatest(octet_length(s.id),octet_length(s.account_id), \
+                             octet_length(g.actor_id),octet_length(g.capabilities), \
+                             octet_length(c.account_id),octet_length(c.session_id), \
+                             octet_length(c.connection_id))<=$4",
+                    &[&query_world, &hash, &now_ms(), &ACCESS_COLUMN_BYTES],
                 ).await?)
             })
         }).await?.ok_or(AccessError::Session)?;
@@ -439,7 +624,7 @@ impl Authority {
             .map_err(|_| StoreError::Capacity)?;
         let text = |column| -> Result<Option<&str>, StoreError> {
             let text: Option<&str> = row.try_get(column)?;
-            if text.is_some_and(|value| value.len() > 512) {
+            if text.is_some_and(|value| value.len() > ACCESS_COLUMN_BYTES as usize) {
                 return Err(StoreError::InvalidRecord);
             }
             Ok(text)

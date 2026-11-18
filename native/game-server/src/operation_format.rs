@@ -1,7 +1,7 @@
 //! Finite formatting continuations issued by the active candidate. These
 //! replies retain their original binding and add no world authority.
 
-use crate::{activity_format, control_format, world::WorldError};
+use crate::{activity_format, control_format, language::LanguageProvider, world::WorldError};
 use openlegend_simulation::{
     activity::ActivityView,
     encoding::json_record,
@@ -34,6 +34,7 @@ struct Answer {
 enum Formatted {
     Activity { view: ActivityView },
     Control { message: JsText },
+    Collation { order: Vec<u32>, groups: Vec<u32> },
 }
 
 /// Borrow the funded request and admit its finite decoded text, facts and JSON
@@ -42,29 +43,45 @@ enum Formatted {
 pub(crate) fn answer(
     request: &RuntimeProvider,
     budget: &ByteBudget,
+    language: Option<&LanguageProvider>,
 ) -> Result<Option<RuntimeProviderInput>, WorldError> {
     request.with_request(|request| {
         let envelope: Envelope<'_> =
             serde_json::from_str(request).map_err(|_| WorldError::ProviderKind)?;
-        if !matches!(envelope.kind, "display" | "control") {
+        if !matches!(envelope.kind, "display" | "control" | "collation") {
             return Ok(None);
         }
         let bytes = envelope
             .value
             .get()
             .len()
-            .checked_mul(12)
+            // A collation array can have a short string per slot. The
+            // carrier bound covers the typed string, UTF16 and rank lists.
+            .checked_mul(if envelope.kind == "collation" { 48 } else { 12 })
             .and_then(|n| n.checked_add(4096))
             .ok_or(HostError::Capacity)?;
         let mut workspace = budget.reserve(bytes).map_err(HostError::from)?;
-        let value = if envelope.kind == "display" {
-            Formatted::Activity {
+        let value = match envelope.kind {
+            "display" => Formatted::Activity {
                 view: activity_format::format(envelope.value)?,
-            }
-        } else {
-            Formatted::Control {
+            },
+            "control" => Formatted::Control {
                 message: control_format::format(envelope.value)?,
+            },
+            "collation" => {
+                #[derive(Deserialize)]
+                struct Input {
+                    strings: Vec<JsText>,
+                }
+                let input: Input = serde_json::from_str(envelope.value.get())
+                    .map_err(|_| WorldError::ProviderKind)?;
+                let (order, groups) = language
+                    .ok_or(WorldError::ProviderKind)?
+                    .collate(&input.strings)
+                    .map_err(WorldError::Language)?;
+                Formatted::Collation { order, groups }
             }
+            _ => unreachable!("validated provider kind"),
         };
         let answer = json_record(&Answer {
             binding: envelope.binding,

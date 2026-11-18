@@ -12,7 +12,7 @@ mod transition;
 pub(crate) use due::{DueExits, next_exit_deadline};
 pub(crate) use transition::{
     CompletedParticipation, ParticipationAnswer, ParticipationCursor, ParticipationError,
-    ParticipationRequest, ParticipationStep,
+    ParticipationOperation, ParticipationRequest, ParticipationStep,
 };
 
 pub(crate) struct ParticipationState {

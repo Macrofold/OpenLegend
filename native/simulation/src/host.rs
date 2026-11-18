@@ -7,6 +7,7 @@ pub(crate) mod retained_size;
 mod world_memory;
 pub use budget::{ByteBudget, ByteReservation, CapacityError};
 pub use resident::{ResidentMemory, ResidentReservation, SharedMemoryPin};
+pub use retained_size::map_storage;
 pub(crate) use world_memory::{CandidateMemory, MemoryCheckpoint};
 
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};

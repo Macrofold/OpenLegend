@@ -8,7 +8,6 @@ use indexmap::IndexMap;
 use serde::ser::{SerializeMap, SerializeSeq};
 use serde::{Serialize, Serializer};
 use serde_json::Value;
-use std::fmt::Write as _;
 use std::io;
 
 mod fields;
@@ -67,10 +66,19 @@ impl serde_json::ser::Formatter for JsFormatter {
 /// Value bodies use `json_value` so integer-property enumeration stays exact.
 pub fn json_record<T: Serialize + ?Sized>(record: &T) -> Result<String, serde_json::Error> {
     let mut bytes = Vec::new();
-    let mut serializer = serde_json::Serializer::with_formatter(&mut bytes, JsFormatter::default());
-    record.serialize(&mut serializer)?;
+    write_json_record(record, &mut bytes)?;
     // serde_json only emits UTF-8. Avoid a second parse or payload re-encoding.
     Ok(String::from_utf8(bytes).expect("JSON serializer emitted non-UTF-8 data"))
+}
+
+/// Emit a selected current-format record into the caller's admitted sink.
+/// The sink owns its bytes and can enforce its own output capacity.
+pub fn write_json_record<T: Serialize + ?Sized>(
+    record: &T,
+    sink: impl io::Write,
+) -> Result<(), serde_json::Error> {
+    let mut serializer = serde_json::Serializer::with_formatter(sink, JsFormatter::default());
+    record.serialize(&mut serializer)
 }
 
 pub fn json_value(value: &Value) -> Result<String, serde_json::Error> {
@@ -415,9 +423,19 @@ pub(crate) fn js_number(value: &str) -> f64 {
 /// Callers must not substitute the smaller non-security content label.
 pub fn sha256_hex(bytes: &[u8]) -> String {
     use sha2::{Digest, Sha256};
-    let mut output = String::with_capacity(64);
-    for byte in Sha256::digest(bytes) {
-        write!(output, "{byte:02x}").expect("writing to a String cannot fail");
-    }
+    hex_bytes(&Sha256::digest(bytes))
+}
+
+pub fn hex_bytes(bytes: &[u8]) -> String {
+    let mut output = String::with_capacity(2 * bytes.len());
+    append_hex(&mut output, bytes);
     output
+}
+
+pub fn append_hex(output: &mut String, bytes: &[u8]) {
+    const HEX: &[u8; 16] = b"0123456789abcdef";
+    for byte in bytes {
+        output.push(HEX[(byte >> 4) as usize] as char);
+        output.push(HEX[(byte & 0xf) as usize] as char);
+    }
 }

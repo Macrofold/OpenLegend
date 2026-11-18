@@ -24,6 +24,19 @@ export const sdkOwners: Readonly<Record<string, readonly string[]>> = {
   'scripts/art/texel-splatting/run.mjs': ['@playwright/test'],
 };
 
+/** The Rust server uses its own socket owner. OIDC takes that owner's custom
+ * transport, and database transactions use the single locked store. */
+export const rustServerNetworkOwners: Readonly<Record<string, readonly RegExp[]>> = {
+  reqwest: [/^network\.rs$/, /^oidc\.rs$/, /^provider_transport(?:\.rs|\/)/],
+  openidconnect: [/^oidc\.rs$/],
+  tokio_postgres: [
+    /^store(?:\.rs|\/)/,
+    /^authority(?:\.rs|\/)/,
+    /^(boot|command_epoch|embodiment|launch)\.rs$/,
+  ],
+  tokio_postgres_rustls: [/^(boot|store)\.rs$/],
+};
+
 /** These runners execute local programs/files. Changing one to remote work must
  * move that invocation through runRemoteProcess with an explicit finite profile.
  */

@@ -12,27 +12,27 @@ use std::mem::size_of;
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct AdmittedWorldInput {
+pub struct AdmittedWorldInput {
     pub actor_id: String,
     pub steering: Option<SteeringInput>,
     pub release: Option<ReleaseInput>,
 }
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct SteeringInput {
+pub struct SteeringInput {
     pub direction: Direction,
     pub starts_at: f64,
     pub ends_at: f64,
 }
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(crate) struct Direction {
+pub struct Direction {
     pub x: f64,
     pub z: f64,
 }
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct ReleaseInput {
+pub struct ReleaseInput {
     pub action_id: String,
     pub starts_at: f64,
     pub ends_at: f64,
@@ -53,7 +53,10 @@ impl AdmittedWorldInput {
             })
     }
 }
-pub(crate) fn can_steer(state: &crate::simulation::SimulationState, entity: &Entity) -> Result<bool, ExecutionError> {
+pub(crate) fn can_steer(
+    state: &crate::simulation::SimulationState,
+    entity: &Entity,
+) -> Result<bool, ExecutionError> {
     let installed = &state.installed;
     Ok(entity
         .actor

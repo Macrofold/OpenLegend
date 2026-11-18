@@ -18,6 +18,7 @@ import {
   localProcessOwners,
   networkDependencies,
   rawNetworkOwners,
+  rustServerNetworkOwners,
   sdkOwners,
   testSourceOwners,
 } from './network-boundary-inventory.js';
@@ -893,7 +894,7 @@ export function checkNetworkBoundaries(root: string): BoundaryFailure[] {
     },
   });
   const snapshot = api.updateSnapshot({ openProjects: [configurationPath] });
-  const failures: BoundaryFailure[] = [],
+  const failures: BoundaryFailure[] = checkRustServerNetwork(root),
     embedded: NetworkSource[] = [];
   const used = new Set<string>();
   try {
@@ -1052,6 +1053,40 @@ export function checkNetworkBoundaries(root: string): BoundaryFailure[] {
         message: 'Stale generated network artifact/source inventory.',
       });
   if (embedded.length) failures.push(...inspectNetworkSources(root, embedded));
+  return failures;
+}
+
+/** Compile-time SDK imports are limited to the application transport, its
+ * protocol adapters and the PostgreSQL owner. The connection acquisition
+ * points also have an explicit owning file within those consumers. */
+function checkRustServerNetwork(root: string): BoundaryFailure[] {
+  const source = 'native/game-server/src';
+  const failures: BoundaryFailure[] = [];
+  const sdk = /\b(reqwest|openidconnect|tokio_postgres|tokio_postgres_rustls)\s*::/g;
+  const scan = (directory: string) => {
+    for (const entry of readdirSync(resolve(root, source, directory), { withFileTypes: true })) {
+      const path = portable(`${directory}${entry.name}`);
+      if (entry.isDirectory()) scan(`${path}/`);
+      else if (path.endsWith('.rs')) {
+        const file = `${source}/${path}`;
+        const text = readFileSync(resolve(root, file), 'utf8');
+        const report = (index: number | undefined, message: string) =>
+          failures.push({ path: file, line: text.slice(0, index).split('\n').length, message });
+        for (const match of text.matchAll(sdk)) {
+          const owner = match[1]!;
+          if (!rustServerNetworkOwners[owner]?.some((allowed) => allowed.test(path)))
+            report(match.index, `Rust SDK ${owner} has no reviewed owner here.`);
+        }
+        const http = /\breqwest\s*::\s*(?:Client\s*::|(?:get|blocking)\b)/.exec(text);
+        if (http && path !== 'network.rs')
+          report(http.index, 'Rust HTTP acquisition must use the bounded transport owner.');
+        const database = /\b(?:config|database)\s*\.\s*connect\s*\(/.exec(text);
+        if (database && path !== 'store.rs')
+          report(database.index, 'Rust PostgreSQL connection acquisition belongs to the store.');
+      }
+    }
+  };
+  if (existsSync(resolve(root, source))) scan('');
   return failures;
 }
 

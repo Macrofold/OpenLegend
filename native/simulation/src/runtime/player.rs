@@ -40,8 +40,11 @@ pub struct RuntimePlayerRead {
     events: crate::experience::CapturedPlayerEvents,
     preparation: Option<PlayerControlPreparation>,
     controls: Option<CapturedPlayerControls>,
+    clock: RuntimeClock,
     _custody: ByteReservation,
 }
+
+pub use crate::simulation::PlayerInputState as RuntimePlayerInputState;
 pub struct RuntimePlayerPublication {
     can_use_inventory: bool,
     _lease: PublicationLease,
@@ -56,11 +59,23 @@ impl NativeWorldSession {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let input: PlayerInputRequest = serde_json::from_slice(input).map_err(failure)?;
-        let simulation = self.session.accepted().map_err(failure)?;
-        let facts = simulation
-            .player_input(&input.account_id, &input.actor_id)
-            .map_err(failure)?;
+        let facts = self.player_input_direct(&input.account_id, &input.actor_id)?;
         RuntimeJson::encode(&facts, &self.budget)
+    }
+
+    /// Reuse authoritative binding, life and steering predicates without
+    /// preparing presentation, observation history or an addon packet.
+    pub fn player_input_direct(
+        &self,
+        account: &str,
+        actor: &str,
+    ) -> Result<RuntimePlayerInputState, RuntimeError> {
+        self.require_active()?;
+        self.session
+            .accepted()
+            .map_err(failure)?
+            .player_input(account, actor)
+            .map_err(failure)
     }
     pub fn player_interaction(
         &self,
@@ -135,6 +150,7 @@ impl NativeWorldSession {
             -> Result<(AcceptedActorRead, T), crate::simulation::ActorReadError>,
     ) -> Result<(RuntimePlayerRead, T), RuntimeError> {
         self.require_active()?;
+        let clock = self.clock()?;
         let serial = self
             .next_read_serial
             .checked_add(1)
@@ -183,6 +199,7 @@ impl NativeWorldSession {
                 events,
                 preparation,
                 controls,
+                clock,
                 _custody: custody,
             },
             prepared,
@@ -228,6 +245,11 @@ impl NativeWorldSession {
     }
 }
 impl RuntimePlayerRead {
+    /// These controls and clock came from the accepted cut used for the view.
+    pub fn clock(&self) -> RuntimeClock {
+        self.clock
+    }
+
     /// Compare the scope retained by this capture without exposing its IDs or
     /// granting current permission to disclose it.
     pub fn belongs_to(&self, account: &str, actor: &str) -> bool {

@@ -21,6 +21,7 @@ use crate::work::{InstalledWorkPolicy, WorkBook};
 use indexmap::IndexMap;
 use std::sync::Arc;
 mod read;
+pub use read::PlayerInputState;
 pub(crate) use read::{AcceptedActorRead, ActorReadError, InteractionMode};
 mod save;
 pub(crate) use save::{encode_candidate_changes, encode_root_changes};

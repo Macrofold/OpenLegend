@@ -17,6 +17,7 @@ static NEXT_GENERATION: AtomicU64 = AtomicU64::new(1);
 mod account_retention;
 mod control;
 pub use account_retention::RuntimeAccountRetention;
+pub use control::RuntimeClock;
 mod direct_history;
 pub use direct_history::{
     HistoryAccount, HistoryCut, HistoryTemporal, RuntimeHistory, RuntimeHistoryCuts,
@@ -37,6 +38,7 @@ mod npc_intake;
 pub use npc_intake::{RuntimeNpcInspection, RuntimeNpcTrigger};
 mod npc_labels;
 mod participation;
+pub use participation::RuntimeParticipation;
 mod player;
 mod player_places;
 mod privacy;
@@ -46,21 +48,32 @@ pub use private_history::{RuntimePrivateHistoryPublication, RuntimePrivateHistor
 mod navigation;
 mod read_cut;
 pub use navigation::RuntimeNavigationRead;
+pub use read_cut::RuntimeKnownPlaceRead;
 mod restore;
 mod retained_values;
 pub use crate::simulation::session::PreparedReadProgress as RuntimeProgress;
 pub use handoff::RuntimeOutputHandoff;
 mod consumer;
+pub use crate::time::{AdmittedWorldInput, Direction, ReleaseInput, SteeringInput};
 pub use consumer::RuntimeConsumer;
 pub(crate) use npc::HeldSourceProof;
 pub use npc::{
     RuntimeNpcPreparationStep, RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket,
 };
-pub use player::{RuntimePlayerPublication, RuntimePlayerRead};
+pub use player::{RuntimePlayerInputState, RuntimePlayerPublication, RuntimePlayerRead};
 pub use reply_preview::{RuntimeReplyPreviewPublication, RuntimeReplyPreviewRead};
 
 #[derive(Debug)]
 pub struct RuntimeError(String);
+impl RuntimeError {
+    /// Preserve a trusted application's reason when it cannot stage a product
+    /// before Ready. The original candidate still rolls back.
+    pub fn application_refused(reason: impl std::fmt::Display) -> Self {
+        Self(format!(
+            "Application refused the prepared operation: {reason}"
+        ))
+    }
+}
 impl std::fmt::Display for RuntimeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(&self.0)
@@ -385,6 +398,10 @@ impl RuntimeProvider {
     ) -> Result<Option<T>, RuntimeError> {
         let request = self.question()?;
         Ok(request.geometry().map(compute))
+    }
+
+    pub fn asks_known_places(&self) -> Result<bool, RuntimeError> {
+        Ok(self.question()?.kind() == crate::simulation::ProviderKind::KnownPlaces)
     }
 
     pub fn json(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
@@ -766,6 +783,18 @@ impl NativeWorldSession {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let inputs = serde_json::from_slice(input).map_err(failure)?;
+        self.begin_advance_direct(seconds, maximum_intervals, inputs)
+    }
+
+    /// Accept the already funded, finite app input snapshot. The same
+    /// native movement checks still own its physical use.
+    pub fn begin_advance_direct(
+        &mut self,
+        seconds: f64,
+        maximum_intervals: usize,
+        inputs: Vec<AdmittedWorldInput>,
+    ) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
         let (prepared, _transfer) = self.navigation.take(&self.budget)?;
         self.session
             .begin_advance(seconds, maximum_intervals, prepared, inputs)
@@ -1077,7 +1106,7 @@ struct RuntimeTemporalSaveSettings {
     target_bytes: usize,
     row_bytes: usize,
 }
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RuntimeSaveAcknowledgement {
     pub world_id: String,

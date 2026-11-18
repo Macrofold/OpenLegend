@@ -72,7 +72,7 @@ impl<A: HeapBytes, B: HeapBytes> HeapBytes for (A, B) {
 // IndexMap exposes one common capacity rather than its two allocator layouts.
 // Retain a conservative two-times power-of-two bound for the dense buckets and
 // hash-index/control arrays. Payload fields use their actual owned capacities.
-pub(crate) fn map_storage<K, V>(capacity: usize) -> Option<usize> {
+pub fn map_storage<K, V>(capacity: usize) -> Option<usize> {
     map_storage_layout(capacity, size_of::<(usize, K, V)>())
 }
 /// The same pinned IndexMap layout for a family whose pure decoder chooses the

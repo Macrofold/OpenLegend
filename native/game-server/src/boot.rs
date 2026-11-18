@@ -2,6 +2,7 @@
 //! exact current world. No setup input can replace a failed durable open.
 
 use crate::{
+    language::LanguageProvider,
     spatial::SpatialProvider,
     store::{StorageSchema, Store},
     world::{HostedWorld, WorldHost},
@@ -62,6 +63,7 @@ pub struct CurrentServer {
     pub store: Arc<Store>,
     pub world: Arc<HostedWorld>,
     pub spatial: Arc<SpatialProvider>,
+    language: Option<Arc<LanguageProvider>>,
     pub verified: VerifiedOpening,
 }
 
@@ -78,6 +80,10 @@ pub struct VerifiedOpening {
 }
 
 impl CurrentServer {
+    pub fn language(&self) -> Option<&Arc<LanguageProvider>> {
+        self.language.as_ref()
+    }
+
     /// Prepare one cold installed writer from PostgreSQL. Normal game startup
     /// must then reconcile presence and hot evidence through the simulation's
     /// startup operation before exposing any player view.
@@ -104,11 +110,21 @@ impl CurrentServer {
     ) -> Result<Self, BootError> {
         let manifest: ReleaseManifest =
             serde_json::from_slice(&read_bounded(&release.join("manifest.json"), 4 * 1024)?)?;
-        let host = WorldHost::new(workers, TRANSIENT_BYTES)?;
+        // Match the existing server's configured request envelope. The
+        // world writer's wait queue does not introduce a smaller player cap.
+        let players = match std::env::var("OPEN_LEGEND_PLAYER_CAPACITY") {
+            Ok(value) => value.parse::<usize>().ok(),
+            Err(std::env::VarError::NotPresent) => Some(100),
+            Err(_) => None,
+        };
+        let players = players
+            .filter(|players| (1..=10_000).contains(players))
+            .ok_or("OPEN_LEGEND_PLAYER_CAPACITY must be between 1 and 10000")?;
+        let host = WorldHost::new(workers, TRANSIENT_BYTES, players * 4)?;
         let budget = host.budget();
         // These are finite trusted build products. Retain their independent
         // construction charge across deserialization and cold adoption.
-        let _storage_manifest = budget.reserve(16 * 1024 * 1024)?;
+        let storage_manifest = budget.reserve(16 * 1024 * 1024)?;
         let schema: StorageSchema = artifact(
             release,
             "storage.json",
@@ -127,6 +143,7 @@ impl CurrentServer {
         let (tls, _) = MakeRustlsConnect::with_native_certs()
             .map_err(|_| "No usable trust roots for PostgreSQL")?;
         let store = Arc::new(Store::open(database, tls, schema, false, budget.clone()).await?);
+        drop(storage_manifest);
         let opening = store
             .current_opening()
             .await?
@@ -158,6 +175,9 @@ impl CurrentServer {
                 None => Ok(SpatialProvider::new(map, budget)?),
             }
         })??;
+        let language = navigation
+            .map(|_| LanguageProvider::open(&release.join("language"), host.budget()).map(Arc::new))
+            .transpose()?;
         let cut = session.accepted_progress()?;
         let verified = VerifiedOpening {
             world_id: cut.world_id.to_owned(),
@@ -174,12 +194,14 @@ impl CurrentServer {
             store,
             world,
             spatial: Arc::new(spatial),
+            language,
             verified,
         })
     }
 
-    /// Answer the operation's finite request on the shared compute pool. The
-    /// installed spatial provider takes its typed input without encoding it.
+    /// Answer the operation's finite request using the current accepted cut.
+    /// PostgreSQL waits keep their own inputs without occupying a worker.
+    /// Physical providers use their typed requests without encoding them.
     pub async fn answer_operation(
         &self,
         question: openlegend_simulation::runtime::RuntimeProvider,
@@ -192,7 +214,16 @@ impl CurrentServer {
     > {
         use crate::world::WorldError;
         use openlegend_simulation::runtime::RuntimeProviderInput;
+        if question.asks_known_places()? {
+            let (question, prepared) = self.world.prepare_known_places(question).await?;
+            let store = Arc::clone(&self.store);
+            let answer = tokio::spawn(async move { store.read_known_places(prepared).await })
+                .await
+                .map_err(|_| openlegend_world_host::pool::HostError::WorkerFailed)??;
+            return Ok((question, answer));
+        }
         let spatial = Arc::clone(&self.spatial);
+        let language = self.language.clone();
         let budget = self.host.budget().clone();
         self.host
             .compute(move || {
@@ -202,8 +233,10 @@ impl CurrentServer {
                         let (answer, custody) = result?.into_parts();
                         RuntimeProviderInput::geometry(answer, custody)?
                     }
-                    None => crate::operation_format::answer(&question, &budget)?
-                        .ok_or(WorldError::ProviderKind)?,
+                    None => {
+                        crate::operation_format::answer(&question, &budget, language.as_deref())?
+                            .ok_or(WorldError::ProviderKind)?
+                    }
                 };
                 Ok((question, answer))
             })

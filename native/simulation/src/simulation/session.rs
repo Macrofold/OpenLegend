@@ -1426,6 +1426,20 @@ impl Session {
         Ok(&self.simulation)
     }
 
+    pub(crate) fn clock(&self) -> Result<crate::runtime::RuntimeClock, SessionError> {
+        let state = &self.accepted()?.state.physical;
+        let header = &state.header;
+        Ok(crate::runtime::RuntimeClock {
+            at: header.sim_time,
+            paused: header.paused,
+            manually_paused: self.host.manually_paused,
+            speed: self.host.speed,
+            exit_exposure_active: state
+                .participation
+                .exposures()
+                .is_some_and(|rows| !rows.is_empty()),
+        })
+    }
     /// A synchronous owner check may run inside the already-held disclosure
     /// lease. It must never inspect a candidate or mint a nested publication.
     pub(crate) fn publication_read(&self) -> Result<&Simulation, SessionError> {

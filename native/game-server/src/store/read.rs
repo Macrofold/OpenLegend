@@ -26,7 +26,7 @@ pub struct CurrentOpening {
 
 /// These are the existing receipt fields, including the distinct read-only
 /// recovery fingerprint. The public result is retained as its original bytes.
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct GameplayReceipt {
     pub id: String,
