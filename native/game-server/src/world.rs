@@ -451,6 +451,11 @@ impl HostedWorld {
         if self.closing.load(Ordering::Acquire) {
             return Err(HostError::Closed.into());
         }
+        // An already admitted provider start owns the world turn. A preview
+        // can defer its frame but must not take that start's session lock.
+        let Ok(_turn) = self.turn.try_lock() else {
+            return Ok(None);
+        };
         let session = match self.session.try_lock() {
             Ok(session) => session,
             Err(std::sync::TryLockError::WouldBlock) => return Ok(None),
