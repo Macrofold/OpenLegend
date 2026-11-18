@@ -1,6 +1,7 @@
 use openlegend_game_server::boot::{CurrentServer, recover_checkpoint};
 use std::error::Error;
 use std::ffi::OsString;
+use std::io::{self, Write};
 use std::path::PathBuf;
 
 const USAGE: &str = "Usage: openlegend-game-server serve|check-open RELEASE_DIRECTORY
@@ -22,8 +23,9 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
         }
         Some("check-open") if arguments.next().is_none() => {
             let server = CurrentServer::open(&release, database, 1).await?;
-            println!("{}", serde_json::to_string(&server.verified)?);
-            server.close().await
+            let report = write_report(&server.verified);
+            server.close().await?;
+            report
         }
         Some("recover-checkpoint") => {
             let directory = arguments.next().map(PathBuf::from).ok_or(USAGE)?;
@@ -45,11 +47,18 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
                 floor.as_deref(),
             )
             .await?;
-            println!("{}", serde_json::to_string(&result)?);
-            Ok(())
+            write_report(&result)
         }
         _ => Err(USAGE.into()),
     }
+}
+
+fn write_report(report: &impl serde::Serialize) -> Result<(), Box<dyn Error + Send + Sync>> {
+    let mut output = io::stdout().lock();
+    serde_json::to_writer(&mut output, report)?;
+    output.write_all(b"\n")?;
+    output.flush()?;
+    Ok(())
 }
 
 fn text(value: Option<OsString>) -> Result<String, &'static str> {
