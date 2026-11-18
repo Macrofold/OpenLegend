@@ -320,6 +320,11 @@ pub struct ReceivedChargeDirectory {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ReceivedError(pub &'static str);
 
+impl ReceivedError {
+    pub(crate) const TRANSIENT_CAPACITY: Self =
+        Self("Current receiving mutation exceeds native byte allowance.");
+}
+
 impl fmt::Display for ReceivedError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter.write_str(self.0)

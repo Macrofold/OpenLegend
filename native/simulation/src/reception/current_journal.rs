@@ -21,7 +21,7 @@ fn invalid() -> ReceivedError {
     ReceivedError("Invalid current receiving mutation or rollback.")
 }
 fn capacity() -> ReceivedError {
-    ReceivedError("Current receiving mutation exceeds native byte allowance.")
+    ReceivedError::TRANSIENT_CAPACITY
 }
 #[derive(Clone, Copy)]
 pub(crate) struct CurrentCheckpoint {

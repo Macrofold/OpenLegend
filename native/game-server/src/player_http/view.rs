@@ -4,12 +4,13 @@
 use super::*;
 use crate::{
     authority::Capability,
-    player_stream::{PlayerStream, PrepareView, ViewAttempt},
+    player_stream::{PlayerStream, PrepareView, VIEW_CADENCE, ViewAttempt},
     player_view::{ViewError, ViewTelemetry, capture_host, prepare_view},
     store::AiDisplay,
     world::PlayerDisclosure,
 };
 use axum::{extract::Query, routing::get};
+use openlegend_world_host::pool::HostError;
 use tokio::sync::{Mutex, watch};
 
 #[derive(Clone)]
@@ -143,9 +144,16 @@ impl Views {
         tab: &Tab,
         encode_http: bool,
     ) -> Result<(ViewAttempt, Option<Bytes>), ViewError> {
+        let mut refusal = ViewError::Changed;
         for _ in 0..2 {
+            if refusal.busy() {
+                tokio::time::sleep(VIEW_CADENCE).await;
+            }
             let attempt = match self.prepare(tab).await {
-                Err(ViewError::Changed) => continue,
+                Err(error) if error.changed() || error.busy() => {
+                    refusal = error;
+                    continue;
+                }
                 result => result?,
             };
             let result = self
@@ -167,15 +175,22 @@ impl Views {
                         }
                     },
                 )
-                .await
-                .map_err(ViewError::World)?;
+                .await;
             match result {
-                PlayerDisclosure::Busy | PlayerDisclosure::Changed => (),
-                PlayerDisclosure::Unchanged => return Ok((attempt, None)),
-                PlayerDisclosure::Published(bytes) => return Ok((attempt, Some(bytes))),
+                Ok(PlayerDisclosure::Changed) => refusal = ViewError::Changed,
+                Ok(PlayerDisclosure::Busy) => refusal = ViewError::World(HostError::Busy.into()),
+                Ok(PlayerDisclosure::Unchanged) => return Ok((attempt, None)),
+                Ok(PlayerDisclosure::Published(bytes)) => return Ok((attempt, Some(bytes))),
+                Err(error) => {
+                    let error = ViewError::World(error);
+                    if !error.busy() {
+                        return Err(error);
+                    }
+                    refusal = error;
+                }
             }
         }
-        Err(ViewError::Changed)
+        Err(refusal)
     }
 }
 

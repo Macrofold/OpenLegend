@@ -14,10 +14,11 @@ use crate::{
 };
 use indexmap::IndexMap;
 use openlegend_simulation::{
-    host::{ByteBudget, ByteReservation},
+    host::{ByteBudget, ByteReservation, FenceError},
     runtime::{RuntimeError, RuntimePlayerInputState, RuntimePlayerRead},
     text::JsText,
 };
+use openlegend_world_host::pool::HostError;
 use serde::Serialize;
 use serde_json::value::RawValue;
 use std::{error::Error, fmt, sync::Arc};
@@ -44,6 +45,27 @@ pub enum ViewError {
     Store(StoreError),
     World(WorldError),
     Encoding(serde_json::Error),
+}
+impl ViewError {
+    pub(crate) fn changed(&self) -> bool {
+        matches!(self, Self::Changed | Self::Store(StoreError::StaleCut))
+    }
+
+    pub(crate) fn busy(&self) -> bool {
+        matches!(
+            self,
+            Self::Capacity
+                | Self::Capture(SceneError::Capacity)
+                | Self::Event(crate::player_events::PlayerEventError::Capacity)
+                | Self::Store(StoreError::Capacity)
+                | Self::World(
+                    WorldError::Host(HostError::Busy | HostError::Capacity)
+                        | WorldError::Fence(FenceError::Busy)
+                        | WorldError::Wire(crate::wire::WireError::Capacity)
+                        | WorldError::Access(crate::authority::AccessError::Busy)
+                )
+        ) || matches!(self, Self::World(WorldError::Simulation(error)) if error.is_capacity())
+    }
 }
 impl fmt::Display for ViewError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

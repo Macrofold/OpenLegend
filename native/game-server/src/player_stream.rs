@@ -21,7 +21,7 @@ use tokio::{
     time::{Instant, sleep_until},
 };
 
-const CADENCE: Duration = Duration::from_millis(50);
+pub(crate) const VIEW_CADENCE: Duration = Duration::from_millis(50);
 const HEARTBEAT: Duration = Duration::from_secs(15);
 const SUFFIX: &[u8] = b"\n\n";
 const RESET: &[u8] = b"event: reset\ndata: ";
@@ -121,6 +121,21 @@ impl PlayerStream {
         self.previous = None;
         self.pending = None;
     }
+
+    fn defer(&mut self) {
+        self.after = Instant::now() + VIEW_CADENCE;
+        self.fresh_attempt = true;
+    }
+
+    fn changed(&mut self) {
+        if self.fresh_attempt {
+            // This publication exhausted its fresh attempt. Keep the latest
+            // notice eligible at the regular cadence, even in a paused world.
+            self.defer();
+        } else {
+            self.fresh_attempt = true;
+        }
+    }
 }
 
 impl Body for PlayerStream {
@@ -191,17 +206,24 @@ impl Body for PlayerStream {
                         b"event: access-changed\ndata: {}\n\n",
                     )))));
                 }
-                Next::View(Err(ViewError::Changed)) if !self.fresh_attempt => {
-                    self.fresh_attempt = true;
+                Next::View(Err(error)) if error.changed() => {
+                    self.changed();
                     continue;
                 }
-                Next::View(Err(_error)) => {
+                Next::View(Err(error)) if error.busy() => {
+                    // Keep the actual previous handoff. Once capacity returns,
+                    // build a fresh view against it without replaying private bytes.
+                    self.defer();
+                    continue;
+                }
+                Next::View(Err(error)) => {
+                    eprintln!("Player stream preparation stopped: {error:?}");
                     self.end();
                     return Poll::Ready(None);
                 }
                 Next::View(Ok(attempt)) => {
                     let offered = *self.revisions.borrow();
-                    self.after = Instant::now() + CADENCE;
+                    self.after = Instant::now() + VIEW_CADENCE;
                     let mut inventory = false;
                     let result = self.world.disclose_player(
                         &self.authority,
@@ -236,12 +258,7 @@ impl Body for PlayerStream {
                     match result {
                         Ok(PlayerDisclosure::Busy | PlayerDisclosure::Changed)
                         | Err(WorldError::ProjectionChanged) => {
-                            if self.fresh_attempt {
-                                self.revisions.borrow_and_update();
-                                self.fresh_attempt = false;
-                            } else {
-                                self.fresh_attempt = true;
-                            }
+                            self.changed();
                         }
                         Ok(PlayerDisclosure::Unchanged) => {
                             self.revisions.borrow_and_update();
@@ -265,7 +282,9 @@ impl Body for PlayerStream {
                                 b"event: access-changed\ndata: {}\n\n",
                             )))));
                         }
+                        Err(WorldError::Wire(wire::WireError::Capacity)) => self.defer(),
                         Err(error) => {
+                            eprintln!("Player stream delivery stopped: {error:?}");
                             self.end();
                             return Poll::Ready(Some(Err(error)));
                         }

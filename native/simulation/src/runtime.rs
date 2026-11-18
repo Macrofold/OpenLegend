@@ -21,7 +21,7 @@ pub use control::RuntimeClock;
 mod direct_history;
 pub use direct_history::{
     HistoryAccount, HistoryCut, HistoryTemporal, RuntimeHistory, RuntimeHistoryCuts,
-    RuntimeMetadataPersistence, RuntimeRecallRead, metadata_rows,
+    RuntimeMetadataPersistence, RuntimeRecallDecoder, RuntimeRecallRead, metadata_rows,
 };
 mod handoff;
 mod knowledge;
@@ -80,30 +80,81 @@ pub use reply_preview::{
 };
 
 #[derive(Debug)]
-pub struct RuntimeError(String);
+pub struct RuntimeError {
+    detail: String,
+    capacity: bool,
+}
 impl RuntimeError {
     /// Preserve a trusted application's reason when it cannot stage a product
     /// before Ready. The original candidate still rolls back.
     pub fn application_refused(reason: impl std::fmt::Display) -> Self {
-        Self(format!(
-            "Application refused the prepared operation: {reason}"
-        ))
+        Self {
+            detail: format!("Application refused the prepared operation: {reason}"),
+            capacity: false,
+        }
+    }
+
+    /// A live host can defer work that refused byte admission before acceptance.
+    /// Semantic, rollback and owner errors still stop the affected operation.
+    pub fn is_capacity(&self) -> bool {
+        self.capacity
     }
 }
 impl std::fmt::Display for RuntimeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&self.0)
+        f.write_str(&self.detail)
     }
 }
 impl std::error::Error for RuntimeError {}
 impl From<crate::host::CapacityError> for RuntimeError {
     fn from(error: crate::host::CapacityError) -> Self {
-        failure(error)
+        RuntimeError {
+            capacity: true,
+            ..failure(error)
+        }
     }
 }
 
 fn failure(error: impl std::fmt::Debug) -> RuntimeError {
-    RuntimeError(format!("Native writer refused operation: {error:?}"))
+    RuntimeError {
+        detail: format!("Native writer refused operation: {error:?}"),
+        capacity: false,
+    }
+}
+
+fn advance_failure(error: crate::simulation::session::SessionError) -> RuntimeError {
+    use crate::commands::CommandOperationError;
+    use crate::events::EventError;
+    use crate::execution::ExecutionError;
+    use crate::reception::ObserverReceptionError;
+    use crate::simulation::{DriveError, SessionError};
+    use crate::time::AdvanceError;
+
+    fn allocation(error: &ExecutionError) -> bool {
+        matches!(error, ExecutionError::Capacity)
+            || matches!(error, ExecutionError::Received(error) if *error == crate::received::ReceivedError::TRANSIENT_CAPACITY)
+    }
+
+    let capacity = match &error {
+        SessionError::Drive(DriveError::Capacity) => true,
+        SessionError::Execution(error)
+        | SessionError::Drive(DriveError::Semantic(
+            AdvanceError::Execution(error)
+            | AdvanceError::Command(
+                CommandOperationError::Execution(error)
+                | CommandOperationError::Event(EventError::Execution(error)),
+            )
+            | AdvanceError::Reception(
+                ObserverReceptionError::Execution(error)
+                | ObserverReceptionError::Event(EventError::Execution(error)),
+            ),
+        )) => allocation(error),
+        _ => false,
+    };
+    RuntimeError {
+        capacity,
+        ..failure(error)
+    }
 }
 fn decode_preparation(bytes: &[u8], budget: &ByteBudget) -> Result<ByteReservation, RuntimeError> {
     use crate::host::retained_size::map_storage;
@@ -885,7 +936,7 @@ impl NativeWorldSession {
         let (action_routes, _actions) = self.navigation.prepare_actions(&self.budget)?;
         self.session
             .begin_advance(seconds, maximum_intervals, prepared, &action_routes, inputs)
-            .map_err(failure)
+            .map_err(advance_failure)
     }
     pub fn begin_command(
         &mut self,
@@ -991,7 +1042,7 @@ impl NativeWorldSession {
                     policy_revision: self.history_policy_revision,
                 },
             )
-            .map_err(failure)
+            .map_err(advance_failure)
     }
 
     /// Drive the same candidate as the addon's step. The output callback runs

@@ -180,6 +180,17 @@ pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(
         .map_err(|_| "The listener left a running world owner")?
         .close()
         .await;
+    println!(
+        "OpenLegend native memory {}",
+        serde_json::json!({
+            "transientBytes": custody.used(),
+            "transientPeakBytes": custody.peak(),
+            "residentBytes": custody.resident().used(),
+            "residentPeakBytes": custody.resident().peak(),
+            "pendingSaveBytes": custody.pending_save_used(),
+            "pendingSavePeakBytes": custody.pending_save_peak(),
+        })
+    );
     run.and(close)
 }
 

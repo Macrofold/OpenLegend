@@ -416,8 +416,9 @@ impl GameClock {
                 }
                 Ok(None) => Some(true),
                 Err(WorldError::ClockChanged)
-                | Err(WorldError::Host(HostError::Busy))
+                | Err(WorldError::Host(HostError::Busy | HostError::Capacity))
                 | Err(WorldError::Fence(FenceError::Busy)) => None,
+                Err(WorldError::Simulation(error)) if error.is_capacity() => None,
                 Err(error) => return Err(error),
             };
             if let Some(include_world) = routes
