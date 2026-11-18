@@ -17,8 +17,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 mod account_retention;
 mod consumer;
-mod dispatch;
-use dispatch::{SerialDispatch, submit_world};
+use openlegend_world_host::{DispatchWorld, SerialDispatch, submit_world};
 mod control;
 mod knowledge;
 mod maintenance;
@@ -56,11 +55,21 @@ fn operation_error(error: impl std::fmt::Debug) -> napi::Error {
 pub(crate) struct WorldRuntime {
     world_id: String,
     session: Mutex<Option<NativeWorldSession>>,
-    dispatch: SerialDispatch,
+    dispatch: SerialDispatch<HostRuntime, Self>,
     fence: Arc<CandidateFence>,
     stopped: AtomicBool,
     active: AtomicBool,
 }
+impl DispatchWorld<HostRuntime> for WorldRuntime {
+    fn dispatch(&self) -> &SerialDispatch<HostRuntime, Self> {
+        &self.dispatch
+    }
+
+    fn poison(&self) {
+        self.fence.poison();
+    }
+}
+
 impl WorldRuntime {
     pub(crate) fn stopped(&self) -> bool {
         self.stopped.load(Ordering::Acquire)
@@ -397,7 +406,8 @@ where
             world,
             move |host, world, cancel| Ok(work(Some((host, world)), cancel)),
             complete,
-        ),
+        )
+        .map(|_| ()),
         None => host
             .pool
             .submit(move |cancel| Ok(work(None, cancel)), complete, || {})

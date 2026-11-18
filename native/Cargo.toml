@@ -1,5 +1,5 @@
 [workspace]
-members = ["simulation", "node-bridge"]
+members = ["simulation", "node-bridge", "world-host", "game-server"]
 resolver = "3"
 
 [workspace.package]

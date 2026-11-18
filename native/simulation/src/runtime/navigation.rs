@@ -63,12 +63,16 @@ pub struct RuntimeNavigationRead {
 }
 impl RuntimeNavigationRead {
     pub fn packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
-        let queries = match &self.phase {
-            NavigationPhase::Direct { queries, .. } => queries,
-            NavigationPhase::Pending(value) => value.queries(),
-            NavigationPhase::Done => return Err(failure("navigation preparation was consumed")),
-        };
-        RuntimeJson::encode(queries, budget)
+        RuntimeJson::encode(self.queries()?, budget)
+    }
+
+    /// The read keeps the exact route request and current-source binding alive.
+    pub fn queries(&self) -> Result<&GeometryQueries, RuntimeError> {
+        match &self.phase {
+            NavigationPhase::Direct { queries, .. } => Ok(queries),
+            NavigationPhase::Pending(value) => Ok(value.queries()),
+            NavigationPhase::Done => Err(failure("navigation preparation was consumed")),
+        }
     }
 }
 impl NativeWorldSession {
@@ -198,6 +202,33 @@ impl NativeWorldSession {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let answer: GeometryAnswers = serde_json::from_slice(input).map_err(failure)?;
+        self.apply_navigation(read, answer)
+    }
+
+    /// Consume the independent physical provider's owned answer under its
+    /// original query and accepted-state fence.
+    pub fn resolve_navigation_direct(
+        &mut self,
+        read: &mut RuntimeNavigationRead,
+        answer: GeometryAnswers,
+        custody: ByteReservation,
+    ) -> Result<bool, RuntimeError> {
+        self.require_active()?;
+        if !self.budget.owns(&custody) {
+            return Err(failure(
+                "navigation answer belongs to another native budget",
+            ));
+        }
+        let result = self.apply_navigation(read, answer);
+        drop(custody);
+        result
+    }
+
+    fn apply_navigation(
+        &mut self,
+        read: &mut RuntimeNavigationRead,
+        answer: GeometryAnswers,
+    ) -> Result<bool, RuntimeError> {
         let state = &self.session.accepted().map_err(failure)?.state;
         let current = crate::native_controller::proposal_current(
             &state.physical,

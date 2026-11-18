@@ -26,6 +26,7 @@ const sourceFiles = [
   'native/package.json',
   'native/simulation/Cargo.toml',
   'native/node-bridge/Cargo.toml',
+  'native/world-host/Cargo.toml',
   'native/node-bridge/build.rs',
 ];
 function rustFiles(directory) {
@@ -43,6 +44,7 @@ function sourceIdentity() {
     ...sourceFiles,
     ...rustFiles(join(native, 'simulation/src')),
     ...rustFiles(join(native, 'node-bridge/src')),
+    ...rustFiles(join(native, 'world-host/src')),
     ...rustFiles(join(repository, 'packages/domain/src/worlds')),
   ].sort();
   const hash = createHash('sha256');

@@ -484,7 +484,7 @@ impl GeometryBinding {
 
 /// One phase builds this product from stable borrowed physical inputs. Arrays
 /// retain source order; provider arrival order never chooses occurrence order.
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GeometryQueries {
     pub binding: GeometryBinding,
@@ -606,6 +606,67 @@ pub enum GeometryAnswerError {
     Stale,
     Incomplete,
     Invalid,
+}
+
+mod query_custody {
+    use super::*;
+    use crate::host::retained_size::{HeapBytes, heap_record, heap_sum};
+
+    heap_record!(SightRay {});
+    heap_record!(WalkingSegment { from, to, body });
+    heap_record!(RelativeSupport {});
+    heap_record!(SupportQuery {
+        surface_id,
+        relative
+    });
+    heap_record!(StandingQuery { point, body });
+    heap_record!(SurfaceLineQuery { from, body });
+    heap_record!(SightSweepQuery {});
+    heap_record!(PhysicalFeatureQuery {
+        cursor,
+        priority_anchors
+    });
+    heap_record!(ConvexViewQuery { target });
+    heap_record!(BodySweepGroup { bounds, body });
+    heap_record!(StandingColumnsQuery { distances, body });
+    impl HeapBytes for RouteQuery {
+        fn heap_bytes(&self) -> Option<usize> {
+            match self {
+                Self::Approach {
+                    from,
+                    body,
+                    target_support,
+                    ..
+                } => heap_sum([
+                    from.heap_bytes()?,
+                    body.heap_bytes()?,
+                    target_support.heap_bytes()?,
+                ]),
+                Self::Surface { from, to, body } => {
+                    heap_sum([from.heap_bytes()?, to.heap_bytes()?, body.heap_bytes()?])
+                }
+                Self::Outside { from, body, .. } => {
+                    heap_sum([from.heap_bytes()?, body.heap_bytes()?])
+                }
+            }
+        }
+    }
+    heap_record!(GeometryQueries {
+        sight,
+        walking,
+        support,
+        standing,
+        surface_lines,
+        sight_sweeps,
+        sound,
+        navigation,
+        routes,
+        features,
+        feature_ids,
+        convex_views,
+        body_sweeps,
+        standing_columns
+    });
 }
 
 impl GeometryQueries {

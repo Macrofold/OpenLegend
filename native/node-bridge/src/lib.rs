@@ -2,7 +2,7 @@
 //! concrete simulation owners; this foundation exposes no generic world write.
 
 pub mod geometry;
-pub mod pool;
+use openlegend_world_host::pool;
 pub mod records;
 mod world;
 
@@ -71,6 +71,16 @@ struct HostRuntime {
     poisoned: AtomicBool,
     error: Mutex<Option<String>>,
     worlds: Mutex<Vec<Arc<world::WorldRuntime>>>,
+}
+
+impl openlegend_world_host::DispatchHost for HostRuntime {
+    fn pool(&self) -> &HostPool {
+        &self.pool
+    }
+
+    fn budget(&self) -> &ByteBudget {
+        &self.bytes
+    }
 }
 
 impl HostRuntime {

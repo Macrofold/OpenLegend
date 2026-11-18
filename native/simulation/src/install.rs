@@ -40,7 +40,8 @@ mod geometry;
 pub(crate) use geometry::install_geometry;
 mod core;
 mod working_set;
-pub(crate) use working_set::{InstalledWorkingSet, WorkingSetSelection};
+pub(crate) use working_set::InstalledWorkingSet;
+pub use working_set::WorkingSetSelection;
 mod scope;
 pub(crate) use core::{
     CoreInstallError, CoreInstallInput, CoreInstallation, InstallPurpose, assemble_core,

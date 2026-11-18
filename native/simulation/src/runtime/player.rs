@@ -194,10 +194,16 @@ impl RuntimePlayerRead {
         &self,
         budget: &ByteBudget,
     ) -> Result<Option<RuntimeJson>, RuntimeError> {
+        self.control_queries()
+            .map(|queries| RuntimeJson::encode(queries, budget))
+            .transpose()
+    }
+
+    /// The capture owns this immutable input through its control preparation.
+    pub fn control_queries(&self) -> Option<&crate::geometry::GeometryQueries> {
         self.preparation
             .as_ref()
-            .map(|preparation| RuntimeJson::encode(preparation.queries(), budget))
-            .transpose()
+            .map(PlayerControlPreparation::queries)
     }
     pub fn finish_controls(
         &mut self,
@@ -206,6 +212,26 @@ impl RuntimePlayerRead {
     ) -> Result<(), RuntimeError> {
         let _decode = decode_preparation(bytes, budget)?;
         let answers: GeometryAnswers = serde_json::from_slice(bytes).map_err(failure)?;
+        self.apply_controls(answers)
+    }
+
+    /// Reuse the control validator with a typed physical answer instead of
+    /// serializing its path through the addon.
+    pub fn finish_controls_direct(
+        &mut self,
+        answers: GeometryAnswers,
+        custody: ByteReservation,
+        budget: &ByteBudget,
+    ) -> Result<(), RuntimeError> {
+        if !budget.owns(&custody) || !custody.shares_owner(&self._custody) {
+            return Err(failure("control answer belongs to another native budget"));
+        }
+        let result = self.apply_controls(answers);
+        drop(custody);
+        result
+    }
+
+    fn apply_controls(&mut self, answers: GeometryAnswers) -> Result<(), RuntimeError> {
         let preparation = self
             .preparation
             .take()

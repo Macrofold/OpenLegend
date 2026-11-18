@@ -102,23 +102,91 @@ struct HistoryInput {
 
 /// Raw source bytes retain their immutable canonical owner. Expanded receipt
 /// and actor metadata allocations retain their own guards through handoff.
-pub(crate) struct CapturedHistoryInput {
+#[derive(Clone)]
+pub(crate) struct CapturedHistoryInput(Arc<CapturedHistoryBacking>);
+
+struct CapturedHistoryBacking {
     input: HistoryInput,
     _reservations: Vec<ByteReservation>,
     _pins: Vec<Arc<crate::host::SharedMemoryPin>>,
 }
 impl CapturedHistoryInput {
     pub(crate) fn value(&self) -> impl Serialize + '_ {
-        &self.input
+        &self.0.input
     }
     pub(crate) fn base_cut(&self) -> u64 {
-        self.input.base_cut
+        self.0.input.base_cut
     }
     pub(crate) fn generation(&self) -> &str {
-        &self.input.generation
+        &self.0.input.generation
     }
     pub(crate) fn world_id(&self) -> &str {
-        &self.input.world_id
+        &self.0.input.world_id
+    }
+    pub(crate) fn originals(&self) -> impl Iterator<Item = &OriginalOccurrence> {
+        self.0.input.changed.iter().map(|row| row.0.as_ref())
+    }
+    pub(crate) fn accounts(
+        &self,
+    ) -> impl Iterator<
+        Item = (
+            &str,
+            &str,
+            Option<&str>,
+            Option<(&TemporalReceipt, &[SensoryFacet], u64)>,
+        ),
+    > {
+        self.0.input.accounts.iter().map(|account| {
+            (
+                account.event_id.as_str(),
+                account.actor_id.as_str(),
+                account
+                    .awareness_payload
+                    .as_ref()
+                    .map(|body| body.0.payload()),
+                account
+                    .temporal
+                    .as_ref()
+                    .map(|account| (&account.receipt, account.values.as_slice(), account.bytes)),
+            )
+        })
+    }
+    pub(crate) fn cuts(
+        &self,
+    ) -> impl Iterator<
+        Item = (
+            &str,
+            f64,
+            f64,
+            &[String],
+            &[String],
+            Option<&ReceivedFrontier>,
+            bool,
+            &[ReceivedChargeDirectory],
+            u64,
+            u64,
+        ),
+    > {
+        self.0.input.cuts.iter().map(|cut| {
+            (
+                cut.actor_id.as_str(),
+                cut.at,
+                cut.max_age_seconds,
+                cut.forgotten.as_slice(),
+                cut.corrected.as_slice(),
+                cut.frontier.as_ref(),
+                cut.recent_present,
+                cut.recent_directories.as_slice(),
+                cut.recent_bytes,
+                cut.recent_count,
+            )
+        })
+    }
+    pub(crate) fn policy(&self) -> (u64, Option<&str>) {
+        (
+            self.0.input.policy_revision,
+            self.0.input.policy_payload.as_deref(),
+        )
     }
 }
 
@@ -262,7 +330,7 @@ pub(crate) fn capture_history_input(
         .and_then(|n| n.checked_add(2))
         .ok_or_else(capacity)?;
     let skeleton = heap_sum([
-        size_of::<HistoryInput>(),
+        size_of::<CapturedHistoryBacking>() + 2 * size_of::<usize>(),
         state.physical.header.id.len(),
         state.generation.len(),
         originals
@@ -519,7 +587,7 @@ pub(crate) fn capture_history_input(
             owner_id: owner.clone(),
         })
         .collect();
-    Ok(CapturedHistoryInput {
+    Ok(CapturedHistoryInput(Arc::new(CapturedHistoryBacking {
         input: HistoryInput {
             world_id: state.physical.header.id.clone(),
             generation: state.generation.clone(),
@@ -534,7 +602,7 @@ pub(crate) fn capture_history_input(
         },
         _reservations: reservations,
         _pins: pins,
-    })
+    })))
 }
 
 fn capture_actor_cut(

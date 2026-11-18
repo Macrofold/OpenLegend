@@ -13,7 +13,7 @@ crate-type = ["cdylib"]
 openlegend-simulation = { path = "../simulation" }
 napi.workspace = true
 napi-derive.workspace = true
-rayon.workspace = true
+openlegend-world-host = { path = "../world-host" }
 serde_json.workspace = true
 
 [build-dependencies]

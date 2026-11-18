@@ -6,12 +6,12 @@ use crate::state::{BodyProfile, Point};
 
 mod angle;
 mod logarithm;
-pub(crate) use angle::atan2;
+pub use angle::atan2;
 pub(crate) use logarithm::log10;
 
 /// Current JavaScript Math.hypot(dx,dy,dz) evaluation order, including its
 /// scaled compensated sum. Squared sums or nested hypot alter real route cuts.
-pub(crate) fn distance(from: Point, to: Point) -> f64 {
+pub fn distance(from: Point, to: Point) -> f64 {
     let dx = (from.x - to.x).abs();
     let dy = (from.y - to.y).abs();
     let dz = (from.z - to.z).abs();
@@ -31,7 +31,7 @@ pub(crate) fn distance(from: Point, to: Point) -> f64 {
     maximum * sum.sqrt()
 }
 
-pub(crate) fn interpolate(from: Point, to: Point, fraction: f64) -> Point {
+pub fn interpolate(from: Point, to: Point, fraction: f64) -> Point {
     Point {
         x: from.x + (to.x - from.x) * fraction,
         y: from.y + (to.y - from.y) * fraction,

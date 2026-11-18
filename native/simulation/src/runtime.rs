@@ -17,6 +17,11 @@ static NEXT_GENERATION: AtomicU64 = AtomicU64::new(1);
 mod account_retention;
 mod control;
 pub use account_retention::RuntimeAccountRetention;
+mod direct_history;
+pub use direct_history::{
+    HistoryAccount, HistoryCut, HistoryTemporal, RuntimeHistory, RuntimeStartupPersistence,
+    startup_metadata_rows,
+};
 mod handoff;
 mod knowledge;
 mod learning;
@@ -43,6 +48,7 @@ mod read_cut;
 pub use navigation::RuntimeNavigationRead;
 mod restore;
 mod retained_values;
+pub use crate::simulation::session::PreparedReadProgress as RuntimeProgress;
 pub use handoff::RuntimeOutputHandoff;
 mod consumer;
 pub use consumer::RuntimeConsumer;
@@ -61,6 +67,12 @@ impl std::fmt::Display for RuntimeError {
     }
 }
 impl std::error::Error for RuntimeError {}
+impl From<crate::host::CapacityError> for RuntimeError {
+    fn from(error: crate::host::CapacityError) -> Self {
+        failure(error)
+    }
+}
+
 fn failure(error: impl std::fmt::Debug) -> RuntimeError {
     RuntimeError(format!("Native writer refused operation: {error:?}"))
 }
@@ -106,14 +118,36 @@ fn decode_preparation(bytes: &[u8], budget: &ByteBudget) -> Result<ByteReservati
 /// Field order keeps the String funded through its actual destruction, including
 /// stale-question and malformed-answer refusal. This input grants no authority.
 pub struct RuntimeProviderInput {
-    json: String,
+    body: RuntimeAnswerBody,
     custody: ByteReservation,
+}
+enum RuntimeAnswerBody {
+    Json(String),
+    Geometry(Box<crate::geometry::GeometryAnswers>),
 }
 impl RuntimeProviderInput {
     /// The caller already admitted and owns this String's backing. Its actual
-    /// capacity and host budget are checked at the continuation boundary below.
+    /// capacity and host budget are checked at the continuation boundary.
     pub fn new(json: String, custody: ByteReservation) -> Self {
-        Self { json, custody }
+        Self {
+            body: RuntimeAnswerBody::Json(json),
+            custody,
+        }
+    }
+
+    pub fn geometry(
+        answers: crate::geometry::GeometryAnswers,
+        mut custody: ByteReservation,
+    ) -> Result<Self, RuntimeError> {
+        let bytes = custody
+            .bytes()
+            .checked_add(std::mem::size_of::<crate::geometry::GeometryAnswers>())
+            .ok_or_else(|| failure("capacity"))?;
+        custody.resize(bytes).map_err(failure)?;
+        Ok(Self {
+            body: RuntimeAnswerBody::Geometry(Box::new(answers)),
+            custody,
+        })
     }
 }
 
@@ -127,12 +161,19 @@ fn provider_response(
             if !budget.owns(&input.custody) {
                 return Err(failure("provider answer belongs to another native budget"));
             }
-            ProviderResponse::new(
-                question.kind(),
-                question.binding(),
-                input.json,
-                input.custody,
-            )
+            match input.body {
+                RuntimeAnswerBody::Json(json) => {
+                    ProviderResponse::new(question.kind(), question.binding(), json, input.custody)
+                }
+                RuntimeAnswerBody::Geometry(answer) => {
+                    if question.geometry().is_none() {
+                        return Err(failure(
+                            "geometry answer cannot satisfy this provider request",
+                        ));
+                    }
+                    ProviderResponse::geometry(question.binding(), answer, input.custody)
+                }
+            }
             .map_err(failure)
         })
         .transpose()
@@ -215,6 +256,63 @@ struct Installation {
     accepted_cut: u64,
 }
 
+/// Build-time authored content and trusted host settings. The live database
+/// supplies records and historical sources independently at each cold open.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RuntimeInstallDefinitions {
+    definitions: crate::install::NativeDefinitionInputs,
+    settings: crate::install::NativeSetupSettings,
+    storage: RuntimeStorageSettings,
+    layouts: Vec<crate::records::RecordLayout>,
+}
+
+pub struct RuntimeInstallSources {
+    pub records: crate::records::CurrentRecords,
+    pub originals: Vec<crate::events::OriginalOccurrenceInput>,
+    pub cold_directories:
+        Option<indexmap::IndexMap<String, Vec<crate::received::ReceivedChargeDirectory>>>,
+    pub working_set: Option<crate::install::WorkingSetSelection>,
+    pub accepted_cut: u64,
+}
+
+impl RuntimeInstallDefinitions {
+    /// The caller admits the typed input before retrieval and retains its
+    /// custody through installation. All installed families, rows and pins
+    /// are validated by the same owner as the addon installation.
+    pub fn install_current(
+        self,
+        sources: RuntimeInstallSources,
+        database_schema: &str,
+        budget: ByteBudget,
+        input_custody: ByteReservation,
+    ) -> Result<NativeWorldSession, RuntimeError> {
+        if !budget.owns(&input_custody) {
+            return Err(failure(
+                "installation input belongs to another native budget",
+            ));
+        }
+        let result = NativeWorldSession::install_input(
+            Installation {
+                definitions: self.definitions,
+                settings: self.settings,
+                storage: self.storage,
+                layouts: self.layouts,
+                records: sources.records,
+                originals: sources.originals,
+                cold_directories: sources.cold_directories,
+                working_set: sources.working_set,
+                accepted_cut: sources.accepted_cut,
+            },
+            database_schema,
+            budget.for_world(),
+            crate::install::InstallPurpose::Current,
+        );
+        drop(input_custody);
+        result
+    }
+}
+
 impl Installation {
     fn decoded_text_heap(&self) -> Option<usize> {
         use crate::host::retained_size::{HeapBytes, heap_sum};
@@ -268,12 +366,39 @@ impl RuntimeProvider {
             .upgrade()
             .ok_or_else(|| failure("native provider question is no longer pending"))
     }
+    /// Lend the same funded request to an in-process provider without a bridge
+    /// buffer copy. The active candidate owns its body; the callback may only
+    /// retain independently admitted data.
+    pub fn with_request<T>(&self, use_request: impl FnOnce(&str) -> T) -> Result<T, RuntimeError> {
+        let request = self.question()?;
+        let json = request
+            .json()
+            .ok_or_else(|| failure("geometry requires a typed provider"))?;
+        Ok(use_request(json))
+    }
+
+    /// The pending simulator owns this immutable geometry request through the
+    /// callback. A direct provider takes no bridge encoding or mutable state.
+    pub fn with_geometry<T>(
+        &self,
+        compute: impl FnOnce(&crate::geometry::GeometryQueries) -> T,
+    ) -> Result<Option<T>, RuntimeError> {
+        let request = self.question()?;
+        Ok(request.geometry().map(compute))
+    }
+
     pub fn json(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
         let question = self.question()?;
-        // The question is already encoded by its semantic owner. Copy only this
+        if let Some(geometry) = question.geometry_envelope() {
+            return RuntimeJson::encode(&geometry, budget);
+        }
+        // Other provider families already own an encoded body. Copy only this
         // selected output; JavaScript buffers can never alias canonical bytes.
-        let mut custody = budget.reserve(question.json().len()).map_err(failure)?;
-        let bytes = question.json().as_bytes().to_vec();
+        let json = question
+            .json()
+            .ok_or_else(|| failure("missing provider request"))?;
+        let mut custody = budget.reserve(json.len()).map_err(failure)?;
+        let bytes = json.as_bytes().to_vec();
         custody.resize(bytes.capacity()).map_err(failure)?;
         Ok(RuntimeJson {
             bytes,
@@ -310,6 +435,45 @@ impl RuntimePrepared {
     }
 }
 
+/// A direct host stages only the borrowed products it will actually consume
+/// after acceptance. The returned owned value must hold its own admission.
+pub enum RuntimeDirectStep<T> {
+    Continue,
+    Provider(RuntimeProvider),
+    Prepared(RuntimeDirectPrepared<T>),
+    Preview(T),
+}
+
+pub struct RuntimeDirectPrepared<T> {
+    prepared: crate::simulation::session::PreparedCandidate,
+    output: T,
+    protected_save: Option<RuntimeSave>,
+}
+impl<T> RuntimeDirectPrepared<T> {
+    pub fn key(&self) -> CandidateKey {
+        self.prepared.key
+    }
+
+    /// Mark Ready after all output and application preparation has succeeded.
+    /// Final live authority must be checked before settling the same fence.
+    pub fn ready(&self) -> Result<(), RuntimeError> {
+        self.prepared.ready().map_err(failure)
+    }
+
+    pub fn output(&self) -> &T {
+        &self.output
+    }
+
+    /// The exact protected prefix has independent custody throughout SQL.
+    pub fn protected_save(&self) -> Option<&RuntimeSave> {
+        self.protected_save.as_ref()
+    }
+
+    pub fn into_output(self) -> T {
+        self.output
+    }
+}
+
 pub enum RuntimeStep {
     Continue,
     Provider(RuntimeProvider),
@@ -322,6 +486,7 @@ pub enum RuntimeStep {
 pub struct NativeWorldSession {
     session: Session,
     budget: ByteBudget,
+    world_work_limit: crate::work::WorkDemand,
     prepared_output: Option<CandidateKey>,
     active_response: Option<npc::ActiveNpcResponse>,
     held_receipts: npc::HeldReceiptRegistry,
@@ -389,7 +554,6 @@ impl NativeWorldSession {
         budget: ByteBudget,
         purpose: crate::install::InstallPurpose,
     ) -> Result<Self, RuntimeError> {
-        let restore_installation = matches!(&purpose, crate::install::InstallPurpose::Restore);
         let budget = budget.for_world();
         // Parsed rows coexist with the caller's input and consuming installers.
         // This is transient preparation, not a canonical-world size policy.
@@ -406,6 +570,16 @@ impl NativeWorldSession {
         let _decode = _decode
             .finish_installation(retained_text)
             .map_err(failure)?;
+        Self::install_input(input, database_schema, budget, purpose)
+    }
+
+    fn install_input(
+        input: Installation,
+        database_schema: &str,
+        budget: ByteBudget,
+        purpose: crate::install::InstallPurpose,
+    ) -> Result<Self, RuntimeError> {
+        let restore_installation = matches!(&purpose, crate::install::InstallPurpose::Restore);
         let pending_save_budget = budget.pending_save(input.storage.pending_save_bytes);
         let temporal_save_limits = crate::received::TemporalSaveLimits {
             target_bytes: input.storage.temporal_save.target_bytes,
@@ -413,6 +587,7 @@ impl NativeWorldSession {
             resident_bytes: input.storage.temporal_resident_bytes,
         };
         let history_edit_limits = input.storage.history_edit;
+        let world_work_limit = input.settings.work.world;
         let core = crate::install::CoreInstallInput {
             purpose,
             records: input.records,
@@ -468,6 +643,7 @@ impl NativeWorldSession {
             )
             .map_err(failure)?,
             budget,
+            world_work_limit,
             prepared_output: None,
             active_response: None,
             held_receipts,
@@ -484,9 +660,48 @@ impl NativeWorldSession {
             history_edit_limits,
         })
     }
+    /// A single-world application keeps its existing installed world work
+    /// limit. Pending and accepted allocations must each fit that same limit.
+    pub fn check_current_work(&self) -> Result<(), RuntimeError> {
+        let allocation = self
+            .session
+            .accepted()
+            .map_err(failure)?
+            .state
+            .work_allocation()
+            .map_err(failure)?;
+        crate::work::require_work(allocation, self.world_work_limit, false).map_err(failure)
+    }
+
     pub fn fence(&self) -> Arc<CandidateFence> {
         self.session.fence()
     }
+    /// Lend the immutable installed map for spatial preparation. Any derived
+    /// structures kept by the provider have their own admission and revision.
+    pub fn with_geometry<T>(
+        &self,
+        use_map: impl FnOnce(&crate::geometry::GeometryMap) -> T,
+    ) -> Result<T, RuntimeError> {
+        let accepted = self.session.accepted().map_err(failure)?;
+        Ok(use_map(&accepted.state.installed.geometry))
+    }
+
+    /// Lend a finite current clock/header cut, excluding any tentative or
+    /// rolled-back world. A capture can retain scalar values independently.
+    pub fn accepted_progress(&self) -> Result<RuntimeProgress<'_>, RuntimeError> {
+        let state = &self.session.accepted().map_err(failure)?.state;
+        Ok(RuntimeProgress {
+            world_id: &state.physical.header.id,
+            generation: &state.generation,
+            base_cut: state.accepted_cut,
+            through_cut: state.accepted_cut,
+            identity_through: state.physical.identity.next_id(),
+            at: state.physical.header.sim_time,
+            sequence: state.physical.header.sequence,
+            paused: state.physical.header.paused,
+        })
+    }
+
     pub fn installation(&self) -> Result<RuntimeJson, RuntimeError> {
         RuntimeJson::encode(
             &self.session.current_installation().map_err(failure)?,
@@ -595,22 +810,7 @@ impl NativeWorldSession {
         key: CandidateKey,
         answer: Option<(&RuntimeProvider, RuntimeProviderInput)>,
     ) -> Result<RuntimeStep, RuntimeError> {
-        if self.session.is_npc_candidates(key) || self.session.is_npc_sources(key) {
-            return Err(failure("NPC discovery requires its originating read"));
-        }
-        let answer = provider_response(answer, &self.budget)?;
-        // This is the installed story policy, not a bridge-selected world law.
-        let step = self
-            .session
-            .step(
-                key,
-                answer,
-                crate::experience::HistorySettings {
-                    policy_id: &self.history_policy_id,
-                    policy_revision: self.history_policy_revision,
-                },
-            )
-            .map_err(failure)?;
+        let step = self.step_session(key, answer)?;
         Ok(match step {
             SessionStep::Continue => RuntimeStep::Continue,
             SessionStep::Question(question) => {
@@ -633,35 +833,10 @@ impl NativeWorldSession {
                         return Err(failure(error));
                     }
                 }
-                let (
-                    operation,
-                    history,
-                    notices,
-                    records,
-                    personal_predecessors,
-                    temporal_predecessors,
-                    source_versions,
-                    protected_save,
-                    progress,
-                ) = self.session.prepared_products(key).map_err(failure)?;
-                let restore = self.session.prepared_restore_facts(key).map_err(failure)?;
+                let products = self.prepared_products(key)?;
                 let output = (|| {
                     let handoff = RuntimeOutputHandoff::new(&self.budget)?;
-                    let mut output = RuntimeJson::encode(
-                        &Products {
-                            operation,
-                            history,
-                            notices,
-                            records,
-                            personal_predecessors,
-                            temporal_predecessors,
-                            source_versions,
-                            protected_save,
-                            progress,
-                            restore,
-                        },
-                        &self.budget,
-                    )?;
+                    let mut output = RuntimeJson::encode(&products, &self.budget)?;
                     output.handoff = Some(handoff.clone());
                     Ok::<_, RuntimeError>((output, handoff))
                 })();
@@ -679,6 +854,121 @@ impl NativeWorldSession {
                     handoff,
                 })
             }
+        })
+    }
+    fn step_session(
+        &mut self,
+        key: CandidateKey,
+        answer: Option<(&RuntimeProvider, RuntimeProviderInput)>,
+    ) -> Result<SessionStep, RuntimeError> {
+        if self.session.is_npc_candidates(key) || self.session.is_npc_sources(key) {
+            return Err(failure("NPC discovery requires its originating read"));
+        }
+        let answer = provider_response(answer, &self.budget)?;
+        // This is the installed story policy, not a bridge-selected world law.
+        self.session
+            .step(
+                key,
+                answer,
+                crate::experience::HistorySettings {
+                    policy_id: &self.history_policy_id,
+                    policy_revision: self.history_policy_revision,
+                },
+            )
+            .map_err(failure)
+    }
+
+    /// Drive the same candidate as the addon's step. The output callback runs
+    /// only on a completed result, before Ready, and borrows from the actual
+    /// candidate. An allocation or application preparation error rolls back.
+    pub fn step_direct<T>(
+        &mut self,
+        key: CandidateKey,
+        answer: Option<(&RuntimeProvider, RuntimeProviderInput)>,
+        stage: impl FnOnce(RuntimeDirectOutput<'_>, &ByteBudget) -> Result<T, RuntimeError>,
+    ) -> Result<RuntimeDirectStep<T>, RuntimeError> {
+        Ok(match self.step_session(key, answer)? {
+            SessionStep::Continue => RuntimeDirectStep::Continue,
+            SessionStep::Question(question) => {
+                RuntimeDirectStep::Provider(self.prepare_provider(key, question)?)
+            }
+            SessionStep::Preview(preview) => RuntimeDirectStep::Preview(stage(
+                RuntimeDirectOutput::Preview(preview.outcome()),
+                &self.budget,
+            )?),
+            SessionStep::Prepared(prepared) => {
+                if let Err(error) =
+                    crate::work::require_work(prepared.allocation, self.world_work_limit, false)
+                {
+                    self.cancel(key)?;
+                    return Err(failure(error));
+                }
+                if self.restoring == Some(key) {
+                    if let Err(error) = self.session.prepare_restore_adoption(key) {
+                        self.cancel(key)?;
+                        return Err(failure(error));
+                    }
+                }
+                let output = match self.prepared_products(key).and_then(|products| {
+                    stage(RuntimeDirectOutput::Prepared(products), &self.budget)
+                }) {
+                    Ok(output) => output,
+                    Err(error) => {
+                        self.cancel(key)?;
+                        return Err(error);
+                    }
+                };
+                let protected_save = match self.session.pin_protected_prefix(key) {
+                    Ok(prefix) => prefix.map(|prefix| RuntimeSave { prefix }),
+                    Err(error) => {
+                        self.cancel(key)?;
+                        return Err(failure(error));
+                    }
+                };
+                self.prepared_output = Some(key);
+                RuntimeDirectStep::Prepared(RuntimeDirectPrepared {
+                    prepared,
+                    output,
+                    protected_save,
+                })
+            }
+            SessionStep::NpcCandidates(_)
+            | SessionStep::NpcSources(_)
+            | SessionStep::LearningBatch(_) => {
+                return Err(failure(
+                    "NPC read preparation requires its originating read",
+                ));
+            }
+        })
+    }
+
+    fn prepared_products(
+        &self,
+        key: CandidateKey,
+    ) -> Result<RuntimePreparedProducts<'_>, RuntimeError> {
+        let (
+            operation,
+            history,
+            notices,
+            records,
+            personal_predecessors,
+            temporal_predecessors,
+            source_versions,
+            protected_save,
+            progress,
+        ) = self.session.prepared_products(key).map_err(failure)?;
+        let restore = self.session.prepared_restore_facts(key).map_err(failure)?;
+        Ok(RuntimePreparedProducts {
+            operation,
+            history,
+            notices,
+            records,
+            personal_predecessors,
+            temporal_predecessors,
+            source_versions,
+            protected_save,
+            progress,
+            restore,
         })
     }
     /// Requires the genuine fence result, never an acceptance boolean supplied
@@ -803,11 +1093,24 @@ pub struct RuntimeSave {
 }
 impl RuntimeSave {
     pub fn json(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
-        RuntimeJson::encode(self.prefix.rows(), budget)
+        RuntimeJson::encode(self.rows(), budget)
+    }
+
+    /// The immutable save handle owns these rows through write and ACK. A
+    /// direct SQL writer binds their existing typed cells without re-encoding.
+    pub fn rows(&self) -> &crate::records::SaveRows {
+        self.prefix.rows()
     }
 }
 
-struct Products<'a> {
+pub enum RuntimeDirectOutput<'a> {
+    Preview(&'a crate::commands::Outcome),
+    Prepared(RuntimePreparedProducts<'a>),
+}
+
+/// Borrowed data at the exact candidate cut. This neither changes gameplay
+/// nor grants disclosure to an external recipient.
+pub struct RuntimePreparedProducts<'a> {
     operation: &'a CompletedOperation,
     history: &'a crate::experience::CapturedHistoryInput,
     notices: &'a crate::cognition::PreparedSemanticNotices,
@@ -819,7 +1122,29 @@ struct Products<'a> {
     progress: crate::simulation::session::PreparedReadProgress<'a>,
     restore: Option<crate::simulation::session::PreparedRestoreFacts<'a>>,
 }
-impl Serialize for Products<'_> {
+impl RuntimePreparedProducts<'_> {
+    pub fn outcome(&self) -> &crate::commands::Outcome {
+        self.operation.outcome()
+    }
+
+    pub fn events(&self) -> impl Iterator<Item = &crate::events::WorldEvent> + Clone {
+        self.operation.events()
+    }
+
+    pub fn changes(&self) -> &crate::records::ChangedRows {
+        self.records
+    }
+
+    pub fn protected_save(&self) -> Option<&crate::records::SaveRows> {
+        self.protected_save
+    }
+
+    pub fn progress(&self) -> &RuntimeProgress<'_> {
+        &self.progress
+    }
+}
+
+impl Serialize for RuntimePreparedProducts<'_> {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("outcome", self.operation.outcome())?;

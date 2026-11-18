@@ -1,8 +1,8 @@
 # Rust game server
 
-| Status      | Current progress                                                                                       | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------ | ------------ |
-| Not started | The design is complete. Implementation and comparison are open. TypeScript remains the default server. | 2026-11-18   |
+| Status      | Current progress                                                                                           | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The host, current database opening and spatial port are under integration. TypeScript remains the default. | 2026-11-18   |
 
 ## Goal
 

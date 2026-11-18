@@ -138,6 +138,12 @@ impl PreparedPublication {
     ) -> Result<Option<&'a crate::records::SaveRows>, PublicationError> {
         save.prepared_prefix(&self.append).map_err(Into::into)
     }
+    pub(crate) fn pin_protected_prefix(
+        &self,
+        save: &SaveJournal,
+    ) -> Result<Option<Arc<crate::records::save::SavePrefix>>, PublicationError> {
+        Ok(save.prepared_prefix_owner(&self.append)?.cloned())
+    }
     pub(crate) fn restore_residency<'a>(
         &self,
         save: &'a SaveJournal,

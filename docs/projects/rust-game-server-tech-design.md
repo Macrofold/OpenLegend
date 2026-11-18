@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                           | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | The design is complete. The stand-alone server and its comparison on the new opening await implementation. | 2026-11-18   |
+| In progress | The host, current database opening and spatial port are under integration. TypeScript remains the default. | 2026-11-18   |
 
 ## Boundary and implementation order
 

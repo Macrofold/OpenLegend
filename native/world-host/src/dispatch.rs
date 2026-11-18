@@ -2,7 +2,6 @@
 //! steal work that waits for the session locked by their own suspended parent.
 //! docs/projects/native-runtime-foundations-tech-design.md#r0--one-runnable-outer-call-per-world
 
-use super::{HostRuntime, WorldRuntime};
 use crate::pool::{Cancellation, HostError, WorkAdmission};
 use openlegend_simulation::host::{ByteBudget, ByteReservation};
 use std::{
@@ -11,22 +10,32 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-type Job = Box<dyn FnOnce(&Arc<HostRuntime>, &Arc<WorldRuntime>) + Send>;
+pub trait DispatchHost: Send + Sync + 'static {
+    fn pool(&self) -> &crate::pool::HostPool;
+    fn budget(&self) -> &ByteBudget;
+}
 
-pub(super) struct SerialDispatch {
-    state: Mutex<Pending>,
+pub trait DispatchWorld<H>: Send + Sync + Sized + 'static {
+    fn dispatch(&self) -> &SerialDispatch<H, Self>;
+    fn poison(&self);
+}
+
+type Job<H, W> = Box<dyn FnOnce(&Arc<H>, &Arc<W>) + Send>;
+
+pub struct SerialDispatch<H, W> {
+    state: Mutex<Pending<H, W>>,
     _storage: ByteReservation,
 }
-struct Pending {
+struct Pending<H, W> {
     running: bool,
-    jobs: VecDeque<Job>,
+    jobs: VecDeque<Job<H, W>>,
 }
 
-impl SerialDispatch {
-    pub(super) fn new(budget: &ByteBudget, capacity: usize) -> Result<Self, HostError> {
+impl<H, W> SerialDispatch<H, W> {
+    pub fn new(budget: &ByteBudget, capacity: usize) -> Result<Self, HostError> {
         let mut storage = budget.reserve(
             capacity
-                .checked_mul(size_of::<Job>())
+                .checked_mul(size_of::<Job<H, W>>())
                 .ok_or(HostError::Capacity)?,
         )?;
         let mut jobs = VecDeque::new();
@@ -34,7 +43,7 @@ impl SerialDispatch {
             .map_err(|_| HostError::Capacity)?;
         storage.resize(
             jobs.capacity()
-                .checked_mul(size_of::<Job>())
+                .checked_mul(size_of::<Job<H, W>>())
                 .ok_or(HostError::Capacity)?,
         )?;
         Ok(Self {
@@ -46,7 +55,7 @@ impl SerialDispatch {
         })
     }
 
-    fn enter(&self, job: Job) -> Option<Job> {
+    fn enter(&self, job: Job<H, W>) -> Option<Job<H, W>> {
         let mut state = self.state.lock().unwrap_or_else(|error| error.into_inner());
         if state.running {
             // The already admitted active job and waiters all use one host
@@ -59,7 +68,7 @@ impl SerialDispatch {
         }
     }
 
-    fn leave(&self) -> Option<Job> {
+    fn leave(&self) -> Option<Job<H, W>> {
         let mut state = self.state.lock().unwrap_or_else(|error| error.into_inner());
         let next = state.jobs.pop_front();
         if next.is_none() {
@@ -72,60 +81,61 @@ impl SerialDispatch {
 /// Each waiting closure owns admission and storage, but receives its world
 /// and host from the runner at invocation. Queued callbacks must not capture
 /// either owning Arc, directly or through a JS class.
-pub(super) fn submit_world<T, F, C>(
-    host: &Arc<HostRuntime>,
-    world: &Arc<WorldRuntime>,
+pub fn submit_world<H, W, T, F, C>(
+    host: &Arc<H>,
+    world: &Arc<W>,
     run: F,
     complete: C,
-) -> Result<(), HostError>
+) -> Result<Cancellation, HostError>
 where
+    H: DispatchHost,
+    W: DispatchWorld<H>,
     T: Send + 'static,
-    F: FnOnce(&Arc<HostRuntime>, &Arc<WorldRuntime>, &Cancellation) -> Result<T, HostError>
-        + Send
-        + 'static,
+    F: FnOnce(&Arc<H>, &Arc<W>, &Cancellation) -> Result<T, HostError> + Send + 'static,
     C: FnOnce(Result<T, HostError>) + Send + 'static,
 {
-    let admitted = host.pool.admit()?;
+    let admitted = host.pool().admit()?;
+    let cancellation = admitted.cancellation();
     let storage = host
-        .bytes
+        .budget()
         .reserve(size_of::<(F, C, WorkAdmission, ByteReservation)>())?;
-    let job: Job = Box::new(move |host, world| {
+    let job: Job<H, W> = Box::new(move |host, world| {
         let _storage = storage;
         admitted.run(
             |cancel| run(host, world, cancel),
             complete,
-            || world.fence.poison(),
+            || world.poison(),
         );
     });
-    if let Some(job) = world.dispatch.enter(job) {
+    if let Some(job) = world.dispatch().enter(job) {
         schedule(host, world, job);
     }
-    Ok(())
+    Ok(cancellation)
 }
 
-fn schedule(host: &Arc<HostRuntime>, world: &Arc<WorldRuntime>, job: Job) {
+fn schedule<H: DispatchHost, W: DispatchWorld<H>>(host: &Arc<H>, world: &Arc<W>, job: Job<H, W>) {
     let turn = Running {
         host: Arc::clone(host),
         world: Arc::clone(world),
     };
-    host.pool.schedule(move || turn.run(job));
+    host.pool().schedule(move || turn.run(job));
 }
 
-struct Running {
-    host: Arc<HostRuntime>,
-    world: Arc<WorldRuntime>,
+struct Running<H: DispatchHost, W: DispatchWorld<H>> {
+    host: Arc<H>,
+    world: Arc<W>,
 }
-impl Running {
-    fn run(self, job: Job) {
+impl<H: DispatchHost, W: DispatchWorld<H>> Running<H, W> {
+    fn run(self, job: Job<H, W>) {
         job(&self.host, &self.world);
     }
 }
-impl Drop for Running {
+impl<H: DispatchHost, W: DispatchWorld<H>> Drop for Running<H, W> {
     fn drop(&mut self) {
         if std::thread::panicking() {
-            self.world.fence.poison();
+            self.world.poison();
         }
-        if let Some(job) = self.world.dispatch.leave() {
+        if let Some(job) = self.world.dispatch().leave() {
             schedule(&self.host, &self.world, job);
         }
     }

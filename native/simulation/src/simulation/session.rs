@@ -37,15 +37,15 @@ pub(crate) struct CurrentInstallation<'a> {
 /// facts only after the same candidate is accepted; they are never a world.
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct PreparedReadProgress<'a> {
-    world_id: &'a str,
-    generation: &'a str,
-    base_cut: u64,
-    through_cut: u64,
-    identity_through: u64,
-    at: f64,
-    sequence: u64,
-    paused: bool,
+pub struct PreparedReadProgress<'a> {
+    pub world_id: &'a str,
+    pub generation: &'a str,
+    pub base_cut: u64,
+    pub through_cut: u64,
+    pub identity_through: u64,
+    pub at: f64,
+    pub sequence: u64,
+    pub paused: bool,
 }
 
 pub(crate) struct CapturedActorReadCut<'a> {
@@ -1218,6 +1218,18 @@ impl Session {
                 paused: state.physical.header.paused,
             },
         ))
+    }
+    pub(crate) fn pin_protected_prefix(
+        &self,
+        key: CandidateKey,
+    ) -> Result<Option<Arc<crate::records::save::SavePrefix>>, SessionError> {
+        let Some(Candidate::Prepared(prepared)) = self.candidate.as_ref() else {
+            return Err(FenceError::NotReady.into());
+        };
+        if prepared.key != key {
+            return Err(FenceError::Stale.into());
+        }
+        Ok(prepared.publication.pin_protected_prefix(&self.save)?)
     }
     pub(crate) fn cancel(&mut self, key: CandidateKey) -> Result<(), SessionError> {
         if self.simulation.fence.phase() != CandidatePhase::Preparing {

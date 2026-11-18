@@ -9,7 +9,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct WorkingSetSelection {
+pub struct WorkingSetSelection {
     world_id: String,
     generation: String,
     #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]

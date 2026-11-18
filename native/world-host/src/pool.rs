@@ -107,6 +107,10 @@ pub(crate) struct WorkAdmission {
     permit: WorkPermit,
 }
 impl WorkAdmission {
+    pub(crate) fn cancellation(&self) -> Cancellation {
+        self.cancellation.clone()
+    }
+
     pub(crate) fn run<T>(
         self,
         work: impl FnOnce(&Cancellation) -> Result<T, HostError>,
@@ -262,7 +266,7 @@ impl HostPool {
         })
     }
 
-    pub(crate) fn capacity(&self) -> usize {
+    pub fn capacity(&self) -> usize {
         self.max_outstanding
     }
 
@@ -294,7 +298,7 @@ impl HostPool {
         P: Fn() + Send + 'static,
     {
         let admitted = self.admit()?;
-        let cancellation = admitted.cancellation.clone();
+        let cancellation = admitted.cancellation();
         self.schedule(move || admitted.run(work, complete, poison));
         Ok(cancellation)
     }
@@ -303,7 +307,7 @@ impl HostPool {
         self.closing.store(true, Ordering::Release);
     }
 
-    /// Run outside the Node main thread. Timeout retains this pool, its workers
+    /// Run outside the async I/O runtime. Timeout retains this pool, its workers
     /// and every active reservation; it is not a successful release. The caller
     /// may observe/finish the same shutdown after the original jobs settle.
     pub fn shutdown(&self, allowance: Duration) -> Result<(), HostError> {

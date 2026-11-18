@@ -104,7 +104,7 @@ fn atan(mut x: f64) -> f64 {
     }
 }
 
-pub(crate) fn atan2(y: f64, x: f64) -> f64 {
+pub fn atan2(y: f64, x: f64) -> f64 {
     use std::f64::consts::{FRAC_PI_2, FRAC_PI_4, PI};
     const PI_LOW: f64 = 1.2246467991473531772e-16;
     if x.is_nan() || y.is_nan() {

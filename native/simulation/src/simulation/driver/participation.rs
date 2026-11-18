@@ -42,14 +42,7 @@ pub(super) fn poll_participation(
             ParticipationStep::Continue => return Ok(Poll::Continue),
             ParticipationStep::Complete(value) => return Ok(Poll::Complete(value)),
             ParticipationStep::Geometry(queries) => {
-                return question(
-                    answer,
-                    ProviderKind::Geometry,
-                    queries.binding,
-                    queries,
-                    budget,
-                    ParticipationReply::Geometry,
-                );
+                return geometry_question(answer, queries, budget, ParticipationReply::Geometry);
             }
             ParticipationStep::Event(child) => {
                 let route = match route.take() {
