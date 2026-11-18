@@ -114,11 +114,18 @@ pub(super) async fn collect(
         budget,
     )
     .map_err(invalid)?;
+    let selector = crate::wire::encode(
+        &json!({"expandedBodyOrdinals":[],"coverage":"suggestions"}),
+        b"",
+        b"",
+        budget,
+    )
+    .map_err(invalid)?;
     let mut original = game
         .world
-        .read_npc(request.clone())
+        .capture_npc_offers(game.clone(), request.clone(), selector.clone())
         .await
-        .map_err(|error| CallFailure::World(error).at("original-read"))?;
+        .map_err(|error| CallFailure::World(error).at("original-offers"))?;
     let original_json = capture(&original, budget)?;
     let original_self = &original_json.value["self"];
     let mut through = get_u64(&original_self["acceptedCut"])?;
@@ -181,37 +188,9 @@ pub(super) async fn collect(
         Some(data)
     };
     ensure_running(work)?;
-    let selector = crate::wire::encode(
-        &json!({"expandedBodyOrdinals":[],"coverage":"suggestions"}),
-        b"",
-        b"",
-        budget,
-    )
-    .map_err(invalid)?;
-    let original = game
-        .world
-        .prepare_npc(
-            game.clone(),
-            original,
-            selector.clone(),
-            NativeWorldSession::begin_npc_candidates,
-        )
-        .await
-        .map_err(|error| CallFailure::World(error).at("original-offers"))?;
-    ensure_running(work)?;
     let current = game
         .world
-        .read_npc(request)
-        .await
-        .map_err(|error| CallFailure::World(error).at("current-read"))?;
-    let current = game
-        .world
-        .prepare_npc(
-            game.clone(),
-            current,
-            selector,
-            NativeWorldSession::begin_npc_candidates,
-        )
+        .capture_npc_offers(game.clone(), request, selector)
         .await
         .map_err(|error| CallFailure::World(error).at("current-offers"))?;
     let captured = capture(&current, budget)?;
