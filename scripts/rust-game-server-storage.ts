@@ -22,6 +22,7 @@ import {
 import { CHECKPOINT_ENCODING, CHECKPOINT_LIMITS } from '../apps/server/src/checkpoint-format.js';
 import { SAVE_FORMAT } from '../apps/server/src/game-saves.js';
 import { HISTORY_TABLES } from '../apps/server/src/history.js';
+import { storyAccountSql } from '../apps/server/src/personal-accounts.js';
 import { ACCOUNT_RETENTION_PREPARATION } from '../apps/server/src/account-retention.js';
 import { SUPPORT_MEMBERSHIP_PREPARATION } from '../apps/server/src/retention-cleanup.js';
 import { SOURCE_RETENTION_CLOSURE_ROUNDS } from '../apps/server/src/source-version-retention.js';
@@ -115,6 +116,7 @@ async function storageSchema(adminUrl: string) {
             '$4::text::jsonb',
           ),
           defaultStory: defaultStoryPolicy(),
+          transcriptAccount: storyAccountSql(),
           checkpoint: {
             encoding: CHECKPOINT_ENCODING,
             format: SAVE_FORMAT,

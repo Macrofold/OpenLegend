@@ -36,7 +36,7 @@ enum RevealMode {
 
 #[derive(Clone, Copy, PartialEq, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
-enum Voice {
+pub(crate) enum Voice {
     Restrained,
     Lyrical,
     Wry,
@@ -101,13 +101,7 @@ pub async fn profile(
                     .map_err(|_| StoreError::InvalidRecord)?
                     .flatten()
                     .unwrap_or_default();
-                let voice: Voice = row
-                    .try_get::<_, Option<&str>>(4)?
-                    .map(serde_json::from_str::<Option<Voice>>)
-                    .transpose()
-                    .map_err(|_| StoreError::InvalidRecord)?
-                    .flatten()
-                    .unwrap_or(Voice::Restrained);
+                let voice = narrator_voice(row.try_get(4)?)?;
                 Ok(PlayerProfile {
                     id: account,
                     revision,
@@ -124,6 +118,15 @@ pub async fn profile(
             })
         })
         .await
+}
+
+pub(crate) fn narrator_voice(stored: Option<&str>) -> Result<Voice, StoreError> {
+    Ok(stored
+        .map(serde_json::from_str::<Option<Voice>>)
+        .transpose()
+        .map_err(|_| StoreError::InvalidRecord)?
+        .flatten()
+        .unwrap_or(Voice::Restrained))
 }
 
 impl PlayerProfile {

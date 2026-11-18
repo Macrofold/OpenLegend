@@ -20,6 +20,7 @@ pub struct StorageSchema {
     pub(crate) source_versions: SourceVersionStatements,
     pub(crate) checkpoint: CheckpointFormat,
     pub(crate) default_story: Box<serde_json::value::RawValue>,
+    pub(crate) transcript_account: String,
 }
 
 /// Shared Source SQL in the operator's verified release, generated with
@@ -175,6 +176,7 @@ impl StorageSchema {
             .checked_add(self.upsert_job.capacity())?
             .checked_add(self.recall.reconcile.capacity())?
             .checked_add(self.default_story.get().len())?
+            .checked_add(self.transcript_account.capacity())?
             .checked_add(self.lexical.work.capacity())?
             .checked_add(self.lexical.write.capacity())?
             .checked_add(self.lexical.complete.capacity())?
@@ -205,6 +207,7 @@ impl StorageSchema {
         self.checkpoint.validate(self)?;
         if self.version.is_empty()
             || self.upsert_job.is_empty()
+            || self.transcript_account.is_empty()
             || self.recall.insert.is_empty()
             || self.recall.reconcile.is_empty()
             || self.lexical.work.is_empty()

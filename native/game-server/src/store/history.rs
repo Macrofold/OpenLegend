@@ -22,6 +22,7 @@ mod expiry;
 mod perspective;
 mod story;
 mod story_write;
+pub(crate) mod transcript;
 use perspective::Perspective;
 
 /// Write the actual detached occurrence and personal-account changes. Recall,

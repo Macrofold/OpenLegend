@@ -35,6 +35,20 @@ impl Drop for RuntimePrivateHistoryRead {
 pub struct RuntimePrivateHistoryPublication {
     _lease: PublicationLease,
 }
+pub struct RuntimePlayerTranscriptRead {
+    scope: crate::capture::NpcHistoricalScope,
+    durable_revision: u64,
+}
+
+impl RuntimePlayerTranscriptRead {
+    pub fn durable_head(&self) -> (&str, &str, u64) {
+        (
+            &self.scope.world_id,
+            &self.scope.generation,
+            self.durable_revision,
+        )
+    }
+}
 impl RuntimePrivateHistoryRead {
     pub fn receipt_liveness(&self) -> Weak<AtomicBool> {
         Arc::downgrade(&self.receipt_payload)
@@ -84,6 +98,82 @@ impl RuntimePrivateHistoryRead {
     }
 }
 impl NativeWorldSession {
+    /// Pin the current player's private transcript authority and a fixed
+    /// already-durable SQL version. No accepted but unsaved event is assumed
+    /// available to this historical reader.
+    pub fn read_player_transcript(
+        &self,
+        account: &str,
+        actor: &str,
+    ) -> Result<RuntimePlayerTranscriptRead, RuntimeError> {
+        let accepted = self.session.accepted().map_err(failure)?;
+        accepted
+            .require_player_read(account, actor)
+            .map_err(failure)?;
+        let state = &accepted.state;
+        Ok(RuntimePlayerTranscriptRead {
+            scope: crate::capture::NpcHistoricalScope::capture_history_personal(
+                state,
+                actor,
+                0,
+                &self.budget,
+            )
+            .map_err(failure)?,
+            durable_revision: state.durable_revision,
+        })
+    }
+
+    /// The original player, timeline, life and personal privacy must still
+    /// authorize these durable results at the synchronous transport handoff.
+    pub fn transcript_publication(
+        &self,
+        account: &str,
+        read: &RuntimePlayerTranscriptRead,
+        temporal: &[(&crate::received::TemporalReceiptLocator, f64)],
+        expires_at: Option<f64>,
+    ) -> Result<Option<RuntimePrivateHistoryPublication>, RuntimeError> {
+        let current = self.session.accepted().map_err(failure)?;
+        let scope = &read.scope;
+        if current
+            .require_player_read(account, &scope.actor_id)
+            .is_err()
+            || !scope.still_permitted(&current.state)
+            || expires_at.is_some_and(|expiry| current.state.physical.header.sim_time >= expiry)
+            || current
+                .state
+                .physical
+                .entities
+                .get(&scope.actor_id)
+                .and_then(|entity| entity.actor.as_ref())
+                .is_none_or(|actor| actor.physical_life.unwrap_or(0) != scope.physical_life)
+        {
+            return Ok(None);
+        }
+        if !temporal.is_empty() {
+            let Some(history) = current.state.temporal.actor(&scope.actor_id) else {
+                return Ok(None);
+            };
+            let header = history.header();
+            if temporal.iter().any(|(receipt, at)| {
+                receipt.actor_id != scope.actor_id
+                    || !crate::received::received_position_eligible(
+                        &crate::received::ReceivedPosition {
+                            batch_order: receipt.batch_order,
+                            entry_index: receipt.entry_index,
+                            member_index: 0,
+                        },
+                        *at,
+                        header.frontier.as_ref(),
+                    )
+            }) {
+                return Ok(None);
+            }
+        }
+        Ok(Some(RuntimePrivateHistoryPublication {
+            _lease: self.session.fence().begin_publication().map_err(failure)?,
+        }))
+    }
+
     pub fn read_history(
         &mut self,
         actor: &str,

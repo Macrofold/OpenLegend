@@ -48,7 +48,9 @@ mod privacy;
 pub use privacy::RuntimePrivacyEdit;
 mod private_history;
 mod reply_preview;
-pub use private_history::{RuntimePrivateHistoryPublication, RuntimePrivateHistoryRead};
+pub use private_history::{
+    RuntimePlayerTranscriptRead, RuntimePrivateHistoryPublication, RuntimePrivateHistoryRead,
+};
 mod navigation;
 mod read_cut;
 pub use crate::capture::{

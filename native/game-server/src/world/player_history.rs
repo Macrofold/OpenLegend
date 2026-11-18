@@ -3,7 +3,8 @@
 use super::*;
 use crate::store::{KnownPlaceViewPage, PreparedKnownPlaceRead};
 use axum::body::Bytes;
-use openlegend_simulation::runtime::RuntimePrivateHistoryRead;
+use openlegend_simulation::received::TemporalReceiptLocator;
+use openlegend_simulation::runtime::{RuntimePlayerTranscriptRead, RuntimePrivateHistoryRead};
 
 pub(crate) struct PlayerHistoryRead {
     scope: Arc<AuthorizedScope>,
@@ -11,6 +12,71 @@ pub(crate) struct PlayerHistoryRead {
 }
 
 impl HostedWorld {
+    /// Select the original durable history revision under current player
+    /// authority, then release the world turn before SQL reads its accounts.
+    pub(crate) async fn capture_transcript(
+        self: &Arc<Self>,
+        authority: Arc<Authority>,
+        scope: Arc<AuthorizedScope>,
+    ) -> Result<RuntimePlayerTranscriptRead, WorldError> {
+        self.request_advance_publication();
+        let _turn = self.enter().await?;
+        self.call(move |session| {
+            let selected = authority.current_view(&scope, |selected, _| {
+                session.read_player_transcript(&selected.account_id, &selected.actor_id)
+            });
+            Ok(selected
+                .map_err(WorldError::from)
+                .and_then(|result| result.map_err(Into::into)))
+        })
+        .await?
+    }
+
+    /// Select and encode this independently held page while player authority,
+    /// the original privacy witness and the native publication lease agree.
+    pub(crate) async fn disclose_transcript(
+        &self,
+        authority: &Authority,
+        scope: &AuthorizedScope,
+        selected: &RuntimePlayerTranscriptRead,
+        temporal: &[(&TemporalReceiptLocator, f64)],
+        expires_at: Option<f64>,
+        publish: impl FnOnce(&ByteBudget) -> Result<Bytes, WorldError>,
+    ) -> Result<PlayerDisclosure, WorldError> {
+        self.request_advance_publication();
+        let _turn = self.enter().await?;
+        authority
+            .current_view(scope, |permit, _| {
+                let edits = self
+                    .pending_source_edits
+                    .lock()
+                    .map_err(|_| HostError::Poisoned)?;
+                if edits.contains(permit.actor_id.as_str()) {
+                    return Ok(PlayerDisclosure::Changed);
+                }
+                let session = match self.session.try_lock() {
+                    Ok(session) => session,
+                    Err(std::sync::TryLockError::WouldBlock) => return Ok(PlayerDisclosure::Busy),
+                    Err(std::sync::TryLockError::Poisoned(_)) => {
+                        return Err(HostError::Poisoned.into());
+                    }
+                };
+                let Some(lease) = session.transcript_publication(
+                    &permit.account_id,
+                    selected,
+                    temporal,
+                    expires_at,
+                )?
+                else {
+                    return Ok(PlayerDisclosure::Changed);
+                };
+                let bytes = publish(self.host.budget())?;
+                drop(lease);
+                Ok(PlayerDisclosure::Published(bytes))
+            })
+            .map_err(WorldError::Access)?
+    }
+
     /// Pin the exact accepted memory inputs before awaiting their SQL owner.
     /// The world turn ends once the privately funded result exists.
     pub(crate) async fn capture_known_place_view(

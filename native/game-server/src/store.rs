@@ -30,6 +30,7 @@ mod write;
 pub(crate) use view_cognition::AiDisplay;
 
 pub use history::OrdinaryProjection;
+pub(crate) use history::transcript::{Transcript, TranscriptItem, TranscriptRequest};
 pub(crate) use jobs::{AdmittedJob, ConversationJob, JobRequest, TerminalOutcome};
 pub use known_places::PreparedKnownPlaceRead;
 pub(crate) use known_places::{KnownPlaceViewPage, PlaceViewRequest, PlaceViewSearch};

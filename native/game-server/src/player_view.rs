@@ -25,7 +25,7 @@ use std::{error::Error, fmt, sync::Arc};
 mod host;
 mod patch;
 mod policy;
-mod profile;
+pub(crate) mod profile;
 pub(crate) use host::{ViewHostInput, capture_host};
 pub(crate) use patch::{PreviousView, ViewSelection};
 pub use policy::PlayerViewPolicy;

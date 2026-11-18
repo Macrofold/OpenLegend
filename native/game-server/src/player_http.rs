@@ -33,6 +33,7 @@ use tokio::sync::Semaphore;
 pub(crate) mod actions;
 pub(crate) mod assets;
 mod dialogue;
+mod history;
 mod known_places;
 mod preview;
 mod view;
@@ -104,6 +105,7 @@ pub(crate) fn router(
         .route("/api/control", post(manual_clock))
         .route("/api/input", post(update_input))
         .route("/api/known-places", post(known_places::list))
+        .route("/api/history", axum::routing::get(history::journal))
         .route("/api/actions", post(actions::menu))
         .route("/api/chat", post(dialogue::chat))
         .route("/api/chat/receipt", post(dialogue::receipt))
