@@ -3,16 +3,20 @@ use crate::{
     boot::CurrentServer,
     decision_dispatch::CallFailure,
     decision_render::{BoundSchema, OfferedAction, PreparedPrompt, ResponseReferences},
+    world::WorldError,
 };
 use openlegend_simulation::{
     encoding::{json_record, sha256_hex},
     host::{ByteBudget, ByteReservation},
     narration::{NameArticle, name_phrase, native_text},
-    runtime::{NativeWorldSession, RuntimeNpcRead, RuntimeNpcResponseTicket},
+    runtime::{RuntimeNpcRead, RuntimeNpcResponseTicket},
     state::Named,
 };
 use serde_json::{Value, json};
 use std::{collections::HashMap, sync::Arc};
+
+mod recall;
+pub(super) use recall::{Collected, RecallReview, collect};
 
 pub(super) struct Prepared {
     pub(super) through: u64,
@@ -97,123 +101,29 @@ pub(super) struct ReceivedFrame {
     pub(super) support: Option<String>,
 }
 
-pub(super) async fn collect(
+pub(super) async fn finish(
     game: &Arc<CurrentServer>,
     work: &Work,
+    mut collected: Collected,
 ) -> Result<Prepared, CallFailure> {
     ensure_running(work)?;
     let budget = game.host.budget();
-    let consumer = if work.permit.is_some() {
-        "chat"
-    } else {
-        "thought"
-    };
-    let request = crate::wire::encode(
-        &json!({"actorId":work.actor,"requiredAppraisals":[],"consumer":consumer}),
-        b"",
-        b"",
-        budget,
-    )
-    .map_err(invalid)?;
-    let selector = crate::wire::encode(
-        &json!({"expandedBodyOrdinals":[],"coverage":"suggestions"}),
-        b"",
-        b"",
-        budget,
-    )
-    .map_err(invalid)?;
-    let mut original = game
-        .world
-        .capture_npc_offers(game.clone(), request.clone(), selector.clone())
-        .await
-        .map_err(|error| CallFailure::World(error).at("original-offers"))?;
-    let original_json = capture(&original, budget)?;
-    let original_self = &original_json.value["self"];
-    let mut through = get_u64(&original_self["acceptedCut"])?;
-    if through < work.accepted_cut || original_self["actorId"] != work.actor {
-        return Err(CallFailure::Stale("decision-accepted-read-cut"));
-    }
-    let frame = ReceivedFrame {
-        x: original_self["position"]["x"]
-            .as_f64()
-            .ok_or(CallFailure::Invalid)?,
-        z: original_self["position"]["z"]
-            .as_f64()
-            .ok_or(CallFailure::Invalid)?,
-        heading: original_self["heading"]
-            .as_f64()
-            .ok_or(CallFailure::Invalid)?,
-        support: original_self["supportSurfaceId"]
-            .as_str()
-            .map(str::to_owned),
-    };
-    let mut evidence = Vec::new();
-    let source_data = if work.source.is_empty() {
-        if work.job.job.player_speech_event_id.is_some() {
-            return Err(CallFailure::Stale("decision-heard-source"));
-        }
-        None
-    } else {
-        ensure_running(work)?;
-        let select = crate::wire::encode(&json!({"personal":work.source.iter().map(|reference| json!({"reference":reference})).collect::<Vec<_>>(),"receipts":[]}), b"", b"", budget).map_err(invalid)?;
-        original = game
-            .world
-            .prepare_npc(
-                game.clone(),
-                original,
-                select,
-                NativeWorldSession::begin_npc_sources,
-            )
-            .await
-            .map_err(|error| CallFailure::World(error).at("original-sources"))?;
-        let product = original.latest_sources_packet(budget).map_err(invalid)?;
-        let data = FundedJson::read(
-            std::str::from_utf8(product.bytes()).map_err(invalid)?,
-            budget,
-        )?;
-        let ordinal = get_u64(&data.value["ordinal"])?;
-        let inventory = &data.value["inventory"];
-        if !inventory["unavailablePersonal"]
-            .as_array()
-            .is_some_and(Vec::is_empty)
-        {
-            return Err(CallFailure::Stale("decision-selected-account-withdrawn"));
-        }
-        let selected = records(&inventory["personal"])?;
-        evidence.extend(
-            selected
-                .iter()
-                .enumerate()
-                .map(|(row, _)| json!({"inventory":ordinal,"ordinal":row})),
-        );
-        Some(data)
-    };
-    ensure_running(work)?;
-    let current = game
-        .world
-        .capture_npc_offers(game.clone(), request, selector)
-        .await
-        .map_err(|error| CallFailure::World(error).at("current-offers"))?;
+    let current = capture_offers(game, work, consumer(work), "current-offers").await?;
     let captured = capture(&current, budget)?;
-    through = through.max(get_u64(&captured.value["self"]["acceptedCut"])?);
-    let bytes = captured
-        ._custody
-        .bytes()
-        .checked_add(original_json._custody.bytes())
-        .and_then(|n| n.checked_add(source_data.as_ref().map_or(0, |data| data._custody.bytes())))
-        .and_then(|n| n.checked_add(32_768))
-        .ok_or(CallFailure::Invalid)?;
+    let through = collected
+        .through
+        .max(get_u64(&captured.value["self"]["acceptedCut"])?);
     // The decoded capture continues to own its independent graph. Projection,
     // labels and selector records have their own allowance through binding.
-    let projection = budget.reserve(bytes).map_err(invalid)?;
+    let projection = collected.projection_custody(&captured, budget)?;
     let (binding, context, addressed, speech_trigger) = project(
         game,
         work,
         &captured.value,
-        &original_json.value,
-        source_data.as_ref().map(|data| &data.value),
-        evidence,
-        consumer,
+        &collected.original_json.value,
+        collected.sources.as_ref().map(|data| &data.value),
+        &collected.required,
+        consumer(work),
     )?;
     let route = game
         .cognition
@@ -229,9 +139,14 @@ pub(super) async fn collect(
     let origin = work.automatic.as_ref().map(|trigger| trigger.read.clone());
     let ticket = game
         .world
-        .bind_npc(original, current, request, origin)
+        .bind_npc(
+            collected.original.take().ok_or(CallFailure::Invalid)?,
+            current,
+            request,
+            origin,
+        )
         .await
-        .map_err(|error| CallFailure::World(error).at("response-binding"))?;
+        .map_err(binding_failure)?;
     Ok(Prepared {
         through,
         addressed,
@@ -239,9 +154,53 @@ pub(super) async fn collect(
         route,
         context,
         ticket: Arc::new(ticket),
-        frame,
+        frame: collected.frame,
         _projection: projection,
     })
+}
+
+fn binding_failure(error: WorldError) -> CallFailure {
+    if let WorldError::Simulation(inner) = &error
+        && let Some(reason) = inner.stale_reason()
+    {
+        return CallFailure::Stale(reason).at("response-binding");
+    }
+    CallFailure::World(error).at("response-binding")
+}
+
+fn consumer(work: &Work) -> &'static str {
+    if work.permit.is_some() {
+        "chat"
+    } else {
+        "thought"
+    }
+}
+
+async fn capture_offers(
+    game: &Arc<CurrentServer>,
+    work: &Work,
+    consumer: &str,
+    stage: &'static str,
+) -> Result<RuntimeNpcRead, CallFailure> {
+    let budget = game.host.budget();
+    let request = crate::wire::encode(
+        &json!({"actorId":work.actor,"requiredAppraisals":[],"consumer":consumer}),
+        b"",
+        b"",
+        budget,
+    )
+    .map_err(invalid)?;
+    let selector = crate::wire::encode(
+        &json!({"expandedBodyOrdinals":[],"coverage":"suggestions"}),
+        b"",
+        b"",
+        budget,
+    )
+    .map_err(invalid)?;
+    game.world
+        .capture_npc_offers(game.clone(), request, selector)
+        .await
+        .map_err(|error| CallFailure::World(error).at(stage))
 }
 
 fn capture(read: &RuntimeNpcRead, budget: &ByteBudget) -> Result<FundedJson, CallFailure> {
@@ -258,7 +217,7 @@ fn project(
     facts: &Value,
     original: &Value,
     selected: Option<&Value>,
-    evidence: Vec<Value>,
+    rows: &[usize],
     consumer: &str,
 ) -> Result<(Value, Projection, bool, bool), CallFailure> {
     let own = &facts["self"];
@@ -305,15 +264,19 @@ fn project(
         surroundings.push(line);
         scene.push(body);
     }
-    let mut source_entries = selected
-        .and_then(|selected| selected["inventory"]["personal"].as_array())
-        .into_iter()
-        .flatten()
-        .collect::<Vec<_>>();
+    let mut source_entries = Vec::with_capacity(rows.len());
+    if let Some(selected) = selected {
+        let personal = records(&selected["inventory"]["personal"])?;
+        for &row in rows {
+            source_entries.push(personal.get(row).ok_or(CallFailure::Invalid)?);
+        }
+    }
     source_entries.sort_by(|a, b| {
-        a["value"]["sequence"]
-            .as_u64()
-            .cmp(&b["value"]["sequence"].as_u64())
+        personal_time(a).total_cmp(&personal_time(b)).then_with(|| {
+            a["value"]["sequence"]
+                .as_u64()
+                .cmp(&b["value"]["sequence"].as_u64())
+        })
     });
     let target_event = work.job.job.player_speech_event_id.as_deref().or_else(|| {
         work.automatic
@@ -433,7 +396,7 @@ fn project(
     let binding = json!({"decisionId":work.job.job.id,"selection":{
         "consumer":consumer,"purpose":"decision","validity":"decision","actions":actions,
         "prototypeSource":"current","perspectives":[],"semanticCauses":work.automatic.as_ref().map_or(&[][..],|trigger|trigger.causes.as_slice()),"intents":[],
-        "evidence":evidence,"entities":entities,"identities":[],"knowledge":[],
+        "evidence":personal_evidence(selected, rows.iter().copied())?,"entities":entities,"identities":[],"knowledge":[],
         "observations":[],"current":[],"receipts":[],"attention":attention,"presented":presented,"appraisals":null,
     }});
     Ok((
@@ -451,6 +414,44 @@ fn project(
         addressed,
         speech,
     ))
+}
+
+fn personal_evidence(
+    sources: Option<&Value>,
+    rows: impl Iterator<Item = usize>,
+) -> Result<Value, CallFailure> {
+    let ordinal = sources.map(|data| get_u64(&data["ordinal"])).transpose()?;
+    Ok(Value::Array(
+        rows.map(|row| json!({"inventory":ordinal,"ordinal":row}))
+            .collect(),
+    ))
+}
+
+fn describe_experience(
+    game: &CurrentServer,
+    entry: &Value,
+    description: &str,
+) -> Result<Value, CallFailure> {
+    let value = &entry["value"];
+    let at = personal_time(entry);
+    if !at.is_finite() {
+        return Err(CallFailure::Invalid);
+    }
+    let world = &game.view_policy().world;
+    Ok(
+        json!({"text":description,"at":at,"eventType":value["eventType"],
+        "acquisition":value["modality"],"observerRelationship":value["triggerKind"],
+        "eventTime": game_time(at, world.offset_hours, world.day_label.as_deref())}),
+    )
+}
+
+fn personal_time(entry: &Value) -> f64 {
+    let field = if entry["reference"]["kind"] == "summary" {
+        "to"
+    } else {
+        "at"
+    };
+    entry["value"][field].as_f64().unwrap_or(f64::NAN)
 }
 
 fn alias(key: &str, kind: &str, index: usize) -> String {

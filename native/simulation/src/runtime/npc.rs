@@ -150,7 +150,8 @@ impl NativeWorldSession {
             .as_ref()
             .ok_or_else(|| failure("NPC response was released"))?;
         checked.require_prepared()?;
-        if checked.original.query_expanded
+        if checked.bindings.purpose == crate::capture::NpcBindingPurpose::Recall
+            || checked.original.query_expanded
             || checked.original.candidate_key.is_some()
             || checked.current.candidate_key.is_some()
         {

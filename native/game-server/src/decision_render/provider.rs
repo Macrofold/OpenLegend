@@ -310,9 +310,30 @@ pub(crate) fn decode_judgment(
     questions: &Value,
     budget: &ByteBudget,
 ) -> Result<JudgmentAnswer, RenderError> {
+    decode_answers(data, questions, budget, false)
+}
+
+/// An unanswered optional relevance question supplies no selected evidence.
+/// Responses still must match the offered rubric for every answer provided.
+pub(crate) fn decode_optional_attention(
+    data: &Value,
+    questions: &Value,
+    budget: &ByteBudget,
+) -> Result<JudgmentAnswer, RenderError> {
+    decode_answers(data, questions, budget, true)
+}
+
+fn decode_answers(
+    data: &Value,
+    questions: &Value,
+    budget: &ByteBudget,
+    allow_missing: bool,
+) -> Result<JudgmentAnswer, RenderError> {
     let invalid = RenderError::InvalidResponse;
     let questions = questions.as_object().ok_or(RenderError::Contract)?;
-    let answers = data["answers"].as_object().ok_or(invalid)?;
+    let answers = data["answers"]
+        .as_object()
+        .ok_or(RenderError::InvalidResponse)?;
     if data["truncated"].as_bool() == Some(true) {
         return Err(RenderError::InvalidResponse);
     }
@@ -337,10 +358,15 @@ pub(crate) fn decode_judgment(
     let custody = budget.reserve(bytes).map_err(|_| RenderError::Capacity)?;
     let mut values = BTreeMap::new();
     for (id, question) in questions {
-        let answer = answers
-            .get(id)
-            .filter(|row| row["type"] == question["type"])
-            .ok_or(RenderError::InvalidResponse)?;
+        let Some(answer) = answers.get(id) else {
+            if allow_missing {
+                continue;
+            }
+            return Err(invalid);
+        };
+        if answer["type"] != question["type"] {
+            return Err(invalid);
+        }
         if answer
             .get("confidence")
             .is_some_and(|value| finite(value).is_none())

@@ -20,7 +20,9 @@ use std::sync::Arc;
 use tokio_postgres::Transaction;
 
 mod pending;
+mod recall;
 mod receipts;
+pub(crate) use recall::RecallScope;
 
 const KINDS: [Kind; 3] = [Kind::Awareness, Kind::Memory, Kind::Summary];
 

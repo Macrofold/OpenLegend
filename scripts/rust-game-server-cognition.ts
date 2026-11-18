@@ -23,7 +23,10 @@ import {
   RESPONSE_INSTRUCTIONS,
 } from '../apps/server/src/cognition-contracts.js';
 import { CONTEXT_BYTE_LIMIT } from '../apps/server/src/context.js';
-import { decisionActionAttentionRequest } from '../apps/server/src/attention-request.js';
+import {
+  attentionRequest,
+  decisionActionAttentionRequest,
+} from '../apps/server/src/attention-request.js';
 import {
   formatCandidateDetails,
   formatCandidateTemporary,
@@ -34,9 +37,15 @@ import {
   SITUATION_QUERY_INSTRUCTIONS,
   situationResponseJsonSchema,
 } from '../apps/server/src/decision-situation-query.js';
-import { decisionQuestions, LEVEL1_POLICY } from '../apps/server/src/jev-questions.js';
+import {
+  CONTEXT_ATTENTION_POLICY,
+  CONTEXT_ATTENTION_THRESHOLD,
+  decisionQuestions,
+  LEVEL1_POLICY,
+} from '../apps/server/src/jev-questions.js';
 import { navigationInstructions } from '../apps/server/src/navigation-contracts.js';
 import { INTAKE_LIMITS } from '../apps/server/src/actor-work.js';
+import { HARD_CONTEXT_LIMITS } from '../apps/server/src/recall.js';
 import { NPC_INTAKE_SELECTION } from '../apps/server/src/native-npc-intake.js';
 import { RECORD_ACTOR_PATHS } from '../apps/server/src/world-record-schema.js';
 
@@ -130,6 +139,12 @@ export function rustGameServerDecisionPolicy(world: WorldState) {
   const unsupported = selectedResponseExpressions(world, false);
   const appraises = world.moduleManifest.appraisals?.definitions.some((entry) => entry.decision);
   const maxQueries = selectedAttentionPolicy(world).scene.maximumQueries;
+  const recallAlias = '@rgs:recall-candidate';
+  const recallQuestion = attentionRequest({}, [[recallAlias, 'one optional candidate']]).questions[
+    recallAlias
+  ];
+  if (recallQuestion?.type !== 'noul')
+    throw new Error('The installed context-attention template is unavailable.');
   const schemas = [false, true].flatMap((speech) =>
     [false, true].map((expressions) => {
       const bound = boundResponseSchema(
@@ -189,6 +204,12 @@ export function rustGameServerDecisionPolicy(world: WorldState) {
         questions: decisionQuestions(addressed, maximum, speech, generation),
       })),
     ),
+    recallAttention: {
+      policy: CONTEXT_ATTENTION_POLICY,
+      question: recallQuestion,
+    },
+    recallThreshold: CONTEXT_ATTENTION_THRESHOLD,
+    recentRecall: HARD_CONTEXT_LIMITS.memories,
     actionAttention: (['actions', 'choose-action'] as const).map((purpose) => {
       const request = decisionActionAttentionRequest(
         {},

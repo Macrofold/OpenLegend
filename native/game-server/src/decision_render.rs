@@ -14,6 +14,7 @@ pub(crate) mod provider;
 mod scheduling;
 mod schema;
 
+pub(crate) use attention::BoundAttention;
 pub(crate) use prompt::PreparedPrompt;
 pub(crate) use scheduling::SchedulingPolicy;
 pub(crate) use schema::{BoundSchema, ResponseReferences};
@@ -63,7 +64,10 @@ pub(crate) struct DecisionPolicy {
     pub(crate) knowledge_instructions: String,
     pub(crate) expression_guidance: [String; 2],
     questions: Vec<QuestionSet>,
-    action_attention: [ActionAttention; 2],
+    action_attention: [AttentionTemplate; 2],
+    recall_attention: AttentionTemplate,
+    recall_threshold: f64,
+    pub(crate) recent_recall: usize,
     pub(crate) choice_threshold: f64,
     judgment_characters: [usize; 2],
     references: HashMap<String, String>,
@@ -91,7 +95,7 @@ struct SchemaVariant {
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct ActionAttention {
+struct AttentionTemplate {
     policy: String,
     question: Value,
 }

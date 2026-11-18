@@ -29,6 +29,7 @@ pub(crate) enum NpcCatalogueSource {
 pub(crate) enum NpcBindingPurpose {
     Decision,
     Reflection,
+    Recall,
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -397,6 +398,11 @@ impl NpcBindingMaps {
                 != (selection.purpose == NpcBindingPurpose::Reflection)
             || selection.purpose == NpcBindingPurpose::Decision
                 && (read.candidates.is_none() || read.original_candidates.is_none())
+            || selection.purpose == NpcBindingPurpose::Recall
+                && !matches!(
+                    selection.validity,
+                    crate::response::ResponseValidityRoute::PreparedResponse
+                )
             || selection.appraisals.as_ref().is_some_and(|appraisals| {
                 appraisals.reflection() != (selection.purpose == NpcBindingPurpose::Reflection)
             })

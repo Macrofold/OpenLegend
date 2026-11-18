@@ -234,21 +234,31 @@ impl NpcHistoricalScope {
     /// Historical copies survive ordinary age and contact loss. Only their
     /// actual timeline, observer life and privacy owner fence later disclosure.
     pub(crate) fn still_permitted(&self, state: &SimulationState) -> bool {
-        state.generation == self.generation
-            && state.physical.header.id == self.world_id
-            && state.physical.header.sim_time >= self.at
-            && (matches!(self.permission, HistoricalPermission::PersonalOwner)
-                || state
-                    .physical
-                    .entities
-                    .get(&self.actor_id)
-                    .and_then(|entity| entity.actor.as_ref())
-                    .is_some_and(|actor| actor.physical_life.unwrap_or(0) == self.physical_life))
-            && state
-                .experience
-                .actor(&self.actor_id)
-                .map_or(0, |actor| actor.privacy.revision())
-                == self.privacy_revision
+        self.refusal(state).is_none()
+    }
+
+    pub(crate) fn refusal(&self, state: &SimulationState) -> Option<&'static str> {
+        if state.generation != self.generation || state.physical.header.id != self.world_id {
+            return Some("native-history-timeline");
+        }
+        if !(state.physical.header.sim_time >= self.at) {
+            return Some("native-history-chronology");
+        }
+        if matches!(self.permission, HistoricalPermission::ReceivingLife)
+            && !state
+                .physical
+                .entities
+                .get(&self.actor_id)
+                .and_then(|entity| entity.actor.as_ref())
+                .is_some_and(|actor| actor.physical_life.unwrap_or(0) == self.physical_life)
+        {
+            return Some("native-history-actor-life");
+        }
+        let revision = state
+            .experience
+            .actor(&self.actor_id)
+            .map_or(0, |actor| actor.privacy.revision());
+        (revision != self.privacy_revision).then_some("native-history-privacy-revision")
     }
 
     pub(super) fn allows_selection(&self, receipts_empty: bool) -> bool {

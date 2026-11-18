@@ -89,6 +89,7 @@ pub struct RuntimeError {
 enum Refusal {
     Capacity,
     Busy,
+    Stale(&'static str),
     Other,
 }
 impl RuntimeError {
@@ -111,6 +112,14 @@ impl RuntimeError {
     pub fn is_busy(&self) -> bool {
         matches!(self.refusal, Refusal::Busy)
     }
+
+    /// An exact live evidence comparison lost its authority.
+    pub fn stale_reason(&self) -> Option<&'static str> {
+        match self.refusal {
+            Refusal::Stale(reason) => Some(reason),
+            _ => None,
+        }
+    }
 }
 impl std::fmt::Display for RuntimeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -131,6 +140,13 @@ fn failure(error: impl std::fmt::Debug) -> RuntimeError {
     RuntimeError {
         detail: format!("Native writer refused operation: {error:?}"),
         refusal: Refusal::Other,
+    }
+}
+
+fn stale(reason: &'static str) -> RuntimeError {
+    RuntimeError {
+        refusal: Refusal::Stale(reason),
+        ..failure(reason)
     }
 }
 

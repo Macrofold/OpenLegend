@@ -106,10 +106,56 @@ pub(super) async fn run(
     work: Work,
 ) -> Result<(), CallFailure> {
     let mut stop = work.cancellation.clone();
-    let prepared = tokio::select! {
+    let mut collected = tokio::select! {
         biased;
         _ = stopped(&mut stop) => return Err(CallFailure::Cancelled),
         prepared = tokio::time::timeout_at(work.deadline,prepare::collect(game, &work)) => {
+            prepared.map_err(|_| CallFailure::Stale("decision-deadline"))?.map_err(|error| error.at("preparation"))?
+        }
+    };
+    ensure_running(&work)?;
+    let review = tokio::select! {
+        biased;
+        _ = stopped(&mut stop) => return Err(CallFailure::Cancelled),
+        review = tokio::time::timeout_at(work.deadline, collected.review(game, &work)) => {
+            review.map_err(|_| CallFailure::Stale("decision-deadline"))?.map_err(|error| error.at("recall-preparation"))?
+        }
+    };
+    if let Some(review) = review {
+        let answered = match recall_attention(game, dispatch, &work, models, &review).await {
+            Ok(answered) => Some(answered),
+            Err(error) => match error.cause().1 {
+                CallFailure::Cancelled
+                | CallFailure::Authority(_)
+                | CallFailure::Commit(_)
+                | CallFailure::World(_) => return Err(error),
+                CallFailure::Stale(reason)
+                    if !matches!(
+                        *reason,
+                        "native-response-prepared-witness" | "world-publication-busy"
+                    ) =>
+                {
+                    return Err(error);
+                }
+                _ => None,
+            },
+        };
+        // Optional relevance failure cannot erase required context. Keep the
+        // original read and freshly bind only the evidence the decision uses.
+        // The next eligibility/authority checks still refuse stale or cancelled work.
+        ensure_running(&work)?;
+        collected.accept_review(review.ticket, |index| {
+            game.cognition.recall_includes(
+                answered
+                    .as_ref()
+                    .and_then(|value| value.predicate(&format!("c{index}"))),
+            )
+        })?;
+    }
+    let prepared = tokio::select! {
+        biased;
+        _ = stopped(&mut stop) => return Err(CallFailure::Cancelled),
+        prepared = tokio::time::timeout_at(work.deadline,prepare::finish(game, &work, collected)) => {
             prepared.map_err(|_| CallFailure::Stale("decision-deadline"))?.map_err(|error| error.at("preparation"))?
         }
     };
@@ -452,6 +498,63 @@ async fn finish_native(
     )
     .await
     .map_err(|error| error.at("response-application"))
+}
+
+async fn recall_attention(
+    game: &Arc<CurrentServer>,
+    dispatch: &Arc<DecisionDispatch>,
+    work: &Work,
+    models: &Models,
+    review: &prepare::RecallReview,
+) -> Result<provider::JudgmentAnswer, CallFailure> {
+    let budget = game.host.budget();
+    let decision = &models.judgment;
+    let allowance = decision.amount_micro_usd.to_string();
+    let id = format!("{}:attempt:0:attention:0", work.job.job.id);
+    let attended = review.request.clone();
+    let request = provider::judgment_request(
+        &decision.destination,
+        &decision.requested,
+        decision.route(&allowance, work.deadline),
+        provider::Judgment {
+            state: provider::JudgmentState::Structured(&attended.state),
+            questions: &attended.questions,
+        },
+        decision.output_tokens,
+        &id,
+        budget,
+    )?;
+    let evidence_digest = openlegend_simulation::encoding::hex_bytes(&request.digest);
+    let parser = budget.clone();
+    dispatch
+        .submit(
+            side(
+                work,
+                decision,
+                models.ceiling_micro_usd,
+                id,
+                request,
+                InferenceClass::Jev,
+                "attention",
+                1,
+                &evidence_digest,
+                review.through,
+            )?,
+            CallAuthority {
+                source: review.ticket.clone(),
+                speaker: work.permit.clone(),
+            },
+            work.cancellation.clone(),
+            decoder(
+                decision.macrofold.as_ref().map(|value| value.billing),
+                budget.clone(),
+                move |output| {
+                    provider::decode_optional_attention(output, &attended.questions, &parser)
+                        .map_err(|_| CallFailure::Invalid)
+                },
+            ),
+        )
+        .await
 }
 
 async fn action_attention(

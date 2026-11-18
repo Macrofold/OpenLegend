@@ -71,32 +71,13 @@ impl DecisionPolicy {
             .ok_or(RenderError::Contract)?;
         let mut questions = Map::new();
         let mut state = serde_json::json!({"decisionContext":context,"attentionPolicy":template.policy,"candidates":{}});
-        let [whole, per_question] = self.judgment_characters;
-        let mut state_size = units(&state)?;
-        // `{"state":...,"questions":{}}` owns these separators before offers.
-        let mut request_size = state_size + r#"{"state":,"questions":{}}"#.len();
-        let mut largest = 0;
+        let mut size = RequestFit::new(&state, self.judgment_characters)?;
         for action in actions {
             let label = format!("Option {}", questions.len() + 1);
             let candidate: Value = action.description.into();
             let mut question = template.question.clone();
             question["instructions"] = prefix.replacen("Option 1", &label, 1).into();
-            let question_units = units(&question)?;
-            let comma = usize::from(!questions.is_empty());
-            let addition = units(&Members {
-                name: &label,
-                value: &candidate,
-            })? - 2
-                + comma;
-            let question_addition = units(&Members {
-                name: action.id,
-                value: &question,
-            })? - 2
-                + comma;
-            let longest = largest.max(question_units);
-            if state_size + addition + longest > per_question
-                || request_size + addition + question_addition > whole
-            {
+            if !size.include(action.id, &label, &candidate, &question)? {
                 continue;
             }
             state["candidates"]
@@ -104,15 +85,127 @@ impl DecisionPolicy {
                 .ok_or(RenderError::Contract)?
                 .insert(label, candidate);
             questions.insert(action.id.to_owned(), question);
-            state_size += addition;
-            request_size += addition + question_addition;
-            largest = longest;
         }
         Ok(BoundAttention {
             state,
             questions: Value::Object(questions),
             _custody: custody,
         })
+    }
+
+    /// Render one bounded relevance map over already permitted optional facts.
+    /// Unfitted facts keep their original ordinal and never enter the request.
+    /// The returned owner funds the independent graph through provider encoding.
+    /// docs/memory-architecture.md#4-jev-attention-before-context-inclusion
+    pub(crate) fn recall_attention(
+        &self,
+        fields: &Map<String, Value>,
+        candidates: &[Value],
+        budget: &ByteBudget,
+    ) -> Result<BoundAttention, RenderError> {
+        let template = &self.recall_attention;
+        let prefix = template.question["instructions"]
+            .as_str()
+            .ok_or(RenderError::Contract)?;
+        let bytes = fields.iter().fold(
+            tree_bytes(&template.question)
+                .saturating_add(template.policy.len())
+                .saturating_add(2048),
+            |bytes, (key, value)| {
+                bytes
+                    .saturating_add(128)
+                    .saturating_add(key.len())
+                    .saturating_add(tree_bytes(value))
+            },
+        );
+        let mut custody = budget.reserve(bytes).map_err(|_| RenderError::Capacity)?;
+        let mut state = Value::Object(fields.clone());
+        state["attentionPolicy"] = template.policy.as_str().into();
+        state["candidates"] = Value::Object(Map::new());
+        let mut questions = Map::new();
+        let mut size = RequestFit::new(&state, self.judgment_characters)?;
+        for (ordinal, candidate) in candidates.iter().enumerate() {
+            let id = format!("c{ordinal}");
+            let mut question = template.question.clone();
+            question["instructions"] = prefix.replace("@rgs:recall-candidate", &id).into();
+            if !size.include(&id, &id, candidate, &question)? {
+                continue;
+            }
+            let bytes = custody
+                .bytes()
+                .saturating_add(tree_bytes(candidate))
+                .saturating_add(tree_bytes(&question))
+                .saturating_add(2 * id.len() + 256);
+            custody.resize(bytes).map_err(|_| RenderError::Capacity)?;
+            state["candidates"]
+                .as_object_mut()
+                .ok_or(RenderError::Contract)?
+                .insert(id.clone(), candidate.clone());
+            questions.insert(id, question);
+        }
+        Ok(BoundAttention {
+            state,
+            questions: Value::Object(questions),
+            _custody: custody,
+        })
+    }
+
+    pub(crate) fn recall_includes(&self, score: Option<f64>) -> bool {
+        score.is_some_and(|score| score >= self.recall_threshold)
+    }
+}
+
+struct RequestFit {
+    state: usize,
+    request: usize,
+    longest: usize,
+    count: usize,
+    limits: [usize; 2],
+}
+
+impl RequestFit {
+    fn new(state: &Value, limits: [usize; 2]) -> Result<Self, RenderError> {
+        let state = units(state)?;
+        Ok(Self {
+            state,
+            // The wrapper owns these separators before any question is added.
+            request: state + r#"{"state":,"questions":{}}"#.len(),
+            longest: 0,
+            count: 0,
+            limits,
+        })
+    }
+
+    fn include(
+        &mut self,
+        id: &str,
+        label: &str,
+        candidate: &Value,
+        question: &Value,
+    ) -> Result<bool, RenderError> {
+        let comma = usize::from(self.count != 0);
+        let addition = units(&Members {
+            name: label,
+            value: candidate,
+        })? - 2
+            + comma;
+        let question_addition = units(&Members {
+            name: id,
+            value: question,
+        })? - 2
+            + comma;
+        let longest = self.longest.max(units(question)?);
+        let [whole, per_question] = self.limits;
+        if self.state + addition + longest > per_question
+            || self.request + addition + question_addition > whole
+        {
+            return Ok(false);
+        }
+        self.state += addition;
+        self.request += addition + question_addition;
+        self.longest = longest;
+        self.count += 1;
+        Ok(true)
     }
 }
 

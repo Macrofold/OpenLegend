@@ -12,6 +12,14 @@ use openlegend_simulation::runtime::{
 pub(crate) type BeginNpcRead =
     fn(&mut NativeWorldSession, &mut RuntimeNpcRead, &[u8]) -> Result<CandidateKey, RuntimeError>;
 
+pub(crate) enum NpcBinding {
+    Issued(RuntimeNpcResponseTicket),
+    Refused {
+        original: RuntimeNpcRead,
+        reason: RuntimeError,
+    },
+}
+
 impl HostedWorld {
     pub(crate) async fn capture_reply_preview(
         self: &Arc<Self>,
@@ -145,15 +153,40 @@ impl HostedWorld {
         request: Bytes,
         trigger: Option<Arc<RuntimeNpcTrigger>>,
     ) -> Result<RuntimeNpcResponseTicket, WorldError> {
+        match self
+            .bind_npc_preserving_read(original, current, request, trigger)
+            .await?
+        {
+            NpcBinding::Issued(ticket) => Ok(ticket),
+            NpcBinding::Refused { reason, .. } => Err(reason.into()),
+        }
+    }
+
+    /// A refused optional recall binding leaves the initial evidence with the
+    /// caller. Any subsequent required decision still binds it from scratch.
+    pub(crate) async fn bind_npc_preserving_read(
+        self: &Arc<Self>,
+        original: RuntimeNpcRead,
+        current: RuntimeNpcRead,
+        request: Bytes,
+        trigger: Option<Arc<RuntimeNpcTrigger>>,
+    ) -> Result<NpcBinding, WorldError> {
         let _turn = self.enter().await?;
         self.call(move |session| {
-            session.bind_npc_response(
-                &mut Some(original),
+            let mut original = Some(original);
+            match session.bind_npc_response(
+                &mut original,
                 &mut Some(current),
                 &request,
                 trigger.as_deref(),
                 None,
-            )
+            ) {
+                Ok(ticket) => Ok(NpcBinding::Issued(ticket)),
+                Err(reason) => Ok(NpcBinding::Refused {
+                    original: original.expect("a refused binding preserves its initial read"),
+                    reason,
+                }),
+            }
         })
         .await
     }

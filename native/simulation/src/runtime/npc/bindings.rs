@@ -56,6 +56,16 @@ impl RuntimeNpcResponseTicket {
             self.current.receipt_liveness(),
         ]
     }
+    /// End an optional relevance disclosure and return the still-owned initial
+    /// read. This ticket cannot apply a response or reopen a situation query.
+    /// The final decision uses a fresh current read and binds its own evidence.
+    pub fn into_recall_origin(self) -> Result<RuntimeNpcRead, RuntimeError> {
+        self.require_prepared()?;
+        if self.bindings.purpose != NpcBindingPurpose::Recall {
+            return Err(failure("NPC recall disclosure has another purpose"));
+        }
+        Ok(self.original)
+    }
     pub(super) fn publication_available(&self) -> bool {
         matches!(self.phase.load(Ordering::Acquire), FRESH | SETTLED)
     }
@@ -486,11 +496,13 @@ impl NativeWorldSession {
             return Err(failure("NPC response capture is unavailable"));
         }
         let simulation = self.session.accepted().map_err(failure)?;
-        if !first.historical_scope.still_permitted(&simulation.state)
-            || !fresh.historical_scope.still_permitted(&simulation.state)
-            || action.is_some_and(|read| !read.historical_scope.still_permitted(&simulation.state))
+        if let Some(reason) = first
+            .historical_scope
+            .refusal(&simulation.state)
+            .or_else(|| fresh.historical_scope.refusal(&simulation.state))
+            .or_else(|| action.and_then(|read| read.historical_scope.refusal(&simulation.state)))
         {
-            return Err(failure("NPC response capture was revoked"));
+            return Err(stale(reason));
         }
         let candidates = fresh.candidates.as_ref();
         let action_candidates = action

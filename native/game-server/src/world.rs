@@ -31,6 +31,7 @@ use tokio::time::Instant;
 const TURN_WAIT: Duration = Duration::from_secs(5);
 pub(crate) const IO_YIELD: Duration = Duration::from_millis(8);
 mod npc;
+pub(crate) use npc::NpcBinding;
 mod player_history;
 pub(crate) use player_history::PlayerHistoryRead;
 
