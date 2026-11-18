@@ -3965,7 +3965,7 @@ export class AiDirector {
           );
         } catch (error) {
           this.current(run);
-          if (!deadline.aborted) throw error;
+          if (!deadline.aborted || error !== deadline.reason) throw error;
           break;
         }
         // The original response never reached acceptance. Re-enter its original
