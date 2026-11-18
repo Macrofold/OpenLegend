@@ -18,6 +18,14 @@ import { personalAccountRecordId, personalAccountRevision } from './personal-acc
 import type { SavedWorld, SqlDatabase } from './store.js';
 import type { RecordChanges, RowChange } from './world-records.js';
 import { type RetentionMetadataView } from './retention-metadata.js';
+import {
+  sourceArchiveChargesSql,
+  sourceDependentClassesSql,
+  sourceLearningRevisionSql,
+  sourcePredecessorSql,
+  sourceRetiredBodiesSql,
+  SOURCE_VERSION_TABLES as tables,
+} from './source-version-queries.js';
 
 export const SOURCE_RETENTION_CLOSURE_ROUNDS = 4;
 
@@ -184,11 +192,6 @@ export class RestoredSourceVersionSelection {
     return { rows: retained, totals };
   }
 }
-const tables = {
-  awareness: 'mind_awareness',
-  memory: 'mind_memories',
-  summary: 'mind_summaries',
-} as const;
 const key = (value: VersionKey) =>
   JSON.stringify([value.actorId, value.kind, value.id, value.revision]);
 const sourceKey = (actorId: string, kind: string, id: string) =>
@@ -323,12 +326,7 @@ export async function prepareSourceVersionPlan(
     )) {
       const requests = batch.map(([actor_id, id]) => ({ actor_id, id }));
       for (const old of await db
-        .prepare(
-          `SELECT t.id,t.parent_id,t.position,t.actor_id,t.source_id,t.account_revision,
-          t.retention_metadata,t.retention_class,t.logical_bytes,octet_length(t.payload) AS encoded_bytes
-         FROM jsonb_to_recordset(?::jsonb) q(actor_id TEXT,id TEXT)
-         JOIN ${table} t ON t.world_id=? AND t.actor_id=q.actor_id AND t.id=q.id`,
-        )
+        .prepare(sourcePredecessorSql(table, '?', '?'))
         .all(JSON.stringify(requests), context.worldId)) {
         const item = missing.get(String(old['id']))!;
         item.prior = {
@@ -406,11 +404,7 @@ export async function prepareSourceVersionPlan(
       const requests = batch.map(([actor_id, source_id]) => ({ actor_id, source_id }));
       const found = new Map<string, string>();
       for (const row of await db
-        .prepare(
-          `SELECT t.actor_id,t.source_id,t.account_revision
-         FROM jsonb_to_recordset(?::jsonb) q(actor_id TEXT,source_id TEXT)
-         JOIN ${tables[kind]} t ON t.world_id=? AND t.actor_id=q.actor_id AND t.source_id=q.source_id`,
-        )
+        .prepare(sourceLearningRevisionSql(tables[kind], '?', '?'))
         .all(JSON.stringify(requests), context.worldId))
         found.set(
           sourceKey(String(row['actor_id']), kind, String(row['source_id'])),
@@ -483,24 +477,8 @@ export async function prepareSourceVersionPlan(
       id: value.id,
       revision: value.revision,
     }));
-    const accountUnion = Object.entries(tables)
-      .map(
-        ([kind, table]) =>
-          `SELECT '${kind}' AS kind,actor_id,source_id,retention_class FROM ${table} WHERE world_id=?`,
-      )
-      .join(' UNION ALL ');
     const rows = await db
-      .prepare(
-        `WITH requested AS (
-      SELECT * FROM jsonb_to_recordset(?::jsonb) q(actor_id text,kind text,id text,revision text)
-    ), changed AS (SELECT * FROM jsonb_to_recordset(?::jsonb) q(actor_id text,kind text,id text)),
-    accounts AS (${accountUnion})
-    SELECT DISTINCT q.actor_id,q.kind,q.id,q.revision,a.retention_class
-    FROM requested q JOIN mind_source_dependencies d ON d.world_id=? AND d.actor_id=q.actor_id
-      AND d.source_kind=q.kind AND d.source_id=q.id AND d.source_revision=q.revision
-    JOIN accounts a ON a.actor_id=d.actor_id AND a.kind=d.derived_kind AND a.source_id=d.derived_id
-    WHERE a.retention_class<>'sensory' AND NOT EXISTS(SELECT 1 FROM changed c WHERE c.actor_id=d.actor_id AND c.kind=d.derived_kind AND c.id=d.derived_id)`,
-      )
+      .prepare(sourceDependentClassesSql('?', '?', '?'))
       .all(
         JSON.stringify(batch),
         JSON.stringify(changedOwners),
@@ -518,11 +496,7 @@ export async function prepareSourceVersionPlan(
         row['retention_class'] as Category,
       );
     const old = await db
-      .prepare(
-        `SELECT v.actor_id,v.source_kind,v.source_id,v.revision,v.retention_class,v.logical_bytes
-      FROM mind_source_versions v JOIN jsonb_to_recordset(?::jsonb) q(actor_id text,kind text,id text,revision text)
-      ON v.actor_id=q.actor_id AND v.source_kind=q.kind AND v.source_id=q.id AND v.revision=q.revision WHERE v.world_id=?`,
-      )
+      .prepare(sourceArchiveChargesSql('?', '?'))
       .all(JSON.stringify(batch), context.worldId);
     for (const row of old) {
       const value = {
@@ -602,10 +576,7 @@ export async function prepareSourceVersionPlan(
       }
       const wanted = new Map(batch.map((item) => [item.recordId, item]));
       for (const row of await db
-        .prepare(
-          `SELECT id,source_id,account_revision,payload FROM ${tables[group.kind]}
-      WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])`,
-        )
+        .prepare(sourceRetiredBodiesSql(tables[group.kind], '?', '?', '?'))
         .all(context.worldId, group.actorId, [...wanted.keys()])) {
         const item = wanted.get(String(row['id']));
         if (!item || item.prior!.columns['account_revision'] !== row['account_revision'])
