@@ -25,6 +25,7 @@ import {
 } from '../apps/server/src/memory-repository.js';
 
 import {
+  enqueueLexicalSql,
   lexicalWorkSql,
   lexicalWriteSql,
   lexicalCompletionSql,
@@ -76,6 +77,9 @@ async function storageSchema(adminUrl: string) {
             work: lexicalWorkSql(),
             write: lexicalWriteSql('$1::text', '$2', '$3'),
             complete: lexicalCompletionSql('$1::text', '$2', '$3', '$4::bigint'),
+            removeAwareness: `WITH changed AS (
+              DELETE FROM recall_sources WHERE world_id=$1 AND source_kind='awareness' AND record_id=ANY($2::text[])
+              RETURNING world_id,actor_id,id,source_kind,revision) ${enqueueLexicalSql('changed', true)}`,
           },
           recall: {
             insert: memoryProjectionSql('$2::bigint', '$1::text'),

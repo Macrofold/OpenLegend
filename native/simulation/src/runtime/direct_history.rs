@@ -7,6 +7,8 @@ use crate::host::ByteReservation;
 use crate::received::{ReceivedChargeDirectory, ReceivedFrontier, TemporalReceipt};
 use crate::reception::SensoryFacet;
 
+pub use crate::experience::SensoryExpiration;
+
 #[derive(Clone)]
 pub struct RuntimeHistory(CapturedHistoryInput);
 
@@ -47,6 +49,11 @@ impl RuntimePreparedProducts<'_> {
 }
 
 impl RuntimeHistory {
+    /// Exact natural deadlines whose canonical body was retired by this
+    /// accepted candidate, independent of the current live history owner.
+    pub fn sensory_expirations(&self) -> &[SensoryExpiration] {
+        self.0.sensory_expirations()
+    }
     pub fn world_id(&self) -> &str {
         self.0.world_id()
     }

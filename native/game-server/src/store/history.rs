@@ -13,6 +13,7 @@ use std::fmt::Write as _;
 use tokio_postgres::Transaction;
 use tokio_postgres::types::{ToSql, Type};
 
+mod expiry;
 mod perspective;
 mod story;
 mod story_write;
@@ -58,7 +59,7 @@ impl<'a> OrdinaryProjection<'a> {
         changes: &ChangedRows,
         history: &RuntimeHistory,
     ) -> StoreResult<()> {
-        if derived_rows(changes) {
+        if unsupported_rows(changes) || expiry::missing_proof(changes, history) {
             return Err(StoreError::DerivedProjectionRequired);
         }
         // A malformed authored policy must refuse before this candidate
@@ -74,7 +75,7 @@ impl<'a> OrdinaryProjection<'a> {
     }
 }
 
-fn derived_rows(changes: &ChangedRows) -> bool {
+fn unsupported_rows(changes: &ChangedRows) -> bool {
     let leaf = changes
         .writes
         .keys()
@@ -89,11 +90,10 @@ fn derived_rows(changes: &ChangedRows) -> bool {
                     | "mind_privacy_revisions"
             )
         });
-    let awareness_update = changes.deletes.contains_key("mind_awareness")
-        || changes
-            .writes
-            .get("mind_awareness")
-            .is_some_and(|rows| rows.iter().any(|row| !row.create));
+    let awareness_update = changes
+        .writes
+        .get("mind_awareness")
+        .is_some_and(|rows| rows.iter().any(|row| !row.create));
     leaf || awareness_update
         || [
             "data_world",
@@ -125,7 +125,7 @@ impl PrefixProjection for OrdinaryProjection<'_> {
         {
             return Err(StoreError::StaleCut);
         }
-        if derived_rows(&rows.changes)
+        if unsupported_rows(&rows.changes)
             || rows.changes.writes.contains_key("mind_awareness") != self.recall.is_some()
             || self
                 .histories
@@ -135,6 +135,7 @@ impl PrefixProjection for OrdinaryProjection<'_> {
         {
             return Err(StoreError::DerivedProjectionRequired);
         }
+        self.store.expire_sensory(transaction, rows, self.histories).await?;
         self.store
             .append_originals(transaction, rows, self.histories)
             .await?;

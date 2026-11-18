@@ -33,7 +33,7 @@ pub(crate) use awareness_encoding::{AwarenessEncoding, AwarenessFactory, Awarene
 mod evidence;
 pub use evidence::*;
 mod history;
-pub use history::HistoryOriginals;
+pub use history::{HistoryOriginals, SensoryExpiration};
 mod player_events;
 pub(crate) use history::{
     CapturedHistoryCuts, CapturedHistoryInput, HistorySettings, capture_history_cuts,

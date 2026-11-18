@@ -125,10 +125,22 @@ pub(crate) struct CapturedHistoryInput(Arc<CapturedHistoryBacking>);
 
 struct CapturedHistoryBacking {
     input: HistoryInput,
+    sensory_expirations: Vec<SensoryExpiration>,
+    _sensory_storage: Option<ByteReservation>,
     _reservations: Vec<ByteReservation>,
     _pins: Vec<Arc<crate::host::SharedMemoryPin>>,
 }
+
+pub struct SensoryExpiration {
+    pub row_id: String,
+    pub actor_id: String,
+    pub event_id: String,
+    pub revision: String,
+}
 impl CapturedHistoryInput {
+    pub(crate) fn sensory_expirations(&self) -> &[SensoryExpiration] {
+        &self.0.sensory_expirations
+    }
     pub(crate) fn value(&self) -> impl Serialize + '_ {
         &self.0.input
     }
@@ -172,6 +184,7 @@ impl CapturedHistoryInput {
     pub(crate) fn same_capture(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.0, &other.0)
     }
+
     pub(crate) fn account_count(&self) -> usize {
         self.0.input.accounts.len()
     }
@@ -577,11 +590,44 @@ pub(crate) fn capture_history_input(
             .chain(journal.replaced(&state.experience))
             .map(|record| record.header.actor_id.as_str()),
     );
-    actors.extend(
-        journal
-            .removed()
-            .map(|record| record.header.actor_id.as_str()),
-    );
+    let mut sensory_storage: Option<ByteReservation> = None;
+    let mut sensory_expirations = Vec::new();
+    for record in journal.removed() {
+        let header = &record.header;
+        actors.insert(header.actor_id.as_str());
+        // A natural sensory deadline removes a source without adding a
+        // privacy decision. The exact predecessor owns its SQL derivatives.
+        if header.reference.kind != super::PersonalSourceKind::Awareness
+            || header.class != super::AccountClass::Sensory
+            || header.expires_at.is_none_or(|at| at > state.physical.header.sim_time)
+        {
+            continue;
+        }
+        let slots = if sensory_expirations.len() == sensory_expirations.capacity() {
+            sensory_expirations.capacity().max(4)
+        } else {
+            0
+        };
+        let bytes = heap_sum([
+            slots.checked_mul(size_of::<SensoryExpiration>()).ok_or_else(capacity)?,
+            record.row_id().len(),
+            header.actor_id.len(),
+            header.reference.id.len(),
+            header.reference.revision.len(),
+        ]).ok_or_else(capacity)?;
+        if let Some(storage) = &mut sensory_storage {
+            storage.resize(storage.bytes().checked_add(bytes).ok_or_else(capacity)?).map_err(|_| capacity())?;
+        } else {
+            sensory_storage = Some(reserve(budget, Some(bytes))?);
+        }
+        sensory_expirations.try_reserve_exact(slots).map_err(|_| capacity())?;
+        sensory_expirations.push(SensoryExpiration {
+            row_id: record.row_id().to_owned(),
+            actor_id: header.actor_id.clone(),
+            event_id: header.reference.id.clone(),
+            revision: header.reference.revision.clone(),
+        });
+    }
     actors.extend(journal.changed_privacy_actors());
     let mut cuts = Vec::new();
     cuts.try_reserve_exact(actors.len())
@@ -644,6 +690,8 @@ pub(crate) fn capture_history_input(
         })
         .collect();
     Ok(CapturedHistoryInput(Arc::new(CapturedHistoryBacking {
+        sensory_expirations,
+        _sensory_storage: sensory_storage,
         input: HistoryInput {
             world_id: state.physical.header.id.clone(),
             generation: state.generation.clone(),
