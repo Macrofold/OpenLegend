@@ -2401,15 +2401,36 @@ export class WorldService {
     timer.unref?.();
   }
 
+  /** The elapsed candidate is still private while a changed source needs an
+   * exact retention read. Keep existing input usable against the same world
+   * until the final in-memory acceptance fence. A rejected draft retains debt.
+   * docs/projects/action-execution-and-skill-expression-tech-design.md#13-movement-alongside-preparation-and-the-live-input-lease */
+  private async acceptElapsedProgress(
+    saved: SavedWorld,
+    due: boolean,
+    inputs: readonly AdmittedWorldInput[],
+  ): Promise<boolean> {
+    const before = this.world;
+    const current = inputs.length
+      ? () => {
+          this.preparingElapsedInputWorld = undefined;
+          return this.world === before && this.worldInputs.authorized(inputs, performance.now());
+        }
+      : undefined;
+    if (current && this.clockAdmission === 'monotonic') this.preparingElapsedInputWorld = before;
+    try {
+      if (!(await this.acceptProgress(saved, undefined, undefined, false, undefined, current)))
+        return false;
+    } finally {
+      this.preparingElapsedInputWorld = undefined;
+    }
+    if (due) await this.saveRequestedProgress();
+    return !due || !this.storageError;
+  }
+
   /** Capture the due accepted prefix for the existing ordered background writer.
    * Pending rows retain history independently of resident tails; eviction cannot
    * turn ordinary native advancement into a synchronous disk barrier. */
-  private async saveProgress(saved: SavedWorld): Promise<boolean> {
-    if (saved !== this.saved && !(await this.acceptProgress(saved))) return false;
-    await this.saveRequestedProgress();
-    return !this.storageError;
-  }
-
   private async saveRequestedProgress(): Promise<void> {
     if (this.storageError || this.backgroundSave || !this.pendingSave) return;
     const pending = this.pendingSave;
@@ -2552,6 +2573,7 @@ export class WorldService {
     retention?: PreparedMemoryRetention,
     emergencyPause = false,
     onPendingRefusal?: (through: number) => void,
+    current?: () => boolean,
   ): Promise<boolean> {
     if (!emergencyPause && !this.pendingAdmissionOpen())
       return this.rejectPendingAdmission(onPendingRefusal);
@@ -2587,6 +2609,10 @@ export class WorldService {
       const pending = this.pendingSave ?? new PendingWorldSave(performance.now());
       const sequence = this.snapshotSequence + 1;
       this.assertLiveAdmission(!emergencyPause);
+      if (current && !current()) {
+        allocation.rollback();
+        return false;
+      }
       if (
         !pending.admit(
           prepared.snapshot,
@@ -4890,9 +4916,7 @@ export class WorldService {
           ? await this.commit(saved, undefined, 'append', undefined, undefined, undefined, {
               constructionChanges,
             })
-          : due
-            ? await this.saveProgress(saved)
-            : await this.acceptProgress(saved)
+          : await this.acceptElapsedProgress(saved, due, candidateInputs)
       )
         this.debtSeconds = Math.max(0, this.debtSeconds - advancedSeconds);
       countMetric('clock.advancedSimSeconds', this.world.simTime - beforeSimTime);
