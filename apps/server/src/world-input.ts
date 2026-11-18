@@ -49,13 +49,15 @@ export class WorldInputOwner {
   has(actorId: string): boolean {
     return this.states.has(actorId);
   }
+  heldSteering(actorId: string): WorldInputState | undefined {
+    const state = this.states.get(actorId);
+    return state?.steering && state.isCurrent() ? state : undefined;
+  }
   /** Reuse an existing held direction only at the accepted cut where its
    * caller last proved steering eligibility. This does not admit a new one. */
   steeringAt(actorId: string, cut: number): WorldInputState | undefined {
-    const state = this.states.get(actorId);
-    return state?.steering && state.steeringCheckedCut === cut && state.isCurrent()
-      ? state
-      : undefined;
+    const state = this.heldSteering(actorId);
+    return state?.steeringCheckedCut === cut ? state : undefined;
   }
   /** A projection may check its captured tokens without issuing or retiring
    * controls. Every replacement or token rotation advances this revision. */

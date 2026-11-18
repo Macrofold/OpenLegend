@@ -649,6 +649,7 @@ export class WorldService {
   }
   private inputAccountedThrough?: number;
   private clockAdmission: 'monotonic' | 'duration' = 'duration';
+  private preparingElapsedInputWorld?: WorldState;
   /** The host owns wall-time admission; explicit duration callers remain deterministic. */
   useMonotonicClock(): void {
     this.clockAdmission = 'monotonic';
@@ -716,8 +717,8 @@ export class WorldService {
     scope = this.localScope,
   ): Promise<WorldInputResult> {
     await this.ready;
-    return this.authorityContext.run({ scope, capability: 'play', controlling: true }, () =>
-      this.mutate(async () => {
+    return this.authorityContext.run({ scope, capability: 'play', controlling: true }, () => {
+      const update = () => {
         this.assertLiveAdmission();
         const now = performance.now();
         this.accountInputTime(now);
@@ -748,8 +749,22 @@ export class WorldService {
             };
         }
         return this.worldInputs.update(state, input, now, this.world.simTime + this.debtSeconds);
-      }),
-    );
+      };
+      const continuedMovement =
+        input.kind === 'renew'
+          ? input.movement && !input.pendingRelease
+          : input.direction.x === 0 && input.direction.z === 0;
+      // An elapsed draft sees only its captured input window. Reuse the normal
+      // owner while the accepted world is unchanged, so key-up can withdraw the
+      // old direction without waiting for the draft to reach its final fence.
+      if (
+        continuedMovement &&
+        this.preparingElapsedInputWorld === this.world &&
+        this.worldInputs.heldSteering(scope.actorId)
+      )
+        return update();
+      return this.mutate(async () => update());
+    });
   }
   executionView(actorId: string): AttackExecutionView | undefined {
     const execution = entityGet(this.world.entities, actorId)?.actor?.action?.attackExecution;
@@ -4723,32 +4738,41 @@ export class WorldService {
         };
         let sliceStarted = performance.now(),
           result = nextSlice();
-        while (!result.done) {
-          if (result.value && typeof result.value === 'object') {
-            const started = beginTiming();
-            try {
-              completeGeometryBatch(result.value, await this.geometryBatches.compute(result.value));
-            } finally {
-              endTiming('native.geometryBatch', started);
+        if (!result.done && candidateInputs.length && this.clockAdmission === 'monotonic')
+          this.preparingElapsedInputWorld = this.world;
+        try {
+          while (!result.done) {
+            if (result.value && typeof result.value === 'object') {
+              const started = beginTiming();
+              try {
+                completeGeometryBatch(
+                  result.value,
+                  await this.geometryBatches.compute(result.value),
+                );
+              } finally {
+                endTiming('native.geometryBatch', started);
+              }
             }
+            if (performance.now() - sliceStarted >= NATIVE_IO_YIELD_MS) {
+              if (measured) recordDuration('native.noYield', performance.now() - sliceStarted);
+              await new Promise<void>((resolve) => setImmediate(resolve));
+              sliceStarted = performance.now();
+            }
+            // I/O still yields every 8 ms above. Keep the private native draft longer
+            // when uncontended, but let waiting commands/reads take the next coherent
+            // boundary rather than waiting for the 32 ms publication target.
+            // A ready route removes a physical wait at the same game instant.
+            // Publish it for a waiting command, but do not repeat the whole native
+            // start merely because the uncontended batch's clock target elapsed.
+            result = nextSlice(
+              ((result.value === 'boundary' || result.value === 'preparation') &&
+                this.pendingOperations > 0) ||
+                (result.value === 'boundary' &&
+                  performance.now() - batchStarted >= NATIVE_PUBLICATION_MS),
+            );
           }
-          if (performance.now() - sliceStarted >= NATIVE_IO_YIELD_MS) {
-            if (measured) recordDuration('native.noYield', performance.now() - sliceStarted);
-            await new Promise<void>((resolve) => setImmediate(resolve));
-            sliceStarted = performance.now();
-          }
-          // I/O still yields every 8 ms above. Keep the private native draft longer
-          // when uncontended, but let waiting commands/reads take the next coherent
-          // boundary rather than waiting for the 32 ms publication target.
-          // A ready route removes a physical wait at the same game instant.
-          // Publish it for a waiting command, but do not repeat the whole native
-          // start merely because the uncontended batch's clock target elapsed.
-          result = nextSlice(
-            ((result.value === 'boundary' || result.value === 'preparation') &&
-              this.pendingOperations > 0) ||
-              (result.value === 'boundary' &&
-                performance.now() - batchStarted >= NATIVE_PUBLICATION_MS),
-          );
+        } finally {
+          this.preparingElapsedInputWorld = undefined;
         }
         const advanced = result.value;
         // Expired private work (including random draws/events) is never published.
