@@ -8,7 +8,7 @@ use crate::{
     player_events::{PreparedPlayerEvents, SpeechReply, prepare as prepare_events},
     player_references::ReferenceIssuer,
     player_scene::{PreparedContacts, PreparedSelf, SceneError, prepare_contacts, prepare_self},
-    store::StoreError,
+    store::{NarrationBanner, StoreError},
     world::WorldError,
     world_input::{InputScope, WorldInputs},
 };
@@ -145,7 +145,7 @@ pub struct HistoryViewFacts {
     pub epoch: String,
     pub memory_revision: String,
     pub places_revision: String,
-    pub narrator: Option<Arc<RawValue>>,
+    pub(crate) narrator: Option<NarrationBanner>,
 }
 
 #[derive(Serialize, PartialEq)]
@@ -322,10 +322,11 @@ pub(crate) async fn prepare_view(
     if !host.matches(&scope)? {
         return Err(ViewError::Changed);
     }
-    let profile = profile(
+    let mut profile = profile(
         &game.store,
         &scope.account_id,
         &scope.world_id,
+        &scope.actor_id,
         game.host.budget(),
     )
     .await
@@ -390,7 +391,15 @@ pub(crate) async fn prepare_view(
                     .map_err(runtime)?;
             }
             let scoped = references.scoped(&scope).map_err(ViewError::Encoding)?;
-            let host = host.assemble(revision, &read, &policy, &scoped, &own)?;
+            let mut host = host.assemble(revision, &read, &policy, &scoped, &own)?;
+            if let Some(mut banner) = profile.narrator.take() {
+                if banner
+                    .select(&mut read, &scope.actor_id, &scoped, &budget)
+                    .map_err(ViewError::World)?
+                {
+                    host.history.narrator = Some(banner);
+                }
+            }
             let perception = read.perception().map_err(runtime)?;
             own.name_action_target(&policy.scene.self_view, &perception)
                 .map_err(ViewError::Capture)?;

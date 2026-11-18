@@ -45,6 +45,13 @@ pub struct RuntimePlayerRead {
     controls: Option<CapturedPlayerControls>,
     clock: RuntimeClock,
     view_source: Option<RuntimePlayerViewSource>,
+    narrator: Option<RuntimeNarratorFence>,
+    _custody: ByteReservation,
+}
+
+struct RuntimeNarratorFence {
+    privacy_revision: u64,
+    temporal: Vec<(crate::received::TemporalReceiptLocator, f64)>,
     _custody: ByteReservation,
 }
 
@@ -56,6 +63,7 @@ pub struct RuntimePlayerViewSource {
     pub memory_cut: u64,
     pub places_revision: u64,
     pub inventory_revision: u64,
+    recent_story_age: f64,
     presentation_release: Option<Box<RawValue>>,
     pub presentation_release_revision: Option<u64>,
     milestones: IndexMap<String, bool>,
@@ -280,6 +288,7 @@ impl NativeWorldSession {
                 controls,
                 clock,
                 view_source,
+                narrator: None,
                 _custody: custody,
             },
             prepared,
@@ -304,6 +313,36 @@ impl NativeWorldSession {
             let current_release = current.presentation_release.as_deref().map(RawValue::get);
             if current_release != source.presentation_release().map(RawValue::get)
                 || current.presentation_release_revision != source.presentation_release_revision
+            {
+                return Ok(None);
+            }
+        }
+        if let Some(narrator) = &read.narrator {
+            let state = &simulation.state;
+            let privacy = state
+                .experience
+                .actor(&read.actor)
+                .map_or(0, |actor| actor.privacy.revision());
+            let recent = state
+                .installed
+                .attention
+                .value()
+                .retention
+                .recent
+                .max_age_seconds;
+            if narrator.privacy_revision != privacy
+                || !super::private_history::durable_temporal_current(
+                    state,
+                    &read.actor,
+                    narrator.temporal.iter().map(|(receipt, at)| (receipt, *at)),
+                )
+                || narrator.temporal.iter().any(|(_, at)| {
+                    !crate::received::temporal_recent_at(
+                        *at,
+                        state.physical.header.sim_time,
+                        recent,
+                    )
+                })
             {
                 return Ok(None);
             }
@@ -334,6 +373,51 @@ impl NativeWorldSession {
     }
 }
 impl RuntimePlayerRead {
+    /// Attach the stored narrator's exact personal-source witness to this
+    /// already selected view. The physical reader owns a separate small copy
+    /// until the final native disclosure or the caller drops this attempt.
+    pub fn bind_narrator(
+        &mut self,
+        privacy_revision: u64,
+        temporal: &[(crate::received::TemporalReceiptLocator, f64)],
+        budget: &ByteBudget,
+    ) -> Result<bool, RuntimeError> {
+        if self.narrator.is_some() {
+            return Err(failure("narration already bound"));
+        }
+        let view = self.view_source()?;
+        if privacy_revision != view.privacy_revision
+            || temporal.iter().any(|(receipt, at)| {
+                receipt.actor_id != self.actor
+                    || !crate::received::temporal_recent_at(
+                        *at,
+                        self.clock.at,
+                        view.recent_story_age,
+                    )
+            })
+        {
+            return Ok(false);
+        }
+        let bytes = temporal
+            .iter()
+            .try_fold(0usize, |used, (receipt, _)| {
+                used.checked_add(std::mem::size_of::<(
+                    crate::received::TemporalReceiptLocator,
+                    f64,
+                )>())?
+                .checked_add(receipt.actor_id.len())?
+                .checked_add(receipt.epoch.len())
+            })
+            .ok_or_else(|| failure("narration source capacity"))?;
+        let custody = budget.reserve(bytes)?;
+        self.narrator = Some(RuntimeNarratorFence {
+            privacy_revision,
+            temporal: temporal.to_vec(),
+            _custody: custody,
+        });
+        Ok(true)
+    }
+
     pub fn view_source(&self) -> Result<&RuntimePlayerViewSource, RuntimeError> {
         self.view_source
             .as_ref()
@@ -489,6 +573,13 @@ fn capture_view_source(
         memory_cut: state.accepted_cut,
         places_revision: state.experience.known_place_revision(actor),
         inventory_revision: state.administration.object_membership.revision,
+        recent_story_age: state
+            .installed
+            .attention
+            .value()
+            .retention
+            .recent
+            .max_age_seconds,
         presentation_release: host.presentation_release.clone(),
         presentation_release_revision: host.presentation_release_revision,
         milestones: milestones.cloned().unwrap_or_default(),

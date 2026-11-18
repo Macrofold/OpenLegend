@@ -52,7 +52,7 @@ pub(crate) struct TranscriptRows {
     _transfers: [ByteReservation; 2],
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct TranscriptItem {
     pub id: String,
@@ -101,14 +101,14 @@ enum ItemStatus {
     Completed,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 enum SourceStatus {
     Available,
     Unavailable,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct Impact {
     pub entity_id: String,
@@ -463,7 +463,7 @@ fn event(
     })
 }
 
-fn narration(row: &Row, payload: &str, actor: &str) -> StoreResult<TranscriptItem> {
+pub(super) fn narration(row: &Row, payload: &str, actor: &str) -> StoreResult<TranscriptItem> {
     let mut item: TranscriptItem = decode(payload)?;
     if item.kind != ItemKind::Narration
         || item.id != row.try_get::<_, &str>(0)?
@@ -481,6 +481,23 @@ fn narration(row: &Row, payload: &str, actor: &str) -> StoreResult<TranscriptIte
         item.status = Some(ItemStatus::Failed);
     }
     Ok(item)
+}
+
+impl TranscriptItem {
+    pub(crate) fn project_impacts(
+        &mut self,
+        actor: &str,
+        references: &crate::player_references::PlayerReferences<'_>,
+    ) -> StoreResult<()> {
+        for impact in &mut self.impacts {
+            if impact.entity_id != actor {
+                impact.entity_id = references
+                    .historical(&impact.source_id, &impact.entity_id, "impact")
+                    .map_err(|_| StoreError::InvalidRecord)?;
+            }
+        }
+        Ok(())
+    }
 }
 
 fn decode<'a, T: Deserialize<'a>>(body: &'a str) -> StoreResult<T> {

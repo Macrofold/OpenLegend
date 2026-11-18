@@ -18,6 +18,7 @@ use std::sync::Arc;
 use tokio_postgres::Transaction;
 use tokio_postgres::types::{ToSql, Type};
 
+pub(crate) mod banner;
 mod expiry;
 mod perspective;
 mod story;

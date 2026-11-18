@@ -149,25 +149,8 @@ impl NativeWorldSession {
         {
             return Ok(None);
         }
-        if !temporal.is_empty() {
-            let Some(history) = current.state.temporal.actor(&scope.actor_id) else {
-                return Ok(None);
-            };
-            let header = history.header();
-            if temporal.iter().any(|(receipt, at)| {
-                receipt.actor_id != scope.actor_id
-                    || !crate::received::received_position_eligible(
-                        &crate::received::ReceivedPosition {
-                            batch_order: receipt.batch_order,
-                            entry_index: receipt.entry_index,
-                            member_index: 0,
-                        },
-                        *at,
-                        header.frontier.as_ref(),
-                    )
-            }) {
-                return Ok(None);
-            }
+        if !durable_temporal_current(&current.state, &scope.actor_id, temporal.iter().copied()) {
+            return Ok(None);
         }
         Ok(Some(RuntimePrivateHistoryPublication {
             _lease: self.session.fence().begin_publication().map_err(failure)?,
@@ -522,4 +505,31 @@ impl NativeWorldSession {
             _lease: self.session.fence().begin_publication().map_err(failure)?,
         }))
     }
+}
+
+/// Accepted time/pressure eviction can precede the ordinary SQL prefix.
+/// Each caller still owns identity, privacy and its actual disclosure lease.
+pub(super) fn durable_temporal_current<'a>(
+    state: &crate::simulation::SimulationState,
+    actor: &str,
+    receipts: impl Iterator<Item = (&'a crate::received::TemporalReceiptLocator, f64)>,
+) -> bool {
+    let frontier = state
+        .temporal
+        .actor(actor)
+        .map(|history| history.header().frontier.as_ref());
+    receipts.into_iter().all(|(receipt, at)| {
+        receipt.actor_id == actor
+            && frontier.is_some_and(|frontier| {
+                crate::received::received_position_eligible(
+                    &crate::received::ReceivedPosition {
+                        batch_order: receipt.batch_order,
+                        entry_index: receipt.entry_index,
+                        member_index: 0,
+                    },
+                    at,
+                    frontier,
+                )
+            })
+    })
 }

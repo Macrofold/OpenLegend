@@ -86,13 +86,7 @@ async fn page(
         .scoped(&scope.scope)
         .map_err(|_| StoreError::InvalidRecord)?;
     for item in &mut page.items {
-        for impact in &mut item.impacts {
-            if impact.entity_id != scope.scope.actor_id {
-                impact.entity_id = references
-                    .historical(&impact.source_id, &impact.entity_id, "impact")
-                    .map_err(|_| StoreError::InvalidRecord)?;
-            }
-        }
+        item.project_impacts(&scope.scope.actor_id, &references)?;
     }
     let temporal = page
         .items

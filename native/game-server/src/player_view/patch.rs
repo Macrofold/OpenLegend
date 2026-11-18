@@ -97,7 +97,7 @@ fn same_output(
         && before.host.command_epoch == after.host.command_epoch
         && before.host.history.events_revision == after.host.history.events_revision
         && before.host.history.revision == after.host.history.revision
-        && raw(before.host.history.narrator.as_ref()) == raw(after.host.history.narrator.as_ref())
+        && before.host.history.narrator == after.host.history.narrator
         && before.profile.matches(&after.profile)
         && !PlayerChanges {
             before: before.player(old_inventory),
@@ -248,7 +248,7 @@ impl Serialize for GamePatch<'_> {
         if before.host.history.revision != after.host.history.revision {
             map.serialize_entry("historyRevision", &after.host.history.revision)?;
         }
-        if raw(before.host.history.narrator.as_ref()) != raw(after.host.history.narrator.as_ref()) {
+        if before.host.history.narrator != after.host.history.narrator {
             map.serialize_entry("narrator", &after.host.history.narrator)?;
         }
         if !before.profile.matches(&after.profile) {
