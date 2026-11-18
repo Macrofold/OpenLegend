@@ -13,7 +13,7 @@ Start with [AGENTS.md](../../../AGENTS.md), applicable scoped instructions and [
 
 ## Establish an auditable scope
 
-Identify the requested repository, branch, exclusions and deliverables. Pin the refreshed base commit and record the exact ref. Use a separate branch when requested; preserve other work and report branch changes. Create or update a durable review plan when breadth, cross-layer contracts or semantic risk warrant it. Estimate runtime logic changes separately from documentation size.
+Identify the requested repository, revision, exclusions and deliverables. Record the exact ref and commit being reviewed. For a review of the current checkout, identify any local changes relevant to the review. For a claim about the latest remote branch, refresh or verify that ref first. Follow the rebase procedure when history reconciliation is part of the assignment. Use a separate branch when requested, preserve other work and report branch changes. Create or update a durable review plan when breadth, cross-layer contracts or semantic risk warrant it. Estimate runtime logic changes separately from documentation size.
 
 Inventory the entire agreed scope from the repository, not just the maintainer index: root/package documentation, nested project files, feature and architecture specifications, world documentation, task trackers, limits, handoffs, guidance, repertoires and verification reports. Include relevant documentation outside `docs/` and new files. An index can omit a document. Respect archive exclusions; an active document pointing into an excluded archive is a dependency to disclose or inspect narrowly, not proof its contract was checked.
 

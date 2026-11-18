@@ -164,6 +164,8 @@ For the coarse touch-only resident, select another empty PostgreSQL database, it
 
 ## Develop
 
+For an ordinary change, format the files you edited and select the [checks for that task](.agents/rules/verification.md#select-checks-for-the-task). The commands below are the full contributor workflow. The first rewrites formatting across the repository, the second includes all unit tests, and the third builds the project and runs the browser suite.
+
 ```sh
 pnpm run format
 pnpm run check

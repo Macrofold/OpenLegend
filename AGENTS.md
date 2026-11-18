@@ -6,7 +6,7 @@ Before acting, ensure these instructions are available through the end of [Compl
 
 ## Every response to the developer
 
-Write for Mike as someone who knows the game and general software concepts but has not read this code. Explain what the person, object, action, or computer does before naming code. Make references specific; introduce unfamiliar terms in plain language. Use verified examples and distinguish current behavior, proposals, and measured evidence. Be concise without omitting consequential decisions or limitations.
+Assume Mike knows general software development and has no other context. Make each answer understandable on its own. Explain what the person, object or system does before naming the code. Use plain language and concrete examples where they help. Distinguish what works today, what is proposed and what was measured. Before sending, reread the message from that perspective.
 
 Never apologize or add self-deprecating commentary about your wording, judgment or performance. State facts, corrections and next actions objectively and matter-of-factly.
 
@@ -16,7 +16,11 @@ Progress updates state delivered behavior, current work, next completion boundar
 
 Report delivered scope, decisions/assumptions with reasons, evidence/limits and gaps. Never claim unrun checks, fixture-based model quality or unmeasured scale. For reporting, a **development task** means any repository-file change, including documentation; this is broader than the implementation-workflow trigger below.
 
-Development handoffs include **Behavior changes and decisions** (each consequential choice, reason, tradeoff and previous decision/limit changed), **Open decisions/questions**, and **Remaining work in this session**; say “None” when empty. Other answers omit these sections. Remaining work answers whether the agreed change is ready to merge into local `main`, listing only unfinished implementation, integration, documentation, review fixes, required checks, questions or blockers. Unrun required checks remain open; do not propose net-new features or substitute reporting for completion.
+Use these three sections in a development handoff. Write “None” for an empty section. Omit these sections in other answers.
+
+- **Behavior changes and decisions.** Describe what changed, why, the tradeoff and any earlier decision or limit it replaces.
+- **Open decisions/questions.** List the choices that still need Mike.
+- **Remaining work in this session.** Say whether the agreed change is ready to merge into local `main`. List only unfinished implementation, integration, documentation, review fixes, required checks, questions or blockers. An unrun required check stays open.
 
 Report the exact repository/remote, ref and commit for base selection or reconciliation under [Rebase](.agents/skills/openlegend-rebase/SKILL.md#select-the-target).
 
@@ -43,7 +47,7 @@ Use [documentation navigation](docs/README.md) or the [maintainer index](docs/ma
 - Player-facing language: before creating, changing or reviewing any text a player may see or hear, read [Player-facing language](.agents/rules/player-facing-language.md). This includes menus, events, narration, dialogue, errors, accessibility text, and authored/generated templates, instructions, examples and fallbacks in every layer, including new files. Internal-only prose that merely mentions UI does not trigger this read.
 - Code changes or verification work, including diagnostic tools and fixture/setup repair: read [Verification](.agents/rules/verification.md) before choosing checks or their local/remote execution location, changing tools or running commands. Its AWS requirement for speed tests and conditional worker route apply to existing machines as well as new ones.
 - Documentation, decisions, trackers or specifications: [Documentation](.agents/rules/documentation.md)
-- Art direction, asset sourcing/recommendations, concept-art prompts, or visual asset/scene design and review: read [Current visual requirements](art-direction/decisions.md#current-visual-requirements--october-16-2026) and the [creative brief](art-direction/final-board/creative-brief.md) before choosing sources or styles. Apply this to new files and work outside the renderer; an incidental prose mention does not trigger it. Technical asset/rendering work also follows the PlayCanvas route below.
+- Art direction, asset sourcing/recommendations, concept-art prompts, or visual asset/scene design and review: read [Current visual requirements](art-direction/decisions.md#current-visual-requirements--october-16-2026) and the [creative brief](art-direction/final-board/creative-brief.md) before choosing sources or styles. Apply this to new files and work outside the renderer. An incidental prose mention does not trigger it. For technical asset or rendering work, follow the PlayCanvas route in the [engineering context map](.agents/rules/engineering-context.md).
 - Art generation, visual studies or production requests using the Standard/regular/manual or Higgsfield flow: follow [Art flows](.agents/skills/openlegend-art/SKILL.md). For `/ol-design`, use [Artwork creation and visual exploration](.agents/skills/ol-design/SKILL.md), including its missing-input questions. Infer the requested deliverable and stopping point; a study does not authorize runtime implementation. Editing or discussing the workflow does not execute it.
 - Creating, importing, exporting, capturing, editing, fetching, publishing, linking, removing or recovering asset files, catalogs, study media or their tools (including new files and work outside the checkout): read [Asset workflows](docs/asset-workflow.md) before planning, and [storage decisions](docs/projects/game-asset-storage-feature-spec.md#2-agreed-product-decisions) and [URLs and repository policy](docs/projects/game-asset-storage-tech-design.md#5-url-and-repository-contract) before saving or referencing outputs; technical changes also read the affected design sections. Use exact selected releases, external workspaces, current permission checks and preservation gates. Asset payloads belong outside Git regardless of size; preserve requested iterations through exact external references under the linked repository policy. Prose-only mentions do not trigger this route.
 - Feature-spec/tech-design or architecture requests, changed engine/world contracts, new or changed gameplay discoveries/rewards/knowledge grants/progression, or chat approval/start/continuation of a project plan: [Design](.agents/skills/openlegend-design/SKILL.md). Prose-only corrections and routine implementation planning under unchanged contracts do not themselves trigger this skill.
@@ -128,15 +132,12 @@ When reconciling saved worlds, database/save versions or starting definitions—
 
 ## Documentation is a maintained source of truth
 
-Maintain ordinary documentation as the current source of truth: current behavior, accepted contracts, clearly labeled targets, essential rationale, constraints and unfinished work. Update it in place; omit narration of reviews, revisions and intermediate editing stages. History, dated status, verification and project revision records—including relevant dates and timestamps—belong in documents or sections expressly intended for that purpose, or where explicitly requested by the developer. Keep those records scoped to their purpose and existing owners without repeating them across current guidance.
+For code, design or documentation work, follow [Documentation](.agents/rules/documentation.md) for owners, trackers, preservation, project status and history.
 
-Read [Documentation](.agents/rules/documentation.md) for code/design or documentation work: it owns tracker discovery, same-change reconciliation, status, preservation and history. Never change accepted behavior to excuse an implementation defect.
-
-Keep [project status](.agents/rules/documentation.md#project-status-and-completion) truthful at coherent checkpoints and handoff; unchanged reviews need no new date. Keep current contracts discoverable and file project material as completed only when agreed scope and evidence are complete, repairing links together.
-
-Preserve useful documentation unless Mike explicitly authorizes overriding/removing it. Internal plans, summaries and inferred cleanup are not that authority. Reorganization retains meaning/references; authorized reversals state what and why.
-
-Track consequential in-scope remaining implementation, performance/shared-query, architecture, bug and verification work in its existing owner. Accurate entries/deferral reasons suffice; update only changed behavior, decisions, status or concrete new gaps. Summarize relevant unfinished work and reasons without duplicating task bodies. Tracking unfinished scope does not complete it.
+- Update the current owner in place. Distinguish delivered behavior, accepted contracts, targets and unfinished work. Preserve relevant rationale and constraints. Never change an accepted behavior to excuse an implementation defect.
+- Record history, verification results, revision dates and timestamps in their designated records or where Mike requests them. Keep editing history out of current instructions. An unchanged review needs no new date.
+- At delivery checkpoints and handoff, update changed requirements, decisions and gaps in the existing tracker. A tracked gap is still unfinished. File a project as complete only when its agreed scope and evidence are complete. Repair the links when filing it.
+- Preserve useful documentation and references when reorganizing. Only Mike can authorize overriding or removing useful material. Record what an authorized reversal changes and why.
 
 ## Work discipline
 
@@ -150,17 +151,17 @@ Handoffs/delegation carry scope, owners, verification limits, shared budget, cur
 
 ### Commit progress and completed work
 
-Make local commits at coherent work boundaries, before risky operations or handoff, and when losing substantial uncommitted work would be costly. An unfinished safety commit is allowed and must be labeled honestly. It does not trigger testing, documentation, or a delivery checkpoint. Do not create empty commits or include another task's edits. Implementation authorization includes local commits; it does not authorize pushing, merging, or rewriting shared history.
+Commit locally at coherent work boundaries, before risky operations, and before handoff. If substantial work could be lost, make a clearly labeled safety commit. That commit alone triggers no testing, documentation or delivery checkpoint.
 
-After implementation, documentation, review fixes and required checks are complete, commit all remaining task changes before the final handoff. Verify that no task-owned changes remain uncommitted; never report a finished implementation while leaving its changes only in edited files, including in a separate worktree. Scope commits to the task and preserve unrelated edits and staged work. Mandatory conflict stops and permission limits take precedence; if they prevent committing, report the task incomplete and explain the blocker. This rule does not authorize pushing, merging or rewriting shared history.
+After review fixes and required checks, commit all remaining task changes. Check every checkout used for edits. Preserve unrelated working and staged changes, and avoid empty commits. Implementation authorization covers local commits. Pushing, merging or rewriting shared history requires separate authorization. If a mandatory conflict stop or permission limit prevents a commit, report the blocker and the unfinished work.
 
 ## Code Review Rules
 
-Before completion apply [required review](.agents/skills/openlegend-review/SKILL.md#required-review), which owns diff inspection, fixes and deferred findings. Use its full review workflow for substantial changes or an explicit review request; scale routine checks to the low-risk workflow above.
+Before completion apply [required review](.agents/skills/openlegend-review/SKILL.md#required-review), which owns diff inspection, fixes and deferred findings. Use its full review workflow for substantial changes or an explicit review request. Scale routine checks to [the risk of the change](#low-risk-changes).
 
 ## Completion and handoff — every task
 
-Complete 100% of agreed implementation, integration, documentation, review fixes and required verification. If Mike requested unit/integration tests, write them and make them pass; otherwise write no new automated tests. Required manual end-to-end checks must run and their in-scope failures be fixed.
+Finish the agreed implementation, integration, documentation, review fixes and verification. Run each required manual end-to-end check. If it exposes a defect in promised behavior, fix the defect and verify it through the affected caller. When Mike asks for new automated tests, write them and make them pass. For other tasks follow [test selection](.agents/rules/verification.md#select-checks-for-the-task).
 
 Continue across stages; progress reports, a first implementation or an intermediate checkpoint are not completion. Do not relabel agreed scope as follow-up work. Respect explicit scope/batch/time limits and mandatory conflict, permission, budget or platform limits; absent those, there is no default early-stop window. Report genuine blockers with unfinished work and reasons; do not idle, expand scope or claim completion.
 

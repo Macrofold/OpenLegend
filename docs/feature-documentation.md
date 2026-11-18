@@ -10,7 +10,7 @@ A feature specification describes purpose, supported behavior, target scenarios 
 
 For costly qualification, specify the workload and distinguish a required pass, required measurement, exploration and human/external acceptance. State what a failed result means; do not silently create a capacity promise.
 
-Its technical design describes semantic owners and callers, contracts/data flow, persistence/migration, security/privacy and authority, performance, extension seams, stages, verification and tradeoffs/open decisions. Relevant world-specific choices remain under the world’s own contract.
+Its technical design identifies who makes each change, who calls that code, how data flows, what gets saved and restored, and how permissions and privacy are enforced. Cover performance, extension points, stages, verification, tradeoffs and open decisions. For a change to stored data, follow the [development save policy](../AGENTS.md#development-save-policy). Relevant world-specific choices remain under the world’s own contract.
 
 Each new or substantially changed feature spec, technical design or persistent feature document includes a **Maintained records** section linking:
 

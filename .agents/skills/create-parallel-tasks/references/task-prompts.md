@@ -32,7 +32,9 @@ A dependency on another assignment in the same batch is an allocation defect, no
 
 ## Name a new branch in each prompt
 
-Every copyable task prompt must tell its recipient to **create and switch to a new branch**, giving the exact branch name chosen for that assignment. Use a concise, change-specific `codex/<descriptive-name>` by default, honoring an explicit user naming constraint. Give different assignments different names; check known branches and earlier allocations to avoid reusing an existing task branch. Published prompts must contain concrete names, not unresolved placeholders or only a suggestion to choose a branch.
+For an edit-authorized standalone assignment, tell the recipient to **create and switch to a new branch** and give its exact name. Use a concise, change-specific `codex/<descriptive-name>` by default. Honor Mike's branch instructions. If he specifies a branch to work on, name that branch. If he asks for read-only work or prohibits branch creation, omit the creation step. A specified **base** identifies the starting revision and can still be the base of a new work branch.
+
+Give independent new branches different names. Check known branches and earlier allocations to avoid reusing an existing task branch. Replace placeholders before publishing the prompt.
 
 The worker selects and refreshes the development base under `AGENTS.md` before creating the branch and beginning implementation. Do not assume pending prerequisites are already present in that base. This branch instruction does not authorize the planning agent to create branches now, or grant the worker pushing, merging, shared-history rewriting or task coordination. Explicit read-only/no-branch instructions remain controlling.
 
@@ -83,12 +85,12 @@ Complete [observable integrated result] and the acceptance in [precise reference
 Keep documentation synchronized as this work is delivered: update [named canonical docs, world rules and limits as applicable], [this assignment's tracker] and the overlapping requirements in [specific other maintainer paths/IDs]. Mark only the scope whose exit criteria are actually satisfied; retain broader incomplete work and unverified acceptance. Do not mark planning or partial delivery as runtime completion.
 ```
 
-If the requested deliverable is findings or design rather than implementation, change the opening and completion wording accordingly. Do not smuggle implementation authorization into a prompt for a read-only task.
+If the requested deliverable is findings or design, state the actual deliverable and stopping point. For a read-only task, also remove the sample branch-creation and documentation-edit instructions.
 
 ## Final quality check
 
 Verify the requested number and focus, explaining any justified shortfall under the selection rules; check readable descriptions, real references, complete task definitions and coherent combined outcome. A task can span categories, and multiple tasks can share a category. Any capacity figures must match the user's request and disclose assumptions.
 
-Read every prompt as an agent with only the target repository. Can it identify the desired behavior, scope, confirmed and open prerequisites, exact new branch name, design decisions, completion criteria and documentation obligations? Apply the independent-completion check: could this agent finish every requirement if no sibling agent ever starts? Check that Open prerequisites contains only earlier external work needed before launch, and that available work, this task's own deliverables and nonblocking qualifications appear elsewhere. Regroup any same-batch dependency; remove unsupported assumptions and instructions requiring communication or intermediate handoffs. Check specifically for stale grants to spend, write tests, merge branches or orchestrate other agents from copied prompts.
+Read every prompt as an agent with only the target repository. Can it identify the desired behavior, scope, confirmed and open prerequisites, the branch to use when applicable, design decisions, completion criteria and documentation obligations? Apply the independent-completion check: could this agent finish every requirement if no sibling agent ever starts? Check that Open prerequisites contains only earlier external work needed before launch, and that available work, this task's own deliverables and nonblocking qualifications appear elsewhere. Regroup any same-batch dependency; remove unsupported assumptions and instructions requiring communication or intermediate handoffs. Check specifically for stale grants to spend, write tests, merge branches or orchestrate other agents from copied prompts.
 
 Present one clearly labeled copyable block per assignment, with a short allocation/dependency explanation for the owner where useful. Do not create chats, dispatch work or start runtime implementation unless separately requested. Report genuine readiness gaps plainly; a polished prompt does not resolve them.

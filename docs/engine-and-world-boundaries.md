@@ -74,7 +74,7 @@ For every new feature or significant change, answer these questions in its ownin
 2. **Can supported mechanisms express it?** Prefer configuration or composition. Do not add a native branch for a named finished invention.
 3. **What new computation is genuinely missing?** Add a narrow reviewed service or evaluator only when the existing interface cannot express the necessary work.
 4. **What can it read and change?** Distinguish world knowledge, actor evidence, private interpretation, security grants, and actual effects.
-5. **What wakes it and what bounds it?** Declare meaningful dependencies, execution phase, deadlines, maximum affected work, and failure behavior.
+5. **What wakes it and how much work can it cause?** Identify the dependencies, execution phase, deadlines and failure behavior. Give the maximum affected work when there is a bound. For an [intentionally uncapped case](limits/README.md), say what grows with the input and what safeguards still apply.
 6. **How does it enter and leave a running world?** Define state ownership, initialization, definition pins, active-work compatibility, removal, and save/load treatment.
 7. **Does it work through ordinary user and actor surfaces?** New state/actions need scoped inspection, context, discovery, and truthful presentation—not only a field in storage.
 8. **Can a substantially different fixture use the same contract?** Test a machine's charge rather than only adding thirst beside hunger.
