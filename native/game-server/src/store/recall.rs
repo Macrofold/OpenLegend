@@ -22,6 +22,12 @@ use tokio_postgres::Transaction;
 const TABLE: &str = "mind_awareness";
 const BATCH: usize = 100;
 
+/// Same serialized string digest as the Source dependency index. Both the
+/// writer and the protected correction selection use this exact witness.
+pub(super) fn native_origin_dependency_key() -> String {
+    sha256_hex(b"\"native-origin\"")
+}
+
 pub struct PreparedRecall {
     world: String,
     generation: String,
@@ -268,8 +274,8 @@ impl Store {
                 }
             }
         }
-        let recognition = sha256_hex(b"recognition");
-        let origin = sha256_hex(b"native-origin");
+        let recognition = sha256_hex(b"\"recognition\"");
+        let origin = native_origin_dependency_key();
         if !native.is_empty() {
             let input = native
                 .iter()
