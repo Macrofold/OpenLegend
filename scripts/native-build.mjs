@@ -78,6 +78,9 @@ const metadata = spawnSync(
     cwd: native,
     encoding: 'utf8',
     env: compilerEnvironment,
+    // Cargo resolves the shared workspace, including the stand-alone server.
+    // Keep the complete locked graph within a bounded subprocess capture.
+    maxBuffer: 8 * 1024 * 1024,
   },
 );
 if (metadata.error || metadata.status !== 0)
