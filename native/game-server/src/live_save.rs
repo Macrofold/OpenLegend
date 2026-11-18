@@ -366,24 +366,31 @@ impl LiveSaves {
     /// PostgreSQL never owns the mutation turn while writing ordinary work.
     /// A caller can retry the same detached prefix or apply its known ACK.
     pub async fn flush(self: &Arc<Self>) -> Result<bool, WorldError> {
+        self.flush_ready(false).await
+    }
+
+    async fn flush_ready(self: &Arc<Self>, scheduled: bool) -> Result<bool, WorldError> {
         // The caller can lose its connection while this save owns the exact
         // cut. Until the actual SQL result, the writer keeps both products.
         let owner = self.clone();
-        tokio::spawn(async move { owner.flush_owned().await })
+        tokio::spawn(async move { owner.flush_owned(scheduled).await })
             .await
             .map_err(|_| openlegend_world_host::pool::HostError::WorkerFailed)?
     }
 
-    async fn flush_owned(self: &Arc<Self>) -> Result<bool, WorldError> {
+    async fn flush_owned(self: &Arc<Self>, scheduled: bool) -> Result<bool, WorldError> {
         let mut detached = self.detached.lock().await;
         if detached.is_none() {
-            if self
+            let oldest = self
                 .pending
                 .lock()
                 .map_err(|_| StoreError::WriterUnavailable)?
                 .queue
-                .is_empty()
-            {
+                .front()
+                .map(|(at, _)| *at);
+            // A protected drain can settle the prefix that started this timer.
+            // Check the current deadline while holding the sole flush owner.
+            if oldest.is_none_or(|at| scheduled && at.elapsed() < SAVE_INTERVAL) {
                 return Ok(false);
             }
             let owner = self.clone();
@@ -495,7 +502,7 @@ impl LiveSaves {
                         _ = stop.changed() => break,
                         _ = tokio::time::sleep_until(due) => {},
                     }
-                    retry_at = match self.flush().await {
+                    retry_at = match self.flush_ready(true).await {
                         Err(WorldError::Host(openlegend_world_host::pool::HostError::Busy)) => {
                             Some(Instant::now() + SAVE_INTERVAL)
                         }
