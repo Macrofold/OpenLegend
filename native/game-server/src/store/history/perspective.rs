@@ -2,6 +2,7 @@
 //! revision and participant columns follow history-append.ts.
 
 use super::super::{StoreError, StoreResult, sql_ordinal};
+use crate::language::canonical::{KeyOrder, write_canonical};
 use indexmap::IndexMap;
 use openlegend_simulation::{
     encoding::{hex_bytes, json_record, json_record_len, serialize_js_map, write_json_record},
@@ -18,9 +19,7 @@ use openlegend_simulation::{
 use serde::{Deserialize, Serialize, Serializer};
 use serde_json::value::RawValue;
 use sha2::{Digest, Sha256};
-use std::{borrow::Cow, cmp::Ordering, io};
-
-pub(super) type Compare<'a> = dyn Fn(&str, &str) -> StoreResult<Ordering> + Sync + 'a;
+use std::{borrow::Cow, io};
 
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -205,7 +204,7 @@ impl<'a> Perspective<'a> {
         original: &'a OriginalOccurrence,
         original_revision: &str,
         position: i64,
-        compare: &Compare<'_>,
+        compare: &KeyOrder<'_>,
         budget: &ByteBudget,
     ) -> StoreResult<Self> {
         let original = original.event();
@@ -266,7 +265,8 @@ impl<'a> Perspective<'a> {
                 original_hash.update(encoded.as_bytes());
                 let revision = hex_bytes(&original_hash.finalize());
                 let mut canonical = HashWriter(Sha256::new());
-                canonical_json(&encoded, compare, &mut canonical)?;
+                write_canonical(&encoded, compare, &mut canonical)
+                    .map_err(|_| StoreError::InvalidRecord)?;
                 (
                     revision,
                     AccountRef::Temporal {
@@ -396,48 +396,4 @@ impl io::Write for HashWriter {
     fn flush(&mut self) -> io::Result<()> {
         Ok(())
     }
-}
-
-fn canonical_json(input: &str, compare: &Compare<'_>, out: &mut HashWriter) -> StoreResult<()> {
-    match input.as_bytes().first() {
-        Some(b'{') => {
-            let mut object: IndexMap<String, &RawValue> =
-                serde_json::from_str(input).map_err(|_| StoreError::InvalidRecord)?;
-            let mut failed = false;
-            object.sort_by(|left, _, right, _| {
-                compare(left, right).unwrap_or_else(|_| {
-                    failed = true;
-                    Ordering::Equal
-                })
-            });
-            if failed {
-                return Err(StoreError::InvalidRecord);
-            }
-            out.0.update(b"{");
-            for (at, (key, value)) in object.into_iter().enumerate() {
-                if at > 0 {
-                    out.0.update(b",");
-                }
-                write_json_record(&key, &mut *out).map_err(|_| StoreError::InvalidRecord)?;
-                out.0.update(b":");
-                canonical_json(value.get(), compare, out)?;
-            }
-            out.0.update(b"}");
-        }
-        Some(b'[') => {
-            let array = serde_json::from_str::<Vec<&RawValue>>(input)
-                .map_err(|_| StoreError::InvalidRecord)?;
-            out.0.update(b"[");
-            for (at, value) in array.into_iter().enumerate() {
-                if at > 0 {
-                    out.0.update(b",");
-                }
-                canonical_json(value.get(), compare, out)?;
-            }
-            out.0.update(b"]");
-        }
-        Some(_) => out.0.update(input.as_bytes()),
-        None => return Err(StoreError::InvalidRecord),
-    }
-    Ok(())
 }

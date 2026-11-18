@@ -97,6 +97,9 @@ impl Presence {
                     {
                         return Ok(false);
                     }
+                    let transition = page.visible != shown
+                        || now.saturating_duration_since(page.at) > LIVE
+                        || page.scope.scope.control_generation != scope.control_generation;
                     if order.is_some()
                         || page.scope.scope.control_generation != scope.control_generation
                     {
@@ -105,7 +108,7 @@ impl Presence {
                     page.scope = authorized.clone();
                     page.visible = shown;
                     page.at = now;
-                    return Ok(true);
+                    return Ok(transition);
                 }
                 if state.pages.len() >= self.capacity {
                     state

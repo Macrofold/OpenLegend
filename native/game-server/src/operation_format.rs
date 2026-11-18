@@ -3,12 +3,14 @@
 
 use crate::{
     activity_format, control_format,
-    language::{LanguageProvider, PreparedUtterance, PreparedWordLists},
+    language::{
+        LanguageProvider, PreparedUtterance, PreparedWordLists, canonical::write_canonical,
+    },
     world::WorldError,
 };
 use openlegend_simulation::{
     activity::ActivityView,
-    encoding::json_record,
+    encoding::{json_record, json_tree_allocation_bound},
     geometry::GeometryBinding,
     host::ByteBudget,
     runtime::{RuntimeProvider, RuntimeProviderInput},
@@ -39,6 +41,7 @@ enum Formatted {
     Activity { view: ActivityView },
     Control { message: JsText },
     Collation { order: Vec<u32>, groups: Vec<u32> },
+    Canonical { canonical: String },
     Utterance(PreparedUtterance),
     Words(PreparedWordLists),
 }
@@ -56,7 +59,7 @@ pub(crate) fn answer(
             serde_json::from_str(request).map_err(|_| WorldError::ProviderKind)?;
         if !matches!(
             envelope.kind,
-            "display" | "control" | "collation" | "utterance" | "words"
+            "display" | "control" | "collation" | "utterance" | "words" | "canonical" | "digest"
         ) {
             return Ok(None);
         }
@@ -69,6 +72,13 @@ pub(crate) fn answer(
             .checked_mul(if envelope.kind == "collation" { 48 } else { 12 })
             .and_then(|n| n.checked_add(4096))
             .ok_or(HostError::Capacity)?;
+        let bytes = if matches!(envelope.kind, "canonical" | "digest") {
+            json_tree_allocation_bound(envelope.value.get())
+                .and_then(|scratch| scratch.checked_add(bytes))
+                .ok_or(HostError::Capacity)?
+        } else {
+            bytes
+        };
         let mut workspace = budget.reserve(bytes).map_err(HostError::from)?;
         let value = match envelope.kind {
             "display" => Formatted::Activity {
@@ -117,6 +127,36 @@ pub(crate) fn answer(
                         .speech_word_lists(&input.strings, budget)
                         .map_err(WorldError::Language)?,
                 )
+            }
+            "canonical" | "digest" => {
+                #[derive(Deserialize)]
+                struct Command<'a> {
+                    #[serde(borrow)]
+                    command: &'a RawValue,
+                }
+                #[derive(Deserialize)]
+                struct Value<'a> {
+                    #[serde(borrow)]
+                    value: &'a RawValue,
+                }
+                let selected = match envelope.kind {
+                    "canonical" => serde_json::from_str::<Command<'_>>(envelope.value.get())
+                        .map(|input| input.command),
+                    _ => serde_json::from_str::<Value<'_>>(envelope.value.get())
+                        .map(|input| input.value),
+                }
+                .map_err(|_| WorldError::ProviderKind)?;
+                let language = language.ok_or(WorldError::ProviderKind)?;
+                let mut encoded = Vec::with_capacity(selected.get().len());
+                write_canonical(
+                    selected.get(),
+                    &|left, right| language.compare_utf8(left, right),
+                    &mut encoded,
+                )
+                .map_err(WorldError::Language)?;
+                Formatted::Canonical {
+                    canonical: String::from_utf8(encoded).map_err(|_| WorldError::ProviderKind)?,
+                }
             }
             _ => unreachable!("validated provider kind"),
         };

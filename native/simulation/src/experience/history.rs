@@ -185,6 +185,21 @@ impl CapturedHistoryInput {
         Arc::ptr_eq(&self.0, &other.0)
     }
 
+    pub(crate) fn addressed_speech_source(
+        &self,
+        event: &str,
+        recipient: &str,
+        speaker: &str,
+    ) -> Option<&PersonalSourceRef> {
+        self.0.input.accounts.iter().find_map(|account| {
+            if account.event_id != event || account.actor_id != recipient {
+                return None;
+            }
+            let header = account.awareness_payload.as_ref()?.0.header();
+            (header.heard_addressed_speech && header.evidence_source_id.as_deref() == Some(speaker))
+                .then_some(&header.reference)
+        })
+    }
     pub(crate) fn account_count(&self) -> usize {
         self.0.input.accounts.len()
     }

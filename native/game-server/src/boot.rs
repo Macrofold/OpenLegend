@@ -2,7 +2,10 @@
 //! exact current world. No setup input can replace a failed durable open.
 
 use crate::{
+    decision_render::DecisionPolicy,
     language::LanguageProvider,
+    player_http::assets::InstalledAssets,
+    player_view::PlayerViewPolicy,
     spatial::SpatialProvider,
     store::{StorageSchema, Store},
     world::{HostedWorld, WorldHost},
@@ -29,6 +32,10 @@ type BootError = Box<dyn Error + Send + Sync>;
 struct ReleaseManifest {
     storage_sha256: String,
     definitions_sha256: String,
+    view_sha256: String,
+    cognition_sha256: String,
+    assets_sha256: String,
+    asset_max_object_bytes: u64,
 }
 
 fn read_bounded(path: &Path, maximum: usize) -> Result<Vec<u8>, BootError> {
@@ -64,6 +71,10 @@ pub struct CurrentServer {
     pub world: Arc<HostedWorld>,
     pub spatial: Arc<SpatialProvider>,
     language: Option<Arc<LanguageProvider>>,
+    view: Arc<PlayerViewPolicy>,
+    pub(crate) cognition: Arc<DecisionPolicy>,
+    assets: Option<Arc<InstalledAssets>>,
+    _cognition_custody: openlegend_simulation::host::ByteReservation,
     pub verified: VerifiedOpening,
 }
 
@@ -82,6 +93,14 @@ pub struct VerifiedOpening {
 impl CurrentServer {
     pub fn language(&self) -> Option<&Arc<LanguageProvider>> {
         self.language.as_ref()
+    }
+
+    pub(crate) fn view_policy(&self) -> &Arc<PlayerViewPolicy> {
+        &self.view
+    }
+
+    pub(crate) fn installed_assets(&self) -> Option<&Arc<InstalledAssets>> {
+        self.assets.as_ref()
     }
 
     /// Prepare one cold installed writer from PostgreSQL. Normal game startup
@@ -139,6 +158,25 @@ impl CurrentServer {
             &manifest.definitions_sha256,
             4 * 1024 * 1024,
         )?;
+        let view = admitted_view(release, &manifest.view_sha256, budget)?;
+        let cognition_custody = budget.reserve(4 * 1024 * 1024)?;
+        let cognition = Arc::new(artifact(
+            release,
+            "cognition.json",
+            &manifest.cognition_sha256,
+            512 * 1024,
+        )?);
+        let assets = navigation
+            .map(|_| {
+                InstalledAssets::load(
+                    &release.join("assets.json"),
+                    &manifest.assets_sha256,
+                    std::env::var_os("OPEN_LEGEND_RUNTIME_ASSET_ROOT").map(Into::into),
+                    manifest.asset_max_object_bytes,
+                    budget,
+                )
+            })
+            .transpose()?;
         let _ = rustls::crypto::ring::default_provider().install_default();
         let (tls, _) = MakeRustlsConnect::with_native_certs()
             .map_err(|_| "No usable trust roots for PostgreSQL")?;
@@ -169,6 +207,18 @@ impl CurrentServer {
             budget.clone(),
             custody,
         )?;
+        let (retained_release, asset_revision) = session.saved_presentation_release();
+        if let Some(retained_release) = retained_release {
+            if asset_revision.is_none_or(|revision| revision == 0) {
+                return Err(
+                    "The saved presentation release has no current binding revision".into(),
+                );
+            }
+            let release = crate::store::assets::AssetRevision::from_current(retained_release)?;
+            store
+                .require_retained_asset_release(&receipt.world_id, &release)
+                .await?;
+        }
         let spatial = session.with_geometry(|map| -> Result<SpatialProvider, BootError> {
             match navigation {
                 Some(directory) => Ok(SpatialProvider::from_release(map, directory, budget)?),
@@ -195,6 +245,10 @@ impl CurrentServer {
             world,
             spatial: Arc::new(spatial),
             language,
+            view,
+            cognition,
+            assets,
+            _cognition_custody: cognition_custody,
             verified,
         })
     }
@@ -222,8 +276,25 @@ impl CurrentServer {
                 .map_err(|_| openlegend_world_host::pool::HostError::WorkerFailed)??;
             return Ok((question, answer));
         }
+        if question.asks_source_versions()? {
+            let (question, prepared) = self.world.prepare_source_versions(question).await?;
+            let store = Arc::clone(&self.store);
+            let answer = tokio::spawn(async move { store.read_source_versions(prepared).await })
+                .await
+                .map_err(|_| openlegend_world_host::pool::HostError::WorkerFailed)??;
+            return Ok((question, answer));
+        }
+        if question.asks_npc_sources()? {
+            let (question, prepared) = self.world.prepare_npc_sources(question).await?;
+            let store = Arc::clone(&self.store);
+            let answer = tokio::spawn(async move { store.read_npc_sources(prepared).await })
+                .await
+                .map_err(|_| openlegend_world_host::pool::HostError::WorkerFailed)??;
+            return Ok((question, answer));
+        }
         let spatial = Arc::clone(&self.spatial);
         let language = self.language.clone();
+        let cognition = self.cognition.clone();
         let budget = self.host.budget().clone();
         self.host
             .compute(move || {
@@ -234,13 +305,43 @@ impl CurrentServer {
                         RuntimeProviderInput::geometry(answer, custody)?
                     }
                     None => {
-                        crate::operation_format::answer(&question, &budget, language.as_deref())?
-                            .ok_or(WorldError::ProviderKind)?
+                        match crate::operation_format::answer(&question, &budget, language.as_deref())? {
+                            Some(answer) => answer,
+                            None => cognition.answer_choices(&question, &budget)
+                                .map_err(openlegend_simulation::runtime::RuntimeError::application_refused)?
+                                .ok_or(WorldError::ProviderKind)?,
+                        }
                     }
                 };
                 Ok((question, answer))
             })
             .await?
+    }
+
+    /// Drive one independently captured physical route at a time through
+    /// the shared compute pool. No route wait holds the world mutation turn.
+    pub(crate) async fn complete_route(
+        &self,
+        include_world: bool,
+    ) -> Result<(), crate::world::WorldError> {
+        let mut read = self.world.navigation(include_world).await?;
+        while let Some(ticket) = read {
+            let spatial = self.spatial.clone();
+            let budget = self.host.budget().clone();
+            let (ticket, answer, funding) = self
+                .host
+                .compute(move || {
+                    let (answer, funding) =
+                        spatial.compute(ticket.queries()?, &budget)?.into_parts();
+                    Ok::<_, crate::world::WorldError>((ticket, answer, funding))
+                })
+                .await??;
+            read = self
+                .world
+                .resolve_navigation(ticket, answer, funding)
+                .await?;
+        }
+        Ok(())
     }
 
     /// The caller first drains any accepted gameplay prefix. A confirmed
@@ -250,4 +351,29 @@ impl CurrentServer {
         self.host.shutdown().await?;
         Ok(())
     }
+}
+
+fn admitted_view(
+    release: &Path,
+    expected: &str,
+    budget: &openlegend_simulation::host::ByteBudget,
+) -> Result<Arc<PlayerViewPolicy>, BootError> {
+    const MAX_VIEW_BYTES: usize = 4 * 1024 * 1024;
+    let workspace = budget.reserve(MAX_VIEW_BYTES)?;
+    let contents = read_bounded(&release.join("view.json"), MAX_VIEW_BYTES)?;
+    if sha256_hex(&contents) != expected {
+        return Err("The installed public view artifact has changed".into());
+    }
+    // Public compiled static artifacts keep their custody with each retained
+    // installation. JSON strings, carriers and raw map fields have bounded
+    // scope here and decoded players never make another copy of the map.
+    let backing = contents
+        .len()
+        .checked_mul(12)
+        .and_then(|bytes| bytes.checked_add(8192))
+        .ok_or("The installed public view exceeds its allowance")?;
+    let resident = budget.resident().reserve(backing)?;
+    let view: PlayerViewPolicy = serde_json::from_slice(&contents)?;
+    drop(workspace);
+    Ok(Arc::new(view.with_storage(resident)))
 }

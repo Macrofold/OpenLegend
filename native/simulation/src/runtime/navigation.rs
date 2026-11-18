@@ -157,6 +157,62 @@ impl RuntimeNavigationRead {
     }
 }
 impl NativeWorldSession {
+    /// Read a real deferred route without transferring the body's other
+    /// state. Ordinary advances already carry new entity-local offers. Walk
+    /// the accepted action membership only when a held world route blocked
+    /// elapsed time.
+    pub fn read_deferred_navigation(
+        &mut self,
+        include_world: bool,
+    ) -> Result<Option<RuntimeNavigationRead>, RuntimeError> {
+        self.require_active()?;
+        let (actors, _custody) = {
+            let state = &self.session.accepted().map_err(failure)?.state;
+            let mut custody = self.budget.reserve(0)?;
+            let mut actors = Vec::new();
+            let mut add = |id: &str| -> Result<(), RuntimeError> {
+                let bytes = size_of::<String>()
+                    .checked_mul(4)
+                    .and_then(|bytes| bytes.checked_add(id.len()))
+                    .and_then(|bytes| bytes.checked_add(custody.bytes()))
+                    .ok_or_else(|| failure("capacity"))?;
+                custody.resize(bytes)?;
+                actors.push(id.to_owned());
+                Ok(())
+            };
+            if include_world {
+                let revision = state.installed.geometry.spatial.revision;
+                let now = state.physical.header.sim_time;
+                for id in state.physical.entities.ordered_ids() {
+                    let entity = state
+                        .physical
+                        .entities
+                        .get(id)
+                        .ok_or_else(|| failure("missing navigation body"))?;
+                    if crate::time::action_navigation_pending(entity, now, revision, &self.budget)
+                        .map_err(failure)?
+                    {
+                        add(id)?;
+                    }
+                }
+            }
+            if let Some((pending, _)) = &self.pending_navigation {
+                for (handle, _) in pending {
+                    if let Some(entity) = state.physical.entities.resolve(*handle) {
+                        add(&entity.id)?;
+                    }
+                }
+            }
+            (actors, custody)
+        };
+        for actor in actors {
+            if let Some(read) = self.read_navigation(&actor)? {
+                return Ok(Some(read));
+            }
+        }
+        Ok(None)
+    }
+
     pub fn read_navigation(
         &mut self,
         actor: &str,

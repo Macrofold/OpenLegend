@@ -1,8 +1,10 @@
 //! Canonical occurrence placement for a funded detached save. Personal
 //! perspectives are separate and must come from their actual received account.
 
-use super::{PrefixProjection, PreparedRecall, Store, StoreError, StoreResult, sql_ordinal};
-use crate::language::LanguageProvider;
+use super::{
+    AdmittedJob, PrefixProjection, PreparedRecall, Store, StoreError, StoreResult, sql_ordinal,
+};
+use crate::language::{LanguageProvider, canonical::KeyOrder};
 use openlegend_simulation::events::OriginalOccurrence;
 use openlegend_simulation::reception::EventScalar;
 use openlegend_simulation::records::{ChangedRows, SaveRows};
@@ -10,6 +12,7 @@ use openlegend_simulation::runtime::{RuntimeHistory, RuntimeHistoryCuts};
 use std::borrow::Cow;
 use std::collections::HashSet;
 use std::fmt::Write as _;
+use std::sync::Arc;
 use tokio_postgres::Transaction;
 use tokio_postgres::types::{ToSql, Type};
 
@@ -17,7 +20,7 @@ mod expiry;
 mod perspective;
 mod story;
 mod story_write;
-use perspective::{Compare, Perspective};
+use perspective::Perspective;
 
 /// Write the actual detached occurrence and personal-account changes. Recall,
 /// history, privacy fences and receipts all stay inside this same transaction.
@@ -27,6 +30,7 @@ pub struct OrdinaryProjection<'a> {
     eligibility: Option<&'a RuntimeHistoryCuts>,
     recall: Option<&'a PreparedRecall>,
     language: Option<&'a LanguageProvider>,
+    jobs: &'a [Arc<AdmittedJob>],
 }
 
 impl<'a> OrdinaryProjection<'a> {
@@ -37,7 +41,13 @@ impl<'a> OrdinaryProjection<'a> {
             eligibility: None,
             recall: None,
             language: None,
+            jobs: &[],
         }
+    }
+
+    pub(crate) fn with_conversation_jobs(mut self, jobs: &'a [Arc<AdmittedJob>]) -> Self {
+        self.jobs = jobs;
+        self
     }
 
     pub fn with_projections(
@@ -135,17 +145,15 @@ impl PrefixProjection for OrdinaryProjection<'_> {
         {
             return Err(StoreError::DerivedProjectionRequired);
         }
-        self.store.expire_sensory(transaction, rows, self.histories).await?;
+        self.store
+            .expire_sensory(transaction, rows, self.histories)
+            .await?;
         self.store
             .append_originals(transaction, rows, self.histories)
             .await?;
         if let Some(cuts) = self.eligibility {
-            let compare = |left: &str, right: &str| {
-                self.language
-                    .ok_or(StoreError::DerivedProjectionRequired)?
-                    .compare_utf8(left, right)
-                    .map_err(|_| StoreError::InvalidRecord)
-            };
+            let language = self.language.ok_or(StoreError::DerivedProjectionRequired)?;
+            let compare = |left: &str, right: &str| language.compare_utf8(left, right);
             self.store
                 .append_perspectives(transaction, rows, self.histories, cuts, &compare)
                 .await?;
@@ -161,6 +169,11 @@ impl PrefixProjection for OrdinaryProjection<'_> {
     ) -> StoreResult<()> {
         if let Some(recall) = self.recall {
             self.store.write_recall(transaction, rows, recall).await?;
+        }
+        for job in self.jobs {
+            self.store
+                .write_conversation_job(transaction, &job.job)
+                .await?;
         }
         Ok(())
     }
@@ -248,7 +261,7 @@ impl Store {
         rows: &SaveRows,
         histories: &[RuntimeHistory],
         cuts: &RuntimeHistoryCuts,
-        compare: &Compare<'_>,
+        compare: &KeyOrder<'_>,
     ) -> StoreResult<()> {
         if cuts.binding() != (&rows.world_id, &rows.generation, rows.through_cut) {
             return Err(StoreError::StaleCut);

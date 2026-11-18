@@ -252,6 +252,7 @@ impl ProviderQuestion {
 enum AnswerBody {
     Json(String),
     Geometry(Box<GeometryAnswers>),
+    NpcSources(Box<crate::capture::NpcSourcesAnswer>),
 }
 
 /// The host funds construction before moving the incoming allocation here.
@@ -293,6 +294,22 @@ impl ProviderResponse {
             kind: ProviderKind::Geometry,
             binding,
             body: AnswerBody::Geometry(answer),
+            _reservation: reservation,
+        })
+    }
+
+    pub(crate) fn npc_sources(
+        binding: GeometryBinding,
+        answer: Box<crate::capture::NpcSourcesAnswer>,
+        reservation: ByteReservation,
+    ) -> Result<Self, DriveError> {
+        if binding != answer.binding() {
+            return Err(DriveError::StaleResponse);
+        }
+        Ok(Self {
+            kind: ProviderKind::Sources,
+            binding,
+            body: AnswerBody::NpcSources(answer),
             _reservation: reservation,
         })
     }
@@ -1430,6 +1447,9 @@ impl OperationDriver {
                 match body {
                     AnswerBody::Geometry(value) => {
                         (Some(Answer::Geometry(*value)), Some(_reservation), None)
+                    }
+                    AnswerBody::NpcSources(value) => {
+                        (Some(Answer::Sources(*value)), Some(_reservation), None)
                     }
                     AnswerBody::Json(json) => {
                         let decoded = if matches!(

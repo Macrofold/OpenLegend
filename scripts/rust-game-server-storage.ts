@@ -4,13 +4,16 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { nativeSetupSettings } from '../packages/domain/src/native-install.js';
 import { rustGameServerViewPolicy } from './rust-game-server-view.js';
+import { rustGameServerDecisionPolicy } from './rust-game-server-cognition.js';
 import { createDisposableDatabase } from './disposable-postgres.mjs';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { DATABASE_SCHEMA, SqlGameRepository } from '../apps/server/src/store.js';
+import { JOB_UPSERT_SQL } from '../apps/server/src/job-storage.js';
 import { WorldRecords } from '../apps/server/src/world-records.js';
 import { RECORD_NODES } from '../apps/server/src/world-record-schema.js';
 import { receivedCurrentOwnerTables } from '../apps/server/src/received-record-references.js';
 import { ASSET_TABLES } from '../apps/server/src/asset-repository.js';
+import { readAssetConfiguration, readAssetIndex } from '../apps/server/src/asset-configuration.js';
 import { AUTHORITY_TABLES } from '../apps/server/src/authority.js';
 import {
   captureCurrentSources,
@@ -41,6 +44,14 @@ import {
   lexicalCompletionSql,
 } from '../apps/server/src/lexical-projection.js';
 import { defaultStoryPolicy } from '../packages/domain/src/story-selection.js';
+import {
+  SOURCE_VERSION_TABLES,
+  sourceArchiveChargesSql,
+  sourceDependentClassesSql,
+  sourceLearningRevisionSql,
+  sourcePredecessorSql,
+  sourceRetiredBodiesSql,
+} from '../apps/server/src/source-version-queries.js';
 
 // Capture schema statements from the production initializer against real empty
 // PostgreSQL, including extensions, constraints and indexes. The Rust release
@@ -77,11 +88,16 @@ async function storageSchema(adminUrl: string) {
           })),
           orderedWrites: Boolean(node.uniqueIndexes?.length),
         }));
+        let jobParameter = 0;
         return {
           version: DATABASE_SCHEMA,
           permittedUnmarked: [...ASSET_TABLES, ...AUTHORITY_TABLES],
           receivedValueOwners: [...receivedCurrentOwnerTables, 'mind_temporal_pages'],
           initialization: database.initialization,
+          upsertJob: JOB_UPSERT_SQL.replace(/\?/g, () => `$${++jobParameter}`).replace(
+            '$4::jsonb',
+            '$4::text::jsonb',
+          ),
           defaultStory: defaultStoryPolicy(),
           checkpoint: {
             encoding: CHECKPOINT_ENCODING,
@@ -102,6 +118,20 @@ async function storageSchema(adminUrl: string) {
             removeAwareness: `WITH changed AS (
               DELETE FROM recall_sources WHERE world_id=$1 AND source_kind='awareness' AND record_id=ANY($2::text[])
               RETURNING world_id,actor_id,id,source_kind,revision) ${enqueueLexicalSql('changed', true)}`,
+          },
+          sourceVersions: {
+            dependents: sourceDependentClassesSql('$1::text', '$2::text', '$3', true),
+            archives: sourceArchiveChargesSql('$1::text', '$2'),
+            accounts: Object.fromEntries(
+              Object.entries(SOURCE_VERSION_TABLES).map(([kind, table]) => [
+                kind,
+                {
+                  predecessors: sourcePredecessorSql(table, '$1::text', '$2', true),
+                  learning: sourceLearningRevisionSql(table, '$1::text', '$2'),
+                  bodies: sourceRetiredBodiesSql(table, '$1', '$2', '$3'),
+                },
+              ]),
+            ),
           },
           recall: {
             insert: memoryProjectionSql('$2::bigint', '$1::text'),
@@ -145,6 +175,7 @@ async function openingDefinitions(url: string) {
           definitions: nativeDefinitionSources(opening),
         },
         view: rustGameServerViewPolicy(selected.state.world),
+        cognition: rustGameServerDecisionPolicy(selected.state.world),
       };
     });
   } finally {
@@ -152,29 +183,40 @@ async function openingDefinitions(url: string) {
   }
 }
 
-const [adminUrl, output, openingUrl, ...unknown] = process.argv.slice(2);
+const [adminUrl, output, openingUrl, browserAssetIndex, ...unknown] = process.argv.slice(2);
 if (!adminUrl || !output || unknown.length)
   throw new Error(
-    'Usage: node --import tsx scripts/rust-game-server-storage.ts LOOPBACK_ADMIN_URL OUTPUT [CURRENT_OPENING_URL]',
+    'Usage: node --import tsx scripts/rust-game-server-storage.ts LOOPBACK_ADMIN_URL OUTPUT [CURRENT_OPENING_URL [BROWSER_ASSET_INDEX]]',
   );
 
 const storage = JSON.stringify(await storageSchema(adminUrl));
 if (openingUrl) {
-  const artifacts = await openingDefinitions(openingUrl);
+  const [artifacts, assetIndex, { maxObjectBytes }] = await Promise.all([
+    openingDefinitions(openingUrl),
+    readAssetIndex(browserAssetIndex),
+    readAssetConfiguration(),
+  ]);
   const definitions = JSON.stringify(artifacts.definitions);
   const view = JSON.stringify(artifacts.view);
+  const cognition = JSON.stringify(artifacts.cognition);
+  const assets = JSON.stringify(assetIndex);
   const sha256 = (body: string) => createHash('sha256').update(body).digest('hex');
   await mkdir(output);
   try {
     await writeFile(join(output, 'storage.json'), storage, { flag: 'wx' });
     await writeFile(join(output, 'definitions.json'), definitions, { flag: 'wx' });
     await writeFile(join(output, 'view.json'), view, { flag: 'wx' });
+    await writeFile(join(output, 'cognition.json'), cognition, { flag: 'wx' });
+    await writeFile(join(output, 'assets.json'), assets, { flag: 'wx' });
     await writeFile(
       join(output, 'manifest.json'),
       JSON.stringify({
         storageSha256: sha256(storage),
         definitionsSha256: sha256(definitions),
         viewSha256: sha256(view),
+        cognitionSha256: sha256(cognition),
+        assetsSha256: sha256(assets),
+        assetMaxObjectBytes: maxObjectBytes,
       }),
       { flag: 'wx' },
     );

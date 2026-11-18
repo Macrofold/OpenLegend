@@ -1636,7 +1636,9 @@ name = "openlegend-game-server"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "chrono",
  "getrandom 0.4.3",
+ "http-body",
  "httpdate",
  "indexmap 2.14.2",
  "libloading",

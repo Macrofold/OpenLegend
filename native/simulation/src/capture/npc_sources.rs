@@ -33,7 +33,7 @@ pub use places::RuntimeKnownPlaceWitness;
 
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct NpcPersonalSelection {
+pub struct NpcPersonalSelection {
     pub reference: PersonalSourceRef,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub through: Option<PersonalSourceRef>,
@@ -47,7 +47,7 @@ impl std::ops::Deref for NpcPersonalSelection {
 
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct NpcReceiptSelection {
+pub struct NpcReceiptSelection {
     pub locator: TemporalReceiptLocator,
     /// Omission selects the actual whole receipt; an empty list selects a
     /// genuine fieldless history boundary/frame, never every member.
@@ -56,14 +56,14 @@ pub(crate) struct NpcReceiptSelection {
 }
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct NpcSourceSelection {
+pub struct NpcSourceSelection {
     pub receipts: Vec<NpcReceiptSelection>,
     pub personal: Vec<NpcPersonalSelection>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub consolidation_job: Option<String>,
 }
 
-pub(crate) enum NpcPersonalSourceRow {
+pub enum NpcPersonalSourceRow {
     Current {
         kind: PersonalSourceKind,
         row: InstalledRow,
@@ -75,17 +75,17 @@ pub(crate) enum NpcPersonalSourceRow {
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct NpcArchivedSourceRow {
-    world_id: String,
-    actor_id: String,
-    source_kind: PersonalSourceKind,
-    source_id: String,
-    revision: String,
-    payload: String,
+pub struct NpcArchivedSourceRow {
+    pub world_id: String,
+    pub actor_id: String,
+    pub source_kind: PersonalSourceKind,
+    pub source_id: String,
+    pub revision: String,
+    pub payload: String,
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct NpcSourceRows {
+pub struct NpcSourceRows {
     pub pages: Vec<InstalledRow>,
     pub values: Vec<InstalledRow>,
     pub personal: Vec<NpcPersonalSourceRow>,

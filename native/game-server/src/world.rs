@@ -3,7 +3,7 @@
 //! their inputs and never occupy a worker.
 
 use crate::{
-    authority::{AccessError, Authority, AuthorizedScope, Capability},
+    authority::{AccessError, Authority, AuthorizedScope},
     store::{CommitError, Store, StoreError},
 };
 use openlegend_simulation::host::{
@@ -11,8 +11,9 @@ use openlegend_simulation::host::{
 };
 use openlegend_simulation::runtime::{
     NativeWorldSession, RuntimeActivation, RuntimeDirectOutput, RuntimeDirectPrepared,
-    RuntimeDirectStep, RuntimeError, RuntimePlayerRead, RuntimeProvider, RuntimeProviderInput,
-    RuntimeSave, RuntimeSaveAcknowledgement,
+    RuntimeDirectStep, RuntimeError, RuntimeNavigationRead, RuntimeNpcResponseTicket,
+    RuntimePlayerRead, RuntimeProvider, RuntimeProviderInput, RuntimeSave,
+    RuntimeSaveAcknowledgement,
 };
 use openlegend_world_host::{
     DispatchHost, DispatchWorld, SerialDispatch,
@@ -24,9 +25,11 @@ use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, Weak};
 use std::time::Duration;
-use tokio::sync::{Mutex as TurnLock, Semaphore, oneshot};
+use tokio::sync::{Mutex as TurnLock, Semaphore, oneshot, watch};
 
 const TURN_WAIT: Duration = Duration::from_secs(5);
+mod npc;
+mod player_history;
 
 #[derive(Debug)]
 pub enum WorldError {
@@ -44,6 +47,7 @@ pub enum WorldError {
     Geometry(crate::spatial::SpatialError),
     Language(crate::language::LanguageError),
     ClockChanged,
+    ProjectionChanged,
 }
 
 impl std::fmt::Display for WorldError {
@@ -67,6 +71,7 @@ impl std::fmt::Display for WorldError {
             Self::ClockChanged => {
                 f.write_str("The accepted clock changed before the elapsed offer")
             }
+            Self::ProjectionChanged => f.write_str("The allowed player view changed"),
         }
     }
 }
@@ -191,6 +196,7 @@ impl WorldHost {
         store.assert_write_admission()?;
         let dispatch = SerialDispatch::new(&self.budget, self.pool.capacity())?;
         session.check_current_work()?;
+        let (durable, _) = watch::channel(receipt.accepted_cut);
         session.activate(receipt)?;
         let fence = session.fence();
         let world = Arc::new(HostedWorld {
@@ -202,6 +208,7 @@ impl WorldHost {
             turn: TurnLock::new(()),
             waiting: Arc::new(Semaphore::new(self.request_capacity)),
             closing: AtomicBool::new(false),
+            durable,
             protected_hold: Mutex::new(None),
         });
         *writer = Arc::downgrade(&world);
@@ -226,6 +233,7 @@ pub struct HostedWorld {
     turn: TurnLock<()>,
     waiting: Arc<Semaphore>,
     closing: AtomicBool,
+    durable: watch::Sender<u64>,
     // An unresolved SQL outcome retains the actual candidate output and prefix.
     // Normal stop cannot pretend it rejected the mutation. Recovery cold-opens
     // the published database head after the old writer exits.
@@ -247,6 +255,17 @@ pub enum ApplicationStart<T> {
     Existing(T),
 }
 
+#[derive(Debug)]
+pub(crate) enum NpcDisclosure {
+    Busy,
+    Refused(&'static str),
+}
+
+pub(crate) struct NpcDisclosureTurn<'a> {
+    world: &'a HostedWorld,
+    _turn: tokio::sync::MutexGuard<'a, ()>,
+}
+
 impl DispatchWorld<WorldHost> for HostedWorld {
     fn dispatch(&self) -> &SerialDispatch<WorldHost, Self> {
         &self.dispatch
@@ -258,6 +277,62 @@ impl DispatchWorld<WorldHost> for HostedWorld {
 }
 
 impl HostedWorld {
+    /// Start the prepared transfer only while its native source and consumer
+    /// are current. The synchronous callback must relinquish the lease
+    /// before any provider, database or socket wait.
+    pub(crate) async fn npc_disclosure_turn(&self) -> Result<NpcDisclosureTurn<'_>, WorldError> {
+        self.request_advance_publication();
+        Ok(NpcDisclosureTurn {
+            world: self,
+            _turn: self.enter().await?,
+        })
+    }
+
+    fn disclose_npc<T>(
+        &self,
+        ticket: &RuntimeNpcResponseTicket,
+        deliver: impl FnOnce() -> T,
+    ) -> Result<Result<T, NpcDisclosure>, WorldError> {
+        if self.closing.load(Ordering::Acquire) {
+            return Err(HostError::Closed.into());
+        }
+        let session = match self.session.try_lock() {
+            Ok(session) => session,
+            Err(std::sync::TryLockError::WouldBlock) => return Ok(Err(NpcDisclosure::Busy)),
+            Err(std::sync::TryLockError::Poisoned(_)) => return Err(HostError::Poisoned.into()),
+        };
+        match session.npc_response_publication(ticket)? {
+            Ok(lease) => {
+                let result = deliver();
+                drop(lease);
+                Ok(Ok(result))
+            }
+            Err(reason) => Ok(Err(NpcDisclosure::Refused(reason))),
+        }
+    }
+
+    /// Positive preview words require their final exact native exposure cut.
+    /// A busy mutation leaves them withheld without delaying this socket poll.
+    pub(crate) fn disclose_reply_preview<T>(
+        &self,
+        scope: &crate::authority::RequestScope,
+        cut: u64,
+        publish: impl FnOnce() -> T,
+    ) -> Result<Option<T>, WorldError> {
+        if self.closing.load(Ordering::Acquire) {
+            return Err(HostError::Closed.into());
+        }
+        let session = match self.session.try_lock() {
+            Ok(session) => session,
+            Err(std::sync::TryLockError::WouldBlock) => return Ok(None),
+            Err(std::sync::TryLockError::Poisoned(_)) => return Err(HostError::Poisoned.into()),
+        };
+        let lease = session.reply_preview_publication(&scope.account_id, &scope.actor_id, cut)?;
+        Ok(lease
+            .filter(|lease| lease.is_current())
+            .map(|_lease| publish()))
+    }
+
     async fn call<T>(
         self: &Arc<Self>,
         run: impl FnOnce(&mut NativeWorldSession) -> Result<T, RuntimeError> + Send + 'static,
@@ -331,7 +406,39 @@ impl HostedWorld {
         receipt: RuntimeSaveAcknowledgement,
     ) -> Result<(), WorldError> {
         let _turn = self.enter().await?;
-        self.call(move |session| session.acknowledge(receipt)).await
+        self.acknowledge_owned(receipt).await
+    }
+
+    async fn acknowledge_owned(
+        self: &Arc<Self>,
+        receipt: RuntimeSaveAcknowledgement,
+    ) -> Result<(), WorldError> {
+        let through = receipt.through_cut;
+        self.call(move |session| session.acknowledge(receipt))
+            .await?;
+        self.durable.send_if_modified(|previous| {
+            if through <= *previous {
+                return false;
+            }
+            *previous = through;
+            true
+        });
+        Ok(())
+    }
+
+    /// Wait for the caller's already selected accepted prefix under the
+    /// ordinary save timer. Subsequent world activity cannot extend it.
+    pub(crate) async fn when_durable(
+        &self,
+        required: u64,
+        until: tokio::time::Instant,
+    ) -> Result<(), WorldError> {
+        let mut saved = self.durable.subscribe();
+        tokio::time::timeout_at(until, saved.wait_for(|through| *through >= required))
+            .await
+            .map_err(|_| HostError::Busy)?
+            .map_err(|_| HostError::Closed)?;
+        Ok(())
     }
 
     /// Keep the accepted cut stable for a bounded capture. The returned owner
@@ -380,24 +487,57 @@ impl HostedWorld {
         selected_events: &[String],
         publish: impl FnOnce(bool, &ByteBudget) -> Result<Option<axum::body::Bytes>, WorldError>,
     ) -> Result<PlayerDisclosure, WorldError> {
-        let result = authority.current(scope, Capability::Play, false, |scope, controlling| {
+        let Ok(_turn) = self.turn.try_lock() else {
+            return Ok(PlayerDisclosure::Busy);
+        };
+        self.disclose_player_in_turn(authority, scope, read, selected_events, publish)
+    }
+
+    /// The first state response and stream headers may wait for the existing
+    /// fair world turn. Final authorization and any payload still leave
+    /// synchronously. An existing stream body remains nonblocking.
+    pub(crate) async fn first_player_disclosure(
+        &self,
+        authority: &Authority,
+        scope: &AuthorizedScope,
+        read: &RuntimePlayerRead,
+        selected_events: &[String],
+        publish: impl FnOnce(bool, &ByteBudget) -> Result<Option<axum::body::Bytes>, WorldError>,
+    ) -> Result<PlayerDisclosure, WorldError> {
+        self.request_advance_publication();
+        let _turn = self.enter().await?;
+        self.disclose_player_in_turn(authority, scope, read, selected_events, publish)
+    }
+
+    fn disclose_player_in_turn(
+        &self,
+        authority: &Authority,
+        scope: &AuthorizedScope,
+        read: &RuntimePlayerRead,
+        selected_events: &[String],
+        publish: impl FnOnce(bool, &ByteBudget) -> Result<Option<axum::body::Bytes>, WorldError>,
+    ) -> Result<PlayerDisclosure, WorldError> {
+        let result = authority.current_view(scope, |scope, controlling| {
             if self.closing.load(Ordering::Acquire) {
                 return Err(HostError::Closed.into());
             }
             if !read.belongs_to(&scope.account_id, &scope.actor_id) {
                 return Ok(PlayerDisclosure::Changed);
             }
-            let Ok(_turn) = self.turn.try_lock() else {
-                return Ok(PlayerDisclosure::Busy);
-            };
             let session = match self.session.try_lock() {
                 Ok(session) => session,
                 Err(std::sync::TryLockError::WouldBlock) => return Ok(PlayerDisclosure::Busy),
                 Err(std::sync::TryLockError::Poisoned(_)) => return Err(HostError::Poisoned.into()),
             };
-            let paused = session.accepted_progress()?.paused;
+            let clock = session.clock()?;
+            let prepared = read.clock();
+            if (clock.paused, clock.manually_paused, clock.speed)
+                != (prepared.paused, prepared.manually_paused, prepared.speed)
+            {
+                return Ok(PlayerDisclosure::Changed);
+            }
             let Some(permit) =
-                session.player_publication(read, selected_events, paused, controlling)?
+                session.player_publication(read, selected_events, clock.paused, controlling)?
             else {
                 return Ok(PlayerDisclosure::Changed);
             };
@@ -428,6 +568,60 @@ impl HostedWorld {
             })
             .await?;
         Ok((question, prepared.ok_or(WorldError::ProviderKind)??))
+    }
+
+    pub(crate) async fn prepare_source_versions(
+        self: &Arc<Self>,
+        question: RuntimeProvider,
+    ) -> Result<(RuntimeProvider, crate::store::PreparedSourceVersions), WorldError> {
+        let store = self.store.clone();
+        let (question, prepared) = self
+            .call(move |session| {
+                let prepared = session.with_source_version_read(&question, |read| {
+                    store.prepare_source_versions(read)
+                })?;
+                Ok((question, prepared))
+            })
+            .await?;
+        Ok((question, prepared.ok_or(WorldError::ProviderKind)??))
+    }
+
+    pub(crate) async fn prepare_npc_sources(
+        self: &Arc<Self>,
+        question: RuntimeProvider,
+    ) -> Result<(RuntimeProvider, crate::store::PreparedNpcSources), WorldError> {
+        let store = self.store.clone();
+        let (question, prepared) = self
+            .call(move |session| {
+                let prepared = session
+                    .with_npc_sources_read(&question, |read| store.prepare_npc_sources(read))?;
+                Ok((question, prepared))
+            })
+            .await?;
+        Ok((question, prepared.ok_or(WorldError::ProviderKind)??))
+    }
+
+    pub(crate) async fn navigation(
+        self: &Arc<Self>,
+        include_world: bool,
+    ) -> Result<Option<RuntimeNavigationRead>, WorldError> {
+        let _turn = self.enter().await?;
+        self.call(move |session| session.read_deferred_navigation(include_world))
+            .await
+    }
+
+    pub(crate) async fn resolve_navigation(
+        self: &Arc<Self>,
+        mut read: RuntimeNavigationRead,
+        result: openlegend_simulation::geometry::GeometryAnswers,
+        funding: openlegend_simulation::host::ByteReservation,
+    ) -> Result<Option<RuntimeNavigationRead>, WorldError> {
+        let _turn = self.enter().await?;
+        self.call(move |session| {
+            let more = session.resolve_navigation_direct(&mut read, result, funding)?;
+            Ok(more.then_some(read))
+        })
+        .await
     }
 
     /// Drive an ordinary operation through the simulation's real candidate.
@@ -571,9 +765,7 @@ impl HostedWorld {
                     {
                         return Err(FenceError::Stale.into());
                     }
-                    world
-                        .call(move |session| session.acknowledge(acknowledgement))
-                        .await
+                    world.acknowledge_owned(acknowledgement).await
                 };
                 if accepted.await.is_err() {
                     return Err(world.hold_protected(prepared));
@@ -726,6 +918,16 @@ impl HostedWorld {
         let _turn = self.turn.lock().await;
         self.require_recovered()?;
         self.call(|session| session.finish_stop()).await
+    }
+}
+
+impl NpcDisclosureTurn<'_> {
+    pub(crate) fn disclose<T>(
+        self,
+        ticket: &RuntimeNpcResponseTicket,
+        deliver: impl FnOnce() -> T,
+    ) -> Result<Result<T, NpcDisclosure>, WorldError> {
+        self.world.disclose_npc(ticket, deliver)
     }
 }
 

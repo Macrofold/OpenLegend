@@ -31,7 +31,7 @@ pub use output::{RecordEncodingError, RecordPlacement, RecordSchema};
 
 /// A complete SQL row at an imported fixed cut. `payload` is already encoded by
 /// its owning codec and must not be decoded/re-encoded by the Node writer.
-#[derive(Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct InstalledRow {
     pub id: String,
@@ -82,6 +82,19 @@ pub struct ChangedRow {
     pub received_value_removals: Option<Vec<String>>,
 }
 
+impl ChangedRow {
+    /// This immutable row can be held by a new read after its save owner
+    /// releases the accepted prefix. Fund the typed clone before copying it.
+    pub fn installed_bytes(&self) -> Option<usize> {
+        use crate::host::retained_size::HeapBytes;
+        self.id.heap_bytes()?
+            .checked_add(self.parent.heap_bytes()?)?
+            .checked_add(self.slot.heap_bytes()?)?
+            .checked_add(self.payload.heap_bytes()?)?
+            .checked_add(self.extra.heap_bytes()?)
+    }
+}
+
 /// Each row carries its semantic position. Independent upserts can be selected
 /// in a different transport order; the PostgreSQL schema owner supplies actual
 /// uniqueness/dependency ordering. Map iteration never chooses gameplay effects.
@@ -97,7 +110,7 @@ pub struct ChangedRows {
 
 /// Installation identifies unloaded owners explicitly. An omitted collection is
 /// not an empty collection, and hydration carries its original native ordinals.
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct OwnerCoverage {
     pub table: String,

@@ -421,7 +421,8 @@ impl Session {
             base_cut: binding.base_cut,
             generation: binding.generation,
         };
-        self.fence().validate_phase(key, CandidatePhase::Preparing)?;
+        self.fence()
+            .validate_phase(key, CandidatePhase::Preparing)?;
         let state = &self.simulation.state;
         let save = self.save.read_metadata()?;
         if world != state.physical.header.id
@@ -432,6 +433,34 @@ impl Session {
             return Err(FenceError::Stale.into());
         }
         Ok((save, &self.save))
+    }
+
+    /// Pack only the selected actor's pending receipt pages for an actual
+    /// NPC Sources query. SQL and native subsequently select exact receipts.
+    pub(crate) fn npc_source_temporal(
+        &self,
+        actor: &str,
+        represented_before: u64,
+        limits: TemporalSaveLimits,
+        budget: &ByteBudget,
+    ) -> Result<crate::records::EncodedRows, SessionError> {
+        let state = &self.simulation.state;
+        crate::received::preview_temporal_rows(
+            &TemporalSaveCut {
+                world_id: &state.physical.header.id,
+                generation: &state.generation,
+                through_cut: state.accepted_cut,
+                identity_through: state.physical.identity.next_id(),
+                temporal: &state.temporal,
+            },
+            actor,
+            represented_before,
+            limits,
+            &state.installed.schema,
+            budget,
+        )
+        .map_err(SaveError::from)
+        .map_err(SessionError::from)
     }
     /// Capture the actor's real unsaved page representation before any private
     /// writes. Pending non-temporal deltas/history already belong to the

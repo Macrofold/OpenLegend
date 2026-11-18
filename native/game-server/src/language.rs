@@ -18,6 +18,7 @@ use std::{
     sync::Mutex,
 };
 
+pub(crate) mod canonical;
 mod lexical;
 mod speech;
 pub use lexical::LexicalVector;

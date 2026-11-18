@@ -9,7 +9,47 @@ use crate::capture::{
 use crate::execution::ExecutionError;
 use crate::host::{ByteBudget, ByteReservation, CandidatePhase, CapacityError};
 mod interaction;
-pub(crate) use interaction::InteractionMode;
+pub use interaction::{InteractionMode, PlayerInteractionFacts};
+
+impl Simulation {
+    pub(crate) fn with_player_targets<Body, Person>(
+        &self,
+        account: &str,
+        actor: &str,
+        budget: &ByteBudget,
+        mut body: Body,
+        mut person: Person,
+    ) -> Result<(), ActorReadError>
+    where
+        Body: FnMut(crate::capture::PlayerObservedBody<'_>) -> bool,
+        Person: FnMut(&str) -> bool,
+    {
+        self.require_player_read(account, actor)?;
+        let perception =
+            capture_actor_perception(&self.state, actor, ActorReadPurpose::PlayerView, budget)?;
+        for contact in crate::capture::PlayerPerception::new(&perception)?.bodies() {
+            if body(contact.ok_or(ExecutionError::Invariant)?) {
+                return Ok(());
+            }
+        }
+        drop(perception);
+        with_actor_self(
+            &self.state,
+            actor,
+            ActorReadPurpose::PlayerView,
+            budget,
+            |own, _| {
+                for subject in own.player_facts()?.communication_subjects() {
+                    if person(subject.id) {
+                        break;
+                    }
+                }
+                Ok(())
+            },
+        )?;
+        Ok(())
+    }
+}
 
 #[derive(Debug)]
 pub(crate) enum ActorReadError {

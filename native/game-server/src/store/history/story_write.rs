@@ -2,8 +2,8 @@
 //! the same SQL transaction. Provider claims are a later operational stage.
 
 use super::super::{Store, StoreError, StoreResult, sql_ordinal};
-use super::perspective::Compare;
 use super::story::{Impact, PolicyStamp, StoryCandidate, StorySource};
+use crate::language::canonical::KeyOrder;
 use openlegend_simulation::{encoding::json_record, narration::native_text, text::JsText};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -45,7 +45,7 @@ impl Store {
         transaction: &Transaction<'_>,
         world: &str,
         mut candidates: Vec<StoryCandidate<'_>>,
-        compare: &Compare<'_>,
+        compare: &KeyOrder<'_>,
     ) -> StoreResult<()> {
         let mut failed = false;
         candidates.sort_by(|left, right| {
@@ -75,7 +75,7 @@ impl Store {
         transaction: &Transaction<'_>,
         world: &str,
         mut candidate: StoryCandidate<'_>,
-        compare: &Compare<'_>,
+        compare: &KeyOrder<'_>,
     ) -> StoreResult<()> {
         let owner = candidate.owner;
         let source = candidate.source;

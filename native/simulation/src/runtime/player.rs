@@ -8,7 +8,9 @@ use crate::capture::{
 use crate::geometry::{GeometryAnswers, GeometryBinding};
 use crate::host::{CapacityError, PublicationLease};
 use crate::simulation::AcceptedActorRead;
+pub use crate::simulation::{InteractionMode, PlayerInteractionFacts};
 use indexmap::IndexMap;
+use serde_json::value::RawValue;
 use std::mem::size_of;
 
 #[derive(Deserialize)]
@@ -54,13 +56,19 @@ pub struct RuntimePlayerViewSource {
     pub memory_cut: u64,
     pub places_revision: u64,
     pub inventory_revision: u64,
-    pub has_presentation_release: bool,
+    presentation_release: Option<Box<RawValue>>,
     pub presentation_release_revision: Option<u64>,
     milestones: IndexMap<String, bool>,
     _custody: ByteReservation,
 }
 
 impl RuntimePlayerViewSource {
+    /// Borrow the saved presentation reference from this exact accepted cut.
+    /// Application projection still needs the current asset catalog grant.
+    pub fn presentation_release(&self) -> Option<&RawValue> {
+        self.presentation_release.as_deref()
+    }
+
     pub fn milestone_done(&self, id: &str) -> bool {
         self.milestones.get(id).copied().unwrap_or(false)
     }
@@ -77,6 +85,16 @@ impl RuntimePlayerPublication {
     }
 }
 impl NativeWorldSession {
+    /// The application verifies external catalog retention before adopting
+    /// the cold writer. Simulation does not interpret these asset references.
+    pub fn saved_presentation_release(&self) -> (Option<&RawValue>, Option<u64>) {
+        let host = self.session.player_view_settings();
+        (
+            host.presentation_release.as_deref(),
+            host.presentation_release_revision,
+        )
+    }
+
     pub fn player_input(&self, input: &[u8]) -> Result<RuntimeJson, RuntimeError> {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
@@ -118,18 +136,53 @@ impl NativeWorldSession {
         {
             return Err(failure("invalid selected interaction recipient"));
         }
-        let simulation = self.session.accepted().map_err(failure)?;
-        let facts = simulation
-            .player_interaction(
-                &read.account,
-                &read.actor,
-                input.mode,
-                input.target_id.as_deref(),
-                &self.budget,
-                input.utterance_event_id.as_deref(),
-            )
+        self.with_player_interaction(
+            &read.account,
+            &read.actor,
+            input.mode,
+            input.target_id.as_deref(),
+            input.utterance_event_id.as_deref(),
+            |facts| RuntimeJson::encode(&facts, &self.budget),
+        )?
+    }
+
+    /// Resolve the same current and remembered roles emitted to the browser,
+    /// without preparing history or presentation control geometry. Only a
+    /// caller-funded selection may survive the accepted read.
+    pub fn with_player_targets(
+        &self,
+        account: &str,
+        actor: &str,
+        body: impl FnMut(crate::capture::PlayerObservedBody<'_>) -> bool,
+        person: impl FnMut(&str) -> bool,
+    ) -> Result<(), RuntimeError> {
+        self.require_active()?;
+        self.session
+            .accepted()
+            .map_err(failure)?
+            .with_player_targets(account, actor, &self.budget, body, person)
+            .map_err(failure)
+    }
+
+    /// Inspect the authoritative actor, recipient and payer in one accepted
+    /// read. The callback must fund anything it retains past the read.
+    pub fn with_player_interaction<T>(
+        &self,
+        account: &str,
+        actor: &str,
+        mode: InteractionMode,
+        target: Option<&str>,
+        utterance: Option<&str>,
+        consume: impl FnOnce(PlayerInteractionFacts<'_>) -> T,
+    ) -> Result<T, RuntimeError> {
+        self.require_active()?;
+        let facts = self
+            .session
+            .accepted()
+            .map_err(failure)?
+            .player_interaction(account, actor, mode, target, &self.budget, utterance)
             .map_err(failure)?;
-        RuntimeJson::encode(&facts, &self.budget)
+        Ok(consume(facts))
     }
     pub fn read_player(
         &mut self,
@@ -245,6 +298,15 @@ impl NativeWorldSession {
         let simulation = self.session.accepted().map_err(failure)?;
         if read.controls.is_none() {
             return Err(failure("player control preparation is unfinished"));
+        }
+        if let Some(source) = &read.view_source {
+            let current = self.session.player_view_settings();
+            let current_release = current.presentation_release.as_deref().map(RawValue::get);
+            if current_release != source.presentation_release().map(RawValue::get)
+                || current.presentation_release_revision != source.presentation_release_revision
+            {
+                return Ok(None);
+            }
         }
         if !simulation
             .player_read_still_permitted(&read.account, &read.actor, &read.read)
@@ -407,6 +469,13 @@ fn capture_view_source(
                     sum.checked_add(key.len())
                 })
         })
+        .and_then(|bytes| {
+            bytes.checked_add(
+                host.presentation_release
+                    .as_ref()
+                    .map_or(0, |release| release.get().len()),
+            )
+        })
         .ok_or_else(|| failure("capacity"))?;
     let custody = budget.reserve(bytes).map_err(failure)?;
     Ok(RuntimePlayerViewSource {
@@ -420,7 +489,7 @@ fn capture_view_source(
         memory_cut: state.accepted_cut,
         places_revision: state.experience.known_place_revision(actor),
         inventory_revision: state.administration.object_membership.revision,
-        has_presentation_release: host.presentation_release.is_some(),
+        presentation_release: host.presentation_release.clone(),
         presentation_release_revision: host.presentation_release_revision,
         milestones: milestones.cloned().unwrap_or_default(),
         _custody: custody,

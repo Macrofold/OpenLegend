@@ -46,6 +46,18 @@ impl RuntimePreparedProducts<'_> {
     pub fn retain_history(&self) -> RuntimeHistory {
         RuntimeHistory(self.history.clone())
     }
+
+    /// An occurrence can request a reply only when the intended recipient
+    /// actually acquired addressed speech in this exact candidate.
+    pub fn addressed_speech_source(
+        &self,
+        event: &str,
+        recipient: &str,
+        speaker: &str,
+    ) -> Option<&crate::experience::PersonalSourceRef> {
+        self.history
+            .addressed_speech_source(event, recipient, speaker)
+    }
 }
 
 impl RuntimeHistory {

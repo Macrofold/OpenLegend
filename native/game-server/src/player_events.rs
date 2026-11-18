@@ -463,6 +463,15 @@ pub enum SpeechReplyStatus {
     Stale,
 }
 
+impl SpeechReplyStatus {
+    pub(crate) fn terminal(self) -> bool {
+        matches!(
+            self,
+            Self::Completed | Self::Failed | Self::Cancelled | Self::Stale
+        )
+    }
+}
+
 #[derive(Deserialize)]
 pub struct SpeechReply {
     pub id: String,

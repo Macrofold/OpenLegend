@@ -14,8 +14,10 @@ use std::{
 };
 
 mod events;
+mod follow;
 pub(crate) mod macrofold;
 pub(crate) use events::{InferenceEvent, InferenceEvents};
+pub(crate) use follow::{ActiveRun, ObservedRun};
 
 const REQUEST_BYTES: usize = 500_000;
 const DIRECT_REPLY_BYTES: usize = 500_000;
@@ -39,6 +41,7 @@ impl ProviderRoute {
     }
 }
 
+#[derive(Clone)]
 pub(crate) struct ProviderDestination {
     route: ProviderRoute,
     url: Url,
@@ -174,6 +177,7 @@ impl ProviderDestination {
             request,
             digest,
             _body: storage,
+            observation: (self.route == ProviderRoute::Macrofold).then(|| self.clone()),
         })
     }
 }
@@ -183,6 +187,17 @@ pub(crate) struct PreparedProviderRequest {
     request: Request,
     pub(crate) digest: [u8; 32],
     _body: ByteReservation,
+    observation: Option<ProviderDestination>,
+}
+
+impl PreparedProviderRequest {
+    pub(crate) fn route(&self) -> ProviderRoute {
+        self.route
+    }
+
+    pub(crate) fn observer(&self) -> Option<ProviderDestination> {
+        self.observation.clone()
+    }
 }
 
 /// A response is opened within the caller's currentness lease and then
@@ -317,6 +332,7 @@ impl<'a> ProviderExchange<'a> {
             body: FundedReply {
                 bytes: body.bytes,
                 _storage: body.storage,
+                observed: None,
             },
         })
     }
@@ -345,6 +361,7 @@ pub(crate) enum ProviderReply {
 pub(crate) struct FundedReply {
     pub(crate) bytes: Vec<u8>,
     _storage: ByteReservation,
+    pub(crate) observed: Option<ObservedRun>,
 }
 
 #[derive(Clone, Debug, Serialize)]

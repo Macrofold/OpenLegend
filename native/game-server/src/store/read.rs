@@ -160,22 +160,10 @@ impl Store {
             .map_err(|_| StoreError::Capacity)?;
         let mut tables = BTreeMap::new();
         for table in &self.schema.tables {
-            let query = current_select(table);
             let params: &[&(dyn ToSql + Sync)] = &[&head.world_id];
-            let (_wire, rows) = admitted_query(&transaction, &query, params, &self.budget).await?;
-            grow(&mut custody, allocation::<InstalledRow>(rows.len())?)?;
-            let mut records = Vec::with_capacity(rows.len());
-            for row in rows {
-                let mut decode = self
-                    .budget
-                    .reserve(installed_row_bound(table, &row)?)
-                    .map_err(|_| StoreError::Capacity)?;
-                let record = installed_row(table, row)?;
-                let retained = record.retained_bytes().ok_or(StoreError::Capacity)?;
-                release_workspace(&mut decode, retained)?;
-                custody.merge(decode).map_err(|_| StoreError::Capacity)?;
-                records.push(record);
-            }
+            let records = self
+                .select_current_rows(&transaction, table, "world_id=$1", params, &mut custody)
+                .await?;
             tables.insert(table.name.clone(), records);
         }
         let originals = {
@@ -427,11 +415,69 @@ pub(super) fn hot_occurrence_ids<'a>(
     Ok((storage, ids))
 }
 
+impl Store {
+    /// Transfer a trusted, explicitly scoped current-record selection. The
+    /// caller owns the independently funded typed rows through its snapshot.
+    pub(super) async fn select_current_rows(
+        &self,
+        transaction: &Transaction<'_>,
+        table: &Table,
+        predicate: &str,
+        params: &[&(dyn ToSql + Sync)],
+        custody: &mut ByteReservation,
+    ) -> StoreResult<Vec<InstalledRow>> {
+        self.select_current_rows_bounded(transaction, table, predicate, params, custody, None)
+            .await
+    }
+
+    /// The same current row transfer with an additional consumer wire bound.
+    /// Debit it from the original trusted size preflight before receiving bodies.
+    pub(super) async fn select_current_rows_bounded(
+        &self,
+        transaction: &Transaction<'_>,
+        table: &Table,
+        predicate: &str,
+        params: &[&(dyn ToSql + Sync)],
+        custody: &mut ByteReservation,
+        wire_bytes: Option<&mut usize>,
+    ) -> StoreResult<Vec<InstalledRow>> {
+        let query = current_select(table, predicate);
+        let (_wire, rows) =
+            admitted_query_bounded(transaction, &query, params, &self.budget, wire_bytes).await?;
+        grow(custody, allocation::<InstalledRow>(rows.len())?)?;
+        let mut records = Vec::with_capacity(rows.len());
+        for row in rows {
+            let mut decode = self
+                .budget
+                .reserve(installed_row_bound(table, &row)?)
+                .map_err(|_| StoreError::Capacity)?;
+            let record = installed_row(table, row)?;
+            release_workspace(
+                &mut decode,
+                record.retained_bytes().ok_or(StoreError::Capacity)?,
+            )?;
+            custody.merge(decode).map_err(|_| StoreError::Capacity)?;
+            records.push(record);
+        }
+        Ok(records)
+    }
+}
+
 pub(super) async fn admitted_query(
     transaction: &Transaction<'_>,
     selection: &str,
     params: &[&(dyn ToSql + Sync)],
     budget: &ByteBudget,
+) -> StoreResult<(ByteReservation, Vec<Row>)> {
+    admitted_query_bounded(transaction, selection, params, budget, None).await
+}
+
+pub(super) async fn admitted_query_bounded(
+    transaction: &Transaction<'_>,
+    selection: &str,
+    params: &[&(dyn ToSql + Sync)],
+    budget: &ByteBudget,
+    wire_bytes: Option<&mut usize>,
 ) -> StoreResult<(ByteReservation, Vec<Row>)> {
     let statement = format!(
         "SELECT count(*),COALESCE(sum(octet_length(row_to_json(selected)::text)),0)::bigint FROM ({selection}) selected"
@@ -443,6 +489,12 @@ pub(super) async fn admitted_query(
         return Ok((empty, Vec::new()));
     }
     let bytes = usize::try_from(ordinal(bound.try_get(1)?)?).map_err(|_| StoreError::Capacity)?;
+    if let Some(remaining) = wire_bytes {
+        // A canonical transport envelope can escape up to six bytes per
+        // original code unit. SQL proof bytes here include its column names.
+        let transfer = bytes.checked_mul(6).ok_or(StoreError::Capacity)?;
+        *remaining = remaining.checked_sub(transfer).ok_or(StoreError::Capacity)?;
+    }
     // Wire buffers and driver row descriptors can overlap. The decoder admits
     // shape-dependent carrier storage separately before building a Rust graph.
     let bytes = bytes
@@ -457,7 +509,7 @@ pub(super) async fn admitted_query(
     Ok((allowance, rows))
 }
 
-fn current_select(table: &Table) -> String {
+fn current_select(table: &Table, predicate: &str) -> String {
     let mut select = String::from("SELECT ");
     append_current_record_fields(&mut select, table, "");
     for column in &table.columns {
@@ -472,7 +524,7 @@ fn current_select(table: &Table) -> String {
         }
     }
     select.push_str(&format!(
-        " FROM {} WHERE world_id=$1 ORDER BY parent_id,position,id",
+        " FROM {} WHERE {predicate} ORDER BY parent_id,position,id",
         table.name
     ));
     select
@@ -482,7 +534,10 @@ fn current_select(table: &Table) -> String {
 /// Joined selectors can qualify their trusted table alias without changing
 /// how SQL JSON cells are transferred for the shared row decoder.
 pub(super) fn append_current_record_fields(select: &mut String, table: &Table, qualifier: &str) {
-    for (index, name) in ["id", "parent_id", "slot", "position", "payload"].iter().enumerate() {
+    for (index, name) in ["id", "parent_id", "slot", "position", "payload"]
+        .iter()
+        .enumerate()
+    {
         if index != 0 {
             select.push(',');
         }

@@ -215,6 +215,23 @@ impl SaveJournal {
         )
     }
 
+    /// The source query folds these sparse accepted changes before awaiting
+    /// SQL. A later acknowledgement may release these save handles.
+    pub(crate) fn pending_source_versions(
+        &self,
+        detached: bool,
+    ) -> impl Iterator<Item = crate::received::SourceVersionArchiveChange<'_>> {
+        let plan = if detached {
+            self.in_flight
+                .as_ref()
+                .and_then(|prefix| prefix._source_versions.as_deref())
+        } else {
+            self.suffix_versions.as_deref()
+        };
+        std::iter::successors(plan, |&plan| plan.previous())
+            .flat_map(|plan| plan.value.archive_changes())
+    }
+
     /// Fund and validate all accumulating-save work before Ready/accept. The
     /// accepted suffix stays unchanged on refusal; only this private incoming
     /// product is held until the exact candidate settles. SQL may acknowledge

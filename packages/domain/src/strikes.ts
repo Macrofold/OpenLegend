@@ -23,6 +23,7 @@ import { selectedNaturalStrikeBodyPlans } from './world-composition.js';
 import { itemFor } from './objects.js';
 import { equippedItems } from './equipment.js';
 import type { Action, Entity, WorldState } from './types.js';
+import attackDescription from './attack-description.json' with { type: 'json' };
 /** Trusted targeted-strike definitions; data selects only this finite native family.
  * docs/targeted-actions.md#targeted-strikes
  */
@@ -64,7 +65,7 @@ export function describeAttack(
     'damage' | 'range' | 'workSeconds' | 'recoverySeconds' | 'accuracy'
   >,
 ): string {
-  return `${profile.damage} injury per hit; ${profile.workSeconds + (profile.recoverySeconds ?? 0)} game seconds plus approach; reach ${profile.range} m; ${Math.round((profile.accuracy ?? 1) * 100)}% base hit chance in reach.`;
+  return `${profile.damage}${attackDescription.injury}${profile.workSeconds + (profile.recoverySeconds ?? 0)}${attackDescription.time}${profile.range}${attackDescription.reach}${Math.round((profile.accuracy ?? 1) * 100)}${attackDescription.chance}`;
 }
 export function validMelee(profile: MeleeProfile): boolean {
   return (

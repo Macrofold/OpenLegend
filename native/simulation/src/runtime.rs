@@ -50,8 +50,12 @@ mod reply_preview;
 pub use private_history::{RuntimePrivateHistoryPublication, RuntimePrivateHistoryRead};
 mod navigation;
 mod read_cut;
+pub use crate::capture::{
+    NpcArchivedSourceRow, NpcPersonalSelection, NpcPersonalSourceRow, NpcReceiptSelection,
+    NpcSourceRows, NpcSourceSelection,
+};
 pub use navigation::RuntimeNavigationRead;
-pub use read_cut::RuntimeKnownPlaceRead;
+pub use read_cut::{RuntimeKnownPlaceRead, RuntimeNpcSourceRead, RuntimeSourceVersionRead};
 mod restore;
 mod retained_values;
 pub use crate::simulation::session::PreparedReadProgress as RuntimeProgress;
@@ -63,7 +67,10 @@ pub(crate) use npc::HeldSourceProof;
 pub use npc::{
     RuntimeNpcPreparationStep, RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket,
 };
-pub use player::{RuntimePlayerInputState, RuntimePlayerPublication, RuntimePlayerRead};
+pub use player::{
+    InteractionMode, PlayerInteractionFacts, RuntimePlayerInputState, RuntimePlayerPublication,
+    RuntimePlayerRead,
+};
 pub use reply_preview::{
     RuntimeReplyPreviewFacts, RuntimeReplyPreviewPublication, RuntimeReplyPreviewRead,
 };
@@ -142,6 +149,7 @@ pub struct RuntimeProviderInput {
 enum RuntimeAnswerBody {
     Json(String),
     Geometry(Box<crate::geometry::GeometryAnswers>),
+    NpcSources(Box<crate::capture::NpcSourcesAnswer>),
 }
 impl RuntimeProviderInput {
     /// The caller already admitted and owns this String's backing. Its actual
@@ -167,6 +175,28 @@ impl RuntimeProviderInput {
             custody,
         })
     }
+
+    /// Move the independently admitted selected PostgreSQL rows directly to
+    /// the existing native NPC evidence validator.
+    pub fn npc_sources(
+        binding: crate::geometry::GeometryBinding,
+        read_serial: u64,
+        rows: NpcSourceRows,
+        custody: ByteReservation,
+        budget: &ByteBudget,
+    ) -> Result<Self, RuntimeError> {
+        if !budget.owns(&custody) {
+            return Err(failure("NPC source rows belong to another native budget"));
+        }
+        let wrapper = budget.reserve(0).map_err(failure)?;
+        Ok(Self {
+            body: RuntimeAnswerBody::NpcSources(Box::new(
+                crate::capture::NpcSourcesAnswer::adopt(binding, read_serial, rows, custody)
+                    .map_err(failure)?,
+            )),
+            custody: wrapper,
+        })
+    }
 }
 
 fn provider_response(
@@ -190,6 +220,14 @@ fn provider_response(
                         ));
                     }
                     ProviderResponse::geometry(question.binding(), answer, input.custody)
+                }
+                RuntimeAnswerBody::NpcSources(answer) => {
+                    if question.kind() != crate::simulation::ProviderKind::Sources {
+                        return Err(failure(
+                            "NPC source answer cannot satisfy this provider request",
+                        ));
+                    }
+                    ProviderResponse::npc_sources(question.binding(), answer, input.custody)
                 }
             }
             .map_err(failure)
@@ -1224,6 +1262,10 @@ impl RuntimePreparedProducts<'_> {
 
     pub fn progress(&self) -> &RuntimeProgress<'_> {
         &self.progress
+    }
+
+    pub fn has_deferred_navigation(&self) -> bool {
+        matches!(self.operation, CompletedOperation::Advance(advance) if !advance.navigation.is_empty())
     }
 }
 

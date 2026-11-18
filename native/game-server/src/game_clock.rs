@@ -2,6 +2,7 @@
 //! advancement and its accepted result. A refused candidate consumes no debt.
 
 use crate::{
+    authority::{Authority, AuthorizedScope, Capability},
     boot::CurrentServer,
     live_save::{AcceptedSaveInput, LiveSaves},
     presence::Presence,
@@ -31,6 +32,7 @@ const MAX_GAME_OFFER: f64 = 86400.0;
 struct Advance {
     seconds: f64,
     navigation_pending: bool,
+    deferred_routes: bool,
     save: Option<Arc<AcceptedSaveInput>>,
 }
 
@@ -40,6 +42,7 @@ pub struct GameClock {
     base_ratio: f64,
     presence: Option<Arc<Presence>>,
     inputs: Option<Arc<WorldInputs>>,
+    accepted_reset: Mutex<Instant>,
 }
 
 impl GameClock {
@@ -50,7 +53,15 @@ impl GameClock {
             base_ratio,
             presence: None,
             inputs: None,
+            accepted_reset: Mutex::new(Instant::now()),
         }
+    }
+
+    /// A visibility transition has the same acknowledgement boundary as the
+    /// saved clock change it requested. Ordinary heartbeat renewal has no
+    /// reason to invoke this owner.
+    pub(crate) async fn presence_changed(&self) -> Result<(), WorldError> {
+        self.clock_with_presence().await.map(|_| ())
     }
 
     pub(crate) fn with_inputs(mut self, presence: Arc<Presence>, inputs: Arc<WorldInputs>) -> Self {
@@ -78,13 +89,60 @@ impl GameClock {
         if paused == current.paused {
             return Ok((current, false));
         }
+        self.persist_control(RuntimeClock { paused, ..current }, true, || Ok(()))
+            .await?;
+        Ok((RuntimeClock { paused, ..current }, true))
+    }
+
+    pub(crate) async fn manual_pause(
+        &self,
+        authority: Arc<Authority>,
+        scope: Arc<AuthorizedScope>,
+        setting: Option<bool>,
+    ) -> Result<bool, WorldError> {
+        authority.current(&scope, Capability::Play, true, |_, _| ())?;
+        let _protected = self.saves.enter_protected().await?;
+        let previous = self.game.world.capture(NativeWorldSession::clock).await?;
+        let visible = match &self.presence {
+            Some(presence) => presence.visible()?,
+            None => true,
+        };
+        if setting == Some(false) && !visible {
+            return Ok(false);
+        }
+        let manual = setting.unwrap_or(previous.manually_paused);
+        let paused = manual || !(visible || previous.exit_exposure_active);
+        if manual != previous.manually_paused || paused != previous.paused {
+            let active = RuntimeClock {
+                paused,
+                manually_paused: manual,
+                ..previous
+            };
+            self.persist_control(active, previous.paused || paused, move || {
+                Ok(authority.current(&scope, Capability::Play, true, |_, _| ())?)
+            })
+            .await?;
+        } else {
+            authority.current(&scope, Capability::Play, true, |_, _| ())?;
+        }
+        Ok(true)
+    }
+
+    /// Only the ordinary-save barrier holder can settle a durable clock
+    /// transition. The caller supplies the current authorization check.
+    async fn persist_control(
+        &self,
+        next: RuntimeClock,
+        reset_elapsed: bool,
+        validate: impl FnOnce() -> Result<(), WorldError> + Send + 'static,
+    ) -> Result<(), WorldError> {
         let provider = self.game.clone();
         let store = self.game.store.clone();
         self.game
             .world
             .execute_protected(
                 move |session| {
-                    session.begin_control_direct(paused, current.speed, current.manually_paused)
+                    session.begin_control_direct(next.paused, next.speed, next.manually_paused)
                 },
                 move |question| {
                     let game = provider.clone();
@@ -96,7 +154,7 @@ impl GameClock {
                     };
                     value.metadata_control().map(MetadataProjection::new)
                 },
-                || Ok(()),
+                validate,
                 move |projection, prefix| -> ProtectedCommit<'_> {
                     Box::pin(
                         async move { store.commit_prefix(prefix.rows(), &[], projection).await },
@@ -104,8 +162,17 @@ impl GameClock {
                 },
             )
             .await?;
+        if reset_elapsed {
+            *self
+                .accepted_reset
+                .lock()
+                .map_err(|_| HostError::Poisoned)? = Instant::now();
+            if let Some(inputs) = &self.inputs {
+                inputs.exclude()?;
+            }
+        }
         self.saves.signal_view();
-        Ok((RuntimeClock { paused, ..current }, true))
+        Ok(())
     }
 
     /// Reconcile the loaded hot state before accepting connections. Startup
@@ -186,6 +253,7 @@ impl GameClock {
                 }
                 let seconds = product.progress().at - clock.at;
                 let navigation_pending = result.code == "navigation-pending";
+                let deferred_routes = product.has_deferred_navigation();
                 let save = if navigation_pending && seconds == 0.0 {
                     None
                 } else {
@@ -194,6 +262,7 @@ impl GameClock {
                 Ok(Advance {
                     seconds,
                     navigation_pending,
+                    deferred_routes,
                     save,
                 })
             },
@@ -259,6 +328,11 @@ impl GameClock {
         let mut debt = 0.0;
         let mut more = false;
         let mut was_paused = true;
+        let mut reset = *self
+            .accepted_reset
+            .lock()
+            .map_err(|_| HostError::Poisoned)?;
+        let mut route = tokio::task::JoinSet::new();
         while !*stop.borrow() {
             if more {
                 tokio::task::yield_now().await;
@@ -283,9 +357,21 @@ impl GameClock {
             let suspended = *sample.borrow_and_update();
             let gap = suspended.saturating_sub(excluded);
             excluded = suspended;
-            if clock.paused || changed {
-                previous = Instant::now();
-                if !was_paused && let Some(inputs) = &self.inputs {
+            let latest_reset = *self
+                .accepted_reset
+                .lock()
+                .map_err(|_| HostError::Poisoned)?;
+            if clock.paused || changed || latest_reset != reset {
+                reset = latest_reset;
+                previous = if clock.paused {
+                    Instant::now()
+                } else {
+                    latest_reset
+                };
+                if clock.paused
+                    && !was_paused
+                    && let Some(inputs) = &self.inputs
+                {
                     inputs.exclude()?;
                 }
                 was_paused = true;
@@ -311,20 +397,34 @@ impl GameClock {
             if debt < 1e-6 {
                 continue;
             }
+            while let Some(result) = route.try_join_next() {
+                match result.map_err(|_| HostError::WorkerFailed)? {
+                    Err(WorldError::Host(HostError::Busy)) => {}
+                    other => other?,
+                }
+            }
             match self.saves.check_admission(now) {
                 Err(WorldError::Storage(StoreError::WriterUnavailable)) => continue,
                 other => other?,
             }
-            match self.advance(clock, debt.min(MAX_GAME_OFFER)).await {
+            let routes = match self.advance(clock, debt.min(MAX_GAME_OFFER)).await {
                 Ok(Some(advance)) => {
                     debt = (debt - advance.seconds).max(0.0);
                     more = debt >= 1e-6 && advance.seconds > 0.0 && !advance.navigation_pending;
+                    (advance.deferred_routes || advance.navigation_pending)
+                        .then_some(advance.navigation_pending)
                 }
-                Ok(None)
-                | Err(WorldError::ClockChanged)
+                Ok(None) => Some(true),
+                Err(WorldError::ClockChanged)
                 | Err(WorldError::Host(HostError::Busy))
-                | Err(WorldError::Fence(FenceError::Busy)) => (),
+                | Err(WorldError::Fence(FenceError::Busy)) => None,
                 Err(error) => return Err(error),
+            };
+            if let Some(include_world) = routes
+                && route.is_empty()
+            {
+                let game = self.game.clone();
+                route.spawn(async move { game.complete_route(include_world).await });
             }
         }
         Ok(())

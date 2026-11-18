@@ -14,8 +14,10 @@ pub struct StorageSchema {
     pub(crate) permitted_unmarked: Vec<String>,
     pub(crate) received_value_owners: Vec<String>,
     pub(crate) tables: Vec<Table>,
+    pub(crate) upsert_job: String,
     pub(crate) recall: RecallStatements,
     pub(crate) lexical: LexicalStatements,
+    pub(crate) source_versions: SourceVersionStatements,
     pub(crate) checkpoint: CheckpointFormat,
     pub(crate) default_story: Box<serde_json::value::RawValue>,
 }
@@ -36,6 +38,44 @@ pub(crate) struct LexicalStatements {
     pub write: String,
     pub complete: String,
     pub remove_awareness: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct SourceVersionStatements {
+    pub dependents: String,
+    pub archives: String,
+    pub accounts: SourceVersionAccountStatements,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct SourceVersionAccountStatements {
+    pub awareness: SourceVersionAccountQueries,
+    pub memory: SourceVersionAccountQueries,
+    pub summary: SourceVersionAccountQueries,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct SourceVersionAccountQueries {
+    pub predecessors: String,
+    pub learning: String,
+    pub bodies: String,
+}
+
+impl SourceVersionStatements {
+    fn statements(&self) -> impl Iterator<Item = &String> {
+        [&self.dependents, &self.archives].into_iter().chain(
+            [
+                &self.accounts.awareness,
+                &self.accounts.memory,
+                &self.accounts.summary,
+            ]
+            .into_iter()
+            .flat_map(|query| [&query.predecessors, &query.learning, &query.bodies]),
+        )
+    }
 }
 
 #[derive(Deserialize)]
@@ -132,6 +172,7 @@ impl StorageSchema {
             .checked_add(strings(&self.permitted_unmarked)?)?
             .checked_add(strings(&self.received_value_owners)?)?
             .checked_add(self.recall.insert.capacity())?
+            .checked_add(self.upsert_job.capacity())?
             .checked_add(self.recall.reconcile.capacity())?
             .checked_add(self.default_story.get().len())?
             .checked_add(self.lexical.work.capacity())?
@@ -139,6 +180,10 @@ impl StorageSchema {
             .checked_add(self.lexical.complete.capacity())?
             .checked_add(self.lexical.remove_awareness.capacity())?
             .checked_add(self.tables.capacity().checked_mul(size_of::<Table>())?)?;
+        bytes = self
+            .source_versions
+            .statements()
+            .try_fold(bytes, |n, sql| n.checked_add(sql.capacity()))?;
         for table in &self.tables {
             bytes = bytes
                 .checked_add(table.name.capacity())?
@@ -159,12 +204,14 @@ impl StorageSchema {
     pub(crate) fn validate(&self) -> StoreResult<()> {
         self.checkpoint.validate(self)?;
         if self.version.is_empty()
+            || self.upsert_job.is_empty()
             || self.recall.insert.is_empty()
             || self.recall.reconcile.is_empty()
             || self.lexical.work.is_empty()
             || self.lexical.write.is_empty()
             || self.lexical.complete.is_empty()
             || self.lexical.remove_awareness.is_empty()
+            || self.source_versions.statements().any(String::is_empty)
             || self
                 .tables
                 .first()

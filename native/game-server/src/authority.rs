@@ -78,7 +78,7 @@ pub enum Capability {
     ManageAccess,
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
 enum Audience {
     Embodied,
@@ -86,7 +86,7 @@ enum Audience {
 }
 
 // The browser's existing scope digest hashes these fields in this order.
-#[derive(Debug, Clone, Eq, PartialEq, Serialize)]
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RequestScope {
     pub account_id: String,
@@ -176,6 +176,17 @@ struct Access {
 }
 type TokenHash = [u8; 32];
 
+pub(crate) struct AssetAccess {
+    key: TokenHash,
+    session: Arc<Access>,
+}
+
+impl AssetAccess {
+    pub(crate) fn account_id(&self) -> &str {
+        &self.session.account
+    }
+}
+
 struct Cache {
     tokens: HashMap<TokenHash, Arc<Access>>,
     revision: u64,
@@ -233,6 +244,37 @@ impl Authority {
 
     pub(crate) fn output_budget(&self) -> &ByteBudget {
         &self.budget
+    }
+
+    /// Asset access shares the authenticated session, without granting a
+    /// world, player body or asset permission. The asset repository selects
+    /// the independently permitted release before the actual transfer.
+    pub(crate) async fn asset_access(&self, token: &str) -> Result<AssetAccess, AccessError> {
+        let (key, session) = self.access(token).await?;
+        Ok(AssetAccess { key, session })
+    }
+
+    /// Order the handoff of one already permitted asset against logout and
+    /// session expiry. The callback must finish synchronously in this lease.
+    pub(crate) fn disclose_asset<T>(
+        &self,
+        authorized: &AssetAccess,
+        publish: impl FnOnce() -> T,
+    ) -> Result<T, AccessError> {
+        let cache = self.cache.lock().map_err(|_| AccessError::Availability)?;
+        let current = cache
+            .tokens
+            .get(&authorized.key)
+            .ok_or(AccessError::Changed)?;
+        if cache.revoking.contains(&authorized.key)
+            || current.expires_at <= now_ms()
+            || current.session != authorized.session.session
+            || current.account != authorized.session.account
+            || current.session_revision != authorized.session.session_revision
+        {
+            return Err(AccessError::Changed);
+        }
+        Ok(publish())
     }
 
     /// Bind the listener to the installed writer's durable timeline before
@@ -480,6 +522,24 @@ impl Authority {
             self.selected(&cache, permit, Capability::Play, true)?;
         }
         Ok(accept())
+    }
+
+    pub(crate) fn current_view<T>(
+        &self,
+        authorized: &AuthorizedScope,
+        publish: impl FnOnce(&RequestScope, bool) -> T,
+    ) -> Result<T, AccessError> {
+        let cache = self.cache.lock().map_err(|_| AccessError::Availability)?;
+        let (_, controlling) = self.selected(&cache, authorized, Capability::Play, false)?;
+        let generation = cache
+            .tokens
+            .get(&authorized.key)
+            .and_then(|access| access.control.as_ref())
+            .map_or(0, |control| control.generation);
+        if generation != authorized.scope.control_generation {
+            return Err(AccessError::Changed);
+        }
+        Ok(publish(&authorized.scope, controlling))
     }
 
     fn selected<'cache>(

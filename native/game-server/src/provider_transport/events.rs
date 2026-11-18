@@ -28,6 +28,17 @@ pub(crate) struct FundedEventData {
     _storage: ByteReservation,
 }
 
+impl FundedEventData {
+    pub(crate) fn into_reply(self) -> FundedReply {
+        let value: Box<str> = self.value.into();
+        FundedReply {
+            bytes: value.into_string().into_bytes(),
+            _storage: self._storage,
+            observed: None,
+        }
+    }
+}
+
 pub(crate) struct InferenceEvents<'a> {
     exchange: ProviderExchange<'a>,
     decoder: Frames,
@@ -60,6 +71,12 @@ impl<'a> InferenceEvents<'a> {
     /// transport failure can still expose that admitted identity for recovery.
     pub(crate) fn accepted_run(&self) -> Option<&str> {
         self.run.as_ref().map(|(run, _)| run.as_str())
+    }
+
+    /// Lend bytes already owned by the event reader. Callers may keep only
+    /// independently admitted decoded speech, never this accumulated prefix.
+    pub(crate) fn prefix(&self) -> &[u8] {
+        &self.text.bytes
     }
 
     pub(crate) async fn next(

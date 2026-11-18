@@ -3,7 +3,8 @@
 
 use crate::{
     language::LanguageProvider,
-    store::{GameplayReceipt, OrdinaryProjection, PreparedRecall, Store, StoreError},
+    npc::schedule::{ScheduleInbox, ScheduleWake},
+    store::{AdmittedJob, GameplayReceipt, OrdinaryProjection, PreparedRecall, Store, StoreError},
     world::{HostedWorld, WorldError},
 };
 use indexmap::IndexMap;
@@ -31,6 +32,8 @@ pub struct AcceptedSaveInput {
     through: u64,
     history: RuntimeHistory,
     receipt: Option<GameplayReceipt>,
+    job: Option<Arc<AdmittedJob>>,
+    wake: Option<ScheduleWake>,
     _custody: ByteReservation,
 }
 
@@ -63,6 +66,7 @@ struct PreparedPrefix {
     through: u64,
     histories: Vec<RuntimeHistory>,
     receipts: Vec<GameplayReceipt>,
+    jobs: Vec<Arc<AdmittedJob>>,
     eligibility: Option<RuntimeHistoryCuts>,
     recall: Option<PreparedRecall>,
     _custody: ByteReservation,
@@ -79,6 +83,7 @@ pub struct LiveSaves {
     wake: Notify,
     lexical_wake: Arc<Notify>,
     publications: watch::Sender<u64>,
+    schedule: Option<Arc<ScheduleInbox>>,
 }
 
 impl LiveSaves {
@@ -108,7 +113,13 @@ impl LiveSaves {
             wake: Notify::new(),
             lexical_wake: Arc::new(Notify::new()),
             publications,
+            schedule: None,
         })
+    }
+
+    pub(crate) fn with_schedule(mut self, schedule: Arc<ScheduleInbox>) -> Self {
+        self.schedule = Some(schedule);
+        self
     }
 
     pub(crate) fn lexical_waker(&self) -> Arc<Notify> {
@@ -162,7 +173,9 @@ impl LiveSaves {
 
     pub(crate) fn signal_view(&self) {
         self.publications.send_modify(|revision| {
-            *revision = revision.checked_add(1).expect("publication revision exhausted");
+            *revision = revision
+                .checked_add(1)
+                .expect("publication revision exhausted");
         });
     }
 
@@ -173,6 +186,15 @@ impl LiveSaves {
         &self,
         products: &RuntimePreparedProducts<'_>,
         receipt: Option<GameplayReceipt>,
+    ) -> Result<Arc<AcceptedSaveInput>, RuntimeError> {
+        self.stage_with_job(products, receipt, None)
+    }
+
+    pub(crate) fn stage_with_job(
+        &self,
+        products: &RuntimePreparedProducts<'_>,
+        receipt: Option<GameplayReceipt>,
+        job: Option<Arc<AdmittedJob>>,
     ) -> Result<Arc<AcceptedSaveInput>, RuntimeError> {
         let receipt_body = receipt
             .as_ref()
@@ -205,10 +227,17 @@ impl LiveSaves {
                 .map_err(|_| CapacityError)?;
             pending.queue_custody = growing;
         }
+        let wake = self
+            .schedule
+            .as_ref()
+            .map(|schedule| schedule.stage(products.changes()))
+            .transpose()?;
         Ok(Arc::new(AcceptedSaveInput {
             through: products.progress().through_cut,
             history,
             receipt,
+            job,
+            wake,
             _custody: custody,
         }))
     }
@@ -235,6 +264,9 @@ impl LiveSaves {
             readers.accepted = Some(input.clone());
         }
         pending.queue.push_back((Instant::now(), input.clone()));
+        if let Some((schedule, wake)) = self.schedule.as_ref().zip(input.wake.as_ref()) {
+            schedule.accept(wake);
+        }
         if was_empty {
             self.wake.notify_one();
         }
@@ -308,6 +340,20 @@ impl LiveSaves {
             .and_then(|readers| readers.accepted.clone()))
     }
 
+    /// A pending job is visible at the accepted boundary before PostgreSQL
+    /// confirms the same occurrence. The returned owner survives that ACK.
+    pub(crate) fn pending_job(&self, id: &str) -> Result<Option<Arc<AdmittedJob>>, StoreError> {
+        let pending = self
+            .pending
+            .lock()
+            .map_err(|_| StoreError::WriterUnavailable)?;
+        Ok(pending
+            .queue
+            .iter()
+            .rev()
+            .find_map(|(_, input)| input.job.as_ref().filter(|job| job.job.id == id).cloned()))
+    }
+
     /// The existing one-second timer and manual barriers use this writer.
     /// PostgreSQL never owns the mutation turn while writing ordinary work.
     /// A caller can retry the same detached prefix or apply its known ACK.
@@ -363,7 +409,8 @@ impl LiveSaves {
                     flight.prepared.eligibility.as_ref(),
                     flight.prepared.recall.as_ref(),
                     self.language.as_deref(),
-                );
+                )
+                .with_conversation_jobs(&flight.prepared.jobs);
             match self
                 .store
                 .commit_save(&flight.native, &flight.prepared.receipts, &projection)
@@ -475,6 +522,7 @@ impl LiveSaves {
         let mut bytes = std::mem::size_of::<PreparedPrefix>();
         let mut histories_count = 0usize;
         let mut receipts_count = 0usize;
+        let mut jobs_count = 0usize;
         for input in selected() {
             histories_count += 1;
             bytes = bytes
@@ -485,6 +533,12 @@ impl LiveSaves {
                 bytes = bytes
                     .checked_add(std::mem::size_of::<GameplayReceipt>())
                     .and_then(|size| size.checked_add(receipt_bytes(receipt).ok()?))
+                    .ok_or(StoreError::Capacity)?;
+            }
+            if input.job.is_some() {
+                jobs_count += 1;
+                bytes = bytes
+                    .checked_add(std::mem::size_of::<Arc<AdmittedJob>>())
                     .ok_or(StoreError::Capacity)?;
             }
         }
@@ -500,10 +554,16 @@ impl LiveSaves {
         receipts
             .try_reserve_exact(receipts_count)
             .map_err(|_| StoreError::Capacity)?;
+        let mut jobs = Vec::new();
+        jobs.try_reserve_exact(jobs_count)
+            .map_err(|_| StoreError::Capacity)?;
         for input in selected() {
             histories.push(input.history.clone());
             if let Some(receipt) = &input.receipt {
                 receipts.push(receipt.clone());
+            }
+            if let Some(job) = &input.job {
+                jobs.push(job.clone());
             }
         }
         let eligibility = session.capture_save_history_cuts(through, &histories)?;
@@ -513,6 +573,7 @@ impl LiveSaves {
             through,
             histories,
             receipts,
+            jobs,
             eligibility,
             recall,
             _custody: custody,

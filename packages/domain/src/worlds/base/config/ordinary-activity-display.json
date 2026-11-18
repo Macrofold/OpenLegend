@@ -6,5 +6,44 @@
     "coordinateSeparator": ", ",
     "distanceName": "distance",
     "distanceSuffix": " m directly; the route length is not known"
+  },
+  "say": {
+    "name": "Speak",
+    "chunkUnits": 500,
+    "wordsName": "my words",
+    "moreWordsName": "more of my words",
+    "replyName": "reply",
+    "reply": "Speaking does not promise that anyone hears, answers or agrees"
+  },
+  "followName": "Follow",
+  "status": {
+    "name": "Act",
+    "activatePrefix": "Begin ",
+    "deactivatePrefix": "End ",
+    "resultName": "result",
+    "result": "An attempt; the actual applied or resisted change is recorded when it happens"
+  },
+  "strike": {
+    "name": "Attack once",
+    "attackName": "attack",
+    "approachName": "approach",
+    "approachPrefix": "Move to within ",
+    "approachSuffix": " m; route length is not known"
+  },
+  "observed": {
+    "distanceName": "distance",
+    "distanceSuffix": " m",
+    "directionName": "direction",
+    "directions": [
+      "ahead",
+      "ahead and to my right",
+      "to my right",
+      "behind and to my right",
+      "behind",
+      "behind and to my left",
+      "to my left",
+      "ahead and to my left"
+    ],
+    "healthName": "health"
   }
 }

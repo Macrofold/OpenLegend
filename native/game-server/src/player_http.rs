@@ -3,12 +3,15 @@
 
 use crate::{
     access_http::{access_failure, read_cookie, refusal},
-    authority::{AccessError, Authority, AuthorizedScope, ControlRequest},
+    authority::{AccessError, Authority, AuthorizedScope, Capability, ControlRequest},
     boot::CurrentServer,
     command_epoch::RequestIdentity,
     embodiment::{self, EmbodimentChange},
+    game_clock::GameClock,
     live_save::LiveSaves,
+    npc::Director,
     player_command::PlayerCommands,
+    player_references::ReferenceIssuer,
     presence::Presence,
     store::{CommitError, StoreError},
     wire,
@@ -18,7 +21,7 @@ use crate::{
 use axum::{
     Router,
     body::{Body, Bytes, to_bytes},
-    extract::{Request, State},
+    extract::{Query, Request, State},
     http::{HeaderMap, StatusCode, header},
     response::{IntoResponse, Response},
     routing::post,
@@ -27,6 +30,11 @@ use openlegend_simulation::host::{ByteBudget, ByteReservation};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::{sync::Arc, time::Duration};
 use tokio::sync::Semaphore;
+pub(crate) mod assets;
+mod dialogue;
+mod known_places;
+mod preview;
+mod view;
 
 const REQUEST_LIMIT: usize = 4096;
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
@@ -39,6 +47,10 @@ struct PlayerRoutes {
     commands: Arc<PlayerCommands>,
     presence: Arc<Presence>,
     inputs: Arc<WorldInputs>,
+    clock: Arc<GameClock>,
+    decisions: Arc<Director>,
+    references: Arc<ReferenceIssuer>,
+    expected_world: String,
     capacity: Arc<Semaphore>,
     grace: Duration,
 }
@@ -50,9 +62,15 @@ pub(crate) fn router(
     saves: Arc<LiveSaves>,
     presence: Arc<Presence>,
     inputs: Arc<WorldInputs>,
+    clock: Arc<GameClock>,
+    decisions: Arc<Director>,
+    expected_world: String,
     capacity: usize,
     grace: Duration,
-) -> Router {
+    streams: usize,
+    ai_display: crate::store::AiDisplay,
+    stop: tokio::sync::watch::Receiver<bool>,
+) -> Result<Router, getrandom::Error> {
     let commands = Arc::new(PlayerCommands::new(
         game.clone(),
         saves.clone(),
@@ -66,16 +84,33 @@ pub(crate) fn router(
         commands,
         presence,
         inputs,
+        clock,
+        decisions,
+        references: Arc::new(ReferenceIssuer::new()?),
+        expected_world,
         capacity: Arc::new(Semaphore::new(capacity)),
         grace,
     };
-    Router::new()
+    let streams = Arc::new(Semaphore::new(streams));
+    let reads = view::router(state.clone(), streams.clone(), ai_display, stop.clone())
+        .merge(preview::router(state.clone(), streams, stop));
+    let operations = Router::new()
         .route("/api/command", post(command))
         .route("/api/command/receipt", post(command))
         .route("/api/embodiment", post(control))
         .route("/api/presence", post(presence_report))
+        .route("/api/control", post(manual_clock))
         .route("/api/input", post(update_input))
-        .with_state(state)
+        .route("/api/known-places", post(known_places::list))
+        .route("/api/chat", post(dialogue::chat))
+        .route("/api/chat/receipt", post(dialogue::receipt))
+        .route("/api/ai/cancel", post(dialogue::cancel))
+        .route(
+            "/api/player-interaction/availability",
+            axum::routing::get(dialogue::availability),
+        )
+        .with_state(state);
+    Ok(operations.merge(reads))
 }
 
 async fn command(State(state): State<PlayerRoutes>, request: Request) -> Response {
@@ -172,21 +207,101 @@ struct PresenceReport {
     sequence: Option<u64>,
 }
 
-async fn presence_report(State(state): State<PlayerRoutes>, request: Request) -> Response {
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct PresenceBeacon {
+    client: String,
+    scope: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct ManualClock {
+    paused: Option<bool>,
+    speed: Option<f64>,
+    client_id: Option<String>,
+    presence_sequence: Option<u64>,
+}
+
+async fn manual_clock(State(state): State<PlayerRoutes>, request: Request) -> Response {
     let Ok(_request) = state.capacity.try_acquire() else {
         return busy();
     };
     let (parts, body) = request.into_parts();
     let authorized = match scope(&state.authority, &parts.headers, None).await {
-        Ok(scope) => scope,
+        Ok(access) => Arc::new(access),
         Err(error) => return access_failure(error),
     };
-    let (input, _custody): (PresenceReport, _) =
+    let (input, _custody): (ManualClock, _) =
         match json(&parts.headers, body, state.game.host.budget()).await {
             Ok(input) => input,
             Err(error) => return error,
         };
+    if input.speed.is_some() {
+        return refusal(
+            StatusCode::OK,
+            "forbidden",
+            "Game speed is available in God mode only.",
+        );
+    }
+    if input
+        .client_id
+        .as_ref()
+        .is_some_and(|id| id != &authorized.scope.connection_id)
+        || input
+            .presence_sequence
+            .is_some_and(|n| n > openlegend_simulation::identity::MAX_SAFE_INTEGER)
+    {
+        return access_failure(AccessError::Changed);
+    }
+    if input.paused == Some(false)
+        && input.client_id.is_some()
+        && let Err(error) = state
+            .presence
+            .report(authorized.clone(), true, input.presence_sequence)
+    {
+        return access_failure(error);
+    }
+    match state
+        .clock
+        .manual_pause(state.authority.clone(), authorized, input.paused)
+        .await
+    {
+        Ok(true) => control_response(&state, true, "control", "World controls updated."),
+        Ok(false) => refusal(
+            StatusCode::OK,
+            "away",
+            "This game tab has not reconnected yet. Reload it and try Resume again.",
+        ),
+        Err(error) => failed(error),
+    }
+}
+
+async fn presence_report(State(state): State<PlayerRoutes>, request: Request) -> Response {
+    let Ok(_request) = state.capacity.try_acquire() else {
+        return busy();
+    };
+    let (parts, body) = request.into_parts();
+    let beacon = if parts.headers.contains_key("x-ol-client") {
+        None
+    } else {
+        match Query::<PresenceBeacon>::try_from_uri(&parts.uri) {
+            Ok(Query(beacon)) => Some(beacon),
+            Err(_) => return access_failure(AccessError::Changed),
+        }
+    };
+    let authorized = match scope_from(&state.authority, &parts.headers, None, beacon.as_ref()).await
+    {
+        Ok(scope) => scope,
+        Err(error) => return access_failure(error),
+    };
+    let (input, _custody): (PresenceReport, _) =
+        match read_json(&parts.headers, body, state.game.host.budget(), true).await {
+            Ok(input) => input,
+            Err(error) => return error,
+        };
     if input.client_id != authorized.scope.connection_id
+        || (beacon.is_some() && input.visible)
         || input
             .sequence
             .is_some_and(|sequence| sequence > openlegend_simulation::identity::MAX_SAFE_INTEGER)
@@ -204,6 +319,9 @@ async fn presence_report(State(state): State<PlayerRoutes>, request: Request) ->
                 && let Err(error) = state.inputs.clear_actor(&actor)
             {
                 return access_failure(error);
+            }
+            if changed && let Err(error) = state.clock.presence_changed().await {
+                return failed(error);
             }
             control_response(
                 &state,
@@ -231,21 +349,29 @@ async fn update_input(State(state): State<PlayerRoutes>, request: Request) -> Re
             Err(error) => return error,
         };
     let inputs = state.inputs.clone();
+    let accepted_scope = authorized.clone();
     state.game.world.request_advance_publication();
     let report = state
         .game
         .world
         .capture(move |world| {
-            let scope = &authorized.scope;
+            let scope = &accepted_scope.scope;
             let facts = world.player_input_direct(&scope.account_id, &scope.actor_id)?;
-            Ok(inputs.update(authorized, facts, world.clock()?, input))
+            Ok(inputs.update(accepted_scope, facts, world.clock()?, input))
         })
         .await;
     match report {
-        Ok(Ok(result)) => match wire::encode(&result, b"", b"", state.game.host.budget()) {
-            Ok(bytes) => json_response(StatusCode::OK, bytes),
-            Err(_) => busy(),
-        },
+        Ok(Ok(result)) => {
+            match state
+                .authority
+                .current(&authorized, Capability::Play, true, |_, _| {
+                    wire::encode(&result, b"", b"", state.game.host.budget())
+                }) {
+                Ok(Ok(bytes)) => json_response(StatusCode::OK, bytes),
+                Ok(Err(_)) => busy(),
+                Err(error) => access_failure(error),
+            }
+        }
         Ok(Err(error)) => access_failure(error),
         Err(error) => failed(error),
     }
@@ -256,22 +382,27 @@ async fn scope(
     headers: &HeaderMap,
     expected: Option<u64>,
 ) -> Result<AuthorizedScope, AccessError> {
+    scope_from(authority, headers, expected, None).await
+}
+
+async fn scope_from(
+    authority: &Authority,
+    headers: &HeaderMap,
+    expected: Option<u64>,
+    beacon: Option<&PresenceBeacon>,
+) -> Result<AuthorizedScope, AccessError> {
     let token = read_cookie(headers, "ol_session").ok_or(AccessError::Session)?;
     let tab = headers
         .get("x-ol-client")
         .and_then(|header| header.to_str().ok())
-        .filter(|text| {
-            !text.is_empty()
-                && text.len() <= 100
-                && text
-                    .bytes()
-                    .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-'))
-        })
+        .or_else(|| beacon.map(|beacon| beacon.client.as_str()))
+        .filter(|text| valid_tab(text))
         .ok_or(AccessError::Changed)?;
     let authorized = authority.scope(token, tab.to_owned()).await?;
     let submitted = headers
         .get("x-ol-scope")
         .and_then(|header| header.to_str().ok())
+        .or_else(|| beacon.map(|beacon| beacon.scope.as_str()))
         .ok_or(AccessError::Changed)?;
     let selected = &authorized.scope;
     if selected.key().map_err(|_| AccessError::Availability)? != submitted {
@@ -287,15 +418,34 @@ async fn scope(
     Ok(authorized)
 }
 
+fn valid_tab(tab: &str) -> bool {
+    !tab.is_empty()
+        && tab.len() <= 100
+        && tab
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-'))
+}
+
 async fn json<T: DeserializeOwned>(
     headers: &HeaderMap,
     body: Body,
     budget: &ByteBudget,
 ) -> Result<(T, ByteReservation), Response> {
+    read_json(headers, body, budget, false).await
+}
+
+async fn read_json<T: DeserializeOwned>(
+    headers: &HeaderMap,
+    body: Body,
+    budget: &ByteBudget,
+    presence: bool,
+) -> Result<(T, ByteReservation), Response> {
     if !headers
         .get(header::CONTENT_TYPE)
         .and_then(|value| value.to_str().ok())
-        .is_some_and(|value| value.starts_with("application/json"))
+        .is_some_and(|value| {
+            value.starts_with("application/json") || (presence && value.starts_with("text/plain"))
+        })
     {
         return Err(refusal(
             StatusCode::UNSUPPORTED_MEDIA_TYPE,

@@ -19,19 +19,19 @@ export type OrdinaryActivityNameInput = {
 export function ordinaryActivityName({ command, effect }: OrdinaryActivityNameInput): string {
   if (command.type === 'status-effect' && effect)
     return command.operation === 'activate'
-      ? (effect.activate ?? `Begin ${effect.label}`)
-      : (effect.deactivate ?? `End ${effect.label}`);
+      ? (effect.activate ?? `${display.status.activatePrefix}${effect.label}`)
+      : (effect.deactivate ?? `${display.status.deactivatePrefix}${effect.label}`);
   return (
     command.purpose ??
     (command.type === 'move'
       ? display.move.name
       : command.type === 'say'
-        ? 'Speak'
+        ? display.say.name
         : command.type === 'follow'
-          ? 'Follow'
+          ? display.followName
           : command.type === 'strike'
-            ? 'Attack once'
-            : 'Act')
+            ? display.strike.name
+            : display.status.name)
   );
 }
 export function sharedOrdinaryActivityName(input: OrdinaryActivityNameInput): string {
@@ -79,10 +79,14 @@ export function ordinaryActivityView(input: OrdinaryActivityViewInput): Activity
     });
   appendObservedActivityFacts(view, actor, target);
   if (command.type === 'strike' && strike) {
-    view.facts.push({ name: 'attack', value: describeAttack(strike), critical: true });
     view.facts.push({
-      name: 'approach',
-      value: `Move to within ${strike.approachRange ?? strike.range} m; route length is not known`,
+      name: display.strike.attackName,
+      value: describeAttack(strike),
+      critical: true,
+    });
+    view.facts.push({
+      name: display.strike.approachName,
+      value: `${display.strike.approachPrefix}${strike.approachRange ?? strike.range}${display.strike.approachSuffix}`,
       critical: true,
     });
   }
@@ -98,22 +102,22 @@ export function ordinaryActivityView(input: OrdinaryActivityViewInput): Activity
     });
   }
   if (command.type === 'say') {
-    for (let at = 0; at < command.text.length; at += 500)
+    for (let at = 0; at < command.text.length; at += display.say.chunkUnits)
       view.facts.push({
-        name: at ? 'more of my words' : 'my words',
-        value: command.text.slice(at, at + 500),
+        name: at ? display.say.moreWordsName : display.say.wordsName,
+        value: command.text.slice(at, at + display.say.chunkUnits),
         critical: true,
       });
     view.facts.push({
-      name: 'reply',
-      value: 'Speaking does not promise that anyone hears, answers or agrees',
+      name: display.say.replyName,
+      value: display.say.reply,
       critical: true,
     });
   }
   if (command.type === 'status-effect') {
     view.facts.push({
-      name: 'result',
-      value: 'An attempt; the actual applied or resisted change is recorded when it happens',
+      name: display.status.resultName,
+      value: display.status.result,
       critical: true,
     });
   }
@@ -130,27 +134,17 @@ export function appendObservedActivityFacts(
   const a = actor.position,
     b = target.position;
   view.facts.push({
-    name: 'distance',
-    value: `${Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z).toFixed(1)} m`,
+    name: display.observed.distanceName,
+    value: `${Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z).toFixed(1)}${display.observed.distanceSuffix}`,
     critical: true,
   });
   // Right-handed, Y-up: facing +Z puts the right hand at -X.
   const bearing = actor.heading - Math.atan2(b.x - a.x, b.z - a.z);
-  const directions = [
-    'ahead',
-    'ahead and to my right',
-    'to my right',
-    'behind and to my right',
-    'behind',
-    'behind and to my left',
-    'to my left',
-    'ahead and to my left',
-  ];
   view.facts.push({
-    name: 'direction',
-    value: directions[((Math.round(bearing / (Math.PI / 4)) % 8) + 8) % 8]!,
+    name: display.observed.directionName,
+    value: display.observed.directions[((Math.round(bearing / (Math.PI / 4)) % 8) + 8) % 8]!,
     critical: true,
   });
   const health = formatObservedBodyHealth(target.health);
-  if (health) view.facts.push({ name: 'health', value: health, critical: true });
+  if (health) view.facts.push({ name: display.observed.healthName, value: health, critical: true });
 }

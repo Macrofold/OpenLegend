@@ -6,26 +6,34 @@ use serde::Serialize;
 
 #[derive(Clone, Copy, serde::Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub(crate) enum InteractionMode {
+pub enum InteractionMode {
     Speak,
     Act,
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct PlayerInteractionFacts<'a> {
-    actor_available: bool,
-    recipient_available: bool,
-    funding_actor_id: &'a str,
-    reply: bool,
+pub struct PlayerInteractionFacts<'a> {
+    pub actor_available: bool,
+    pub recipient_available: bool,
+    pub funding_actor_id: &'a str,
+    pub reply: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    recipient_can_respond: Option<bool>,
+    pub recipient_can_respond: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    heard_utterance: Option<bool>,
+    pub heard_utterance: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    recipient_name: Option<&'a crate::text::JsText>,
+    pub recipient_name: Option<&'a crate::text::JsText>,
     #[serde(skip_serializing_if = "Option::is_none")]
     recipient_description: Option<crate::worlds::base_knowledge::OwnedPersonalName>,
+}
+
+impl PlayerInteractionFacts<'_> {
+    pub fn recipient_description(&self) -> Option<&crate::state::Named> {
+        self.recipient_description
+            .as_ref()
+            .map(|description| description.name())
+    }
 }
 
 impl Simulation {

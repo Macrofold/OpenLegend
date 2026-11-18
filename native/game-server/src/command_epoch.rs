@@ -55,6 +55,27 @@ impl RequestIdentity {
             .await
     }
 
+    /// Install the recovery timeline and invalidate prior command tokens
+    /// inside the same transaction as the staged world replacement.
+    pub(crate) async fn restore(
+        tx: &Transaction<'_>,
+        world: &str,
+        timeline: &str,
+    ) -> StoreResult<Self> {
+        Uuid::parse_str(timeline).map_err(|_| StoreError::InvalidRecord)?;
+        write(
+            tx,
+            &format!("integration:world-timeline:{world}"),
+            &timeline,
+        )
+        .await?;
+        let epoch = rotate(tx, world, now_ms()).await?;
+        Ok(Self {
+            timeline: timeline.to_owned(),
+            epoch,
+        })
+    }
+
     /// The accepted-operation turn calls this before resolving new commands.
     /// Keep the prior live token if the required durable rotation rolls back.
     pub async fn refresh(&mut self, store: &Store, world: &str) -> Result<bool, CommitError> {

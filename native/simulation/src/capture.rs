@@ -42,10 +42,13 @@ mod npc_history;
 pub(crate) use npc_history::{NpcHistoricalScope, NpcHistoryPrefix};
 mod npc_sources;
 pub use npc_sources::RuntimeKnownPlaceWitness;
+pub use npc_sources::{
+    NpcArchivedSourceRow, NpcPersonalSelection, NpcPersonalSourceRow, NpcReceiptSelection,
+    NpcSourceRows, NpcSourceSelection,
+};
 pub(crate) use npc_sources::{
-    NpcPersonalScope, NpcPersonalSelection, NpcSourceRows, NpcSourceSelection, NpcSourcesAnswer,
-    NpcSourcesCursor, NpcSourcesRequest, PreparedKnownPlaceSources, PreparedMovementTerms,
-    PreparedNpcSources,
+    NpcPersonalScope, NpcSourcesAnswer, NpcSourcesCursor, NpcSourcesRequest,
+    PreparedKnownPlaceSources, PreparedMovementTerms, PreparedNpcSources,
 };
 mod npc_selection;
 pub(crate) use npc_selection::NpcObservationSelection;

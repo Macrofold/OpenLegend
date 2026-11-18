@@ -25,6 +25,17 @@ pub(crate) struct NpcSourcesAnswer {
     _storage: ByteReservation,
 }
 impl NpcSourcesAnswer {
+    pub(crate) fn adopt(
+        binding: GeometryBinding,
+        read_serial: u64,
+        rows: NpcSourceRows,
+        mut storage: ByteReservation,
+    ) -> Result<Self, crate::simulation::DriveError> {
+        let size = storage.bytes().checked_add(size_of::<Self>()).ok_or(crate::simulation::DriveError::Capacity)?;
+        storage.resize(size).map_err(|_| crate::simulation::DriveError::Capacity)?;
+        Ok(Self { value: SourceAnswer { binding, read_serial, rows }, _storage: storage })
+    }
+
     pub(crate) fn binding(&self) -> GeometryBinding {
         self.value.binding
     }

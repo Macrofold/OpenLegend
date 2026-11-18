@@ -2,28 +2,44 @@
 //! admitted readers use a fixed read-only snapshot on a separate connection.
 
 mod archives;
+pub(crate) mod assets;
+mod attempts;
+pub(crate) use attempts::{
+    AttemptAdmission, AttemptRequest, InferenceClass, ModelReceipt, ModelUsage, ReservedAttempt,
+};
 mod checkpoint;
 pub(crate) use checkpoint::{
     AdministrativeCheckpoint, CheckpointHistory, RecoveryAuthority, read_recovery_authority,
     reconcile_history_positions,
 };
 mod history;
+mod jobs;
 mod known_places;
 mod lexical;
 mod metadata;
+mod npc_schedule;
+mod npc_sources;
 mod read;
 mod recall;
 mod received;
 mod schema;
+mod source_versions;
+mod view_cognition;
 mod write;
+pub(crate) use view_cognition::AiDisplay;
 
 pub use history::OrdinaryProjection;
+pub(crate) use jobs::{AdmittedJob, ConversationJob, JobRequest, TerminalOutcome};
 pub use known_places::PreparedKnownPlaceRead;
+pub(crate) use known_places::{KnownPlaceViewPage, PlaceViewRequest, PlaceViewSearch};
 pub use lexical::{PendingLexical, PreparedLexical};
 pub use metadata::MetadataProjection;
+pub(crate) use npc_schedule::ThoughtRead;
+pub(crate) use npc_sources::PreparedNpcSources;
 pub use read::{AdmittedReceipt, CurrentOpening, GameplayReceipt};
 pub use recall::PreparedRecall;
 pub use schema::StorageSchema;
+pub(crate) use source_versions::PreparedSourceVersions;
 pub use write::{CommitError, PrefixProjection};
 
 use openlegend_simulation::host::ByteBudget;

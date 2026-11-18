@@ -55,7 +55,7 @@ pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(
         .await?;
     let (authority, identity) = Authority::for_world(
         game.store.clone(),
-        world_id,
+        world_id.clone(),
         Duration::from_secs_f64(duration * 3600.0),
         4096_i64.max(16 * players),
         local,
@@ -73,16 +73,49 @@ pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(
         custody.clone(),
         usize::try_from(6 * players)?,
     )?);
-    let saves = Arc::new(LiveSaves::new(
-        game.world.clone(),
-        game.store.clone(),
-        custody.clone(),
-        game.language().cloned(),
-    )?);
     let grace = setting("OPEN_LEGEND_EXIT_GRACE_SECONDS", "15")?.parse::<f64>()?;
     if !(1.0..=60.0).contains(&grace) {
         return Err("OPEN_LEGEND_EXIT_GRACE_SECONDS must be between 1 and 60".into());
     }
+    let limit_usd = setting("AI_BUDGET_USD", "50")?.parse::<f64>()?;
+    if !(0.0..=100.0).contains(&limit_usd) {
+        return Err("AI_BUDGET_USD must be between 0 and 100".into());
+    }
+    let macrofold = !setting("MACROFOLD_API_KEY", "")?.is_empty();
+    let jev = !setting("TYPESAFE_API_KEY", &setting("JEV_API_KEY", "")?)?.is_empty();
+    let language = !setting("OPENAI_API_KEY", "")?.is_empty();
+    let display = crate::store::AiDisplay {
+        jev_configured: macrofold || jev,
+        llm_configured: macrofold || language,
+        limit_usd,
+    };
+    let schedule = (display.jev_configured && limit_usd > 0.0).then(|| {
+        Arc::new(crate::npc::schedule::ScheduleInbox::new(
+            game.cognition.clone(),
+            custody.clone(),
+        ))
+    });
+    let saves = LiveSaves::new(
+        game.world.clone(),
+        game.store.clone(),
+        custody.clone(),
+        game.language().cloned(),
+    )?;
+    let saves = Arc::new(match &schedule {
+        Some(schedule) => saves.with_schedule(schedule.clone()),
+        None => saves,
+    });
+    let clock = Arc::new(
+        GameClock::new(game.clone(), saves.clone(), game.view_policy().base_ratio())
+            .with_inputs(presence.clone(), inputs.clone()),
+    );
+    let decisions = Arc::new(crate::npc::Director::new(
+        game.clone(),
+        saves.clone(),
+        authority.clone(),
+        limit_usd,
+    )?);
+    let (end_http, http_stop) = watch::channel(false);
     let requests = crate::player_http::router(
         authority.clone(),
         identity,
@@ -90,14 +123,31 @@ pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(
         saves.clone(),
         presence.clone(),
         inputs.clone(),
+        clock.clone(),
+        decisions.clone(),
+        world_id,
         usize::try_from(4 * players)?,
         Duration::from_secs_f64(grace),
-    );
+        usize::try_from(3 * players)?,
+        display,
+        http_stop.clone(),
+    )
+    .map_err(|_| "Could not establish per-process player reference keys")?;
     let game_routes = Router::new()
         .route_service("/", ServeFile::new(browser.join("index.html")))
         .fallback_service(ServeDir::new(browser).append_index_html_on_directories(false))
         .layer(middleware::from_fn(build_cache))
         .merge(requests);
+    let game_routes = match game.installed_assets() {
+        Some(assets) => game_routes.merge(crate::player_http::assets::router(
+            assets.clone(),
+            authority.clone(),
+            game.store.clone(),
+            custody.clone(),
+            http_stop,
+        )),
+        None => game_routes,
+    };
     let routes = if local {
         access_http::local_router(authority, bound.port(), game_routes)
     } else {
@@ -112,10 +162,19 @@ pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(
         )?;
         access_http::oidc_router(authority, oidc, game_routes)
     };
-    let clock = GameClock::new(game.clone(), saves.clone(), 60.0).with_inputs(presence, inputs);
     clock.initialize().await?;
     println!("OpenLegend listening on {bound}");
-    let run = run(listen, routes, clock, saves, game.clone()).await;
+    let run = run(
+        listen,
+        routes,
+        clock,
+        saves,
+        decisions,
+        schedule,
+        end_http,
+        game.clone(),
+    )
+    .await;
     let close = Arc::try_unwrap(game)
         .map_err(|_| "The listener left a running world owner")?
         .close()
@@ -126,11 +185,16 @@ pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(
 async fn run(
     listen: TcpListener,
     routes: Router,
-    clock: GameClock,
+    clock: Arc<GameClock>,
     saves: Arc<LiveSaves>,
+    decisions: Arc<crate::npc::Director>,
+    schedule: Option<Arc<crate::npc::schedule::ScheduleInbox>>,
+    end_http: watch::Sender<bool>,
     game: Arc<CurrentServer>,
 ) -> Result<(), LaunchError> {
-    let (end_http, http_stop) = watch::channel(false);
+    let http_stop = end_http.subscribe();
+    let scheduler = schedule
+        .map(|inbox| tokio::spawn(decisions.clone().run_schedule(inbox, end_http.subscribe())));
     let (end_clock, clock_stop) = watch::channel(false);
     let (end_saves, save_stop) = watch::channel(false);
     let (end_lexical, lexical_stop) = watch::channel(false);
@@ -140,7 +204,7 @@ async fn run(
         lexical_stop,
     ));
     let http = async move {
-        axum::serve(listen, routes)
+        axum::serve(crate::socket::Listener(listen), routes)
             .with_graceful_shutdown(stopped(http_stop))
             .await
     };
@@ -150,6 +214,7 @@ async fn run(
     let mut http_result = None;
     let mut clock_result = None;
     let mut save_result = None;
+    let mut decision_result = None;
     let signal = tokio::select! {
         result = &mut http => { http_result = Some(result); Ok(()) }
         result = &mut clock_work => { clock_result = Some(result); Ok(()) }
@@ -159,8 +224,10 @@ async fn run(
     let _ = end_http.send(true);
     let _ = end_clock.send(true);
     let _ = end_lexical.send(true);
+    let stop_decisions = async move { decisions.stop().await };
+    tokio::pin!(stop_decisions);
     // Let pending accepted commands finish while their writer still runs.
-    while http_result.is_none() || clock_result.is_none() {
+    while http_result.is_none() || clock_result.is_none() || decision_result.is_none() {
         tokio::select! {
             result = &mut http, if http_result.is_none() => {
                 http_result = Some(result);
@@ -171,6 +238,9 @@ async fn run(
             result = &mut save_work, if save_result.is_none() => {
                 save_result = Some(result);
             }
+            result = &mut stop_decisions, if decision_result.is_none() => {
+                decision_result = Some(result);
+            }
         }
     }
     let _ = end_saves.send(true);
@@ -178,7 +248,11 @@ async fn run(
         save_result = Some(save_work.await);
     }
     lexical.await?;
+    if let Some(scheduler) = scheduler {
+        scheduler.await?;
+    }
     signal?;
+    decision_result.expect("joined decision owner")?;
     save_result.expect("joined save owner")?;
     clock_result.ok_or("The save owner stopped before the clock")??;
     http_result.ok_or("The save owner stopped before ingress")??;

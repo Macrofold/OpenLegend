@@ -6,8 +6,9 @@ use openlegend_simulation::{activity::ActivityView, state::Point, text::JsText};
 use serde::Deserialize;
 use serde_json::value::RawValue;
 
-#[path = "../../../packages/domain/src/worlds/base/native/move_display.rs"]
-mod move_display;
+#[path = "../../../packages/domain/src/worlds/base/native/ordinary_activity_display.rs"]
+mod authored;
+use authored::{EffectWords, ObservedActor, ObservedTarget, OrdinaryAction, StrikeRead};
 
 #[derive(Deserialize)]
 struct Profile<'a> {
@@ -24,41 +25,73 @@ struct DisplayRequest<'a> {
 
 #[derive(Deserialize)]
 struct DisplayInput {
-    command: MoveCommand,
-    actor: ActorPosition,
+    command: DisplayCommand,
+    actor: Option<ObservedActor>,
+    target: Option<ObservedTarget>,
+    effect: Option<EffectWords>,
+    strike: Option<StrikeRead>,
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct MoveCommand {
+struct DisplayCommand {
     #[serde(rename = "type")]
-    _kind: MoveKind,
-    destination: Point,
+    kind: Kind,
+    destination: Option<Point>,
+    text: Option<JsText>,
     purpose: Option<JsText>,
     chosen_purpose: Option<JsText>,
+    operation: Option<StatusOperation>,
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "kebab-case")]
-enum MoveKind {
+enum Kind {
     Move,
+    Say,
+    Follow,
+    StatusEffect,
+    Strike,
 }
 
 #[derive(Deserialize)]
-struct ActorPosition {
-    position: Point,
+#[serde(rename_all = "lowercase")]
+enum StatusOperation {
+    Activate,
+    Deactivate,
 }
 
 pub(crate) fn format(request: &RawValue) -> Result<ActivityView, WorldError> {
     let request: DisplayRequest<'_> =
         serde_json::from_str(request.get()).map_err(|_| WorldError::ProviderKind)?;
-    let command = request.input.command;
-    move_display::format(
-        (request.profile.id, request.profile.version),
+    let DisplayInput {
+        command,
+        actor,
+        target,
+        effect,
+        strike,
+    } = request.input;
+    let profile = (request.profile.id, request.profile.version);
+    let action = match command.kind {
+        Kind::Move => OrdinaryAction::Move(command.destination.ok_or(WorldError::ProviderKind)?),
+        Kind::Say => OrdinaryAction::Say(command.text.ok_or(WorldError::ProviderKind)?),
+        Kind::Follow => OrdinaryAction::Follow,
+        Kind::StatusEffect => OrdinaryAction::Status {
+            activate: matches!(
+                command.operation.ok_or(WorldError::ProviderKind)?,
+                StatusOperation::Activate
+            ),
+            effect,
+        },
+        Kind::Strike => OrdinaryAction::Strike(strike),
+    };
+    authored::format(
+        profile,
+        action,
         command.purpose,
         command.chosen_purpose,
-        request.input.actor.position,
-        command.destination,
+        actor,
+        target,
     )
     .ok_or(WorldError::ProviderKind)
 }
