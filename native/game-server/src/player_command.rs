@@ -213,6 +213,62 @@ impl PlayerCommands {
         self.identity.lock().await.epoch.token.clone()
     }
 
+    /// Paused work follows the ordinary checked Stop command through a
+    /// rolled-back preview. The result stays bound to the displayed cut.
+    pub(crate) async fn preview_paused_stop(
+        &self,
+        scope: Arc<AuthorizedScope>,
+        cut: u64,
+    ) -> Result<crate::player_view::PausedStop, WorldError> {
+        let authority = self.authority.clone();
+        let provider = self.game.clone();
+        let command_budget = self.game.host.budget().clone();
+        let preview = self
+            .game
+            .world
+            .execute_and_publish(
+                move |world| {
+                    authority.current(&scope, Capability::Play, true, |_, _| ())?;
+                    if world.accepted_progress()?.through_cut != cut || !world.clock()?.paused {
+                        return Err(WorldError::ProjectionChanged);
+                    }
+                    let _command = command_budget.reserve(4096).map_err(RuntimeError::from)?;
+                    let (input, signature) = encode_operation(
+                        &Uuid::new_v4().to_string(),
+                        &scope.scope.actor_id,
+                        MoveOrCancel::Cancel,
+                        None,
+                        None,
+                    )?;
+                    Ok(ApplicationStart::Candidate(
+                        world.begin_command_preview(input.as_bytes(), signature)?,
+                    ))
+                },
+                move |question| {
+                    let game = provider.clone();
+                    async move { game.answer_operation(question).await }
+                },
+                move |output, budget| {
+                    let RuntimeDirectOutput::Preview(value) = output else {
+                        return Err(RuntimeError::application_refused(
+                            "Stop preview did not roll back",
+                        ));
+                    };
+                    let custody = budget.reserve(value.message.storage_bytes() + 128)?;
+                    Ok(crate::player_view::PausedStop {
+                        ok: value.ok,
+                        message: value.message.clone(),
+                        cut,
+                        _custody: custody,
+                    })
+                },
+                |fence, key, _| Ok(fence.settle(key, false)?),
+                |_| {},
+            )
+            .await?;
+        preview.ok_or(WorldError::ProjectionChanged)
+    }
+
     pub(crate) async fn command(
         &self,
         scope: Arc<AuthorizedScope>,

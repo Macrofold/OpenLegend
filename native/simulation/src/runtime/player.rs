@@ -373,6 +373,12 @@ impl NativeWorldSession {
     }
 }
 impl RuntimePlayerRead {
+    /// The exact accepted owner for a host control preview prepared after
+    /// capturing this view. No other caller may infer authority from the cut.
+    pub fn accepted_cut(&self) -> u64 {
+        self.read.accepted_cut
+    }
+
     /// Attach the stored narrator's exact personal-source witness to this
     /// already selected view. The physical reader owns a separate small copy
     /// until the final native disclosure or the caller drops this attempt.

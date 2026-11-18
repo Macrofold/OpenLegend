@@ -230,6 +230,7 @@ impl Body for PlayerStream {
                         &attempt.scope,
                         attempt.view.read(),
                         attempt.view.event_ids(),
+                        attempt.view.control_preview_cut(),
                         |allowed, budget| {
                             inventory = allowed;
                             match attempt

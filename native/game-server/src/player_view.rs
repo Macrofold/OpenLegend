@@ -137,6 +137,8 @@ pub struct PersistenceView {
 pub struct PausedStop {
     pub ok: bool,
     pub message: JsText,
+    pub cut: u64,
+    pub(crate) _custody: ByteReservation,
 }
 
 pub struct HistoryViewFacts {
@@ -315,8 +317,9 @@ pub(crate) async fn prepare_view(
     audience: Arc<AuthorizedScope>,
     references: Arc<ReferenceIssuer>,
     inputs: &WorldInputs,
+    commands: &crate::player_command::PlayerCommands,
     saves: Arc<LiveSaves>,
-    host: ViewHostInput,
+    mut host: ViewHostInput,
 ) -> Result<PreparedPlayerView, ViewError> {
     let scope = Arc::new(audience.scope.clone());
     if !host.matches(&scope)? {
@@ -368,6 +371,21 @@ pub(crate) async fn prepare_view(
         .await
         .map_err(ViewError::World)?;
     let mut own = own.map_err(ViewError::Capture)?;
+    if read.clock().paused
+        && own.player.has_work
+        && host.controlling()
+        && policy.controls.stop_inactive
+    {
+        host.paused_stop = Some(
+            commands
+                .preview_paused_stop(audience.clone(), read.accepted_cut())
+                .await
+                .map_err(|error| match error {
+                    WorldError::ProjectionChanged => ViewError::Changed,
+                    other => ViewError::World(other),
+                })?,
+        );
+    }
     let input_scope = if host.controlling() {
         Some(
             inputs
@@ -527,13 +545,11 @@ fn controls(
     recover: bool,
 ) -> Result<Vec<ActionOption>, ViewError> {
     let words = &policy.controls;
-    if paused && own.player.has_work && host.paused_stop.is_none() {
-        return Err(ViewError::Changed);
-    }
     let can_choose = host.access.controlling
         && (words.stop_inactive
             || (!paused && !own.inactive() && own.player.alive && !own.incapacitated));
-    let possible = own.player.has_work && host.paused_stop.as_ref().is_none_or(|stop| stop.ok);
+    let possible =
+        own.player.has_work && (!paused || host.paused_stop.as_ref().is_some_and(|stop| stop.ok));
     let reason = if !can_choose {
         Some(
             if paused {
@@ -583,6 +599,10 @@ fn controls(
 }
 
 impl PreparedPlayerView {
+    pub(crate) fn control_preview_cut(&self) -> Option<u64> {
+        self.owned.host.paused_stop.as_ref().map(|stop| stop.cut)
+    }
+
     pub fn read(&self) -> &RuntimePlayerRead {
         &self.read
     }

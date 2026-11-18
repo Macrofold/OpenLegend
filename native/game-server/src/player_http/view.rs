@@ -120,6 +120,7 @@ impl Views {
             scope.clone(),
             self.routes.references.clone(),
             &self.routes.inputs,
+            &self.routes.commands,
             self.routes.saves.clone(),
             host,
         )
@@ -165,6 +166,7 @@ impl Views {
                     &attempt.scope,
                     attempt.view.read(),
                     attempt.view.event_ids(),
+                    attempt.view.control_preview_cut(),
                     |allowed, budget| {
                         if encode_http {
                             wire::encode(&attempt.view.wire(allowed), b"", b"", budget)

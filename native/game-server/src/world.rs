@@ -607,12 +607,20 @@ impl HostedWorld {
         scope: &AuthorizedScope,
         read: &RuntimePlayerRead,
         selected_events: &[String],
+        control_preview_cut: Option<u64>,
         publish: impl FnOnce(bool, &ByteBudget) -> Result<Option<axum::body::Bytes>, WorldError>,
     ) -> Result<PlayerDisclosure, WorldError> {
         let Ok(_turn) = self.turn.try_lock() else {
             return Ok(PlayerDisclosure::Busy);
         };
-        self.disclose_player_in_turn(authority, scope, read, selected_events, publish)
+        self.disclose_player_in_turn(
+            authority,
+            scope,
+            read,
+            selected_events,
+            control_preview_cut,
+            publish,
+        )
     }
 
     /// The first state response and stream headers may wait for the existing
@@ -624,11 +632,19 @@ impl HostedWorld {
         scope: &AuthorizedScope,
         read: &RuntimePlayerRead,
         selected_events: &[String],
+        control_preview_cut: Option<u64>,
         publish: impl FnOnce(bool, &ByteBudget) -> Result<Option<axum::body::Bytes>, WorldError>,
     ) -> Result<PlayerDisclosure, WorldError> {
         self.request_advance_publication();
         let _turn = self.enter().await?;
-        self.disclose_player_in_turn(authority, scope, read, selected_events, publish)
+        self.disclose_player_in_turn(
+            authority,
+            scope,
+            read,
+            selected_events,
+            control_preview_cut,
+            publish,
+        )
     }
 
     fn disclose_player_in_turn(
@@ -637,6 +653,7 @@ impl HostedWorld {
         scope: &AuthorizedScope,
         read: &RuntimePlayerRead,
         selected_events: &[String],
+        control_preview_cut: Option<u64>,
         publish: impl FnOnce(bool, &ByteBudget) -> Result<Option<axum::body::Bytes>, WorldError>,
     ) -> Result<PlayerDisclosure, WorldError> {
         let result = authority.current_view(scope, |scope, controlling| {
@@ -659,6 +676,11 @@ impl HostedWorld {
                 Err(std::sync::TryLockError::Poisoned(_)) => return Err(HostError::Poisoned.into()),
             };
             let clock = session.clock()?;
+            if let Some(cut) = control_preview_cut
+                && session.accepted_progress()?.through_cut != cut
+            {
+                return Ok(PlayerDisclosure::Changed);
+            }
             let prepared = read.clock();
             if (clock.paused, clock.manually_paused, clock.speed)
                 != (prepared.paused, prepared.manually_paused, prepared.speed)
