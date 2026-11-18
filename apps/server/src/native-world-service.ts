@@ -2110,13 +2110,14 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     this.debtSeconds += ((until - from) / 1000) * ratio;
     this.inputAccountedThrough = until;
   }
+  /** Discard elapsed offers and steering only after an accepted pause or
+   * replacement. An admission refusal must retain both for continued play. */
   private resetClock(): void {
     this.debtSeconds = 0;
     this.inputs.clear();
     this.inputAccountedThrough = performance.now();
   }
   private async syncPauseInLane(): Promise<void> {
-    this.resetClock();
     const paused = this.paused,
       resuming = this.progress.paused && !paused;
     if (this.progress.paused !== paused)
@@ -2128,6 +2129,9 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         ),
       );
     else this.notify(false);
+    // Refusal must preserve accepted elapsed debt and steering. Reset only
+    // after the native pause/control owner has accepted the transition.
+    this.resetClock();
     if (resuming && !this.progress.paused) this.clockStartedAt = performance.now();
   }
 
@@ -2139,40 +2143,60 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   ): Promise<void> {
     const change = () =>
       this.lane.run(async () => {
-        if (connected) {
-          signal?.throwIfAborted();
-          this.assertScope(scope);
-          if (this.connections.size >= this.connectionLimit)
-            throw new Error('Connection capacity reached.');
-          const profile = await this.profileFor(scope);
-          try {
+        const previousConnection = this.connections.get(connectionId);
+        const previousPreference = this.connectionPreferences.get(scope.accountId);
+        const awaitingPresence = this.awaitingRestoredPresence.has(scope.actorId);
+        try {
+          if (connected) {
             signal?.throwIfAborted();
             this.assertScope(scope);
-            this.connections.set(connectionId, scope);
-            this.connectionPreferences.set(scope.accountId, profile.preferences.pauseWhenHidden);
-          } finally {
-            releaseNativeProduct(profile);
-          }
-        } else {
-          const previous = this.connections.get(connectionId);
-          this.connections.delete(connectionId);
-          if (
-            previous &&
-            ![...this.connections.values()].some(
-              (item) => this.presenceKey(item) === this.presenceKey(previous),
-            )
-          ) {
-            this.inputs.clear(previous.actorId);
-            this.presence.delete(this.presenceKey(previous));
-            this.presenceOrders.delete(this.presenceKey(previous));
+            if (this.connections.size >= this.connectionLimit)
+              throw new Error('Connection capacity reached.');
+            const profile = await this.profileFor(scope);
+            try {
+              signal?.throwIfAborted();
+              this.assertScope(scope);
+              this.connections.set(connectionId, scope);
+              this.connectionPreferences.set(scope.accountId, profile.preferences.pauseWhenHidden);
+            } finally {
+              releaseNativeProduct(profile);
+            }
+          } else {
+            const previous = this.connections.get(connectionId);
+            this.connections.delete(connectionId);
             if (
-              ![...this.connections.values()].some((item) => item.accountId === previous.accountId)
-            )
-              this.connectionPreferences.delete(previous.accountId);
+              previous &&
+              ![...this.connections.values()].some(
+                (item) => this.presenceKey(item) === this.presenceKey(previous),
+              )
+            ) {
+              this.inputs.clear(previous.actorId);
+              this.presence.delete(this.presenceKey(previous));
+              this.presenceOrders.delete(this.presenceKey(previous));
+              if (
+                ![...this.connections.values()].some(
+                  (item) => item.accountId === previous.accountId,
+                )
+              )
+                this.connectionPreferences.delete(previous.accountId);
+            }
           }
+          await this.reconcileParticipationInLane();
+          if (this.progress.paused !== this.paused) await this.syncPauseInLane();
+        } catch (error) {
+          // Registration can fail after mapping the socket but before the HTTP
+          // caller receives ownership. Keep independent presence/input intact.
+          // Already accepted native participation remains with its real owner.
+          if (connected) {
+            if (previousConnection) this.connections.set(connectionId, previousConnection);
+            else this.connections.delete(connectionId);
+            if (previousPreference === undefined)
+              this.connectionPreferences.delete(scope.accountId);
+            else this.connectionPreferences.set(scope.accountId, previousPreference);
+            if (awaitingPresence) this.awaitingRestoredPresence.add(scope.actorId);
+          }
+          throw error;
         }
-        await this.reconcileParticipationInLane();
-        if (this.progress.paused !== this.paused) await this.syncPauseInLane();
       });
     // Another connection may be settling a protected save. Wait outside the
     // lane for that exact barrier before admitting a fresh transport change.
@@ -2347,8 +2371,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           manuallyPaused = input.paused ?? this.operational.manuallyPaused;
         if (this.clockAdmission === 'monotonic') this.accountInputTime(performance.now());
         const paused = manuallyPaused || this.absent || !!this.failure,
-          resuming = this.progress.paused && !paused;
-        if (paused || this.progress.paused) this.resetClock();
+          resuming = this.progress.paused && !paused,
+          resetElapsed = paused || this.progress.paused;
         const outcome = await this.hostControlInLane(
           paused,
           speed,
@@ -2357,8 +2381,11 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           'play',
           true,
         );
-        if (outcome.ok && resuming) this.clockStartedAt = performance.now();
-        if (outcome.ok) this.scheduleRetention();
+        if (outcome.ok) {
+          if (resetElapsed) this.resetClock();
+          if (resuming) this.clockStartedAt = performance.now();
+          this.scheduleRetention();
+        }
         return outcome;
       }),
     );
@@ -2951,8 +2978,9 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     return this.withSaveBarrier(scope, 'save', () =>
       this.lane.run(async () => {
         this.assertScope(scope, 'save');
-        this.resetClock();
-        return this.hostControlInLane(true, this.speed, true, scope, 'save');
+        const outcome = await this.hostControlInLane(true, this.speed, true, scope, 'save');
+        if (outcome.ok) this.resetClock();
+        return outcome;
       }),
     );
   }
