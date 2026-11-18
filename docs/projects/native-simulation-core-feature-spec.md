@@ -1,8 +1,8 @@
 # Native simulation core and adaptive execution
 
-| Status      | Current progress                                                                                         | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Repair callers pass; failed controls leave relative CPU impact inconclusive and broader conversion open. | 2026-11-14   |
+| Status      | Current progress                                                                                                          | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Current 2 GiB matched gameplay completes; E1 rejects Native adoption on CPU and latency. Broader conversion remains open. | 2026-11-17   |
 
 ## 1. Purpose and selected direction
 

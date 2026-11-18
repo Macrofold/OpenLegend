@@ -1,8 +1,8 @@
 # Native simulation core — technical design
 
-| Status      | Current progress                                                                                         | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Repair callers pass; failed controls leave relative CPU impact inconclusive and broader conversion open. | 2026-11-14   |
+| Status      | Current progress                                                                                                          | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Current 2 GiB matched gameplay completes; E1 rejects Native adoption on CPU and latency. Broader conversion remains open. | 2026-11-17   |
 
 Companion: [feature specification](native-simulation-core-feature-spec.md). Tasks live only in [NSC](../maintainers/native-simulation-core.md); [limits](../limits/native-simulation-core.md) owns operating defaults. This is the authorized implementation direction, not a claim that the full conversion or distributed execution is installed or qualified.
 
@@ -215,6 +215,8 @@ Admitted asynchronous bridge work acquires the existing world mutex on a native 
 
 Player publication constructs and funds the complete permitted decoded view for comparison, then selects no output, a patch or a reset before outgoing JSON sizing/encoding. HTTP state and SSE reset encode the full view once; a patch encodes only the patch once; an unchanged publication encodes nothing. Final permission/current-source checks, selection, encoding and transport handoff remain inside the synchronous native disclosure lease. Its encoder and read-source retainer expire when that callback returns. The retained view pins its captured/definition allocations independently; copied output bytes and outstanding transport own their separate admitted storage. Capacity failure still occurs before initial response headers. Drain requests a fresh permitted publication rather than replaying stale bytes or an escaped encoder.
 
+An opening player stream can wait for a recoverable protected save before transport registration, accepted capture or final disclosure. The wait uses the existing admission deadline and occurs outside the mutation lane so the save can settle. A single request cancellation follows all three boundaries. Registration rechecks authority after reading the profile. Capture and publication retain their current permission checks, and initial headers still go out with the lease-authorized reset. An established stream defers a temporary refusal through its ordinary scheduler. If registration fails after recording the transport, undo only that registration, its prior account preference and its consumed restored-presence flag. Independent presence, steering and already accepted participation remain with their actual owners. Pause and recovery preparation discard elapsed offers and steering only after the native control accepts; admission refusal preserves both.
+
 Checkpoints reuse the existing durable fixed-revision database snapshot after the required save barrier. They do not require a second full native-world copy. A selected native diagnostic capture remains bounded and must state whether it is current, accepted-but-unsaved or durable. Copy-on-write chunk snapshots are an E1 alternative only if selective capture proves too expensive; count retained generations and peak memory.
 
 ### 6.2 Direct changed-record saving
@@ -224,6 +226,8 @@ The accepted semantic mutation already identifies changed records. Accumulate ch
 Keep one existing ordered database writer, pending save prefix and bounded live-read overlay. Rust supplies immutable row bytes and needed indexed columns; TypeScript binds and batches them without decoding and re-encoding the same payload. The existing storage schema remains the field/column mapping owner; derive only the native encoding descriptors it needs, not a second editable storage schema. Validate the current format at load/install boundaries. A newly allocated record carries real allocation proof; a cold predecessor cannot be assumed absent. Unchanged metadata must not dirty stable content.
 
 Save completion acknowledges its exact prefix. If a newer native change arrives during encoding/I/O, it stays pending. Failure retains the accepted data and current backpressure, never resets dirty keys or invents durable success. Protected spending/access/source-release operations retain their barriers. No new journal, broker, local database or automatic replay system is introduced.
+
+On graceful shutdown, complete the final pending save, suppress future received-value collection and join the collector's outstanding SQL transaction while its live value-protection reader is still available. Apply that ordering on failed startup after adopting the writer as well. Once a save failure closes Native live admission, the automatic clock stops offering new work and retains the original failure and debt for recovery.
 
 The writer handoff carries the native accepted cut explicitly. It is independent of the in-world occurrence sequence: a restored world may contain many occurrences before the new native runtime's cut zero. Save-prefix allocation floors likewise start at the actual durable identity high-water mark; the candidate's later allocator value cannot acknowledge its own unsaved temporal batches.
 
