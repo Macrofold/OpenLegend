@@ -1,0 +1,19 @@
+# Stand-alone Rust server comparison — November 18, 2026
+
+## Required work and evidence
+
+[RGS08](../../../maintainers/rust-game-server.md) compares TypeScript, Node-hosted Rust and stand-alone Rust on the standard 16 GiB worker. One player, ten human NPCs, ten deer and five hares occupy the same authored Base opening with 1,246 scenery records. The work includes a foreground stream, 34 walks including warmup, two held steering gestures, two committed controlled conversations and one-second background saves. Each arm plays the installed 60:1 clock for 180 real seconds after ten seconds of warmup. Cases use independent current-format databases and a rotating three-repetition order on one worker.
+
+Three attempts on source `1119f03edc30d1cdcf4caff4d5de1555aabcbf9d` each stopped in the first TypeScript case. The other eight cases in each manifest remained unstarted. No case supplies equivalent completed work. The adoption decision remains open.
+
+| Managed campaign                       | Boundary reached       | Preserved outcome                                                                                                              | Settled estimate |
+| -------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------- |
+| `54a98305-699a-4e3d-a3c0-edd63f195834` | Warmup                 | The sampler refused three live child processes. The game server shut down normally.                                            | $0.427101        |
+| `2b83fe79-eee9-4dde-9d58-66526efe74f0` | End of the input offer | The launcher crashed on a cleanup write to a closed client pipe. Its lifetime process receipt survived.                        | $0.241133        |
+| `835daa8e-a0ec-4abe-925c-f51ce72e5b85` | Gameplay assessment    | The server accepted 34 walks and saved the second reply. The first Send returned busy and one steering renewal returned stale. | $0.241688        |
+
+The initial source archive was `059611048cb5576d0dfeeeed719323d358fc88688ba00a778aa8eb5bbae46278`. The third try kept that source archive, the opening and the original offers fixed. It used driver bundle `d66a33e3e55424469995b02a64332c24bc3d693e8feeb632b625b7ea36024af1`. Slot 2 on `i-0cdb36fd4c27cf973` ran generation 489. The case identified all three live helper processes as esbuild services. Scoped Linux process samples now count whole process leaders and their waited-child CPU once. The fixture, client and exclusive PostgreSQL cluster have separate totals. Pinned Linux Node checks cover a helper exiting during the journey and a closed client pipe during cleanup. The latter driver records gameplay evidence before stopping the children and verifies final process exit independently.
+
+The interrupted TypeScript path returned busy from both availability and the first permitted Send. It completed the second conversation once and committed its reply. Its second steering start was still waiting for a response when the driver offered renewal. Neutral reached the authority before the renewal. The existing browser suppresses renewal while the preceding input is pending. A separate real authenticated input check reproduced the stale response after neutral with the same control identity, then verified true lease expiry separately. The next input fixture is being qualified against the browser's actual sequencing.
+
+The three failed attempts and pinned inputs are retained under `native-runtime-foundations/rgs08-heavy-campaign-20261118` in the local verification archive. The worker stopped and the controller released all holds after each attempt. Total estimated shared spend reached $47.275293 of $100, including earlier work. These verification attempts charged $0 for external models.
