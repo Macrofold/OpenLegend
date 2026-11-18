@@ -4,6 +4,8 @@
 mod apply;
 mod decide;
 pub(crate) mod preview;
+mod retry;
+pub(crate) use retry::ChatRetryRequest;
 pub(crate) mod schedule;
 mod settings;
 mod slots;

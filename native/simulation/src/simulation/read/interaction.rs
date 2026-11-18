@@ -22,6 +22,8 @@ pub struct PlayerInteractionFacts<'a> {
     pub recipient_can_respond: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub heard_utterance: Option<bool>,
+    #[serde(skip)]
+    pub addressed_source: Option<&'a crate::experience::PersonalSourceRef>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub recipient_name: Option<&'a crate::text::JsText>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -70,6 +72,7 @@ impl Simulation {
                 .capability_blocked(Some(entity), if speaking { "speech" } else { "actions" })
                 .map_err(|error| ActorReadError::Capture(error.into()))?;
         let mut heard_utterance = None;
+        let mut addressed_source = None;
         let mut recipient_available = true;
         let mut reply = false;
         let mut recipient_can_respond = None;
@@ -132,14 +135,32 @@ impl Simulation {
                         crate::experience::PersonalSourceKind::Awareness,
                     )
                     .map_err(|error| ActorReadError::Capture(error.into()))?;
-                heard_utterance = Some(
-                    awareness
-                        .and_then(|collection| collection.resident_record(event_id))
-                        .is_some_and(|record| {
-                            record.header().heard_addressed_speech
-                                && record.header().evidence_source_id.as_deref() == Some(actor_id)
-                        }),
-                );
+                let heard = awareness
+                    .and_then(|collection| collection.resident_record(event_id))
+                    .map(|record| record.header())
+                    .filter(|header| {
+                        header.heard_addressed_speech
+                            && header.evidence_source_id.as_deref() == Some(actor_id)
+                    });
+                heard_utterance = Some(heard.is_some());
+                // The retry caller can use this exact resident source only
+                // while the speaker and listener retain the original evidence.
+                addressed_source = heard
+                    .filter(|header| {
+                        !self
+                            .state
+                            .experience
+                            .actor(actor_id)
+                            .is_some_and(|entry| entry.privacy.revoked(event_id))
+                            && !self.state.experience.actor(target_id).is_some_and(|entry| {
+                                entry.privacy.revoked(event_id)
+                                    || header
+                                        .privacy_dependencies
+                                        .iter()
+                                        .any(|id| entry.privacy.revoked(id))
+                            })
+                    })
+                    .map(|header| &header.reference);
             }
             recipient_description = Some(
                 names
@@ -174,6 +195,7 @@ impl Simulation {
             reply,
             recipient_can_respond,
             heard_utterance,
+            addressed_source,
             recipient_name,
             recipient_description,
         })

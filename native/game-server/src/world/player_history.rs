@@ -208,11 +208,19 @@ impl HostedWorld {
         actor: &str,
         consume: impl FnOnce() -> Result<T, WorldError>,
     ) -> Result<Option<T>, WorldError> {
+        self.with_unedited_sources(&[actor], consume)
+    }
+
+    pub(crate) fn with_unedited_sources<T>(
+        &self,
+        actors: &[&str],
+        consume: impl FnOnce() -> Result<T, WorldError>,
+    ) -> Result<Option<T>, WorldError> {
         let pending = self
             .pending_source_edits
             .lock()
             .map_err(|_| HostError::Poisoned)?;
-        if pending.contains(actor) {
+        if actors.iter().any(|actor| pending.contains(*actor)) {
             return Ok(None);
         }
         consume().map(Some)

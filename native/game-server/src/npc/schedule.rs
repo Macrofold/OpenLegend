@@ -511,6 +511,7 @@ impl Director {
                 message: "Considering a semantic event.".into(),
                 authority: None,
                 player_speech_event_id: None,
+                retry_of: None,
                 request: JobRequest {
                     text: proposal.text.into(),
                     npc_id: actor.clone(),

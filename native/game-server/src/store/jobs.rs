@@ -23,6 +23,8 @@ pub(crate) struct ConversationJob {
     pub message: JsText,
     pub authority: Option<RequestScope>,
     pub player_speech_event_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub retry_of: Option<String>,
     pub request: JobRequest,
     pub created_at: i64,
     #[serde(skip_serializing)]
@@ -95,6 +97,7 @@ impl AdmittedJob {
             message,
             authority: previous.authority.clone(),
             player_speech_event_id: previous.player_speech_event_id.clone(),
+            retry_of: previous.retry_of.clone(),
             request: JobRequest {
                 text: previous.request.text.clone(),
                 npc_id: previous.request.npc_id.clone(),
@@ -137,6 +140,55 @@ impl Store {
         let store = self.clone();
         self.operational(move |tx| {
             Box::pin(async move { store.write_conversation_job(tx, &record.job).await })
+        })
+        .await
+    }
+
+    /// An explicit retry can supersede only the latest failed attempt for
+    /// this exact speech and timeline. Keep the test and the write in one
+    /// transaction even though the resident slot already orders local work.
+    pub(crate) async fn admit_conversation_retry(
+        self: &Arc<Self>,
+        record: Arc<AdmittedJob>,
+        stopped: tokio::sync::watch::Receiver<bool>,
+    ) -> Result<bool, CommitError> {
+        let store = self.clone();
+        self.operational(move |tx| {
+            Box::pin(async move {
+                let job = &record.job;
+                let scope = job.authority.as_ref().ok_or(StoreError::InvalidRecord)?;
+                let original = job.retry_of.as_deref().ok_or(StoreError::InvalidRecord)?;
+                let speech = job
+                    .player_speech_event_id
+                    .as_deref()
+                    .ok_or(StoreError::InvalidRecord)?;
+                let speech = json_record(speech).map_err(|_| StoreError::InvalidRecord)?;
+                let eligible: bool = tx
+                    .query_one(
+                        "SELECT COALESCE((SELECT id=$2 AND selection->>'status'='failed' FROM jobs \
+                 WHERE selection->>'kind'='chat' AND selection->>'playerSpeechEventId'=$1 \
+                 AND payload::jsonb #>> '{authority,worldId}'=$3 \
+                 AND payload::jsonb #>> '{authority,timelineId}'=$4 \
+                 AND payload::jsonb #>> '{authority,actorId}'=$5 \
+                 AND payload::jsonb #>> '{authority,accountId}'=$6 \
+                 ORDER BY created_at DESC,id DESC LIMIT 1),false)",
+                        &[
+                            &speech,
+                            &original,
+                            &scope.world_id,
+                            &scope.timeline_id,
+                            &scope.actor_id,
+                            &scope.account_id,
+                        ],
+                    )
+                    .await?
+                    .try_get(0)?;
+                if !eligible {
+                    return Ok(false);
+                }
+                store.write_conversation_job(tx, job).await?;
+                Ok(true)
+            })
         })
         .await
     }

@@ -3,7 +3,8 @@
 
 use super::*;
 use crate::npc::{
-    ChatRequest, InteractionAvailability, SubmitResult, human_request, job_report, valid_request_id,
+    ChatRequest, ChatRetryRequest, InteractionAvailability, SubmitResult, human_request,
+    job_report, valid_request_id,
 };
 use openlegend_simulation::runtime::InteractionMode;
 
@@ -16,28 +17,37 @@ pub(super) async fn chat(State(state): State<PlayerRoutes>, request: Request) ->
         Ok(access) => Arc::new(access),
         Err(error) => return access_failure(error),
     };
-    let (input, custody): (ChatRequest, _) =
-        match json(&parts.headers, body, state.game.host.budget()).await {
-            Ok(input) => input,
-            Err(response) => return response,
-        };
-    match state
-        .decisions
-        .submit(input, access.clone(), custody, state.references.clone())
-        .await
-    {
+    let retry = parts.uri.path() == "/api/chat/retry";
+    let status = if retry {
+        StatusCode::OK
+    } else {
+        StatusCode::ACCEPTED
+    };
+    let result = if retry {
+        let (input, custody): (ChatRetryRequest, _) =
+            match json(&parts.headers, body, state.game.host.budget()).await {
+                Ok(input) => input,
+                Err(response) => return response,
+            };
+        state.decisions.retry(input, access.clone(), custody).await
+    } else {
+        let (input, custody): (ChatRequest, _) =
+            match json(&parts.headers, body, state.game.host.budget()).await {
+                Ok(input) => input,
+                Err(response) => return response,
+            };
+        state
+            .decisions
+            .submit(input, access.clone(), custody, state.references.clone())
+            .await
+    };
+    match result {
         Ok(result) => match state
             .authority
             .current(&access, Capability::Play, false, |_, _| match result {
-                SubmitResult::Job(job) => {
-                    reply(&state, StatusCode::ACCEPTED, &job_report(&job, true))
-                }
-                SubmitResult::Command(outcome, _custody) => {
-                    reply(&state, StatusCode::ACCEPTED, &outcome)
-                }
-                SubmitResult::Refusal { code, message } => {
-                    refusal(StatusCode::ACCEPTED, code, message)
-                }
+                SubmitResult::Job(job) => reply(&state, status, &job_report(&job, true)),
+                SubmitResult::Command(outcome, _custody) => reply(&state, status, &outcome),
+                SubmitResult::Refusal { code, message } => refusal(status, code, message),
             }) {
             Ok(response) => response,
             Err(error) => access_failure(error),

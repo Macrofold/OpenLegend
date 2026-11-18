@@ -114,6 +114,7 @@ pub(crate) fn router(
         )
         .route("/api/actions", post(actions::menu))
         .route("/api/chat", post(dialogue::chat))
+        .route("/api/chat/retry", post(dialogue::chat))
         .route("/api/chat/receipt", post(dialogue::receipt))
         .route("/api/ai/cancel", post(dialogue::cancel))
         .route(

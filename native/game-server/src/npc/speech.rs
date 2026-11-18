@@ -394,6 +394,7 @@ pub(super) async fn speak(
                 id: stage_input.job_id.clone(), fingerprint: stage_input.fingerprint.clone(), kind: "chat".into(),
                 status: if heard { SpeechReplyStatus::Queued } else { SpeechReplyStatus::Completed },
                 message, authority: Some(stage_input.scope.scope.clone()), player_speech_event_id: Some(event.id.clone()),
+                retry_of: None,
                 request: JobRequest { text: stage_input.request.text.clone(), npc_id: selected.actor.clone(), volume: Some(stage_input.request.volume) },
                 created_at: now, completed_at: (!heard).then_some(now), outcome: None,
             }, budget).map_err(RuntimeError::application_refused)?;
