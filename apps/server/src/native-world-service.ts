@@ -2096,6 +2096,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   private inputAccountedThrough?: number;
   private clockAdmission: 'duration' | 'monotonic' = 'duration';
   private heldInputCut?: number;
+  private heldPlayerReadCut?: number;
   useMonotonicClock(): void {
     this.clockAdmission = 'monotonic';
   }
@@ -4343,11 +4344,10 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     }
   }
   async updateWorldInput(input: WorldInputUpdate, scope: RequestScope): Promise<WorldInputResult> {
+    const neutral = input.kind === 'steer' && input.direction.x === 0 && input.direction.z === 0;
     const continuedMovement =
-      input.kind === 'renew'
-        ? input.movement && !input.pendingRelease
-        : input.direction.x === 0 && input.direction.z === 0;
-    const cut = this.heldInputCut;
+      input.kind === 'renew' ? input.movement && !input.pendingRelease : neutral;
+    const cut = this.heldInputCut ?? (neutral && !this.paused ? this.heldPlayerReadCut : undefined);
     if (continuedMovement && cut !== undefined && cut === this.acceptedCut) {
       const state = this.inputs.steeringAt(scope.actorId, cut);
       if (state) {
@@ -4547,10 +4547,21 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     );
   }
 
-  /** Initial stream publication can wait for a recoverable protected save.
-   * Established streams already defer transient refusals to their scheduler. */
+  /** Initial streams can wait for a recoverable protected save. Established
+   * streams defer refusals. This read-only turn lets key-up disarm an already
+   * checked direction at the same cut without waiting for view preparation.
+   * docs/projects/action-execution-and-skill-expression-tech-design.md#13-movement-alongside-preparation-and-the-live-input-lease */
   private playerReadBoundary<T>(signal: AbortSignal | undefined, operation: () => T | Promise<T>) {
-    return signal ? this.atAcceptedBoundary(operation, signal) : this.lane.run(operation);
+    const read = async () => {
+      const previous = this.heldPlayerReadCut;
+      this.heldPlayerReadCut = this.clockAdmission === 'monotonic' ? this.acceptedCut : undefined;
+      try {
+        return await operation();
+      } finally {
+        this.heldPlayerReadCut = previous;
+      }
+    };
+    return signal ? this.atAcceptedBoundary(read, signal) : this.lane.run(read);
   }
 
   async capture(scope: RequestScope): Promise<NativePlayerRead> {
