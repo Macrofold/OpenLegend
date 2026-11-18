@@ -37,7 +37,7 @@ pub use history::HistoryOriginals;
 mod player_events;
 pub(crate) use history::{
     CapturedHistoryCuts, CapturedHistoryInput, HistorySettings, capture_history_cuts,
-    capture_history_input,
+    capture_history_input, history_account_eligible_at,
 };
 pub(crate) use player_events::{CapturedPlayerEvents, capture_player_events};
 pub(crate) mod consolidation;

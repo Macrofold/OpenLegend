@@ -1,8 +1,9 @@
 //! A Rust SQL writer retains the real funded history input independently of
 //! the settled candidate. The addon continues to serialize its own handoff.
 
-use super::RuntimePreparedProducts;
-use crate::experience::{CapturedHistoryInput, HistoryOriginals};
+use super::{NativeWorldSession, RuntimeError, RuntimePreparedProducts, failure};
+use crate::experience::{CapturedHistoryInput, HistoryOriginals, history_account_eligible_at};
+use crate::host::ByteReservation;
 use crate::received::{ReceivedChargeDirectory, ReceivedFrontier, TemporalReceipt};
 use crate::reception::SensoryFacet;
 
@@ -99,6 +100,114 @@ impl RuntimeHistory {
     }
     pub fn policy(&self) -> (u64, Option<&str>) {
         self.0.policy()
+    }
+}
+
+/// Current eligibility for the independently held accounts in one pending
+/// prefix. Its funding stays with that prefix while SQL is in flight.
+pub struct RuntimeHistoryCuts {
+    world: String,
+    generation: String,
+    through: u64,
+    accounts: Vec<(RuntimeHistory, Vec<bool>)>,
+    _storage: ByteReservation,
+}
+
+impl RuntimeHistoryCuts {
+    pub fn binding(&self) -> (&str, &str, u64) {
+        (&self.world, &self.generation, self.through)
+    }
+
+    pub fn eligible_accounts(&self, history: &RuntimeHistory) -> Option<&[bool]> {
+        if history.0.account_count() == 0 {
+            return Some(&[]);
+        }
+        self.accounts
+            .binary_search_by_key(&history.base_cut(), |(candidate, _)| candidate.base_cut())
+            .ok()
+            .and_then(|index| {
+                let (candidate, accounts) = &self.accounts[index];
+                history
+                    .0
+                    .same_capture(&candidate.0)
+                    .then_some(accounts.as_slice())
+            })
+    }
+}
+
+impl NativeWorldSession {
+    /// Borrow the current accepted recent directory and privacy owners under
+    /// the same application turn that detaches the prefix. Keep one decision
+    /// per held account, bound to its exact immutable capture, through SQL.
+    pub fn capture_save_history_cuts(
+        &self,
+        through: u64,
+        histories: &[RuntimeHistory],
+    ) -> Result<Option<RuntimeHistoryCuts>, RuntimeError> {
+        self.require_active()?;
+        let state = &self.session.accepted().map_err(failure)?.state;
+        if through != state.accepted_cut
+            || histories
+                .windows(2)
+                .any(|pair| pair[0].base_cut() >= pair[1].base_cut())
+            || histories.iter().any(|history| {
+                history.world_id() != state.physical.header.id
+                    || history.generation() != state.generation
+                    || history.base_cut() >= through
+            })
+        {
+            return Err(failure("history eligibility cut is stale"));
+        }
+        let needed = histories
+            .iter()
+            .filter(|history| history.0.account_count() != 0);
+        let captures = needed.clone().count();
+        if captures == 0 {
+            return Ok(None);
+        }
+        let bytes = needed
+            .clone()
+            .try_fold(
+                state
+                    .physical
+                    .header
+                    .id
+                    .len()
+                    .checked_add(state.generation.len())
+                    .ok_or_else(|| failure("capacity"))?,
+                |bytes, history| {
+                    bytes
+                        .checked_add(std::mem::size_of::<(RuntimeHistory, Vec<bool>)>())?
+                        .checked_add(history.0.account_count())
+                },
+            )
+            .ok_or_else(|| failure("capacity"))?;
+        let storage = self.budget.reserve(bytes).map_err(failure)?;
+        let accounts = needed
+            .map(|history| {
+                (
+                    history.clone(),
+                    history
+                        .accounts()
+                        .map(|account| {
+                            history_account_eligible_at(
+                                state,
+                                account.actor_id,
+                                account.event_id,
+                                account.temporal.map(|temporal| temporal.receipt),
+                            )
+                        })
+                        .collect(),
+                )
+            })
+            .collect();
+        Ok(Some(RuntimeHistoryCuts {
+            world: state.physical.header.id.clone(),
+            generation: state.generation.clone(),
+            through,
+            accounts,
+            _storage: storage,
+        }))
     }
 }
 

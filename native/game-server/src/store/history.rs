@@ -5,12 +5,15 @@ use super::{PrefixProjection, Store, StoreError, StoreResult, sql_ordinal};
 use openlegend_simulation::events::OriginalOccurrence;
 use openlegend_simulation::reception::EventScalar;
 use openlegend_simulation::records::{ChangedRows, SaveRows};
-use openlegend_simulation::runtime::RuntimeHistory;
+use openlegend_simulation::runtime::{RuntimeHistory, RuntimeHistoryCuts};
 use std::borrow::Cow;
 use std::collections::HashSet;
 use std::fmt::Write as _;
 use tokio_postgres::Transaction;
 use tokio_postgres::types::{ToSql, Type};
+
+mod perspective;
+use perspective::{Compare, Perspective};
 
 /// Write the detached prefix's actual append-only occurrences. All captures
 /// are borrowed from their independently funded accepted owners. Until their
@@ -180,6 +183,141 @@ impl Store {
         Ok(())
     }
 
+    /// Place the selected, still-eligible personal accounts for the same
+    /// append written by `append_originals`. Cold reading can recover each
+    /// reference from its own awareness or canonical received receipt.
+    /// This helper leaves authored narration selection to its caller.
+    pub(crate) async fn append_perspectives(
+        &self,
+        transaction: &Transaction<'_>,
+        rows: &SaveRows,
+        histories: &[RuntimeHistory],
+        cuts: &RuntimeHistoryCuts,
+        compare: &Compare<'_>,
+    ) -> StoreResult<()> {
+        if cuts.binding() != (&rows.world_id, &rows.generation, rows.through_cut) {
+            return Err(StoreError::StaleCut);
+        }
+        let _head = self
+            .budget
+            .reserve(8192)
+            .map_err(|_| StoreError::Capacity)?;
+        let mut prepared = Vec::with_capacity(64);
+        for history in histories {
+            let count = history.originals().len();
+            let _index = self
+                .budget
+                .reserve(count.checked_mul(160).ok_or(StoreError::Capacity)?)
+                .map_err(|_| StoreError::Capacity)?;
+            let mut originals: std::collections::HashMap<_, _> = history
+                .originals()
+                .map(|original| (original.event().id.as_str(), (original, None)))
+                .collect();
+            if originals.len() != count {
+                return Err(StoreError::InvalidRecord);
+            }
+            let eligible = cuts
+                .eligible_accounts(history)
+                .ok_or(StoreError::StaleCut)?;
+            for (account, allowed) in history.accounts().zip(eligible) {
+                let (original, revision) = originals
+                    .get_mut(account.event_id)
+                    .ok_or(StoreError::InvalidRecord)?;
+                if !allowed {
+                    continue;
+                }
+                if account.awareness_payload.is_some() {
+                    let bound = (account.actor_id.len() + account.event_id.len())
+                        .checked_mul(7)
+                        .and_then(|n| n.checked_add(256))
+                        .ok_or(StoreError::Capacity)?;
+                    let _key = self
+                        .budget
+                        .reserve(bound)
+                        .map_err(|_| StoreError::Capacity)?;
+                    let id = openlegend_simulation::encoding::json_record(&[
+                        "world",
+                        "experience",
+                        "awareness",
+                        account.actor_id,
+                        account.event_id,
+                    ])
+                    .map_err(|_| StoreError::InvalidRecord)?;
+                    if [&rows.changes.deletes, &rows.changes.expired]
+                        .iter()
+                        .any(|table| {
+                            table
+                                .get("mind_awareness")
+                                .is_some_and(|rows| rows.contains(&id))
+                        })
+                    {
+                        continue;
+                    }
+                }
+                prepared.push(Perspective::prepare(
+                    account,
+                    original,
+                    revision
+                        .get_or_insert_with(|| perspective::digest(original.payload().as_bytes())),
+                    event_position(original)?,
+                    compare,
+                    &self.budget,
+                )?);
+                if prepared.len() == 64 {
+                    Self::insert_perspectives(transaction, &rows.world_id, &prepared).await?;
+                    prepared.clear();
+                }
+            }
+        }
+        if !prepared.is_empty() {
+            Self::insert_perspectives(transaction, &rows.world_id, &prepared).await?;
+        }
+        Ok(())
+    }
+
+    async fn insert_perspectives(
+        transaction: &Transaction<'_>,
+        world: &str,
+        rows: &[Perspective<'_>],
+    ) -> StoreResult<()> {
+        let mut sql = String::from(
+            "INSERT INTO history_perspectives
+            (world_id,event_id,actor_id,payload,position,event_type,source_id,target_id,speech_peer_id,
+             response_action,temporal_life,temporal_epoch,temporal_batch_order,temporal_entry_index) VALUES ",
+        );
+        let mut params: Vec<(&(dyn ToSql + Sync), Type)> = vec![(&world, Type::TEXT)];
+        for (index, row) in rows.iter().enumerate() {
+            if index != 0 {
+                sql.push(',');
+            }
+            sql.push_str("($1");
+            for index in params.len() + 1..=params.len() + 13 {
+                write!(&mut sql, ",${index}").expect("string write");
+            }
+            sql.push(')');
+            params.extend([
+                (&row.event as &(dyn ToSql + Sync), Type::TEXT),
+                (&row.actor, Type::TEXT),
+                (&row.payload, Type::TEXT),
+                (&row.position, Type::INT8),
+                (&row.event_type, Type::TEXT),
+                (&row.source, Type::TEXT),
+                (&row.target, Type::TEXT),
+                (&row.speech_peer, Type::TEXT),
+                (&row.conversation_relevant, Type::BOOL),
+                (&row.temporal_life, Type::INT8),
+                (&row.temporal_epoch, Type::TEXT),
+                (&row.temporal_batch, Type::INT8),
+                (&row.temporal_entry, Type::INT8),
+            ]);
+        }
+        let written = transaction.execute_typed(&sql, &params).await?;
+        if written != rows.len() as u64 {
+            return Err(StoreError::StaleCut);
+        }
+        Ok(())
+    }
+
     async fn insert_original_batch(
         &self,
         transaction: &Transaction<'_>,
@@ -233,6 +371,19 @@ impl Store {
     }
 }
 
+fn event_position(row: &OriginalOccurrence) -> StoreResult<i64> {
+    let event = row.event();
+    sql_ordinal(event.order.unwrap_or_else(|| {
+        event
+            .id
+            .rsplit('-')
+            .next()
+            .and_then(|tail| tail.parse::<u64>().ok())
+            .filter(|id| *id > 0)
+            .unwrap_or(event.sequence)
+    }))
+}
+
 struct HistoryRow<'a> {
     id: &'a str,
     position: i64,
@@ -245,15 +396,7 @@ struct HistoryRow<'a> {
 impl<'a> HistoryRow<'a> {
     fn from_original(row: &'a OriginalOccurrence) -> StoreResult<Self> {
         let event = row.event();
-        let position = sql_ordinal(event.order.unwrap_or_else(|| {
-            event
-                .id
-                .rsplit('-')
-                .next()
-                .and_then(|tail| tail.parse::<u64>().ok())
-                .filter(|id| *id > 0)
-                .unwrap_or(event.sequence)
-        }))?;
+        let position = event_position(row)?;
         let field = |key| {
             event
                 .data

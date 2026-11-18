@@ -169,6 +169,12 @@ impl CapturedHistoryInput {
             )
         })
     }
+    pub(crate) fn same_capture(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
+    }
+    pub(crate) fn account_count(&self) -> usize {
+        self.0.input.accounts.len()
+    }
     pub(crate) fn cuts(
         &self,
     ) -> impl Iterator<
@@ -701,6 +707,49 @@ impl CapturedHistoryCuts {
     pub(crate) fn value(&self) -> impl Serialize + '_ {
         &self.input
     }
+}
+
+/// Story grants apply to the complete acquired occurrence. The ordinary
+/// writer needs only its eligibility at detachment, not copies of every
+/// directory and privacy ID behind that decision.
+pub(crate) fn history_account_eligible_at(
+    state: &SimulationState,
+    actor: &str,
+    event: &str,
+    receipt: Option<&TemporalReceipt>,
+) -> bool {
+    if state.experience.actor(actor).is_some_and(|actor| {
+        actor.privacy.forgotten().any(|id| id == event)
+            || actor.privacy.corrections().contains_key(event)
+    }) {
+        return false;
+    }
+    let Some(receipt) = receipt else { return true };
+    let Some(temporal) = state.temporal.actor(actor) else {
+        return false;
+    };
+    use crate::received::{ReceivedPosition, received_position_eligible, temporal_recent_at};
+    let position = ReceivedPosition {
+        batch_order: receipt.locator.batch_order,
+        entry_index: receipt.locator.entry_index,
+        member_index: 0,
+    };
+    receipt.locator.actor_id == actor
+        && temporal_recent_at(
+            receipt.at,
+            state.physical.header.sim_time,
+            state
+                .installed
+                .attention
+                .value()
+                .retention
+                .recent
+                .max_age_seconds,
+        )
+        && received_position_eligible(&position, receipt.at, temporal.header().frontier.as_ref())
+        && temporal
+            .recent()
+            .contains(&receipt.locator, f64::NEG_INFINITY)
 }
 
 /// Refresh only the actual actors retained by a pending history prefix. Their
