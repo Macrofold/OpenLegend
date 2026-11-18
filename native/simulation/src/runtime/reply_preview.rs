@@ -58,6 +58,49 @@ impl RuntimeReplyPreviewFacts {
 }
 
 impl NativeWorldSession {
+    /// A settled preview may name only an exact addressed source still
+    /// owned by its listener. The lease excludes withdrawal during handoff.
+    pub fn reply_receipt_publication(
+        &self,
+        account: &str,
+        player: &str,
+        expected: Option<&crate::experience::PersonalSourceRef>,
+    ) -> Result<(RuntimeReplyPreviewPublication, bool), RuntimeError> {
+        self.require_active()?;
+        let simulation = self.session.accepted().map_err(failure)?;
+        simulation
+            .require_player_read(account, player)
+            .map_err(failure)?;
+        let permitted = expected.is_some_and(|source| {
+            use crate::experience::PersonalSourceKind;
+            source.kind == PersonalSourceKind::Awareness
+                && simulation
+                    .state
+                    .experience
+                    .actor(player)
+                    .is_some_and(|history| {
+                        !history.privacy.revoked(&source.id)
+                            && history
+                                .collection(source.kind)
+                                .ok()
+                                .and_then(|collection| collection.resident_record(&source.id))
+                                .is_some_and(|current| {
+                                    current.header().heard_addressed_speech
+                                        && current.header().reference == *source
+                                })
+                    })
+        });
+        let fence = self.session.fence();
+        let lease = fence.begin_publication().map_err(failure)?;
+        Ok((
+            RuntimeReplyPreviewPublication {
+                _lease: lease,
+                fence,
+            },
+            permitted,
+        ))
+    }
+
     pub fn reply_preview_publication(
         &self,
         account: &str,

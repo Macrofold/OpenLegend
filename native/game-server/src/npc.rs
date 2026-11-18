@@ -623,6 +623,7 @@ impl Director {
             },
         )
         .await;
+        self.dispatch.previews().end_job(&job.job.id);
         if let Err(error) = result {
             if let Err(error) = self.finish_failed(&job, cut, error).await {
                 eprintln!(

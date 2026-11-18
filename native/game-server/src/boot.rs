@@ -10,9 +10,12 @@ use crate::{
     store::{StorageSchema, Store},
     world::{HostedWorld, WorldHost},
 };
-use openlegend_simulation::encoding::sha256_hex;
 use openlegend_simulation::runtime::{
     RuntimeActivation, RuntimeInstallDefinitions, RuntimeInstallSources,
+};
+use openlegend_simulation::{
+    encoding::sha256_hex,
+    host::{ByteBudget, ByteReservation},
 };
 use serde::{Deserialize, Serialize};
 use std::error::Error;
@@ -36,6 +39,49 @@ struct ReleaseManifest {
     cognition_sha256: String,
     assets_sha256: String,
     asset_max_object_bytes: u64,
+}
+
+fn read_manifest(release: &Path) -> Result<ReleaseManifest, BootError> {
+    Ok(serde_json::from_slice(&read_bounded(
+        &release.join("manifest.json"),
+        4 * 1024,
+    )?)?)
+}
+
+async fn open_store(
+    release: &Path,
+    manifest: &ReleaseManifest,
+    database: Config,
+    budget: &ByteBudget,
+) -> Result<Arc<Store>, BootError> {
+    let _workspace = budget.reserve(16 * 1024 * 1024)?;
+    let schema: StorageSchema = artifact(
+        release,
+        "storage.json",
+        &manifest.storage_sha256,
+        2 * 1024 * 1024,
+    )?;
+    let _ = rustls::crypto::ring::default_provider().install_default();
+    let (tls, _) = MakeRustlsConnect::with_native_certs()
+        .map_err(|_| "No usable trust roots for PostgreSQL")?;
+    Ok(Arc::new(
+        Store::open(database, tls, schema, false, budget.clone()).await?,
+    ))
+}
+
+fn read_definitions(
+    release: &Path,
+    manifest: &ReleaseManifest,
+    budget: &ByteBudget,
+) -> Result<(RuntimeInstallDefinitions, ByteReservation), BootError> {
+    let custody = budget.reserve(32 * 1024 * 1024)?;
+    let definitions = artifact(
+        release,
+        "definitions.json",
+        &manifest.definitions_sha256,
+        4 * 1024 * 1024,
+    )?;
+    Ok((definitions, custody))
 }
 
 fn read_bounded(path: &Path, maximum: usize) -> Result<Vec<u8>, BootError> {
@@ -127,8 +173,7 @@ impl CurrentServer {
         database: Config,
         workers: usize,
     ) -> Result<Self, BootError> {
-        let manifest: ReleaseManifest =
-            serde_json::from_slice(&read_bounded(&release.join("manifest.json"), 4 * 1024)?)?;
+        let manifest = read_manifest(release)?;
         // Match the existing server's configured request envelope. The
         // world writer's wait queue does not introduce a smaller player cap.
         let players = match std::env::var("OPEN_LEGEND_PLAYER_CAPACITY") {
@@ -143,21 +188,7 @@ impl CurrentServer {
         let budget = host.budget();
         // These are finite trusted build products. Retain their independent
         // construction charge across deserialization and cold adoption.
-        let storage_manifest = budget.reserve(16 * 1024 * 1024)?;
-        let schema: StorageSchema = artifact(
-            release,
-            "storage.json",
-            &manifest.storage_sha256,
-            2 * 1024 * 1024,
-        )?;
-        let storage_version = schema.version.clone();
-        let definition_custody = budget.reserve(32 * 1024 * 1024)?;
-        let definitions: RuntimeInstallDefinitions = artifact(
-            release,
-            "definitions.json",
-            &manifest.definitions_sha256,
-            4 * 1024 * 1024,
-        )?;
+        let (definitions, definition_custody) = read_definitions(release, &manifest, budget)?;
         let view = admitted_view(release, &manifest.view_sha256, budget)?;
         let cognition_custody = budget.reserve(4 * 1024 * 1024)?;
         let cognition = Arc::new(artifact(
@@ -177,11 +208,7 @@ impl CurrentServer {
                 )
             })
             .transpose()?;
-        let _ = rustls::crypto::ring::default_provider().install_default();
-        let (tls, _) = MakeRustlsConnect::with_native_certs()
-            .map_err(|_| "No usable trust roots for PostgreSQL")?;
-        let store = Arc::new(Store::open(database, tls, schema, false, budget.clone()).await?);
-        drop(storage_manifest);
+        let store = open_store(release, &manifest, database, budget).await?;
         let opening = store
             .current_opening()
             .await?
@@ -203,7 +230,7 @@ impl CurrentServer {
                 working_set: None,
                 accepted_cut: receipt.accepted_cut,
             },
-            &storage_version,
+            &store.schema.version,
             budget.clone(),
             custody,
         )?;

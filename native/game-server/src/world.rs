@@ -319,6 +319,32 @@ impl HostedWorld {
         cut: u64,
         publish: impl FnOnce() -> T,
     ) -> Result<Option<T>, WorldError> {
+        self.reply_disclosure(|session| {
+            let lease =
+                session.reply_preview_publication(&scope.account_id, &scope.actor_id, cut)?;
+            Ok(lease
+                .filter(|lease| lease.is_current())
+                .map(|_lease| publish()))
+        })
+    }
+
+    pub(crate) fn disclose_reply_receipt<T>(
+        &self,
+        scope: &crate::authority::RequestScope,
+        source: Option<&openlegend_simulation::experience::PersonalSourceRef>,
+        publish: impl FnOnce(bool) -> T,
+    ) -> Result<Option<T>, WorldError> {
+        self.reply_disclosure(|session| {
+            let (lease, allowed) =
+                session.reply_receipt_publication(&scope.account_id, &scope.actor_id, source)?;
+            Ok(lease.is_current().then(|| publish(allowed)))
+        })
+    }
+
+    fn reply_disclosure<T>(
+        &self,
+        select: impl FnOnce(&NativeWorldSession) -> Result<Option<T>, RuntimeError>,
+    ) -> Result<Option<T>, WorldError> {
         if self.closing.load(Ordering::Acquire) {
             return Err(HostError::Closed.into());
         }
@@ -327,10 +353,7 @@ impl HostedWorld {
             Err(std::sync::TryLockError::WouldBlock) => return Ok(None),
             Err(std::sync::TryLockError::Poisoned(_)) => return Err(HostError::Poisoned.into()),
         };
-        let lease = session.reply_preview_publication(&scope.account_id, &scope.actor_id, cut)?;
-        Ok(lease
-            .filter(|lease| lease.is_current())
-            .map(|_lease| publish()))
+        Ok(select(&session)?)
     }
 
     async fn call<T>(

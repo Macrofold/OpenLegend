@@ -4,11 +4,11 @@
 use crate::{
     authority::{Authority, AuthorizedScope, Capability},
     boot::CurrentServer,
-    decision_dispatch::CallFailure,
+    decision_dispatch::{CallFailure, ReplyPreview, ReplyReceipt},
     live_save::{AcceptedSaveInput, LiveSaves},
     player_events::SpeechReplyStatus,
     store::{AdmittedJob, TerminalOutcome},
-    world::{ApplicationStart, WorldError},
+    world::ApplicationStart,
 };
 use axum::body::Bytes;
 use openlegend_simulation::runtime::{RuntimeDirectOutput, RuntimeError, RuntimeNpcResponseTicket};
@@ -17,7 +17,10 @@ use tokio::{sync::watch, time::Instant};
 
 enum Applied {
     Stale(&'static str),
-    Accepted(Arc<AcceptedSaveInput>),
+    Accepted {
+        save: Arc<AcceptedSaveInput>,
+        preview: Option<(Arc<ReplyPreview>, Option<Arc<ReplyReceipt>>)>,
+    },
     Refused(Arc<AcceptedSaveInput>),
 }
 
@@ -29,6 +32,7 @@ pub(super) async fn apply(
     draft: Bytes,
     permit: Option<(Arc<Authority>, Arc<AuthorizedScope>)>,
     cancellation: watch::Receiver<bool>,
+    preview: Option<Arc<ReplyPreview>>,
 ) -> Result<(), CallFailure> {
     if *cancellation.borrow() {
         return Err(CallFailure::Cancelled);
@@ -53,7 +57,7 @@ pub(super) async fn apply(
                     return Ok(ApplicationStart::Existing(Applied::Stale("cancelled")));
                 }
                 if let Some((authority, scope)) = &begin_permit {
-                authority.current(scope, Capability::Play, true, |_, _| ())?;
+                    authority.current(scope, Capability::Play, true, |_, _| ())?;
                 }
                 let witness = ticket.as_ref().expect("response ticket is present");
                 match session.npc_response_publication(witness)? {
@@ -98,7 +102,11 @@ pub(super) async fn apply(
                     .map_err(RuntimeError::application_refused)?;
                 let save = staged.stage_with_job(&product, None, Some(change))?;
                 Ok(if result.ok {
-                    Applied::Accepted(save)
+                    let preview = preview.as_ref().map(|preview| {
+                        let receipt = preview.prepare_receipt(&product, budget);
+                        (preview.clone(), receipt)
+                    });
+                    Applied::Accepted { save, preview }
                 } else {
                     Applied::Refused(save)
                 })
@@ -108,21 +116,27 @@ pub(super) async fn apply(
                     return Ok(fence.settle(key, false)?);
                 }
                 if let Some((authority, scope)) = permit {
-                return Ok(authority.current(&scope, Capability::Play, true, |_, _| {
+                    return Ok(authority.current(&scope, Capability::Play, true, |_, _| {
                         fence.settle(key, true)
                     })??);
                 }
                 Ok(fence.settle(key, true)?)
             },
             move |applied| match applied {
-                Applied::Accepted(save) | Applied::Refused(save) => accepted.accept(save),
+                Applied::Accepted { save, preview } => {
+                    accepted.accept(save);
+                    if let Some((selected, receipt)) = preview {
+                        selected.settle(receipt.clone());
+                    }
+                }
+                Applied::Refused(save) => accepted.accept(save),
                 Applied::Stale(_) => {}
             },
         )
         .await
         .map_err(CallFailure::World)?;
     match applied {
-        Some(Applied::Accepted(_) | Applied::Refused(_)) => Ok(()),
+        Some(Applied::Accepted { .. } | Applied::Refused(_)) => Ok(()),
         Some(Applied::Stale("cancelled")) | None => Err(CallFailure::Cancelled),
         Some(Applied::Stale(reason)) => Err(CallFailure::Stale(reason)),
     }

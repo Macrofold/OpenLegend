@@ -369,6 +369,7 @@ pub(super) async fn run(
         payload,
         work.permit,
         work.cancellation,
+        dispatch.previews().get(&work.job.job.id),
     )
     .await
     .map_err(|error| error.at("response-application"))
@@ -447,6 +448,7 @@ async fn finish_native(
         payload,
         work.permit,
         work.cancellation,
+        None,
     )
     .await
     .map_err(|error| error.at("response-application"))

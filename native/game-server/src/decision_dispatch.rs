@@ -28,7 +28,7 @@ use std::{
 use tokio::{sync::watch, time::Instant};
 
 mod previews;
-pub(crate) use previews::{ReplyPreview, ReplyPreviews};
+pub(crate) use previews::{PreviewTerminal, ReplyPreview, ReplyPreviews, ReplyReceipt};
 
 pub(crate) struct PreparedCall {
     pub request: PreparedProviderRequest,
@@ -354,8 +354,11 @@ impl DecisionDispatch {
                                 }
                                 Some(InferenceEvent::Terminal {
                                     data,
-                                    preview_matches: _,
+                                    preview_matches,
                                 }) => {
+                                    if preview_matches && let Some(display) = display.take() {
+                                        display.complete();
+                                    }
                                     return Ok(data.into_reply());
                                 }
                                 None => return Err(CallFailure::Transport(NetworkError::Transfer)),

@@ -63,8 +63,8 @@ impl Write for ExactSink<'_> {
 /// independently of the decoded previous-view state and disclosure lease.
 pub fn encode(
     value: &(impl Serialize + ?Sized),
-    prefix: &'static [u8],
-    suffix: &'static [u8],
+    prefix: &[u8],
+    suffix: &[u8],
     budget: &ByteBudget,
 ) -> Result<Bytes, WireError> {
     let length = json_record_len(value).map_err(WireError::Encoding)?;

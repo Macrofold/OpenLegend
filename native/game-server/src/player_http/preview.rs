@@ -3,7 +3,7 @@
 
 use super::*;
 use crate::{
-    decision_dispatch::ReplyPreview,
+    decision_dispatch::{PreviewTerminal, ReplyPreview},
     npc::{
         preview::{PreviewDisclosure, read_disclosure},
         valid_request_id,
@@ -21,6 +21,8 @@ use tokio::{
     sync::{OwnedSemaphorePermit, watch},
     time::{Instant, sleep_until},
 };
+
+const CADENCE: Duration = Duration::from_millis(250);
 
 #[derive(Clone)]
 struct PreviewRoutes {
@@ -98,6 +100,7 @@ async fn open(
         scope,
         pending: None,
         displayed: None,
+        shown_words: false,
         after: Instant::now(),
         heartbeat: Instant::now() + Duration::from_secs(15),
         first: true,
@@ -135,6 +138,7 @@ enum Delivery {
     Wait,
     Heartbeat,
     Forming(Bytes, Arc<ReplyPreview>),
+    Terminal(Bytes),
 }
 
 struct PreviewStream {
@@ -145,6 +149,7 @@ struct PreviewStream {
     revisions: watch::Receiver<u64>,
     pending: Option<Preparation>,
     displayed: Option<Arc<ReplyPreview>>,
+    shown_words: bool,
     after: Instant,
     heartbeat: Instant,
     first: bool,
@@ -235,7 +240,67 @@ struct Snapshot<'a> {
     speaker: &'a JsText,
     volume: SpeechVolume,
     text: &'a JsText,
-    history_ids: [&'a str; 0],
+    history_ids: &'a [&'a str],
+}
+
+fn encode_snapshot(
+    game: &CurrentServer,
+    fields: &crate::authority::RequestScope,
+    preview: &ReplyPreview,
+    state: &'static str,
+    speaker: &JsText,
+    text: &JsText,
+    history_ids: &[&str],
+) -> Option<Bytes> {
+    let job = &preview.job.job;
+    let snapshot = Snapshot {
+        request_id: &job.id,
+        attempt: 0,
+        generation: &preview.generation,
+        world_id: &fields.world_id,
+        timeline_id: &fields.timeline_id,
+        player_speech_event_id: job.player_speech_event_id.as_deref()?,
+        npc_id: &job.request.npc_id,
+        sequence: if state == "forming" { 1 } else { 2 },
+        state,
+        speaker,
+        volume: preview.speech.volume,
+        text,
+        history_ids,
+    };
+    let _header = game.host.budget().reserve(128).ok()?;
+    let prefix = format!(
+        "id: {}:{}\nevent: snapshot\ndata: ",
+        snapshot.generation, snapshot.sequence
+    );
+    wire::encode(&snapshot, prefix.as_bytes(), b"\n\n", game.host.budget()).ok()
+}
+
+impl PreviewStream {
+    fn terminal(&self, fields: &crate::authority::RequestScope) -> Result<Delivery, WorldError> {
+        let Some(prior) = &self.displayed else {
+            return Ok(Delivery::Clear);
+        };
+        let game = &self.state.routes.game;
+        let blank = JsText::default();
+        prior.terminal(|terminal| {
+            let result = match terminal {
+                PreviewTerminal::InProgress => return Ok(Delivery::Clear),
+                PreviewTerminal::Withdrawn => {
+                    encode_snapshot(game, fields, prior, "withdrawn", &blank, &blank, &[])
+                }
+                PreviewTerminal::Settled(source) => game
+                    .world
+                    .disclose_reply_receipt(fields, source, |allowed| {
+                        let ids = [source.map_or("", |source| source.id.as_str())];
+                        let ids = if allowed { &ids[..] } else { &[] };
+                        encode_snapshot(game, fields, prior, "settled", &blank, &blank, ids)
+                    })?
+                    .flatten(),
+            };
+            Ok(result.map_or(Delivery::Wait, Delivery::Terminal))
+        })
+    }
 }
 
 impl http_body::Body for PreviewStream {
@@ -268,55 +333,41 @@ impl http_body::Body for PreviewStream {
                 |fields, _| match next {
                     Next::Stop => Ok(Delivery::End),
                     Next::Heartbeat => Ok(Delivery::Heartbeat),
-                    Next::Empty => Ok(Delivery::Clear),
+                    Next::Empty => self.terminal(fields),
                     Next::Selected(preview, fresh) => {
                         let Some(fresh) =
                             fresh.filter(|fresh| fresh.speaker == preview.original.speaker)
                         else {
                             preview.withdraw();
-                            return Ok(Delivery::Clear);
+                            return self.terminal(fields);
                         };
                         if !preview.current() {
-                            return Ok(Delivery::Clear);
+                            return self.terminal(fields);
                         }
-                        if self
-                            .displayed
-                            .as_ref()
-                            .is_some_and(|previous| Arc::ptr_eq(previous, &preview))
+                        if self.shown_words
+                            && self
+                                .displayed
+                                .as_ref()
+                                .is_some_and(|previous| Arc::ptr_eq(previous, &preview))
                         {
                             return Ok(Delivery::Wait);
                         }
                         let game = &self.state.routes.game;
-                        let job = &preview.job.job;
                         let prepared =
                             game.world.disclose_reply_preview(fields, fresh.cut, || {
-                                if !preview.current() {
-                                    return None;
-                                }
-                                let snapshot = Snapshot {
-                                    request_id: &job.id,
-                                    attempt: 0,
-                                    generation: &preview.generation,
-                                    world_id: &fields.world_id,
-                                    timeline_id: &fields.timeline_id,
-                                    player_speech_event_id: job
-                                        .player_speech_event_id
-                                        .as_deref()?,
-                                    npc_id: &job.request.npc_id,
-                                    sequence: 1,
-                                    state: "forming",
-                                    speaker: &fresh.speaker,
-                                    volume: preview.speech.volume,
-                                    text: &preview.speech.text,
-                                    history_ids: [],
-                                };
-                                wire::encode(
-                                    &snapshot,
-                                    b"event: snapshot\ndata: ",
-                                    b"\n\n",
-                                    game.host.budget(),
-                                )
-                                .ok()
+                                preview
+                                    .during_forming(|| {
+                                        encode_snapshot(
+                                            game,
+                                            fields,
+                                            &preview,
+                                            "forming",
+                                            &fresh.speaker,
+                                            &preview.speech.text,
+                                            &[],
+                                        )
+                                    })
+                                    .flatten()
                             })?;
                         Ok(match prepared.flatten() {
                             Some(bytes) => Delivery::Forming(bytes, preview),
@@ -325,7 +376,7 @@ impl http_body::Body for PreviewStream {
                     }
                 },
             );
-            self.after = Instant::now() + Duration::from_millis(50);
+            self.after = Instant::now() + CADENCE;
             let bytes = match authorized {
                 Err(_) => {
                     self.ended = true;
@@ -345,11 +396,20 @@ impl http_body::Body for PreviewStream {
                     }
                     Delivery::Forming(bytes, preview) => {
                         self.displayed = Some(preview);
+                        self.shown_words = true;
                         Some(bytes)
                     }
                     Delivery::Clear => {
-                        let clear = !self.sent || self.displayed.take().is_some();
-                        clear.then(|| Bytes::from_static(b"event: snapshot\ndata: null\n\n"))
+                        let clear = !self.sent || self.shown_words;
+                        self.shown_words = false;
+                        clear.then(|| {
+                            Bytes::from_static(b"id: none\nevent: snapshot\ndata: null\n\n")
+                        })
+                    }
+                    Delivery::Terminal(bytes) => {
+                        self.displayed = None;
+                        self.shown_words = false;
+                        Some(bytes)
                     }
                     Delivery::Wait => None,
                     Delivery::Heartbeat => {
