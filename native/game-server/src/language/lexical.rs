@@ -47,6 +47,26 @@ impl LexicalVector {
 }
 
 impl LanguageProvider {
+    pub(super) fn lowercase_units(
+        &self,
+        input: &[u16],
+        budget: &ByteBudget,
+    ) -> Result<(Vec<u16>, ByteReservation), LanguageError> {
+        let length = i32::try_from(input.len()).map_err(|_| LanguageError::Capacity)?;
+        transform(budget, |output, maximum, status| unsafe {
+            // Empty locale is ICU root, matching ECMAScript toLowerCase, not
+            // the service's process/user locale or toLocaleLowerCase.
+            (self.lexical.lowercase)(
+                output,
+                maximum,
+                input.as_ptr(),
+                length,
+                c"".as_ptr(),
+                status,
+            )
+        })
+    }
+
     /// Generate exactly the Source tsvector text from one admitted search body.
     /// Transient ICU work is dropped before handing the result to a SQL owner.
     pub fn lexical_vector(

@@ -1,7 +1,11 @@
 //! Finite formatting continuations issued by the active candidate. These
 //! replies retain their original binding and add no world authority.
 
-use crate::{activity_format, control_format, language::LanguageProvider, world::WorldError};
+use crate::{
+    activity_format, control_format,
+    language::{LanguageProvider, PreparedUtterance, PreparedWordLists},
+    world::WorldError,
+};
 use openlegend_simulation::{
     activity::ActivityView,
     encoding::json_record,
@@ -35,6 +39,8 @@ enum Formatted {
     Activity { view: ActivityView },
     Control { message: JsText },
     Collation { order: Vec<u32>, groups: Vec<u32> },
+    Utterance(PreparedUtterance),
+    Words(PreparedWordLists),
 }
 
 /// Borrow the funded request and admit its finite decoded text, facts and JSON
@@ -48,7 +54,10 @@ pub(crate) fn answer(
     request.with_request(|request| {
         let envelope: Envelope<'_> =
             serde_json::from_str(request).map_err(|_| WorldError::ProviderKind)?;
-        if !matches!(envelope.kind, "display" | "control" | "collation") {
+        if !matches!(
+            envelope.kind,
+            "display" | "control" | "collation" | "utterance" | "words"
+        ) {
             return Ok(None);
         }
         let bytes = envelope
@@ -80,6 +89,34 @@ pub(crate) fn answer(
                     .collate(&input.strings)
                     .map_err(WorldError::Language)?;
                 Formatted::Collation { order, groups }
+            }
+            "utterance" => {
+                #[derive(Deserialize)]
+                struct Input {
+                    text: JsText,
+                }
+                let input: Input = serde_json::from_str(envelope.value.get())
+                    .map_err(|_| WorldError::ProviderKind)?;
+                Formatted::Utterance(
+                    language
+                        .ok_or(WorldError::ProviderKind)?
+                        .utterance(&input.text, budget)
+                        .map_err(WorldError::Language)?,
+                )
+            }
+            "words" => {
+                #[derive(Deserialize)]
+                struct Input {
+                    strings: Vec<JsText>,
+                }
+                let input: Input = serde_json::from_str(envelope.value.get())
+                    .map_err(|_| WorldError::ProviderKind)?;
+                Formatted::Words(
+                    language
+                        .ok_or(WorldError::ProviderKind)?
+                        .speech_word_lists(&input.strings, budget)
+                        .map_err(WorldError::Language)?,
+                )
             }
             _ => unreachable!("validated provider kind"),
         };

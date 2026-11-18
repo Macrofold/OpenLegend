@@ -19,7 +19,9 @@ use std::{
 };
 
 mod lexical;
+mod speech;
 pub use lexical::LexicalVector;
+pub(crate) use speech::{PreparedUtterance, PreparedWordLists};
 
 const NODE_DATA_SHA: &str = "2cac4f3277df9fa37f8ebd5d3459d4151e99f7d84d99fca5b7392fcd3c880ea9";
 const MAX_LIBRARY_BYTES: u64 = 128 * 1024 * 1024;
@@ -82,6 +84,7 @@ pub struct LanguageProvider {
     compare: Compare,
     compare_utf8: CompareUtf8,
     lexical: lexical::LexicalPolicy,
+    speech: speech::SpeechPolicy,
     _library: Library,
     _resident: ResidentReservation,
 }
@@ -140,8 +143,10 @@ impl LanguageProvider {
                 return Err(LanguageError::Provider);
             }
             let lexical = lexical::LexicalPolicy::load(&library)?;
+            let speech = speech::SpeechPolicy::load(&library)?;
             Ok(Self {
                 lexical,
+                speech,
                 collator: Mutex::new(collator),
                 compare,
                 compare_utf8,
