@@ -1101,7 +1101,7 @@ The current host join installs the existing temporal packing/residency settings 
 
 ## Verification boundaries
 
-Use the [technical experiment ledger](../projects/native-simulation-core-tech-design.md#10-experiments-and-adoption-gates) and current [verification policy](../../.agents/rules/verification.md). Finish each implemented stage before its isolated AWS comparisons. No unit-suite run or new maintained test suite is selected. Correctness may reuse focused checks and disposable actual-consumer scenarios; all speed testing uses the managed standard 16 GiB AWS worker unless Mike explicitly approves another environment. Required numerical gates remain with the dedicated qualification owner and must be fixed before measurement.
+Use the [technical experiment ledger](../projects/native-simulation-core-tech-design.md#10-experiments-and-adoption-gates) and current [verification policy](../../.agents/rules/verification.md). Finish each NSC experiment before its isolated AWS comparison. The separate [RGS comparison plan](../projects/rust-game-server-tech-design.md#8-compare-and-decide-rgs08) measures the integrated server and selects extra trials by the decision they resolve. No unit-suite run or new maintained test suite is selected. Correctness may reuse focused checks and disposable actual-consumer scenarios; all speed testing uses the managed standard 16 GiB AWS worker unless Mike explicitly approves another environment. Required numerical gates remain with the dedicated qualification owner and must be fixed before measurement.
 
 ### First-proof qualification criteria
 
