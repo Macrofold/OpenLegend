@@ -299,6 +299,63 @@ impl Session {
     pub(crate) fn current_installation(&self) -> Result<CurrentInstallation<'_>, SessionError> {
         CurrentInstallation::capture(&self.accepted()?.state)
     }
+
+    /// Remembered-place preparation runs before the physical cursor. Match
+    /// its actual preparing ticket and borrow the independently accepted
+    /// save rows without exposing tentative physical or knowledge changes.
+    pub(crate) fn known_place_read(
+        &self,
+        binding: crate::geometry::GeometryBinding,
+        world: &str,
+        generation: &str,
+        actor: &str,
+        life: u64,
+        privacy_revision: u64,
+        known_place_revision: u64,
+    ) -> Result<
+        (
+            crate::records::save::SaveReadMetadata,
+            &crate::experience::ActorPrivacy,
+            (
+                Option<&crate::records::ChangedRows>,
+                &crate::records::ChangedRows,
+            ),
+        ),
+        SessionError,
+    > {
+        let key = CandidateKey {
+            id: binding.candidate_id,
+            base_cut: binding.base_cut,
+            generation: binding.generation,
+        };
+        self.fence()
+            .validate_phase(key, CandidatePhase::Preparing)?;
+        let state = &self.simulation.state;
+        let save = self.save.read_metadata()?;
+        if world != state.physical.header.id
+            || generation != state.generation
+            || save.through_cut != binding.base_cut
+            || state.accepted_cut != binding.base_cut
+            || state
+                .physical
+                .entities
+                .get(actor)
+                .and_then(|row| row.physical_life())
+                != Some(life)
+            || state.experience.known_place_revision(actor) != known_place_revision
+        {
+            return Err(FenceError::Stale.into());
+        }
+        let privacy = &state
+            .experience
+            .actor(actor)
+            .ok_or(FenceError::Stale)?
+            .privacy;
+        if privacy.revision() != privacy_revision {
+            return Err(FenceError::Stale.into());
+        }
+        Ok((save, privacy, self.save.pending_read_rows()))
+    }
     /// Capture the actor's real unsaved page representation before any private
     /// writes. Pending non-temporal deltas/history already belong to the
     /// application's pre-Ready immutable publication owner and are not copied

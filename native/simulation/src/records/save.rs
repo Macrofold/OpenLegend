@@ -206,6 +206,15 @@ impl SaveJournal {
         })
     }
 
+    /// Borrow ordinary accepted rows only. Candidate changes remain outside
+    /// both save owners until settlement.
+    pub(crate) fn pending_read_rows(&self) -> (Option<&ChangedRows>, &ChangedRows) {
+        (
+            self.in_flight.as_ref().map(|prefix| &prefix.rows.changes),
+            &self.suffix,
+        )
+    }
+
     /// Fund and validate all accumulating-save work before Ready/accept. The
     /// accepted suffix stays unchanged on refusal; only this private incoming
     /// product is held until the exact candidate settles. SQL may acknowledge

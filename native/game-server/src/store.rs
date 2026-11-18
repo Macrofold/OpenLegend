@@ -3,12 +3,15 @@
 
 mod archives;
 mod history;
+mod known_places;
 mod metadata;
 mod read;
 mod received;
 mod schema;
 mod write;
 
+pub use history::OrdinaryProjection;
+pub use known_places::PreparedKnownPlaceRead;
 pub use metadata::MetadataProjection;
 pub use read::{AdmittedReceipt, CurrentOpening, GameplayReceipt};
 pub use schema::StorageSchema;
@@ -41,6 +44,7 @@ pub enum StoreError {
     InvalidRecord,
     Capacity,
     Maintenance,
+    DerivedProjectionRequired,
 }
 
 impl fmt::Display for StoreError {
@@ -57,6 +61,9 @@ impl fmt::Display for StoreError {
             Self::InvalidRecord => "A current PostgreSQL record is invalid",
             Self::Capacity => "PostgreSQL transfer cannot fit its allowance",
             Self::Maintenance => "This server cannot open an active maintenance schedule",
+            Self::DerivedProjectionRequired => {
+                "This save requires its history or personal index projection"
+            }
         };
         formatter.write_str(reason)
     }

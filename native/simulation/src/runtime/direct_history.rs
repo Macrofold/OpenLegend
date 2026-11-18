@@ -2,11 +2,11 @@
 //! the settled candidate. The addon continues to serialize its own handoff.
 
 use super::RuntimePreparedProducts;
-use crate::events::OriginalOccurrence;
-use crate::experience::CapturedHistoryInput;
+use crate::experience::{CapturedHistoryInput, HistoryOriginals};
 use crate::received::{ReceivedChargeDirectory, ReceivedFrontier, TemporalReceipt};
 use crate::reception::SensoryFacet;
 
+#[derive(Clone)]
 pub struct RuntimeHistory(CapturedHistoryInput);
 
 pub struct HistoryAccount<'a> {
@@ -53,7 +53,7 @@ impl RuntimeHistory {
     pub fn base_cut(&self) -> u64 {
         self.0.base_cut()
     }
-    pub fn originals(&self) -> impl Iterator<Item = &OriginalOccurrence> {
+    pub fn originals(&self) -> HistoryOriginals<'_> {
         self.0.originals()
     }
     pub fn accounts(&self) -> impl Iterator<Item = HistoryAccount<'_>> {

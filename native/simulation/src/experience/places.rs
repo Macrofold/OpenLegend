@@ -631,15 +631,39 @@ impl ExperienceJournal {
 
 /// The exact selected sparse support remains the source; projection never
 /// invents a visit from a live definition or a retired prose account.
-pub(crate) struct OwnedPlaceCapsules {
+pub struct OwnedPlaceCapsules {
     values: Vec<KnownPlaceCapsule>,
     _reservation: ByteReservation,
 }
 impl OwnedPlaceCapsules {
-    pub(crate) fn capsules(&self) -> &[KnownPlaceCapsule] {
+    pub fn capsules(&self) -> &[KnownPlaceCapsule] {
         &self.values
     }
 }
+/// Decode a selected immutable SQL support record through the same exact
+/// factory used when the receiving owner writes that support. The returned
+/// acquired capsules own their storage after the parser and row are released.
+pub fn stored_support_place_capsules(
+    source: &str,
+    actor: &str,
+    budget: &ByteBudget,
+) -> Result<OwnedPlaceCapsules, ExperienceError> {
+    use crate::received::{ReceivedValueFragment, TemporalFacetReference, TemporalSupportCapsule};
+    let _parse = crate::install::reserve_typed_parse::<TemporalSupportCapsule>(
+        source,
+        size_of::<ReceivedValueFragment>().max(size_of::<TemporalFacetReference>()),
+        None,
+        budget,
+    )
+    .map_err(|error| match error {
+        crate::install::InstallError::Capacity => ExperienceError::Capacity,
+        _ => ExperienceError::InvalidBody("stored place support"),
+    })?;
+    let support = serde_json::from_str(source)
+        .map_err(|_| ExperienceError::InvalidBody("stored place support"))?;
+    temporal_known_place_capsules(actor, &support, budget)
+}
+
 pub(crate) fn temporal_known_place_capsules(
     actor_id: &str,
     support: &crate::received::TemporalSupportCapsule,

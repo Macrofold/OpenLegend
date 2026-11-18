@@ -33,6 +33,7 @@ pub(crate) use awareness_encoding::{AwarenessEncoding, AwarenessFactory, Awarene
 mod evidence;
 pub use evidence::*;
 mod history;
+pub use history::HistoryOriginals;
 mod player_events;
 pub(crate) use history::{
     CapturedHistoryCuts, CapturedHistoryInput, HistorySettings, capture_history_cuts,
@@ -110,7 +111,10 @@ pub(crate) use result::{
 mod columns;
 pub(crate) mod places;
 pub(crate) use places::KnownPlaceMutation;
-pub use places::{KnownPlaceCapsule, PlaceProvenance, PreparedKnownPlaceEvidence};
+pub use places::{
+    KnownPlaceCapsule, OwnedPlaceCapsules, PlaceProvenance, PreparedKnownPlaceEvidence,
+    stored_support_place_capsules,
+};
 mod owners;
 mod sensory;
 pub(crate) use sensory::{expire_sensory_awareness, next_sensory_expiry};

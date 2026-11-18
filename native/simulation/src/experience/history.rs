@@ -29,6 +29,24 @@ impl Serialize for Original {
         out.end()
     }
 }
+
+/// Borrow the originals retained by one accepted history capture. SQL can
+/// keep this finite cursor across I/O without copying their row pointers.
+pub struct HistoryOriginals<'a>(std::slice::Iter<'a, Original>);
+
+impl<'a> Iterator for HistoryOriginals<'a> {
+    type Item = &'a OriginalOccurrence;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next().map(|original| original.0.as_ref())
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.0.size_hint()
+    }
+}
+
+impl ExactSizeIterator for HistoryOriginals<'_> {}
 struct AwarenessBody(Arc<PersonalSourceRecord>);
 impl Serialize for AwarenessBody {
     fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
@@ -123,8 +141,8 @@ impl CapturedHistoryInput {
     pub(crate) fn world_id(&self) -> &str {
         &self.0.input.world_id
     }
-    pub(crate) fn originals(&self) -> impl Iterator<Item = &OriginalOccurrence> {
-        self.0.input.changed.iter().map(|row| row.0.as_ref())
+    pub(crate) fn originals(&self) -> HistoryOriginals<'_> {
+        HistoryOriginals(self.0.input.changed.iter())
     }
     pub(crate) fn accounts(
         &self,

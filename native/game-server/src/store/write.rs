@@ -208,6 +208,8 @@ impl Store {
             }
             self.write_records(&transaction, &rows.world_id, sql_revision, &rows.changes)
                 .await?;
+            self.project_support_places(&transaction, &rows.world_id, &rows.changes)
+                .await?;
             projection
                 .after_records(&transaction, rows, revision)
                 .await?;

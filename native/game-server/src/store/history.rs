@@ -1,16 +1,112 @@
 //! Canonical occurrence placement for a funded detached save. Personal
 //! perspectives are separate and must come from their actual received account.
 
-use super::{Store, StoreError, StoreResult, sql_ordinal};
+use super::{PrefixProjection, Store, StoreError, StoreResult, sql_ordinal};
 use openlegend_simulation::events::OriginalOccurrence;
 use openlegend_simulation::reception::EventScalar;
-use openlegend_simulation::records::SaveRows;
+use openlegend_simulation::records::{ChangedRows, SaveRows};
 use openlegend_simulation::runtime::RuntimeHistory;
 use std::borrow::Cow;
 use std::collections::HashSet;
 use std::fmt::Write as _;
 use tokio_postgres::Transaction;
 use tokio_postgres::types::{ToSql, Type};
+
+/// Write the detached prefix's actual append-only occurrences. All captures
+/// are borrowed from their independently funded accepted owners. Until their
+/// additional derived writer is attached, personal edits or perspectives
+/// refuse this projection before any gameplay can be published to SQL.
+pub struct OrdinaryProjection<'a> {
+    store: &'a Store,
+    histories: &'a [RuntimeHistory],
+}
+
+impl<'a> OrdinaryProjection<'a> {
+    pub fn new(store: &'a Store, histories: &'a [RuntimeHistory]) -> Self {
+        Self { store, histories }
+    }
+
+    /// The acceptance owner checks this before Ready while a refused
+    /// candidate can still be rolled back. Prefix capture repeats the same
+    /// predicate for any newly materialized save rows.
+    pub fn validate_candidate(changes: &ChangedRows, history: &RuntimeHistory) -> StoreResult<()> {
+        if derived_rows(changes) || history.accounts().next().is_some() {
+            return Err(StoreError::DerivedProjectionRequired);
+        }
+        Ok(())
+    }
+}
+
+fn derived_rows(changes: &ChangedRows) -> bool {
+    let leaf = changes
+        .writes
+        .keys()
+        .chain(changes.deletes.keys())
+        .any(|table| {
+            matches!(
+                table.as_str(),
+                "mind_awareness"
+                    | "mind_memories"
+                    | "mind_summaries"
+                    | "mind_forgotten"
+                    | "mind_corrections"
+                    | "mind_privacy_revisions"
+            )
+        });
+    leaf || [
+        "data_world",
+        "world_settings",
+        "experience_state",
+        "mind_awareness_owners",
+        "mind_memories_owners",
+        "mind_summaries_owners",
+        "mind_forgotten_owners",
+        "mind_corrections_owners",
+    ]
+    .into_iter()
+    .any(|name| changes.deletes.contains_key(name))
+}
+
+impl PrefixProjection for OrdinaryProjection<'_> {
+    async fn before_records(
+        &self,
+        transaction: &Transaction<'_>,
+        rows: &SaveRows,
+        _revision: u64,
+    ) -> StoreResult<()> {
+        let last = self.histories.last().ok_or(StoreError::StaleCut)?;
+        if last.base_cut().checked_add(1) != Some(rows.through_cut)
+            || self
+                .histories
+                .windows(2)
+                .any(|pair| pair[0].base_cut().checked_add(1) != Some(pair[1].base_cut()))
+        {
+            return Err(StoreError::StaleCut);
+        }
+        if derived_rows(&rows.changes)
+            || self
+                .histories
+                .iter()
+                .any(|history| history.accounts().next().is_some())
+        {
+            return Err(StoreError::DerivedProjectionRequired);
+        }
+        self.store
+            .append_originals(transaction, rows, self.histories)
+            .await
+    }
+
+    async fn after_records(
+        &self,
+        _transaction: &Transaction<'_>,
+        _rows: &SaveRows,
+        _revision: u64,
+    ) -> StoreResult<()> {
+        // Canonical supports' derived capsule rows are owned by the shared
+        // store writer. This checked scope has no other post-record effects.
+        Ok(())
+    }
+}
 
 impl Store {
     /// Write already encoded original bodies at the existing SQL occurrence
@@ -35,10 +131,6 @@ impl Store {
         {
             return Err(StoreError::StaleCut);
         }
-        let mut pending = histories
-            .iter()
-            .flat_map(RuntimeHistory::originals)
-            .peekable();
         let mut inserted = 0i64;
         // Retain row references only. Canonical bodies continue to be owned by
         // the funded captures and are borrowed directly into the SQL request.
@@ -47,62 +139,31 @@ impl Store {
             .reserve(4096)
             .map_err(|_| StoreError::Capacity)?;
         let mut batch = Vec::with_capacity(128);
-        while pending.peek().is_some() {
-            batch.clear();
-            let mut bound = 0usize;
-            while let Some(row) = pending.peek() {
+        let mut bound = 0usize;
+        for history in histories {
+            for row in history.originals() {
                 let added = original_bound(row).ok_or(StoreError::Capacity)?;
                 let bytes = bound.checked_add(added).ok_or(StoreError::Capacity)?;
                 if !batch.is_empty() && (bytes > 262_144 || batch.len() == 128) {
-                    break;
+                    inserted = inserted
+                        .checked_add(
+                            self.insert_original_batch(transaction, rows, &batch, bound)
+                                .await?,
+                        )
+                        .ok_or(StoreError::Capacity)?;
+                    batch.clear();
+                    bound = 0;
                 }
-                bound = bytes;
-                batch.push(pending.next().ok_or(StoreError::InvalidRecord)?);
+                bound = bound.checked_add(added).ok_or(StoreError::Capacity)?;
+                batch.push(row);
             }
-            let _sql = self
-                .budget
-                .reserve(bound)
-                .map_err(|_| StoreError::Capacity)?;
-            let events = batch
-                .iter()
-                .map(|row| HistoryRow::from_original(row))
-                .collect::<StoreResult<Vec<_>>>()?;
-            let mut sql = String::from(
-                "INSERT INTO history_events \
-                (world_id,id,position,payload,response_id,data_references,utterance_id) VALUES ",
-            );
-            let world_id = rows.world_id.as_str();
-            let mut params: Vec<(&(dyn ToSql + Sync), Type)> = vec![(&world_id, Type::TEXT)];
-            let mut base = 2;
-            for (at, event) in events.iter().enumerate() {
-                if at != 0 {
-                    sql.push(',');
-                }
-                write!(
-                    sql,
-                    "($1,${},${},${},${},${},${})",
-                    base,
-                    base + 1,
-                    base + 2,
-                    base + 3,
-                    base + 4,
-                    base + 5
-                )
-                .expect("string write");
-                base += 6;
-                params.push((&event.id, Type::TEXT));
-                params.push((&event.position, Type::INT8));
-                params.push((&event.payload, Type::TEXT));
-                params.push((&event.response_id, Type::TEXT));
-                params.push((&event.references, Type::TEXT_ARRAY));
-                params.push((&event.utterance_id, Type::TEXT));
-            }
-            let written = transaction.execute_typed(&sql, &params).await?;
-            if written != events.len() as u64 {
-                return Err(StoreError::StaleCut);
-            }
+        }
+        if !batch.is_empty() {
             inserted = inserted
-                .checked_add(written as i64)
+                .checked_add(
+                    self.insert_original_batch(transaction, rows, &batch, bound)
+                        .await?,
+                )
                 .ok_or(StoreError::Capacity)?;
         }
         if inserted != 0 {
@@ -117,6 +178,58 @@ impl Store {
             }
         }
         Ok(())
+    }
+
+    async fn insert_original_batch(
+        &self,
+        transaction: &Transaction<'_>,
+        rows: &SaveRows,
+        batch: &[&OriginalOccurrence],
+        bound: usize,
+    ) -> StoreResult<i64> {
+        let _sql = self
+            .budget
+            .reserve(bound)
+            .map_err(|_| StoreError::Capacity)?;
+        let events = batch
+            .iter()
+            .map(|row| HistoryRow::from_original(row))
+            .collect::<StoreResult<Vec<_>>>()?;
+        let mut sql = String::from(
+            "INSERT INTO history_events \
+            (world_id,id,position,payload,response_id,data_references,utterance_id) VALUES ",
+        );
+        let world_id = rows.world_id.as_str();
+        let mut params: Vec<(&(dyn ToSql + Sync), Type)> = vec![(&world_id, Type::TEXT)];
+        let mut base = 2;
+        for (at, event) in events.iter().enumerate() {
+            if at != 0 {
+                sql.push(',');
+            }
+            write!(
+                sql,
+                "($1,${},${},${},${},${},${})",
+                base,
+                base + 1,
+                base + 2,
+                base + 3,
+                base + 4,
+                base + 5
+            )
+            .expect("string write");
+            base += 6;
+            params.push((&event.id, Type::TEXT));
+            params.push((&event.position, Type::INT8));
+            params.push((&event.payload, Type::TEXT));
+            params.push((&event.response_id, Type::TEXT));
+            params.push((&event.references, Type::TEXT_ARRAY));
+            params.push((&event.utterance_id, Type::TEXT));
+        }
+        let written = transaction.execute_typed(&sql, &params).await?;
+        if written != events.len() as u64 {
+            return Err(StoreError::StaleCut);
+        }
+        Ok(written as i64)
     }
 }
 
