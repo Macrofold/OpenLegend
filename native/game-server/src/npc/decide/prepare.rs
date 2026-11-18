@@ -118,7 +118,7 @@ pub(super) async fn collect(
         .world
         .read_npc(request.clone())
         .await
-        .map_err(CallFailure::World)?;
+        .map_err(|error| CallFailure::World(error).at("original-read"))?;
     let original_json = capture(&original, budget)?;
     let original_self = &original_json.value["self"];
     let mut through = get_u64(&original_self["acceptedCut"])?;
@@ -157,7 +157,7 @@ pub(super) async fn collect(
                 NativeWorldSession::begin_npc_sources,
             )
             .await
-            .map_err(CallFailure::World)?;
+            .map_err(|error| CallFailure::World(error).at("original-sources"))?;
         let product = original.latest_sources_packet(budget).map_err(invalid)?;
         let data = FundedJson::read(
             std::str::from_utf8(product.bytes()).map_err(invalid)?,
@@ -181,11 +181,6 @@ pub(super) async fn collect(
         Some(data)
     };
     ensure_running(work)?;
-    let current = game
-        .world
-        .read_npc(request)
-        .await
-        .map_err(CallFailure::World)?;
     let selector = crate::wire::encode(
         &json!({"expandedBodyOrdinals":[],"coverage":"suggestions"}),
         b"",
@@ -193,6 +188,22 @@ pub(super) async fn collect(
         budget,
     )
     .map_err(invalid)?;
+    let original = game
+        .world
+        .prepare_npc(
+            game.clone(),
+            original,
+            selector.clone(),
+            NativeWorldSession::begin_npc_candidates,
+        )
+        .await
+        .map_err(|error| CallFailure::World(error).at("original-offers"))?;
+    ensure_running(work)?;
+    let current = game
+        .world
+        .read_npc(request)
+        .await
+        .map_err(|error| CallFailure::World(error).at("current-read"))?;
     let current = game
         .world
         .prepare_npc(
@@ -202,7 +213,7 @@ pub(super) async fn collect(
             NativeWorldSession::begin_npc_candidates,
         )
         .await
-        .map_err(CallFailure::World)?;
+        .map_err(|error| CallFailure::World(error).at("current-offers"))?;
     let captured = capture(&current, budget)?;
     through = through.max(get_u64(&captured.value["self"]["acceptedCut"])?);
     let bytes = captured
@@ -235,11 +246,12 @@ pub(super) async fn collect(
         .map_err(invalid)?;
     ensure_running(work)?;
     let request = crate::wire::encode(&binding, b"", b"", budget).map_err(invalid)?;
+    let origin = work.automatic.as_ref().map(|trigger| trigger.read.clone());
     let ticket = game
         .world
-        .bind_npc(original, current, request, None)
+        .bind_npc(original, current, request, origin)
         .await
-        .map_err(CallFailure::World)?;
+        .map_err(|error| CallFailure::World(error).at("response-binding"))?;
     Ok(Prepared {
         through,
         addressed,
@@ -323,11 +335,15 @@ fn project(
             .as_u64()
             .cmp(&b["value"]["sequence"].as_u64())
     });
-    let target_event = work.job.job.player_speech_event_id.as_deref();
+    let target_event = work.job.job.player_speech_event_id.as_deref().or_else(|| {
+        work.automatic
+            .as_ref()
+            .and_then(|trigger| trigger.evidence.as_deref())
+    });
     let trigger = target_event.and_then(|event| {
         source_entries
             .iter()
-            .find(|row| row["reference"]["id"] == event)
+            .find(|row| row["reference"]["id"] == event || row["value"]["eventId"] == event)
             .copied()
     });
     if target_event.is_some() && trigger.is_none() {
@@ -346,8 +362,7 @@ fn project(
     let mut recall = Vec::new();
     for entry in source_entries {
         let value = &entry["value"];
-        let display = received_text(value)?;
-        let at = value["at"].as_f64().ok_or(CallFailure::Invalid)?;
+        let (display, at) = personal_description(entry)?;
         let fact = json!({"text":display,"at":at,"eventType":value["eventType"],"acquisition":value["modality"],"observerRelationship":value["triggerKind"],"eventTime":display_time(at)});
         let line = format!("{display} ({})", display_time(at));
         if value["eventType"] == "speech" {
@@ -359,7 +374,7 @@ fn project(
     }
     let (stimulus, trigger_facts) = if let Some(trigger) = trigger {
         let value = &trigger["value"];
-        let at = value["at"].as_f64().ok_or(CallFailure::Invalid)?;
+        let (display, at) = personal_description(trigger)?;
         let event_time = display_time(at);
         let speaker_visible = value["sourceBody"]["entityId"].as_str().is_some_and(|id| {
             current_body["bodies"].as_array().is_some_and(|bodies| {
@@ -372,14 +387,28 @@ fn project(
         });
         (
             format!(
-                "Addressed speech (to me): {} ({event_time})",
-                received_text(value)?
+                "{}: {} ({event_time})",
+                if addressed {
+                    "Addressed speech (to me)"
+                } else if speech {
+                    "Nearby speech"
+                } else {
+                    "World change"
+                },
+                display
             ),
-            json!({"experience":{"text":received_text(value)?,"at":at,"acquisition":value["modality"]},"eventTime":event_time,"ageGameSeconds":(now-at).max(0.0),"observerRelationship":value["triggerKind"],"speaker":value["speech"]["speaker"]["nameAtTime"].as_str().unwrap_or("Unknown speaker"),"addressing":value["speech"]["addressing"],"intendedRecipient":value["speech"]["addressee"]["nameAtTime"].as_str().unwrap_or("Unknown; no recipient identity perceived"),"sourceCurrentlyVisible":speaker_visible}),
+            json!({"experience":{"text":display,"at":at,"acquisition":value["modality"]},"eventTime":event_time,"ageGameSeconds":(now-at).max(0.0),"observerRelationship":value["triggerKind"],"speaker":value["speech"]["speaker"]["nameAtTime"].as_str().unwrap_or("Unknown speaker"),"addressing":value["speech"]["addressing"],"intendedRecipient":value["speech"]["addressee"]["nameAtTime"].as_str().unwrap_or("Unknown; no recipient identity perceived"),"sourceCurrentlyVisible":speaker_visible}),
         )
     } else {
         (
-            "Situation change: Current perceived activity.".to_owned(),
+            work.job
+                .job
+                .request
+                .text
+                .as_unicode()
+                .filter(|_| work.automatic.is_some())
+                .unwrap_or("Situation change: Current perceived activity.")
+                .to_owned(),
             json!({}),
         )
     };
@@ -419,7 +448,7 @@ fn project(
     project_markers(&mut fields, &canonical, &refs);
     let binding = json!({"decisionId":work.job.job.id,"selection":{
         "consumer":consumer,"purpose":"decision","validity":"decision","actions":actions,
-        "prototypeSource":"current","perspectives":[],"semanticCauses":[],"intents":[],
+        "prototypeSource":"current","perspectives":[],"semanticCauses":work.automatic.as_ref().map_or(&[][..],|trigger|trigger.causes.as_slice()),"intents":[],
         "evidence":evidence,"entities":entities,"identities":[],"knowledge":[],
         "observations":[],"current":[],"receipts":[],"attention":attention,"presented":presented,"appraisals":null,
     }});
@@ -479,6 +508,23 @@ fn received_text(value: &Value) -> Result<String, CallFailure> {
         .as_unicode()
         .map(str::to_owned)
         .ok_or(CallFailure::Invalid)
+}
+
+fn personal_description(entry: &Value) -> Result<(String, f64), CallFailure> {
+    let value = &entry["value"];
+    let (description, date) = match entry["reference"]["kind"].as_str() {
+        Some("awareness") => (received_text(value)?, &value["at"]),
+        Some("memory") => (text(&value["summary"])?.to_owned(), &value["at"]),
+        Some("summary") => (
+            format!(
+                "Summary of remembered experience: {}",
+                text(&value["text"])?
+            ),
+            &value["to"],
+        ),
+        _ => return Err(CallFailure::Invalid),
+    };
+    Ok((description, date.as_f64().ok_or(CallFailure::Invalid)?))
 }
 
 fn identity(value: &Value, label: &str, token: &str) -> Result<String, CallFailure> {

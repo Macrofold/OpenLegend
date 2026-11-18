@@ -55,6 +55,12 @@ enum PreparedIntake {
     Queue(String, ByteReservation),
 }
 impl NpcIntakeCapture {
+    pub(crate) fn matches_actor(&self, actor: &str) -> bool {
+        self.request.actor_id == actor
+    }
+    pub(crate) fn semantic_causes(&self) -> &[crate::response::ResponseSemanticCause] {
+        self.read.semantic_causes.values()
+    }
     pub(crate) fn json(&self) -> &str {
         &self.read.json
     }

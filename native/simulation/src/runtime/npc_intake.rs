@@ -1,6 +1,8 @@
 //! The director can inspect a finite native wakeup cut. The opaque handle is
 //! the freshness witness; restoring its JSON cannot acknowledge an inspection.
 use super::*;
+mod direct;
+pub use direct::{NpcScheduleCause, NpcSchedulePopulation, NpcScheduleSources};
 pub struct RuntimeNpcTrigger {
     read: crate::capture::npc_intake::NpcIntakeCapture,
 }

@@ -11,9 +11,11 @@ mod attention;
 mod choices;
 mod prompt;
 pub(crate) mod provider;
+mod scheduling;
 mod schema;
 
 pub(crate) use prompt::PreparedPrompt;
+pub(crate) use scheduling::SchedulingPolicy;
 pub(crate) use schema::{BoundSchema, ResponseReferences};
 
 #[derive(Debug)]
@@ -67,6 +69,7 @@ pub(crate) struct DecisionPolicy {
     references: HashMap<String, String>,
     schemas: Vec<SchemaVariant>,
     choices: Value,
+    pub(crate) scheduling: SchedulingPolicy,
 }
 
 #[derive(Deserialize)]

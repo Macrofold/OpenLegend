@@ -5,6 +5,7 @@ import {
   itemOutputFamilies,
   knowledgePolicyInstructions,
   namedClockTimes,
+  STIMULUS_POLICY,
   selectedAttentionPolicy,
   selectedActivityChoiceFormatter,
   selectedOccurrenceRules,
@@ -35,6 +36,9 @@ import {
 } from '../apps/server/src/decision-situation-query.js';
 import { decisionQuestions, LEVEL1_POLICY } from '../apps/server/src/jev-questions.js';
 import { navigationInstructions } from '../apps/server/src/navigation-contracts.js';
+import { INTAKE_LIMITS } from '../apps/server/src/actor-work.js';
+import { NPC_INTAKE_SELECTION } from '../apps/server/src/native-npc-intake.js';
+import { RECORD_ACTOR_PATHS } from '../apps/server/src/world-record-schema.js';
 
 // These build-time tokens are replaced by request-scoped aliases issued by
 // the same native capture used for effects. No tokens are model-addressable.
@@ -206,5 +210,16 @@ export function rustGameServerDecisionPolicy(world: WorldState) {
     references,
     schemas,
     choices: choiceText(world),
+    scheduling: {
+      ...INTAKE_LIMITS,
+      selection: NPC_INTAKE_SELECTION,
+      actorPaths: Object.fromEntries(RECORD_ACTOR_PATHS),
+      stimuli: STIMULUS_POLICY,
+      significantEvents: world.cognitionPolicy.significantEventTypes,
+      policyRevision: world.cognitionPolicy.revision,
+      bodyPolicyPin: world.moduleManifest.bodyPolicyPin,
+      discovery: selectedAttentionPolicy(world).semantic.discovery,
+      preparedResponses: world.cognitionPolicy.preparedResponses,
+    },
   };
 }

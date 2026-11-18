@@ -145,18 +145,20 @@ export interface NativeNpcQueueInputs {
   readonly facts: NativeNpcInputFacts;
   readonly input: IntakeInputs & { owner: ReturnType<typeof nativeProductOwner> };
 }
+export const NPC_INTAKE_SELECTION = {
+  limit: 256,
+  protectedImportance: EXPERIENCE_LIMITS.protectedImportance,
+  preferredImportance: 6,
+  interruptionImportance: THOUGHT_RESPONSE_INTERRUPTION.importance,
+  interruptionUrgency: THOUGHT_RESPONSE_INTERRUPTION.urgency,
+};
+
 function intakeRequest(actorId: string, afterSequence: number, weighedThrough?: number) {
   return {
     actorId,
     afterSequence,
     ...(weighedThrough !== undefined ? { weighedThrough } : {}),
-    selection: {
-      limit: 256,
-      protectedImportance: EXPERIENCE_LIMITS.protectedImportance,
-      preferredImportance: 6,
-      interruptionImportance: THOUGHT_RESPONSE_INTERRUPTION.importance,
-      interruptionUrgency: THOUGHT_RESPONSE_INTERRUPTION.urgency,
-    },
+    selection: NPC_INTAKE_SELECTION,
   };
 }
 async function queueInputs(read: () => Promise<NativeWorldJson>): Promise<NativeNpcQueueInputs> {

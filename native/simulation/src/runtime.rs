@@ -35,7 +35,10 @@ pub use maintenance::{
 };
 mod npc;
 mod npc_intake;
-pub use npc_intake::{RuntimeNpcInspection, RuntimeNpcTrigger};
+pub use npc_intake::{
+    NpcScheduleCause, NpcSchedulePopulation, NpcScheduleSources, RuntimeNpcInspection,
+    RuntimeNpcTrigger,
+};
 mod npc_labels;
 mod participation;
 pub use participation::RuntimeParticipation;

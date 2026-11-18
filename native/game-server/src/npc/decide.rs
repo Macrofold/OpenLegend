@@ -89,6 +89,13 @@ pub(super) struct Work {
     pub(super) permit: Option<(Arc<Authority>, Arc<AuthorizedScope>)>,
     pub(super) cancellation: watch::Receiver<bool>,
     pub(super) deadline: Instant,
+    pub(super) automatic: Option<AutomaticTrigger>,
+}
+
+pub(super) struct AutomaticTrigger {
+    pub(super) read: Arc<openlegend_simulation::runtime::RuntimeNpcTrigger>,
+    pub(super) evidence: Option<String>,
+    pub(super) causes: Vec<usize>,
 }
 
 pub(super) async fn run(
@@ -537,18 +544,28 @@ where
             completion_uncertain: true,
         };
         if let Some(billing) = billing {
-            let result = macrofold::MacrofoldAdmission::read(&body.bytes)
+            let binding = BillingBinding {
+                mode: billing,
+                deployment: None,
+            };
+            let result = if let Some(observed) = &body.observed {
+                observation.provider_request_id = Some(observed.run.id.clone());
+                macrofold::observed_terminal(
+                    &observed.run.id,
+                    &observed.status,
+                    &body.bytes,
+                    binding,
+                )
                 .ok()
-                .and_then(|admission| {
-                    observation.provider_request_id = Some(admission.run_id.to_owned());
-                    admission
-                        .terminal(BillingBinding {
-                            mode: billing,
-                            deployment: None,
-                        })
-                        .ok()
-                        .flatten()
-                });
+                .flatten()
+            } else {
+                macrofold::MacrofoldAdmission::read(&body.bytes)
+                    .ok()
+                    .and_then(|admission| {
+                        observation.provider_request_id = Some(admission.run_id.to_owned());
+                        admission.terminal(binding).ok().flatten()
+                    })
+            };
             if let Some(result) = result {
                 observation.model = result.model_revision.map(str::to_owned);
                 observation.usage = result.usage.map(|usage| ModelUsage {

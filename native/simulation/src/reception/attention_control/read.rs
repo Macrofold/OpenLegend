@@ -26,6 +26,10 @@ pub(crate) struct CapturedSemanticCauses {
     _storage: ByteReservation,
 }
 impl CapturedSemanticCauses {
+    pub(crate) fn values(&self) -> &[crate::response::ResponseSemanticCause] {
+        &self.values
+    }
+
     pub(crate) fn copy_all(
         &self,
         budget: &ByteBudget,

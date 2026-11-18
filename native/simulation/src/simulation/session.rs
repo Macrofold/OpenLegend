@@ -305,6 +305,10 @@ impl Session {
     pub(crate) fn operational_generation(&self) -> u64 {
         self.generation
     }
+
+    pub(crate) fn durable_identity_through(&self) -> u64 {
+        self.save.durable_identity_through()
+    }
     /// Actual validated install facts used by the existing SQL writer's cold
     /// adoption. This finite summary conveys no actor facts or write permission.
     pub(crate) fn current_installation(&self) -> Result<CurrentInstallation<'_>, SessionError> {
