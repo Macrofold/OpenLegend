@@ -129,7 +129,10 @@ import {
 } from '@open-legend/domain';
 import { workBatchDigest, previewWorkBatch } from './work-batches.js';
 import type { WorkBatchRequest, WorkBatchPreview } from '@open-legend/protocol';
-import { playerInteractionAvailability } from './player-interaction.js';
+import {
+  playerInteractionAvailability,
+  type PlayerInteractionAdmission,
+} from './player-interaction.js';
 import {
   canSpeak,
   activelyParticipates,
@@ -6982,9 +6985,9 @@ export class WorldService {
     );
   }
 
-  private playerInteractionAdmission?: (actorId: string) => boolean;
+  private playerInteractionAdmission?: PlayerInteractionAdmission;
   /** The AI scheduler remains the sole owner of inference capacity. */
-  setPlayerInteractionAdmission(admit: (actorId: string) => boolean): () => void {
+  setPlayerInteractionAdmission(admit: PlayerInteractionAdmission): () => void {
     this.playerInteractionAdmission = admit;
     return () => {
       if (this.playerInteractionAdmission === admit) this.playerInteractionAdmission = undefined;
@@ -6997,7 +7000,7 @@ export class WorldService {
     mode: 'speak' | 'act',
     targetId?: string,
     scope = this.localScope,
-    admit = (actorId: string) => this.playerInteractionAdmission?.(actorId) ?? true,
+    options?: { admit?: PlayerInteractionAdmission; offerWait?: boolean },
   ): Promise<PlayerInteractionAvailability> {
     await this.ready;
     return playerInteractionAvailability({
@@ -7034,7 +7037,8 @@ export class WorldService {
       },
       budgetAvailable: (actor, allowance, ceiling) =>
         this.store.budgetAvailable(actor, allowance, ceiling),
-      admit,
+      admit: options?.admit ?? ((actorId) => this.playerInteractionAdmission?.(actorId) ?? true),
+      offerWait: options?.offerWait,
     });
   }
 

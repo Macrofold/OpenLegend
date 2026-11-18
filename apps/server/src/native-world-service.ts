@@ -143,7 +143,11 @@ import { LiveReadRevisionError } from './live-read-overlay.js';
 import { resolveNativeReceiptTail } from './native-temporal-tail.js';
 import { SUPPORT_MEMBERSHIP_PREPARATION } from './retention-cleanup.js';
 import { RETENTION_MIN_DELAY_MS } from './retention-deadlines.js';
-import { chatNotSent, playerInteractionAvailability } from './player-interaction.js';
+import {
+  chatNotSent,
+  playerInteractionAvailability,
+  type PlayerInteractionAdmission,
+} from './player-interaction.js';
 import { nativePlayerCommandReferences } from './native-player-command.js';
 import { ordinaryPlayerCommand } from './ordinary-player-command.js';
 import {
@@ -295,7 +299,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   private protectedCompletion?: Promise<void>;
   private protectedHold?: NativeProtectedHold;
   private committedPrefix?: { readonly prefix: NativePendingPrefix; readonly revision: number };
-  private playerInteractionAdmission?: (actorId: string) => boolean;
+  private playerInteractionAdmission?: PlayerInteractionAdmission;
   private stopping?: Promise<void>;
   private restoring = false;
   private restoration?: {
@@ -1793,7 +1797,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     });
   }
 
-  setPlayerInteractionAdmission(admit: (actorId: string) => boolean): () => void {
+  setPlayerInteractionAdmission(admit: PlayerInteractionAdmission): () => void {
     this.playerInteractionAdmission = admit;
     return () => {
       if (this.playerInteractionAdmission === admit) this.playerInteractionAdmission = undefined;
@@ -1804,6 +1808,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     mode: 'speak' | 'act',
     targetId: string | undefined,
     scope: RequestScope,
+    offerWait = false,
   ) {
     return playerInteractionAvailability({
       mode,
@@ -1812,6 +1817,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       budgetAvailable: (actor, allowance, ceiling) =>
         this.store.budgetAvailable(actor, allowance, ceiling),
       admit: (actor) => this.playerInteractionAdmission?.(actor) ?? true,
+      offerWait,
     });
   }
 

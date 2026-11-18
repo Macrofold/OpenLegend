@@ -442,7 +442,9 @@ export class NativeNpcDirector {
       releasePublication();
       releaseChange();
     };
-    this.releaseAdmission = service.setPlayerInteractionAdmission((id) => this.canAdmit(id));
+    this.releaseAdmission = service.setPlayerInteractionAdmission((id) =>
+      this.chatAdmission.availability(id),
+    );
   }
 
   /** An uncommitted Send can wait for an immediate slot without holding either
@@ -2280,10 +2282,10 @@ export class NativeNpcDirector {
               thought.preparedResult ||
               thought.interruptions.length > 0 ||
               thought.nativeCauses.some((cause) => cause.severity >= INTAKE_LIMITS.urgent);
-          // At the configured job cap, a waiting Send goes before new optional
-          // ordinary thoughts. Urgent and already admitted work keep their priority.
+          // A waiting Send precedes new ordinary work for its resident, or
+          // at the shared cap. Urgent and already admitted work keep their priority.
           if (
-            (!urgent && this.chatAdmission.hasCapacityWaiter) ||
+            (!urgent && this.chatAdmission.hasPriorityWaiter(actorId)) ||
             !this.canAdmit(actorId) ||
             !(await this.execution.primaryAvailable())
           )

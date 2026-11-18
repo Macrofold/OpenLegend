@@ -4,6 +4,8 @@ import { chatNotSent } from './player-interaction.js';
 // The HTTP request is still uncommitted throughout this wait. See LA231.
 const CHAT_ADMISSION_WAIT_MS = 5_000;
 export type NpcChatBlocker = 'closed' | 'higher-reasoning' | 'actor-slot' | 'job-capacity';
+const waitable = (blocked: NpcChatBlocker) =>
+  blocked === 'actor-slot' || blocked === 'job-capacity';
 
 interface NpcChatAttempt {
   assertScope(): void;
@@ -23,19 +25,37 @@ export class NpcChatAdmission {
   private revision = 0;
   private readonly waiters = new Set<() => void>();
   private pendingAtCapacity = 0;
+  private readonly pendingActors = new Map<string, number>();
 
   constructor(
     private readonly blocker: (actorId?: string) => NpcChatBlocker | undefined,
     private readonly serialize: (operation: () => Promise<ApiResult>) => Promise<ApiResult>,
   ) {}
 
-  get hasCapacityWaiter(): boolean {
-    return this.pendingAtCapacity > 0;
+  /** Read-only advice for the composer. Only an explicit Send owns a wait. */
+  availability(actorId: string): boolean | 'wait' {
+    const blocked = this.blocker(actorId);
+    return blocked === undefined ? true : waitable(blocked) && 'wait';
+  }
+
+  hasPriorityWaiter(actorId: string): boolean {
+    return this.pendingAtCapacity > 0 || this.pendingActors.has(actorId);
   }
 
   async wait({ assertScope, current, signal, trySend }: NpcChatAttempt): Promise<ApiResult> {
     const until = performance.now() + CHAT_ADMISSION_WAIT_MS;
     let hasPriority = false;
+    let waitingActor: string | undefined;
+    const setWaitingActor = (actorId?: string) => {
+      if (actorId === waitingActor) return;
+      if (waitingActor) {
+        const count = this.pendingActors.get(waitingActor)!;
+        if (count === 1) this.pendingActors.delete(waitingActor);
+        else this.pendingActors.set(waitingActor, count - 1);
+      }
+      waitingActor = actorId;
+      if (actorId) this.pendingActors.set(actorId, (this.pendingActors.get(actorId) ?? 0) + 1);
+    };
     let refusal: ApiResult | undefined;
     const expired = () => (refusal && performance.now() >= until ? refusal : undefined);
     try {
@@ -45,9 +65,10 @@ export class NpcChatAdmission {
           if (expired() || !current()) return false;
           const blocked = this.blocker(actorId);
           if (!blocked) return true;
-          if (blocked === 'closed' || blocked === 'higher-reasoning') return false;
+          if (!waitable(blocked)) return false;
           blockedAt = this.revision;
           const sharedSlot = blocked === 'job-capacity';
+          setWaitingActor(sharedSlot ? undefined : actorId);
           if (sharedSlot !== hasPriority) {
             this.pendingAtCapacity += sharedSlot ? 1 : -1;
             hasPriority = sharedSlot;
@@ -70,6 +91,7 @@ export class NpcChatAdmission {
       }
     } finally {
       if (hasPriority) this.pendingAtCapacity--;
+      setWaitingActor();
     }
   }
 

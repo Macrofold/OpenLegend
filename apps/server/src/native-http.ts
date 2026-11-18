@@ -591,7 +591,7 @@ export async function createNativeGameServer(options: {
             .parse(Object.fromEntries(url.searchParams));
           return send(
             200,
-            await current.playerInteractionAvailability(value.mode, value.targetId, scope),
+            await current.playerInteractionAvailability(value.mode, value.targetId, scope, true),
           );
         }
         if (request.method !== 'POST')

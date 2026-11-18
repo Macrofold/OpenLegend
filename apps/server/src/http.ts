@@ -1368,6 +1368,7 @@ async function initializeGameServer(
               ? resolveContactTarget(service.world, scope, value.targetId, { communication: true })
               : undefined,
             scope,
+            { offerWait: true },
           );
           service.assertScope(scope);
           return send(response, 200, available);

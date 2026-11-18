@@ -401,7 +401,7 @@ export class AiDirector {
     );
     this.replyPreviews = new NpcReplyPreviews(sourceNpcReplyPreviewHost(service));
     this.releasePlayerInteractionAdmission = service.setPlayerInteractionAdmission((actorId) =>
-      this.canAdmit(actorId),
+      this.chatAdmission.availability(actorId),
     );
     this.unsubscribe = service.subscribe(() => {
       this.replyPreviews.recheck();
@@ -1409,7 +1409,7 @@ export class AiDirector {
           'speak',
           targetId,
           authority,
-          admitChat,
+          { admit: admitChat },
         );
         if (current && !current()) return chatNotSent;
         const noSlot = expired?.();
@@ -4293,7 +4293,10 @@ export class AiDirector {
               nativeCauses.some((cause) => cause.severity >= INTAKE_LIMITS.urgent);
             // Capacity refusal leaves this character's coalesced ticket and evidence
             // untouched. Ordinary aging still orders eligible work in the same queue.
-            if ((!urgent && this.chatAdmission.hasCapacityWaiter) || !this.canAdmit(entity.id))
+            if (
+              (!urgent && this.chatAdmission.hasPriorityWaiter(entity.id)) ||
+              !this.canAdmit(entity.id)
+            )
               continue;
             if (!(await this.execution.primaryAvailable())) continue;
             // Native urgency identifies the initiating experience, not just queue

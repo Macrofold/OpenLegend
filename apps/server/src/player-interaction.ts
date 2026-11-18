@@ -22,6 +22,9 @@ export interface PlayerInteractionFacts {
   readonly recipientName?: string;
 }
 
+/** A directed reply may enter its bounded Send wait while its slot is occupied. */
+export type PlayerInteractionAdmission = (actorId: string) => boolean | 'wait';
+
 /** One ordinary Send gate, shared across simulation implementations. The paid
  * execution owner still reserves its actual dispatch after this availability
  * read; checking an allowance never invokes or retries a model. */
@@ -34,7 +37,8 @@ export async function playerInteractionAvailability(request: {
     allowance: number,
     ceiling: number,
   ) => Promise<boolean>;
-  readonly admit?: (actorId: string) => boolean;
+  readonly admit?: PlayerInteractionAdmission;
+  readonly offerWait?: boolean;
 }): Promise<PlayerInteractionAvailability> {
   const unavailable = (
     facts: PlayerInteractionFacts,
@@ -108,7 +112,11 @@ export async function playerInteractionAvailability(request: {
       'ai-unavailable',
       'Speak and Act need an available character AI allowance.',
     );
-  if (request.admit && !request.admit(before.fundingActorId))
+  const admission = request.admit?.(before.fundingActorId) ?? true;
+  if (
+    admission !== true &&
+    !(request.offerWait && admission === 'wait' && request.mode === 'speak' && after.reply)
+  )
     return unavailable(
       after,
       'busy',
