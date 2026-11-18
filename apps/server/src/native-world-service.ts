@@ -2087,6 +2087,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   private debtSeconds = 0;
   private inputAccountedThrough?: number;
   private clockAdmission: 'duration' | 'monotonic' = 'duration';
+  private preparingElapsedCut?: number;
   useMonotonicClock(): void {
     this.clockAdmission = 'monotonic';
   }
@@ -4178,10 +4179,15 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           publicationWake.unref();
           let publication: NativePublication | undefined;
           try {
+            if (this.clockAdmission === 'monotonic') this.preparingElapsedCut = this.acceptedCut;
             publication = await this.acceptInLane({
               first: () =>
                 withNativeJsonInput(world, inputs, (bytes) => world.advance(offered, 4096, bytes)),
-              current: () => !this.paused && this.inputs.authorized(inputs, performance.now()),
+              current: () => {
+                // Close before settlement can install a different accepted body or cut.
+                this.preparingElapsedCut = undefined;
+                return !this.paused && this.inputs.authorized(inputs, performance.now());
+              },
               admitPublication: (value) =>
                 !(
                   value.progress.at === before &&
@@ -4190,6 +4196,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                 ),
             });
           } finally {
+            this.preparingElapsedCut = undefined;
             clearInterval(publicationWake);
             releaseNativeProduct(inputs);
           }
@@ -4264,6 +4271,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         allocation,
       );
       transferred = true;
+      state.steeringCheckedCut = canSteer ? this.acceptedCut : undefined;
       if (!canSteer && state.steering) this.inputs.invalidateMovement(scope.actorId);
       return state;
     } finally {
@@ -4271,6 +4279,31 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     }
   }
   async updateWorldInput(input: WorldInputUpdate, scope: RequestScope): Promise<WorldInputResult> {
+    const continuedMovement =
+      input.kind === 'renew'
+        ? input.movement && !input.pendingRelease
+        : input.direction.x === 0 && input.direction.z === 0;
+    const cut = this.preparingElapsedCut;
+    if (continuedMovement && cut !== undefined && cut === this.acceptedCut) {
+      const state = this.inputs.steeringAt(scope.actorId, cut);
+      if (state) {
+        this.assertAdmission();
+        this.assertScope(scope, 'play', true);
+        const output = NativeInputResultAllocation.prepare(this.host);
+        try {
+          // Renew only the permitted live direction. The private advance
+          // keeps its captured finite window. Neutral removes that direction
+          // and makes its ordinary final authorization reject the old input.
+          const now = performance.now();
+          this.accountInputTime(now);
+          return output.finish(
+            this.inputs.update(state, input, now, this.progress.at + this.debtSeconds),
+          );
+        } finally {
+          output.release();
+        }
+      }
+    }
     return this.lane.run(async () => {
       this.assertAdmission();
       this.assertScope(scope, 'play', true);

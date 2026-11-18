@@ -23,6 +23,7 @@ export interface WorldInputState {
   scope: WorldInputScope;
   movementSequence: number;
   gestureSequence: number;
+  steeringCheckedCut?: number;
   steering?: Window & { direction: { x: number; z: number }; sequence: number };
   attack?: AttackGesture;
 }
@@ -47,6 +48,14 @@ export class WorldInputOwner {
   ) {}
   has(actorId: string): boolean {
     return this.states.has(actorId);
+  }
+  /** Reuse an existing held direction only at the accepted cut where its
+   * caller last proved steering eligibility. This does not admit a new one. */
+  steeringAt(actorId: string, cut: number): WorldInputState | undefined {
+    const state = this.states.get(actorId);
+    return state?.steering && state.steeringCheckedCut === cut && state.isCurrent()
+      ? state
+      : undefined;
   }
   /** A projection may check its captured tokens without issuing or retiring
    * controls. Every replacement or token rotation advances this revision. */
