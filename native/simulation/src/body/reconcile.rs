@@ -285,6 +285,10 @@ impl BodyReconcileCursor {
                         &self.actor,
                         outcome == ZeroHealthOutcome::Incapacitate,
                     )?;
+                    crate::native_controller::foraging::relinquish(
+                        &mut core.physical(),
+                        &self.actor,
+                    )?;
                     if outcome == ZeroHealthOutcome::Die {
                         let entity = core
                             .state
@@ -292,9 +296,6 @@ impl BodyReconcileCursor {
                             .entities
                             .get(&self.actor)
                             .ok_or(ExecutionError::Invariant)?;
-                        if entity.animal.as_ref().is_some_and(|a| a.foraging.is_some()) {
-                            return Err(ExecutionError::UnsupportedFamily);
-                        }
                         let body = entity
                             .actor
                             .as_ref()
@@ -576,7 +577,7 @@ pub(crate) fn reconcile_native_control(
     {
         return Ok(());
     }
-    if animal.foraging.is_some() || entity.spatial.flight.is_some() || entity.threat.is_some() {
+    if entity.spatial.flight.is_some() || entity.threat.is_some() {
         return Err(ExecutionError::UnsupportedFamily);
     }
     let owned = actor
@@ -593,6 +594,10 @@ pub(crate) fn reconcile_native_control(
                 .contains(&action.kind)
         });
     if animal.episode.is_none()
+        && animal
+            .foraging
+            .as_ref()
+            .is_none_or(|foraging| foraging.work.is_none())
         && !owned
         && animal.acoustic_patterns.is_empty()
         && animal.physical_life == actor.physical_life.unwrap_or(0)
@@ -619,6 +624,7 @@ pub(crate) fn reconcile_native_control(
         .keys()
         .cloned()
         .collect();
+    crate::native_controller::foraging::relinquish(&mut core.physical(), id)?;
     *core.physical().snapshot_episode(id)? = None;
     for key in keys {
         core.physical().set_acoustic_pattern(id, &key, None)?;

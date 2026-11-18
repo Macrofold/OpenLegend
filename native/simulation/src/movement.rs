@@ -404,12 +404,9 @@ impl MotionCursor {
         occupied: bool,
         epsilon: f64,
     ) -> Result<Self, MovementError> {
-        // These active families alter pursuit/route limits in source followPath;
-        // absence is established by the selected installation, never inferred.
-        if entity.threat.is_some()
-            || entity.animal.as_ref().is_some_and(|a| a.foraging.is_some())
-            || entity.spatial.flight.is_some()
-        {
+        // Territorial pursuit and flight keep their separate motion owners.
+        // The installed resource diet has no independent route limits.
+        if entity.threat.is_some() || entity.spatial.flight.is_some() {
             return Err(MovementError::UnsupportedFamily);
         }
         let position = entity

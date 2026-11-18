@@ -11,8 +11,8 @@ use super::{
     private_motion_seconds,
 };
 use crate::commands::{
-    CommandOperation, CommandOperationError, CompletedCommandOperation, Outcome,
-    begin_native_movement, begin_native_stop,
+    CommandOperation, CommandOperationError, CompletedCommandOperation, Outcome, begin_native_feed,
+    begin_native_foraging_move, begin_native_movement, begin_native_stop,
 };
 use crate::events::{
     CompletedEvent, EventAccountPlacement, EventCursor, WorldEvent, begin_staged_occurrence,
@@ -31,6 +31,7 @@ use crate::host::{AcceptedCandidate, ByteBudget, ByteReservation, CandidateKey};
 use crate::identity::MAX_SAFE_INTEGER;
 use crate::language::{CollationAnswer, CollationRequest};
 use crate::movement::{MoveAdvanceAnswer, MoveAdvanceCursor, MoveAdvanceStep};
+use crate::native_controller::foraging::{ForageChoice, ForageIntention};
 use crate::native_controller::{
     GroundResponseCursor, GroundResponseDecision, GroundResponseStep, WanderCursor, WanderStep,
     advance_wander_clock, expire_acoustic_patterns, reconcile_wander,
@@ -353,6 +354,7 @@ enum NativeIntention {
         ByteReservation,
     ),
     Stop,
+    Forage(ForageIntention),
 }
 pub(crate) struct AdvanceCursor {
     exits: Option<crate::participation::DueExits>,
@@ -402,12 +404,14 @@ pub(crate) struct AdvanceCursor {
     command: Option<CommandOperation>,
     command_actor: Option<EntityHandle>,
     command_mode: Option<LocomotionMode>,
+    command_foraging: bool,
     command_before: Option<LocalCommandPreparation>,
     queued_movement: Option<(EntityHandle, NativeIntention, Phase)>,
     slice_invalidated: bool,
     boundary_recorded: bool,
     perception_before: Option<(PhysicalChangeCursor, usize)>,
     response: Option<GroundResponseCursor>,
+    forage: Option<ForageChoice>,
     wander: Option<WanderCursor>,
     choices: Vec<EntityHandle>,
     perception: Option<PerceptionCursor>,
@@ -457,6 +461,7 @@ impl AdvanceCursor {
                     .as_ref()
                     .and_then(SteeringPreparation::question)
             })
+            .or_else(|| self.forage.as_ref().and_then(ForageChoice::sight_request))
             .or_else(|| {
                 self.response
                     .as_ref()
@@ -571,12 +576,14 @@ impl AdvanceCursor {
             command: None,
             command_actor: None,
             command_mode: None,
+            command_foraging: false,
             command_before: None,
             queued_movement: None,
             slice_invalidated: false,
             boundary_recorded: false,
             perception_before: None,
             response: None,
+            forage: None,
             wander: None,
             choices: Vec::new(),
             perception: None,
@@ -769,9 +776,17 @@ impl AdvanceCursor {
             Progress::Geometry => {
                 AdvanceStep::Geometry(self.geometry_request().ok_or_else(invalid)?)
             }
-            Progress::Collation => {
-                AdvanceStep::Collation(self.preparation.as_ref().ok_or_else(invalid)?.request())
-            }
+            Progress::Collation => AdvanceStep::Collation(
+                self.preparation
+                    .as_ref()
+                    .map(ParticipantPreparation::request)
+                    .or_else(|| {
+                        self.forage
+                            .as_ref()
+                            .and_then(ForageChoice::collation_request)
+                    })
+                    .ok_or_else(invalid)?,
+            ),
             Progress::Event => AdvanceStep::Event(self.event.as_mut().ok_or_else(invalid)?),
             Progress::Participation => {
                 AdvanceStep::Participation(self.participation.as_mut().ok_or_else(invalid)?)

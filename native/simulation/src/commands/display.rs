@@ -152,6 +152,7 @@ impl ActivityDisplayCursor {
         if matches!(
             command,
             NativeCommand::Outing { .. }
+                | NativeCommand::Feed { .. }
                 | NativeCommand::Cancel { .. }
                 | NativeCommand::WithdrawAttempt { .. }
                 | NativeCommand::InspectInventory { .. }
@@ -395,6 +396,7 @@ impl ActivityDisplayCursor {
             },
             NativeCommand::Strike { .. } => Command::Strike { purpose },
             NativeCommand::Outing { .. }
+            | NativeCommand::Feed { .. }
             | NativeCommand::Cancel { .. }
             | NativeCommand::WithdrawAttempt { .. }
             | NativeCommand::InspectInventory { .. }

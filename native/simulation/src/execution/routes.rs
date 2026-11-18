@@ -19,7 +19,7 @@ impl PhysicalMutation<'_> {
             .resolve(handle)
             .and_then(|entity| entity.actor.as_ref())
             .and_then(|actor| actor.action.as_ref())
-            .filter(|action| action.id == action_id && action.kind == "move")
+            .filter(|action| action.id == action_id && action.has_ground_motion())
             .ok_or(ExecutionError::Invariant)?;
         let before = action.motion_sample_remaining_metres;
         if before == Some(remaining) {
@@ -127,7 +127,7 @@ impl PhysicalMutation<'_> {
             .resolve(handle)
             .and_then(|entity| entity.actor.as_ref())
             .and_then(|actor| actor.action.as_ref())
-            .filter(|action| action.id == action_id && action.kind == "move")
+            .filter(|action| action.id == action_id && action.has_ground_motion())
             .ok_or(ExecutionError::Invariant)?;
         self.journal.reserve(
             heap_sum([2 * size_of::<Undo>(), action_id.len()]).ok_or(ExecutionError::Capacity)?,
@@ -184,7 +184,7 @@ impl PhysicalMutation<'_> {
             .and_then(|entity| entity.actor.as_ref())
             .and_then(|actor| actor.action.as_ref())
             .filter(|action| {
-                action.id == action_id && action.kind == "move" && action.stage == "working"
+                action.id == action_id && action.has_ground_motion() && action.stage == "working"
             })
             .ok_or(ExecutionError::Invariant)?;
         let before = action.remaining_seconds;
@@ -280,7 +280,7 @@ impl PhysicalMutation<'_> {
             .and_then(|actor| actor.action.as_ref())
             .filter(|action| action.id == action_id)
             .ok_or(ExecutionError::Invariant)?;
-        if action.kind != "move" {
+        if !action.has_ground_motion() {
             return Err(ExecutionError::UnsupportedFamily);
         }
         if !after.storage.is_funded_by(&self.journal.budget) {

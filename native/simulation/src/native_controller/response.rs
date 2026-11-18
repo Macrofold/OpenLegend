@@ -150,7 +150,7 @@ impl GroundResponseCursor {
                         return Ok(self.complete(GroundResponseDecision::None));
                     }
                     selected_profile(&core.state.installed, state)?;
-                    if entity.spatial.flight.is_some() || state.foraging.is_some() {
+                    if entity.spatial.flight.is_some() {
                         return Err(ExecutionError::UnsupportedFamily);
                     }
                     self.phase = Phase::Readiness;

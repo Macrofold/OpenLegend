@@ -28,6 +28,8 @@ const sourceFiles = [
   'native/node-bridge/Cargo.toml',
   'native/world-host/Cargo.toml',
   'native/node-bridge/build.rs',
+  'packages/domain/src/worlds/base/config/feeding-terms.json',
+  'packages/domain/src/worlds/base/config/ordinary-activity-display.json',
 ];
 function rustFiles(directory) {
   const files = [];

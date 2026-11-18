@@ -30,11 +30,6 @@ pub(super) fn prepare(
         let Some(animal) = entity.animal.as_ref() else {
             continue;
         };
-        // This live family is refused by the selected installer and has no
-        // proof command writer. Never interpret a supplied proposal as absent.
-        if animal.foraging.is_some() {
-            return Err(ExecutionError::UnsupportedFamily);
-        }
         let Some(proposal) = animal
             .episode
             .as_ref()

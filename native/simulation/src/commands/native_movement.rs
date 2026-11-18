@@ -18,9 +18,14 @@ impl HeapBytes for NativeMovementInput {
             self.binding.profile.heap_bytes()?,
             self.binding.locomotion.heap_bytes()?,
             self.binding.episode_id.heap_bytes()?,
-            self.route.candidate.id.heap_bytes()?,
-            self.route.candidate.point.heap_bytes()?,
-            self.route.path.heap_bytes()?,
+            match self.route.as_ref() {
+                Some(route) => heap_sum([
+                    route.candidate.id.heap_bytes()?,
+                    route.candidate.point.heap_bytes()?,
+                    route.path.heap_bytes()?,
+                ])?,
+                None => 0,
+            },
         ])
     }
 }
@@ -40,6 +45,53 @@ struct StopInput<'a> {
     actor_id: &'a str,
     #[serde(rename = "type")]
     kind: &'static str,
+}
+
+pub(crate) fn begin_native_feed(
+    core: &mut CoreMutation<'_>,
+    actor_id: &str,
+    target_id: &str,
+    candidate: CandidateKey,
+    budget: &ByteBudget,
+) -> Result<CommandOperation, CommandOperationError> {
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct FeedInput<'a> {
+        id: &'a str,
+        actor_id: &'a str,
+        target_id: &'a str,
+        #[serde(rename = "type")]
+        kind: &'static str,
+    }
+    let _scratch = budget
+        .reserve((actor_id.len() + target_id.len() + 64) * 12 + size_of::<NativeCommand>())?;
+    let id = format!("native-forage-{}", core.state.physical.identity.next_id());
+    let encoded = json_record(&FeedInput {
+        id: &id,
+        actor_id,
+        target_id,
+        kind: "feed",
+    })
+    .map_err(|_| ExecutionError::Invariant)?;
+    let command = serde_json::from_str(&encoded).map_err(|_| ExecutionError::Invariant)?;
+    let geometry = GeometryBinding::new(
+        candidate,
+        core.state.installed.geometry.spatial.revision,
+        core.journal.next_provider_serial()?,
+    );
+    let cursor = CommandCursor::new(
+        command,
+        encoded,
+        CommandOptions {
+            preview: false,
+            native_controller: true,
+            native_movement: None,
+            durable_receipt: false,
+        },
+        geometry,
+        budget,
+    )?;
+    CommandOperation::from_cursor(core, cursor, candidate, budget)
 }
 
 pub(crate) fn begin_native_stop(
@@ -98,6 +150,41 @@ pub(crate) fn begin_native_movement(
     candidate: CandidateKey,
     budget: &ByteBudget,
 ) -> Result<CommandOperation, CommandOperationError> {
+    begin_native_ground(core, actor_id, Some(route), None, mode, candidate, budget)
+}
+
+pub(crate) fn begin_native_foraging_move(
+    core: &mut CoreMutation<'_>,
+    actor_id: &str,
+    destination: &SurfacePoint,
+    candidate: CandidateKey,
+    budget: &ByteBudget,
+) -> Result<CommandOperation, CommandOperationError> {
+    begin_native_ground(
+        core,
+        actor_id,
+        None,
+        Some(destination),
+        LocomotionMode::Travel,
+        candidate,
+        budget,
+    )
+}
+
+fn begin_native_ground(
+    core: &mut CoreMutation<'_>,
+    actor_id: &str,
+    route: Option<RefugeRoute>,
+    proposed: Option<&SurfacePoint>,
+    mode: LocomotionMode,
+    candidate: CandidateKey,
+    budget: &ByteBudget,
+) -> Result<CommandOperation, CommandOperationError> {
+    let destination = route
+        .as_ref()
+        .map(|route| &route.candidate.point)
+        .or(proposed)
+        .ok_or(ExecutionError::Invariant)?;
     let entity = core
         .state
         .physical
@@ -128,7 +215,7 @@ pub(crate) fn begin_native_movement(
     .ok_or(ExecutionError::Capacity)?;
     let bytes = heap_sum([
         actor_id.len(),
-        route.candidate.point.surface_id.len(),
+        destination.surface_id.len(),
         64,
         binding_bytes,
     ])
@@ -136,12 +223,17 @@ pub(crate) fn begin_native_movement(
     .and_then(|bytes| bytes.checked_add(size_of::<NativeCommand>()))
     .ok_or(ExecutionError::Capacity)?;
     let _scratch = budget.reserve(bytes)?;
-    let id = format!("native-move-{}", core.state.physical.identity.next_id());
+    let name = if proposed.is_some() {
+        "native-forage"
+    } else {
+        "native-move"
+    };
+    let id = format!("{name}-{}", core.state.physical.identity.next_id());
     let movement = MovementInput {
         id: &id,
         actor_id,
         kind: "move",
-        destination: &route.candidate.point,
+        destination,
     };
     let encoded_bytes = json_record_len(&movement).map_err(|_| ExecutionError::Invariant)?;
     let _encoding = budget.reserve(
@@ -161,7 +253,7 @@ pub(crate) fn begin_native_movement(
             purpose: None,
             chosen_purpose: None,
         },
-        destination: route.candidate.point.clone().into(),
+        destination: destination.clone().into(),
     };
     let binding = NativeLocomotion {
         profile: pin.clone(),

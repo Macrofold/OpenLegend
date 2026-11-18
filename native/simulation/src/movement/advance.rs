@@ -22,6 +22,7 @@ use crate::narration::{Narration, NarrationPart, PersonRole};
 use crate::native_response::{NavigationWait, profile_key};
 use crate::state::{Action, Entity, NavigationPending, Placement, Point, SurfacePoint};
 use std::mem::size_of;
+mod feeding;
 
 pub(crate) enum MoveAdvanceAnswer {
     Geometry(GeometryAnswers),
@@ -49,6 +50,8 @@ enum Phase {
     Probe,
     PositiveMotion,
     Arrival,
+    FeedReach,
+    FeedSight,
     Finish,
     Clear,
     Stopped,
@@ -61,6 +64,7 @@ pub(crate) struct MoveAdvanceCursor {
     seconds: f64,
     phase: Phase,
     motion: Option<MotionOperation>,
+    meal_sight: Option<crate::reception::SightBatch>,
     queries: Option<(GeometryQueries, ByteReservation)>,
     binding: GeometryBinding,
     failure: Option<String>,
@@ -87,7 +91,7 @@ fn bound<'a>(
         .actor
         .as_ref()
         .and_then(|actor| actor.action.as_ref())
-        .filter(|value| value.id == action && value.kind == "move")
+        .filter(|value| value.id == action && value.has_ground_motion())
         .ok_or(ExecutionError::Invariant)?;
     Ok((entity, action))
 }
@@ -136,6 +140,7 @@ impl MoveAdvanceCursor {
             seconds,
             phase: Phase::Start,
             motion: None,
+            meal_sight: None,
             queries: None,
             binding,
             failure: None,
@@ -209,6 +214,8 @@ impl MoveAdvanceCursor {
     pub(crate) fn queries(&self) -> Result<&GeometryQueries, ExecutionError> {
         if let Some(motion) = &self.motion {
             motion.queries().ok_or(ExecutionError::Invariant)
+        } else if let Some(sight) = &self.meal_sight {
+            Ok(sight.queries())
         } else {
             Ok(&self.queries.as_ref().ok_or(ExecutionError::Invariant)?.0)
         }
@@ -260,6 +267,9 @@ impl MoveAdvanceCursor {
         }
         if self.motion.is_none() {
             if let Some(mut answer) = geometry.take() {
+                if self.phase == Phase::FeedSight {
+                    return self.feed_sight_answer(core, answer);
+                }
                 let (query, _guard) = self
                     .queries
                     .take()
@@ -269,6 +279,9 @@ impl MoveAdvanceCursor {
                     .map_err(|_| ExecutionError::Invariant)?;
                 let action_id = self.action_id.as_deref().ok_or(ExecutionError::Invariant)?;
                 let (_, action) = bound(core, &self.actor_id, action_id, self.physical_life)?;
+                if self.phase == Phase::FeedReach {
+                    return self.feed_reach_answer(core, answer.sight.pop() == Some(true));
+                }
                 let replans = action.replans;
                 let route = match self.phase {
                     Phase::Route => answer.routes.pop().ok_or(ExecutionError::Invariant)?,
@@ -455,13 +468,16 @@ impl MoveAdvanceCursor {
                         self.phase = Phase::Done;
                         continue;
                     }
-                    if action.kind != "move" || entity.spatial.local_pose.is_some() {
+                    if !action.has_ground_motion() || entity.spatial.local_pose.is_some() {
                         return Err(ExecutionError::UnsupportedFamily);
                     }
                     self.reserve(action.id.len())?;
                     self.action_id = Some(action.id.clone());
                     self.physical_life =
                         entity.physical_life().ok_or(ExecutionError::MissingActor)?;
+                    if action.feeding.is_some() && action.stage == "working" {
+                        return self.begin_feed_check(core);
+                    }
                     if action.stage == "working" {
                         if core.physical().advance_movement_work(
                             &self.actor_id,
@@ -509,7 +525,7 @@ impl MoveAdvanceCursor {
                         self.action_id.as_deref().ok_or(ExecutionError::Invariant)?,
                         self.physical_life,
                     )?;
-                    if action.destination.is_none() {
+                    if action.feeding.is_none() && action.destination.is_none() {
                         self.fail(&rules.movement_missing_destination)?;
                         continue;
                     }
@@ -523,6 +539,9 @@ impl MoveAdvanceCursor {
                     let action_id = self.action_id.as_deref().ok_or(ExecutionError::Invariant)?;
                     let (entity, action) =
                         bound(core, &self.actor_id, action_id, self.physical_life)?;
+                    if action.feeding.is_some() {
+                        return self.begin_feed_check(core);
+                    }
                     if in_reach(
                         entity,
                         action,
@@ -692,6 +711,21 @@ impl MoveAdvanceCursor {
                             plan_id: None,
                             action_id: None,
                         }
+                    } else if core
+                        .state
+                        .physical
+                        .entities
+                        .get(&self.actor_id)
+                        .and_then(|entity| entity.actor.as_ref())
+                        .and_then(|actor| actor.action.as_ref())
+                        .is_some_and(|action| action.feeding.is_some())
+                    {
+                        let mut completed = rules.movement_completed.outcome(true);
+                        completed.message = crate::worlds::base_foraging::feeding_terms()
+                            .completed
+                            .as_str()
+                            .into();
+                        completed
                     } else {
                         rules.movement_completed.outcome(true)
                     };
@@ -715,6 +749,13 @@ impl MoveAdvanceCursor {
                     }
                 }
                 Phase::Clear => {
+                    if self.failure.is_some() {
+                        crate::native_controller::foraging::work_failed(
+                            core,
+                            &self.actor_id,
+                            self.action_id.as_deref().ok_or(ExecutionError::Invariant)?,
+                        )?;
+                    }
                     core.physical().replace_action(
                         &self.actor_id,
                         None,
@@ -752,7 +793,12 @@ impl MoveAdvanceCursor {
                     )?));
                 }
                 Phase::Done => return Ok(Progress::Complete),
-                Phase::Route | Phase::Probe | Phase::ZeroMotion | Phase::PositiveMotion => {
+                Phase::Route
+                | Phase::Probe
+                | Phase::ZeroMotion
+                | Phase::PositiveMotion
+                | Phase::FeedReach
+                | Phase::FeedSight => {
                     return Err(ExecutionError::Invariant);
                 }
             }

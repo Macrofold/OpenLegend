@@ -25,6 +25,7 @@ import {
 import { BASE_EVENT_PRESENTATION } from './worlds/base/event-presentation.js';
 import { BASE_ACTION_DEFAULTS, BASE_SPEECH_ACTION } from './worlds/base/actions.js';
 import { BASE_ORDINARY_ACTION_RULES } from './worlds/base/ordinary-action-rules.js';
+import BASE_FEEDING_TERMS from './worlds/base/config/feeding-terms.json' with { type: 'json' };
 import { BASE_PLAYTEST_MILESTONES } from './worlds/base/playtest.js';
 import { BASE_STRIKE_BODY_RULES } from './worlds/base/strikes.js';
 import { BASE_OBSERVATION_RULES } from './worlds/base/observation-rules.js';
@@ -702,6 +703,11 @@ export function selectedPlayerWorkLabels(
   selectedCreationProfileForWorld(world);
   return basePlayerWorkLabels(input);
 }
+export function selectedFeedingTerms(world: Pick<WorldState, 'profile'>) {
+  selectedCreationProfileForWorld(world);
+  return BASE_FEEDING_TERMS;
+}
+
 export function selectedOrdinaryActionRules(world: Pick<WorldState, 'profile'>) {
   selectedCreationProfileForWorld(world);
   return BASE_ORDINARY_ACTION_RULES;

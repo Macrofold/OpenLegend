@@ -8,6 +8,40 @@ use crate::state::{Point, Resource, SurfacePoint};
 use crate::values::{DefinitionPin, deserialize_safe_integer, is_safe_record_id};
 use indexmap::IndexMap;
 use serde::Deserialize;
+use std::sync::LazyLock;
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct ResourceFeedingTerms {
+    pub started: String,
+    pub completed: String,
+    pub out_of_reach: String,
+    pub unavailable: String,
+    pub cannot_consume: String,
+    pub consumed_first: String,
+    pub event_type: String,
+    pub description_prefix: String,
+    pub description_suffix: String,
+}
+
+pub(crate) fn feeding_terms() -> &'static ResourceFeedingTerms {
+    static TERMS: LazyLock<ResourceFeedingTerms> = LazyLock::new(|| {
+        serde_json::from_str(include_str!("../config/feeding-terms.json"))
+            .expect("Base feeding terms must match the compiled world recipe")
+    });
+    &TERMS
+}
+
+/// Base's foraging choice uses the installed daylight boundaries.
+pub(crate) fn foraging_night(named_times: &IndexMap<String, f64>, hour: f64) -> Option<bool> {
+    let dusk = *named_times.get("dusk")?;
+    let dawn = *named_times.get("dawn")?;
+    Some(if dusk < dawn {
+        hour >= dusk && hour < dawn
+    } else {
+        hour >= dusk || hour < dawn
+    })
+}
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -68,6 +102,11 @@ pub(crate) struct FoodDefinition {
     version: u64,
     pub nutrition: f64,
     pub name: crate::text::JsText,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_option"
+    )]
+    pub portable: Option<bool>,
     #[serde(
         default,
         deserialize_with = "crate::values::deserialize_present_option"

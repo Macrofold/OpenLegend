@@ -47,7 +47,7 @@ impl SliceActions {
             let Some(action) = &actor.action else {
                 continue;
             };
-            if !matches!(action.kind.as_str(), "move" | "status-effect")
+            if (!action.has_ground_motion() && action.kind != "status-effect")
                 || action.has_unconverted_fields()
             {
                 return Err(ExecutionError::UnsupportedFamily);
@@ -66,7 +66,7 @@ impl SliceActions {
                 )?;
                 working.insert(*handle, action.id.clone());
             }
-            if action.kind == "move" && action.stage == "approaching" && !restricted {
+            if action.has_ground_motion() && action.stage == "approaching" && !restricted {
                 approaching.push(*handle);
             }
         }

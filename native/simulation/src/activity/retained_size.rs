@@ -159,7 +159,11 @@ impl HeapBytes for NativeCommand {
                 envelope,
                 attempt_id,
             } => heap_sum([envelope.heap_bytes()?, attempt_id.heap_bytes()?]),
-            Self::Follow {
+            Self::Feed {
+                envelope,
+                target_id,
+            }
+            | Self::Follow {
                 envelope,
                 target_id,
                 ..

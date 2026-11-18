@@ -23,10 +23,11 @@ use crate::narration::{Narration, NarrationPart, PersonRole};
 use crate::state::{Action, NavigationPending, SurfacePoint};
 use crate::work::{MeterToken, WorkUnit};
 mod discovery;
+mod feeding;
 
 pub(crate) struct NativeMovementInput {
     pub binding: crate::native_response::NativeLocomotion,
-    pub route: crate::native_refuge::RefugeRoute,
+    pub route: Option<crate::native_refuge::RefugeRoute>,
 }
 pub(crate) struct CommandOptions {
     pub preview: bool,
@@ -68,6 +69,8 @@ enum Phase {
     Support,
     Standing,
     Route,
+    FeedReach,
+    FeedApproach,
     Probe,
     Prepared,
     Choice,
@@ -599,7 +602,30 @@ impl CommandCursor {
                                         action.path = path;
                                         action.stage = "approaching".to_owned();
                                     }
-                                    RoutePlan::Pending { request, .. } => {
+                                    RoutePlan::Pending { mut request, .. } => {
+                                        if self.options.native_controller {
+                                            let animal = core
+                                                .state
+                                                .physical
+                                                .entities
+                                                .get(&self.command.envelope().actor_id)
+                                                .and_then(|entity| entity.animal.as_ref())
+                                                .ok_or(ExecutionError::Invariant)?;
+                                            let profile =
+                                                crate::native_controller::selected_profile(
+                                                    &core.state.installed,
+                                                    animal,
+                                                )?;
+                                            request.wait = Some(match profile.candidates.navigation_wait {
+                                                crate::native_response::NavigationWait::Entity => "entity",
+                                                crate::native_response::NavigationWait::World => "world",
+                                            }.into());
+                                            self.grow_action_storage(6)?;
+                                        }
+                                        let action = self
+                                            .action
+                                            .as_mut()
+                                            .ok_or(ExecutionError::Invariant)?;
                                         action.stage = "approaching".to_owned();
                                         action.navigation = Some(NavigationPending {
                                             request,
@@ -624,6 +650,15 @@ impl CommandCursor {
                                     self.phase = Phase::Prepared;
                                 }
                                 self.queries = None;
+                            }
+                            Phase::FeedReach => {
+                                self.queries = None;
+                                self.phase =
+                                    if answer.sight.pop().ok_or(ExecutionError::Invariant)? {
+                                        Phase::Prepared
+                                    } else {
+                                        Phase::FeedApproach
+                                    };
                             }
                             Phase::StatusReach => {
                                 if !answer.sight.pop().ok_or(ExecutionError::Invariant)? {
@@ -888,6 +923,11 @@ impl CommandCursor {
                             }
                             self.phase = Phase::Interrupt;
                         }
+                        NativeCommand::Feed { .. } => {
+                            if self.prepare_feeding(core)? {
+                                return Ok(Progress::Geometry);
+                            }
+                        }
                         NativeCommand::Outing { .. }
                         | NativeCommand::Follow { .. }
                         | NativeCommand::Strike { .. }
@@ -916,6 +956,10 @@ impl CommandCursor {
                     self.question(core, Phase::Standing)?
                         .standing
                         .push(StandingQuery { point, body });
+                    return Ok(Progress::Geometry);
+                }
+                Phase::FeedApproach => {
+                    self.prepare_feeding_route(core)?;
                     return Ok(Progress::Geometry);
                 }
                 Phase::Route => {
@@ -958,24 +1002,22 @@ impl CommandCursor {
                         self.phase = Phase::Prepared;
                         continue;
                     }
-                    if self.options.native_movement.is_some() {
-                        let path_bytes = self
-                            .options
-                            .native_movement
-                            .as_ref()
-                            .ok_or(ExecutionError::Invariant)?
-                            .route
-                            .path
-                            .heap_bytes()
-                            .ok_or(ExecutionError::Capacity)?;
+                    if let Some(route) = self
+                        .options
+                        .native_movement
+                        .as_ref()
+                        .and_then(|native| native.route.as_ref())
+                    {
+                        let path_bytes = route.path.heap_bytes().ok_or(ExecutionError::Capacity)?;
                         self.grow_action_storage(path_bytes)?;
-                        let native = self
+                        let route = self
                             .options
                             .native_movement
                             .as_ref()
+                            .and_then(|native| native.route.as_ref())
                             .ok_or(ExecutionError::Invariant)?;
                         self.action.as_mut().ok_or(ExecutionError::Invariant)?.path =
-                            native.route.path.clone();
+                            route.path.clone();
                         self.phase = Phase::Prepared;
                         continue;
                     }
@@ -1352,6 +1394,9 @@ impl CommandCursor {
                         false
                     };
                     if !native && !routine {
+                        if matches!(self.command, NativeCommand::Feed { .. }) {
+                            return self.feeding_started(core, &actor_id);
+                        }
                         let NativeCommand::Move { destination, .. } = &self.command else {
                             return Err(ExecutionError::Invariant);
                         };
@@ -1942,6 +1987,7 @@ impl CommandCursor {
                 }
                 Phase::Support
                 | Phase::Probe
+                | Phase::FeedReach
                 | Phase::StatusSight
                 | Phase::DiscoverySight
                 | Phase::DiscoveryReach
@@ -1970,6 +2016,9 @@ fn actor_problem(
     let Some(actor) = &entity.actor else {
         return Ok(Some(ordinary.unknown_actor.outcome(false)));
     };
+    if matches!(command, NativeCommand::Feed { .. }) && !native {
+        return Ok(Some(ordinary.unsupported_controller.outcome(false)));
+    }
     if entity.spatial.local_pose.is_some()
         || actor
             .action

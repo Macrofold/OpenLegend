@@ -308,7 +308,6 @@ fn assemble_selected_core(
         &physical.entities,
         budget,
     )?;
-    super::physical::validate_physical_item_references(&physical, &retained)?;
     use crate::host::retained_size::HeapBytes;
     let mut definition_storage = meanings.storage;
     definition_storage
@@ -368,6 +367,7 @@ fn assemble_selected_core(
         agency_limits: agency,
         actor_response_limits: actor_response,
     });
+    super::physical::validate_physical_item_references(&physical, &installed)?;
     crate::plans::validate_installation(&physical, &installed, &activity, budget)?;
     let outings = crate::outings::OutingState::install_closed(&mut import, &mut children, budget)?;
     // Every presence below is consumed from the actual root, including empty

@@ -15,6 +15,8 @@ mod event;
 pub(crate) use event::{acquire_event, event_reception_needed, require_supported_event};
 mod ground;
 pub(crate) use ground::{GroundTurn, ground_turn, proposal_current};
+pub(crate) mod feeding;
+pub(crate) mod foraging;
 mod movement;
 pub(crate) use movement::{complete_movement, movement_refused};
 mod response;
@@ -71,7 +73,7 @@ pub(crate) fn begin_ground_proposal(
         .ok_or(ExecutionError::MissingEntity)?;
     let state = animal.animal.as_ref().ok_or(ExecutionError::Invariant)?;
     let episode = state.episode.as_ref().ok_or(ExecutionError::Invariant)?;
-    if episode.proposal.is_some() || animal.spatial.flight.is_some() || state.foraging.is_some() {
+    if episode.proposal.is_some() || animal.spatial.flight.is_some() {
         return Err(ExecutionError::UnsupportedFamily);
     }
     let profile = selected_profile(installed, state)?;
@@ -402,7 +404,7 @@ pub(crate) fn acquire_sound(
     {
         return Ok(());
     }
-    if state.foraging.is_some() || animal.spatial.flight.is_some() {
+    if animal.spatial.flight.is_some() {
         return Err(ExecutionError::UnsupportedFamily);
     }
     let profile = selected_profile(installed, state)?;
@@ -499,6 +501,7 @@ pub(crate) fn acquire_sound(
         moving,
     };
     if !repeated {
+        foraging::relinquish(mutation, &awareness.actor_id)?;
         mutation.reserve_response_growth(
             std::mem::size_of::<NativeResponseEpisode>()
                 .saturating_add(profile_pin.id.len())

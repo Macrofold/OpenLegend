@@ -328,6 +328,18 @@ impl AdvanceCursor {
             if done.command.actor_id() != self.actor(core, handle)? {
                 return Err(invalid().into());
             }
+            if std::mem::take(&mut self.command_foraging) {
+                let name = self.actor(core, handle)?;
+                let _name = budget.reserve(name.len())?;
+                let name = name.to_owned();
+                crate::native_controller::foraging::admitted(
+                    core,
+                    &name,
+                    done.command.outcome(),
+                    budget,
+                )?;
+                core.sync_sensory_changes()?;
+            }
             if self.command_mode.take() == Some(LocomotionMode::Escape)
                 && !done.command.outcome().ok
             {
@@ -769,8 +781,9 @@ impl AdvanceCursor {
                                     .entities
                                     .resolve(**handle)
                                     .and_then(|entity| entity.animal.as_ref())
-                                    .and_then(|animal| animal.episode.as_ref())
-                                    .is_some()
+                                    .is_some_and(|animal| {
+                                        animal.episode.is_some() || animal.foraging.is_some()
+                                    })
                             })
                             .copied(),
                     );
@@ -794,6 +807,85 @@ impl AdvanceCursor {
                         self.phase = Phase::SenseStart;
                         continue;
                     };
+                    let has_episode = core
+                        .state
+                        .physical
+                        .entities
+                        .resolve(handle)
+                        .and_then(|entity| entity.animal.as_ref())
+                        .is_some_and(|state| state.episode.is_some());
+                    if !has_episode {
+                        if self.forage.is_none() {
+                            let entity = core
+                                .state
+                                .physical
+                                .entities
+                                .resolve(handle)
+                                .ok_or(ExecutionError::Invariant)?;
+                            let due = crate::native_controller::foraging::review_at(
+                                entity,
+                                &core.state.installed,
+                                core.state.physical.header.sim_time,
+                            )?
+                            .is_some_and(|at| at <= core.state.physical.header.sim_time);
+                            if !due {
+                                self.next += 1;
+                                continue;
+                            }
+                            if self.pending_flush(core, Phase::AnimalChoices, budget)? {
+                                continue;
+                            }
+                            let binding = self.binding(core)?;
+                            self.forage = ForageChoice::prepare(core, handle, binding, budget)?;
+                            if self.forage.is_none() {
+                                self.next += 1;
+                                continue;
+                            }
+                        }
+                        let choice = self.forage.as_mut().ok_or_else(invalid)?;
+                        if choice.sight_request().is_some() {
+                            let Some(AdvanceAnswer::Geometry(result)) = answer.take() else {
+                                return Ok(Progress::Geometry);
+                            };
+                            let next = self.binding(core)?;
+                            self.forage.as_mut().ok_or_else(invalid)?.observe(
+                                &core.state.physical,
+                                result,
+                                next,
+                                budget,
+                            )?;
+                            return Ok(Progress::Collation);
+                        }
+                        let Some(AdvanceAnswer::Collation(result)) = answer.take() else {
+                            return Ok(Progress::Collation);
+                        };
+                        let before = core.journal.physical.change_cursor();
+                        let decision = self
+                            .forage
+                            .take()
+                            .ok_or_else(invalid)?
+                            .choose(core, &result, budget)?;
+                        if core
+                            .journal
+                            .physical
+                            .changes_since(before)?
+                            .iter()
+                            .any(|change| matches!(change, PhysicalChange::Behavior { .. }))
+                        {
+                            self.discard_mechanics()?;
+                        }
+                        self.next += 1;
+                        if let Some(intention) = decision {
+                            self.queued_movement = Some((
+                                handle,
+                                NativeIntention::Forage(intention),
+                                Phase::AnimalChoices,
+                            ));
+                            self.phase = Phase::NativeCommand;
+                        }
+                        core.sync_sensory_changes()?;
+                        continue;
+                    }
                     if self.response.is_none() {
                         let id = self.actor(core, handle)?;
                         let state = core
@@ -976,6 +1068,28 @@ impl AdvanceCursor {
                             )?;
                             drop(reservation);
                             (operation, mode)
+                        }
+                        NativeIntention::Forage(intention) => {
+                            let operation = match intention {
+                                ForageIntention::Feed(target, _allowance) => begin_native_feed(
+                                    core,
+                                    &actor,
+                                    &target,
+                                    self.candidate,
+                                    budget,
+                                )?,
+                                ForageIntention::Move(point, _allowance) => {
+                                    begin_native_foraging_move(
+                                        core,
+                                        &actor,
+                                        &point,
+                                        self.candidate,
+                                        budget,
+                                    )?
+                                }
+                            };
+                            self.command_foraging = true;
+                            (operation, LocomotionMode::Travel)
                         }
                     };
                     self.command = Some(command);

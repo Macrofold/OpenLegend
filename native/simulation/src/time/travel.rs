@@ -41,6 +41,7 @@ fn reach(installed: &InstalledWorld, entity: &Entity, seconds: f64) -> Result<f6
     let moving = match actor.action.as_ref() {
         None => false,
         Some(action) if action.kind == "move" => true,
+        Some(action) if action.has_ground_motion() => action.stage == "approaching",
         Some(action) if action.kind == "status-effect" => false,
         Some(_) => return Err(ExecutionError::UnsupportedFamily),
     };

@@ -8,6 +8,7 @@ use crate::simulation::{InstalledWorld, PhysicalState};
 
 pub(crate) fn next_animal_review(
     physical: &PhysicalState,
+    installed: &InstalledWorld,
     participants: &NativeParticipants,
 ) -> Result<f64, ExecutionError> {
     let mut next = f64::INFINITY;
@@ -19,9 +20,6 @@ pub(crate) fn next_animal_review(
         let Some(animal) = &entity.animal else {
             return Err(ExecutionError::Invariant);
         };
-        if animal.foraging.is_some() {
-            return Err(ExecutionError::UnsupportedFamily);
-        }
         // Source's private choice clock includes acoustic expiry even while
         // the earned mechanical forecast is retained. Land on its absolute
         // endpoint rather than reconstructing it by duration addition.
@@ -34,6 +32,14 @@ pub(crate) fn next_animal_review(
         );
         if choice > physical.header.sim_time {
             next = next.min(choice);
+        }
+        if let Some(at) = crate::native_controller::foraging::review_at(
+            entity,
+            installed,
+            physical.header.sim_time,
+        )? && at > physical.header.sim_time
+        {
+            next = next.min(at);
         }
     }
     Ok(next)
@@ -64,7 +70,9 @@ pub(crate) fn private_motion_seconds(
             .and_then(|actor| actor.action.as_ref());
         if forecast.private_walkers.contains(handle) {
             if let Some(action) = action.filter(|action| {
-                action.kind == "move" && action.stage == "approaching" && !action.path.is_empty()
+                action.has_ground_motion()
+                    && action.stage == "approaching"
+                    && !action.path.is_empty()
             }) {
                 let speed = installed.movement_speed(entity)?;
                 bound = bound.min(

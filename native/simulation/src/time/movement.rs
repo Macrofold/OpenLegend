@@ -176,7 +176,7 @@ impl MotionSliceCursor {
                             actor.alive
                                 && !actor.incapacitated
                                 && actor.action.as_ref().is_some_and(|action| {
-                                    action.kind == "move" && action.stage == "approaching"
+                                    action.has_ground_motion() && action.stage == "approaching"
                                 })
                         });
                 if !eligible {

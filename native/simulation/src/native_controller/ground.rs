@@ -148,7 +148,7 @@ pub(crate) fn ground_turn(
     {
         return Err(ExecutionError::Invariant);
     }
-    if animal.spatial.flight.is_some() || state.foraging.is_some() {
+    if animal.spatial.flight.is_some() {
         return Err(ExecutionError::UnsupportedFamily);
     }
     let episode = state.episode.as_ref().ok_or(ExecutionError::Invariant)?;

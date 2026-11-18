@@ -9,6 +9,7 @@ import {
   selectedOutwardBodyNotice,
   selectedSpeechAction,
   selectedOrdinaryActionRules,
+  selectedFeedingTerms,
 } from './world-composition.js';
 import { effectiveBodyProfile } from './spatial-state.js';
 import type { NativeMechanicsDiscard } from './diagnostic-counters.js';
@@ -4621,10 +4622,12 @@ function executeCommandNative(
                   actor,
                   `${fireCareStartText(action.fireOperation!, entityGet(world.entities, action.targetId!) ?? 'fire')}.`,
                 )
-              : subjectNarration(
-                  actor,
-                  `started ${action.type === 'practice-shot' || action.type === 'coaching' ? `the activity “${nativeActivityView(world, command).name}”` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
-                ),
+              : action.type === 'feed'
+                ? subjectNarration(actor, selectedFeedingTerms(world).started)
+                : subjectNarration(
+                    actor,
+                    `started ${action.type === 'practice-shot' || action.type === 'coaching' ? `the activity “${nativeActivityView(world, command).name}”` : action.type === 'craft' ? `crafting ${world.recipes[action.recipeId!]!.name}` : action.type}.`,
+                  ),
         actor,
         action.targetId,
         { actionType: action.type },
@@ -5117,7 +5120,7 @@ function completeAction(
         failAction(world, actor, events, problem);
         return;
       }
-      completion = 'Ate one actual unit of exposed food.';
+      completion = selectedFeedingTerms(world).completed;
       break;
     }
     case 'harvest': {

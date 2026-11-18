@@ -1,0 +1,11 @@
+{
+  "started": "started feed.",
+  "completed": "Ate one actual unit of exposed food.",
+  "outOfReach": "the food is no longer within reach.",
+  "unavailable": "the selected food or its access is no longer available.",
+  "cannotConsume": "the body can no longer consume this food.",
+  "consumedFirst": "the remaining food was consumed first.",
+  "eventType": "fed",
+  "descriptionPrefix": "ate some ",
+  "descriptionSuffix": "."
+}

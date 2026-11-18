@@ -657,7 +657,6 @@ fn validate_entity(
         || entity.container.is_some()
         || entity.declared_owner.is_some()
         || entity.retirement.is_some()
-        || entity.resource.is_some()
         || entity.replenisher.is_some()
         || entity.heat.is_some()
         || entity
@@ -789,7 +788,7 @@ fn validate_entity(
         if actor.action.as_ref().is_some_and(|a| {
             a.has_unconverted_fields()
                 || a.target_life.is_some()
-                || !matches!(a.kind.as_str(), "move" | "status-effect")
+                || (!a.has_ground_motion() && a.kind != "status-effect")
         }) {
             return Err(InstallError::CurrentFormat);
         }
@@ -853,9 +852,6 @@ fn validate_entity(
         }
     }
     if let Some(animal) = &entity.animal {
-        if animal.foraging.is_some() {
-            return Err(InstallError::CurrentFormat);
-        }
         let key = crate::native_response::profile_key(&animal.profile)
             .map_err(|_| InstallError::DefinitionPin)?;
         let profile = installed
@@ -900,7 +896,7 @@ fn validate_entity(
 
 /// Plain installed bodies have geometry and outward identity, without an actor
 /// or an unconverted mechanical continuation. The shared component validation
-/// above still owns item/resource/heat and the other positive family refusals.
+/// above still owns item/heat and the other positive family refusals.
 /// Reception, private place acquisition and actual player consumers share this
 /// installed subset; positive mechanical families retain their own refusal:
 /// docs/maintainers/native-simulation-core-coverage.md#candidate-implementation-ledger
@@ -1008,10 +1004,27 @@ fn validate_body_references(
 }
 pub(super) fn validate_physical_item_references(
     state: &PhysicalState,
-    retained: &super::RetainedDefinitions,
+    installed: &crate::simulation::InstalledWorld,
 ) -> Result<(), InstallError> {
+    let retained = &installed.retained;
     for id in state.entities.ordered_ids() {
         let entity = state.entities.get(id).ok_or(InstallError::CurrentFormat)?;
+        if let Some(stock) = entity.resource.as_ref() {
+            let definition = retained.foraging.food.get(&stock.definition_id);
+            if entity.actor.is_some()
+                || entity.kind != "resource"
+                || stock.cast.is_some()
+                || !stock.work_seconds.is_finite()
+                || stock.work_seconds <= 0.0
+                || entity.supported_position().is_none()
+                || !definition.is_some_and(|food| food.definition.portable == Some(false))
+            {
+                return Err(InstallError::UnsupportedFamily(
+                    "resource stock other than exposed food",
+                ));
+            }
+        }
+        validate_resource_foraging(entity, state, installed)?;
         for yielded in entity.remains.iter().flat_map(|r| r.yields.iter()).chain(
             entity
                 .actor
@@ -1027,6 +1040,98 @@ pub(super) fn validate_physical_item_references(
             {
                 return Err(InstallError::CurrentFormat);
             }
+        }
+    }
+    Ok(())
+}
+
+fn validate_resource_foraging(
+    entity: &Entity,
+    state: &PhysicalState,
+    installed: &crate::simulation::InstalledWorld,
+) -> Result<(), InstallError> {
+    let saved = entity
+        .animal
+        .as_ref()
+        .and_then(|animal| animal.foraging.as_ref());
+    let feeding = entity
+        .actor
+        .as_ref()
+        .and_then(|actor| actor.action.as_ref())
+        .filter(|action| action.kind == "feed");
+    let Some(saved) = saved else {
+        return if feeding.is_some() {
+            Err(InstallError::CurrentFormat)
+        } else {
+            Ok(())
+        };
+    };
+    let selected = &installed.retained.foraging;
+    let profile = selected
+        .profiles
+        .get(&saved.profile.id)
+        .filter(|definition| definition.pin == saved.profile)
+        .ok_or(InstallError::DefinitionPin)?;
+    let actor = entity.actor.as_ref().ok_or(InstallError::CurrentFormat)?;
+    let meter = &profile.profile.fullness.attribute_id;
+    let installed_meter = installed
+        .attributes
+        .get(meter)
+        .ok_or(InstallError::DefinitionBody)?
+        .value();
+    if installed_meter.implementation != "number-v1"
+        || installed_meter.reservoir.is_some()
+        || !matches!(
+            installed_meter.schema,
+            crate::status::AttributeSchema::Number { .. }
+        )
+        || !actor
+            .attributes
+            .as_ref()
+            .is_some_and(|attributes| attributes.contains_key(meter))
+        || crate::worlds::base_foraging::foraging_night(&installed.status_policy.named_times, 0.0)
+            .is_none()
+        || !saved.valid_at(state.header.sim_time)
+    {
+        return Err(InstallError::CurrentFormat);
+    }
+    if let Some(action) = feeding {
+        let binding = action.feeding.as_ref().ok_or(InstallError::CurrentFormat)?;
+        // An admitted meal may lose live stock while paused. The action owner
+        // checks its live target and exact stock revision before the next bite.
+        let definition = selected
+            .food
+            .get(&binding.food.id)
+            .ok_or(InstallError::DefinitionBody)?;
+        let diet = profile
+            .profile
+            .diet
+            .iter()
+            .find(|meal| meal.definition_id == definition.pin.id)
+            .ok_or(InstallError::DefinitionBody)?;
+        if binding.profile != saved.profile
+            || binding.food != definition.pin
+            || actor.controller != "native"
+            || !actor.alive
+            || actor.incapacitated
+            || !saved.work.as_ref().is_some_and(|work| {
+                work.kind == crate::native_response::ForagingWorkKind::Food
+                    && work.action_id == action.id
+                    && work.source_id == action.target_id
+            })
+            || !matches!(action.stage.as_str(), "approaching" | "working")
+            || !action
+                .target_id
+                .as_deref()
+                .is_some_and(crate::values::is_safe_record_id)
+            || action.destination.is_some()
+            || action.native_locomotion.is_some()
+            || action.total_seconds != diet.work_seconds
+            || !action.remaining_seconds.is_finite()
+            || action.remaining_seconds < 0.0
+            || action.remaining_seconds > action.total_seconds
+        {
+            return Err(InstallError::CurrentFormat);
         }
     }
     Ok(())

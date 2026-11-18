@@ -116,7 +116,7 @@ impl WanderCursor {
             return Ok(cursor);
         }
         if state.foraging.is_some() {
-            return Err(ExecutionError::UnsupportedFamily);
+            return Ok(cursor);
         }
         let profile = selected_profile(&installed, state)?;
         let handle = core

@@ -254,8 +254,12 @@ impl MechanicalForecast {
             let Some(animal) = &entity.animal else {
                 continue;
             };
-            if animal.foraging.is_some() {
-                return Err(ExecutionError::UnsupportedFamily);
+            if let Some(at) = crate::native_controller::foraging::review_at(
+                entity,
+                &installed,
+                physical.header.sim_time,
+            )? {
+                bound.at(at);
             }
             for pattern in animal.acoustic_patterns.values() {
                 bound.at(pattern.idle_expires_at);
@@ -333,7 +337,7 @@ impl MechanicalForecast {
             if action.kind == "status-effect" {
                 continue;
             }
-            if action.kind != "move" || action.has_unconverted_fields() {
+            if !action.has_ground_motion() || action.has_unconverted_fields() {
                 return Err(ExecutionError::UnsupportedFamily);
             }
             if let Some(plan) = &actor.agency.plan {

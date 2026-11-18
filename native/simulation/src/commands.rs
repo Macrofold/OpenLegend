@@ -29,7 +29,9 @@ mod exposure;
 mod finalization;
 pub(crate) use finalization::*;
 mod native_movement;
-pub(crate) use native_movement::{begin_native_movement, begin_native_stop};
+pub(crate) use native_movement::{
+    begin_native_feed, begin_native_foraging_move, begin_native_movement, begin_native_stop,
+};
 mod state;
 pub(crate) use state::*;
 mod display;
@@ -181,6 +183,10 @@ pub(crate) enum NativeCommand {
     Move {
         envelope: CommandEnvelope,
         destination: RecordedSurfacePoint,
+    },
+    Feed {
+        envelope: CommandEnvelope,
+        target_id: String,
     },
     Say {
         envelope: CommandEnvelope,
@@ -358,6 +364,28 @@ impl<'de> Deserialize<'de> for NativeCommand {
                     D::Error::custom("Movement requires its selected destination.")
                 })?,
             }),
+            "feed"
+                if !extras_for_say
+                    && input.text.is_none()
+                    && input.target_role.is_none()
+                    && input.self_introduction.is_none()
+                    && input.volume.is_none()
+                    && envelope.human_initiated.is_none()
+                    && envelope.cooperation.is_none()
+                    && envelope.combat_help_id.is_none()
+                    && envelope.purpose.is_none()
+                    && envelope.chosen_purpose.is_none() =>
+            {
+                Ok(Self::Feed {
+                    envelope,
+                    target_id: input
+                        .target_id
+                        .filter(|id| is_safe_record_id(id))
+                        .ok_or_else(|| {
+                            D::Error::custom("Feeding requires its selected resource.")
+                        })?,
+                })
+            }
             "say" if !extras_for_say => Ok(Self::Say {
                 envelope,
                 text: input
@@ -469,6 +497,7 @@ impl NativeCommand {
         match self {
             Self::Outing { envelope, .. }
             | Self::Move { envelope, .. }
+            | Self::Feed { envelope, .. }
             | Self::Say { envelope, .. }
             | Self::StatusEffect { envelope, .. }
             | Self::Cancel { envelope, .. }
@@ -489,6 +518,7 @@ impl NativeCommand {
         match self {
             Self::Outing { envelope, .. }
             | Self::Move { envelope, .. }
+            | Self::Feed { envelope, .. }
             | Self::Say { envelope, .. }
             | Self::StatusEffect { envelope, .. }
             | Self::Cancel { envelope, .. }
@@ -503,6 +533,7 @@ impl NativeCommand {
         match self {
             Self::Outing { .. } => crate::worlds::base_outings::travel_command_type(),
             Self::Move { .. } => "move",
+            Self::Feed { .. } => "feed",
             Self::Say { .. } => "say",
             Self::StatusEffect { .. } => "status-effect",
             Self::Cancel { .. } => "cancel",

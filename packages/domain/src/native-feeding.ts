@@ -12,6 +12,7 @@ import { foragingProfile } from './native-foraging.js';
 import { canonicalJson, emit } from './events.js';
 import { remainingYieldDigest, consumeRemainingYield } from './remains.js';
 import { hasRecordFields, isSafeRecordId } from './records.js';
+import { selectedFeedingTerms } from './world-composition.js';
 import { readOnlyDraftView } from './draft.js';
 import type { DefinitionPin } from './world-modules.js';
 import type { Action, Entity, WorldEvent, WorldState } from './types.js';
@@ -96,10 +97,11 @@ export function nativeFeedingProblem(
   actor: Entity,
   action: Action,
 ): string | undefined {
+  const terms = selectedFeedingTerms(world);
   const binding = action.feeding,
     target = entityGet(world.entities, action.targetId ?? '');
   if (!binding || !target || !canReachEntity(world, actor, target, world.itemHandling.reach))
-    return 'the food is no longer within reach.';
+    return terms.outOfReach;
   if (binding.source.kind === 'item' || binding.source.kind === 'remains') {
     if (!canAccessContainer(world, actor.id, target.id))
       return 'the selected food is no longer accessible.';
@@ -111,7 +113,7 @@ export function nativeFeedingProblem(
     binding.source.kind === 'item' ? binding.source.itemId : undefined,
   );
   if (!prepared || canonicalJson(prepared.binding) !== canonicalJson(binding))
-    return 'the selected food or its access is no longer available.';
+    return terms.unavailable;
 }
 /** The existing stock transaction and attribute writer commit in the same native
  * transition. Corpse yields have exactly one debit owner, shared with harvesting. */
@@ -123,6 +125,7 @@ export function completeNativeFeeding(
 ): string | undefined {
   const problem = nativeFeedingProblem(world, actor, action);
   if (problem) return problem;
+  const terms = selectedFeedingTerms(world);
   const binding = action.feeding!,
     profile = foragingProfile(world, actor)!,
     target = entityGet(world.entities, action.targetId!)!,
@@ -134,10 +137,10 @@ export function completeNativeFeeding(
     typeof before.value !== 'number' ||
     attribute.schema.kind !== 'number'
   )
-    return 'the body can no longer consume this food.';
+    return terms.cannotConsume;
   if (binding.source.kind === 'remains') {
     if (!consumeRemainingYield(target, binding.food.id, 1, binding.source.digest))
-      return 'the remaining food was consumed first.';
+      return terms.consumedFirst;
   } else {
     const source: ResourceRef =
       binding.source.kind === 'resource'
@@ -154,7 +157,7 @@ export function completeNativeFeeding(
         events,
       ).status !== 'applied'
     )
-      return 'the remaining food was consumed first.';
+      return terms.consumedFirst;
   }
   const value = Math.min(
     attribute.schema.max,
@@ -174,8 +177,13 @@ export function completeNativeFeeding(
   emit(
     world,
     events,
-    'fed',
-    subjectNarration(actor, `ate some ${world.itemDefinitions[binding.food.id]!.name}.`),
+    terms.eventType,
+    subjectNarration(
+      actor,
+      terms.descriptionPrefix +
+        world.itemDefinitions[binding.food.id]!.name +
+        terms.descriptionSuffix,
+    ),
     actor,
     target.id,
     { actionId: action.id, definitionId: binding.food.id, quantity: 1 },

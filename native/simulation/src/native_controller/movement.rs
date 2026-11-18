@@ -66,6 +66,7 @@ pub(crate) fn complete_movement(
     }
     let at = core.state.physical.header.sim_time;
     if matches!(movement.binding.mode, LocomotionMode::Escape) {
+        let route = movement.route.ok_or(ExecutionError::Invariant)?;
         let episode = animal.episode.as_ref().ok_or(ExecutionError::Invariant)?;
         let profile = installed
             .response_profiles
@@ -76,7 +77,7 @@ pub(crate) fn complete_movement(
         let mut mutation = core.physical();
         mutation.reserve_response_growth(
             action_id.len()
-                + movement.route.candidate.point.surface_id.len()
+                + route.candidate.point.surface_id.len()
                 + std::mem::size_of::<NativeRefuge>(),
         )?;
         let episode = mutation
@@ -85,7 +86,7 @@ pub(crate) fn complete_movement(
             .ok_or(ExecutionError::Invariant)?;
         episode.refuge = Some(NativeRefuge {
             acoustic_direction: episode.acoustic_cue.as_ref().map(|cue| cue.sound.direction),
-            point: movement.route.candidate.point,
+            point: route.candidate.point,
             selected_at: at,
             generation: episode.proposal_generation,
             draw: None,

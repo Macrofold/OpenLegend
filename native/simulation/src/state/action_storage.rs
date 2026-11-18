@@ -43,6 +43,7 @@ impl HeapBytes for Action {
         }
         heap_sum([
             self.native_locomotion.heap_bytes()?,
+            self.feeding.heap_bytes()?,
             self.id.capacity(),
             self.kind.capacity(),
             self.stage.capacity(),

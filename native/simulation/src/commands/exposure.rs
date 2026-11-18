@@ -27,7 +27,9 @@ impl CommandExposure {
         let id = match command {
             NativeCommand::Outing { .. } => return Err(ExecutionError::UnsupportedFamily),
             NativeCommand::StatusEffect { target_id, .. } => target_id,
-            NativeCommand::Move { envelope, .. } | NativeCommand::Cancel { envelope, .. } => {
+            NativeCommand::Feed { envelope, .. }
+            | NativeCommand::Move { envelope, .. }
+            | NativeCommand::Cancel { envelope, .. } => {
                 let entity = core
                     .state
                     .physical
@@ -41,10 +43,13 @@ impl CommandExposure {
                     .value()
                     .outward_activity
                     .actions;
-                if !entity
-                    .status_effects
-                    .as_ref()
-                    .is_some_and(|states| states.values().any(|state| state.active))
+                let exposes_feed = matches!(command, NativeCommand::Feed { .. })
+                    && outward.iter().any(|kind| kind == command.kind());
+                if !exposes_feed
+                    && !entity
+                        .status_effects
+                        .as_ref()
+                        .is_some_and(|states| states.values().any(|state| state.active))
                     && !entity
                         .actor
                         .as_ref()

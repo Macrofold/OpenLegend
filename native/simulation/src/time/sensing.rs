@@ -48,7 +48,9 @@ pub(super) fn sensory_bound(
                             .actor
                             .as_ref()
                             .and_then(|actor| actor.action.as_ref())
-                            .is_some_and(|action| action.kind == "move" && !action.path.is_empty())
+                            .is_some_and(|action| {
+                                action.has_ground_motion() && !action.path.is_empty()
+                            })
                 })
         });
     for handle in participants.actors() {

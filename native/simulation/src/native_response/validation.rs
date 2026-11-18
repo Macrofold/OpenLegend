@@ -73,7 +73,7 @@ pub(crate) fn validate_native_response(
             Ok(())
         };
     };
-    if state.foraging.is_some() || state.aerial_route_id.is_some() {
+    if state.aerial_route_id.is_some() {
         return Err(UnconvertedFamily);
     }
     let actor = entity.actor.as_ref().ok_or(Continuation)?;

@@ -2726,6 +2726,42 @@ impl PhysicalMutation<'_> {
         Ok(())
     }
 
+    /// Prepare one separately owned controller replacement. The caller states
+    /// how much new backing its edit can retain beyond the complete copy.
+    pub(crate) fn change_foraging(
+        &mut self,
+        id: &str,
+        growth: usize,
+        edit: impl FnOnce(&mut crate::native_response::ForagingContinuation),
+    ) -> Result<(), ExecutionError> {
+        let Some(before) = self
+            .state
+            .entities
+            .get(id)
+            .and_then(|entity| entity.animal.as_ref())
+            .and_then(|animal| animal.foraging.as_deref())
+        else {
+            return Ok(());
+        };
+        let budget = self.journal.budget.clone();
+        let bytes = heap_sum([
+            size_of::<crate::native_response::ForagingContinuation>(),
+            before.heap_bytes().ok_or(ExecutionError::Capacity)?,
+            growth,
+        ])
+        .ok_or(ExecutionError::Capacity)?;
+        let storage = budget.reserve(bytes)?;
+        let mut next = Box::new(before.clone());
+        edit(&mut next);
+        if *next == *before {
+            return Ok(());
+        }
+        self.replace_foraging(
+            id,
+            crate::state::FundedForaging::adopt(next, storage, &budget)?,
+        )
+    }
+
     /// Debit one exposed unit only at the admitted stock revision. The caller
     /// owns the food/access/reach checks and joins the matched nutrition write
     /// in the same mutation checkpoint.

@@ -64,7 +64,7 @@ pub(crate) fn require_supported_event(
         .and_then(|actor| actor.action.as_ref())
     {
         if action.has_unconverted_fields()
-            || !matches!(action.kind.as_str(), "move" | "status-effect")
+            || (!action.has_ground_motion() && action.kind != "status-effect")
         {
             return Err(ExecutionError::UnsupportedFamily);
         }

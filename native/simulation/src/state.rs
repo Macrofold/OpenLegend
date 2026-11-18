@@ -503,7 +503,7 @@ pub struct Action {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub feeding: Option<UnconvertedField>,
+    pub feeding: Option<Box<crate::native_response::ResourceFeeding>>,
     #[serde(
         default,
         deserialize_with = "deserialize_present_option",
@@ -827,8 +827,12 @@ pub struct Action {
 }
 
 impl Action {
+    pub(crate) fn has_ground_motion(&self) -> bool {
+        self.kind == "move" || (self.kind == "feed" && self.feeding.is_some())
+    }
+
     pub(crate) fn has_unconverted_fields(&self) -> bool {
-        self.feeding.is_some()
+        (self.feeding.is_some() != (self.kind == "feed"))
             || self.gathering.is_some()
             || self.attack_observers.is_some()
             || self.cooperation.is_some()
@@ -940,6 +944,19 @@ impl Action {
     pub(crate) fn status_effect(episode: String, definition_id: String) -> Self {
         let mut action = Self::native_action(episode, "status-effect", "working");
         action.definition_id = Some(definition_id);
+        action
+    }
+    pub(crate) fn resource_feed(
+        id: String,
+        target_id: String,
+        seconds: f64,
+        feeding: crate::native_response::ResourceFeeding,
+    ) -> Self {
+        let mut action = Self::native_action(id, "feed", "working");
+        action.target_id = Some(target_id);
+        action.remaining_seconds = seconds;
+        action.total_seconds = seconds;
+        action.feeding = Some(Box::new(feeding));
         action
     }
     pub(crate) fn movement(

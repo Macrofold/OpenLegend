@@ -75,7 +75,7 @@ impl AdvanceCursor {
         }
         let now = core.state.physical.header.sim_time;
         let mechanics = self.mechanics.as_ref().ok_or_else(invalid)?;
-        let review = next_animal_review(&core.state.physical, participants)?;
+        let review = next_animal_review(&core.state.physical, &core.state.installed, participants)?;
         let input = private_motion_seconds(
             &core.state.physical,
             &installed,
@@ -128,7 +128,7 @@ impl AdvanceCursor {
         let participants = self.roster.as_ref().ok_or_else(invalid)?;
         let mechanics = self.mechanics.as_ref().ok_or_else(invalid)?;
         let now = core.state.physical.header.sim_time;
-        let review = next_animal_review(&core.state.physical, participants)?;
+        let review = next_animal_review(&core.state.physical, &core.state.installed, participants)?;
         let sensed = sensory_bound(
             core,
             participants,
