@@ -1,0 +1,10 @@
+{
+  "chosenPurpose": "chosen purpose",
+  "move": {
+    "name": "Move",
+    "targetPrefix": "the chosen place at ",
+    "coordinateSeparator": ", ",
+    "distanceName": "distance",
+    "distanceSuffix": " m directly; the route length is not known"
+  }
+}

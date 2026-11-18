@@ -1,10 +1,12 @@
+import display from './world-control-display.json' with { type: 'json' };
+
 /** The application owns this control receipt's wording; formatting grants no
  * authority to change the clock or the saved host settings. */
 export function worldControlOutcome(paused: boolean, speed: number) {
   return {
     ok: true as const,
     code: 'control' as const,
-    message: paused ? 'World paused.' : `World running at ${speed}×.`,
+    message: paused ? display.paused : `${display.runningPrefix}${speed}${display.runningSuffix}`,
   };
 }
 

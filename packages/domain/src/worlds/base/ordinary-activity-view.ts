@@ -4,6 +4,7 @@ import type { Position } from '../../types.js';
 import { formatObservedBodyHealth } from './hunting.js';
 import { describeAttack, type StrikeDefinition } from '../../strikes.js';
 import { FOLLOW_RULES } from './navigation.js';
+import display from './config/ordinary-activity-display.json' with { type: 'json' };
 
 type DisplayPurpose = { purpose?: string; chosenPurpose?: string };
 export type OrdinaryActivityNameInput = {
@@ -23,7 +24,7 @@ export function ordinaryActivityName({ command, effect }: OrdinaryActivityNameIn
   return (
     command.purpose ??
     (command.type === 'move'
-      ? 'Move'
+      ? display.move.name
       : command.type === 'say'
         ? 'Speak'
         : command.type === 'follow'
@@ -69,7 +70,7 @@ export function ordinaryActivityView(input: OrdinaryActivityViewInput): Activity
     facts: [],
   };
   if (command.chosenPurpose !== undefined)
-    view.facts.push({ name: 'chosen purpose', value: command.chosenPurpose, critical: true });
+    view.facts.push({ name: display.chosenPurpose, value: command.chosenPurpose, critical: true });
   if (command.type === 'follow' && command.complete)
     view.facts.push({
       name: 'finite approach',
@@ -87,11 +88,12 @@ export function ordinaryActivityView(input: OrdinaryActivityViewInput): Activity
   }
   if (command.type === 'move' && actor) {
     const from = actor.position,
-      to = command.destination;
-    view.target = `the chosen place at ${to.x.toFixed(1)}, ${to.z.toFixed(1)}`;
+      to = command.destination,
+      move = display.move;
+    view.target = `${move.targetPrefix}${to.x.toFixed(1)}${move.coordinateSeparator}${to.z.toFixed(1)}`;
     view.facts.push({
-      name: 'distance',
-      value: `${Math.hypot(to.x - from.x, to.y - from.y, to.z - from.z).toFixed(1)} m directly; the route length is not known`,
+      name: move.distanceName,
+      value: `${Math.hypot(to.x - from.x, to.y - from.y, to.z - from.z).toFixed(1)}${move.distanceSuffix}`,
       critical: true,
     });
   }
