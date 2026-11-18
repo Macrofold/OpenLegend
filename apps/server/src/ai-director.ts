@@ -191,7 +191,8 @@ import type { DeclarationProvenance, WorldState } from '@open-legend/domain';
 import type { ApiResult } from '@open-legend/protocol';
 import { CONTEXT_BYTE_LIMIT, ContextBudgetError } from './context.js';
 import { digest, type JobRecord } from './store.js';
-import type { WorldService } from './world-service.js';
+import { pendingResponseSave, type WorldService } from './world-service.js';
+import { LIVE_SAVE_MAX_AGE_MS } from './pending-world-save.js';
 
 interface ResponseInterruption {
   eventId: string;
@@ -3939,9 +3940,38 @@ export class AiDirector {
         ? this.service.authorized(run.job.authority, 'play', true, commit)
         : commit();
     let result = await authorizedCommit();
-    while (!result.ok && result.code === 'paused') {
-      await this.awaitResume(run, true);
-      if (await retryForUrgentAwareness()) return;
+    let waitedForSave = false;
+    while (!result.ok) {
+      if (result.code === 'paused') {
+        await this.awaitResume(run, true);
+        if (await retryForUrgentAwareness()) return;
+      } else if (
+        run.job.kind === 'chat' &&
+        !waitedForSave &&
+        result[pendingResponseSave] !== undefined
+      ) {
+        this.current(run);
+        const remaining = Math.min(
+          LIVE_SAVE_MAX_AGE_MS,
+          (run.job.decision?.usefulUntilMonotonic ?? Infinity) - performance.now(),
+        );
+        if (remaining <= 0) break;
+        waitedForSave = true;
+        const deadline = AbortSignal.timeout(Math.ceil(remaining));
+        try {
+          await this.service.whenDurable(
+            result[pendingResponseSave],
+            AbortSignal.any([run.controller.signal, deadline]),
+          );
+        } catch (error) {
+          this.current(run);
+          if (!deadline.aborted) throw error;
+          break;
+        }
+        // The original response never reached acceptance. Re-enter its original
+        // authority/source checks without preparing or buying another answer.
+        this.current(run);
+      } else break;
       result = await authorizedCommit();
     }
     if (publication?.deliveredAt !== undefined) {

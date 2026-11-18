@@ -490,6 +490,9 @@ function releaseCommandReceipt(world: WorldState, id: string): WorldState {
   );
 }
 
+/** Internal save pressure witnessed before a prepared response accepted any effects. */
+export const pendingResponseSave = Symbol('pending response save');
+
 /** Latest durable world commit, in one process-local `generation` (it changes on restart and
  * load). `sequence` orders snapshots: a durability ticket is saved once `sequence >= ticket`.
  * Bounds for records created at or before the cut: awareness/memory `sequence <= nextId`,
@@ -1773,6 +1776,7 @@ export class WorldService {
     },
     cleanup?: PreparedMemoryRetention,
     restoreArchiveBaseline?: readonly Record<string, unknown>[],
+    onPendingRefusal?: (through: number) => void,
   ): Promise<boolean> {
     const protectedOperation =
       !!restore ||
@@ -1787,6 +1791,7 @@ export class WorldService {
         receipt,
         undefined,
         saved.world.paused && !this.world.paused,
+        onPendingRefusal,
       );
     // Capture the transition's scope before the flush can release its residency.
     // Privacy/source comparison still uses the commit owner's durable baseline.
@@ -2012,18 +2017,41 @@ export class WorldService {
   /** Joins the scheduled save for one fixed accepted prefix outside mutation.
    * Protected callers use flush explicitly rather than silently forcing a save.
    * docs/projects/ordered-async-saves.md#durable-notification-epr05-seam */
-  async whenDurable(target = this.snapshotSequence): Promise<DurableMark> {
+  async whenDurable(target = this.snapshotSequence, signal?: AbortSignal): Promise<DurableMark> {
     await this.ready;
     if (this.mutationContext.getStore()?.active)
       throw new Error(
         'Durability must be awaited outside world mutation. Use an explicit protected flush.',
       );
+    signal?.throwIfAborted();
     if (this.durableSequence >= target) return this.durable;
     if (this.storageError) throw new Error(this.storageError);
     // A waiter joins the scheduled batch; it never starts an early save.
-    return new Promise((resolve, reject) =>
-      this.durableWaiters.push({ sequence: target, resolve, reject }),
-    );
+    if (!signal)
+      return new Promise((resolve, reject) =>
+        this.durableWaiters.push({ sequence: target, resolve, reject }),
+      );
+    return new Promise((resolve, reject) => {
+      const removeAbort = () => signal.removeEventListener('abort', abort);
+      const waiter = {
+        sequence: target,
+        resolve: (mark: DurableMark) => {
+          removeAbort();
+          resolve(mark);
+        },
+        reject: (error: Error) => {
+          removeAbort();
+          reject(error);
+        },
+      };
+      const abort = () => {
+        const index = this.durableWaiters.indexOf(waiter);
+        if (index >= 0) this.durableWaiters.splice(index, 1);
+        waiter.reject(signal.reason);
+      };
+      this.durableWaiters.push(waiter);
+      signal.addEventListener('abort', abort, { once: true });
+    });
   }
 
   private pendingSave?: PendingWorldSave;
@@ -2306,6 +2334,15 @@ export class WorldService {
     );
   }
 
+  /** Retrying can only wait for an already accepted save that owns this pressure. */
+  private rejectPendingAdmission(onRefusal?: (through: number) => void): false {
+    if (onRefusal && !this.closed && !this.storageError) {
+      const blocking = this.inFlightSave ?? this.pendingSave;
+      if (blocking) onRefusal(blocking.through);
+    }
+    return false;
+  }
+
   /** A refused queue admission has not touched a save. Failures after admission
    * still reach the existing storage-fault owner; they must never be retried here.
    * docs/performance/scheduling.md#bounded-admission */
@@ -2514,14 +2551,17 @@ export class WorldService {
     receipt?: GameplayReceipt,
     retention?: PreparedMemoryRetention,
     emergencyPause = false,
+    onPendingRefusal?: (through: number) => void,
   ): Promise<boolean> {
-    if (!emergencyPause && !this.pendingAdmissionOpen()) return false;
+    if (!emergencyPause && !this.pendingAdmissionOpen())
+      return this.rejectPendingAdmission(onPendingRefusal);
     let allocation: ReturnType<HostWork['reserve']> | undefined;
     try {
       if (!retention && sourceVersionPreparationNeeded(this.world, saved.world)) {
         retention = await this.prepareChangedSourceVersions(saved, this.saved);
         saved = retention.state;
-        if (!emergencyPause && !this.pendingAdmissionOpen()) return false;
+        if (!emergencyPause && !this.pendingAdmissionOpen())
+          return this.rejectPendingAdmission(onPendingRefusal);
       }
       freezeWorld(saved.world);
       allocation = this.hostWork.reserve(saved.world);
@@ -5657,7 +5697,7 @@ export class WorldService {
     command?: Command,
     decision?: DecisionPublication,
     responseProjection?: (result: Transition) => ApiResult,
-  ): Promise<ApiResult> {
+  ): Promise<ApiResult & { [pendingResponseSave]?: number }> {
     await this.ready;
     await this.prepareNativeKnownPlaces();
     try {
@@ -5722,6 +5762,7 @@ export class WorldService {
         )
           return { ...response };
         const world = receipt ? releaseCommandReceipt(result.world, receipt.id) : result.world;
+        let blockedThrough: number | undefined;
         if (
           !(await this.commit(
             { ...this.saved, world },
@@ -5758,12 +5799,20 @@ export class WorldService {
                   }
                 : {}),
             },
+            undefined,
+            undefined,
+            responseJobId
+              ? (through) => {
+                  blockedThrough = through;
+                }
+              : undefined,
           ))
         )
           return {
             ok: false,
             code: this.storageError ? 'storage' : 'busy',
             message: this.storageError ?? 'Saving is catching up. Try again shortly.',
+            ...(blockedThrough === undefined ? {} : { [pendingResponseSave]: blockedThrough }),
           };
         if (decision) {
           decision.deliveredAt = decision.now();
