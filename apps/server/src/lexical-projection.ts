@@ -34,6 +34,64 @@ export class LexicalPreparationError extends Error {
   }
 }
 
+/** Exact pending-key deltas share the source transaction. Replacing a queued
+ * revision coalesces one row and cannot manufacture storage pressure. */
+export function enqueueLexicalSql(source: string, removing: boolean): string {
+  if (removing)
+    return `, removed_documents AS (
+    DELETE FROM memory_lexical_documents d USING ${source} s WHERE d.world_id=s.world_id
+      AND d.actor_id=s.actor_id AND d.id=s.id AND d.source_kind=s.source_kind
+  ), removed_pending AS (
+    DELETE FROM memory_lexical_pending q USING ${source} s WHERE q.world_id=s.world_id
+      AND q.actor_id=s.actor_id AND q.id=s.id AND q.source_kind=s.source_kind RETURNING q.world_id,q.bytes
+  ), delta AS (SELECT world_id,count(*) AS rows,sum(bytes) AS bytes FROM removed_pending GROUP BY world_id)
+  UPDATE memory_lexical_progress p SET pending_rows=greatest(0,p.pending_rows-d.rows),
+    pending_bytes=greatest(0,p.pending_bytes-d.bytes) FROM delta d WHERE p.world_id=d.world_id
+    RETURNING p.pending_rows,p.pending_bytes`;
+  return `, previous_pending AS MATERIALIZED (
+    SELECT q.world_id,q.actor_id,q.id,q.source_kind,q.bytes FROM memory_lexical_pending q
+    JOIN ${source} s ON s.world_id=q.world_id AND s.actor_id=q.actor_id AND s.id=q.id AND s.source_kind=q.source_kind
+  ), candidates AS MATERIALIZED (
+    SELECT s.*,h.generation,h.revision AS world_revision,p.id AS previous_id,
+      coalesce(p.bytes,0) AS previous_bytes,coalesce(g.pending_rows,0) AS pending_rows,coalesce(g.pending_bytes,0) AS pending_bytes,
+      octet_length(s.world_id)+octet_length(s.actor_id)+octet_length(s.id)+octet_length(s.source_kind)+octet_length(s.revision)+octet_length(h.generation)+512 AS bytes
+    FROM ${source} s JOIN world_head h ON h.world_id=s.world_id
+    LEFT JOIN previous_pending p ON p.world_id=s.world_id AND p.actor_id=s.actor_id AND p.id=s.id AND p.source_kind=s.source_kind
+    LEFT JOIN memory_lexical_progress g ON g.world_id=s.world_id WHERE s.search_text<>''
+  ), ranked AS (
+    SELECT c.*,sum(CASE WHEN previous_id IS NULL THEN 1 ELSE 0 END) OVER admission AS new_rows,
+      sum(greatest(0,bytes-previous_bytes)) OVER admission AS added_bytes FROM candidates c
+    WINDOW admission AS (PARTITION BY world_id ORDER BY actor_id,id,source_kind ROWS UNBOUNDED PRECEDING)
+  ), queued AS (
+    INSERT INTO memory_lexical_pending
+    SELECT world_id,actor_id,id,source_kind,revision,generation,world_revision,false,bytes FROM ranked
+    WHERE (previous_id IS NOT NULL OR pending_rows+new_rows<=${PENDING_ROWS}) AND pending_bytes+added_bytes<=${PENDING_BYTES}
+    ON CONFLICT(world_id,actor_id,id,source_kind) DO UPDATE SET
+      source_revision=excluded.source_revision,generation=excluded.generation,world_revision=excluded.world_revision,
+      removing=excluded.removing,bytes=excluded.bytes
+    RETURNING world_id,actor_id,id,source_kind,generation,world_revision,bytes
+  ), queue_delta AS (
+    SELECT q.world_id,min(q.world_revision)-1 AS covered_revision,
+      count(*)-count(p.id) AS pending_rows,sum(q.bytes)-coalesce(sum(p.bytes),0) AS pending_bytes
+    FROM queued q LEFT JOIN previous_pending p ON p.world_id=q.world_id AND p.actor_id=q.actor_id AND p.id=q.id AND p.source_kind=q.source_kind
+    GROUP BY q.world_id
+  ), coverage AS (
+    SELECT s.world_id,h.generation,min(h.revision)-1 AS covered_revision,
+      coalesce(array_agg(DISTINCT s.actor_id) FILTER(WHERE s.lexical_expected AND
+        (s.search_text='' OR NOT EXISTS(SELECT 1 FROM queued q WHERE q.world_id=s.world_id AND q.actor_id=s.actor_id AND q.id=s.id AND q.source_kind=s.source_kind))),ARRAY[]::text[]) AS incomplete_actors
+    FROM ${source} s JOIN world_head h ON h.world_id=s.world_id GROUP BY s.world_id,h.generation
+  ) INSERT INTO memory_lexical_progress
+    SELECT c.world_id,c.generation,coalesce(q.covered_revision,c.covered_revision),
+      coalesce(q.pending_rows,0),coalesce(q.pending_bytes,0),c.incomplete_actors
+    FROM coverage c LEFT JOIN queue_delta q ON q.world_id=c.world_id WHERE true
+    ON CONFLICT(world_id) DO UPDATE SET
+      covered_revision=least(memory_lexical_progress.covered_revision,excluded.covered_revision),
+      pending_rows=memory_lexical_progress.pending_rows+excluded.pending_rows,
+      pending_bytes=memory_lexical_progress.pending_bytes+excluded.pending_bytes,
+      incomplete_actors=ARRAY(SELECT DISTINCT unnest(memory_lexical_progress.incomplete_actors||excluded.incomplete_actors))
+    RETURNING pending_rows,pending_bytes`;
+}
+
 /** Durable derived work shares the existing database writer, never world mutation
  * authority. A source reference cannot publish into a different revision/generation. */
 export class LexicalProjection {
@@ -85,64 +143,6 @@ export class LexicalProjection {
         pending_rows BIGINT NOT NULL,pending_bytes BIGINT NOT NULL,
         incomplete_actors TEXT[] NOT NULL DEFAULT '{}');
     `);
-  }
-
-  /** Exact pending-key deltas share the source transaction. Replacing a queued
-   * revision coalesces one row and cannot manufacture storage pressure. */
-  enqueueSql(source: string, removing: boolean): string {
-    if (removing)
-      return `, removed_documents AS (
-      DELETE FROM memory_lexical_documents d USING ${source} s WHERE d.world_id=s.world_id
-        AND d.actor_id=s.actor_id AND d.id=s.id AND d.source_kind=s.source_kind
-    ), removed_pending AS (
-      DELETE FROM memory_lexical_pending q USING ${source} s WHERE q.world_id=s.world_id
-        AND q.actor_id=s.actor_id AND q.id=s.id AND q.source_kind=s.source_kind RETURNING q.world_id,q.bytes
-    ), delta AS (SELECT world_id,count(*) AS rows,sum(bytes) AS bytes FROM removed_pending GROUP BY world_id)
-    UPDATE memory_lexical_progress p SET pending_rows=greatest(0,p.pending_rows-d.rows),
-      pending_bytes=greatest(0,p.pending_bytes-d.bytes) FROM delta d WHERE p.world_id=d.world_id
-      RETURNING p.pending_rows,p.pending_bytes`;
-    return `, previous_pending AS MATERIALIZED (
-      SELECT q.world_id,q.actor_id,q.id,q.source_kind,q.bytes FROM memory_lexical_pending q
-      JOIN ${source} s ON s.world_id=q.world_id AND s.actor_id=q.actor_id AND s.id=q.id AND s.source_kind=q.source_kind
-    ), candidates AS MATERIALIZED (
-      SELECT s.*,h.generation,h.revision AS world_revision,p.id AS previous_id,
-        coalesce(p.bytes,0) AS previous_bytes,coalesce(g.pending_rows,0) AS pending_rows,coalesce(g.pending_bytes,0) AS pending_bytes,
-        octet_length(s.world_id)+octet_length(s.actor_id)+octet_length(s.id)+octet_length(s.source_kind)+octet_length(s.revision)+octet_length(h.generation)+512 AS bytes
-      FROM ${source} s JOIN world_head h ON h.world_id=s.world_id
-      LEFT JOIN previous_pending p ON p.world_id=s.world_id AND p.actor_id=s.actor_id AND p.id=s.id AND p.source_kind=s.source_kind
-      LEFT JOIN memory_lexical_progress g ON g.world_id=s.world_id WHERE s.search_text<>''
-    ), ranked AS (
-      SELECT c.*,sum(CASE WHEN previous_id IS NULL THEN 1 ELSE 0 END) OVER admission AS new_rows,
-        sum(greatest(0,bytes-previous_bytes)) OVER admission AS added_bytes FROM candidates c
-      WINDOW admission AS (PARTITION BY world_id ORDER BY actor_id,id,source_kind ROWS UNBOUNDED PRECEDING)
-    ), queued AS (
-      INSERT INTO memory_lexical_pending
-      SELECT world_id,actor_id,id,source_kind,revision,generation,world_revision,false,bytes FROM ranked
-      WHERE (previous_id IS NOT NULL OR pending_rows+new_rows<=${PENDING_ROWS}) AND pending_bytes+added_bytes<=${PENDING_BYTES}
-      ON CONFLICT(world_id,actor_id,id,source_kind) DO UPDATE SET
-        source_revision=excluded.source_revision,generation=excluded.generation,world_revision=excluded.world_revision,
-        removing=excluded.removing,bytes=excluded.bytes
-      RETURNING world_id,actor_id,id,source_kind,generation,world_revision,bytes
-    ), queue_delta AS (
-      SELECT q.world_id,min(q.world_revision)-1 AS covered_revision,
-        count(*)-count(p.id) AS pending_rows,sum(q.bytes)-coalesce(sum(p.bytes),0) AS pending_bytes
-      FROM queued q LEFT JOIN previous_pending p ON p.world_id=q.world_id AND p.actor_id=q.actor_id AND p.id=q.id AND p.source_kind=q.source_kind
-      GROUP BY q.world_id
-    ), coverage AS (
-      SELECT s.world_id,h.generation,min(h.revision)-1 AS covered_revision,
-        coalesce(array_agg(DISTINCT s.actor_id) FILTER(WHERE s.lexical_expected AND
-          (s.search_text='' OR NOT EXISTS(SELECT 1 FROM queued q WHERE q.world_id=s.world_id AND q.actor_id=s.actor_id AND q.id=s.id AND q.source_kind=s.source_kind))),ARRAY[]::text[]) AS incomplete_actors
-      FROM ${source} s JOIN world_head h ON h.world_id=s.world_id GROUP BY s.world_id,h.generation
-    ) INSERT INTO memory_lexical_progress
-      SELECT c.world_id,c.generation,coalesce(q.covered_revision,c.covered_revision),
-        coalesce(q.pending_rows,0),coalesce(q.pending_bytes,0),c.incomplete_actors
-      FROM coverage c LEFT JOIN queue_delta q ON q.world_id=c.world_id WHERE true
-      ON CONFLICT(world_id) DO UPDATE SET
-        covered_revision=least(memory_lexical_progress.covered_revision,excluded.covered_revision),
-        pending_rows=memory_lexical_progress.pending_rows+excluded.pending_rows,
-        pending_bytes=memory_lexical_progress.pending_bytes+excluded.pending_bytes,
-        incomplete_actors=ARRAY(SELECT DISTINCT unnest(memory_lexical_progress.incomplete_actors||excluded.incomplete_actors))
-      RETURNING pending_rows,pending_bytes`;
   }
 
   async admit(progress: Record<string, unknown> | undefined) {

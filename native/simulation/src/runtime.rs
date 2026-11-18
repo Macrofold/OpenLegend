@@ -19,8 +19,8 @@ mod control;
 pub use account_retention::RuntimeAccountRetention;
 mod direct_history;
 pub use direct_history::{
-    HistoryAccount, HistoryCut, HistoryTemporal, RuntimeHistory, RuntimeMetadataPersistence,
-    metadata_rows,
+    HistoryAccount, HistoryCut, HistoryTemporal, RuntimeHistory, RuntimeHistoryCuts,
+    RuntimeMetadataPersistence, RuntimeRecallRead, metadata_rows,
 };
 mod handoff;
 mod knowledge;

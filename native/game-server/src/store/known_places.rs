@@ -15,6 +15,7 @@ use tokio_postgres::types::ToSql;
 
 mod support;
 use support::{PendingSupports, SqlSupports};
+pub(super) use support::place_capsule_key;
 
 /// Own the exact read inputs independently of the active provider or save
 /// acknowledgement. The native preparation remains the final owner of place

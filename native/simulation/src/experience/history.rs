@@ -206,6 +206,37 @@ impl CapturedHistoryInput {
             )
         })
     }
+    pub(crate) fn has_principal(&self, actor: &str) -> bool {
+        self.0
+            .input
+            .principals
+            .iter()
+            .any(|principal| principal.actor_id == actor)
+    }
+
+    pub(crate) fn story_subject(
+        &self,
+        id: &str,
+        field: &str,
+        policy: &str,
+    ) -> Option<(bool, Option<f64>)> {
+        self.0
+            .input
+            .subjects
+            .iter()
+            .find(|subject| subject.id == id)
+            .map(|subject| {
+                let actor = subject.actor.is_some() || subject.animal.is_some();
+                let value = subject
+                    .mechanism_fields
+                    .as_ref()
+                    .and_then(|mechanisms| mechanisms.get(policy))
+                    .and_then(|values| values.get(field))
+                    .copied();
+                (actor, value)
+            })
+    }
+
     pub(crate) fn policy(&self) -> (u64, Option<&str>) {
         (
             self.0.input.policy_revision,

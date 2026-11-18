@@ -40,7 +40,7 @@ fn add_subject(ids: &mut IndexSet<String>, subject: Option<&ObserverSubject>) {
         ids.insert(individual_id.clone());
     }
 }
-fn originals(
+pub(super) fn originals(
     awareness: &Awareness,
 ) -> impl Iterator<Item = &Arc<crate::reception::ObservationContribution>> {
     awareness
@@ -80,14 +80,10 @@ fn individual_ids(awareness: &Awareness) -> Vec<String> {
     ids.into_iter().collect()
 }
 
-fn retention_metadata(
+pub(crate) fn awareness_learning_sources(
     awareness: &Awareness,
     law: &impl AccountRecordingLaw,
-) -> Result<Value, RecordEncodingError> {
-    let mut aliases = IndexSet::new();
-    for observation in originals(awareness) {
-        aliases.insert(observation.id.clone());
-    }
+) -> Result<Vec<PersonalLearningSource>, RecordEncodingError> {
     let mut learning = law.learning_sources(
         awareness
             .recognition
@@ -119,6 +115,18 @@ fn retention_metadata(
         }
     }
     learning.extend(observed.into_values());
+    Ok(learning)
+}
+
+fn retention_metadata(
+    awareness: &Awareness,
+    law: &impl AccountRecordingLaw,
+) -> Result<Value, RecordEncodingError> {
+    let mut aliases = IndexSet::new();
+    for observation in originals(awareness) {
+        aliases.insert(observation.id.clone());
+    }
+    let learning = awareness_learning_sources(awareness, law)?;
     let mut personal = Vec::new();
     for source in learning {
         aliases.insert(source.id().to_owned());

@@ -24,38 +24,38 @@ pub(super) type Compare<'a> = dyn Fn(&str, &str) -> StoreResult<Ordering> + Sync
 
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct AwarenessEvidence<'a> {
+pub(super) struct AwarenessEvidence<'a> {
     #[serde(skip_serializing, borrow)]
     event_id: Cow<'a, str>,
     #[serde(borrow)]
-    retention_class: &'a RawValue,
+    pub(super) retention_class: &'a RawValue,
     #[serde(skip_serializing_if = "Option::is_none")]
     expires_at: Option<&'a RawValue>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    sound: Option<&'a RawValue>,
+    pub(super) sound: Option<&'a RawValue>,
     #[serde(borrow)]
     actor_id: Cow<'a, str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    event_data: Option<&'a RawValue>,
+    pub(super) event_data: Option<&'a RawValue>,
     #[serde(skip_serializing_if = "Option::is_none")]
     references: Option<&'a RawValue>,
     #[serde(borrow)]
-    event_type: Cow<'a, str>,
-    text: &'a RawValue,
+    pub(super) event_type: Cow<'a, str>,
+    pub(super) text: &'a RawValue,
     #[serde(skip_serializing_if = "Option::is_none")]
     content: Option<&'a RawValue>,
     modality: &'a RawValue,
     #[serde(borrow, skip_serializing_if = "Option::is_none")]
-    source_id: Option<Cow<'a, str>>,
+    pub(super) source_id: Option<Cow<'a, str>>,
     #[serde(borrow, skip_serializing_if = "Option::is_none")]
-    target_id: Option<Cow<'a, str>>,
+    pub(super) target_id: Option<Cow<'a, str>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    speech: Option<&'a RawValue>,
+    pub(super) speech: Option<&'a RawValue>,
     importance: &'a RawValue,
     #[serde(skip_serializing_if = "Option::is_none")]
     urgency: Option<&'a RawValue>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    exposure: Option<&'a RawValue>,
+    pub(super) exposure: Option<&'a RawValue>,
     #[serde(skip_serializing_if = "Option::is_none")]
     observation: Option<&'a RawValue>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -72,11 +72,11 @@ struct AwarenessEvidence<'a> {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct TemporalEvidence<'a> {
+pub(super) struct TemporalEvidence<'a> {
     retention_class: &'static str,
     actor_id: &'a str,
-    event_type: &'a str,
-    text: &'a JsText,
+    pub(super) event_type: &'a str,
+    pub(super) text: &'a JsText,
     modality: ExperienceModality,
     importance: f64,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -84,15 +84,15 @@ struct TemporalEvidence<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     content: Option<&'a JsText>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    source_id: Option<&'a str>,
+    pub(super) source_id: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    target_id: Option<&'a str>,
+    pub(super) target_id: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     source_subject: Option<&'a ObserverSubject>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    sound: Option<&'a PerceivedSound>,
+    pub(super) sound: Option<&'a PerceivedSound>,
     #[serde(serialize_with = "event_data")]
-    event_data: &'a IndexMap<String, EventScalar>,
+    pub(super) event_data: &'a IndexMap<String, EventScalar>,
     references: &'a [ReceivedReference],
 }
 
@@ -104,7 +104,7 @@ fn event_data<S: Serializer>(
 }
 
 impl<'a> TemporalEvidence<'a> {
-    fn acquire(actor_id: &'a str, values: &'a [SensoryFacet]) -> StoreResult<Self> {
+    pub(super) fn acquire(actor_id: &'a str, values: &'a [SensoryFacet]) -> StoreResult<Self> {
         let event = values
             .iter()
             .find(|value| matches!(value, SensoryFacet::Event { .. }));

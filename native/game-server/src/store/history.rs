@@ -1,7 +1,8 @@
 //! Canonical occurrence placement for a funded detached save. Personal
 //! perspectives are separate and must come from their actual received account.
 
-use super::{PrefixProjection, Store, StoreError, StoreResult, sql_ordinal};
+use super::{PrefixProjection, PreparedRecall, Store, StoreError, StoreResult, sql_ordinal};
+use crate::language::LanguageProvider;
 use openlegend_simulation::events::OriginalOccurrence;
 use openlegend_simulation::reception::EventScalar;
 use openlegend_simulation::records::{ChangedRows, SaveRows};
@@ -13,27 +14,51 @@ use tokio_postgres::Transaction;
 use tokio_postgres::types::{ToSql, Type};
 
 mod perspective;
+mod story;
 use perspective::{Compare, Perspective};
 
-/// Write the detached prefix's actual append-only occurrences. All captures
-/// are borrowed from their independently funded accepted owners. Until their
-/// additional derived writer is attached, personal edits or perspectives
-/// refuse this projection before any gameplay can be published to SQL.
+/// Write the actual detached occurrence and personal-account changes. Recall,
+/// history, privacy fences and receipts all stay inside this same transaction.
 pub struct OrdinaryProjection<'a> {
     store: &'a Store,
     histories: &'a [RuntimeHistory],
+    eligibility: Option<&'a RuntimeHistoryCuts>,
+    recall: Option<&'a PreparedRecall>,
+    language: Option<&'a LanguageProvider>,
 }
 
 impl<'a> OrdinaryProjection<'a> {
     pub fn new(store: &'a Store, histories: &'a [RuntimeHistory]) -> Self {
-        Self { store, histories }
+        Self {
+            store,
+            histories,
+            eligibility: None,
+            recall: None,
+            language: None,
+        }
     }
 
-    /// The acceptance owner checks this before Ready while a refused
-    /// candidate can still be rolled back. Prefix capture repeats the same
-    /// predicate for any newly materialized save rows.
-    pub fn validate_candidate(changes: &ChangedRows, history: &RuntimeHistory) -> StoreResult<()> {
-        if derived_rows(changes) || history.accounts().next().is_some() {
+    pub fn with_projections(
+        mut self,
+        eligibility: Option<&'a RuntimeHistoryCuts>,
+        recall: Option<&'a PreparedRecall>,
+        language: Option<&'a LanguageProvider>,
+    ) -> Self {
+        self.eligibility = eligibility;
+        self.recall = recall;
+        self.language = language;
+        self
+    }
+
+    /// Check while the exact candidate can still be rolled back. This port
+    /// supports ordinary awareness appends and actual captured perspectives.
+    /// Edits, erasures and positive narration selection still need their owners.
+    pub fn validate_candidate(
+        store: &Store,
+        changes: &ChangedRows,
+        history: &RuntimeHistory,
+    ) -> StoreResult<()> {
+        if derived_rows(changes) || store.requires_story(history)? {
             return Err(StoreError::DerivedProjectionRequired);
         }
         Ok(())
@@ -48,26 +73,31 @@ fn derived_rows(changes: &ChangedRows) -> bool {
         .any(|table| {
             matches!(
                 table.as_str(),
-                "mind_awareness"
-                    | "mind_memories"
+                "mind_memories"
                     | "mind_summaries"
                     | "mind_forgotten"
                     | "mind_corrections"
                     | "mind_privacy_revisions"
             )
         });
-    leaf || [
-        "data_world",
-        "world_settings",
-        "experience_state",
-        "mind_awareness_owners",
-        "mind_memories_owners",
-        "mind_summaries_owners",
-        "mind_forgotten_owners",
-        "mind_corrections_owners",
-    ]
-    .into_iter()
-    .any(|name| changes.deletes.contains_key(name))
+    let awareness_update = changes.deletes.contains_key("mind_awareness")
+        || changes
+            .writes
+            .get("mind_awareness")
+            .is_some_and(|rows| rows.iter().any(|row| !row.create));
+    leaf || awareness_update
+        || [
+            "data_world",
+            "world_settings",
+            "experience_state",
+            "mind_awareness_owners",
+            "mind_memories_owners",
+            "mind_summaries_owners",
+            "mind_forgotten_owners",
+            "mind_corrections_owners",
+        ]
+        .into_iter()
+        .any(|name| changes.deletes.contains_key(name))
 }
 
 impl PrefixProjection for OrdinaryProjection<'_> {
@@ -87,26 +117,41 @@ impl PrefixProjection for OrdinaryProjection<'_> {
             return Err(StoreError::StaleCut);
         }
         if derived_rows(&rows.changes)
+            || rows.changes.writes.contains_key("mind_awareness") != self.recall.is_some()
             || self
                 .histories
                 .iter()
                 .any(|history| history.accounts().next().is_some())
+                != self.eligibility.is_some()
         {
             return Err(StoreError::DerivedProjectionRequired);
         }
         self.store
             .append_originals(transaction, rows, self.histories)
-            .await
+            .await?;
+        if let Some(cuts) = self.eligibility {
+            let compare = |left: &str, right: &str| {
+                self.language
+                    .ok_or(StoreError::DerivedProjectionRequired)?
+                    .compare_utf8(left, right)
+                    .map_err(|_| StoreError::InvalidRecord)
+            };
+            self.store
+                .append_perspectives(transaction, rows, self.histories, cuts, &compare)
+                .await?;
+        }
+        Ok(())
     }
 
     async fn after_records(
         &self,
-        _transaction: &Transaction<'_>,
-        _rows: &SaveRows,
+        transaction: &Transaction<'_>,
+        rows: &SaveRows,
         _revision: u64,
     ) -> StoreResult<()> {
-        // Canonical supports' derived capsule rows are owned by the shared
-        // store writer. This checked scope has no other post-record effects.
+        if let Some(recall) = self.recall {
+            self.store.write_recall(transaction, rows, recall).await?;
+        }
         Ok(())
     }
 }

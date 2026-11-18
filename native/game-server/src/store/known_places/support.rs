@@ -147,6 +147,31 @@ pub(super) struct SqlSupports<'a> {
     _custody: ByteReservation,
 }
 
+// canonicalJson([source, ordinal]) has this fixed order for the
+// current finite EvidenceSource schema keys.
+#[derive(Serialize)]
+struct CapsuleKey<'a> {
+    family: EvidenceFamily,
+    id: &'a str,
+    observer: &'a ObserverLife,
+    revision: &'a SourceRevision,
+}
+fn capsule_key_input(capsule: &KnownPlaceCapsule) -> (CapsuleKey<'_>, u64) {
+    let source = &capsule.source;
+    (
+        CapsuleKey {
+            family: source.family,
+            id: &source.id,
+            observer: &source.observer,
+            revision: &source.revision,
+        },
+        capsule.facet_ordinal,
+    )
+}
+pub(in crate::store) fn place_capsule_key(capsule: &KnownPlaceCapsule) -> StoreResult<String> {
+    json_record(&capsule_key_input(capsule)).map_err(|_| StoreError::InvalidRecord)
+}
+
 impl Store {
     /// Rebuild only the derived place capsules of canonical supports actually
     /// written by this prefix. Canonical deletion cascades close its old rows.
@@ -170,25 +195,7 @@ impl Store {
                     continue;
                 };
                 for capsule in placement.capsules.capsules() {
-                    // canonicalJson([source, ordinal]) has this fixed order
-                    // for the current EvidenceSource's finite schema keys.
-                    #[derive(Serialize)]
-                    struct Key<'a> {
-                        family: EvidenceFamily,
-                        id: &'a str,
-                        observer: &'a ObserverLife,
-                        revision: &'a SourceRevision,
-                    }
-                    let source = &capsule.source;
-                    let input = (
-                        Key {
-                            family: source.family,
-                            id: &source.id,
-                            observer: &source.observer,
-                            revision: &source.revision,
-                        },
-                        capsule.facet_ordinal,
-                    );
+                    let input = capsule_key_input(capsule);
                     let bound = json_record_len(&input).map_err(|_| StoreError::InvalidRecord)?;
                     output.fund(
                         bound

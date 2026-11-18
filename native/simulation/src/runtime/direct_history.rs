@@ -98,6 +98,21 @@ impl RuntimeHistory {
             },
         )
     }
+    /// Narration belongs only to the actual captured player principal.
+    pub fn has_story_principal(&self, actor: &str) -> bool {
+        self.0.has_principal(actor)
+    }
+
+    /// The event-time subject's type and selected field, without retaining its body.
+    pub fn story_subject(
+        &self,
+        id: &str,
+        field: &str,
+        policy: &str,
+    ) -> Option<(bool, Option<f64>)> {
+        self.0.story_subject(id, field, policy)
+    }
+
     pub fn policy(&self) -> (u64, Option<&str>) {
         self.0.policy()
     }
@@ -207,6 +222,98 @@ impl NativeWorldSession {
             through,
             accounts,
             _storage: storage,
+        }))
+    }
+}
+
+/// Exact accepted changes needed for recall indexes. The database projection
+/// may retain only its own funded outputs, never this save-journal borrow.
+pub struct RuntimeRecallRead<'a> {
+    pub world_id: &'a str,
+    pub generation: &'a str,
+    pub through: u64,
+    pub hard_bytes: u64,
+    pub changes: &'a crate::records::ChangedRows,
+    account_law: crate::worlds::InstalledAccountLaw<'a>,
+    budget: &'a crate::host::ByteBudget,
+}
+
+impl RuntimeRecallRead<'_> {
+    /// Decode one accepted awareness body under its own parser and builder
+    /// custody. Reuse the world's actual identity-support placement law.
+    pub fn with_awareness<T>(
+        &self,
+        row: &crate::records::ChangedRow,
+        revision: &str,
+        read: impl FnOnce(
+            &crate::experience::Awareness,
+            &[crate::experience::PersonalLearningSource],
+            Option<&crate::experience::KnownPlaceCapsule>,
+        ) -> T,
+    ) -> Result<T, crate::experience::ExperienceError> {
+        use crate::experience::{
+            Awareness, ExperienceError, PersonalSourceKind, PersonalSourceRef,
+            awareness_learning_sources,
+        };
+        let _parse = crate::install::reserve_typed_parse::<Awareness>(
+            &row.payload,
+            std::mem::size_of::<crate::reception::ObservationFacet>(),
+            None,
+            self.budget,
+        )
+        .map_err(|error| match error {
+            crate::install::InstallError::Capacity => ExperienceError::Capacity,
+            _ => ExperienceError::InvalidBody("stored awareness"),
+        })?;
+        let body: Awareness = serde_json::from_str(&row.payload)
+            .map_err(|_| ExperienceError::InvalidBody("stored awareness"))?;
+        let learning = awareness_learning_sources(&body, &self.account_law)
+            .map_err(|_| ExperienceError::InvalidBody("stored awareness learning"))?;
+        let place = if matches!(
+            body.exposure,
+            Some(crate::reception::EncounterExposure::Place { .. })
+        ) {
+            let reference = PersonalSourceRef {
+                kind: PersonalSourceKind::Awareness,
+                id: body.event_id.clone(),
+                revision: revision.to_owned(),
+            };
+            Some(
+                crate::experience::places::known_place_capsule(&body, Some(reference))?
+                    .ok_or(ExperienceError::InvalidBody("acquired place awareness"))?,
+            )
+        } else {
+            None
+        };
+        Ok(read(&body, &learning, place.as_ref()))
+    }
+}
+
+impl NativeWorldSession {
+    /// Borrow before detachment in the same accepted application turn. The
+    /// detached writer later checks the selected record bodies and save cut.
+    pub fn with_ordinary_recall<T>(
+        &self,
+        through: u64,
+        read: impl FnOnce(RuntimeRecallRead<'_>) -> T,
+    ) -> Result<T, RuntimeError> {
+        self.require_active()?;
+        let (state, changes) = self
+            .session
+            .ordinary_recall_rows(through)
+            .map_err(failure)?;
+        let hard = crate::simulation::session::MemoryAllowance::capture(state).hard_bytes;
+        if !hard.is_finite() || hard < 0.0 || hard > crate::identity::MAX_SAFE_INTEGER as f64 {
+            return Err(failure("Invalid installed derived memory allowance"));
+        }
+        Ok(read(RuntimeRecallRead {
+            world_id: &state.physical.header.id,
+            generation: &state.generation,
+            through,
+            hard_bytes: hard as u64,
+            changes,
+            account_law: state.installed.account_law(),
+            budget: &self.budget,
         }))
     }
 }

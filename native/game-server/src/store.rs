@@ -6,6 +6,7 @@ mod history;
 mod known_places;
 mod metadata;
 mod read;
+mod recall;
 mod received;
 mod schema;
 mod write;
@@ -14,6 +15,7 @@ pub use history::OrdinaryProjection;
 pub use known_places::PreparedKnownPlaceRead;
 pub use metadata::MetadataProjection;
 pub use read::{AdmittedReceipt, CurrentOpening, GameplayReceipt};
+pub use recall::PreparedRecall;
 pub use schema::StorageSchema;
 pub use write::{CommitError, PrefixProjection};
 

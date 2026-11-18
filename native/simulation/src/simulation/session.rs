@@ -75,21 +75,36 @@ impl serde::Serialize for CapturedActorReadCut<'_> {
 }
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
-struct MemoryAllowance<'a> {
+pub(crate) struct MemoryAllowance<'a> {
     world_id: &'a str,
     policy_id: &'a str,
     policy_version: u64,
     max_bytes: u64,
-    hard_bytes: f64,
+    pub(crate) hard_bytes: f64,
     low_bytes: f64,
+}
+
+impl<'a> MemoryAllowance<'a> {
+    pub(crate) fn capture(state: &'a SimulationState) -> Self {
+        let policy = state.installed.attention.value();
+        let retention = &policy.retention;
+        Self {
+            world_id: &state.physical.header.id,
+            policy_id: &policy.id,
+            policy_version: policy.version,
+            max_bytes: retention.derived_max_bytes,
+            hard_bytes: (retention.derived_max_bytes as f64
+                * (1.0 + retention.maintenance_headroom))
+                .floor(),
+            low_bytes: (retention.derived_max_bytes as f64 * retention.derived_low_water).floor(),
+        }
+    }
 }
 
 impl<'a> CurrentInstallation<'a> {
     /// Capture only actual validated installation metadata. The public session
     /// reader additionally requires its accepted Idle boundary.
     pub(crate) fn capture(state: &'a SimulationState) -> Result<Self, SessionError> {
-        let policy = state.installed.attention.value();
-        let retention = &policy.retention;
         let history_event_count = state
             .occurrences
             .archived_count()
@@ -107,17 +122,7 @@ impl<'a> CurrentInstallation<'a> {
             accepted_cut: state.accepted_cut,
             history_event_count,
             work_allocation: state.work_allocation().map_err(ExecutionError::Work)?,
-            memory_allowance: MemoryAllowance {
-                world_id: &state.physical.header.id,
-                policy_id: &policy.id,
-                policy_version: policy.version,
-                max_bytes: retention.derived_max_bytes,
-                hard_bytes: (retention.derived_max_bytes as f64
-                    * (1.0 + retention.maintenance_headroom))
-                    .floor(),
-                low_bytes: (retention.derived_max_bytes as f64 * retention.derived_low_water)
-                    .floor(),
-            },
+            memory_allowance: MemoryAllowance::capture(state),
         })
     }
 }
@@ -298,6 +303,19 @@ impl Session {
     /// adoption. This finite summary conveys no actor facts or write permission.
     pub(crate) fn current_installation(&self) -> Result<CurrentInstallation<'_>, SessionError> {
         CurrentInstallation::capture(&self.accepted()?.state)
+    }
+
+    pub(crate) fn ordinary_recall_rows(
+        &self,
+        through: u64,
+    ) -> Result<(&SimulationState, &crate::records::ChangedRows), SessionError> {
+        let state = &self.accepted()?.state;
+        let metadata = self.save.read_metadata()?;
+        let (detached, rows) = self.save.pending_read_rows();
+        if through != state.accepted_cut || through != metadata.through_cut || detached.is_some() {
+            return Err(FenceError::Stale.into());
+        }
+        Ok((state, rows))
     }
 
     /// Remembered-place preparation runs before the physical cursor. Match
@@ -1407,6 +1425,7 @@ impl Session {
         }
         Ok(&self.simulation)
     }
+
     /// A synchronous owner check may run inside the already-held disclosure
     /// lease. It must never inspect a candidate or mint a nested publication.
     pub(crate) fn publication_read(&self) -> Result<&Simulation, SessionError> {

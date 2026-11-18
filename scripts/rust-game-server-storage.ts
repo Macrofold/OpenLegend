@@ -18,6 +18,13 @@ import {
   nativeStorageSettings,
 } from '../apps/server/src/native-install-inputs.js';
 
+import {
+  memoryProjectionSql,
+  memoryReconciliationSql,
+} from '../apps/server/src/memory-repository.js';
+
+import { defaultStoryPolicy } from '../packages/domain/src/story-selection.js';
+
 // Capture schema statements from the production initializer against real empty
 // PostgreSQL, including extensions, constraints and indexes. The Rust release
 // can create this exact schema with no TypeScript executable at runtime.
@@ -58,6 +65,14 @@ async function storageSchema(adminUrl: string) {
           permittedUnmarked: [...ASSET_TABLES, ...AUTHORITY_TABLES],
           receivedValueOwners: [...receivedCurrentOwnerTables, 'mind_temporal_pages'],
           initialization: database.initialization,
+          defaultStory: defaultStoryPolicy(),
+          recall: {
+            insert: memoryProjectionSql('$2::bigint', '$1::text'),
+            reconcile: memoryReconciliationSql(
+              "SELECT actor_id,id,'awareness'::text FROM unnest($2::text[],$3::text[]) c(actor_id,id)",
+              '$1',
+            ),
+          },
           tables,
         };
       } finally {

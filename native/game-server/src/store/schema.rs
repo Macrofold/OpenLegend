@@ -13,6 +13,17 @@ pub struct StorageSchema {
     pub(crate) permitted_unmarked: Vec<String>,
     pub(crate) received_value_owners: Vec<String>,
     pub(crate) tables: Vec<Table>,
+    pub(crate) recall: RecallStatements,
+    pub(crate) default_story: Box<serde_json::value::RawValue>,
+}
+
+/// Shared Source SQL in the operator's verified release, generated with
+/// PostgreSQL's typed parameter markers for the stand-alone caller.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct RecallStatements {
+    pub insert: String,
+    pub reconcile: String,
 }
 
 #[derive(Deserialize)]
@@ -107,6 +118,9 @@ impl StorageSchema {
             .checked_add(strings(&self.initialization)?)?
             .checked_add(strings(&self.permitted_unmarked)?)?
             .checked_add(strings(&self.received_value_owners)?)?
+            .checked_add(self.recall.insert.capacity())?
+            .checked_add(self.recall.reconcile.capacity())?
+            .checked_add(self.default_story.get().len())?
             .checked_add(self.tables.capacity().checked_mul(size_of::<Table>())?)?;
         for table in &self.tables {
             bytes = bytes
@@ -127,6 +141,8 @@ impl StorageSchema {
 
     pub(crate) fn validate(&self) -> StoreResult<()> {
         if self.version.is_empty()
+            || self.recall.insert.is_empty()
+            || self.recall.reconcile.is_empty()
             || self
                 .tables
                 .first()
