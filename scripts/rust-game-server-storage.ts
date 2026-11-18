@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { nativeSetupSettings } from '../packages/domain/src/native-install.js';
+import { rustGameServerViewPolicy } from './rust-game-server-view.js';
 import { createDisposableDatabase } from './disposable-postgres.mjs';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
 import { DATABASE_SCHEMA, SqlGameRepository } from '../apps/server/src/store.js';
@@ -23,6 +24,11 @@ import {
   memoryReconciliationSql,
 } from '../apps/server/src/memory-repository.js';
 
+import {
+  lexicalWorkSql,
+  lexicalWriteSql,
+  lexicalCompletionSql,
+} from '../apps/server/src/lexical-projection.js';
 import { defaultStoryPolicy } from '../packages/domain/src/story-selection.js';
 
 // Capture schema statements from the production initializer against real empty
@@ -66,6 +72,11 @@ async function storageSchema(adminUrl: string) {
           receivedValueOwners: [...receivedCurrentOwnerTables, 'mind_temporal_pages'],
           initialization: database.initialization,
           defaultStory: defaultStoryPolicy(),
+          lexical: {
+            work: lexicalWorkSql(),
+            write: lexicalWriteSql('$1::text', '$2', '$3'),
+            complete: lexicalCompletionSql('$1::text', '$2', '$3', '$4::bigint'),
+          },
           recall: {
             insert: memoryProjectionSql('$2::bigint', '$1::text'),
             reconcile: memoryReconciliationSql(
@@ -94,13 +105,20 @@ async function openingDefinitions(url: string) {
     return await database.readTransaction(async () => {
       const marker = await database.prepare("SELECT value FROM meta WHERE key='schema'").get();
       if (marker?.value !== DATABASE_SCHEMA) throw new Error('Opening has an incompatible schema.');
-      const opening = await captureCurrentSources(new WorldRecords(database), DATABASE_SCHEMA);
+      const records = new WorldRecords(database);
+      const opening = await captureCurrentSources(records, DATABASE_SCHEMA);
       if (!opening) throw new Error('The selected opening is empty.');
+      const selected = await records.load(true);
+      if (!selected || selected.revision !== opening.records.durableRevision)
+        throw new Error('The public view artifact needs the same installed opening.');
       return {
-        settings: nativeSetupSettings,
-        storage: nativeStorageSettings,
-        layouts: nativeRecordLayouts(),
-        definitions: nativeDefinitionSources(opening),
+        definitions: {
+          settings: nativeSetupSettings,
+          storage: nativeStorageSettings,
+          layouts: nativeRecordLayouts(),
+          definitions: nativeDefinitionSources(opening),
+        },
+        view: rustGameServerViewPolicy(selected.state.world),
       };
     });
   } finally {
@@ -116,15 +134,22 @@ if (!adminUrl || !output || unknown.length)
 
 const storage = JSON.stringify(await storageSchema(adminUrl));
 if (openingUrl) {
-  const definitions = JSON.stringify(await openingDefinitions(openingUrl));
+  const artifacts = await openingDefinitions(openingUrl);
+  const definitions = JSON.stringify(artifacts.definitions);
+  const view = JSON.stringify(artifacts.view);
   const sha256 = (body: string) => createHash('sha256').update(body).digest('hex');
   await mkdir(output);
   try {
     await writeFile(join(output, 'storage.json'), storage, { flag: 'wx' });
     await writeFile(join(output, 'definitions.json'), definitions, { flag: 'wx' });
+    await writeFile(join(output, 'view.json'), view, { flag: 'wx' });
     await writeFile(
       join(output, 'manifest.json'),
-      JSON.stringify({ storageSha256: sha256(storage), definitionsSha256: sha256(definitions) }),
+      JSON.stringify({
+        storageSha256: sha256(storage),
+        definitionsSha256: sha256(definitions),
+        viewSha256: sha256(view),
+      }),
       { flag: 'wx' },
     );
   } catch (error) {

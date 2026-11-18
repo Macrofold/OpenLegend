@@ -292,6 +292,13 @@ impl RuntimeRecallRead<'_> {
 }
 
 impl NativeWorldSession {
+    /// The background index reads this selected world allowance from the
+    /// accepted installation without preparing any gameplay database cut.
+    pub fn recall_hard_bytes(&self) -> Result<u64, RuntimeError> {
+        self.require_active()?;
+        derived_hard_bytes(&self.session.accepted().map_err(failure)?.state)
+    }
+
     /// Borrow before detachment in the same accepted application turn. The
     /// detached writer later checks the selected record bodies and save cut.
     pub fn with_ordinary_recall<T>(
@@ -304,20 +311,25 @@ impl NativeWorldSession {
             .session
             .ordinary_recall_rows(through)
             .map_err(failure)?;
-        let hard = crate::simulation::session::MemoryAllowance::capture(state).hard_bytes;
-        if !hard.is_finite() || hard < 0.0 || hard > crate::identity::MAX_SAFE_INTEGER as f64 {
-            return Err(failure("Invalid installed derived memory allowance"));
-        }
+        let hard = derived_hard_bytes(state)?;
         Ok(read(RuntimeRecallRead {
             world_id: &state.physical.header.id,
             generation: &state.generation,
             through,
-            hard_bytes: hard as u64,
+            hard_bytes: hard,
             changes,
             account_law: state.installed.account_law(),
             budget: &self.budget,
         }))
     }
+}
+
+fn derived_hard_bytes(state: &crate::simulation::SimulationState) -> Result<u64, RuntimeError> {
+    let hard = crate::simulation::session::MemoryAllowance::capture(state).hard_bytes;
+    if !hard.is_finite() || hard < 0.0 || hard > crate::identity::MAX_SAFE_INTEGER as f64 {
+        return Err(failure("Invalid installed derived memory allowance"));
+    }
+    Ok(hard as u64)
 }
 
 /// Startup or host control can certify a metadata-only transaction. The SQL

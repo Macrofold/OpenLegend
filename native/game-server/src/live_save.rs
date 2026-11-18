@@ -77,6 +77,7 @@ pub struct LiveSaves {
     detached: AsyncMutex<Option<Detached>>,
     intake: RwLock<()>,
     wake: Notify,
+    lexical_wake: Arc<Notify>,
     publications: watch::Sender<u64>,
 }
 
@@ -105,8 +106,13 @@ impl LiveSaves {
             detached: AsyncMutex::new(None),
             intake: RwLock::new(()),
             wake: Notify::new(),
+            lexical_wake: Arc::new(Notify::new()),
             publications,
         })
+    }
+
+    pub(crate) fn lexical_waker(&self) -> Arc<Notify> {
+        self.lexical_wake.clone()
     }
 
     /// An ordinary applicant may hold this promise only through its mutation.
@@ -399,6 +405,9 @@ impl LiveSaves {
         }
         pending.fault = false;
         drop(pending);
+        if flight.prepared.recall.is_some() {
+            self.lexical_wake.notify_one();
+        }
         // Keep the successfully acknowledged prefix if its caller has another
         // independent read. This writer no longer needs its reference.
         *detached = None;

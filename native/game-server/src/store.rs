@@ -4,6 +4,7 @@
 mod archives;
 mod history;
 mod known_places;
+mod lexical;
 mod metadata;
 mod read;
 mod recall;
@@ -13,6 +14,7 @@ mod write;
 
 pub use history::OrdinaryProjection;
 pub use known_places::PreparedKnownPlaceRead;
+pub use lexical::{PendingLexical, PreparedLexical};
 pub use metadata::MetadataProjection;
 pub use read::{AdmittedReceipt, CurrentOpening, GameplayReceipt};
 pub use recall::PreparedRecall;

@@ -25,6 +25,80 @@ function lexicalVector(text: string): string {
   return [...words].map(([word, positions]) => `${lexeme(word)}:${positions.join(',')}`).join(' ');
 }
 
+/** The selected finite pending work, including the accepted head. Raw text
+ * transfers through the Rust owner's independent admission against this same
+ * deterministic statement. */
+export function lexicalWorkSql(): string {
+  return `WITH head AS MATERIALIZED (
+          SELECT h.world_id,h.generation,h.revision,p.generation AS projection_generation
+          FROM world_head h LEFT JOIN memory_lexical_progress p ON p.world_id=h.world_id WHERE h.id=1
+        ), candidates AS MATERIALIZED (
+          SELECT q.* FROM head h JOIN memory_lexical_pending q
+            ON q.world_id=h.world_id AND q.generation=h.generation
+          WHERE h.projection_generation=h.generation
+          ORDER BY q.world_revision,q.actor_id,q.id,q.source_kind LIMIT ${BATCH_ROWS}
+        ), sized AS (
+          SELECT q.*,row_number() OVER batch AS ordinal,
+            sum(coalesce(octet_length(r.search_text),0)) OVER batch AS source_bytes
+          FROM candidates q LEFT JOIN recall_sources r ON r.world_id=q.world_id AND r.actor_id=q.actor_id
+            AND r.id=q.id AND r.source_kind=q.source_kind AND r.revision=q.source_revision
+          WINDOW batch AS (ORDER BY q.world_revision,q.actor_id,q.id,q.source_kind ROWS UNBOUNDED PRECEDING)
+        ) SELECT h.*,q.actor_id,q.id,q.source_kind,q.source_revision,q.world_revision,q.removing,r.search_text
+          FROM head h LEFT JOIN sized q ON q.ordinal=1 OR q.source_bytes<=${BATCH_BYTES}
+          LEFT JOIN recall_sources r ON r.world_id=q.world_id AND r.actor_id=q.actor_id
+            AND r.id=q.id AND r.source_kind=q.source_kind AND r.revision=q.source_revision
+          ORDER BY q.world_revision,q.actor_id,q.id,q.source_kind`;
+}
+
+/** Write only claims whose exact account revision is still current, with
+ * the actor's same optional lexical storage admission. */
+export function lexicalWriteSql(requested = '?', world = '?', generation = '?'): string {
+  return `WITH requested AS MATERIALIZED (
+          SELECT * FROM jsonb_to_recordset(${requested}::jsonb) AS s(actor text,id text,kind text,revision text,vector text,budget bigint)
+        ), offered AS MATERIALIZED (
+        SELECT r.world_id,r.actor_id,r.id,r.source_kind,r.revision AS source_revision,s.vector::tsvector AS search_vector,s.budget
+        FROM requested s
+        JOIN recall_sources r ON r.actor_id=s.actor AND r.id=s.id AND r.source_kind=s.kind AND r.revision=s.revision
+        WHERE r.world_id=${world} AND s.vector IS NOT NULL AND (SELECT generation FROM world_head WHERE id=1)=${generation}
+        ), sized AS (
+          SELECT d.*,sum(${derivedChargeSql('lexical')}) OVER(PARTITION BY world_id,actor_id ORDER BY id,source_kind ROWS UNBOUNDED PRECEDING) AS charge
+          FROM offered d
+        ), written AS (INSERT INTO memory_lexical_documents
+        SELECT world_id,actor_id,id,source_kind,source_revision,search_vector FROM sized WHERE charge<=budget
+        ON CONFLICT(world_id,actor_id,id,source_kind) DO UPDATE SET source_revision=excluded.source_revision,search_vector=excluded.search_vector
+        RETURNING actor_id,id,source_kind)
+        SELECT actor_id,id,source_kind FROM written UNION SELECT d.actor_id,d.id,d.source_kind
+        FROM memory_lexical_documents d JOIN requested s ON d.actor_id=s.actor AND d.id=s.id
+          AND d.source_kind=s.kind AND d.source_revision=s.revision WHERE d.world_id=${world}`;
+}
+
+/** Complete only the exact queue keys, after the prepared source effects.
+ * DML CTE reads share the old snapshot, so coverage subtracts completed keys. */
+export function lexicalCompletionSql(
+  requested = '?',
+  world = '?',
+  generation = '?',
+  revision = '?',
+): string {
+  return `WITH claimed AS MATERIALIZED (
+          SELECT * FROM jsonb_to_recordset(${requested}::jsonb) AS s(actor text,id text,kind text,revision text,"worldRevision" bigint)
+        ), removed_documents AS (
+          DELETE FROM memory_lexical_documents d USING claimed s WHERE d.world_id=${world} AND d.actor_id=s.actor AND d.id=s.id AND d.source_kind=s.kind
+          AND NOT EXISTS(SELECT 1 FROM recall_sources r WHERE r.world_id=d.world_id AND r.actor_id=d.actor_id AND r.id=d.id AND r.source_kind=d.source_kind)
+        ), completed AS (
+          DELETE FROM memory_lexical_pending q USING claimed s WHERE q.world_id=${world} AND q.generation=${generation} AND q.actor_id=s.actor AND q.id=s.id
+            AND q.source_kind=s.kind AND q.source_revision=s.revision AND q.world_revision=s."worldRevision"
+          RETURNING q.actor_id,q.id,q.source_kind,q.bytes
+        ), unresolved AS MATERIALIZED (
+          SELECT 1 FROM memory_lexical_pending q WHERE q.world_id=${world} AND q.generation=${generation}
+          AND NOT EXISTS (SELECT 1 FROM completed c WHERE c.actor_id=q.actor_id AND c.id=q.id AND c.source_kind=q.source_kind) LIMIT 1
+        ) UPDATE memory_lexical_progress SET
+          covered_revision=CASE WHEN NOT EXISTS(SELECT 1 FROM unresolved) THEN ${revision} ELSE covered_revision END,
+          pending_rows=CASE WHEN NOT EXISTS(SELECT 1 FROM unresolved) THEN 0 ELSE greatest(0,pending_rows-(SELECT count(*) FROM completed)) END,
+          pending_bytes=CASE WHEN NOT EXISTS(SELECT 1 FROM unresolved) THEN 0 ELSE greatest(0,pending_bytes-coalesce((SELECT sum(bytes) FROM completed),0)) END
+          WHERE world_id=${world} AND generation=${generation} RETURNING NOT EXISTS(SELECT 1 FROM unresolved) AS ready`;
+}
+
 export class LexicalPreparationError extends Error {
   override readonly name = 'LexicalPreparationError';
   constructor() {
@@ -312,29 +386,7 @@ export class LexicalProjection {
   }
 
   private async batch(): Promise<boolean> {
-    const rows = await this.db
-      .prepare(
-        `WITH head AS MATERIALIZED (
-          SELECT h.world_id,h.generation,h.revision,p.generation AS projection_generation
-          FROM world_head h LEFT JOIN memory_lexical_progress p ON p.world_id=h.world_id WHERE h.id=1
-        ), candidates AS MATERIALIZED (
-          SELECT q.* FROM head h JOIN memory_lexical_pending q
-            ON q.world_id=h.world_id AND q.generation=h.generation
-          WHERE h.projection_generation=h.generation
-          ORDER BY q.world_revision,q.actor_id,q.id,q.source_kind LIMIT ${BATCH_ROWS}
-        ), sized AS (
-          SELECT q.*,row_number() OVER batch AS ordinal,
-            sum(coalesce(octet_length(r.search_text),0)) OVER batch AS source_bytes
-          FROM candidates q LEFT JOIN recall_sources r ON r.world_id=q.world_id AND r.actor_id=q.actor_id
-            AND r.id=q.id AND r.source_kind=q.source_kind AND r.revision=q.source_revision
-          WINDOW batch AS (ORDER BY q.world_revision,q.actor_id,q.id,q.source_kind ROWS UNBOUNDED PRECEDING)
-        ) SELECT h.*,q.actor_id,q.id,q.source_kind,q.source_revision,q.world_revision,q.removing,r.search_text
-          FROM head h LEFT JOIN sized q ON q.ordinal=1 OR q.source_bytes<=${BATCH_BYTES}
-          LEFT JOIN recall_sources r ON r.world_id=q.world_id AND r.actor_id=q.actor_id
-            AND r.id=q.id AND r.source_kind=q.source_kind AND r.revision=q.source_revision
-          ORDER BY q.world_revision,q.actor_id,q.id,q.source_kind`,
-      )
-      .all();
+    const rows = await this.db.prepare(lexicalWorkSql()).all();
     const head = rows[0];
     if (!head) {
       // Startup can precede the first world commit. There is no work to own yet;
@@ -402,25 +454,7 @@ export class LexicalProjection {
             : null,
       }));
       const written = await this.db
-        .prepare(
-          `WITH requested AS MATERIALIZED (
-          SELECT * FROM jsonb_to_recordset(?::jsonb) AS s(actor text,id text,kind text,revision text,vector text,budget bigint)
-        ), offered AS MATERIALIZED (
-        SELECT r.world_id,r.actor_id,r.id,r.source_kind,r.revision AS source_revision,s.vector::tsvector AS search_vector,s.budget
-        FROM requested s
-        JOIN recall_sources r ON r.actor_id=s.actor AND r.id=s.id AND r.source_kind=s.kind AND r.revision=s.revision
-        WHERE r.world_id=? AND s.vector IS NOT NULL AND (SELECT generation FROM world_head WHERE id=1)=?
-        ), sized AS (
-          SELECT d.*,sum(${derivedChargeSql('lexical')}) OVER(PARTITION BY world_id,actor_id ORDER BY id,source_kind ROWS UNBOUNDED PRECEDING) AS charge
-          FROM offered d
-        ), written AS (INSERT INTO memory_lexical_documents
-        SELECT world_id,actor_id,id,source_kind,source_revision,search_vector FROM sized WHERE charge<=budget
-        ON CONFLICT(world_id,actor_id,id,source_kind) DO UPDATE SET source_revision=excluded.source_revision,search_vector=excluded.search_vector
-        RETURNING actor_id,id,source_kind)
-        SELECT actor_id,id,source_kind FROM written UNION SELECT d.actor_id,d.id,d.source_kind
-        FROM memory_lexical_documents d JOIN requested s ON d.actor_id=s.actor AND d.id=s.id
-          AND d.source_kind=s.kind AND d.source_revision=s.revision WHERE d.world_id=?`,
-        )
+        .prepare(lexicalWriteSql())
         .all(JSON.stringify(values), world, generation, world);
       const stored = new Set(
         written.map((row) => JSON.stringify([row['actor_id'], row['id'], row['source_kind']])),
@@ -440,25 +474,7 @@ export class LexicalProjection {
       ]);
     }
     const completed = await this.db
-      .prepare(
-        `WITH claimed AS MATERIALIZED (
-          SELECT * FROM jsonb_to_recordset(?::jsonb) AS s(actor text,id text,kind text,revision text,"worldRevision" bigint)
-        ), removed_documents AS (
-          DELETE FROM memory_lexical_documents d USING claimed s WHERE d.world_id=? AND d.actor_id=s.actor AND d.id=s.id AND d.source_kind=s.kind
-          AND NOT EXISTS(SELECT 1 FROM recall_sources r WHERE r.world_id=d.world_id AND r.actor_id=d.actor_id AND r.id=d.id AND r.source_kind=d.source_kind)
-        ), completed AS (
-          DELETE FROM memory_lexical_pending q USING claimed s WHERE q.world_id=? AND q.generation=? AND q.actor_id=s.actor AND q.id=s.id
-            AND q.source_kind=s.kind AND q.source_revision=s.revision AND q.world_revision=s."worldRevision"
-          RETURNING q.actor_id,q.id,q.source_kind,q.bytes
-        ), unresolved AS MATERIALIZED (
-          SELECT 1 FROM memory_lexical_pending q WHERE q.world_id=? AND q.generation=?
-          AND NOT EXISTS (SELECT 1 FROM completed c WHERE c.actor_id=q.actor_id AND c.id=q.id AND c.source_kind=q.source_kind) LIMIT 1
-        ) UPDATE memory_lexical_progress SET
-          covered_revision=CASE WHEN NOT EXISTS(SELECT 1 FROM unresolved) THEN ? ELSE covered_revision END,
-          pending_rows=CASE WHEN NOT EXISTS(SELECT 1 FROM unresolved) THEN 0 ELSE greatest(0,pending_rows-(SELECT count(*) FROM completed)) END,
-          pending_bytes=CASE WHEN NOT EXISTS(SELECT 1 FROM unresolved) THEN 0 ELSE greatest(0,pending_bytes-coalesce((SELECT sum(bytes) FROM completed),0)) END
-          WHERE world_id=? AND generation=? RETURNING NOT EXISTS(SELECT 1 FROM unresolved) AS ready`,
-      )
+      .prepare(lexicalCompletionSql())
       .get(
         JSON.stringify(claims),
         world,

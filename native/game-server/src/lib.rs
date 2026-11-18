@@ -9,6 +9,7 @@ mod control_format;
 mod embodiment;
 pub mod game_clock;
 pub mod language;
+mod lexical_maintenance;
 pub mod launch;
 pub mod live_save;
 mod network;

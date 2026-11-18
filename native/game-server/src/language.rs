@@ -18,6 +18,8 @@ use std::{
     sync::Mutex,
 };
 
+mod lexical;
+pub use lexical::LexicalVector;
 
 const NODE_DATA_SHA: &str = "2cac4f3277df9fa37f8ebd5d3459d4151e99f7d84d99fca5b7392fcd3c880ea9";
 const MAX_LIBRARY_BYTES: u64 = 128 * 1024 * 1024;
@@ -79,6 +81,7 @@ pub struct LanguageProvider {
     collator: Mutex<Collator>,
     compare: Compare,
     compare_utf8: CompareUtf8,
+    lexical: lexical::LexicalPolicy,
     _library: Library,
     _resident: ResidentReservation,
 }
@@ -136,7 +139,9 @@ impl LanguageProvider {
             if status > 0 {
                 return Err(LanguageError::Provider);
             }
+            let lexical = lexical::LexicalPolicy::load(&library)?;
             Ok(Self {
+                lexical,
                 collator: Mutex::new(collator),
                 compare,
                 compare_utf8,

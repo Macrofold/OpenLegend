@@ -115,7 +115,7 @@ pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(
     let clock = GameClock::new(game.clone(), saves.clone(), 60.0).with_inputs(presence, inputs);
     clock.initialize().await?;
     println!("OpenLegend listening on {bound}");
-    let run = run(listen, routes, clock, saves).await;
+    let run = run(listen, routes, clock, saves, game.clone()).await;
     let close = Arc::try_unwrap(game)
         .map_err(|_| "The listener left a running world owner")?
         .close()
@@ -128,10 +128,17 @@ async fn run(
     routes: Router,
     clock: GameClock,
     saves: Arc<LiveSaves>,
+    game: Arc<CurrentServer>,
 ) -> Result<(), LaunchError> {
     let (end_http, http_stop) = watch::channel(false);
     let (end_clock, clock_stop) = watch::channel(false);
     let (end_saves, save_stop) = watch::channel(false);
+    let (end_lexical, lexical_stop) = watch::channel(false);
+    let lexical = tokio::spawn(crate::lexical_maintenance::run(
+        game,
+        saves.lexical_waker(),
+        lexical_stop,
+    ));
     let http = async move {
         axum::serve(listen, routes)
             .with_graceful_shutdown(stopped(http_stop))
@@ -151,6 +158,7 @@ async fn run(
     };
     let _ = end_http.send(true);
     let _ = end_clock.send(true);
+    let _ = end_lexical.send(true);
     // Let pending accepted commands finish while their writer still runs.
     while http_result.is_none() || clock_result.is_none() {
         tokio::select! {
@@ -169,6 +177,7 @@ async fn run(
     if save_result.is_none() {
         save_result = Some(save_work.await);
     }
+    lexical.await?;
     signal?;
     save_result.expect("joined save owner")?;
     clock_result.ok_or("The save owner stopped before the clock")??;

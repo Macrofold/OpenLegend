@@ -14,6 +14,7 @@ pub struct StorageSchema {
     pub(crate) received_value_owners: Vec<String>,
     pub(crate) tables: Vec<Table>,
     pub(crate) recall: RecallStatements,
+    pub(crate) lexical: LexicalStatements,
     pub(crate) default_story: Box<serde_json::value::RawValue>,
 }
 
@@ -24,6 +25,14 @@ pub struct StorageSchema {
 pub(crate) struct RecallStatements {
     pub insert: String,
     pub reconcile: String,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct LexicalStatements {
+    pub work: String,
+    pub write: String,
+    pub complete: String,
 }
 
 #[derive(Deserialize)]
@@ -121,6 +130,9 @@ impl StorageSchema {
             .checked_add(self.recall.insert.capacity())?
             .checked_add(self.recall.reconcile.capacity())?
             .checked_add(self.default_story.get().len())?
+            .checked_add(self.lexical.work.capacity())?
+            .checked_add(self.lexical.write.capacity())?
+            .checked_add(self.lexical.complete.capacity())?
             .checked_add(self.tables.capacity().checked_mul(size_of::<Table>())?)?;
         for table in &self.tables {
             bytes = bytes
@@ -143,6 +155,9 @@ impl StorageSchema {
         if self.version.is_empty()
             || self.recall.insert.is_empty()
             || self.recall.reconcile.is_empty()
+            || self.lexical.work.is_empty()
+            || self.lexical.write.is_empty()
+            || self.lexical.complete.is_empty()
             || self
                 .tables
                 .first()
