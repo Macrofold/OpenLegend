@@ -1,0 +1,499 @@
+//! One admitted decision keeps its original evidence, deadline and job ID
+//! from preparation through settlement. Transport and database waits do not
+//! occupy a simulation turn.
+
+use crate::{
+    authority::{Authority, AuthorizedScope},
+    boot::CurrentServer,
+    decision_dispatch::{
+        CallAuthority, CallFailure, DecisionDispatch, PreparedCall, ProviderObservation,
+    },
+    decision_render::{BoundSchema, provider},
+    live_save::LiveSaves,
+    provider_transport::{
+        FundedReply, HttpEvidence, ProviderDestination,
+        macrofold::{self, BillingBinding, BillingMode},
+    },
+    store::{AdmittedJob, AttemptRequest, InferenceClass, ModelUsage},
+};
+use openlegend_simulation::{
+    encoding::{json_tree_allocation_bound, sha256_hex},
+    experience::PersonalSourceRef,
+    host::{ByteBudget, ByteReservation},
+};
+use serde::Serialize;
+use serde_json::Value;
+use std::sync::Arc;
+use tokio::{sync::watch, time::Instant};
+
+mod prepare;
+
+pub(super) struct Models {
+    pub(super) judgment: Model,
+    pub(super) fast: Option<Model>,
+    pub(super) complex: Option<Model>,
+    pub(super) ceiling_micro_usd: u64,
+}
+
+pub(super) struct Model {
+    pub(super) destination: ProviderDestination,
+    pub(super) requested: String,
+    pub(super) macrofold: Option<MacrofoldCatalog>,
+    pub(super) amount_micro_usd: u64,
+    pub(super) output_tokens: usize,
+    pub(super) effort: Option<&'static str>,
+}
+
+pub(super) struct MacrofoldCatalog {
+    pub(super) billing: BillingMode,
+    pub(super) connection: Option<String>,
+}
+
+impl Model {
+    fn route<'a>(
+        &'a self,
+        allowance: &'a str,
+        deadline: Instant,
+    ) -> Option<provider::MacrofoldRoute<'a>> {
+        let catalog = self.macrofold.as_ref()?;
+        let remaining = deadline.saturating_duration_since(Instant::now());
+        let seconds = remaining
+            .as_secs()
+            .saturating_add(u64::from(remaining.subsec_nanos() > 0));
+        Some(provider::MacrofoldRoute {
+            workspace_id: None,
+            binding: provider::MacrofoldBinding::Catalog {
+                provider: "openrouter",
+                model: &self.requested,
+                billing_mode: billing_name(catalog.billing),
+                provider_connection_id: catalog.connection.as_deref(),
+            },
+            max_cost_micro_usd: allowance,
+            timeout_seconds: seconds,
+        })
+    }
+}
+
+fn billing_name(billing: BillingMode) -> &'static str {
+    match billing {
+        BillingMode::Managed => "managed",
+        BillingMode::Byok => "byok",
+    }
+}
+
+pub(super) struct Work {
+    pub(super) job: Arc<AdmittedJob>,
+    pub(super) actor: String,
+    pub(super) source: Vec<PersonalSourceRef>,
+    pub(super) accepted_cut: u64,
+    pub(super) permit: Option<(Arc<Authority>, Arc<AuthorizedScope>)>,
+    pub(super) cancellation: watch::Receiver<bool>,
+    pub(super) deadline: Instant,
+}
+
+pub(super) async fn run(
+    game: &Arc<CurrentServer>,
+    saves: &Arc<LiveSaves>,
+    dispatch: &Arc<DecisionDispatch>,
+    models: &Models,
+    work: Work,
+) -> Result<(), CallFailure> {
+    let prepared = prepare::collect(game, &work).await?;
+    ensure_running(&work)?;
+    let available = models.fast.is_some();
+    let questions = game
+        .cognition
+        .route_questions(prepared.addressed, prepared.speech_trigger, available)
+        .map_err(|_| CallFailure::Invalid)?;
+    let budget = game.host.budget();
+    let source = prepared.ticket.clone();
+    let decision = &models.judgment;
+    let allowance = decision.amount_micro_usd.to_string();
+    let operation = ":attempt:0:route";
+    let id = format!("{}{operation}", work.job.job.id);
+    let input = provider::Judgment {
+        state: provider::JudgmentState::Prompt(prepared.route.as_str()),
+        questions,
+    };
+    let request = provider::judgment_request(
+        &decision.destination,
+        &decision.requested,
+        decision.route(&allowance, work.deadline),
+        input,
+        decision.output_tokens,
+        &id,
+        budget,
+    )?;
+    let policy = game.cognition.clone();
+    let parse_budget = budget.clone();
+    let addressed = prepared.addressed;
+    let speech_trigger = prepared.speech_trigger;
+    let observed = dispatch
+        .submit(
+            side(
+                &work,
+                decision,
+                models.ceiling_micro_usd,
+                id,
+                request,
+                InferenceClass::Jev,
+                "route",
+                1,
+                prepared.route.as_str(),
+                prepared.through,
+            )?,
+            CallAuthority {
+                source,
+                speaker: work.permit.clone(),
+            },
+            work.cancellation.clone(),
+            decoder(
+                decision.macrofold.as_ref().map(|value| value.billing),
+                parse_budget.clone(),
+                move |parsed| {
+                    let questions = policy
+                        .route_questions(addressed, speech_trigger, available)
+                        .map_err(|_| CallFailure::Invalid)?;
+                    provider::decode_judgment(parsed, questions, &parse_budget)
+                        .map_err(|_| CallFailure::Invalid)
+                },
+            ),
+        )
+        .await?;
+    ensure_running(&work)?;
+    let (model, level) = match observed.choice("route") {
+        Some("native") => {
+            let payload = crate::wire::encode(&Operations { operations: &[] }, b"", b"", budget)
+                .map_err(|_| CallFailure::Invalid)?;
+            return super::apply::apply(
+                saves,
+                game,
+                &work.job,
+                prepared.ticket,
+                payload,
+                work.permit,
+                work.cancellation,
+            )
+            .await;
+        }
+        Some("level2") => (models.fast.as_ref().ok_or(CallFailure::Invalid)?, 2),
+        Some("level3") => (models.complex.as_ref().ok_or(CallFailure::Invalid)?, 3),
+        Some("level4") => (models.complex.as_ref().ok_or(CallFailure::Invalid)?, 4),
+        _ => return Err(CallFailure::Invalid),
+    };
+    let schema = Arc::new(prepared.schema);
+    let allowance = model.amount_micro_usd.to_string();
+    let id = format!("{}:attempt:0:generate", work.job.job.id);
+    let instructions_bytes = game
+        .cognition
+        .response_instructions
+        .len()
+        .saturating_add(game.cognition.query_instructions.len())
+        .saturating_add(1);
+    let _instructions_custody = budget
+        .reserve(instructions_bytes)
+        .map_err(|_| CallFailure::Invalid)?;
+    let instructions = format!(
+        "{} {}",
+        game.cognition.response_instructions, game.cognition.query_instructions
+    );
+    let generation = provider::Generation {
+        schema_name: "npc_response",
+        schema: &schema,
+        instructions: &instructions,
+        prompt: prepared.response.as_str(),
+        effort: model.effort,
+        max_output_tokens: model.output_tokens,
+        stream: false,
+    };
+    let request = provider::generation_request(
+        &model.destination,
+        &model.requested,
+        model.route(&allowance, work.deadline),
+        generation,
+        &id,
+        budget,
+    )?;
+    let macrofold = model.macrofold.as_ref().map(|value| value.billing);
+    let parse_budget = budget.clone();
+    let parsed = dispatch
+        .submit(
+            side(
+                &work,
+                model,
+                models.ceiling_micro_usd,
+                id,
+                request,
+                InferenceClass::OpenAi,
+                "generate",
+                level,
+                prepared.response.as_str(),
+                prepared.through,
+            )?,
+            CallAuthority {
+                source: prepared.ticket.clone(),
+                speaker: work.permit.clone(),
+            },
+            work.cancellation.clone(),
+            decoder(macrofold, parse_budget.clone(), move |value| {
+                if macrofold.is_some() {
+                    match provider::macrofold_text(value).map_err(|_| CallFailure::Invalid)? {
+                        provider::TextResult::Refused => Err(CallFailure::Invalid),
+                        provider::TextResult::Complete(text) => {
+                            provider::generation_output(text, &schema, &parse_budget)
+                                .map_err(|_| CallFailure::Invalid)
+                        }
+                    }
+                } else {
+                    direct_output(value, &schema, &parse_budget)
+                }
+            }),
+        )
+        .await?;
+    ensure_running(&work)?;
+    let payload = effects(parsed, &prepared.frame, budget)?;
+    super::apply::apply(
+        saves,
+        game,
+        &work.job,
+        prepared.ticket,
+        payload,
+        work.permit,
+        work.cancellation,
+    )
+    .await
+}
+
+fn ensure_running(work: &Work) -> Result<(), CallFailure> {
+    if *work.cancellation.borrow() {
+        return Err(CallFailure::Cancelled);
+    }
+    if Instant::now() >= work.deadline {
+        return Err(CallFailure::Stale("decision-deadline"));
+    }
+    Ok(())
+}
+
+fn side(
+    work: &Work,
+    model: &Model,
+    ceiling: u64,
+    id: String,
+    request: crate::provider_transport::PreparedProviderRequest,
+    provider: InferenceClass,
+    stage: &'static str,
+    level: i32,
+    context: &str,
+    evidence_cut: u64,
+) -> Result<PreparedCall, CallFailure> {
+    ensure_running(work)?;
+    Ok(PreparedCall {
+        request,
+        allowance: AttemptRequest {
+            id,
+            actor: work.actor.clone(),
+            job: work.job.job.id.clone(),
+            provider,
+            category: "level",
+            stage,
+            level: Some(level),
+            background: work.permit.is_none(),
+            amount: model.amount_micro_usd,
+            ceiling,
+        },
+        requested_model: model.requested.clone(),
+        context_digest: sha256_hex(context.as_bytes()),
+        macrofold_billing_mode: model
+            .macrofold
+            .as_ref()
+            .map(|route| billing_name(route.billing)),
+        deadline: work.deadline,
+        evidence_cut,
+    })
+}
+
+fn decoder<T, F>(
+    billing: Option<BillingMode>,
+    budget: ByteBudget,
+    use_output: F,
+) -> impl FnOnce(FundedReply, &HttpEvidence) -> ProviderObservation<T>
+where
+    F: FnOnce(&Value) -> Result<T, CallFailure>,
+{
+    move |body, http| {
+        let mut observation = ProviderObservation {
+            value: Err(CallFailure::Invalid),
+            provider_request_id: http.trace_id.clone(),
+            model: None,
+            usage: None,
+            charged_microusd: None,
+            completion_uncertain: true,
+        };
+        if let Some(billing) = billing {
+            let result = macrofold::MacrofoldAdmission::read(&body.bytes)
+                .ok()
+                .and_then(|admission| {
+                    observation.provider_request_id = Some(admission.run_id.to_owned());
+                    admission
+                        .terminal(BillingBinding {
+                            mode: billing,
+                            deployment: None,
+                        })
+                        .ok()
+                        .flatten()
+                });
+            if let Some(result) = result {
+                observation.model = result.model_revision.map(str::to_owned);
+                observation.usage = result.usage.map(|usage| ModelUsage {
+                    input_tokens: usage.input_tokens,
+                    output_tokens: usage.output_tokens,
+                });
+                observation.charged_microusd = result.estimated_micro_usd;
+                observation.completion_uncertain = result.completion_uncertain;
+                if let Some(parsed) = result
+                    .output
+                    .and_then(|output| FundedJson::read(output.get(), &budget).ok())
+                {
+                    observation.value = use_output(&parsed.value);
+                }
+            }
+        } else if let Ok(text) = std::str::from_utf8(&body.bytes)
+            && let Ok(parsed) = FundedJson::read(text, &budget)
+        {
+            observation.model = parsed.value["model"].as_str().map(str::to_owned);
+            observation.provider_request_id = parsed.value["id"]
+                .as_str()
+                .map(str::to_owned)
+                .or(observation.provider_request_id);
+            observation.usage = parsed.value["usage"]["input_tokens"]
+                .as_u64()
+                .zip(parsed.value["usage"]["output_tokens"].as_u64())
+                .map(|(input_tokens, output_tokens)| ModelUsage {
+                    input_tokens,
+                    output_tokens,
+                });
+            observation.completion_uncertain = false;
+            observation.value = use_output(&parsed.value);
+        }
+        observation
+    }
+}
+
+fn direct_output(
+    value: &Value,
+    schema: &BoundSchema,
+    budget: &ByteBudget,
+) -> Result<provider::GenerationOutput, CallFailure> {
+    let parts = value["output"].as_array().ok_or(CallFailure::Invalid)?;
+    let pieces = || {
+        parts
+            .iter()
+            .filter(|item| item["type"] == "message")
+            .filter_map(|item| item["content"].as_array())
+            .flatten()
+    };
+    if pieces().any(|part| part["type"] == "refusal") {
+        return Err(CallFailure::Invalid);
+    }
+    let texts = || {
+        pieces()
+            .filter(|part| part["type"] == "output_text")
+            .filter_map(|part| part["text"].as_str())
+    };
+    let bytes = texts()
+        .try_fold(0usize, |length, text| length.checked_add(text.len()))
+        .filter(|bytes| *bytes <= 40_000)
+        .ok_or(CallFailure::Invalid)?;
+    let _custody = budget.reserve(bytes).map_err(|_| CallFailure::Invalid)?;
+    let mut joined = String::with_capacity(bytes);
+    for text in texts() {
+        joined.push_str(text);
+    }
+    provider::generation_output(&joined, schema, budget).map_err(|_| CallFailure::Invalid)
+}
+
+#[derive(Serialize)]
+struct Operations<'a> {
+    operations: &'a [Value],
+}
+
+fn effects(
+    mut parsed: provider::GenerationOutput,
+    frame: &prepare::ReceivedFrame,
+    budget: &ByteBudget,
+) -> Result<axum::body::Bytes, CallFailure> {
+    if parsed.value["queries"]
+        .as_array()
+        .is_some_and(|queries| !queries.is_empty())
+    {
+        return Err(CallFailure::Stale(
+            "situation-query-continuation-unavailable",
+        ));
+    }
+    let operations = parsed.value["operations"]
+        .as_array_mut()
+        .ok_or(CallFailure::Invalid)?;
+    for operation in &mut *operations {
+        if let Some(fields) = operation.as_object_mut()
+            && fields.get("appraise").is_some_and(Value::is_null)
+        {
+            fields.shift_remove("appraise");
+        }
+        if let Some(arguments) = operation
+            .get_mut("act")
+            .and_then(|act| act.get_mut("invocation"))
+            .and_then(Value::as_object_mut)
+            && arguments.get("frame").and_then(Value::as_str) == Some("received")
+        {
+            if arguments.get("family").and_then(Value::as_str) != Some("move") {
+                return Err(CallFailure::Invalid);
+            }
+            let right = arguments
+                .get("x")
+                .and_then(Value::as_f64)
+                .ok_or(CallFailure::Invalid)?;
+            let forward = arguments
+                .get("z")
+                .and_then(Value::as_f64)
+                .ok_or(CallFailure::Invalid)?;
+            let x = frame.x - frame.heading.cos() * right + frame.heading.sin() * forward;
+            let z = frame.z + frame.heading.sin() * right + frame.heading.cos() * forward;
+            arguments.insert(
+                "x".into(),
+                serde_json::Number::from_f64(x)
+                    .ok_or(CallFailure::Invalid)?
+                    .into(),
+            );
+            arguments.insert(
+                "z".into(),
+                serde_json::Number::from_f64(z)
+                    .ok_or(CallFailure::Invalid)?
+                    .into(),
+            );
+            arguments.insert("frame".into(), "world".into());
+            if arguments.get("surfaceId").is_some_and(Value::is_null)
+                && let Some(surface) = frame.support.as_ref()
+            {
+                arguments.insert("surfaceId".into(), surface.clone().into());
+            }
+        }
+    }
+    crate::wire::encode(&Operations { operations }, b"", b"", budget)
+        .map_err(|_| CallFailure::Invalid)
+}
+
+struct FundedJson {
+    value: Value,
+    _custody: ByteReservation,
+}
+
+impl FundedJson {
+    fn read(text: &str, budget: &ByteBudget) -> Result<Self, CallFailure> {
+        let bound = json_tree_allocation_bound(text).ok_or(CallFailure::Invalid)?;
+        let custody = budget.reserve(bound).map_err(|_| CallFailure::Invalid)?;
+        Ok(Self {
+            value: serde_json::from_str(text).map_err(|_| CallFailure::Invalid)?,
+            _custody: custody,
+        })
+    }
+}

@@ -85,6 +85,20 @@ pub fn json_value(value: &Value) -> Result<String, serde_json::Error> {
     json_record(&JsValue(value))
 }
 
+/// Fund an independent present-format `serde_json::Value` decode before
+/// allocation. Count from existing JSON bytes without storing a second tree.
+/// Actual syntax and selected contract validation still belong to the decoder.
+pub fn json_tree_allocation_bound(text: &str) -> Option<usize> {
+    let shape = JsonAllocationShape::read(text).ok()?;
+    text.len()
+        .checked_mul(2)?
+        .checked_add(256)?
+        .checked_add(shape.array_items.checked_mul(96)?)?
+        .checked_add(shape.members.checked_mul(192)?)?
+        .checked_add(shape.strings.checked_mul(64)?)?
+        .checked_add(shape.containers.checked_mul(128)?)
+}
+
 /// Count the actual emitted UTF-8 bytes without retaining a second encoded
 /// payload when a work/quota consumer needs only its size.
 pub fn json_record_len<T: Serialize + ?Sized>(record: &T) -> Result<usize, serde_json::Error> {

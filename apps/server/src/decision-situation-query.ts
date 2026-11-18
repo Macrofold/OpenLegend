@@ -17,6 +17,15 @@ export function withSituationQueries<T extends z.ZodRawShape>(
   return z.object({ queries: situationQueriesField(maximum), ...schema.shape }).strict();
 }
 
+/** The release compiler uses the same provider-facing input shape. Frame
+ * conversion and other transforms still run against the admitted live read. */
+export function situationResponseJsonSchema<T extends z.ZodRawShape>(
+  schema: z.ZodObject<T>,
+  maximum: number,
+) {
+  return z.toJSONSchema(withSituationQueries(schema, maximum), { target: 'draft-7', io: 'input' });
+}
+
 /** A query is a request for evidence, never permission to execute beside it. */
 export function readSituationQueryResponse(value: unknown, maximum: number) {
   const parsed = z
