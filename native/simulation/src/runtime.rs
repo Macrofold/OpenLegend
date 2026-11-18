@@ -45,6 +45,7 @@ pub use participation::RuntimeParticipation;
 mod player;
 mod player_places;
 mod privacy;
+pub use privacy::RuntimePrivacyEdit;
 mod private_history;
 mod reply_preview;
 pub use private_history::{RuntimePrivateHistoryPublication, RuntimePrivateHistoryRead};

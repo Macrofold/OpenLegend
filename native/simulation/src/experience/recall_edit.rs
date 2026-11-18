@@ -36,6 +36,11 @@ impl CompletedRecallEdit {
             .iter()
             .flat_map(CompletedPrivacyEdit::affected)
     }
+    pub(crate) fn privacy_constraints(&self) -> Option<(&[String], &IndexMap<String, String>)> {
+        self.privacy
+            .as_ref()
+            .map(|value| (value.forgotten.as_slice(), &value.corrections))
+    }
     pub(crate) fn privacy_change(&self) -> Option<impl Serialize + '_> {
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]

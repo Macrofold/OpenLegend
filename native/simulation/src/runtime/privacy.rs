@@ -17,6 +17,23 @@ struct CorrectInput {
     correction_event_id: String,
 }
 impl NativeWorldSession {
+    /// The application has separately checked Creator and, for another
+    /// actor, Inspect. No creator session inherits another player's mind.
+    pub fn may_forget_recall(&self, owner: &str, actor: &str) -> Result<bool, RuntimeError> {
+        let accepted = self.session.accepted().map_err(failure)?;
+        Ok(accepted
+            .state
+            .physical
+            .entities
+            .get(actor)
+            .is_some_and(|entity| {
+                entity.has_memory()
+                    && entity
+                        .actor
+                        .as_ref()
+                        .is_some_and(|body| actor == owner || body.controller != "player")
+            }))
+    }
     /// Application authority and retained-source admission remain with the
     /// existing creator service. Native owns the actual protected-obligation
     /// check, scoped erasure, transition, rollback and accepted save products.
@@ -24,11 +41,22 @@ impl NativeWorldSession {
         self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let input: ForgetInput = serde_json::from_slice(input).map_err(failure)?;
-        let held = self.held_source_proof(&input.actor_id, &input.source_id)?;
+        self.begin_forget_direct(&input.actor_id, &input.source_id)
+    }
+
+    /// Begin the same protected edit from trusted, already decoded application
+    /// arguments. Storage and rollback stay with the semantic cursor.
+    pub fn begin_forget_direct(
+        &mut self,
+        actor_id: &str,
+        source_id: &str,
+    ) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
+        let held = self.held_source_proof(actor_id, source_id)?;
         self.session
             .begin_recall_edit(
-                &input.actor_id,
-                &input.source_id,
+                actor_id,
+                source_id,
                 crate::experience::PrivacyEditMode::Forget,
                 held,
                 self.history_edit_limits,
@@ -51,6 +79,42 @@ impl NativeWorldSession {
                 self.history_edit_limits,
             )
             .map_err(failure)
+    }
+}
+
+pub struct RuntimePrivacyEdit<'a> {
+    edit: &'a crate::experience::CompletedRecallEdit,
+    pub actor_id: &'a str,
+    pub forgotten: &'a [String],
+    pub corrections: &'a indexmap::IndexMap<String, String>,
+}
+
+impl RuntimePrivacyEdit<'_> {
+    pub fn invalidated_ids(&self) -> impl Iterator<Item = &str> {
+        self.edit.invalidated_ids()
+    }
+}
+
+impl RuntimeProvider {
+    pub fn asks_personal_history(&self) -> Result<bool, RuntimeError> {
+        Ok(self.question()?.kind() == crate::simulation::ProviderKind::History)
+    }
+}
+
+impl RuntimePreparedProducts<'_> {
+    /// Borrow the complete changed actor constraints and exact invalidated
+    /// IDs while the actual protected simulation operation still owns them.
+    pub fn privacy_edit(&self) -> Option<RuntimePrivacyEdit<'_>> {
+        let CompletedOperation::RecallEdit(edit) = self.operation else {
+            return None;
+        };
+        let (forgotten, corrections) = edit.privacy_constraints()?;
+        Some(RuntimePrivacyEdit {
+            edit,
+            actor_id: edit.actor_id(),
+            forgotten,
+            corrections,
+        })
     }
 }
 struct Invalidated<'a>(&'a crate::experience::CompletedRecallEdit);
