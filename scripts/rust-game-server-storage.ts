@@ -12,7 +12,16 @@ import { RECORD_NODES } from '../apps/server/src/world-record-schema.js';
 import { receivedCurrentOwnerTables } from '../apps/server/src/received-record-references.js';
 import { ASSET_TABLES } from '../apps/server/src/asset-repository.js';
 import { AUTHORITY_TABLES } from '../apps/server/src/authority.js';
-import { captureCurrentSources } from '../apps/server/src/native-current-sources.js';
+import {
+  captureCurrentSources,
+  RESTORED_HISTORY_POSITION_TABLES,
+} from '../apps/server/src/native-current-sources.js';
+import { CHECKPOINT_ENCODING, CHECKPOINT_LIMITS } from '../apps/server/src/checkpoint-format.js';
+import { SAVE_FORMAT } from '../apps/server/src/game-saves.js';
+import { HISTORY_TABLES } from '../apps/server/src/history.js';
+import { ACCOUNT_RETENTION_PREPARATION } from '../apps/server/src/account-retention.js';
+import { SUPPORT_MEMBERSHIP_PREPARATION } from '../apps/server/src/retention-cleanup.js';
+import { SOURCE_RETENTION_CLOSURE_ROUNDS } from '../apps/server/src/source-version-retention.js';
 import { nativeDefinitionSources } from '../apps/server/src/native-definition-sources.js';
 import {
   nativeRecordLayouts,
@@ -22,6 +31,7 @@ import {
 import {
   memoryProjectionSql,
   memoryReconciliationSql,
+  MEMORY_HISTORY_TABLES,
 } from '../apps/server/src/memory-repository.js';
 
 import {
@@ -73,6 +83,18 @@ async function storageSchema(adminUrl: string) {
           receivedValueOwners: [...receivedCurrentOwnerTables, 'mind_temporal_pages'],
           initialization: database.initialization,
           defaultStory: defaultStoryPolicy(),
+          checkpoint: {
+            encoding: CHECKPOINT_ENCODING,
+            format: SAVE_FORMAT,
+            ...CHECKPOINT_LIMITS,
+            historyTables: [...HISTORY_TABLES, ...MEMORY_HISTORY_TABLES],
+            historyPositionTables: RESTORED_HISTORY_POSITION_TABLES,
+            retentionPreparation: {
+              accounts: ACCOUNT_RETENTION_PREPARATION,
+              support: SUPPORT_MEMBERSHIP_PREPARATION,
+              rounds: SOURCE_RETENTION_CLOSURE_ROUNDS,
+            },
+          },
           lexical: {
             work: lexicalWorkSql(),
             write: lexicalWriteSql('$1::text', '$2', '$3'),

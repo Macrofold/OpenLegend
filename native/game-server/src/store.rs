@@ -2,6 +2,11 @@
 //! admitted readers use a fixed read-only snapshot on a separate connection.
 
 mod archives;
+mod checkpoint;
+pub(crate) use checkpoint::{
+    AdministrativeCheckpoint, CheckpointHistory, RecoveryAuthority, read_recovery_authority,
+    reconcile_history_positions,
+};
 mod history;
 mod known_places;
 mod lexical;

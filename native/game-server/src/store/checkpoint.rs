@@ -3,8 +3,9 @@
 //! native restore and protected PostgreSQL installation have both qualified.
 
 use super::schema::{FIXED_COLUMNS, SqlType, StorageSchema, Table};
-use super::{MAX_SAFE_INTEGER, StoreError, StoreResult};
+use super::{CurrentOpening, DurableHead, MAX_SAFE_INTEGER, Store, StoreError, StoreResult};
 use openlegend_simulation::encoding::hex_bytes;
+use openlegend_simulation::events::OriginalOccurrenceInput;
 use openlegend_simulation::host::{ByteBudget, ByteReservation};
 use openlegend_simulation::records::{InstalledRow, SqlCell};
 use openlegend_simulation::text::JsText;
@@ -16,10 +17,15 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, File};
 use std::io::{BufRead, BufReader, Read};
 use std::path::Path;
+use std::path::PathBuf;
+use std::sync::Arc;
 use uuid::Uuid;
 
 mod authority;
-pub(super) use authority::{RecoveryAuthority, read_recovery_authority};
+mod positions;
+mod write;
+pub(crate) use authority::{RecoveryAuthority, read_recovery_authority};
+pub(crate) use positions::reconcile_history_positions;
 
 const METADATA: usize = 16 * 1024;
 const FILE_BUFFER: usize = 64 * 1024;
@@ -34,22 +40,27 @@ pub(crate) struct CheckpointFormat {
     pub(super) row_bytes: usize,
     pub(super) bytes: usize,
     pub(super) rows: usize,
+    pub(super) page: usize,
     pub(super) history_tables: Vec<String>,
+    pub(super) history_position_tables: Vec<String>,
+    pub(super) retention_preparation: Box<RawValue>,
 }
 
 impl CheckpointFormat {
     pub(super) fn retained_bytes(&self) -> Option<usize> {
-        self.history_tables.iter().try_fold(
-            self.encoding
-                .capacity()
-                .checked_add(self.format.capacity())?
-                .checked_add(
-                    self.history_tables
-                        .capacity()
-                        .checked_mul(size_of::<String>())?,
-                )?,
-            |n, name| n.checked_add(name.capacity()),
-        )
+        let bytes = self
+            .encoding
+            .capacity()
+            .checked_add(self.format.capacity())?
+            .checked_add(self.retention_preparation.get().len())?;
+        [&self.history_tables, &self.history_position_tables]
+            .into_iter()
+            .try_fold(bytes, |bytes, values| {
+                values.iter().try_fold(
+                    bytes.checked_add(values.capacity().checked_mul(size_of::<String>())?)?,
+                    |n, name| n.checked_add(name.capacity()),
+                )
+            })
     }
 
     pub(super) fn validate(&self, schema: &StorageSchema) -> StoreResult<()> {
@@ -61,8 +72,21 @@ impl CheckpointFormat {
         if self.encoding.is_empty()
             || self.format.is_empty()
             || self.row_bytes == 0
+            || self.page == 0
             || self.rows <= schema.tables.len()
             || self.row_bytes > self.bytes
+            || self.history_position_tables.is_empty()
+            || self
+                .history_position_tables
+                .iter()
+                .enumerate()
+                .any(|(position, table)| {
+                    self.history_position_tables[..position].contains(table)
+                        || !schema
+                            .tables
+                            .iter()
+                            .any(|parent| parent.children.iter().any(|child| child.table == *table))
+                })
             || !["history_events", "history_totals"]
                 .into_iter()
                 .all(|required| self.history_tables.iter().any(|table| table == required))
@@ -126,11 +150,47 @@ struct Line<'a> {
 pub(crate) struct AdministrativeCheckpoint {
     pub world_id: String,
     pub id: String,
+    pub checksum: String,
     pub revision: u64,
     pub sim_time: f64,
     pub canonical: BTreeMap<String, Vec<InstalledRow>>,
     pub history: BTreeMap<String, Vec<Box<RawValue>>>,
     pub custody: ByteReservation,
+    history_custody: ByteReservation,
+}
+
+pub(crate) struct CheckpointHistory {
+    pub tables: BTreeMap<String, Vec<Box<RawValue>>>,
+    _custody: ByteReservation,
+}
+
+impl Store {
+    /// Read one retained file on an operator worker while independently
+    /// holding the schema release. No PostgreSQL lane is held during file I/O.
+    pub(crate) async fn retained_checkpoint(
+        self: &Arc<Self>,
+        directory: PathBuf,
+        id: String,
+        world: String,
+    ) -> StoreResult<AdministrativeCheckpoint> {
+        let store = Arc::clone(self);
+        tokio::task::spawn_blocking(move || {
+            AdministrativeCheckpoint::read(
+                &directory,
+                &id,
+                &world,
+                &store.schema,
+                &store.schema.checkpoint,
+                &store.budget,
+            )
+        })
+        .await
+        .map_err(|_| StoreError::InvalidRecord)?
+    }
+
+    pub(crate) fn restore_retention_preparation(&self) -> &RawValue {
+        &self.schema.checkpoint.retention_preparation
+    }
 }
 
 impl AdministrativeCheckpoint {
@@ -247,10 +307,20 @@ impl AdministrativeCheckpoint {
         }
         let mut custody = budget
             .reserve(
-                expected
+                schema
+                    .tables
                     .len()
                     .checked_mul(512)
-                    .and_then(|n| n.checked_add(world.len() + id.len()))
+                    .and_then(|n| n.checked_add(world.len() + id.len() + metadata.checksum.len()))
+                    .ok_or(StoreError::Capacity)?,
+            )
+            .map_err(|_| StoreError::Capacity)?;
+        let mut history_custody = budget
+            .reserve(
+                contract
+                    .history_tables
+                    .len()
+                    .checked_mul(512)
                     .ok_or(StoreError::Capacity)?,
             )
             .map_err(|_| StoreError::Capacity)?;
@@ -307,7 +377,7 @@ impl AdministrativeCheckpoint {
                         return Err(StoreError::InvalidRecord);
                     }
                     let rows = history.get_mut(current).ok_or(StoreError::InvalidRecord)?;
-                    grow_rows(&mut custody, rows, row.get().len())?;
+                    grow_rows(&mut history_custody, rows, row.get().len())?;
                     rows.push(row.to_owned());
                 }
             } else {
@@ -347,12 +417,46 @@ impl AdministrativeCheckpoint {
         Ok(Self {
             world_id: metadata.world_id,
             id: metadata.id,
+            checksum: metadata.checksum,
             revision: header.revision,
             sim_time: metadata.sim_time,
             canonical,
             history,
             custody,
+            history_custody,
         })
+    }
+
+    /// Bind current-format records to the prospective SQL head and retain their
+    /// real hot originals. The historical table reader has its own backing so
+    /// finishing native installation cannot invalidate later restore reads.
+    pub(crate) fn into_opening(
+        self,
+        store: &Store,
+        replacement: DurableHead,
+    ) -> StoreResult<(CurrentOpening, CheckpointHistory)> {
+        if replacement.world_id != self.world_id {
+            return Err(StoreError::StaleCut);
+        }
+        let mut custody = self.custody;
+        let originals = restore_originals(
+            &self.canonical["world_hot_events"],
+            &self.history["history_events"],
+            &store.budget,
+            &mut custody,
+        )?;
+        let records = store.opening_records(replacement, self.canonical, &mut custody)?;
+        Ok((
+            CurrentOpening {
+                records,
+                originals,
+                custody,
+            },
+            CheckpointHistory {
+                tables: self.history,
+                _custody: self.history_custody,
+            },
+        ))
     }
 
     /// A retained source can establish the target's identity floor only when
@@ -380,6 +484,76 @@ impl AdministrativeCheckpoint {
         };
         allocation_floor(&settings.payload, &target.world_id)
     }
+}
+
+fn restore_originals(
+    hot: &[InstalledRow],
+    history: &[Box<RawValue>],
+    budget: &ByteBudget,
+    custody: &mut ByteReservation,
+) -> StoreResult<Vec<OriginalOccurrenceInput>> {
+    let (_selection, ids) = super::read::hot_occurrence_ids(hot, budget)?;
+    if ids.is_empty() {
+        return Ok(Vec::new());
+    }
+    let count = ids.len();
+    let mut selected = ids
+        .into_iter()
+        .map(|id| (id, false))
+        .collect::<BTreeMap<_, _>>();
+    if selected.len() != count {
+        return Err(StoreError::InvalidRecord);
+    }
+    let grow = |custody: &mut ByteReservation, bytes: usize| {
+        let next = custody
+            .bytes()
+            .checked_add(bytes)
+            .ok_or(StoreError::Capacity)?;
+        custody.resize(next).map_err(|_| StoreError::Capacity)
+    };
+    grow(
+        custody,
+        count
+            .checked_mul(size_of::<OriginalOccurrenceInput>())
+            .ok_or(StoreError::Capacity)?,
+    )?;
+    let mut originals = Vec::with_capacity(count);
+    #[derive(Deserialize)]
+    struct Original<'a> {
+        id: &'a str,
+        #[serde(borrow)]
+        payload: &'a RawValue,
+    }
+    for row in history {
+        let row: Original<'_> =
+            serde_json::from_str(row.get()).map_err(|_| StoreError::InvalidRecord)?;
+        let Some(found) = selected.get_mut(row.id) else {
+            continue;
+        };
+        if std::mem::replace(found, true) {
+            return Err(StoreError::InvalidRecord);
+        }
+        let body = row.payload.get();
+        let _decode = budget
+            .reserve(SqlCell::json_decode_bound(body).ok_or(StoreError::InvalidRecord)?)
+            .map_err(|_| StoreError::Capacity)?;
+        let payload: String = serde_json::from_str(body).map_err(|_| StoreError::InvalidRecord)?;
+        grow(
+            custody,
+            payload
+                .capacity()
+                .checked_add(row.id.len())
+                .ok_or(StoreError::Capacity)?,
+        )?;
+        originals.push(OriginalOccurrenceInput {
+            event_id: row.id.to_owned(),
+            payload,
+        });
+    }
+    if originals.len() != count {
+        return Err(StoreError::InvalidRecord);
+    }
+    Ok(originals)
 }
 
 fn allocation_floor(payload: &str, world: &str) -> Option<u64> {

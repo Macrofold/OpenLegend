@@ -5,7 +5,7 @@ use super::read::GameplayReceipt;
 use super::schema::{FIXED_COLUMNS, SqlType, Table};
 use super::{Session, Store, StoreError, StoreResult, durable_head, sql_ordinal};
 use openlegend_simulation::host::{ByteBudget, ByteReservation};
-use openlegend_simulation::records::{ChangedRow, ChangedRows, SaveRows, SqlCell};
+use openlegend_simulation::records::{ChangedRow, ChangedRows, InstalledRow, SaveRows, SqlCell};
 use openlegend_simulation::runtime::{RuntimeSave, RuntimeSaveAcknowledgement};
 use sha2::{Digest, Sha256};
 use std::borrow::Cow;
@@ -19,7 +19,7 @@ use tokio_postgres::types::{ToSql, Type};
 
 // Same ordered writer byte and parameter batch limits as sql-rows.ts.
 const PARAMETER_LIMIT: usize = 10_000;
-const BATCH_BYTES: usize = 262_144;
+pub(super) const BATCH_BYTES: usize = 262_144;
 const DELETE_ROWS: usize = 800;
 
 /// Derived and operational rows belong to the same database transaction as
@@ -511,40 +511,46 @@ struct WriteShape<'a> {
 }
 impl<'a> WriteShape<'a> {
     fn for_row(table: &'a Table, row: &ChangedRow) -> StoreResult<Self> {
-        let mask = row.write_columns.as_ref();
-        let mut columns: Vec<_> = if mask.is_some() {
-            vec![FIXED_COLUMNS[0], FIXED_COLUMNS[1], FIXED_COLUMNS[5]]
-        } else {
-            FIXED_COLUMNS.to_vec()
+        let Some(mask) = row.write_columns.as_ref() else {
+            return Ok(Self::full(table, row.create));
         };
+        let mut columns = vec![FIXED_COLUMNS[0], FIXED_COLUMNS[1], FIXED_COLUMNS[5]];
         let mut extras = Vec::new();
-        if let Some(mask) = mask {
-            for name in mask {
-                let at = table
-                    .columns
-                    .iter()
-                    .position(|column| &column.name == name)
-                    .ok_or(StoreError::InvalidRecord)?;
-                let column = &table.columns[at];
-                columns.push((column.name.as_str(), column.data_type));
-                extras.push(at);
-            }
-        } else {
-            columns.extend(
-                table
-                    .columns
-                    .iter()
-                    .map(|column| (column.name.as_str(), column.data_type)),
-            );
-            extras.extend(0..table.columns.len());
+        for name in mask {
+            let at = table
+                .columns
+                .iter()
+                .position(|column| &column.name == name)
+                .ok_or(StoreError::InvalidRecord)?;
+            let column = &table.columns[at];
+            columns.push((column.name.as_str(), column.data_type));
+            extras.push(at);
         }
         Ok(Self {
             columns,
             extras,
             create: row.create,
-            masked: mask.is_some(),
+            masked: true,
         })
     }
+
+    fn full(table: &'a Table, create: bool) -> Self {
+        Self {
+            columns: FIXED_COLUMNS
+                .into_iter()
+                .chain(
+                    table
+                        .columns
+                        .iter()
+                        .map(|column| (column.name.as_str(), column.data_type)),
+                )
+                .collect(),
+            extras: (0..table.columns.len()).collect(),
+            create,
+            masked: false,
+        }
+    }
+
     fn statement(&self, table: &Table, count: usize) -> String {
         let columns = self
             .columns
@@ -597,6 +603,43 @@ impl<'a> WriteShape<'a> {
     }
 }
 
+/// The position and payload are already funded by their native save or
+/// current-format checkpoint. The SQL binder borrows the original bytes.
+struct RecordForWrite<'a> {
+    id: &'a str,
+    parent: &'a str,
+    slot: &'a str,
+    position: u64,
+    payload: &'a str,
+    extra: &'a [SqlCell],
+}
+
+impl<'a> From<&'a ChangedRow> for RecordForWrite<'a> {
+    fn from(row: &'a ChangedRow) -> Self {
+        Self {
+            id: &row.id,
+            parent: &row.parent,
+            slot: &row.slot,
+            position: row.position,
+            payload: &row.payload,
+            extra: &row.extra,
+        }
+    }
+}
+
+impl<'a> From<&'a InstalledRow> for RecordForWrite<'a> {
+    fn from(row: &'a InstalledRow) -> Self {
+        Self {
+            id: &row.id,
+            parent: &row.parent,
+            slot: &row.slot,
+            position: row.position,
+            payload: &row.payload,
+            extra: &row.extra,
+        }
+    }
+}
+
 async fn write_group(
     transaction: &Transaction<'_>,
     table: &Table,
@@ -605,14 +648,60 @@ async fn write_group(
     group: &[&ChangedRow],
     budget: &ByteBudget,
 ) -> StoreResult<()> {
-    let shape = WriteShape::for_row(table, group[0])?;
+    write_rows(
+        transaction,
+        table,
+        world_id,
+        revision,
+        WriteShape::for_row(table, group[0])?,
+        group.len(),
+        |index| group[index].into(),
+        budget,
+    )
+    .await
+}
+
+pub(super) async fn insert_checkpoint_rows(
+    transaction: &Transaction<'_>,
+    table: &Table,
+    world_id: &str,
+    revision: i64,
+    rows: &[InstalledRow],
+    budget: &ByteBudget,
+) -> StoreResult<()> {
+    if rows.is_empty() {
+        return Ok(());
+    }
+    write_rows(
+        transaction,
+        table,
+        world_id,
+        revision,
+        WriteShape::full(table, true),
+        rows.len(),
+        |index| (&rows[index]).into(),
+        budget,
+    )
+    .await
+}
+
+async fn write_rows<'a>(
+    transaction: &Transaction<'_>,
+    table: &Table,
+    world_id: &str,
+    revision: i64,
+    shape: WriteShape<'_>,
+    count: usize,
+    row: impl Fn(usize) -> RecordForWrite<'a> + Sync,
+    budget: &ByteBudget,
+) -> StoreResult<()> {
     let columns = shape.columns.len();
     let mut from = 0;
-    while from < group.len() {
+    while from < count {
         let mut through = from;
         let mut bytes = 0usize;
-        while through < group.len() {
-            let row = group[through];
+        while through < count {
+            let row = row(through);
             let extra = shape
                 .extras
                 .iter()
@@ -646,17 +735,18 @@ async fn write_group(
         let _temporary = budget.reserve(scratch).map_err(|_| StoreError::Capacity)?;
         let sql = shape.statement(table, count);
         let mut values = Vec::with_capacity(count * columns);
-        for row in &group[from..through] {
+        for index in from..through {
+            let row = row(index);
             values.push(Bind::text(world_id));
-            values.push(Bind::text(&row.id));
+            values.push(Bind::text(row.id));
             if !shape.masked {
-                values.push(Bind::text(&row.parent));
-                values.push(Bind::text(&row.slot));
+                values.push(Bind::text(row.parent));
+                values.push(Bind::text(row.slot));
                 values.push(Bind::Integer(Some(sql_ordinal(row.position)?)));
             }
             values.push(Bind::Integer(Some(revision)));
             if !shape.masked {
-                values.push(Bind::text(&row.payload));
+                values.push(Bind::text(row.payload));
             }
             for index in &shape.extras {
                 values.push(Bind::cell(

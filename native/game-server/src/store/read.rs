@@ -179,31 +179,7 @@ impl Store {
             tables.insert(table.name.clone(), records);
         }
         let originals = {
-            #[derive(Deserialize)]
-            struct Pointer<'a> {
-                id: &'a str,
-            }
-            let hot = &tables["world_hot_events"];
-            let _ids = self
-                .budget
-                .reserve(
-                    hot.iter()
-                        .try_fold(0usize, |bytes, row| {
-                            bytes
-                                .checked_add(64)?
-                                .checked_add(row.payload.len().checked_mul(4)?)
-                        })
-                        .ok_or(StoreError::Capacity)?,
-                )
-                .map_err(|_| StoreError::Capacity)?;
-            let ids = hot
-                .iter()
-                .map(|row| {
-                    serde_json::from_str::<Pointer<'_>>(&row.payload)
-                        .map(|pointer| pointer.id)
-                        .map_err(|_| StoreError::InvalidRecord)
-                })
-                .collect::<StoreResult<Vec<_>>>()?;
+            let (_selection, ids) = hot_occurrence_ids(&tables["world_hot_events"], &self.budget)?;
             if ids.is_empty() {
                 Vec::new()
             } else {
@@ -247,7 +223,7 @@ impl Store {
         }))
     }
 
-    fn opening_records(
+    pub(super) fn opening_records(
         &self,
         head: DurableHead,
         tables: BTreeMap<String, Vec<InstalledRow>>,
@@ -419,7 +395,39 @@ impl Store {
     }
 }
 
-async fn admitted_query(
+/// Borrow the exact currently retained original IDs from hot canonical pointers.
+/// The caller retains selection custody through its source read.
+pub(super) fn hot_occurrence_ids<'a>(
+    hot: &'a [InstalledRow],
+    budget: &ByteBudget,
+) -> StoreResult<(ByteReservation, Vec<&'a str>)> {
+    #[derive(Deserialize)]
+    struct Pointer<'a> {
+        id: &'a str,
+    }
+    let storage = budget
+        .reserve(
+            hot.iter()
+                .try_fold(0usize, |bytes, row| {
+                    bytes
+                        .checked_add(64)?
+                        .checked_add(row.payload.len().checked_mul(4)?)
+                })
+                .ok_or(StoreError::Capacity)?,
+        )
+        .map_err(|_| StoreError::Capacity)?;
+    let ids = hot
+        .iter()
+        .map(|row| {
+            serde_json::from_str::<Pointer<'_>>(&row.payload)
+                .map(|pointer| pointer.id)
+                .map_err(|_| StoreError::InvalidRecord)
+        })
+        .collect::<StoreResult<Vec<_>>>()?;
+    Ok((storage, ids))
+}
+
+pub(super) async fn admitted_query(
     transaction: &Transaction<'_>,
     selection: &str,
     params: &[&(dyn ToSql + Sync)],

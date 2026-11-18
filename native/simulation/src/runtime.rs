@@ -303,6 +303,41 @@ impl RuntimeInstallDefinitions {
         budget: ByteBudget,
         input_custody: ByteReservation,
     ) -> Result<NativeWorldSession, RuntimeError> {
+        self.install_current_for_purpose(
+            sources,
+            database_schema,
+            budget,
+            input_custody,
+            crate::install::InstallPurpose::Current,
+        )
+    }
+
+    /// Install the validated checkpoint as an inactive candidate. Gameplay and
+    /// private reads remain closed until its exact committed restore receipt.
+    pub fn install_current_for_restore(
+        self,
+        sources: RuntimeInstallSources,
+        database_schema: &str,
+        budget: ByteBudget,
+        input_custody: ByteReservation,
+    ) -> Result<NativeWorldSession, RuntimeError> {
+        self.install_current_for_purpose(
+            sources,
+            database_schema,
+            budget,
+            input_custody,
+            crate::install::InstallPurpose::Restore,
+        )
+    }
+
+    fn install_current_for_purpose(
+        self,
+        sources: RuntimeInstallSources,
+        database_schema: &str,
+        budget: ByteBudget,
+        input_custody: ByteReservation,
+        purpose: crate::install::InstallPurpose,
+    ) -> Result<NativeWorldSession, RuntimeError> {
         if !budget.owns(&input_custody) {
             return Err(failure(
                 "installation input belongs to another native budget",
@@ -322,7 +357,7 @@ impl RuntimeInstallDefinitions {
             },
             database_schema,
             budget.for_world(),
-            crate::install::InstallPurpose::Current,
+            purpose,
         );
         drop(input_custody);
         result

@@ -150,18 +150,7 @@ impl Store {
         client: &impl GenericClient,
         world: &str,
     ) -> StoreResult<()> {
-        let expected = self
-            .schema
-            .received_value_owners
-            .iter()
-            .map(|table| {
-                format!(
-                    "SELECT p.world_id,'{table}',p.id,p.actor_id,v.id FROM {table} p \
-            CROSS JOIN LATERAL unnest(p.value_refs) v(id) WHERE p.world_id=$1"
-                )
-            })
-            .collect::<Vec<_>>()
-            .join(" UNION ");
+        let expected = self.expected_received_uses();
         let sql = format!(
             "WITH expected AS MATERIALIZED ({expected}), actual AS MATERIALIZED \
             (SELECT * FROM received_value_uses WHERE world_id=$1) \
@@ -172,5 +161,45 @@ impl Store {
             return Err(StoreError::InvalidRecord);
         }
         Ok(())
+    }
+
+    /// Restore owns a complete canonical replacement and has no surviving
+    /// reverse index to update incrementally. Rebuild inside that transaction.
+    pub(super) async fn rebuild_received(
+        &self,
+        transaction: &Transaction<'_>,
+        world: &str,
+        revision: i64,
+    ) -> StoreResult<()> {
+        transaction
+            .execute(
+                "DELETE FROM received_value_uses WHERE world_id=$1",
+                &[&world],
+            )
+            .await?;
+        let expected = self.expected_received_uses();
+        let insert = format!("INSERT INTO received_value_uses {expected} ON CONFLICT DO NOTHING");
+        transaction.execute(&insert, &[&world]).await?;
+        transaction
+            .execute(
+                "UPDATE mind_perception_values SET gc_candidate_seq=$2 WHERE world_id=$1",
+                &[&world, &revision],
+            )
+            .await?;
+        Ok(())
+    }
+
+    fn expected_received_uses(&self) -> String {
+        self.schema
+            .received_value_owners
+            .iter()
+            .map(|table| {
+                format!(
+                    "SELECT p.world_id,'{table}',p.id,p.actor_id,v.id FROM {table} p \
+            CROSS JOIN LATERAL unnest(p.value_refs) v(id) WHERE p.world_id=$1"
+                )
+            })
+            .collect::<Vec<_>>()
+            .join(" UNION ")
     }
 }
