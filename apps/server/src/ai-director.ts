@@ -1649,6 +1649,7 @@ export class AiDirector {
     run.releasePreparedSources = undefined;
     run.temporalSourcesCurrent = undefined;
     run.temporalSourceFailure = undefined;
+    run.receptionPublicationCurrent = undefined;
   }
   private holdPreparedSources(
     run: Running,
@@ -1658,6 +1659,7 @@ export class AiDirector {
     run.releasePreparedSources = prepared.dispose;
     run.temporalSourcesCurrent = prepared.temporalSourcesCurrent;
     run.temporalSourceFailure = prepared.temporalSourceFailure;
+    if (run.job.kind === 'chat') run.receptionPublicationCurrent = prepared.receptionCurrent;
   }
   private selectedSourceFailure(run: Running): DecisionDependencyFailure | undefined {
     if (run.temporalSourceFailure) return run.temporalSourceFailure();

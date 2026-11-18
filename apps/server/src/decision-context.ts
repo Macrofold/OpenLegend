@@ -115,7 +115,12 @@ import {
   type TemporalHistoryReadContext,
   type TemporalHistoryQuery,
 } from './temporal-storage.js';
-import type { MemoryScope, CurrentMemorySource, TemporalSourceFence } from './memory-repository.js';
+import type {
+  CanonicalSourceFence,
+  CurrentMemorySource,
+  MemoryScope,
+  TemporalSourceFence,
+} from './memory-repository.js';
 
 const currentWithoutDatabase = () => true;
 const releaseWithoutDatabase = () => {};
@@ -152,9 +157,10 @@ async function validateCapturedDecision(
   rememberedAttribution: string,
   outcomeBinding: string,
   validateSituation: () => Promise<void>,
+  publicationCurrent: (() => boolean) | undefined,
   flush = true,
 ) {
-  await conversationValidate(flush, sources);
+  await conversationValidate(flush, sources, publicationCurrent);
   // Historical interpretation survives contact loss; identity/source grants and
   // executable effects remain fenced by their separate existing owners.
   if (
@@ -437,6 +443,7 @@ export async function prepareDecision(
   requiredChoices?: RequiredDecisionChoices,
 ) {
   let sourceFence: TemporalSourceFence | undefined;
+  let publicationFence: CanonicalSourceFence | undefined;
   let prepared = false;
   try {
     await service.flushMemorySources(actorId);
@@ -1053,17 +1060,19 @@ export async function prepareDecision(
         .flatMap((candidate) => candidate.entityIds),
     );
     const rememberedAttribution = attribution(rememberedSubjects);
-    const validatePrepared = validateCapturedDecision.bind(
-      undefined,
-      service,
-      actorId,
-      conversation.validate,
-      sources,
-      rememberedSubjects,
-      rememberedAttribution,
-      outcomeBinding,
-      validateSituation,
-    );
+    const validatePrepared = (flush = true) =>
+      validateCapturedDecision(
+        service,
+        actorId,
+        conversation.validate,
+        sources,
+        rememberedSubjects,
+        rememberedAttribution,
+        outcomeBinding,
+        validateSituation,
+        publicationFence?.current,
+        flush,
+      );
     await validatePrepared(false);
     const currentWorld = service.world;
     const preparedThrough = service.durabilityTicket();
@@ -1426,10 +1435,50 @@ export async function prepareDecision(
       currentObserved.visibleEntities.map((entity) => entity.id),
       actorId,
     );
+    if (includeCurrentConversation && evidenceScope && conversation.directPublicationSources)
+      publicationFence = service.store.memories?.captureConversationPublicationFence(
+        evidenceScope,
+        conversation.directPublicationSources,
+        sources,
+      );
+    let receptionCurrent: (() => boolean) | undefined;
+    if (publicationFence) {
+      const subjects = new Set([
+        ...rememberedSubjects,
+        ...Object.values(entityReferences),
+        ...Object.values(visibleEntityReferences),
+      ]);
+      const perspective = personalAttributionRevision(currentWorld, actorId, subjects);
+      receptionCurrent = () => {
+        const world = service.world;
+        if (
+          signal.aborted ||
+          generation !== service.generation ||
+          !publicationFence?.current() ||
+          !sourceFence?.current() ||
+          !capturedSituation.valid(world) ||
+          personalAttributionRevision(world, actorId, subjects) !== perspective ||
+          outcomeBinding !== JSON.stringify(requiredOutcomeEvidence(world, actorId))
+        )
+          return false;
+        try {
+          conversation.assertCurrent();
+          return true;
+        } catch {
+          return false;
+        }
+      };
+    }
     const result = {
       temporalSourcesCurrent: sourceFence?.current ?? currentWithoutDatabase,
       temporalSourceFailure: sourceFence?.failure,
-      dispose: sourceFence?.release ?? releaseWithoutDatabase,
+      dispose: publicationFence
+        ? () => {
+            publicationFence?.release();
+            sourceFence?.release();
+          }
+        : (sourceFence?.release ?? releaseWithoutDatabase),
+      receptionCurrent,
       situation: capturedSituation,
       readSituationHistory: readCapturedSituationHistory.bind(
         undefined,
@@ -1497,7 +1546,10 @@ export async function prepareDecision(
     prepared = true;
     return result;
   } finally {
-    if (!prepared) sourceFence?.release();
+    if (!prepared) {
+      publicationFence?.release();
+      sourceFence?.release();
+    }
   }
 }
 

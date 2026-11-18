@@ -206,12 +206,17 @@ function conversationValidity(
       state.checkedWorld = new WeakRef(service.world);
     }
   };
-  const check = async (flush = true, additionalSources: CurrentMemorySource[] = []) => {
+  const check = async (
+    flush = true,
+    additionalSources: CurrentMemorySource[] = [],
+    selectedCurrent?: () => boolean,
+  ) => {
     if (flush) await service.flushMemorySources(actorId, false);
     assertCurrent();
     if (repository && scope) {
       for (let read = 0; read < 2; read++) {
         const revision = repository.actorRevision(actorId),
+          nonReception = selectedCurrent && repository.actorNonReceptionRevision(actorId),
           historyEpoch = service.historyEpoch;
         const valid = await repository.validatePreparation(
           scope,
@@ -223,7 +228,11 @@ function conversationValidity(
           (await repository.currentCompactionSources(scope, state.usedCache.value.sources));
         assertCurrent();
         if (!valid || !coverage) throw new Error('Selected speech or recall sources changed.');
-        if (repository.actorRevision(actorId) === revision && service.historyEpoch === historyEpoch)
+        if (
+          service.historyEpoch === historyEpoch &&
+          (repository.actorRevision(actorId) === revision ||
+            (selectedCurrent?.() && repository.actorNonReceptionRevision(actorId) === nonReception))
+        )
           return;
       }
       throw new Error('Personal speech changed during validation.');
@@ -406,7 +415,7 @@ export async function selectConversation(input: {
   };
   attribution(ids: Iterable<string>): string;
   validity: ConversationSelectionValidity;
-  check(flush?: boolean, additionalSources?: CurrentMemorySource[]): Promise<void>;
+  check: ReturnType<typeof conversationValidity>['check'];
   assertCurrent(): void;
   signal: AbortSignal;
   attempt: number;
@@ -691,6 +700,8 @@ export async function selectConversation(input: {
     ],
     awarenessSequence: snapshot.sequence,
     validate: check,
+    assertCurrent,
+    directPublicationSources: validity.usedCache ? undefined : exactTurns,
     diagnostics: {
       mode: summary ? 'compacted' : 'exact-suffix',
       selectedTurns: exactTurns.length,

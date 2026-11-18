@@ -1266,7 +1266,10 @@ export class NativeNpcDirector {
     run.validateJudgmentSource = async () => {
       await prepared.assertValid('dispatch-source');
     };
-    if (run.job.kind === 'chat') run.revalidateJudgmentSource = run.validateJudgmentSource;
+    if (run.job.kind === 'chat') {
+      run.revalidateJudgmentSource = run.validateJudgmentSource;
+      run.receptionPublicationCurrent = prepared.receptionCurrent;
+    }
     run.temporalSourceFailure = prepared.sourceFailure;
     const policy = this.service.definitions.facts.definitions.cognitionPolicy,
       generationAvailable =

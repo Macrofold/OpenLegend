@@ -55,6 +55,9 @@ export interface DispatchRun {
   /** Recheck the retained request's exact evidence. Only an owner that can
    * validate the already rendered input can recover a changed read fence. */
   revalidateJudgmentSource?: () => Promise<void>;
+  /** The prepared request owns exact selected sources and their current
+   * presentation, so ordinary reception alone need not renew its broad fence. */
+  receptionPublicationCurrent?: () => boolean;
   discovery?: { actorId: string; reservation: string; spent: boolean };
 }
 /** Application owners provide actual source/authority and pause checks. This host
@@ -144,9 +147,17 @@ export async function dispatchDecision<R extends DispatchRun, T>(
     );
   let sourceCurrent = captureSourceFence();
   const revalidateSource = run.revalidateJudgmentSource;
+  const selectedPublicationCurrent = run.receptionPublicationCurrent;
   const nonReceptionRevision = revalidateSource
     ? host.store.memories?.actorNonReceptionRevision(sourceActorId)
     : undefined;
+  const currentSource = () =>
+    sourceCurrent() ||
+    (fenceFailure?.condition === 'actor-private-revision' &&
+      nonReceptionRevision !== undefined &&
+      nonReceptionRevision === host.store.memories?.actorNonReceptionRevision(sourceActorId) &&
+      !sourceAccessFailure() &&
+      selectedPublicationCurrent?.() === true);
   const rejectFence = (
     stage: 'dispatch-source' | 'dispatch-publication',
     category: DecisionStopEvidence['category'],
@@ -317,7 +328,7 @@ export async function dispatchDecision<R extends DispatchRun, T>(
           throw error;
         }
         sourceCurrent = nextFence;
-      } while (!sourceCurrent());
+      } while (!currentSource());
     };
     const validate = async () => {
       if (track) run.failureStage = 'dispatch-source';
@@ -325,7 +336,7 @@ export async function dispatchDecision<R extends DispatchRun, T>(
         host.current(run);
         await run.validateJudgmentSource?.();
         host.current(run);
-        if (!sourceCurrent()) await refreshFence('dispatch-source');
+        if (!currentSource()) await refreshFence('dispatch-source');
         assertImmediateDeadline();
       } catch (error) {
         sourceFailure = error;
@@ -341,7 +352,7 @@ export async function dispatchDecision<R extends DispatchRun, T>(
           try {
             return await host.publication(run, () => {
               host.current(run);
-              if (!sourceCurrent()) {
+              if (!currentSource()) {
                 const refusal = rejectFence(
                   'dispatch-publication',
                   'validity-unresolved',

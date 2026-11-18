@@ -1170,6 +1170,29 @@ export class MemoryRepository {
       },
     };
   }
+  /** Preserve the already rendered direct accounts across ordinary receiving.
+   * A source requiring archive/receipt rehydration keeps its full async check.
+   * The decision owner pairs this with its sight, attribution and access checks
+   * and releases it with the prepared context. */
+  captureConversationPublicationFence(
+    scope: MemoryScope,
+    conversation: readonly ConversationSource[],
+    sources: readonly CurrentMemorySource[],
+  ): CanonicalSourceFence | undefined {
+    if (
+      conversation.length + sources.length > RETRIEVAL_ROWS ||
+      sources.some((source) => source.receipt || source.through)
+    )
+      return undefined;
+    return this.captureCanonicalSourceFence(scope, [
+      ...conversation.map(({ id, revision }) => ({
+        id,
+        revision,
+        sourceKind: 'awareness' as const,
+      })),
+      ...sources,
+    ]);
+  }
   /** Register before retention awaits its selected cold records. Existing live
    * acceptance and durable publication feed this same finite watch, so settling
    * a save or evicting a resident value cannot erase an intervening source edit.
@@ -1741,10 +1764,12 @@ export class MemoryRepository {
     }
     for (const [table, ids] of changes.deletes) {
       if (!affectsMemory(table)) continue;
-      // Ordinary receiving in either host can rotate these support rows. Exact
-      // watches were invalidated above. A retained request can prove its
-      // selected sources again; protected SQL edits use the committed path.
-      const receptionOnly = acceptedOrigin !== undefined && table === 'mind_temporal_supports';
+      // Ordinary reception can retire a recognition association along with
+      // its support. A retained request can prove its selected identity again.
+      // Exact watches ran above, and protected edits use the committed path.
+      const receptionOnly =
+        acceptedOrigin !== undefined &&
+        (table === 'mind_temporal_supports' || table === 'mind_recognition');
       for (const id of ids) mark(id, receptionOnly);
     }
     if (

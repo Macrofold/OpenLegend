@@ -248,6 +248,14 @@ async function prepareOwnedDecision(
     generation: sourceGeneration,
   };
   const fence = repository.captureTemporalSourceFence(scope, signal);
+  let publicationFence: ReturnType<typeof repository.captureConversationPublicationFence>;
+  let publicationBytes: ReturnType<typeof service.world.reserveConsumerBytes> | undefined;
+  const releasePublication = () => {
+    publicationFence?.release();
+    publicationFence = undefined;
+    publicationBytes?.release();
+    publicationBytes = undefined;
+  };
   const bodies = new MemoryReadCache();
   const sql = <T>(operation: () => Promise<T>) => service.withActorMemoryRead(actorId, operation);
   const stopSource = (
@@ -267,6 +275,8 @@ async function prepareOwnedDecision(
       return { condition: 'world-generation', expected: generation, current: latest };
     return fence.failure();
   };
+  const receptionCurrent = () =>
+    !signal.aborted && !sourceFailure() && publicationFence?.current() === true;
   const assertCurrent = (stage: DecisionFailureStage = 'preparation') => {
     signal.throwIfAborted();
     const failure = sourceFailure();
@@ -1354,6 +1364,20 @@ async function prepareOwnedDecision(
       throw new ContextBudgetError(
         'Complete accepted inner world and required context exceed the input budget.',
       );
+    if (input.consumer === 'chat' && !compactedSources && !validity.usedCache) {
+      let bytes = decisionObjectBytes(4);
+      for (const group of [validity.boundSources, selectedProofs])
+        for (const { id, revision } of group)
+          bytes +=
+            decisionObjectBytes(4) + decisionTextBytes(4 * (id.length + revision.length + 64));
+      publicationBytes = service.world.reserveConsumerBytes(bytes);
+      publicationFence = repository.captureConversationPublicationFence(
+        scope,
+        validity.boundSources,
+        selectedProofs,
+      );
+      if (!publicationFence) releasePublication();
+    }
     await conversationCheck(false, selectedProofs);
     const binding = nativeResponseSelection({
       original,
@@ -1548,6 +1572,10 @@ async function prepareOwnedDecision(
         addressedSpeech,
         speechTrigger,
         sourceFailure,
+        // Only an issued response ticket carries selected chronology at the
+        // synchronous publication boundary. Routing and expanded queries keep
+        // their existing asynchronous revalidation.
+        receptionCurrent: () => !!ticket && !queryUsed && receptionCurrent(),
         get routing() {
           requireContext();
           return routing;
@@ -1818,6 +1846,7 @@ async function prepareOwnedDecision(
           reflectionTicket?.release();
           ticket = undefined;
           reflectionTicket = undefined;
+          releasePublication();
           fence.release();
           original.release();
           now.release();
@@ -1861,6 +1890,7 @@ async function prepareOwnedDecision(
       formattingOwner.dispose();
       ticket?.release();
       reflectionTicket?.release();
+      releasePublication();
       fence.release();
       conversationCurrent?.release();
       current?.release();
