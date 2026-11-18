@@ -142,4 +142,10 @@ register('observations', 'ui.inview', ['takeoff', 'landed', 'departed', 'returne
 export const BASE_EVENT_PRESENTATION: EventPresentationPolicy = {
   types,
   fallback: { category: 'observations', icon: 'ui.inview', displayToPlayer: false },
+  coordinateText: {
+    eventType: 'moved',
+    actionEventType: 'action-started',
+    actionTypes: ['move', 'assemble'],
+    prefixes: ['started moving to ', 'moved to '],
+  },
 };

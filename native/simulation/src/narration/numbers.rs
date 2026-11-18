@@ -1,7 +1,19 @@
 //! Source language/numbers.ts display precision. Decimal half expansion follows
 //! the shortest ECMAScript number text, rather than multiplying a binary float
 //! (which would turn values such as 1.005 into a different display decision).
-pub(crate) fn display_number(value: f64, integer: bool) -> Result<String, serde_json::Error> {
+/// Format an acquired numeric value for display at zero or two decimal
+/// places. The original value retains its full precision.
+pub fn display_number(value: f64, integer: bool) -> Result<String, serde_json::Error> {
+    if !value.is_finite() {
+        return Ok(if value.is_nan() {
+            "NaN"
+        } else if value.is_sign_negative() {
+            "-∞"
+        } else {
+            "∞"
+        }
+        .into());
+    }
     let digits = if integer { 0 } else { 2 };
     let value = if value.abs() < 0.5 * 10f64.powi(-(digits as i32)) {
         0.0

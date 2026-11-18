@@ -210,18 +210,28 @@ export function publicEvent(
       ? 'I'
       : references.find((reference) => reference.role === 'actor')?.label;
   let text = nativeText(event.text);
-  // Only these native movement records have this coordinate suffix. Do not round
-  // arbitrary prose, quoted speech, names or IDs by scanning all event text.
+  // The selected world identifies its own occurrences and wording. Quoted
+  // speech, names and IDs do not go through coordinate formatting.
+  const coordinates = presentation?.coordinateText;
+  const action = event.data?.['actionType'];
   if (
     !event.speech &&
-    (event.type === 'moved' ||
-      (event.type === 'action-started' &&
-        (event.data?.['actionType'] === 'move' || event.data?.['actionType'] === 'assemble')))
+    coordinates &&
+    (event.type === coordinates.eventType ||
+      (event.type === coordinates.actionEventType &&
+        typeof action === 'string' &&
+        coordinates.actionTypes.includes(action)))
   )
     text = text.replace(
-      /((?:started moving|moved) to )(-?\d+(?:\.\d+)?(?:e[+-]?\d+)?), (-?\d+(?:\.\d+)?(?:e[+-]?\d+)?)\.$/i,
-      (_match, prefix: string, x: string, z: string) =>
-        `${prefix}${formatDisplayNumber(Number(x))}, ${formatDisplayNumber(Number(z))}.`,
+      /(-?\d+(?:\.\d+)?(?:e[+-]?\d+)?), (-?\d+(?:\.\d+)?(?:e[+-]?\d+)?)\.$/i,
+      (match, x: string, z: string, offset: number, whole: string) =>
+        coordinates.prefixes.some(
+          (prefix) =>
+            offset >= prefix.length &&
+            whole.slice(offset - prefix.length, offset).toLowerCase() === prefix.toLowerCase(),
+        )
+          ? `${formatDisplayNumber(Number(x))}, ${formatDisplayNumber(Number(z))}.`
+          : match,
     );
   if (attributeChange && subject && attributeChange.name) {
     const delta = attributeChange.after - attributeChange.before;

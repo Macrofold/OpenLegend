@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 
 mod numbers;
 mod retained_size;
-pub(crate) use numbers::display_number;
+pub use numbers::display_number;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]

@@ -9,4 +9,11 @@ export interface EventPresentation {
 export interface EventPresentationPolicy {
   types: Readonly<Record<string, EventPresentation>>;
   fallback: EventPresentation;
+  /** Normalize the coordinate suffix on only these authored occurrences. */
+  coordinateText?: {
+    eventType: string;
+    actionEventType: string;
+    actionTypes: readonly string[];
+    prefixes: readonly string[];
+  };
 }
