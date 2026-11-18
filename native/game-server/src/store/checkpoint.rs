@@ -28,6 +28,7 @@ mod positions;
 mod provider;
 mod retention;
 mod support;
+mod version_baseline;
 mod write;
 pub(super) use authority::{AcceptedPrivacy, validate_privacy};
 pub(crate) use authority::{RecoveryAuthority, read_recovery_authority};

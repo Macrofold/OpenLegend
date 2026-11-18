@@ -9,7 +9,9 @@ use openlegend_simulation::geometry::GeometryBinding;
 use openlegend_simulation::host::ByteReservation;
 use openlegend_simulation::received::AccountClass;
 use openlegend_simulation::records::{ChangedRows, SqlCell};
-use openlegend_simulation::runtime::{RuntimeProviderInput, RuntimeSourceVersionRead};
+use openlegend_simulation::runtime::{
+    RuntimeProvider, RuntimeProviderInput, RuntimeSourceVersionRead,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
 use std::borrow::Cow;
@@ -88,12 +90,20 @@ struct Envelope<'a> {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Request<'a> {
+    binding: GeometryBinding,
+    #[serde(borrow)]
+    world_id: Cow<'a, str>,
+    #[serde(borrow)]
+    generation: Cow<'a, str>,
+    base_cut: u64,
     cuts: Vec<PrivacyCut>,
     #[serde(borrow)]
     records: Records<'a>,
     #[serde(borrow)]
     personal_predecessors: Vec<Predecessor<'a>>,
     maximum_transfer_bytes: usize,
+    restore_projection: Option<Box<RawValue>>,
+    archive_baseline: Option<Box<RawValue>>,
 }
 
 #[derive(Deserialize)]
@@ -230,11 +240,57 @@ impl Store {
             .budget
             .reserve(allowance)
             .map_err(|_| StoreError::Capacity)?;
-        let Envelope { value: mut request } =
+        let Envelope { value: request } =
             serde_json::from_str(read.request).map_err(|_| StoreError::InvalidRecord)?;
-        if request.maximum_transfer_bytes == 0 {
+        if request.maximum_transfer_bytes == 0
+            || request.restore_projection.is_some()
+            || request.archive_baseline.is_some()
+        {
             return Err(StoreError::InvalidRecord);
         }
+        let maximum = request.maximum_transfer_bytes;
+        let (forgotten, changed) = self.source_version_inputs(request)?;
+        let (prefix, suffix) = read.pending_rows();
+        if prefix.is_some() != read.in_flight_through.is_some() {
+            return Err(StoreError::StaleCut);
+        }
+        let pending = [
+            pending::Owner::prepare(
+                self,
+                prefix,
+                read.pending_versions(true),
+                &forgotten,
+                &mut custody,
+            )?,
+            pending::Owner::prepare(
+                self,
+                Some(suffix),
+                read.pending_versions(false),
+                &forgotten,
+                &mut custody,
+            )?,
+        ];
+        Ok(PreparedSourceVersions {
+            binding: read.binding,
+            world: read.world_id.to_owned(),
+            generation: read.generation.to_owned(),
+            revision: read.durable_revision,
+            in_flight_through: read.in_flight_through,
+            maximum,
+            forgotten,
+            changed,
+            pending,
+            custody,
+        })
+    }
+
+    fn source_version_inputs(
+        &self,
+        mut request: Request<'_>,
+    ) -> StoreResult<(
+        BTreeMap<String, BTreeSet<String>>,
+        BTreeMap<(Kind, String), Mutation>,
+    )> {
         let mut forgotten = BTreeMap::new();
         for cut in request.cuts {
             if forgotten.insert(cut.actor_id, cut.forgotten).is_some() {
@@ -293,48 +349,86 @@ impl Store {
                 return Err(StoreError::InvalidRecord);
             }
         }
-        let (prefix, suffix) = read.pending_rows();
-        if prefix.is_some() != read.in_flight_through.is_some() {
-            return Err(StoreError::StaleCut);
+        Ok((forgotten, changed))
+    }
+
+    /// Replay the exact earlier private candidate projection, including its
+    /// admitted archive baseline, before using the common version planner.
+    pub(crate) async fn answer_checkpoint_source_versions(
+        &self,
+        tx: &Transaction<'_>,
+        head: &super::DurableHead,
+        provider: &RuntimeProvider,
+    ) -> StoreResult<RuntimeProviderInput> {
+        if !provider
+            .asks_source_versions()
+            .map_err(|_| StoreError::StaleCut)?
+        {
+            return Err(StoreError::InvalidRecord);
         }
-        let pending = [
-            pending::Owner::prepare(
-                self,
-                prefix,
-                read.pending_versions(true),
-                &forgotten,
-                &mut custody,
-            )?,
-            pending::Owner::prepare(
-                self,
-                Some(suffix),
-                read.pending_versions(false),
-                &forgotten,
-                &mut custody,
-            )?,
-        ];
-        Ok(PreparedSourceVersions {
-            binding: read.binding,
-            world: read.world_id.to_owned(),
-            generation: read.generation.to_owned(),
-            revision: read.durable_revision,
-            in_flight_through: read.in_flight_through,
-            maximum: request.maximum_transfer_bytes,
-            forgotten,
-            changed,
-            pending,
-            custody,
+        let (read, projection, baseline) = provider
+            .with_request(|text| {
+                let size = SqlCell::json_decode_bound(text)
+                    .and_then(|bytes| bytes.checked_mul(2))
+                    .ok_or(StoreError::Capacity)?;
+                let custody = self
+                    .budget
+                    .reserve(size)
+                    .map_err(|_| StoreError::Capacity)?;
+                let Envelope { value: mut request } =
+                    serde_json::from_str(text).map_err(|_| StoreError::InvalidRecord)?;
+                if request.base_cut != 0
+                    || request.binding.base_cut != 0
+                    || request.world_id != head.world_id
+                    || request.generation != head.generation
+                    || request.maximum_transfer_bytes == 0
+                {
+                    return Err(StoreError::StaleCut);
+                }
+                let projection = request
+                    .restore_projection
+                    .take()
+                    .ok_or(StoreError::InvalidRecord)?;
+                let baseline = request
+                    .archive_baseline
+                    .take()
+                    .ok_or(StoreError::InvalidRecord)?;
+                let binding = request.binding;
+                let maximum = request.maximum_transfer_bytes;
+                let (forgotten, changed) = self.source_version_inputs(request)?;
+                Ok((
+                    PreparedSourceVersions {
+                        binding,
+                        world: head.world_id.clone(),
+                        generation: head.generation.clone(),
+                        revision: head.revision,
+                        in_flight_through: None,
+                        maximum,
+                        forgotten,
+                        changed,
+                        pending: [pending::Owner::default(), pending::Owner::default()],
+                        custody,
+                    },
+                    projection,
+                    baseline,
+                ))
+            })
+            .map_err(|_| StoreError::StaleCut)??;
+        self.with_checkpoint_view(tx, head, &projection, async {
+            self.apply_checkpoint_archive_baseline(tx, head, &baseline)
+                .await?;
+            self.finish_source_versions(tx, read, false).await
         })
+        .await
     }
 
     pub(crate) async fn read_source_versions(
         self: &Arc<Self>,
-        mut read: PreparedSourceVersions,
+        read: PreparedSourceVersions,
     ) -> StoreResult<RuntimeProviderInput> {
         let store = self.clone();
         self.read_operational(move |transaction| {
             Box::pin(async move {
-                let budget = &store.budget;
                 let head = durable_head(transaction)
                     .await?
                     .ok_or(StoreError::StaleCut)?;
@@ -346,35 +440,47 @@ impl Store {
                     Some(1) if read.in_flight_through.is_some() => true,
                     _ => return Err(StoreError::StaleCut),
                 };
-                let pending = pending::Overlay::join(&read.pending, detached_durable)?;
-                let mut inputs = plan::Input {
-                    world: &read.world,
-                    selected: &read.forgotten,
-                    transaction,
-                    budget,
-                    sql: &store.schema.source_versions,
-                    pending: &pending,
-                    custody: &mut read.custody,
-                };
-                let reply = plan::Reply {
-                    binding: read.binding,
-                    plan: inputs.prepare(read.changed).await?,
-                };
-                let len = json_record_len(&reply).map_err(|_| StoreError::InvalidRecord)?;
-                if len > read.maximum {
-                    return Err(StoreError::Capacity);
-                }
-                let mut custody = budget
-                    .reserve(len.checked_mul(2).ok_or(StoreError::Capacity)?)
-                    .map_err(|_| StoreError::Capacity)?;
-                let json = json_record(&reply).map_err(|_| StoreError::InvalidRecord)?;
-                custody
-                    .resize(json.capacity())
-                    .map_err(|_| StoreError::Capacity)?;
-                Ok(RuntimeProviderInput::new(json, custody))
+                store
+                    .finish_source_versions(transaction, read, detached_durable)
+                    .await
             })
         })
         .await
+    }
+
+    async fn finish_source_versions(
+        &self,
+        transaction: &Transaction<'_>,
+        mut read: PreparedSourceVersions,
+        detached_durable: bool,
+    ) -> StoreResult<RuntimeProviderInput> {
+        let budget = &self.budget;
+        let pending = pending::Overlay::join(&read.pending, detached_durable)?;
+        let mut inputs = plan::Input {
+            world: &read.world,
+            selected: &read.forgotten,
+            transaction,
+            budget,
+            sql: &self.schema.source_versions,
+            pending: &pending,
+            custody: &mut read.custody,
+        };
+        let reply = plan::Reply {
+            binding: read.binding,
+            plan: inputs.prepare(read.changed).await?,
+        };
+        let len = json_record_len(&reply).map_err(|_| StoreError::InvalidRecord)?;
+        if len > read.maximum {
+            return Err(StoreError::Capacity);
+        }
+        let mut custody = budget
+            .reserve(len.checked_mul(2).ok_or(StoreError::Capacity)?)
+            .map_err(|_| StoreError::Capacity)?;
+        let json = json_record(&reply).map_err(|_| StoreError::InvalidRecord)?;
+        custody
+            .resize(json.capacity())
+            .map_err(|_| StoreError::Capacity)?;
+        Ok(RuntimeProviderInput::new(json, custody))
     }
 }
 

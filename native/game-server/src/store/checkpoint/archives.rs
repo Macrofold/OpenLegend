@@ -34,13 +34,13 @@ impl Category {
 
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Archive {
-    actor_id: String,
-    kind: String,
-    id: String,
-    revision: String,
-    category: Category,
-    bytes: usize,
+pub(super) struct Archive {
+    pub(super) actor_id: String,
+    pub(super) kind: String,
+    pub(super) id: String,
+    pub(super) revision: String,
+    pub(super) category: Category,
+    pub(super) bytes: usize,
 }
 
 #[derive(Deserialize)]

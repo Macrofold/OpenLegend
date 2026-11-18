@@ -104,7 +104,7 @@ impl Store {
         Ok(())
     }
 
-    async fn apply_archive_batch(
+    pub(super) async fn apply_archive_batch(
         &self,
         transaction: &Transaction<'_>,
         world: &str,
