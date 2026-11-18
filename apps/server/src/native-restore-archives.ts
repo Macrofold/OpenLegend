@@ -18,14 +18,23 @@ export interface NativeRestoreArchivesRequest {
 
 export const restoreArchiveSelectionRows = 256;
 
-/** Exact reverse-index selection shared by both native application hosts. */
-export function restoreArchiveSelectionSql(input: string, world: string) {
-  const derived = (table: string, kind: string) => `
-      SELECT w.ordinal AS archive_index,r.retention_class FROM wanted w
-      JOIN mind_source_dependencies d ON d.world_id=${world} AND d.actor_id=w.actor_id
+/** A complete stopped installation can prove references from its canonical
+ * accounts. The live reader still starts from the existing reverse index. */
+export function restoreArchiveSelectionSql(
+  input: string,
+  world: string,
+  source: 'live-index' | 'complete-checkpoint' = 'live-index',
+) {
+  const sourceJoin = (table: string, kind: string) =>
+    source === 'complete-checkpoint'
+      ? `JOIN ${table} r ON r.world_id=${world} AND r.actor_id=w.actor_id`
+      : `JOIN mind_source_dependencies d ON d.world_id=${world} AND d.actor_id=w.actor_id
         AND d.source_kind=w.kind AND d.source_id=w.id AND d.source_revision=w.revision
       JOIN ${table} r ON r.world_id=d.world_id AND r.actor_id=d.actor_id
-        AND r.source_id=d.derived_id AND d.derived_kind='${kind}'
+        AND r.source_id=d.derived_id AND d.derived_kind='${kind}'`;
+  const derived = (table: string, kind: string) => `
+      SELECT w.ordinal AS archive_index,r.retention_class FROM wanted w
+      ${sourceJoin(table, kind)}
       WHERE ${kind === 'memory' ? "r.kind<>'impression' AND" : ''}
         r.retention_metadata->'versions' @> jsonb_build_array(jsonb_build_object(
           'kind',w.kind,'id',w.id,'revision',w.revision))

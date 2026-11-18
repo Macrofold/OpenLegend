@@ -26,6 +26,7 @@ mod authority;
 mod history_read;
 mod positions;
 mod provider;
+mod retention;
 mod support;
 mod write;
 pub(super) use authority::{AcceptedPrivacy, validate_privacy};
@@ -55,6 +56,8 @@ pub(crate) struct CheckpointFormat {
     pub(super) archive_rows: usize,
     pub(super) support_membership: String,
     pub(super) retention_membership: String,
+    pub(super) account_metadata: BTreeMap<String, String>,
+    pub(super) summary_memory_prefix: String,
 }
 
 #[derive(Deserialize)]
@@ -81,6 +84,14 @@ impl CheckpointFormat {
             .checked_add(self.history_edit.dependencies.capacity())?
             .checked_add(self.history_edit.alias_pages.capacity())?
             .checked_add(self.history_edit.addressed_pages.capacity())?;
+        let bytes = self.account_metadata.iter().try_fold(
+            bytes.checked_add(self.summary_memory_prefix.capacity())?,
+            |n, (table, sql)| {
+                n.checked_add(table.capacity())?
+                    .checked_add(sql.capacity())?
+                    .checked_add(128)
+            },
+        )?;
         [&self.history_tables, &self.history_position_tables]
             .into_iter()
             .try_fold(bytes, |bytes, values| {
@@ -107,6 +118,15 @@ impl CheckpointFormat {
             || self.archive_rows == 0
             || self.support_membership.is_empty()
             || self.retention_membership.is_empty()
+            || self.summary_memory_prefix.is_empty()
+            || self.account_metadata.len() != 3
+            || ["mind_awareness", "mind_memories", "mind_summaries"]
+                .into_iter()
+                .any(|table| {
+                    self.account_metadata
+                        .get(table)
+                        .is_none_or(String::is_empty)
+                })
             || self.history_edit.dependencies.is_empty()
             || self.history_edit.alias_pages.is_empty()
             || self.history_edit.addressed_pages.is_empty()

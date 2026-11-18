@@ -341,6 +341,44 @@ export interface AccountRetentionQuery {
   overridden: readonly string[];
   changed: readonly string[];
 }
+/** A retention request selects indexed scalar metadata first. Only the
+ * selected result may request a bounded body for the actual account. */
+export function accountRetentionCandidatesSql(
+  table: (typeof accountTables)[number],
+  requestValues: string,
+  world: string,
+  selectionOnly: boolean,
+) {
+  return `WITH requested(actor_id,at,due,pressured,overridden,changed) AS MATERIALIZED (
+          VALUES ${requestValues}
+        ), scoped AS (
+          ${retentionProjection(table, selectionOnly)},'due'::text AS criterion FROM requested q CROSS JOIN LATERAL (
+            SELECT t.* FROM ${table} t WHERE q.due AND t.world_id=${world} AND t.actor_id=q.actor_id
+              AND t.retention_class<>'sensory' AND t.active_or_protected=0 AND t.next_due_at<=q.at
+              AND NOT(t.id=ANY(q.overridden))
+            ORDER BY t.policy_priority,t.at,t.source_id COLLATE "C" LIMIT ${ACCOUNT_RETENTION_PREPARATION.rows + 1}
+          ) t
+          UNION ALL
+          ${retentionProjection(table, selectionOnly)},'pressure'::text AS criterion FROM requested q
+          CROSS JOIN LATERAL unnest(q.pressured) pool(kind) CROSS JOIN LATERAL (
+            SELECT t.* FROM ${table} t WHERE t.world_id=${world} AND t.actor_id=q.actor_id
+              AND t.retention_class=pool.kind AND t.active_or_protected=0 AND NOT(t.id=ANY(q.overridden))
+            ORDER BY t.policy_priority,t.at,t.source_id COLLATE "C" LIMIT ${ACCOUNT_RETENTION_PREPARATION.rows + 1}
+          ) t
+          UNION ALL
+          ${retentionProjection(table, selectionOnly)},'changed'::text AS criterion FROM requested q JOIN ${table} t
+            ON t.world_id=${world} AND t.actor_id=q.actor_id AND t.id=ANY(q.changed)
+          UNION ALL
+          SELECT '${table}',NULL::text,NULL::text,NULL::bigint,q.actor_id,
+            jsonb_build_object('next_due_at',next.due),0::bigint,'deadline'::text
+          FROM requested q CROSS JOIN LATERAL (
+            SELECT MIN(t.next_due_at) AS due FROM ${table} t
+            WHERE t.world_id=${world} AND t.actor_id=q.actor_id AND t.retention_class<>'sensory'
+              AND t.active_or_protected=0 AND t.next_due_at>q.at AND NOT(t.id=ANY(q.overridden))
+          ) next
+        ) SELECT * FROM scoped`;
+}
+
 /** Both actual retention callers select the same bounded indexed metadata.
  * Opaque account prose is fetched only after the single per-actor selection. */
 export async function readAccountRetentionCandidates(
@@ -362,34 +400,14 @@ export async function readAccountRetentionCandidates(
     request.changed,
   ]);
   for (const batch of sqlRowBatches(requestRows, worldBindings)) {
-    const statement = `WITH requested(actor_id,at,due,pressured,overridden,changed) AS MATERIALIZED (
-          VALUES ${batch.map(() => '(?::text,?::double precision,?::boolean,?::text[],?::text[],?::text[])').join(',')}
-        ), scoped AS (
-          ${retentionProjection(table, selectionOnly)},'due'::text AS criterion FROM requested q CROSS JOIN LATERAL (
-            SELECT t.* FROM ${table} t WHERE q.due AND t.world_id=? AND t.actor_id=q.actor_id
-              AND t.retention_class<>'sensory' AND t.active_or_protected=0 AND t.next_due_at<=q.at
-              AND NOT(t.id=ANY(q.overridden))
-            ORDER BY t.policy_priority,t.at,t.source_id COLLATE "C" LIMIT ${ACCOUNT_RETENTION_PREPARATION.rows + 1}
-          ) t
-          UNION ALL
-          ${retentionProjection(table, selectionOnly)},'pressure'::text AS criterion FROM requested q
-          CROSS JOIN LATERAL unnest(q.pressured) pool(kind) CROSS JOIN LATERAL (
-            SELECT t.* FROM ${table} t WHERE t.world_id=? AND t.actor_id=q.actor_id
-              AND t.retention_class=pool.kind AND t.active_or_protected=0 AND NOT(t.id=ANY(q.overridden))
-            ORDER BY t.policy_priority,t.at,t.source_id COLLATE "C" LIMIT ${ACCOUNT_RETENTION_PREPARATION.rows + 1}
-          ) t
-          UNION ALL
-          ${retentionProjection(table, selectionOnly)},'changed'::text AS criterion FROM requested q JOIN ${table} t
-            ON t.world_id=? AND t.actor_id=q.actor_id AND t.id=ANY(q.changed)
-          UNION ALL
-          SELECT '${table}',NULL::text,NULL::text,NULL::bigint,q.actor_id,
-            jsonb_build_object('next_due_at',next.due),0::bigint,'deadline'::text
-          FROM requested q CROSS JOIN LATERAL (
-            SELECT MIN(t.next_due_at) AS due FROM ${table} t
-            WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.retention_class<>'sensory'
-              AND t.active_or_protected=0 AND t.next_due_at>q.at AND NOT(t.id=ANY(q.overridden))
-          ) next
-        ) SELECT * FROM scoped`;
+    const statement = accountRetentionCandidatesSql(
+      table,
+      batch
+        .map(() => '(?::text,?::double precision,?::boolean,?::text[],?::text[],?::text[])')
+        .join(','),
+      '?',
+      selectionOnly,
+    );
     if (admit) {
       const stats = await db
         .prepare(

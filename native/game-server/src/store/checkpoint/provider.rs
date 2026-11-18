@@ -12,6 +12,8 @@ use tokio_postgres::Transaction;
 pub(super) struct Binding {
     pub(super) world_id: String,
     pub(super) generation: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(super) actor_id: Option<String>,
     pub(super) accepted_cut: u64,
     pub(super) identity_through: u64,
     candidate_id: u64,

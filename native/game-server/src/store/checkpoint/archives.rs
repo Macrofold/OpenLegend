@@ -16,10 +16,20 @@ use tokio_postgres::Transaction;
 
 #[derive(Clone, Copy, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
-enum Category {
+pub(super) enum Category {
     Optional,
     Required,
     Speech,
+}
+
+impl Category {
+    pub(super) fn as_str(self) -> &'static str {
+        match self {
+            Self::Optional => "optional",
+            Self::Required => "required",
+            Self::Speech => "speech",
+        }
+    }
 }
 
 #[derive(Deserialize, Serialize)]
@@ -78,6 +88,26 @@ impl RestoreInput {
 }
 
 impl Store {
+    /// Determine archive retention from the fully staged canonical account
+    /// references at this ticket. Abandoned gameplay indexes cannot inform
+    /// the replacement or prevent recovery when those indexes are damaged.
+    pub(crate) async fn answer_checkpoint_archives(
+        &self,
+        tx: &Transaction<'_>,
+        prospective: &DurableHead,
+        request: &RuntimeProvider,
+    ) -> StoreResult<RuntimeProviderInput> {
+        let prepared = self.prepare_checkpoint_archives(request)?;
+        self.with_checkpoint_projection(
+            tx,
+            prospective,
+            prepared.projection(),
+            false,
+            self.read_checkpoint_archives(tx, prospective, &prepared),
+        )
+        .await
+    }
+
     pub(crate) fn prepare_checkpoint_archives(
         &self,
         request: &RuntimeProvider,

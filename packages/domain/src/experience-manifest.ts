@@ -414,6 +414,8 @@ export function manifestDependsOn(
     )
   );
 }
+export const summaryMemoryPrefix = 'Summary of remembered experience: ';
+
 export function summaryMemory(summary: ExperienceSummary, actorId: string): MemoryRecord {
   validateExperienceManifest(summary.manifest);
   return {
@@ -422,7 +424,7 @@ export function summaryMemory(summary: ExperienceSummary, actorId: string): Memo
     at: summary.to,
     kind: 'reflection',
     source: 'inferred',
-    summary: `Summary of remembered experience: ${summary.text}`,
+    summary: summaryMemoryPrefix + summary.text,
     entityIds: summary.entityIds,
     importance: summary.importance,
     sequence: summary.sequence,

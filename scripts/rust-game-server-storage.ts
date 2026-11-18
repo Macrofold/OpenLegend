@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { nativeSetupSettings } from '../packages/domain/src/native-install.js';
+import { summaryMemoryPrefix } from '../packages/domain/src/experience-manifest.js';
 import { rustGameServerViewPolicy } from './rust-game-server-view.js';
 import { rustGameServerDecisionPolicy } from './rust-game-server-cognition.js';
 import { createDisposableDatabase } from './disposable-postgres.mjs';
@@ -27,6 +28,8 @@ import { ACCOUNT_RETENTION_PREPARATION } from '../apps/server/src/account-retent
 import { SUPPORT_MEMBERSHIP_PREPARATION } from '../apps/server/src/retention-cleanup.js';
 import { SOURCE_RETENTION_CLOSURE_ROUNDS } from '../apps/server/src/source-version-retention.js';
 import {
+  accountRetentionCandidatesSql,
+  accountTables,
   restoreRetentionMembershipSql,
   restoreSupportMembershipSql,
 } from '../apps/server/src/retention-metadata.js';
@@ -128,10 +131,22 @@ async function storageSchema(adminUrl: string) {
               support: SUPPORT_MEMBERSHIP_PREPARATION,
               rounds: SOURCE_RETENTION_CLOSURE_ROUNDS,
             },
-            archiveSelection: restoreArchiveSelectionSql('$1::text', '$2'),
+            archiveSelection: restoreArchiveSelectionSql('$1::text', '$2', 'complete-checkpoint'),
             archiveRows: restoreArchiveSelectionRows,
             supportMembership: restoreSupportMembershipSql('$1', '$2', '$3'),
             retentionMembership: restoreRetentionMembershipSql('$1', '$2', '$3', '$4'),
+            accountMetadata: Object.fromEntries(
+              accountTables.map((table) => [
+                table,
+                accountRetentionCandidatesSql(
+                  table,
+                  '($1::text,$2::double precision,$3::boolean,$4::text[],ARRAY[]::text[],ARRAY[]::text[])',
+                  '$5',
+                  true,
+                ),
+              ]),
+            ),
+            summaryMemoryPrefix,
             historyEdit: {
               dependencies: correctionDependencySql('$1::text', '$2', '$3'),
               aliasPages: correctionAliasPagesSql('$1', '$2', '$3', '$4', '$5::text'),
