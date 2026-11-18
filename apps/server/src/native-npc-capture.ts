@@ -54,7 +54,7 @@ import {
   driveNativeNpcSources,
   type NativeHistoryReadContext,
 } from './native-providers.js';
-import { captureNativeReadCut, nativeScopedReadCut } from './native-read-cut.js';
+import { captureNativeScopedReadCut } from './native-read-cut.js';
 import type {
   NativeNpcBindingSelection,
   NativeNpcHistoricalScope,
@@ -460,18 +460,31 @@ export class NativeNpcCapture {
     const facts = this.facts;
     const read = this.read;
     signal?.throwIfAborted();
-    const current = await captureNativeReadCut(world, facts.self.actorId);
-    const pending = history.liveReadCuts({
-      worldId: facts.self.worldId,
-      actorId: facts.self.actorId,
+    const cut = await captureNativeScopedReadCut(world, facts.self.actorId, () => {
+      const pending = history.liveReadCuts({
+        worldId: facts.self.worldId,
+        actorId: facts.self.actorId,
+      });
+      if (!pending) throw new Error('Native source preparation has no accepted publication owner.');
+      return pending;
     });
-    if (!pending) throw new Error('Native source preparation has no accepted publication owner.');
-    const cut = nativeScopedReadCut(current, pending);
-    const prepared = { db: history.db, liveReadCuts: () => cut };
-    const first = await withNativeJsonInput(world, selection, (bytes) =>
-      world.npcSources(read, bytes),
-    );
-    await driveNativeNpcSources(world, read, first, geometry, prepared, signal);
+    try {
+      const first = await withNativeJsonInput(world, selection, (bytes) =>
+        world.npcSources(read, bytes),
+      );
+      await driveNativeNpcSources(
+        world,
+        read,
+        first,
+        geometry,
+        { db: history.db, liveReadCuts: () => cut },
+        signal,
+      );
+    } finally {
+      // The completed native inventory owns its selected sources. Provider
+      // work and subsequent expansions never borrow this earlier SQL overlay.
+      releaseNativeProduct(cut);
+    }
     const product = freezeNativeProduct(
       decodeNativeProduct<{ ordinal: number; inventory: NativeNpcSourceInventory }>(
         await read.latestSources(),
