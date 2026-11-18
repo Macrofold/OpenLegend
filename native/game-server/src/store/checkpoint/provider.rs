@@ -50,12 +50,13 @@ pub(super) async fn verify_header(
     store: &Store,
     tx: &Transaction<'_>,
     prospective: &DurableHead,
+    accepted_cut: u64,
     binding: &Binding,
     at: Option<f64>,
 ) -> StoreResult<()> {
     if binding.world_id != prospective.world_id
         || binding.generation != prospective.generation
-        || binding.accepted_cut != 0
+        || binding.accepted_cut != accepted_cut
         || [
             binding.identity_through,
             binding.candidate_id,

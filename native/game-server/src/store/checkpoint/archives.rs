@@ -98,7 +98,7 @@ impl Store {
         prepared: &PreparedCheckpointArchives,
     ) -> StoreResult<RuntimeProviderInput> {
         let input = &prepared.input;
-        provider::verify_header(self, tx, prospective, &input.binding, None).await?;
+        provider::verify_header(self, tx, prospective, 0, &input.binding, None).await?;
         if input.archives.len() > self.schema.checkpoint.archive_rows
             || input
                 .offset
@@ -290,7 +290,7 @@ impl Store {
         })
     }
 
-    fn encode_restore_output(
+    pub(super) fn encode_restore_output(
         &self,
         value: &impl Serialize,
         limit: usize,

@@ -70,6 +70,39 @@ interface RetentionSnapshot {
 }
 
 export const accountTables = ['mind_awareness', 'mind_memories', 'mind_summaries'] as const;
+
+function accountMembershipQueries(world: string) {
+  return accountTables.map((table) => {
+    const suffix =
+      table === 'mind_awareness'
+        ? 'awareness'
+        : table === 'mind_memories'
+          ? 'memories'
+          : 'summaries';
+    return `SELECT q.key,
+      ARRAY(SELECT id FROM unnest(q.aliases) id WHERE t.kind IS DISTINCT FROM 'impression' AND
+        (id=t.source_id OR id=t.event_id OR jsonb_exists(t.retention_metadata->'aliases',id))) AS aliases,
+      ARRAY(SELECT id FROM unnest(q.individuals) id WHERE id=ANY(t.individual_ids)) AS individuals,
+      NULL::text AS page_id,0::bigint AS page_bytes
+      FROM requested q JOIN ${table} t ON t.world_id=${world} AND t.actor_id=q.actor_id
+      WHERE q.${suffix} AND NOT(t.id=ANY(q.excluded_${suffix})) AND
+        (t.source_id=ANY(q.aliases) OR t.event_id=ANY(q.aliases) OR
+          jsonb_exists_any(t.retention_metadata->'aliases',q.aliases) OR t.individual_ids && q.individuals)`;
+  });
+}
+
+/** A stopped native restore already owns its complete prospective rows. Use
+ * the same account membership predicates and exclude all recent-page work. */
+export function restoreSupportMembershipSql(world: string, actor: string, aliases: string) {
+  return `WITH requested AS MATERIALIZED (
+    SELECT 0 AS key,${actor}::text AS actor_id,${aliases}::text[] AS aliases,
+      ARRAY[]::text[] AS individuals,true AS awareness,true AS memories,true AS summaries,
+      ARRAY[]::text[] AS excluded_awareness,ARRAY[]::text[] AS excluded_memories,
+      ARRAY[]::text[] AS excluded_summaries
+  ), proofs AS (${accountMembershipQueries(world).join(' UNION ALL ')})
+  SELECT DISTINCT unnest(aliases) FROM proofs`;
+}
+
 const indexedTables = [...accountTables, 'mind_temporal_pages', 'mind_temporal_supports'] as const;
 const indexed = new Set<string>(indexedTables);
 const accountColumns = [
@@ -1115,23 +1148,7 @@ export class RetentionMetadataView {
       }
       const encoded = `[${encodedInputs.join(',')}]`;
       countMetric('retention.survivalCandidates', keys);
-      const accountQueries = accountTables.map((table) => {
-        const suffix =
-          table === 'mind_awareness'
-            ? 'awareness'
-            : table === 'mind_memories'
-              ? 'memories'
-              : 'summaries';
-        return `SELECT q.key,
-          ARRAY(SELECT id FROM unnest(q.aliases) id WHERE t.kind IS DISTINCT FROM 'impression' AND
-            (id=t.source_id OR id=t.event_id OR jsonb_exists(t.retention_metadata->'aliases',id))) AS aliases,
-          ARRAY(SELECT id FROM unnest(q.individuals) id WHERE id=ANY(t.individual_ids)) AS individuals,
-          NULL::text AS page_id,0::bigint AS page_bytes
-          FROM requested q JOIN ${table} t ON t.world_id=? AND t.actor_id=q.actor_id
-          WHERE q.${suffix} AND NOT(t.id=ANY(q.excluded_${suffix})) AND
-            (t.source_id=ANY(q.aliases) OR t.event_id=ANY(q.aliases) OR
-              jsonb_exists_any(t.retention_metadata->'aliases',q.aliases) OR t.individual_ids && q.individuals)`;
-      });
+      const accountQueries = accountMembershipQueries('?');
       const readMembership = () =>
         db
           .prepare(

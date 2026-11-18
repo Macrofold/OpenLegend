@@ -26,7 +26,9 @@ mod authority;
 mod history_read;
 mod positions;
 mod provider;
+mod support;
 mod write;
+pub(super) use authority::{AcceptedPrivacy, validate_privacy};
 pub(crate) use authority::{RecoveryAuthority, read_recovery_authority};
 pub(crate) use history_read::PreparedCheckpointHistory;
 pub(crate) use positions::reconcile_history_positions;
@@ -51,6 +53,7 @@ pub(crate) struct CheckpointFormat {
     pub(super) history_edit: HistoryEditSql,
     pub(super) archive_selection: String,
     pub(super) archive_rows: usize,
+    pub(super) support_membership: String,
 }
 
 #[derive(Deserialize)]
@@ -72,6 +75,7 @@ impl CheckpointFormat {
             .checked_add(self.format.capacity())?
             .checked_add(self.retention_preparation.get().len())?
             .checked_add(self.archive_selection.capacity())?
+            .checked_add(self.support_membership.capacity())?
             .checked_add(self.history_edit.dependencies.capacity())?
             .checked_add(self.history_edit.alias_pages.capacity())?
             .checked_add(self.history_edit.addressed_pages.capacity())?;
@@ -99,6 +103,7 @@ impl CheckpointFormat {
             || self.row_bytes > self.bytes
             || self.archive_selection.is_empty()
             || self.archive_rows == 0
+            || self.support_membership.is_empty()
             || self.history_edit.dependencies.is_empty()
             || self.history_edit.alias_pages.is_empty()
             || self.history_edit.addressed_pages.is_empty()

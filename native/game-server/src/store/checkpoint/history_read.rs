@@ -14,6 +14,7 @@ use openlegend_simulation::runtime::{RuntimeProvider, RuntimeProviderInput};
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
 use std::collections::BTreeMap;
+use std::sync::Arc;
 use tokio_postgres::Transaction;
 use tokio_postgres::types::ToSql;
 
@@ -61,7 +62,7 @@ struct Question {
     totals: Totals,
     maximum_transfer_bytes: usize,
     predecessors: Vec<Predecessor>,
-    restore_projection: Box<RawValue>,
+    restore_projection: Option<Box<RawValue>>,
 }
 
 pub(crate) struct PreparedCheckpointHistory {
@@ -71,7 +72,10 @@ pub(crate) struct PreparedCheckpointHistory {
 
 impl PreparedCheckpointHistory {
     pub(crate) fn projection(&self) -> &RawValue {
-        &self.input.restore_projection
+        self.input
+            .restore_projection
+            .as_deref()
+            .expect("checked private restore projection")
     }
 }
 
@@ -100,7 +104,10 @@ impl Store {
         &self,
         provider: &RuntimeProvider,
     ) -> StoreResult<PreparedCheckpointHistory> {
-        let (input, custody) = provider::prepare(self, provider, "history")?;
+        let (input, custody): (Question, _) = provider::prepare(self, provider, "history")?;
+        if input.restore_projection.is_none() {
+            return Err(StoreError::InvalidRecord);
+        }
         Ok(PreparedCheckpointHistory {
             input,
             _custody: custody,
@@ -115,9 +122,53 @@ impl Store {
         prospective: &DurableHead,
         prepared: &PreparedCheckpointHistory,
     ) -> StoreResult<RuntimeProviderInput> {
-        let request = &prepared.input;
+        self.read_history_at(tx, prospective, 0, &prepared.input)
+            .await
+    }
+
+    /// The protected world caller holds one accepted turn and has flushed
+    /// its exact predecessor. This live read reuses the restore selection
+    /// without letting an awaited SQL snapshot drift to a later accepted cut.
+    pub(crate) async fn read_live_personal_history(
+        self: &Arc<Self>,
+        provider: &RuntimeProvider,
+        durable: DurableHead,
+        accepted_cut: u64,
+    ) -> StoreResult<RuntimeProviderInput> {
+        self.assert_write_admission()?;
+        let (request, custody): (Question, _) = provider::prepare(self, provider, "history")?;
+        if request.restore_projection.is_some() {
+            return Err(StoreError::InvalidRecord);
+        }
+        let store = Arc::clone(self);
+        self.read_operational(move |tx| {
+            Box::pin(async move {
+                let _request_storage = custody;
+                store
+                    .read_history_at(tx, &durable, accepted_cut, &request)
+                    .await
+            })
+        })
+        .await
+    }
+
+    async fn read_history_at(
+        &self,
+        tx: &Transaction<'_>,
+        prospective: &DurableHead,
+        accepted_cut: u64,
+        request: &Question,
+    ) -> StoreResult<RuntimeProviderInput> {
         verify_request(request)?;
-        provider::verify_header(self, tx, prospective, &request.binding, Some(request.at)).await?;
+        provider::verify_header(
+            self,
+            tx,
+            prospective,
+            accepted_cut,
+            &request.binding,
+            Some(request.at),
+        )
+        .await?;
         let mut custody = self
             .budget
             .reserve(4096)

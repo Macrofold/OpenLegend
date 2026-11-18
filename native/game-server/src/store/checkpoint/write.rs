@@ -4,7 +4,9 @@
 use super::CheckpointHistory;
 use crate::store::read::admitted_query;
 use crate::store::write::{BATCH_BYTES, insert_checkpoint_rows};
-use crate::store::{CurrentOpening, DurableHead, Store, StoreError, StoreResult, sql_ordinal};
+use crate::store::{
+    CurrentOpening, DurableHead, Store, StoreError, StoreResult, durable_head, sql_ordinal,
+};
 use openlegend_simulation::records::{ChangedRows, SqlCell};
 use serde_json::value::RawValue;
 use std::collections::{BTreeMap, BTreeSet};
@@ -22,6 +24,21 @@ impl Store {
         projection: &RawValue,
         consume: impl std::future::Future<Output = StoreResult<R>>,
     ) -> StoreResult<R> {
+        self.with_checkpoint_projection(tx, prospective, projection, true, consume)
+            .await
+    }
+
+    pub(super) async fn with_checkpoint_projection<R>(
+        &self,
+        tx: &Transaction<'_>,
+        prospective: &DurableHead,
+        projection: &RawValue,
+        needs_dependencies: bool,
+        consume: impl std::future::Future<Output = StoreResult<R>>,
+    ) -> StoreResult<R> {
+        if durable_head(tx).await?.as_ref() != Some(prospective) {
+            return Err(StoreError::StaleCut);
+        }
         let _workspace = self
             .budget
             .reserve(SqlCell::json_decode_bound(projection.get()).ok_or(StoreError::InvalidRecord)?)
@@ -31,28 +48,29 @@ impl Store {
         self.validate_rows(&changes)?;
         // A dependent recall projection must be applied before a lookup uses
         // those indexes. Keep its admission closed until that owner is joined.
-        if changes
-            .writes
-            .keys()
-            .chain(changes.deletes.keys())
-            .any(|name| {
-                matches!(
-                    name.as_str(),
-                    "data_world"
-                        | "experience_state"
-                        | "world_memories"
-                        | "mind_awareness"
-                        | "mind_awareness_owners"
-                        | "mind_memories"
-                        | "mind_memories_owners"
-                        | "mind_summaries"
-                        | "mind_summaries_owners"
-                        | "mind_forgotten"
-                        | "mind_forgotten_owners"
-                        | "mind_corrections"
-                        | "mind_corrections_owners"
-                )
-            })
+        if needs_dependencies
+            && changes
+                .writes
+                .keys()
+                .chain(changes.deletes.keys())
+                .any(|name| {
+                    matches!(
+                        name.as_str(),
+                        "data_world"
+                            | "experience_state"
+                            | "world_memories"
+                            | "mind_awareness"
+                            | "mind_awareness_owners"
+                            | "mind_memories"
+                            | "mind_memories_owners"
+                            | "mind_summaries"
+                            | "mind_summaries_owners"
+                            | "mind_forgotten"
+                            | "mind_forgotten_owners"
+                            | "mind_corrections"
+                            | "mind_corrections_owners"
+                    )
+                })
         {
             return Err(StoreError::DerivedProjectionRequired);
         }
@@ -61,8 +79,6 @@ impl Store {
         tx.batch_execute("SAVEPOINT recovery_read").await?;
         let answer = async {
             self.write_records(tx, world, revision, &changes).await?;
-            self.project_received(tx, world, revision, &changes).await?;
-            self.project_support_places(tx, world, &changes).await?;
             consume.await
         }
         .await;

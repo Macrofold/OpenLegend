@@ -202,7 +202,7 @@ pub(crate) async fn read_recovery_authority(
     })
 }
 
-fn validate_privacy(privacy: &AcceptedPrivacy) -> StoreResult<()> {
+pub(crate) fn validate_privacy(privacy: &AcceptedPrivacy) -> StoreResult<()> {
     // Fact aliases may be longer than entity IDs. They still exclude empty and
     // current JavaScript prototype keys, as the original operational ledger.
     let valid_source = |source: &str| {
