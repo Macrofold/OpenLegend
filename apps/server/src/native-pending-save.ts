@@ -178,7 +178,10 @@ export class NativePendingSave {
           publication,
           ...receipts,
         );
-        const entry: Entry = { value, acceptedAt: 0, dispose: () => owner.dispose() };
+        // The queue needs the scope's disposer, without the acceptance closure
+        // that captures the previous tail. A wrapper here can keep that
+        // predecessor's entire published graph reachable after acknowledgement.
+        const entry: Entry = { value, acceptedAt: 0, dispose: owner.dispose };
         const before = this.tail;
         return {
           value,
@@ -438,7 +441,7 @@ export class NativePendingSave {
           ...receipts.values(),
           ...(temporalEdits ? [temporalEdits] : []),
         );
-        this.prefixOwners.set(prefix, () => owner.dispose());
+        this.prefixOwners.set(prefix, owner.dispose);
         return prefix;
       });
     } catch (error) {
