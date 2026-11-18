@@ -10,6 +10,7 @@ use crate::reception::SensoryFacet;
 #[derive(Clone)]
 pub struct RuntimeHistory(CapturedHistoryInput);
 
+#[derive(Clone, Copy)]
 pub struct HistoryAccount<'a> {
     pub event_id: &'a str,
     pub actor_id: &'a str,
@@ -17,6 +18,7 @@ pub struct HistoryAccount<'a> {
     pub temporal: Option<HistoryTemporal<'a>>,
 }
 
+#[derive(Clone, Copy)]
 pub struct HistoryTemporal<'a> {
     pub receipt: &'a TemporalReceipt,
     pub values: &'a [SensoryFacet],
@@ -99,8 +101,8 @@ impl RuntimeHistory {
         )
     }
     /// Narration belongs only to the actual captured player principal.
-    pub fn has_story_principal(&self, actor: &str) -> bool {
-        self.0.has_principal(actor)
+    pub fn story_principal(&self, actor: &str) -> Option<&str> {
+        self.0.story_principal(actor)
     }
 
     /// The event-time subject's type and selected field, without retaining its body.

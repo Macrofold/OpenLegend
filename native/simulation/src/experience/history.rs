@@ -206,12 +206,13 @@ impl CapturedHistoryInput {
             )
         })
     }
-    pub(crate) fn has_principal(&self, actor: &str) -> bool {
+    pub(crate) fn story_principal(&self, actor: &str) -> Option<&str> {
         self.0
             .input
             .principals
             .iter()
-            .any(|principal| principal.actor_id == actor)
+            .find(|principal| principal.actor_id == actor)
+            .map(|principal| principal.owner_id.as_str())
     }
 
     pub(crate) fn story_subject(

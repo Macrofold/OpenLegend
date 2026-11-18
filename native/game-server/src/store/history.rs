@@ -15,6 +15,7 @@ use tokio_postgres::types::{ToSql, Type};
 
 mod perspective;
 mod story;
+mod story_write;
 use perspective::{Compare, Perspective};
 
 /// Write the actual detached occurrence and personal-account changes. Recall,
@@ -50,16 +51,24 @@ impl<'a> OrdinaryProjection<'a> {
         self
     }
 
-    /// Check while the exact candidate can still be rolled back. This port
-    /// supports ordinary awareness appends and actual captured perspectives.
-    /// Edits, erasures and positive narration selection still need their owners.
+    /// Check while the exact candidate can still be rolled back. Protected
+    /// personal edits and erasures still have their own projection owner.
     pub fn validate_candidate(
         store: &Store,
         changes: &ChangedRows,
         history: &RuntimeHistory,
     ) -> StoreResult<()> {
-        if derived_rows(changes) || store.requires_story(history)? {
+        if derived_rows(changes) {
             return Err(StoreError::DerivedProjectionRequired);
+        }
+        // A malformed authored policy must refuse before this candidate
+        // enters the ordinary save queue. Unobserved changes have no story
+        // authority and need no policy read here.
+        if history
+            .accounts()
+            .any(|account| history.story_principal(account.actor_id).is_some())
+        {
+            store.story_policy(history)?;
         }
         Ok(())
     }
@@ -248,6 +257,20 @@ impl Store {
             .reserve(8192)
             .map_err(|_| StoreError::Capacity)?;
         let mut prepared = Vec::with_capacity(64);
+        let current = histories.last().ok_or(StoreError::StaleCut)?;
+        // Capture the latest authored policy once per prefix. Event-time
+        // subject fields occur only in the individual admitted captures.
+        let story_policy = if histories.iter().any(|history| {
+            history
+                .accounts()
+                .any(|account| current.story_principal(account.actor_id).is_some())
+        }) {
+            self.story_policy(current)?
+        } else {
+            None
+        };
+        let mut stories = Vec::new();
+
         for history in histories {
             let count = history.originals().len();
             let _index = self
@@ -299,7 +322,7 @@ impl Store {
                         continue;
                     }
                 }
-                prepared.push(Perspective::prepare(
+                let perspective = Perspective::prepare(
                     account,
                     original,
                     revision
@@ -307,7 +330,21 @@ impl Store {
                     event_position(original)?,
                     compare,
                     &self.budget,
-                )?);
+                )?;
+                if let Some(policy) = &story_policy
+                    && let Some(owner) = current.story_principal(account.actor_id)
+                    && let Some(story) = policy.candidate(
+                        self,
+                        history,
+                        owner,
+                        original.event(),
+                        account,
+                        &perspective,
+                    )?
+                {
+                    stories.push(story);
+                }
+                prepared.push(perspective);
                 if prepared.len() == 64 {
                     Self::insert_perspectives(transaction, &rows.world_id, &prepared).await?;
                     prepared.clear();
@@ -317,6 +354,8 @@ impl Store {
         if !prepared.is_empty() {
             Self::insert_perspectives(transaction, &rows.world_id, &prepared).await?;
         }
+        self.append_stories(transaction, &rows.world_id, stories, compare)
+            .await?;
         Ok(())
     }
 

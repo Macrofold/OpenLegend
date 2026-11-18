@@ -43,7 +43,7 @@ pub(super) struct AwarenessEvidence<'a> {
     pub(super) event_type: Cow<'a, str>,
     pub(super) text: &'a RawValue,
     #[serde(skip_serializing_if = "Option::is_none")]
-    content: Option<&'a RawValue>,
+    pub(super) content: Option<&'a RawValue>,
     modality: &'a RawValue,
     #[serde(borrow, skip_serializing_if = "Option::is_none")]
     pub(super) source_id: Option<Cow<'a, str>>,
@@ -82,7 +82,7 @@ pub(super) struct TemporalEvidence<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     urgency: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    content: Option<&'a JsText>,
+    pub(super) content: Option<&'a JsText>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(super) source_id: Option<&'a str>,
     #[serde(skip_serializing_if = "Option::is_none")]
