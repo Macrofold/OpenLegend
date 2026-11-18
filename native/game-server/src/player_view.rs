@@ -562,6 +562,34 @@ impl PreparedPlayerView {
         self.owned.events.speech_reply_ids()
     }
 
+    /// Read the current installed-artwork grant only for the accepted saved
+    /// binding. Call after other async projection reads and immediately before
+    /// the current session/native publication gate.
+    pub(crate) async fn attach_presentation_release(
+        &mut self,
+        installed: Option<&crate::player_http::assets::InstalledAssets>,
+        store: &crate::store::Store,
+    ) -> Result<(), ViewError> {
+        let source = self.read.view_source().map_err(runtime)?;
+        let (Some(raw), Some(installed)) = (source.presentation_release(), installed) else {
+            return Ok(());
+        };
+        let release =
+            crate::store::assets::AssetRevision::from_current(raw).map_err(ViewError::Store)?;
+        if installed
+            .permitted_release(store, &self.owned.host.access.account_id, &release)
+            .await
+            .map_err(ViewError::Store)?
+            .is_some()
+        {
+            // The independent host view owns this small exact reference even
+            // after the native capture is released on stream handoff.
+            self.owned.host.presentation_release = Some(Arc::from(raw.to_owned()));
+            self.owned.host.presentation_release_revision = source.presentation_release_revision;
+        }
+        Ok(())
+    }
+
     /// Join only the selected speech events' independently admitted job
     /// products. The original read and disclosure boundary stay intact.
     pub fn attach_speech_replies(

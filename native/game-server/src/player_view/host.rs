@@ -130,11 +130,6 @@ impl ViewHostInput {
     ) -> Result<ViewHostFacts, ViewError> {
         let input = read.view_source().map_err(runtime)?;
         let control = read.control_facts().map_err(runtime)?;
-        if input.has_presentation_release {
-            return Err(ViewError::Unsupported(
-                "the saved asset release needs its current grant owner",
-            ));
-        }
         let history_revision = format!("{}:{}", control.generation, input.history_order);
         let epoch = format!("{}:{}", control.generation, input.privacy_revision);
         let events_revision = format!("{history_revision}:{}", input.privacy_revision);
