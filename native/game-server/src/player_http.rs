@@ -405,15 +405,21 @@ async fn update_input(State(state): State<PlayerRoutes>, request: Request) -> Re
     let inputs = state.inputs.clone();
     let accepted_scope = authorized.clone();
     state.game.world.request_advance_publication();
-    let report = state
-        .game
-        .world
-        .capture(move |world| {
-            let scope = &accepted_scope.scope;
-            let facts = world.player_input_direct(&scope.account_id, &scope.actor_id)?;
-            Ok(inputs.update(accepted_scope, facts, world.clock()?, input))
-        })
-        .await;
+    let report = match inputs.update_during_advance(&authorized, &input) {
+        Ok(Some(result)) => Ok(Ok(result)),
+        Err(error) => Ok(Err(error)),
+        Ok(None) => {
+            state
+                .game
+                .world
+                .capture(move |world| {
+                    let scope = &accepted_scope.scope;
+                    let facts = world.player_input_direct(&scope.account_id, &scope.actor_id)?;
+                    Ok(inputs.update(accepted_scope, facts, world.clock()?, input))
+                })
+                .await
+        }
+    };
     match report {
         Ok(Ok(result)) => {
             match state

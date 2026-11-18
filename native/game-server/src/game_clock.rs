@@ -226,18 +226,20 @@ impl GameClock {
                 if current.paused || current.speed != clock.speed || current.at != clock.at {
                     return Err(WorldError::ClockChanged);
                 }
-                let values = match (inputs, capture) {
+                let key = match (inputs, capture) {
                     (Some(inputs), Some(capture)) => {
+                        let mut held = capture.lock().map_err(|_| HostError::Poisoned)?;
                         let mut snapshot = inputs.snapshot(session)?;
                         let values = snapshot.take();
-                        *capture.lock().map_err(|_| HostError::Poisoned)? = Some(snapshot);
-                        values
+                        // A refused begin drops the input proof before this world
+                        // turn ends. A running candidate retains it until settlement.
+                        let key = session.begin_advance_direct(seconds, 4096, values)?;
+                        *held = Some(snapshot);
+                        key
                     }
-                    _ => Vec::new(),
+                    _ => session.begin_advance_direct(seconds, 4096, Vec::new())?,
                 };
-                Ok(ApplicationStart::Candidate(
-                    session.begin_advance_direct(seconds, 4096, values)?,
-                ))
+                Ok(ApplicationStart::Candidate(key))
             },
             move |question| {
                 let game = game.clone();
