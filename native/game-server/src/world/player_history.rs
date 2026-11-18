@@ -41,7 +41,11 @@ impl HostedWorld {
         selected: &RuntimePlayerTranscriptRead,
         temporal: &[(&TemporalReceiptLocator, f64)],
         expires_at: Option<f64>,
-        publish: impl FnOnce(&ByteBudget) -> Result<Bytes, WorldError>,
+        publish: impl FnOnce(
+            &NativeWorldSession,
+            &openlegend_simulation::runtime::RuntimePrivateHistoryPublication,
+            &ByteBudget,
+        ) -> Result<Bytes, WorldError>,
     ) -> Result<PlayerDisclosure, WorldError> {
         self.request_advance_publication();
         let _turn = self.enter().await?;
@@ -70,7 +74,7 @@ impl HostedWorld {
                 else {
                     return Ok(PlayerDisclosure::Changed);
                 };
-                let bytes = publish(self.host.budget())?;
+                let bytes = publish(&session, &lease, self.host.budget())?;
                 drop(lease);
                 Ok(PlayerDisclosure::Published(bytes))
             })

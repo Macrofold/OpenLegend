@@ -48,6 +48,32 @@ impl RuntimePlayerTranscriptRead {
             self.durable_revision,
         )
     }
+
+    pub fn privacy_revision(&self) -> u64 {
+        self.scope.privacy_revision
+    }
+}
+
+pub struct RuntimeRecordedEventRoles<'a> {
+    roles: crate::experience::player_events::RoleReader<'a>,
+    budget: &'a ByteBudget,
+}
+
+impl RuntimeRecordedEventRoles<'_> {
+    /// Issue only current role facts for the same observer's already
+    /// validated saved evidence. Historical labels remain with that evidence.
+    pub fn project(
+        &self,
+        source_id: Option<&str>,
+        target_id: Option<&str>,
+        subject: Option<&crate::reception::ObserverSubject>,
+        body: Option<&crate::experience::AwarenessSourceBody>,
+        addressee: bool,
+    ) -> Result<crate::experience::player_events::RoleFacts, RuntimeError> {
+        self.roles
+            .project(source_id, target_id, subject, body, addressee, self.budget)
+            .map_err(failure)
+    }
 }
 impl RuntimePrivateHistoryRead {
     pub fn receipt_liveness(&self) -> Weak<AtomicBool> {
@@ -98,6 +124,23 @@ impl RuntimePrivateHistoryRead {
     }
 }
 impl NativeWorldSession {
+    /// Borrow current naming and body associations only within this
+    /// historical read's synchronous disclosure lease.
+    pub fn recorded_event_roles<'a>(
+        &'a self,
+        read: &'a RuntimePlayerTranscriptRead,
+        _lease: &RuntimePrivateHistoryPublication,
+    ) -> Result<RuntimeRecordedEventRoles<'a>, RuntimeError> {
+        let state = &self.session.publication_read().map_err(failure)?.state;
+        let roles =
+            crate::experience::player_events::RoleReader::prepare(state, &read.scope.actor_id)
+                .map_err(failure)?;
+        Ok(RuntimeRecordedEventRoles {
+            roles,
+            budget: &self.budget,
+        })
+    }
+
     /// Pin the current player's private transcript authority and a fixed
     /// already-durable SQL version. No accepted but unsaved event is assumed
     /// available to this historical reader.

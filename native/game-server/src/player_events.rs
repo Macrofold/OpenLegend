@@ -170,70 +170,72 @@ struct Contact {
 impl Evidence {
     fn read(account: &Account<'_>, observer: &str) -> Result<Option<Self>, PlayerEventError> {
         match (account.evidence, account.values) {
-            (Some(persisted), None) => {
-                let evidence: Self = serde_json::from_str(persisted.get())?;
-                if evidence.actor_id != observer {
-                    return Err(PlayerEventError::InvalidCapture);
-                }
-                Ok(Some(evidence))
-            }
-            (None, Some(captured)) => {
-                // A selected temporal/current value is the account. It is
-                // never reconstructed from the objective occurrence.
-                let mut event = None;
-                let mut heard = None;
-                for value in serde_json::from_str::<Vec<SensoryFacet>>(captured.get())? {
-                    match value {
-                        value @ SensoryFacet::Event { .. } if event.is_none() => {
-                            event = Some(value)
-                        }
-                        SensoryFacet::Sound { sound, .. } if heard.is_none() => heard = Some(sound),
-                        _ => {}
-                    }
-                }
-                let Some(SensoryFacet::Event {
-                    event_type,
-                    text,
-                    modality,
-                    data,
-                    references,
-                    source_subject,
-                    ..
-                }) = event
-                else {
-                    return Ok(None);
-                };
-                let source_id = references
-                    .iter()
-                    .find(|item| item.role == ReferenceRole::Actor)
-                    .map(|reference| reference.id.clone());
-                let target_id = references
-                    .iter()
-                    .find(|item| item.role == ReferenceRole::Target)
-                    .map(|reference| reference.id.clone());
-                Ok(Some(Self {
-                    actor_id: observer.to_owned(),
-                    event_type,
-                    text: NativeText::Literal(text),
-                    modality,
-                    references: references
-                        .into_iter()
-                        .map(|reference| EventReference {
-                            id: reference.id,
-                            label: reference.label,
-                            role: reference.role,
-                        })
-                        .collect(),
-                    source_id,
-                    target_id,
-                    source_subject,
-                    event_data: Some(data),
-                    speech: None,
-                    sound: heard,
-                }))
-            }
+            (Some(persisted), None) => Ok(Some(Self::persisted(persisted.get(), observer)?)),
+            (None, Some(captured)) => Self::facets(serde_json::from_str(captured.get())?, observer),
             _ => Err(PlayerEventError::InvalidCapture),
         }
+    }
+
+    fn persisted(body: &str, observer: &str) -> Result<Self, PlayerEventError> {
+        let evidence: Self = serde_json::from_str(body)?;
+        if evidence.actor_id != observer {
+            return Err(PlayerEventError::InvalidCapture);
+        }
+        Ok(evidence)
+    }
+
+    fn facets(values: Vec<SensoryFacet>, observer: &str) -> Result<Option<Self>, PlayerEventError> {
+        // A selected temporal/current value is the account. It is
+        // never reconstructed from the objective occurrence.
+        let mut event = None;
+        let mut heard = None;
+        for value in values {
+            match value {
+                value @ SensoryFacet::Event { .. } if event.is_none() => event = Some(value),
+                SensoryFacet::Sound { sound, .. } if heard.is_none() => heard = Some(sound),
+                _ => {}
+            }
+        }
+        let Some(SensoryFacet::Event {
+            event_type,
+            text,
+            modality,
+            data,
+            references,
+            source_subject,
+            ..
+        }) = event
+        else {
+            return Ok(None);
+        };
+        let source_id = references
+            .iter()
+            .find(|item| item.role == ReferenceRole::Actor)
+            .map(|reference| reference.id.clone());
+        let target_id = references
+            .iter()
+            .find(|item| item.role == ReferenceRole::Target)
+            .map(|reference| reference.id.clone());
+        Ok(Some(Self {
+            actor_id: observer.to_owned(),
+            event_type,
+            text: NativeText::Literal(text),
+            modality,
+            references: references
+                .into_iter()
+                .map(|reference| EventReference {
+                    id: reference.id,
+                    label: reference.label,
+                    role: reference.role,
+                })
+                .collect(),
+            source_id,
+            target_id,
+            source_subject,
+            event_data: Some(data),
+            speech: None,
+            sound: heard,
+        }))
     }
 
     fn kind(&self) -> &str {
@@ -267,6 +269,137 @@ impl Evidence {
                 None => native_text(&self.text).ends_with_str(&rule.text_suffix),
                 _ => false,
             }
+    }
+}
+
+pub(crate) struct RetainedPlayerEvent {
+    pub id: String,
+    pub time: f64,
+    evidence: Evidence,
+    rendered: JsText,
+    source_body: Option<openlegend_simulation::experience::AwarenessSourceBody>,
+    pub expires_at: Option<f64>,
+}
+
+impl RetainedPlayerEvent {
+    pub(crate) fn awareness(
+        id: String,
+        time: f64,
+        payload: &str,
+        actor: &str,
+    ) -> Result<Self, PlayerEventError> {
+        #[derive(Deserialize)]
+        #[serde(rename_all = "camelCase")]
+        struct ArchivedScope {
+            event_id: Option<String>,
+            source_body: Option<openlegend_simulation::experience::AwarenessSourceBody>,
+            expires_at: Option<f64>,
+        }
+        let archived: ArchivedScope = serde_json::from_str(payload)?;
+        if archived
+            .event_id
+            .as_deref()
+            .is_some_and(|stored| stored != id)
+        {
+            return Err(PlayerEventError::InvalidCapture);
+        }
+        let evidence = Evidence::persisted(payload, actor)?;
+        let rendered = native_text(&evidence.text);
+        Ok(Self {
+            id,
+            time,
+            evidence,
+            rendered,
+            source_body: archived.source_body,
+            expires_at: archived.expires_at,
+        })
+    }
+
+    pub(crate) fn temporal(
+        id: String,
+        time: f64,
+        values: Vec<SensoryFacet>,
+        actor: &str,
+    ) -> Result<Self, PlayerEventError> {
+        let evidence = Evidence::facets(values, actor)?.ok_or(PlayerEventError::InvalidCapture)?;
+        let rendered = native_text(&evidence.text);
+        Ok(Self {
+            id,
+            time,
+            evidence,
+            rendered,
+            source_body: None,
+            expires_at: None,
+        })
+    }
+
+    pub(crate) fn text(&self) -> &JsText {
+        &self.rendered
+    }
+
+    pub(crate) fn project(
+        &self,
+        policy: &PlayerEventPolicy,
+        issuer: &PlayerReferences<'_>,
+        roles: &openlegend_simulation::runtime::RuntimeRecordedEventRoles<'_>,
+    ) -> Result<PublicEvent, PlayerEventError> {
+        let evidence = &self.evidence;
+        let actor = roles
+            .project(
+                evidence.source_id.as_deref(),
+                evidence.target_id.as_deref(),
+                evidence.source_subject.as_ref(),
+                self.source_body.as_ref(),
+                evidence
+                    .speech
+                    .as_ref()
+                    .is_some_and(|speech| speech.addressee.is_some()),
+            )
+            .map_err(|_| PlayerEventError::InvalidCapture)?;
+        let actor_contact = actor.actor_contact.map(|value| Contact {
+            id: value.id,
+            life: value.life,
+            lease_id: value.lease_id,
+        });
+        let target_contact = actor.target_contact.map(|value| Contact {
+            id: value.id,
+            life: value.life,
+            lease_id: value.lease_id,
+        });
+        project_row(
+            &self.id,
+            self.time,
+            RoleFacts {
+                self_contact: actor.self_contact,
+                actor_contact,
+                target_contact,
+                source_communication_id: actor.source_communication_id,
+                target_communication_id: actor.target_communication_id,
+            },
+            evidence,
+            self.rendered.clone(),
+            policy,
+            issuer,
+        )
+    }
+}
+
+impl PlayerEventPolicy {
+    /// Select installed kinds before touching stored account bodies. Fallback
+    /// admission inverts the smaller predicate over configured kinds.
+    pub(crate) fn history_kinds(&self, category: &str, show_all: bool) -> (Vec<&str>, bool) {
+        let shown = |value: &Presentation| {
+            (category == "all" || value.category == category)
+                && (show_all || value.display_to_player == Some(true))
+        };
+        let include_fallback = shown(&self.presentation.fallback);
+        let kinds = self
+            .presentation
+            .types
+            .iter()
+            .filter_map(|(kind, rule)| (shown(rule) != include_fallback).then_some(kind.as_str()))
+            .collect();
+        (kinds, !include_fallback)
     }
 }
 
@@ -701,9 +834,27 @@ fn public_row(
     policy: &PlayerEventPolicy,
     issuer: &PlayerReferences<'_>,
 ) -> Result<PublicEvent, PlayerEventError> {
-    let id = account.original.id;
-    let (actor, target) =
-        live_references(serde_json::from_str(account.roles.get())?, evidence, issuer)?;
+    project_row(
+        account.original.id,
+        account.original.at,
+        serde_json::from_str(account.roles.get())?,
+        evidence,
+        rendered,
+        policy,
+        issuer,
+    )
+}
+
+fn project_row(
+    id: &str,
+    at: f64,
+    roles: RoleFacts,
+    evidence: &Evidence,
+    rendered: JsText,
+    policy: &PlayerEventPolicy,
+    issuer: &PlayerReferences<'_>,
+) -> Result<PublicEvent, PlayerEventError> {
+    let (actor, target) = live_references(roles, evidence, issuer)?;
     let self_actor = evidence.source_id.as_deref() == Some(&evidence.actor_id);
     let references = evidence
         .references
@@ -789,7 +940,7 @@ fn public_row(
         .then_some(true),
         attribute_change,
         id: id.to_owned(),
-        time: account.original.at,
+        time: at,
         kind: kind.to_owned(),
         text,
         modality: evidence.modality,

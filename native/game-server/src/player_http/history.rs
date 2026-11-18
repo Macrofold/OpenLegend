@@ -105,7 +105,7 @@ async fn page(
             &selected,
             &temporal,
             expires_at,
-            |budget| {
+            |_, _, budget| {
                 let visible = Journal {
                     items: &page.items,
                     watermark: page.watermark,

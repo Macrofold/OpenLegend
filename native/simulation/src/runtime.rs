@@ -50,6 +50,7 @@ mod private_history;
 mod reply_preview;
 pub use private_history::{
     RuntimePlayerTranscriptRead, RuntimePrivateHistoryPublication, RuntimePrivateHistoryRead,
+    RuntimeRecordedEventRoles,
 };
 mod navigation;
 mod read_cut;

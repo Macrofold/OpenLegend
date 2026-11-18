@@ -8,6 +8,7 @@ pub(crate) use attempts::{
     AttemptAdmission, AttemptRequest, InferenceClass, ModelReceipt, ModelUsage, ReservedAttempt,
 };
 mod checkpoint;
+pub use checkpoint::RecoveredCheckpoint;
 pub(crate) use checkpoint::{
     AdministrativeCheckpoint, CheckpointHistory, RecoveryAuthority, read_recovery_authority,
     reconcile_history_positions,
@@ -31,6 +32,7 @@ pub(crate) use view_cognition::AiDisplay;
 
 pub use history::OrdinaryProjection;
 pub(crate) use history::banner::NarrationBanner;
+pub(crate) use history::events::{EventBoundary, EventEdge, EventFeed, EventSourceQuery};
 pub(crate) use history::transcript::{Transcript, TranscriptItem, TranscriptRequest};
 pub(crate) use jobs::{AdmittedJob, ConversationJob, JobRequest, TerminalOutcome};
 pub use known_places::PreparedKnownPlaceRead;

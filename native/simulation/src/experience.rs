@@ -34,7 +34,7 @@ mod evidence;
 pub use evidence::*;
 mod history;
 pub use history::{HistoryOriginals, SensoryExpiration};
-mod player_events;
+pub(crate) mod player_events;
 pub(crate) use history::{
     CapturedHistoryCuts, CapturedHistoryInput, HistorySettings, capture_history_cuts,
     capture_history_input, history_account_eligible_at,

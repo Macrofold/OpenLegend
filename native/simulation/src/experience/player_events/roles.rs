@@ -7,27 +7,27 @@ use crate::worlds::InstalledPersonalNameReader;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct Contact {
-    id: String,
-    life: u64,
-    lease_id: String,
+pub struct Contact {
+    pub id: String,
+    pub life: u64,
+    pub lease_id: String,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(super) struct RoleFacts {
-    self_contact: bool,
+pub struct RoleFacts {
+    pub self_contact: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    actor_contact: Option<Contact>,
+    pub actor_contact: Option<Contact>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    source_communication_id: Option<String>,
+    pub source_communication_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    target_communication_id: Option<String>,
+    pub target_communication_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    target_contact: Option<Contact>,
+    pub target_contact: Option<Contact>,
     #[serde(skip)]
     _guard: ByteReservation,
 }
-pub(super) struct RoleReader<'a> {
+pub(crate) struct RoleReader<'a> {
     state: &'a SimulationState,
     actor: &'a str,
     names: InstalledPersonalNameReader<'a>,
@@ -216,6 +216,27 @@ impl<'a> RoleReader<'a> {
                 addressee = false;
             }
         }
+        self.project(
+            source_id,
+            target_id,
+            source_subject,
+            source_body,
+            addressee,
+            budget,
+        )
+    }
+
+    /// Historical words stay fixed. Reuse the same fresh contact and
+    /// communication checks for an independently verified durable account.
+    pub(crate) fn project(
+        &self,
+        source_id: Option<&str>,
+        target_id: Option<&str>,
+        source_subject: Option<&ObserverSubject>,
+        source_body: Option<&AwarenessSourceBody>,
+        addressee: bool,
+        budget: &ByteBudget,
+    ) -> Result<RoleFacts, ExperienceError> {
         let mut self_contact = false;
         let mut actor_contact = None;
         if let Some(body) = source_body {

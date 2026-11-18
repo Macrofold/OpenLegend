@@ -13,7 +13,7 @@ use crate::simulation::SimulationState;
 use serde::ser::{SerializeSeq, SerializeStruct, Serializer};
 use std::mem::size_of;
 mod roles;
-use roles::{RoleFacts, RoleReader};
+pub(crate) use roles::{RoleFacts, RoleReader};
 mod fence;
 pub(crate) use fence::CapturedPlayerEvents;
 

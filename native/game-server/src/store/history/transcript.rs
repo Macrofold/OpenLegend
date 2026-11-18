@@ -310,70 +310,34 @@ fn reserve_graph(custody: &mut ByteReservation, bodies: &[&str]) -> StoreResult<
     custody.resize(bytes).map_err(|_| StoreError::Capacity)
 }
 
-fn event(
+pub(super) enum VerifiedEventBody<'a> {
+    Awareness(&'a str),
+    Temporal {
+        values: Vec<SensoryFacet>,
+        receipt: TemporalReceiptLocator,
+        received_at: f64,
+    },
+}
+
+pub(super) fn retained_event<'a>(
     id: &str,
     position: i64,
     pointer: &str,
-    acquired: &str,
+    acquired: &'a str,
     actor: &str,
     language: &LanguageProvider,
     budget: &ByteBudget,
-) -> StoreResult<TranscriptItem> {
+) -> StoreResult<(f64, VerifiedEventBody<'a>)> {
     let source: Source<'_> = decode(pointer)?;
     if source.id != id || source.order != position || !source.time.is_finite() {
         return Err(StoreError::InvalidRecord);
     }
-    let (kind, text, speaker_id, speaker, speech, temporal, expires_at) = match source.account {
+    let body = match source.account {
         Account::Awareness { revision } | Account::Perspective { revision } => {
             if sha256_hex(acquired.as_bytes()) != revision {
                 return Err(StoreError::InvalidRecord);
             }
-            let evidence: Awareness = decode(acquired)?;
-            if evidence.actor_id != actor
-                || evidence
-                    .event_id
-                    .as_deref()
-                    .is_some_and(|event| event != id)
-            {
-                return Err(StoreError::InvalidRecord);
-            }
-            let mut speech = evidence.speech;
-            let speaker = speech
-                .as_ref()
-                .and_then(|part| part.speaker.as_ref().map(|part| part.name_at_time.clone()))
-                .or_else(|| {
-                    evidence
-                        .references
-                        .into_iter()
-                        .find(|reference| reference.role == ReferenceRole::Actor)
-                        .map(|reference| reference.label)
-                });
-            if let Some(parts) = speech.as_mut() {
-                if parts.perception == SpeechPerception::Seen {
-                    parts.addressing = None;
-                    parts.intelligibility = Intelligibility::None;
-                    parts.segments.clear();
-                    parts.addressee = None;
-                } else {
-                    parts.addressing = Some(parts.addressing.unwrap_or(SpeechAddressing::Ambient));
-                }
-            }
-            let kind = if evidence.event_type == "speech"
-                && (speech.is_some() || evidence.sound.is_none())
-            {
-                ItemKind::Speech
-            } else {
-                ItemKind::Event
-            };
-            (
-                kind,
-                native_text(&evidence.text),
-                evidence.source_id,
-                speaker,
-                speech,
-                None,
-                evidence.expires_at,
-            )
+            VerifiedEventBody::Awareness(acquired)
         }
         Account::Temporal {
             revision,
@@ -424,7 +388,82 @@ fn event(
             if sha256_hex(&canonical) != revision {
                 return Err(StoreError::InvalidRecord);
             }
-            let speaker = body.values.iter().find_map(|value| match value {
+            VerifiedEventBody::Temporal {
+                values: body.values,
+                receipt,
+                received_at,
+            }
+        }
+    };
+    Ok((source.time, body))
+}
+
+fn event(
+    id: &str,
+    position: i64,
+    pointer: &str,
+    acquired: &str,
+    actor: &str,
+    language: &LanguageProvider,
+    budget: &ByteBudget,
+) -> StoreResult<TranscriptItem> {
+    let (at, verified) = retained_event(id, position, pointer, acquired, actor, language, budget)?;
+    let (kind, text, speaker_id, speaker, speech, temporal, expires_at) = match verified {
+        VerifiedEventBody::Awareness(acquired) => {
+            let evidence: Awareness = decode(acquired)?;
+            if evidence.actor_id != actor
+                || evidence
+                    .event_id
+                    .as_deref()
+                    .is_some_and(|event| event != id)
+            {
+                return Err(StoreError::InvalidRecord);
+            }
+            let mut speech = evidence.speech;
+            let speaker = speech
+                .as_ref()
+                .and_then(|part| part.speaker.as_ref().map(|part| part.name_at_time.clone()))
+                .or_else(|| {
+                    evidence
+                        .references
+                        .into_iter()
+                        .find(|reference| reference.role == ReferenceRole::Actor)
+                        .map(|reference| reference.label)
+                });
+            if let Some(parts) = speech.as_mut() {
+                if parts.perception == SpeechPerception::Seen {
+                    parts.addressing = None;
+                    parts.intelligibility = Intelligibility::None;
+                    parts.segments.clear();
+                    parts.addressee = None;
+                } else {
+                    parts.addressing = Some(parts.addressing.unwrap_or(SpeechAddressing::Ambient));
+                }
+            }
+            let kind = if evidence.event_type == "speech"
+                && (speech.is_some() || evidence.sound.is_none())
+            {
+                ItemKind::Speech
+            } else {
+                ItemKind::Event
+            };
+            (
+                kind,
+                native_text(&evidence.text),
+                evidence.source_id,
+                speaker,
+                speech,
+                None,
+                evidence.expires_at,
+            )
+        }
+        VerifiedEventBody::Temporal {
+            values,
+            receipt,
+            received_at,
+        } => {
+            let evidence = TemporalEvidence::acquire(actor, &values)?;
+            let speaker = values.iter().find_map(|value| match value {
                 SensoryFacet::Event { references, .. } => references
                     .iter()
                     .find(|reference| reference.role == ReferenceRole::Actor)
@@ -446,7 +485,7 @@ fn event(
         id: id.to_owned(),
         kind,
         text,
-        time: source.time,
+        time: at,
         order: ordinal(position)?,
         speaker_id: speaker_id.filter(|id| id == actor),
         speaker,

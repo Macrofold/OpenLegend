@@ -19,6 +19,7 @@ use tokio_postgres::Transaction;
 use tokio_postgres::types::{ToSql, Type};
 
 pub(crate) mod banner;
+pub(crate) mod events;
 mod expiry;
 mod perspective;
 mod story;
