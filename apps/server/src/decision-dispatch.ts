@@ -335,7 +335,22 @@ export async function dispatchDecision<R extends DispatchRun, T>(
       if (track) run.failureStage = 'dispatch-source';
       try {
         host.current(run);
-        await run.validateJudgmentSource?.();
+        try {
+          await run.validateJudgmentSource?.();
+        } catch (error) {
+          // The shared preparation validator can also refuse the actual
+          // provider handoff. Keep its cause and record where it stopped.
+          if (
+            error instanceof StopJob &&
+            error.evidence?.stage === 'preparation' &&
+            error.status !== 'cancelled'
+          )
+            throw new StopJob(error.status, error.message, error.outcome, {
+              ...error.evidence,
+              stage: 'dispatch-source',
+            });
+          throw error;
+        }
         host.current(run);
         if (!currentSource()) await refreshFence('dispatch-source');
         assertImmediateDeadline();
