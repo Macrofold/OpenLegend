@@ -69,6 +69,32 @@ struct RestoreContext<'a, A: Serialize> {
     restore_projection: &'a ChangedRows,
     archive_baseline: A,
 }
+fn needs_no_source_versions(records: &ChangedRows, schema: &crate::records::RecordSchema) -> bool {
+    records.deletes.is_empty()
+        && records.expired.is_empty()
+        && records.writes.iter().all(|(name, rows)| {
+            let metadata = schema.layout(name).ok().and_then(|layout| {
+                layout
+                    .columns
+                    .iter()
+                    .position(|column| column == "retention_metadata")
+            });
+            metadata.is_some_and(|metadata| {
+                rows.iter().all(|row| {
+                    row.create
+                        && row.extra.get(metadata).is_some_and(|value| {
+                            ["versions", "learning"].into_iter().all(|field| {
+                                value
+                                    .get(field)
+                                    .and_then(|value| value.as_array())
+                                    .is_some_and(<[_]>::is_empty)
+                            })
+                        })
+                })
+            })
+        })
+}
+
 pub(in crate::simulation) struct Finalizer {
     pub(in crate::simulation) question: Arc<ProviderQuestion>,
     actors: indexmap::IndexSet<String>,
@@ -151,6 +177,23 @@ impl Finalizer {
             return Ok(None);
         }
         records.rows = records.writes.values().map(Vec::len).sum();
+        let predecessors = crate::experience::capture_personal_predecessors(
+            &core.journal.experience,
+            since,
+            budget,
+        )
+        .map_err(|_| DriveError::Encoding)?;
+        // The shared Source planner selects versions only from old bodies,
+        // prior/next version references, and personal learning aliases. An
+        // exact append with none of those inputs has no affected key to query.
+        // docs/projects/rust-game-server-tech-design.md#3-read-and-write-postgresql-directly-rgs03
+        if restore.is_none()
+            && predecessors.records().is_empty()
+            && needs_no_source_versions(&records, &core.state.installed.schema)
+        {
+            return Ok(None);
+        }
+
         let ids = records
             .writes
             .values()
@@ -211,12 +254,6 @@ impl Finalizer {
                 forgotten: history.privacy.forgotten_ids(),
             });
         }
-        let predecessors = crate::experience::capture_personal_predecessors(
-            &core.journal.experience,
-            since,
-            budget,
-        )
-        .map_err(|_| DriveError::Encoding)?;
         let binding =
             GeometryBinding::new(key, core.state.installed.geometry.spatial.revision, serial);
         let maximum_transfer_bytes = budget.limit();
