@@ -6,7 +6,7 @@ Before acting, ensure these instructions are available through the end of [Compl
 
 ## Every response to the developer
 
-Assume Mike knows general software development and has no other context. Make each answer understandable on its own. Explain what the person, object or system does before naming the code. Use plain language and concrete examples where they help. Distinguish what works today, what is proposed and what was measured. Before sending, reread the message from that perspective.
+Use simple, straightforward, intuitive language in every message to Mike, including questions, explanations, progress updates and handoffs. Use concrete examples where they help. Assume Mike has a developer's general technical knowledge and zero other context. Make each message understandable without knowing the code, reading the documentation, knowing specialized terms or having seen any previous messages. Explain what a person, object or system does before naming the code. Distinguish what works today, what is proposed and what was measured. **Before sending any message, reread it from Mike's perspective and revise it until it meets these requirements.**
 
 Never apologize or add self-deprecating commentary about your wording, judgment or performance. State facts, corrections and next actions objectively and matter-of-factly.
 
