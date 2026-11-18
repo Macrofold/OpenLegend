@@ -1641,3 +1641,14 @@ pub fn personal_fact_alias(source_id: &str, ordinal: u64) -> Result<String, Expe
     json_record(&("perception-fact", source_id, ordinal))
         .map_err(|_| ExperienceError::InvalidBody("fact alias encoding"))
 }
+
+/// Recover coordinates for the physical page selector. The full original
+/// alias remains the authority for correction and forgetting.
+pub fn parse_personal_fact_alias(value: &str) -> Option<(String, u64)> {
+    if !value.starts_with("[\"perception-fact\",") {
+        return None;
+    }
+    let (kind, source, ordinal): (&str, String, u64) = serde_json::from_str(value).ok()?;
+    (kind == "perception-fact" && personal_fact_alias(&source, ordinal).ok()?.as_str() == value)
+        .then_some((source, ordinal))
+}

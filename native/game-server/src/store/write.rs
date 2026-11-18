@@ -331,7 +331,7 @@ impl Store {
         Ok(committed.then_some(resolved.acknowledgement))
     }
 
-    fn validate_rows(&self, changes: &ChangedRows) -> StoreResult<()> {
+    pub(super) fn validate_rows(&self, changes: &ChangedRows) -> StoreResult<()> {
         let checked = changes
             .writes
             .keys()
@@ -364,7 +364,7 @@ impl Store {
         Ok(())
     }
 
-    async fn write_records(
+    pub(super) async fn write_records(
         &self,
         transaction: &Transaction<'_>,
         world_id: &str,

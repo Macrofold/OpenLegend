@@ -4,13 +4,44 @@ import type { SqlDatabase } from './store.js';
 import type { LiveReadCuts } from './live-read-overlay.js';
 import type { NativeHistoryEditReadRequest } from './native-temporal-pages.js';
 import type { NativeRestoreArchive } from './native-restore.js';
-import { RestoredSourceVersionSelection } from './source-version-retention.js';
+import {
+  RestoredSourceVersionSelection,
+  sourceVersionPriority,
+} from './source-version-retention.js';
 
 export interface NativeRestoreArchivesRequest {
   readonly binding: NativeHistoryEditReadRequest['binding'];
   readonly offset: number;
   readonly archives: readonly NativeRestoreArchive[];
   readonly maximumTransferBytes: number;
+}
+
+export const restoreArchiveSelectionRows = 256;
+
+/** Exact reverse-index selection shared by both native application hosts. */
+export function restoreArchiveSelectionSql(input: string, world: string) {
+  const derived = (table: string, kind: string) => `
+      SELECT w.ordinal AS archive_index,r.retention_class FROM wanted w
+      JOIN mind_source_dependencies d ON d.world_id=${world} AND d.actor_id=w.actor_id
+        AND d.source_kind=w.kind AND d.source_id=w.id AND d.source_revision=w.revision
+      JOIN ${table} r ON r.world_id=d.world_id AND r.actor_id=d.actor_id
+        AND r.source_id=d.derived_id AND d.derived_kind='${kind}'
+      WHERE ${kind === 'memory' ? "r.kind<>'impression' AND" : ''}
+        r.retention_metadata->'versions' @> jsonb_build_array(jsonb_build_object(
+          'kind',w.kind,'id',w.id,'revision',w.revision))
+        AND NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=r.world_id
+          AND f.actor_id=w.actor_id AND f.source_id=w.id)`;
+  // An invalid class sorts first so the consumer still refuses stored damage.
+  const ranks = (['optional', 'required', 'speech'] as const)
+    .map((category) => `WHEN '${category}' THEN ${sourceVersionPriority(category)}`)
+    .join(' ');
+  return `
+      WITH wanted AS (SELECT * FROM jsonb_to_recordset(${input}::jsonb)
+        w(ordinal integer,actor_id text,kind text,id text,revision text))
+      SELECT DISTINCT ON (archive_index) archive_index,retention_class FROM (
+        ${derived('mind_memories', 'memory')} UNION ALL
+        ${derived('mind_summaries', 'summary')}
+      ) retained ORDER BY archive_index,CASE retention_class ${ranks} ELSE 3 END DESC`;
 }
 
 /** Only exact reverse-index matches reach the canonical reference metadata.
@@ -21,7 +52,8 @@ export async function selectNativeRestoreArchives(
   worldId: string,
   archives: readonly NativeRestoreArchive[],
 ) {
-  if (archives.length > 256) throw new Error('Restore archive query exceeded its bounded batch.');
+  if (archives.length > restoreArchiveSelectionRows)
+    throw new Error('Restore archive query exceeded its bounded batch.');
   const wanted = archives.flatMap((row, index) =>
     row.kind === 'perspective'
       ? []
@@ -37,27 +69,8 @@ export async function selectNativeRestoreArchives(
   );
   const selection = new RestoredSourceVersionSelection(() => false);
   if (wanted.length) {
-    const derived = (table: string, kind: string) => `
-      SELECT w.ordinal AS archive_index,r.retention_class FROM wanted w
-      JOIN mind_source_dependencies d ON d.world_id=? AND d.actor_id=w.actor_id
-        AND d.source_kind=w.kind AND d.source_id=w.id AND d.source_revision=w.revision
-      JOIN ${table} r ON r.world_id=d.world_id AND r.actor_id=d.actor_id
-        AND r.source_id=d.derived_id AND d.derived_kind='${kind}'
-      WHERE ${kind === 'memory' ? "r.kind<>'impression' AND" : ''}
-        r.retention_metadata->'versions' @> jsonb_build_array(jsonb_build_object(
-          'kind',w.kind,'id',w.id,'revision',w.revision))
-        AND NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=r.world_id
-          AND f.actor_id=w.actor_id AND f.source_id=w.id)`;
     const rows = await db
-      .prepare(
-        `
-      WITH wanted AS (SELECT * FROM jsonb_to_recordset(?::jsonb)
-        w(ordinal integer,actor_id text,kind text,id text,revision text))
-      SELECT DISTINCT archive_index,retention_class FROM (
-        ${derived('mind_memories', 'memory')} UNION ALL
-        ${derived('mind_summaries', 'summary')}
-      ) retained ORDER BY archive_index,retention_class`,
-      )
+      .prepare(restoreArchiveSelectionSql('?', '?'))
       .all(JSON.stringify(wanted), worldId, worldId);
     for (const row of rows) {
       const index = Number(row['archive_index']),
@@ -103,7 +116,7 @@ export async function readNativeRestoreArchives(
     binding.acceptedCut !== cut.sequence ||
     !Number.isSafeInteger(request.offset) ||
     request.offset < 0 ||
-    request.archives.length > 256 ||
+    request.archives.length > restoreArchiveSelectionRows ||
     !Number.isSafeInteger(request.offset + request.archives.length) ||
     !Number.isSafeInteger(request.maximumTransferBytes) ||
     request.maximumTransferBytes <= 0

@@ -5,13 +5,72 @@ use super::CheckpointHistory;
 use crate::store::read::admitted_query;
 use crate::store::write::{BATCH_BYTES, insert_checkpoint_rows};
 use crate::store::{CurrentOpening, DurableHead, Store, StoreError, StoreResult, sql_ordinal};
-use openlegend_simulation::records::SqlCell;
+use openlegend_simulation::records::{ChangedRows, SqlCell};
 use serde_json::value::RawValue;
 use std::collections::{BTreeMap, BTreeSet};
 use tokio_postgres::Transaction;
 use tokio_postgres::types::Type;
 
 impl Store {
+    /// Use the candidate's actual private canonical projection for a bounded
+    /// read. End the savepoint before returning any independently funded answer.
+    /// The outer transaction owns cancellation if this future is dropped.
+    pub(crate) async fn with_checkpoint_view<R>(
+        &self,
+        tx: &Transaction<'_>,
+        prospective: &DurableHead,
+        projection: &RawValue,
+        consume: impl std::future::Future<Output = StoreResult<R>>,
+    ) -> StoreResult<R> {
+        let _workspace = self
+            .budget
+            .reserve(SqlCell::json_decode_bound(projection.get()).ok_or(StoreError::InvalidRecord)?)
+            .map_err(|_| StoreError::Capacity)?;
+        let changes: ChangedRows =
+            serde_json::from_str(projection.get()).map_err(|_| StoreError::InvalidRecord)?;
+        self.validate_rows(&changes)?;
+        // A dependent recall projection must be applied before a lookup uses
+        // those indexes. Keep its admission closed until that owner is joined.
+        if changes
+            .writes
+            .keys()
+            .chain(changes.deletes.keys())
+            .any(|name| {
+                matches!(
+                    name.as_str(),
+                    "data_world"
+                        | "experience_state"
+                        | "world_memories"
+                        | "mind_awareness"
+                        | "mind_awareness_owners"
+                        | "mind_memories"
+                        | "mind_memories_owners"
+                        | "mind_summaries"
+                        | "mind_summaries_owners"
+                        | "mind_forgotten"
+                        | "mind_forgotten_owners"
+                        | "mind_corrections"
+                        | "mind_corrections_owners"
+                )
+            })
+        {
+            return Err(StoreError::DerivedProjectionRequired);
+        }
+        let revision = sql_ordinal(prospective.revision)?;
+        let world = &prospective.world_id;
+        tx.batch_execute("SAVEPOINT recovery_read").await?;
+        let answer = async {
+            self.write_records(tx, world, revision, &changes).await?;
+            self.project_received(tx, world, revision, &changes).await?;
+            self.project_support_places(tx, world, &changes).await?;
+            consume.await
+        }
+        .await;
+        tx.batch_execute("ROLLBACK TO SAVEPOINT recovery_read; RELEASE SAVEPOINT recovery_read")
+            .await?;
+        answer
+    }
+
     /// Stage the private checkpoint on the original writer. The caller must
     /// reconcile Native and rebuild derived sources before COMMIT. There is no
     /// standalone acceptance path for these tentative imported bodies.

@@ -60,8 +60,8 @@ impl InstalledRow {
     }
 }
 
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ChangedRow {
     pub id: String,
     pub parent: String,
@@ -87,7 +87,8 @@ impl ChangedRow {
     /// releases the accepted prefix. Fund the typed clone before copying it.
     pub fn installed_bytes(&self) -> Option<usize> {
         use crate::host::retained_size::HeapBytes;
-        self.id.heap_bytes()?
+        self.id
+            .heap_bytes()?
             .checked_add(self.parent.heap_bytes()?)?
             .checked_add(self.slot.heap_bytes()?)?
             .checked_add(self.payload.heap_bytes()?)?
@@ -98,13 +99,13 @@ impl ChangedRow {
 /// Each row carries its semantic position. Independent upserts can be selected
 /// in a different transport order; the PostgreSQL schema owner supplies actual
 /// uniqueness/dependency ordering. Map iteration never chooses gameplay effects.
-#[derive(Debug, Serialize, Default)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Deserialize, Serialize, Default)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ChangedRows {
     pub writes: BTreeMap<String, Vec<ChangedRow>>,
     pub deletes: BTreeMap<String, Vec<String>>,
     pub rows: usize,
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub expired: BTreeMap<String, Vec<String>>,
 }
 

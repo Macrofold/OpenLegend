@@ -193,6 +193,12 @@ fn lookup_bucket(kind: &str, value: &str) -> u64 {
     u64::from(crate::encoding::content_hash(&format!("{kind}\0{value}")) & 16383)
 }
 
+/// Select physical pages that may hold this source alias. A bucket match
+/// alone is never evidence of the alias or its observer's permission.
+pub fn receipt_source_bucket(value: &str) -> u16 {
+    lookup_bucket("sourceIds", value) as u16
+}
+
 pub(super) fn projection(
     metadata: &TemporalPageMetadata,
     actor_id: &str,

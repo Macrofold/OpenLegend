@@ -1,0 +1,97 @@
+//! Shared ownership of the stopped candidate's private provider request and
+//! exact current SQL identity. Live routes cannot construct this product.
+
+use crate::store::read::admitted_query;
+use crate::store::{DurableHead, MAX_SAFE_INTEGER, Store, StoreError, StoreResult, durable_head};
+use openlegend_simulation::{host::ByteReservation, records::SqlCell, runtime::RuntimeProvider};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use tokio_postgres::Transaction;
+
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(super) struct Binding {
+    pub(super) world_id: String,
+    pub(super) generation: String,
+    pub(super) accepted_cut: u64,
+    pub(super) identity_through: u64,
+    candidate_id: u64,
+    candidate_generation: u64,
+    request_serial: u64,
+}
+
+pub(super) fn prepare<T: DeserializeOwned>(
+    store: &Store,
+    provider: &RuntimeProvider,
+    kind: &str,
+) -> StoreResult<(T, ByteReservation)> {
+    #[derive(Deserialize)]
+    struct Envelope<T> {
+        kind: String,
+        value: T,
+    }
+    provider
+        .with_request(|request| {
+            let workspace = SqlCell::json_decode_bound(request).ok_or(StoreError::InvalidRecord)?;
+            let custody = store
+                .budget
+                .reserve(workspace)
+                .map_err(|_| StoreError::Capacity)?;
+            let envelope: Envelope<T> =
+                serde_json::from_str(request).map_err(|_| StoreError::InvalidRecord)?;
+            if envelope.kind != kind {
+                return Err(StoreError::InvalidRecord);
+            }
+            Ok((envelope.value, custody))
+        })
+        .map_err(|_| StoreError::InvalidRecord)?
+}
+
+pub(super) async fn verify_header(
+    store: &Store,
+    tx: &Transaction<'_>,
+    prospective: &DurableHead,
+    binding: &Binding,
+    at: Option<f64>,
+) -> StoreResult<()> {
+    if binding.world_id != prospective.world_id
+        || binding.generation != prospective.generation
+        || binding.accepted_cut != 0
+        || [
+            binding.identity_through,
+            binding.candidate_id,
+            binding.candidate_generation,
+            binding.request_serial,
+        ]
+        .into_iter()
+        .any(|value| value > MAX_SAFE_INTEGER)
+        || durable_head(tx).await?.as_ref() != Some(prospective)
+    {
+        return Err(StoreError::StaleCut);
+    }
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Settings<'a> {
+        id: &'a str,
+        next_id: u64,
+        sim_time: f64,
+    }
+    let (_transfer, rows) = admitted_query(
+        tx,
+        "SELECT payload FROM world_settings WHERE world_id=$1 AND id='[\"world\"]'",
+        &[&binding.world_id],
+        &store.budget,
+    )
+    .await?;
+    let [settings] = rows.as_slice() else {
+        return Err(StoreError::StaleCut);
+    };
+    let header: Settings<'_> =
+        serde_json::from_str(settings.try_get(0)?).map_err(|_| StoreError::InvalidRecord)?;
+    if header.id != binding.world_id
+        || header.next_id != binding.identity_through
+        || at.is_some_and(|at| header.sim_time != at)
+    {
+        return Err(StoreError::StaleCut);
+    }
+    Ok(())
+}

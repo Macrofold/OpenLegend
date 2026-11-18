@@ -493,7 +493,9 @@ pub(super) async fn admitted_query_bounded(
         // A canonical transport envelope can escape up to six bytes per
         // original code unit. SQL proof bytes here include its column names.
         let transfer = bytes.checked_mul(6).ok_or(StoreError::Capacity)?;
-        *remaining = remaining.checked_sub(transfer).ok_or(StoreError::Capacity)?;
+        *remaining = remaining
+            .checked_sub(transfer)
+            .ok_or(StoreError::Capacity)?;
     }
     // Wire buffers and driver row descriptors can overlap. The decoder admits
     // shape-dependent carrier storage separately before building a Rust graph.

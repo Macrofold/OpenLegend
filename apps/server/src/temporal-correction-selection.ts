@@ -39,20 +39,7 @@ export function correctionCandidates(sources: readonly CorrectionSource[]): Corr
 
 export function correctionDependencyQuery(worldId: string, roots: readonly CorrectionSource[]) {
   return {
-    sql: `WITH RECURSIVE affected(actor_id,source_id) AS (
-      SELECT actor_id,source_id FROM jsonb_to_recordset(?::jsonb) AS roots(actor_id text,source_id text)
-      UNION
-      SELECT a.actor_id,d.id FROM affected a CROSS JOIN LATERAL (
-        SELECT id FROM recall_sources WHERE world_id=? AND actor_id=a.actor_id AND event_id=a.source_id
-        UNION SELECT event_id FROM recall_sources WHERE world_id=? AND actor_id=a.actor_id AND id=a.source_id AND source_kind='memory' AND event_id IS NOT NULL
-        UNION SELECT result_evidence_id FROM activity_occurrences WHERE world_id=? AND actor_id=a.actor_id AND source_id=a.source_id AND result_evidence_id IS NOT NULL
-        UNION SELECT source_id FROM activity_occurrences WHERE world_id=? AND actor_id=a.actor_id AND result_evidence_id=a.source_id
-        UNION SELECT activity_id FROM mind_memories WHERE world_id=? AND actor_id=a.actor_id AND source_id=a.source_id AND activity_id IS NOT NULL
-        UNION SELECT derived_id FROM mind_source_dependencies WHERE world_id=? AND actor_id=a.actor_id AND (source_id=a.source_id OR alias_id=a.source_id)
-        UNION SELECT source_id FROM mind_source_dependencies WHERE world_id=? AND actor_id=a.actor_id AND derived_id=a.source_id AND support_key=?
-        UNION SELECT source_id FROM mind_corrections WHERE world_id=? AND actor_id=a.actor_id AND correction_id=a.source_id
-      ) d
-    ) SELECT actor_id,source_id FROM affected`,
+    sql: correctionDependencySql('?', '?', '?'),
     parameters: [
       JSON.stringify(roots),
       worldId,
@@ -66,6 +53,55 @@ export function correctionDependencyQuery(worldId: string, roots: readonly Corre
       worldId,
     ],
   };
+}
+
+/** Shared selection for the current native protected readers. All arguments
+ * are trusted SQL parameter markers, never a world or evidence identity. */
+export function correctionDependencySql(roots: string, world: string, origin: string) {
+  return `WITH RECURSIVE affected(actor_id,source_id) AS (
+      SELECT actor_id,source_id FROM jsonb_to_recordset(${roots}::jsonb) AS roots(actor_id text,source_id text)
+      UNION
+      SELECT a.actor_id,d.id FROM affected a CROSS JOIN LATERAL (
+        SELECT id FROM recall_sources WHERE world_id=${world} AND actor_id=a.actor_id AND event_id=a.source_id
+        UNION SELECT event_id FROM recall_sources WHERE world_id=${world} AND actor_id=a.actor_id AND id=a.source_id AND source_kind='memory' AND event_id IS NOT NULL
+        UNION SELECT result_evidence_id FROM activity_occurrences WHERE world_id=${world} AND actor_id=a.actor_id AND source_id=a.source_id AND result_evidence_id IS NOT NULL
+        UNION SELECT source_id FROM activity_occurrences WHERE world_id=${world} AND actor_id=a.actor_id AND result_evidence_id=a.source_id
+        UNION SELECT activity_id FROM mind_memories WHERE world_id=${world} AND actor_id=a.actor_id AND source_id=a.source_id AND activity_id IS NOT NULL
+        UNION SELECT derived_id FROM mind_source_dependencies WHERE world_id=${world} AND actor_id=a.actor_id AND (source_id=a.source_id OR alias_id=a.source_id)
+        UNION SELECT source_id FROM mind_source_dependencies WHERE world_id=${world} AND actor_id=a.actor_id AND derived_id=a.source_id AND support_key=${origin}
+        UNION SELECT source_id FROM mind_corrections WHERE world_id=${world} AND actor_id=a.actor_id AND correction_id=a.source_id
+      ) d
+    ) SELECT actor_id,source_id FROM affected`;
+}
+
+export function correctionAliasPagesSql(
+  world: string,
+  maxAge: string,
+  at: string,
+  resident: string,
+  aliases: string,
+) {
+  return `SELECT t.id,t.encoded_bytes AS bytes
+        FROM mind_temporal_pages t WHERE t.world_id=${world} AND t.last_at+${maxAge}>${at} AND NOT (t.slot=ANY(${resident}::text[])) AND EXISTS (
+          SELECT 1 FROM jsonb_to_recordset(${aliases}::jsonb) a(actor_id text,source_id text,lookup_source_id text,lookup_bucket smallint)
+          WHERE a.actor_id=t.actor_id AND t.lookup_buckets @> ARRAY[a.lookup_bucket]::smallint[] AND t.source_ids @> ARRAY[a.lookup_source_id]::text[]) ORDER BY t.actor_id,t.position LIMIT ${correctionPageRows + 1}`;
+}
+
+export function correctionAddressedPagesSql(wanted: string, world: string, resident: string) {
+  return `WITH requested AS MATERIALIZED (
+          SELECT * FROM jsonb_to_recordset(${wanted}::jsonb) q(actor_id text,epoch text,batch_order bigint,entry_index bigint,member_index bigint)
+        ) SELECT DISTINCT p.id,p.encoded_bytes AS bytes FROM requested q CROSS JOIN LATERAL (
+          (SELECT id,slot,receipt_epoch,last_batch_order,last_entry,last_member,encoded_bytes
+            FROM mind_temporal_pages WHERE world_id=${world} AND actor_id=q.actor_id
+              AND (first_batch_order,first_entry,first_member)<=(q.batch_order,q.entry_index,COALESCE(q.member_index,-1))
+            ORDER BY first_batch_order DESC,first_entry DESC,first_member DESC,id DESC LIMIT 1)
+          UNION ALL
+          (SELECT id,slot,receipt_epoch,last_batch_order,last_entry,last_member,encoded_bytes
+            FROM mind_temporal_pages WHERE q.member_index IS NULL AND world_id=${world} AND actor_id=q.actor_id
+              AND first_batch_order=q.batch_order AND first_entry=q.entry_index)
+        ) p WHERE p.receipt_epoch=q.epoch
+          AND (p.last_batch_order,p.last_entry,p.last_member)>=(q.batch_order,q.entry_index,COALESCE(q.member_index,0))
+          AND NOT(p.slot=ANY(${resident}::text[])) LIMIT ${correctionPageRows + 1}`;
 }
 
 export async function readCorrectionDependencies(
@@ -91,12 +127,7 @@ export async function readCorrectionPageMetadata(
 ): Promise<Record<string, unknown>[]> {
   const aliases = candidates.some((candidate) => !candidate.position)
     ? await db
-        .prepare(
-          `SELECT t.id,t.encoded_bytes AS bytes
-        FROM mind_temporal_pages t WHERE t.world_id=? AND t.last_at+?>? AND NOT (t.slot=ANY(?::text[])) AND EXISTS (
-          SELECT 1 FROM jsonb_to_recordset(?::jsonb) a(actor_id text,source_id text,lookup_source_id text,lookup_bucket smallint)
-          WHERE a.actor_id=t.actor_id AND t.lookup_buckets @> ARRAY[a.lookup_bucket]::smallint[] AND t.source_ids @> ARRAY[a.lookup_source_id]::text[]) ORDER BY t.actor_id,t.position LIMIT ${correctionPageRows + 1}`,
-        )
+        .prepare(correctionAliasPagesSql('?', '?', '?', '?', '?'))
         .all(
           worldId,
           maxAgeSeconds,
@@ -120,22 +151,7 @@ export async function readCorrectionPageMetadata(
   );
   const addressed = direct.length
     ? await db
-        .prepare(
-          `WITH requested AS MATERIALIZED (
-          SELECT * FROM jsonb_to_recordset(?::jsonb) q(actor_id text,epoch text,batch_order bigint,entry_index bigint,member_index bigint)
-        ) SELECT DISTINCT p.id,p.encoded_bytes AS bytes FROM requested q CROSS JOIN LATERAL (
-          (SELECT id,slot,receipt_epoch,last_batch_order,last_entry,last_member,encoded_bytes
-            FROM mind_temporal_pages WHERE world_id=? AND actor_id=q.actor_id
-              AND (first_batch_order,first_entry,first_member)<=(q.batch_order,q.entry_index,COALESCE(q.member_index,-1))
-            ORDER BY first_batch_order DESC,first_entry DESC,first_member DESC,id DESC LIMIT 1)
-          UNION ALL
-          (SELECT id,slot,receipt_epoch,last_batch_order,last_entry,last_member,encoded_bytes
-            FROM mind_temporal_pages WHERE q.member_index IS NULL AND world_id=? AND actor_id=q.actor_id
-              AND first_batch_order=q.batch_order AND first_entry=q.entry_index)
-        ) p WHERE p.receipt_epoch=q.epoch
-          AND (p.last_batch_order,p.last_entry,p.last_member)>=(q.batch_order,q.entry_index,COALESCE(q.member_index,0))
-          AND NOT(p.slot=ANY(?::text[])) LIMIT ${correctionPageRows + 1}`,
-        )
+        .prepare(correctionAddressedPagesSql('?', '?', '?'))
         .all(JSON.stringify(direct), worldId, worldId, residentSlots)
     : [];
   return [...new Map([...aliases, ...addressed].map((row) => [String(row['id']), row])).values()];

@@ -155,7 +155,8 @@ export class RestoredSourceVersionSelection {
       if (this.forgotten(actorId, source.id)) continue;
       const id = key({ actorId, kind: source.kind, id: source.id, revision: source.revision }),
         old = this.needed.get(id);
-      if (old === undefined || priority(category) > priority(old)) this.needed.set(id, category);
+      if (old === undefined || sourceVersionPriority(category) > sourceVersionPriority(old))
+        this.needed.set(id, category);
     }
   }
 
@@ -201,7 +202,7 @@ const zero = () => ({
   required: { bytes: 0, count: 0 },
   speech: { bytes: 0, count: 0 },
 });
-const priority = (category: Category) =>
+export const sourceVersionPriority = (category: Category) =>
   category === 'required' ? 2 : category === 'speech' ? 1 : 0;
 export function sourceVersionPreparationNeeded(
   before: Pick<WorldState, 'memories' | 'experience'> | undefined,
@@ -421,7 +422,8 @@ export async function prepareSourceVersionPlan(
     if (context.forgotten.get(value.actorId)?.has(value.id)) return;
     const id = key(value),
       old = future.get(id);
-    if (old === undefined || priority(category) > priority(old)) future.set(id, category);
+    if (old === undefined || sourceVersionPriority(category) > sourceVersionPriority(old))
+      future.set(id, category);
   };
   const keys = [...affected.values()];
   const versionsBySource = new Map<string, VersionKey[]>();

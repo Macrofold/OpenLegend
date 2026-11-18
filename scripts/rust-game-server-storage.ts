@@ -25,6 +25,18 @@ import { HISTORY_TABLES } from '../apps/server/src/history.js';
 import { ACCOUNT_RETENTION_PREPARATION } from '../apps/server/src/account-retention.js';
 import { SUPPORT_MEMBERSHIP_PREPARATION } from '../apps/server/src/retention-cleanup.js';
 import { SOURCE_RETENTION_CLOSURE_ROUNDS } from '../apps/server/src/source-version-retention.js';
+import {
+  restoreArchiveSelectionRows,
+  restoreArchiveSelectionSql,
+} from '../apps/server/src/native-restore-archives.js';
+import {
+  correctionAddressedPagesSql,
+  correctionAliasPagesSql,
+  correctionDependencySql,
+  correctionPageBytes,
+  correctionPageRows,
+  correctionSourceBytes,
+} from '../apps/server/src/temporal-correction-selection.js';
 import { nativeDefinitionSources } from '../apps/server/src/native-definition-sources.js';
 import {
   nativeRecordLayouts,
@@ -109,6 +121,16 @@ async function storageSchema(adminUrl: string) {
               accounts: ACCOUNT_RETENTION_PREPARATION,
               support: SUPPORT_MEMBERSHIP_PREPARATION,
               rounds: SOURCE_RETENTION_CLOSURE_ROUNDS,
+            },
+            archiveSelection: restoreArchiveSelectionSql('$1::text', '$2'),
+            archiveRows: restoreArchiveSelectionRows,
+            historyEdit: {
+              dependencies: correctionDependencySql('$1::text', '$2', '$3'),
+              aliasPages: correctionAliasPagesSql('$1', '$2', '$3', '$4', '$5::text'),
+              addressedPages: correctionAddressedPagesSql('$1::text', '$2', '$3'),
+              pageRows: correctionPageRows,
+              pageBytes: correctionPageBytes,
+              sourceBytes: correctionSourceBytes,
             },
           },
           lexical: {

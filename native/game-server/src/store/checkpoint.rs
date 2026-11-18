@@ -21,10 +21,14 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use uuid::Uuid;
 
+mod archives;
 mod authority;
+mod history_read;
 mod positions;
+mod provider;
 mod write;
 pub(crate) use authority::{RecoveryAuthority, read_recovery_authority};
+pub(crate) use history_read::PreparedCheckpointHistory;
 pub(crate) use positions::reconcile_history_positions;
 
 const METADATA: usize = 16 * 1024;
@@ -44,6 +48,20 @@ pub(crate) struct CheckpointFormat {
     pub(super) history_tables: Vec<String>,
     pub(super) history_position_tables: Vec<String>,
     pub(super) retention_preparation: Box<RawValue>,
+    pub(super) history_edit: HistoryEditSql,
+    pub(super) archive_selection: String,
+    pub(super) archive_rows: usize,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(super) struct HistoryEditSql {
+    pub(super) dependencies: String,
+    pub(super) alias_pages: String,
+    pub(super) addressed_pages: String,
+    pub(super) page_rows: u64,
+    pub(super) page_bytes: u64,
+    pub(super) source_bytes: u64,
 }
 
 impl CheckpointFormat {
@@ -52,7 +70,11 @@ impl CheckpointFormat {
             .encoding
             .capacity()
             .checked_add(self.format.capacity())?
-            .checked_add(self.retention_preparation.get().len())?;
+            .checked_add(self.retention_preparation.get().len())?
+            .checked_add(self.archive_selection.capacity())?
+            .checked_add(self.history_edit.dependencies.capacity())?
+            .checked_add(self.history_edit.alias_pages.capacity())?
+            .checked_add(self.history_edit.addressed_pages.capacity())?;
         [&self.history_tables, &self.history_position_tables]
             .into_iter()
             .try_fold(bytes, |bytes, values| {
@@ -75,6 +97,14 @@ impl CheckpointFormat {
             || self.page == 0
             || self.rows <= schema.tables.len()
             || self.row_bytes > self.bytes
+            || self.archive_selection.is_empty()
+            || self.archive_rows == 0
+            || self.history_edit.dependencies.is_empty()
+            || self.history_edit.alias_pages.is_empty()
+            || self.history_edit.addressed_pages.is_empty()
+            || self.history_edit.page_rows == 0
+            || self.history_edit.page_bytes == 0
+            || self.history_edit.source_bytes == 0
             || self.history_position_tables.is_empty()
             || self
                 .history_position_tables
