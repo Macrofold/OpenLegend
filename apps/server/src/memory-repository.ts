@@ -1436,7 +1436,7 @@ export class MemoryRepository {
   actorRevision(actorId: string): number {
     return objectIndexGet(this.actorRevisions, actorId) ?? 0;
   }
-  /** A retained Native NPC request may revalidate after ordinary recognition
+  /** A retained NPC request may revalidate after ordinary recognition
    * or temporal-support updates. Other private edits and unknown scopes keep
    * the broad dispatch refusal even when the selected history is readable. */
   actorNonReceptionRevision(actorId: string): number {
@@ -1665,11 +1665,10 @@ export class MemoryRepository {
     }
     for (const [table, ids] of changes.deletes) {
       if (!affectsMemory(table)) continue;
-      // Ordinary Native receiving can rotate these support rows. Keep all
-      // exact source invalidations above, and allow the retained request to
-      // prove its still-current sources again. Protected SQL edits take the
-      // separate committed path and do not receive this classification.
-      const receptionOnly = acceptedOrigin === 'native' && table === 'mind_temporal_supports';
+      // Ordinary receiving in either host can rotate these support rows. Exact
+      // watches were invalidated above. A retained request can prove its
+      // selected sources again; protected SQL edits use the committed path.
+      const receptionOnly = acceptedOrigin !== undefined && table === 'mind_temporal_supports';
       for (const id of ids) mark(id, receptionOnly);
     }
     if (
