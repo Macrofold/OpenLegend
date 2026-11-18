@@ -365,19 +365,52 @@ async fn finish_native(
     ticket: Arc<openlegend_simulation::runtime::RuntimeNpcResponseTicket>,
     choice: Option<&prepare::NativeOffer>,
 ) -> Result<(), CallFailure> {
+    let Some(choice) = choice else {
+        // A native/no-intervention judgment has no gameplay draft. Like
+        // Source, keep the completed job and its attempt receipt without
+        // starting a world mutation or inventing a response occurrence.
+        ensure_running(&work)?;
+        let (dispatched, received) = game
+            .store
+            .conversation_transfers(&work.job.job.id)
+            .await
+            .map_err(|error| CallFailure::World(error.into()))?;
+        let terminal = work
+            .job
+            .advance(
+                crate::player_events::SpeechReplyStatus::Completed,
+                "Native behavior continues; no model response.".into(),
+                Some(crate::store::TerminalOutcome {
+                    stage: "route".into(),
+                    condition: "native".into(),
+                    dispatched,
+                    received,
+                    applied: false,
+                }),
+                game.host.budget(),
+            )
+            .map_err(|error| CallFailure::World(error.into()))?;
+        drop(ticket);
+        game.store
+            .put_conversation_job(terminal)
+            .await
+            .map_err(CallFailure::Commit)?;
+        saves.signal_view();
+        return Ok(());
+    };
     let transient = game
         .host
         .budget()
         .reserve(4096)
         .map_err(|_| CallFailure::Invalid)?;
-    let operations = choice.map(|offer| serde_json::json!({
+    let operations = [serde_json::json!({
         "localId":"action","requiresAccepted":[],"talk":null,"think":null,"goal":null,"plan":null,
-        "act":{"kind":"known","mode":if offer.transition=="continue" {"enqueue"} else {&offer.transition},
-            "actionId":offer.id,"verb":null,"targetEntityId":null,"description":null},
-    }));
+        "act":{"kind":"known","mode":if choice.transition=="continue" {"enqueue"} else {&choice.transition},
+            "actionId":choice.id,"verb":null,"targetEntityId":null,"description":null},
+    })];
     let payload = crate::wire::encode(
         &Operations {
-            operations: operations.as_slice(),
+            operations: &operations,
         },
         b"",
         b"",

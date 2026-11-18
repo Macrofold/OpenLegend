@@ -554,7 +554,7 @@ impl Director {
             evidence: proposal.evidence,
             causes: proposal.causes,
         };
-        tokio::spawn(async move {
+        self.start_job(async move {
             controller
                 .run(
                     slot,
@@ -579,7 +579,7 @@ impl Director {
                     )
                     .await;
             }
-        });
+        })?;
         Ok(Some(next_at))
     }
 
