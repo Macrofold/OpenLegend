@@ -4,7 +4,10 @@
 use crate::{
     language::LanguageProvider,
     npc::schedule::{ScheduleInbox, ScheduleWake},
-    store::{AdmittedJob, GameplayReceipt, OrdinaryProjection, PreparedRecall, Store, StoreError},
+    store::{
+        AdmittedJob, GameplayReceipt, OrdinaryProjection, PreparedActivityMemories, PreparedRecall,
+        Store, StoreError,
+    },
     world::{HostedWorld, WorldError},
 };
 use indexmap::IndexMap;
@@ -33,6 +36,7 @@ pub struct AcceptedSaveInput {
     history: RuntimeHistory,
     receipt: Option<GameplayReceipt>,
     job: Option<Arc<AdmittedJob>>,
+    activity_memories: Option<Arc<PreparedActivityMemories>>,
     wake: Option<ScheduleWake>,
     _custody: ByteReservation,
 }
@@ -69,6 +73,8 @@ struct PreparedPrefix {
     jobs: Vec<Arc<AdmittedJob>>,
     eligibility: Option<RuntimeHistoryCuts>,
     recall: Option<PreparedRecall>,
+    activity_memories: Vec<Arc<PreparedActivityMemories>>,
+    recall_hard_bytes: i64,
     _custody: ByteReservation,
 }
 
@@ -212,8 +218,9 @@ impl LiveSaves {
             ));
         }
         let history = products.retain_history();
-        OrdinaryProjection::validate_candidate(&self.store, products.changes(), &history)
-            .map_err(RuntimeError::application_refused)?;
+        let activity_memories =
+            OrdinaryProjection::validate_candidate(&self.store, products.changes(), &history)
+                .map_err(RuntimeError::application_refused)?;
         let old = pending.queue.capacity();
         if pending.queue.len() == old {
             let next = old.checked_mul(2).ok_or(CapacityError)?.max(8);
@@ -237,6 +244,7 @@ impl LiveSaves {
             history,
             receipt,
             job,
+            activity_memories,
             wake,
             _custody: custody,
         }))
@@ -410,7 +418,11 @@ impl LiveSaves {
                     flight.prepared.recall.as_ref(),
                     self.language.as_deref(),
                 )
-                .with_conversation_jobs(&flight.prepared.jobs);
+                .with_conversation_jobs(&flight.prepared.jobs)
+                .with_activity_memories(
+                    &flight.prepared.activity_memories,
+                    flight.prepared.recall_hard_bytes,
+                );
             match self
                 .store
                 .commit_save(&flight.native, &flight.prepared.receipts, &projection)
@@ -452,7 +464,7 @@ impl LiveSaves {
         }
         pending.fault = false;
         drop(pending);
-        if flight.prepared.recall.is_some() {
+        if flight.prepared.recall.is_some() || !flight.prepared.activity_memories.is_empty() {
             self.lexical_wake.notify_one();
         }
         // Keep the successfully acknowledged prefix if its caller has another
@@ -523,6 +535,7 @@ impl LiveSaves {
         let mut histories_count = 0usize;
         let mut receipts_count = 0usize;
         let mut jobs_count = 0usize;
+        let mut memory_count = 0usize;
         for input in selected() {
             histories_count += 1;
             bytes = bytes
@@ -541,6 +554,12 @@ impl LiveSaves {
                     .checked_add(std::mem::size_of::<Arc<AdmittedJob>>())
                     .ok_or(StoreError::Capacity)?;
             }
+            if input.activity_memories.is_some() {
+                memory_count += 1;
+                bytes = bytes
+                    .checked_add(std::mem::size_of::<Arc<PreparedActivityMemories>>())
+                    .ok_or(StoreError::Capacity)?;
+            }
         }
         let custody = self
             .budget
@@ -557,6 +576,10 @@ impl LiveSaves {
         let mut jobs = Vec::new();
         jobs.try_reserve_exact(jobs_count)
             .map_err(|_| StoreError::Capacity)?;
+        let mut activity_memories = Vec::new();
+        activity_memories
+            .try_reserve_exact(memory_count)
+            .map_err(|_| StoreError::Capacity)?;
         for input in selected() {
             histories.push(input.history.clone());
             if let Some(receipt) = &input.receipt {
@@ -565,10 +588,15 @@ impl LiveSaves {
             if let Some(job) = &input.job {
                 jobs.push(job.clone());
             }
+            if let Some(memories) = &input.activity_memories {
+                activity_memories.push(memories.clone());
+            }
         }
         let eligibility = session.capture_save_history_cuts(through, &histories)?;
-        let recall =
-            session.with_ordinary_recall(through, |read| self.store.prepare_recall(read))??;
+        let (recall, recall_hard_bytes) = session.with_ordinary_recall(through, |read| {
+            let hard_bytes = i64::try_from(read.hard_bytes).map_err(|_| StoreError::Capacity)?;
+            Ok::<_, StoreError>((self.store.prepare_recall(read)?, hard_bytes))
+        })??;
         Ok(PreparedPrefix {
             through,
             histories,
@@ -576,6 +604,8 @@ impl LiveSaves {
             jobs,
             eligibility,
             recall,
+            activity_memories,
+            recall_hard_bytes,
             _custody: custody,
         })
     }

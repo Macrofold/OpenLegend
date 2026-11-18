@@ -38,6 +38,7 @@ pub(crate) use npc_schedule::ThoughtRead;
 pub(crate) use npc_sources::PreparedNpcSources;
 pub use read::{AdmittedReceipt, CurrentOpening, GameplayReceipt};
 pub use recall::PreparedRecall;
+pub(crate) use recall::activity_results::PreparedActivityMemories;
 pub use schema::StorageSchema;
 pub(crate) use source_versions::PreparedSourceVersions;
 pub use write::{CommitError, PrefixProjection};

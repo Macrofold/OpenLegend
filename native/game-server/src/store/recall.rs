@@ -19,6 +19,8 @@ use serde::Serialize;
 use std::collections::HashSet;
 use tokio_postgres::Transaction;
 
+pub(crate) mod activity_results;
+
 const TABLE: &str = "mind_awareness";
 const BATCH: usize = 100;
 
@@ -64,8 +66,12 @@ struct Source<'a> {
     source_kind: &'static str,
     record_id: &'a str,
     revision: &'a str,
-    event_id: &'a str,
-    event_type: &'a str,
+    event_id: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    memory_kind: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    acquisition: Option<&'a str>,
+    event_type: Option<&'a str>,
     at: f64,
     importance: f64,
     required: i64,
@@ -390,8 +396,10 @@ impl AccountRow {
             source_kind: "awareness",
             record_id,
             revision,
-            event_id: id,
-            event_type,
+            event_id: Some(id),
+            memory_kind: None,
+            acquisition: None,
+            event_type: Some(event_type),
             at: awareness.at,
             importance: awareness.importance,
             required: 0,

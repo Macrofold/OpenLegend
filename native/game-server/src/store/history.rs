@@ -2,7 +2,9 @@
 //! perspectives are separate and must come from their actual received account.
 
 use super::{
-    AdmittedJob, PrefixProjection, PreparedRecall, Store, StoreError, StoreResult, sql_ordinal,
+    AdmittedJob, PrefixProjection, PreparedRecall, Store, StoreError, StoreResult,
+    recall::activity_results::{self, PreparedActivityMemories},
+    sql_ordinal,
 };
 use crate::language::{LanguageProvider, canonical::KeyOrder};
 use openlegend_simulation::events::OriginalOccurrence;
@@ -31,6 +33,8 @@ pub struct OrdinaryProjection<'a> {
     recall: Option<&'a PreparedRecall>,
     language: Option<&'a LanguageProvider>,
     jobs: &'a [Arc<AdmittedJob>],
+    activity_memories: &'a [Arc<PreparedActivityMemories>],
+    activity_memory_hard_bytes: i64,
 }
 
 impl<'a> OrdinaryProjection<'a> {
@@ -42,11 +46,23 @@ impl<'a> OrdinaryProjection<'a> {
             recall: None,
             language: None,
             jobs: &[],
+            activity_memories: &[],
+            activity_memory_hard_bytes: 0,
         }
     }
 
     pub(crate) fn with_conversation_jobs(mut self, jobs: &'a [Arc<AdmittedJob>]) -> Self {
         self.jobs = jobs;
+        self
+    }
+
+    pub(crate) fn with_activity_memories(
+        mut self,
+        memories: &'a [Arc<PreparedActivityMemories>],
+        hard_bytes: i64,
+    ) -> Self {
+        self.activity_memories = memories;
+        self.activity_memory_hard_bytes = hard_bytes;
         self
     }
 
@@ -68,7 +84,7 @@ impl<'a> OrdinaryProjection<'a> {
         store: &Store,
         changes: &ChangedRows,
         history: &RuntimeHistory,
-    ) -> StoreResult<()> {
+    ) -> StoreResult<Option<Arc<PreparedActivityMemories>>> {
         if unsupported_rows(changes) || expiry::missing_proof(changes, history) {
             return Err(StoreError::DerivedProjectionRequired);
         }
@@ -81,7 +97,7 @@ impl<'a> OrdinaryProjection<'a> {
         {
             store.story_policy(history)?;
         }
-        Ok(())
+        store.prepare_activity_memories(changes, history)
     }
 }
 
@@ -93,18 +109,20 @@ fn unsupported_rows(changes: &ChangedRows) -> bool {
         .any(|table| {
             matches!(
                 table.as_str(),
-                "mind_memories"
-                    | "mind_summaries"
-                    | "mind_forgotten"
-                    | "mind_corrections"
-                    | "mind_privacy_revisions"
+                "mind_summaries" | "mind_forgotten" | "mind_corrections" | "mind_privacy_revisions"
             )
         });
     let awareness_update = changes
         .writes
         .get("mind_awareness")
         .is_some_and(|rows| rows.iter().any(|row| !row.create));
+    let memory_edit = changes.deletes.contains_key(activity_results::TABLE)
+        || changes
+            .writes
+            .get(activity_results::TABLE)
+            .is_some_and(|rows| rows.iter().any(|row| !row.create));
     leaf || awareness_update
+        || memory_edit
         || [
             "data_world",
             "world_settings",
@@ -169,6 +187,18 @@ impl PrefixProjection for OrdinaryProjection<'_> {
     ) -> StoreResult<()> {
         if let Some(recall) = self.recall {
             self.store.write_recall(transaction, rows, recall).await?;
+        }
+        if !self.activity_memories.is_empty()
+            || rows.changes.writes.contains_key(activity_results::TABLE)
+        {
+            self.store
+                .write_activity_memories(
+                    transaction,
+                    rows,
+                    self.activity_memories,
+                    self.activity_memory_hard_bytes,
+                )
+                .await?;
         }
         for job in self.jobs {
             self.store
