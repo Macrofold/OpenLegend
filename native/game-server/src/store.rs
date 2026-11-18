@@ -8,7 +8,6 @@ pub(crate) use attempts::{
     AttemptAdmission, AttemptRequest, InferenceClass, ModelReceipt, ModelUsage, ReservedAttempt,
 };
 mod checkpoint;
-pub use checkpoint::RecoveredCheckpoint;
 pub(crate) use checkpoint::{
     AdministrativeCheckpoint, CheckpointHistory, RecoveryAuthority, read_recovery_authority,
     reconcile_history_positions,
