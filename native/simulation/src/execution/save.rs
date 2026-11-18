@@ -137,6 +137,7 @@ struct EntityRows<'a> {
     goals_before: Option<&'a Vec<crate::state::Goal>>,
     intents_before: Option<&'a Vec<crate::plans::PendingIntent>>,
     animal: bool,
+    resource: bool,
     episode: bool,
     episode_before: Option<&'a Option<crate::native_response::NativeResponseEpisode>>,
     attributes: IndexMap<&'a str, bool>,
@@ -666,6 +667,8 @@ impl PhysicalJournal {
                         | Undo::ActionSample { entity, .. }
                         | Undo::SensoryProgress { entity, .. }
                         | Undo::AnimalEpisode { entity, .. }
+                        | Undo::Foraging { entity, .. }
+                        | Undo::ResourceStock { entity, .. }
                         | Undo::AnimalWander { entity, .. }
                         | Undo::AnimalPhysicalLife { entity, .. }
                         | Undo::AcousticPattern { entity, .. }
@@ -727,9 +730,10 @@ impl PhysicalJournal {
                                 rows.episode_before = Some(before);
                             }
                         }
-                        Undo::AnimalWander { .. } | Undo::AnimalPhysicalLife { .. } => {
-                            rows.animal = true
-                        }
+                        Undo::AnimalWander { .. }
+                        | Undo::AnimalPhysicalLife { .. }
+                        | Undo::Foraging { .. } => rows.animal = true,
+                        Undo::ResourceStock { .. } => rows.resource = true,
                         Undo::AcousticPattern { key, before, .. } => {
                             rows.patterns
                                 .entry(key.as_str())
@@ -1038,6 +1042,18 @@ impl PhysicalJournal {
                     entity.status_effects.as_ref(),
                     &rows.statuses,
                     true,
+                    budget,
+                )?;
+            }
+            if rows.resource {
+                one(
+                    ledger,
+                    output,
+                    "sim_resources",
+                    &["world", "entities", id, "resource"],
+                    &parent,
+                    "resource",
+                    entity.resource.as_ref(),
                     budget,
                 )?;
             }

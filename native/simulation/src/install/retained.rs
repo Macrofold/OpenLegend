@@ -9,7 +9,9 @@ use crate::records::{InstalledRow, RecordSchema};
 use indexmap::IndexMap;
 use serde::Deserialize;
 use serde_json::Value;
+use serde_json::value::RawValue;
 use std::mem::size_of;
+mod foraging;
 mod residency;
 
 pub(crate) enum RetainedOne {
@@ -107,6 +109,7 @@ pub(crate) struct RetainedDefinitions {
     pub native_strikes: Option<RetainedMap>,
     pub native_strike_read: IndexMap<String, crate::worlds::base_decision_offers::NativeStrikeRead>,
     pub native_foraging_profiles: Option<RetainedMap>,
+    pub foraging: crate::worlds::base_foraging::InstalledForaging,
     pub supply_opportunities: Option<RetainedMap>,
     pub food_preparations: RetainedMap,
     pub cast_definitions: RetainedMap,
@@ -273,6 +276,15 @@ impl Reader<'_> {
         table: &str,
         input: Option<CanonicalInput>,
     ) -> Result<Option<RetainedMap>, InstallError> {
+        self.verified_map(field, table, input)
+            .map(|verified| verified.map(|(rows, _)| rows))
+    }
+    fn verified_map(
+        &mut self,
+        field: &str,
+        table: &str,
+        input: Option<CanonicalInput>,
+    ) -> Result<Option<(RetainedMap, CanonicalInput)>, InstallError> {
         let Some((rows, input)) = self.map_rows(field, table, input)? else {
             return Ok(None);
         };
@@ -307,7 +319,7 @@ impl Reader<'_> {
         }
         let _verification = self.json_preparation(&input.canonical)?;
         input.verify_json(&Value::Object(assembled))?;
-        Ok(Some(rows))
+        Ok(Some((rows, input)))
     }
     // Placement and completeness have one owner, independent of each family's
     // typed content validation. In particular, Place text must not pass through
@@ -525,6 +537,23 @@ pub(crate) fn install_retained(
         .map_rows("places", "definition_places", Some(input.places))?
         .ok_or(InstallError::ParentPresence)?;
     let places_read = crate::reception::InstalledPlaces::install(&places, &places_input, budget)?;
+    let (native_foraging_profiles, foraging_input) = match r.verified_map(
+        "nativeForagingProfiles",
+        "config_native_foraging_profiles",
+        input.native_foraging_profiles,
+    )? {
+        Some((rows, canonical)) => (Some(rows), Some(canonical)),
+        None => (None, None),
+    };
+    let (item_definitions, item_input) = r
+        .verified_map(
+            "itemDefinitions",
+            "definition_items",
+            Some(input.item_definitions),
+        )?
+        .ok_or(InstallError::ParentPresence)?;
+    let (foraging, _foraging_preparation) =
+        foraging::prepare(foraging_input.as_ref(), &item_input, budget)?;
     let mut installed = RetainedDefinitions {
         _storage: None,
         knowledge_policy,
@@ -572,11 +601,8 @@ pub(crate) fn install_retained(
         participation_read,
         native_strikes,
         native_strike_read,
-        native_foraging_profiles: r.map(
-            "nativeForagingProfiles",
-            "config_native_foraging_profiles",
-            input.native_foraging_profiles,
-        )?,
+        native_foraging_profiles,
+        foraging,
         supply_opportunities: r.map(
             "supplyOpportunities",
             "config_supply_opportunities",
@@ -598,13 +624,7 @@ pub(crate) fn install_retained(
             .ok_or(InstallError::ParentPresence)?,
         invention_policy,
         story_policy: r.one("storyPolicy", "config_story", input.story_policy)?,
-        item_definitions: r
-            .map(
-                "itemDefinitions",
-                "definition_items",
-                Some(input.item_definitions),
-            )?
-            .ok_or(InstallError::ParentPresence)?,
+        item_definitions,
         recipes: r
             .map("recipes", "definition_recipes", Some(input.recipes))?
             .ok_or(InstallError::ParentPresence)?,

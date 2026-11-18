@@ -40,6 +40,7 @@ heap_record!(Participation {
 
 pub(super) struct EntityMetadata {
     _authored: ResidentReservation,
+    foraging: Option<ResidentReservation>,
     values: status::ValueStorage,
     semantic: usize,
     agency: usize,
@@ -58,6 +59,16 @@ impl EntityMetadata {
             values: status::ValueStorage::new(entity, budget)?,
             _authored: budget
                 .reserve_record(authored::bytes(entity).ok_or(ExecutionError::Capacity)?)?,
+            foraging: entity
+                .animal
+                .as_ref()
+                .and_then(|animal| animal.foraging.as_ref())
+                .map(|value| {
+                    budget
+                        .reserve_record(value.heap_bytes().ok_or(ExecutionError::Capacity)?)
+                        .map_err(ExecutionError::from)
+                })
+                .transpose()?,
             semantic,
             agency,
             participation,
@@ -71,6 +82,29 @@ impl EntityMetadata {
             )?,
             budget: budget.clone(),
         })
+    }
+}
+
+pub(crate) struct FundedForaging {
+    pub(crate) value: Box<crate::native_response::ForagingContinuation>,
+    pub(crate) storage: ResidentReservation,
+}
+
+impl FundedForaging {
+    /// The producer owns the temporary candidate allocation until this
+    /// exact successful body and its buffers move into the resident slot.
+    pub(crate) fn adopt(
+        value: Box<crate::native_response::ForagingContinuation>,
+        mut workspace: ByteReservation,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        let bytes = value.heap_bytes().ok_or(ExecutionError::Capacity)?;
+        if workspace.bytes() < bytes {
+            return Err(ExecutionError::Capacity);
+        }
+        workspace.resize(bytes)?;
+        let storage = budget.adopt_record(workspace)?;
+        Ok(Self { value, storage })
     }
 }
 fn operational_bytes(entity: &Entity) -> Result<usize, ExecutionError> {
@@ -121,6 +155,48 @@ fn agency_bytes(entity: &Entity) -> Result<usize, ExecutionError> {
 }
 
 impl EntityStore {
+    pub(crate) fn foraging_storage(
+        &self,
+        handle: EntityHandle,
+    ) -> Result<&ResidentReservation, ExecutionError> {
+        self.slots
+            .get(handle.slot)
+            .filter(|slot| slot.generation == handle.generation)
+            .and_then(|slot| slot.metadata_storage.as_ref())
+            .and_then(|metadata| metadata.foraging.as_ref())
+            .ok_or(ExecutionError::Invariant)
+    }
+
+    /// Replace the complete animal's foraging continuation. The displaced
+    /// record stays funded for the undo journal or dies with its last owner.
+    pub(crate) fn swap_funded_foraging(
+        &mut self,
+        handle: EntityHandle,
+        next: FundedForaging,
+    ) -> Result<FundedForaging, ExecutionError> {
+        let slot = self
+            .slots
+            .get_mut(handle.slot)
+            .filter(|slot| slot.generation == handle.generation)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let animal = slot
+            .entity
+            .as_mut()
+            .and_then(|entity| entity.animal.as_mut())
+            .ok_or(ExecutionError::Invariant)?;
+        let metadata = slot
+            .metadata_storage
+            .as_mut()
+            .ok_or(ExecutionError::Invariant)?;
+        match (&mut animal.foraging, &mut metadata.foraging) {
+            (Some(value), Some(storage)) => Ok(FundedForaging {
+                value: std::mem::replace(value, next.value),
+                storage: std::mem::replace(storage, next.storage),
+            }),
+            _ => Err(ExecutionError::Invariant),
+        }
+    }
+
     pub(crate) fn settle_agency_memory(
         &mut self,
         handle: EntityHandle,

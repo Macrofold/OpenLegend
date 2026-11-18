@@ -44,6 +44,7 @@ heap_record!(RetainedDefinitions {
     native_strikes,
     native_strike_read,
     native_foraging_profiles,
+    foraging,
     supply_opportunities,
     food_preparations,
     cast_definitions,

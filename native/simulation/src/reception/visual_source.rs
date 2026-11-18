@@ -43,13 +43,34 @@ pub(super) fn prepare_visual_source(
     else {
         return Err(invalid());
     };
-    if subject.assembly.is_some()
-        || subject.container.is_some()
-        || subject.item.is_some()
-        || subject.resource.is_some()
-    {
+    if subject.assembly.is_some() || subject.container.is_some() || subject.item.is_some() {
         return Err(invalid());
     }
+    let resource = subject
+        .resource
+        .as_ref()
+        .map(|stock| {
+            state
+                .installed
+                .retained
+                .foraging
+                .food
+                .get(&stock.definition_id)
+                .map(|definition| (stock, definition))
+                .ok_or_else(invalid)
+        })
+        .transpose()?;
+    let icon = match resource {
+        Some((_, definition)) => &definition.definition.icon,
+        None => &subject.icon,
+    };
+    let subtype = match resource {
+        Some((stock, _)) => Some(&stock.definition_id),
+        None => subject
+            .actor
+            .as_ref()
+            .and_then(|actor| actor.species.as_ref()),
+    };
     // Broad reception may reuse an unchanged eligible relation even when a
     // separate detail check is negative. Do not replace the receiving owner's
     // scoped broad roster with that detail result. Neither path reads a hidden
@@ -91,15 +112,11 @@ pub(super) fn prepare_visual_source(
             .as_ref()
             .map_or(Some("sprite".len()), HeapBytes::heap_bytes)
             .ok_or(ExecutionError::Capacity)?,
-        subject.icon.heap_bytes().ok_or(ExecutionError::Capacity)?,
+        icon.heap_bytes().ok_or(ExecutionError::Capacity)?,
         label.name.storage_bytes(),
         label.name_form.map_or(0, str::len),
         label.indefinite_article.map_or(0, str::len),
-        subject
-            .actor
-            .as_ref()
-            .and_then(|actor| actor.species.as_ref())
-            .map_or(0, String::len),
+        subtype.map_or(0, String::len),
         if detailed {
             description.map_or(0, crate::text::JsText::storage_bytes)
         } else {
@@ -170,22 +187,15 @@ pub(super) fn prepare_visual_source(
         animation,
         effects,
         body_plan,
-        subtype: subject
-            .actor
-            .as_ref()
-            .and_then(|actor| actor.species.clone()),
-        icon: subject
-            .icon
-            .as_ref()
-            .filter(|icon| !icon.is_empty())
-            .cloned(),
+        subtype: subtype.cloned(),
+        icon: icon.as_ref().filter(|icon| !icon.is_empty()).cloned(),
         label: Some(Named {
             name: label.name.to_owned().into(),
             name_form: label.name_form.map(str::to_owned),
             indefinite_article: label.indefinite_article.map(str::to_owned),
         }),
         assembly: None,
-        quantity: None,
+        quantity: resource.map(|(stock, _)| stock.quantity as f64),
         heat_lit: subject.heat.as_ref().map(|heat| heat.lit),
         remains_phase: subject
             .remains

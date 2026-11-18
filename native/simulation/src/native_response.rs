@@ -2,7 +2,7 @@
 //! records neither announce a response nor acquire evidence during restoration.
 
 use crate::reception::{AcousticDirection, PerceivedSound};
-use crate::state::{Point, SurfacePoint, UnconvertedField};
+use crate::state::{Point, SurfacePoint};
 use crate::values::{
     DefinitionPin, deserialize_present_option, deserialize_present_safe_integer,
     deserialize_safe_integer,
@@ -10,6 +10,11 @@ use crate::values::{
 use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
 
+mod foraging;
+pub use foraging::{
+    AnchorFood, EmptyFoodSource, FoodStock, ForagingContinuation, ForagingMode, ForagingWork,
+    ForagingWorkKind, ResourceFeeding,
+};
 mod validation;
 pub(crate) use validation::validate_native_response;
 
@@ -48,7 +53,7 @@ pub struct NativeResponseState {
         deserialize_with = "deserialize_present_option",
         skip_serializing_if = "Option::is_none"
     )]
-    pub foraging: Option<UnconvertedField>,
+    pub foraging: Option<Box<ForagingContinuation>>,
     /// Key iteration follows actual acquisition order, not hash/worker order.
     pub acoustic_patterns: IndexMap<String, AcousticPattern>,
     pub profile: DefinitionPin,

@@ -24,6 +24,7 @@ pub(crate) use agency::AgencyOrder;
 pub(crate) use goal_storage::FundedGoals;
 use indexmap::IndexMap;
 pub(crate) use intent_storage::FundedIntents;
+pub(crate) use residency::FundedForaging;
 pub(crate) use residency::FundedStatus;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;

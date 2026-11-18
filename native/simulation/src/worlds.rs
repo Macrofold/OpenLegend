@@ -72,6 +72,9 @@ pub(crate) use base_ordinary_actions::{
     ActionMessage as InstalledActionMessage, OrdinaryActionRules as InstalledOrdinaryActionRules,
 };
 
+#[path = "../../../packages/domain/src/worlds/base/native/foraging.rs"]
+pub(crate) mod base_foraging;
+
 #[path = "../../../packages/domain/src/worlds/base/native/retained_size.rs"]
 mod base_retained_size;
 

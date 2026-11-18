@@ -1185,6 +1185,8 @@ enum UndoKey {
     ActionSample(usize, u64),
     SensoryProgress(usize, u64),
     AnimalEpisode(usize, u64),
+    Foraging(usize, u64),
+    ResourceStock(usize, u64),
     AnimalWander(usize, u64),
     AnimalPhysicalLife(usize, u64),
     AcousticPattern(usize, u64, String),
@@ -1424,6 +1426,15 @@ enum Undo {
     AnimalEpisode {
         entity: EntityHandle,
         before: Option<crate::native_response::NativeResponseEpisode>,
+    },
+    Foraging {
+        entity: EntityHandle,
+        before: crate::state::FundedForaging,
+    },
+    ResourceStock {
+        entity: EntityHandle,
+        quantity: u64,
+        revision: Option<u64>,
     },
     AnimalWander {
         entity: EntityHandle,
@@ -2234,6 +2245,22 @@ impl PhysicalJournal {
                         .ok_or(ExecutionError::Invariant)?
                         .episode = before;
                 }
+                Undo::Foraging { entity, before } => {
+                    drop(state.entities.swap_funded_foraging(entity, before)?);
+                }
+                Undo::ResourceStock {
+                    entity,
+                    quantity,
+                    revision,
+                } => {
+                    let stock = state
+                        .entities
+                        .resolve_mut(entity)
+                        .and_then(|value| value.resource.as_mut())
+                        .ok_or(ExecutionError::Invariant)?;
+                    stock.quantity = quantity;
+                    stock.revision = revision;
+                }
                 Undo::AnimalWander { entity, before } => {
                     state
                         .entities
@@ -2646,6 +2673,110 @@ impl PhysicalMutation<'_> {
     }
     pub(crate) fn reserve_response_growth(&mut self, bytes: usize) -> Result<(), ExecutionError> {
         self.journal.reserve(bytes)
+    }
+
+    /// Rollback moves the actual previous funded controller state back. Admit
+    /// the journal and new body before changing the live slot.
+    pub(crate) fn replace_foraging(
+        &mut self,
+        id: &str,
+        next: crate::state::FundedForaging,
+    ) -> Result<(), ExecutionError> {
+        let entity = self
+            .state
+            .entities
+            .handle(id)
+            .ok_or(ExecutionError::MissingEntity)?;
+        let key = UndoKey::Foraging(entity.slot, entity.generation);
+        let first = self.journal.first(&key)?;
+        if !self.journal.budget.resident().owns(&next.storage) {
+            return Err(ExecutionError::Invariant);
+        }
+        let previous = self
+            .state
+            .entities
+            .resolve(entity)
+            .and_then(|entity| entity.animal.as_ref())
+            .and_then(|animal| animal.foraging.as_deref())
+            .ok_or(ExecutionError::Invariant)?;
+        let behavior = next.value.mode != previous.mode || next.value.work != previous.work;
+        self.journal
+            .reserve(2 * size_of::<Undo>() + 4 * size_of::<PhysicalChange>() + id.len() * 4)?;
+        if first {
+            self.journal
+                .budget
+                .retain_record(self.state.entities.foraging_storage(entity)?)?;
+        }
+        self.journal.change(PhysicalChange::AnimalClock {
+            entity_id: id.to_owned(),
+        })?;
+        if behavior {
+            // A work binding or mode can change metabolic policy, but does
+            // not itself disclose an action or movement.
+            self.journal.change(PhysicalChange::Behavior {
+                entity_id: id.to_owned(),
+                outward_change: false,
+            })?;
+        }
+        let before = self.state.entities.swap_funded_foraging(entity, next)?;
+        if first {
+            self.journal
+                .retain(key, Undo::Foraging { entity, before })?;
+        }
+        Ok(())
+    }
+
+    /// Debit one exposed unit only at the admitted stock revision. The caller
+    /// owns the food/access/reach checks and joins the matched nutrition write
+    /// in the same mutation checkpoint.
+    pub(crate) fn debit_resource_unit(
+        &mut self,
+        id: &str,
+        expected_revision: u64,
+    ) -> Result<bool, ExecutionError> {
+        let Some(entity) = self.state.entities.handle(id) else {
+            return Ok(false);
+        };
+        let Some(stock) = self
+            .state
+            .entities
+            .resolve(entity)
+            .and_then(|value| value.resource.as_ref())
+        else {
+            return Ok(false);
+        };
+        let (quantity, revision) = (stock.quantity, stock.revision);
+        if quantity == 0 || revision.unwrap_or(0) != expected_revision {
+            return Ok(false);
+        }
+        let next = expected_revision
+            .checked_add(1)
+            .filter(|value| *value <= crate::identity::MAX_SAFE_INTEGER)
+            .ok_or(ExecutionError::Identity)?;
+        let key = UndoKey::ResourceStock(entity.slot, entity.generation);
+        if self.journal.first(&key)? {
+            self.journal.reserve(2 * size_of::<Undo>())?;
+            self.journal.retain(
+                key,
+                Undo::ResourceStock {
+                    entity,
+                    quantity,
+                    revision,
+                },
+            )?;
+        }
+        let stock = self
+            .state
+            .entities
+            .resolve_mut(entity)
+            .and_then(|value| value.resource.as_mut())
+            .ok_or(ExecutionError::Invariant)?;
+        stock.quantity = quantity - 1;
+        stock.revision = Some(next);
+        // The permitted visual body includes the quantity, including every
+        // nonempty change. Invalidate current sight at the actual stock write.
+        self.behavior_changed(id, true)?;
+        Ok(true)
     }
 
     /// The animal controller owns these bounded subrecords. Their guards join

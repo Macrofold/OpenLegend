@@ -1125,23 +1125,21 @@ impl StatusRead<'_> {
                         .as_ref()
                         .is_some_and(|animal| animal.episode.is_some()),
             )),
-            "nativeForagingActive" | "controllerProfileId" => {
-                // The scoped authored initializer genuinely has no ecology
-                // state. A future live foraging family must implement its owner;
-                // retained unconverted input must never masquerade as absence.
-                if entity
+            "controllerProfileId" => Some(StatusValue::Text(
+                entity
                     .animal
                     .as_ref()
-                    .is_some_and(|animal| animal.foraging.is_some())
-                {
-                    return Err(ValueError::InvalidMeaning);
-                }
-                Some(if field == "controllerProfileId" {
-                    StatusValue::Text(String::new())
-                } else {
-                    StatusValue::Boolean(false)
-                })
-            }
+                    .and_then(|animal| animal.foraging.as_deref())
+                    .filter(|_| actor.is_some_and(|actor| actor.controller == "native"))
+                    .map_or_else(String::new, |forage| forage.profile.id.clone()),
+            )),
+            "nativeForagingActive" => Some(StatusValue::Boolean(actor.is_some_and(|actor| {
+                entity
+                    .animal
+                    .as_ref()
+                    .and_then(|animal| animal.foraging.as_deref())
+                    .is_some_and(|forage| forage.active(actor))
+            }))),
             _ => return Err(ValueError::InvalidMeaning),
         })
     }
