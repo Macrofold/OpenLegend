@@ -2096,7 +2096,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   private inputAccountedThrough?: number;
   private clockAdmission: 'duration' | 'monotonic' = 'duration';
   private heldInputCut?: number;
-  private heldPlayerReadCut?: number;
+  private heldReadInputCut?: number;
   useMonotonicClock(): void {
     this.clockAdmission = 'monotonic';
   }
@@ -4353,7 +4353,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     const neutral = input.kind === 'steer' && input.direction.x === 0 && input.direction.z === 0;
     const continuedMovement =
       input.kind === 'renew' ? input.movement && !input.pendingRelease : neutral;
-    const cut = this.heldInputCut ?? (!this.paused ? this.heldPlayerReadCut : undefined);
+    const cut = this.heldInputCut ?? (!this.paused ? this.heldReadInputCut : undefined);
     if (continuedMovement && cut !== undefined && cut === this.acceptedCut) {
       const state = this.inputs.steeringAt(scope.actorId, cut);
       if (state) {
@@ -4553,20 +4553,23 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     );
   }
 
-  /** Initial streams can wait for a recoverable protected save. Established
-   * streams defer refusals. This read-only turn lets the exact controller
-   * renew or stop a direction checked at the same cut during view preparation.
+  /** A read-only turn already in the lane leaves previously checked steering
+   * current at the same accepted cut. It does not check a new direction.
    * docs/projects/action-execution-and-skill-expression-tech-design.md#13-movement-alongside-preparation-and-the-live-input-lease */
+  private async withAcceptedInputRead<T>(read: () => T | Promise<T>): Promise<T> {
+    const previous = this.heldReadInputCut;
+    this.heldReadInputCut = this.clockAdmission === 'monotonic' ? this.acceptedCut : undefined;
+    try {
+      return await read();
+    } finally {
+      this.heldReadInputCut = previous;
+    }
+  }
+
+  /** Initial streams can wait for a recoverable protected save. Established
+   * streams defer refusals. */
   private playerReadBoundary<T>(signal: AbortSignal | undefined, operation: () => T | Promise<T>) {
-    const read = async () => {
-      const previous = this.heldPlayerReadCut;
-      this.heldPlayerReadCut = this.clockAdmission === 'monotonic' ? this.acceptedCut : undefined;
-      try {
-        return await operation();
-      } finally {
-        this.heldPlayerReadCut = previous;
-      }
-    };
+    const read = () => this.withAcceptedInputRead(operation);
     return signal ? this.atAcceptedBoundary(read, signal) : this.lane.run(read);
   }
 
@@ -4775,41 +4778,43 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     const captured = await this.lane.run(
       async () => {
         if (this.closed || this.failure || this.protectedAdmission || this.paused) return;
-        const world = this.world,
-          generation = this.generation;
-        const sources = this.store.memories.captureRetentionSourceWatch(
-          this.worldId,
-          [actorId],
-          'accounts',
-        );
-        const read = await withNativeJsonInput(
-          world,
-          { actorId, preparation: ACCOUNT_RETENTION_PREPARATION },
-          (bytes) => world.readAccountRetention(bytes),
-        ).catch((error: unknown) => {
-          sources.release();
-          throw error;
-        });
-        let request: NativeAccountRetentionRequest | undefined;
-        try {
-          request = decodeNativeProduct<NativeAccountRetentionRequest>(await read.packet());
-          if (!request.due && !request.pressured.length) {
+        return this.withAcceptedInputRead(async () => {
+          const world = this.world,
+            generation = this.generation;
+          const sources = this.store.memories.captureRetentionSourceWatch(
+            this.worldId,
+            [actorId],
+            'accounts',
+          );
+          const read = await withNativeJsonInput(
+            world,
+            { actorId, preparation: ACCOUNT_RETENTION_PREPARATION },
+            (bytes) => world.readAccountRetention(bytes),
+          ).catch((error: unknown) => {
+            sources.release();
+            throw error;
+          });
+          let request: NativeAccountRetentionRequest | undefined;
+          try {
+            request = decodeNativeProduct<NativeAccountRetentionRequest>(await read.packet());
+            if (!request.due && !request.pressured.length) {
+              read.release();
+              sources.release();
+              releaseNativeProduct(request);
+              return;
+            }
+            const cut = await captureNativeScopedReadCut(world, actorId, () =>
+              this.pending.liveReadCuts(),
+            );
+            if (cut.sequence !== request.acceptedCut) throw new ViewChangedError();
+            return { world, generation, sources, read, request, cut };
+          } catch (error) {
             read.release();
             sources.release();
-            releaseNativeProduct(request);
-            return;
+            if (request) releaseNativeProduct(request);
+            throw error;
           }
-          const cut = await captureNativeScopedReadCut(world, actorId, () =>
-            this.pending.liveReadCuts(),
-          );
-          if (cut.sequence !== request.acceptedCut) throw new ViewChangedError();
-          return { world, generation, sources, read, request, cut };
-        } catch (error) {
-          read.release();
-          sources.release();
-          if (request) releaseNativeProduct(request);
-          throw error;
-        }
+        });
       },
       this.lane.waitMs,
       true,
