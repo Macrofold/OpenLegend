@@ -4160,27 +4160,27 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             this.inputAccountedThrough -= elapsedRealSeconds * 1000;
             if (!elapsedRealSeconds) return false;
           }
-          const memoryBacklog = await readNativeResidentPressure(this.world);
-          if (this.memoryBacklog !== memoryBacklog) {
-            this.memoryBacklog = memoryBacklog;
-            this.notify(false);
-          }
-          if (options.offeredUntil !== undefined)
-            this.accountInputTime(
-              options.offeredUntil,
-              options.offeredUntil - elapsedRealSeconds * 1000,
-            );
-          else {
-            this.clockAdmission = 'duration';
-            this.inputs.clear();
-            this.inputAccountedThrough = undefined;
-            this.debtSeconds += elapsedRealSeconds * this.config.baseRatio * this.speed;
-          }
-          this.inputs.expire(performance.now());
-          const offered = Math.min(this.debtSeconds, 86400);
-          if (offered < 1e-6) return false;
-          const before = this.progress.at;
-          const publication = await this.withHeldInputCut(async (close) => {
+          const advance = async (close: () => void) => {
+            const memoryBacklog = await readNativeResidentPressure(this.world);
+            if (this.memoryBacklog !== memoryBacklog) {
+              this.memoryBacklog = memoryBacklog;
+              this.notify(false);
+            }
+            if (options.offeredUntil !== undefined)
+              this.accountInputTime(
+                options.offeredUntil,
+                options.offeredUntil - elapsedRealSeconds * 1000,
+              );
+            else {
+              this.clockAdmission = 'duration';
+              this.inputs.clear();
+              this.inputAccountedThrough = undefined;
+              this.debtSeconds += elapsedRealSeconds * this.config.baseRatio * this.speed;
+            }
+            this.inputs.expire(performance.now());
+            const offered = Math.min(this.debtSeconds, 86400);
+            if (offered < 1e-6) return false;
+            const before = this.progress.at;
             const inputs = nativeInputSnapshot(this.host, this.inputs, performance.now());
             const world = this.world,
               startedAt = performance.now();
@@ -4194,8 +4194,9 @@ export class NativeWorldService implements NativePlayerRequestOwner {
                 world.requestAdvancePublication();
             }, NATIVE_IO_YIELD_MS);
             publicationWake.unref();
+            let publication: NativePublication | undefined;
             try {
-              return await this.acceptInLane({
+              publication = await this.acceptInLane({
                 accountElapsed: true,
                 first: () =>
                   withNativeJsonInput(world, inputs, (bytes) =>
@@ -4217,27 +4218,32 @@ export class NativeWorldService implements NativePlayerRequestOwner {
               clearInterval(publicationWake);
               releaseNativeProduct(inputs);
             }
-          });
-          if (!publication) return false;
-          try {
-            if (!publication.outcome.ok) {
-              this.fail(
-                new Error(
-                  `Required native work stopped before advancing time: ${publication.outcome.message}`,
-                ),
+            if (!publication) return false;
+            try {
+              if (!publication.outcome.ok) {
+                this.fail(
+                  new Error(
+                    `Required native work stopped before advancing time: ${publication.outcome.message}`,
+                  ),
+                );
+                return false;
+              }
+              const advanced = publication.progress.at - before;
+              return (
+                !this.paused &&
+                this.debtSeconds >= 1e-6 &&
+                advanced > 0 &&
+                publication.outcome.code !== 'navigation-pending'
               );
-              return false;
+            } finally {
+              releaseNativeProduct(publication);
             }
-            const advanced = publication.progress.at - before;
-            return (
-              !this.paused &&
-              this.debtSeconds >= 1e-6 &&
-              advanced > 0 &&
-              publication.outcome.code !== 'navigation-pending'
-            );
-          } finally {
-            releaseNativeProduct(publication);
-          }
+          };
+          // The pressure read and private advance share the same accepted cut.
+          // Duration-only ticks clear live input instead of using that cut.
+          return options.offeredUntil === undefined
+            ? advance(() => {})
+            : this.withHeldInputCut(advance);
         },
         this.lane.waitMs,
         false,
