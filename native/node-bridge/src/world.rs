@@ -735,6 +735,14 @@ impl NativeWorld {
     pub fn request_advance_publication(&self) {
         self.world.fence.request_advance_publication();
     }
+    /// This nonblocking guard checks native admission for an existing host
+    /// input lease. The caller still owns authorization and cut identity.
+    #[napi]
+    pub fn admission_open(&self) -> bool {
+        self.world.active.load(Ordering::Acquire)
+            && self.world.fence.admission_open()
+            && !self.host.pool.is_closing()
+    }
     #[napi]
     pub fn close_admission(&self) {
         self.world.fence.close_admission();

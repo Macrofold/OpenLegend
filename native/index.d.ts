@@ -204,6 +204,11 @@ export declare class NativeWorld {
   finishSettlement(key: NativeCandidateKey): Promise<boolean>;
   cancel(key: NativeCandidateKey): Promise<void>;
   requestAdvancePublication(): void;
+  /**
+   * This nonblocking guard checks native admission for an existing host
+   * input lease. The caller still owns authorization and cut identity.
+   */
+  admissionOpen(): boolean;
   closeAdmission(): void;
   captureSave(): Promise<NativeWorldSave>;
   acknowledge(ack: string): Promise<void>;

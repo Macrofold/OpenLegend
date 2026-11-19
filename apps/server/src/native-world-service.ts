@@ -3225,7 +3225,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           if (!returned) releaseNativeProduct(publication);
         }
       } catch (error) {
-        if (this.installingInputCut || this.host.status().poisoned)
+        if (this.installingInputCut || !this.world.admissionOpen())
           this.failure = error instanceof Error ? error : new Error(String(error));
         throw error;
       } finally {
@@ -4287,8 +4287,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
           throw error;
         // A refused native read grants no shortcut. Keep the ordinary
         // checked input route and unrelated work available on a healthy host.
-        const status = this.host.status();
-        if (status.poisoned || status.phase !== 'Open') throw error;
+        if (!this.world.admissionOpen()) throw error;
       } finally {
         pin?.release();
       }
@@ -4336,6 +4335,13 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       if (!transferred) allocation.release();
     }
   }
+
+  private assertInputAdmission(scope: RequestScope): void {
+    this.assertAdmission();
+    this.assertScope(scope, 'play', true);
+    if (!this.world.admissionOpen()) throw new Error('Native world admission is closed.');
+  }
+
   async updateWorldInput(input: WorldInputUpdate, scope: RequestScope): Promise<WorldInputResult> {
     const neutral = input.kind === 'steer' && input.direction.x === 0 && input.direction.z === 0;
     const continuedMovement =
@@ -4349,8 +4355,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     ) {
       const state = this.inputs.steeringAt(scope.actorId, this.acceptedCut);
       if (state) {
-        this.assertAdmission();
-        this.assertScope(scope, 'play', true);
+        this.assertInputAdmission(scope);
         const output = NativeInputResultAllocation.prepare(this.host);
         try {
           // A private advance keeps its finite window. Neutral revokes that
@@ -4366,8 +4371,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       }
     }
     return this.lane.run(async () => {
-      this.assertAdmission();
-      this.assertScope(scope, 'play', true);
+      this.assertInputAdmission(scope);
       const output = NativeInputResultAllocation.prepare(this.host);
       let facts: NativePlayerInputFacts | undefined;
       try {
@@ -4375,7 +4379,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         this.accountInputTime(startedAt);
         this.inputs.expire(startedAt, scope.actorId);
         facts = await NativePlayerCapture.input(this.world, scope);
-        this.assertScope(scope, 'play', true);
+        this.assertInputAdmission(scope);
         // A checked renewal may have advanced the shared cursor during the read.
         const now = performance.now();
         this.accountInputTime(now);

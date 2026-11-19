@@ -104,7 +104,7 @@ impl Default for CandidateFence {
 
 impl CandidateFence {
     pub fn begin_publication(self: &Arc<Self>) -> Result<PublicationLease, FenceError> {
-        if self.closed.load(Ordering::Acquire) {
+        if !self.admission_open() {
             return Err(FenceError::Closed);
         }
         let before = self.token.load(Ordering::Acquire);
@@ -134,7 +134,7 @@ impl CandidateFence {
 
     /// Called by the existing single writer before editing any canonical record.
     pub fn begin(&self, base_cut: u64, generation: u64) -> Result<CandidateKey, FenceError> {
-        if self.closed.load(Ordering::Acquire) {
+        if !self.admission_open() {
             return Err(FenceError::Closed);
         }
         let previous = self.token.load(Ordering::Acquire);
@@ -310,6 +310,11 @@ impl CandidateFence {
     pub fn close_admission(&self) {
         self.closed.store(true, Ordering::Release);
         self.request_stop();
+    }
+
+    /// Read the world's admission state without reading a private candidate.
+    pub fn admission_open(&self) -> bool {
+        !self.closed.load(Ordering::Acquire)
     }
 
     /// Panic leaves no trustworthy rollback assumption; the owner must recover
