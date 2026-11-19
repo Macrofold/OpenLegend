@@ -30,7 +30,7 @@ The [focused game-reference map](../../archive/02-research/game-inspiration/READ
 
 [Native simulation core (NSC00–NSC08)](native-simulation-core.md) owns the designed Rust pipeline proof, conditional supported-game conversion, flexible work pooling and later adaptive cell placement. [Feature](../projects/native-simulation-core-feature-spec.md) and [technical design](../projects/native-simulation-core-tech-design.md) distinguish architecture targets from isolated experiments; no runtime migration or scale benefit is established. PF/BK and production distributed-delivery gates retain their existing owners.
 
-[Rust game server (RGS00–RGS08)](rust-game-server.md) owns the stand-alone host and three-minute heavy-play comparison.
+The [completed Rust game server record](completed/2026/rust-game-server.md) links the scoped adoption to the [current stand-alone host contract](../architecture.md#stand-alone-rust-host).
 
 [Native runtime foundations (NRF00–NRF16)](native-runtime-foundations.md) owns the JSON, scratch-lifetime, compatible-capture and ordered rate-read experiments, the [shared Rust–TypeScript bridge](native-runtime-foundations.md#shared-bridge-work), [player availability and installed warning work](native-runtime-foundations.md#send-availability-and-installed-warning-work), [multiplayer delivery](native-runtime-foundations.md#multiplayer-update-delivery), and [decoder and gameplay memory](native-runtime-foundations.md#decoder-and-gameplay-memory). The tracker distinguishes historical 128 MiB results, current 2 GiB work and remaining qualification.
 

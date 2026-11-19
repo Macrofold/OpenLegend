@@ -52,7 +52,7 @@ The continuing shared task budget is **not reset**. Mike's November 12 chat rais
 
 ## Work and exit criteria
 
-The [stand-alone Rust server](rust-game-server.md) hands actual retained or removed callers back to NRF01–03 and NRF06. Reuse surviving control evidence and qualify changed callers in their real runtime. A new Rust host alone does not settle a Node-side experiment.
+The [stand-alone Rust server](../architecture.md#stand-alone-rust-host) serves the measured opening using the shared Rust simulation and world host. Its direct PostgreSQL writer, geometry and provider transport bypass the addon, Node JSON conversion and JavaScript save-row adapters. The Node-hosted route still uses those callers. NRF01 retains the equal-profile control and lifetime requirements. NRF02–03 need material Node-side cost attribution before a new trial. NRF06 retains cleanup and combined checks for changes to the remaining callers. Use the [frozen RGS08 one-worker result](../benchmarks/native-runtime-foundations/2026/2026-11-18-rust-game-server.md#rollback-qualified-comparison) as the baseline for substantial parallel work.
 
 - [x] **NRF00 — Select the near-term contracts and candidate recipes.** The pair distinguishes existing coverage, source-backed candidate mechanisms and deferred consumers. All 28 catalogue scopes are mapped without changing their priorities or commissioning their contents. The nine research briefs have scoped dispositions rather than a blanket completion claim. Final documentation verification is recorded below; this checkbox claims design content, not runtime delivery.
 

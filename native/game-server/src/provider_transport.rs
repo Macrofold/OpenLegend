@@ -1,6 +1,6 @@
 //! NPC inference wire requests. The director owns funding, source fencing,
 //! response schemas and effects. This owner never starts a replacement inference.
-//! docs/projects/rust-game-server-tech-design.md#6-execute-npc-decisions-without-node-rgs06
+//! docs/ai-providers.md#admission-and-cancellation
 
 use crate::network::{NetworkError, NetworkOperation, NetworkResponse, permitted_destination};
 use openlegend_simulation::encoding::write_json_record;

@@ -1,6 +1,6 @@
 /** Build-time Recast artifacts for the stand-alone Rust server. No navigation
  * work or JavaScript carrier from this exporter is needed at launch.
- * docs/projects/rust-game-server-tech-design.md#2-start-the-process-and-run-a-world-rgs02
+ * README.md#run-the-stand-alone-rust-server
  */
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';

@@ -56,7 +56,7 @@ const hares: Point[] = [
 /** The RGS comparison uses one authored terrain and the real Base pasture
  * profiles. Fixed scenario intentions enter the same plan owner as other
  * frontier work. The live clock still has to start and finish every step.
- * docs/projects/rust-game-server-tech-design.md#1-freeze-a-playable-workload-rgs01 */
+ * docs/projects/completed/2026/rust-game-server-tech-design.md#1-freeze-a-playable-workload-rgs01 */
 export function createBaseRustServerOpening(accounts: WorldCreationAccounts, worldId: string) {
   const { seed, player } = BASE_NATIVE_PROOF;
   const world = createFreshBaseWorld(seed, accounts, { worldId, playerId: player.id });

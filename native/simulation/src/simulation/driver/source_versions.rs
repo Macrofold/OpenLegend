@@ -186,7 +186,7 @@ impl Finalizer {
         // The shared Source planner selects versions only from old bodies,
         // prior/next version references, and personal learning aliases. An
         // exact append with none of those inputs has no affected key to query.
-        // docs/projects/rust-game-server-tech-design.md#3-read-and-write-postgresql-directly-rgs03
+        // docs/save-and-load.md#current-personal-evidence-continuation
         if restore.is_none()
             && predecessors.records().is_empty()
             && needs_no_source_versions(&records, &core.state.installed.schema)
