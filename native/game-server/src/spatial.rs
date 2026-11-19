@@ -235,28 +235,16 @@ impl SpatialProvider {
                     .map(|path| SurfaceLineAnswer { path })
             })
             .collect();
-        let sight_sweeps = q
-            .sight_sweeps
-            .iter()
-            .map(|q| self.sight_sweep(q))
-            .collect::<Result<_, _>>()?;
+        let sight_sweeps = collect_funded_answers(&q.sight_sweeps, |q| self.sight_sweep(q))?;
         let sound = q.sound.iter().map(|r| self.sound(r.from, r.to)).collect();
         let routes = q.routes.iter().map(|q| self.route(q)).collect();
-        let features = q
-            .features
-            .iter()
-            .map(|q| self.features.query(q))
-            .collect::<Result<_, _>>()?;
+        let features = collect_funded_answers(&q.features, |q| self.features.query(q))?;
         let feature_ids = q
             .feature_ids
             .iter()
             .map(|id| self.features.get(id).cloned())
             .collect();
-        let convex_views = q
-            .convex_views
-            .iter()
-            .map(|q| self.convex(q))
-            .collect::<Result<_, _>>()?;
+        let convex_views = collect_funded_answers(&q.convex_views, |q| self.convex(q))?;
         let body_sweeps = q
             .body_sweeps
             .iter()
@@ -310,10 +298,7 @@ impl SpatialProvider {
                     TryLockError::WouldBlock => SpatialError::NavigationBusy,
                     TryLockError::Poisoned(_) => SpatialError::NavigationUnavailable,
                 })?;
-            q.navigation
-                .iter()
-                .map(|q| self.navigation_answer(&mut recast, q))
-                .collect::<Result<_, _>>()?
+            collect_funded_answers(&q.navigation, |q| self.navigation_answer(&mut recast, q))?
         };
         let answers = GeometryAnswers {
             binding: q.binding,
@@ -397,6 +382,22 @@ impl SpatialProvider {
         }
         Ok((budget.reserve(bytes)?, budget.reserve(scratch)?))
     }
+}
+
+/// Allocate the outer answer vector against the caller's existing per-query reservation.
+/// Fallible iterator collection can grow past that allocation even when each query returns one answer.
+fn collect_funded_answers<Q, A>(
+    queries: &[Q],
+    mut answer: impl FnMut(&Q) -> Result<A, SpatialError>,
+) -> Result<Vec<A>, SpatialError> {
+    let mut answers = Vec::new();
+    answers
+        .try_reserve_exact(queries.len())
+        .map_err(|_| SpatialError::Capacity)?;
+    for query in queries {
+        answers.push(answer(query)?);
+    }
+    Ok(answers)
 }
 
 fn attenuation(value: f64) -> bool {
