@@ -288,7 +288,13 @@ impl PlayerCommands {
                 .await
                 .map_err(WorldError::Commit)?;
         }
-        let _intake = self.saves.enter_ordinary().await;
+        // Recovering an existing result cannot admit a mutation. Do not keep
+        // a protected save waiting for this independent receipt read.
+        let _intake = if recovery {
+            None
+        } else {
+            Some(self.saves.enter_ordinary().await)
+        };
         let epoch = {
             let identity = self.identity.lock().await;
             (
@@ -309,8 +315,13 @@ impl PlayerCommands {
             .map(ResultOwner::Accepted)
             .or_else(|| durable.map(ResultOwner::Durable));
         if recovery || prior.is_some() || !epoch.1 {
+            let fresh_epoch = if recovery && prior.is_none() {
+                self.identity.lock().await.epoch.token == facts.request.command_epoch
+            } else {
+                epoch.1
+            };
             return permits.current(&scope, Capability::Play, !recovery, |scope, _| {
-                report(prior.as_ref(), &facts, scope, epoch.1, recovery, budget)
+                report(prior.as_ref(), &facts, scope, fresh_epoch, recovery, budget)
             })?;
         }
         self.saves.check_admission(tokio::time::Instant::now())?;

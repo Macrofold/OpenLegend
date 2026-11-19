@@ -16,10 +16,9 @@ use tokio::{
     time::Instant,
 };
 
-#[derive(Clone)]
 struct Views {
     routes: PlayerRoutes,
-    lane: Arc<Mutex<()>>,
+    lane: Mutex<()>,
     streams: Arc<Semaphore>,
     display: AiDisplay,
     stop: watch::Receiver<bool>,
@@ -31,13 +30,13 @@ pub(super) fn router(
     display: AiDisplay,
     stop: watch::Receiver<bool>,
 ) -> Router {
-    let state = Views {
+    let state = Arc::new(Views {
         routes,
-        lane: Arc::new(Mutex::new(())),
+        lane: Mutex::new(()),
         streams,
         display,
         stop,
-    };
+    });
     Router::new()
         .route("/api/state", get(state_view))
         .route("/api/events", get(events))
@@ -203,7 +202,7 @@ impl Views {
     }
 }
 
-async fn state_view(State(views): State<Views>, headers: HeaderMap) -> Response {
+async fn state_view(State(views): State<Arc<Views>>, headers: HeaderMap) -> Response {
     let tab = match views.tab(&headers, None) {
         Ok(tab) => tab,
         Err(error) => return access_failure(error),
@@ -224,7 +223,7 @@ struct EventQuery {
 }
 
 async fn events(
-    State(views): State<Views>,
+    State(views): State<Arc<Views>>,
     Query(query): Query<EventQuery>,
     headers: HeaderMap,
 ) -> Response {

@@ -7,7 +7,7 @@ use crate::{
     player_http::assets::InstalledAssets,
     player_view::PlayerViewPolicy,
     spatial::SpatialProvider,
-    store::{StorageSchema, Store},
+    store::{StorageSchema, Store, StoreResult},
     world::{HostedWorld, WorldHost},
 };
 use openlegend_simulation::runtime::{
@@ -19,11 +19,13 @@ use openlegend_simulation::{
 };
 use serde::{Deserialize, Serialize};
 use std::error::Error;
+use std::future::Future;
 use std::io::{Read, Take};
 use std::path::Path;
 use std::sync::Arc;
 use tokio_postgres::Config;
 use tokio_postgres_rustls::MakeRustlsConnect;
+use tokio_util::task::AbortOnDropHandle;
 
 const TRANSIENT_BYTES: usize = 2 * 1024 * 1024 * 1024;
 type BootError = Box<dyn Error + Send + Sync>;
@@ -338,33 +340,24 @@ impl CurrentServer {
             let (question, prepared) = self.world.prepare_known_places(question).await?;
             let store = Arc::clone(&self.store);
             let answer = self
-                .world
-                .operations
-                .spawn(async move { store.read_known_places(prepared).await })
-                .await
-                .map_err(|_| openlegend_world_host::pool::HostError::WorkerFailed)??;
+                .read_for_operation(async move { store.read_known_places(prepared).await })
+                .await?;
             return Ok((question, answer));
         }
         if question.asks_source_versions()? {
             let (question, prepared) = self.world.prepare_source_versions(question).await?;
             let store = Arc::clone(&self.store);
             let answer = self
-                .world
-                .operations
-                .spawn(async move { store.read_source_versions(prepared).await })
-                .await
-                .map_err(|_| openlegend_world_host::pool::HostError::WorkerFailed)??;
+                .read_for_operation(async move { store.read_source_versions(prepared).await })
+                .await?;
             return Ok((question, answer));
         }
         if question.asks_npc_sources()? {
             let (question, prepared) = self.world.prepare_npc_sources(question).await?;
             let store = Arc::clone(&self.store);
             let answer = self
-                .world
-                .operations
-                .spawn(async move { store.read_npc_sources(prepared).await })
-                .await
-                .map_err(|_| openlegend_world_host::pool::HostError::WorkerFailed)??;
+                .read_for_operation(async move { store.read_npc_sources(prepared).await })
+                .await?;
             return Ok((question, answer));
         }
         let spatial = Arc::clone(&self.spatial);
@@ -391,6 +384,18 @@ impl CurrentServer {
                 Ok((question, answer))
             })
             .await?
+    }
+
+    /// Keep the read input owned until the operation finishes or cancels.
+    /// Dropping the caller aborts the read. The tracker still joins its
+    /// cleanup on shutdown and maps a failed task to the existing refusal.
+    async fn read_for_operation<T: Send + 'static>(
+        &self,
+        read: impl Future<Output = StoreResult<T>> + Send + 'static,
+    ) -> Result<T, crate::world::WorldError> {
+        Ok(AbortOnDropHandle::new(self.world.operations.spawn(read))
+            .await
+            .map_err(|_| openlegend_world_host::pool::HostError::WorkerFailed)??)
     }
 
     /// Drive one independently captured physical route at a time through

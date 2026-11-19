@@ -141,7 +141,7 @@ impl Store {
             return Err(StoreError::InvalidRecord);
         }
         let store = Arc::clone(self);
-        self.read_operational(move |tx| {
+        self.read_simulation_cut(move |tx| {
             Box::pin(async move {
                 let _request_storage = custody;
                 store

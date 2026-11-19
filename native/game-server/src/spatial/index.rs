@@ -13,7 +13,7 @@ pub(super) struct Node {
 }
 
 pub(super) enum Members {
-    Leaf(Vec<Entry>),
+    Leaf(Box<[Entry]>),
     Branch(Box<[Node; 2]>),
 }
 
@@ -33,7 +33,9 @@ impl Node {
             point(std::array::from_fn(|i| lo[i] + hi[i]))
         };
         let members = if items.len() <= 4 {
-            Members::Leaf(items)
+            // A left split keeps its parent's allocation. Retain only the entries
+            // this leaf can query, rather than its share of the build workspace.
+            Members::Leaf(items.into_boxed_slice())
         } else {
             let centres = extent(items.iter().map(centre));
             let lo = coordinates(centres.min);
@@ -91,7 +93,7 @@ impl Node {
         }
         match &self.members {
             Members::Leaf(items) => {
-                for x in items {
+                for x in items.iter() {
                     if *remaining == 0 {
                         return false;
                     }

@@ -84,8 +84,8 @@ impl Authority {
         })
     }
 
-    /// Recovery comes before new participation preparation. The caller
-    /// rechecks the original current grant before handing over that outcome.
+    /// Check replay under the protected save barrier before preparing new
+    /// participation. The caller rechecks the grant before returning a result.
     pub async fn control_replayed(
         &self,
         scope: &RequestScope,
@@ -101,7 +101,7 @@ impl Authority {
             .map_err(|_| StoreError::Capacity)?;
         Ok(self
             .store
-            .read_operational(move |tx| {
+            .read_simulation_cut(move |tx| {
                 Box::pin(
                     async move { Ok(read_receipt(tx, &scope, &id, &fingerprint).await?.is_some()) },
                 )

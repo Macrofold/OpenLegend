@@ -366,7 +366,7 @@ fn pop<'a>(queue: &mut Vec<Task<'a>>) -> Task<'a> {
 }
 fn node_bytes(node: &Node) -> usize {
     match &node.members {
-        Members::Leaf(entries) => entries.capacity() * size_of::<Entry>(),
+        Members::Leaf(entries) => entries.len() * size_of::<Entry>(),
         Members::Branch(children) => {
             2 * size_of::<Node>() + node_bytes(&children[0]) + node_bytes(&children[1])
         }

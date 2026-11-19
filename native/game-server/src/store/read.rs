@@ -110,11 +110,10 @@ impl Store {
         Self::read_snapshot(&self.reader, work).await
     }
 
-    /// Answer a prepared provider request on its accepted cut. A candidate or
-    /// disclosure can own the world turn while it awaits this SQL snapshot.
-    /// Keep its connection independent of operational reads so a held receipt
-    /// or view cannot queue ahead of that turn and an ordinary save capture.
-    pub(super) async fn read_simulation_cut<R>(
+    /// Read the exact cut required by a caller holding the world turn or
+    /// protected save barrier. Keep this snapshot independent of operational
+    /// readers that cannot advance the caller's operation.
+    pub(crate) async fn read_simulation_cut<R>(
         &self,
         work: impl for<'a> FnOnce(&'a Transaction<'a>) -> ReadWork<'a, R>,
     ) -> StoreResult<R> {
@@ -138,8 +137,9 @@ impl Store {
         Ok(result)
     }
 
-    pub async fn current_head(&self) -> StoreResult<Option<DurableHead>> {
-        let reader = self.reader.lock().await;
+    /// Read one durable header under the caller's protected save barrier.
+    pub(crate) async fn protected_edit_head(&self) -> StoreResult<Option<DurableHead>> {
+        let reader = self.simulation_reader.lock().await;
         durable_head(&reader.client).await
     }
 
@@ -367,6 +367,7 @@ impl Store {
         )
         .await?;
         transaction.commit().await?;
+        drop(reader);
         let Some(row) = rows.pop() else {
             return Ok(None);
         };

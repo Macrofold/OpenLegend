@@ -83,6 +83,8 @@ Current routine vision follows the [selected world’s sampling policy](../world
 
 Cache **dependency-valid results**, not just individual ray intersections. A stationary observer looking at unchanged objects and geometry should not reconstruct the same static visible list every interval. Keep static object membership/poses separate from moving actor targets. Geometry, source identity/pose/body, observer pose/anchors/range/capability and detector policy are explicit invalidators; metadata/recognition remains freshly observer-scoped rather than cached with geometric visibility.
 
+The stand-alone provider uses the same immutable extent tree for obstacle shapes, supporting surfaces and received physical features. Each leaf retains exactly its own entries after installation. The existing partition, traversal order and authored geometry remain the inputs to collision, sight, navigation and discovery.
+
 Use dirty entity/region work from the existing mutation owner and a phase-local scalar view, not a full-world deep copy into each worker. Snapshot/fork/load boundaries must not share mutable or revoked draft references. Unchanged exposure reuse and incremental source-bin membership are delivered by PW08/NP02, including old/new-neighborhood observer selection; [current query ownership](storage.md#shared-entity-queries-and-cognition-work) names the remaining roster, affected-observer and publication scans. Finer changed-target work remains gated by its measured cost. Preserve deterministic candidate/event order; unchanged arrays can be retained, while changed membership retains its acquisition/loss semantics.
 
 Sight queries skip spatial cells outside the observer's sphere until its bounded

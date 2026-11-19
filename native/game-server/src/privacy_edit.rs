@@ -78,7 +78,7 @@ pub(crate) async fn forget(
     operator(&authority, &scope, &target)?;
     let durable = game
         .store
-        .current_head()
+        .protected_edit_head()
         .await?
         .ok_or(StoreError::StaleCut)?;
     let expected = durable.clone();
