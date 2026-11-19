@@ -28,6 +28,7 @@ const RESET: &[u8] = b"event: reset\ndata: ";
 const PATCH: &[u8] = b"event: patch\ndata: ";
 
 pub(crate) struct ViewAttempt {
+    pub started_at: Instant,
     pub scope: Arc<AuthorizedScope>,
     pub view: PreparedPlayerView,
 }
@@ -246,7 +247,9 @@ impl Body for PlayerStream {
                 }
                 Next::View(Ok((attempt, turn))) => {
                     let revision = attempt.view.revision();
-                    self.after = Instant::now() + VIEW_CADENCE;
+                    // Start-to-start cadence gives preparation and disclosure their
+                    // share of the same publication window.
+                    self.after = attempt.started_at + VIEW_CADENCE;
                     let mut inventory = false;
                     let result = turn.disclose(
                         &self.authority,

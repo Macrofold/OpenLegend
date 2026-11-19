@@ -11,7 +11,10 @@ use crate::{
 };
 use axum::{extract::Query, routing::get};
 use openlegend_world_host::pool::HostError;
-use tokio::sync::{Mutex, watch};
+use tokio::{
+    sync::{Mutex, watch},
+    time::Instant,
+};
 
 #[derive(Clone)]
 struct Views {
@@ -81,6 +84,7 @@ impl Views {
         let _serial = tokio::time::timeout(REQUEST_TIMEOUT, self.lane.lock())
             .await
             .map_err(|_| ViewError::Capacity)?;
+        let started_at = Instant::now();
         if *self.stop.borrow() {
             return Err(ViewError::Changed);
         }
@@ -134,7 +138,11 @@ impl Views {
         }
         view.attach_presentation_release(game.installed_assets().map(Arc::as_ref), &game.store)
             .await?;
-        Ok(ViewAttempt { scope, view })
+        Ok(ViewAttempt {
+            started_at,
+            scope,
+            view,
+        })
     }
 
     /// The opening header cannot succeed on an unchecked capture. A later
