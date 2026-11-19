@@ -46,7 +46,6 @@ enum Next {
 pub(crate) struct PlayerStream {
     authority: Arc<Authority>,
     world: Arc<HostedWorld>,
-    prepare: PrepareView,
     revisions: watch::Receiver<u64>,
     stop: watch::Receiver<bool>,
     pending: Option<NextFrame>,
@@ -59,6 +58,8 @@ pub(crate) struct PlayerStream {
     fresh_attempt: bool,
     ended: bool,
     _permit: OwnedSemaphorePermit,
+    // The preparation closure holds the request owner until this body drops.
+    prepare: PrepareView,
 }
 
 impl PlayerStream {
@@ -77,7 +78,6 @@ impl PlayerStream {
         Self {
             authority,
             world,
-            prepare,
             revisions,
             stop,
             pending: None,
@@ -90,6 +90,7 @@ impl PlayerStream {
             fresh_attempt: false,
             ended: false,
             _permit: permit,
+            prepare,
         }
     }
 

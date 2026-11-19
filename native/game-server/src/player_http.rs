@@ -56,6 +56,8 @@ struct PlayerRoutes {
     expected_world: String,
     capacity: Arc<Semaphore>,
     grace: Duration,
+    // Declared last so the clone releases its world owners before this signal.
+    _request_owner: tokio::sync::watch::Sender<()>,
 }
 
 pub(crate) fn router(
@@ -74,6 +76,7 @@ pub(crate) fn router(
     ai_display: crate::store::AiDisplay,
     god_mode: bool,
     stop: tokio::sync::watch::Receiver<bool>,
+    request_owner: tokio::sync::watch::Sender<()>,
 ) -> Result<Router, getrandom::Error> {
     let commands = Arc::new(PlayerCommands::new(
         game.clone(),
@@ -94,6 +97,7 @@ pub(crate) fn router(
         expected_world,
         capacity: Arc::new(Semaphore::new(capacity)),
         grace,
+        _request_owner: request_owner,
     };
     let streams = Arc::new(Semaphore::new(streams));
     let reads = view::router(state.clone(), streams.clone(), ai_display, stop.clone())

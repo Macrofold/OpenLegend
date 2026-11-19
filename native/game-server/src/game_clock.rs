@@ -308,9 +308,9 @@ impl GameClock {
 
     /// One loop offers time from a monotonic cursor and yields between
     /// catch-up publications. It must be joined before the save task drains.
-    pub async fn run(&self, mut stop: watch::Receiver<bool>) -> Result<(), WorldError> {
+    pub async fn run(&self, stop: watch::Receiver<bool>) -> Result<(), WorldError> {
         let started = Instant::now();
-        let (offered, mut sample) = watch::channel(Duration::ZERO);
+        let (offered, sample) = watch::channel(Duration::ZERO);
         // Sample suspension independently. An operation waiting for geometry
         // or the next accepted turn must not discard the elapsed time it owes.
         let mut sampler = tokio::task::JoinSet::new();
@@ -332,6 +332,22 @@ impl GameClock {
                 }
             }
         });
+        let mut route = tokio::task::JoinSet::new();
+        let result = self.run_offers(stop, started, sample, &mut route).await;
+        // A deferred route holds the server while it awaits geometry. Join
+        // its cancellation before the listener can release the world owner.
+        route.shutdown().await;
+        sampler.shutdown().await;
+        result
+    }
+
+    async fn run_offers(
+        &self,
+        mut stop: watch::Receiver<bool>,
+        started: Instant,
+        mut sample: watch::Receiver<Duration>,
+        route: &mut tokio::task::JoinSet<Result<(), WorldError>>,
+    ) -> Result<(), WorldError> {
         let mut previous = started;
         let mut excluded = Duration::ZERO;
         let mut debt = 0.0;
@@ -341,7 +357,6 @@ impl GameClock {
             .accepted_reset
             .lock()
             .map_err(|_| HostError::Poisoned)?;
-        let mut route = tokio::task::JoinSet::<Result<(), WorldError>>::new();
         while !*stop.borrow() {
             if more {
                 tokio::task::yield_now().await;

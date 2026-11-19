@@ -150,7 +150,6 @@ enum Delivery {
 }
 
 struct PreviewStream {
-    state: PreviewRoutes,
     request: String,
     scope: Arc<AuthorizedScope>,
     notices: Notices,
@@ -164,6 +163,8 @@ struct PreviewStream {
     ended: bool,
     _permit: OwnedSemaphorePermit,
     _custody: ByteReservation,
+    // The pending future can hold the server independently of this state.
+    state: PreviewRoutes,
 }
 
 impl PreviewStream {

@@ -116,6 +116,7 @@ pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(
         limit_usd,
     )?);
     let (end_http, http_stop) = watch::channel(false);
+    let (request_owner, mut requests_released) = watch::channel(());
     let requests = crate::player_http::router(
         authority.clone(),
         identity,
@@ -132,6 +133,7 @@ pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(
         display,
         setting("OPEN_LEGEND_GOD_MODE", "false")? == "true",
         http_stop.clone(),
+        request_owner,
     )
     .map_err(|_| "Could not establish per-process player reference keys")?;
     let game_routes = Router::new()
@@ -176,6 +178,9 @@ pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(
         game.clone(),
     )
     .await;
+    // Axum can report a finished connection before Hyper drops its
+    // service and response body. Wait for their player owners as well.
+    let _ = requests_released.changed().await;
     game.world.drain_operations().await;
     let close = Arc::try_unwrap(game)
         .map_err(|_| "The listener left a running world owner")?
