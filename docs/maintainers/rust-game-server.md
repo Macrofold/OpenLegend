@@ -23,11 +23,7 @@ The controlled wire, saved conversation, preview and held evidence checks are in
 
 ## Release inputs
 
-Build `openlegend-game-server` with the pinned Rust toolchain and `cargo build --locked --offline --release --manifest-path native/Cargo.toml -p openlegend-game-server`. Prepare the current opening and database using the existing initializer. The [storage exporter](../../scripts/rust-game-server-storage.ts) reads the installed definitions and writes the release manifest. The [navigation exporter](../../scripts/rust-game-server-navigation.ts) and [language builder](../../scripts/rust-game-server-language.sh) provide the checked `navigation/` and `language/` directories. Copy the existing browser build under `browser/` in the release directory.
-
-Set `OPEN_LEGEND_DATABASE_URL` through the operator's environment and run `openlegend-game-server serve RELEASE_DIRECTORY`. The executable opens the current database and starts the player listener using the release inputs. `check-open RELEASE_DIRECTORY` validates current storage and closes without accepting gameplay. Build tools can use Node. The game process runs the Rust executable, and the browser runs its own JavaScript.
-
-Stop the world writer before running `openlegend-game-server recover-checkpoint RELEASE_DIRECTORY CHECKPOINT_DIRECTORY SLOT_ID OPERATION_UUID [FLOOR_SLOT_ID]`. Select a validated checkpoint and use the same operation UUID to recover its original result after an interrupted acknowledgement. `FLOOR_SLOT_ID` identifies the current authority baseline when recovery needs a separately captured floor. Recovery keeps operational rights and current privacy, then atomically installs the recovered gameplay and derived records. The next `serve` validates and opens its new timeline. [Recovery contract](../save-and-load.md#loading-as-an-authority-transition)
+The [stand-alone release instructions](../../README.md#run-the-stand-alone-rust-server) provide the preparation, startup and stopped-checkpoint commands.
 
 ## Delivery gates
 

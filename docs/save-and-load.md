@@ -321,6 +321,8 @@ After capture, serialize and write from stable data. Background serialization of
 
 Write a candidate without destroying the last good save. Validate completeness and integrity, then publish it atomically using the chosen storage system's durability guarantees. An interrupted write must leave either the previous complete save or the new complete save discoverable, never a partial replacement. A checksum detects accidental corruption; it does not establish trust. Concurrent completion must not let an older capture replace a newer slot revision accidentally. Return useful failures for full storage, missing dependencies or failed publication.
 
+The stand-alone writer detaches an exact changed-record prefix from the accepted Rust world before starting PostgreSQL work. One database transaction commits that prefix and its receipts. Confirmation retires only the captured prefix. An independent reader can keep its old cut while newer accepted rows and a later save continue. Scoped reads use one database snapshot and the accepted changes the database has yet to include at that cut. Checkpoint recovery while the writer is stopped validates the replacement, preserves current access and privacy, and installs the new timeline atomically. [Stand-alone store verification](maintainers/rust-game-server.md#current-implementation) · [Loading as an authority transition](#loading-as-an-authority-transition)
+
 ## Current-format validation
 
 An independently initialized artwork catalog or access repository may precede a game's first schema initialization. Only those owners' registered tables are allowed without a game schema marker; any unmarked gameplay or other storage table still refuses startup. This does not admit an older world or recreate lost game metadata.
