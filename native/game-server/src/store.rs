@@ -1,5 +1,5 @@
 //! Direct PostgreSQL ownership. One session owns the writer lock. Independently
-//! admitted readers use a fixed read-only snapshot on a separate connection.
+//! admitted readers use fixed read-only snapshots on separate connections.
 
 mod archives;
 pub(crate) mod assets;
@@ -137,15 +137,17 @@ pub struct Store {
     _schema_custody: openlegend_simulation::host::ByteReservation,
     writer: Mutex<Session>,
     reader: Mutex<Session>,
+    simulation_reader: Mutex<Session>,
     admitted: AtomicBool,
     writer_connected: Arc<AtomicBool>,
     budget: ByteBudget,
 }
 
 impl Store {
-    /// Connect one locked writer and one independent read-only session. The
-    /// generated artifact is trusted release input. Its DDL is only applied
-    /// on explicit initialization after the preexisting metadata check.
+    /// Connect one locked writer and independent read-only sessions for
+    /// operational reads and simulation-cut reads. The generated artifact is
+    /// trusted release input. Its DDL is only applied on explicit initialization
+    /// after the preexisting metadata check.
     pub async fn open(
         mut config: Config,
         tls: MakeRustlsConnect,
@@ -201,21 +203,28 @@ impl Store {
         schema_custody
             .resize(schema.retained_bytes().ok_or(StoreError::Capacity)?)
             .map_err(|_| StoreError::Capacity)?;
-        let reader = Self::session(&config, tls).await?;
-        reader
-            .client
-            .batch_execute("SET default_transaction_read_only=on")
-            .await?;
+        let reader = Self::read_only_session(&config, tls.clone()).await?;
+        let simulation_reader = Self::read_only_session(&config, tls).await?;
         let writer_connected = Arc::clone(&writer.connected);
         Ok(Self {
             schema,
             _schema_custody: schema_custody,
             writer: Mutex::new(writer),
             reader: Mutex::new(reader),
+            simulation_reader: Mutex::new(simulation_reader),
             admitted: AtomicBool::new(true),
             writer_connected,
             budget,
         })
+    }
+
+    async fn read_only_session(config: &Config, tls: MakeRustlsConnect) -> StoreResult<Session> {
+        let session = Self::session(config, tls).await?;
+        session
+            .client
+            .batch_execute("SET default_transaction_read_only=on")
+            .await?;
+        Ok(session)
     }
 
     async fn session(config: &Config, tls: MakeRustlsConnect) -> StoreResult<Session> {

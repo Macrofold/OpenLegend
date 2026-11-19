@@ -2,7 +2,9 @@
 //! each exact selection inside its owning snapshot, before body transfer.
 
 use super::schema::{SqlType, Table};
-use super::{DurableHead, Store, StoreError, StoreResult, durable_head, ordinal, sql_ordinal};
+use super::{
+    DurableHead, Session, Store, StoreError, StoreResult, durable_head, ordinal, sql_ordinal,
+};
 use openlegend_simulation::events::OriginalOccurrenceInput;
 use openlegend_simulation::host::{ByteBudget, ByteReservation};
 use openlegend_simulation::records::{
@@ -15,8 +17,11 @@ use std::collections::{BTreeMap, HashMap};
 use std::future::Future;
 use std::mem::size_of;
 use std::pin::Pin;
+use tokio::sync::Mutex;
 use tokio_postgres::types::ToSql;
 use tokio_postgres::{IsolationLevel, Row, Transaction};
+
+type ReadWork<'a, R> = Pin<Box<dyn Future<Output = StoreResult<R>> + Send + 'a>>;
 
 pub struct CurrentOpening {
     pub records: CurrentRecords,
@@ -100,11 +105,27 @@ impl Store {
     /// session/grant check. Variable bodies use the existing transfer preflight.
     pub(crate) async fn read_operational<R>(
         &self,
-        work: impl for<'a> FnOnce(
-            &'a Transaction<'a>,
-        ) -> Pin<Box<dyn Future<Output = StoreResult<R>> + Send + 'a>>,
+        work: impl for<'a> FnOnce(&'a Transaction<'a>) -> ReadWork<'a, R>,
     ) -> StoreResult<R> {
-        let mut reader = self.reader.lock().await;
+        Self::read_snapshot(&self.reader, work).await
+    }
+
+    /// Answer a prepared provider request on its accepted cut. A candidate or
+    /// disclosure can own the world turn while it awaits this SQL snapshot.
+    /// Keep its connection independent of operational reads so a held receipt
+    /// or view cannot queue ahead of that turn and an ordinary save capture.
+    pub(super) async fn read_simulation_cut<R>(
+        &self,
+        work: impl for<'a> FnOnce(&'a Transaction<'a>) -> ReadWork<'a, R>,
+    ) -> StoreResult<R> {
+        Self::read_snapshot(&self.simulation_reader, work).await
+    }
+
+    async fn read_snapshot<R>(
+        lane: &Mutex<Session>,
+        work: impl for<'a> FnOnce(&'a Transaction<'a>) -> ReadWork<'a, R>,
+    ) -> StoreResult<R> {
+        let mut reader = lane.lock().await;
         let transaction = reader
             .client
             .build_transaction()

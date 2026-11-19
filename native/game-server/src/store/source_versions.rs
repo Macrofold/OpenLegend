@@ -431,7 +431,7 @@ impl Store {
         read: PreparedSourceVersions,
     ) -> StoreResult<RuntimeProviderInput> {
         let store = self.clone();
-        self.read_operational(move |transaction| {
+        self.read_simulation_cut(move |transaction| {
             Box::pin(async move {
                 let head = durable_head(transaction)
                     .await?

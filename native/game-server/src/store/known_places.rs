@@ -200,7 +200,7 @@ impl Store {
         read: PreparedKnownPlaceRead,
     ) -> StoreResult<RuntimeProviderInput> {
         let budget = self.budget.clone();
-        self.read_operational(move |transaction| {
+        self.read_simulation_cut(move |transaction| {
             Box::pin(async move {
                 let head = durable_head(transaction).await?.ok_or(StoreError::StaleCut)?;
                 if head.world_id != read.world || head.generation != read.generation {
