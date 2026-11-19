@@ -1198,7 +1198,6 @@ enum UndoKey {
     Condition(usize, u64, String),
     Practice(usize, u64, String),
     NativeWindow,
-    Episode(String),
     Invocation(String),
 }
 
@@ -3356,43 +3355,38 @@ impl PhysicalMutation<'_> {
             .ok_or(ExecutionError::Capacity)?;
         }
         self.journal.reserve(bytes)?;
-        let key = UndoKey::Episode(episode.to_owned());
-        if self.journal.first(&key)? {
-            let mut prior_attributes = Vec::with_capacity(binding.attributes.len());
-            let mut prior_links = Vec::with_capacity(binding.attributes.len());
-            for id in binding.attributes.keys() {
-                prior_attributes.push((
-                    id.clone(),
-                    attributes
-                        .get(id)
-                        .ok_or(ValueError::MissingAttribute)?
-                        .clone(),
-                ));
-                let (index, _, value) =
-                    links.get_full(id).ok_or(ValueError::InvalidContinuation)?;
-                prior_links.push((index, id.clone(), value.clone()));
-            }
-            // A binding's authored attribute order need not match the subject
-            // index. Restore low positions first, including an empty subject.
-            prior_links.sort_by_key(|(position, _, _)| *position);
-            self.journal.retain(
-                key,
-                Undo::Episode(EpisodeUndo {
-                    episode: episode.to_owned(),
-                    binding: (binding_index, binding.clone()),
-                    elapsed_seconds: window.elapsed_seconds,
-                    sim_time: window.sim_time,
-                    binding_count: window.binding_count,
-                    subject_index,
-                    links: prior_links,
-                    entity: handle,
-                    attributes: prior_attributes,
-                    status_id: binding.status_id.clone(),
-                    status: crate::state::FundedStatus::copy(status, &self.journal.budget)?,
-                    status_index,
-                }),
-            )?;
+        // Each removal changes the positions observed by later inverses. A
+        // re-retained episode can be removed again within the same checkpoint.
+        let mut prior_attributes = Vec::with_capacity(binding.attributes.len());
+        let mut prior_links = Vec::with_capacity(binding.attributes.len());
+        for id in binding.attributes.keys() {
+            prior_attributes.push((
+                id.clone(),
+                attributes
+                    .get(id)
+                    .ok_or(ValueError::MissingAttribute)?
+                    .clone(),
+            ));
+            let (index, _, value) = links.get_full(id).ok_or(ValueError::InvalidContinuation)?;
+            prior_links.push((index, id.clone(), value.clone()));
         }
+        // A binding's authored attribute order need not match the subject
+        // index. Restore low positions first, including an empty subject.
+        prior_links.sort_by_key(|(position, _, _)| *position);
+        self.journal.undo.push(Undo::Episode(EpisodeUndo {
+            episode: episode.to_owned(),
+            binding: (binding_index, binding.clone()),
+            elapsed_seconds: window.elapsed_seconds,
+            sim_time: window.sim_time,
+            binding_count: window.binding_count,
+            subject_index,
+            links: prior_links,
+            entity: handle,
+            attributes: prior_attributes,
+            status_id: binding.status_id.clone(),
+            status: crate::state::FundedStatus::copy(status, &self.journal.budget)?,
+            status_index,
+        }));
         let entity = self
             .state
             .entities
