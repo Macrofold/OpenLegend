@@ -4347,7 +4347,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     const neutral = input.kind === 'steer' && input.direction.x === 0 && input.direction.z === 0;
     const continuedMovement =
       input.kind === 'renew' ? input.movement && !input.pendingRelease : neutral;
-    const cut = this.heldInputCut ?? (neutral && !this.paused ? this.heldPlayerReadCut : undefined);
+    const cut = this.heldInputCut ?? (!this.paused ? this.heldPlayerReadCut : undefined);
     if (continuedMovement && cut !== undefined && cut === this.acceptedCut) {
       const state = this.inputs.steeringAt(scope.actorId, cut);
       if (state) {
@@ -4355,8 +4355,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
         this.assertScope(scope, 'play', true);
         const output = NativeInputResultAllocation.prepare(this.host);
         try {
-          // Renew only the permitted live direction. A private advance keeps
-          // its finite window, and neutral makes its final check refuse that input.
+          // A read leaves this checked direction current. A private advance
+          // keeps its finite window, and neutral revokes that prepared input.
           const now = performance.now();
           this.accountInputTime(now);
           return output.finish(
@@ -4548,8 +4548,8 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   }
 
   /** Initial streams can wait for a recoverable protected save. Established
-   * streams defer refusals. This read-only turn lets key-up disarm an already
-   * checked direction at the same cut without waiting for view preparation.
+   * streams defer refusals. This read-only turn lets the exact controller
+   * renew or stop a direction checked at the same cut during view preparation.
    * docs/projects/action-execution-and-skill-expression-tech-design.md#13-movement-alongside-preparation-and-the-live-input-lease */
   private playerReadBoundary<T>(signal: AbortSignal | undefined, operation: () => T | Promise<T>) {
     const read = async () => {
