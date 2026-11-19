@@ -176,6 +176,7 @@ pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(
         game.clone(),
     )
     .await;
+    game.world.drain_operations().await;
     let close = Arc::try_unwrap(game)
         .map_err(|_| "The listener left a running world owner")?
         .close()

@@ -102,13 +102,22 @@ impl RuntimeError {
         }
     }
 
+    /// The application withheld admission before Ready. Keep its reason and
+    /// let the host apply the resource owner's wait or recovery policy.
+    pub fn application_busy(reason: impl std::fmt::Display) -> Self {
+        Self {
+            refusal: Refusal::Busy,
+            ..Self::application_refused(reason)
+        }
+    }
+
     /// A live host can defer work that refused byte admission before acceptance.
     /// Semantic, rollback and owner errors still stop the affected operation.
     pub fn is_capacity(&self) -> bool {
         matches!(self.refusal, Refusal::Capacity)
     }
 
-    /// The requested accepted boundary was temporarily occupied.
+    /// The runtime or its application could not admit this work.
     pub fn is_busy(&self) -> bool {
         matches!(self.refusal, Refusal::Busy)
     }

@@ -1,7 +1,10 @@
 //! Page visibility belongs to the application. A heartbeat never changes a
 //! body or grants control, and an older report cannot replace a newer one.
 
-use crate::authority::{AccessError, Authority, AuthorizedScope, Capability};
+use crate::authority::{
+    AccessError, Authority, AuthorizedScope, Capability, ControlChange, ControlOperation,
+    ControlRequest,
+};
 use indexmap::IndexMap;
 use openlegend_simulation::host::{ByteBudget, ByteReservation, map_storage};
 use std::{
@@ -63,11 +66,30 @@ impl Presence {
     // ordinary acquire selection can only take over an unattended control.
     pub(crate) fn controller_present(&self, actor: &str) -> Result<bool, AccessError> {
         let state = self.state.lock().map_err(|_| AccessError::Availability)?;
+        Ok(self.has_controller(&state, actor))
+    }
+
+    /// The caller has finished the protected writer drain and receipt lookup.
+    /// Hold the presence lock through fencing so the latest valid heartbeat
+    /// decides whether an ordinary acquisition may replace an unattended tab.
+    pub(crate) fn fence_control(
+        &self,
+        authorized: &AuthorizedScope,
+        request: ControlRequest,
+    ) -> Result<ControlChange, AccessError> {
+        let state = self.state.lock().map_err(|_| AccessError::Availability)?;
+        let unattended = request.operation == ControlOperation::Acquire
+            && !self.has_controller(&state, &authorized.scope.actor_id);
+        self.authority
+            .fence_control(authorized, request, unattended)
+    }
+
+    fn has_controller(&self, state: &State, actor: &str) -> bool {
         let now = Instant::now();
-        Ok(state
+        state
             .pages
             .values()
-            .any(|page| page.scope.scope.actor_id == actor && self.current(page, now)))
+            .any(|page| page.scope.scope.actor_id == actor && self.current(page, now))
     }
 
     fn current(&self, page: &Page, now: Instant) -> bool {

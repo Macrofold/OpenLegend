@@ -27,6 +27,7 @@ use std::time::Duration;
 use std::{collections::BTreeSet, future::Future};
 use tokio::sync::{Mutex as TurnLock, Semaphore, oneshot, watch};
 use tokio::time::Instant;
+use tokio_util::task::TaskTracker;
 
 const TURN_WAIT: Duration = Duration::from_secs(5);
 pub(crate) const IO_YIELD: Duration = Duration::from_millis(8);
@@ -52,7 +53,25 @@ pub enum WorldError {
     Language(crate::language::LanguageError),
     ClockChanged,
     ProjectionChanged,
+    NpcDecisionExpired,
     SourceEditPending,
+}
+
+impl WorldError {
+    /// These owners refused work before acceptance. The clock can keep the
+    /// elapsed offer or try the still-pending route on a later wake.
+    pub(crate) fn is_admission_refusal(&self) -> bool {
+        match self {
+            Self::Host(HostError::Busy | HostError::Capacity)
+            | Self::Fence(FenceError::Busy)
+            | Self::Geometry(
+                crate::spatial::SpatialError::Capacity
+                | crate::spatial::SpatialError::NavigationBusy,
+            ) => true,
+            Self::Simulation(error) => error.is_busy() || error.is_capacity(),
+            _ => false,
+        }
+    }
 }
 
 impl std::fmt::Display for WorldError {
@@ -77,6 +96,9 @@ impl std::fmt::Display for WorldError {
                 f.write_str("The accepted clock changed before the elapsed offer")
             }
             Self::ProjectionChanged => f.write_str("The allowed player view changed"),
+            Self::NpcDecisionExpired => {
+                f.write_str("The character's original decision deadline passed")
+            }
             Self::SourceEditPending => {
                 f.write_str("The selected character's evidence is being edited")
             }
@@ -262,6 +284,7 @@ impl WorldHost {
             fence,
             turn: Arc::new(TurnLock::new(())),
             waiting: Arc::new(Semaphore::new(self.request_capacity)),
+            operations: TaskTracker::new(),
             closing: AtomicBool::new(false),
             durable,
             pending_source_edits: Mutex::new(BTreeSet::new()),
@@ -288,6 +311,7 @@ pub struct HostedWorld {
     fence: Arc<CandidateFence>,
     turn: Arc<TurnLock<()>>,
     waiting: Arc<Semaphore>,
+    pub(crate) operations: TaskTracker,
     closing: AtomicBool,
     durable: watch::Sender<u64>,
     pending_source_edits: Mutex<BTreeSet<Arc<str>>>,
@@ -1029,7 +1053,7 @@ impl HostedWorld {
         let (mut sender, receiver) = oneshot::channel();
         // Once a private candidate exists, cancellation must still join its
         // rollback even when the caller drops its future.
-        tokio::spawn(async move {
+        self.operations.spawn(async move {
             let result = async {
                 let _turn = tokio::select! {
                     biased;
@@ -1135,6 +1159,13 @@ impl HostedWorld {
             }
             _ => self.call(move |session| session.cancel(key)).await,
         }
+    }
+
+    /// Join tasks that still hold candidate cleanup or scoped reads after
+    /// their callers have stopped. Ingress and the save owner are already joined.
+    pub(crate) async fn drain_operations(&self) {
+        self.operations.close();
+        self.operations.wait().await;
     }
 
     /// Call after the save owner has drained the last accepted prefix.

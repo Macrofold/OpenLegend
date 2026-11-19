@@ -107,7 +107,6 @@ impl Views {
         let host = capture_host(
             authority,
             &scope,
-            &self.routes.saves,
             &self.routes.commands,
             &self.routes.presence,
             ViewTelemetry { ai, custody },

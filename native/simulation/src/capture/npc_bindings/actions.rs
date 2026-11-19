@@ -3,7 +3,7 @@
 use super::*;
 
 pub(crate) fn prepare_ordinary_actions(
-    original: &PreparedNpcCandidates,
+    original: Option<&PreparedNpcCandidates>,
     current: &PreparedNpcCandidates,
     selected: &[NpcActionOrdinal],
     actor: &str,
@@ -30,7 +30,7 @@ pub(crate) fn prepare_ordinary_actions(
     let mut aliases = Vec::with_capacity(selected.len());
     for selected in selected {
         let catalogue = match selected.source {
-            NpcCatalogueSource::Original => original,
+            NpcCatalogueSource::Original => original.ok_or_else(invalid)?,
             NpcCatalogueSource::Current => current,
         };
         let offer = catalogue

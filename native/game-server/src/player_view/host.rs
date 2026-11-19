@@ -3,8 +3,8 @@
 
 use super::*;
 use crate::{
-    authority::Authority, live_save::LiveSaves, player_command::PlayerCommands,
-    player_references::PlayerReferences, presence::Presence,
+    authority::Authority, player_command::PlayerCommands, player_references::PlayerReferences,
+    presence::Presence,
 };
 use openlegend_simulation::encoding::{json_record, sha256_hex};
 
@@ -12,7 +12,6 @@ pub(crate) struct ViewHostInput {
     access: PlayerAccess,
     checkpoint: Option<CheckpointContext>,
     command_epoch: String,
-    persistence: PersistenceView,
     pub(crate) paused_stop: Option<PausedStop>,
     telemetry: ViewTelemetry,
     custody: ByteReservation,
@@ -23,7 +22,6 @@ pub(crate) struct ViewHostInput {
 pub(crate) async fn capture_host(
     authority: &Authority,
     grant: &AuthorizedScope,
-    saves: &LiveSaves,
     commands: &PlayerCommands,
     presence: &Presence,
     telemetry: ViewTelemetry,
@@ -64,7 +62,6 @@ pub(crate) async fn capture_host(
     } else {
         None
     };
-    let failed = saves.has_failed();
     let controlled_elsewhere = !access.controlling
         && presence
             .controller_present(&scope.actor_id)
@@ -89,17 +86,6 @@ pub(crate) async fn capture_host(
         },
         checkpoint,
         command_epoch: commands.epoch().await,
-        persistence: if failed {
-            PersistenceView {
-                status: PersistenceStatus::Error,
-                message: "Saving must recover before playing.".into(),
-            }
-        } else {
-            PersistenceView {
-                status: PersistenceStatus::Saved,
-                message: "Saved locally; the world pauses when you leave".into(),
-            }
-        },
         paused_stop: None,
         telemetry,
         custody,
@@ -123,6 +109,7 @@ impl ViewHostInput {
     pub(super) fn assemble(
         self,
         revision: u64,
+        save_failed: bool,
         read: &RuntimePlayerRead,
         policy: &PlayerViewPolicy,
         references: &PlayerReferences<'_>,
@@ -164,7 +151,17 @@ impl ViewHostInput {
             checkpoint: self.checkpoint,
             command_epoch: self.command_epoch,
             base_ratio: policy.base_ratio(),
-            persistence: self.persistence,
+            persistence: if save_failed {
+                PersistenceView {
+                    status: PersistenceStatus::Error,
+                    message: "Saving must recover before playing.".into(),
+                }
+            } else {
+                PersistenceView {
+                    status: PersistenceStatus::Saved,
+                    message: "Saved locally; the world pauses when you leave".into(),
+                }
+            },
             inventory: InventoryReadRevision {
                 bindings: input.inventory_revision,
                 details: input.inventory_revision,

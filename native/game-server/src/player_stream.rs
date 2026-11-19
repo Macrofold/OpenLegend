@@ -52,6 +52,7 @@ pub(crate) struct PlayerStream {
     pending: Option<NextFrame>,
     first: Option<ViewAttempt>,
     previous: Option<PreviousView>,
+    covered_revision: Option<u64>,
     scope: Arc<AuthorizedScope>,
     after: Instant,
     heartbeat: Instant,
@@ -83,6 +84,7 @@ impl PlayerStream {
             scope: first.scope.clone(),
             first: Some(first),
             previous: None,
+            covered_revision: None,
             after: now,
             heartbeat: now + HEARTBEAT,
             fresh_attempt: false,
@@ -99,14 +101,21 @@ impl PlayerStream {
         let prepare = self.prepare.clone();
         let world = self.world.clone();
         let first = self.first.take();
-        let fresh = self.fresh_attempt || self.previous.is_none();
+        let covered = self.covered_revision.filter(|_| !self.fresh_attempt);
         Box::pin(async move {
             let shutdown = async { while !*stop.borrow() && stop.changed().await.is_ok() {} };
             let view = async {
                 let attempt = match first {
                     Some(first) => first,
                     None => {
-                        if !fresh && revisions.changed().await.is_err() {
+                        // A newer notice can arrive during or just after disclosure.
+                        // Wait for a revision beyond the view we actually covered.
+                        if let Some(revision) = covered
+                            && revisions
+                                .wait_for(|latest| *latest > revision)
+                                .await
+                                .is_err()
+                        {
                             return Next::Stop;
                         }
                         sleep_until(after).await;
@@ -235,7 +244,7 @@ impl Body for PlayerStream {
                     return Poll::Ready(None);
                 }
                 Next::View(Ok((attempt, turn))) => {
-                    let offered = *self.revisions.borrow();
+                    let revision = attempt.view.revision();
                     self.after = Instant::now() + VIEW_CADENCE;
                     let mut inventory = false;
                     let result = turn.disclose(
@@ -275,14 +284,11 @@ impl Body for PlayerStream {
                             self.changed();
                         }
                         Ok(PlayerDisclosure::Unchanged) => {
-                            self.revisions.borrow_and_update();
+                            self.covered_revision = Some(revision);
                             self.fresh_attempt = false;
                         }
                         Ok(PlayerDisclosure::Published(bytes)) => {
-                            let revision = attempt.view.revision();
-                            if offered <= revision {
-                                self.revisions.borrow_and_update();
-                            }
+                            self.covered_revision = Some(revision);
                             self.fresh_attempt = false;
                             self.scope = attempt.scope;
                             self.previous = Some(attempt.view.into_previous(inventory));

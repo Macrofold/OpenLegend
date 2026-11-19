@@ -7,6 +7,7 @@ use crate::{
 };
 use openlegend_simulation::{
     encoding::{json_record, sha256_hex},
+    experience::{PersonalSourceKind, PersonalSourceRef},
     host::{ByteBudget, ByteReservation},
     narration::{NameArticle, name_phrase, native_text},
     runtime::{RuntimeNpcRead, RuntimeNpcResponseTicket},
@@ -183,13 +184,7 @@ async fn capture_offers(
     stage: &'static str,
 ) -> Result<RuntimeNpcRead, CallFailure> {
     let budget = game.host.budget();
-    let request = crate::wire::encode(
-        &json!({"actorId":work.actor,"requiredAppraisals":[],"consumer":consumer}),
-        b"",
-        b"",
-        budget,
-    )
-    .map_err(invalid)?;
+    let request = read_request(work, consumer, budget)?;
     let selector = crate::wire::encode(
         &json!({"expandedBodyOrdinals":[],"coverage":"suggestions"}),
         b"",
@@ -201,6 +196,34 @@ async fn capture_offers(
         .capture_npc_offers(game.clone(), request, selector)
         .await
         .map_err(|error| CallFailure::World(error).at(stage))
+}
+
+/// Keep the original accepted perception and personal source lineage. This
+/// path binds its executable choices and response prototypes from a later cut.
+async fn capture_origin(
+    game: &Arc<CurrentServer>,
+    work: &Work,
+    consumer: &str,
+) -> Result<RuntimeNpcRead, CallFailure> {
+    let request = read_request(work, consumer, game.host.budget())?;
+    game.world
+        .capture_npc_read(request)
+        .await
+        .map_err(|error| CallFailure::World(error).at("original-read"))
+}
+
+fn read_request(
+    work: &Work,
+    consumer: &str,
+    budget: &ByteBudget,
+) -> Result<axum::body::Bytes, CallFailure> {
+    crate::wire::encode(
+        &json!({"actorId":work.actor,"requiredAppraisals":[],"consumer":consumer}),
+        b"",
+        b"",
+        budget,
+    )
+    .map_err(invalid)
 }
 
 fn capture(read: &RuntimeNpcRead, budget: &ByteBudget) -> Result<FundedJson, CallFailure> {
@@ -294,6 +317,11 @@ fn project(
     }
     let addressed = trigger.is_some_and(|row| row["value"]["triggerKind"] == "addressed_speech");
     let speech = trigger.is_some_and(|row| row["value"]["eventType"] == "speech");
+    let speech_trigger = work
+        .automatic
+        .as_ref()
+        .is_none_or(|trigger| trigger.causes.is_empty())
+        && speech_only(&work.source, &source_entries);
     if consumer == "chat" && !addressed {
         return Err(CallFailure::Stale("decision-heard-addressing"));
     }
@@ -412,8 +440,34 @@ fn project(
             preview_player,
         },
         addressed,
-        speech,
+        speech_trigger,
     ))
+}
+
+/// Only the exact causes of this decision determine the conversational
+/// shortcut. Recalled context can contain unrelated physical events.
+/// See docs/memory-architecture.md#every-semantic-decision-uses-an-event-or-intent-sentence.
+fn speech_only(causes: &[PersonalSourceRef], entries: &[&Value]) -> bool {
+    let mut heard = false;
+    for cause in causes {
+        if cause.kind != PersonalSourceKind::Awareness {
+            return false;
+        }
+        let Some(row) = entries.iter().find(|row| {
+            let reference = &row["reference"];
+            reference["kind"] == "awareness"
+                && reference["id"] == cause.id.as_str()
+                && reference["revision"] == cause.revision.as_str()
+        }) else {
+            return false;
+        };
+        let value = &row["value"];
+        if !value["speech"].is_object() {
+            return false;
+        }
+        heard |= value["eventType"] == "speech" && value["modality"] != "observed";
+    }
+    heard
 }
 
 fn personal_evidence(

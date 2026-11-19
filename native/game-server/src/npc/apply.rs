@@ -32,12 +32,15 @@ pub(super) async fn apply(
     draft: Bytes,
     permit: Option<(Arc<Authority>, Arc<AuthorizedScope>)>,
     cancellation: watch::Receiver<bool>,
+    deadline: Instant,
     preview: Option<Arc<ReplyPreview>>,
 ) -> Result<(), CallFailure> {
     if *cancellation.borrow() {
         return Err(CallFailure::Cancelled);
     }
-    let _ordinary = saves.enter_ordinary().await;
+    let _ordinary = tokio::time::timeout_at(deadline, saves.enter_ordinary())
+        .await
+        .map_err(|_| CallFailure::Stale("decision-deadline"))?;
     saves
         .check_admission(Instant::now())
         .map_err(CallFailure::World)?;
@@ -57,6 +60,11 @@ pub(super) async fn apply(
             move |session| {
                 if *begin_stop.borrow() {
                     return Ok(ApplicationStart::Existing(Applied::Stale("cancelled")));
+                }
+                if Instant::now() >= deadline {
+                    return Ok(ApplicationStart::Existing(Applied::Stale(
+                        "decision-deadline",
+                    )));
                 }
                 if let Some((authority, scope)) = &begin_permit {
                     authority.current(scope, Capability::Play, true, |_, _| ())?;
@@ -114,11 +122,17 @@ pub(super) async fn apply(
                 })
             },
             move |fence, key, _| {
-                if *cancellation.borrow() {
-                    return Ok(fence.settle(key, false)?);
-                }
-                let settle =
-                    || settle_world.settle_npc_response(&settle_job.job.request.npc_id, fence, key);
+                let settle = || {
+                    if *cancellation.borrow() {
+                        return Ok(fence.settle(key, false)?);
+                    }
+                    // A useful reply may expire while its physical effects
+                    // are being prepared. Roll back before accepting them.
+                    if Instant::now() >= deadline {
+                        return Err(WorldError::NpcDecisionExpired);
+                    }
+                    settle_world.settle_npc_response(&settle_job.job.request.npc_id, fence, key)
+                };
                 if let Some((authority, scope)) = permit {
                     return authority.current(&scope, Capability::Play, true, |_, _| settle())?;
                 }
@@ -138,6 +152,7 @@ pub(super) async fn apply(
         .await
         .map_err(|error| match error {
             WorldError::SourceEditPending => CallFailure::Stale("source-edit-pending"),
+            WorldError::NpcDecisionExpired => CallFailure::Stale("decision-deadline"),
             other => CallFailure::World(other),
         })?;
     match applied {

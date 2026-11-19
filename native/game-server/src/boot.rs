@@ -337,7 +337,10 @@ impl CurrentServer {
         if question.asks_known_places()? {
             let (question, prepared) = self.world.prepare_known_places(question).await?;
             let store = Arc::clone(&self.store);
-            let answer = tokio::spawn(async move { store.read_known_places(prepared).await })
+            let answer = self
+                .world
+                .operations
+                .spawn(async move { store.read_known_places(prepared).await })
                 .await
                 .map_err(|_| openlegend_world_host::pool::HostError::WorkerFailed)??;
             return Ok((question, answer));
@@ -345,7 +348,10 @@ impl CurrentServer {
         if question.asks_source_versions()? {
             let (question, prepared) = self.world.prepare_source_versions(question).await?;
             let store = Arc::clone(&self.store);
-            let answer = tokio::spawn(async move { store.read_source_versions(prepared).await })
+            let answer = self
+                .world
+                .operations
+                .spawn(async move { store.read_source_versions(prepared).await })
                 .await
                 .map_err(|_| openlegend_world_host::pool::HostError::WorkerFailed)??;
             return Ok((question, answer));
@@ -353,7 +359,10 @@ impl CurrentServer {
         if question.asks_npc_sources()? {
             let (question, prepared) = self.world.prepare_npc_sources(question).await?;
             let store = Arc::clone(&self.store);
-            let answer = tokio::spawn(async move { store.read_npc_sources(prepared).await })
+            let answer = self
+                .world
+                .operations
+                .spawn(async move { store.read_npc_sources(prepared).await })
                 .await
                 .map_err(|_| openlegend_world_host::pool::HostError::WorkerFailed)??;
             return Ok((question, answer));

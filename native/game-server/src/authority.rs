@@ -261,20 +261,26 @@ impl Authority {
         authorized: &AssetAccess,
         publish: impl FnOnce() -> T,
     ) -> Result<T, AccessError> {
+        self.current_session(authorized.key, &authorized.session, |_| publish())
+    }
+
+    fn current_session<T>(
+        &self,
+        key: TokenHash,
+        selected: &Access,
+        publish: impl FnOnce(&Access) -> T,
+    ) -> Result<T, AccessError> {
         let cache = self.cache.lock().map_err(|_| AccessError::Availability)?;
-        let current = cache
-            .tokens
-            .get(&authorized.key)
-            .ok_or(AccessError::Changed)?;
-        if cache.revoking.contains(&authorized.key)
+        let current = cache.tokens.get(&key).ok_or(AccessError::Changed)?;
+        if cache.revoking.contains(&key)
             || current.expires_at <= now_ms()
-            || current.session != authorized.session.session
-            || current.account != authorized.session.account
-            || current.session_revision != authorized.session.session_revision
+            || current.session != selected.session
+            || current.account != selected.account
+            || current.session_revision != selected.session_revision
         {
             return Err(AccessError::Changed);
         }
-        Ok(publish())
+        Ok(publish(current))
     }
 
     /// Bind the listener to the installed writer's durable timeline before
@@ -419,19 +425,24 @@ impl Authority {
         Ok(token)
     }
 
-    pub async fn session(&self, token: &str) -> Result<(String, Vec<WorldGrant>), AccessError> {
-        let (_key, access) = self.access(token).await?;
-        let grants = access.grant.as_ref().filter(|grant| {
-            if grant.actor_id.is_some() {
-                grant.capabilities.contains(&Capability::Play)
-            } else {
-                !grant.capabilities.is_empty()
-            }
-        });
-        Ok((
-            access.account.clone(),
-            grants.cloned().into_iter().collect(),
-        ))
+    /// Read the session and synchronously hand off its currently permitted
+    /// account and grants. Logout fences the same lease before awaiting SQL.
+    pub(crate) async fn session<T>(
+        &self,
+        token: &str,
+        publish: impl FnOnce(&str, &[WorldGrant]) -> T,
+    ) -> Result<T, AccessError> {
+        let (key, access) = self.access(token).await?;
+        self.current_session(key, &access, |current| {
+            let grant = current.grant.as_ref().filter(|grant| {
+                if grant.actor_id.is_some() {
+                    grant.capabilities.contains(&Capability::Play)
+                } else {
+                    !grant.capabilities.is_empty()
+                }
+            });
+            publish(&current.account, grant.map_or(&[], std::slice::from_ref))
+        })
     }
 
     pub async fn scope(

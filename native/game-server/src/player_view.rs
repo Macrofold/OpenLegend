@@ -334,7 +334,7 @@ pub(crate) async fn prepare_view(
     )
     .await
     .map_err(ViewError::Store)?;
-    let (read, (own, input_facts, revision)) = game
+    let (read, (own, input_facts, revision, save_failed)) = game
         .world
         .capture_player(
             scope.account_id.clone(),
@@ -345,9 +345,10 @@ pub(crate) async fn prepare_view(
                 let references = Arc::clone(&references);
                 let scope = Arc::clone(&scope);
                 move |facts, budget| {
-                    // Read the application revision inside this accepted turn.
-                    // A preceding awaited SQL read is not a world read cut.
+                    // Sample the notice before its save status. A fault that
+                    // arrives later must still wake the stream for a new view.
                     let revision = saves.publication_revision();
+                    let save_failed = saves.has_failed();
                     let input_facts = RuntimePlayerInputState {
                         physical_life: facts.physical_life,
                         alive: facts.alive,
@@ -364,7 +365,7 @@ pub(crate) async fn prepare_view(
                             budget,
                         )
                     })();
-                    Ok((projected, input_facts, revision))
+                    Ok((projected, input_facts, revision, save_failed))
                 }
             },
         )
@@ -409,7 +410,7 @@ pub(crate) async fn prepare_view(
                     .map_err(runtime)?;
             }
             let scoped = references.scoped(&scope).map_err(ViewError::Encoding)?;
-            let mut host = host.assemble(revision, &read, &policy, &scoped, &own)?;
+            let mut host = host.assemble(revision, save_failed, &read, &policy, &scoped, &own)?;
             if let Some(mut banner) = profile.narrator.take() {
                 if banner
                     .select(&mut read, &scope.actor_id, &scoped, &budget)

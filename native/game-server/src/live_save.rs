@@ -5,8 +5,8 @@ use crate::{
     language::LanguageProvider,
     npc::schedule::{ScheduleInbox, ScheduleWake},
     store::{
-        AdmittedJob, GameplayReceipt, OrdinaryProjection, PreparedActivityMemories, PreparedRecall,
-        Store, StoreError,
+        AdmittedJob, CommitError, GameplayReceipt, OrdinaryProjection, PreparedActivityMemories,
+        PreparedRecall, Store, StoreError,
     },
     world::{HostedWorld, WorldError},
 };
@@ -18,6 +18,7 @@ use openlegend_simulation::{
         RuntimePreparedProducts, RuntimeSave, RuntimeSaveAcknowledgement,
     },
 };
+use openlegend_world_host::pool::HostError;
 use std::{
     collections::VecDeque,
     sync::{Arc, Mutex},
@@ -150,6 +151,7 @@ impl LiveSaves {
     }
 
     pub fn check_admission(&self, now: Instant) -> Result<(), WorldError> {
+        self.store.assert_write_admission()?;
         let pending = self
             .pending
             .lock()
@@ -165,8 +167,24 @@ impl LiveSaves {
     }
 
     pub(crate) fn has_failed(&self) -> bool {
+        self.fault_latched() || self.store.assert_write_admission().is_err()
+    }
+
+    fn fault_latched(&self) -> bool {
         self.pending.lock().map_or(true, |pending| pending.fault)
-            || self.store.assert_write_admission().is_err()
+    }
+
+    fn latch_fault(&self, error: WorldError) -> WorldError {
+        if let Ok(mut pending) = self.pending.lock()
+            && !pending.fault
+        {
+            pending.fault = true;
+            drop(pending);
+            eprintln!("Ordinary world save failed: {error}");
+            self.signal_view();
+            self.wake.notify_one();
+        }
+        error
     }
 
     pub(crate) fn publication_revision(&self) -> u64 {
@@ -213,7 +231,7 @@ impl LiveSaves {
         let custody = self.budget.reserve(total)?;
         let mut pending = self.pending.lock().map_err(|_| CapacityError)?;
         if pending.fault {
-            return Err(RuntimeError::application_refused(
+            return Err(RuntimeError::application_busy(
                 StoreError::WriterUnavailable,
             ));
         }
@@ -364,7 +382,7 @@ impl LiveSaves {
 
     /// The existing one-second timer and manual barriers use this writer.
     /// PostgreSQL never owns the mutation turn while writing ordinary work.
-    /// A caller can retry the same detached prefix or apply its known ACK.
+    /// A refused capture or ACK turn can wait for the next save opportunity.
     pub async fn flush(self: &Arc<Self>) -> Result<bool, WorldError> {
         self.flush_ready(false).await
     }
@@ -375,11 +393,14 @@ impl LiveSaves {
         let owner = self.clone();
         tokio::spawn(async move { owner.flush_owned(scheduled).await })
             .await
-            .map_err(|_| openlegend_world_host::pool::HostError::WorkerFailed)?
+            .map_err(|_| HostError::WorkerFailed)?
     }
 
     async fn flush_owned(self: &Arc<Self>, scheduled: bool) -> Result<bool, WorldError> {
         let mut detached = self.detached.lock().await;
+        if self.fault_latched() {
+            return Err(StoreError::WriterUnavailable.into());
+        }
         if detached.is_none() {
             let oldest = self
                 .pending
@@ -394,16 +415,17 @@ impl LiveSaves {
                 return Ok(false);
             }
             let owner = self.clone();
-            let (native, prepared) = self
+            let capture = self
                 .world
                 .capture_save_with(move |session| owner.prepare_prefix(session))
-                .await?;
+                .await;
+            let (native, prepared) = match capture {
+                Ok(prefix) => prefix,
+                Err(error) if capture_can_wait(&error) => return Err(error),
+                Err(error) => return Err(self.latch_fault(error)),
+            };
             if native.rows().through_cut != prepared.through {
-                self.pending
-                    .lock()
-                    .map_err(|_| StoreError::WriterUnavailable)?
-                    .fault = true;
-                return Err(StoreError::StaleCut.into());
+                return Err(self.latch_fault(StoreError::StaleCut.into()));
             }
             *detached = Some(Detached {
                 native,
@@ -412,12 +434,6 @@ impl LiveSaves {
             });
         }
         let flight = detached.as_mut().expect("detached save");
-        if flight.committed.is_none() && self.store.assert_write_admission().is_err() {
-            flight.committed = self
-                .store
-                .reconcile_prefix(flight.native.rows(), &flight.prepared.receipts)
-                .await?;
-        }
         if flight.committed.is_none() {
             let projection = OrdinaryProjection::new(&self.store, &flight.prepared.histories)
                 .with_projections(
@@ -430,20 +446,29 @@ impl LiveSaves {
                     &flight.prepared.activity_memories,
                     flight.prepared.recall_hard_bytes,
                 );
-            match self
+            let result = self
                 .store
                 .commit_save(&flight.native, &flight.prepared.receipts, &projection)
-                .await
-            {
-                Ok(ack) => flight.committed = Some(ack),
-                Err(error) => {
-                    self.pending
-                        .lock()
-                        .map_err(|_| StoreError::WriterUnavailable)?
-                        .fault = true;
-                    return Err(WorldError::Commit(error));
+                .await;
+            let ack = match result {
+                Ok(ack) => Ok(ack),
+                Err(CommitError::Unknown(cause)) => {
+                    // Only read the exact durable outcome on the original
+                    // writer. A proven rollback still latches the write fault.
+                    match self
+                        .store
+                        .reconcile_prefix(flight.native.rows(), &flight.prepared.receipts)
+                        .await
+                    {
+                        Ok(Some(ack)) => Ok(ack),
+                        Ok(None) => Err(CommitError::RolledBack(cause)),
+                        Err(_) => Err(CommitError::Unknown(cause)),
+                    }
                 }
-            }
+                Err(error) => Err(error),
+            };
+            flight.committed =
+                Some(ack.map_err(|error| self.latch_fault(WorldError::Commit(error)))?);
         }
         let ack = flight
             .committed
@@ -451,12 +476,12 @@ impl LiveSaves {
             .expect("confirmed ordinary save")
             .clone();
         let through = ack.through_cut;
-        if let Err(error) = self.world.acknowledge(ack).await {
-            self.pending
-                .lock()
-                .map_err(|_| StoreError::WriterUnavailable)?
-                .fault = true;
-            return Err(error);
+        match self.world.acknowledge(ack).await {
+            Ok(()) => (),
+            // The database already committed. A refused turn leaves the ACK
+            // in this detached owner, so the next attempt never resends SQL.
+            Err(error) if error.is_admission_refusal() => return Err(error),
+            Err(error) => return Err(self.latch_fault(error)),
         }
         let mut pending = self
             .pending
@@ -469,7 +494,6 @@ impl LiveSaves {
         {
             pending.queue.pop_front();
         }
-        pending.fault = false;
         drop(pending);
         if flight.prepared.recall.is_some() || !flight.prepared.activity_memories.is_empty() {
             self.lexical_wake.notify_one();
@@ -485,40 +509,53 @@ impl LiveSaves {
     /// owns any confirmed/refused result and joins this task during shutdown.
     pub async fn run(self: &Arc<Self>, mut stop: watch::Receiver<bool>) -> Result<(), WorldError> {
         let mut retry_at = None;
-        while !*stop.borrow() {
-            let oldest = self
-                .pending
-                .lock()
-                .map_err(|_| StoreError::WriterUnavailable)?
-                .queue
-                .front()
-                .map(|(at, _)| *at);
+        let fault = loop {
+            if *stop.borrow() {
+                break None;
+            }
+            let oldest = {
+                let pending = self
+                    .pending
+                    .lock()
+                    .map_err(|_| StoreError::WriterUnavailable)?;
+                if pending.fault {
+                    break Some(StoreError::WriterUnavailable.into());
+                }
+                pending.queue.front().map(|(at, _)| *at)
+            };
             match oldest {
                 Some(at) => {
                     // A newer tail can already be due when the older prefix
-                    // finishes. Only a busy capture defers the next attempt.
+                    // finishes. A refused capture or ACK turn gets a new
+                    // opportunity without resetting the oldest acceptance.
                     let due = (at + SAVE_INTERVAL).max(retry_at.unwrap_or(at));
                     tokio::select! {
-                        _ = stop.changed() => break,
+                        _ = stop.changed() => break None,
                         _ = tokio::time::sleep_until(due) => {},
                     }
                     retry_at = match self.flush_ready(true).await {
-                        Err(WorldError::Host(openlegend_world_host::pool::HostError::Busy)) => {
+                        Ok(_) => None,
+                        Err(error) if self.fault_latched() => break Some(error),
+                        Err(error) if capture_can_wait(&error) => {
                             Some(Instant::now() + SAVE_INTERVAL)
                         }
-                        result => {
-                            result?;
-                            None
-                        }
+                        Err(error) => return Err(error),
                     };
                 }
                 None => {
                     tokio::select! {
-                        _ = stop.changed() => break,
+                        _ = stop.changed() => break None,
                         _ = self.wake.notified() => {},
                     }
                 }
             }
+        };
+        if let Some(error) = fault {
+            // Keep the accepted cut and its visible error until an operator
+            // stops the listener. A failed write does not replay on shutdown.
+            // docs/save-and-load.md#background-and-synchronous-world-saves
+            while !*stop.borrow() && stop.changed().await.is_ok() {}
+            return Err(error);
         }
         while self.flush().await? {}
         Ok(())
@@ -621,6 +658,10 @@ impl LiveSaves {
             _custody: custody,
         })
     }
+}
+
+fn capture_can_wait(error: &WorldError) -> bool {
+    error.is_admission_refusal() || matches!(error, WorldError::Storage(StoreError::Capacity))
 }
 
 impl AcceptedSaveInput {

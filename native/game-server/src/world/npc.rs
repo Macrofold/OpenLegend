@@ -45,6 +45,16 @@ impl HostedWorld {
         .await?
     }
 
+    /// Retain the accepted actor, source and reference read with its native
+    /// serial. No physical catalogue is prepared for this read.
+    pub(crate) async fn capture_npc_read(
+        self: &Arc<Self>,
+        request: Bytes,
+    ) -> Result<RuntimeNpcRead, WorldError> {
+        let _turn = self.enter().await?;
+        self.call(move |session| session.read_npc(&request)).await
+    }
+
     /// Read and begin the physical catalogue in one world turn. The native
     /// candidate deliberately refuses a preserved read from an older cut.
     pub(crate) async fn capture_npc_offers(
@@ -91,7 +101,7 @@ impl HostedWorld {
             .map_err(|_| HostError::Busy)?;
         let world = self.clone();
         let (mut send, receive) = oneshot::channel();
-        tokio::spawn(async move {
+        self.operations.spawn(async move {
             let result = async {
                 let _turn = tokio::select! {
                     biased;

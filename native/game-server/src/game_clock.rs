@@ -10,9 +10,8 @@ use crate::{
     world::{ApplicationStart, IO_YIELD, ProtectedCommit, WorldError},
     world_input::{InputSnapshot, WorldInputs},
 };
-use openlegend_simulation::{
-    host::FenceError,
-    runtime::{NativeWorldSession, RuntimeClock, RuntimeDirectOutput, RuntimeError},
+use openlegend_simulation::runtime::{
+    NativeWorldSession, RuntimeClock, RuntimeDirectOutput, RuntimeError,
 };
 use openlegend_world_host::pool::HostError;
 use std::{
@@ -342,7 +341,7 @@ impl GameClock {
             .accepted_reset
             .lock()
             .map_err(|_| HostError::Poisoned)?;
-        let mut route = tokio::task::JoinSet::new();
+        let mut route = tokio::task::JoinSet::<Result<(), WorldError>>::new();
         while !*stop.borrow() {
             if more {
                 tokio::task::yield_now().await;
@@ -355,12 +354,11 @@ impl GameClock {
             let now = Instant::now();
             let elapsed = now.saturating_duration_since(previous);
             let (clock, changed) = match self.clock_with_presence().await {
-                Err(WorldError::Host(HostError::Busy | HostError::Capacity))
-                | Err(WorldError::Fence(FenceError::Busy)) => {
+                Err(WorldError::Storage(StoreError::WriterUnavailable)) => {
                     more = false;
                     continue;
                 }
-                Err(WorldError::Simulation(error)) if error.is_busy() || error.is_capacity() => {
+                Err(error) if error.is_admission_refusal() => {
                     more = false;
                     continue;
                 }
@@ -414,7 +412,7 @@ impl GameClock {
             }
             while let Some(result) = route.try_join_next() {
                 match result.map_err(|_| HostError::WorkerFailed)? {
-                    Err(WorldError::Host(HostError::Busy)) => {}
+                    Err(error) if error.is_admission_refusal() => {}
                     other => other?,
                 }
             }
@@ -430,12 +428,10 @@ impl GameClock {
                         .then_some(advance.navigation_pending)
                 }
                 Ok(None) => Some(true),
-                Err(WorldError::ClockChanged)
-                | Err(WorldError::Host(HostError::Busy | HostError::Capacity))
-                | Err(WorldError::Fence(FenceError::Busy)) => None,
-                Err(WorldError::Simulation(error)) if error.is_capacity() || error.is_busy() => {
-                    None
-                }
+                Err(
+                    WorldError::ClockChanged | WorldError::Storage(StoreError::WriterUnavailable),
+                ) => None,
+                Err(error) if error.is_admission_refusal() => None,
                 Err(error) => return Err(error),
             };
             if let Some(include_world) = routes

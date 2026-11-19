@@ -396,8 +396,9 @@ impl NpcBindingMaps {
             ) != (selection.purpose == NpcBindingPurpose::Reflection)
             || (selection.consumer == crate::response::ResponseConsumer::Reflection)
                 != (selection.purpose == NpcBindingPurpose::Reflection)
-            || selection.purpose == NpcBindingPurpose::Decision
-                && (read.candidates.is_none() || read.original_candidates.is_none())
+            || selection.purpose == NpcBindingPurpose::Decision && read.candidates.is_none()
+            || matches!(selection.prototype_source, NpcCatalogueSource::Original)
+                && read.original_candidates.is_none()
             || selection.purpose == NpcBindingPurpose::Recall
                 && !matches!(
                     selection.validity,
@@ -570,12 +571,9 @@ impl NpcBindingMaps {
             }
         }
         let (mut actions, ordinary_aliases, action_storage) =
-            if let (Some(original), Some(current)) = (
-                read.original_candidates,
-                read.action_candidates.or(read.candidates),
-            ) {
+            if let Some(current) = read.action_candidates.or(read.candidates) {
                 prepare_ordinary_actions(
-                    original,
+                    read.original_candidates,
                     current,
                     &selection.actions,
                     actor,

@@ -148,7 +148,7 @@ impl NativeWorldSession {
             .count();
         let (mut actions, ordinary_aliases, mut action_storage) =
             crate::capture::prepare_ordinary_actions(
-                original,
+                Some(original),
                 current,
                 &request.actions,
                 &ticket.current.read.perception.actor_id,

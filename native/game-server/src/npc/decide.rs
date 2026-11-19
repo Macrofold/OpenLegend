@@ -277,9 +277,13 @@ pub(super) async fn run(
                 }
             }
             Ok(None) => {}
-            // Optional action advice can miss its budget or return no usable
-            // rating. It cannot make otherwise valid speech disappear.
-            Err(CallFailure::Invalid) if !choose => selected.extend(&prepared.context.offers),
+            // A settled optional judgment can have unusable ratings. Keep
+            // the permitted offers and let the generation dispatch recheck
+            // the same decision. A level-one rating is the decision itself.
+            Err(error) if !choose && matches!(error.cause().1, CallFailure::Invalid) => {
+                ensure_running(&work)?;
+                selected.extend(&prepared.context.offers);
+            }
             Err(error) => return Err(error.at("action-attention")),
         }
         if choose {
@@ -415,6 +419,7 @@ pub(super) async fn run(
         payload,
         work.permit,
         work.cancellation,
+        work.deadline,
         dispatch.previews().get(&work.job.job.id),
     )
     .await
@@ -494,6 +499,7 @@ async fn finish_native(
         payload,
         work.permit,
         work.cancellation,
+        work.deadline,
         None,
     )
     .await

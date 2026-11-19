@@ -76,7 +76,7 @@ pub(crate) async fn change(
     authority: &Arc<Authority>,
     authorized: &AuthorizedScope,
     request: ControlRequest,
-    unattended: bool,
+    presence: &crate::presence::Presence,
     grace: Duration,
 ) -> Result<EmbodimentChange, WorldError> {
     let _barrier = saves.enter_protected().await?;
@@ -98,7 +98,7 @@ pub(crate) async fn change(
         None => RuntimeParticipation::Return,
     };
     let release = exit.is_some();
-    let control = Arc::new(authority.fence_control(authorized, request, unattended)?);
+    let control = Arc::new(presence.fence_control(authorized, request)?);
     let write = control.clone();
     let provider = game.clone();
     let store = game.store.clone();

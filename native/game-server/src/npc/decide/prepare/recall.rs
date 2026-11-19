@@ -2,8 +2,8 @@
 
 use super::{
     Arc, ByteBudget, ByteReservation, CallFailure, CurrentServer, FundedJson, ReceivedFrame,
-    RuntimeNpcRead, RuntimeNpcResponseTicket, Value, Work, capture, capture_offers, consumer,
-    describe_experience, ensure_running, get_u64, invalid, json, personal_description,
+    RuntimeNpcRead, RuntimeNpcResponseTicket, Value, Work, capture, capture_offers, capture_origin,
+    consumer, describe_experience, ensure_running, get_u64, invalid, json, personal_description,
     personal_evidence, project, project_markers, records, text,
 };
 use crate::{
@@ -38,7 +38,7 @@ pub(in crate::npc::decide) async fn collect(
     ensure_running(work)?;
     let budget = game.host.budget();
     let consumer = consumer(work);
-    let mut original = capture_offers(game, work, consumer, "original-offers").await?;
+    let mut original = capture_origin(game, work, consumer).await?;
     let original_json = capture(&original, budget)?;
     let original_self = &original_json.value["self"];
     let through = get_u64(&original_self["acceptedCut"])?;

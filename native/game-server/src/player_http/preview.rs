@@ -93,8 +93,10 @@ async fn open(
         return busy();
     };
     let stream = PreviewStream {
-        changed: state.routes.decisions.previews().watch(),
-        revisions: state.routes.saves.subscribe(),
+        notices: Notices {
+            changed: state.routes.decisions.previews().watch(),
+            revisions: state.routes.saves.subscribe(),
+        },
         state,
         request: query.request_id,
         scope,
@@ -123,7 +125,13 @@ async fn open(
         .into_response()
 }
 
-type Preparation = Pin<Box<dyn Future<Output = Next> + Send>>;
+type Preparation = Pin<Box<dyn Future<Output = (Next, Option<Notices>)> + Send>>;
+
+#[derive(Clone)]
+struct Notices {
+    changed: watch::Receiver<()>,
+    revisions: watch::Receiver<u64>,
+}
 
 enum Next {
     Stop,
@@ -145,8 +153,7 @@ struct PreviewStream {
     state: PreviewRoutes,
     request: String,
     scope: Arc<AuthorizedScope>,
-    changed: watch::Receiver<()>,
-    revisions: watch::Receiver<u64>,
+    notices: Notices,
     pending: Option<Preparation>,
     displayed: Option<Arc<ReplyPreview>>,
     shown_words: bool,
@@ -162,30 +169,28 @@ struct PreviewStream {
 impl PreviewStream {
     fn next(&mut self) -> Preparation {
         let mut stop = self.state.stop.clone();
-        let mut changed = self.changed.clone();
-        let mut revisions = self.revisions.clone();
+        let mut notices = self.notices.clone();
         let authority = self.state.routes.authority.clone();
         let game = self.state.routes.game.clone();
         let registry = self.state.routes.decisions.previews().clone();
         let scope = self.scope.clone();
         let request = self.request.clone();
         let first = self.first;
-        self.first = false;
         let after = self.after;
         let heartbeat = self.heartbeat;
-        // Mark the watched revision before yielding. A crossed cut wakes a new
-        // calculation and never discloses the old positive one.
-        self.changed.borrow_and_update();
-        self.revisions.borrow_and_update();
         Box::pin(async move {
             let prepare = async {
                 if !first {
                     tokio::select! {
-                        _ = changed.changed() => (),
-                        _ = revisions.changed() => (),
+                        _ = notices.changed.changed() => (),
+                        _ = notices.revisions.changed() => (),
                     }
                 }
                 sleep_until(after).await;
+                // Record only the notices this calculation can cover. The
+                // stream adopts them if preparation completes before heartbeat.
+                notices.changed.mark_unchanged();
+                notices.revisions.mark_unchanged();
                 let Some(selected) = registry.get(&request) else {
                     return Next::Empty;
                 };
@@ -207,9 +212,9 @@ impl PreviewStream {
             };
             tokio::select! {
                 biased;
-                _ = stop.wait_for(|stop| *stop) => Next::Stop,
-                _ = sleep_until(heartbeat) => Next::Heartbeat,
-                selection = prepare => selection,
+                _ = stop.wait_for(|stop| *stop) => (Next::Stop, None),
+                _ = sleep_until(heartbeat) => (Next::Heartbeat, None),
+                selection = prepare => (selection, Some(notices)),
             }
         })
     }
@@ -318,7 +323,7 @@ impl http_body::Body for PreviewStream {
             if self.pending.is_none() {
                 self.pending = Some(self.next());
             }
-            let next = ready!(
+            let (next, notices) = ready!(
                 self.pending
                     .as_mut()
                     .expect("scheduled preview")
@@ -326,6 +331,10 @@ impl http_body::Body for PreviewStream {
                     .poll(cx)
             );
             self.pending = None;
+            if let Some(notices) = notices {
+                self.notices = notices;
+                self.first = false;
+            }
             let authorized = self.state.routes.authority.current(
                 &self.scope,
                 Capability::Play,

@@ -268,34 +268,38 @@ fn redirect(location: &str, cookies: &[String]) -> Response {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct SessionView {
+struct SessionView<'a> {
     ok: bool,
-    account_id: String,
-    worlds: Vec<WorldGrant>,
+    account_id: &'a str,
+    worlds: &'a [WorldGrant],
 }
 
 async fn session(State(state): State<AccessRoutes>, headers: HeaderMap) -> Response {
     let Some(token) = read_cookie(&headers, "ol_session") else {
         return access_failure(AccessError::Session);
     };
-    match state.authority.session(token).await {
-        Ok((account_id, worlds)) => match wire::encode(
-            &SessionView {
-                ok: true,
-                account_id,
-                worlds,
-            },
-            b"",
-            b"",
-            state.authority.output_budget(),
-        ) {
-            Ok(bytes) => (
-                [(header::CONTENT_TYPE, "application/json; charset=utf-8")],
-                bytes,
+    match state
+        .authority
+        .session(token, |account_id, worlds| {
+            wire::encode(
+                &SessionView {
+                    ok: true,
+                    account_id,
+                    worlds,
+                },
+                b"",
+                b"",
+                state.authority.output_budget(),
             )
-                .into_response(),
-            Err(_) => access_failure(AccessError::Availability),
-        },
+        })
+        .await
+    {
+        Ok(Ok(bytes)) => (
+            [(header::CONTENT_TYPE, "application/json; charset=utf-8")],
+            bytes,
+        )
+            .into_response(),
+        Ok(Err(_)) => access_failure(AccessError::Availability),
         Err(error) => access_failure(error),
     }
 }

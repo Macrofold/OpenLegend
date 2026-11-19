@@ -211,22 +211,13 @@ async fn control(State(state): State<PlayerRoutes>, request: Request) -> Respons
         Ok(scope) => scope,
         Err(error) => return access_failure(error),
     };
-    // Whether an occupied controller is unattended belongs to presence. An
-    // explicit replace already carries the user's decision and needs no hint.
-    let unattended = match state
-        .presence
-        .controller_present(&authorized.scope.actor_id)
-    {
-        Ok(present) => !present,
-        Err(error) => return access_failure(error),
-    };
     let result = embodiment::change(
         &state.game,
         &state.saves,
         &state.authority,
         &authorized,
         input,
-        unattended,
+        &state.presence,
         state.grace,
     )
     .await;

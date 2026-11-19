@@ -323,6 +323,8 @@ Write a candidate without destroying the last good save. Validate completeness a
 
 The stand-alone writer detaches an exact changed-record prefix from the accepted Rust world before starting PostgreSQL work. One database transaction commits that prefix and its receipts. Confirmation retires only the captured prefix. An independent reader can keep its old cut while newer accepted rows and a later save continue. Scoped reads use one database snapshot and the accepted changes the database has yet to include at that cut. Checkpoint recovery while the writer is stopped validates the replacement, preserves current access and privacy, and installs the new timeline atomically. [Stand-alone store verification](maintainers/completed/2026/rust-game-server.md#current-implementation) · [Loading as an authority transition](#loading-as-an-authority-transition)
 
+When a stand-alone background write fails, the accepted view and its receipts remain available under current permissions. Publication reports the storage fault and further gameplay waits for recovery. The writer can reconcile an uncertain commit against its original connection, exact saved prefix and receipts. A confirmed commit needs only application acknowledgement. A failed or unresolved write keeps the accepted suffix and reports failure at explicit shutdown without resending the transaction.
+
 ## Current-format validation
 
 An independently initialized artwork catalog or access repository may precede a game's first schema initialization. Only those owners' registered tables are allowed without a game schema marker; any unmarked gameplay or other storage table still refuses startup. This does not admit an older world or recreate lost game metadata.
