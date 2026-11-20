@@ -44,7 +44,6 @@ pub(crate) enum AttemptAdmission {
 pub(crate) struct ReservedAttempt {
     id: String,
     provider: InferenceClass,
-    actor: String,
 }
 
 #[derive(Deserialize)]
@@ -179,7 +178,7 @@ impl Store {
         {
             return Err(CommitError::RolledBack(StoreError::InvalidRecord));
         }
-        let admission = self.operational(move |tx| Box::pin(async move {
+        self.operational(move |tx| Box::pin(async move {
             if tx.query_opt("SELECT id FROM attempts WHERE id=$1", &[&request.id]).await?.is_some() {
                 return Ok(AttemptAdmission::Existing);
             }
@@ -197,14 +196,8 @@ impl Store {
                  VALUES($1,$2,$3,$4,$5,$6)",
                 &[&request.id,&request.job,&request.category,&request.level,&request.stage,&execution],
             ).await?;
-            Ok(AttemptAdmission::Reserved(ReservedAttempt {
-                id: request.id, provider: request.provider, actor: request.actor,
-            }))
-        })).await?;
-        if let AttemptAdmission::Reserved(attempt) = &admission {
-            self.notify_usage(&attempt.actor);
-        }
-        Ok(admission)
+            Ok(AttemptAdmission::Reserved(ReservedAttempt { id: request.id, provider: request.provider }))
+        })).await
     }
 
     pub(crate) async fn model_dispatch_intent(
@@ -234,7 +227,6 @@ impl Store {
             .budget
             .reserve(64 * 1024)
             .map_err(|_| CommitError::RolledBack(StoreError::Capacity))?;
-        let actor = attempt.actor;
         self.operational(move |tx| {
             Box::pin(async move {
                 let row = tx
@@ -274,7 +266,7 @@ impl Store {
                     if row.try_get::<_, &str>(0)? == "settled"
                         && (!prior.dispatched || prior.estimated_cost_usd.is_some())
                     {
-                        return Ok(false);
+                        return Ok(());
                     }
                     charge = charge.max(prior.estimated_cost_usd.map(microusd).transpose()?);
                     receipt.estimated_cost_usd = charge.map(|value| value as f64 / 1_000_000.0);
@@ -297,15 +289,10 @@ impl Store {
                     &[&attempt.id, &status, &spent, &body],
                 )
                 .await?;
-                Ok(true)
+                Ok(())
             })
         })
         .await
-        .map(|changed| {
-            if changed {
-                self.notify_usage(&actor);
-            }
-        })
     }
 
     /// Record the original accepted Run before waiting for it. The existing
@@ -341,9 +328,7 @@ impl Store {
             ).await?;
             if updated != 1 { return Err(StoreError::StaleCut); }
             Ok(())
-        })).await?;
-        self.notify_usage(&admitted.actor);
-        Ok(())
+        })).await
     }
 }
 

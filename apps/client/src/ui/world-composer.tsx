@@ -58,7 +58,6 @@ type WorldComposerProps = {
   portalTarget?: HTMLElement;
   negotiationPerson?: { id: string; name: string; communicationReference?: string };
   visible: boolean;
-  allowanceRevision: number;
   preferenceNotice?: string;
   notice?: string;
   clearRecipient(): void;
@@ -90,7 +89,6 @@ function ScopedWorldComposer({
   connected,
   intent,
   visible,
-  allowanceRevision,
   preferenceNotice,
   notice,
   clearRecipient,
@@ -195,7 +193,6 @@ function ScopedWorldComposer({
     view.ai.jevConfigured,
     view.ai.llmConfigured,
     view.ai.allowanceLimitUsd,
-    allowanceRevision,
     view.ai.jobs.map((job) => [job.id, job.status]),
     availabilityRefresh,
   ]);

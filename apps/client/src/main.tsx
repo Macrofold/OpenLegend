@@ -561,12 +561,6 @@ function App({
   const aiUsageVisible =
     transportReady && !tabPaused && (open.includes('ai') || open.includes('agent'));
   const aiUsage = usePlayerAiUsage(view?.access?.scope, aiUsageVisible, aiJobsRevision ?? '');
-  const [allowanceRevision, setAllowanceRevision] = useState(0);
-  const aiUsageWake = useRef<() => void>(() => {});
-  aiUsageWake.current = () => {
-    if (aiUsageVisible) aiUsage.retry();
-    if (worldIntent || tradeNegotiation) setAllowanceRevision((value) => value + 1);
-  };
   targetingAllowed.current =
     connected &&
     !picker &&
@@ -692,8 +686,6 @@ function App({
             pauseTab();
             clearAccess();
             resetApplication();
-          } else if (frame.event === 'ai-usage-changed') {
-            aiUsageWake.current();
           } else if (frame.event === 'reset') {
             try {
               const reset = JSON.parse(frame.data) as GameView;
@@ -3312,7 +3304,6 @@ function App({
             {!tabPaused && performance && <FpsCounter renderer={scene} />}
             {!tabPaused && picker && !creation.visible && actionBrowser(picker)}
             <WorldComposer
-              allowanceRevision={allowanceRevision}
               notice={notice}
               chooseTarget={(id) =>
                 setWorldIntent({

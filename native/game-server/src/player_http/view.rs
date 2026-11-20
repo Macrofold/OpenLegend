@@ -364,11 +364,6 @@ async fn events(
             Box::pin(async move { views.prepare(&tab).await })
         })
     };
-    let store = views.routes.game.store.clone();
-    let usage = match store.watch_usage(&first.scope.scope.actor_id) {
-        Ok(usage) => usage,
-        Err(_) => return busy(),
-    };
     let body = PlayerStream::new(
         views.routes.authority.clone(),
         views.routes.game.world.clone(),
@@ -377,8 +372,6 @@ async fn events(
         views.stop.clone(),
         first,
         connection,
-        store,
-        usage,
     );
     (
         [

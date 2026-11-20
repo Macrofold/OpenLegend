@@ -12,17 +12,7 @@ use crate::{
 use indexmap::IndexMap;
 use openlegend_simulation::{encoding::json_record, host::ByteReservation, text::JsText};
 use serde::Deserialize;
-use std::collections::BTreeMap;
 use std::sync::Arc;
-use tokio::sync::watch;
-
-#[derive(Default)]
-pub(super) struct UsageChanges(BTreeMap<String, (watch::Sender<()>, ByteReservation)>);
-
-pub(crate) struct UsageSubscription {
-    pub(crate) receiver: watch::Receiver<()>,
-    _custody: ByteReservation,
-}
 
 #[derive(Clone, Copy)]
 pub(crate) struct AiDisplay {
@@ -66,51 +56,6 @@ struct InventionScope {
 }
 
 impl Store {
-    /// Notices carry no accounting data. One funded watch serves the active
-    /// streams for this actor; actors with no viewers retain no map entries.
-    pub(crate) fn watch_usage(&self, actor: &str) -> StoreResult<UsageSubscription> {
-        let subscription = self.budget.reserve(512).map_err(|_| StoreError::Capacity)?;
-        let mut changes = self
-            .usage_changes
-            .lock()
-            .map_err(|_| StoreError::Capacity)?;
-        let receiver = if let Some((sender, _)) = changes.0.get(actor) {
-            sender.subscribe()
-        } else {
-            let custody = self
-                .budget
-                .reserve(1024 + actor.len())
-                .map_err(|_| StoreError::Capacity)?;
-            let (sender, receiver) = watch::channel(());
-            changes.0.insert(actor.to_owned(), (sender, custody));
-            receiver
-        };
-        Ok(UsageSubscription {
-            receiver,
-            _custody: subscription,
-        })
-    }
-
-    pub(crate) fn release_usage_watch(&self, actor: &str) {
-        if let Ok(mut changes) = self.usage_changes.lock()
-            && changes
-                .0
-                .get(actor)
-                .is_some_and(|(sender, _)| sender.receiver_count() == 0)
-        {
-            changes.0.remove(actor);
-        }
-    }
-
-    pub(super) fn notify_usage(&self, actor: &str) {
-        if let Ok(mut changes) = self.usage_changes.lock()
-            && let Some((sender, _)) = changes.0.get(actor)
-            && sender.send(()).is_err()
-        {
-            changes.0.remove(actor);
-        }
-    }
-
     /// Read the finite recent job window and narrator eligibility in one
     /// independent read-only snapshot. Each decoded product
     /// keeps its own custody after the transaction ends.

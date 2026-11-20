@@ -4,7 +4,6 @@
 use crate::{
     authority::{AccessError, Authority, AuthorizedScope},
     player_view::{PreparedPlayerView, PreviousView, ViewError, ViewSelection},
-    store::{Store, UsageSubscription},
     wire,
     world::{HostedWorld, PlayerDisclosure, PlayerDisclosureTurn, WorldError},
 };
@@ -38,15 +37,6 @@ pub(crate) type Preparation = Pin<Box<dyn Future<Output = Result<ViewAttempt, Vi
 pub(crate) type PrepareView = Arc<dyn Fn() -> Preparation + Send + Sync>;
 
 type NextFrame = Pin<Box<dyn Future<Output = Next> + Send>>;
-type UsageWait = Pin<Box<dyn Future<Output = UsageSubscription> + Send>>;
-
-fn wait_usage(mut subscription: UsageSubscription) -> UsageWait {
-    Box::pin(async move {
-        // This stream holds the store and the store keeps live receivers registered.
-        let _ = subscription.receiver.changed().await;
-        subscription
-    })
-}
 
 enum Next {
     Stop,
@@ -68,8 +58,6 @@ pub(crate) struct PlayerStream {
     heartbeat: Instant,
     fresh_attempt: bool,
     ended: bool,
-    usage: Option<UsageWait>,
-    store: Arc<Store>,
     _permit: OwnedSemaphorePermit,
     // The preparation closure holds the request owner until this body drops.
     prepare: PrepareView,
@@ -86,8 +74,6 @@ impl PlayerStream {
         stop: watch::Receiver<bool>,
         first: ViewAttempt,
         permit: OwnedSemaphorePermit,
-        store: Arc<Store>,
-        usage: UsageSubscription,
     ) -> Self {
         let now = Instant::now();
         Self {
@@ -104,8 +90,6 @@ impl PlayerStream {
             heartbeat: now + HEARTBEAT,
             fresh_attempt: false,
             ended: false,
-            store,
-            usage: Some(wait_usage(usage)),
             _permit: permit,
             prepare,
         }
@@ -166,14 +150,6 @@ impl PlayerStream {
         self.first = None;
         self.previous = None;
         self.pending = None;
-        self.release_usage();
-    }
-
-    fn release_usage(&mut self) {
-        if let Some(subscription) = self.usage.take() {
-            drop(subscription);
-            self.store.release_usage_watch(&self.scope.scope.actor_id);
-        }
     }
 
     fn defer(&mut self) {
@@ -189,13 +165,6 @@ impl PlayerStream {
         } else {
             self.fresh_attempt = true;
         }
-    }
-}
-
-impl Drop for PlayerStream {
-    fn drop(&mut self) {
-        self.pending = None;
-        self.release_usage();
     }
 }
 
@@ -215,25 +184,6 @@ impl Body for PlayerStream {
             if self.ended || *self.stop.borrow() {
                 self.end();
                 return Poll::Ready(None);
-            }
-            // Invalidation never cancels a view in preparation or takes its turn.
-            // Deliver the first authorized view before optional display notices.
-            if self.previous.is_some()
-                && let Some(wait) = self.usage.as_mut()
-                && let Poll::Ready(receiver) = wait.as_mut().poll(context)
-            {
-                self.usage = Some(wait_usage(receiver));
-                let notice = self.authority.current_view(&self.scope, |_, _| {
-                    Frame::data(Bytes::from_static(b"event: ai-usage-changed\ndata: {}\n\n"))
-                });
-                let frame = match notice {
-                    Ok(frame) => frame,
-                    Err(_) => {
-                        self.end();
-                        Frame::data(Bytes::from_static(b"event: access-changed\ndata: {}\n\n"))
-                    }
-                };
-                return Poll::Ready(Some(Ok(frame)));
             }
             if self.pending.is_none() {
                 self.pending = Some(self.next());
@@ -354,14 +304,6 @@ impl Body for PlayerStream {
                         Ok(PlayerDisclosure::Published(bytes)) => {
                             self.covered_revision = Some(revision);
                             self.fresh_attempt = false;
-                            if self.scope.scope.actor_id != attempt.scope.scope.actor_id {
-                                self.release_usage();
-                                self.usage = self
-                                    .store
-                                    .watch_usage(&attempt.scope.scope.actor_id)
-                                    .ok()
-                                    .map(wait_usage);
-                            }
                             self.scope = attempt.scope;
                             self.previous = Some(attempt.view.into_previous(inventory));
                             return Poll::Ready(Some(Ok(Frame::data(bytes))));
