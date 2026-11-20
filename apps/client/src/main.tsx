@@ -51,6 +51,7 @@ import { Narrator } from './ui/history';
 import { Journal } from './ui/journal';
 import { Settings } from './ui/settings';
 import { usePlayerProfile } from './player-profile';
+import { usePlayerAiUsage } from './player-ai-usage';
 import { createRoot } from 'react-dom/client';
 import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
 import { WorldClockProvider } from './ui/event-time';
@@ -552,6 +553,23 @@ function App({
     transportReady && !tabPaused,
     open.includes('help') && settingsSection === 'graphics',
   );
+  const aiJobs = view?.ai.jobs;
+  const aiJobsRevision = useMemo(
+    () => JSON.stringify(aiJobs?.map(({ id, status }) => [id, status])),
+    [aiJobs],
+  );
+  const aiUsageVisible = transportReady && !tabPaused && (open.includes('ai') || open.includes('agent'));
+  const aiUsage = usePlayerAiUsage(
+    view?.access?.scope,
+    aiUsageVisible,
+    aiJobsRevision ?? '',
+  );
+  const [allowanceRevision, setAllowanceRevision] = useState(0);
+  const aiUsageWake = useRef<() => void>(() => {});
+  aiUsageWake.current = () => {
+    if (aiUsageVisible) aiUsage.retry();
+    if (worldIntent || tradeNegotiation) setAllowanceRevision((value) => value + 1);
+  };
   targetingAllowed.current =
     connected &&
     !picker &&
@@ -677,6 +695,8 @@ function App({
             pauseTab();
             clearAccess();
             resetApplication();
+          } else if (frame.event === 'ai-usage-changed') {
+            aiUsageWake.current();
           } else if (frame.event === 'reset') {
             try {
               const reset = JSON.parse(frame.data) as GameView;
@@ -2531,7 +2551,8 @@ function App({
             accessScope={view.access?.privateDraftScope ?? view.player.id}
             requestScope={view.access?.scope ?? ''}
             inspectionScope={JSON.stringify([view.access?.scope, view.historyEpoch])}
-            budget={view.ai.budget}
+            allowanceLimitUsd={view.ai.allowanceLimitUsd}
+            usage={aiUsage}
             godMode={view.godMode}
             saveTimeline={view.saveTimeline}
             key={view.worldId}
@@ -2546,7 +2567,7 @@ function App({
           />
         );
       case 'ai':
-        return <AiSettings view={view} />;
+        return <AiSettings view={view} usage={aiUsage} />;
       case 'events':
         return (
           <WorldEvents
@@ -3294,6 +3315,7 @@ function App({
             {!tabPaused && performance && <FpsCounter renderer={scene} />}
             {!tabPaused && picker && !creation.visible && actionBrowser(picker)}
             <WorldComposer
+              allowanceRevision={allowanceRevision}
               notice={notice}
               chooseTarget={(id) =>
                 setWorldIntent({

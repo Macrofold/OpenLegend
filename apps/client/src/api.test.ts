@@ -319,8 +319,7 @@ function publicView(): import('@open-legend/protocol').GameView {
       llmConfigured: false,
       message: '',
       jobs: [],
-      budget: { limitUsd: 0, spentUsd: 0, reservedUsd: 0, estimated: false },
-      usage: { jevCalls: 0, llmCalls: 0, inputTokens: 0, outputTokens: 0, lastLatencyMs: 0 },
+      allowanceLimitUsd: 0,
     },
     persistence: { status: 'saved', message: '' },
   };
@@ -344,7 +343,7 @@ it('roundtrips optional-field removal through the actual JSON patch producer and
   previous.commandEpoch = 'command:1';
   previous.historyEpoch = 'history:1';
   previous.worldEventsRevision = 'events:1';
-  previous.ai.budget.accounts = { one: { spentUsd: 0, reservedUsd: 0 } };
+  previous.ai.allowanceLimitUsd = 1;
   const before = structuredClone(previous);
   const next = structuredClone(previous);
   next.revision++;
@@ -357,7 +356,7 @@ it('roundtrips optional-field removal through the actual JSON patch producer and
   delete next.commandEpoch;
   delete next.historyEpoch;
   next.worldEventsRevision = '';
-  delete next.ai.budget.accounts;
+  next.ai.allowanceLimitUsd = 0;
   const patch = projectPatch(previous, next);
   expect(patch).not.toBeNull();
   const wire: import('@open-legend/protocol').GamePatch = JSON.parse(JSON.stringify(patch));

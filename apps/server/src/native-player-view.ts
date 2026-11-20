@@ -38,7 +38,6 @@ import {
 import {
   permittedPlayerJobs,
   playerSpeechJobIds,
-  playerUsageFallback,
   projectPlayerAi,
   projectPlayerJobs,
   type PlayerAsyncOwner,
@@ -410,17 +409,6 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
     const speechIds = playerSpeechJobIds(conversation, self.actorId);
     // These loaders can outlive projection. Bind only operational arguments;
     // a projection closure can also retain practice's captured gameplay cut.
-    const usage = optionalNativePlayerView(
-      owner,
-      sections,
-      capacity,
-      store.db,
-      'usage',
-      [read.telemetryRevision],
-      store.usage.bind(store, budgetUsd, sections.scope.actorId),
-      playerUsageFallback(budgetUsd),
-      sources,
-    );
     const jobs = optionalNativePlayerView(
       owner,
       sections,
@@ -510,7 +498,7 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
       entities: nativePlayerEntities(self, perception, definitions, scope, capacity),
       communicationReferences: nativePlayerCommunicationReferences(self, scope),
       recipes: [],
-      ai: projectPlayerAi(jobs, usage, request),
+      ai: projectPlayerAi(jobs, budgetUsd, request),
     };
     const current = owner.lifecycle();
     if (

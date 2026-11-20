@@ -19,6 +19,7 @@ import { GodCharacterActions, type GodCharacterControls } from './god-character-
 import { playerEntity } from '../entity-view';
 import { sightDetailTime } from '@open-legend/protocol';
 import { UsageRemaining } from './usage-remaining';
+import type { PlayerAiUsage } from '../player-ai-usage';
 import { ActionAttempts } from './action-attempts';
 import { RecipeDetails } from './recipe-details';
 import { memo, useEffect, useId, useRef, useState, type ReactNode } from 'react';
@@ -1134,27 +1135,31 @@ type AiSettingsView = Pick<GameView, 'ai' | 'godMode'> & {
   entities: Array<Pick<EntityView, 'id' | 'name'>>;
 };
 export const AiSettings = memo(
-  function AiSettings({ view }: { view: AiSettingsView }) {
+  function AiSettings({ view, usage }: { view: AiSettingsView; usage: PlayerAiUsage }) {
     const ai = view.ai,
-      b = ai.budget;
-    const account = b.accounts?.[view.player.id];
+      b = usage.value?.budget;
+    const account = b?.accounts[view.player.id];
+    const retry = usage.unavailable && (
+      <Button size="sm" onPress={usage.retry}>Reload allowance</Button>
+    );
     if (!view.godMode)
       return (
         <>
           <Section title="Your allowance">
             <UsageRemaining
-              limit={b.limitUsd}
+              limit={ai.allowanceLimitUsd}
               spent={account?.spentUsd ?? 0}
               reserved={account?.reservedUsd ?? 0}
-              available={ai.llmConfigured && b.limitUsd > 0}
+              available={ai.llmConfigured && ai.allowanceLimitUsd > 0 && !!b}
             />
+            {retry}
             <p>
               Describing an action or proposing a new invention uses this character's allowance.
               Existing native actions remain available according to the world's rules.
             </p>
             <p className="ol-caption">
               Allowance includes work already in progress.{' '}
-              {b.period ? `Current period: ${b.period}.` : ''}
+              {b?.period ? `Current period: ${b.period}.` : ''}
             </p>
           </Section>
           <Section title="Intelligence availability">
@@ -1189,18 +1194,19 @@ export const AiSettings = memo(
         </Section>
         <Section title="Monthly agent allowances">
           <h3 className="ol-heading">
-            ${b.limitUsd.toFixed(2)} per agent · {b.period ?? 'current month'}
+            ${ai.allowanceLimitUsd.toFixed(2)} per agent · {b?.period ?? 'current month'}
           </h3>
-          <p>
+          {b && <p>
             Total spent ${b.spentUsd.toFixed(4)}
             {b.estimated ? ' (estimated)' : ''}
             <br />
             Reserved ${b.reservedUsd.toFixed(4)}
-          </p>
-          {Object.entries(b.accounts ?? {}).map(([id, account]) => (
+          </p>}
+          {retry}
+          {Object.entries(b?.accounts ?? {}).map(([id, account]) => (
             <p key={id}>
               {view.entities.find((e) => e.id === id)?.name ?? id}: $
-              {Math.max(0, b.limitUsd - account.spentUsd - account.reservedUsd).toFixed(2)}{' '}
+              {Math.max(0, ai.allowanceLimitUsd - account.spentUsd - account.reservedUsd).toFixed(2)}{' '}
               remaining
             </p>
           ))}
@@ -1211,13 +1217,13 @@ export const AiSettings = memo(
         </Section>
         <details>
           <summary>Execution details</summary>
-          <p>
-            {ai.usage.llmCalls} language model calls · {ai.usage.jevCalls} Jev calls
+          {usage.value && <p>
+            {usage.value.usage.llmCalls} language model calls · {usage.value.usage.jevCalls} Jev calls
             <br />
-            {ai.usage.inputTokens} input / {ai.usage.outputTokens} output tokens
+            {usage.value.usage.inputTokens} input / {usage.value.usage.outputTokens} output tokens
             <br />
-            Last latency {(ai.usage.lastLatencyMs / 1000).toFixed(1)}s
-          </p>
+            Last latency {(usage.value.usage.lastLatencyMs / 1000).toFixed(1)}s
+          </p>}
           {ai.jobs
             .filter((job) => job.status === 'failed')
             .map((job) => (
@@ -1229,7 +1235,9 @@ export const AiSettings = memo(
       </>
     );
   },
-  ({ view: previous }, { view: next }) =>
+  ({ view: previous, usage: previousUsage }, { view: next, usage: nextUsage }) =>
+    previousUsage.value === nextUsage.value &&
+    previousUsage.unavailable === nextUsage.unavailable &&
     previous.ai === next.ai &&
     previous.godMode === next.godMode &&
     previous.player.id === next.player.id &&

@@ -157,8 +157,15 @@ pub struct AiView {
     pub llm_configured: bool,
     pub message: JsText,
     pub jobs: Vec<AiJob>,
+    pub allowance_limit_usd: f64,
+}
+
+#[derive(Serialize)]
+pub struct AiUsageReport {
     pub budget: AiBudget,
     pub usage: AiUsage,
+    #[serde(skip)]
+    pub(crate) _custody: ByteReservation,
 }
 
 #[derive(Serialize, PartialEq)]
@@ -190,12 +197,9 @@ pub struct AiBudget {
     pub spent_usd: f64,
     pub reserved_usd: f64,
     pub estimated: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub per_agent: Option<bool>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub period: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub accounts: Option<IndexMap<String, AccountAmount>>,
+    pub per_agent: bool,
+    pub period: String,
+    pub accounts: IndexMap<String, AccountAmount>,
 }
 
 #[derive(Serialize, PartialEq)]

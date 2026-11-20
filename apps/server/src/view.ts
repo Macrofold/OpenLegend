@@ -3,7 +3,6 @@ import {
   optional,
   permittedPlayerJobs,
   projectPlayerJobs,
-  playerUsageFallback,
   projectPlayerAi,
   playerSpeechJobIds,
   ViewChangedError,
@@ -852,20 +851,6 @@ export async function projectView(
       (key.startsWith('event:') && !selectedEventIds.has(key.slice(6)))
     )
       cache.values.delete(key);
-  const usage = optional(
-    service,
-    cache,
-    'usage',
-    memo('usage', [telemetryRevision], () =>
-      service.store.usage(
-        service.config.budgetUsd,
-        scope.audience === 'authorized-inspection' && service.currentScope(scope, 'inspect')
-          ? undefined
-          : scope.actorId,
-      ),
-    ),
-    playerUsageFallback(service.config.budgetUsd),
-  );
   const jobs = projectPlayerJobs(
     optional(
       service,
@@ -1421,7 +1406,11 @@ export async function projectView(
     conversation: conversationEntries.map((event) =>
       projectConversationEvent(event, scope.actorId, replies.get(event.id)),
     ),
-    ai: projectPlayerAi(jobs, usage, { executionSource, jevConfigured, llmConfigured }),
+    ai: projectPlayerAi(jobs, service.config.budgetUsd, {
+      executionSource,
+      jevConfigured,
+      llmConfigured,
+    }),
     milestones: BASE_PLAYTEST_MILESTONES.map((milestone) => ({
       ...milestone,
       done: milestones[milestone.id] === true,

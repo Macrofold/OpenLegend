@@ -1193,6 +1193,16 @@ async function initializeGameServer(
         }
         if (request.method === 'GET' && url.pathname === '/api/profile')
           return send(response, 200, await service.profileFor(scope));
+        if (request.method === 'GET' && url.pathname === '/api/ai/usage') {
+          const inspect =
+            scope.audience === 'authorized-inspection' && service.currentScope(scope, 'inspect');
+          if (inspect) responseCapability = 'inspect';
+          return send(
+            response,
+            200,
+            await store.usage(config.budgetUsd, inspect ? undefined : scope.actorId),
+          );
+        }
         if (request.method === 'GET' && url.pathname === '/api/world-agent/creation/targets') {
           const value = z
             .object({ sessionId: requestIdSchema })

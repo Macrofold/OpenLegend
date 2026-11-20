@@ -78,15 +78,9 @@ export function projectPlayerJobs(jobs: readonly JobRecord[]): GameView['ai']['j
     totalLatencyMs,
   }));
 }
-export function playerUsageFallback(limitUsd: number): Pick<GameView['ai'], 'budget' | 'usage'> {
-  return {
-    budget: { limitUsd, spentUsd: 0, reservedUsd: 0, estimated: true },
-    usage: { jevCalls: 0, llmCalls: 0, inputTokens: 0, outputTokens: 0, lastLatencyMs: 0 },
-  };
-}
 export function projectPlayerAi(
   jobs: GameView['ai']['jobs'],
-  usage: Pick<GameView['ai'], 'budget' | 'usage'>,
+  allowanceLimitUsd: number,
   config: {
     executionSource: 'live-model' | 'test-fixture';
     jevConfigured: boolean;
@@ -115,7 +109,7 @@ export function projectPlayerAi(
           : (latestProblem?.message ??
             'Jev routes bounded decisions. LLMs handle conversation, reconsideration and new recipes.'),
     jobs,
-    ...usage,
+    allowanceLimitUsd,
   };
 }
 

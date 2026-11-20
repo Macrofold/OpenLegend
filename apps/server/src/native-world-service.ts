@@ -60,6 +60,7 @@ import type {
   NativeWorldReplyPreviewRead,
 } from '@open-legend/native-simulation';
 import type {
+  AiUsageView,
   ApiResult,
   CommandInput,
   CommandReceiptResult,
@@ -928,11 +929,28 @@ export class NativeWorldService implements NativePlayerRequestOwner {
     return this.reads.exit(operation);
   }
   private async readProfile(id: string): Promise<PlayerProfile> {
+    return this.readPlayerOperational(() => this.store.getProfile(id));
+  }
+  /** Read the permitted monthly display and fund its separate HTTP lifetime. */
+  async playerAiUsage(scope: RequestScope): Promise<AiUsageView> {
+    this.assertScope(scope);
+    const usage = await this.readPlayerOperational(() =>
+      this.store.usage(this.config.budgetUsd, scope.actorId),
+    );
+    try {
+      this.assertScope(scope);
+      return usage;
+    } catch (error) {
+      releaseNativeProduct(usage);
+      throw error;
+    }
+  }
+  private async readPlayerOperational<T extends object>(read: () => Promise<T>): Promise<T> {
     const world = this.world;
     const admit = this.store.db.withReadTransferAdmission?.bind(this.store.db);
     const transaction = this.store.db.readTransaction?.bind(this.store.db);
     if (!admit || !transaction)
-      throw new Error('Native player profiles require admitted SQL transfer.');
+      throw new Error('Native player display reads require admitted SQL transfer.');
     const guards: NativeWorldConsumer[] = [];
     try {
       return await withNativeSourcePreparation(world, () =>
@@ -941,7 +959,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
             (bytes, rows) => {
               guards.push(world.reserveConsumerBytes(bytes * 3 + rows * 1536 + 512));
             },
-            () => transaction(() => this.store.getProfile(id)),
+            () => transaction(read),
           );
           return retainNativeProduct(copyNativeProduct(world, value));
         }),

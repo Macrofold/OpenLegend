@@ -6,13 +6,23 @@ use crate::{
     authority::RequestScope,
     player_events::{SpeechReply, SpeechReplyStatus},
     player_view::{
-        AccountAmount, AiBudget, AiJob, AiMode, AiUsage, AiView, ViewTelemetry,
+        AccountAmount, AiBudget, AiJob, AiMode, AiUsage, AiUsageReport, AiView, ViewTelemetry,
     },
 };
 use indexmap::IndexMap;
 use openlegend_simulation::{encoding::json_record, host::ByteReservation, text::JsText};
 use serde::Deserialize;
+use std::collections::BTreeMap;
 use std::sync::Arc;
+use tokio::sync::watch;
+
+#[derive(Default)]
+pub(super) struct UsageChanges(BTreeMap<String, (watch::Sender<()>, ByteReservation)>);
+
+pub(crate) struct UsageSubscription {
+    pub(crate) receiver: watch::Receiver<()>,
+    _custody: ByteReservation,
+}
 
 #[derive(Clone, Copy)]
 pub(crate) struct AiDisplay {
@@ -56,8 +66,41 @@ struct InventionScope {
 }
 
 impl Store {
-    /// Read the finite recent job window, current scoped usage, and account
-    /// narrator eligibility in one independent read-only snapshot. Each decoded product
+    /// Notices carry no accounting data. One funded watch serves the active
+    /// streams for this actor; actors with no viewers retain no map entries.
+    pub(crate) fn watch_usage(&self, actor: &str) -> StoreResult<UsageSubscription> {
+        let subscription = self.budget.reserve(512).map_err(|_| StoreError::Capacity)?;
+        let mut changes = self.usage_changes.lock().map_err(|_| StoreError::Capacity)?;
+        let receiver = if let Some((sender, _)) = changes.0.get(actor) {
+            sender.subscribe()
+        } else {
+            let custody = self.budget.reserve(1024 + actor.len()).map_err(|_| StoreError::Capacity)?;
+            let (sender, receiver) = watch::channel(());
+            changes.0.insert(actor.to_owned(), (sender, custody));
+            receiver
+        };
+        Ok(UsageSubscription { receiver, _custody: subscription })
+    }
+
+    pub(crate) fn release_usage_watch(&self, actor: &str) {
+        if let Ok(mut changes) = self.usage_changes.lock()
+            && changes.0.get(actor).is_some_and(|(sender, _)| sender.receiver_count() == 0)
+        {
+            changes.0.remove(actor);
+        }
+    }
+
+    pub(super) fn notify_usage(&self, actor: &str) {
+        if let Ok(mut changes) = self.usage_changes.lock()
+            && let Some((sender, _)) = changes.0.get(actor)
+            && sender.send(()).is_err()
+        {
+            changes.0.remove(actor);
+        }
+    }
+
+    /// Read the finite recent job window and narrator eligibility in one
+    /// independent read-only snapshot. Each decoded product
     /// keeps its own custody after the transaction ends.
     pub(crate) async fn player_view_input(
         self: &Arc<Self>,
@@ -108,6 +151,54 @@ impl Store {
                         queue_latency_ms: job.queue_latency_ms, total_latency_ms: job.total_latency_ms,
                     });
                 }
+                let problem = jobs.iter().find(|job| matches!(job.status, SpeechReplyStatus::Failed | SpeechReplyStatus::Completed))
+                    .filter(|job| job.status == SpeechReplyStatus::Failed);
+                let (mode, message): (AiMode, JsText) = if !display.jev_configured {
+                    (AiMode::Unconfigured, "Configure backend AI credentials and a spending cap. Macrofold native execution also needs an owner-selected MACROFOLD_WORKER_ID; direct inference does not.".into())
+                } else if let Some(problem) = problem {
+                    (AiMode::Degraded, problem.message.clone())
+                } else {
+                    (AiMode::Live, "Jev routes bounded decisions. LLMs handle conversation, reconsideration and new recipes.".into())
+                };
+                let extra = budget.reserve(4096).map_err(|_| StoreError::Capacity)?;
+                charges.merge(extra).map_err(|_| StoreError::Capacity)?;
+                // Drop PostgreSQL carriers before the selected read leaves.
+                drop(rows);
+                let retained = jobs.iter().try_fold(
+                    4096 + std::mem::size_of::<AiJob>() * jobs.capacity()
+                        + message.storage_bytes(),
+                    |size, job| size.checked_add(job.id.capacity())?
+                        .checked_add(job.kind.capacity())?
+                        .checked_add(job.message.storage_bytes()),
+                ).ok_or(StoreError::Capacity)?;
+                charges.resize(retained).map_err(|_| StoreError::Capacity)?;
+                let narrator = store.read_view_narrator(tx, &account, &world, &actor).await?;
+                let ai = AiView {
+                    mode,
+                    jev_configured: display.jev_configured,
+                    llm_configured: display.llm_configured,
+                    message,
+                    jobs,
+                    allowance_limit_usd: display.limit_usd,
+                };
+                Ok((ViewTelemetry { ai, custody: charges }, narrator))
+            })
+        }).await
+    }
+}
+
+impl Store {
+    /// Read display-only monthly amounts for this actor, with independently
+    /// admitted custody until the authorized HTTP handoff.
+    pub(crate) async fn player_usage(
+        &self,
+        scope: &RequestScope,
+        limit_usd: f64,
+    ) -> StoreResult<AiUsageReport> {
+        let custody = self.budget.reserve(8192 + 4 * scope.actor_id.len())
+            .map_err(|_| StoreError::Capacity)?;
+        let actor = scope.actor_id.clone();
+        self.read_operational(move |tx| Box::pin(async move {
                 let usage_row = tx.query_one(
                     "WITH utc AS (SELECT date_trunc('month', now() AT TIME ZONE 'UTC') AS start), \
                      reports AS (SELECT a.provider,a.status,a.spent,a.reserved,a.created_at,a.id, \
@@ -133,49 +224,19 @@ impl Store {
                 let usage = AiUsage { jev_calls: integer(3)?, llm_calls: integer(4)?, input_tokens: integer(5)?,
                     output_tokens: integer(6)?, last_latency_ms: usage_row.try_get(7)? };
                 drop(usage_row);
-                let problem = jobs.iter().find(|job| matches!(job.status, SpeechReplyStatus::Failed | SpeechReplyStatus::Completed))
-                    .filter(|job| job.status == SpeechReplyStatus::Failed);
-                let (mode, message): (AiMode, JsText) = if !display.jev_configured {
-                    (AiMode::Unconfigured, "Configure backend AI credentials and a spending cap. Macrofold native execution also needs an owner-selected MACROFOLD_WORKER_ID; direct inference does not.".into())
-                } else if let Some(problem) = problem {
-                    (AiMode::Degraded, problem.message.clone())
-                } else {
-                    (AiMode::Live, "Jev routes bounded decisions. LLMs handle conversation, reconsideration and new recipes.".into())
-                };
-                let extra = budget.reserve(4096).map_err(|_| StoreError::Capacity)?;
-                charges.merge(extra).map_err(|_| StoreError::Capacity)?;
-                // Drop PostgreSQL carriers before the selected read leaves.
-                drop(rows);
-                let retained = jobs.iter().try_fold(
-                    4096 + std::mem::size_of::<AiJob>() * jobs.capacity()
-                        + message.storage_bytes(),
-                    |size, job| size.checked_add(job.id.capacity())?
-                        .checked_add(job.kind.capacity())?
-                        .checked_add(job.message.storage_bytes()),
-                ).ok_or(StoreError::Capacity)?;
-                charges.resize(retained).map_err(|_| StoreError::Capacity)?;
-                let narrator = store.read_view_narrator(tx, &account, &world, &actor).await?;
                 let mut accounts = IndexMap::new();
                 if has_usage {
                     accounts.insert(actor, AccountAmount { spent_usd: spent, reserved_usd: reserved });
                 }
-                let ai = AiView {
-                    mode,
-                    jev_configured: display.jev_configured,
-                    llm_configured: display.llm_configured,
-                    message,
-                    jobs,
-                    budget: AiBudget { limit_usd: display.limit_usd, spent_usd: spent, reserved_usd: reserved,
-                        estimated: true, per_agent: Some(true), period: Some(period), accounts: Some(accounts) },
+                Ok(AiUsageReport {
+                    budget: AiBudget { limit_usd, spent_usd: spent, reserved_usd: reserved,
+                        estimated: true, per_agent: true, period, accounts },
                     usage,
-                };
-                Ok((ViewTelemetry { ai, custody: charges }, narrator))
-            })
-        }).await
+                    _custody: custody,
+                })
+        })).await
     }
-}
 
-impl Store {
     /// Read only reply outcomes bound to the exact player-authored speech
     /// selected by the accepted view. No event or job body leaves the store.
     pub(crate) async fn player_speech_replies<'a>(

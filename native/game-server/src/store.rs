@@ -29,7 +29,7 @@ mod source_versions;
 mod view_cognition;
 mod view_profile;
 mod write;
-pub(crate) use view_cognition::AiDisplay;
+pub(crate) use view_cognition::{AiDisplay, UsageSubscription};
 
 pub use history::OrdinaryProjection;
 pub(crate) use history::banner::NarrationBanner;
@@ -139,6 +139,7 @@ pub struct Store {
     writer: Mutex<Session>,
     reader: Mutex<Session>,
     simulation_reader: Mutex<Session>,
+    usage_changes: std::sync::Mutex<view_cognition::UsageChanges>,
     admitted: AtomicBool,
     writer_connected: Arc<AtomicBool>,
     budget: ByteBudget,
@@ -213,6 +214,7 @@ impl Store {
             writer: Mutex::new(writer),
             reader: Mutex::new(reader),
             simulation_reader: Mutex::new(simulation_reader),
+            usage_changes: std::sync::Mutex::new(view_cognition::UsageChanges::default()),
             admitted: AtomicBool::new(true),
             writer_connected,
             budget,

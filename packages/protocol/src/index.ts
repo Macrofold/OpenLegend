@@ -440,6 +440,26 @@ export interface PlayerProfile {
 /** A control changes only its own preference, preserving concurrent UI choices. */
 export type PlayerPreferencePatch = Partial<PlayerProfile['preferences']>;
 
+/** Scoped accounting display. Live spending admission uses its own durable read. */
+export interface AiUsageView {
+  budget: {
+    limitUsd: number;
+    spentUsd: number;
+    reservedUsd: number;
+    estimated: boolean;
+    perAgent: boolean;
+    period: string;
+    accounts: Record<string, { spentUsd: number; reservedUsd: number }>;
+  };
+  usage: {
+    jevCalls: number;
+    llmCalls: number;
+    inputTokens: number;
+    outputTokens: number;
+    lastLatencyMs: number;
+  };
+}
+
 export interface ActionAnimation {
   id: string;
   kind: 'punch' | 'melee';
@@ -1230,22 +1250,7 @@ export interface GameView {
     llmConfigured: boolean;
     message: string;
     jobs: AiJobView[];
-    budget: {
-      limitUsd: number;
-      spentUsd: number;
-      reservedUsd: number;
-      estimated: boolean;
-      perAgent?: boolean;
-      period?: string;
-      accounts?: Record<string, { spentUsd: number; reservedUsd: number }>;
-    };
-    usage: {
-      jevCalls: number;
-      llmCalls: number;
-      inputTokens: number;
-      outputTokens: number;
-      lastLatencyMs: number;
-    };
+    allowanceLimitUsd: number;
   };
   milestones: Array<{ id: string; label: string; done: boolean }>;
   persistence: { status: 'saved' | 'error'; message: string };

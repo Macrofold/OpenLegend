@@ -41,6 +41,7 @@ pub(super) fn router(
         .route("/api/state", get(state_view))
         .route("/api/events", get(events))
         .route("/api/profile", get(profile))
+        .route("/api/ai/usage", get(usage))
         .with_state(state)
 }
 
@@ -219,30 +220,49 @@ async fn state_view(State(views): State<Arc<Views>>, headers: HeaderMap) -> Resp
     }
 }
 
-async fn profile(State(views): State<Arc<Views>>, headers: HeaderMap) -> Response {
-    let routes = &views.routes;
-    let Ok(_slot) = routes.capacity.try_acquire() else {
-        return busy();
-    };
-    let scope = match read_scope(&routes.authority, &headers).await {
-        Ok(scope) => scope,
-        Err(error) => return access_failure(error),
-    };
-    if let Err(error) = routes.authority.current_view(&scope, |_, _| ()) {
-        return access_failure(error);
-    }
-    let profile = match routes.game.store.player_profile(&scope.scope).await {
-        Ok(profile) => profile,
-        Err(error) => return failed(error.into()),
-    };
-    match routes.authority.current_view(&scope, |_, _| {
-        match wire::encode(&profile, b"", b"", routes.game.host.budget()) {
+async fn display_scope<'a>(
+    routes: &'a PlayerRoutes,
+    headers: &HeaderMap,
+) -> Result<(tokio::sync::SemaphorePermit<'a>, AuthorizedScope), Response> {
+    let slot = routes.capacity.try_acquire().map_err(|_| busy())?;
+    let scope = read_scope(&routes.authority, headers).await.map_err(access_failure)?;
+    routes.authority.current_view(&scope, |_, _| ()).map_err(access_failure)?;
+    Ok((slot, scope))
+}
+
+fn display_response<T: Serialize>(routes: &PlayerRoutes, scope: &AuthorizedScope, value: T) -> Response {
+    match routes.authority.current_view(scope, |_, _| {
+        match wire::encode(&value, b"", b"", routes.game.host.budget()) {
             Ok(bytes) => json_response(StatusCode::OK, bytes),
             Err(_) => busy(),
         }
     }) {
         Ok(response) => response,
         Err(error) => access_failure(error),
+    }
+}
+
+async fn profile(State(views): State<Arc<Views>>, headers: HeaderMap) -> Response {
+    let routes = &views.routes;
+    let (_slot, scope) = match display_scope(routes, &headers).await {
+        Ok(authorized) => authorized,
+        Err(response) => return response,
+    };
+    match routes.game.store.player_profile(&scope.scope).await {
+        Ok(profile) => display_response(routes, &scope, profile),
+        Err(error) => failed(error.into()),
+    }
+}
+
+async fn usage(State(views): State<Arc<Views>>, headers: HeaderMap) -> Response {
+    let routes = &views.routes;
+    let (_slot, scope) = match display_scope(routes, &headers).await {
+        Ok(authorized) => authorized,
+        Err(response) => return response,
+    };
+    match routes.game.store.player_usage(&scope.scope, views.display.limit_usd).await {
+        Ok(usage) => display_response(routes, &scope, usage),
+        Err(error) => failed(error.into()),
     }
 }
 
@@ -292,6 +312,11 @@ async fn events(
             Box::pin(async move { views.prepare(&tab).await })
         })
     };
+    let store = views.routes.game.store.clone();
+    let usage = match store.watch_usage(&first.scope.scope.actor_id) {
+        Ok(usage) => usage,
+        Err(_) => return busy(),
+    };
     let body = PlayerStream::new(
         views.routes.authority.clone(),
         views.routes.game.world.clone(),
@@ -300,6 +325,8 @@ async fn events(
         views.stop.clone(),
         first,
         connection,
+        store,
+        usage,
     );
     (
         [

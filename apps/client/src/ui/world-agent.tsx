@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import type {
-  GameView,
   RecipeView,
   WorldAgentSessionSummary,
   WorldAgentSessionCursor,
@@ -12,6 +11,7 @@ import { Inventions } from './inventions';
 import { WorldInspection } from './world-inspection';
 import { WorldAgentSession } from './world-agent-session';
 import { UsageRemaining } from './usage-remaining';
+import type { PlayerAiUsage } from '../player-ai-usage';
 import './creator-workspaces.css';
 import './world-agent-layout.css';
 import { authoringKey } from './world-agent-identity';
@@ -23,7 +23,8 @@ type Props = {
   accessScope: string;
   requestScope: string;
   inspectionScope: string;
-  budget: GameView['ai']['budget'];
+  allowanceLimitUsd: number;
+  usage: PlayerAiUsage;
   actorId: string;
   godMode?: boolean;
   saveTimeline?: string;
@@ -78,7 +79,8 @@ function WorldAgentPanel(props: Props) {
     accessScope,
     requestScope,
     inspectionScope,
-    budget,
+    allowanceLimitUsd,
+    usage,
     actorId,
     godMode,
     saveTimeline,
@@ -262,12 +264,17 @@ function WorldAgentPanel(props: Props) {
           browseRecipe={browseRecipe}
           connected={connected}
           allowance={
-            <UsageRemaining
-              limit={budget.limitUsd}
-              spent={budget.accounts?.[actorId]?.spentUsd ?? 0}
-              reserved={budget.accounts?.[actorId]?.reservedUsd ?? 0}
-              available={connected && !!budget.accounts}
-            />
+            <div>
+              <UsageRemaining
+                limit={allowanceLimitUsd}
+                spent={usage.value?.budget.accounts[actorId]?.spentUsd ?? 0}
+                reserved={usage.value?.budget.accounts[actorId]?.reservedUsd ?? 0}
+                available={connected && !!usage.value}
+              />
+              {usage.unavailable && (
+                <Button size="sm" onPress={usage.retry}>Reload allowance</Button>
+              )}
+            </div>
           }
         />
       </div>
