@@ -45,18 +45,11 @@ pub fn current_group_metadata<'a>(
     kind: &str,
     part: Option<CurrentReceivedPart>,
 ) -> Option<&'a CurrentPartPartition> {
-    let part = part.unwrap_or(
-        if group
-            .received
-            .fields
-            .get(kind)
-            .is_some_and(|field| field.value.kind == "body")
-        {
-            CurrentReceivedPart::Detail
-        } else {
-            CurrentReceivedPart::Value
-        },
-    );
+    let part = part.unwrap_or_else(|| {
+        group.received.fields.get(kind).map_or(CurrentReceivedPart::Value, |field| {
+            current_field_parts(field)[0]
+        })
+    });
     // A current installation validates unique members. Last-address lookup also
     // matches the source owner's map semantics for editable phase metadata.
     group.metadata.iter().rev().find(|partition| {
@@ -73,11 +66,29 @@ pub fn current_group_native_facet<'a>(
     kind: &str,
     partition: Option<&'a CurrentPartPartition>,
 ) -> Option<CurrentNativeFacet<'a>> {
+    selected_group_facet(
+        group,
+        original,
+        kind,
+        group.received.fields.get(kind)?,
+        partition,
+    )
+}
+
+fn selected_group_facet<'a>(
+    group: &'a CurrentReceivedGroup,
+    original: &'a ReceivedObservation,
+    kind: &str,
+    field: &'a CurrentStoredField,
+    partition: Option<&'a CurrentPartPartition>,
+) -> Option<CurrentNativeFacet<'a>> {
     Some(CurrentNativeFacet {
-        field: group.received.fields.get(kind)?,
+        field,
         grant: &group.received.grant,
         original_source: original,
-        metadata: partition.or_else(|| current_group_metadata(group, kind, None))?,
+        metadata: partition.or_else(|| {
+            current_group_metadata(group, kind, Some(current_field_parts(field)[0]))
+        })?,
     })
 }
 
@@ -88,11 +99,13 @@ pub fn current_contact_native_facet<'a>(
 ) -> Result<Option<CurrentNativeFacet<'a>>, ReceivedError> {
     let mut selected = None;
     for group in &contact.content.groups {
+        let Some(field) = group.received.fields.get(kind) else {
+            continue;
+        };
         let grant = &group.received.grant;
-        if !group.received.fields.contains_key(kind)
-            || selector
-                .modality
-                .is_some_and(|modality| modality != grant.modality)
+        if selector
+            .modality
+            .is_some_and(|modality| modality != grant.modality)
             || selector
                 .channel
                 .is_some_and(|channel| channel != &grant.channel)
@@ -105,9 +118,9 @@ pub fn current_contact_native_facet<'a>(
         if selected.is_some() {
             return Ok(None);
         }
-        selected = Some(group);
+        selected = Some((group, field));
     }
-    let Some(group) = selected else {
+    let Some((group, field)) = selected else {
         return Ok(None);
     };
     let original = contact
@@ -115,7 +128,7 @@ pub fn current_contact_native_facet<'a>(
         .originals
         .get(&group.received.grant.original)
         .ok_or(ReceivedError("A current group has no acquired original."))?;
-    Ok(current_group_native_facet(group, original, kind, None))
+    Ok(selected_group_facet(group, original, kind, field, None))
 }
 
 pub fn current_native_facet_at<'a>(
