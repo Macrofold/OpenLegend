@@ -1,13 +1,57 @@
 //! Account preferences and live narrator eligibility have separate callers.
 
-use super::{Store, StoreError, StoreResult};
+use super::{CommitError, Store, StoreError, StoreResult};
 use crate::{
-    authority::RequestScope,
-    player_view::profile::{PlayerProfile, Preferences, Reveal, narrator_voice},
+    authority::{RequestScope, now_ms},
+    player_view::profile::{PlayerProfile, Preferences, Reveal, Voice, narrator_voice},
 };
+use openlegend_simulation::encoding::json_record;
 use tokio_postgres::Transaction;
 
 impl Store {
+    /// Store a selected display preference in the existing account profile
+    /// transaction. It is outside gameplay saves and preserves untouched fields.
+    pub(crate) async fn set_display_preferences(
+        &self,
+        scope: &RequestScope,
+        reveal: Option<Reveal>,
+        voice: Option<Voice>,
+    ) -> Result<(), CommitError> {
+        let _custody = self.budget.reserve(8192 + 4 * (scope.account_id.len() + scope.session_id.len()))
+            .map_err(|_| CommitError::RolledBack(StoreError::Capacity))?;
+        let account = scope.account_id.clone();
+        let session = scope.session_id.clone();
+        let revision = i64::try_from(scope.session_revision)
+            .map_err(|_| CommitError::RolledBack(StoreError::InvalidRecord))?;
+        self.operational(move |tx| Box::pin(async move {
+            let updated = tx.execute(
+                "INSERT INTO player_profiles (id,revision,show_unavailable_actions,pause_when_hidden) \
+                 SELECT $1,1,0,1 FROM auth_sessions \
+                 WHERE id=$2 AND account_id=$1 AND revision=$3 AND expires_at>$4 \
+                 ON CONFLICT(id) DO UPDATE SET revision=player_profiles.revision+1",
+                &[&account, &session, &revision, &now_ms()],
+            ).await?;
+            if updated != 1 { return Err(StoreError::StaleCut); }
+            if let Some(reveal) = reveal {
+                let reveal = json_record(&reveal).map_err(|_| StoreError::InvalidRecord)?;
+                tx.execute(
+                    "INSERT INTO meta (key,value) VALUES ('integration:world-reveal:' || $1::text,$2) \
+                     ON CONFLICT (key) DO UPDATE SET value = (meta.value::jsonb || excluded.value::jsonb)::text",
+                    &[&account, &reveal],
+                ).await?;
+            }
+            if let Some(voice) = voice {
+                let voice = json_record(&voice).map_err(|_| StoreError::InvalidRecord)?;
+                tx.execute(
+                    "INSERT INTO meta (key,value) VALUES ('integration:narrator-voice:' || $1::text,$2) \
+                     ON CONFLICT (key) DO UPDATE SET value=excluded.value",
+                    &[&account, &voice],
+                ).await?;
+            }
+            Ok(())
+        })).await
+    }
+
     /// Fetch a fresh scoped profile for login, reconnect or opening Settings.
     /// The result owns its retained storage after the transaction ends.
     pub(crate) async fn player_profile(&self, scope: &RequestScope) -> StoreResult<PlayerProfile> {

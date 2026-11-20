@@ -6,6 +6,7 @@ use crate::{
     authority::Capability,
     player_stream::{PlayerStream, PrepareView, VIEW_CADENCE, ViewAttempt},
     player_view::{ViewError, capture_host, prepare_view},
+    player_view::profile::DisplayPreferencesPatch,
     store::AiDisplay,
     world::PlayerDisclosure,
 };
@@ -41,6 +42,7 @@ pub(super) fn router(
         .route("/api/state", get(state_view))
         .route("/api/events", get(events))
         .route("/api/profile", get(profile))
+        .route("/api/profile/preferences", post(save_profile))
         .route("/api/ai/usage", get(usage))
         .with_state(state)
 }
@@ -251,6 +253,33 @@ async fn profile(State(views): State<Arc<Views>>, headers: HeaderMap) -> Respons
     match routes.game.store.player_profile(&scope.scope).await {
         Ok(profile) => display_response(routes, &scope, profile),
         Err(error) => failed(error.into()),
+    }
+}
+
+async fn save_profile(State(views): State<Arc<Views>>, request: Request) -> Response {
+    let routes = &views.routes;
+    let Ok(_slot) = routes.capacity.try_acquire() else { return busy(); };
+    let (parts, body) = request.into_parts();
+    let authorized = match scope(&routes.authority, &parts.headers, None).await {
+        Ok(authorized) => authorized,
+        Err(error) => return access_failure(error),
+    };
+    let (patch, _custody): (DisplayPreferencesPatch, _) =
+        match json(&parts.headers, body, routes.game.host.budget()).await {
+            Ok(value) => value,
+            Err(response) => return response,
+        };
+    let Some((reveal, voice)) = patch.parts() else {
+        return refusal(StatusCode::BAD_REQUEST, "preferences", "Choose a valid preference.");
+    };
+    if let Err(error) = routes.authority.set_display_preferences(&authorized, reveal, voice).await {
+        return access_failure(error);
+    }
+    match routes.authority.current_view(&authorized, |_, _| {
+        control_response(routes, true, "preferences", "Your preference was saved.")
+    }) {
+        Ok(response) => response,
+        Err(error) => access_failure(error),
     }
 }
 

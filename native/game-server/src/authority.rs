@@ -3,6 +3,7 @@
 
 use crate::{
     command_epoch::RequestIdentity,
+    player_view::profile::{Reveal, Voice},
     store::{CommitError, Store, StoreError},
 };
 use openlegend_simulation::host::{ByteBudget, ByteReservation};
@@ -238,6 +239,19 @@ fn digest_text(digest: TokenHash) -> String {
 }
 
 impl Authority {
+    /// The account write serializes with logout. A scope superseded before
+    /// writer admission cannot change the profile for that request.
+    pub(crate) async fn set_display_preferences(
+        &self,
+        authorized: &AuthorizedScope,
+        reveal: Option<Reveal>,
+        voice: Option<Voice>,
+    ) -> Result<(), AccessError> {
+        let _change = self.changes.lock().await;
+        self.current_view(authorized, |_, _| ())?;
+        self.store.set_display_preferences(&authorized.scope, reveal, voice).await?;
+        Ok(())
+    }
     pub fn session_lifetime_secs(&self) -> i64 {
         self.duration_ms / 1000
     }

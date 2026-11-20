@@ -41,12 +41,45 @@ pub(crate) enum Voice {
     Wry,
 }
 
-#[derive(Default, Deserialize)]
+#[derive(Default, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct Reveal {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    reveal_mode: Option<RevealMode>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    reveal_radius: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    reveal_strength: Option<f64>,
+}
+
+/// Settings controls served by the stand-alone browser. Presence remains
+/// with the existing clock/presence owner, outside this display mutation.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct DisplayPreferencesPatch {
     reveal_mode: Option<RevealMode>,
     reveal_radius: Option<f64>,
     reveal_strength: Option<f64>,
+    narrator_voice: Option<Voice>,
+}
+
+impl DisplayPreferencesPatch {
+    pub(crate) fn parts(self) -> Option<(Option<Reveal>, Option<Voice>)> {
+        if self.reveal_radius.is_some_and(|value| !(2.0..=12.0).contains(&value))
+            || self.reveal_strength.is_some_and(|value| !(0.2..=0.95).contains(&value))
+        {
+            return None;
+        }
+        let reveal = (self.reveal_mode.is_some()
+            || self.reveal_radius.is_some()
+            || self.reveal_strength.is_some())
+        .then_some(Reveal {
+            reveal_mode: self.reveal_mode,
+            reveal_radius: self.reveal_radius,
+            reveal_strength: self.reveal_strength,
+        });
+        (reveal.is_some() || self.narrator_voice.is_some()).then_some((reveal, self.narrator_voice))
+    }
 }
 
 impl Preferences {
