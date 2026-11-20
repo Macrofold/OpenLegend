@@ -8,8 +8,7 @@ const configured: GameView['ai'] = {
   llmConfigured: true,
   message: 'Configured',
   jobs: [],
-  budget: { limitUsd: 1, spentUsd: 0, reservedUsd: 0, estimated: true },
-  usage: { jevCalls: 0, llmCalls: 0, inputTokens: 0, outputTokens: 0, lastLatencyMs: 0 },
+  allowanceLimitUsd: 1,
 };
 
 describe('composer AI setup guidance', () => {
@@ -20,7 +19,7 @@ describe('composer AI setup guidance', () => {
         mode: 'unconfigured',
         jevConfigured: false,
         llmConfigured: false,
-        budget: { ...configured.budget, limitUsd: 0 },
+        allowanceLimitUsd: 0,
       }),
     ).toBe(
       'Talk and invention need Jev and the language model and a world allowance. Set up AI to continue.',
@@ -35,19 +34,17 @@ describe('composer AI setup guidance', () => {
   });
 
   it('separates configured providers from permission to spend', () => {
-    expect(
-      aiSetupReason({ ...configured, budget: { ...configured.budget, limitUsd: 0 } }),
-    ).toContain('no spending allowance');
-    expect(
-      aiSetupReason({ ...configured, budget: { ...configured.budget, spentUsd: 1 } }),
-    ).toContain('allowance is used up');
+    expect(aiSetupReason({ ...configured, allowanceLimitUsd: 0 })).toContain('no spending allowance');
+    expect(aiSetupReason(configured)).toBeNull();
   });
 
-  it('does not ask to reconfigure when allowance is temporarily reserved by pending work', () => {
+  it('does not ask to reconfigure while a job is pending', () => {
     expect(
-      aiSetupReason({ ...configured, budget: { ...configured.budget, reservedUsd: 1 } }),
+      aiSetupReason({
+        ...configured,
+        jobs: [{ id: 'pending', kind: 'chat', status: 'judging', message: 'Pending' }],
+      }),
     ).toBeNull();
-    expect(aiSetupReason(configured)).toBeNull();
   });
 
   it('keeps explicitly marked fixtures usable without suggesting they are live AI', () => {
@@ -57,7 +54,7 @@ describe('composer AI setup guidance', () => {
         mode: 'fixture',
         jevConfigured: false,
         llmConfigured: false,
-        budget: { ...configured.budget, limitUsd: 0 },
+        allowanceLimitUsd: 0,
       }),
     ).toBeNull();
   });

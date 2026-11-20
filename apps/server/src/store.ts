@@ -131,7 +131,7 @@ import { ReceivedValueOwnership } from './received-value-ownership.js';
 import { evidenceEncodedBytesSql } from './temporal-page-storage.js';
 import { CommandReceipts, type GameplayReceipt } from './command-receipts.js';
 import { VectorStore } from './vector-store.js';
-import type { GameView, IntelligenceCall } from '@open-legend/protocol';
+import type { AiUsageView, IntelligenceCall } from '@open-legend/protocol';
 import { join } from 'node:path';
 import {
   appendedEventCount as provenAppendCount,
@@ -550,7 +550,7 @@ export interface GameRepository extends WorldStore {
   attemptReceipt(id: string): Promise<AiReceipt | undefined>;
   settle(id: string, receipt: AiReceipt): Promise<void>;
   recoverInterruptedWork(): Promise<void>;
-  usage(ceilingUsd: number, actorId?: string): Promise<Pick<GameView['ai'], 'budget' | 'usage'>>;
+  usage(ceilingUsd: number, actorId?: string): Promise<AiUsageView>;
 }
 
 /**
