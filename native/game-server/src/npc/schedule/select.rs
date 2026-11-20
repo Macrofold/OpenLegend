@@ -183,8 +183,7 @@ impl Inspection {
                     candidates.values().any(|candidate| {
                         candidate["presentedDescription"] != candidate["descriptionRevision"]
                     })
-                })
-        {
+                }) {
             if self.at() < discovery_at {
                 // Only a real optional cue earns a later inspection. Evidence,
                 // active work and urgent causes keep the ordinary wake path.

@@ -1,4 +1,10 @@
-import type { EntityView, GameView, PlayerProfile, SurfacePoint, ConstructionShape } from '@open-legend/protocol';
+import type {
+  EntityView,
+  GameView,
+  PlayerProfile,
+  SurfacePoint,
+  ConstructionShape,
+} from '@open-legend/protocol';
 import type { CameraCommand, CameraState } from './world-camera';
 export type ShadowQuality = 'detailed' | 'economy';
 export interface ScreenPoint {

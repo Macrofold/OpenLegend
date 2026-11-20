@@ -272,7 +272,9 @@ function WorldAgentPanel(props: Props) {
                 available={connected && !!usage.value}
               />
               {usage.unavailable && (
-                <Button size="sm" onPress={usage.retry}>Reload allowance</Button>
+                <Button size="sm" onPress={usage.retry}>
+                  Reload allowance
+                </Button>
               )}
             </div>
           }

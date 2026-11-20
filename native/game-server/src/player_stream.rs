@@ -356,8 +356,11 @@ impl Body for PlayerStream {
                             self.fresh_attempt = false;
                             if self.scope.scope.actor_id != attempt.scope.scope.actor_id {
                                 self.release_usage();
-                                self.usage = self.store.watch_usage(&attempt.scope.scope.actor_id)
-                                    .ok().map(wait_usage);
+                                self.usage = self
+                                    .store
+                                    .watch_usage(&attempt.scope.scope.actor_id)
+                                    .ok()
+                                    .map(wait_usage);
                             }
                             self.scope = attempt.scope;
                             self.previous = Some(attempt.view.into_previous(inventory));

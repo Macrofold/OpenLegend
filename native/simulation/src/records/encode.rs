@@ -217,8 +217,9 @@ impl<'a> RowEncoder<'a> {
         if body.0.capacity() > bound {
             return Err(error());
         }
-        crate::encoding::write_json_record(value, &mut body)
-            .map_err(|_| RecordEncodingError("Canonical row exceeded its admitted plain codec bound."))?;
+        crate::encoding::write_json_record(value, &mut body).map_err(|_| {
+            RecordEncodingError("Canonical row exceeded its admitted plain codec bound.")
+        })?;
         let payload = String::from_utf8(body.0)
             .map_err(|_| RecordEncodingError("Canonical row encoder did not emit UTF-8."))?;
         self.insert(table, placement, payload, &[], create, effects)

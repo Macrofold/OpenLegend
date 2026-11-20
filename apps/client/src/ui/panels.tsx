@@ -1140,7 +1140,9 @@ export const AiSettings = memo(
       b = usage.value?.budget;
     const account = b?.accounts[view.player.id];
     const retry = usage.unavailable && (
-      <Button size="sm" onPress={usage.retry}>Reload allowance</Button>
+      <Button size="sm" onPress={usage.retry}>
+        Reload allowance
+      </Button>
     );
     if (!view.godMode)
       return (
@@ -1196,17 +1198,21 @@ export const AiSettings = memo(
           <h3 className="ol-heading">
             ${ai.allowanceLimitUsd.toFixed(2)} per agent · {b?.period ?? 'current month'}
           </h3>
-          {b && <p>
-            Total spent ${b.spentUsd.toFixed(4)}
-            {b.estimated ? ' (estimated)' : ''}
-            <br />
-            Reserved ${b.reservedUsd.toFixed(4)}
-          </p>}
+          {b && (
+            <p>
+              Total spent ${b.spentUsd.toFixed(4)}
+              {b.estimated ? ' (estimated)' : ''}
+              <br />
+              Reserved ${b.reservedUsd.toFixed(4)}
+            </p>
+          )}
           {retry}
           {Object.entries(b?.accounts ?? {}).map(([id, account]) => (
             <p key={id}>
               {view.entities.find((e) => e.id === id)?.name ?? id}: $
-              {Math.max(0, ai.allowanceLimitUsd - account.spentUsd - account.reservedUsd).toFixed(2)}{' '}
+              {Math.max(0, ai.allowanceLimitUsd - account.spentUsd - account.reservedUsd).toFixed(
+                2,
+              )}{' '}
               remaining
             </p>
           ))}
@@ -1217,13 +1223,16 @@ export const AiSettings = memo(
         </Section>
         <details>
           <summary>Execution details</summary>
-          {usage.value && <p>
-            {usage.value.usage.llmCalls} language model calls · {usage.value.usage.jevCalls} Jev calls
-            <br />
-            {usage.value.usage.inputTokens} input / {usage.value.usage.outputTokens} output tokens
-            <br />
-            Last latency {(usage.value.usage.lastLatencyMs / 1000).toFixed(1)}s
-          </p>}
+          {usage.value && (
+            <p>
+              {usage.value.usage.llmCalls} language model calls · {usage.value.usage.jevCalls} Jev
+              calls
+              <br />
+              {usage.value.usage.inputTokens} input / {usage.value.usage.outputTokens} output tokens
+              <br />
+              Last latency {(usage.value.usage.lastLatencyMs / 1000).toFixed(1)}s
+            </p>
+          )}
           {ai.jobs
             .filter((job) => job.status === 'failed')
             .map((job) => (

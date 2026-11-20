@@ -550,8 +550,7 @@ pub(crate) fn evaluate_attention_relations(
     .ok_or(ExecutionError::Capacity)?;
     core.journal.current.reserve_growth(bound)?;
     let mut state = prior.clone();
-    let Some(opportunity) = opportunity(&*core.state, observer, &mut state)?
-    else {
+    let Some(opportunity) = opportunity(&*core.state, observer, &mut state)? else {
         core.journal
             .current
             .replace_attention(&mut core.state.reception, observer, state)?;

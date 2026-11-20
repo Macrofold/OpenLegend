@@ -471,7 +471,12 @@ impl Director {
                 .await?
         };
         let proposal = plan
-            .propose(policy, &prior, trigger.schedule_causes(), work.wake.discovery_at)
+            .propose(
+                policy,
+                &prior,
+                trigger.schedule_causes(),
+                work.wake.discovery_at,
+            )
             .map_err(RuntimeError::application_refused)?;
         let read = trigger.clone();
         let actor = observed.actor_id.clone();

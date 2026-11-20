@@ -488,9 +488,16 @@ impl ReceivingMutation<'_> {
         if owner.life != before.observer.physical_life {
             return Err(ExecutionError::Invariant);
         }
-        let _scratch =
-            allocation::reserve(reception, owner, observer, &[], Some(&before), false, budget)
-                .map_err(ExecutionError::Received)?;
+        let _scratch = allocation::reserve(
+            reception,
+            owner,
+            observer,
+            &[],
+            Some(&before),
+            false,
+            budget,
+        )
+        .map_err(ExecutionError::Received)?;
         let entries = owner
             .attention
             .as_ref()

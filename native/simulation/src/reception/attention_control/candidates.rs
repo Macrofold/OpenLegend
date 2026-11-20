@@ -168,8 +168,8 @@ fn descriptions<'a>(
     .into_iter()
     .enumerate()
     {
-        values[at] = facet(kind)?.and_then(|field| {
-            match scope.value(&field.field.value.reference) {
+        values[at] =
+            facet(kind)?.and_then(|field| match scope.value(&field.field.value.reference) {
                 Some(ReceivedValueFragment::Sensory(value)) => Some(value),
                 _ => None,
             }

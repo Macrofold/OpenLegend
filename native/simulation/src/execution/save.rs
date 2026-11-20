@@ -374,7 +374,12 @@ fn work_invocation_payload_bound(value: &crate::values::WorkInvocation) -> Optio
     const PIN: usize = 2 + 3 * (7 + 4) + 20;
     const RECURRENCE: usize = 2 + 2 * (15 + 4) + 32 + 20;
     let fixed = ROOT_SYNTAX + PIN + 3 * VECTOR + 2 * 32 + 3 * 20;
-    let fixed = fixed + if value.recurrence.is_some() { RECURRENCE } else { 0 };
+    let fixed = fixed
+        + if value.recurrence.is_some() {
+            RECURRENCE
+        } else {
+            0
+        };
     [
         Some(&value.id),
         Some(&value.root_id),

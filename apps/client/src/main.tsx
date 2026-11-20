@@ -558,12 +558,9 @@ function App({
     () => JSON.stringify(aiJobs?.map(({ id, status }) => [id, status])),
     [aiJobs],
   );
-  const aiUsageVisible = transportReady && !tabPaused && (open.includes('ai') || open.includes('agent'));
-  const aiUsage = usePlayerAiUsage(
-    view?.access?.scope,
-    aiUsageVisible,
-    aiJobsRevision ?? '',
-  );
+  const aiUsageVisible =
+    transportReady && !tabPaused && (open.includes('ai') || open.includes('agent'));
+  const aiUsage = usePlayerAiUsage(view?.access?.scope, aiUsageVisible, aiJobsRevision ?? '');
   const [allowanceRevision, setAllowanceRevision] = useState(0);
   const aiUsageWake = useRef<() => void>(() => {});
   aiUsageWake.current = () => {

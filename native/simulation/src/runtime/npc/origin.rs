@@ -1,5 +1,7 @@
 //! The stand-alone decision formatter's inputs from its original accepted read.
-use super::{AcceptedActorRead, ByteBudget, ByteReservation, RuntimeError, RuntimeNpcRead, failure};
+use super::{
+    AcceptedActorRead, ByteBudget, ByteReservation, RuntimeError, RuntimeNpcRead, failure,
+};
 use crate::install::reserve_typed_parse;
 use serde::Deserialize;
 use std::mem::size_of;
@@ -73,10 +75,15 @@ impl RuntimeNpcDecisionOrigin<'_> {
     /// its support string's independent allowance through response application.
     pub fn frame(&self, budget: &ByteBudget) -> Result<RuntimeNpcDecisionFrame, RuntimeError> {
         let encoded = self.read.own_json();
-        let mut storage = reserve_typed_parse::<OriginFrame>(encoded, 0, None, budget)
-            .map_err(failure)?;
+        let mut storage =
+            reserve_typed_parse::<OriginFrame>(encoded, 0, None, budget).map_err(failure)?;
         let frame: OriginFrame = serde_json::from_str(encoded).map_err(failure)?;
-        storage.resize(frame.support_surface_id.as_ref().map_or(0, String::capacity))?;
+        storage.resize(
+            frame
+                .support_surface_id
+                .as_ref()
+                .map_or(0, String::capacity),
+        )?;
         Ok(RuntimeNpcDecisionFrame {
             x: frame.position.x,
             z: frame.position.z,

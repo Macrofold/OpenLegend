@@ -65,8 +65,12 @@ pub(crate) struct DisplayPreferencesPatch {
 
 impl DisplayPreferencesPatch {
     pub(crate) fn parts(self) -> Option<(Option<Reveal>, Option<Voice>)> {
-        if self.reveal_radius.is_some_and(|value| !(2.0..=12.0).contains(&value))
-            || self.reveal_strength.is_some_and(|value| !(0.2..=0.95).contains(&value))
+        if self
+            .reveal_radius
+            .is_some_and(|value| !(2.0..=12.0).contains(&value))
+            || self
+                .reveal_strength
+                .is_some_and(|value| !(0.2..=0.95).contains(&value))
         {
             return None;
         }

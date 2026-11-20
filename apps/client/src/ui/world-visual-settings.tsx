@@ -64,7 +64,7 @@ export function WorldVisualSettings({
           <select
             aria-label="See-through reveal"
             disabled={busy || !prefs || profile.failed}
-            value={prefs ? prefs.revealMode ?? 'nearby' : ''}
+            value={prefs ? (prefs.revealMode ?? 'nearby') : ''}
             onChange={(e) =>
               void update({ revealMode: e.target.value as 'off' | 'player' | 'nearby' })
             }
@@ -80,7 +80,7 @@ export function WorldVisualSettings({
           <select
             aria-label="Reveal radius"
             disabled={busy || !prefs || profile.failed}
-            value={prefs ? prefs.revealRadius ?? 6 : ''}
+            value={prefs ? (prefs.revealRadius ?? 6) : ''}
             onChange={(e) => void update({ revealRadius: Number(e.target.value) })}
           >
             {!prefs && <option value="">Unavailable</option>}
@@ -96,7 +96,7 @@ export function WorldVisualSettings({
           <select
             aria-label="Reveal strength"
             disabled={busy || !prefs || profile.failed}
-            value={prefs ? prefs.revealStrength ?? 0.7 : ''}
+            value={prefs ? (prefs.revealStrength ?? 0.7) : ''}
             onChange={(e) => void update({ revealStrength: Number(e.target.value) })}
           >
             {!prefs && <option value="">Unavailable</option>}

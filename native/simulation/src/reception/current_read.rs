@@ -46,9 +46,13 @@ pub fn current_group_metadata<'a>(
     part: Option<CurrentReceivedPart>,
 ) -> Option<&'a CurrentPartPartition> {
     let part = part.unwrap_or_else(|| {
-        group.received.fields.get(kind).map_or(CurrentReceivedPart::Value, |field| {
-            current_field_parts(field)[0]
-        })
+        group
+            .received
+            .fields
+            .get(kind)
+            .map_or(CurrentReceivedPart::Value, |field| {
+                current_field_parts(field)[0]
+            })
     });
     // A current installation validates unique members. Last-address lookup also
     // matches the source owner's map semantics for editable phase metadata.
@@ -86,9 +90,8 @@ fn selected_group_facet<'a>(
         field,
         grant: &group.received.grant,
         original_source: original,
-        metadata: partition.or_else(|| {
-            current_group_metadata(group, kind, Some(current_field_parts(field)[0]))
-        })?,
+        metadata: partition
+            .or_else(|| current_group_metadata(group, kind, Some(current_field_parts(field)[0])))?,
     })
 }
 

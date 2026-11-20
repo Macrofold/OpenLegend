@@ -37,7 +37,11 @@ fn workspace_bound(previous: &ChangedRows, next: &ChangedRows, pending: bool) ->
         .writes
         .keys()
         .filter(|table| !pending || touches_rows(next, table))
-        .chain(next.writes.keys().filter(|&table| !previous.writes.contains_key(table)))
+        .chain(
+            next.writes
+                .keys()
+                .filter(|&table| !previous.writes.contains_key(table)),
+        )
     {
         let incoming = next.writes.get(table).map_or(0, Vec::len);
         let old = previous.writes.get(table).map_or(0, Vec::len);
@@ -86,7 +90,9 @@ fn workspace_bound(previous: &ChangedRows, next: &ChangedRows, pending: bool) ->
         for table in before
             .keys()
             .filter(|table| {
-                !pending || after.contains_key(*table) || (deletes && next.writes.contains_key(*table))
+                !pending
+                    || after.contains_key(*table)
+                    || (deletes && next.writes.contains_key(*table))
             })
             .chain(after.keys().filter(|&table| !before.contains_key(table)))
         {
@@ -117,7 +123,10 @@ fn workspace_bound(previous: &ChangedRows, next: &ChangedRows, pending: bool) ->
                 bytes = bytes.checked_add(id_node)?;
             }
         }
-        let expired = next.expired.keys().filter(|&table| previous.expired.contains_key(table));
+        let expired = next
+            .expired
+            .keys()
+            .filter(|&table| previous.expired.contains_key(table));
         bytes = bytes.checked_add(expired.count().checked_mul(id_node)?)?;
     }
     Some(bytes)

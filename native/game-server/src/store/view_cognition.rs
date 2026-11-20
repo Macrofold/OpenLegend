@@ -70,21 +70,33 @@ impl Store {
     /// streams for this actor; actors with no viewers retain no map entries.
     pub(crate) fn watch_usage(&self, actor: &str) -> StoreResult<UsageSubscription> {
         let subscription = self.budget.reserve(512).map_err(|_| StoreError::Capacity)?;
-        let mut changes = self.usage_changes.lock().map_err(|_| StoreError::Capacity)?;
+        let mut changes = self
+            .usage_changes
+            .lock()
+            .map_err(|_| StoreError::Capacity)?;
         let receiver = if let Some((sender, _)) = changes.0.get(actor) {
             sender.subscribe()
         } else {
-            let custody = self.budget.reserve(1024 + actor.len()).map_err(|_| StoreError::Capacity)?;
+            let custody = self
+                .budget
+                .reserve(1024 + actor.len())
+                .map_err(|_| StoreError::Capacity)?;
             let (sender, receiver) = watch::channel(());
             changes.0.insert(actor.to_owned(), (sender, custody));
             receiver
         };
-        Ok(UsageSubscription { receiver, _custody: subscription })
+        Ok(UsageSubscription {
+            receiver,
+            _custody: subscription,
+        })
     }
 
     pub(crate) fn release_usage_watch(&self, actor: &str) {
         if let Ok(mut changes) = self.usage_changes.lock()
-            && changes.0.get(actor).is_some_and(|(sender, _)| sender.receiver_count() == 0)
+            && changes
+                .0
+                .get(actor)
+                .is_some_and(|(sender, _)| sender.receiver_count() == 0)
         {
             changes.0.remove(actor);
         }
@@ -195,7 +207,9 @@ impl Store {
         scope: &RequestScope,
         limit_usd: f64,
     ) -> StoreResult<AiUsageReport> {
-        let custody = self.budget.reserve(8192 + 4 * scope.actor_id.len())
+        let custody = self
+            .budget
+            .reserve(8192 + 4 * scope.actor_id.len())
             .map_err(|_| StoreError::Capacity)?;
         let actor = scope.actor_id.clone();
         self.read_operational(move |tx| Box::pin(async move {

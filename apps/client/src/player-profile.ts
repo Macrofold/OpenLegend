@@ -14,7 +14,11 @@ export async function savePlayerPreferences(patch: PlayerPreferencePatch): Promi
 
 export function usePlayerProfile(scope: string | undefined, connected: boolean, settings: boolean) {
   const [request, setRequest] = useState(0);
-  const [result, setResult] = useState<{ scope: string; profile?: PlayerProfile; failed?: boolean }>();
+  const [result, setResult] = useState<{
+    scope: string;
+    profile?: PlayerProfile;
+    failed?: boolean;
+  }>();
   const retry = useCallback(() => setRequest((value) => value + 1), []);
   useEffect(() => {
     refresh.addEventListener('change', retry);

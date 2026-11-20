@@ -249,7 +249,9 @@ impl Authority {
     ) -> Result<(), AccessError> {
         let _change = self.changes.lock().await;
         self.current_view(authorized, |_, _| ())?;
-        self.store.set_display_preferences(&authorized.scope, reveal, voice).await?;
+        self.store
+            .set_display_preferences(&authorized.scope, reveal, voice)
+            .await?;
         Ok(())
     }
     pub fn session_lifetime_secs(&self) -> i64 {

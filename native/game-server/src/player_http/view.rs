@@ -6,7 +6,6 @@ use crate::{
     authority::Capability,
     player_stream::{PlayerStream, PrepareView, VIEW_CADENCE, ViewAttempt},
     player_view::{ViewError, capture_host, prepare_view},
-    player_view::profile::DisplayPreferencesPatch,
     store::AiDisplay,
     world::PlayerDisclosure,
 };
@@ -227,12 +226,21 @@ async fn display_scope<'a>(
     headers: &HeaderMap,
 ) -> Result<(tokio::sync::SemaphorePermit<'a>, AuthorizedScope), Response> {
     let slot = routes.capacity.try_acquire().map_err(|_| busy())?;
-    let scope = read_scope(&routes.authority, headers).await.map_err(access_failure)?;
-    routes.authority.current_view(&scope, |_, _| ()).map_err(access_failure)?;
+    let scope = read_scope(&routes.authority, headers)
+        .await
+        .map_err(access_failure)?;
+    routes
+        .authority
+        .current_view(&scope, |_, _| ())
+        .map_err(access_failure)?;
     Ok((slot, scope))
 }
 
-fn display_response<T: Serialize>(routes: &PlayerRoutes, scope: &AuthorizedScope, value: T) -> Response {
+fn display_response<T: Serialize>(
+    routes: &PlayerRoutes,
+    scope: &AuthorizedScope,
+    value: T,
+) -> Response {
     match routes.authority.current_view(scope, |_, _| {
         match wire::encode(&value, b"", b"", routes.game.host.budget()) {
             Ok(bytes) => json_response(StatusCode::OK, bytes),
@@ -258,7 +266,9 @@ async fn profile(State(views): State<Arc<Views>>, headers: HeaderMap) -> Respons
 
 async fn save_profile(State(views): State<Arc<Views>>, request: Request) -> Response {
     let routes = &views.routes;
-    let Ok(_slot) = routes.capacity.try_acquire() else { return busy(); };
+    let Ok(_slot) = routes.capacity.try_acquire() else {
+        return busy();
+    };
     let (parts, body) = request.into_parts();
     let authorized = match scope(&routes.authority, &parts.headers, None).await {
         Ok(authorized) => authorized,
@@ -270,9 +280,17 @@ async fn save_profile(State(views): State<Arc<Views>>, request: Request) -> Resp
             Err(response) => return response,
         };
     let Some((reveal, voice)) = patch.parts() else {
-        return refusal(StatusCode::BAD_REQUEST, "preferences", "Choose a valid preference.");
+        return refusal(
+            StatusCode::BAD_REQUEST,
+            "preferences",
+            "Choose a valid preference.",
+        );
     };
-    if let Err(error) = routes.authority.set_display_preferences(&authorized, reveal, voice).await {
+    if let Err(error) = routes
+        .authority
+        .set_display_preferences(&authorized, reveal, voice)
+        .await
+    {
         return access_failure(error);
     }
     match routes.authority.current_view(&authorized, |_, _| {
@@ -289,7 +307,12 @@ async fn usage(State(views): State<Arc<Views>>, headers: HeaderMap) -> Response 
         Ok(authorized) => authorized,
         Err(response) => return response,
     };
-    match routes.game.store.player_usage(&scope.scope, views.display.limit_usd).await {
+    match routes
+        .game
+        .store
+        .player_usage(&scope.scope, views.display.limit_usd)
+        .await
+    {
         Ok(usage) => display_response(routes, &scope, usage),
         Err(error) => failed(error.into()),
     }
