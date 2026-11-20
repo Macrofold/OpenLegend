@@ -32,6 +32,9 @@ pub mod native_response;
 pub(crate) mod outings;
 pub(crate) mod participation;
 pub(crate) mod plans;
+#[cfg(feature = "profile-campaign")]
+pub mod profile;
+mod profile_macros;
 pub mod received;
 pub mod reception;
 pub mod records;

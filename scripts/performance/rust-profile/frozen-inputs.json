@@ -1,0 +1,218 @@
+{
+  "driver": {
+    "campaign": "f3816cae-1af5-4a5f-8cd3-170e9061441b",
+    "sha256": "ff0505a83ca10486070ef0843b212e0688af2dffbbaa67140fc824738878dd15",
+    "files": {
+      "launch.mjs": {
+        "sha256": "49d52202128882b4589ee4e7215c57492d8403d53ea3cb0708161a67bb35ea3e",
+        "bytes": 4568
+      },
+      "linux-process-accounting.mjs": {
+        "sha256": "4d4665ebb82dfe7c0f02851ebff22e71d2914c08296c0a462bca2353b2fb84de",
+        "bytes": 3374
+      },
+      "node-server.mts": {
+        "sha256": "ee641f2ed6e7727d71db2aeb1f4006cf48312534377fca79aacc1f4b7519be77",
+        "bytes": 2837
+      },
+      "player-client.mts": {
+        "sha256": "7ff24c91a93a8d2ac5cbbdd52a6f0405d234459a4a3f550cc0276ad8e32b5b06",
+        "bytes": 16607
+      },
+      "pocket-opening.mts": {
+        "sha256": "3f6895e258a36e0c293a41ce5fdc04a750aa2d77221c76d3479fe9fb22e4a9d7",
+        "bytes": 1236
+      },
+      "process-resource.mjs": {
+        "sha256": "759ba92d3655d530f89105ed37d88c3878835cbbb347583c42171ef352e03397",
+        "bytes": 7665
+      },
+      "stream.mts": {
+        "sha256": "8d01445527f308c702b835d17c043a8b149f82d2a0f824c1d8fde086bd3320b4",
+        "bytes": 8990
+      },
+      "typed-provider.mts": {
+        "sha256": "6f38ffd280071eac3384447fb6e0e3e09b07133c010bdacb518b9e5d0b1e2854",
+        "bytes": 14579
+      },
+      "workload.mts": {
+        "sha256": "b2463a92d8029ea34f94b3a3926a6b98fda9ea3d766a2cea725df38fdcfa9774",
+        "bytes": 37208
+      }
+    },
+    "archiveSha256": "f4f99b312773d435bb54fa4ebfeac9177126b1aed4b6ffa35824639d52226689",
+    "archiveBytes": 29872
+  },
+  "tools": {
+    "campaign": "f3816cae-1af5-4a5f-8cd3-170e9061441b",
+    "sha256": "24a8641d3fa2a8b9c98090662d2e1df9b6671b2e8278ee18c8fadf6ed9240122",
+    "files": {
+      "build.mjs": {
+        "sha256": "b844b6652206ed0f87667992a8efb3bc3504d0aea6af54bf5dab0bffb4e35324",
+        "bytes": 7814
+      },
+      "cargo-1.99.1-x86_64-unknown-linux-gnu.tar.xz": {
+        "sha256": "53f3521949404d595efb06a55c12c5658d4ed1c75566f33d3d514eaebe70bd8a",
+        "bytes": 10954816
+      },
+      "cargo-vendor.tar.gz": {
+        "sha256": "30c92be93d8948c31abb083435b5b21472254fc57484b7bcb34558c2dbdfc5fc",
+        "bytes": 40124897
+      },
+      "manifest.json": {
+        "sha256": "b4be80de57ed7b779b5bb7797011f359289ac3a0682ec1a0e75133bf8013e0c4",
+        "bytes": 1718
+      },
+      "node-v22.23.2-linux-x64.tar.xz": {
+        "sha256": "d60acfe00a2932254bb0ad20e01b0d74397a0875595de719654b214f4b03f307",
+        "bytes": 31058332
+      },
+      "rust-std-1.99.1-x86_64-unknown-linux-gnu.tar.xz": {
+        "sha256": "109b074225bf5b9ea3820890876bfdf4ed161adbfaf94b2b4b5984c85ee5d958",
+        "bytes": 31563228
+      },
+      "rustc-1.99.1-x86_64-unknown-linux-gnu.tar.xz": {
+        "sha256": "2ff05ff9c08a90861e7f6e4065b40a8b87463b4576186fd613871c3e37f2091f",
+        "bytes": 84098960
+      },
+      "zig-x86_64-linux-0.15.2.tar.xz": {
+        "sha256": "02aa270f183da276e5b5920b1dac44a63f1a49e55050ebde3aecc9eb82f93239",
+        "bytes": 53733924
+      }
+    },
+    "archiveSha256": "33263c97650ed83ff00935dfdc42d61b121b29ef918c329e43b7013f93f7b7be",
+    "archiveBytes": 251293108
+  },
+  "language": {
+    "campaign": "f3816cae-1af5-4a5f-8cd3-170e9061441b",
+    "sha256": "13df3fd52e04f9ea26d691652c4c4586e0fac592b6b61c2a7119c051644337ce",
+    "files": {
+      "ICU-LICENSE": {
+        "sha256": "e55522d81edc687a341a4411e0776e54ca654e90147f354a90458aaced4116af",
+        "bytes": 27718
+      },
+      "language.json": {
+        "sha256": "9c5a1377dd847fb66fd9181ad2cf2059c3fb787eec8a292d12c23ac29a6104ec",
+        "bytes": 169
+      },
+      "libopenlegend_icu.so": {
+        "sha256": "4565721cd00111a2ed3149bd9763c4e1c36e992585329bfb1b7165ae34ba7fc2",
+        "bytes": 40948928
+      }
+    },
+    "archiveSha256": "ab6dec394581aa78197a6758cba497c23de9386b153ca265daadbed728a5ec60",
+    "archiveBytes": 16319477
+  },
+  "profile": {
+    "campaign": "32b916bf-aa32-49bd-a00b-a34930cc0ef3",
+    "sha256": "883a1d3974f43f3e1bd7684c801ce27802dd52ec7bd06cd84a0aa2f60be9c4f7",
+    "files": {
+      "build.mjs": {
+        "sha256": "af7625817d7faede06d26de3765b3305d665b93cf387702ab8e86cd4136506ed",
+        "bytes": 426
+      },
+      "ol-profile-sampler.so": {
+        "sha256": "b36ab97c40f03121c5a623aa0780bdc1ea69019670c4887560471e0e21fe80c2",
+        "bytes": 20272
+      },
+      "run.mjs": {
+        "sha256": "39981108e9c7faf02edcb4ff5d9bc63a257eeda3f5dd0dd476389d7bcf962df5",
+        "bytes": 975
+      },
+      "sampler.c": {
+        "sha256": "a585ba223bcfca738e927886894acce13e858b5069a22425a8e12f8646e2e5b6",
+        "bytes": 4970
+      },
+      "symbolize.py": {
+        "sha256": "da4b8e40b483549ecefa3234920ee3b595ef50bf5e7c002cc21d7e7bb7ec6021",
+        "bytes": 2929
+      }
+    },
+    "archiveSha256": "c8d3f8851ac9f8d02ff6800eb4601ad6463d7b7053899c86e44bfd447ef66f4f",
+    "archiveBytes": 12866
+  },
+  "linux-tools": {
+    "campaign": "32b916bf-aa32-49bd-a00b-a34930cc0ef3",
+    "sha256": "d1100d882ff4e9b4d858dc8292bd7098001649bd5ca1afe0fe8d6af8cd52b937",
+    "files": {
+      "addr2line": {
+        "sha256": "a116f9e176f9f1ef6e2ab31ad41bacb9d2571b479725ebdfe10fb9cb70aa9e53",
+        "bytes": 31440
+      },
+      "libbfd-2.42-system.so": {
+        "sha256": "11f084bc6ff5fc64e91c0b6422040fab1245419e7ff29560a95c1176ce1b9ff4",
+        "bytes": 1479888
+      },
+      "libctf-nobfd.so.0": {
+        "sha256": "1c16e8ac316c5cd952fe3544d2f7faea49b79a85b8f9e405f77c2a0059aefeae",
+        "bytes": 216096
+      },
+      "libsframe.so.1": {
+        "sha256": "1693a2dbd77c909d279ae34aa9b5d8d08d97f116f8d0ed724063df11151b3c69",
+        "bytes": 35168
+      },
+      "libz.so.1": {
+        "sha256": "f61677c7bdb7c2aa2a243ea781bfd16afcb361cede7b4ef76127a9d8eb9a5242",
+        "bytes": 113000
+      },
+      "libzstd.so.1": {
+        "sha256": "0a2128bc10841fb29e76d08d945864dfb0b6a66da5df6df5d8299197439e54bb",
+        "bytes": 755864
+      },
+      "readelf": {
+        "sha256": "64c58e15274bbbb5153f31078e455e9e77ee5f51489e709bba5bb788ce9df2b0",
+        "bytes": 789280
+      }
+    },
+    "archiveSha256": "145f8a69c2e424bcaf1a2a096638db3c67183e61c52075fa468fa7e645729760",
+    "archiveBytes": 1471229
+  },
+  "sql": {
+    "campaign": "32b916bf-aa32-49bd-a00b-a34930cc0ef3",
+    "sha256": "b595e977e89c5e6e6c99076aa334e4007c24493ef087d018bbf6f44560480ce5",
+    "files": {
+      "launch.mjs": {
+        "sha256": "63ff3df10ae7d22f30797b20398354a9dc96e217a7acce286fd9f65be05ae268",
+        "bytes": 4537
+      },
+      "linux-process-accounting.mjs": {
+        "sha256": "4d4665ebb82dfe7c0f02851ebff22e71d2914c08296c0a462bca2353b2fb84de",
+        "bytes": 3374
+      },
+      "node-server.mts": {
+        "sha256": "ee641f2ed6e7727d71db2aeb1f4006cf48312534377fca79aacc1f4b7519be77",
+        "bytes": 2837
+      },
+      "player-client.mts": {
+        "sha256": "7ff24c91a93a8d2ac5cbbdd52a6f0405d234459a4a3f550cc0276ad8e32b5b06",
+        "bytes": 16607
+      },
+      "pocket-opening.mts": {
+        "sha256": "3f6895e258a36e0c293a41ce5fdc04a750aa2d77221c76d3479fe9fb22e4a9d7",
+        "bytes": 1236
+      },
+      "postgres-wire-observation.mjs": {
+        "sha256": "eceeb9195dd78ea6c47bbde0fdc7521b2cbe3678968bbbf6f59f9933838d2751",
+        "bytes": 5549
+      },
+      "process-resource.mjs": {
+        "sha256": "759ba92d3655d530f89105ed37d88c3878835cbbb347583c42171ef352e03397",
+        "bytes": 7665
+      },
+      "stream.mts": {
+        "sha256": "8d01445527f308c702b835d17c043a8b149f82d2a0f824c1d8fde086bd3320b4",
+        "bytes": 8990
+      },
+      "typed-provider.mts": {
+        "sha256": "6f38ffd280071eac3384447fb6e0e3e09b07133c010bdacb518b9e5d0b1e2854",
+        "bytes": 14579
+      },
+      "workload.mts": {
+        "sha256": "722f090af23ae1e291e8ae62a6e5849dee294fa8a6e55d288b1cff9e88e95cd4",
+        "bytes": 38035
+      }
+    },
+    "archiveSha256": "3cf61211da95aea68dfafa880ea7426771a9491ad299e00059633bf3a416b0bc",
+    "archiveBytes": 31895
+  }
+}

@@ -144,6 +144,7 @@ pub(crate) fn reconcile_exposure(
     frame: &DangerAssessment,
     epsilon: f64,
 ) -> Result<(), ExecutionError> {
+    let _profile = crate::profile_scope!(EXPOSURE);
     frame.require_current(mutation.state, actor_id)?;
     mutation.reserve_response_growth(frame.records.len() * std::mem::size_of::<(&str, bool)>())?;
     let animal = mutation
@@ -576,6 +577,7 @@ pub(crate) fn reconcile_wander(
     actor_id: &str,
     time_epsilon: f64,
 ) -> Result<(), ExecutionError> {
+    let _profile = crate::profile_scope!(WANDER);
     let Some(entity) = mutation.state.entities.get(actor_id) else {
         return Ok(());
     };

@@ -620,6 +620,8 @@ impl Director {
             .game
             .world
             .execute_and_publish(
+                #[cfg(feature = "profile-campaign")]
+                openlegend_simulation::profile::sites::TURN_NPC,
                 move |session| {
                     let scope = session.accepted_progress()?;
                     if scope.generation != generation || scope.paused {

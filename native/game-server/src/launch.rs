@@ -17,6 +17,8 @@ use tower_http::services::{ServeDir, ServeFile};
 type LaunchError = Box<dyn Error + Send + Sync>;
 
 pub async fn serve(release: &Path, database: tokio_postgres::Config) -> Result<(), LaunchError> {
+    #[cfg(feature = "profile-campaign")]
+    let _profile = crate::profile::start_from_operator();
     let mode = setting("OPEN_LEGEND_AUTH_MODE", "local")?;
     if !matches!(mode.as_str(), "local" | "oidc") {
         return Err("Unsupported OPEN_LEGEND_AUTH_MODE".into());

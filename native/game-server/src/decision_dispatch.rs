@@ -98,6 +98,26 @@ impl fmt::Display for CallFailure {
 impl std::error::Error for CallFailure {}
 
 impl CallFailure {
+    #[cfg(feature = "profile-campaign")]
+    pub(crate) fn profile_outcome<T>(
+        result: &Result<T, Self>,
+    ) -> openlegend_simulation::profile::Outcome {
+        use openlegend_simulation::profile::Outcome;
+        match result {
+            Ok(_) => Outcome::Completed,
+            Err(error) => match error.cause().1 {
+                Self::Cancelled => Outcome::Cancelled,
+                Self::Admission
+                | Self::Existing
+                | Self::Stale(_)
+                | Self::Authority(_)
+                | Self::Refused(_)
+                | Self::DecodeBusy => Outcome::Refused,
+                _ => Outcome::Failed,
+            },
+        }
+    }
+
     pub(crate) fn at(self, stage: &'static str) -> Self {
         match self {
             Self::At { .. } => self,
@@ -192,7 +212,19 @@ impl DecisionDispatch {
     {
         let stage = call.allowance.stage;
         let owner = self.clone();
-        tokio::spawn(async move { owner.run(call, permit, stopped, decode).await })
+        let operation = async move {
+            openlegend_simulation::profile_body!(
+                PROVIDER,
+                { owner.run(call, permit, stopped, decode).await },
+                CallFailure::profile_outcome
+            )
+        };
+        #[cfg(feature = "profile-campaign")]
+        let operation = openlegend_simulation::profile::carry(
+            openlegend_simulation::profile::current(),
+            operation,
+        );
+        tokio::spawn(operation)
             .await
             .map_err(|_| CallFailure::Invalid.at(stage))?
             .map_err(|error| error.at(stage))

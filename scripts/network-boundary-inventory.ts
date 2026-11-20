@@ -45,6 +45,8 @@ export const localProcessOwners: Readonly<Record<string, string>> = {
   'scripts/decision-benchmark/run.ts': 'Local Git revision/diff inspection only.',
   'scripts/decision-benchmark/escalation.ts': 'Local Git revision/diff inspection only.',
   'scripts/profile-server.ts': 'Local Git revision inspection only.',
+  'scripts/performance/rust-profile/registry.ts':
+    'Read-only Git object and probe inventory for offline Rust campaign planning.',
   'scripts/performance/profile-server.mjs':
     'Local profiling server child; outgoing work uses script network boundary.',
   'scripts/stress-data.ts': 'Local Git revision inspection only.',
@@ -66,6 +68,7 @@ export const localGitCommands: Readonly<Record<string, readonly string[]>> = {
   'scripts/decision-benchmark/run.ts': ['rev-parse', 'ls-files', 'diff'],
   'scripts/decision-benchmark/escalation.ts': ['rev-parse', 'diff'],
   'scripts/profile-server.ts': ['rev-parse', 'ls-files', 'branch'],
+  'scripts/performance/rust-profile/registry.ts': ['cat-file', 'ls-tree', 'grep', 'diff'],
   'scripts/stress-data.ts': ['rev-parse'],
   'scripts/check-agent-guidance.mjs': ['ls-files'],
   'scripts/check-assets.ts': ['ls-files'],

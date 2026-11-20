@@ -90,6 +90,7 @@ impl ReceivingCursor {
         answer: Option<CollationAnswer>,
         budget: &ByteBudget,
     ) -> Result<ReceivingStep<'a>, ExecutionError> {
+        let _profile = crate::profile_scope!(RECEIVE);
         if self.event_id != event.id
             || awareness.event_id != event.id
             || awareness.actor_id != self.current.observer.actor_id

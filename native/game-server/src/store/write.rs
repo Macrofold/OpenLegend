@@ -241,7 +241,7 @@ impl Store {
             receipts,
             _custody: _binding,
         });
-        self.commit(transaction).await?;
+        openlegend_simulation::profile_result!(WRITE_COMMIT, self.commit(transaction)).await?;
         Ok(uncertain_save
             .take()
             .expect("fresh commit witness")
@@ -375,65 +375,69 @@ impl Store {
         revision: i64,
         changes: &ChangedRows,
     ) -> StoreResult<()> {
-        // Preserve schema preorder and source row order where another unique
-        // index can make order meaningful. Group only independently shaped rows.
-        for table in &self.schema.tables {
-            let Some(rows) = changes.writes.get(&table.name) else {
-                continue;
-            };
-            let preparation = rows.len().checked_mul(48).ok_or(StoreError::Capacity)?;
-            let _groups = self
-                .budget
-                .reserve(preparation)
-                .map_err(|_| StoreError::Capacity)?;
-            let mut groups: Vec<Vec<&ChangedRow>> = Vec::new();
-            for row in rows {
-                let compatible = |peer: &ChangedRow| {
-                    row.create == peer.create && row.write_columns == peer.write_columns
+        openlegend_simulation::profile_body!(RECORDS, {
+            // Preserve schema preorder and source row order where another unique
+            // index can make order meaningful. Group only independently shaped rows.
+            for table in &self.schema.tables {
+                let Some(rows) = changes.writes.get(&table.name) else {
+                    continue;
                 };
-                let group = if table.ordered_writes {
-                    groups.last_mut().filter(|group| compatible(group[0]))
-                } else {
-                    groups.iter_mut().find(|group| compatible(group[0]))
-                };
-                if let Some(group) = group {
-                    group.push(row);
-                } else {
-                    groups.push(vec![row]);
+                let preparation = rows.len().checked_mul(48).ok_or(StoreError::Capacity)?;
+                let _groups = self
+                    .budget
+                    .reserve(preparation)
+                    .map_err(|_| StoreError::Capacity)?;
+                let mut groups: Vec<Vec<&ChangedRow>> = Vec::new();
+                for row in rows {
+                    let compatible = |peer: &ChangedRow| {
+                        row.create == peer.create && row.write_columns == peer.write_columns
+                    };
+                    let group = if table.ordered_writes {
+                        groups.last_mut().filter(|group| compatible(group[0]))
+                    } else {
+                        groups.iter_mut().find(|group| compatible(group[0]))
+                    };
+                    if let Some(group) = group {
+                        group.push(row);
+                    } else {
+                        groups.push(vec![row]);
+                    }
+                }
+                for group in groups {
+                    write_group(transaction, table, world_id, revision, &group, &self.budget)
+                        .await?;
+                    openlegend_simulation::profile_count!(RECORD_ROWS, group.len() as u64);
                 }
             }
-            for group in groups {
-                write_group(transaction, table, world_id, revision, &group, &self.budget).await?;
-            }
-        }
-        // Placement edges use a restrictive physical foreign key. Move
-        // survivors before deleting the edges of removed entities, as Source does.
-        if let Some(removed) = changes.deletes.get("sim_entities") {
-            for chunk in removed.chunks(DELETE_ROWS) {
-                let _temporary = reserve_delete(&self.budget, world_id, chunk)?;
-                transaction
-                    .execute(
-                        "DELETE FROM sim_placements WHERE world_id=$1 AND parent_id=ANY($2)",
-                        &[&world_id, &chunk],
-                    )
-                    .await?;
-            }
-        }
-        // Deleting children before parents maintains their structural ownership;
-        // placement edges above are the additional non-cascade foreign keys.
-        for table in self.schema.tables.iter().rev() {
-            if let Some(removed) = changes.deletes.get(&table.name) {
-                let sql = format!(
-                    "DELETE FROM {} WHERE world_id=$1 AND id=ANY($2)",
-                    table.name
-                );
+            // Placement edges use a restrictive physical foreign key. Move
+            // survivors before deleting the edges of removed entities, as Source does.
+            if let Some(removed) = changes.deletes.get("sim_entities") {
                 for chunk in removed.chunks(DELETE_ROWS) {
                     let _temporary = reserve_delete(&self.budget, world_id, chunk)?;
-                    transaction.execute(&sql, &[&world_id, &chunk]).await?;
+                    transaction
+                        .execute(
+                            "DELETE FROM sim_placements WHERE world_id=$1 AND parent_id=ANY($2)",
+                            &[&world_id, &chunk],
+                        )
+                        .await?;
                 }
             }
-        }
-        Ok(())
+            // Deleting children before parents maintains their structural ownership;
+            // placement edges above are the additional non-cascade foreign keys.
+            for table in self.schema.tables.iter().rev() {
+                if let Some(removed) = changes.deletes.get(&table.name) {
+                    let sql = format!(
+                        "DELETE FROM {} WHERE world_id=$1 AND id=ANY($2)",
+                        table.name
+                    );
+                    for chunk in removed.chunks(DELETE_ROWS) {
+                        let _temporary = reserve_delete(&self.budget, world_id, chunk)?;
+                        transaction.execute(&sql, &[&world_id, &chunk]).await?;
+                    }
+                }
+            }
+            Ok(())
+        })
     }
 
     async fn write_receipts(

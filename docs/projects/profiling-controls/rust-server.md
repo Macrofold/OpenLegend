@@ -94,6 +94,8 @@ Reuse the verified local artifact layout, CSV/JSON and static HTML of the [hiera
 
 Show unsupported/unselected/not exercised, censored, sampling loss and unqualified overhead beside the affected rows. Give the checked local report path, source/input identities, actual run count, spend and cleanup. A recommendation to check sight less often or retain fewer observations must say what the player or NPC could miss. Changing an authored rule or optimizing game code is a subsequent decision.
 
+The offline report looks for `ownership/safety/<comparisonId>.json` in the campaign directory. The checksum envelope contains `sha256` and a `proof` with schema 1, the comparison ID and frozen identity, and a `repetitions` array with an explicit repetition number on each replay record. Each replay identifies the control and candidate source, executable SHA, mode, probe IDs and sampling probability. It records the admitted-input and canonical-effect SHA values for both arms and whether admitted order, saved randomness, durable effects, private inputs and cold continuation matched. A replay qualifies only its matching timed binaries and selections.
+
 ## Maintained records
 
 - [Profiling behavior](../profiling-controls-feature-spec.md#hierarchical-server-campaigns) and [shared campaign contracts](../../performance/hierarchical-profiling.md).

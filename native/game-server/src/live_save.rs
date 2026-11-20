@@ -397,111 +397,120 @@ impl LiveSaves {
     }
 
     async fn flush_owned(self: &Arc<Self>, scheduled: bool) -> Result<bool, WorldError> {
-        let mut detached = self.detached.lock().await;
-        if self.fault_latched() {
-            return Err(StoreError::WriterUnavailable.into());
-        }
-        if detached.is_none() {
-            let oldest = self
-                .pending
-                .lock()
-                .map_err(|_| StoreError::WriterUnavailable)?
-                .queue
-                .front()
-                .map(|(at, _)| *at);
-            // A protected drain can settle the prefix that started this timer.
-            // Check the current deadline while holding the sole flush owner.
-            if oldest.is_none_or(|at| scheduled && at.elapsed() < SAVE_INTERVAL) {
-                return Ok(false);
-            }
-            let owner = self.clone();
-            let capture = self
-                .world
-                .capture_save_with(move |session| owner.prepare_prefix(session))
-                .await;
-            let (native, prepared) = match capture {
-                Ok(prefix) => prefix,
-                Err(error) if capture_can_wait(&error) => return Err(error),
-                Err(error) => return Err(self.latch_fault(error)),
-            };
-            if native.rows().through_cut != prepared.through {
-                return Err(self.latch_fault(StoreError::StaleCut.into()));
-            }
-            *detached = Some(Detached {
-                native,
-                prepared,
-                committed: None,
-            });
-        }
-        let flight = detached.as_mut().expect("detached save");
-        if flight.committed.is_none() {
-            let projection = OrdinaryProjection::new(&self.store, &flight.prepared.histories)
-                .with_projections(
-                    flight.prepared.eligibility.as_ref(),
-                    flight.prepared.recall.as_ref(),
-                    self.language.as_deref(),
-                )
-                .with_conversation_jobs(&flight.prepared.jobs)
-                .with_activity_memories(
-                    &flight.prepared.activity_memories,
-                    flight.prepared.recall_hard_bytes,
-                );
-            let result = self
-                .store
-                .commit_save(&flight.native, &flight.prepared.receipts, &projection)
-                .await;
-            let ack = match result {
-                Ok(ack) => Ok(ack),
-                Err(CommitError::Unknown(cause)) => {
-                    // Only read the exact durable outcome on the original
-                    // writer. A proven rollback still latches the write fault.
-                    match self
-                        .store
-                        .reconcile_prefix(flight.native.rows(), &flight.prepared.receipts)
-                        .await
-                    {
-                        Ok(Some(ack)) => Ok(ack),
-                        Ok(None) => Err(CommitError::RolledBack(cause)),
-                        Err(_) => Err(CommitError::Unknown(cause)),
-                    }
+        openlegend_simulation::profile_body!(
+            SAVE_FLUSH,
+            {
+                let mut detached = self.detached.lock().await;
+                if self.fault_latched() {
+                    return Err(StoreError::WriterUnavailable.into());
                 }
-                Err(error) => Err(error),
-            };
-            flight.committed =
-                Some(ack.map_err(|error| self.latch_fault(WorldError::Commit(error)))?);
-        }
-        let ack = flight
-            .committed
-            .as_ref()
-            .expect("confirmed ordinary save")
-            .clone();
-        let through = ack.through_cut;
-        match self.world.acknowledge(ack).await {
-            Ok(()) => (),
-            // The database already committed. A refused turn leaves the ACK
-            // in this detached owner, so the next attempt never resends SQL.
-            Err(error) if error.is_admission_refusal() => return Err(error),
-            Err(error) => return Err(self.latch_fault(error)),
-        }
-        let mut pending = self
-            .pending
-            .lock()
-            .map_err(|_| StoreError::WriterUnavailable)?;
-        while pending
-            .queue
-            .front()
-            .is_some_and(|(_, input)| input.through <= through)
-        {
-            pending.queue.pop_front();
-        }
-        drop(pending);
-        if flight.prepared.recall.is_some() || !flight.prepared.activity_memories.is_empty() {
-            self.lexical_wake.notify_one();
-        }
-        // Keep the successfully acknowledged prefix if its caller has another
-        // independent read. This writer no longer needs its reference.
-        *detached = None;
-        Ok(true)
+                if detached.is_none() {
+                    let oldest = self
+                        .pending
+                        .lock()
+                        .map_err(|_| StoreError::WriterUnavailable)?
+                        .queue
+                        .front()
+                        .map(|(at, _)| *at);
+                    // A protected drain can settle the prefix that started this timer.
+                    // Check the current deadline while holding the sole flush owner.
+                    if oldest.is_none_or(|at| scheduled && at.elapsed() < SAVE_INTERVAL) {
+                        return Ok(false);
+                    }
+                    let owner = self.clone();
+                    let capture = self
+                        .world
+                        .capture_save_with(move |session| owner.prepare_prefix(session))
+                        .await;
+                    let (native, prepared) = match capture {
+                        Ok(prefix) => prefix,
+                        Err(error) if capture_can_wait(&error) => return Err(error),
+                        Err(error) => return Err(self.latch_fault(error)),
+                    };
+                    if native.rows().through_cut != prepared.through {
+                        return Err(self.latch_fault(StoreError::StaleCut.into()));
+                    }
+                    *detached = Some(Detached {
+                        native,
+                        prepared,
+                        committed: None,
+                    });
+                }
+                let flight = detached.as_mut().expect("detached save");
+                if flight.committed.is_none() {
+                    let projection =
+                        OrdinaryProjection::new(&self.store, &flight.prepared.histories)
+                            .with_projections(
+                                flight.prepared.eligibility.as_ref(),
+                                flight.prepared.recall.as_ref(),
+                                self.language.as_deref(),
+                            )
+                            .with_conversation_jobs(&flight.prepared.jobs)
+                            .with_activity_memories(
+                                &flight.prepared.activity_memories,
+                                flight.prepared.recall_hard_bytes,
+                            );
+                    let result = self
+                        .store
+                        .commit_save(&flight.native, &flight.prepared.receipts, &projection)
+                        .await;
+                    let ack = match result {
+                        Ok(ack) => Ok(ack),
+                        Err(CommitError::Unknown(cause)) => {
+                            // Only read the exact durable outcome on the original
+                            // writer. A proven rollback still latches the write fault.
+                            match self
+                                .store
+                                .reconcile_prefix(flight.native.rows(), &flight.prepared.receipts)
+                                .await
+                            {
+                                Ok(Some(ack)) => Ok(ack),
+                                Ok(None) => Err(CommitError::RolledBack(cause)),
+                                Err(_) => Err(CommitError::Unknown(cause)),
+                            }
+                        }
+                        Err(error) => Err(error),
+                    };
+                    flight.committed =
+                        Some(ack.map_err(|error| self.latch_fault(WorldError::Commit(error)))?);
+                }
+                let ack = flight
+                    .committed
+                    .as_ref()
+                    .expect("confirmed ordinary save")
+                    .clone();
+                let through = ack.through_cut;
+                match openlegend_simulation::profile_result!(ACK, self.world.acknowledge(ack)).await
+                {
+                    Ok(()) => (),
+                    // The database already committed. A refused turn leaves the ACK
+                    // in this detached owner, so the next attempt never resends SQL.
+                    Err(error) if error.is_admission_refusal() => return Err(error),
+                    Err(error) => return Err(self.latch_fault(error)),
+                }
+                let mut pending = self
+                    .pending
+                    .lock()
+                    .map_err(|_| StoreError::WriterUnavailable)?;
+                while pending
+                    .queue
+                    .front()
+                    .is_some_and(|(_, input)| input.through <= through)
+                {
+                    pending.queue.pop_front();
+                }
+                drop(pending);
+                if flight.prepared.recall.is_some() || !flight.prepared.activity_memories.is_empty()
+                {
+                    self.lexical_wake.notify_one();
+                }
+                // Keep the successfully acknowledged prefix if its caller has another
+                // independent read. This writer no longer needs its reference.
+                *detached = None;
+                Ok(true)
+            },
+            WorldError::profile_outcome
+        )
     }
 
     /// Schedule one background write per ordinary save opportunity. The

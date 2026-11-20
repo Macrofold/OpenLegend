@@ -105,325 +105,334 @@ pub(super) async fn run(
     models: &Models,
     work: Work,
 ) -> Result<(), CallFailure> {
-    let mut stop = work.cancellation.clone();
-    let mut collected = tokio::select! {
-        biased;
-        _ = stopped(&mut stop) => return Err(CallFailure::Cancelled),
-        prepared = tokio::time::timeout_at(work.deadline,prepare::collect(game, &work)) => {
-            prepared.map_err(|_| CallFailure::Stale("decision-deadline"))?.map_err(|error| error.at("preparation"))?
-        }
-    };
-    ensure_running(&work)?;
-    let review = tokio::select! {
-        biased;
-        _ = stopped(&mut stop) => return Err(CallFailure::Cancelled),
-        review = tokio::time::timeout_at(work.deadline, collected.review(game, &work)) => {
-            review.map_err(|_| CallFailure::Stale("decision-deadline"))?.map_err(|error| error.at("recall-preparation"))?
-        }
-    };
-    if let Some(review) = review {
-        let answered = match recall_attention(game, dispatch, &work, models, &review).await {
-            Ok(answered) => Some(answered),
-            Err(error) => match error.cause().1 {
-                CallFailure::Cancelled
-                | CallFailure::Authority(_)
-                | CallFailure::Commit(_)
-                | CallFailure::World(_) => return Err(error),
-                CallFailure::Stale(reason)
-                    if !matches!(
-                        *reason,
-                        "native-response-prepared-witness" | "world-publication-busy"
-                    ) =>
-                {
-                    return Err(error);
+    openlegend_simulation::profile_body!(
+        NPC,
+        {
+            let mut stop = work.cancellation.clone();
+            let mut collected = tokio::select! {
+                biased;
+                _ = stopped(&mut stop) => return Err(CallFailure::Cancelled),
+                prepared = tokio::time::timeout_at(work.deadline,prepare::collect(game, &work)) => {
+                    prepared.map_err(|_| CallFailure::Stale("decision-deadline"))?.map_err(|error| error.at("preparation"))?
                 }
-                _ => None,
-            },
-        };
-        // Optional relevance failure cannot erase required context. Keep the
-        // original read and freshly bind only the evidence the decision uses.
-        // The next eligibility/authority checks still refuse stale or cancelled work.
-        ensure_running(&work)?;
-        collected.accept_review(review.ticket, |index| {
-            game.cognition.recall_includes(
-                answered
+            };
+            ensure_running(&work)?;
+            let review = tokio::select! {
+                biased;
+                _ = stopped(&mut stop) => return Err(CallFailure::Cancelled),
+                review = tokio::time::timeout_at(work.deadline, collected.review(game, &work)) => {
+                    review.map_err(|_| CallFailure::Stale("decision-deadline"))?.map_err(|error| error.at("recall-preparation"))?
+                }
+            };
+            if let Some(review) = review {
+                let answered = match recall_attention(game, dispatch, &work, models, &review).await
+                {
+                    Ok(answered) => Some(answered),
+                    Err(error) => match error.cause().1 {
+                        CallFailure::Cancelled
+                        | CallFailure::Authority(_)
+                        | CallFailure::Commit(_)
+                        | CallFailure::World(_) => return Err(error),
+                        CallFailure::Stale(reason)
+                            if !matches!(
+                                *reason,
+                                "native-response-prepared-witness" | "world-publication-busy"
+                            ) =>
+                        {
+                            return Err(error);
+                        }
+                        _ => None,
+                    },
+                };
+                // Optional relevance failure cannot erase required context. Keep the
+                // original read and freshly bind only the evidence the decision uses.
+                // The next eligibility/authority checks still refuse stale or cancelled work.
+                ensure_running(&work)?;
+                collected.accept_review(review.ticket, |index| {
+                    game.cognition.recall_includes(
+                        answered
+                            .as_ref()
+                            .and_then(|value| value.predicate(&format!("c{index}"))),
+                    )
+                })?;
+            }
+            let prepared = tokio::select! {
+                biased;
+                _ = stopped(&mut stop) => return Err(CallFailure::Cancelled),
+                prepared = tokio::time::timeout_at(work.deadline,prepare::finish(game, &work, collected)) => {
+                    prepared.map_err(|_| CallFailure::Stale("decision-deadline"))?.map_err(|error| error.at("preparation"))?
+                }
+            };
+            ensure_running(&work)?;
+            let available = models.fast.is_some();
+            let questions = game
+                .cognition
+                .route_questions(prepared.addressed, prepared.speech_trigger, available)
+                .map_err(|_| CallFailure::Invalid)?;
+            let budget = game.host.budget();
+            let source = prepared.ticket.clone();
+            let decision = &models.judgment;
+            let allowance = decision.amount_micro_usd.to_string();
+            let operation = ":attempt:0:route";
+            let id = format!("{}{operation}", work.job.job.id);
+            let input = provider::Judgment {
+                state: provider::JudgmentState::Prompt(prepared.route.as_str()),
+                questions,
+            };
+            let request = provider::judgment_request(
+                &decision.destination,
+                &decision.requested,
+                decision.route(&allowance, work.deadline),
+                input,
+                decision.output_tokens,
+                &id,
+                budget,
+            )?;
+            let policy = game.cognition.clone();
+            let parse_budget = budget.clone();
+            let addressed = prepared.addressed;
+            let speech_trigger = prepared.speech_trigger;
+            let observed = dispatch
+                .submit(
+                    side(
+                        &work,
+                        decision,
+                        models.ceiling_micro_usd,
+                        id,
+                        request,
+                        InferenceClass::Jev,
+                        "route",
+                        1,
+                        prepared.route.as_str(),
+                        prepared.through,
+                    )?,
+                    CallAuthority {
+                        source,
+                        speaker: work.permit.clone(),
+                    },
+                    work.cancellation.clone(),
+                    decoder(
+                        decision.macrofold.as_ref().map(|value| value.billing),
+                        parse_budget.clone(),
+                        move |parsed| {
+                            let questions = policy
+                                .route_questions(addressed, speech_trigger, available)
+                                .map_err(|_| CallFailure::Invalid)?;
+                            provider::decode_judgment(parsed, questions, &parse_budget)
+                                .map_err(|_| CallFailure::Invalid)
+                        },
+                    ),
+                )
+                .await
+                .map_err(|error| error.at("route"))?;
+            ensure_running(&work)?;
+            let selected_route = observed.choice("route").filter(|choice| {
+                observed
+                    .probability("route", choice)
+                    .is_some_and(|rating| rating >= 0.5)
+            });
+            let route = match selected_route {
+                None | Some("native") if available && prepared.addressed => "level2",
+                None | Some("native") => {
+                    return finish_native(game, saves, work, prepared.ticket, None).await;
+                }
+                Some(route) => route,
+            };
+            let choose = route == "level1";
+            let include_actions = choose
+                || !prepared.speech_trigger
+                || observed.choice("possibleAction") != Some("no")
+                || observed.probability("possibleAction", "no").unwrap_or(0.0) < 0.8;
+            let mut selected = Vec::new();
+            let mut escalation = 2;
+            if include_actions {
+                let accepted = action_attention(
+                    game,
+                    dispatch,
+                    &work,
+                    &prepared,
+                    decision,
+                    models.ceiling_micro_usd,
+                    choose,
+                )
+                .await;
+                match accepted {
+                    Ok(Some(rated)) => {
+                        let mut best = None;
+                        let threshold = if choose {
+                            game.cognition.choice_threshold
+                        } else {
+                            0.5
+                        };
+                        for offer in &prepared.context.offers {
+                            if let Some(value) = rated
+                                .predicate(&offer.id)
+                                .filter(|value| *value >= threshold)
+                            {
+                                selected.push(offer);
+                                if best.is_none_or(|(_, rating)| value > rating) {
+                                    best = Some((offer, value));
+                                }
+                            }
+                        }
+                        if choose && let Some((offer, _)) = best {
+                            let picked = (!offer.no_intervention).then_some(offer);
+                            return finish_native(game, saves, work, prepared.ticket, picked).await;
+                        }
+                    }
+                    Ok(None) => {}
+                    // A settled optional judgment can have unusable ratings. Keep
+                    // the permitted offers and let the generation dispatch recheck
+                    // the same decision. A level-one rating is the decision itself.
+                    Err(error) if !choose && matches!(error.cause().1, CallFailure::Invalid) => {
+                        ensure_running(&work)?;
+                        selected.extend(&prepared.context.offers);
+                    }
+                    Err(error) => return Err(error.at("action-attention")),
+                }
+                if choose {
+                    if !available {
+                        return finish_native(game, saves, work, prepared.ticket, None).await;
+                    }
+                    let mut best = None;
+                    for level in [2, 3, 4] {
+                        if let Some(value) = observed.probability("route", &format!("level{level}"))
+                            && best.is_none_or(|(_, rating)| value > rating)
+                        {
+                            best = Some((level, value));
+                        }
+                    }
+                    escalation = best.map_or(2, |(level, _)| level);
+                }
+            }
+            let level = match route {
+                "level1" => escalation,
+                "level2" => 2,
+                "level3" => 3,
+                "level4" => 4,
+                _ => return Err(CallFailure::Invalid.at("route")),
+            };
+            let model = if level == 2 {
+                models.fast.as_ref()
+            } else {
+                models.complex.as_ref()
+            }
+            .ok_or(CallFailure::Invalid.at("route"))?;
+            let (response, schema) = prepared
+                .context
+                .render_response(game, &selected, include_actions)
+                .map_err(|error| error.at("generation-preparation"))?;
+            let schema = Arc::new(schema);
+            let allowance = model.amount_micro_usd.to_string();
+            let id = format!("{}:attempt:0:generate", work.job.job.id);
+            let instructions_bytes = game
+                .cognition
+                .response_instructions
+                .len()
+                .saturating_add(game.cognition.query_instructions.len())
+                .saturating_add(1);
+            let _instructions_custody = budget
+                .reserve(instructions_bytes)
+                .map_err(|_| CallFailure::Invalid)?;
+            let instructions = format!(
+                "{} {}",
+                game.cognition.response_instructions, game.cognition.query_instructions
+            );
+            let preview = if model.macrofold.is_some() && prepared.addressed {
+                work.permit
                     .as_ref()
-                    .and_then(|value| value.predicate(&format!("c{index}"))),
-            )
-        })?;
-    }
-    let prepared = tokio::select! {
-        biased;
-        _ = stopped(&mut stop) => return Err(CallFailure::Cancelled),
-        prepared = tokio::time::timeout_at(work.deadline,prepare::finish(game, &work, collected)) => {
-            prepared.map_err(|_| CallFailure::Stale("decision-deadline"))?.map_err(|error| error.at("preparation"))?
-        }
-    };
-    ensure_running(&work)?;
-    let available = models.fast.is_some();
-    let questions = game
-        .cognition
-        .route_questions(prepared.addressed, prepared.speech_trigger, available)
-        .map_err(|_| CallFailure::Invalid)?;
-    let budget = game.host.budget();
-    let source = prepared.ticket.clone();
-    let decision = &models.judgment;
-    let allowance = decision.amount_micro_usd.to_string();
-    let operation = ":attempt:0:route";
-    let id = format!("{}{operation}", work.job.job.id);
-    let input = provider::Judgment {
-        state: provider::JudgmentState::Prompt(prepared.route.as_str()),
-        questions,
-    };
-    let request = provider::judgment_request(
-        &decision.destination,
-        &decision.requested,
-        decision.route(&allowance, work.deadline),
-        input,
-        decision.output_tokens,
-        &id,
-        budget,
-    )?;
-    let policy = game.cognition.clone();
-    let parse_budget = budget.clone();
-    let addressed = prepared.addressed;
-    let speech_trigger = prepared.speech_trigger;
-    let observed = dispatch
-        .submit(
-            side(
+                    .zip(prepared.context.preview_player.as_ref())
+                    .and_then(|((authority, scope), player)| {
+                        super::preview::PreviewAttempt::new(
+                            authority.clone(),
+                            scope.clone(),
+                            work.job.clone(),
+                            work.cancellation.clone(),
+                            schema.clone(),
+                            player,
+                            budget,
+                        )
+                    })
+            } else {
+                None
+            };
+            let generation = provider::Generation {
+                schema_name: "npc_response",
+                schema: &schema,
+                instructions: &instructions,
+                prompt: response.as_str(),
+                effort: model.effort,
+                max_output_tokens: model.output_tokens,
+                stream: preview.is_some(),
+            };
+            let request = provider::generation_request(
+                &model.destination,
+                &model.requested,
+                model.route(&allowance, work.deadline),
+                generation,
+                &id,
+                budget,
+            )?;
+            let macrofold = model.macrofold.as_ref().map(|value| value.billing);
+            let parse_budget = budget.clone();
+            let mut call = side(
                 &work,
-                decision,
+                model,
                 models.ceiling_micro_usd,
                 id,
                 request,
-                InferenceClass::Jev,
-                "route",
-                1,
-                prepared.route.as_str(),
+                InferenceClass::OpenAi,
+                "generate",
+                level,
+                response.as_str(),
                 prepared.through,
-            )?,
-            CallAuthority {
-                source,
-                speaker: work.permit.clone(),
-            },
-            work.cancellation.clone(),
-            decoder(
-                decision.macrofold.as_ref().map(|value| value.billing),
-                parse_budget.clone(),
-                move |parsed| {
-                    let questions = policy
-                        .route_questions(addressed, speech_trigger, available)
-                        .map_err(|_| CallFailure::Invalid)?;
-                    provider::decode_judgment(parsed, questions, &parse_budget)
-                        .map_err(|_| CallFailure::Invalid)
-                },
-            ),
-        )
-        .await
-        .map_err(|error| error.at("route"))?;
-    ensure_running(&work)?;
-    let selected_route = observed.choice("route").filter(|choice| {
-        observed
-            .probability("route", choice)
-            .is_some_and(|rating| rating >= 0.5)
-    });
-    let route = match selected_route {
-        None | Some("native") if available && prepared.addressed => "level2",
-        None | Some("native") => {
-            return finish_native(game, saves, work, prepared.ticket, None).await;
-        }
-        Some(route) => route,
-    };
-    let choose = route == "level1";
-    let include_actions = choose
-        || !prepared.speech_trigger
-        || observed.choice("possibleAction") != Some("no")
-        || observed.probability("possibleAction", "no").unwrap_or(0.0) < 0.8;
-    let mut selected = Vec::new();
-    let mut escalation = 2;
-    if include_actions {
-        let accepted = action_attention(
-            game,
-            dispatch,
-            &work,
-            &prepared,
-            decision,
-            models.ceiling_micro_usd,
-            choose,
-        )
-        .await;
-        match accepted {
-            Ok(Some(rated)) => {
-                let mut best = None;
-                let threshold = if choose {
-                    game.cognition.choice_threshold
-                } else {
-                    0.5
-                };
-                for offer in &prepared.context.offers {
-                    if let Some(value) = rated
-                        .predicate(&offer.id)
-                        .filter(|value| *value >= threshold)
-                    {
-                        selected.push(offer);
-                        if best.is_none_or(|(_, rating)| value > rating) {
-                            best = Some((offer, value));
-                        }
-                    }
-                }
-                if choose && let Some((offer, _)) = best {
-                    let picked = (!offer.no_intervention).then_some(offer);
-                    return finish_native(game, saves, work, prepared.ticket, picked).await;
-                }
-            }
-            Ok(None) => {}
-            // A settled optional judgment can have unusable ratings. Keep
-            // the permitted offers and let the generation dispatch recheck
-            // the same decision. A level-one rating is the decision itself.
-            Err(error) if !choose && matches!(error.cause().1, CallFailure::Invalid) => {
-                ensure_running(&work)?;
-                selected.extend(&prepared.context.offers);
-            }
-            Err(error) => return Err(error.at("action-attention")),
-        }
-        if choose {
-            if !available {
-                return finish_native(game, saves, work, prepared.ticket, None).await;
-            }
-            let mut best = None;
-            for level in [2, 3, 4] {
-                if let Some(value) = observed.probability("route", &format!("level{level}"))
-                    && best.is_none_or(|(_, rating)| value > rating)
-                {
-                    best = Some((level, value));
-                }
-            }
-            escalation = best.map_or(2, |(level, _)| level);
-        }
-    }
-    let level = match route {
-        "level1" => escalation,
-        "level2" => 2,
-        "level3" => 3,
-        "level4" => 4,
-        _ => return Err(CallFailure::Invalid.at("route")),
-    };
-    let model = if level == 2 {
-        models.fast.as_ref()
-    } else {
-        models.complex.as_ref()
-    }
-    .ok_or(CallFailure::Invalid.at("route"))?;
-    let (response, schema) = prepared
-        .context
-        .render_response(game, &selected, include_actions)
-        .map_err(|error| error.at("generation-preparation"))?;
-    let schema = Arc::new(schema);
-    let allowance = model.amount_micro_usd.to_string();
-    let id = format!("{}:attempt:0:generate", work.job.job.id);
-    let instructions_bytes = game
-        .cognition
-        .response_instructions
-        .len()
-        .saturating_add(game.cognition.query_instructions.len())
-        .saturating_add(1);
-    let _instructions_custody = budget
-        .reserve(instructions_bytes)
-        .map_err(|_| CallFailure::Invalid)?;
-    let instructions = format!(
-        "{} {}",
-        game.cognition.response_instructions, game.cognition.query_instructions
-    );
-    let preview = if model.macrofold.is_some() && prepared.addressed {
-        work.permit
-            .as_ref()
-            .zip(prepared.context.preview_player.as_ref())
-            .and_then(|((authority, scope), player)| {
-                super::preview::PreviewAttempt::new(
-                    authority.clone(),
-                    scope.clone(),
-                    work.job.clone(),
+            )?;
+            call.preview = preview;
+            let parsed = dispatch
+                .submit(
+                    call,
+                    CallAuthority {
+                        source: prepared.ticket.clone(),
+                        speaker: work.permit.clone(),
+                    },
                     work.cancellation.clone(),
-                    schema.clone(),
-                    player,
-                    budget,
-                )
-            })
-    } else {
-        None
-    };
-    let generation = provider::Generation {
-        schema_name: "npc_response",
-        schema: &schema,
-        instructions: &instructions,
-        prompt: response.as_str(),
-        effort: model.effort,
-        max_output_tokens: model.output_tokens,
-        stream: preview.is_some(),
-    };
-    let request = provider::generation_request(
-        &model.destination,
-        &model.requested,
-        model.route(&allowance, work.deadline),
-        generation,
-        &id,
-        budget,
-    )?;
-    let macrofold = model.macrofold.as_ref().map(|value| value.billing);
-    let parse_budget = budget.clone();
-    let mut call = side(
-        &work,
-        model,
-        models.ceiling_micro_usd,
-        id,
-        request,
-        InferenceClass::OpenAi,
-        "generate",
-        level,
-        response.as_str(),
-        prepared.through,
-    )?;
-    call.preview = preview;
-    let parsed = dispatch
-        .submit(
-            call,
-            CallAuthority {
-                source: prepared.ticket.clone(),
-                speaker: work.permit.clone(),
-            },
-            work.cancellation.clone(),
-            decoder(macrofold, parse_budget.clone(), move |value| {
-                if macrofold.is_some() {
-                    match provider::macrofold_text(value).map_err(|_| CallFailure::Invalid)? {
-                        provider::TextResult::Refused => Err(CallFailure::Invalid),
-                        provider::TextResult::Complete(text) => {
-                            provider::generation_output(text, &schema, &parse_budget)
-                                .map_err(|_| CallFailure::Invalid)
+                    decoder(macrofold, parse_budget.clone(), move |value| {
+                        if macrofold.is_some() {
+                            match provider::macrofold_text(value)
+                                .map_err(|_| CallFailure::Invalid)?
+                            {
+                                provider::TextResult::Refused => Err(CallFailure::Invalid),
+                                provider::TextResult::Complete(text) => {
+                                    provider::generation_output(text, &schema, &parse_budget)
+                                        .map_err(|_| CallFailure::Invalid)
+                                }
+                            }
+                        } else {
+                            direct_output(value, &schema, &parse_budget)
                         }
-                    }
-                } else {
-                    direct_output(value, &schema, &parse_budget)
-                }
-            }),
-        )
-        .await
-        .map_err(|error| error.at("generate"))?;
-    ensure_running(&work)?;
-    let payload = effects(parsed, &prepared.frame, budget)
-        .map_err(|error| error.at("response-validation"))?;
-    super::apply::apply(
-        saves,
-        game,
-        &work.job,
-        prepared.ticket,
-        payload,
-        work.permit,
-        work.cancellation,
-        work.deadline,
-        dispatch.previews().get(&work.job.job.id),
+                    }),
+                )
+                .await
+                .map_err(|error| error.at("generate"))?;
+            ensure_running(&work)?;
+            let payload = effects(parsed, &prepared.frame, budget)
+                .map_err(|error| error.at("response-validation"))?;
+            super::apply::apply(
+                saves,
+                game,
+                &work.job,
+                prepared.ticket,
+                payload,
+                work.permit,
+                work.cancellation,
+                work.deadline,
+                dispatch.previews().get(&work.job.job.id),
+            )
+            .await
+            .map_err(|error| error.at("response-application"))
+        },
+        CallFailure::profile_outcome
     )
-    .await
-    .map_err(|error| error.at("response-application"))
 }
 
 async fn stopped(watch: &mut watch::Receiver<bool>) {

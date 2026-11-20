@@ -24,6 +24,7 @@ pub(crate) fn encode_candidate_changes(
     host: Option<HostSave<'_>>,
     budget: &ByteBudget,
 ) -> Result<crate::records::EncodedRows, RecordEncodingError> {
+    let _profile = crate::profile_scope!(SAVE_ENCODE);
     // Encoding is also useful inside a private rollback checkpoint. It grants
     // no publication: Ready must separately require closed operations and fund
     // the actual ledger/save/consumer products before accepting this delta.
@@ -84,7 +85,9 @@ pub(crate) fn encode_candidate_changes(
         host.milestones
             .encode(host.settings, state, &mut output, budget)?;
     }
-    output.finish()
+    let rows = output.finish()?;
+    crate::profile_count!(SAVED_ROWS, rows.changes().rows as u64);
+    Ok(rows)
 }
 fn error() -> RecordEncodingError {
     RecordEncodingError("Native parent save has unavailable scalar fields or capacity.")

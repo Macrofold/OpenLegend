@@ -227,6 +227,8 @@ impl PlayerCommands {
             .game
             .world
             .execute_and_publish(
+                #[cfg(feature = "profile-campaign")]
+                openlegend_simulation::profile::sites::TURN_COMMAND,
                 move |world| {
                     authority.current(&scope, Capability::Play, true, |_, _| ())?;
                     if world.accepted_progress()?.through_cut != cut || !world.clock()?.paused {
@@ -276,180 +278,198 @@ impl PlayerCommands {
         recovery: bool,
         body: ByteReservation,
     ) -> Result<Bytes, WorldError> {
-        let permits = &self.authority;
-        permits.current(&scope, Capability::Play, !recovery, |_, _| ())?;
-        input.check()?;
-        let world_id = &scope.scope.world_id;
-        if !recovery && self.identity.lock().await.due() {
-            let _protected = self.saves.enter_protected().await?;
-            let mut identity = self.identity.lock().await;
-            identity
-                .refresh(&self.game.store, world_id)
-                .await
-                .map_err(WorldError::Commit)?;
-        }
-        // Recovering an existing result cannot admit a mutation. Do not keep
-        // a protected save waiting for this independent receipt read.
-        let _intake = if recovery {
-            None
-        } else {
-            Some(self.saves.enter_ordinary().await)
-        };
-        let epoch = {
-            let identity = self.identity.lock().await;
-            (
-                identity.epoch.generation,
-                identity.epoch.token == input.command_epoch,
-            )
-        };
-        let budget = self.game.host.budget();
-        let facts = Arc::new(input.prepare(&scope.scope, epoch.0, body, budget)?);
-        let watch = self.saves.read_receipt(&facts.id)?;
-        let durable = if watch.accepted()?.is_none() {
-            self.game.store.command_receipt(world_id, &facts.id).await?
-        } else {
-            None
-        };
-        let mut prior = watch
-            .accepted()?
-            .map(ResultOwner::Accepted)
-            .or_else(|| durable.map(ResultOwner::Durable));
-        if recovery || prior.is_some() || !epoch.1 {
-            let fresh_epoch = if recovery && prior.is_none() {
-                self.identity.lock().await.epoch.token == facts.request.command_epoch
-            } else {
-                epoch.1
-            };
-            return permits.current(&scope, Capability::Play, !recovery, |scope, _| {
-                report(prior.as_ref(), &facts, scope, fresh_epoch, recovery, budget)
-            })?;
-        }
-        self.saves.check_admission(tokio::time::Instant::now())?;
-        let reference = facts.request.command.known_place.as_ref();
-        let remembered = reference.is_some();
-        let selected_place = match reference {
-            Some(reference) => {
-                match SelectedKnownPlace::read(&self.game, permits, &scope, reference).await {
-                    Err(WorldError::Storage(StoreError::StaleCut)) => None,
-                    value => value?,
+        openlegend_simulation::profile_body!(
+            COMMAND,
+            {
+                let permits = &self.authority;
+                permits.current(&scope, Capability::Play, !recovery, |_, _| ())?;
+                input.check()?;
+                let world_id = &scope.scope.world_id;
+                if !recovery && self.identity.lock().await.due() {
+                    let _protected = self.saves.enter_protected().await?;
+                    let mut identity = self.identity.lock().await;
+                    identity
+                        .refresh(&self.game.store, world_id)
+                        .await
+                        .map_err(WorldError::Commit)?;
                 }
-            }
-            None => None,
-        };
-        let prepare = facts.clone();
-        let begin_facts = facts.clone();
-        let begin_saves = self.saves.clone();
-        let begin_scope = scope.clone();
-        let begin_authority = permits.clone();
-        let accept = self.saves.clone();
-        let stage = self.saves.clone();
-        let game = self.game.clone();
-        let finish_scope = scope.clone();
-        let finish_authority = permits.clone();
-        let place_world = self.game.world.clone();
-        let finish_world = place_world.clone();
-        self.game.world.request_advance_publication();
-        prior = self
-            .game
-            .world
-            .execute_and_publish(
-                move |world| {
-                    begin_authority.current(&begin_scope, Capability::Play, true, |_, _| ())?;
-                    if let Some(value) = begin_saves.watched_receipt(&begin_facts.id)? {
-                        return Ok(ApplicationStart::Existing(ResultOwner::Accepted(value)));
-                    }
-                    let clock = world.clock()?;
-                    if clock.paused
-                        && !(matches!(begin_facts.request.command.kind, MoveOrCancel::Cancel)
-                            && clock.manually_paused)
-                    {
-                        return Ok(ApplicationStart::Existing(ResultOwner::Refused(
-                            "paused",
-                            "Resume the world to act.",
-                        )));
-                    }
-                    world.player_input_direct(
-                        &begin_scope.scope.account_id,
-                        &begin_scope.scope.actor_id,
-                    )?;
-                    let position = if remembered {
-                        let stale = || {
-                            ApplicationStart::Existing(ResultOwner::Refused(
-                                "stale-place",
-                                KNOWN_PLACE_UNAVAILABLE,
-                            ))
-                        };
-                        let Some(place) = selected_place.as_ref() else {
-                            return Ok(stale());
-                        };
-                        let Some(position) = place_world
-                            .with_current_player_history(world, &place.evidence, |world| {
-                                place.destination(world, &begin_scope.scope)
-                            })?
-                            .flatten()
-                        else {
-                            return Ok(stale());
-                        };
-                        Some(position)
+                // Recovering an existing result cannot admit a mutation. Do not keep
+                // a protected save waiting for this independent receipt read.
+                let _intake = if recovery {
+                    None
+                } else {
+                    Some(self.saves.enter_ordinary().await)
+                };
+                let epoch = {
+                    let identity = self.identity.lock().await;
+                    (
+                        identity.epoch.generation,
+                        identity.epoch.token == input.command_epoch,
+                    )
+                };
+                let budget = self.game.host.budget();
+                let facts = Arc::new(input.prepare(&scope.scope, epoch.0, body, budget)?);
+                let watch = self.saves.read_receipt(&facts.id)?;
+                let durable = if watch.accepted()?.is_none() {
+                    self.game.store.command_receipt(world_id, &facts.id).await?
+                } else {
+                    None
+                };
+                let mut prior = watch
+                    .accepted()?
+                    .map(ResultOwner::Accepted)
+                    .or_else(|| durable.map(ResultOwner::Durable));
+                if recovery || prior.is_some() || !epoch.1 {
+                    let fresh_epoch = if recovery && prior.is_none() {
+                        self.identity.lock().await.epoch.token == facts.request.command_epoch
                     } else {
-                        begin_facts.request.command.position.as_ref()
+                        epoch.1
                     };
-                    let (command, signature) =
-                        begin_facts.command(&begin_scope.scope.actor_id, position)?;
-                    Ok(ApplicationStart::Candidate(world.begin_command(
-                        command.as_bytes(),
-                        signature,
-                        true,
-                    )?))
-                },
-                move |question| {
-                    let game = game.clone();
-                    async move { game.answer_operation(question).await }
-                },
-                move |output, _| {
-                    let RuntimeDirectOutput::Prepared(product) = output else {
-                        unreachable!("ordinary command cannot preview")
-                    };
-                    let value = json_record(product.outcome())
-                        .map_err(RuntimeError::application_refused)?;
-                    let receipt = GameplayReceipt {
-                        id: prepare.id.clone(),
-                        epoch: prepare.epoch,
-                        fingerprint: prepare.fingerprint.clone(),
-                        recovery_fingerprint: Some(prepare.recovery_fingerprint.clone()),
-                        expires_at: now_ms().saturating_add(RETRY_MS) as u64,
-                        result: RawValue::from_string(value)
-                            .map_err(RuntimeError::application_refused)?,
-                    };
-                    Ok(ResultOwner::Accepted(stage.stage(&product, Some(receipt))?))
-                },
-                move |fence, key, _| {
-                    finish_authority.current(
-                        &finish_scope,
-                        Capability::Play,
-                        true,
-                        |scope, _| {
-                            if remembered {
-                                return finish_world
-                                    .with_unedited_history(&scope.actor_id, || {
-                                        Ok(fence.settle(key, true)?)
-                                    })?
-                                    .ok_or(WorldError::ProjectionChanged);
-                            }
-                            Ok(fence.settle(key, true)?)
-                        },
-                    )?
-                },
-                move |result| {
-                    if let ResultOwner::Accepted(value) = result {
-                        accept.accept(value);
+                    return permits.current(&scope, Capability::Play, !recovery, |scope, _| {
+                        report(prior.as_ref(), &facts, scope, fresh_epoch, recovery, budget)
+                    })?;
+                }
+                self.saves.check_admission(tokio::time::Instant::now())?;
+                let reference = facts.request.command.known_place.as_ref();
+                let remembered = reference.is_some();
+                let selected_place = match reference {
+                    Some(reference) => {
+                        match SelectedKnownPlace::read(&self.game, permits, &scope, reference).await
+                        {
+                            Err(WorldError::Storage(StoreError::StaleCut)) => None,
+                            value => value?,
+                        }
                     }
-                },
-            )
-            .await?;
-        permits.current(&scope, Capability::Play, true, |scope, _| {
-            report(prior.as_ref(), &facts, scope, epoch.1, false, budget)
-        })?
+                    None => None,
+                };
+                let prepare = facts.clone();
+                let begin_facts = facts.clone();
+                let begin_saves = self.saves.clone();
+                let begin_scope = scope.clone();
+                let begin_authority = permits.clone();
+                let accept = self.saves.clone();
+                let stage = self.saves.clone();
+                let game = self.game.clone();
+                let finish_scope = scope.clone();
+                let finish_authority = permits.clone();
+                let place_world = self.game.world.clone();
+                let finish_world = place_world.clone();
+                self.game.world.request_advance_publication();
+                prior = self
+                    .game
+                    .world
+                    .execute_and_publish(
+                        #[cfg(feature = "profile-campaign")]
+                        openlegend_simulation::profile::sites::TURN_COMMAND,
+                        move |world| {
+                            begin_authority.current(
+                                &begin_scope,
+                                Capability::Play,
+                                true,
+                                |_, _| (),
+                            )?;
+                            if let Some(value) = begin_saves.watched_receipt(&begin_facts.id)? {
+                                return Ok(ApplicationStart::Existing(ResultOwner::Accepted(
+                                    value,
+                                )));
+                            }
+                            let clock = world.clock()?;
+                            if clock.paused
+                                && !(matches!(
+                                    begin_facts.request.command.kind,
+                                    MoveOrCancel::Cancel
+                                ) && clock.manually_paused)
+                            {
+                                return Ok(ApplicationStart::Existing(ResultOwner::Refused(
+                                    "paused",
+                                    "Resume the world to act.",
+                                )));
+                            }
+                            world.player_input_direct(
+                                &begin_scope.scope.account_id,
+                                &begin_scope.scope.actor_id,
+                            )?;
+                            let position = if remembered {
+                                let stale = || {
+                                    ApplicationStart::Existing(ResultOwner::Refused(
+                                        "stale-place",
+                                        KNOWN_PLACE_UNAVAILABLE,
+                                    ))
+                                };
+                                let Some(place) = selected_place.as_ref() else {
+                                    return Ok(stale());
+                                };
+                                let Some(position) = place_world
+                                    .with_current_player_history(world, &place.evidence, |world| {
+                                        place.destination(world, &begin_scope.scope)
+                                    })?
+                                    .flatten()
+                                else {
+                                    return Ok(stale());
+                                };
+                                Some(position)
+                            } else {
+                                begin_facts.request.command.position.as_ref()
+                            };
+                            let (command, signature) =
+                                begin_facts.command(&begin_scope.scope.actor_id, position)?;
+                            Ok(ApplicationStart::Candidate(world.begin_command(
+                                command.as_bytes(),
+                                signature,
+                                true,
+                            )?))
+                        },
+                        move |question| {
+                            let game = game.clone();
+                            async move { game.answer_operation(question).await }
+                        },
+                        move |output, _| {
+                            let RuntimeDirectOutput::Prepared(product) = output else {
+                                unreachable!("ordinary command cannot preview")
+                            };
+                            let value = json_record(product.outcome())
+                                .map_err(RuntimeError::application_refused)?;
+                            let receipt = GameplayReceipt {
+                                id: prepare.id.clone(),
+                                epoch: prepare.epoch,
+                                fingerprint: prepare.fingerprint.clone(),
+                                recovery_fingerprint: Some(prepare.recovery_fingerprint.clone()),
+                                expires_at: now_ms().saturating_add(RETRY_MS) as u64,
+                                result: RawValue::from_string(value)
+                                    .map_err(RuntimeError::application_refused)?,
+                            };
+                            Ok(ResultOwner::Accepted(stage.stage(&product, Some(receipt))?))
+                        },
+                        move |fence, key, _| {
+                            finish_authority.current(
+                                &finish_scope,
+                                Capability::Play,
+                                true,
+                                |scope, _| {
+                                    if remembered {
+                                        return finish_world
+                                            .with_unedited_history(&scope.actor_id, || {
+                                                Ok(fence.settle(key, true)?)
+                                            })?
+                                            .ok_or(WorldError::ProjectionChanged);
+                                    }
+                                    Ok(fence.settle(key, true)?)
+                                },
+                            )?
+                        },
+                        move |result| {
+                            if let ResultOwner::Accepted(value) = result {
+                                accept.accept(value);
+                            }
+                        },
+                    )
+                    .await?;
+                permits.current(&scope, Capability::Play, true, |scope, _| {
+                    report(prior.as_ref(), &facts, scope, epoch.1, false, budget)
+                })?
+            },
+            WorldError::profile_outcome
+        )
     }
 }
 

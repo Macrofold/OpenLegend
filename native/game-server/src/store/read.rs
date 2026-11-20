@@ -107,7 +107,9 @@ impl Store {
         &self,
         work: impl for<'a> FnOnce(&'a Transaction<'a>) -> ReadWork<'a, R>,
     ) -> StoreResult<R> {
-        Self::read_snapshot(&self.reader, work).await
+        openlegend_simulation::profile_body!(READ_OP, {
+            Self::read_snapshot(&self.reader, work).await
+        })
     }
 
     /// Read the exact cut required by a caller holding the world turn or
@@ -117,24 +119,39 @@ impl Store {
         &self,
         work: impl for<'a> FnOnce(&'a Transaction<'a>) -> ReadWork<'a, R>,
     ) -> StoreResult<R> {
-        Self::read_snapshot(&self.simulation_reader, work).await
+        openlegend_simulation::profile_body!(READ_SIM, {
+            Self::read_snapshot(&self.simulation_reader, work).await
+        })
     }
 
     async fn read_snapshot<R>(
         lane: &Mutex<Session>,
         work: impl for<'a> FnOnce(&'a Transaction<'a>) -> ReadWork<'a, R>,
     ) -> StoreResult<R> {
-        let mut reader = lane.lock().await;
-        let transaction = reader
-            .client
-            .build_transaction()
-            .read_only(true)
-            .isolation_level(IsolationLevel::RepeatableRead)
-            .start()
-            .await?;
-        let result = work(&transaction).await?;
-        transaction.commit().await?;
-        Ok(result)
+        let mut reader = openlegend_simulation::profile_measure!(READER_WAIT, lane.lock()).await;
+        #[cfg(feature = "profile-campaign")]
+        let mut hold = openlegend_simulation::profile::begin(
+            openlegend_simulation::profile::sites::READER_HOLD,
+        );
+        let result = openlegend_simulation::profile_body!(TRANSACTION, {
+            let transaction = reader
+                .client
+                .build_transaction()
+                .read_only(true)
+                .isolation_level(IsolationLevel::RepeatableRead)
+                .start()
+                .await?;
+            let result = work(&transaction).await?;
+            transaction.commit().await?;
+            Ok(result)
+        });
+        #[cfg(feature = "profile-campaign")]
+        hold.outcome(if result.is_ok() {
+            openlegend_simulation::profile::Outcome::Completed
+        } else {
+            openlegend_simulation::profile::Outcome::Failed
+        });
+        result
     }
 
     /// Read one durable header under the caller's protected save barrier.
@@ -473,11 +490,12 @@ impl Store {
                 .budget
                 .reserve(installed_row_bound(table, &row)?)
                 .map_err(|_| StoreError::Capacity)?;
-            let record = installed_row(table, row)?;
-            release_workspace(
-                &mut decode,
-                record.retained_bytes().ok_or(StoreError::Capacity)?,
-            )?;
+            let record = {
+                let _profile = openlegend_simulation::profile_scope!(DECODE);
+                installed_row(table, row)?
+            };
+            let retained = record.retained_bytes().ok_or(StoreError::Capacity)?;
+            release_workspace(&mut decode, retained)?;
             custody.merge(decode).map_err(|_| StoreError::Capacity)?;
             records.push(record);
         }
@@ -504,7 +522,11 @@ pub(super) async fn admitted_query_bounded(
     let statement = format!(
         "SELECT count(*),COALESCE(sum(octet_length(row_to_json(selected)::text)),0)::bigint FROM ({selection}) selected"
     );
-    let bound = transaction.query_one(&statement, params).await?;
+    let bound = openlegend_simulation::profile_result!(
+        PREFLIGHT,
+        transaction.query_one(&statement, params)
+    )
+    .await?;
     let count = usize::try_from(ordinal(bound.try_get(0)?)?).map_err(|_| StoreError::Capacity)?;
     if count == 0 {
         let empty = budget.reserve(0).map_err(|_| StoreError::Capacity)?;
@@ -526,7 +548,9 @@ pub(super) async fn admitted_query_bounded(
         .and_then(|total| total.checked_add(count.checked_mul(1024)?))
         .ok_or(StoreError::Capacity)?;
     let allowance = budget.reserve(bytes).map_err(|_| StoreError::Capacity)?;
-    let rows = transaction.query(selection, params).await?;
+    let rows =
+        openlegend_simulation::profile_result!(BODY, transaction.query(selection, params)).await?;
+    openlegend_simulation::profile_count!(BODY_ROWS, rows.len() as u64);
     if rows.len() != count {
         return Err(StoreError::StaleCut);
     }

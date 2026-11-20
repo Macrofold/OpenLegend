@@ -440,6 +440,7 @@ pub(crate) fn pack_temporal_save(
     schema: &RecordSchema,
     budget: &ByteBudget,
 ) -> Result<PackedTemporalSave, RecordEncodingError> {
+    let _profile = crate::profile_scope!(PACK);
     let actors = cut.temporal.actors.values();
     let count = pending_count(actors.clone())?;
     let _saved_backing = budget

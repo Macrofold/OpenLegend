@@ -101,22 +101,31 @@ impl HostedWorld {
             .map_err(|_| HostError::Busy)?;
         let world = self.clone();
         let (mut send, receive) = oneshot::channel();
-        self.operations.spawn(async move {
+        #[cfg(feature = "profile-campaign")]
+        let parent = openlegend_simulation::profile::current();
+        let operation = async move {
             let result = async {
-                let _turn = tokio::select! {
+                let guard = tokio::select! {
                     biased;
                     _ = send.closed() => return Err(HostError::Cancelled.into()),
-                    turn = tokio::time::timeout(TURN_WAIT, world.turn.lock()) => turn.map_err(|_| HostError::Busy)?,
+                    turn = super::wait_for_turn(world.turn.lock()) => turn?,
                 };
+                let _turn = super::held_turn(
+                    guard,
+                    #[cfg(feature = "profile-campaign")]
+                    openlegend_simulation::profile::sites::TURN_NPC,
+                );
                 drop(queued);
                 if world.closing.load(Ordering::Acquire) {
                     return Err(HostError::Closed.into());
                 }
-                let (key, selected) = world.call(move |session| {
-                    let mut read = read(session)?;
-                    let key = begin(session, &mut read, &request)?;
-                    Ok((key, read))
-                }).await?;
+                let (key, selected) = world
+                    .call(move |session| {
+                        let mut read = read(session)?;
+                        let key = begin(session, &mut read, &request)?;
+                        Ok((key, read))
+                    })
+                    .await?;
                 let result = async {
                     let mut read = selected;
                     let mut answer: Option<(RuntimeProvider, RuntimeProviderInput)> = None;
@@ -124,14 +133,20 @@ impl HostedWorld {
                         if send.is_closed() {
                             return Err(HostError::Cancelled.into());
                         }
-                        let (next, step) = world.call(move |session| {
-                            let (ticket, input) = match answer {
-                                Some((ticket, input)) => (Some(ticket), Some(input)),
-                                None => (None, None),
-                            };
-                            let result = session.step_npc_preparation(&mut read, key, ticket.as_ref().zip(input))?;
-                            Ok((read, result))
-                        }).await?;
+                        let (next, step) = world
+                            .call(move |session| {
+                                let (ticket, input) = match answer {
+                                    Some((ticket, input)) => (Some(ticket), Some(input)),
+                                    None => (None, None),
+                                };
+                                let result = session.step_npc_preparation(
+                                    &mut read,
+                                    key,
+                                    ticket.as_ref().zip(input),
+                                )?;
+                                Ok((read, result))
+                            })
+                            .await?;
                         read = next;
                         match step {
                             RuntimeNpcPreparationStep::Complete => return Ok(read),
@@ -145,14 +160,19 @@ impl HostedWorld {
                             }
                         }
                     }
-                }.await;
+                }
+                .await;
                 if result.is_err() {
                     world.cleanup_candidate(key).await?;
                 }
                 result
-            }.await;
+            }
+            .await;
             let _ = send.send(result);
-        });
+        };
+        #[cfg(feature = "profile-campaign")]
+        let operation = openlegend_simulation::profile::carry(parent, operation);
+        self.operations.spawn(operation);
         receive.await.map_err(|_| HostError::WorkerFailed)?
     }
 

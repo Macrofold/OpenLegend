@@ -6,6 +6,9 @@ rust-version.workspace = true
 license.workspace = true
 publish.workspace = true
 
+[features]
+profile-campaign = ["openlegend-world-host/profile-campaign"]
+
 [dependencies]
 openlegend-simulation = { path = "../simulation" }
 openlegend-world-host = { path = "../world-host" }

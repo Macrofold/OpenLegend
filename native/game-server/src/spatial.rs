@@ -204,11 +204,14 @@ impl SpatialProvider {
             return Err(SpatialError::InvalidQuery);
         }
         let (allocation, _scratch) = self.reserve_answers(q, budget)?;
-        let sight = q
-            .sight
-            .iter()
-            .map(|r| self.clear_sight(r.from, r.to))
-            .collect();
+        let sight = {
+            let _profile = openlegend_simulation::profile_scope!(SIGHT);
+            openlegend_simulation::profile_count!(SIGHT_QUERIES, q.sight.len() as u64);
+            q.sight
+                .iter()
+                .map(|r| self.clear_sight(r.from, r.to))
+                .collect()
+        };
         let walking = q
             .walking
             .iter()

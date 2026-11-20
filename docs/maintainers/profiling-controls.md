@@ -55,7 +55,9 @@ Execution prerequisites are the priced finite matrix, source/workspace identity,
 
 ## Stand-alone Rust server
 
-The [Rust design](../projects/profiling-controls/rust-server.md) defines the work below. All three tasks await implementation.
+The [Rust design](../projects/profiling-controls/rust-server.md) defines the work below. The recorder and campaign tools are implemented. Managed timing and publication of qualified results remain open.
+
+The disposable exact replay in `native-runtime-foundations/pc12-profile-exact-replay-20261120` under the private verification directory exercised the current server owners on macOS. Recording on and off preserved ordered refusal and retry, accepted motion and elapsed time, durable data, saved randomness and cold continuation. A held host question survived stop and rearm without entering the next capture. This supplies focused correctness evidence. It does not supply the exact Linux build or private-NPC replay evidence required for qualifying timed pairs.
 
 | Work                                            | Depends on                                     | Completion evidence                                                                                                                                                                                                             |
 | ----------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

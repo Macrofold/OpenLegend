@@ -147,6 +147,8 @@ async fn preview(
         .game
         .world
         .execute_and_publish(
+            #[cfg(feature = "profile-campaign")]
+            openlegend_simulation::profile::sites::TURN_COMMAND,
             move |world| {
                 authority.current_view(&scope, |_, _| ())?;
                 let through = world.accepted_progress()?.through_cut;

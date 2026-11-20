@@ -75,6 +75,16 @@ impl Cancellation {
         self.requested.store(true, Ordering::Release);
     }
 
+    #[cfg(feature = "profile-campaign")]
+    pub(crate) fn profile_key(&self) -> usize {
+        Arc::as_ptr(&self.requested) as usize
+    }
+
+    #[cfg(feature = "profile-campaign")]
+    pub(crate) fn profile_identity(&self) -> std::sync::Weak<AtomicBool> {
+        Arc::downgrade(&self.requested)
+    }
+
     pub fn requested(&self) -> bool {
         self.requested.load(Ordering::Acquire) || self.host_closing.load(Ordering::Acquire)
     }
@@ -121,10 +131,27 @@ impl WorkAdmission {
             cancellation,
             permit: _permit,
         } = self;
-        let result = if cancellation.requested() {
+        let cancelled = cancellation.requested();
+        #[cfg(feature = "profile-campaign")]
+        let _parent = crate::dispatch::capture::start(&cancellation, cancelled);
+        let result = if cancelled {
             Ok(Err(HostError::Cancelled))
         } else {
-            catch_unwind(AssertUnwindSafe(|| work(&cancellation)))
+            catch_unwind(AssertUnwindSafe(|| {
+                #[cfg(feature = "profile-campaign")]
+                let mut observation = openlegend_simulation::profile_scope!(DISPATCH_EXEC);
+                let result = work(&cancellation);
+                #[cfg(feature = "profile-campaign")]
+                observation.outcome(match &result {
+                    Ok(_) => openlegend_simulation::profile::Outcome::Completed,
+                    Err(HostError::Cancelled) => openlegend_simulation::profile::Outcome::Cancelled,
+                    Err(HostError::Busy | HostError::Capacity | HostError::Closed) => {
+                        openlegend_simulation::profile::Outcome::Refused
+                    }
+                    Err(_) => openlegend_simulation::profile::Outcome::Failed,
+                });
+                result
+            }))
         };
         let result = match result {
             Ok(result) => result,
@@ -239,31 +266,42 @@ impl HostPool {
         if self.closing.load(Ordering::Acquire) {
             return Err(HostError::Closed);
         }
-        let control = self
-            .control
-            .lock()
-            .map_err(|_| HostError::SynchronizationFailed)?;
-        if self.closing.load(Ordering::Acquire) || control.pool.is_none() {
-            return Err(HostError::Closed);
-        }
-        let mut count = self
-            .activity
-            .count
-            .lock()
-            .map_err(|_| HostError::SynchronizationFailed)?;
-        if *count >= self.max_outstanding {
-            return Err(HostError::Busy);
-        }
-        *count += 1;
-        Ok(WorkAdmission {
-            cancellation: Cancellation {
-                requested: Arc::new(AtomicBool::new(false)),
-                host_closing: Arc::clone(&self.closing),
+        openlegend_simulation::profile_call!(
+            HOST_ADMIT,
+            {
+                let control = self
+                    .control
+                    .lock()
+                    .map_err(|_| HostError::SynchronizationFailed)?;
+                if self.closing.load(Ordering::Acquire) || control.pool.is_none() {
+                    return Err(HostError::Closed);
+                }
+                let mut count = self
+                    .activity
+                    .count
+                    .lock()
+                    .map_err(|_| HostError::SynchronizationFailed)?;
+                if *count >= self.max_outstanding {
+                    return Err(HostError::Busy);
+                }
+                *count += 1;
+                Ok(WorkAdmission {
+                    cancellation: Cancellation {
+                        requested: Arc::new(AtomicBool::new(false)),
+                        host_closing: Arc::clone(&self.closing),
+                    },
+                    permit: WorkPermit {
+                        activity: Arc::clone(&self.activity),
+                    },
+                })
             },
-            permit: WorkPermit {
-                activity: Arc::clone(&self.activity),
-            },
-        })
+            |outcome: &Result<_, _>| match outcome {
+                Ok(_) => openlegend_simulation::profile::Outcome::Completed,
+                Err(HostError::Busy | HostError::Capacity | HostError::Closed) =>
+                    openlegend_simulation::profile::Outcome::Refused,
+                Err(_) => openlegend_simulation::profile::Outcome::Failed,
+            }
+        )
     }
 
     pub fn capacity(&self) -> usize {
@@ -315,6 +353,8 @@ impl HostPool {
         let admitted = self.admit()?;
         let (work, complete, poison) = prepare();
         let cancellation = admitted.cancellation();
+        #[cfg(feature = "profile-campaign")]
+        crate::dispatch::capture::register(&cancellation);
         self.schedule(move || admitted.run(work, complete, poison));
         Ok(cancellation)
     }

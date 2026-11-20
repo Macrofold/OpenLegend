@@ -1408,6 +1408,7 @@ impl OperationDriver {
         finalize_sources: bool,
         budget: &ByteBudget,
     ) -> Result<DriveStep, DriveError> {
+        let _profile = crate::profile_scope!(DRIVER);
         if self.done
             || core.state.accepted_cut != self.base_cut
             || core.state.generation != self.generation
@@ -1589,6 +1590,7 @@ fn poll_event(
     mut route: Option<EventReply>,
     budget: &ByteBudget,
 ) -> Result<Poll<CompletedEvent, EventReply>, DriveError> {
+    let _profile = crate::profile_scope!(EVENT);
     let mut supplied = None;
     if matches!(route, Some(EventReply::Geometry)) {
         route = None;
@@ -2001,6 +2003,7 @@ fn poll_perception(
     mut route: Option<PerceptionReply>,
     budget: &ByteBudget,
 ) -> Result<Poll<CompletedPerception, PerceptionReply>, DriveError> {
+    let _profile = crate::profile_scope!(PERCEPTION);
     let mut supplied = None;
     if matches!(route, Some(PerceptionReply::Geometry)) {
         route = None;
@@ -2067,6 +2070,7 @@ fn poll_advance(
     mut route: Option<AdvanceReply>,
     budget: &ByteBudget,
 ) -> Result<Poll<CompletedAdvance, AdvanceReply>, DriveError> {
+    let _profile = crate::profile_scope!(RESUME);
     let mut supplied = None;
     if matches!(route, Some(AdvanceReply::Geometry)) {
         route = None;

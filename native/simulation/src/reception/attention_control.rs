@@ -171,6 +171,7 @@ pub(crate) fn update_attention(
     observer: &str,
     update: AttentionUpdate<'_>,
 ) -> Result<AttentionSelection, ReceivedError> {
+    let _profile = crate::profile_scope!(ATTENTION);
     let Some(entity) = physical
         .entities
         .get(observer)
@@ -438,6 +439,7 @@ pub(crate) fn update_attention(
     )?;
     journal.consume_attention_changes(observer)?;
     journal.consume_attention_familiarity(observer)?;
+    crate::profile_count!(CANDIDATES_COUNT, candidates.len() as u64);
     let live: IndexSet<_> = candidates.keys().cloned().collect();
     state.explicit.retain(|key| live.contains(key));
     // A completed unchanged competition is retained until an actual dependency
@@ -448,6 +450,7 @@ pub(crate) fn update_attention(
         && !geometry_changed
         && journal.selection_current(observer, &state.policy, work_target, &state, now);
     let selected = if reuse {
+        crate::profile_count!(ATTENTION_REUSE, 1);
         selection::Selection {
             entries: entries_before.clone(),
             subjects: candidates
@@ -460,6 +463,7 @@ pub(crate) fn update_attention(
                 .collect(),
         }
     } else {
+        crate::profile_count!(ATTENTION_RANK, 1);
         selection::select(
             physical,
             reception,

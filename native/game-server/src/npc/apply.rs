@@ -57,6 +57,8 @@ pub(super) async fn apply(
     let applied = game
         .world
         .execute_and_publish(
+            #[cfg(feature = "profile-campaign")]
+            openlegend_simulation::profile::sites::TURN_NPC,
             move |session| {
                 if *begin_stop.borrow() {
                     return Ok(ApplicationStart::Existing(Applied::Stale("cancelled")));

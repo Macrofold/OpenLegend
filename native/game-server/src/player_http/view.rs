@@ -75,72 +75,74 @@ impl Views {
     }
 
     async fn prepare(&self, tab: &Tab) -> Result<ViewAttempt, ViewError> {
-        let _admitted = self
-            .routes
-            .capacity
-            .try_acquire()
-            .map_err(|_| ViewError::Capacity)?;
-        let _serial = tokio::time::timeout(REQUEST_TIMEOUT, self.lane.lock())
-            .await
-            .map_err(|_| ViewError::Capacity)?;
-        let started_at = Instant::now();
-        if *self.stop.borrow() {
-            return Err(ViewError::Changed);
-        }
-        let game = &self.routes.game;
-        let budget = game.host.budget();
-        let authority = &self.routes.authority;
-        let scope = Arc::new(
-            authority
-                .scope(&tab.token, tab.connection.clone())
+        openlegend_simulation::profile_body!(VIEW, {
+            let _admitted = self
+                .routes
+                .capacity
+                .try_acquire()
+                .map_err(|_| ViewError::Capacity)?;
+            let _serial = tokio::time::timeout(REQUEST_TIMEOUT, self.lane.lock())
                 .await
-                .map_err(world_access)?,
-        );
-        if scope.scope.world_id != self.routes.expected_world {
-            return Err(world_access(AccessError::Changed));
-        }
-        authority
-            .current(&scope, Capability::Play, false, |_, _| ())
-            .map_err(world_access)?;
-        let (ai, custody) = game
-            .store
-            .player_cognition(&scope.scope, self.display)
-            .await
-            .map_err(ViewError::Store)?;
-        let host = capture_host(
-            authority,
-            &scope,
-            &self.routes.commands,
-            &self.routes.presence,
-            ViewTelemetry { ai, custody },
-            budget,
-        )
-        .await?;
-        let mut view = prepare_view(
-            game,
-            game.view_policy().clone(),
-            scope.clone(),
-            self.routes.references.clone(),
-            &self.routes.inputs,
-            &self.routes.commands,
-            self.routes.saves.clone(),
-            host,
-        )
-        .await?;
-        if let Some((outcomes, funding)) = game
-            .store
-            .player_speech_replies(&scope.scope, view.speech_reply_ids())
-            .await
-            .map_err(ViewError::Store)?
-        {
-            view = view.attach_speech_replies(outcomes, funding)?;
-        }
-        view.attach_presentation_release(game.installed_assets().map(Arc::as_ref), &game.store)
+                .map_err(|_| ViewError::Capacity)?;
+            let started_at = Instant::now();
+            if *self.stop.borrow() {
+                return Err(ViewError::Changed);
+            }
+            let game = &self.routes.game;
+            let budget = game.host.budget();
+            let authority = &self.routes.authority;
+            let scope = Arc::new(
+                authority
+                    .scope(&tab.token, tab.connection.clone())
+                    .await
+                    .map_err(world_access)?,
+            );
+            if scope.scope.world_id != self.routes.expected_world {
+                return Err(world_access(AccessError::Changed));
+            }
+            authority
+                .current(&scope, Capability::Play, false, |_, _| ())
+                .map_err(world_access)?;
+            let (ai, custody) = game
+                .store
+                .player_cognition(&scope.scope, self.display)
+                .await
+                .map_err(ViewError::Store)?;
+            let host = capture_host(
+                authority,
+                &scope,
+                &self.routes.commands,
+                &self.routes.presence,
+                ViewTelemetry { ai, custody },
+                budget,
+            )
             .await?;
-        Ok(ViewAttempt {
-            started_at,
-            scope,
-            view,
+            let mut view = prepare_view(
+                game,
+                game.view_policy().clone(),
+                scope.clone(),
+                self.routes.references.clone(),
+                &self.routes.inputs,
+                &self.routes.commands,
+                self.routes.saves.clone(),
+                host,
+            )
+            .await?;
+            if let Some((outcomes, funding)) = game
+                .store
+                .player_speech_replies(&scope.scope, view.speech_reply_ids())
+                .await
+                .map_err(ViewError::Store)?
+            {
+                view = view.attach_speech_replies(outcomes, funding)?;
+            }
+            view.attach_presentation_release(game.installed_assets().map(Arc::as_ref), &game.store)
+                .await?;
+            Ok(ViewAttempt {
+                started_at,
+                scope,
+                view,
+            })
         })
     }
 
@@ -175,9 +177,15 @@ impl Views {
                     attempt.view.control_preview_cut(),
                     |allowed, budget| {
                         if encode_http {
-                            wire::encode(&attempt.view.wire(allowed), b"", b"", budget)
-                                .map(Some)
-                                .map_err(WorldError::Wire)
+                            let result =
+                                wire::encode(&attempt.view.wire(allowed), b"", b"", budget)
+                                    .map(Some)
+                                    .map_err(WorldError::Wire);
+                            openlegend_simulation::profile_count!(
+                                FRAME_HTTP,
+                                u64::from(result.is_ok())
+                            );
+                            result
                         } else {
                             Ok(None)
                         }

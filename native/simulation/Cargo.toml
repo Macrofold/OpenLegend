@@ -6,6 +6,9 @@ rust-version.workspace = true
 license.workspace = true
 publish.workspace = true
 
+[features]
+profile-campaign = []
+
 [dependencies]
 rayon.workspace = true
 indexmap.workspace = true

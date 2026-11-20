@@ -1,0 +1,192 @@
+import { copyFile, mkdir, readFile, symlink, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { hashFile } from './contract.js';
+import type { CasePlan } from './contract.js';
+import type { RunnerInput } from './inputs.js';
+
+function replace(source: string, old: string, replacement: string) {
+  const index = source.indexOf(old);
+  if (index < 0 || source.indexOf(old, index + old.length) >= 0)
+    throw new Error(`Frozen fixture anchor missing or ambiguous: ${old.slice(0, 100)}`);
+  return source.slice(0, index) + replacement + source.slice(index + old.length);
+}
+
+/** Copies the immutable driver into a private case workspace and adds only
+ * lifecycle observations. The gameplay calls, offered inputs and assertions
+ * are shared with the frozen release comparison.
+ */
+export async function stageFixture(plan: CasePlan, work: string, inputs: RunnerInput[]) {
+  const input = (id: string) => {
+    const found = inputs.find((entry) => entry.id === id);
+    if (!found) throw new Error(`Missing verified case input ${id}.`);
+    return found;
+  };
+  const driver = join(work, 'driver');
+  const tools = join(work, 'tools');
+  await Promise.all([mkdir(driver), mkdir(tools)]);
+  await Promise.all(
+    input('driver').paths.map((file) =>
+      copyFile(join(input('driver').root, file), join(driver, file)),
+    ),
+  );
+  await copyFile(
+    fileURLToPath(new URL('./fixture-observer.mjs', import.meta.url)),
+    join(driver, 'fixture-observer.mjs'),
+  );
+  if (plan.mode === 'sql') {
+    const name = 'postgres-wire-observation.mjs';
+    await copyFile(join(input('sql').root, name), join(driver, name));
+  }
+  const build = join(tools, 'build.mjs');
+  await Promise.all(
+    input('tools')
+      .paths.filter((path) => path !== 'build.mjs')
+      .map((path) => symlink(join(input('tools').root, path), join(tools, path))),
+  );
+  let builder = await readFile(join(input('tools').root, 'build.mjs'), 'utf8');
+  // A disabled and enabled run use the same build configuration. Frame
+  // pointers change the build independently from attaching the sampler.
+  if (plan.mode === 'disabled' || plan.mode === 'enabled') {
+    builder = replace(
+      builder,
+      "'--bin', 'openlegend-game-server'], env, true);",
+      "'--bin', 'openlegend-game-server', '--features', 'profile-campaign'], env, true);",
+    );
+  }
+  await writeFile(build, builder);
+  const workload = join(driver, 'workload.mts');
+  await writeFile(workload, adaptWorkload(await readFile(workload, 'utf8')));
+  const client = join(driver, 'player-client.mts');
+  await writeFile(client, adaptClient(await readFile(client, 'utf8')));
+  return {
+    build,
+    launch: join(driver, 'launch.mjs'),
+    hashes: {
+      build: await hashFile(build),
+      workload: await hashFile(workload),
+      inputSchedule: await hashFile(client),
+      observer: await hashFile(join(driver, 'fixture-observer.mjs')),
+    },
+  };
+}
+
+function adaptWorkload(source: string) {
+  source = replace(
+    source,
+    "import assert from 'node:assert/strict';",
+    `import assert from 'node:assert/strict';
+import { captureAddressMap, coldContinuation, connectObserver } from './fixture-observer.mjs';
+const profile = JSON.parse(process.env.OPEN_LEGEND_PROFILE_CASE);
+`,
+  );
+  source = replace(
+    source,
+    "const release = join(measuring ? process.env.HOME : dir, 'release');",
+    "const release = join(profile.workDirectory, 'release');",
+  );
+  source = replace(
+    source,
+    "let provider, server, serverExit, client, clientExit, sampling, output = '';",
+    "let provider, server, serverExit, client, clientExit, sampling, output = '';\nlet recorder, continuation, sqlWire;",
+  );
+  source = replace(
+    source,
+    '  const listener = Promise.withResolvers();',
+    `  const listener = Promise.withResolvers();
+  if (profile.mode === 'sql') {
+    const { observeLocalPostgres } = await import('./postgres-wire-observation.mjs');
+    sqlWire = await observeLocalPostgres(database);
+    env.OPEN_LEGEND_DATABASE_URL = sqlWire.url;
+  }
+  if (profile.mode === 'sampled') Object.assign(env, {
+    LD_PRELOAD: profile.sampler,
+    OL_PROFILE_RAW: join(dir, 'stacks.bin'),
+  });
+  if (profile.mode === 'enabled') Object.assign(env, {
+    OPEN_LEGEND_PROFILE_CONTROL: 'stdin',
+    OPEN_LEGEND_PROFILE_OUTPUT: join(dir, 'metrics.json'),
+  });`,
+  );
+  source = replace(
+    source,
+    "  server = arm === 'direct'\n    ? spawn(build.executable.path, ['serve', release], { env, stdio: ['ignore', 'pipe', 'pipe'] })",
+    `  const startDirect = (runtimeEnv, controller = false) => spawn(build.executable.path, ['serve', release], {
+    env: runtimeEnv, stdio: [controller ? 'pipe' : 'ignore', 'pipe', 'pipe'],
+  });
+  server = arm === 'direct'
+    ? startDirect(env, profile.mode === 'enabled')`,
+  );
+  source = replace(
+    source,
+    "  server.on('error', error => {",
+    `  if (profile.mode === 'enabled') recorder = connectObserver(server);
+  const reopenEnv = { ...env, OPEN_LEGEND_DATABASE_URL: database };
+  continuation = () => coldContinuation({ start: () => startDirect({ ...reopenEnv, OPEN_LEGEND_PROFILE_CONTROL: undefined, OPEN_LEGEND_PROFILE_OUTPUT: undefined, LD_PRELOAD: undefined, OL_PROFILE_RAW: undefined }),
+    clientId: site.clientId, actorId: site.actorId, acceptedGameSecond: report.steady.end.clock.seconds,
+    commandEpoch: controlled.commandEpoch, lastCommand: report.commandLatencyWitnesses.at(-1) });
+  server.on('error', error => {`,
+  );
+  source = replace(
+    source,
+    "  if (measuring) {\n    const executable = await realpath('/proc/' + server.pid + '/exe');",
+    `  if (profile.mode === 'sampled') await captureAddressMap(server, dir);
+  if (measuring) {
+    const executable = await realpath('/proc/' + server.pid + '/exe');`,
+  );
+  source = replace(
+    source,
+    '  await sendChild(client, { go: true });',
+    `  const window = await recorder?.arm(profile);
+  const began = window?.began ?? Math.ceil(at()) + 1000;
+  report.captureWindow = window;
+  await sendChild(client, { go: true, began });`,
+  );
+  source = replace(
+    source,
+    '    return { at: operationAt, resource, observedAt: at(), sql, exactNodeStatus };',
+    '    return { at: operationAt, resource, observedAt: at(), sql, exactNodeStatus, wire: sqlWire?.snapshot() };',
+  );
+  source = replace(
+    source,
+    '  report.completedEquivalentWork = true;\n} catch (error) {',
+    `  if (recorder) {
+    report.captureStop = await recorder.stop(window, join(dir, 'metrics.json'));
+  } else if (report.offered) {
+    await delay(Math.max(0, report.offered.offeredAtUnixMs + profile.drainSeconds * 1000 - at()));
+  }
+  report.completedEquivalentWork = true;
+} catch (error) {`,
+  );
+  source = replace(
+    source,
+    '  await pendingReceiptRead;\n  if (report.completedEquivalentWork) {',
+    `  await pendingReceiptRead;
+  if (report.completedEquivalentWork) {
+    try { report.coldContinuation = await continuation(); }
+    catch (error) {
+      report.completedEquivalentWork = false;
+      report.coldContinuationFailure = failure(error);
+    }
+  }
+  if (report.completedEquivalentWork) {`,
+  );
+  return replace(
+    source,
+    "    ['database', () => db.close()],",
+    "    ['database', () => db.close()],\n    ['postgres-wire', () => sqlWire?.close()],",
+  );
+}
+
+function adaptClient(source: string) {
+  return replace(
+    source,
+    'assert(go.go);\nbegan = at();',
+    `assert(go.go);
+assert(Number.isSafeInteger(go.began));
+began = go.began;
+assert(at() < began, 'The client missed the armed workload start.');
+while (at() < began) await delay(Math.max(1, began - at()));`,
+  );
+}

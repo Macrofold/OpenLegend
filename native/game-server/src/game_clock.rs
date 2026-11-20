@@ -183,6 +183,8 @@ impl GameClock {
         self.game
             .world
             .execute_and_publish(
+                #[cfg(feature = "profile-campaign")]
+                openlegend_simulation::profile::sites::TURN_CLOCK,
                 |session| Ok(ApplicationStart::Candidate(session.begin_startup()?)),
                 move |question| {
                     let game = game.clone();
@@ -209,101 +211,120 @@ impl GameClock {
         clock: RuntimeClock,
         seconds: f64,
     ) -> Result<Option<Advance>, WorldError> {
-        let game = self.game.clone();
-        let prepare = self.saves.clone();
-        let accept = self.saves.clone();
-        let inputs = self.inputs.clone();
-        let settlement = inputs
-            .as_ref()
-            .map(|_| Arc::new(Mutex::new(None::<InputSnapshot>)));
-        let capture = settlement.clone();
-        let recheck = inputs.clone();
-        let advance = self.game.world.execute_and_publish(
-            move |session| {
-                // Pause/speed can change while this caller waits for the turn.
-                let current = session.clock()?;
-                if current.paused || current.speed != clock.speed || current.at != clock.at {
-                    return Err(WorldError::ClockChanged);
-                }
-                let key = match (inputs, capture) {
-                    (Some(inputs), Some(capture)) => {
-                        let mut held = capture.lock().map_err(|_| HostError::Poisoned)?;
-                        let mut snapshot = inputs.snapshot(session)?;
-                        let values = snapshot.take();
-                        // A refused begin drops the input proof before this world
-                        // turn ends. A running candidate retains it until settlement.
-                        let key = session.begin_advance_direct(seconds, 4096, values)?;
-                        *held = Some(snapshot);
-                        key
-                    }
-                    _ => session.begin_advance_direct(seconds, 4096, Vec::new())?,
-                };
-                Ok(ApplicationStart::Candidate(key))
-            },
-            move |question| {
-                let game = game.clone();
-                async move { game.answer_operation(question).await }
-            },
-            move |output, _| {
-                let RuntimeDirectOutput::Prepared(product) = output else {
-                    unreachable!("advance cannot preview")
-                };
-                let result = product.outcome();
-                if !result.ok {
-                    return Err(RuntimeError::application_refused(&result.code));
-                }
-                let seconds = product.progress().at - clock.at;
-                let navigation_pending = result.code == "navigation-pending";
-                let deferred_routes = product.has_deferred_navigation();
-                let save = if navigation_pending && seconds == 0.0 {
-                    None
-                } else {
-                    Some(prepare.stage(&product, None)?)
-                };
-                Ok(Advance {
-                    seconds,
-                    navigation_pending,
-                    deferred_routes,
-                    save,
-                })
-            },
-            move |fence, key, staged| {
-                let active = staged.save.is_some();
-                match (recheck, settlement) {
-                    (Some(inputs), Some(settlement)) if active => {
-                        let held = settlement.lock().map_err(|_| HostError::Poisoned)?;
-                        let snapshot = held.as_ref().expect("prepared input snapshot");
-                        match inputs.accept_inputs(snapshot, || fence.settle(key, true)) {
-                            Ok(result) => Ok(result?),
-                            Err(crate::authority::AccessError::Changed) => {
-                                Ok(fence.settle(key, false)?)
+        openlegend_simulation::profile_body!(
+            CLOCK,
+            {
+                let game = self.game.clone();
+                let prepare = self.saves.clone();
+                let accept = self.saves.clone();
+                let inputs = self.inputs.clone();
+                let settlement = inputs
+                    .as_ref()
+                    .map(|_| Arc::new(Mutex::new(None::<InputSnapshot>)));
+                let capture = settlement.clone();
+                let recheck = inputs.clone();
+                let advance = self.game.world.execute_and_publish(
+                    #[cfg(feature = "profile-campaign")]
+                    openlegend_simulation::profile::sites::TURN_CLOCK,
+                    move |session| {
+                        // Pause/speed can change while this caller waits for the turn.
+                        let current = session.clock()?;
+                        if current.paused || current.speed != clock.speed || current.at != clock.at
+                        {
+                            return Err(WorldError::ClockChanged);
+                        }
+                        let key = match (inputs, capture) {
+                            (Some(inputs), Some(capture)) => {
+                                let mut held = capture.lock().map_err(|_| HostError::Poisoned)?;
+                                let mut snapshot = inputs.snapshot(session)?;
+                                let values = snapshot.take();
+                                // A refused begin drops the input proof before this world
+                                // turn ends. A running candidate retains it until settlement.
+                                let key = session.begin_advance_direct(seconds, 4096, values)?;
+                                *held = Some(snapshot);
+                                key
                             }
-                            Err(error) => Err(error.into()),
+                            _ => session.begin_advance_direct(seconds, 4096, Vec::new())?,
+                        };
+                        Ok(ApplicationStart::Candidate(key))
+                    },
+                    move |question| {
+                        let game = game.clone();
+                        async move { game.answer_operation(question).await }
+                    },
+                    move |output, _| {
+                        let RuntimeDirectOutput::Prepared(product) = output else {
+                            unreachable!("advance cannot preview")
+                        };
+                        let result = product.outcome();
+                        if !result.ok {
+                            return Err(RuntimeError::application_refused(&result.code));
+                        }
+                        let seconds = product.progress().at - clock.at;
+                        let navigation_pending = result.code == "navigation-pending";
+                        let deferred_routes = product.has_deferred_navigation();
+                        let save = if navigation_pending && seconds == 0.0 {
+                            None
+                        } else {
+                            Some(prepare.stage(&product, None)?)
+                        };
+                        Ok(Advance {
+                            seconds,
+                            navigation_pending,
+                            deferred_routes,
+                            save,
+                        })
+                    },
+                    move |fence, key, staged| {
+                        let active = staged.save.is_some();
+                        match (recheck, settlement) {
+                            (Some(inputs), Some(settlement)) if active => {
+                                let held = settlement.lock().map_err(|_| HostError::Poisoned)?;
+                                let snapshot = held.as_ref().expect("prepared input snapshot");
+                                match inputs.accept_inputs(snapshot, || fence.settle(key, true)) {
+                                    Ok(result) => Ok(result?),
+                                    Err(crate::authority::AccessError::Changed) => {
+                                        Ok(fence.settle(key, false)?)
+                                    }
+                                    Err(error) => Err(error.into()),
+                                }
+                            }
+                            _ => Ok(fence.settle(key, active)?),
+                        }
+                    },
+                    move |staged| {
+                        accept.accept(staged.save.as_ref().expect("accepted clock has save input"))
+                    },
+                );
+                tokio::pin!(advance);
+                let mut publication =
+                    tokio::time::interval_at(Instant::now() + TICK_SLICE, IO_YIELD);
+                publication.set_missed_tick_behavior(MissedTickBehavior::Skip);
+                loop {
+                    tokio::select! {
+                        biased;
+                        result = &mut advance => {
+                            #[cfg(feature = "profile-campaign")]
+                            if let Ok(Some(accepted)) = &result {
+                                let mut observation = openlegend_simulation::profile_scope!(ACCEPTED);
+                                if observation.is_observed() {
+                                    observation.work((accepted.seconds * 1_000_000.0) as u64);
+                                }
+                            }
+                            return result;
+                        },
+                        _ = publication.tick() => {
+                            // The first deadline can pass while another operation owns
+                            // the turn. Keep offering a boundary until this single
+                            // clock advance finishes, as on the pool-backed host.
+                            // docs/limits/native-work.md#nw12
+                            self.game.world.request_advance_publication();
                         }
                     }
-                    _ => Ok(fence.settle(key, active)?),
                 }
             },
-            move |staged| {
-                accept.accept(staged.save.as_ref().expect("accepted clock has save input"))
-            },
-        );
-        tokio::pin!(advance);
-        let mut publication = tokio::time::interval_at(Instant::now() + TICK_SLICE, IO_YIELD);
-        publication.set_missed_tick_behavior(MissedTickBehavior::Skip);
-        loop {
-            tokio::select! {
-                biased;
-                result = &mut advance => return result,
-                _ = publication.tick() => {
-                    // The first deadline can pass while another operation owns
-                    // the turn. Keep offering a boundary until this single
-                    // clock advance finishes, as on the pool-backed host.
-                    // docs/limits/native-work.md#nw12
-                    self.game.world.request_advance_publication();
-                }
-            }
-        }
+            WorldError::profile_outcome
+        )
     }
 
     /// One loop offers time from a monotonic cursor and yields between
@@ -403,6 +424,7 @@ impl GameClock {
                     inputs.exclude()?;
                 }
                 was_paused = true;
+                openlegend_simulation::profile_count!(RELEASE_DEBT, (debt * 1_000_000.0) as u64);
                 debt = 0.0;
                 more = false;
                 continue;
@@ -412,6 +434,7 @@ impl GameClock {
                 if let Some(inputs) = &self.inputs {
                     inputs.exclude()?;
                 }
+                openlegend_simulation::profile_count!(RELEASE_DEBT, (debt * 1_000_000.0) as u64);
                 debt = 0.0;
             }
             let ratio = clock.speed * self.base_ratio;
@@ -420,7 +443,9 @@ impl GameClock {
                 let entrance = if gap.is_zero() { from } else { now - admitted };
                 inputs.credit(entrance, now, clock.at + debt, ratio)?;
             }
-            debt += admitted.as_secs_f64() * ratio;
+            let offered = admitted.as_secs_f64() * ratio;
+            debt += offered;
+            openlegend_simulation::profile_count!(OFFERED, (offered * 1_000_000.0) as u64);
             more = false;
             if debt < 1e-6 {
                 continue;

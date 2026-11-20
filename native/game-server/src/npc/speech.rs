@@ -331,6 +331,8 @@ pub(super) async fn speak(
     let occurrence_id = utterance.clone();
     game.world.request_advance_publication();
     game.world.execute_and_publish(
+        #[cfg(feature = "profile-campaign")]
+        openlegend_simulation::profile::sites::TURN_NPC,
         move |session| {
             if *first_stop.borrow() {
                 return Ok(ApplicationStart::Existing(Spoken::Refused(SpeechRefusal::Cancelled)));

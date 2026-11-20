@@ -3,3 +3,6 @@
 mod dispatch;
 pub use dispatch::{DispatchHost, DispatchWorld, SerialDispatch, submit_world, try_submit_world};
 pub mod pool;
+
+#[cfg(feature = "profile-campaign")]
+pub use dispatch::{clear_profile_dispatch, prepare_profile_dispatch};

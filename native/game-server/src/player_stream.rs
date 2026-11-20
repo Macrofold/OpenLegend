@@ -268,16 +268,34 @@ impl Body for PlayerStream {
                                     }
                                     _ => WorldError::ProjectionChanged,
                                 })? {
-                                ViewSelection::Unchanged => Ok(None),
+                                ViewSelection::Unchanged => {
+                                    openlegend_simulation::profile_count!(FRAME_UNCHANGED, 1);
+                                    Ok(None)
+                                }
                                 ViewSelection::Reset => {
-                                    wire::encode(&attempt.view.wire(allowed), RESET, SUFFIX, budget)
-                                        .map(Some)
-                                        .map_err(WorldError::Wire)
+                                    let result = wire::encode(
+                                        &attempt.view.wire(allowed),
+                                        RESET,
+                                        SUFFIX,
+                                        budget,
+                                    )
+                                    .map(Some)
+                                    .map_err(WorldError::Wire);
+                                    openlegend_simulation::profile_count!(
+                                        FRAME_RESET,
+                                        u64::from(result.is_ok())
+                                    );
+                                    result
                                 }
                                 ViewSelection::Patch(patch) => {
-                                    wire::encode(&patch, PATCH, SUFFIX, budget)
+                                    let result = wire::encode(&patch, PATCH, SUFFIX, budget)
                                         .map(Some)
-                                        .map_err(WorldError::Wire)
+                                        .map_err(WorldError::Wire);
+                                    openlegend_simulation::profile_count!(
+                                        FRAME_PATCH,
+                                        u64::from(result.is_ok())
+                                    );
+                                    result
                                 }
                             }
                         },

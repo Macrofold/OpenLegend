@@ -210,6 +210,7 @@ pub(super) fn build_candidates(
     keys: Option<&[&str]>,
     journal: &mut CurrentJournal,
 ) -> Result<IndexMap<String, AttentionCandidate>, ReceivedError> {
+    let _profile = crate::profile_scope!(CANDIDATES);
     let Some(scope) = CurrentBodyReadScope::prepare(
         reception,
         &physical.entities,

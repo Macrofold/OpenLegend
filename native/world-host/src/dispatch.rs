@@ -118,6 +118,8 @@ where
         .budget()
         .reserve(size_of::<(F, C, WorkAdmission, ByteReservation)>())?;
     let (run, complete) = prepare();
+    #[cfg(feature = "profile-campaign")]
+    capture::register(&cancellation);
     let job: Job<H, W> = Box::new(move |host, world| {
         let _storage = storage;
         admitted.run(
@@ -158,4 +160,106 @@ impl<H: DispatchHost, W: DispatchWorld<H>> Drop for Running<H, W> {
             schedule(&self.host, &self.world, job);
         }
     }
+}
+
+#[cfg(feature = "profile-campaign")]
+pub(super) mod capture {
+    use std::{
+        collections::HashMap,
+        sync::{Mutex, OnceLock, Weak, atomic::AtomicBool},
+    };
+
+    use openlegend_simulation::profile::{self, Context, Link, Operation, Outcome, sites};
+
+    use crate::pool::Cancellation;
+
+    // Diagnostic custody is outside the game's closure reservation. The map
+    // is strictly bounded, and the weak key owns no live job or world. A key
+    // cannot be reused by a later job while this weak reference exists.
+    const CAPACITY: usize = 1024;
+
+    struct Queued {
+        _identity: Weak<AtomicBool>,
+        parent: Option<Link>,
+        wait: Operation,
+    }
+
+    static QUEUED: OnceLock<Mutex<HashMap<usize, Queued>>> = OnceLock::new();
+
+    pub(crate) fn register(cancellation: &Cancellation) {
+        let parent = profile::current();
+        if parent.is_none() && !profile::selected(sites::DISPATCH_WAIT) {
+            return;
+        }
+        let Some(queued) = QUEUED.get() else {
+            profile::omitted(parent.map_or(sites::DISPATCH_WAIT, Link::site));
+            return;
+        };
+        let Ok(mut queued) = queued.try_lock() else {
+            profile::omitted(parent.map_or(sites::DISPATCH_WAIT, Link::site));
+            return;
+        };
+        if queued.len() == CAPACITY {
+            profile::omitted(parent.map_or(sites::DISPATCH_WAIT, Link::site));
+            return;
+        }
+        queued.insert(
+            cancellation.profile_key(),
+            Queued {
+                _identity: cancellation.profile_identity(),
+                parent,
+                wait: profile::begin(sites::DISPATCH_WAIT),
+            },
+        );
+    }
+
+    pub(crate) fn start(cancellation: &Cancellation, cancelled: bool) -> Context {
+        // Free metadata on the admitted job's actual start, even after capture
+        // stop. The recorder fences both its wait token and inherited parent.
+        let entry = QUEUED.get().and_then(|queued| match queued.try_lock() {
+            Ok(mut queued) => queued.remove(&cancellation.profile_key()),
+            Err(_) => {
+                profile::omitted(sites::DISPATCH_WAIT);
+                None
+            }
+        });
+        if let Some(entry) = entry {
+            entry.wait.finish(if cancelled {
+                Outcome::Cancelled
+            } else {
+                Outcome::Completed
+            });
+            return profile::attach(entry.parent);
+        }
+        profile::attach(None)
+    }
+
+    pub(super) fn prepare() -> bool {
+        if QUEUED.get().is_some() {
+            return true;
+        }
+        let mut queue = HashMap::new();
+        queue.try_reserve(CAPACITY).is_ok() && QUEUED.set(Mutex::new(queue)).is_ok()
+    }
+
+    pub(super) fn clear() {
+        if let Some(queued) = QUEUED.get() {
+            // Called by the capture owner, never while holding a game lock.
+            queued.lock().unwrap_or_else(|err| err.into_inner()).clear();
+        }
+    }
+}
+
+/// Reserve diagnostic scheduling storage during operator arming, outside any
+/// gameplay lane. A refusal affects only the capture.
+#[cfg(feature = "profile-campaign")]
+pub fn prepare_profile_dispatch() -> bool {
+    capture::prepare()
+}
+
+/// Discard optional scheduling metadata at capture stop. Game queue and
+/// cancellation ownership remain with the dispatcher.
+#[cfg(feature = "profile-campaign")]
+pub fn clear_profile_dispatch() {
+    capture::clear();
 }

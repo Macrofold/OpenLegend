@@ -58,6 +58,19 @@ pub enum WorldError {
 }
 
 impl WorldError {
+    #[cfg(feature = "profile-campaign")]
+    pub(crate) fn profile_outcome<T>(
+        result: &Result<T, Self>,
+    ) -> openlegend_simulation::profile::Outcome {
+        use openlegend_simulation::profile::Outcome;
+        match result {
+            Ok(_) => Outcome::Completed,
+            Err(Self::Host(HostError::Cancelled)) => Outcome::Cancelled,
+            Err(error) if error.is_admission_refusal() => Outcome::Refused,
+            Err(_) => Outcome::Failed,
+        }
+    }
+
     /// These owners refused work before acceptance. The clock can keep the
     /// elapsed offer or try the still-pending route on a later wake.
     pub(crate) fn is_admission_refusal(&self) -> bool {
@@ -331,9 +344,53 @@ pub enum PlayerDisclosure {
     Published(axum::body::Bytes),
 }
 
+#[cfg(feature = "profile-campaign")]
+type TurnGuard<T> = MeasuredTurn<T>;
+#[cfg(not(feature = "profile-campaign"))]
+type TurnGuard<T> = T;
+
+/// The observation ends before releasing the actual world turn. It must not
+/// change the lock order or make a timed waiter keep this guard alive.
+#[cfg(feature = "profile-campaign")]
+struct MeasuredTurn<T> {
+    _observation: openlegend_simulation::profile::Operation,
+    _guard: T,
+}
+
+fn held_turn<T>(
+    guard: T,
+    #[cfg(feature = "profile-campaign")] site: openlegend_simulation::profile::Site,
+) -> TurnGuard<T> {
+    #[cfg(feature = "profile-campaign")]
+    {
+        let mut observation = openlegend_simulation::profile::begin(site);
+        observation.outcome(openlegend_simulation::profile::Outcome::Completed);
+        MeasuredTurn {
+            _observation: observation,
+            _guard: guard,
+        }
+    }
+    #[cfg(not(feature = "profile-campaign"))]
+    guard
+}
+
+async fn wait_for_turn<T>(lock: impl Future<Output = T>) -> Result<T, HostError> {
+    openlegend_simulation::profile_measure!(
+        TURN_WAIT,
+        tokio::time::timeout(TURN_WAIT, lock),
+        |result| if result.is_ok() {
+            openlegend_simulation::profile::Outcome::Completed
+        } else {
+            openlegend_simulation::profile::Outcome::Refused
+        }
+    )
+    .await
+    .map_err(|_| HostError::Busy)
+}
+
 pub(crate) struct PlayerDisclosureTurn {
     world: Arc<HostedWorld>,
-    _turn: tokio::sync::OwnedMutexGuard<()>,
+    _turn: TurnGuard<tokio::sync::OwnedMutexGuard<()>>,
 }
 
 impl PlayerDisclosureTurn {
@@ -372,7 +429,7 @@ pub(crate) enum NpcDisclosure {
 
 pub(crate) struct NpcDisclosureTurn<'a> {
     world: &'a HostedWorld,
-    _turn: tokio::sync::MutexGuard<'a, ()>,
+    _turn: TurnGuard<tokio::sync::MutexGuard<'a, ()>>,
 }
 
 pub(crate) struct SourceEdit {
@@ -453,7 +510,11 @@ impl HostedWorld {
         self.request_advance_publication();
         Ok(NpcDisclosureTurn {
             world: self,
-            _turn: self.enter().await?,
+            _turn: held_turn(
+                self.enter_turn(self.turn.lock()).await?,
+                #[cfg(feature = "profile-campaign")]
+                openlegend_simulation::profile::sites::TURN_NPC,
+            ),
         })
     }
 
@@ -529,6 +590,11 @@ impl HostedWorld {
         let Ok(_turn) = self.turn.try_lock() else {
             return Ok(None);
         };
+        let _turn = held_turn(
+            _turn,
+            #[cfg(feature = "profile-campaign")]
+            openlegend_simulation::profile::sites::TURN_VIEW,
+        );
         let session = match self.session.try_lock() {
             Ok(session) => session,
             Err(std::sync::TryLockError::WouldBlock) => return Ok(None),
@@ -583,15 +649,18 @@ impl HostedWorld {
         }
     }
 
-    async fn enter(&self) -> Result<tokio::sync::MutexGuard<'_, ()>, WorldError> {
-        self.enter_turn(self.turn.lock()).await
+    async fn enter(&self) -> Result<TurnGuard<tokio::sync::MutexGuard<'_, ()>>, WorldError> {
+        let guard = self.enter_turn(self.turn.lock()).await?;
+        Ok(held_turn(
+            guard,
+            #[cfg(feature = "profile-campaign")]
+            openlegend_simulation::profile::sites::TURN_OTHER,
+        ))
     }
 
     async fn enter_turn<T>(&self, lock: impl Future<Output = T>) -> Result<T, WorldError> {
         let queued = self.waiting.try_acquire().map_err(|_| HostError::Busy)?;
-        let turn = tokio::time::timeout(TURN_WAIT, lock)
-            .await
-            .map_err(|_| HostError::Busy)?;
+        let turn = wait_for_turn(lock).await?;
         drop(queued);
         if self.closing.load(Ordering::Acquire) {
             return Err(HostError::Closed.into());
@@ -717,7 +786,11 @@ impl HostedWorld {
         let turn = self.enter_turn(self.turn.clone().lock_owned()).await?;
         Ok(PlayerDisclosureTurn {
             world: self,
-            _turn: turn,
+            _turn: held_turn(
+                turn,
+                #[cfg(feature = "profile-campaign")]
+                openlegend_simulation::profile::sites::TURN_VIEW,
+            ),
         })
     }
 
@@ -734,7 +807,12 @@ impl HostedWorld {
         publish: impl FnOnce(bool, &ByteBudget) -> Result<Option<axum::body::Bytes>, WorldError>,
     ) -> Result<PlayerDisclosure, WorldError> {
         self.request_advance_publication();
-        let _turn = self.enter().await?;
+        let guard = self.enter_turn(self.turn.lock()).await?;
+        let _turn = held_turn(
+            guard,
+            #[cfg(feature = "profile-campaign")]
+            openlegend_simulation::profile::sites::TURN_VIEW,
+        );
         self.disclose_player_in_turn(
             authority,
             scope,
@@ -754,6 +832,8 @@ impl HostedWorld {
         control_preview_cut: Option<u64>,
         publish: impl FnOnce(bool, &ByteBudget) -> Result<Option<axum::body::Bytes>, WorldError>,
     ) -> Result<PlayerDisclosure, WorldError> {
+        #[cfg(feature = "profile-campaign")]
+        let mut observation = openlegend_simulation::profile_scope!(DISCLOSE);
         let result = authority.current_view(scope, |scope, controlling| {
             if self.closing.load(Ordering::Acquire) {
                 return Err(HostError::Closed.into());
@@ -793,11 +873,22 @@ impl HostedWorld {
             let result = publish(permit.can_use_inventory(), self.host.budget())?;
             drop(permit);
             Ok(match result {
-                Some(bytes) => PlayerDisclosure::Published(bytes),
+                Some(bytes) => {
+                    openlegend_simulation::profile_count!(VIEW_BYTES, bytes.len() as u64);
+                    PlayerDisclosure::Published(bytes)
+                }
                 None => PlayerDisclosure::Unchanged,
             })
         });
-        result.map_err(WorldError::Access)?
+        let result = result.map_err(WorldError::Access).and_then(|result| result);
+        #[cfg(feature = "profile-campaign")]
+        observation.outcome(match &result {
+            Ok(PlayerDisclosure::Busy | PlayerDisclosure::Changed) => {
+                openlegend_simulation::profile::Outcome::Refused
+            }
+            _ => WorldError::profile_outcome(&result),
+        });
+        result
     }
 
     /// The originating operation is suspended on this exact read ticket and
@@ -897,6 +988,8 @@ impl HostedWorld {
         S: FnOnce(&CandidateFence, CandidateKey) -> Result<Settlement, WorldError> + Send + 'static,
     {
         self.execute_and_publish(
+            #[cfg(feature = "profile-campaign")]
+            openlegend_simulation::profile::sites::TURN_OTHER,
             |session| Ok(ApplicationStart::Candidate(begin(session)?)),
             answer,
             stage,
@@ -911,6 +1004,7 @@ impl HostedWorld {
     /// receipt. The callback only releases or transfers already staged work.
     pub async fn execute_and_publish<T, B, Q, A, R, S, P>(
         self: &Arc<Self>,
+        #[cfg(feature = "profile-campaign")] holder: openlegend_simulation::profile::Site,
         begin: B,
         answer: Q,
         stage: A,
@@ -933,33 +1027,41 @@ impl HostedWorld {
             + 'static,
         P: FnOnce(&T) + Send + 'static,
     {
-        self.execute_inner(begin, answer, stage, |world, key, prepared| async move {
-            if prepared.protected_save().is_some() {
-                return Err(WorldError::Protected);
-            }
-            prepared.ready()?;
-            let decision = settle(&world.fence, key, prepared.output());
-            if decision.is_err() {
-                world.fence.settle(key, false)?;
-            }
-            let accepted = world
-                .call(move |session| session.finish_settlement(key))
-                .await?;
-            decision?;
-            if !accepted {
-                return Ok(None);
-            }
-            let output = prepared.into_output();
-            // An application programmer error cannot turn an accepted
-            // operation into a retryable refusal with an absent receipt.
-            if std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| publish(&output))).is_err()
-            {
-                world.fence.poison();
-                world.closing.store(true, Ordering::Release);
-                return Err(HostError::Poisoned.into());
-            }
-            Ok(Some(output))
-        })
+        self.execute_inner(
+            #[cfg(feature = "profile-campaign")]
+            holder,
+            begin,
+            answer,
+            stage,
+            |world, key, prepared| async move {
+                if prepared.protected_save().is_some() {
+                    return Err(WorldError::Protected);
+                }
+                prepared.ready()?;
+                let decision = settle(&world.fence, key, prepared.output());
+                if decision.is_err() {
+                    world.fence.settle(key, false)?;
+                }
+                let accepted = world
+                    .call(move |session| session.finish_settlement(key))
+                    .await?;
+                decision?;
+                if !accepted {
+                    return Ok(None);
+                }
+                let output = prepared.into_output();
+                // An application programmer error cannot turn an accepted
+                // operation into a retryable refusal with an absent receipt.
+                if std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| publish(&output)))
+                    .is_err()
+                {
+                    world.fence.poison();
+                    world.closing.store(true, Ordering::Release);
+                    return Err(HostError::Poisoned.into());
+                }
+                Ok(Some(output))
+            },
+        )
         .await
     }
 
@@ -988,6 +1090,8 @@ impl HostedWorld {
         C: for<'a> FnOnce(&'a T, &'a RuntimeSave) -> ProtectedCommit<'a> + Send + 'static,
     {
         self.execute_inner(
+            #[cfg(feature = "profile-campaign")]
+            openlegend_simulation::profile::sites::TURN_OTHER,
             |session| Ok(ApplicationStart::Candidate(begin(session)?)),
             answer,
             stage,
@@ -1027,6 +1131,7 @@ impl HostedWorld {
 
     async fn execute_inner<T, B, Q, A, R, F, S>(
         self: &Arc<Self>,
+        #[cfg(feature = "profile-campaign")] holder: openlegend_simulation::profile::Site,
         begin: B,
         mut answer: Q,
         stage: A,
@@ -1053,13 +1158,16 @@ impl HostedWorld {
         let (mut sender, receiver) = oneshot::channel();
         // Once a private candidate exists, cancellation must still join its
         // rollback even when the caller drops its future.
-        self.operations.spawn(async move {
+        #[cfg(feature = "profile-campaign")]
+        let parent = openlegend_simulation::profile::current();
+        let operation = async move {
             let result = async {
-                let _turn = tokio::select! {
+                let guard = tokio::select! {
                     biased;
                     _ = sender.closed() => return Err(HostError::Cancelled.into()),
-                    turn = tokio::time::timeout(TURN_WAIT, world.turn.lock()) => turn.map_err(|_| HostError::Busy)?,
+                    turn = wait_for_turn(world.turn.lock()) => turn?,
                 };
+                let _turn = held_turn(guard, #[cfg(feature = "profile-campaign")] holder);
                 drop(queued);
                 if world.closing.load(Ordering::Acquire) {
                     world.require_recovered()?;
@@ -1098,7 +1206,7 @@ impl HostedWorld {
                                 supplied = Some(tokio::select! {
                                     biased;
                                     _ = sender.closed() => return Err(HostError::Cancelled.into()),
-                                    result = answer(ticket) => result?,
+                                    result = openlegend_simulation::profile_result!(QUESTION, answer(ticket)) => result?,
                                 });
                             }
                             RuntimeDirectStep::Preview(value) => return Ok(Some(value)),
@@ -1119,7 +1227,10 @@ impl HostedWorld {
             }
             .await;
             let _ = sender.send(result);
-        });
+        };
+        #[cfg(feature = "profile-campaign")]
+        let operation = openlegend_simulation::profile::carry(parent, operation);
+        self.operations.spawn(operation);
         receiver.await.map_err(|_| HostError::WorkerFailed)?
     }
 
@@ -1171,7 +1282,12 @@ impl HostedWorld {
     /// Call after the save owner has drained the last accepted prefix.
     pub async fn stop(self: &Arc<Self>) -> Result<(), WorldError> {
         self.closing.store(true, Ordering::Release);
-        let _turn = self.turn.lock().await;
+        let guard = self.turn.lock().await;
+        let _turn = held_turn(
+            guard,
+            #[cfg(feature = "profile-campaign")]
+            openlegend_simulation::profile::sites::TURN_OTHER,
+        );
         self.require_recovered()?;
         self.call(|session| session.finish_stop()).await
     }

@@ -27,6 +27,8 @@ mod player_stream;
 mod player_view;
 mod presence;
 mod privacy_edit;
+#[cfg(feature = "profile-campaign")]
+mod profile;
 mod provider_transport;
 mod socket;
 pub mod spatial;
