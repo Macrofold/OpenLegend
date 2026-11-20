@@ -7,16 +7,38 @@ use indexmap::{IndexMap, IndexSet};
 use std::collections::BTreeMap;
 use std::mem::size_of;
 
+fn touches_rows(changes: &ChangedRows, table: &str) -> bool {
+    changes.writes.contains_key(table) || changes.deletes.contains_key(table)
+}
+
+fn affected_tables(changes: &ChangedRows) -> impl Iterator<Item = &String> {
+    changes.writes.keys().chain(
+        changes
+            .deletes
+            .keys()
+            .filter(|&table| !changes.writes.contains_key(table)),
+    )
+}
+
 /// Folding moves immutable payloads and SQL cells; it does not copy their rich
 /// bodies. Fund the actual temporary key indexes, row vectors and mask/reference
 /// sets separately from the persistent pending-save bytes.
 pub(crate) fn merge_workspace_bound(previous: &ChangedRows, next: &ChangedRows) -> Option<usize> {
+    workspace_bound(previous, next, false)
+}
+
+pub(super) fn pending_workspace_bound(previous: &ChangedRows, next: &ChangedRows) -> Option<usize> {
+    workspace_bound(previous, next, true)
+}
+
+fn workspace_bound(previous: &ChangedRows, next: &ChangedRows, pending: bool) -> Option<usize> {
     let mut bytes = size_of::<ChangedRows>();
-    for (table, _) in previous.writes.iter().chain(
-        next.writes
-            .iter()
-            .filter(|(table, _)| !previous.writes.contains_key(*table)),
-    ) {
+    for table in previous
+        .writes
+        .keys()
+        .filter(|table| !pending || touches_rows(next, table))
+        .chain(next.writes.keys().filter(|&table| !previous.writes.contains_key(table)))
+    {
         let incoming = next.writes.get(table).map_or(0, Vec::len);
         let old = previous.writes.get(table).map_or(0, Vec::len);
         let count = old.checked_add(incoming)?;
@@ -57,15 +79,17 @@ pub(crate) fn merge_workspace_bound(previous: &ChangedRows, next: &ChangedRows) 
             }
         }
     }
-    for (before, after) in [
-        (&previous.deletes, &next.deletes),
-        (&previous.expired, &next.expired),
+    for (before, after, deletes) in [
+        (&previous.deletes, &next.deletes, true),
+        (&previous.expired, &next.expired, false),
     ] {
-        for (table, _) in before.iter().chain(
-            after
-                .iter()
-                .filter(|(table, _)| !before.contains_key(*table)),
-        ) {
+        for table in before
+            .keys()
+            .filter(|table| {
+                !pending || after.contains_key(*table) || (deletes && next.writes.contains_key(*table))
+            })
+            .chain(after.keys().filter(|&table| !before.contains_key(table)))
+        {
             let count = before
                 .get(table)
                 .map_or(0, Vec::len)
@@ -79,6 +103,22 @@ pub(crate) fn merge_workspace_bound(previous: &ChangedRows, next: &ChangedRows) 
                 .checked_add(count.checked_mul(4)?.checked_mul(size_of::<String>())?)?
                 .checked_add(count.checked_mul(tree_node_bound::<&String, ()>()?)?)?;
         }
+    }
+    if pending {
+        // Fund the selected tables' temporary carrier before removing them
+        // from the live suffix. Row bodies themselves move without a copy.
+        let row_node = tree_node_bound::<String, Vec<ChangedRow>>()?;
+        let id_node = tree_node_bound::<String, Vec<String>>()?;
+        for table in affected_tables(next) {
+            if previous.writes.contains_key(table) {
+                bytes = bytes.checked_add(row_node)?;
+            }
+            if previous.deletes.contains_key(table) {
+                bytes = bytes.checked_add(id_node)?;
+            }
+        }
+        let expired = next.expired.keys().filter(|&table| previous.expired.contains_key(table));
+        bytes = bytes.checked_add(expired.count().checked_mul(id_node)?)?;
     }
     Some(bytes)
 }
@@ -157,6 +197,58 @@ pub(crate) fn merge_changes(
     // cannot silently become an accepted partial save.
     schema.validate_changes(&previous)?;
     schema.validate_changes(&next)?;
+    fold_validated(previous, next, schema)
+}
+
+/// Settle the already admitted ordinary suffix. Previous rows were validated
+/// before acceptance, and the candidate owns a validated incoming product.
+/// Only touched tables need the fold, its key indexes, or a new heap count.
+pub(super) fn merge_pending(
+    suffix: &mut ChangedRows,
+    next: ChangedRows,
+    schema: &RecordSchema,
+    before_bytes: usize,
+) -> Result<usize, RecordEncodingError> {
+    let bound = || RecordEncodingError("Pending save exceeds its admitted row bound.");
+    let mut previous = ChangedRows::default();
+    for table in affected_tables(&next) {
+        if let Some((table, rows)) = suffix.writes.remove_entry(table) {
+            previous.rows = previous.rows.checked_add(rows.len()).ok_or_else(bound)?;
+            previous.writes.insert(table, rows);
+        }
+        if let Some((table, ids)) = suffix.deletes.remove_entry(table) {
+            previous.deletes.insert(table, ids);
+        }
+    }
+    for table in next.expired.keys() {
+        if let Some((table, ids)) = suffix.expired.remove_entry(table) {
+            previous.expired.insert(table, ids);
+        }
+    }
+    suffix.rows = suffix.rows.checked_sub(previous.rows).ok_or_else(bound)?;
+    crate::profile_count!(PENDING_REVISITED, previous.rows as u64);
+    crate::profile_count!(PENDING_UNTOUCHED, suffix.rows as u64);
+    let unaffected = before_bytes
+        .checked_sub(super::save::changes_heap(&previous).ok_or_else(bound)?)
+        .ok_or_else(bound)?;
+    let merged = fold_validated(previous, next, schema)?;
+    let actual = unaffected
+        .checked_add(super::save::changes_heap(&merged).ok_or_else(bound)?)
+        .ok_or_else(bound)?;
+    suffix.rows = suffix.rows.checked_add(merged.rows).ok_or_else(bound)?;
+    // Insert the selected disjoint tables without rebuilding the other
+    // branches of the existing B-trees.
+    suffix.writes.extend(merged.writes);
+    suffix.deletes.extend(merged.deletes);
+    suffix.expired.extend(merged.expired);
+    Ok(actual)
+}
+
+fn fold_validated(
+    previous: ChangedRows,
+    next: ChangedRows,
+    schema: &RecordSchema,
+) -> Result<ChangedRows, RecordEncodingError> {
     let mut writes: BTreeMap<String, IndexMap<String, ChangedRow>> = previous
         .writes
         .into_iter()

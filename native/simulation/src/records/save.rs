@@ -3,7 +3,7 @@
 //! before admission here, and SQL still runs through the existing transaction.
 
 use super::SqlCell;
-use super::merge::{merge_changes, merge_workspace_bound};
+use super::merge::{merge_changes, merge_pending, merge_workspace_bound, pending_workspace_bound};
 use super::{ChangedRows, RecordEncodingError, RecordSchema, SaveRows};
 use crate::host::retained_size::tree_node_bound;
 use crate::host::{AcceptedCandidate, ByteBudget, ByteReservation, CandidateKey};
@@ -298,7 +298,7 @@ impl SaveJournal {
         let workspace_bytes = if unchanged {
             0
         } else {
-            merge_workspace_bound(&self.suffix, &changes).ok_or(SaveError::Capacity)?
+            pending_workspace_bound(&self.suffix, &changes).ok_or(SaveError::Capacity)?
         };
         let workspace = scratch
             .reserve(workspace_bytes)
@@ -410,14 +410,18 @@ impl SaveJournal {
             return Ok(());
         }
         let previous_guard = std::mem::replace(&mut self.suffix_reservation, pending.reservation);
+        let before_bytes = previous_guard.bytes();
         self.suffix_reservation
             .merge(previous_guard)
             .expect("same pending-save owner, preflighted complete capacity");
         let peak = self.suffix_reservation.bytes();
-        let previous = std::mem::take(&mut self.suffix);
-        self.suffix = merge_changes(previous, pending.changes, &pending.schema)
-            .expect("validated immutable canonical row merge");
-        let actual = changes_heap(&self.suffix).expect("merged output bounded by admitted inputs");
+        let actual = merge_pending(
+            &mut self.suffix,
+            pending.changes,
+            &pending.schema,
+            before_bytes,
+        )
+        .expect("validated immutable canonical row merge");
         assert!(
             actual <= peak,
             "merged output capacity exceeds its preflight bound"
@@ -662,7 +666,7 @@ fn strings_heap(values: &Vec<String>) -> Option<usize> {
         |sum, value| sum.checked_add(value.capacity()),
     )
 }
-fn changes_heap(changes: &ChangedRows) -> Option<usize> {
+pub(super) fn changes_heap(changes: &ChangedRows) -> Option<usize> {
     let writes = tree_heap(&changes.writes, |table, rows| {
         rows.iter().try_fold(
             table.capacity().checked_add(
