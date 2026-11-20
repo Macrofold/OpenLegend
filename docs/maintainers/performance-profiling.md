@@ -1,8 +1,8 @@
 # Native and full-server profiling
 
-Use the section for the tool you intend to run. The game fixtures launched by the commands below run the TypeScript simulation. In names such as `stress-native.ts`, “native” means deterministic game rules without a model making decisions. The script imports the domain package’s `advanceWorld`; its results do not measure the Rust simulation service.
+Use the section for the tool you intend to run. In the older TypeScript tools, names such as `stress-native.ts` refer to deterministic game rules without a model making decisions. Those tools call the domain package’s `advanceWorld` and measure the TypeScript simulation.
 
-For the **stand-alone Rust executable**, start with the [measured gameplay workload](../benchmarks/native-runtime-foundations/2026/2026-11-18-rust-game-server.md#required-work-and-evidence) and the [proposed Rust profiling procedure](../projects/profiling-controls/rust-server.md).
+For the **stand-alone Rust executable**, use the [Rust campaign commands](#stand-alone-rust-campaigns) with the [measured gameplay workload](../benchmarks/native-runtime-foundations/2026/2026-11-18-rust-game-server.md#required-work-and-evidence).
 
 | What do you need to observe?                                                                | Installed tool and instructions                                                                      |
 | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
@@ -21,8 +21,11 @@ Use the [Rust campaign design](../projects/profiling-controls/rust-server.md) to
 
 - `node --import tsx scripts/performance/profile-campaign.ts plan INPUT.json` freezes a private plan and emits `worker-plan.json`. Supply full `gameSource` and `toolSource` commits, the OpenLegend `verificationDirectory`, an unused private `outputDirectory`, and the task's authorized `cloudAllocationId`, `authorizationRef` and `limitUsd`. Set `taskId` to the managed allocation's exact task ID. It defaults to the report's campaign `id` when the two are the same. Set `repetitions` to 3 and `seed` to 1086. Set campaign and case deadlines to include build, play, drain and worker cleanup.
 - Set `select` to the metric IDs to instrument. Each `comparisons` item declares `id`, `baseline`, `measured`, `workToleranceGameSeconds` and any `internalWorkTolerance`. An enabled recorder can override `probeIds` and use `samplingProbability` of 1, 1/8 or 1/64. Freeze tolerances from the workload before dispatch. The planner resolves the pinned worker input manifests or verifies extracted bundles under `rust-profile-inputs/<archiveSha256>` in the private verification directory.
+- A campaign that selects the world-turn wait probe (`S02.wait.turn`) collects a bounded trace of waits and holders. Other probe families use whole-window counters and distributions without allocating a trace.
 - Use the [managed runner](../../.agents/rules/verification-workers.md#run-lifecycle) to admit, execute and collect `worker-plan.json`. One job keeps six arms in A–B, B–A, A–B order. Recorder off/on and sampler off/on use three two-arm runner cases so each pair can execute the same verified binary. Both arms still get separate databases and result directories. The runner calls `case CASE_ID PLAN.json OUTPUT` inside the owned worker. The server uses an inherited control pipe only in enabled recorder cases.
 - `node --import tsx scripts/performance/profile-campaign.ts summarize CAMPAIGN_DIRECTORY [COLLECTED_DIRECTORY]` verifies collected artifacts and produces the offline report. Preserve failed and missing repetitions. Read qualification, work and resource results together.
+
+To restore inputs on a clean checkout, use the campaign and archive hashes in [the pinned input list](../../scripts/performance/rust-profile/frozen-inputs.json). The managed runner retains each original as `workers/campaigns/<campaign>/inputs/<sha256>.tar.gz` in the verification directory. Check the archive against `archiveSha256` before extracting its members into a new private `rust-profile-inputs/<archiveSha256>` directory. The planner checks every member before handing the inputs back to the runner.
 
 ## Choose collection explicitly
 

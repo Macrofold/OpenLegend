@@ -186,7 +186,7 @@ Implementation and verification: [PC01–PC06](../maintainers/profiling-controls
 
 ## OB03 — Hierarchical campaign measurement
 
-**Designed, not installed — November 7, 2026 · Restrictiveness: Safe for gameplay; measurement resolution is explicitly limited.**
+**Designed for TypeScript November 7, 2026 · Installed for the opt-in Rust build November 20, 2026 · Restrictiveness: Safe for gameplay; measurement resolution is explicitly limited.**
 
 The [procedure](../performance/hierarchical-profiling.md#4-instrumentation-with-bounded-disturbance) owns campaign recorder settings: 32 active timing series, up to 8 MiB for aggregates and an additional 64 MiB for optional tracing per isolate per case (72 MiB combined, including bookkeeping), 4,096 unfinished tokens, 1-microsecond-to-one-hour histogram with 1% successive bin widths, and leaf sampling probabilities 1, 1/8 and 1/64. Split cases when limits would lose required coverage; do not widen normal gameplay diagnostics or silently truncate. Tail estimates disclose histogram precision, overflow, omitted/censored observations and provisional p95/p99 below 100/1,000 samples. Three repetitions report run means/ranges and separate pooled statistics, not a confidence guarantee.
 
@@ -194,4 +194,4 @@ Reason: bound observer work/retention without pretending exact tiny timings or r
 
 The inventory's finite campaign, task-specific budget, machine choices and output retention are operational choices, not game limits. No per-entity metric names, unbounded raw buffers, synchronous measured-path output, new telemetry service or automatic optimization loop. [PC07–PC10](../maintainers/profiling-controls.md#hierarchical-server-measurements) own implementation and acceptance; LA209/LA210/OB01/OB02 keep their installed scopes.
 
-The proposed Rust recorder applies the series, token, aggregate and optional trace allowances once per server process. Its asynchronous tasks and compute threads share these allowances. This bounds diagnostic memory as worker count grows. Instrumentation has separate custody from admitted game memory. Loss or exhaustion affects measurement coverage. The same overhead gates apply to Rust process CPU and combined Rust plus dedicated PostgreSQL CPU per completed work unit. [Design and qualification](../projects/profiling-controls/rust-server.md#3-add-one-bounded-rust-recorder)
+The Rust recorder applies these series, token, aggregate and optional trace allowances once per server process across asynchronous tasks and compute threads. Instrumentation owns separate memory from the game. Loss or exhaustion affects measurement coverage. The same overhead gates apply to Rust process CPU and combined Rust plus dedicated PostgreSQL CPU per completed work unit. [Design](../projects/profiling-controls/rust-server.md#3-add-one-bounded-rust-recorder), [qualification](../maintainers/profiling-controls.md#stand-alone-rust-server)

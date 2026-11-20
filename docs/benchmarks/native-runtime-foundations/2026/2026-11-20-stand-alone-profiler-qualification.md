@@ -1,0 +1,110 @@
+# Stand-alone Rust profiler qualification — November 20, 2026
+
+## Workload and measurement
+
+The standard AWS worker has four logical cores and 16 GiB RAM. Each repetition uses an independent PostgreSQL database. The selected opening has one player, ten active human NPCs, ten deer, five hares and 1,246 scenery records. The driver offers 34 walks, including two in the ten-second warmup, two held steering gestures, and two controlled conversations that must save exactly once. The following 180 real seconds use the ordinary 60:1 clock, a 2 GiB transient allowance, a permitted live stream and one-second saves. Drain, cold reopening and shutdown have separate checks.
+
+Server CPU includes its native worker and asynchronous runtime threads. PostgreSQL CPU is measured for its exclusive process group. The HTTP client and driver have separate counters. Movement receipt means that the client saw the position change in the stream. A functional Chromium scenario separately verifies actual display. Durable receipt time includes the database observer's polling interval. The timed client has no browser-render or reconnect sample. The permitted stream estimates accepted game time at each window edge. It does not expose the clock owner's debt.
+
+## Steady gameplay
+
+Each row reports median / average / p95 across three complete 180-second runs on that comparison's assigned worker. With three samples, the p95 is the highest observed run. These are absolute observations for the named versions and instruments. The paired overhead gates below are separate.
+
+| Comparison and arm                    | Server CPU (% of one core) | PostgreSQL CPU (% of one core) | Intended game speed achieved (%) | Server + PostgreSQL (CPU ms/game-second) |
+| ------------------------------------- | -------------------------: | -----------------------------: | -------------------------------: | ---------------------------------------: |
+| Stock: untouched                      |      65.80 / 65.93 / 68.22 |             8.04 / 8.19 / 8.56 |         100.03 / 100.03 / 100.06 |                    12.30 / 12.35 / 12.80 |
+| Stock: normal build                   |      67.14 / 65.90 / 69.22 |             8.14 / 8.11 / 8.20 |         100.00 / 100.00 / 100.03 |                    12.54 / 12.33 / 12.90 |
+| Dormant: untouched                    |      59.07 / 59.58 / 61.37 |             7.44 / 7.48 / 7.69 |         100.00 / 100.00 / 100.03 |                    11.06 / 11.18 / 11.51 |
+| Dormant: feature built, recorder off  |      64.57 / 65.33 / 68.52 |             7.87 / 7.79 / 8.02 |         100.00 / 100.01 / 100.03 |                    12.07 / 12.18 / 12.76 |
+| Compiler: normal build                |      72.70 / 70.05 / 73.23 |             8.90 / 8.68 / 8.95 |         100.01 / 100.01 / 100.03 |                    13.60 / 13.12 / 13.70 |
+| Compiler: frame pointers, sampler off |      65.98 / 66.09 / 66.98 |             8.10 / 8.12 / 8.30 |         100.03 / 100.02 / 100.03 |                    12.32 / 12.37 / 12.54 |
+| SQL: no relay                         |      65.44 / 65.46 / 68.31 |             7.99 / 7.94 / 8.06 |         100.01 / 100.01 / 100.03 |                    12.25 / 12.23 / 12.72 |
+| SQL: wire relay                       |      68.55 / 70.06 / 75.26 |             8.32 / 8.50 / 8.88 |         100.03 / 100.03 / 100.05 |                    12.81 / 13.09 / 14.02 |
+| Initial clock: recorder off           |      72.12 / 71.37 / 73.76 |             8.63 / 8.50 / 8.65 |         100.02 / 100.02 / 100.06 |                    13.45 / 13.31 / 13.73 |
+| Initial clock: recorder on            |      72.52 / 71.68 / 72.78 |             8.62 / 8.62 / 8.68 |         100.05 / 100.06 / 100.09 |                    13.52 / 13.38 / 13.56 |
+| CPU: sampler off                      |      69.29 / 69.12 / 70.64 |             8.52 / 8.41 / 8.66 |         100.05 / 100.04 / 100.06 |                    12.96 / 12.92 / 13.21 |
+| CPU: sampler on                       |      66.74 / 68.30 / 74.18 |             8.13 / 8.30 / 8.65 |         100.06 / 100.05 / 100.07 |                    12.47 / 12.76 / 13.80 |
+| Corrected clock: recorder off         |      72.03 / 70.98 / 75.59 |             9.03 / 8.86 / 9.19 |         100.03 / 100.03 / 100.05 |                    13.51 / 13.30 / 14.12 |
+| Corrected clock: recorder on          |      72.29 / 71.21 / 72.96 |             8.65 / 8.59 / 8.80 |         100.00 / 100.02 / 100.06 |                    13.49 / 13.30 / 13.63 |
+| Attention: recorder off               |      72.03 / 71.55 / 72.55 |             8.75 / 8.78 / 8.92 |         100.06 / 100.03 / 100.06 |                    13.44 / 13.38 / 13.55 |
+| Attention: recorder on                |      71.95 / 72.70 / 75.05 |             8.69 / 8.68 / 8.77 |         100.06 / 100.05 / 100.06 |                    13.43 / 13.56 / 13.96 |
+
+In the **normal stock build**, steady walks had a median / average / p95 of **9.2 / 15.6 / 49.5 ms** to response, **80.0 / 79.3 / 130.7 ms** to first affected stream receipt and **618.6 / 623.8 / 1,112.4 ms** to observed durability, pooled over 96 successful walks. Cold reopening was **1,369 / 1,353 / 1,404 ms** across three runs. The client and driver used **0.82%** and **1.44%** of a core at the median. Server RSS plus PostgreSQL memory peaked at a sampled **772 MiB** at the median. Median steady WAL was **132.2 MiB** and database growth was **48.0 MiB**.
+
+The stock pair's observed changes in combined CPU per completed game-second ranged from −3.31% to +4.91%. Two command p95 increases exceeded the paired allowance. All three dormant comparisons used more combined CPU per game-second with the feature compiled in, even with recording off. Their median paired increase was 9.12%. Use the normal release for gameplay. The frame-pointer build showed mixed paired changes (−10.70% to +3.98%) in the separate unsampled comparison.
+
+## What used server CPU
+
+All three sampler pairs finished the complete gameplay workload using the same executable on both sides of each pair. The enabled arms collected **36,884 steady stacks** across six sampled threads per run, at about 100 samples per second of accounted server CPU. There were no timer errors, reported drops or overruns. The stack depth limit cut off 5.35% of stacks. The table assigns each stack once to the closest recognized source owner. Kernel CPU and application ancestry hidden by short stacks remain unresolved. Estimated core use applies to the sampled runs.
+
+| Closest recognized source owner                              | Share of steady CPU samples | Approximate percentage points of one core during the sampled runs |
+| ------------------------------------------------------------ | --------------------------: | ----------------------------------------------------------------: |
+| Sight, hearing, private perception and observation recording |                      30.82% |                                                              21.0 |
+| Attention, warnings and relationship checks                  |                       8.54% |                                                               5.8 |
+| NPC decisions, evidence preparation and provider handling    |                       8.52% |                                                               5.8 |
+| Other simulation and scheduling                              |                       8.17% |                                                               5.6 |
+| Preparing, merging and encoding changed records              |                       7.77% |                                                               5.3 |
+| Server-side database adapter, saving and acknowledgement     |                       5.54% |                                                               3.8 |
+| Player view and stream                                       |                       4.55% |                                                               3.1 |
+| Geometry and navigation                                      |                       2.84% |                                                               1.9 |
+| Direct wildlife behavior                                     |                       0.28% |                                                               0.2 |
+| Other recognized owners                                      |                      11.83% |                                                               8.1 |
+| No mapped application owner                                  |                      11.14% |                                                               7.6 |
+
+Perception and attention accounted for about **39%** of sampled server CPU. Direct deer and hare behavior was small by itself. Their movement can still cause many other characters to update what they see and remember. A separate view of the same stacks found serialization in 18.35%, clone or drop work in 18.11%, and hashing or equality checks in 17.23%. These categories overlap the owners above and each other. They help find repeated preparation.
+
+Combined CPU per game-second moved by −0.80%, −9.09% and +6.43% across the sampler pairs. One command p95 rose from 27.62 to 58.59 ms. Keep the stacks for diagnosis. The sampler exceeds the latency gate in that pair and lacks exact Linux replay proof.
+
+## Direct attention and clock evidence
+
+The three attention recordings counted **19.31–22.08 perception segments per game-second**, **0.25–0.33 event-receiving steps**, and **0.83–1.02 attention updates**. A segment can be one of several steps in the same observation. The shared candidate builder ran **2.28–2.60 times per game-second** across its callers. The ordinary attention update prepared **18.13–18.74 candidates per build**. Only 3.01–3.71% of its recorded choices reused the previous selection. The update still builds candidates on reuse to keep source and relation information current. Calls to the ranking path are opportunities to choose again. Some can keep existing winners.
+
+Attention's aggregates had zero recording losses. Roughly 61–64% of builder calls occurred outside the ordinary attention update. Source identifies authorized reads, relation checks and response checks as other callers. The optional raw timeline overflowed after about 14 seconds, so the full-run cost split among those callers is unknown. The tool allocates raw trace space only for a selected turn-wait pass. A focused real call captured 50 candidate preparations with no raw tracing and no recording loss. The timed attention runs retain their original trace settings. `native-runtime-foundations/pc12-clock-trace-review.WWdo08/non-join-trace-policy/compact.json`.
+
+The corrected clock recordings each joined a real steady turn from its wait through worker execution and a yielded question to a positive accepted time. The joined turns advanced about 3.993, 0.044 and 2.442 game-seconds. They explain individual observed turns. Across the full windows, 2.44–2.85 million observation losses and 4.22–5.05 million trace omissions leave the overall timing distribution incomplete. Keep high-volume joined traces for diagnosis. A full-window overhead claim still requires narrower loss-free instrumentation and matched replay.
+
+## PostgreSQL wire pass
+
+The three relay runs observed **52,751–55,576 application statements per 180 seconds**, about **293–309 per real second**. They carried 60,507–62,229 returned wire rows and 33.8–35.9 MB of DataRow payload. Bind frames occupied 204.5–240.1 MB. Those byte counts cover actual wire frames, including framing where applicable. The relay recorded no errors or partial frames. The PostgreSQL process group also includes the driver's independent receipt and boundary reads. This pass gives aggregate query and transfer counts. It does not attribute database CPU by query family.
+
+The median paired combined CPU increase with the relay was 9.22%. The driver's median rose from 1.41% to 5.01% of a core. Use unrelayed runs for latency. The record identifies a high volume of repeated statements and transfers worth tracing through the actual readers. Counts alone do not identify which queries can be removed.
+
+## Connected correctness
+
+- The same feature-capable Mac executable checked actual Chromium movement with recording disabled and enabled. Both runs displayed a new position before and after restart, recovered the original session's saved receipt with two exact retries, refused the same command ID with a changed body, excluded unauthorized state and closed a live stream on shutdown. The enabled run measured four command calls, one reset and 57 patches with zero reported loss. These are functional observations. `native-runtime-foundations/pc12-profile-exact-replay-20261120/chromium/comparison.json`, SHA-256 `ee2e47fc8b4d7ccb5ebe3378064c9f840175dae9d4b2aa870c390cb9b625bb05`.
+- A fixed replay through the real Rust world service compared elapsed inputs, admission refusal and retry, canonical effects, saved randomness and cold continuation. The recorder stopped with a real native question outstanding. That question was censored, and all 21 new questions finished after rearm with no carry-in from the old capture. On the final recorder, authenticated play produced 39 complete steady clock joins, including a yielded host question and accepted game time. Zero trace rows started before the cutoff, and two carry-ins remained in the clipped aggregates. That live check reported 81 aggregate omissions and zero trace overflow. `native-runtime-foundations/pc12-clock-trace-review.WWdo08/warmup-fence/compact.json`.
+- With a held real compute worker, one admitted job canceled before its body ran and another was refused at capacity. An invalid private recorder command ended observation while ordinary world work continued. A deliberate panic in an isolated real worker closed the world to new mutation, and the existing shutdown reported poison and retired the pool. Diagnostic slot exhaustion kept the accepted job running and reported missing observations separately. `native-runtime-foundations/pc12-clock-trace-review.WWdo08/worker-safety/recheck/compact.json`.
+- A real native question kept the world turn while a separate read waited. Canceling the first operation rolled it back, and the waiter read the same accepted cut. The recorder saw the holder overlap the wait, with zero lost observations. `native-runtime-foundations/pc12-clock-trace-review.WWdo08/held-turn-cancel/compact.json`.
+- Controlled HTTPS conversations retained the same five authored generation identities and permitted quotations, with one saved reply, zero effects after cancellation and no dispatch after evidence withdrawal. Normal clock progression changed some complete prepared inputs, so the comparison supplies caller and privacy evidence. Forgetting removed speech from later views and after reopening. With one transport stalled, a healthy stream received two movements. Logout prevented stale queued bytes from crossing the permission boundary. An independently held SQL reader kept its original version through a background save, and fresh and cold readers saw the newer result. `native-runtime-foundations/pc12-profile-exact-replay-20261120`.
+- A clean private extraction of the archives restored all six input families through their pinned hashes. The planner refused a changed member. All seven case modes stage from a read-only tool mount. Native server and bridge builds, the feature build, type checking, scoped formatting and the network checks pass. The offline reader refused corrupt or mismatched evidence and kept missing, censored and lossy rows out of overhead qualification.
+
+## Interpretation and limits
+
+The recorder measures elapsed execution segments and waits. External instruction samples answer a different question about CPU, and PostgreSQL elapsed query time includes waiting. These measurements are separate. Allocation reservations and sampled process memory are reported separately. A Rust allocation-site backend has no qualification.
+
+The first three clock-recording repetitions completed gameplay. Their raw traces filled during warmup and ended about ten seconds before steady play. They omitted 2.37–2.95 million observations and 5.01–5.49 million trace rows. Their aggregate accepted-work counts covered about 29–31% of offered game time. Those runs establish the coverage failure and keep their ordinary whole-process receipts. Their individual timings cannot explain a full steady-play turn.
+
+Qualification requires an exact fixed-work proof for the measured Linux executables and their probe selections. The fixed service replay and real browser checks supply narrower evidence. The current server's production clock derives offers from its monotonic clock, and the exact game time is part of the NPC's rendered input. The automatic-clock runs cannot serve as deterministic replay of those inputs. Reports keep such comparisons unqualified and expose missing proof, actual work, instrumentation loss and threshold failures.
+
+Read the earlier [exclusive CPU breakdown and game mechanics analysis](2026-11-20-stand-alone-cpu-profile.md#where-the-cpu-went) for the existing interpretation of perception, attention, animal reactions and save work on its original source. [Profiler scope and status](../../../maintainers/profiling-controls.md#stand-alone-rust-server)
+
+## Attempts and provenance
+
+The pinned gameplay commit in Macrofold/OpenLegend is `077bf457f538a068105dfaf3027b3bce89d53e66`. Stock, dormant, compiler and SQL wire comparisons used tooling at `b59c5b980`. The first clock comparison used `28fb13b86f5f61c735e7c17a8457c1f74f9aa20b`. The corrected same-executable pairs used snapshot `db9cb9c5beb08c92cfd986f0c5431f60c4927638` with the profiling fixes applied to the same frozen gameplay. The plan and per-arm worker receipts hold the exact archive, toolchain, executable and input hashes. Later gameplay commits on `codex/native-simulation-proof` are outside these measurements.
+
+The private report index is `native-runtime-foundations/pc11-pc13-20261120.ErwFEeiz/index.html` under the OpenLegend verification directory. Its `REPORT-SHA256SUMS` seals the offline HTML, JSON and CSV. Each comparison links to its own checked report and retains the failed or missing rows for its frozen plan.
+
+| Earlier failure                                                                                             | Disposition                                                                                                                                                                                                                                        |
+| ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Allocation task label mismatch, and a worker no longer available when claiming it                           | No work ran. Subsequent plans use the exact continuing allocation and the maintained pool's available worker.                                                                                                                                      |
+| Four read-only mount staging failures                                                                       | Write adapted source into newly owned files. The originals stay read-only.                                                                                                                                                                         |
+| Four early cold-reopen failures                                                                             | Keep the original authorized session when checking its receipt after restart. A different login is correctly denied access to that receipt.                                                                                                        |
+| Two paired releases exceeded the report export limit                                                        | Use the existing executable inside the same owned worker case, verify its full SHA-256, size and ownership, and use independent databases.                                                                                                         |
+| One `busy` walk in a CPU control with the sampler off                                                       | Keep the failed 33-of-34 result. The archived reply does not identify which resource refused that walk.                                                                                                                                            |
+| The sampler first attached to the preflight shell, then its exclusive file creation refused the real server | Scope sampling to the measured Rust process. Separate fixture attempts exposed a staged syntax error and incorrect parser resolution from the read-only mount. The final staged driver is checked in the checkout's pinned parser before building. |
+
+## Collection and cost
+
+Eight comparisons exported all 48 logical runs, including the six initial clock cases with lost trace coverage. Cleanup and settlement are confirmed for their owned work and the earlier attempts. The controller's confirmed estimate for settled profiler campaigns is $7.569553. At the same check the continuing task had $73.983229 in estimated charges under the $100 ceiling, including the previously recorded charges outside the worker controller. The shared allocation still held $1.492119 for open work. These are controller estimates, not an invoice.
+
+The separate database-phase comparison `4c93faf5-4c24-4312-8151-c15387ef39d0` completed its first paired case before the OpenLegend login expired. Its original durable plan remains with the controller. The rest of its results, worker stop and final spending need an authenticated status and collection check.

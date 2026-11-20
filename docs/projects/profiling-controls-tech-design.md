@@ -1,8 +1,8 @@
 # Optional performance profiling — technical design
 
-| Status      | Current progress                                                                                                   | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Default-off TypeScript controls are installed here. Hierarchical profiling has a proposed stand-alone Rust design. | 2026-11-20   |
+| Status      | Current progress                                                                                                                             | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Default-off TypeScript controls and the stand-alone Rust recorder and campaign tools are installed. Overhead qualification remains separate. | 2026-11-20   |
 
 **Technical design used for review — October 18, 2026, 00:02 EDT.** Architecture and its dated implementation reconciliations remain the design reference; the current review preserves their authority and world boundaries.
 
