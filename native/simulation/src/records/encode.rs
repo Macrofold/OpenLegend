@@ -10,6 +10,7 @@ use crate::host::retained_size::map_storage;
 use crate::host::{ByteBudget, ByteReservation};
 use indexmap::IndexMap;
 use serde::Serialize;
+use std::io;
 use std::mem::size_of;
 
 #[derive(Default)]
@@ -59,6 +60,23 @@ fn strings_bytes(values: Option<&[String]>) -> Option<usize> {
         |bytes, value| bytes.checked_add(value.len()),
     )
 }
+
+struct AdmittedRowBody(Vec<u8>);
+
+impl io::Write for AdmittedRowBody {
+    fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
+        if bytes.len() > self.0.capacity() - self.0.len() {
+            return Err(io::ErrorKind::WriteZero.into());
+        }
+        self.0.extend_from_slice(bytes);
+        Ok(bytes.len())
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+}
+
 impl<'a> RowEncoder<'a> {
     pub(crate) fn new(
         schema: &'a RecordSchema,
@@ -169,6 +187,41 @@ impl<'a> RowEncoder<'a> {
         effects: RowEffects<'_>,
     ) -> Result<(), RecordEncodingError> {
         self.write_projected(table, placement, value, extra, create, effects, None)
+    }
+    /// Encode an already-selected plain leaf once into a funded buffer. The
+    /// caller supplies a payload bound for its typed record. If the bound
+    /// cannot be admitted, the ordinary exact-size path still owns the row.
+    pub(crate) fn write_bounded_plain<T: Serialize>(
+        &mut self,
+        table: &str,
+        placement: &RecordPlacement,
+        value: &T,
+        create: bool,
+        bound: Option<usize>,
+    ) -> Result<(), RecordEncodingError> {
+        let effects = RowEffects::default();
+        let layout = self.schema.layout(table)?;
+        let Some(bound) = bound.filter(|_| {
+            layout.codec == super::RecordCodec::Plain
+                && layout.children.is_empty()
+                && layout.columns.is_empty()
+        }) else {
+            return self.write(table, placement, value, &[], create, effects);
+        };
+        let bytes = self.row_bound(table, placement, bound, &[], &effects)?;
+        if self.reserve(bytes).is_err() {
+            return self.write(table, placement, value, &[], create, effects);
+        }
+        let mut body = AdmittedRowBody(Vec::new());
+        body.0.try_reserve_exact(bound).map_err(|_| error())?;
+        if body.0.capacity() > bound {
+            return Err(error());
+        }
+        crate::encoding::write_json_record(value, &mut body)
+            .map_err(|_| RecordEncodingError("Canonical row exceeded its admitted plain codec bound."))?;
+        let payload = String::from_utf8(body.0)
+            .map_err(|_| RecordEncodingError("Canonical row encoder did not emit UTF-8."))?;
+        self.insert(table, placement, payload, &[], create, effects)
     }
     /// Finite parent headers keep their accepted encoded baseline. Compare the
     /// actual storage projection, including JavaScript number normalization,
