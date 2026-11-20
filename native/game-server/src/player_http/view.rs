@@ -40,6 +40,7 @@ pub(super) fn router(
     Router::new()
         .route("/api/state", get(state_view))
         .route("/api/events", get(events))
+        .route("/api/profile", get(profile))
         .with_state(state)
 }
 
@@ -103,7 +104,7 @@ impl Views {
             authority
                 .current(&scope, Capability::Play, false, |_, _| ())
                 .map_err(world_access)?;
-            let (telemetry, profile) = game
+            let (telemetry, narrator) = game
                 .store
                 .player_view_input(&scope.scope, self.display)
                 .await
@@ -114,7 +115,7 @@ impl Views {
                 &self.routes.commands,
                 &self.routes.presence,
                 telemetry,
-                profile,
+                narrator,
                 budget,
             )
             .await?;
@@ -215,6 +216,33 @@ async fn state_view(State(views): State<Arc<Views>>, headers: HeaderMap) -> Resp
         Ok((_, Some(bytes))) => json_response(StatusCode::OK, bytes),
         Ok((_, None)) => busy(),
         Err(error) => unavailable(error),
+    }
+}
+
+async fn profile(State(views): State<Arc<Views>>, headers: HeaderMap) -> Response {
+    let routes = &views.routes;
+    let Ok(_slot) = routes.capacity.try_acquire() else {
+        return busy();
+    };
+    let scope = match read_scope(&routes.authority, &headers).await {
+        Ok(scope) => scope,
+        Err(error) => return access_failure(error),
+    };
+    if let Err(error) = routes.authority.current_view(&scope, |_, _| ()) {
+        return access_failure(error);
+    }
+    let profile = match routes.game.store.player_profile(&scope.scope).await {
+        Ok(profile) => profile,
+        Err(error) => return failed(error.into()),
+    };
+    match routes.authority.current_view(&scope, |_, _| {
+        match wire::encode(&profile, b"", b"", routes.game.host.budget()) {
+            Ok(bytes) => json_response(StatusCode::OK, bytes),
+            Err(_) => busy(),
+        }
+    }) {
+        Ok(response) => response,
+        Err(error) => access_failure(error),
     }
 }
 

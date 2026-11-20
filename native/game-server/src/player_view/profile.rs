@@ -1,6 +1,6 @@
 //! Funded display data and defaults for current account preferences.
 
-use crate::store::{NarrationBanner, StoreError};
+use crate::store::StoreError;
 use openlegend_simulation::host::ByteReservation;
 use serde::{Deserialize, Serialize};
 
@@ -10,8 +10,6 @@ pub struct PlayerProfile {
     id: String,
     revision: u64,
     preferences: Preferences,
-    #[serde(skip)]
-    pub(super) narrator: Option<NarrationBanner>,
     #[serde(skip)]
     _custody: ByteReservation,
 }
@@ -83,21 +81,14 @@ impl PlayerProfile {
         id: String,
         revision: u64,
         preferences: Preferences,
-        narrator: Option<NarrationBanner>,
         custody: ByteReservation,
     ) -> Self {
         Self {
             id,
             revision,
             preferences,
-            narrator,
             _custody: custody,
         }
     }
 
-    pub(crate) fn matches(&self, other: &Self) -> bool {
-        self.id == other.id
-            && self.revision == other.revision
-            && self.preferences == other.preferences
-    }
 }

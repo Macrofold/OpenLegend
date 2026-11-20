@@ -98,7 +98,6 @@ fn same_output(
         && before.host.history.events_revision == after.host.history.events_revision
         && before.host.history.revision == after.host.history.revision
         && before.host.history.narrator == after.host.history.narrator
-        && before.profile.matches(&after.profile)
         && !PlayerChanges {
             before: before.player(old_inventory),
             after: after.player(new_inventory),
@@ -250,9 +249,6 @@ impl Serialize for GamePatch<'_> {
         }
         if before.host.history.narrator != after.host.history.narrator {
             map.serialize_entry("narrator", &after.host.history.narrator)?;
-        }
-        if !before.profile.matches(&after.profile) {
-            map.serialize_entry("profile", &after.profile)?;
         }
         if self.clock.changed() {
             map.serialize_entry("clock", &self.clock)?;

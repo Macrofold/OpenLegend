@@ -251,11 +251,6 @@ function publicView(): import('@open-legend/protocol').GameView {
       mode: 'local',
     },
     inventionPolicy: { revision: 1, playerLocked: false, agentLocked: false },
-    profile: {
-      id: 'profile:1',
-      revision: 1,
-      preferences: { showUnavailableActions: true, pauseWhenHidden: true },
-    },
     vision: { radius: 1, enabled: true, eyeHeight: 1, targetHeights: [1] },
     hearing: {
       referenceRadius: 1,

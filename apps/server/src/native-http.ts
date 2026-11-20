@@ -454,6 +454,14 @@ export async function createNativeGameServer(options: {
           await views.state(scope, response);
           return;
         }
+        if (request.method === 'GET' && url.pathname === '/api/profile') {
+          const profile = await current.profileFor(scope);
+          try {
+            return send(200, profile);
+          } finally {
+            releaseNativeProduct(profile);
+          }
+        }
         if (request.method === 'GET' && url.pathname === '/api/chat/preview') {
           const previewScope = scope;
           current.assertScope(previewScope, 'play', true);

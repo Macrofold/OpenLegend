@@ -50,6 +50,7 @@ import { useTabControl, type TabControl } from './tab-control';
 import { Narrator } from './ui/history';
 import { Journal } from './ui/journal';
 import { Settings } from './ui/settings';
+import { usePlayerProfile } from './player-profile';
 import { createRoot } from 'react-dom/client';
 import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
 import { WorldClockProvider } from './ui/event-time';
@@ -494,11 +495,10 @@ function App({
             worldId: view.worldId,
             saveTimeline: view.saveTimeline,
             godMode: view.godMode,
-            profile: view.profile,
             inventionPolicy: view.inventionPolicy,
           }
         : undefined,
-    [view?.worldId, view?.saveTimeline, view?.godMode, view?.profile, view?.inventionPolicy],
+    [view?.worldId, view?.saveTimeline, view?.godMode, view?.inventionPolicy],
   );
   const browseSettingsActions = useCallback(
     (opener: HTMLElement) => handlers.current.browseKnown(opener),
@@ -547,6 +547,11 @@ function App({
       : { phase: 'loading' as const, completed: 0, total: 0 };
   const sceneReady = sceneProgress.phase === 'ready' && !sceneError;
   const connected = transportReady && !tabPaused && !!view?.access?.controlling && sceneReady;
+  const profile = usePlayerProfile(
+    view?.access?.scope,
+    transportReady && !tabPaused,
+    open.includes('help') && settingsSection === 'graphics',
+  );
   targetingAllowed.current =
     connected &&
     !picker &&
@@ -1752,6 +1757,9 @@ function App({
     }
   }, [view, sceneError, shadowQuality, tabPaused, sceneCreated, failScene]);
   useEffect(() => {
+    scene.current?.setPlayerPreferences(profile.profile?.preferences);
+  }, [profile.profile?.preferences, sceneCreated]);
+  useEffect(() => {
     // List inspection can precede graphics. Replay once; inspect/clear own later selections.
     if (
       sceneCreated &&
@@ -2732,6 +2740,7 @@ function App({
         return (
           <Settings
             view={settingsView ?? view}
+            profile={profile}
             section={settingsSection}
             setSection={setSettingsSection}
             theme={theme}

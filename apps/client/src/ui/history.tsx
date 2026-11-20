@@ -9,7 +9,8 @@ import { LoadingIndicator } from '../design-system/loading';
 import { useEffect, useRef, useState } from 'react';
 import type { TranscriptPage, TranscriptItem } from '@open-legend/protocol';
 import { Button, IconButton } from '../design-system/components';
-import { getScoped, post } from '../api';
+import { getScoped } from '../api';
+import { savePlayerPreferences } from '../player-profile';
 import { ConversationThread } from './conversation';
 import { EventTime } from './event-time';
 import './reading.css';
@@ -100,7 +101,7 @@ function ScopedHistory({ visible = true, revision, refreshRequest = 0 }: Props) 
     const id = ++preferenceRequest.current;
     setSavingVoice(true);
     try {
-      const result = await post('/api/profile/preferences', { narratorVoice: value });
+      const result = await savePlayerPreferences({ narratorVoice: value });
       if (!mounted.current || id !== preferenceRequest.current) return;
       if (!result.ok) setError(result.message);
       else setPage((current) => (current ? { ...current, voice: value } : current));

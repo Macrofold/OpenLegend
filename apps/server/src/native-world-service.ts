@@ -64,6 +64,7 @@ import type {
   CommandInput,
   CommandReceiptResult,
   GameView,
+  PlayerProfile,
   WorldInputUpdate,
   WorldInputResult,
   WorldInputScope,
@@ -907,7 +908,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
       }
     }
   }
-  async profileFor(scope: RequestScope): Promise<GameView['profile']> {
+  async profileFor(scope: RequestScope): Promise<PlayerProfile> {
     this.assertScope(scope);
     const value = await this.profiles.read(scope.accountId, () =>
       this.readProfile(scope.accountId),
@@ -926,7 +927,7 @@ export class NativeWorldService implements NativePlayerRequestOwner {
   withoutPlayerReadScope<T>(operation: () => T): T {
     return this.reads.exit(operation);
   }
-  private async readProfile(id: string): Promise<GameView['profile']> {
+  private async readProfile(id: string): Promise<PlayerProfile> {
     const world = this.world;
     const admit = this.store.db.withReadTransferAdmission?.bind(this.store.db);
     const transaction = this.store.db.readTransaction?.bind(this.store.db);

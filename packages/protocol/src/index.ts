@@ -1075,7 +1075,6 @@ export interface GameView {
   schemaVersion: 3;
   revision: number;
   worldId: string;
-  profile: PlayerProfile;
   /** Public authored location/clock wording; application control names stay in the client. */
   presentation: {
     worldName: string;
@@ -1286,7 +1285,6 @@ export interface GamePatch {
   revision: number;
   narrator?: GameView['narrator'];
   cartography?: GameView['cartography'];
-  profile?: GameView['profile'];
   clock?: Partial<GameView['clock']>;
   player?: Partial<GameView['player']>;
   entities?: {

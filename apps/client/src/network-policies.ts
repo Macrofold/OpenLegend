@@ -28,6 +28,7 @@ routes(
     '/api/operations',
     '/api/session',
     '/api/history',
+    '/api/profile',
     '/api/world-events',
     '/api/construction',
     '/api/construction/hearths',

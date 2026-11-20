@@ -241,7 +241,6 @@ export async function projectView(
   scope: RequestScope = service.localScope,
 ): Promise<GameView> {
   service.assertScope(scope);
-  const profile = await service.profileFor(scope);
   const cache = scopedCache(service, scope);
   const world = service.world;
   // Native arithmetic can advance a person's current meters without replacing
@@ -1113,7 +1112,6 @@ export async function projectView(
           },
         }
       : {}),
-    profile: profile,
     vision: { radius: visionRadius(world, player), ...guide.vision },
     hearing: { referenceRadius: hearingReferenceRadius(world, player), ...guide.hearing },
     map: memo<GameView['map']>('map', [world.map, world.seed], () => ({
@@ -1629,7 +1627,6 @@ export function projectPatch(previous: GameView, next: GameView): GamePatch | nu
       : {}),
     ...(previous.historyEpoch !== next.historyEpoch ? { historyEpoch: next.historyEpoch } : {}),
     ...(!same(previous.narrator, next.narrator) ? { narrator: next.narrator ?? null } : {}),
-    ...(!same(previous.profile, next.profile) ? { profile: next.profile } : {}),
     ...(clock ? { clock } : {}),
     ...(player ? { player } : {}),
     ...(add.length || update.length || remove.length || order

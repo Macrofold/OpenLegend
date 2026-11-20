@@ -31,7 +31,6 @@ pub(crate) use host::{ViewHostInput, capture_host};
 pub(crate) use patch::{PreviousView, ViewSelection};
 pub use policy::PlayerViewPolicy;
 use policy::{CartographyPolicy, Daylight, MapPolicy, PublicWorld, WeatherView};
-use profile::PlayerProfile;
 
 const EVENT_WINDOW: usize = 512;
 
@@ -257,7 +256,6 @@ pub struct PreparedPlayerView {
 struct ViewOwned {
     policy: Arc<PlayerViewPolicy>,
     host: ViewHostFacts,
-    profile: PlayerProfile,
     input_scope: Option<InputScope>,
     own: PreparedSelf,
     contacts: PreparedContacts,
@@ -401,9 +399,9 @@ pub(crate) async fn prepare_view(
                     .map_err(runtime)?;
             }
             let scoped = references.scoped(&scope).map_err(ViewError::Encoding)?;
-            let (mut host, mut profile) =
+            let (mut host, narrator) =
                 host.assemble(revision, save_failed, &read, &policy, &scoped, &own)?;
-            if let Some(mut banner) = profile.narrator.take() {
+            if let Some(mut banner) = narrator {
                 if banner
                     .select(&mut read, &scope.actor_id, &scoped, &budget)
                     .map_err(ViewError::World)?
@@ -460,7 +458,6 @@ pub(crate) async fn prepare_view(
                 owned: ViewOwned {
                     policy,
                     host,
-                    profile,
                     input_scope,
                     own,
                     contacts,
@@ -804,7 +801,6 @@ impl Serialize for FullView<'_> {
         wire.serialize_entry("historyRevision", &host.history.revision)?;
         wire.serialize_entry("historyEpoch", &host.history.epoch)?;
         wire.serialize_entry("narrator", &host.history.narrator)?;
-        wire.serialize_entry("profile", &data.profile)?;
         wire.serialize_entry("clock", &data.calendar())?;
         wire.serialize_entry("vision", &data.own.vision)?;
         wire.serialize_entry("hearing", &data.own.hearing)?;

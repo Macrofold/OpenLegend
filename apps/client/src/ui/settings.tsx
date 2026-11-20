@@ -5,6 +5,7 @@ import { Button, Section, SegmentedControl } from '../design-system/components';
 import type { ShadowQuality } from '../world-renderer';
 import { InventionSettings } from './invention-settings';
 import { WorldVisualSettings } from './world-visual-settings';
+import type { PlayerProfileRead } from '../player-profile';
 import icons from '../design-system/icons/catalog';
 import { THEMES } from '../design-system/themes';
 import {
@@ -17,10 +18,11 @@ import './settings.css';
 
 export type SettingsView = Pick<
   GameView,
-  'worldId' | 'saveTimeline' | 'godMode' | 'profile' | 'inventionPolicy'
+  'worldId' | 'saveTimeline' | 'godMode' | 'inventionPolicy'
 >;
 export const Settings = memo(function Settings({
   view,
+  profile,
   section,
   setSection,
   theme,
@@ -43,6 +45,7 @@ export const Settings = memo(function Settings({
   cameraControls,
 }: {
   view: SettingsView;
+  profile: PlayerProfileRead;
   section: string;
   setSection(value: string): void;
   theme: string;
@@ -167,7 +170,7 @@ export const Settings = memo(function Settings({
       <TabPanel id="graphics" shouldForceMount className="ol-settings-page">
         {cameraControls && <Section title="Camera controls">{cameraControls}</Section>}
         <WorldVisualSettings
-          view={view}
+          profile={profile}
           shadowQuality={shadowQuality}
           setShadowQuality={setShadowQuality}
         />

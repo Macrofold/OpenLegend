@@ -1,9 +1,8 @@
 import type { NativeHost, NativeWorldConsumer } from '@open-legend/native-simulation';
-import type { GameView } from '@open-legend/protocol';
+import type { PlayerProfile as Profile } from '@open-legend/protocol';
 import { attachNativeConsumer, releaseNativeProduct } from './native-consumer.js';
 
 type Admission = Pick<NativeHost, 'reserveConsumerBytes'>;
-type Profile = GameView['profile'];
 type Entry = {
   readonly key: string;
   guard?: NativeWorldConsumer;

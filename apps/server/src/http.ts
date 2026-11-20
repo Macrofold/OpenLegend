@@ -1191,6 +1191,8 @@ async function initializeGameServer(
           responseCapability = 'create';
           return send(response, 200, authoring.openingChoices(scope));
         }
+        if (request.method === 'GET' && url.pathname === '/api/profile')
+          return send(response, 200, await service.profileFor(scope));
         if (request.method === 'GET' && url.pathname === '/api/world-agent/creation/targets') {
           const value = z
             .object({ sessionId: requestIdSchema })

@@ -7,7 +7,6 @@ use crate::{
     player_events::{SpeechReply, SpeechReplyStatus},
     player_view::{
         AccountAmount, AiBudget, AiJob, AiMode, AiUsage, AiView, ViewTelemetry,
-        profile::PlayerProfile,
     },
 };
 use indexmap::IndexMap;
@@ -58,13 +57,13 @@ struct InventionScope {
 
 impl Store {
     /// Read the finite recent job window, current scoped usage, and account
-    /// settings in one independent read-only snapshot. Each decoded product
+    /// narrator eligibility in one independent read-only snapshot. Each decoded product
     /// keeps its own custody after the transaction ends.
     pub(crate) async fn player_view_input(
         self: &Arc<Self>,
         scope: &RequestScope,
         display: AiDisplay,
-    ) -> StoreResult<(ViewTelemetry, PlayerProfile)> {
+    ) -> StoreResult<(ViewTelemetry, Option<super::NarrationBanner>)> {
         let account = scope.account_id.clone();
         let actor = scope.actor_id.clone();
         let world = scope.world_id.clone();
@@ -155,7 +154,7 @@ impl Store {
                         .checked_add(job.message.storage_bytes()),
                 ).ok_or(StoreError::Capacity)?;
                 charges.resize(retained).map_err(|_| StoreError::Capacity)?;
-                let profile = store.read_player_profile(tx, account, &world, &actor).await?;
+                let narrator = store.read_view_narrator(tx, &account, &world, &actor).await?;
                 let mut accounts = IndexMap::new();
                 if has_usage {
                     accounts.insert(actor, AccountAmount { spent_usd: spent, reserved_usd: reserved });
@@ -170,7 +169,7 @@ impl Store {
                         estimated: true, per_agent: Some(true), period: Some(period), accounts: Some(accounts) },
                     usage,
                 };
-                Ok((ViewTelemetry { ai, custody: charges }, profile))
+                Ok((ViewTelemetry { ai, custody: charges }, narrator))
             })
         }).await
     }

@@ -112,7 +112,6 @@ export interface NativePlayerRequestOwner extends PlayerAsyncOwner {
   readonly connectionLimit: number;
   withoutPlayerReadScope<T>(operation: () => T): T;
   assertScope(scope: RequestScope): void;
-  profileFor(scope: RequestScope): Promise<GameView['profile']>;
   capture(scope: RequestScope): Promise<NativePlayerRead>;
   lifecycle(): Lifecycle;
   presentationReleaseFor(scope: RequestScope): Promise<GameView['presentationRelease']>;
@@ -351,7 +350,6 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
   owner.assertScope(scope);
   if (scope.audience !== 'embodied')
     throw new Error('Native authorized-inspection presentation is unavailable.');
-  const profile = await owner.profileFor(scope);
   let read: NativePlayerRead | undefined;
   let frame: NativeWorldConsumer | undefined;
   let projection: NativeWorldConsumer | undefined;
@@ -492,7 +490,6 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
       evaluationCut: self.at,
       sightConfirmedThrough: perception.sightConfirmedThrough,
       godMode: false,
-      profile,
       inventionPolicy: definitions.inventionPolicy,
       narrator: narration.item,
       ...(presentationRelease ? { presentationRelease } : {}),
@@ -539,7 +536,6 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
         request.publish(
           retain(
             finalView,
-            profile,
             ...(inputScope ? [inputScope] : []),
             ...sources,
             ...(narrationBorrow ? [narrationBorrow] : []),
@@ -564,7 +560,6 @@ export async function projectNativePlayerView(request: NativePlayerViewRequest):
     );
   } finally {
     read?.release();
-    releaseNativeProduct(profile);
     if (narrationBorrow) releaseNativeProduct(narrationBorrow);
     if (borrowed) for (const source of borrowed) releaseNativeProduct(source);
     if (cache) {

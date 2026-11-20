@@ -14,7 +14,7 @@ pub(crate) struct ViewHostInput {
     command_epoch: String,
     pub(crate) paused_stop: Option<PausedStop>,
     telemetry: ViewTelemetry,
-    profile: PlayerProfile,
+    narrator: Option<NarrationBanner>,
     custody: ByteReservation,
 }
 
@@ -26,7 +26,7 @@ pub(crate) async fn capture_host(
     commands: &PlayerCommands,
     presence: &Presence,
     telemetry: ViewTelemetry,
-    profile: PlayerProfile,
+    narrator: Option<NarrationBanner>,
     budget: &ByteBudget,
 ) -> Result<ViewHostInput, ViewError> {
     let scope = &grant.scope;
@@ -90,7 +90,7 @@ pub(crate) async fn capture_host(
         command_epoch: commands.epoch().await,
         paused_stop: None,
         telemetry,
-        profile,
+        narrator,
         custody,
     })
 }
@@ -117,7 +117,7 @@ impl ViewHostInput {
         policy: &PlayerViewPolicy,
         references: &PlayerReferences<'_>,
         own: &PreparedSelf,
-    ) -> Result<(ViewHostFacts, PlayerProfile), ViewError> {
+    ) -> Result<(ViewHostFacts, Option<NarrationBanner>), ViewError> {
         let input = read.view_source().map_err(runtime)?;
         let control = read.control_facts().map_err(runtime)?;
         let history_revision = format!("{}:{}", control.generation, input.history_order);
@@ -187,6 +187,6 @@ impl ViewHostInput {
             telemetry,
             custody: self.custody,
         };
-        Ok((facts, self.profile))
+        Ok((facts, self.narrator))
     }
 }

@@ -1,31 +1,31 @@
 import { useState } from 'react';
-import type { ApiResult, GameView, PlayerPreferencePatch } from '@open-legend/protocol';
-import { post } from '../api';
-import { Section } from '../design-system/components';
+import type { PlayerPreferencePatch } from '@open-legend/protocol';
+import { savePlayerPreferences, type PlayerProfileRead } from '../player-profile';
+import { Button, Section } from '../design-system/components';
 import { LoadingIndicator } from '../design-system/loading';
 import type { ShadowQuality } from '../world-renderer';
 import './lifecycle.css';
 
 /** Visibility preferences are player-owned; graphics quality is device-local. */
 export function WorldVisualSettings({
-  view,
+  profile,
   shadowQuality,
   setShadowQuality,
 }: {
-  view: Pick<GameView, 'profile'>;
+  profile: PlayerProfileRead;
   shadowQuality: ShadowQuality;
   setShadowQuality(quality: ShadowQuality): void;
 }) {
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(''),
     [saved, setSaved] = useState(false);
-  const prefs = view.profile.preferences;
+  const prefs = profile.profile?.preferences;
   async function update(patch: PlayerPreferencePatch) {
     setBusy(true);
     setError('');
     setSaved(false);
     try {
-      const result = await post<ApiResult>('/api/profile/preferences', patch);
+      const result = await savePlayerPreferences(patch);
       if (!result.ok) setError(result.message ?? 'Could not save the preference.');
       else setSaved(true);
     } catch {
@@ -63,12 +63,13 @@ export function WorldVisualSettings({
           See-through reveal
           <select
             aria-label="See-through reveal"
-            disabled={busy}
-            value={prefs.revealMode ?? 'nearby'}
+            disabled={busy || !prefs || profile.failed}
+            value={prefs ? prefs.revealMode ?? 'nearby' : ''}
             onChange={(e) =>
               void update({ revealMode: e.target.value as 'off' | 'player' | 'nearby' })
             }
           >
+            {!prefs && <option value="">Unavailable</option>}
             <option value="off">Off</option>
             <option value="player">Player only</option>
             <option value="nearby">Nearby visible objects</option>
@@ -78,10 +79,11 @@ export function WorldVisualSettings({
           Reveal radius
           <select
             aria-label="Reveal radius"
-            disabled={busy}
-            value={prefs.revealRadius ?? 6}
+            disabled={busy || !prefs || profile.failed}
+            value={prefs ? prefs.revealRadius ?? 6 : ''}
             onChange={(e) => void update({ revealRadius: Number(e.target.value) })}
           >
+            {!prefs && <option value="">Unavailable</option>}
             {[2, 4, 6, 8, 10, 12].map((n) => (
               <option key={n} value={n}>
                 {n} metres
@@ -93,10 +95,11 @@ export function WorldVisualSettings({
           Reveal strength
           <select
             aria-label="Reveal strength"
-            disabled={busy}
-            value={prefs.revealStrength ?? 0.7}
+            disabled={busy || !prefs || profile.failed}
+            value={prefs ? prefs.revealStrength ?? 0.7 : ''}
             onChange={(e) => void update({ revealStrength: Number(e.target.value) })}
           >
+            {!prefs && <option value="">Unavailable</option>}
             <option value={0.35}>Subtle</option>
             <option value={0.7}>Balanced</option>
             <option value={0.9}>Strong</option>
@@ -107,6 +110,11 @@ export function WorldVisualSettings({
           walls.
         </p>
         <LoadingIndicator active={busy} label="Saving your visibility preference" />
+        {profile.failed && (
+          <Button size="sm" onPress={profile.retry}>
+            Reload visibility preferences
+          </Button>
+        )}
         {saved && !busy && <p role="status">Visibility preference saved to your player profile.</p>}
         {error && <p role="alert">{error} Choose the preference again to retry.</p>}
       </div>

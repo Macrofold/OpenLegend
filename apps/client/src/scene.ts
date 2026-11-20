@@ -28,7 +28,7 @@ import {
   setVisibilityStencil,
 } from './visibility-stencil';
 import { StatusIndicators } from './status-indicators';
-import type { EntityView, GameView, SurfacePoint } from '@open-legend/protocol';
+import type { EntityView, GameView, PlayerProfile, SurfacePoint } from '@open-legend/protocol';
 import {
   intersectBox,
   panelRayFraction,
@@ -220,6 +220,7 @@ export class WildernessScene implements WorldRenderer {
   private markerUntil = 0;
   private elapsed = 0;
   private view: GameView | null = null;
+  private playerPreferences: PlayerProfile['preferences'] | undefined;
   private mapKey = '';
   private terrain?: GameView['map']['terrain'];
   private terrainKey = '';
@@ -777,6 +778,9 @@ export class WildernessScene implements WorldRenderer {
   setShadowQuality(quality: ShadowQuality): void {
     if (this.presentation.setShadowQuality(quality) && this.view)
       this.presentation.lighting(this.view);
+  }
+  setPlayerPreferences(preferences: PlayerProfile['preferences'] | undefined): void {
+    this.playerPreferences = preferences;
   }
   setPerceptionOptions(options: PerceptionOptions): void {
     this.perception.setOptions(options);
@@ -2725,8 +2729,9 @@ export class WildernessScene implements WorldRenderer {
     // The modifier broadens presentation only to this already-permitted projection.
     // Reuse the same GPU scenery mask; never discover targets or scan target × blocker pairs.
     if (this.revealHeld) return 0.95;
-    const prefs = view.profile.preferences,
-      mode = prefs.revealMode ?? 'nearby';
+    const prefs = this.playerPreferences;
+    if (!prefs) return 0;
+    const mode = prefs.revealMode ?? 'nearby';
     if (mode === 'off') return 0;
     if (entry.view.id === view.player.id) return prefs.revealStrength ?? 0.7;
     if (mode !== 'nearby') return 0;

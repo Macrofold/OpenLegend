@@ -115,7 +115,6 @@ function patchWorkspace(previous: GameView, next: GameView): number {
     'cartography',
     'communicationReferences',
     'narrator',
-    'profile',
     'recipes',
     'conversation',
     'milestones',
