@@ -227,11 +227,17 @@ export async function coldContinuation({
       wallMs: viewedAt - spawnedAt,
     };
   } finally {
-    await network.shutdown();
     if (child.exitCode === null && child.signalCode === null) child.kill('SIGTERM');
     const force = setTimeout(() => child.kill('SIGKILL'), 30_000);
     try {
-      assert.deepEqual(await exited, [0, null], 'The restarted server did not close cleanly.');
+      const [networkClosed, exit] = await Promise.allSettled([
+        network.shutdown({ timeoutMs: 2000 }),
+        exited,
+      ]);
+      if (exit.status === 'rejected') throw exit.reason;
+      if (networkClosed.status === 'rejected') throw networkClosed.reason;
+      assert.equal(networkClosed.value.unresolved, 0);
+      assert.deepEqual(exit.value, [0, null], 'The restarted server did not close cleanly.');
     } finally {
       clearTimeout(force);
     }

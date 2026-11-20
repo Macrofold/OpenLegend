@@ -150,6 +150,9 @@ export async function runCase(plan: CasePlan, outputDirectory: string): Promise<
     failure = error;
   } finally {
     try {
+      const stopped = await commands.shutdown({ timeoutMs: 4000 });
+      if (stopped.unresolved !== 0)
+        throw new Error('Managed commands did not close. The supervisor retains the workspace.');
       await rm(work, { force: true, recursive: true });
       if (plan.sharedBuild?.role === 'second')
         await rm(pairedBuild, { force: true, recursive: true });
