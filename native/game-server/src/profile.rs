@@ -3,7 +3,7 @@
 
 mod record;
 
-use openlegend_simulation::profile::{self, Link, Observer, Outcome, Site};
+use openlegend_simulation::profile::{self, Link, ObservationWindow, Observer, Outcome, Site};
 use record::{Capture, MAX_EXACT, Window};
 use serde::Deserialize;
 use std::{
@@ -25,6 +25,9 @@ struct Recorder {
     capture: Mutex<Option<Capture>>,
     generation: AtomicU32,
     selected: AtomicU64,
+    start_ns: AtomicU64,
+    end_ns: AtomicU64,
+    drain_ns: AtomicU64,
     // Upper half identifies the only generation allowed to increment losses.
     losses: AtomicU64,
     closed: AtomicBool,
@@ -39,6 +42,9 @@ impl Recorder {
             capture: Mutex::new(None),
             generation: AtomicU32::new(0),
             selected: AtomicU64::new(0),
+            start_ns: AtomicU64::new(0),
+            end_ns: AtomicU64::new(0),
+            drain_ns: AtomicU64::new(0),
             losses: AtomicU64::new(0),
             closed: AtomicBool::new(false),
         }
@@ -57,14 +63,31 @@ impl Recorder {
             });
     }
 
-    fn record<T>(
-        &self,
-        generation: u32,
-        update: impl FnOnce(&mut Capture, u64) -> Option<T>,
-    ) -> Option<T> {
+    fn observation_time(&self, generation: u32, window: ObservationWindow) -> Option<u64> {
         if generation == 0 || self.generation.load(Ordering::Acquire) != generation {
             return None;
         }
+        let now = self.now();
+        // Arming publishes the deadlines before enabling the generation. A
+        // concurrent stop or rearm still fences both writes and loss counts.
+        let eligible = match window {
+            ObservationWindow::Start => now < self.end_ns.load(Ordering::Relaxed),
+            ObservationWindow::Count => {
+                now >= self.start_ns.load(Ordering::Relaxed)
+                    && now < self.end_ns.load(Ordering::Relaxed)
+            }
+            ObservationWindow::Continue => now <= self.drain_ns.load(Ordering::Relaxed),
+        };
+        eligible.then_some(now)
+    }
+
+    fn record<T>(
+        &self,
+        generation: u32,
+        window: ObservationWindow,
+        update: impl FnOnce(&mut Capture, u64) -> Option<T>,
+    ) -> Option<T> {
+        let now = self.observation_time(generation, window)?;
         let mut capture = match self.capture.try_lock() {
             Ok(capture) => capture,
             Err(TryLockError::WouldBlock) => {
@@ -80,7 +103,7 @@ impl Recorder {
         let capture = capture
             .as_mut()
             .filter(|capture| capture.generation == generation)?;
-        let update = update(capture, self.now());
+        let update = update(capture, now);
         if update.is_none() {
             self.lose(generation);
         }
@@ -99,6 +122,11 @@ impl Recorder {
             return Err("could not reserve dispatch observations");
         }
         let generation = capture.generation;
+        self.start_ns
+            .store(capture.window.start_ns, Ordering::Relaxed);
+        self.end_ns.store(capture.window.end_ns, Ordering::Relaxed);
+        self.drain_ns
+            .store(capture.window.drain_ns, Ordering::Relaxed);
         *slot = Some(capture);
         self.losses
             .store(u64::from(generation) << 32, Ordering::Release);
@@ -129,48 +157,58 @@ impl Observer for Recorder {
         self.selected.load(Ordering::Acquire) & site.mask() != 0
     }
 
-    fn live(&self, link: Link) -> bool {
-        self.generation.load(Ordering::Acquire) == link.generation()
+    fn generation(&self) -> u32 {
+        self.generation.load(Ordering::Acquire)
     }
 
     fn begin(&self, site: Site, parent: Option<Link>) -> Option<Link> {
         if !self.selected(site) {
             return None;
         }
-        self.record(self.generation.load(Ordering::Acquire), |capture, now| {
-            capture.begin(now, site, parent)
-        })
+        self.record(
+            self.generation.load(Ordering::Acquire),
+            ObservationWindow::Start,
+            |capture, now| capture.begin(now, site, parent),
+        )
         .flatten()
     }
 
     fn resume(&self, link: Link, lane: u32, active_parent: Option<Link>) -> bool {
-        self.record(link.generation(), |capture, now| {
-            capture.resume(now, link, lane, active_parent)
-        })
+        self.record(
+            link.generation(),
+            ObservationWindow::Continue,
+            |capture, now| capture.resume(now, link, lane, active_parent),
+        )
         .unwrap_or(false)
     }
 
     fn suspend(&self, link: Link, lane: u32) {
-        self.record(link.generation(), |capture, now| {
-            capture.suspend(now, link, lane)
-        });
+        self.record(
+            link.generation(),
+            ObservationWindow::Continue,
+            |capture, now| capture.suspend(now, link, lane),
+        );
     }
 
     fn end(&self, link: Link, outcome: Outcome, work: Option<u64>) {
-        self.record(link.generation(), |capture, now| {
-            capture.end(now, link, outcome, work)
-        });
+        self.record(
+            link.generation(),
+            ObservationWindow::Continue,
+            |capture, now| capture.end(now, link, outcome, work),
+        );
     }
 
     fn count(&self, site: Site, value: u64) {
-        self.record(self.generation.load(Ordering::Acquire), |capture, now| {
-            capture.count(now, site, value)
-        });
+        self.record(
+            self.generation.load(Ordering::Acquire),
+            ObservationWindow::Count,
+            |capture, now| capture.count(now, site, value),
+        );
     }
 
-    fn omitted(&self, site: Site) {
-        if self.selected(site) {
-            self.lose(self.generation.load(Ordering::Acquire));
+    fn omitted(&self, generation: u32, window: ObservationWindow) {
+        if self.observation_time(generation, window).is_some() {
+            self.lose(generation);
         }
     }
 }

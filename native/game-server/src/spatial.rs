@@ -205,8 +205,13 @@ impl SpatialProvider {
         }
         let (allocation, _scratch) = self.reserve_answers(q, budget)?;
         let sight = {
-            let _profile = openlegend_simulation::profile_scope!(SIGHT);
-            openlegend_simulation::profile_count!(SIGHT_QUERIES, q.sight.len() as u64);
+            // Support, movement and routes can arrive without any sight rays.
+            #[cfg(feature = "profile-campaign")]
+            let _profile = (!q.sight.is_empty()).then(|| {
+                let scope = openlegend_simulation::profile_scope!(SIGHT);
+                openlegend_simulation::profile_count!(SIGHT_QUERIES, q.sight.len() as u64);
+                scope
+            });
             q.sight
                 .iter()
                 .map(|r| self.clear_sight(r.from, r.to))

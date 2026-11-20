@@ -399,7 +399,12 @@ export async function planCampaign(path: string, root: string) {
 
 export async function readPlan(path: string): Promise<FrozenPlan> {
   const file = resolve(path);
-  const envelope = object(await jsonFile(dirname(file), file.split('/').at(-1)!), 'frozen plan');
+  return parsePlan(await jsonFile(dirname(file), file.split('/').at(-1)!));
+}
+
+/** Validates a plan decoded from bytes already read by the caller. */
+export function parsePlan(value: unknown): FrozenPlan {
+  const envelope = object(value, 'frozen plan');
   const raw = object(envelope.plan, 'plan');
   if (
     raw.schema !== 1 ||

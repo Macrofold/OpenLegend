@@ -78,6 +78,7 @@ export async function runCase(plan: CasePlan, outputDirectory: string): Promise<
   let failure: unknown;
   let executableSha256: string | null = null;
   let adaptedInputs;
+  let raw: Record<string, unknown> = {};
   let cleanup = 'case-workspace-released; supervisor owns database and worker cleanup';
   const commands = createNetworkOwner({ role: 'rust-profile-case-process', capacity: 1 });
   const deadline = performance.now() + plan.hardDeadlineSeconds * 1000;
@@ -120,24 +121,31 @@ export async function runCase(plan: CasePlan, outputDirectory: string): Promise<
     );
     executableSha256 = text(object(built.executable).sha256, 'release executable digest', sha256);
     phase = 'ordinary-play';
-    await run(process.execPath, [fixture.launch, 'direct', output, plan.source], {
-      ...process.env,
-      OPEN_LEGEND_PROFILE_CASE: JSON.stringify({
-        mode: plan.mode,
-        probeIds: plan.probeIds,
-        seed: plan.seed,
-        samplingProbability: plan.samplingProbability,
-        warmupSeconds: plan.warmupSeconds,
-        measureSeconds: plan.measureSeconds,
-        drainSeconds: plan.drainSeconds,
-        workDirectory: work,
-        ...(plan.mode === 'sampled'
-          ? { sampler: join(inputsRoot, 'profile', 'ol-profile-sampler.so') }
-          : {}),
-      }),
-    });
-    const raw = await readRaw(output);
+    try {
+      await run(process.execPath, [fixture.launch, 'direct', output, plan.source], {
+        ...process.env,
+        OPEN_LEGEND_PROFILE_CASE: JSON.stringify({
+          mode: plan.mode,
+          probeIds: plan.probeIds,
+          seed: plan.seed,
+          samplingProbability: plan.samplingProbability,
+          warmupSeconds: plan.warmupSeconds,
+          measureSeconds: plan.measureSeconds,
+          drainSeconds: plan.drainSeconds,
+          workDirectory: work,
+          ...(plan.mode === 'sampled'
+            ? { sampler: join(inputsRoot, 'profile', 'ol-profile-sampler.so') }
+            : {}),
+        }),
+      });
+    } catch (error) {
+      // Keep usable partial evidence without hiding the subprocess failure
+      // if the driver did not finish writing its result.
+      raw = await readRaw(output).catch(() => ({}));
+      throw error;
+    }
     phase = 'reduce-instrument';
+    raw = await readRaw(output);
     if (plan.mode === 'enabled') object(await jsonFile(output, 'metrics.json', 128 * 1024 ** 2));
     if (plan.mode === 'sampled') {
       // The retained symbolizer uses this relative layout. The links live
@@ -165,7 +173,6 @@ export async function runCase(plan: CasePlan, outputDirectory: string): Promise<
       }
     }
   }
-  const raw = await readRaw(output);
   const workload = await writeCaseEvidence(output, plan, raw);
   if (!failure && !Object.values(workload.checks).every(Boolean)) {
     phase = 'qualify-workload';

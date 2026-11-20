@@ -5,6 +5,8 @@ pub use openlegend_simulation::host::{ByteBudget, ByteReservation, CapacityError
 use rayon::{ThreadPool, ThreadPoolBuilder};
 use std::fmt;
 use std::panic::{AssertUnwindSafe, catch_unwind};
+#[cfg(feature = "profile-campaign")]
+use std::sync::atomic::AtomicU32;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Condvar, Mutex};
 use std::thread::{self, JoinHandle};
@@ -66,27 +68,60 @@ impl From<CapacityError> for HostError {
 
 #[derive(Clone)]
 pub struct Cancellation {
-    requested: Arc<AtomicBool>,
+    signal: Arc<CancellationSignal>,
     host_closing: Arc<AtomicBool>,
+}
+
+pub(crate) struct CancellationSignal {
+    requested: AtomicBool,
+    #[cfg(feature = "profile-campaign")]
+    profile_generation: AtomicU32,
+}
+
+// The profile tag fits in the padding of the existing Arc allocation. The
+// Cancellation handle and every closure that captures it keep their size.
+#[cfg(feature = "profile-campaign")]
+const _: () = {
+    assert!(std::mem::size_of::<CancellationSignal>() <= std::mem::size_of::<usize>());
+    assert!(std::mem::align_of::<CancellationSignal>() <= std::mem::align_of::<usize>());
+};
+
+#[cfg(feature = "profile-campaign")]
+impl CancellationSignal {
+    pub(crate) fn profile_generation(&self) -> u32 {
+        self.profile_generation.load(Ordering::Relaxed)
+    }
 }
 
 impl Cancellation {
     pub fn request(&self) {
-        self.requested.store(true, Ordering::Release);
+        self.signal.requested.store(true, Ordering::Release);
     }
 
     #[cfg(feature = "profile-campaign")]
     pub(crate) fn profile_key(&self) -> usize {
-        Arc::as_ptr(&self.requested) as usize
+        Arc::as_ptr(&self.signal) as usize
     }
 
     #[cfg(feature = "profile-campaign")]
-    pub(crate) fn profile_identity(&self) -> std::sync::Weak<AtomicBool> {
-        Arc::downgrade(&self.requested)
+    pub(crate) fn profile_identity(&self) -> std::sync::Weak<CancellationSignal> {
+        Arc::downgrade(&self.signal)
+    }
+
+    #[cfg(feature = "profile-campaign")]
+    pub(crate) fn profile_generation(&self) -> u32 {
+        self.signal.profile_generation()
+    }
+
+    #[cfg(feature = "profile-campaign")]
+    pub(crate) fn set_profile_generation(&self, generation: u32) {
+        self.signal
+            .profile_generation
+            .store(generation, Ordering::Relaxed);
     }
 
     pub fn requested(&self) -> bool {
-        self.requested.load(Ordering::Acquire) || self.host_closing.load(Ordering::Acquire)
+        self.signal.requested.load(Ordering::Acquire) || self.host_closing.load(Ordering::Acquire)
     }
 }
 
@@ -287,7 +322,11 @@ impl HostPool {
                 *count += 1;
                 Ok(WorkAdmission {
                     cancellation: Cancellation {
-                        requested: Arc::new(AtomicBool::new(false)),
+                        signal: Arc::new(CancellationSignal {
+                            requested: AtomicBool::new(false),
+                            #[cfg(feature = "profile-campaign")]
+                            profile_generation: AtomicU32::new(0),
+                        }),
                         host_closing: Arc::clone(&self.closing),
                     },
                     permit: WorkPermit {

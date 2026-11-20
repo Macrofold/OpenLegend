@@ -1,4 +1,14 @@
-import { digest, identifier, integer, jsonFile, list, object, sha256, text } from './contract.js';
+import {
+  digest,
+  identifier,
+  integer,
+  jsonFile,
+  list,
+  object,
+  opening,
+  sha256,
+  text,
+} from './contract.js';
 import type { FrozenPlan } from './plan.js';
 import type { CaseResult } from './report-evidence.js';
 
@@ -30,6 +40,7 @@ function checks(run: CaseResult) {
 
 function completeWork(run: CaseResult) {
   const asserted = checks(run);
+  const metrics = run.metrics;
   return (
     run.status === 'completed' &&
     Boolean(run.instanceId && run.database && run.executable) &&
@@ -43,20 +54,39 @@ function completeWork(run: CaseResult) {
       (run.diagnostic?.data.status === 'sampled' &&
         run.diagnostic.data.executableSha256 === run.executable)) &&
     (run.plan.mode !== 'sql' || run.diagnostic?.data.status === 'measured') &&
-    !(
-      run.metrics &&
-      (!run.metrics.complete ||
-        run.metrics.lost ||
-        run.metrics.traceLost ||
-        (run.metrics.trace.clockJoinSelected &&
-          !run.metrics.trace.clockTurn?.acceptedGameMicroseconds) ||
-        run.metrics.metrics.some(
+    (run.plan.mode !== 'enabled' ||
+      (metrics?.complete === true &&
+        !metrics.lost &&
+        !metrics.traceLost &&
+        (!metrics.trace.clockJoinSelected || !!metrics.trace.clockTurn?.acceptedGameMicroseconds) &&
+        metrics.metrics.every(
           (metric) =>
-            metric.status === 'not-exercised' ||
-            metric.status === 'censored' ||
-            (!metric.countCalls && !metric.latency.count),
-        ))
-    )
+            (metric.status === 'measured' || metric.status === 'sampled') &&
+            (metric.countCalls > 0 || metric.latency.count > 0),
+        )))
+  );
+}
+
+function ownsTimingWindow(run: CaseResult, edgeAllowanceMs: number) {
+  const steady = object(run.timeline?.steady ?? {});
+  const start = finite(steady.startAt);
+  const end = finite(steady.endAt);
+  const sampledStart = finite(steady.startResourceAt);
+  const sampledEnd = finite(steady.endResourceAt);
+  const wall = value(run, 'wallMs');
+  return (
+    start !== null &&
+    end !== null &&
+    end - start === run.plan.measureSeconds * 1000 &&
+    value(run, 'offeredGameSeconds') ===
+      run.plan.measureSeconds * opening.gameSecondsPerRealSecond &&
+    sampledStart !== null &&
+    sampledEnd !== null &&
+    Math.abs(sampledStart - start) <= edgeAllowanceMs &&
+    Math.abs(sampledEnd - end) <= edgeAllowanceMs &&
+    wall !== null &&
+    wall > 0 &&
+    Math.abs(sampledEnd - sampledStart - wall) <= 1e-6
   );
 }
 
@@ -143,6 +173,9 @@ export function compare(
   if (proofError) reasons.add(proofError);
   if (runs.length !== 6 || !runs.every(completeWork))
     reasons.add('Missing checks, coverage, or promised work.');
+  const edgeAllowanceMs = (plan.workToleranceGameSeconds / opening.gameSecondsPerRealSecond) * 1000;
+  if (!runs.every((run) => ownsTimingWindow(run, edgeAllowanceMs)))
+    reasons.add('The frozen steady window or its resource sample duration is unverified.');
   if (runs.some((run) => !run.database) || new Set(runs.map((run) => run.database)).size !== 6)
     reasons.add('Fresh databases not verified for all cases.');
   if (runs.some((run) => !run.instanceId))
@@ -171,7 +204,9 @@ export function compare(
     }
     const timeA = value(a, 'completedGameSeconds'),
       timeB = value(b, 'completedGameSeconds');
-    if (!timeA || !timeB) reasons.add('Completed game time is unavailable for a pair.');
+    if (timeA === null || timeB === null)
+      reasons.add('Completed game time is unavailable for a pair.');
+    else if (!timeA || !timeB) reasons.add('A paired run made no game progress.');
     else if (Math.abs(timeB - timeA) > plan.workToleranceGameSeconds)
       reasons.add('Completed game-time difference exceeds the frozen tolerance.');
     for (const [key, tolerance] of Object.entries(plan.internalWorkTolerance)) {

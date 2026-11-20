@@ -147,7 +147,7 @@ struct Trace {
 pub(super) struct Capture {
     schema: u8,
     pub generation: u32,
-    window: Window,
+    pub(super) window: Window,
     sampling: Sampling,
     pub lost: u64,
     trace_lost: u64,

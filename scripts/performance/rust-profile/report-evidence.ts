@@ -31,6 +31,7 @@ type SelectionStatus =
   | 'unsupported'
   | 'failed'
   | 'censored'
+  | 'no-samples'
   | 'unqualified-overhead';
 
 function files(value: unknown): Map<string, Entry> {
@@ -74,20 +75,35 @@ export async function sealCase(root: string, plan: CasePlan, partial = false) {
   });
 }
 
-export async function managedReader(root: string, plan: FrozenPlan, job: string) {
+export async function managedReader(
+  root: string,
+  plan: FrozenPlan,
+  job: string,
+  planBundleSha256: string,
+) {
   const controller = object(await jsonFile(root, 'controller.json'), 'controller receipt');
   const manifest = object(await jsonFile(root, 'manifest.json'), 'worker export seal');
   const lifecycle = object(controller.lifecycle ?? {}, 'worker lifecycle');
   const completion = object(controller.completion);
+  const ownedPlan = object(controller.plan, 'worker claim plan');
+  const inputReceipts = object(controller.inputs, 'worker input receipts');
   if (
     controller.jobId !== job ||
     controller.runId !== manifest.runId ||
     controller.generation !== manifest.generation ||
+    completion.runId !== controller.runId ||
+    completion.generation !== controller.generation ||
     completion.clean !== true ||
     (completion.manifestHash !== undefined && completion.manifestHash !== digest(manifest))
   )
     throw new Error('Worker receipt does not own the exported generation.');
-  const cases = list(object(controller.plan).cases, 'worker case', 16).map((c) => object(c));
+  if (
+    ownedPlan.taskId !== plan.taskId ||
+    ownedPlan.cloudAllocationId !== plan.cloudAllocationId ||
+    object(inputReceipts.campaign, 'worker campaign input').sha256 !== planBundleSha256
+  )
+    throw new Error('Worker claim does not match the exact dispatched profiling plan.');
+  const cases = list(ownedPlan.cases, 'worker case', 16).map((c) => object(c));
   const expected = plan.cases.filter((item) => item.comparisonId === job);
   const groups = groupRunnerCases(expected);
   if (
@@ -112,7 +128,6 @@ export async function managedReader(root: string, plan: FrozenPlan, job: string)
     })
   )
     throw new Error('Collected worker order differs from the frozen matrix.');
-  const inputReceipts = object(controller.inputs);
   for (const item of expected) {
     for (const [id, hash] of Object.entries(item.inputHashes)) {
       if (object(inputReceipts[id]).sha256 !== hash)
@@ -195,7 +210,7 @@ function histogram(value: unknown, bounds: number[]) {
   };
 }
 
-function captureMetrics(value: unknown, planned: CasePlan) {
+function captureMetrics(value: unknown, planned: CasePlan, timeline: Record<string, unknown>) {
   const data = object(value, 'recorder output');
   const bounds = list(data.boundsNs, 'histogram bounds', 4096).map((n) =>
     integer(n, 'upper nanoseconds', 1, 3_600_000_000_000),
@@ -214,7 +229,20 @@ function captureMetrics(value: unknown, planned: CasePlan) {
     Number.MAX_SAFE_INTEGER,
   );
   const stopNs = integer(window.stopNs, 'recorder stop', 0, drainNs);
-  const complete = window.complete === true && stopNs >= endNs;
+  const arm = object(timeline.captureWindow ?? {}, 'recorder arm receipt');
+  const stop = object(timeline.captured ?? {}, 'recorder stop receipt');
+  const steady = object(timeline.steady ?? {}, 'driver steady window');
+  const generation = integer(data.generation, 'recorder generation', 1, Number.MAX_SAFE_INTEGER);
+  const windowMatched =
+    arm.generation === generation &&
+    stop.generation === generation &&
+    arm.startAt === steady.startAt &&
+    arm.endAt === steady.endAt &&
+    arm.startNs === startNs &&
+    arm.endNs === endNs &&
+    arm.drainNs === drainNs;
+  const complete =
+    windowMatched && stop.complete === true && window.complete === true && stopNs >= endNs;
   const sampling = object(data.sampling);
   if (sampling.every !== 1 / planned.samplingProbability || sampling.seed !== planned.seed)
     throw new Error('Capture sampling does not match the frozen selection.');
@@ -226,16 +254,20 @@ function captureMetrics(value: unknown, planned: CasePlan) {
     const censored = integer(raw.censored, 'censored invocations', 0, Number.MAX_SAFE_INTEGER);
     const countCalls = integer(raw.countCalls ?? 0, 'counter calls', 0, Number.MAX_SAFE_INTEGER);
     const carryIn = integer(raw.carryIn, 'carry-in calls', 0, Number.MAX_SAFE_INTEGER);
+    const carryInCensored = integer(raw.carryInCensored ?? 0, 'censored carry-in', 0, carryIn);
+    const sampled = integer(raw.sampled, 'sampled calls', 0, eligible);
     const status: SelectionStatus =
       lost || !complete
         ? 'failed'
         : !eligible && !countCalls && !carryIn
           ? 'not-exercised'
-          : censored || (!eligible && !countCalls && carryIn)
+          : censored || carryInCensored || (!eligible && !countCalls && carryIn)
             ? 'censored'
-            : sampling.every === 1 || countCalls > 0
-              ? 'measured'
-              : 'sampled';
+            : !sampled && !countCalls
+              ? 'no-samples'
+              : sampling.every === 1 || countCalls > 0
+                ? 'measured'
+                : 'sampled';
     return {
       id,
       unit: text(raw.unit, 'metric unit'),
@@ -243,18 +275,13 @@ function captureMetrics(value: unknown, planned: CasePlan) {
       eligible,
       censored,
       countCalls,
-      sampled: integer(raw.sampled, 'sampled calls', 0, eligible),
+      sampled,
       completed: integer(raw.completed, 'completed calls', 0, eligible),
       refused: integer(raw.refused, 'refused calls', 0, eligible),
       cancelled: integer(raw.cancelled, 'cancelled calls', 0, eligible),
       failed: integer(raw.failed, 'failed calls', 0, eligible),
       carryIn,
-      carryInCensored: integer(
-        raw.carryInCensored ?? 0,
-        'censored carry-in',
-        0,
-        Number.MAX_SAFE_INTEGER,
-      ),
+      carryInCensored,
       unfinishedAtCutoff: integer(
         raw.unfinishedAtCutoff ?? 0,
         'unfinished at cutoff',
@@ -285,7 +312,15 @@ function captureMetrics(value: unknown, planned: CasePlan) {
   )
     throw new Error('One or more selected metric summaries are absent.');
   const trace = traceWitness(data.trace, planned.probeIds, startNs, endNs, stopNs);
-  return { complete, lost, traceLost, metrics, trace, window: { startNs, endNs, drainNs, stopNs } };
+  return {
+    complete,
+    windowMatched,
+    lost,
+    traceLost,
+    metrics,
+    trace,
+    window: { startNs, endNs, drainNs, stopNs },
+  };
 }
 
 type TraceSpan = {
@@ -370,7 +405,7 @@ function traceWitness(
   });
   for (const span of spans.values()) {
     if (span.endNs === undefined || span.outcome !== 'completed' || !needed.has(span.id)) continue;
-    if (span.id === 'S02.10' && span.work === 0) continue;
+    if (span.id === 'S02.10' && !span.work) continue;
     let owner = span.parent === null ? undefined : spans.get(span.parent);
     while (owner && owner.id !== 'S02.entry.tick' && owner.parent !== null) {
       // Parent tokens are created before their children.
@@ -381,7 +416,9 @@ function traceWitness(
       owner?.id !== 'S02.entry.tick' ||
       !inWindow(owner) ||
       owner.endNs === undefined ||
-      owner.outcome !== 'completed'
+      owner.outcome !== 'completed' ||
+      span.startNs < owner.startNs ||
+      span.endNs > owner.endNs
     )
       continue;
     let joined = byClock.get(owner.token);
@@ -391,19 +428,18 @@ function traceWitness(
     }
     if (!joined.has(span.id)) joined.set(span.id, span);
   }
-  const joinedTurns = [...byClock.entries()].filter(([, joined]) => joined.size === needed.size);
-  const witness =
-    joinedTurns.find(([, joined]) => (joined.get('S02.10')?.work ?? 0) > 0) ?? joinedTurns[0];
+  const witness = [...byClock.entries()].find(([, joined]) => joined.size === needed.size);
   const clock = witness && spans.get(witness[0]);
+  const acceptedGameMicroseconds = witness?.[1].get('S02.10')?.work;
   return {
     clockJoinSelected:
       selected.includes('S02.entry.tick') && [...needed].every((id) => selected.includes(id)),
     clockTurn:
-      witness && clock
+      witness && clock && acceptedGameMicroseconds
         ? {
             clock,
             linked: [...witness[1].values()],
-            acceptedGameMicroseconds: witness[1].get('S02.10')?.work ?? null,
+            acceptedGameMicroseconds,
             settledDuringDrain: clock.endNs! >= endNs,
           }
         : null,
@@ -526,7 +562,7 @@ export async function readCase(
       reason: typeof completion.reason === 'string' ? completion.reason : undefined,
       metrics:
         plan.mode === 'enabled' && entries.has('metrics.json')
-          ? captureMetrics(await jsonFile(path, 'metrics.json', 96 * 1024 ** 2), plan)
+          ? captureMetrics(await jsonFile(path, 'metrics.json', 96 * 1024 ** 2), plan, timeline)
           : undefined,
       diagnostic,
       relativePath: relative(join(campaign, 'summary'), path),

@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { jsonFile, object, writeJson } from './contract.js';
+import { jsonFile, object, opening, writeJson } from './contract.js';
 import type { CasePlan } from './contract.js';
 
 type RecordValue = Record<string, unknown>;
@@ -35,26 +35,82 @@ function latency(rows: RecordValue[], began: string, ended: string) {
   };
 }
 function maxSample(samples: RecordValue[], field: string) {
-  const values = samples.flatMap((sample) => {
+  let peak: number | null = null;
+  for (const sample of samples) {
     const value = finite(sample[field]);
-    return value === null ? [] : [value];
-  });
-  return values.length ? Math.max(...values) : null;
+    if (value !== null && (peak === null || value > peak)) peak = value;
+  }
+  return peak;
 }
 function safeCounter(value: unknown) {
   if (typeof value === 'string' && /^\d+$/.test(value)) value = Number(value);
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : null;
 }
-function delta(before: RecordValue, after: RecordValue) {
+function delta(
+  before: RecordValue,
+  after: RecordValue,
+  fields = Object.keys(before).filter((key) => key !== 'at'),
+): Record<string, number | null> {
   return Object.fromEntries(
-    Object.keys(before)
-      .filter((key) => key !== 'at')
-      .map((key) => {
-        const first = safeCounter(before[key]);
-        const last = safeCounter(after[key]);
-        return [key, first === null || last === null || last < first ? null : last - first];
-      }),
+    fields.map((key) => {
+      const first = safeCounter(before[key]);
+      const last = safeCounter(after[key]);
+      return [key, first === null || last === null || last < first ? null : last - first];
+    }),
   );
+}
+
+// Scalar totals emitted by the pinned PostgreSQL wire observer. Unlike these
+// totals, partialFrames is the number of frames in progress at a single cut.
+const wireCounters = [
+  'clientBytes',
+  'serverBytes',
+  'parseMessages',
+  'bindMessages',
+  'bindFrameBytes',
+  'executeMessages',
+  'simpleQueryMessages',
+  'completedStatements',
+  'errorResponses',
+  'selectRows',
+  'insertRows',
+  'updateRows',
+  'deleteRows',
+  'transferRows',
+  'dataRowPayloadBytes',
+  'otherCommandCompletions',
+  'startupPackets',
+  'failures',
+  'connections',
+];
+
+function sqlWireEvidence(start: RecordValue, end: RecordValue) {
+  const startAt = finite(start.at);
+  const endAt = finite(end.at);
+  const startPartialFrames = safeCounter(start.partialFrames);
+  const endPartialFrames = safeCounter(end.partialFrames);
+  const totals = delta(start, end, wireCounters);
+  let reason: string | undefined;
+  if (startAt === null || endAt === null || endAt <= startAt)
+    reason = 'missing-or-unordered-wire-boundaries';
+  else if (Object.values(totals).includes(null)) reason = 'missing-or-reset-wire-counters';
+  else if (safeCounter(start.failures) !== 0 || safeCounter(end.failures) !== 0)
+    reason = 'wire-observer-failure';
+  else if (startPartialFrames !== 0 || endPartialFrames !== 0)
+    reason = 'unknown-or-partial-wire-boundary';
+  else if (!totals.clientBytes || !totals.serverBytes || !totals.completedStatements)
+    reason = 'no-observed-wire-work';
+  return {
+    status: reason ? 'unavailable' : 'measured',
+    reason,
+    method: 'Application-only loopback frame scalars. Use the unrelayed control for latency.',
+    startAt,
+    endAt,
+    startPartialFrames,
+    endPartialFrames,
+    ...totals,
+    queryCategoryAttribution: null,
+  };
 }
 
 export async function readRaw(directory: string): Promise<RecordValue> {
@@ -74,6 +130,8 @@ export async function writeCaseEvidence(directory: string, plan: CasePlan, raw: 
   const config = record(raw.configuration);
   const world = record(config.world);
   const client = record(raw.client);
+  const admittedInput = records(client.input).filter((input) => input.ok === true);
+  const providerProblems = record(raw.provider).problems;
   const progress = record(raw.progress);
   const commands = records(raw.commandLatencyWitnesses);
   const steadyCommands = commands.filter((command) => command.window === 'steady');
@@ -82,9 +140,7 @@ export async function writeCaseEvidence(directory: string, plan: CasePlan, raw: 
   const chats = records(raw.chats);
   const conversationsCompleted = chats.filter((chat) => !!chat.persisted && !chat.failure).length;
   const heldSteeringCompleted = records(client.steeringGestures).filter((gesture) => {
-    const offers = records(client.input).filter(
-      (input) => input.slot === gesture.slot && input.ok === true,
-    );
+    const offers = admittedInput.filter((input) => input.slot === gesture.slot);
     return ['start', 'renew', 'neutral'].every((role) =>
       offers.some((offer) => offer.role === role),
     );
@@ -99,13 +155,13 @@ export async function writeCaseEvidence(directory: string, plan: CasePlan, raw: 
       world.deer === expected.deer &&
       world.hares === expected.hares &&
       world.scenery === expected.scenery &&
-      world.seed === 73 &&
+      world.seed === opening.worldSeed &&
       config.nativeWorkers === 1 &&
       config.nativeTransientAllowanceBytes === 2 * 1024 ** 3 &&
       config.warmupSeconds === plan.warmupSeconds &&
       config.seconds === plan.measureSeconds &&
       config.saveIntervalMs === 1000 &&
-      config.intentionGameSecondsPerSecond === 60,
+      config.intentionGameSecondsPerSecond === opening.gameSecondsPerRealSecond,
     commands: offered === expected.walks && completed === expected.walks,
     streamReceivedMovement:
       commands.length === expected.walks &&
@@ -119,8 +175,8 @@ export async function writeCaseEvidence(directory: string, plan: CasePlan, raw: 
         (chat) =>
           record(chat.availability).available === true && record(chat.job).status === 'completed',
       ) &&
-      Array.isArray(record(raw.provider).problems) &&
-      (record(raw.provider).problems as unknown[]).length === 0,
+      Array.isArray(providerProblems) &&
+      providerProblems.length === 0,
     repliesPersistedExactlyOnce:
       conversationsCompleted === expected.conversations &&
       new Set(chats.map((chat) => record(chat.persisted).id)).size === expected.conversations,
@@ -194,6 +250,7 @@ export async function writeCaseEvidence(directory: string, plan: CasePlan, raw: 
     walBytes,
     queryCategories: null,
   };
+  const memorySamples = records(raw.samples);
   await writeJson(join(directory, 'resources.json'), {
     serverCpuMs: milliseconds(progress.serverCpuSeconds),
     postgresCpuMs: milliseconds(progress.postgresCpuSeconds),
@@ -203,12 +260,9 @@ export async function writeCaseEvidence(directory: string, plan: CasePlan, raw: 
     samplerCpuMs: null,
     wallMs: milliseconds(progress.actualSeconds),
     memory: {
-      sampleCount: records(raw.samples).length,
-      concurrentServerPostgresPeakBytes: maxSample(
-        records(raw.samples),
-        'concurrentServerPostgresBytes',
-      ),
-      concurrentAllPeakBytes: maxSample(records(raw.samples), 'concurrentAllBytes'),
+      sampleCount: memorySamples.length,
+      concurrentServerPostgresPeakBytes: maxSample(memorySamples, 'concurrentServerPostgresBytes'),
+      concurrentAllPeakBytes: maxSample(memorySamples, 'concurrentAllBytes'),
       custody: raw.nativeCustody ?? null,
       allocationSites: {
         status: 'unsupported',
@@ -234,16 +288,10 @@ export async function writeCaseEvidence(directory: string, plan: CasePlan, raw: 
     serverExit: raw.serverExit ?? null,
   });
   if (plan.mode === 'sql') {
-    const wireStart = record(start.wire);
-    const wireEnd = record(end.wire);
-    await writeJson(join(directory, 'sql.json'), {
-      status: wireEnd.failures === 0 ? 'measured' : 'unavailable',
-      method: 'Application-only loopback frame scalars. Use the unrelayed control for latency.',
-      startAt: wireStart.at ?? null,
-      endAt: wireEnd.at ?? null,
-      ...delta(wireStart, wireEnd),
-      queryCategoryAttribution: null,
-    });
+    await writeJson(
+      join(directory, 'sql.json'),
+      sqlWireEvidence(record(start.wire), record(end.wire)),
+    );
   }
   return workload;
 }

@@ -57,6 +57,15 @@ pub enum Outcome {
     Failed,
 }
 
+/// New operations may carry in from warmup. Existing operations can settle
+/// through the drain, while counters describe only the measured window.
+#[derive(Clone, Copy)]
+pub enum ObservationWindow {
+    Start,
+    Count,
+    Continue,
+}
+
 /// A capture and invocation identity. Slot reuse is fenced by the invocation
 /// ID. This value owns no recorder, world, job, or transport resource.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -98,13 +107,13 @@ impl Link {
 /// nonpanicking. A host decline has no bearing on the game operation.
 pub trait Observer: Sync {
     fn selected(&self, site: Site) -> bool;
-    fn live(&self, link: Link) -> bool;
+    fn generation(&self) -> u32;
     fn begin(&self, site: Site, parent: Option<Link>) -> Option<Link>;
     fn resume(&self, link: Link, lane: u32, active_parent: Option<Link>) -> bool;
     fn suspend(&self, link: Link, lane: u32);
     fn end(&self, link: Link, outcome: Outcome, work: Option<u64>);
     fn count(&self, site: Site, value: u64);
-    fn omitted(&self, site: Site);
+    fn omitted(&self, generation: u32, window: ObservationWindow);
 }
 
 static OBSERVER: OnceLock<&'static dyn Observer> = OnceLock::new();
@@ -140,13 +149,20 @@ pub fn selected(site: Site) -> bool {
     observer_for(site).is_some()
 }
 
+pub fn generation() -> u32 {
+    OBSERVER.get().map_or(0, |observer| observer.generation())
+}
+
 pub fn current() -> Option<Link> {
-    let observer = OBSERVER.get()?;
+    let generation = generation();
+    if generation == 0 {
+        return None;
+    }
     CONTEXT
         .try_with(|context| context.get().logical)
         .ok()
         .flatten()
-        .filter(|link| observer.live(*link))
+        .filter(|link| generation == link.generation())
 }
 
 /// Scope for an inherited logical parent. Drop before yielding or awaiting.
@@ -235,6 +251,11 @@ impl Operation {
 
     pub fn finish(mut self, outcome: Outcome) {
         self.outcome(outcome);
+    }
+
+    /// A missed terminal observation remains censored when its capture stops.
+    pub fn omit_finish(&mut self) {
+        self.link = None;
     }
 
     pub fn segment(&self) -> Segment {
@@ -370,8 +391,8 @@ pub fn count(site: Site, amount: u64) {
     }
 }
 
-pub fn omitted(site: Site) {
-    if let Some(observer) = observer_for(site) {
-        observer.omitted(site);
+pub fn omitted(generation: u32, window: ObservationWindow) {
+    if let Some(observer) = OBSERVER.get() {
+        observer.omitted(generation, window);
     }
 }

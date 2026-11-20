@@ -38,23 +38,27 @@ export async function stageFixture(plan: CasePlan, work: string, inputs: RunnerI
   };
   const driver = join(work, 'driver');
   const tools = join(work, 'tools');
-  await Promise.all([mkdir(driver), mkdir(tools)]);
+  await mkdir(driver);
+  await mkdir(tools);
   const sourceDriver = input('driver');
   const workload = join(driver, 'workload.mts');
   const client = join(driver, 'player-client.mts');
   // The supervisor mounts these verified originals read-only. Adapt the
   // bytes into new private files so no write targets a copied read-only inode.
-  await Promise.all([
-    ...sourceDriver.paths
-      .filter((file) => file !== 'workload.mts' && file !== 'player-client.mts')
-      .map((file) => copyFile(join(sourceDriver.root, file), join(driver, file))),
-    readFile(join(sourceDriver.root, 'workload.mts'), 'utf8').then((source) =>
-      stageScript(workload, adaptWorkload(source)),
-    ),
-    readFile(join(sourceDriver.root, 'player-client.mts'), 'utf8').then((source) =>
-      stageScript(client, adaptClient(source)),
-    ),
-  ]);
+  await stageScript(
+    workload,
+    adaptWorkload(await readFile(join(sourceDriver.root, 'workload.mts'), 'utf8')),
+  );
+  await stageScript(
+    client,
+    adaptClient(await readFile(join(sourceDriver.root, 'player-client.mts'), 'utf8')),
+  );
+  // A failed stage must leave no copy still writing into the workspace when
+  // the case owner removes it. The source files are small and outside timing.
+  for (const file of sourceDriver.paths) {
+    if (file !== 'workload.mts' && file !== 'player-client.mts')
+      await copyFile(join(sourceDriver.root, file), join(driver, file));
+  }
   await copyFile(
     fileURLToPath(new URL('./fixture-observer.mjs', import.meta.url)),
     join(driver, 'fixture-observer.mjs'),
@@ -64,12 +68,11 @@ export async function stageFixture(plan: CasePlan, work: string, inputs: RunnerI
     await copyFile(join(input('sql').root, name), join(driver, name));
   }
   const build = join(tools, 'build.mjs');
-  await Promise.all(
-    input('tools')
-      .paths.filter((path) => path !== 'build.mjs')
-      .map((path) => symlink(join(input('tools').root, path), join(tools, path))),
-  );
-  let builder = await readFile(join(input('tools').root, 'build.mjs'), 'utf8');
+  const sourceTools = input('tools');
+  for (const path of sourceTools.paths) {
+    if (path !== 'build.mjs') await symlink(join(sourceTools.root, path), join(tools, path));
+  }
+  let builder = await readFile(join(sourceTools.root, 'build.mjs'), 'utf8');
   // A disabled and enabled run use the same build configuration. Frame
   // pointers change the build independently from attaching the sampler.
   if (plan.mode === 'disabled' || plan.mode === 'enabled') {

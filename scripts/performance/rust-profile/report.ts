@@ -1,8 +1,8 @@
-import { mkdir, realpath, rename, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, realpath, rename, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { randomUUID } from 'node:crypto';
-import { digest, isMissing, object } from './contract.js';
-import { readPlan } from './plan.js';
+import { createHash, randomUUID } from 'node:crypto';
+import { containedFile, digest, isMissing, object } from './contract.js';
+import { parsePlan } from './plan.js';
 import { managedReader, readCase } from './report-evidence.js';
 import type { CaseResult } from './report-evidence.js';
 import { compare, finite, readFixedWork, statistics, value } from './report-qualification.js';
@@ -32,13 +32,25 @@ async function publish(directory: string, name: string, contents: string) {
 export async function summarizeCampaign(campaignPath: string, collectedPath?: string) {
   const campaign = await realpath(resolve(campaignPath));
   const collection = resolve(collectedPath ?? join(campaign, 'ownership', 'collected'));
-  const plan = await readPlan(join(campaign, 'plan.json'));
+  const planFile = await containedFile(campaign, 'plan.json', 8 * 1024 ** 2);
+  const bytes = await readFile(planFile.path);
+  const plan = parsePlan(JSON.parse(bytes.toString('utf8')));
+  // The worker's campaign input bundle has exactly one file. Bind its
+  // byte-level receipt to the same bytes the reporter actually parsed.
+  const planBundleSha256 = digest({
+    'plan.json': { sha256: createHash('sha256').update(bytes).digest('hex'), bytes: bytes.length },
+  });
   const runs: CaseResult[] = [];
   for (const comparison of plan.comparisons) {
     const members = plan.cases.filter((item) => item.comparisonId === comparison.id);
     let reader;
     try {
-      reader = await managedReader(join(collection, comparison.id), plan, comparison.id);
+      reader = await managedReader(
+        join(collection, comparison.id),
+        plan,
+        comparison.id,
+        planBundleSha256,
+      );
     } catch (error) {
       if (!isMissing(error)) {
         for (const member of members)
@@ -164,27 +176,33 @@ export async function summarizeCampaign(campaignPath: string, collectedPath?: st
         'case',
         'id',
         'unit',
+        'status',
+        'overhead',
         'eligible',
         'sampled',
         'completed',
         'censored',
+        'censored carry-in',
         'work',
         'active elapsed ns',
         'self elapsed ns',
         'latency median ns upper',
         'latency p95 ns upper',
       ],
-      ...coverage.flatMap(({ caseId, id, unit, metric }) =>
+      ...coverage.flatMap(({ caseId, id, unit, status, overhead, metric }) =>
         metric
           ? [
               [
                 caseId,
                 id,
                 unit,
+                status,
+                overhead,
                 metric.eligible,
                 metric.sampled,
                 metric.completed,
                 metric.censored,
+                metric.carryInCensored,
                 metric.work,
                 metric.windowActiveNs,
                 metric.windowSelfNs,
@@ -289,9 +307,7 @@ export async function summarizeCampaign(campaignPath: string, collectedPath?: st
     const confidence =
       lost || traceLost
         ? 'Collection lost observations. The remaining records are diagnostic.'
-        : join && join.acceptedGameMicroseconds === null
-          ? 'The clock steps join, but this capture does not record how much game time this turn accepted.'
-          : '';
+        : '';
     return `<h3>${escape(run.plan.id)}</h3><p>${escape(confidence)}</p>
 <pre>${escape(JSON.stringify(join ?? 'No complete steady clock turn joined.', null, 2))}</pre>
 <details><summary>Longest captured turn waits and visible holders</summary><pre>${escape(JSON.stringify(trace.longestTurnWaits, null, 2))}</pre></details>`;

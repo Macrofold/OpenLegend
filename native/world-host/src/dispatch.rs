@@ -166,12 +166,14 @@ impl<H: DispatchHost, W: DispatchWorld<H>> Drop for Running<H, W> {
 pub(super) mod capture {
     use std::{
         collections::HashMap,
-        sync::{Mutex, OnceLock, Weak, atomic::AtomicBool},
+        sync::{Mutex, OnceLock, Weak},
     };
 
-    use openlegend_simulation::profile::{self, Context, Link, Operation, Outcome, sites};
+    use openlegend_simulation::profile::{
+        self, Context, Link, ObservationWindow, Operation, Outcome, sites,
+    };
 
-    use crate::pool::Cancellation;
+    use crate::pool::{Cancellation, CancellationSignal};
 
     // Diagnostic custody is outside the game's closure reservation. The map
     // is strictly bounded, and the weak key owns no live job or world. A key
@@ -179,7 +181,7 @@ pub(super) mod capture {
     const CAPACITY: usize = 1024;
 
     struct Queued {
-        _identity: Weak<AtomicBool>,
+        identity: Weak<CancellationSignal>,
         parent: Option<Link>,
         wait: Operation,
     }
@@ -187,42 +189,69 @@ pub(super) mod capture {
     static QUEUED: OnceLock<Mutex<HashMap<usize, Queued>>> = OnceLock::new();
 
     pub(crate) fn register(cancellation: &Cancellation) {
-        let parent = profile::current();
+        let generation = profile::generation();
+        if generation == 0 {
+            return;
+        }
+        let parent = profile::current().filter(|link| link.generation() == generation);
         if parent.is_none() && !profile::selected(sites::DISPATCH_WAIT) {
             return;
         }
-        let Some(queued) = QUEUED.get() else {
-            profile::omitted(parent.map_or(sites::DISPATCH_WAIT, Link::site));
+        let Some(queue) = QUEUED.get() else { return };
+        let Ok(mut queued) = queue.try_lock() else {
+            profile::omitted(generation, ObservationWindow::Start);
             return;
         };
-        let Ok(mut queued) = queued.try_lock() else {
-            profile::omitted(parent.map_or(sites::DISPATCH_WAIT, Link::site));
+        if profile::generation() != generation {
             return;
-        };
+        }
         if queued.len() == CAPACITY {
-            profile::omitted(parent.map_or(sites::DISPATCH_WAIT, Link::site));
+            // A missed lookup leaves its wait unobserved. Clear those keys
+            // even while an independent caller still owns a cancellation handle.
+            queued.retain(|_, entry| {
+                let pending = entry
+                    .identity
+                    .upgrade()
+                    .is_some_and(|signal| signal.profile_generation() == generation);
+                if !pending {
+                    entry.wait.omit_finish();
+                }
+                pending
+            });
+        }
+        if queued.len() == CAPACITY {
+            drop(queued);
+            profile::omitted(generation, ObservationWindow::Start);
+            return;
+        }
+        let wait = profile::begin(sites::DISPATCH_WAIT);
+        if parent.is_none() && !wait.is_observed() {
             return;
         }
         queued.insert(
             cancellation.profile_key(),
             Queued {
-                _identity: cancellation.profile_identity(),
+                identity: cancellation.profile_identity(),
                 parent,
-                wait: profile::begin(sites::DISPATCH_WAIT),
+                wait,
             },
         );
+        cancellation.set_profile_generation(generation);
     }
 
     pub(crate) fn start(cancellation: &Cancellation, cancelled: bool) -> Context {
-        // Free metadata on the admitted job's actual start, even after capture
-        // stop. The recorder fences both its wait token and inherited parent.
-        let entry = QUEUED.get().and_then(|queued| match queued.try_lock() {
-            Ok(mut queued) => queued.remove(&cancellation.profile_key()),
-            Err(_) => {
-                profile::omitted(sites::DISPATCH_WAIT);
-                None
-            }
-        });
+        let generation = cancellation.profile_generation();
+        if generation == 0 {
+            return profile::attach(None);
+        }
+        if profile::generation() != generation {
+            cancellation.set_profile_generation(0);
+            return profile::attach(None);
+        }
+        let entry = QUEUED
+            .get()
+            .and_then(|queue| queue.try_lock().ok()?.remove(&cancellation.profile_key()));
+        cancellation.set_profile_generation(0);
         if let Some(entry) = entry {
             entry.wait.finish(if cancelled {
                 Outcome::Cancelled
@@ -231,6 +260,9 @@ pub(super) mod capture {
             });
             return profile::attach(entry.parent);
         }
+        // Even if wait timing was not selected, the lost parent association
+        // makes the corresponding capture incomplete.
+        profile::omitted(generation, ObservationWindow::Continue);
         profile::attach(None)
     }
 
