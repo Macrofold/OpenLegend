@@ -1,6 +1,7 @@
 import { copyFile, mkdir, readFile, symlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { transformSync } from 'esbuild';
 
 import { hashFile } from './contract.js';
 import type { CasePlan } from './contract.js';
@@ -11,6 +12,14 @@ function replace(source: string, old: string, replacement: string) {
   if (index < 0 || source.indexOf(old, index + old.length) >= 0)
     throw new Error(`Frozen fixture anchor missing or ambiguous: ${old.slice(0, 100)}`);
   return source.slice(0, index) + replacement + source.slice(index + old.length);
+}
+
+/** Check the staged TypeScript before paying for a release build. The
+ * fixture still executes the original source through its pinned launcher.
+ */
+async function stageScript(file: string, source: string) {
+  transformSync(source, { sourcefile: file, loader: 'ts', format: 'esm' });
+  await writeFile(file, source, { flag: 'wx', mode: 0o600 });
 }
 
 /** Copies the immutable driver into a private case workspace and adds only
@@ -36,10 +45,10 @@ export async function stageFixture(plan: CasePlan, work: string, inputs: RunnerI
       .filter((file) => file !== 'workload.mts' && file !== 'player-client.mts')
       .map((file) => copyFile(join(sourceDriver.root, file), join(driver, file))),
     readFile(join(sourceDriver.root, 'workload.mts'), 'utf8').then((source) =>
-      writeFile(workload, adaptWorkload(source), { flag: 'wx', mode: 0o600 }),
+      stageScript(workload, adaptWorkload(source)),
     ),
     readFile(join(sourceDriver.root, 'player-client.mts'), 'utf8').then((source) =>
-      writeFile(client, adaptClient(source), { flag: 'wx', mode: 0o600 }),
+      stageScript(client, adaptClient(source)),
     ),
   ]);
   await copyFile(
@@ -106,7 +115,6 @@ const profile = JSON.parse(process.env.OPEN_LEGEND_PROFILE_CASE);
     const { observeLocalPostgres } = await import('./postgres-wire-observation.mjs');
     sqlWire = await observeLocalPostgres(database);
     env.OPEN_LEGEND_DATABASE_URL = sqlWire.url;
-  }
   }`,
   );
   source = replace(
