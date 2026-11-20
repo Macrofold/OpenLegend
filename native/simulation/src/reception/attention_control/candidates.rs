@@ -23,7 +23,15 @@ pub(super) fn current_point(
     selector: CurrentFacetSelector<'_>,
     journal: &mut CurrentJournal,
 ) -> Result<Option<AttentionPoint>, ReceivedError> {
-    let Some(location) = scope.native(id, "location", selector)? else {
+    point_from_location(scope, scope.native(id, "location", selector)?, journal)
+}
+
+fn point_from_location<'a>(
+    scope: &CurrentBodyReadScope<'a>,
+    location: Option<CurrentNativeFacet<'a>>,
+    journal: &mut CurrentJournal,
+) -> Result<Option<AttentionPoint>, ReceivedError> {
+    let Some(location) = location else {
         return Ok(None);
     };
     let at = location.metadata.times.expanded().value_measured_through;
@@ -256,13 +264,12 @@ pub(super) fn build_candidates(
             modality: None,
         };
         let location = scope.native(&annotation.source_id, "location", selector)?;
-        let measured = current_point(&scope, &annotation.source_id, selector, journal)?;
+        let measured = point_from_location(&scope, location, journal)?;
         let subject = if body.field.value.kind == "body"
-            && scope
-                .native_body(&annotation.source_id)?
-                .is_some_and(|live| live.field.id == body.field.id)
+            && let Some(live) = scope.native_body(&annotation.source_id)?
+            && live.field.id == body.field.id
         {
-            scope.association(&annotation.source_id)?
+            scope.association_for_live_body(&annotation.source_id, live)?
         } else {
             None
         }

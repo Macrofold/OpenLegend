@@ -345,6 +345,15 @@ impl<'a> CurrentBodyReadScope<'a> {
         let Some(body) = self.native_body(id)? else {
             return Ok(None);
         };
+        self.association_for_live_body(id, body)
+    }
+    /// Reuse the body already checked by `native_body` in this read scope.
+    /// The association still has its independent Sight selection and evidence check.
+    pub(super) fn association_for_live_body(
+        &self,
+        id: &str,
+        body: CurrentNativeFacet<'a>,
+    ) -> Result<Option<&'a ObserverSubject>, ReceivedError> {
         let Some(input) = self.native(
             id,
             "association",
