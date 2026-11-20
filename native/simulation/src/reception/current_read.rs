@@ -254,6 +254,28 @@ pub fn effective_current_check<'a>(
     partition: &CurrentPartPartition,
     presence_only: bool,
 ) -> Result<Option<SightStampRef<'a>>, ReceivedError> {
+    current_check(owner, grant, partition, presence_only, None)
+}
+
+/// Confirm presence using the unique body selected by channel on this contact.
+/// Narrowing that same selection by the body's exposure leaves the result intact.
+pub(super) fn current_body_presence_check<'a>(
+    owner: &'a PerceptionEvidenceOwner,
+    id: &str,
+    contact: &'a CurrentContact,
+    body: CurrentNativeFacet<'a>,
+) -> Result<Option<SightStampRef<'a>>, ReceivedError> {
+    let selected = (body.grant.subject_id == id).then_some((contact, body));
+    current_check(owner, body.grant, body.metadata, true, selected)
+}
+
+fn current_check<'a>(
+    owner: &'a PerceptionEvidenceOwner,
+    grant: &CurrentFacetGrant,
+    partition: &CurrentPartPartition,
+    presence_only: bool,
+    selected: Option<(&'a CurrentContact, CurrentNativeFacet<'a>)>,
+) -> Result<Option<SightStampRef<'a>>, ReceivedError> {
     if partition.availability.is_some()
         || grant.modality != Modality::Sight
         || owner
@@ -270,18 +292,25 @@ pub fn effective_current_check<'a>(
     else {
         return Ok(None);
     };
-    let Some(body) = current_native_facet_at(
-        Some(owner),
-        &grant.subject_id,
-        "body",
-        CurrentFacetSelector {
-            channel: Some(&grant.channel),
-            exposure: Some(&grant.exposure),
-            modality: None,
-        },
-    )?
-    else {
-        return Ok(None);
+    let (contact, body) = if let Some(selected) = selected {
+        selected
+    } else {
+        let Some(contact) = owner.current.get(&grant.subject_id) else {
+            return Ok(None);
+        };
+        let Some(body) = current_contact_native_facet(
+            contact,
+            "body",
+            CurrentFacetSelector {
+                channel: Some(&grant.channel),
+                exposure: Some(&grant.exposure),
+                modality: None,
+            },
+        )?
+        else {
+            return Ok(None);
+        };
+        (contact, body)
     };
     if body.metadata.availability.is_some() || body.grant.exposure != grant.exposure {
         return Ok(None);
@@ -299,10 +328,7 @@ pub fn effective_current_check<'a>(
     {
         return Ok(None);
     }
-    let explicit = owner
-        .current
-        .get(&grant.subject_id)
-        .and_then(|contact| contact.sight.as_ref());
+    let explicit = contact.sight.as_ref();
     let candidate = match check {
         CurrentCheck::Detail => explicit
             .and_then(|stamp| stamp.detail.as_ref())
