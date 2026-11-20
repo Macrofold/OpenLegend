@@ -93,9 +93,27 @@ pub struct FeaturePriority {
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SemanticAttentionPolicy {
     pub discovery: bool,
+    #[serde(
+        default,
+        deserialize_with = "crate::values::deserialize_present_safe_integer",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub npc_optional_cue_capacity: Option<u64>,
+}
+
+impl SemanticAttentionPolicy {
+    /// Optional cue places belong to the installed resident attention policy.
+    pub(crate) fn optional_cue_capacity(&self, controller: &str) -> Option<usize> {
+        if controller == "npc" {
+            self.npc_optional_cue_capacity
+                .map(|cap| usize::try_from(cap).unwrap_or(usize::MAX))
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

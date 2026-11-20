@@ -59,6 +59,7 @@ pub(super) fn select(
     entries_before: &[AttentionEntry],
     candidates: &IndexMap<String, AttentionCandidate>,
     capacity: usize,
+    optional_cue_capacity: Option<usize>,
     change_fed: bool,
     no_incoming_cues: bool,
 ) -> Result<Selection, ReceivedError> {
@@ -148,7 +149,15 @@ pub(super) fn select(
     });
     let retained =
         if change_fed && no_incoming_cues && !expired && target(physical, observer).is_none() {
-            retained(state, entries_before, &view, capacity, policy, now)
+            retained(
+                state,
+                entries_before,
+                &view,
+                capacity,
+                optional_cue_capacity,
+                policy,
+                now,
+            )
         } else {
             None
         };
@@ -252,13 +261,14 @@ pub(super) fn select(
                 );
             }
         }
-        let optional_capacity = capacity.saturating_sub(
+        let spare = capacity.saturating_sub(
             selected.len()
                 + usize::from(
                     discovery
                         .is_some_and(|discovery| !selected.iter().any(|(key, _)| key == discovery)),
                 ),
         );
+        let optional_capacity = spare.min(optional_cue_capacity.unwrap_or(spare));
         let mut incumbents = current
             .values()
             .filter(|entry| {
@@ -362,11 +372,12 @@ fn retained(
     entries: &[AttentionEntry],
     view: &IndexMap<&str, Representative<'_>>,
     capacity: usize,
+    optional_cue_capacity: Option<usize>,
     policy: &AttentionPolicy,
     now: f64,
 ) -> Option<Vec<(String, AttentionBasis)>> {
     if !state.explicit.is_empty()
-        || entries.len() != capacity.min(view.len())
+        || optional_cue_capacity.is_none() && entries.len() != capacity.min(view.len())
         || entries.iter().any(|entry| {
             !view.contains_key(entry.key.as_str())
                 || !matches!(entry.basis, AttentionBasis::Cue | AttentionBasis::Discovery)
@@ -385,6 +396,14 @@ fn retained(
             .as_ref()
             != Some(&candidate.candidate.description_revision)
     });
+    if optional_cue_capacity.is_some_and(|cap| {
+        entries.len()
+            != capacity
+                .min(view.len())
+                .min(cap.saturating_add(usize::from(waiting)))
+    }) {
+        return None;
+    }
     let discovery = entries
         .iter()
         .find(|entry| entry.basis == AttentionBasis::Discovery);

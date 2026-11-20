@@ -49,8 +49,12 @@ pub(crate) struct AttentionSelection {
     /// before making another capture; callers cannot turn this into a receipt.
     pub measurement_changed: bool,
 }
-fn policy_key(policy: &AttentionPolicy, capacity: Option<f64>) -> Result<String, ReceivedError> {
-    json_record(&(
+fn policy_key(
+    policy: &AttentionPolicy,
+    capacity: Option<f64>,
+    optional_cue_capacity: Option<usize>,
+) -> Result<String, ReceivedError> {
+    let selection = (
         &policy.id,
         policy.version,
         capacity,
@@ -65,12 +69,16 @@ fn policy_key(policy: &AttentionPolicy, capacity: Option<f64>) -> Result<String,
         policy.new_description_cue,
         policy.urgent_cue,
         &policy.relation,
-    ))
+    );
+    match optional_cue_capacity {
+        Some(capacity) => json_record(&(selection, capacity)),
+        None => json_record(&selection),
+    }
     .map_err(|_| invalid())
 }
 fn initial_state(policy: &AttentionPolicy) -> Result<AttentionState, ReceivedError> {
     Ok(AttentionState {
-        policy: policy_key(policy, None)?,
+        policy: policy_key(policy, None, None)?,
         next_order: 0,
         annotations: IndexMap::new(),
         entries: Vec::new(),
@@ -262,7 +270,11 @@ pub(crate) fn update_attention(
         return Err(invalid());
     }
     let capacity_value = capacity_value as usize;
-    let next_policy = policy_key(policy, Some(capacity_value as f64))?;
+    let optional_cue_capacity = entity
+        .actor
+        .as_ref()
+        .and_then(|actor| policy.semantic.optional_cue_capacity(&actor.controller));
+    let next_policy = policy_key(policy, Some(capacity_value as f64), optional_cue_capacity)?;
     let policy_changed = state.policy != next_policy;
     state.policy = next_policy;
     journal.begin_attention_work(observer, current.life)?;
@@ -474,6 +486,7 @@ pub(crate) fn update_attention(
             &entries_before,
             &candidates,
             capacity_value,
+            optional_cue_capacity,
             update.changed_source_ids.is_some() && !policy_changed && !expiry_due,
             update.urgency.is_none_or(IndexMap::is_empty)
                 && update.direct_subjects.is_none_or(|ids| ids.is_empty()),

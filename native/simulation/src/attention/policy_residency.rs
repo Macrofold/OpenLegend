@@ -59,7 +59,10 @@ heap_record!(FeaturePriority {
     support,
     solid_face
 });
-heap_record!(SemanticAttentionPolicy { discovery });
+heap_record!(SemanticAttentionPolicy {
+    discovery,
+    npc_optional_cue_capacity
+});
 heap_record!(SceneAttentionPolicy {
     max_bytes,
     max_rows,

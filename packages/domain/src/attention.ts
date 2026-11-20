@@ -128,7 +128,11 @@ export interface AttentionPolicy {
     maxBytes: number;
     featurePriority: Readonly<Record<'support' | 'solid-face', number>>;
   };
-  semantic: { discovery: boolean };
+  semantic: {
+    discovery: boolean;
+    /** Optional cue places for autonomous residents after directed work and urgent cues. */
+    npcOptionalCueCapacity?: number;
+  };
   scene: {
     maxBytes: number;
     maxRows: number;
@@ -301,8 +305,8 @@ export interface AttentionUpdate {
   proofs?: Readonly<Record<string, ObservationFactKey>>;
   directSubjects?: readonly string[];
 }
-const policyKey = (policy: AttentionPolicy, capacity?: number) =>
-  JSON.stringify([
+function policyKey(policy: AttentionPolicy, capacity?: number, optionalCueCapacity?: number) {
+  const selection = [
     policy.id,
     policy.version,
     capacity,
@@ -317,7 +321,11 @@ const policyKey = (policy: AttentionPolicy, capacity?: number) =>
     policy.newDescriptionCue,
     policy.urgentCue,
     policy.relation,
-  ]);
+  ];
+  return JSON.stringify(
+    optionalCueCapacity === undefined ? selection : [selection, optionalCueCapacity],
+  );
+}
 export const attentionSubjectKey = (sourceId: string, exposure: ObservationExposure) =>
   JSON.stringify([
     exposure.observer.actorId,
@@ -728,13 +736,15 @@ function retainedSelection(
   entries: readonly AttentionEntry[],
   candidates: readonly (readonly [string, AttentionCandidate])[],
   capacity: number,
+  optionalCueCapacity: number | undefined,
   policy: AttentionPolicy,
   now: number,
 ): Array<{ key: string; basis: AttentionBasis }> | undefined {
   const current = Object.fromEntries(candidates);
   if (
     state.explicit.length ||
-    entries.length !== Math.min(capacity, candidates.length) ||
+    (optionalCueCapacity === undefined &&
+      entries.length !== Math.min(capacity, candidates.length)) ||
     entries.some(
       (entry) => !current[entry.key] || (entry.basis !== 'cue' && entry.basis !== 'discovery'),
     ) ||
@@ -745,6 +755,11 @@ function retainedSelection(
   const waiting = candidates.some(
     ([, candidate]) => candidate.presentedDescription !== candidate.descriptionRevision,
   );
+  if (
+    optionalCueCapacity !== undefined &&
+    entries.length !== Math.min(capacity, candidates.length, optionalCueCapacity + Number(waiting))
+  )
+    return;
   const discovery = entries.find((entry) => entry.basis === 'discovery');
   const held = discovery && current[discovery.key];
   if (
@@ -916,7 +931,9 @@ export function updateAttention(
   const before = entriesBefore.map((entry) => entry.sourceId);
   const policy = selectedAttentionPolicy(world);
   const capacity = selectedAttentionCapacity(world, observer);
-  const nextPolicy = policyKey(policy, capacity);
+  const optionalCueCapacity =
+    observer.actor.controller === 'npc' ? policy.semantic.npcOptionalCueCapacity : undefined;
+  const nextPolicy = policyKey(policy, capacity, optionalCueCapacity);
   const policyChanged = state.policy !== nextPolicy;
   state.policy = nextPolicy;
   const working = workingFor(world, observerId, owner.life);
@@ -1219,6 +1236,7 @@ export function updateAttention(
       entriesBefore,
       candidateEntriesBefore,
       capacity,
+      optionalCueCapacity,
       policy,
       world.simTime,
     );
@@ -1284,10 +1302,11 @@ export function updateAttention(
     const workTarget = observer.actor.action?.targetId;
     for (const [key, candidate] of candidates)
       if (candidate.sourceId === workTarget && selected.length < ongoing) take(key, 'work');
-    const optionalCapacity =
+    const spare =
       capacity -
       selected.length -
       (discoveryKey && !selected.some((entry) => entry.key === discoveryKey) ? 1 : 0);
+    const optionalCapacity = Math.min(spare, optionalCueCapacity ?? spare);
     const incumbents = [...current.values()].filter(
       (entry) => !selected.some((value) => value.key === entry.key) && entry.key !== discoveryKey,
     );
