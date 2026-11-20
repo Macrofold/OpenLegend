@@ -5,7 +5,7 @@ use super::*;
 use crate::{
     authority::Capability,
     player_stream::{PlayerStream, PrepareView, VIEW_CADENCE, ViewAttempt},
-    player_view::{ViewError, capture_host, prepare_view},
+    player_view::{ViewError, capture_host, prepare_view, profile::DisplayPreferencesPatch},
     store::AiDisplay,
     world::PlayerDisclosure,
 };
