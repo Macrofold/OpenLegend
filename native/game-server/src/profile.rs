@@ -300,9 +300,8 @@ fn commands(recorder: &'static Recorder, output: File) -> Result<(), &'static st
                 notify(&serde_json::json!({ "type": "armed", "generation": generation }))?;
             }
             Command::Stop {} => {
-                let stop_ns = recorder.now();
                 let mut capture = recorder.detach().ok_or("no capture is armed")?;
-                let complete = capture.stop(stop_ns);
+                let complete = capture.stop(recorder.now());
                 serde_json::to_writer(&mut output, &capture)
                     .map_err(|_| "capture export failed")?;
                 output

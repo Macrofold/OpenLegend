@@ -163,6 +163,11 @@ impl HostedWorld {
                 let Ok(_turn) = self.turn.try_lock() else {
                     return Ok(PlayerDisclosure::Busy);
                 };
+                let _turn = super::held_turn(
+                    _turn,
+                    #[cfg(feature = "profile-campaign")]
+                    openlegend_simulation::profile::sites::TURN_VIEW,
+                );
                 let session = match self.session.try_lock() {
                     Ok(session) => session,
                     Err(std::sync::TryLockError::WouldBlock) => return Ok(PlayerDisclosure::Busy),

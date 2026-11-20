@@ -48,8 +48,13 @@ function completeWork(run: CaseResult) {
       (!run.metrics.complete ||
         run.metrics.lost ||
         run.metrics.traceLost ||
+        (run.metrics.trace.clockJoinSelected &&
+          !run.metrics.trace.clockTurn?.acceptedGameMicroseconds) ||
         run.metrics.metrics.some(
-          (metric) => metric.status === 'not-exercised' || metric.status === 'censored',
+          (metric) =>
+            metric.status === 'not-exercised' ||
+            metric.status === 'censored' ||
+            (!metric.countCalls && !metric.latency.count),
         ))
     )
   );
@@ -138,9 +143,11 @@ export function compare(
   if (proofError) reasons.add(proofError);
   if (runs.length !== 6 || !runs.every(completeWork))
     reasons.add('Missing checks, coverage, or promised work.');
-  if (new Set(runs.map((run) => run.database)).size !== 6)
+  if (runs.some((run) => !run.database) || new Set(runs.map((run) => run.database)).size !== 6)
     reasons.add('Fresh databases not verified for all cases.');
-  if (new Set(runs.map((run) => run.instanceId)).size !== 1)
+  if (runs.some((run) => !run.instanceId))
+    reasons.add('Worker identity is missing for one or more cases.');
+  else if (new Set(runs.map((run) => run.instanceId)).size !== 1)
     reasons.add('Matched cases did not use the same assigned worker.');
   const pairs = [];
   for (const repetition of [1, 2, 3]) {
@@ -158,11 +165,14 @@ export function compare(
       reasons.add('Fixed-work equivalence not verified for the timed binaries and selections.');
     if (a.plan.comparisonIdentity !== b.plan.comparisonIdentity)
       reasons.add('Frozen pairing identity differs.');
-    if (b.plan.sharedBuild && a.executable !== b.executable)
-      reasons.add('Observer off/on executables differ.');
+    if (b.plan.sharedBuild) {
+      if (!a.executable || !b.executable) reasons.add('Shared executable is unverified.');
+      else if (a.executable !== b.executable) reasons.add('Observer off/on executables differ.');
+    }
     const timeA = value(a, 'completedGameSeconds'),
       timeB = value(b, 'completedGameSeconds');
-    if (!timeA || !timeB || Math.abs(timeB - timeA) > plan.workToleranceGameSeconds)
+    if (!timeA || !timeB) reasons.add('Completed game time is unavailable for a pair.');
+    else if (Math.abs(timeB - timeA) > plan.workToleranceGameSeconds)
       reasons.add('Completed game-time difference exceeds the frozen tolerance.');
     for (const [key, tolerance] of Object.entries(plan.internalWorkTolerance)) {
       const x = finite(object(a.workload?.internalWork ?? {})[key]);

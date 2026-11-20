@@ -138,6 +138,8 @@ struct Trace {
     site: &'static str,
     lane: Option<u32>,
     outcome: Option<&'static str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    work: Option<u64>,
 }
 
 #[derive(Serialize)]
@@ -316,7 +318,7 @@ impl Capture {
         if in_window {
             add(&mut self.metrics.get_mut(index)?.sampled, 1)?;
         }
-        self.trace("begin", span, now, None, None);
+        self.trace("begin", span, now, None, None, None);
         Some(Some(link))
     }
 
@@ -349,7 +351,7 @@ impl Capture {
             child_window_ns: 0,
         });
         *self.slots.get_mut(link.slot())? = Some(span);
-        self.trace("resume", span, now, Some(lane), None);
+        self.trace("resume", span, now, Some(lane), None, None);
         Some(true)
     }
 
@@ -391,7 +393,7 @@ impl Capture {
         let segment = span.segment.take().filter(|segment| segment.lane == lane)?;
         self.close_segment(&mut span, now, segment)?;
         *self.slots.get_mut(link.slot())? = Some(span);
-        self.trace("suspend", span, now, Some(lane), None);
+        self.trace("suspend", span, now, Some(lane), None, None);
         Some(())
     }
 
@@ -447,6 +449,7 @@ impl Capture {
             } else {
                 outcome_name(outcome)
             }),
+            work.filter(|_| !censored),
         );
         (!incomplete_segment).then_some(())
     }
@@ -470,6 +473,7 @@ impl Capture {
         at_ns: u64,
         lane: Option<u32>,
         outcome: Option<&'static str>,
+        work: Option<u64>,
     ) {
         if self.trace_limit == 0 || at_ns > self.window.drain_ns {
             return;
@@ -486,6 +490,7 @@ impl Capture {
             site: span.link.site().id(),
             lane,
             outcome,
+            work,
         });
     }
 
@@ -529,7 +534,7 @@ impl Capture {
                     }
                 }
             }
-            self.trace("censor", span, stop_ns, None, Some("censored"));
+            self.trace("censor", span, stop_ns, None, Some("censored"), None);
         }
         self.slots.clear();
         self.free.clear();

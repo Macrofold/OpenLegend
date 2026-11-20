@@ -102,6 +102,8 @@ export async function summarizeCampaign(campaignPath: string, collectedPath?: st
       serverCorePercent: core('serverCpuMs'),
       postgresCorePercent: core('postgresCpuMs'),
       clientCorePercent: core('clientCpuMs'),
+      driverCorePercent: core('driverCpuMs'),
+      launcherCorePercent: core('launcherCpuMs'),
       samplerCorePercent: core('samplerCpuMs'),
       achievedGameSpeedPercent: offered && completed !== null ? (100 * completed) / offered : null,
       ownedCpuMsPerGameSecond:
@@ -257,6 +259,43 @@ export async function summarizeCampaign(campaignPath: string, collectedPath?: st
         .join('')
     );
   }
+  function resourceRow(run: (typeof cases)[number]) {
+    const memory = object(run.resources?.memory ?? {});
+    const database = object(run.resources?.database ?? {});
+    const mib = (bytes: unknown) => {
+      const count = finite(bytes);
+      return count === null ? 'unavailable' : rounded(count / 1024 ** 2);
+    };
+    const row = [
+      run.plan.id,
+      run.workload?.offeredGameSeconds,
+      run.workload?.completedGameSeconds,
+      run.workload?.ownerDebt,
+      rounded(run.clientCorePercent),
+      rounded(run.driverCorePercent),
+      rounded(run.launcherCorePercent),
+      rounded(run.samplerCorePercent),
+      mib(memory.concurrentServerPostgresPeakBytes),
+      mib(memory.concurrentAllPeakBytes),
+      database.walBytes,
+      database.growthBytes,
+    ];
+    return `<tr>${row.map((cell) => '<td>' + escape(cell) + '</td>').join('')}</tr>`;
+  }
+  function clockSection(run: CaseResult) {
+    if (!run.metrics) return '';
+    const { trace, lost, traceLost } = run.metrics;
+    const join = trace.clockTurn;
+    const confidence =
+      lost || traceLost
+        ? 'Collection lost observations. The remaining records are diagnostic.'
+        : join && join.acceptedGameMicroseconds === null
+          ? 'The clock steps join, but this capture does not record how much game time this turn accepted.'
+          : '';
+    return `<h3>${escape(run.plan.id)}</h3><p>${escape(confidence)}</p>
+<pre>${escape(JSON.stringify(join ?? 'No complete steady clock turn joined.', null, 2))}</pre>
+<details><summary>Longest steady turn waits and visible holders</summary><pre>${escape(JSON.stringify(trace.longestTurnWaits, null, 2))}</pre></details>`;
+  }
   await publish(
     output,
     'report.html',
@@ -279,9 +318,14 @@ ${byArm.flatMap((item) => item.arms.map((arm) => `<tr><td>${escape(item.comparis
 <table><thead><tr><th>Case</th><th>Reply</th><th>Stream receipt</th><th>Browser display</th><th>Durable observation</th><th>Cold reopen</th></tr></thead><tbody>
 ${cases.map((run) => `<tr><td>${escape(run.plan.id)}</td>${['commandReply', 'firstStreamReceipt', 'firstBrowserDisplay', 'firstDurableObservation', 'coldOpen'].map((key) => `<td>${latencyCell(run, key)}</td>`).join('')}</tr>`).join('\n')}
 </tbody></table>
+<h2>Game time, other processes and storage</h2>
+<p>CPU is a percentage of one logical core. The client, driver, launcher and any separate sampler are outside server and PostgreSQL CPU.</p>
+<table><thead><tr><th>Case</th><th>Offered game-s</th><th>Completed game-s</th><th>Owner debt</th><th>Client CPU</th><th>Driver CPU</th><th>Launcher CPU</th><th>Sampler CPU</th><th>Server + PostgreSQL MiB peak</th><th>All observed MiB peak</th><th>WAL bytes</th><th>Database growth bytes</th></tr></thead><tbody>
+${cases.map(resourceRow).join('\n')}
+</tbody></table>
 <h2>Qualification</h2><ul>${comparisons.map((item) => `<li>${escape(item.id)} — ${escape(item.status)}. ${escape(item.reasons.join(' '))}</li>`).join('')}</ul>
 <h2>Additional measurement passes</h2>${cases.map(diagnosticSection).join('') || '<p>No separate CPU or SQL diagnostic was collected.</p>'}
-<h2>Clock-turn witness</h2>${cases.map((run) => (run.metrics ? `<h3>${escape(run.plan.id)}</h3><pre>${escape(JSON.stringify(run.metrics.trace.clockTurn ?? 'The selected capture does not contain a complete joined clock turn.', null, 2))}</pre>` : '')).join('')}
+<h2>Clock-turn witness</h2>${cases.map(clockSection).join('')}
 <p>Worker time, queue latency, and sampled CPU have different meanings. Overlapping scopes cannot be added. Unavailable observations remain distinct from measured zero.</p>
 `,
   );

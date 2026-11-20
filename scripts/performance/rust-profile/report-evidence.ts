@@ -204,7 +204,17 @@ function captureMetrics(value: unknown, planned: CasePlan) {
     throw new Error('Unrecognized recorder histogram schema.');
   const lost = integer(data.lost, 'omitted observations', 0, Number.MAX_SAFE_INTEGER);
   const traceLost = integer(data.traceLost, 'omitted trace records', 0, Number.MAX_SAFE_INTEGER);
-  const complete = object(data.window).complete === true;
+  const window = object(data.window, 'recorder window');
+  const startNs = integer(window.startNs, 'steady window start', 0, Number.MAX_SAFE_INTEGER);
+  const endNs = integer(window.endNs, 'steady window end', startNs + 1, Number.MAX_SAFE_INTEGER);
+  const drainNs = integer(
+    window.drainNs,
+    'recorder drain deadline',
+    endNs,
+    Number.MAX_SAFE_INTEGER,
+  );
+  const stopNs = integer(window.stopNs, 'recorder stop', 0, drainNs);
+  const complete = window.complete === true && stopNs >= endNs;
   const sampling = object(data.sampling);
   if (sampling.every !== 1 / planned.samplingProbability || sampling.seed !== planned.seed)
     throw new Error('Capture sampling does not match the frozen selection.');
@@ -274,8 +284,8 @@ function captureMetrics(value: unknown, planned: CasePlan) {
     new Set(metrics.map((m) => m.id)).size !== metrics.length
   )
     throw new Error('One or more selected metric summaries are absent.');
-  const trace = traceWitness(data.trace);
-  return { complete, lost, traceLost, metrics, trace };
+  const trace = traceWitness(data.trace, planned.probeIds, startNs, endNs, stopNs);
+  return { complete, lost, traceLost, metrics, trace, window: { startNs, endNs, drainNs, stopNs } };
 }
 
 type TraceSpan = {
@@ -285,9 +295,17 @@ type TraceSpan = {
   startNs: number;
   endNs?: number;
   outcome?: string;
+  work?: number;
 };
 
-function traceWitness(value: unknown) {
+function traceWitness(
+  value: unknown,
+  selected: string[],
+  startNs: number,
+  endNs: number,
+  stopNs: number,
+) {
+  const inWindow = (span: TraceSpan) => span.startNs >= startNs && span.startNs < endNs;
   const spans = new Map<number, TraceSpan>();
   for (const entry of list(value ?? [], 'trace records', 1_048_576)) {
     const row = object(entry);
@@ -307,10 +325,12 @@ function traceWitness(value: unknown) {
       });
     } else {
       const span = spans.get(token);
-      if (!span || span.endNs !== undefined || at < span.startNs)
+      if (!span || span.endNs !== undefined || at < span.startNs || at > stopNs)
         throw new Error('Trace finish has no matching start.');
       span.endNs = at;
       span.outcome = text(row.outcome, 'trace outcome');
+      if (row.work !== undefined)
+        span.work = integer(row.work, 'observed work units', 0, Number.MAX_SAFE_INTEGER);
     }
   }
   const needed = new Set([
@@ -325,7 +345,7 @@ function traceWitness(value: unknown) {
     .filter((span) => span.endNs !== undefined && /\.hold\.(?:turn|other)$/.test(span.id))
     .sort((a, b) => a.startNs - b.startNs);
   const waits = [...spans.values()]
-    .filter((span) => span.id === 'S02.wait.turn' && span.endNs !== undefined)
+    .filter((span) => span.id === 'S02.wait.turn' && span.endNs !== undefined && inWindow(span))
     .sort((a, b) => b.endNs! - b.startNs - (a.endNs! - a.startNs))
     .slice(0, 20);
   const overlap = waits.map((span) => {
@@ -341,10 +361,16 @@ function traceWitness(value: unknown) {
       explainedNs += Math.max(0, item.endNs - Math.max(until, item.startNs));
       until = Math.max(until, item.endNs);
     }
-    return { ...span, observedHolders, uncoveredNs: span.endNs! - span.startNs - explainedNs };
+    return {
+      ...span,
+      settledDuringDrain: span.endNs! >= endNs,
+      observedHolders,
+      uncoveredNs: span.endNs! - span.startNs - explainedNs,
+    };
   });
   for (const span of spans.values()) {
     if (span.endNs === undefined || span.outcome !== 'completed' || !needed.has(span.id)) continue;
+    if (span.id === 'S02.10' && span.work === 0) continue;
     let owner = span.parent === null ? undefined : spans.get(span.parent);
     while (owner && owner.id !== 'S02.entry.tick' && owner.parent !== null) {
       // Parent tokens are created before their children.
@@ -353,6 +379,7 @@ function traceWitness(value: unknown) {
     }
     if (
       owner?.id !== 'S02.entry.tick' ||
+      !inWindow(owner) ||
       owner.endNs === undefined ||
       owner.outcome !== 'completed'
     )
@@ -364,9 +391,22 @@ function traceWitness(value: unknown) {
     }
     if (!joined.has(span.id)) joined.set(span.id, span);
   }
-  const witness = [...byClock.entries()].find(([, joined]) => joined.size === needed.size);
+  const joinedTurns = [...byClock.entries()].filter(([, joined]) => joined.size === needed.size);
+  const witness =
+    joinedTurns.find(([, joined]) => (joined.get('S02.10')?.work ?? 0) > 0) ?? joinedTurns[0];
+  const clock = witness && spans.get(witness[0]);
   return {
-    clockTurn: witness ? { clock: spans.get(witness[0]), linked: [...witness[1].values()] } : null,
+    clockJoinSelected:
+      selected.includes('S02.entry.tick') && [...needed].every((id) => selected.includes(id)),
+    clockTurn:
+      witness && clock
+        ? {
+            clock,
+            linked: [...witness[1].values()],
+            acceptedGameMicroseconds: witness[1].get('S02.10')?.work ?? null,
+            settledDuringDrain: clock.endNs! >= endNs,
+          }
+        : null,
     longestTurnWaits: overlap,
   };
 }
