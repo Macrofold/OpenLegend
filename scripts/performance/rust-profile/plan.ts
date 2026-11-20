@@ -54,6 +54,8 @@ function placement(row: Comparison, repetition: number, position: number, mode: 
 export type FrozenPlan = {
   schema: 1;
   id: string;
+  taskId: string;
+  cloudAllocationId: string;
   gameSource: string;
   toolSource: string;
   limitUsd: number;
@@ -207,6 +209,7 @@ export async function planCampaign(path: string, root: string) {
     'outputDirectory',
     'verificationDirectory',
     'cloudAllocationId',
+    'taskId',
     'deadlineSeconds',
     'caseDeadlineSeconds',
     'comparisons',
@@ -222,6 +225,7 @@ export async function planCampaign(path: string, root: string) {
   const outputDirectory = absolute(input.outputDirectory, 'output directory');
   const verificationDirectory = absolute(input.verificationDirectory, 'verification directory');
   const cloudAllocationId = text(input.cloudAllocationId, 'cloud allocation ID', identifier);
+  const taskId = text(input.taskId ?? id, 'managed task ID', identifier);
   const deadlineSeconds = integer(input.deadlineSeconds, 'campaign deadline seconds', 3600, 28800);
   const caseDeadlineSeconds = integer(
     input.caseDeadlineSeconds,
@@ -332,6 +336,8 @@ export async function planCampaign(path: string, root: string) {
   const plan: FrozenPlan = {
     schema: 1,
     id,
+    taskId,
+    cloudAllocationId,
     gameSource,
     toolSource,
     limitUsd,
@@ -347,7 +353,7 @@ export async function planCampaign(path: string, root: string) {
   await writeJson(join(outputDirectory, 'plan.json'), { plan, sha256: digest(plan) });
   await writeJson(join(outputDirectory, 'inventory.json'), registry);
   await writeJson(join(outputDirectory, 'worker-plan.json'), {
-    taskId: id,
+    taskId,
     cloudAllocationId,
     concurrency: 1,
     lifetime: 'durable',
@@ -404,6 +410,8 @@ export async function readPlan(path: string): Promise<FrozenPlan> {
   )
     throw new Error('Frozen plan checksum or shape mismatch.');
   const verified = raw as FrozenPlan;
+  text(raw.taskId, 'managed task ID', identifier);
+  text(raw.cloudAllocationId, 'cloud allocation ID', identifier);
   const gameSource = text(raw.gameSource, 'game source', gitHash);
   const toolSource = text(raw.toolSource, 'tool source', gitHash);
   const ids = verified.comparisons.map((row) => text(row.id, 'comparison ID', identifier));
