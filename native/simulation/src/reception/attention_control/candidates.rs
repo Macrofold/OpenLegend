@@ -172,8 +172,7 @@ fn descriptions<'a>(
             facet(kind)?.and_then(|field| match scope.value(&field.field.value.reference) {
                 Some(ReceivedValueFragment::Sensory(value)) => Some(value),
                 _ => None,
-            }
-        });
+            });
     }
     let description = match values[0] {
         Some(SensoryFacet::Description { text }) => Some(text),
