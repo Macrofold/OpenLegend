@@ -191,6 +191,8 @@ Some remaining work will be serial, memory-bandwidth-bound or I/O-bound. Report 
 
 ## 6. Captures, saving, correction and restoration
 
+The [Rust preparation experiments](native-simulation-hot-paths.md) apply these capture and storage requirements to the current player, save and NPC callers. Their proposals and verification remain separate from the delivered contracts below.
+
 ### 6.1 Stable consumer products without a permanent immutable world graph
 
 Active state is mutable only through its owner. A consumer capture copies its selected changing values and shares genuinely immutable definitions/value fragments. Current facts retain the exact existing measurement/acquisition/check/source clocks; a capture time is not a new observation. Opaque cut bindings name source revisions and life/timeline/grant state, not raw references into a vector that can later resize.

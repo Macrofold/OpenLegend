@@ -61,6 +61,8 @@ reuse visible identities across nonphysical changes, then resolve current record
 and current disclosure. [NW18](../limits/native-work.md#nw18--derived-spatial-and-read-reuse)
 owns cache bounds.
 
+The [stand-alone player-view experiments](../projects/native-simulation-hot-paths.md#3-separate-expensive-display-work-from-motion) apply this policy to the existing stream and recent-event preparation.
+
 Use scoped conversation/narration revisions on the existing SSE stream to invalidate visible history pages. Load once on opening, once on reconnect/reset and when that scope changes; fetch older pages only on demand. Keep a slow, backoff-based fallback only if the notification contract is unavailable. Hidden panels perform no history polling.
 
 Keep presence heartbeats because they establish liveness, and retain diagnostics' existing visible-panel cadence while making reads coalesced, bounded and independent of gameplay. Provider operation polling may remain necessary where no reliable callback/stream exists; back off while idle, respect provider limits, and preserve receipt reconciliation. Do not treat all timers as defects.
