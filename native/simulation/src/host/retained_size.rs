@@ -27,6 +27,7 @@ fixed!(
     u8,
     u16,
     u32,
+    std::num::NonZeroU32,
     u64,
     usize,
     i8,

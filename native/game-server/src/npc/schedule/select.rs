@@ -61,6 +61,9 @@ impl Inspection {
     pub(super) fn through(&self) -> u64 {
         self.input.accepted_cut
     }
+    pub(super) fn at(&self) -> f64 {
+        self.input.at
+    }
     pub(super) fn sequence(&self) -> u64 {
         self.read["unseen"]["maxSequence"].as_u64().unwrap_or(0)
     }
@@ -83,6 +86,7 @@ impl Inspection {
         policy: &SchedulingPolicy,
         prior: &ThoughtRead,
         causes: impl ExactSizeIterator<Item = NpcScheduleCause<'a>>,
+        discovery_at: f64,
     ) -> ReadResult<Proposal> {
         let facts = &self.read;
         let mut unseen = self
@@ -114,7 +118,7 @@ impl Inspection {
         let actor = &facts["own"]["agency"];
         let plan = &actor["plan"];
         let goals = array(&actor["goals"]);
-        let review = review(facts, policy);
+        let mut review = review(facts, policy);
         let blocks = facts["actionsBlocked"] == true;
         let protection = blocks.then(|| {
             let labels = array(&facts["protectionLabels"])
@@ -166,7 +170,7 @@ impl Inspection {
         let new_review = review.key.is_some() && review.key != previous.review_key;
         let semantic = &facts["semantic"];
         let causes = causes.collect::<Vec<_>>();
-        let discovery = (policy.discovery
+        let discovery = if policy.discovery
             && unseen.is_empty()
             && causes.is_empty()
             && !changed
@@ -179,9 +183,19 @@ impl Inspection {
                     candidates.values().any(|candidate| {
                         candidate["presentedDescription"] != candidate["descriptionRevision"]
                     })
-                }))
-        .then(|| semantic["interval"].as_u64())
-        .flatten();
+                })
+        {
+            if self.at() < discovery_at {
+                // Only a real optional cue earns a later inspection. Evidence,
+                // active work and urgent causes keep the ordinary wake path.
+                review.next_at = review.next_at.min(discovery_at);
+                None
+            } else {
+                semantic["interval"].as_u64()
+            }
+        } else {
+            None
+        };
         let mut identity = json!({
             "semanticRevision":semantic_revision,
             "evidence":unseen.iter().map(|item|item.event()).collect::<Vec<_>>(),

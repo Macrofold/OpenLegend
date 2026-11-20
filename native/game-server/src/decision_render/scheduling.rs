@@ -1,6 +1,7 @@
 use serde::Deserialize;
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
+use std::num::NonZeroU32;
 
 /// Compiled from the existing native Source scheduler and selected world.
 #[derive(Deserialize)]
@@ -16,7 +17,15 @@ pub(crate) struct SchedulingPolicy {
     pub(crate) policy_revision: u64,
     pub(crate) body_policy_pin: Option<Value>,
     pub(crate) discovery: bool,
+    idle_discovery_seconds: Option<NonZeroU32>,
     pub(crate) prepared_responses: Option<Value>,
+}
+
+impl SchedulingPolicy {
+    pub(crate) fn next_discovery_check(&self, at: f64) -> f64 {
+        self.idle_discovery_seconds
+            .map_or(at, |seconds| at + f64::from(seconds.get()))
+    }
 }
 
 #[derive(Deserialize)]

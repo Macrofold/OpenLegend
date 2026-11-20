@@ -138,7 +138,8 @@ export function rustGameServerDecisionPolicy(world: WorldState) {
   const supported = selectedResponseExpressions(world, true);
   const unsupported = selectedResponseExpressions(world, false);
   const appraises = world.moduleManifest.appraisals?.definitions.some((entry) => entry.decision);
-  const maxQueries = selectedAttentionPolicy(world).scene.maximumQueries;
+  const attention = selectedAttentionPolicy(world);
+  const maxQueries = attention.scene.maximumQueries;
   const recallAlias = '@rgs:recall-candidate';
   const recallQuestion = attentionRequest({}, [[recallAlias, 'one optional candidate']]).questions[
     recallAlias
@@ -239,7 +240,8 @@ export function rustGameServerDecisionPolicy(world: WorldState) {
       significantEvents: world.cognitionPolicy.significantEventTypes,
       policyRevision: world.cognitionPolicy.revision,
       bodyPolicyPin: world.moduleManifest.bodyPolicyPin,
-      discovery: selectedAttentionPolicy(world).semantic.discovery,
+      discovery: attention.semantic.discovery,
+      idleDiscoverySeconds: attention.semantic.npcIdleDiscoverySeconds,
       preparedResponses: world.cognitionPolicy.preparedResponses,
     },
   };

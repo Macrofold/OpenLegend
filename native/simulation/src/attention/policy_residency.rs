@@ -61,6 +61,7 @@ heap_record!(FeaturePriority {
 });
 heap_record!(SemanticAttentionPolicy {
     discovery,
+    npc_idle_discovery_seconds,
     npc_optional_cue_capacity
 });
 heap_record!(SceneAttentionPolicy {

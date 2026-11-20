@@ -130,6 +130,8 @@ export interface AttentionPolicy {
   };
   semantic: {
     discovery: boolean;
+    /** Game seconds between stand-alone resident checks for optional discovery. */
+    npcIdleDiscoverySeconds?: number;
     /** Optional cue places for autonomous residents after directed work and urgent cues. */
     npcOptionalCueCapacity?: number;
   };

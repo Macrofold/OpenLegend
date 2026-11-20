@@ -98,6 +98,12 @@ pub struct SemanticAttentionPolicy {
     pub discovery: bool,
     #[serde(
         default,
+        deserialize_with = "crate::values::deserialize_present_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub npc_idle_discovery_seconds: Option<std::num::NonZeroU32>,
+    #[serde(
+        default,
         deserialize_with = "crate::values::deserialize_present_safe_integer",
         skip_serializing_if = "Option::is_none"
     )]

@@ -127,6 +127,7 @@ struct Inputs {
     world_id: String,
     generation: String,
     accepted_cut: u64,
+    at: f64,
     enrolled: bool,
     eligible: bool,
     values: Vec<String>,
@@ -144,11 +145,17 @@ struct Discovery {
 
 struct ResidentWork {
     observed: Inputs,
-    due_at: f64,
+    wake: WakeTimes,
     first_cut: u64,
     dirty_since: Option<Instant>,
     order: u64,
     _custody: ByteReservation,
+}
+
+#[derive(Clone, Copy)]
+struct WakeTimes {
+    inspect_at: f64,
+    discovery_at: f64,
 }
 
 #[derive(Default)]
@@ -161,7 +168,7 @@ struct Queue {
 }
 
 impl Queue {
-    fn refresh(&mut self, observed: Inputs, custody: ByteReservation) {
+    fn refresh(&mut self, observed: Inputs, custody: ByteReservation, policy: &SchedulingPolicy) {
         let actor = &observed.actor_id;
         if !observed.enrolled
             || observed.generation != self.generation
@@ -191,8 +198,11 @@ impl Queue {
                 actor.clone(),
                 ResidentWork {
                     first_cut: observed.accepted_cut,
+                    wake: WakeTimes {
+                        inspect_at: f64::INFINITY,
+                        discovery_at: policy.next_discovery_check(observed.at),
+                    },
                     observed,
-                    due_at: f64::INFINITY,
                     dirty_since: Some(Instant::now()),
                     order: self.next_order,
                     _custody: custody,
@@ -201,11 +211,11 @@ impl Queue {
         }
     }
 
-    fn acknowledge(&mut self, actor: &str, next_at: f64) {
+    fn acknowledge(&mut self, actor: &str, wake: WakeTimes) {
         if let Some(work) = self.work.get_mut(actor) {
             work.dirty_since = None;
             work.observed.urgency = 0.;
-            work.due_at = next_at;
+            work.wake = wake;
         }
     }
 }
@@ -353,7 +363,7 @@ impl Director {
                 self.change_discovery(&inputs.actor_id, &inputs.generation, json!({"type":"settle-discovery","reservation":reservation,"dispatched":dispatched})).await?;
             }
             queue.dirty.shift_remove_index(0);
-            queue.refresh(inputs, custody);
+            queue.refresh(inputs, custody, policy);
         }
 
         let reserve_bytes = queue
@@ -372,7 +382,8 @@ impl Director {
             .work
             .values()
             .filter(|work| {
-                work.observed.eligible && (work.dirty_since.is_some() || work.due_at <= clock.at)
+                work.observed.eligible
+                    && (work.dirty_since.is_some() || work.wake.inspect_at <= clock.at)
             })
             .collect::<Vec<_>>();
         let now = Instant::now();
@@ -402,8 +413,8 @@ impl Director {
         });
         if let Some(work) = work {
             let actor = work.observed.actor_id.clone();
-            if let Some(next_at) = self.inspect_work(work, policy).await? {
-                queue.acknowledge(&actor, next_at);
+            if let Some(wake) = self.inspect_work(work, policy).await? {
+                queue.acknowledge(&actor, wake);
             }
         }
         Ok(())
@@ -413,7 +424,7 @@ impl Director {
         self: &Arc<Self>,
         work: &ResidentWork,
         policy: &SchedulingPolicy,
-    ) -> Result<Option<f64>, WorldError> {
+    ) -> Result<Option<WakeTimes>, WorldError> {
         let observed = &work.observed;
         self.game
             .world
@@ -460,7 +471,7 @@ impl Director {
                 .await?
         };
         let proposal = plan
-            .propose(policy, &prior, trigger.schedule_causes())
+            .propose(policy, &prior, trigger.schedule_causes(), work.wake.discovery_at)
             .map_err(RuntimeError::application_refused)?;
         let read = trigger.clone();
         let actor = observed.actor_id.clone();
@@ -474,7 +485,10 @@ impl Director {
             return Ok(None);
         };
 
-        let next_at = proposal.next_at;
+        let mut wake = WakeTimes {
+            inspect_at: proposal.next_at,
+            discovery_at: work.wake.discovery_at,
+        };
         let mut cursor = prior.cursor.clone();
         cursor.fingerprint = Some(proposal.fingerprint.clone());
         cursor.semantic_revision = Some(proposal.semantic_revision.clone());
@@ -492,7 +506,7 @@ impl Director {
                     .await
                     .map_err(WorldError::Commit)?;
             }
-            return Ok(Some(next_at));
+            return Ok(Some(wake));
         }
         let id = format!("thought-{}", uuid::Uuid::new_v4());
         let priority = if observed.urgency >= policy.urgent {
@@ -565,6 +579,9 @@ impl Director {
             )
             .await
             .map_err(WorldError::Commit)?;
+        if proposal.discovery.is_some() {
+            wake.discovery_at = policy.next_discovery_check(plan.at());
+        }
         let controller = self.clone();
         let accepted_cut = plan.through();
         let automatic = AutomaticTrigger {
@@ -598,7 +615,7 @@ impl Director {
                     .await;
             }
         })?;
-        Ok(Some(next_at))
+        Ok(Some(wake))
     }
 
     async fn change_discovery(
