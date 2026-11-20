@@ -10,8 +10,6 @@ use crate::host::{ByteBudget, ByteReservation};
 use crate::received::{CurrentRecordingContext, ReceivedError, TemporalCurrentGroupInput};
 use crate::simulation::{InstalledWorld, PhysicalState};
 use indexmap::IndexSet;
-use std::borrow::Borrow;
-use std::hash::Hash;
 use std::sync::Arc;
 
 fn invalid() -> ReceivedError {
@@ -62,7 +60,7 @@ pub(crate) struct CurrentCohort {
     observer: ObserverLife,
     entries: Vec<AttentionEntry>,
     tracks: SelectedTracks,
-    subjects: IndexSet<ObserverSubject>,
+    subjects: IndexSet<String>,
     descriptors: Vec<TrackDescriptor>,
     _reservation: ByteReservation,
 }
@@ -97,7 +95,6 @@ impl CurrentCohort {
             &self.observer.actor_id,
             &[source],
             Some(self),
-            false,
             budget,
         )?;
         let entries = owner
@@ -107,9 +104,8 @@ impl CurrentCohort {
         let mut ids = candidate_ids(owner, entries);
         ids.insert(source.to_owned());
         let descriptors = descriptors(reception, experience, &self.observer.actor_id, &ids)?;
-        let (mut tracks, _) = selected_tracks(entries, &descriptors, std::convert::identity);
-        // New links precede old links, even if the earlier descriptor is old-only.
-        linked_tracks(&mut tracks, &self.subjects, &descriptors);
+        let mut tracks = selected_tracks(entries, &descriptors)?;
+        linked_tracks(&mut tracks, &self.subjects, &descriptors)?;
         drop(descriptors);
         drop(ids);
         // Only the returned map survives its construction; its guard remains
@@ -146,7 +142,6 @@ impl CurrentCohort {
             &self.observer.actor_id,
             &[source],
             Some(self),
-            false,
             budget,
         )?;
         let mut ids = IndexSet::new();
@@ -184,7 +179,7 @@ impl CurrentCohort {
         // owner while a body is being retired. Physical-life eligibility is a
         // separate current-body read; it cannot replace the old history epoch.
         let life = owner.life;
-        let reservation = allocation::reserve(reception, owner, observer, &[], None, true, budget)?;
+        let reservation = allocation::reserve(reception, owner, observer, &[], None, budget)?;
         let entries = owner
             .attention
             .as_ref()
@@ -195,7 +190,8 @@ impl CurrentCohort {
             observer,
             &candidate_ids(owner, &entries),
         )?;
-        let (tracks, subjects) = selected_tracks(&entries, &descriptors, ObserverSubject::clone);
+        let tracks = selected_tracks(&entries, &descriptors)?;
+        let subjects = selected_subjects(&entries, &descriptors)?;
         let _ = installed; // Immutable selected meaning is mounted below, never supplied by a caller.
         let mut cohort = Self {
             observer: ObserverLife {
@@ -324,6 +320,17 @@ pub(super) fn descriptors(
     }
     Ok(result)
 }
+fn subject_key(subject: &ObserverSubject) -> Result<String, ReceivedError> {
+    match subject {
+        ObserverSubject::Entity { entity_id } => {
+            crate::encoding::json_record(&("entity", entity_id))
+        }
+        ObserverSubject::Individual { individual_id } => {
+            crate::encoding::json_record(&("individual", individual_id))
+        }
+    }
+    .map_err(|_| invalid())
+}
 fn add(tracks: &mut SelectedTracks, descriptor: &TrackDescriptor) {
     tracks
         .entry(descriptor.source_id.clone())
@@ -336,31 +343,53 @@ fn add(tracks: &mut SelectedTracks, descriptor: &TrackDescriptor) {
             },
         );
 }
-fn linked_tracks<S: Borrow<ObserverSubject> + Eq + Hash>(
-    tracks: &mut SelectedTracks,
-    subjects: &IndexSet<S>,
+fn selected_subjects(
+    entries: &[AttentionEntry],
     descriptors: &[TrackDescriptor],
-) {
+) -> Result<IndexSet<String>, ReceivedError> {
+    let mut subjects = IndexSet::with_capacity(descriptors.len() * 2);
+    for entry in entries {
+        if let Some(source) = descriptors
+            .iter()
+            .rev()
+            .find(|source| {
+                source.source_id == entry.source_id && source.track == entry.exposure.track
+            })
+            .filter(|source| source.lease_id == entry.lease_id)
+        {
+            for subject in [&source.local_subject, &source.subject]
+                .into_iter()
+                .flatten()
+            {
+                subjects.insert(subject_key(subject)?);
+            }
+        }
+    }
+    Ok(subjects)
+}
+fn linked_tracks(
+    tracks: &mut SelectedTracks,
+    subjects: &IndexSet<String>,
+    descriptors: &[TrackDescriptor],
+) -> Result<(), ReceivedError> {
     for source in descriptors {
         for subject in [&source.local_subject, &source.subject]
             .into_iter()
             .flatten()
         {
-            if subjects.contains(subject) {
+            if subjects.contains(&subject_key(subject)?) {
                 add(tracks, source);
                 break;
             }
         }
     }
+    Ok(())
 }
-/// A pre-mutation cohort owns its subjects. Lookups within one read can borrow
-/// them from the already funded descriptors.
-fn selected_tracks<'a, S: Borrow<ObserverSubject> + Eq + Hash>(
+pub(super) fn selected_tracks(
     entries: &[AttentionEntry],
-    descriptors: &'a [TrackDescriptor],
-    store_subject: impl Fn(&'a ObserverSubject) -> S,
-) -> (SelectedTracks, IndexSet<S>) {
-    let mut subjects = IndexSet::with_capacity(descriptors.len() * 2);
+    descriptors: &[TrackDescriptor],
+) -> Result<SelectedTracks, ReceivedError> {
+    let subjects = selected_subjects(entries, descriptors)?;
     let mut tracks = SelectedTracks::with_capacity(descriptors.len());
     for entry in entries {
         if let Some(source) = descriptors
@@ -372,18 +401,10 @@ fn selected_tracks<'a, S: Borrow<ObserverSubject> + Eq + Hash>(
             .filter(|source| source.lease_id == entry.lease_id)
         {
             add(&mut tracks, source);
-            for subject in [&source.local_subject, &source.subject]
-                .into_iter()
-                .flatten()
-            {
-                if !subjects.contains(subject) {
-                    subjects.insert(store_subject(subject));
-                }
-            }
         }
     }
-    linked_tracks(&mut tracks, &subjects, descriptors);
-    (tracks, subjects)
+    linked_tracks(&mut tracks, &subjects, descriptors)?;
+    Ok(tracks)
 }
 
 /// Completes the actual one-hop correspondence change without rerunning optional
@@ -488,16 +509,8 @@ impl ReceivingMutation<'_> {
         if owner.life != before.observer.physical_life {
             return Err(ExecutionError::Invariant);
         }
-        let _scratch = allocation::reserve(
-            reception,
-            owner,
-            observer,
-            &[],
-            Some(&before),
-            false,
-            budget,
-        )
-        .map_err(ExecutionError::Received)?;
+        let _scratch = allocation::reserve(reception, owner, observer, &[], Some(&before), budget)
+            .map_err(ExecutionError::Received)?;
         let entries = owner
             .attention
             .as_ref()
@@ -509,7 +522,7 @@ impl ReceivingMutation<'_> {
             &candidate_ids(owner, entries),
         )
         .map_err(ExecutionError::Received)?;
-        let (after, _) = selected_tracks(entries, &descriptors, std::convert::identity);
+        let after = selected_tracks(entries, &descriptors).map_err(ExecutionError::Received)?;
         let union = before
             .tracks
             .len()
@@ -687,7 +700,6 @@ pub(crate) fn attended_event_participants(
         observer,
         ids,
         None,
-        false,
         budget,
     )?;
 
@@ -699,7 +711,9 @@ pub(crate) fn attended_event_participants(
         observer,
         &candidates,
     )?;
-    let (tracks, _) = selected_tracks(entries, &descriptors, std::convert::identity);
+    let mut tracks = selected_tracks(entries, &descriptors)?;
+    let subjects = selected_subjects(entries, &descriptors)?;
+    linked_tracks(&mut tracks, &subjects, &descriptors)?;
     for id in ids {
         let episode = core
             .state
