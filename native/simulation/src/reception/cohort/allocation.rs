@@ -29,17 +29,6 @@ fn vector<T>(n: usize) -> Result<usize, ReceivedError> {
 fn encoded(n: usize) -> Result<usize, ReceivedError> {
     Ok(times(n, 3)?.max(8))
 }
-fn subject_bytes(subject: &ObserverSubject) -> Result<usize, ReceivedError> {
-    encoded(
-        match subject {
-            ObserverSubject::Entity { entity_id } => json_record_len(&("entity", entity_id)),
-            ObserverSubject::Individual { individual_id } => {
-                json_record_len(&("individual", individual_id))
-            }
-        }
-        .map_err(|_| invalid())?,
-    )
-}
 fn track_bytes(group: &CurrentReceivedGroup) -> Result<usize, ReceivedError> {
     let grant = &group.received.grant;
     encoded(
@@ -117,6 +106,7 @@ pub(super) fn reserve(
     observer: &str,
     extra: &[&str],
     before: Option<&CurrentCohort>,
+    retain_subjects: bool,
     budget: &ByteBudget,
 ) -> Result<ByteReservation, ReceivedError> {
     let attention = owner.attention.as_ref();
@@ -168,7 +158,6 @@ pub(super) fn reserve(
             )?,
         ])?);
         let mut associated_heap = 0;
-        let mut associated_key = 0;
         for group in &contact.content.groups {
             if let Some(field) = group.received.fields.get("association")
                 && field.value.reception.is_none()
@@ -180,7 +169,6 @@ pub(super) fn reserve(
                     .value_at(&field.value.reference)
             {
                 associated_heap = associated_heap.max(subject.heap_bytes().ok_or_else(capacity)?);
-                associated_key = associated_key.max(subject_bytes(subject)?);
                 association = association.max(sum([
                     association_workspace(value)?,
                     encoded(sum([48, times(group.received.grant.original.len(), 6)?])?)?,
@@ -190,15 +178,11 @@ pub(super) fn reserve(
         for group in &contact.content.groups {
             let mut field_heap = None;
             let mut local_heap = 0usize;
-            let mut local_key = 0usize;
             for kind in ["body", "contact", "detected"] {
                 if let Some(field) = group.received.fields.get(kind) {
                     field_heap = Some(field_heap.unwrap_or(0).max(field.id.len()));
                     local_heap =
                         local_heap.max(field.local_subject.heap_bytes().ok_or_else(capacity)?);
-                    if let Some(subject) = &field.local_subject {
-                        local_key = local_key.max(subject_bytes(subject)?);
-                    }
                 }
             }
             let Some(field_heap) = field_heap else {
@@ -221,10 +205,20 @@ pub(super) fn reserve(
                 local_heap.max(associated_heap),
             ])?;
             selected_payload = sum([selected_payload, common, track])?;
-            subject_keys = sum([subject_keys, local_key, local_key.max(associated_key)])?;
+            if retain_subjects {
+                subject_keys = sum([subject_keys, local_heap, local_heap.max(associated_heap)])?;
+            }
         }
     }
     let subjects = times(count, 2)?;
+    // Each selection uses one pre-sized set. Only the cohort that survives a
+    // mutation needs owned keys in addition to its descriptor storage.
+    let subject_map = if retain_subjects {
+        map_storage::<ObserverSubject, ()>(subjects)
+    } else {
+        map_storage::<&ObserverSubject, ()>(subjects)
+    }
+    .ok_or_else(capacity)?;
     let union = sum([before.map_or(0, |b| b.tracks.len()), count])?;
     // Candidate IDs can grow for explicit extra sources; inner track maps
     // grow as channels arrive. Their two backing copies coexist during resize.
@@ -257,8 +251,8 @@ pub(super) fn reserve(
             )?,
         )?,
         times(selected_payload, 2)?, // retained map and an in-flight replacement copy
-        map_storage::<String, ()>(subjects).ok_or_else(capacity)?,
-        times(subject_keys, 2)?,
+        subject_map,
+        subject_keys,
         // Reconciliation borrows body/partition inputs. Its only extra owned
         // data are the before/after source union, generated keys and this Vec.
         map_storage::<String, ()>(union).ok_or_else(capacity)?,
