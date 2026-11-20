@@ -27,6 +27,7 @@ mod received;
 mod schema;
 mod source_versions;
 mod view_cognition;
+mod view_profile;
 mod write;
 pub(crate) use view_cognition::AiDisplay;
 

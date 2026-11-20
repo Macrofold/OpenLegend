@@ -7,7 +7,7 @@ use crate::{
     player_events::{SpeechReply, SpeechReplyStatus},
     player_view::{
         AccountAmount, AiBudget, AiJob, AiMode, AiUsage, AiView, ViewTelemetry,
-        profile::{PlayerProfile, profile},
+        profile::PlayerProfile,
     },
 };
 use indexmap::IndexMap;
@@ -155,7 +155,7 @@ impl Store {
                         .checked_add(job.message.storage_bytes()),
                 ).ok_or(StoreError::Capacity)?;
                 charges.resize(retained).map_err(|_| StoreError::Capacity)?;
-                let profile = profile(&store, tx, account, &world, &actor, &budget).await?;
+                let profile = store.read_player_profile(tx, account, &world, &actor).await?;
                 let mut accounts = IndexMap::new();
                 if has_usage {
                     accounts.insert(actor, AccountAmount { spent_usd: spent, reserved_usd: reserved });
