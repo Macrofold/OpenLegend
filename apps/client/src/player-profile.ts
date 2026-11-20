@@ -27,20 +27,27 @@ export function usePlayerProfile(scope: string | undefined, connected: boolean, 
     setResult((value) => (value?.scope === scope ? value : undefined));
     if (!scope || !connected) return;
     const controller = new AbortController();
-    void getScoped<PlayerProfile>('/api/profile', controller.signal).then(
-      (profile) => {
-        if (!controller.signal.aborted) setResult({ scope, profile });
-      },
-      () => {
-        if (!controller.signal.aborted)
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    async function load(owner: string, first: boolean) {
+      try {
+        const profile = await getScoped<PlayerProfile>('/api/profile', controller.signal);
+        if (!controller.signal.aborted) setResult({ scope: owner, profile });
+      } catch {
+        if (controller.signal.aborted) return;
+        if (first) retryTimer = setTimeout(() => void load(owner, false), 250);
+        else
           setResult((value) => ({
-            scope,
-            profile: value?.scope === scope ? value.profile : undefined,
+            scope: owner,
+            profile: value?.scope === owner ? value.profile : undefined,
             failed: true,
           }));
-      },
-    );
-    return () => controller.abort();
+      }
+    }
+    void load(scope, true);
+    return () => {
+      controller.abort();
+      clearTimeout(retryTimer);
+    };
   }, [scope, connected, request]);
   const selected = result?.scope === scope ? result : undefined;
   return { profile: selected?.profile, failed: selected?.failed, retry };

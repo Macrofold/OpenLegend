@@ -34,7 +34,7 @@ import { Autosaves } from './autosaves.js';
 import { GameSaveError } from './game-saves.js';
 import { resolveRecentObservationReference } from './recent-history.js';
 import { HistoryCursorError } from './perceived-events.js';
-import { releaseNativeProduct, retainNativeProduct } from './native-consumer.js';
+import { encodeNativeJson, releaseNativeProduct, retainNativeProduct } from './native-consumer.js';
 import { PrivateSnapshotStream } from './private-snapshot-stream.js';
 import { nativeNpcReplyPreviewMemory } from './native-npc-reply-preview.js';
 import type { NpcReplyPreview } from '@open-legend/protocol';
@@ -282,6 +282,20 @@ export async function createNativeGameServer(options: {
           throw error;
         }
       };
+      const sendDisplay = (scope: RequestScope, value: object) => {
+        try {
+          current.assertScope(scope);
+          if (response.destroyed) return;
+          const bytes = encodeNativeJson(current.world, value);
+          try {
+            sendNative(bytes);
+          } finally {
+            releaseNativeProduct(bytes);
+          }
+        } finally {
+          releaseNativeProduct(value);
+        }
+      };
       if (requests >= config.capacity.requests) {
         response.setHeader('Retry-After', '1');
         return send(503, { ok: false, code: 'busy', message: new OverloadError().message });
@@ -455,12 +469,7 @@ export async function createNativeGameServer(options: {
           return;
         }
         if (request.method === 'GET' && url.pathname === '/api/profile') {
-          const profile = await current.profileFor(scope);
-          try {
-            return send(200, profile);
-          } finally {
-            releaseNativeProduct(profile);
-          }
+          return sendDisplay(scope, await current.profileFor(scope));
         }
         if (request.method === 'GET' && url.pathname === '/api/chat/preview') {
           const previewScope = scope;
