@@ -1,8 +1,16 @@
-import { constants } from 'node:fs';
-import { chmod, copyFile, lstat, mkdir } from 'node:fs/promises';
-import { join } from 'node:path';
+import { chmod, lstat, mkdir } from 'node:fs/promises';
+import { dirname, join, relative } from 'node:path';
 
-import { containedFile, hashFile, jsonFile, object, sha256, text, writeJson } from './contract.js';
+import {
+  containedFile,
+  hashFile,
+  integer,
+  jsonFile,
+  object,
+  sha256,
+  text,
+  writeJson,
+} from './contract.js';
 import type { CasePlan } from './contract.js';
 
 type RecordValue = Record<string, unknown>;
@@ -34,6 +42,7 @@ export async function readCaseBuild(
 ) {
   const seal = binding(plan, source);
   const paired = plan.sharedBuild;
+  const home = dirname(shared);
   if (paired?.role === 'second') {
     const proof = object(await jsonFile(shared, 'toolchain.json'));
     const recorded = object(proof.binding);
@@ -45,10 +54,8 @@ export async function readCaseBuild(
       throw new Error('The preceding build was owned by a different comparison or worker case.');
     }
     const toolchain = object(proof.toolchain);
-    const executable = object(toolchain.executable);
-    const file = await containedFile(shared, 'openlegend-game-server');
-    if (executable.path !== file.path || executable.sha256 !== (await hashFile(file.path)))
-      throw new Error('The paired executable changed before the second arm.');
+    const path = text(proof.executableRelativePath, 'sealed executable path');
+    await verifyExecutable(home, path, object(toolchain.executable), false);
     await writeJson(join(output, 'toolchain.json'), toolchain);
     return toolchain;
   }
@@ -57,24 +64,46 @@ export async function readCaseBuild(
   if (!paired) return toolchain;
   const executable = object(toolchain.executable);
   const artifact = text(executable.path, 'built executable path');
-  const expected = text(executable.sha256, 'built executable digest', sha256);
-  const stat = await lstat(artifact);
-  if (!stat.isFile() || !(stat.mode & 0o100) || (await hashFile(artifact)) !== expected)
-    throw new Error('The application builder did not produce the exact runnable executable.');
+  const executableRelativePath = relative(home, artifact);
+  await verifyExecutable(home, executableRelativePath, executable, true);
   await mkdir(shared, { mode: 0o700 });
-  const immutable = join(shared, 'openlegend-game-server');
-  await copyFile(artifact, immutable, constants.COPYFILE_EXCL);
-  await chmod(immutable, 0o500);
-  const published = await containedFile(shared, 'openlegend-game-server');
-  if ((await hashFile(published.path)) !== expected)
-    throw new Error('The pair-owned executable copy failed its identity check.');
-  toolchain.executable = { ...executable, path: published.path };
   await writeJson(join(shared, 'toolchain.json'), {
     binding: seal,
     first: plan.id,
     second: paired.peerId,
+    executableRelativePath,
     toolchain,
   });
-  await writeJson(join(output, 'toolchain.json'), toolchain, false);
   return toolchain;
+}
+
+/** The executable stays in the supervisor's case HOME through both arms.
+ * Use the pinned builder's observed size as the bound, not the export cap.
+ */
+async function verifyExecutable(
+  home: string,
+  path: string,
+  descriptor: RecordValue,
+  freeze: boolean,
+) {
+  const bytes = integer(
+    descriptor.bytes,
+    'built executable byte count',
+    1,
+    Number.MAX_SAFE_INTEGER,
+  );
+  const expected = text(descriptor.sha256, 'built executable digest', sha256);
+  const file = await containedFile(home, path, bytes);
+  const stat = await lstat(file.path);
+  if (
+    descriptor.path !== file.path ||
+    file.bytes !== bytes ||
+    stat.uid !== process.getuid?.() ||
+    !(stat.mode & 0o100) ||
+    (!freeze && stat.mode & 0o222)
+  )
+    throw new Error('The paired executable has unexpected ownership, path, size or mode.');
+  if (freeze) await chmod(file.path, 0o500);
+  if ((await hashFile(file.path)) !== expected)
+    throw new Error('The paired executable does not match the built digest.');
 }
