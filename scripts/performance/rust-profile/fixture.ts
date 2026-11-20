@@ -26,11 +26,22 @@ export async function stageFixture(plan: CasePlan, work: string, inputs: RunnerI
   const driver = join(work, 'driver');
   const tools = join(work, 'tools');
   await Promise.all([mkdir(driver), mkdir(tools)]);
-  await Promise.all(
-    input('driver').paths.map((file) =>
-      copyFile(join(input('driver').root, file), join(driver, file)),
+  const sourceDriver = input('driver');
+  const workload = join(driver, 'workload.mts');
+  const client = join(driver, 'player-client.mts');
+  // The supervisor mounts these verified originals read-only. Adapt the
+  // bytes into new private files so no write targets a copied read-only inode.
+  await Promise.all([
+    ...sourceDriver.paths
+      .filter((file) => file !== 'workload.mts' && file !== 'player-client.mts')
+      .map((file) => copyFile(join(sourceDriver.root, file), join(driver, file))),
+    readFile(join(sourceDriver.root, 'workload.mts'), 'utf8').then((source) =>
+      writeFile(workload, adaptWorkload(source), { flag: 'wx', mode: 0o600 }),
     ),
-  );
+    readFile(join(sourceDriver.root, 'player-client.mts'), 'utf8').then((source) =>
+      writeFile(client, adaptClient(source), { flag: 'wx', mode: 0o600 }),
+    ),
+  ]);
   await copyFile(
     fileURLToPath(new URL('./fixture-observer.mjs', import.meta.url)),
     join(driver, 'fixture-observer.mjs'),
@@ -55,11 +66,7 @@ export async function stageFixture(plan: CasePlan, work: string, inputs: RunnerI
       "'--bin', 'openlegend-game-server', '--features', 'profile-campaign'], env, true);",
     );
   }
-  await writeFile(build, builder);
-  const workload = join(driver, 'workload.mts');
-  await writeFile(workload, adaptWorkload(await readFile(workload, 'utf8')));
-  const client = join(driver, 'player-client.mts');
-  await writeFile(client, adaptClient(await readFile(client, 'utf8')));
+  await writeFile(build, builder, { flag: 'wx', mode: 0o600 });
   return {
     build,
     launch: join(driver, 'launch.mjs'),

@@ -106,6 +106,7 @@ export async function runCase(plan: CasePlan, outputDirectory: string): Promise<
   const rustflags = usesFramePointers ? '-C force-frame-pointers=yes' : undefined;
   try {
     const inputs = await verifyCaseInputs(inputsRoot, plan.inputHashes, diagnosticModes);
+    phase = 'stage-fixture';
     const fixture = await stageFixture(plan, work, inputs);
     adaptedInputs = fixture.hashes;
     phase = 'build-release';
@@ -202,7 +203,7 @@ export async function runCase(plan: CasePlan, outputDirectory: string): Promise<
   });
   await writeJson(join(output, 'completion.json'), {
     status: failure ? 'failed' : 'completed',
-    ...(failure ? { reason: phase } : {}),
+    ...(failure ? { reason: phase, failureCode: safeFailureCode(failure) } : {}),
     cleanup,
   });
   if (failure)
@@ -210,4 +211,20 @@ export async function runCase(plan: CasePlan, outputDirectory: string): Promise<
       `The Rust profile case stopped at ${phase}. Preserve the original worker artifacts.`,
       { cause: failure },
     );
+}
+
+/** Keep the operating system failure classification without saving arbitrary
+ * exception text, paths, environment values or subprocess arguments.
+ */
+function safeFailureCode(failure: unknown) {
+  if (
+    failure instanceof Error &&
+    'code' in failure &&
+    typeof failure.code === 'string' &&
+    /^(?:E[A-Z0-9_]+|ERR_[A-Z0-9_]+)$/.test(failure.code) &&
+    failure.code.length <= 32
+  ) {
+    return failure.code;
+  }
+  return undefined;
 }
