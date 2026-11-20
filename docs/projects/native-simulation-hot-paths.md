@@ -1,8 +1,8 @@
 # Rust simulation and player-view preparation
 
-| Status      | Current progress                                                                  | Last updated |
-| ----------- | --------------------------------------------------------------------------------- | ------------ |
-| In progress | Isolated candidates are implemented and the connected verification batch is open. | 2026-11-20   |
+| Status      | Current progress                                                                      | Last updated |
+| ----------- | ------------------------------------------------------------------------------------- | ------------ |
+| In progress | Isolated comparisons are complete and the retained release is in final caller checks. | 2026-11-20   |
 
 During a walk, residents and the player should see the same permitted facts, hear the same speech and get the same reactions. The AI panel should show the same totals a fresh read would return. Save recovery should return the same accepted changes, and an NPC should receive the same decision input and apply its reply exactly once. These experiments build on the shipped Base limit for spare bystander tracking. [Current profile](../benchmarks/native-runtime-foundations/2026/2026-11-20-current-rust-server-profile.md) · [Current authority and storage design](native-simulation-core-tech-design.md#6-captures-saving-correction-and-restoration)
 
@@ -99,5 +99,6 @@ The stand-alone Base candidate spaces checks for optional discovery by 300 game 
 ## Maintained records
 
 - [Implementation and disposition](../maintainers/native-simulation-core.md#stand-alone-hot-path-experiments)
+- [Isolated comparisons and caller evidence](../benchmarks/native-runtime-foundations/2026/2026-11-20-rust-hot-path-comparisons.md)
 - [Host, storage and memory constraints](../limits/native-simulation-core.md#nsc-l03--requests-captures-and-pending-data) · [Stand-alone comparison](../limits/native-simulation-core.md#nsc-l10--stand-alone-rust-server-comparison)
 - [Native simulation design](native-simulation-core-tech-design.md) · [Scoped stand-alone server design](completed/2026/rust-game-server-tech-design.md)
