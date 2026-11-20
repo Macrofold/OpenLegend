@@ -2,6 +2,7 @@
 
 Each report preserves its actual revision, workload, failures and decision. [Current implementation and remaining work](../../maintainers/native-runtime-foundations.md) remain in the existing tracker.
 
+- [Current Rust server profiling — November 20, 2026](2026/2026-11-20-current-rust-server-profile.md): ready-to-run plan for the latest profiler and source-based performance opportunities.
 - [Perception and player-view experiments — November 20, 2026](2026/2026-11-20-perception-cost-experiments.md): three managed gameplay comparisons covering repeated perception work, bystander detail and player-view transactions.
 - [Stand-alone server CPU profile — November 20, 2026](2026/2026-11-20-stand-alone-cpu-profile.md): steady heavy-opening CPU stacks, SQL traffic and opportunities to reduce repeated perception, attention and save work.
 - [Byte-answer comparison — November 14, 2026](2026/2026-11-14-byte-answer.md): all six isolated Native attempts; three fail required gameplay, leaving complete-work CPU and RAM impact inconclusive.
