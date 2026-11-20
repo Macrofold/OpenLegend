@@ -236,12 +236,21 @@ pub(super) fn merge_pending(
         .checked_add(super::save::changes_heap(&merged).ok_or_else(bound)?)
         .ok_or_else(bound)?;
     suffix.rows = suffix.rows.checked_add(merged.rows).ok_or_else(bound)?;
-    // Insert the selected disjoint tables without rebuilding the other
-    // branches of the existing B-trees.
-    suffix.writes.extend(merged.writes);
-    suffix.deletes.extend(merged.deletes);
-    suffix.expired.extend(merged.expired);
+    rejoin_tables(&mut suffix.writes, merged.writes);
+    rejoin_tables(&mut suffix.deletes, merged.deletes);
+    rejoin_tables(&mut suffix.expired, merged.expired);
     Ok(actual)
+}
+
+fn rejoin_tables<V>(untouched: &mut BTreeMap<String, V>, folded: BTreeMap<String, V>) {
+    if untouched.is_empty() {
+        // Dropping the old map releases any empty root left by removing its
+        // last table. The retained-size bound counts nodes by live entry.
+        *untouched = folded;
+    } else {
+        // Extend only the touched tables without rebuilding other branches.
+        untouched.extend(folded);
+    }
 }
 
 fn fold_validated(
