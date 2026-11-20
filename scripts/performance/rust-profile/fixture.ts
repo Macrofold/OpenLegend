@@ -107,14 +107,7 @@ const profile = JSON.parse(process.env.OPEN_LEGEND_PROFILE_CASE);
     sqlWire = await observeLocalPostgres(database);
     env.OPEN_LEGEND_DATABASE_URL = sqlWire.url;
   }
-  if (profile.mode === 'sampled') Object.assign(env, {
-    LD_PRELOAD: profile.sampler,
-    OL_PROFILE_RAW: join(dir, 'stacks.bin'),
-  });
-  if (profile.mode === 'enabled') Object.assign(env, {
-    OPEN_LEGEND_PROFILE_CONTROL: 'stdin',
-    OPEN_LEGEND_PROFILE_OUTPUT: join(dir, 'metrics.json'),
-  });`,
+  }`,
   );
   source = replace(
     source,
@@ -122,8 +115,16 @@ const profile = JSON.parse(process.env.OPEN_LEGEND_PROFILE_CASE);
     `  const startDirect = (runtimeEnv, controller = false) => spawn(build.executable.path, ['serve', release], {
     env: runtimeEnv, stdio: [controller ? 'pipe' : 'ignore', 'pipe', 'pipe'],
   });
+  // Install an observer only in the warm Rust server. The base environment is
+  // also used by the Node-free preflight shell and the cold reopen.
+  const recording = profile.mode === 'enabled';
+  const serverEnv = recording ? {
+    ...env, OPEN_LEGEND_PROFILE_CONTROL: 'stdin', OPEN_LEGEND_PROFILE_OUTPUT: join(dir, 'metrics.json'),
+  } : profile.mode === 'sampled' ? {
+    ...env, LD_PRELOAD: profile.sampler, OL_PROFILE_RAW: join(dir, 'stacks.bin'),
+  } : env;
   server = arm === 'direct'
-    ? startDirect(env, profile.mode === 'enabled')`,
+    ? startDirect(serverEnv, recording)`,
   );
   source = replace(
     source,
@@ -144,7 +145,7 @@ const profile = JSON.parse(process.env.OPEN_LEGEND_PROFILE_CASE);
     '  assert(controlled.access.controlling && controlled.access.actorId === site.actorId);',
     `  assert(controlled.access.controlling && controlled.access.actorId === site.actorId);
   continuation = () => coldContinuation({
-    start: () => startDirect({ ...reopenEnv, OPEN_LEGEND_PROFILE_CONTROL: undefined, OPEN_LEGEND_PROFILE_OUTPUT: undefined, LD_PRELOAD: undefined, OL_PROFILE_RAW: undefined }),
+    start: () => startDirect(reopenEnv),
     cookie, clientId: site.clientId, actorId: site.actorId, acceptedGameSecond: report.steady.end.clock.seconds,
     commandEpoch: controlled.commandEpoch, lastCommand: report.commandLatencyWitnesses.at(-1),
   });`,
