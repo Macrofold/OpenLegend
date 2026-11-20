@@ -69,6 +69,8 @@ The three relay runs observed **52,751–55,576 application statements per 180 s
 
 The median paired combined CPU increase with the relay was 9.22%. The driver's median rose from 1.41% to 5.01% of a core. Use unrelayed runs for latency. The record identifies a high volume of repeated statements and transfers worth tracing through the actual readers. Counts alone do not identify which queries can be removed.
 
+The reader that admits variable-sized results first asks PostgreSQL for the row count and a byte bound. An empty result ends there. For a nonempty result, Rust reserves the transfer memory and fetches the rows in the same database snapshot. A combined query or a bounded stream would need to protect that same read point and memory bound. Whole-window wire counts cannot tell how much of the total came from this two-query pattern. [Reader implementation](../../../../native/game-server/src/store/read.rs)
+
 ## Connected correctness
 
 - The same feature-capable Mac executable checked actual Chromium movement with recording disabled and enabled. Both runs displayed a new position before and after restart, recovered the original session's saved receipt with two exact retries, refused the same command ID with a changed body, excluded unauthorized state and closed a live stream on shutdown. The enabled run measured four command calls, one reset and 57 patches with zero reported loss. These are functional observations. `native-runtime-foundations/pc12-profile-exact-replay-20261120/chromium/comparison.json`, SHA-256 `ee2e47fc8b4d7ccb5ebe3378064c9f840175dae9d4b2aa870c390cb9b625bb05`.
