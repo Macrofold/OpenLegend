@@ -45,15 +45,18 @@ pub fn current_group_metadata<'a>(
     kind: &str,
     part: Option<CurrentReceivedPart>,
 ) -> Option<&'a CurrentPartPartition> {
-    let part = part.unwrap_or_else(|| {
-        group
+    let part = part.unwrap_or(
+        if group
             .received
             .fields
             .get(kind)
-            .map_or(CurrentReceivedPart::Value, |field| {
-                current_field_parts(field)[0]
-            })
-    });
+            .is_some_and(|field| field.value.kind == "body")
+        {
+            CurrentReceivedPart::Detail
+        } else {
+            CurrentReceivedPart::Value
+        },
+    );
     // A current installation validates unique members. Last-address lookup also
     // matches the source owner's map semantics for editable phase metadata.
     group.metadata.iter().rev().find(|partition| {
@@ -70,28 +73,11 @@ pub fn current_group_native_facet<'a>(
     kind: &str,
     partition: Option<&'a CurrentPartPartition>,
 ) -> Option<CurrentNativeFacet<'a>> {
-    selected_group_facet(
-        group,
-        original,
-        kind,
-        group.received.fields.get(kind)?,
-        partition,
-    )
-}
-
-fn selected_group_facet<'a>(
-    group: &'a CurrentReceivedGroup,
-    original: &'a ReceivedObservation,
-    kind: &str,
-    field: &'a CurrentStoredField,
-    partition: Option<&'a CurrentPartPartition>,
-) -> Option<CurrentNativeFacet<'a>> {
     Some(CurrentNativeFacet {
-        field,
+        field: group.received.fields.get(kind)?,
         grant: &group.received.grant,
         original_source: original,
-        metadata: partition
-            .or_else(|| current_group_metadata(group, kind, Some(current_field_parts(field)[0])))?,
+        metadata: partition.or_else(|| current_group_metadata(group, kind, None))?,
     })
 }
 
@@ -102,13 +88,11 @@ pub fn current_contact_native_facet<'a>(
 ) -> Result<Option<CurrentNativeFacet<'a>>, ReceivedError> {
     let mut selected = None;
     for group in &contact.content.groups {
-        let Some(field) = group.received.fields.get(kind) else {
-            continue;
-        };
         let grant = &group.received.grant;
-        if selector
-            .modality
-            .is_some_and(|modality| modality != grant.modality)
+        if !group.received.fields.contains_key(kind)
+            || selector
+                .modality
+                .is_some_and(|modality| modality != grant.modality)
             || selector
                 .channel
                 .is_some_and(|channel| channel != &grant.channel)
@@ -121,9 +105,9 @@ pub fn current_contact_native_facet<'a>(
         if selected.is_some() {
             return Ok(None);
         }
-        selected = Some((group, field));
+        selected = Some(group);
     }
-    let Some((group, field)) = selected else {
+    let Some(group) = selected else {
         return Ok(None);
     };
     let original = contact
@@ -131,7 +115,7 @@ pub fn current_contact_native_facet<'a>(
         .originals
         .get(&group.received.grant.original)
         .ok_or(ReceivedError("A current group has no acquired original."))?;
-    Ok(selected_group_facet(group, original, kind, field, None))
+    Ok(current_group_native_facet(group, original, kind, None))
 }
 
 pub fn current_native_facet_at<'a>(
@@ -257,28 +241,6 @@ pub fn effective_current_check<'a>(
     partition: &CurrentPartPartition,
     presence_only: bool,
 ) -> Result<Option<SightStampRef<'a>>, ReceivedError> {
-    current_check(owner, grant, partition, presence_only, None)
-}
-
-/// Confirm presence using the unique body selected by channel on this contact.
-/// Narrowing that same selection by the body's exposure leaves the result intact.
-pub(super) fn current_body_presence_check<'a>(
-    owner: &'a PerceptionEvidenceOwner,
-    id: &str,
-    contact: &'a CurrentContact,
-    body: CurrentNativeFacet<'a>,
-) -> Result<Option<SightStampRef<'a>>, ReceivedError> {
-    let selected = (body.grant.subject_id == id).then_some((contact, body));
-    current_check(owner, body.grant, body.metadata, true, selected)
-}
-
-fn current_check<'a>(
-    owner: &'a PerceptionEvidenceOwner,
-    grant: &CurrentFacetGrant,
-    partition: &CurrentPartPartition,
-    presence_only: bool,
-    selected: Option<(&'a CurrentContact, CurrentNativeFacet<'a>)>,
-) -> Result<Option<SightStampRef<'a>>, ReceivedError> {
     if partition.availability.is_some()
         || grant.modality != Modality::Sight
         || owner
@@ -295,25 +257,18 @@ fn current_check<'a>(
     else {
         return Ok(None);
     };
-    let (contact, body) = if let Some(selected) = selected {
-        selected
-    } else {
-        let Some(contact) = owner.current.get(&grant.subject_id) else {
-            return Ok(None);
-        };
-        let Some(body) = current_contact_native_facet(
-            contact,
-            "body",
-            CurrentFacetSelector {
-                channel: Some(&grant.channel),
-                exposure: Some(&grant.exposure),
-                modality: None,
-            },
-        )?
-        else {
-            return Ok(None);
-        };
-        (contact, body)
+    let Some(body) = current_native_facet_at(
+        Some(owner),
+        &grant.subject_id,
+        "body",
+        CurrentFacetSelector {
+            channel: Some(&grant.channel),
+            exposure: Some(&grant.exposure),
+            modality: None,
+        },
+    )?
+    else {
+        return Ok(None);
     };
     if body.metadata.availability.is_some() || body.grant.exposure != grant.exposure {
         return Ok(None);
@@ -331,7 +286,10 @@ fn current_check<'a>(
     {
         return Ok(None);
     }
-    let explicit = contact.sight.as_ref();
+    let explicit = owner
+        .current
+        .get(&grant.subject_id)
+        .and_then(|contact| contact.sight.as_ref());
     let candidate = match check {
         CurrentCheck::Detail => explicit
             .and_then(|stamp| stamp.detail.as_ref())

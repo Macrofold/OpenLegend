@@ -1,7 +1,6 @@
 //! A synchronous borrowed view of one actual receiving life. Physical state is
 //! consulted only for grant eligibility; values come from received records.
 
-use super::current_read::current_body_presence_check;
 use super::retained_size::{HeapBytes, heap_sum};
 use super::*;
 use crate::experience::{AssociationEvidenceStatus, ExperienceState, association_evidence_status};
@@ -157,11 +156,8 @@ impl<'a> CurrentBodyReadScope<'a> {
         else {
             return Ok(None);
         };
-        let Some(contact) = self.owner.current.get(id) else {
-            return Ok(None);
-        };
-        let Some(body) = current_contact_native_facet(
-            contact,
+        let Some(body) = self.native(
+            id,
             "body",
             CurrentFacetSelector {
                 channel: Some(pin),
@@ -176,7 +172,7 @@ impl<'a> CurrentBodyReadScope<'a> {
             .sensory
             .as_ref()
             .and_then(|pending| pending.invalidated_revision_for(&self.observer.id, id));
-        let confirmed = current_body_presence_check(self.owner, id, contact, body)?
+        let confirmed = effective_current_check(self.owner, body.grant, body.metadata, true)?
             .filter(|check| check.through >= body.metadata.times.expanded().confirmed_through);
         let subject = self.entities.get(id);
         let expected_life = subject
@@ -345,15 +341,6 @@ impl<'a> CurrentBodyReadScope<'a> {
         let Some(body) = self.native_body(id)? else {
             return Ok(None);
         };
-        self.association_for_live_body(id, body)
-    }
-    /// Reuse the body already checked by `native_body` in this read scope.
-    /// The association still has its independent Sight selection and evidence check.
-    pub(super) fn association_for_live_body(
-        &self,
-        id: &str,
-        body: CurrentNativeFacet<'a>,
-    ) -> Result<Option<&'a ObserverSubject>, ReceivedError> {
         let Some(input) = self.native(
             id,
             "association",

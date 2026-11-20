@@ -23,15 +23,7 @@ pub(super) fn current_point(
     selector: CurrentFacetSelector<'_>,
     journal: &mut CurrentJournal,
 ) -> Result<Option<AttentionPoint>, ReceivedError> {
-    point_from_location(scope, scope.native(id, "location", selector)?, journal)
-}
-
-fn point_from_location<'a>(
-    scope: &CurrentBodyReadScope<'a>,
-    location: Option<CurrentNativeFacet<'a>>,
-    journal: &mut CurrentJournal,
-) -> Result<Option<AttentionPoint>, ReceivedError> {
-    let Some(location) = location else {
+    let Some(location) = scope.native(id, "location", selector)? else {
         return Ok(None);
     };
     let at = location.metadata.times.expanded().value_measured_through;
@@ -135,23 +127,13 @@ struct AssociationMeaning<'a> {
     strength: AssociationStrength,
 }
 
-fn descriptions<'a>(
-    scope: &CurrentBodyReadScope<'a>,
+fn descriptions(
+    scope: &CurrentBodyReadScope<'_>,
     id: &str,
     selector: CurrentFacetSelector<'_>,
-    source: CurrentNativeFacet<'a>,
     journal: &mut CurrentJournal,
 ) -> Result<String, ReceivedError> {
-    // The representative was unique on this channel. Adding its own exposure
-    // to the raw lookup selects the same field; the other kinds still resolve.
-    let facet = |kind: &str| {
-        if kind == source.field.value.kind {
-            Ok(Some(source))
-        } else {
-            scope.native(id, kind, selector)
-        }
-    };
-    let body = facet("body")?;
+    let body = scope.native(id, "body", selector)?;
     let appearance = body.and_then(|body| match scope.value(&body.field.value.reference) {
         Some(ReceivedValueFragment::Body(value)) => Some(&value.body),
         _ => None,
@@ -168,11 +150,12 @@ fn descriptions<'a>(
     .into_iter()
     .enumerate()
     {
-        values[at] =
-            facet(kind)?.and_then(|field| match scope.value(&field.field.value.reference) {
+        values[at] = scope.native(id, kind, selector)?.and_then(|field| {
+            match scope.value(&field.field.value.reference) {
                 Some(ReceivedValueFragment::Sensory(value)) => Some(value),
                 _ => None,
-            });
+            }
+        });
     }
     let description = match values[0] {
         Some(SensoryFacet::Description { text }) => Some(text),
@@ -273,12 +256,13 @@ pub(super) fn build_candidates(
             modality: None,
         };
         let location = scope.native(&annotation.source_id, "location", selector)?;
-        let measured = point_from_location(&scope, location, journal)?;
+        let measured = current_point(&scope, &annotation.source_id, selector, journal)?;
         let subject = if body.field.value.kind == "body"
-            && let Some(live) = scope.native_body(&annotation.source_id)?
-            && live.field.id == body.field.id
+            && scope
+                .native_body(&annotation.source_id)?
+                .is_some_and(|live| live.field.id == body.field.id)
         {
-            scope.association_for_live_body(&annotation.source_id, live)?
+            scope.association(&annotation.source_id)?
         } else {
             None
         }
@@ -294,8 +278,7 @@ pub(super) fn build_candidates(
             .ok_or_else(capacity)?,
         )?;
         let subject = subject.cloned();
-        let description_revision =
-            descriptions(&scope, &annotation.source_id, selector, body, journal)?;
+        let description_revision = descriptions(&scope, &annotation.source_id, selector, journal)?;
         let displacement = match (&measured, &annotation.anchor) {
             (Some(measured), Some(anchor)) => {
                 (crate::spatial::distance(measured.point.position(), anchor.point.position())

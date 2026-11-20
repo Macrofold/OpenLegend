@@ -2,7 +2,8 @@
 //! ordered lists and stable-position maps keep their distinct Source codecs.
 use super::*;
 use crate::records::{
-    MapPositions, RecordSchema, encode_list_changes, encode_map_changes_with_plain_equality,
+    MapPositions, RecordSchema, encode_list_changes, encode_map_changes,
+    encode_map_changes_with_plain_equality,
 };
 fn one<T: Serialize + ?Sized>(
     schema: &RecordSchema,
@@ -205,10 +206,7 @@ impl CurrentJournal {
                 true,
             )?;
             let parent = ["world", "perceptionEvidence", observer, "attention"];
-            // The annotation's fixed fields, including its urgency source,
-            // serialize in a fixed order. The JS formatter normalizes both
-            // signs of zero. The common helper also checks row placement.
-            encode_map_changes_with_plain_equality(
+            encode_map_changes(
                 schema,
                 ledger,
                 "mind_perception_attention_annotations",
@@ -216,7 +214,6 @@ impl CurrentJournal {
                 Some("annotations"),
                 before.map(|before| &before.annotations),
                 after.map(|after| &after.annotations),
-                PartialEq::eq,
                 MapPositions::Stable,
                 output,
                 budget,
