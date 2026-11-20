@@ -626,16 +626,6 @@ impl PerceptionCursor {
                             [entry.scope.ok_or_else(invalid)?]
                         .changed_people
                         .take();
-                    let details = if timing.detail {
-                        Some(requested_visual_details(
-                            core,
-                            &entry.id,
-                            &opportunity,
-                            budget,
-                        )?)
-                    } else {
-                        None
-                    };
                     let entity = core
                         .state
                         .physical
@@ -647,29 +637,32 @@ impl PerceptionCursor {
                         .ok_or(ExecutionError::InvalidPosition)?;
                     let radius =
                         sensors::vision_parameters(&core.state.installed, entity).radius + 2.0;
-                    let (count, _) = core
-                        .state
-                        .physical
-                        .bodies
-                        .candidate_capacity(origin, radius);
-                    let _targets = budget.reserve(
-                        count
-                            .checked_mul(5 * size_of::<(&str, EntityHandle)>())
-                            .ok_or(ExecutionError::Capacity)?,
-                    )?;
-                    let targets = core
-                        .state
-                        .physical
-                        .bodies
-                        .candidates(origin, radius)
-                        .into_iter()
-                        .filter(|(id, _)| {
-                            details
-                                .as_ref()
-                                .is_none_or(|details| details.ids.contains(*id))
-                        })
-                        .map(|(id, _)| id)
-                        .collect::<Vec<_>>();
+                    let bodies = &core.state.physical.bodies;
+                    let (_targets, targets) = if timing.detail {
+                        let details =
+                            requested_visual_details(core, &entry.id, &opportunity, budget)?;
+                        bodies
+                            .requested_candidates(
+                                origin,
+                                radius,
+                                details.ids.iter().map(String::as_str),
+                                budget,
+                            )
+                            .map_err(ExecutionError::from)?
+                    } else {
+                        let (count, _) = bodies.candidate_capacity(origin, radius);
+                        let reservation = budget.reserve(
+                            count
+                                .checked_mul(5 * size_of::<(&str, EntityHandle)>())
+                                .ok_or(ExecutionError::Capacity)?,
+                        )?;
+                        let targets = bodies
+                            .candidates(origin, radius)
+                            .into_iter()
+                            .map(|(id, _)| id)
+                            .collect::<Vec<_>>();
+                        (reservation, targets)
+                    };
                     let binding = GeometryBinding::new(
                         self.candidate,
                         core.state.installed.geometry.spatial.revision,

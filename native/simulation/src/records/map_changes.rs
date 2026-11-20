@@ -28,6 +28,37 @@ pub(crate) fn encode_map_changes<T: Serialize>(
     output: &mut RowEncoder<'_>,
     budget: &ByteBudget,
 ) -> Result<(), RecordEncodingError> {
+    encode_map_changes_with_plain_equality(
+        schema,
+        ledger,
+        table,
+        parent,
+        field,
+        before,
+        after,
+        |_, _| false,
+        positions,
+        output,
+        budget,
+    )
+}
+
+/// Skip payload sizing and encoding only when the leaf owner proves equal
+/// canonical bytes for this plain row. Placement and coverage still come from
+/// the ledger. Unknown or different bodies follow the full encoded comparison.
+pub(crate) fn encode_map_changes_with_plain_equality<T: Serialize>(
+    schema: &RecordSchema,
+    ledger: &RecordLedger,
+    table: &str,
+    parent: &[&str],
+    field: Option<&str>,
+    before: Option<&IndexMap<String, T>>,
+    after: Option<&IndexMap<String, T>>,
+    equal_body: impl Fn(&T, &T) -> bool,
+    positions: MapPositions,
+    output: &mut RowEncoder<'_>,
+    budget: &ByteBudget,
+) -> Result<(), RecordEncodingError> {
     let old_count = before.map_or(0, IndexMap::len);
     let count = after.map_or(0, IndexMap::len);
     let bytes = map_storage::<&str, u64>(old_count)
@@ -102,6 +133,14 @@ pub(crate) fn encode_map_changes<T: Serialize>(
             let position = after_positions[key];
             let prior = before.and_then(|before| before.get(key));
             let layout = schema.layout(table)?;
+            if prior.is_some_and(|prior| equal_body(prior, value))
+                && layout.codec == RecordCodec::Plain
+                && layout.children.is_empty()
+                && layout.columns.is_empty()
+                && old_positions.get(key) == Some(&position)
+            {
+                continue;
+            }
             let old_bytes = prior
                 .map(|prior| layout.project_len(prior))
                 .transpose()

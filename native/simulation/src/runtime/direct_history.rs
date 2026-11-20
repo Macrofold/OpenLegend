@@ -4,7 +4,7 @@
 use super::{NativeWorldSession, RuntimeError, RuntimePreparedProducts, failure};
 use crate::experience::{CapturedHistoryInput, HistoryOriginals, history_account_eligible_at};
 use crate::host::ByteReservation;
-use crate::received::{ReceivedChargeDirectory, ReceivedFrontier, TemporalReceipt};
+use crate::received::TemporalReceipt;
 use crate::reception::SensoryFacet;
 
 pub use crate::experience::SensoryExpiration;
@@ -25,19 +25,6 @@ pub struct HistoryTemporal<'a> {
     pub receipt: &'a TemporalReceipt,
     pub values: &'a [SensoryFacet],
     pub bytes: u64,
-}
-
-pub struct HistoryCut<'a> {
-    pub actor_id: &'a str,
-    pub at: f64,
-    pub max_age_seconds: f64,
-    pub forgotten: &'a [String],
-    pub corrected: &'a [String],
-    pub frontier: Option<&'a ReceivedFrontier>,
-    pub recent_present: bool,
-    pub recent_directories: &'a [ReceivedChargeDirectory],
-    pub recent_bytes: u64,
-    pub recent_count: u64,
 }
 
 impl RuntimePreparedProducts<'_> {
@@ -89,33 +76,6 @@ impl RuntimeHistory {
                     values,
                     bytes,
                 }),
-            },
-        )
-    }
-    pub fn cuts(&self) -> impl Iterator<Item = HistoryCut<'_>> {
-        self.0.cuts().map(
-            |(
-                actor_id,
-                at,
-                max_age_seconds,
-                forgotten,
-                corrected,
-                frontier,
-                recent_present,
-                recent_directories,
-                recent_bytes,
-                recent_count,
-            )| HistoryCut {
-                actor_id,
-                at,
-                max_age_seconds,
-                forgotten,
-                corrected,
-                frontier,
-                recent_present,
-                recent_directories,
-                recent_bytes,
-                recent_count,
             },
         )
     }
@@ -518,7 +478,7 @@ impl RuntimePreparedProducts<'_> {
             || self.events().next().is_some()
             || self.history.originals().next().is_some()
             || self.history.accounts().next().is_some()
-            || self.history.cuts().next().is_some()
+            || self.history.needs_actor_projection()
             || !metadata_rows(self.records)
         {
             return Err(super::failure("candidate requires a derived projection"));

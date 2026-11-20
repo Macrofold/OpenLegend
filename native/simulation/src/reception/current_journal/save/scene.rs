@@ -1,7 +1,10 @@
 //! Geometry and attention are bounded receiver continuations. Their root,
 //! ordered lists and stable-position maps keep their distinct Source codecs.
 use super::*;
-use crate::records::{MapPositions, RecordSchema, encode_list_changes, encode_map_changes};
+use crate::records::{
+    MapPositions, RecordSchema, encode_list_changes, encode_map_changes,
+    encode_map_changes_with_plain_equality,
+};
 fn one<T: Serialize + ?Sized>(
     schema: &RecordSchema,
     ledger: &RecordLedger,
@@ -215,7 +218,10 @@ impl CurrentJournal {
                 output,
                 budget,
             )?;
-            encode_map_changes(
+            // These two leaves have fixed fields and no separately projected
+            // cells. Latch proof lists compare in order, and the JavaScript
+            // number formatter writes both zero signs as the same bytes.
+            encode_map_changes_with_plain_equality(
                 schema,
                 ledger,
                 "mind_perception_attention_latches",
@@ -223,11 +229,12 @@ impl CurrentJournal {
                 Some("latches"),
                 before.map(|before| &before.latches),
                 after.map(|after| &after.latches),
+                |prior, value| prior == value,
                 MapPositions::Stable,
                 output,
                 budget,
             )?;
-            encode_map_changes(
+            encode_map_changes_with_plain_equality(
                 schema,
                 ledger,
                 "mind_perception_attention_scans",
@@ -235,6 +242,7 @@ impl CurrentJournal {
                 Some("relationScans"),
                 before.map(|before| &before.relation_scans),
                 after.map(|after| &after.relation_scans),
+                |prior, value| prior == value,
                 MapPositions::Stable,
                 output,
                 budget,

@@ -20,7 +20,7 @@ pub use account_retention::RuntimeAccountRetention;
 pub use control::RuntimeClock;
 mod direct_history;
 pub use direct_history::{
-    HistoryAccount, HistoryCut, HistoryTemporal, RuntimeHistory, RuntimeHistoryCuts,
+    HistoryAccount, HistoryTemporal, RuntimeHistory, RuntimeHistoryCuts,
     RuntimeMetadataPersistence, RuntimeRecallDecoder, RuntimeRecallRead, metadata_rows,
 };
 mod handoff;
@@ -1034,7 +1034,7 @@ impl NativeWorldSession {
         key: CandidateKey,
         answer: Option<(&RuntimeProvider, RuntimeProviderInput)>,
     ) -> Result<RuntimeStep, RuntimeError> {
-        let step = self.step_session(key, answer)?;
+        let step = self.step_session(key, answer, true)?;
         Ok(match step {
             SessionStep::Continue => RuntimeStep::Continue,
             SessionStep::Question(question) => {
@@ -1084,6 +1084,7 @@ impl NativeWorldSession {
         &mut self,
         key: CandidateKey,
         answer: Option<(&RuntimeProvider, RuntimeProviderInput)>,
+        include_actor_cuts: bool,
     ) -> Result<SessionStep, RuntimeError> {
         if self.session.is_npc_candidates(key) || self.session.is_npc_sources(key) {
             return Err(failure("NPC discovery requires its originating read"));
@@ -1091,13 +1092,14 @@ impl NativeWorldSession {
         let answer = provider_response(answer, &self.budget)?;
         // This is the installed story policy, not a bridge-selected world law.
         self.session
-            .step(
+            .step_with_history_cuts(
                 key,
                 answer,
                 crate::experience::HistorySettings {
                     policy_id: &self.history_policy_id,
                     policy_revision: self.history_policy_revision,
                 },
+                include_actor_cuts,
             )
             .map_err(session_failure)
     }
@@ -1111,7 +1113,7 @@ impl NativeWorldSession {
         answer: Option<(&RuntimeProvider, RuntimeProviderInput)>,
         stage: impl FnOnce(RuntimeDirectOutput<'_>, &ByteBudget) -> Result<T, RuntimeError>,
     ) -> Result<RuntimeDirectStep<T>, RuntimeError> {
-        Ok(match self.step_session(key, answer)? {
+        Ok(match self.step_session(key, answer, false)? {
             SessionStep::Continue => RuntimeDirectStep::Continue,
             SessionStep::Question(question) => {
                 RuntimeDirectStep::Provider(self.prepare_provider(key, question)?)
@@ -1383,10 +1385,13 @@ impl RuntimePreparedProducts<'_> {
 
 impl Serialize for RuntimePreparedProducts<'_> {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let history = self.history.serialized_value().ok_or_else(|| {
+            serde::ser::Error::custom("serialized history requires a complete actor cut")
+        })?;
         let mut map = serializer.serialize_map(None)?;
         map.serialize_entry("outcome", self.operation.outcome())?;
         map.serialize_entry("events", &Events(self.operation))?;
-        map.serialize_entry("history", &self.history.value())?;
+        map.serialize_entry("history", &history)?;
         map.serialize_entry("notices", self.notices)?;
         if let Some(restore) = &self.restore {
             map.serialize_entry("restore", restore)?;

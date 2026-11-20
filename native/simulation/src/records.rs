@@ -21,7 +21,9 @@ pub(crate) use list_changes::encode_list_changes;
 mod sparse_map_changes;
 pub(crate) use sparse_map_changes::{encode_marked_owners, encode_sparse_map_changes};
 mod map_changes;
-pub(crate) use map_changes::{MapPositions, encode_map_changes};
+pub(crate) use map_changes::{
+    MapPositions, encode_map_changes, encode_map_changes_with_plain_equality,
+};
 mod selection;
 pub(crate) use selection::{OrderedMapRows, SelectedPlacement};
 mod ledger;

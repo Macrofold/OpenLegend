@@ -114,7 +114,7 @@ struct HistoryInput {
     principals: Vec<Principal>,
     changed: Vec<Original>,
     accounts: Vec<Account>,
-    cuts: Vec<ActorCut>,
+    cuts: Option<Vec<ActorCut>>,
     subjects: Vec<Subject>,
 }
 
@@ -125,6 +125,7 @@ pub(crate) struct CapturedHistoryInput(Arc<CapturedHistoryBacking>);
 
 struct CapturedHistoryBacking {
     input: HistoryInput,
+    needs_actor_projection: bool,
     sensory_expirations: Vec<SensoryExpiration>,
     _sensory_storage: Option<ByteReservation>,
     _reservations: Vec<ByteReservation>,
@@ -141,8 +142,8 @@ impl CapturedHistoryInput {
     pub(crate) fn sensory_expirations(&self) -> &[SensoryExpiration] {
         &self.0.sensory_expirations
     }
-    pub(crate) fn value(&self) -> impl Serialize + '_ {
-        &self.0.input
+    pub(crate) fn serialized_value(&self) -> Option<impl Serialize + '_> {
+        self.0.input.cuts.as_ref().map(|_| &self.0.input)
     }
     pub(crate) fn base_cut(&self) -> u64 {
         self.0.input.base_cut
@@ -203,36 +204,8 @@ impl CapturedHistoryInput {
     pub(crate) fn account_count(&self) -> usize {
         self.0.input.accounts.len()
     }
-    pub(crate) fn cuts(
-        &self,
-    ) -> impl Iterator<
-        Item = (
-            &str,
-            f64,
-            f64,
-            &[String],
-            &[String],
-            Option<&ReceivedFrontier>,
-            bool,
-            &[ReceivedChargeDirectory],
-            u64,
-            u64,
-        ),
-    > {
-        self.0.input.cuts.iter().map(|cut| {
-            (
-                cut.actor_id.as_str(),
-                cut.at,
-                cut.max_age_seconds,
-                cut.forgotten.as_slice(),
-                cut.corrected.as_slice(),
-                cut.frontier.as_ref(),
-                cut.recent_present,
-                cut.recent_directories.as_slice(),
-                cut.recent_bytes,
-                cut.recent_count,
-            )
-        })
+    pub(crate) fn needs_actor_projection(&self) -> bool {
+        self.0.needs_actor_projection
     }
     pub(crate) fn story_principal(&self, actor: &str) -> Option<&str> {
         self.0
@@ -386,11 +359,16 @@ fn temporal_account(
 /// New originals are issued by the single occurrence owner in this candidate;
 /// their IDs cannot occur in a cold predecessor. No missing resident old source
 /// is interpreted as absent. The receiver scopes must already be flushed.
+/// Pin the admitted event-time accounts and subjects. The serialized
+/// application also needs complete actor metadata at this cut. The direct
+/// writer instead captures per-account eligibility at save detachment.
+/// The returned capture owns its reservations and pins through settlement.
 pub(crate) fn capture_history_input(
     state: &SimulationState,
     history: &OccurrenceHistory,
     journal: &ExperienceJournal,
     settings: HistorySettings<'_>,
+    include_actor_cuts: bool,
     budget: &ByteBudget,
 ) -> Result<CapturedHistoryInput, ExperienceError> {
     let originals = history.appended().count();
@@ -403,13 +381,14 @@ pub(crate) fn capture_history_input(
     let max_actors = audiences
         .checked_add(journal.undo.len())
         .ok_or_else(capacity)?;
+    let actor_cut_capacity = if include_actor_cuts { max_actors } else { 0 };
     let max_subjects = originals
         .checked_add(audiences)
         .and_then(|n| n.checked_mul(2))
         .ok_or_else(capacity)?;
     let max_guards = audiences
         .checked_mul(5)
-        .and_then(|n| n.checked_add(max_actors))
+        .and_then(|n| n.checked_add(actor_cut_capacity))
         .and_then(|n| n.checked_add(originals.checked_mul(3)?))
         .and_then(|n| n.checked_add(2))
         .ok_or_else(capacity)?;
@@ -423,7 +402,7 @@ pub(crate) fn capture_history_input(
         audiences
             .checked_mul(size_of::<Account>())
             .ok_or_else(capacity)?,
-        max_actors
+        actor_cut_capacity
             .checked_mul(size_of::<ActorCut>())
             .ok_or_else(capacity)?,
         max_guards
@@ -597,8 +576,9 @@ pub(crate) fn capture_history_input(
             }
         }
     }
-    // The same fixed cut supplies privacy for source-version preparation even
-    // when a personal memory changed without emitting an original occurrence.
+    // Include actors whose personal records changed without an occurrence.
+    // The serialized writer needs their exact privacy cut. The direct writer
+    // still checks for this work before certifying a metadata-only candidate.
     actors.extend(
         journal
             .appended(&state.experience)
@@ -614,7 +594,9 @@ pub(crate) fn capture_history_input(
         // privacy decision. The exact predecessor owns its SQL derivatives.
         if header.reference.kind != super::PersonalSourceKind::Awareness
             || header.class != super::AccountClass::Sensory
-            || header.expires_at.is_none_or(|at| at > state.physical.header.sim_time)
+            || header
+                .expires_at
+                .is_none_or(|at| at > state.physical.header.sim_time)
         {
             continue;
         }
@@ -624,18 +606,25 @@ pub(crate) fn capture_history_input(
             0
         };
         let bytes = heap_sum([
-            slots.checked_mul(size_of::<SensoryExpiration>()).ok_or_else(capacity)?,
+            slots
+                .checked_mul(size_of::<SensoryExpiration>())
+                .ok_or_else(capacity)?,
             record.row_id().len(),
             header.actor_id.len(),
             header.reference.id.len(),
             header.reference.revision.len(),
-        ]).ok_or_else(capacity)?;
+        ])
+        .ok_or_else(capacity)?;
         if let Some(storage) = &mut sensory_storage {
-            storage.resize(storage.bytes().checked_add(bytes).ok_or_else(capacity)?).map_err(|_| capacity())?;
+            storage
+                .resize(storage.bytes().checked_add(bytes).ok_or_else(capacity)?)
+                .map_err(|_| capacity())?;
         } else {
             sensory_storage = Some(reserve(budget, Some(bytes))?);
         }
-        sensory_expirations.try_reserve_exact(slots).map_err(|_| capacity())?;
+        sensory_expirations
+            .try_reserve_exact(slots)
+            .map_err(|_| capacity())?;
         sensory_expirations.push(SensoryExpiration {
             row_id: record.row_id().to_owned(),
             actor_id: header.actor_id.clone(),
@@ -644,14 +633,20 @@ pub(crate) fn capture_history_input(
         });
     }
     actors.extend(journal.changed_privacy_actors());
-    let mut cuts = Vec::new();
-    cuts.try_reserve_exact(actors.len())
-        .map_err(|_| capacity())?;
-    for actor_id in actors {
-        let (cut, reservation) = capture_actor_cut(state, actor_id, budget)?;
-        cuts.push(cut);
-        reservations.push(reservation);
-    }
+    let needs_actor_projection = !actors.is_empty();
+    let cuts = if include_actor_cuts {
+        let mut cuts = Vec::new();
+        cuts.try_reserve_exact(actors.len())
+            .map_err(|_| capacity())?;
+        for actor_id in actors {
+            let (cut, reservation) = capture_actor_cut(state, actor_id, budget)?;
+            cuts.push(cut);
+            reservations.push(reservation);
+        }
+        Some(cuts)
+    } else {
+        None
+    };
     let mut subjects = Vec::new();
     subjects
         .try_reserve_exact(wanted_subjects.len())
@@ -719,6 +714,7 @@ pub(crate) fn capture_history_input(
             cuts,
             subjects,
         },
+        needs_actor_projection,
         _reservations: reservations,
         _pins: pins,
     })))

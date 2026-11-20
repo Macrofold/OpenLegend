@@ -1077,6 +1077,16 @@ impl Session {
         answer: Option<ProviderResponse>,
         history: HistorySettings<'_>,
     ) -> Result<SessionStep, SessionError> {
+        self.step_with_history_cuts(key, answer, history, true)
+    }
+
+    pub(crate) fn step_with_history_cuts(
+        &mut self,
+        key: CandidateKey,
+        answer: Option<ProviderResponse>,
+        history: HistorySettings<'_>,
+        include_actor_cuts: bool,
+    ) -> Result<SessionStep, SessionError> {
         self.simulation
             .fence
             .validate_phase(key, CandidatePhase::Preparing)?;
@@ -1199,6 +1209,7 @@ impl Session {
                         &self.simulation.state.occurrences,
                         &preparing.journal.experience,
                         history,
+                        include_actor_cuts,
                         &self.budget,
                     )?;
                     let predecessors = crate::experience::capture_personal_predecessors(

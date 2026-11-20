@@ -2,9 +2,11 @@
 //! Rapier remains the physical intersection owner; these records select ordered
 //! bodies and preserve the existing movement/stop-search continuation.
 
+use crate::host::{ByteBudget, ByteReservation, CapacityError};
 use crate::state::{BodyProfile, Bounds, Entity, EntityHandle, EntityStore, Point, SurfacePoint};
 use crate::status::StatusEffectPolicy;
 use std::collections::{BTreeMap, BTreeSet};
+use std::mem::size_of;
 mod advance;
 mod residency;
 pub(crate) use advance::{MoveAdvanceAnswer, MoveAdvanceCursor, MoveAdvanceStep};
@@ -54,6 +56,43 @@ fn cell(point: Point) -> (i64, i64, i64) {
         (point.z / BODY_CELL_SIZE).floor() as i64,
     )
 }
+
+struct CellBounds {
+    low: (i64, i64, i64),
+    high: (i64, i64, i64),
+}
+impl CellBounds {
+    fn around(origin: Point, radius: f64) -> Self {
+        Self {
+            low: cell(Point {
+                x: origin.x - radius,
+                y: origin.y - radius,
+                z: origin.z - radius,
+            }),
+            high: cell(Point {
+                x: origin.x + radius,
+                y: origin.y + radius,
+                z: origin.z + radius,
+            }),
+        }
+    }
+    fn contains(&self, key: (i64, i64, i64)) -> bool {
+        let Self { low, high } = self;
+        key.0 >= low.0
+            && key.0 <= high.0
+            && key.1 >= low.1
+            && key.1 <= high.1
+            && key.2 >= low.2
+            && key.2 <= high.2
+    }
+    fn volume(&self) -> f64 {
+        let Self { low, high } = self;
+        (high.0 as f64 - low.0 as f64 + 1.0)
+            * (high.1 as f64 - low.1 as f64 + 1.0)
+            * (high.2 as f64 - low.2 as f64 + 1.0)
+    }
+}
+
 impl BodyIndex {
     pub(crate) fn root_count(&self) -> u64 {
         self.roots.len() as u64
@@ -69,19 +108,7 @@ impl BodyIndex {
         radius: f64,
         mut visit: impl FnMut(&'a str, &'a BodyPoint),
     ) {
-        let low = cell(Point {
-            x: origin.x - radius,
-            y: origin.y - radius,
-            z: origin.z - radius,
-        });
-        let high = cell(Point {
-            x: origin.x + radius,
-            y: origin.y + radius,
-            z: origin.z + radius,
-        });
-        let volume = (high.0 as f64 - low.0 as f64 + 1.0)
-            * (high.1 as f64 - low.1 as f64 + 1.0)
-            * (high.2 as f64 - low.2 as f64 + 1.0);
+        let bounds = CellBounds::around(origin, radius);
         let mut include = |ids: &BTreeSet<String>| {
             for id in ids {
                 if let Some((key, point)) = self.points.get_key_value(id) {
@@ -89,19 +116,14 @@ impl BodyIndex {
                 }
             }
         };
-        if volume > self.cells.len() as f64 {
+        if bounds.volume() > self.cells.len() as f64 {
             for (key, ids) in &self.cells {
-                if key.0 >= low.0
-                    && key.0 <= high.0
-                    && key.1 >= low.1
-                    && key.1 <= high.1
-                    && key.2 >= low.2
-                    && key.2 <= high.2
-                {
+                if bounds.contains(*key) {
                     include(ids);
                 }
             }
         } else {
+            let CellBounds { low, high } = bounds;
             for x in low.0..=high.0 {
                 for y in low.1..=high.1 {
                     for z in low.2..=high.2 {
@@ -133,6 +155,47 @@ impl BodyIndex {
             .map(|(id, point)| (id, point.handle))
             .collect()
     }
+    /// Look up a unique set of requested IDs twice: first to fund the exact
+    /// admitted subset, then to order that subset without walking other bodies
+    /// in the envelope. The caller holds the returned charge while it uses the
+    /// borrowed IDs to prepare the actual detector request.
+    pub(crate) fn requested_candidates<'a, 'ids>(
+        &'a self,
+        origin: Point,
+        radius: f64,
+        ids: impl Iterator<Item = &'ids str> + Clone,
+        budget: &ByteBudget,
+    ) -> Result<(ByteReservation, Vec<&'a str>), CapacityError> {
+        let bounds = CellBounds::around(origin, radius);
+        let selected = ids.filter_map(|id| {
+            let (id, point) = self.points.get_key_value(id)?;
+            // Refresh stores the point and its cell entry together, including
+            // on rollback. This is the broad query's cell test, not a new range rule.
+            bounds
+                .contains(cell(point.position))
+                .then_some((id.as_str(), point.order.as_str()))
+        });
+        let count = selected.clone().count();
+        let reservation = budget.reserve(
+            count
+                .checked_mul(size_of::<(&str, &str)>() + size_of::<&str>())
+                .ok_or(CapacityError)?,
+        )?;
+        let mut ordered = Vec::new();
+        ordered
+            .try_reserve_exact(count)
+            .map_err(|_| CapacityError)?;
+        ordered.extend(selected);
+        // The entity store rejects duplicate ordering labels on installation.
+        // Ordered insertion and relabeling preserve their uniqueness.
+        ordered.sort_unstable_by_key(|&(_, order)| order);
+        let mut targets = Vec::new();
+        targets
+            .try_reserve_exact(count)
+            .map_err(|_| CapacityError)?;
+        targets.extend(ordered.into_iter().map(|(id, _)| id));
+        Ok((reservation, targets))
+    }
     pub(crate) fn candidates_metered(
         &self,
         origin: Point,
@@ -140,33 +203,16 @@ impl BodyIndex {
         meters: &mut crate::work::WorkMeters,
     ) -> Result<Vec<(&str, EntityHandle)>, crate::work::WorkError> {
         use crate::work::WorkUnit;
-        let low = cell(Point {
-            x: origin.x - radius,
-            y: origin.y - radius,
-            z: origin.z - radius,
-        });
-        let high = cell(Point {
-            x: origin.x + radius,
-            y: origin.y + radius,
-            z: origin.z + radius,
-        });
-        let volume = (high.0 as f64 - low.0 as f64 + 1.0)
-            * (high.1 as f64 - low.1 as f64 + 1.0)
-            * (high.2 as f64 - low.2 as f64 + 1.0);
-        if volume > self.cells.len() as f64 {
+        let bounds = CellBounds::around(origin, radius);
+        if bounds.volume() > self.cells.len() as f64 {
             for (key, ids) in &self.cells {
                 meters.charge(&[(WorkUnit::Tests, 1)])?;
-                if key.0 >= low.0
-                    && key.0 <= high.0
-                    && key.1 >= low.1
-                    && key.1 <= high.1
-                    && key.2 >= low.2
-                    && key.2 <= high.2
-                {
+                if bounds.contains(*key) {
                     meters.charge(&[(WorkUnit::Candidates, ids.len() as u64)])?;
                 }
             }
         } else {
+            let CellBounds { low, high } = bounds;
             for x in low.0..=high.0 {
                 for y in low.1..=high.1 {
                     for z in low.2..=high.2 {

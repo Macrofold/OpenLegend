@@ -1103,6 +1103,10 @@ The [stand-alone review follow-up](../benchmarks/native-runtime-foundations/2026
 
 The [November 20 stand-alone CPU profile](../benchmarks/native-runtime-foundations/2026/2026-11-20-stand-alone-cpu-profile.md) found the largest sampled cost in private perception and attention. It separates direct animal decisions, downstream witness work, changed-record preparation, and PostgreSQL traffic. The report ranks proposed follow-up opportunities. No runtime change or multicore qualification follows from this diagnostic.
 
+**Perception cost follow-up — November 20, 2026.** The first comparison bundles changes that preserve gameplay. Use exact subject lookup for detail-only sight, read attention deadlines without rebuilding the ordered anchor set, and avoid copying recent directories on the stand-alone history path that does not consume them, and skip encoding unchanged plain attention latches and scans with the same stored position. Compare the whole batch with the same stock release on the heavy 26-actor opening. Verify unchanged identities/order and visibility, both replies, required private history and cold save continuation. A stable release and eligible worker precede the clean comparison.
+
+The independent authored trial limits spare ordinary body-tracking cues for human NPCs. Keep broad perception, speech, self warnings, directed and required work, and player detail unchanged. Measure fewer detail preparations and records before measuring complete CPU. Check a bystander's broad acquisition and loss, a directed interaction and a self warning through the real receiving owners. Keep the inactive default until equivalent complete play and the independent comparison justify changing it. View database reads, keyed pending saves, NPC background review and quieter wildlife remain separate follow-ups.
+
 ## Overlap and dependencies
 
 | Existing owner                                            | Reconciliation                                                                                                                                                                                                                        |
