@@ -135,13 +135,23 @@ struct AssociationMeaning<'a> {
     strength: AssociationStrength,
 }
 
-fn descriptions(
-    scope: &CurrentBodyReadScope<'_>,
+fn descriptions<'a>(
+    scope: &CurrentBodyReadScope<'a>,
     id: &str,
     selector: CurrentFacetSelector<'_>,
+    source: CurrentNativeFacet<'a>,
     journal: &mut CurrentJournal,
 ) -> Result<String, ReceivedError> {
-    let body = scope.native(id, "body", selector)?;
+    // The representative was unique on this channel. Adding its own exposure
+    // to the raw lookup selects the same field; the other kinds still resolve.
+    let facet = |kind: &str| {
+        if kind == source.field.value.kind {
+            Ok(Some(source))
+        } else {
+            scope.native(id, kind, selector)
+        }
+    };
+    let body = facet("body")?;
     let appearance = body.and_then(|body| match scope.value(&body.field.value.reference) {
         Some(ReceivedValueFragment::Body(value)) => Some(&value.body),
         _ => None,
@@ -158,7 +168,7 @@ fn descriptions(
     .into_iter()
     .enumerate()
     {
-        values[at] = scope.native(id, kind, selector)?.and_then(|field| {
+        values[at] = facet(kind)?.and_then(|field| {
             match scope.value(&field.field.value.reference) {
                 Some(ReceivedValueFragment::Sensory(value)) => Some(value),
                 _ => None,
@@ -285,7 +295,8 @@ pub(super) fn build_candidates(
             .ok_or_else(capacity)?,
         )?;
         let subject = subject.cloned();
-        let description_revision = descriptions(&scope, &annotation.source_id, selector, journal)?;
+        let description_revision =
+            descriptions(&scope, &annotation.source_id, selector, body, journal)?;
         let displacement = match (&measured, &annotation.anchor) {
             (Some(measured), Some(anchor)) => {
                 (crate::spatial::distance(measured.point.position(), anchor.point.position())
