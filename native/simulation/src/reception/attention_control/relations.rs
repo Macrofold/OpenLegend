@@ -30,27 +30,26 @@ fn anchors(
     world: &crate::simulation::SimulationState,
     observer: &str,
     state: &AttentionState,
-    journal: &mut CurrentJournal,
 ) -> Result<Vec<Anchor>, ReceivedError> {
     let mut result = vec![Anchor {
         key: SELF_RELATION_KEY.into(),
         source_id: observer.into(),
     }];
-    let scope = CurrentBodyReadScope::prepare(
+    let Some(scope) = CurrentBodyReadScope::prepare(
         &world.reception,
         &world.physical.entities,
         &world.installed,
         &world.experience,
         &crate::worlds::InstalledEvidenceMeaning,
         observer,
-    )?;
+    )?
+    else {
+        return Ok(result);
+    };
     let mut selected = IndexSet::new();
     for entry in &state.entries {
         if scope
-            .as_ref()
-            .map(|s| s.native_body(&entry.source_id))
-            .transpose()?
-            .flatten()
+            .native_body(&entry.source_id)?
             .is_none_or(|b| b.field.id != entry.lease_id)
         {
             continue;
@@ -61,41 +60,38 @@ fn anchors(
         });
         selected.insert(entry.key.as_str());
     }
-    let candidates = build_candidates(
-        &world.physical,
-        &world.reception,
-        &world.installed,
-        &world.experience,
-        observer,
-        state,
-        None,
-        journal,
-    )?;
     let target = target(&world.physical, observer);
-    for key in relation_keys(state, target, world.physical.header.sim_time) {
+    let now = world.physical.header.sim_time;
+    // Relation scans need these exact current anchors. The earlier ranking's
+    // description, point and familiarity are unused, and intervening receipt
+    // work can change which bodies are valid before the scan.
+    for key in relation_keys(state, target, now) {
         if key == SELF_RELATION_KEY || selected.contains(key.as_str()) {
             continue;
         }
-        let Some(candidate) = candidates.get(&key) else {
+        let Some(annotation) = state.annotations.get(&key) else {
             continue;
         };
-        let annotation = &candidate.annotation;
-        if scope
-            .as_ref()
-            .map(|s| s.native_body(&annotation.source_id))
-            .transpose()?
-            .flatten()
-            .is_some_and(|b| b.field.id == annotation.lease_id)
-            && (Some(annotation.source_id.as_str()) == target
-                || annotation.direct
-                    && annotation.direct_through.unwrap_or(f64::INFINITY)
-                        > world.physical.header.sim_time)
+        if !(Some(annotation.source_id.as_str()) == target
+            || annotation.direct && annotation.direct_through.unwrap_or(f64::INFINITY) > now)
         {
-            result.push(Anchor {
-                key,
-                source_id: annotation.source_id.clone(),
-            });
+            continue;
         }
+        let Some(source) = scope.attention_source(&annotation.source_id, &annotation.lease_id)?
+        else {
+            continue;
+        };
+        if !scope.channel_eligible(&source.grant.channel)
+            || scope
+                .native_body(&annotation.source_id)?
+                .is_none_or(|b| b.field.id != annotation.lease_id)
+        {
+            continue;
+        }
+        result.push(Anchor {
+            key,
+            source_id: annotation.source_id.clone(),
+        });
     }
     Ok(result)
 }
@@ -103,11 +99,10 @@ fn opportunity(
     world: &crate::simulation::SimulationState,
     observer: &str,
     state: &mut AttentionState,
-    journal: &mut CurrentJournal,
 ) -> Result<Option<Opportunity>, ReceivedError> {
     let now = world.physical.header.sim_time;
     let policy = &world.installed.attention.value().relation;
-    let anchors = anchors(world, observer, state, journal)?;
+    let anchors = anchors(world, observer, state)?;
     let admitted: IndexSet<_> = anchors.iter().map(|a| a.key.as_str()).collect();
     let keys: IndexSet<_> = state
         .relation_dirty
@@ -423,7 +418,9 @@ pub(crate) fn evaluate_attention_relations(
         .ok_or(ExecutionError::Capacity)?;
     let mut max_id = observer.len();
     let mut max_track = observer.len();
+    let mut max_source_groups = 0;
     for contact in receiver.current.values() {
+        max_source_groups = max_source_groups.max(contact.content.groups.len());
         for original in contact.content.originals.values() {
             max_id = max_id.max(original.id.len());
         }
@@ -490,6 +487,22 @@ pub(crate) fn evaluate_attention_relations(
     let pairs = anchor_count
         .checked_mul(2)
         .ok_or(ExecutionError::Capacity)?;
+    // The current-source selector grows a temporary per-channel list, then
+    // collects its borrowed facets. Only one anchor holds this scratch at once.
+    let source_scratch = if max_source_groups == 0 {
+        0
+    } else {
+        max_source_groups
+            .max(4)
+            .checked_next_power_of_two()
+            .and_then(|groups| {
+                groups.checked_mul(
+                    2 * size_of::<(&DefinitionPin, &str, usize)>()
+                        + size_of::<CurrentNativeFacet<'_>>(),
+                )
+            })
+            .ok_or(ExecutionError::Capacity)?
+    };
     let row_storage = heap_sum([
         map_storage::<String, AttentionRelationScan>(pairs).ok_or(ExecutionError::Capacity)?,
         map_storage::<String, AttentionRelationLatch>(pairs).ok_or(ExecutionError::Capacity)?,
@@ -513,6 +526,7 @@ pub(crate) fn evaluate_attention_relations(
             .len()
             .checked_mul(size_of::<&str>())
             .ok_or(ExecutionError::Capacity)?,
+        source_scratch,
     ])
     .ok_or(ExecutionError::Capacity)?;
     let bound = heap_sum([
@@ -536,14 +550,7 @@ pub(crate) fn evaluate_attention_relations(
     .ok_or(ExecutionError::Capacity)?;
     core.journal.current.reserve_growth(bound)?;
     let mut state = prior.clone();
-    // Build candidates borrows the same immutable cut; only its allocation
-    // journal is mutable while the opportunity retires stale scan metadata.
-    let Some(opportunity) = opportunity(
-        &*core.state,
-        observer,
-        &mut state,
-        &mut core.journal.current,
-    )?
+    let Some(opportunity) = opportunity(&*core.state, observer, &mut state)?
     else {
         core.journal
             .current
