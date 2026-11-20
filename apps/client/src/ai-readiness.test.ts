@@ -34,7 +34,9 @@ describe('composer AI setup guidance', () => {
   });
 
   it('separates configured providers from permission to spend', () => {
-    expect(aiSetupReason({ ...configured, allowanceLimitUsd: 0 })).toContain('no spending allowance');
+    expect(aiSetupReason({ ...configured, allowanceLimitUsd: 0 })).toContain(
+      'no spending allowance',
+    );
     expect(aiSetupReason(configured)).toBeNull();
   });
 
