@@ -66,6 +66,4 @@ sites! {
     52, RELEASE_DEBT,  "S02.01.discarded",      "discarded game microsecond";
     53, READ_OP,       "S13.read.operational",  "operational read";
     54, READ_SIM,      "S13.read.simulation",   "simulation cut read";
-    55, PENDING_REVISITED, "S12.pending.revisited", "prior write row in a touched table";
-    56, PENDING_UNTOUCHED, "S12.pending.untouched", "prior write row outside a touched table";
 }

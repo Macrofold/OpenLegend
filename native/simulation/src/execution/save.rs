@@ -365,37 +365,6 @@ fn write_corpse(
     }
     Ok(())
 }
-/// The fixed work row has three vectors of eleven unsigned counters, a
-/// definition pin, and at most one recurrence. Bound escaped text by its byte
-/// length so admission does not walk the value before encoding.
-fn work_invocation_payload_bound(value: &crate::values::WorkInvocation) -> Option<usize> {
-    const VECTOR: usize = 2 + 11 * (13 + 4 + 20);
-    const ROOT_SYNTAX: usize = 2 + 15 * (13 + 4);
-    const PIN: usize = 2 + 3 * (7 + 4) + 20;
-    const RECURRENCE: usize = 2 + 2 * (15 + 4) + 32 + 20;
-    let fixed = ROOT_SYNTAX + PIN + 3 * VECTOR + 2 * 32 + 3 * 20;
-    let fixed = fixed
-        + if value.recurrence.is_some() {
-            RECURRENCE
-        } else {
-            0
-        };
-    [
-        Some(&value.id),
-        Some(&value.root_id),
-        value.parent_id.as_ref(),
-        Some(&value.actor_id),
-        Some(&value.module_id),
-        Some(&value.definition_pin.id),
-        Some(&value.definition_pin.digest),
-    ]
-    .into_iter()
-    .flatten()
-    .try_fold(fixed, |bytes, text| {
-        bytes.checked_add(text.len().checked_mul(6)?.checked_add(2)?)
-    })
-}
-
 fn map<T: Serialize>(
     ledger: &RecordLedger,
     output: &mut RowEncoder<'_>,
@@ -406,46 +375,6 @@ fn map<T: Serialize>(
     changed: &IndexMap<&str, bool>,
     stable: bool,
     budget: &ByteBudget,
-) -> Result<(), RecordEncodingError> {
-    map_rows(
-        ledger,
-        output,
-        table,
-        parent,
-        field,
-        values,
-        changed,
-        stable,
-        budget,
-        |output, table, placement, value| {
-            output.write(
-                table,
-                placement.value(),
-                value,
-                &[],
-                placement.create(),
-                RowEffects::default(),
-            )
-        },
-    )
-}
-
-fn map_rows<T: Serialize>(
-    ledger: &RecordLedger,
-    output: &mut RowEncoder<'_>,
-    table: &str,
-    parent: &[&str],
-    field: &str,
-    values: Option<&IndexMap<String, T>>,
-    changed: &IndexMap<&str, bool>,
-    stable: bool,
-    budget: &ByteBudget,
-    mut write: impl FnMut(
-        &mut RowEncoder<'_>,
-        &str,
-        &SelectedPlacement,
-        &T,
-    ) -> Result<(), RecordEncodingError>,
 ) -> Result<(), RecordEncodingError> {
     let _owner_guard = budget
         .reserve(
@@ -510,7 +439,14 @@ fn map_rows<T: Serialize>(
                     changed.get(key) == Some(&false),
                     budget,
                 )?;
-                write(output, table, &placement, value)?;
+                output.write(
+                    table,
+                    placement.value(),
+                    value,
+                    &[],
+                    placement.create(),
+                    RowEffects::default(),
+                )?;
             }
         }
         if !stable {
@@ -1293,7 +1229,7 @@ impl PhysicalJournal {
                     budget,
                 )?;
             }
-            map_rows(
+            map(
                 ledger,
                 output,
                 "sim_work_invocations",
@@ -1303,15 +1239,6 @@ impl PhysicalJournal {
                 &work,
                 false,
                 budget,
-                |output, table, placement, invocation| {
-                    output.write_bounded_plain(
-                        table,
-                        placement.value(),
-                        invocation,
-                        placement.create(),
-                        work_invocation_payload_bound(invocation),
-                    )
-                },
             )?;
         }
         if window {
