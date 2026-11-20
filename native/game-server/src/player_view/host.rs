@@ -14,6 +14,7 @@ pub(crate) struct ViewHostInput {
     command_epoch: String,
     pub(crate) paused_stop: Option<PausedStop>,
     telemetry: ViewTelemetry,
+    profile: PlayerProfile,
     custody: ByteReservation,
 }
 
@@ -25,6 +26,7 @@ pub(crate) async fn capture_host(
     commands: &PlayerCommands,
     presence: &Presence,
     telemetry: ViewTelemetry,
+    profile: PlayerProfile,
     budget: &ByteBudget,
 ) -> Result<ViewHostInput, ViewError> {
     let scope = &grant.scope;
@@ -88,6 +90,7 @@ pub(crate) async fn capture_host(
         command_epoch: commands.epoch().await,
         paused_stop: None,
         telemetry,
+        profile,
         custody,
     })
 }
@@ -114,7 +117,7 @@ impl ViewHostInput {
         policy: &PlayerViewPolicy,
         references: &PlayerReferences<'_>,
         own: &PreparedSelf,
-    ) -> Result<ViewHostFacts, ViewError> {
+    ) -> Result<(ViewHostFacts, PlayerProfile), ViewError> {
         let input = read.view_source().map_err(runtime)?;
         let control = read.control_facts().map_err(runtime)?;
         let history_revision = format!("{}:{}", control.generation, input.history_order);
@@ -145,7 +148,7 @@ impl ViewHostInput {
             .access
             .can_manage_saves
             .then_some(input.presentation_release_revision.unwrap_or(0));
-        Ok(ViewHostFacts {
+        let facts = ViewHostFacts {
             revision,
             access: self.access,
             checkpoint: self.checkpoint,
@@ -183,6 +186,7 @@ impl ViewHostInput {
             milestones,
             telemetry,
             custody: self.custody,
-        })
+        };
+        Ok((facts, self.profile))
     }
 }

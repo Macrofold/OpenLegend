@@ -5,11 +5,15 @@ use super::{Store, StoreError, StoreResult, read::admitted_query};
 use crate::{
     authority::RequestScope,
     player_events::{SpeechReply, SpeechReplyStatus},
-    player_view::{AccountAmount, AiBudget, AiJob, AiMode, AiUsage, AiView},
+    player_view::{
+        AccountAmount, AiBudget, AiJob, AiMode, AiUsage, AiView, ViewTelemetry,
+        profile::{PlayerProfile, profile},
+    },
 };
 use indexmap::IndexMap;
 use openlegend_simulation::{encoding::json_record, host::ByteReservation, text::JsText};
 use serde::Deserialize;
+use std::sync::Arc;
 
 #[derive(Clone, Copy)]
 pub(crate) struct AiDisplay {
@@ -53,18 +57,19 @@ struct InventionScope {
 }
 
 impl Store {
-    /// Read the same finite recent job window and current scoped month used
-    /// for player telemetry. Keep the decoder's custody until the actual
-    /// borrowed view drops, and never return the original job body.
-    pub(crate) async fn player_cognition(
-        &self,
+    /// Read the finite recent job window, current scoped usage, and account
+    /// settings in one independent read-only snapshot. Each decoded product
+    /// keeps its own custody after the transaction ends.
+    pub(crate) async fn player_view_input(
+        self: &Arc<Self>,
         scope: &RequestScope,
         display: AiDisplay,
-    ) -> StoreResult<(AiView, ByteReservation)> {
+    ) -> StoreResult<(ViewTelemetry, PlayerProfile)> {
         let account = scope.account_id.clone();
         let actor = scope.actor_id.clone();
         let world = scope.world_id.clone();
         let budget = self.budget.clone();
+        let store = Arc::clone(self);
         self.read_operational(move |tx| {
             Box::pin(async move {
                 let (mut charges, rows) = admitted_query(
@@ -104,7 +109,7 @@ impl Store {
                         queue_latency_ms: job.queue_latency_ms, total_latency_ms: job.total_latency_ms,
                     });
                 }
-                let usage = tx.query_one(
+                let usage_row = tx.query_one(
                     "WITH utc AS (SELECT date_trunc('month', now() AT TIME ZONE 'UTC') AS start), \
                      reports AS (SELECT a.provider,a.status,a.spent,a.reserved,a.created_at,a.id, \
                        a.receipt::json -> 'usage' AS usage, (a.receipt::json ->> 'dispatched')::bool AS dispatched, \
@@ -121,16 +126,17 @@ impl Store {
                          count(*) FROM reports",
                     &[&actor],
                 ).await?;
-                let integer = |index| super::ordinal(usage.try_get::<_, i64>(index)?);
+                let integer = |index| super::ordinal(usage_row.try_get::<_, i64>(index)?);
                 let spent = integer(1)? as f64 / 1_000_000.0;
                 let reserved = integer(2)? as f64 / 1_000_000.0;
-                let mut accounts = IndexMap::new();
-                if integer(8)? > 0 {
-                    accounts.insert(actor, AccountAmount { spent_usd: spent, reserved_usd: reserved });
-                }
+                let has_usage = integer(8)? > 0;
+                let period = usage_row.try_get(0)?;
+                let usage = AiUsage { jev_calls: integer(3)?, llm_calls: integer(4)?, input_tokens: integer(5)?,
+                    output_tokens: integer(6)?, last_latency_ms: usage_row.try_get(7)? };
+                drop(usage_row);
                 let problem = jobs.iter().find(|job| matches!(job.status, SpeechReplyStatus::Failed | SpeechReplyStatus::Completed))
                     .filter(|job| job.status == SpeechReplyStatus::Failed);
-                let (mode, message) = if !display.jev_configured {
+                let (mode, message): (AiMode, JsText) = if !display.jev_configured {
                     (AiMode::Unconfigured, "Configure backend AI credentials and a spending cap. Macrofold native execution also needs an owner-selected MACROFOLD_WORKER_ID; direct inference does not.".into())
                 } else if let Some(problem) = problem {
                     (AiMode::Degraded, problem.message.clone())
@@ -141,26 +147,30 @@ impl Store {
                 charges.merge(extra).map_err(|_| StoreError::Capacity)?;
                 // Drop PostgreSQL carriers before the selected read leaves.
                 drop(rows);
-                let result = AiView {
+                let retained = jobs.iter().try_fold(
+                    4096 + std::mem::size_of::<AiJob>() * jobs.capacity()
+                        + message.storage_bytes(),
+                    |size, job| size.checked_add(job.id.capacity())?
+                        .checked_add(job.kind.capacity())?
+                        .checked_add(job.message.storage_bytes()),
+                ).ok_or(StoreError::Capacity)?;
+                charges.resize(retained).map_err(|_| StoreError::Capacity)?;
+                let profile = profile(&store, tx, account, &world, &actor, &budget).await?;
+                let mut accounts = IndexMap::new();
+                if has_usage {
+                    accounts.insert(actor, AccountAmount { spent_usd: spent, reserved_usd: reserved });
+                }
+                let ai = AiView {
                     mode,
                     jev_configured: display.jev_configured,
                     llm_configured: display.llm_configured,
                     message,
                     jobs,
                     budget: AiBudget { limit_usd: display.limit_usd, spent_usd: spent, reserved_usd: reserved,
-                        estimated: true, per_agent: Some(true), period: Some(usage.try_get(0)?), accounts: Some(accounts) },
-                    usage: AiUsage { jev_calls: integer(3)?, llm_calls: integer(4)?, input_tokens: integer(5)?,
-                        output_tokens: integer(6)?, last_latency_ms: usage.try_get(7)? },
+                        estimated: true, per_agent: Some(true), period: Some(period), accounts: Some(accounts) },
+                    usage,
                 };
-                let retained = result.jobs.iter().try_fold(
-                    4096 + std::mem::size_of::<AiJob>() * result.jobs.capacity()
-                        + result.message.storage_bytes(),
-                    |size, job| size.checked_add(job.id.capacity())?
-                        .checked_add(job.kind.capacity())?
-                        .checked_add(job.message.storage_bytes()),
-                ).ok_or(StoreError::Capacity)?;
-                charges.resize(retained).map_err(|_| StoreError::Capacity)?;
-                Ok((result, charges))
+                Ok((ViewTelemetry { ai, custody: charges }, profile))
             })
         }).await
     }

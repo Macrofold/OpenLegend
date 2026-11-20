@@ -31,7 +31,7 @@ pub(crate) use host::{ViewHostInput, capture_host};
 pub(crate) use patch::{PreviousView, ViewSelection};
 pub use policy::PlayerViewPolicy;
 use policy::{CartographyPolicy, Daylight, MapPolicy, PublicWorld, WeatherView};
-use profile::{PlayerProfile, profile};
+use profile::PlayerProfile;
 
 const EVENT_WINDOW: usize = 512;
 
@@ -308,9 +308,9 @@ struct ControlCommand {
     kind: &'static str,
 }
 
-/// Spends no model budget. SQL preference reading and physical preparation
-/// relinquish the world turn. `host` already owns its independently admitted
-/// operational state. The returned reader still needs synchronous disclosure.
+/// Spends no model budget. The host input already owns its account snapshot,
+/// and physical preparation relinquishes the world turn. The returned reader
+/// still needs synchronous disclosure.
 pub(crate) async fn prepare_view(
     game: &CurrentServer,
     policy: Arc<PlayerViewPolicy>,
@@ -325,15 +325,6 @@ pub(crate) async fn prepare_view(
     if !host.matches(&scope)? {
         return Err(ViewError::Changed);
     }
-    let mut profile = profile(
-        &game.store,
-        &scope.account_id,
-        &scope.world_id,
-        &scope.actor_id,
-        game.host.budget(),
-    )
-    .await
-    .map_err(ViewError::Store)?;
     let (read, (own, input_facts, revision, save_failed)) = game
         .world
         .capture_player(
@@ -410,7 +401,8 @@ pub(crate) async fn prepare_view(
                     .map_err(runtime)?;
             }
             let scoped = references.scoped(&scope).map_err(ViewError::Encoding)?;
-            let mut host = host.assemble(revision, save_failed, &read, &policy, &scoped, &own)?;
+            let (mut host, mut profile) =
+                host.assemble(revision, save_failed, &read, &policy, &scoped, &own)?;
             if let Some(mut banner) = profile.narrator.take() {
                 if banner
                     .select(&mut read, &scope.actor_id, &scoped, &budget)

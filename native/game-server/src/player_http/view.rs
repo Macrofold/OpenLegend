@@ -5,7 +5,7 @@ use super::*;
 use crate::{
     authority::Capability,
     player_stream::{PlayerStream, PrepareView, VIEW_CADENCE, ViewAttempt},
-    player_view::{ViewError, ViewTelemetry, capture_host, prepare_view},
+    player_view::{ViewError, capture_host, prepare_view},
     store::AiDisplay,
     world::PlayerDisclosure,
 };
@@ -103,9 +103,9 @@ impl Views {
             authority
                 .current(&scope, Capability::Play, false, |_, _| ())
                 .map_err(world_access)?;
-            let (ai, custody) = game
+            let (telemetry, profile) = game
                 .store
-                .player_cognition(&scope.scope, self.display)
+                .player_view_input(&scope.scope, self.display)
                 .await
                 .map_err(ViewError::Store)?;
             let host = capture_host(
@@ -113,7 +113,8 @@ impl Views {
                 &scope,
                 &self.routes.commands,
                 &self.routes.presence,
-                ViewTelemetry { ai, custody },
+                telemetry,
+                profile,
                 budget,
             )
             .await?;
