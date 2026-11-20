@@ -474,29 +474,41 @@ pub(crate) fn capture_player_events(
         .optional_collection(actor_id, PersonalSourceKind::Awareness)?;
     let privacy = state.experience.actor(actor_id).map(|actor| &actor.privacy);
     let maximum = window.checked_mul(2).ok_or_else(capacity)?;
-    let hot_count = state.occurrences.hot().len();
+    let mut placements = state.occurrences.hot();
+    let hot_count = placements.len();
+    let tail_count = window.min(hot_count);
 
     let skeleton = map_storage::<&str, ()>(maximum)
         .and_then(|bytes| {
             bytes.checked_add(
-                hot_count.checked_mul(tree_node_bound::<&str, &crate::events::WorldEvent>()?)?,
+                hot_count
+                    .min(maximum)
+                    .checked_mul(tree_node_bound::<&str, &crate::events::WorldEvent>()?)?,
             )
+        })
+        .and_then(|bytes| {
+            bytes.checked_add(tail_count.checked_mul(size_of::<&crate::events::WorldEvent>())?)
         })
         .ok_or_else(capacity)?;
     let _selection_guard = budget.reserve(skeleton).map_err(|_| capacity())?;
-    let mut hot = BTreeMap::new();
-    for value in state.occurrences.hot() {
-        hot.insert(value.event().event().id.as_str(), value.event().event());
-    }
+    let mut tail = Vec::new();
+    tail.try_reserve_exact(tail_count).map_err(|_| capacity())?;
+    tail.extend(
+        placements
+            .by_ref()
+            .rev()
+            .take(tail_count)
+            .map(|placement| placement.event().event()),
+    );
     let mut wanted = IndexSet::new();
     wanted.try_reserve(maximum).map_err(|_| capacity())?;
-    wanted.extend(
-        state
-            .occurrences
-            .hot()
-            .skip(hot_count.saturating_sub(window))
-            .map(|value| value.event().event().id.as_str()),
-    );
+    let mut hot = BTreeMap::new();
+    for event in tail.into_iter().rev() {
+        let id = event.id.as_str();
+        wanted.insert(id);
+        hot.insert(id, event);
+    }
+    let world_ids = wanted.len();
     if let Some(awareness) = awareness {
         let count = awareness.records().len();
         wanted.extend(
@@ -505,6 +517,20 @@ pub(crate) fn capture_player_events(
                 .skip(count.saturating_sub(window))
                 .filter_map(|source| source.header().event_id.as_deref()),
         );
+    }
+    // Only awareness IDs outside the window can need older hot placements.
+    // The originals index alone does not establish hot-list membership.
+    if wanted.len() != world_ids {
+        for placement in placements {
+            let event = placement.event().event();
+            let id = event.id.as_str();
+            if wanted
+                .get_index_of(id)
+                .is_some_and(|index| index >= world_ids)
+            {
+                hot.insert(id, event);
+            }
+        }
     }
     let SelectedAccounts {
         mut selected,
