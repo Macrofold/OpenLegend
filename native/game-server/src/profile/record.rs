@@ -475,7 +475,13 @@ impl Capture {
         outcome: Option<&'static str>,
         work: Option<u64>,
     ) {
-        if self.trace_limit == 0 || at_ns > self.window.drain_ns {
+        // Preserve the optional trace for operations that start in steady
+        // play. Warmup can exhaust it before the first measured turn. Carry-in
+        // work still contributes to the clipped aggregates.
+        if self.trace_limit == 0
+            || span.started < self.window.start_ns
+            || at_ns > self.window.drain_ns
+        {
             return;
         }
         if self.trace.len() >= self.trace_limit {

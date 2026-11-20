@@ -1,7 +1,7 @@
 import { copyFile, mkdir, readFile, symlink, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { transformSync } from 'esbuild';
 
 import { hashFile } from './contract.js';
 import type { CasePlan } from './contract.js';
@@ -18,6 +18,10 @@ function replace(source: string, old: string, replacement: string) {
  * fixture still executes the original source through its pinned launcher.
  */
 async function stageScript(file: string, source: string) {
+  // The managed runner mounts this tool outside the source tree. Use the
+  // checkout's parser, from the same lockfile as the fixture's TSX loader.
+  const require = createRequire(join(process.cwd(), 'package.json'));
+  const { transformSync }: typeof import('esbuild') = require('esbuild');
   transformSync(source, { sourcefile: file, loader: 'ts', format: 'esm' });
   await writeFile(file, source, { flag: 'wx', mode: 0o600 });
 }

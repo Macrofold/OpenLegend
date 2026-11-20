@@ -294,7 +294,7 @@ export async function summarizeCampaign(campaignPath: string, collectedPath?: st
           : '';
     return `<h3>${escape(run.plan.id)}</h3><p>${escape(confidence)}</p>
 <pre>${escape(JSON.stringify(join ?? 'No complete steady clock turn joined.', null, 2))}</pre>
-<details><summary>Longest steady turn waits and visible holders</summary><pre>${escape(JSON.stringify(trace.longestTurnWaits, null, 2))}</pre></details>`;
+<details><summary>Longest captured turn waits and visible holders</summary><pre>${escape(JSON.stringify(trace.longestTurnWaits, null, 2))}</pre></details>`;
   }
   await publish(
     output,
