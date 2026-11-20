@@ -975,7 +975,7 @@ The [efficiency follow-through](../projects/completed/macrofold-efficiency-follo
 
 Dependencies: PF00; use PF04 only when its contention gate is met.
 
-The proposed [optional profiling controls](profiling-controls.md) (PC01–PC06) specify default-off server collection, worker propagation, browser stop/cleanup and matched on/off evidence. The [feature specification](../projects/profiling-controls-feature-spec.md) and [technical design](../projects/profiling-controls-tech-design.md) are design-only; existing Intelligence logging and the tasks below retain their separate owners.
+The [profiling tracker](profiling-controls.md) owns the implemented default-off TypeScript controls and their remaining overhead checks. [PC11–PC13](profiling-controls.md#stand-alone-rust-server) own the proposed stand-alone Rust profiler. The [feature specification](../projects/profiling-controls-feature-spec.md) and [technical design](../projects/profiling-controls-tech-design.md) cover both. Intelligence logging and the tasks below retain their separate owners.
 
 - [x] Add bounded diagnostic-write backpressure or batching only if observed pending writes grow during sustained tracing or shutdown flushes become material. The 3× investigation added per-ID coalescing and a 1,000-ID/16-MiB pending bound after measuring redundant writes; sustained overload and finite shutdown qualification remain open.
 - [ ] Preserve enqueue-time sanitization/immutability, distinct trace identities, latest terminal snapshots and explicit capture gaps. Batch pending records by age/bytes/count, coalesce superseded versions of the same ID, and keep old versions from overwriting newer persisted values. Accounting receipts are never lossy diagnostics.
