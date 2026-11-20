@@ -88,7 +88,9 @@ export function connectObserver(server) {
           ...bounds,
           seed: plan.seed,
           every: 1 / plan.samplingProbability,
-          traceBytes: 8 * 1024 ** 2,
+          // The campaign report joins turn waits and holders. Other passes
+          // need only the full-window aggregate series.
+          traceBytes: plan.probeIds.includes('S02.wait.turn') ? 8 * 1024 ** 2 : 0,
         },
         'armed',
       );

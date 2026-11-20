@@ -283,7 +283,7 @@ export async function summarizeCampaign(campaignPath: string, collectedPath?: st
     return `<tr>${row.map((cell) => '<td>' + escape(cell) + '</td>').join('')}</tr>`;
   }
   function clockSection(run: CaseResult) {
-    if (!run.metrics) return '';
+    if (!run.metrics || !run.plan.probeIds.includes('S02.wait.turn')) return '';
     const { trace, lost, traceLost } = run.metrics;
     const join = trace.clockTurn;
     const confidence =
