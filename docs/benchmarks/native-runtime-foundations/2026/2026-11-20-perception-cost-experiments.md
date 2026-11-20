@@ -23,6 +23,29 @@ The bystander setting caps only spare ordinary cues. Urgent cues and ordinary cu
 
 The Mac release used for these checks has SHA-256 `0a316a6fdb05beefb601883cfcdd92769261a192cee3e789c2575fd0f7e80317`. Privacy evidence was collected in the private `perception-privacy-20261120.a5bc9jn1` directory, manifest SHA-256 `169deb64174b4d0eb0d86bebd76a024b81b6fe7de211c29dbc4fd10dca53dd6e`. The other disposable fixtures and outputs are in the private `perception-cost-20261120.xJ8EXnWn` directory. Local correctness durations do not measure performance.
 
+## Bystander attention result
+
+**Adopt the Base setting.** All six replays completed full gameplay on the same executable. The configured policy was verified in the installed definitions and the persisted entries of all ten human NPCs. The combined CPU reduction was 14.6% by arm medians and 16.7%, 20.4%, and 14.6% in the three matched pairs. The observed clock differed by no more than 3.09 game seconds per pair. Neither player observations nor mandatory gameplay was excluded. Median NPC detailed entries at shutdown fell from 94 to 20. Median resident retained observation receipts fell from 21,724 to 10,970. The candidate had more median wildlife placement changes, and optional judgment counts varied in both arms.
+
+| Measure                                          | Control median / mean / p95 | Candidate median / mean / p95 |
+| ------------------------------------------------ | --------------------------: | ----------------------------: |
+| Server CPU (% of one logical core)               |       56.83 / 57.61 / 59.41 |         47.22 / 46.48 / 48.32 |
+| PostgreSQL CPU (% of one logical core)           |          8.28 / 8.27 / 8.50 |            8.15 / 8.04 / 8.21 |
+| Achieved game speed (% of intended)              |    100.00 / 100.01 / 100.03 |      100.00 / 100.00 / 100.03 |
+| Client CPU (% of one logical core)               |          0.72 / 0.74 / 0.78 |            0.73 / 0.73 / 0.76 |
+| Combined CPU (ms per completed game-second)      |       10.81 / 10.98 / 11.32 |            9.23 / 9.09 / 9.42 |
+| Command response (ms)                            |         5.90 / 8.22 / 25.25 |           6.98 / 7.83 / 13.39 |
+| First changed position received (ms)             |      44.32 / 50.11 / 117.17 |         63.04 / 57.68 / 90.34 |
+| First observed durable receipt (ms)              |   554.51 / 560.38 / 1070.60 |     582.46 / 584.21 / 1066.07 |
+| Concurrent server and database memory peak (MiB) | 1081.83 / 1027.60 / 1170.97 |     900.79 / 968.70 / 1155.97 |
+| Transient reservation peak (MiB)                 |    439.66 / 461.56 / 517.85 |      308.11 / 313.30 / 327.29 |
+| Database growth (MB)                             |       55.22 / 56.83 / 60.28 |         36.96 / 37.55 / 39.18 |
+| WAL (MB)                                         |    139.64 / 143.86 / 153.29 |      111.34 / 112.14 / 117.42 |
+
+Whole-window and resource statistics use three runs per arm. Latency statistics pool the 96 steady walks per arm. Median movement receipt took 18.72 ms longer and average receipt took 7.57 ms longer. The candidate was slower at median in two pairs and faster in one. The p95 improved from 117.17 to 90.34 ms and the largest sample improved from 139.41 to 135.53 ms. Command p95 also improved. Both arms stayed inside the [interaction targets](../../../maintainers/native-simulation-core.md#applicable-multiplayer-timing-policy). The typical latency tradeoff did not outweigh the repeatable CPU and tail benefit for this opening. The table measures an actual stream receipt separately from displayed pixels and from the one-second save.
+
+Median database commits increased from 12,128 to 12,734 while stream deliveries increased from 3,027 to 3,275. Database growth and WAL decreased. Fewer observation records can lower database writes even when the server prepares more views. Statement calls by family were not measured during clean timing. The complete run data, including actual activity and each latency distribution, remains in the verified private result. The shared worker executable SHA-256 was `113cb498faa45450fe47441790c9a79681deb7dd3f7b071d9b6d2b30c1269a34`; all 58 sealed files verified on generation 33.
+
 ## Managed comparison plan
 
 Each comparison uses its own standard 16 GiB worker. It interleaves three control and three candidate runs, with a fresh PostgreSQL database in each arm. One authenticated player, ten human NPCs, ten deer and five hares play on the same 62 × 54 m opening with 1,246 scenery records. The steady window is 180 real seconds after warmup at 60 game seconds per real second, one simulation worker and the 2 GiB transient profile. Every run must complete the frozen movement schedule and both saved conversations while ordinary one-second saves continue. The controlled provider is local HTTPS. CPU timing has no stack sampler or phase recorder.
@@ -31,10 +54,12 @@ The comparisons hold the offered schedule fixed and record actual game progress,
 
 The [worker method](../../../../.agents/rules/verification-workers.md) owns resource cleanup, and [measurement](../../../performance/measurement.md) owns distributions and claims. View work beyond one transaction, keyed pending saves, background thought frequency and quieter wildlife remain separate. No change to the normal clock, geometric visibility, animal escape, spending limits or save interval belongs to these experiments.
 
-| Campaign                                             | Worker  | Frozen plan SHA-256                                                |
-| ---------------------------------------------------- | ------- | ------------------------------------------------------------------ |
-| Perception `83de3a6d-0369-4faa-89e8-1cfe51df6fc6`    | Slot 5  | `908eeebc0a0b54a324ab2b379720ff3aa23cda10bd6e7d41252ca66d6c302c6d` |
-| Bystander `907f37c6-6cbe-4b8f-ba65-236ac9b082ee`     | Slot 6  | `9ecf6dfb67ea5d0515b2c42d68cf1573831f60028ef93b1bf3386a84862eac2e` |
-| Display reads `a755fd97-7ccc-4f18-b5a6-83b85bcc39e4` | Slot 11 | `84349ec357aa31d1becaf37fe41ebf045dea4690da765c8bf149089a74ba82ff` |
+| Campaign                                                     | Worker  | Frozen plan SHA-256                                                |
+| ------------------------------------------------------------ | ------- | ------------------------------------------------------------------ |
+| Perception `83de3a6d-0369-4faa-89e8-1cfe51df6fc6`            | Slot 5  | `908eeebc0a0b54a324ab2b379720ff3aa23cda10bd6e7d41252ca66d6c302c6d` |
+| Bystander `907f37c6-6cbe-4b8f-ba65-236ac9b082ee`             | Slot 6  | `9ecf6dfb67ea5d0515b2c42d68cf1573831f60028ef93b1bf3386a84862eac2e` |
+| Initial display reads `a755fd97-7ccc-4f18-b5a6-83b85bcc39e4` | Slot 11 | `84349ec357aa31d1becaf37fe41ebf045dea4690da765c8bf149089a74ba82ff` |
 
-Managed run results, dispositions and cleanup are pending. Rust workspace and release checks, TypeScript, network-boundary, formatting and diff checks passed for the local candidates. The unit suite was skipped.
+The initial display-read campaign was stopped after the integrated network-boundary check found a PostgreSQL SDK type imported from a player-view module. Before redispatch, the query and its decoding moved into the existing store owner with the SQL unchanged. The repaired implementation passed the network boundary and Rust compile checks. The control remains pinned, and the withdrawn campaign remains separate from the repaired results.
+
+Managed run results, dispositions and cleanup are pending. Rust workspace and release checks, TypeScript, formatting and diff checks covered the local integration. The unit suite was skipped.

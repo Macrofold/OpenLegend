@@ -95,7 +95,7 @@ export const BASE_ATTENTION_POLICY: AttentionPolicy = {
     maxBytes: 8 * 1024,
     featurePriority: { support: 0, 'solid-face': 1 },
   },
-  semantic: { discovery: true },
+  semantic: { discovery: true, npcOptionalCueCapacity: 1 },
   scene: {
     maxBytes: 12 * 1024,
     maxRows: 48,
