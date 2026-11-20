@@ -1101,6 +1101,8 @@ The [stand-alone review follow-up](../benchmarks/native-runtime-foundations/2026
 
 - [ ] **Stand-alone view database work.** Each preparation still reads the profile, recent decision summaries and the actor's UTC-month attempts. A view with relevant speech also reads its saved reply outcomes. The faster publication window increased median PostgreSQL commits by 16%. Measure which results stay unchanged across preparations and how the monthly aggregation grows with retained attempts and concurrent streams. Any reuse follows [the existing display-data contract](../performance/scheduling.md#browser-and-provider-polling), including accounting and job writes, UTC-month rollover, independent snapshot custody and current disclosure. Spending admission retains its exact durable read.
 
+The [November 20 stand-alone CPU profile](../benchmarks/native-runtime-foundations/2026/2026-11-20-stand-alone-cpu-profile.md) found the largest sampled cost in private perception and attention. It separates direct animal decisions, downstream witness work, changed-record preparation, and PostgreSQL traffic. The report ranks proposed follow-up opportunities. No runtime change or multicore qualification follows from this diagnostic.
+
 ## Overlap and dependencies
 
 | Existing owner                                            | Reconciliation                                                                                                                                                                                                                        |
