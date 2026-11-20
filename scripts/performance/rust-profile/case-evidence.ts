@@ -87,12 +87,12 @@ const wireCounters = [
 function sqlWireEvidence(start: RecordValue, end: RecordValue) {
   const startAt = finite(start.at);
   const endAt = finite(end.at);
+  const durationMs = startAt !== null && endAt !== null && endAt > startAt ? endAt - startAt : null;
   const startPartialFrames = safeCounter(start.partialFrames);
   const endPartialFrames = safeCounter(end.partialFrames);
   const totals = delta(start, end, wireCounters);
   let reason: string | undefined;
-  if (startAt === null || endAt === null || endAt <= startAt)
-    reason = 'missing-or-unordered-wire-boundaries';
+  if (durationMs === null) reason = 'missing-or-unordered-wire-boundaries';
   else if (Object.values(totals).includes(null)) reason = 'missing-or-reset-wire-counters';
   else if (safeCounter(start.failures) !== 0 || safeCounter(end.failures) !== 0)
     reason = 'wire-observer-failure';
@@ -106,6 +106,7 @@ function sqlWireEvidence(start: RecordValue, end: RecordValue) {
     method: 'Application-only loopback frame scalars. Use the unrelayed control for latency.',
     startAt,
     endAt,
+    durationMs,
     startPartialFrames,
     endPartialFrames,
     ...totals,

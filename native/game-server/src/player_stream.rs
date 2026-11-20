@@ -273,29 +273,21 @@ impl Body for PlayerStream {
                                     Ok(None)
                                 }
                                 ViewSelection::Reset => {
-                                    let result = wire::encode(
+                                    let bytes = wire::encode(
                                         &attempt.view.wire(allowed),
                                         RESET,
                                         SUFFIX,
                                         budget,
                                     )
-                                    .map(Some)
-                                    .map_err(WorldError::Wire);
-                                    openlegend_simulation::profile_count!(
-                                        FRAME_RESET,
-                                        u64::from(result.is_ok())
-                                    );
-                                    result
+                                    .map_err(WorldError::Wire)?;
+                                    openlegend_simulation::profile_count!(FRAME_RESET, 1);
+                                    Ok(Some(bytes))
                                 }
                                 ViewSelection::Patch(patch) => {
-                                    let result = wire::encode(&patch, PATCH, SUFFIX, budget)
-                                        .map(Some)
-                                        .map_err(WorldError::Wire);
-                                    openlegend_simulation::profile_count!(
-                                        FRAME_PATCH,
-                                        u64::from(result.is_ok())
-                                    );
-                                    result
+                                    let bytes = wire::encode(&patch, PATCH, SUFFIX, budget)
+                                        .map_err(WorldError::Wire)?;
+                                    openlegend_simulation::profile_count!(FRAME_PATCH, 1);
+                                    Ok(Some(bytes))
                                 }
                             }
                         },

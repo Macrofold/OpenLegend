@@ -175,8 +175,12 @@ const profile = JSON.parse(process.env.OPEN_LEGEND_PROFILE_CASE);
   );
   source = replace(
     source,
-    '    return { at: operationAt, resource, observedAt: at(), sql, exactNodeStatus };',
-    '    return { at: operationAt, resource, observedAt: at(), sql, exactNodeStatus, wire: sqlWire?.snapshot() };',
+    `    const [sql, exactNodeStatus] = await Promise.all([databaseResource(), nodeStatus(label)]);
+    return { at: operationAt, resource, observedAt: at(), sql, exactNodeStatus };`,
+    `    // Take the wire cut before the independent PostgreSQL statistics query can delay it.
+    const wire = sqlWire?.snapshot();
+    const [sql, exactNodeStatus] = await Promise.all([databaseResource(), nodeStatus(label)]);
+    return { at: operationAt, resource, observedAt: at(), sql, exactNodeStatus, wire };`,
   );
   source = replace(
     source,

@@ -57,6 +57,14 @@ pub enum Outcome {
     Failed,
 }
 
+pub fn result_outcome<T, E>(result: &Result<T, E>) -> Outcome {
+    if result.is_ok() {
+        Outcome::Completed
+    } else {
+        Outcome::Failed
+    }
+}
+
 /// New operations may carry in from warmup. Existing operations can settle
 /// through the drain, while counters describe only the measured window.
 #[derive(Clone, Copy)]
@@ -137,8 +145,9 @@ pub fn install(observer: &'static dyn Observer) -> bool {
     OBSERVER.set(observer).is_ok()
 }
 
+#[doc(hidden)]
 #[inline]
-fn observer_for(site: Site) -> Option<&'static dyn Observer> {
+pub fn observer_for(site: Site) -> Option<&'static dyn Observer> {
     OBSERVER
         .get()
         .copied()
@@ -383,12 +392,6 @@ where
     .await;
     operation.finish(classify(&result));
     result
-}
-
-pub fn count(site: Site, amount: u64) {
-    if let Some(observer) = observer_for(site) {
-        observer.count(site, amount);
-    }
 }
 
 pub fn omitted(generation: u32, window: ObservationWindow) {

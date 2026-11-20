@@ -135,20 +135,23 @@ impl Recorder {
         Ok(())
     }
 
-    fn detach(&self) -> Option<Capture> {
-        let capture = {
+    fn detach(&self) -> Option<(Capture, u64)> {
+        let detached = {
             let mut slot = self
                 .capture
                 .lock()
                 .unwrap_or_else(|error| error.into_inner());
+            let mut capture = slot.take()?;
+            // Freeze the last possible observation before dispatch cleanup;
+            // that lock can delay teardown past a measurement boundary.
+            let stopped_at = self.now();
             self.selected.store(0, Ordering::Release);
             self.generation.store(0, Ordering::Release);
-            let mut capture = slot.take()?;
             capture.lost = u64::from(self.losses.swap(0, Ordering::AcqRel) as u32);
-            capture
+            (capture, stopped_at)
         };
         openlegend_world_host::clear_profile_dispatch();
-        Some(capture)
+        Some(detached)
     }
 }
 
@@ -338,8 +341,8 @@ fn commands(recorder: &'static Recorder, output: File) -> Result<(), &'static st
                 notify(&serde_json::json!({ "type": "armed", "generation": generation }))?;
             }
             Command::Stop {} => {
-                let mut capture = recorder.detach().ok_or("no capture is armed")?;
-                let complete = capture.stop(recorder.now());
+                let (mut capture, stopped_at) = recorder.detach().ok_or("no capture is armed")?;
+                let complete = capture.stop(stopped_at);
                 serde_json::to_writer(&mut output, &capture)
                     .map_err(|_| "capture export failed")?;
                 output

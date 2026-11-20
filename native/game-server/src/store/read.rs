@@ -490,10 +490,8 @@ impl Store {
                 .budget
                 .reserve(installed_row_bound(table, &row)?)
                 .map_err(|_| StoreError::Capacity)?;
-            let record = {
-                let _profile = openlegend_simulation::profile_scope!(DECODE);
-                installed_row(table, row)?
-            };
+            let record =
+                openlegend_simulation::profile_call!(DECODE, { installed_row(table, row) })?;
             let retained = record.retained_bytes().ok_or(StoreError::Capacity)?;
             release_workspace(&mut decode, retained)?;
             custody.merge(decode).map_err(|_| StoreError::Capacity)?;

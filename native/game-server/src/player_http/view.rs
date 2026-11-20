@@ -178,15 +178,10 @@ impl Views {
                     attempt.view.control_preview_cut(),
                     |allowed, budget| {
                         if encode_http {
-                            let result =
-                                wire::encode(&attempt.view.wire(allowed), b"", b"", budget)
-                                    .map(Some)
-                                    .map_err(WorldError::Wire);
-                            openlegend_simulation::profile_count!(
-                                FRAME_HTTP,
-                                u64::from(result.is_ok())
-                            );
-                            result
+                            let bytes = wire::encode(&attempt.view.wire(allowed), b"", b"", budget)
+                                .map_err(WorldError::Wire)?;
+                            openlegend_simulation::profile_count!(FRAME_HTTP, 1);
+                            Ok(Some(bytes))
                         } else {
                             Ok(None)
                         }

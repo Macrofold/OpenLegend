@@ -5,7 +5,14 @@ import { containedFile, digest, isMissing, object } from './contract.js';
 import { parsePlan } from './plan.js';
 import { managedReader, readCase } from './report-evidence.js';
 import type { CaseResult } from './report-evidence.js';
-import { compare, finite, readFixedWork, statistics, value } from './report-qualification.js';
+import {
+  compare,
+  finite,
+  readFixedWork,
+  statistics,
+  value,
+  windowEvidence,
+} from './report-qualification.js';
 import type { FixedWork } from './report-qualification.js';
 
 function csv(rows: (string | number | null | undefined)[][]) {
@@ -52,11 +59,9 @@ export async function summarizeCampaign(campaignPath: string, collectedPath?: st
         planBundleSha256,
       );
     } catch (error) {
-      if (!isMissing(error)) {
-        for (const member of members)
-          runs.push({ plan: member, status: 'failed', reason: String(error) });
-        continue;
-      }
+      for (const member of members)
+        runs.push({ plan: member, status: 'failed', reason: String(error) });
+      continue;
     }
     for (const member of members) runs.push(await readCase(campaign, collection, member, reader));
   }
@@ -99,8 +104,10 @@ export async function summarizeCampaign(campaignPath: string, collectedPath?: st
       };
     }),
   );
+  const plannedById = new Map(plan.comparisons.map((item) => [item.id, item]));
   const cases = runs.map((run) => {
-    const wallMs = value(run, 'wallMs');
+    const measured = windowEvidence(run, plannedById.get(run.plan.comparisonId)!);
+    const wallMs = measured.resources ? value(run, 'wallMs') : null;
     const core = (name: string) => {
       const time = value(run, name);
       return wallMs && time !== null ? (time * 100) / wallMs : null;
@@ -111,15 +118,19 @@ export async function summarizeCampaign(campaignPath: string, collectedPath?: st
       postgres = value(run, 'postgresCpuMs');
     return {
       ...run,
+      measurementWindow: measured,
       serverCorePercent: core('serverCpuMs'),
       postgresCorePercent: core('postgresCpuMs'),
       clientCorePercent: core('clientCpuMs'),
       driverCorePercent: core('driverCpuMs'),
       launcherCorePercent: core('launcherCpuMs'),
       samplerCorePercent: core('samplerCpuMs'),
-      achievedGameSpeedPercent: offered && completed !== null ? (100 * completed) / offered : null,
+      achievedGameSpeedPercent:
+        measured.schedule && offered && completed !== null ? (100 * completed) / offered : null,
       ownedCpuMsPerGameSecond:
-        completed && server !== null && postgres !== null ? (server + postgres) / completed : null,
+        measured.resources && completed && server !== null && postgres !== null
+          ? (server + postgres) / completed
+          : null,
     };
   });
   const byArm = plan.comparisons.map((item) => ({
@@ -256,13 +267,21 @@ export async function summarizeCampaign(campaignPath: string, collectedPath?: st
     const row = object(latency);
     return `${rounded(finite(row.medianMs))} / ${rounded(finite(row.meanMs))} / ${rounded(finite(row.p95Ms))} (n=${escape(row.count)}, omitted=${escape(row.omitted)})`;
   }
-  function diagnosticSection(run: CaseResult) {
+  function diagnosticSection(run: (typeof cases)[number]) {
     if (!run.diagnostic) return '';
     const { data, file } = run.diagnostic;
     const title = `<h3>${escape(run.plan.id)} · ${escape(data.status)}</h3>`;
-    if (file === 'sql.json') return title + `<pre>${escape(JSON.stringify(data, null, 2))}</pre>`;
+    const inWindow =
+      file === 'sql.json' ? run.measurementWindow.wire : run.measurementWindow.stacks;
+    const limits = inWindow
+      ? ''
+      : '<p>These observations cannot qualify the planned steady window.</p>';
+    if (file === 'sql.json') {
+      return title + limits + `<pre>${escape(JSON.stringify(data, null, 2))}</pre>`;
+    }
     return (
       title +
+      limits +
       `<p>${escape(data.limitations)}</p><pre>${escape(JSON.stringify(data.coverage, null, 2))}</pre>` +
       ['leaf', 'inclusive']
         .map((kind) => {
@@ -323,7 +342,7 @@ export async function summarizeCampaign(campaignPath: string, collectedPath?: st
 <p><a href="report.json">Full evidence</a> · <a href="hierarchy.csv">Hierarchy</a> · <a href="coverage.csv">Coverage</a> · <a href="comparisons.csv">Comparison pairs</a></p>
 <h2>Steady play</h2>
 <table><thead><tr><th>Case</th><th>Outcome</th><th>Server % of one core</th><th>PostgreSQL %</th><th>Game speed %</th><th>Owned CPU ms/game-s</th></tr></thead><tbody>
-${cases.map((run) => `<tr><td>${escape(run.plan.id)}</td><td>${escape(run.status)}${run.reason ? ': ' + escape(run.reason) : ''}</td><td>${rounded(run.serverCorePercent)}</td><td>${rounded(run.postgresCorePercent)}</td><td>${rounded(run.achievedGameSpeedPercent)}</td><td>${rounded(run.ownedCpuMsPerGameSecond)}</td></tr>`).join('\n')}
+${cases.map((run) => `<tr><td>${escape(run.plan.id)}</td><td>${escape(run.status)}${run.reason ? ': ' + escape(run.reason) : !run.measurementWindow.resources ? ' · resource window unverified' : ''}</td><td>${rounded(run.serverCorePercent)}</td><td>${rounded(run.postgresCorePercent)}</td><td>${rounded(run.achievedGameSpeedPercent)}</td><td>${rounded(run.ownedCpuMsPerGameSecond)}</td></tr>`).join('\n')}
 </tbody></table>
 <h2>Per-arm median / average / p95</h2>
 <table><thead><tr><th>Comparison / arm</th><th>Server % of one core</th><th>PostgreSQL %</th><th>Game speed %</th><th>Owned CPU ms/game-s</th></tr></thead><tbody>

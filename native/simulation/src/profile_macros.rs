@@ -44,11 +44,12 @@ macro_rules! profile_measure {
 #[macro_export]
 #[cfg(feature = "profile-campaign")]
 macro_rules! profile_count {
-    ($site:ident, $amount:expr) => {
-        if $crate::profile::selected($crate::profile::sites::$site) {
-            $crate::profile::count($crate::profile::sites::$site, $amount);
+    ($site:ident, $amount:expr) => {{
+        let site = $crate::profile::sites::$site;
+        if let Some(observer) = $crate::profile::observer_for(site) {
+            observer.count(site, $amount);
         }
-    };
+    }};
 }
 
 #[doc(hidden)]
@@ -83,13 +84,7 @@ macro_rules! profile_body {
 #[macro_export]
 macro_rules! profile_result {
     ($site:ident, $future:expr) => {
-        $crate::profile_measure!($site, $future, |result: &Result<_, _>| {
-            if result.is_ok() {
-                $crate::profile::Outcome::Completed
-            } else {
-                $crate::profile::Outcome::Failed
-            }
-        })
+        $crate::profile_measure!($site, $future, $crate::profile::result_outcome)
     };
 }
 
@@ -97,6 +92,9 @@ macro_rules! profile_result {
 #[macro_export]
 #[cfg(feature = "profile-campaign")]
 macro_rules! profile_call {
+    ($site:ident, $body:block) => {
+        $crate::profile_call!($site, $body, $crate::profile::result_outcome)
+    };
     ($site:ident, $body:block, $outcome:expr) => {{
         let mut observation = $crate::profile_scope!($site);
         // Return and ? resolve the observed invocation before recording its
@@ -113,7 +111,7 @@ macro_rules! profile_call {
 #[macro_export]
 #[cfg(not(feature = "profile-campaign"))]
 macro_rules! profile_call {
-    ($site:ident, $body:block, $outcome:expr) => {
+    ($site:ident, $body:block $(, $outcome:expr)?) => {
         $body
     };
 }

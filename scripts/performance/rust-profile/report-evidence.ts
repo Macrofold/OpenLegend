@@ -1,4 +1,5 @@
-import { realpath } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { readFile, realpath } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 import type { CasePlan } from './contract.js';
 import {
@@ -15,6 +16,7 @@ import {
   object,
   runnerSteps,
   sha256,
+  standardWorker,
   text,
   workerResultPath,
   writeJson,
@@ -22,6 +24,7 @@ import {
 import type { FrozenPlan } from './plan.js';
 
 type Entry = { path: string; bytes: number; sha256: string };
+const jsonArtifactBytes = 8 * 1024 ** 2;
 type SelectionStatus =
   | 'measured'
   | 'sampled'
@@ -48,13 +51,31 @@ function files(value: unknown): Map<string, Entry> {
   return map;
 }
 
-async function sealedRead(root: string, entries: Map<string, Entry>, path: string) {
+/** Hash the bytes the report decodes. For unused artifact bodies, verify
+ * the seal by streaming so large gameplay outputs never enter the report.
+ */
+async function sealedRead(
+  root: string,
+  entries: Map<string, Entry>,
+  path: string,
+  jsonLimit?: number,
+) {
   const expected = entries.get(path);
   if (!expected) throw new Error(`Missing sealed artifact ${path}.`);
-  const file = await containedFile(root, path, expected.bytes);
-  if (file.bytes !== expected.bytes || (await hashFile(file.path)) !== expected.sha256)
+  const file = await containedFile(
+    root,
+    path,
+    Math.min(expected.bytes, jsonLimit ?? expected.bytes),
+  );
+  if (file.bytes !== expected.bytes) throw new Error(`Artifact size mismatch for ${path}.`);
+  const bytes = jsonLimit === undefined ? undefined : await readFile(file.path);
+  const actualSha256 = bytes
+    ? createHash('sha256').update(bytes).digest('hex')
+    : await hashFile(file.path);
+  if ((bytes && bytes.length !== expected.bytes) || actualSha256 !== expected.sha256)
     throw new Error(`Artifact checksum mismatch for ${path}.`);
-  return { ...file, expectedSha256: expected.sha256 };
+  const json: unknown = bytes && JSON.parse(bytes.toString('utf8'));
+  return { ...file, sha256: expected.sha256, json };
 }
 
 /** Local case seal. Worker results also acquire the supervisor's independent artifact receipt. */
@@ -81,6 +102,14 @@ export async function managedReader(
   job: string,
   planBundleSha256: string,
 ) {
+  // A directory that exists but lacks a receipt is a broken collection.
+  // Only an absent collection lets the reporter look for local case files.
+  try {
+    await realpath(root);
+  } catch (error) {
+    if (isMissing(error)) return undefined;
+    throw error;
+  }
   const controller = object(await jsonFile(root, 'controller.json'), 'controller receipt');
   const manifest = object(await jsonFile(root, 'manifest.json'), 'worker export seal');
   const lifecycle = object(controller.lifecycle ?? {}, 'worker lifecycle');
@@ -137,9 +166,9 @@ export async function managedReader(
   const entries = files(manifest.files);
   const source = async (caseId: string) => {
     const file = `cases/${caseId}/source.json`;
-    await sealedRead(root, entries, file);
+    const { json } = await sealedRead(root, entries, file, jsonArtifactBytes);
     const claimed = cases.find((item) => item.id === caseId);
-    const actual = object(await jsonFile(root, file));
+    const actual = object(json);
     if (
       !claimed?.sourceHash ||
       actual.archiveSha256 !== claimed.sourceHash ||
@@ -149,11 +178,16 @@ export async function managedReader(
     return text(actual.archiveSha256, 'actual source archive', sha256);
   };
   const machine = object(controller.machine);
-  if (machine.instanceType !== 'm7i.xlarge' || machine.vcpus !== 4 || machine.memoryMiB !== 16_384)
+  if (Object.entries(standardWorker).some(([key, value]) => machine[key] !== value))
     throw new Error('Results did not run on the standard worker profile.');
+  const resultMember = (item: CasePlan, file: string) => `${workerResultPath(item)}/${file}`;
   return {
-    read: async (item: CasePlan, file: string) =>
-      sealedRead(root, entries, `${workerResultPath(item)}/${file}`),
+    read: async (item: CasePlan, file: string, jsonLimit?: number) =>
+      sealedRead(root, entries, resultMember(item, file), jsonLimit),
+    claimsCase: (item: CasePlan) =>
+      ['integrity.json', ...item.requiredArtifacts].some((file) =>
+        entries.has(resultMember(item, file)),
+      ),
     source,
     instanceId: text(machine.instanceId, 'owned instance', /^i-[0-9a-f]+$/),
     runId: text(manifest.runId, 'run identity', identifier),
@@ -175,18 +209,18 @@ function histogram(value: unknown, bounds: number[]) {
   const bins = list(row.bins, 'histogram bins', bounds.length + 2).map((n) =>
     integer(n, 'bin count', 0, count),
   );
-  if (bins.length !== bounds.length + 1 && bins.length !== bounds.length + 2)
+  if (bins.length !== bounds.length + 2)
     throw new Error('Histogram bins do not match their frozen bounds.');
   if (bins.reduce((a, b) => a + b, 0) !== count)
     throw new Error('Histogram count differs from its bins.');
-  const distinctUnderflow = bins.length === bounds.length + 2;
   const quantile = (p: number) => {
     if (!count) return null;
     let cumulative = 0;
     for (let index = 0; index < bins.length; index++) {
       cumulative += bins[index]!;
       if (cumulative >= Math.ceil(count * p)) {
-        const bound = index - Number(distinctUnderflow);
+        // The recorder reserves the first and last bins for underflow and overflow.
+        const bound = index - 1;
         return {
           lowerNs: bounds[bound - 1] ?? 0,
           upperNs: bounds[bound] ?? (bound < 0 ? (bounds[0] ?? null) : null),
@@ -236,11 +270,16 @@ function captureMetrics(value: unknown, planned: CasePlan, timeline: Record<stri
   const windowMatched =
     arm.generation === generation &&
     stop.generation === generation &&
+    typeof arm.startAt === 'number' &&
     arm.startAt === steady.startAt &&
     arm.endAt === steady.endAt &&
+    arm.endAt === arm.startAt + planned.measureSeconds * 1000 &&
+    arm.drainAt === arm.endAt + planned.drainSeconds * 1000 &&
     arm.startNs === startNs &&
     arm.endNs === endNs &&
-    arm.drainNs === drainNs;
+    arm.drainNs === drainNs &&
+    endNs - startNs === planned.measureSeconds * 1e9 &&
+    drainNs - endNs === planned.drainSeconds * 1e9;
   const complete =
     windowMatched && stop.complete === true && window.complete === true && stopNs >= endNs;
   const sampling = object(data.sampling);
@@ -252,9 +291,9 @@ function captureMetrics(value: unknown, planned: CasePlan, timeline: Record<stri
     if (!planned.probeIds.includes(id)) throw new Error('Capture contains an unplanned metric.');
     const eligible = integer(raw.eligible, 'eligible calls', 0, Number.MAX_SAFE_INTEGER);
     const censored = integer(raw.censored, 'censored invocations', 0, Number.MAX_SAFE_INTEGER);
-    const countCalls = integer(raw.countCalls ?? 0, 'counter calls', 0, Number.MAX_SAFE_INTEGER);
+    const countCalls = integer(raw.countCalls, 'counter calls', 0, Number.MAX_SAFE_INTEGER);
     const carryIn = integer(raw.carryIn, 'carry-in calls', 0, Number.MAX_SAFE_INTEGER);
-    const carryInCensored = integer(raw.carryInCensored ?? 0, 'censored carry-in', 0, carryIn);
+    const carryInCensored = integer(raw.carryInCensored, 'censored carry-in', 0, carryIn);
     const sampled = integer(raw.sampled, 'sampled calls', 0, eligible);
     const status: SelectionStatus =
       lost || !complete
@@ -283,7 +322,7 @@ function captureMetrics(value: unknown, planned: CasePlan, timeline: Record<stri
       carryIn,
       carryInCensored,
       unfinishedAtCutoff: integer(
-        raw.unfinishedAtCutoff ?? 0,
+        raw.unfinishedAtCutoff,
         'unfinished at cutoff',
         0,
         Number.MAX_SAFE_INTEGER,
@@ -468,39 +507,46 @@ export async function readCase(
   campaign: string,
   collection: string,
   plan: CasePlan,
-  reader: Awaited<ReturnType<typeof managedReader>> | undefined,
+  reader: Awaited<ReturnType<typeof managedReader>>,
 ): Promise<CaseResult> {
-  const managed = Boolean(reader);
-  const path = managed
+  const path = reader
     ? join(collection, plan.comparisonId, workerResultPath(plan))
     : join(campaign, 'cases', plan.id, `repeat-${plan.repetition}`);
+  let found = false;
   try {
-    if ((await realpath(path)) !== resolve(path))
-      throw new Error('Case artifacts traverse a symlink.');
-    const local = object(await jsonFile(path, 'integrity.json'), 'case seal');
+    const canonical = await realpath(path);
+    found = true;
+    if (canonical !== resolve(path)) throw new Error('Case artifacts traverse a symlink.');
+    const local = object(
+      reader
+        ? (await reader.read(plan, 'integrity.json', jsonArtifactBytes)).json
+        : await jsonFile(path, 'integrity.json'),
+      'case seal',
+    );
     if (local.caseId !== plan.id || local.comparisonIdentity !== plan.comparisonIdentity)
       throw new Error('Case seal does not match the frozen plan.');
     const entries = files(local.files);
-    if (reader) await reader.read(plan, 'integrity.json');
-    const verify = async (file: string) => {
+    const verified = new Set<string>();
+    const read = async (file: string, jsonLimit?: number) => {
       // Verify the managed seal when present as well as the case-owned seal.
+      const artifact = reader
+        ? await reader.read(plan, file, jsonLimit)
+        : await sealedRead(path, entries, file, jsonLimit);
       if (reader) {
-        const exported = await reader.read(plan, file);
         const row = entries.get(file);
-        if (!row || row.bytes !== exported.bytes || row.sha256 !== exported.expectedSha256)
+        if (!row || row.bytes !== artifact.bytes || row.sha256 !== artifact.sha256)
           throw new Error(`Managed and case checksums differ for ${file}.`);
-      } else await sealedRead(path, entries, file);
+      }
+      verified.add(file);
+      return artifact.json;
     };
-    await verify('completion.json');
-    const completion = object(await jsonFile(path, 'completion.json'), 'case completion');
+    const readJson = async (file: string, label?: string, limit = jsonArtifactBytes) =>
+      object(await read(file, limit), label);
+    const completion = await readJson('completion.json', 'case completion');
     const status = completion.status;
     if (status !== 'completed' && status !== 'failed' && status !== 'unsupported')
       throw new Error('Unrecognized case completion.');
-    for (const file of plan.requiredArtifacts) {
-      if (file !== 'completion.json' && (status === 'completed' || entries.has(file)))
-        await verify(file);
-    }
-    const identity = object(await jsonFile(path, 'manifest.json'), 'case manifest');
+    const identity = await readJson('manifest.json', 'case manifest');
     const hashes = object(identity.inputHashes);
     if (
       identity.id !== plan.id ||
@@ -514,9 +560,11 @@ export async function readCase(
       Object.entries(plan.inputHashes).some(([id, hash]) => hashes[id] !== hash)
     )
       throw new Error('Case provenance does not match the frozen plan.');
-    const workload = object(await jsonFile(path, 'workload.json'), 'workload evidence');
-    const resources = object(await jsonFile(path, 'resources.json'), 'resource evidence');
-    const timeline = object(await jsonFile(path, 'timeline.json'), 'event windows');
+    const optional = (file: string, label: string) =>
+      status === 'completed' || entries.has(file) ? readJson(file, label) : undefined;
+    const workload = await optional('workload.json', 'workload evidence');
+    const resources = await optional('resources.json', 'resource evidence');
+    const timeline = await optional('timeline.json', 'event windows');
     const executable =
       status === 'completed'
         ? text(identity.executableSha256, 'actual executable checksum', sha256)
@@ -535,7 +583,7 @@ export async function readCase(
     )
       throw new Error('Case manifest refers to another worker execution.');
     if (executable) {
-      const build = object(await jsonFile(path, 'toolchain.json'));
+      const build = await readJson('toolchain.json');
       if (build.source !== plan.source || object(build.executable).sha256 !== executable)
         throw new Error('Case executable differs from the source-bound build receipt.');
     }
@@ -545,9 +593,16 @@ export async function readCase(
       diagnosticFile && entries.has(diagnosticFile)
         ? {
             file: diagnosticFile,
-            data: object(await jsonFile(path, diagnosticFile, 64 * 1024 ** 2)),
+            data: await readJson(diagnosticFile, 'diagnostic evidence', 64 * 1024 ** 2),
           }
         : undefined;
+    const metrics =
+      timeline && plan.mode === 'enabled' && entries.has('metrics.json')
+        ? captureMetrics(await read('metrics.json', 96 * 1024 ** 2), plan, timeline)
+        : undefined;
+    for (const file of plan.requiredArtifacts) {
+      if (!verified.has(file) && (status === 'completed' || entries.has(file))) await read(file);
+    }
     return {
       plan,
       status,
@@ -560,14 +615,12 @@ export async function readCase(
       instanceId: reader?.instanceId,
       cleanup: reader?.cleanup,
       reason: typeof completion.reason === 'string' ? completion.reason : undefined,
-      metrics:
-        plan.mode === 'enabled' && entries.has('metrics.json')
-          ? captureMetrics(await jsonFile(path, 'metrics.json', 96 * 1024 ** 2), plan, timeline)
-          : undefined,
+      metrics,
       diagnostic,
       relativePath: relative(join(campaign, 'summary'), path),
     };
   } catch (error) {
-    return { plan, status: isMissing(error) ? 'missing' : 'failed', reason: String(error) };
+    const missing = !found && isMissing(error) && !reader?.claimsCase(plan);
+    return { plan, status: missing ? 'missing' : 'failed', reason: String(error) };
   }
 }

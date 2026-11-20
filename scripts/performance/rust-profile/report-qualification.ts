@@ -67,27 +67,48 @@ function completeWork(run: CaseResult) {
   );
 }
 
-function ownsTimingWindow(run: CaseResult, edgeAllowanceMs: number) {
+export function windowEvidence(run: CaseResult, plan: FrozenPlan['comparisons'][number]) {
   const steady = object(run.timeline?.steady ?? {});
   const start = finite(steady.startAt);
   const end = finite(steady.endAt);
   const sampledStart = finite(steady.startResourceAt);
   const sampledEnd = finite(steady.endResourceAt);
   const wall = value(run, 'wallMs');
-  return (
+  const edgeAllowanceMs = (plan.workToleranceGameSeconds / opening.gameSecondsPerRealSecond) * 1000;
+  const schedule =
     start !== null &&
     end !== null &&
     end - start === run.plan.measureSeconds * 1000 &&
-    value(run, 'offeredGameSeconds') ===
-      run.plan.measureSeconds * opening.gameSecondsPerRealSecond &&
-    sampledStart !== null &&
-    sampledEnd !== null &&
-    Math.abs(sampledStart - start) <= edgeAllowanceMs &&
-    Math.abs(sampledEnd - end) <= edgeAllowanceMs &&
-    wall !== null &&
-    wall > 0 &&
-    Math.abs(sampledEnd - sampledStart - wall) <= 1e-6
-  );
+    value(run, 'offeredGameSeconds') === run.plan.measureSeconds * opening.gameSecondsPerRealSecond;
+  const matches = (first: number | null, last: number | null) =>
+    schedule &&
+    first !== null &&
+    last !== null &&
+    last > first &&
+    Math.abs(first - start) <= edgeAllowanceMs &&
+    Math.abs(last - end) <= edgeAllowanceMs;
+  const stackWindow =
+    run.plan.mode === 'sampled' ? object(run.diagnostic?.data.window ?? {}) : null;
+  return {
+    schedule,
+    resources:
+      sampledStart !== null &&
+      sampledEnd !== null &&
+      matches(sampledStart, sampledEnd) &&
+      wall !== null &&
+      wall > 0 &&
+      Math.abs(sampledEnd - sampledStart - wall) <= 1e-6,
+    wire:
+      run.plan.mode === 'sql'
+        ? matches(finite(run.diagnostic?.data.startAt), finite(run.diagnostic?.data.endAt))
+        : null,
+    // The reducer already selects stack records against these exact driver
+    // timestamps. Unlike a physical resource read, that filter has no edge lag.
+    stacks:
+      stackWindow === null
+        ? null
+        : schedule && stackWindow.startAt === start && stackWindow.endAt === end,
+  };
 }
 
 const replayChecks = [
@@ -173,9 +194,13 @@ export function compare(
   if (proofError) reasons.add(proofError);
   if (runs.length !== 6 || !runs.every(completeWork))
     reasons.add('Missing checks, coverage, or promised work.');
-  const edgeAllowanceMs = (plan.workToleranceGameSeconds / opening.gameSecondsPerRealSecond) * 1000;
-  if (!runs.every((run) => ownsTimingWindow(run, edgeAllowanceMs)))
+  const windows = new Map(runs.map((run) => [run, windowEvidence(run, plan)]));
+  if ([...windows.values()].some((window) => !window.resources))
     reasons.add('The frozen steady window or its resource sample duration is unverified.');
+  if ([...windows.values()].some((window) => window.wire === false))
+    reasons.add('A PostgreSQL wire sample does not span the frozen steady window.');
+  if ([...windows.values()].some((window) => window.stacks === false))
+    reasons.add('CPU stack samples were not selected from the frozen steady window.');
   if (runs.some((run) => !run.database) || new Set(runs.map((run) => run.database)).size !== 6)
     reasons.add('Fresh databases not verified for all cases.');
   if (runs.some((run) => !run.instanceId))
@@ -218,7 +243,7 @@ export function compare(
     const cpu = (run: CaseResult, gameSeconds: number | null, includePg: boolean) => {
       const server = value(run, 'serverCpuMs');
       const postgres = includePg ? value(run, 'postgresCpuMs') : 0;
-      return gameSeconds && server !== null && postgres !== null
+      return windows.get(run)?.resources && gameSeconds && server !== null && postgres !== null
         ? (server + postgres) / gameSeconds
         : null;
     };
