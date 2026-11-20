@@ -128,17 +128,20 @@ export async function captureAddressMap(server, directory) {
   );
 }
 
-/** Cold gameplay read using the same executable, database and release.
- * This runs after the measured process exits. The old observer is closed.
+/** Cold gameplay read after the measured process and its observer exit.
+ * Keep the original authenticated session in memory because receipt recovery
+ * is bound to that session. Obtain a fresh permitted scope from the reopened server.
  */
 export async function coldContinuation({
   start,
+  cookie,
   clientId,
   actorId,
   acceptedGameSecond,
   commandEpoch,
   lastCommand,
 }) {
+  assert(cookie, 'The fixture has no original authenticated session for recovery.');
   const child = start();
   const network = createNetworkOwner({ role: 'rust-profile-cold-caller', capacity: 1 });
   const spawnedAt = at();
@@ -166,14 +169,6 @@ export async function coldContinuation({
       network.run({ timeoutMs: 10_000 }, (operation) =>
         requestBytes(operation, { url: base + path, init, bodyPolicy }),
       );
-    const login = await request(
-      '/auth/login',
-      { redirect: 'manual' },
-      { kind: 'bounded', maxBytes: 8192 },
-    );
-    assert.equal(login.status, 303);
-    const cookie = login.headers.get('set-cookie')?.split(';')[0];
-    assert(cookie, 'The cold server did not reopen the authorized account.');
     const state = await request(
       '/api/state',
       {
@@ -211,17 +206,26 @@ export async function coldContinuation({
       },
       { kind: 'complete-projection', owner: 'browser-api' },
     );
-    assert.equal(receipt.status, 200);
-    const recovered = JSON.parse(Buffer.from(receipt.bytes).toString());
+    assert.equal(receipt.status, 200, 'The reopened server rejected the walk receipt request.');
+    let recovered;
+    try {
+      recovered = JSON.parse(Buffer.from(receipt.bytes).toString());
+    } catch {
+      throw new Error('The reopened server did not return a valid walk receipt.');
+    }
+    const status = ['resolved', 'unavailable', 'expired', 'unknown'].includes(recovered?.status)
+      ? recovered.status
+      : 'invalid';
     assert(
-      recovered?.ok &&
-        recovered.status === 'resolved' &&
+      status === 'resolved' &&
+        recovered.ok === true &&
         recovered.result?.actionId === lastCommand.actionId,
-      'The restarted owner could not return the exact saved walk receipt.',
+      `The reopened server could not return the exact saved walk receipt (${status}).`,
     );
     return {
       verified: true,
       receiptRecovered: true,
+      receiptStatus: status,
       spawnedAt,
       viewedAt,
       wallMs: viewedAt - spawnedAt,

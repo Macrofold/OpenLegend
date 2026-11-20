@@ -130,9 +130,6 @@ const profile = JSON.parse(process.env.OPEN_LEGEND_PROFILE_CASE);
     "  server.on('error', error => {",
     `  if (profile.mode === 'enabled') recorder = connectObserver(server);
   const reopenEnv = { ...env, OPEN_LEGEND_DATABASE_URL: database };
-  continuation = () => coldContinuation({ start: () => startDirect({ ...reopenEnv, OPEN_LEGEND_PROFILE_CONTROL: undefined, OPEN_LEGEND_PROFILE_OUTPUT: undefined, LD_PRELOAD: undefined, OL_PROFILE_RAW: undefined }),
-    clientId: site.clientId, actorId: site.actorId, acceptedGameSecond: report.steady.end.clock.seconds,
-    commandEpoch: controlled.commandEpoch, lastCommand: report.commandLatencyWitnesses.at(-1) });
   server.on('error', error => {`,
   );
   source = replace(
@@ -141,6 +138,16 @@ const profile = JSON.parse(process.env.OPEN_LEGEND_PROFILE_CASE);
     `  if (profile.mode === 'sampled') await captureAddressMap(server, dir);
   if (measuring) {
     const executable = await realpath('/proc/' + server.pid + '/exe');`,
+  );
+  source = replace(
+    source,
+    '  assert(controlled.access.controlling && controlled.access.actorId === site.actorId);',
+    `  assert(controlled.access.controlling && controlled.access.actorId === site.actorId);
+  continuation = () => coldContinuation({
+    start: () => startDirect({ ...reopenEnv, OPEN_LEGEND_PROFILE_CONTROL: undefined, OPEN_LEGEND_PROFILE_OUTPUT: undefined, LD_PRELOAD: undefined, OL_PROFILE_RAW: undefined }),
+    cookie, clientId: site.clientId, actorId: site.actorId, acceptedGameSecond: report.steady.end.clock.seconds,
+    commandEpoch: controlled.commandEpoch, lastCommand: report.commandLatencyWitnesses.at(-1),
+  });`,
   );
   source = replace(
     source,
