@@ -4,7 +4,7 @@ use super::{
     Arc, ByteBudget, ByteReservation, CallFailure, CurrentServer, FundedJson, ReceivedFrame,
     RuntimeNpcRead, RuntimeNpcResponseTicket, Value, Work, capture, capture_offers, capture_origin,
     consumer, describe_experience, ensure_running, get_u64, invalid, json, personal_description,
-    personal_evidence, project, project_markers, records, text,
+    personal_evidence, project, project_markers, records,
 };
 use crate::{
     decision_render::{BoundAttention, RenderError},
@@ -16,13 +16,18 @@ use std::collections::{HashMap, HashSet};
 
 pub(in crate::npc::decide) struct Collected {
     pub(super) original: Option<RuntimeNpcRead>,
-    pub(super) original_json: FundedJson,
+    pub(super) attention: OriginAttention,
     pub(super) sources: Option<FundedJson>,
     pub(super) required: Vec<usize>,
     optional: Vec<usize>,
     pub(super) frame: ReceivedFrame,
     pub(super) through: u64,
     _selection: ByteReservation,
+}
+
+pub(super) struct OriginAttention {
+    pub(super) ordinals: Vec<usize>,
+    _storage: ByteReservation,
 }
 
 pub(in crate::npc::decide) struct RecallReview {
@@ -39,36 +44,26 @@ pub(in crate::npc::decide) async fn collect(
     let budget = game.host.budget();
     let consumer = consumer(work);
     let mut original = capture_origin(game, work, consumer).await?;
-    let original_json = capture(&original, budget)?;
-    let original_self = &original_json.value["self"];
-    let through = get_u64(&original_self["acceptedCut"])?;
-    if through < work.accepted_cut || original_self["actorId"] != work.actor {
+    let origin = original.decision_origin();
+    let through = origin.accepted_cut;
+    if through < work.accepted_cut || origin.actor_id != work.actor {
         return Err(CallFailure::Stale("decision-accepted-read-cut"));
     }
-    let frame = ReceivedFrame {
-        x: original_self["position"]["x"]
-            .as_f64()
-            .ok_or(CallFailure::Invalid)?,
-        z: original_self["position"]["z"]
-            .as_f64()
-            .ok_or(CallFailure::Invalid)?,
-        heading: original_self["heading"]
-            .as_f64()
-            .ok_or(CallFailure::Invalid)?,
-        support: original_self["supportSurfaceId"]
-            .as_str()
-            .map(str::to_owned),
-    };
+    let frame = origin.frame(budget).map_err(invalid)?;
     if work.source.is_empty() && work.job.job.player_speech_event_id.is_some() {
         return Err(CallFailure::Stale("decision-heard-source"));
     }
-    let history = &original_json.value["historyScope"];
+    let (ordinals, storage) = origin.attention_ordinals(budget).map_err(invalid)?;
+    let attention = OriginAttention {
+        ordinals,
+        _storage: storage,
+    };
     let scope = RecallScope {
-        world: text(&history["worldId"])?,
-        generation: text(&history["generation"])?,
+        world: origin.world_id,
+        generation: origin.generation,
         actor: &work.actor,
-        at: history["at"].as_f64().ok_or(CallFailure::Invalid)?,
-        identity_through: get_u64(&history["identityThrough"])?,
+        at: origin.at,
+        identity_through: origin.identity_through,
     };
     let references = game
         .store
@@ -195,7 +190,7 @@ pub(in crate::npc::decide) async fn collect(
     };
     Ok(Collected {
         original: Some(original),
-        original_json,
+        attention,
         sources: source_data,
         required,
         optional,
@@ -227,7 +222,7 @@ impl Collected {
             game,
             work,
             &facts.value,
-            &self.original_json.value,
+            &self.attention.ordinals,
             source_data,
             &self.required,
             consumer,
@@ -343,10 +338,19 @@ impl Collected {
         fresh: &FundedJson,
         budget: &ByteBudget,
     ) -> Result<ByteReservation, CallFailure> {
+        // A selected ordinal produces two 24-byte aliases, a two-field JSON
+        // object, and vector entries for the reference and presentation.
+        // Cover their growth and alias generation apart from the origin read.
+        let attention = self
+            .attention
+            .ordinals
+            .len()
+            .checked_mul(2048)
+            .ok_or(CallFailure::Invalid)?;
         let bytes = fresh
             ._custody
             .bytes()
-            .checked_add(self.original_json._custody.bytes())
+            .checked_add(attention)
             .and_then(|n| {
                 n.checked_add(
                     self.sources

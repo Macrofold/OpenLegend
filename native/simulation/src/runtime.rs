@@ -70,7 +70,8 @@ pub use crate::time::{AdmittedWorldInput, Direction, ReleaseInput, SteeringInput
 pub use consumer::RuntimeConsumer;
 pub(crate) use npc::HeldSourceProof;
 pub use npc::{
-    RuntimeNpcPreparationStep, RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket,
+    RuntimeNpcDecisionFrame, RuntimeNpcDecisionOrigin, RuntimeNpcPreparationStep,
+    RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket,
 };
 pub use player::{
     InteractionMode, PlayerInteractionFacts, RuntimePlayerInputState, RuntimePlayerPublication,

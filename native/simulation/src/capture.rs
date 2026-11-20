@@ -202,6 +202,9 @@ impl CapturedActorPerception {
             .as_ref()
             .map_or(&[], |current| current.attention.entries.as_slice())
     }
+    pub(crate) fn encoded_npc_current(&self) -> Option<&str> {
+        self.npc_current.as_ref().map(|current| current.encoded())
+    }
     pub(crate) fn write_json(
         &self,
         budget: &ByteBudget,

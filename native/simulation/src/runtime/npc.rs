@@ -10,11 +10,13 @@ use std::sync::atomic::AtomicBool;
 
 mod bindings;
 mod held_sources;
+mod origin;
 mod perspectives;
 pub(super) use bindings::ActiveNpcResponse;
 pub use bindings::RuntimeNpcResponseTicket;
 pub(super) use held_sources::HeldReceiptRegistry;
 pub(crate) use held_sources::HeldSourceProof;
+pub use origin::{RuntimeNpcDecisionFrame, RuntimeNpcDecisionOrigin};
 
 /// A brief dispatch gate, never retained while SQL or a provider is awaited.
 /// Historical disclosure and current response semantics are separate routes.

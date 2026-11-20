@@ -13,6 +13,11 @@ pub(crate) struct NpcCurrentCapture {
     pub(super) attention: crate::reception::CapturedAttentionPresentations,
     _storage: ByteReservation,
 }
+impl NpcCurrentCapture {
+    pub(super) fn encoded(&self) -> &str {
+        &self.json
+    }
+}
 impl Serialize for NpcCurrentCapture {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let raw: &serde_json::value::RawValue =

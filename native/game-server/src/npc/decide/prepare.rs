@@ -17,6 +17,7 @@ use serde_json::{Value, json};
 use std::{collections::HashMap, sync::Arc};
 
 mod recall;
+pub(super) use openlegend_simulation::runtime::RuntimeNpcDecisionFrame as ReceivedFrame;
 pub(super) use recall::{Collected, RecallReview, collect};
 
 pub(super) struct Prepared {
@@ -95,13 +96,6 @@ impl Projection {
     }
 }
 
-pub(super) struct ReceivedFrame {
-    pub(super) x: f64,
-    pub(super) z: f64,
-    pub(super) heading: f64,
-    pub(super) support: Option<String>,
-}
-
 pub(super) async fn finish(
     game: &Arc<CurrentServer>,
     work: &Work,
@@ -121,11 +115,12 @@ pub(super) async fn finish(
         game,
         work,
         &captured.value,
-        &collected.original_json.value,
+        &collected.attention.ordinals,
         collected.sources.as_ref().map(|data| &data.value),
         &collected.required,
         consumer(work),
     )?;
+    drop(collected.attention);
     let route = game
         .cognition
         .prompt(
@@ -238,7 +233,7 @@ fn project(
     game: &CurrentServer,
     work: &Work,
     facts: &Value,
-    original: &Value,
+    original_attention: &[usize],
     selected: Option<&Value>,
     rows: &[usize],
     consumer: &str,
@@ -258,18 +253,12 @@ fn project(
     let mut scene = Vec::new();
     let mut attention = Vec::new();
     let mut attention_aliases = Vec::new();
-    let initial = &original["perception"]["npcCurrent"]["attention"];
     let mut presented = Vec::new();
-    for (ordinal, presentation) in records(&initial["presentations"])?.iter().enumerate() {
-        if records(&initial["entries"])?
-            .iter()
-            .any(|entry| entry["key"] == presentation["key"])
-        {
-            let id = alias(&reference_key, "attention", ordinal);
-            attention_aliases.push(id.clone());
-            attention.push(json!({"alias":id,"ordinal":ordinal}));
-            presented.push(ordinal);
-        }
+    for &ordinal in original_attention {
+        let id = alias(&reference_key, "attention", ordinal);
+        attention_aliases.push(id.clone());
+        attention.push(json!({"alias":id,"ordinal":ordinal}));
+        presented.push(ordinal);
     }
     for index in records(&choices["bodyOrdinals"])? {
         let ordinal = get_u64(index)? as usize;
