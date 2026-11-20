@@ -1,0 +1,18 @@
+# Unreal Engine 5 playable-client migration
+
+[Feature specification](../projects/unreal-engine-5-migration-feature-spec.md) · [Guide for Mike](../unreal-engine-5-for-founders.md) · [Presentation constraints](../limits/interface.md#unreal-client-qualification) · [Rust host coverage](native-simulation-core-coverage.md#stand-alone-server-caller-inventory)
+
+**Current progress.** The migration is selected. The feature brief and introductory guide are ready for a separate technical design. All implementation and packaged-game qualification below are open. The branch is based on the native proof and references the art work by pinned revision. A read of either branch alone does not establish the combined result.
+
+| ID | Outstanding outcome | Depends on | Exit evidence |
+| --- | --- | --- | --- |
+| UE01 | Resolve the first-party licensing boundary, target PC and initial device/input promise. Reconcile accepted art/host sources and assign decisions in the technical design. | Mike, rights holders and intended distribution | Documented rights-safe implementation path, named targets and budget owners. |
+| UE02 | Deliver installable native entry, session/control and scoped state, intentions and recovery. | UE01 for affected code, public player protocol and available Rust routes | Clean PC joins the measured opening, recovers one lost reply, survives reconnect/restart and fences stale grants. |
+| UE03 | Join the client scene and server spatial/time/perception contracts. | UE02, [SW](spatial-world.md), [Rust caller coverage](native-simulation-core-coverage.md) | Correct distance, movement, support, picking, pause, disclosure and different witnesses in a packaged session. |
+| UE04 | Reconcile the complete player/tool surface inventory. Deliver native controls, player UI/audio/accessibility and independently usable web tools. | UE02–03, [UI coverage](../ui-ux/interface-coverage.md), host family support | Every selected journey and handoff has an owner and a pass, including stale input, captions and ordinary Main. Named deferrals retain approval and evidence limits. |
+| UE05 | Deliver playable authored terrain, light, forests, procedural placements, streaming and player edits. | UE03 and UE06 source/geometry agreement | Walk and build through changing conditions; a second player and a returning player encounter the correct durable result. |
+| UE06 | Qualify asset/character/motion families, exact releases, access and in-session content policy. | UE01 rights, [asset owners](game-asset-storage.md), pinned art proof | Batch reimport, two wearers, motion and private/public packaging pass. Unapproved sculpts and unrelated private studies stay out of production. |
+| UE07 | Establish unattended build/import/capture and multi-agent publishing with restore/retry and spending controls. | Can proceed by class once rights, source and target are known | A clean worker rebuilds a selected release and supplies reviewable packaged evidence, including a failed job resumed without duplicate publication/charges. |
+| UE08 | Qualify PC installation/update, budgets, dense scenes, release recovery and switch the primary player. | UE01–07 for selected scope; [first playable](first-playable-world.md) and host gaps | Fresh-PC and human play evidence, supported hardware and agreed surface coverage. Remove superseded player paths while required tools and original sources remain accessible. |
+
+Next deliverable is the technical design specified in the feature brief. Existing host conversion, art approval, hardware selection, licensing and live qualification retain their respective owners. This tracker grants no authorization to implement or release.

@@ -4,6 +4,8 @@
 
 Use this page to find the owner of work. Focused trackers own task status; specifications own behavior, limits inventories own restrictions, and topic verification reports own actual evidence. A linked proposal or completed design does not establish implemented or qualified behavior.
 
+[Unreal Engine 5 playable-client migration (UE01–UE08)](unreal-engine-5-migration.md) tracks the selected desktop direction, technical-design handoff and qualification against the stand-alone Rust and art baselines.
+
 ## First playable: survival, a defensible home and independent encounters
 
 Start with [first-playable delivery and validation (FPV01–FPV09)](first-playable-validation.md). The [world specification](../worlds/base/playable-openings.md#first-playable-game-target) owns the required survival, camp, character, invention and conflict experience; [gameplay priorities](../repertoires/gameplay-priorities.md) owns selection; the [playtest plan](../projects/first-playable-playtest-plan.md) owns participant-learning procedure. FPV routes missing mechanics to existing subsystem owners and distinguishes useful partial tests from complete acceptance.
@@ -96,7 +98,7 @@ The [completed Rust game server record](completed/2026/rust-game-server.md) link
 | DG32 — Shared equipment             | [Shared-equipment proposal](../projects/shared-equipment-and-institutions-feature-spec.md), [INV-20](inventions-and-world-evolution.md) and [limits](../limits/shared-equipment-and-institutions.md)                                                                                  |
 | DG33 — Afterlife and telepathy      | [Product proposal](../projects/extraordinary-minds-and-afterlife-feature-spec.md), [BW15](base-world.md), [EWF10T](extensible-world-foundation.md), [world profile](../worlds/base/extraordinary-minds-and-afterlife.md) and [limits](../limits/extraordinary-minds-and-afterlife.md) |
 | DG34 — Local campaign opportunities | [Campaign proposal](../projects/shared-campaigns-feature-spec.md), [PS07/PS08](product-scalability.md), [Ash Road](../worlds/base/shared-campaigns.md) and [PS limits](../limits/product-scalability.md)                                                                              |
-| DG35 — Platform choice              | [Browser/offline decision](../projects/completed/platform-and-offline-decision-brief.md) and [ND34](needs-design.md#nd34--additional-distribution-platforms-and-offline-play)                                                                                                         |
+| DG35 — Platform choice              | [Platform decisions](../projects/platform-and-offline-decision-brief.md) and [ND34](needs-design.md#nd34--additional-distribution-platforms-and-offline-play)                                                                                                         |
 
 Adult players, non-explicit presentation with optional sex, and browser delivery are selected. Mechanical tuning, technical delivery and service qualification retain their owners; additional platforms remain conditional.
 

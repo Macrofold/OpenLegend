@@ -4,6 +4,8 @@
 
 Confirmed favorites, with creative interpretation kept distinct from your stated preferences. This is the final curated reference set for this discussion, not a finalized renderer, asset budget or production specification.
 
+For the installed UE5 player, use the [updated creative brief](https://github.com/Macrofold/OpenLegend/blob/d8e39b132611a10641704c3fc87b0f9409901532/art-direction/final-board/creative-brief.md) and [migration art requirements](../../docs/projects/unreal-engine-5-migration-feature-spec.md#landscapes-weather-and-the-visible-world). The pixel treatments below belong to the earlier browser baseline.
+
 ## Shared direction
 
 Beautiful dimensional pixel art with believable real-world proportions, expressive and recognizable people, purposeful light and an inviting sense of life. Explicitly reject the visibly low-poly 3D look, flat faceted styling, blocky/Lego-like or cutesy assets, and small-body/big-head or exaggerated cartoon characters. Stylization belongs in pixels, palette, material interpretation and lighting while anatomy, objects and the world retain convincing proportions. Readable silhouettes and quiet areas matter as much as fine texture. Painted references remain useful for concepts and composition; photorealistic final rendering is not required.

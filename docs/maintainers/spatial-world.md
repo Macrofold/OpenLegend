@@ -185,9 +185,7 @@ PX03 adds [knowledge-bound destination selection](../spatial-world.md#static-nam
 
 ## SW10 — Renderer boundary and mixed representation
 
-The [client replacement path](../spatial-world.md#client-replacement-path) explains how this boundary supports a future renderer or native-client change. SW10 does not deliver an Unreal client, console support or offline play; engine reconsideration uses the existing visual proof and D02/D09 evidence.
-
-The October 9 [DG35 decision brief](../projects/platform-and-offline-decision-brief.md) compares the actual player problems and common behavior requirements without selecting a new audience or platform. ND34 still requires that premise before scoped design. The existing browser pilot and the development-only refresh observation below do not establish a production reason to replace the renderer; no SW10 item is completed or broadened by this research.
+The [client replacement path](../spatial-world.md#client-replacement-path) and [UE5 migration tasks](unreal-engine-5-migration.md) distinguish browser renderer work from the selected installed player. Use SW10 evidence where a native slice needs it. UI, native entry, scene integration and cutover are tracked under UE01–UE08. Earlier browser pilots do not qualify those gates. Console and offline play remain separate decisions.
 
 **Owners:** client renderer/art adapter. **Depends on:** SW02 and the existing art contract; SW03 geometry input for surfaces. **Touchpoints:** `scene.ts`, `art.ts`, `main.tsx`, renderer tests.
 
