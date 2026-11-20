@@ -52,3 +52,13 @@ Design complete November 7, 2026: [reusable procedure](../performance/hierarchic
 The inventory’s [deferred coverage](../performance/simulation-inventory.md#initial-run-plan) remains available for explicitly selected future work; it is not required to close this initial scope. Profiler-safety checks are non-timing checks outside the 27 timed runs; their failures/unrun results remain gaps.
 
 Execution prerequisites are the priced finite matrix, source/workspace identity, valid managed claims/image and any unresolved pool recovery. [VW](verification-workers.md) owns general worker lifecycle; PC09 owns this campaign's explicit machine-selection extension. Do not duplicate those task bodies in BK runtime optimization trackers or start optimization after a poor result.
+
+## Stand-alone Rust server
+
+Design delivered November 20, 2026. The [Rust profiling design](../projects/profiling-controls/rust-server.md) maps the TypeScript reference implementation to the stand-alone executable. The separate reference branch's recorded campaign and outstanding qualifications are linked there. The following implementation and measurement work is proposed.
+
+| Work                                                       | Dependency                                          | Completion evidence                                                                                                                                                                                   |
+| ---------------------------------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PC11 — Reproduce and sample the Rust workload              | Frozen Rust release, driver and owned worker inputs | Verified running binary, complete heavy opening, server and PostgreSQL accounting, and a source-bound report of CPU coverage and missing symbols. Record sampler overhead.                            |
+| PC12 — Explain one expensive operation through its callers | PC11 plan and a matched control                     | One clock turn joined through worker execution and accepted progress. Disabled equivalence, bounded capture, failure and private-input safety pass. Each further selected family has its own witness. |
+| PC13 — Qualify and publish the hierarchy                   | PC11–PC12 and approved finite case list             | Three matched observations per qualified configuration, explicit coverage and overhead dispositions, verified local report, cost and cleanup. An unqualified diagnostic remains identified.           |

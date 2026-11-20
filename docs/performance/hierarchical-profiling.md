@@ -2,6 +2,8 @@
 
 This is the reusable procedure and instrumentation design for measuring a complete execution path, then its actual constituent operations. It works with the [simulation inventory](simulation-inventory.md) or a different explicitly supplied measurement inventory. [Measurement and interpretation](measurement.md) remains the shared evidence contract; [existing profiler commands](../maintainers/performance-profiling.md) describe tools already installed.
 
+For the stand-alone Rust executable, use the [Rust profiling design](../projects/profiling-controls/rust-server.md) alongside this procedure. It identifies the reusable TypeScript tools, native measurement sites and qualification steps.
+
 **Delivery boundary:** the hierarchical registry, complete distributions, workload matrix and campaign adapter below are designed, not installed. [PC07–PC10](../maintainers/profiling-controls.md#hierarchical-server-measurements) track delivery. Existing CPU profiles, domain counters and 256-value timing rings do not satisfy these requirements. Finish that tooling before claiming this procedure has run. This document authorizes neither gameplay changes nor a profiling campaign by itself.
 
 ## 1. Questions and scope

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                   | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Default-off controls are installed; hierarchical server profiling is designed, with tooling and measurements open. | 2026-11-07   |
+| In progress | Default-off TypeScript controls are installed here. Hierarchical profiling has a proposed stand-alone Rust design. | 2026-11-20   |
 
 **Specification reviewed and synchronized — October 18, 2026, 00:02 EDT.** The selected feature behavior is unchanged. Current implementation departures and the remaining verification limits are recorded in the linked tracker and technical design.
 
@@ -84,9 +84,11 @@ The [reusable procedure](../performance/hierarchical-profiling.md) owns implemen
 
 Acceptance requires source/workload identity, positive coverage for each selected component, three completed runs per selected configuration, explicit overhead/rare-tail uncertainty, correctly separated timings, complete local artifacts and owned cleanup. Qualify each overhead or hardware comparison against its declared controls. The two detailed timer sets chosen from earlier results supply diagnostic observations only. Their individual overhead requires separately interleaved off/on runs if a decision depends on it. Real-time comparisons require the promised actions and effects and workload-specific tolerances set before the runs. In focused fixed-work replays, affected cognition inputs and native effects must match the uninstrumented caller. These check measurement-off/on equivalence, asynchronous ordering/cancellation, private knowledge/correction and current-format save/load; they do not require an entire-game mechanics acceptance suite. Live-model response quality remains outside this campaign. Performance results are required measurements, not an invented capacity pass. The capability is not installed yet; [PC07–PC10](../maintainers/profiling-controls.md#hierarchical-server-measurements) own implementation and execution. No new telemetry service, production database, UI or game feature is proposed.
 
+The proposed stand-alone Rust profiler lets a developer follow a costly feature from a complete gameplay run to CPU samples, direct work counts and the waits a player experienced. The proposed report distinguishes what an animal did, what nearby characters noticed, and what the server sent or saved. Comparing the real permitted character inputs and saved effects is part of accepting the instrument. [Rust implementation design](profiling-controls/rust-server.md)
+
 ## Maintained records
 
-- Implementation and acceptance: [PC01–PC10](../maintainers/profiling-controls.md), a focused part of [PF06](../maintainers/performance.md#pf06--optional-diagnostics-and-bounded-buffers).
+- Implementation and acceptance: [Profiling tasks](../maintainers/profiling-controls.md), a focused part of [PF06](../maintainers/performance.md#pf06--optional-diagnostics-and-bounded-buffers).
 - Mechanism and implementation order: [technical design](profiling-controls-tech-design.md).
 - Existing and proposed constraints: [LA209](../limits/observability.md#la209), [LA210](../limits/observability.md#la210), [OB01](../limits/observability.md#ob01--explicit-browser-performance-capture), [OB02](../limits/observability.md#ob02--optional-profiling-controls), [OB03](../limits/observability.md#ob03--hierarchical-campaign-measurement).
 - Current usage and reproduction: [profiling guide](../maintainers/performance-profiling.md). It documents the implemented switches and commands.

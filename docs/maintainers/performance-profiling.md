@@ -2,6 +2,8 @@
 
 Use the section for the tool you intend to run. The game fixtures launched by the commands below run the TypeScript simulation. In names such as `stress-native.ts`, “native” means deterministic game rules without a model making decisions. The script imports the domain package’s `advanceWorld`; its results do not measure the Rust simulation service.
 
+For the **stand-alone Rust executable**, start with the [measured gameplay workload](../benchmarks/native-runtime-foundations/2026/2026-11-18-rust-game-server.md#required-work-and-evidence) and the [proposed Rust profiling procedure](../projects/profiling-controls/rust-server.md).
+
 | What do you need to observe?                                                                | Installed tool and instructions                                                                      |
 | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | The cost of advancing the simulation without a server, database or provider                 | [Native CPU isolation](#native-cpu-isolation)                                                        |

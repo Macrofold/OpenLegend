@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                   | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Default-off controls are installed; hierarchical server profiling is designed, with tooling and measurements open. | 2026-11-07   |
+| In progress | Default-off TypeScript controls are installed here. Hierarchical profiling has a proposed stand-alone Rust design. | 2026-11-20   |
 
 **Technical design used for review — October 18, 2026, 00:02 EDT.** Architecture and its dated implementation reconciliations remain the design reference; the current review preserves their authority and world boundaries.
 
@@ -135,9 +135,11 @@ The existing 64-category/256-value snapshot is still a recent diagnostic view. C
 
 The separate runner implements selection, pricing and admission for the three planned machine profiles. Verify the deployed runner and actual machines before dispatch through the [worker procedure](../../.agents/rules/verification-workers.md). Reuse existing bounded parallel dispatch and exclusive claims. H1C’s supervised CPU/memory limits and broader catalogue fixtures are deferred. The inventory’s initial 27-run plan selects opening probes on H0 and whole-game controls on H1/H2; install candidate probes before source freeze. The two sets selected later from the earlier measurements are diagnostic. Qualifying the overhead of either set needs its own interleaved off/on comparison only if a decision requires it. Focused profiler-safety replays, disabled equivalence, instrument overhead, selected coverage and the finite AWS plan are tracked in [PC07–PC10](../maintainers/profiling-controls.md#hierarchical-server-measurements). Technical design source use: November 7, 2026; pinned runtime and runner revisions are recorded once in the inventory.
 
+For the stand-alone Rust executable, use the [Rust campaign design](profiling-controls/rust-server.md). It maps the pinned TypeScript implementation to the native owners and specifies how to qualify a recorder across asynchronous requests, compute workers and PostgreSQL.
+
 ## Maintained records
 
 - Behavior: [feature specification](profiling-controls-feature-spec.md).
-- Implementation: [PC01–PC10](../maintainers/profiling-controls.md).
+- Implementation: [Profiling tasks](../maintainers/profiling-controls.md).
 - Constraints: [OB02](../limits/observability.md#ob02--optional-profiling-controls), [OB03](../limits/observability.md#ob03--hierarchical-campaign-measurement), alongside existing [LA209](../limits/observability.md#la209), [LA210](../limits/observability.md#la210) and [OB01](../limits/observability.md#ob01--explicit-browser-performance-capture).
 - Existing runtime contracts: [performance](../performance.md), [architecture](../architecture.md#performance-critical-path), [engine/world boundaries](../engine-and-world-boundaries.md#design-principles-for-every-feature).
