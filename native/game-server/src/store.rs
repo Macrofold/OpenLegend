@@ -81,6 +81,9 @@ pub enum StoreError {
     WriterUnavailable,
     Schema,
     InitializationRequired,
+    OpeningRequired,
+    AwaitingCreation,
+    DamagedInstallation,
     StaleCut,
     InvalidRecord,
     Capacity,
@@ -99,6 +102,10 @@ impl fmt::Display for StoreError {
             Self::WriterUnavailable => "The PostgreSQL writer is unavailable",
             Self::Schema => "PostgreSQL does not match the current Open Legend schema",
             Self::InitializationRequired => "An empty database requires explicit initialization",
+            Self::OpeningRequired => "This database is initialized and requires a starting world",
+            Self::AwaitingCreation => "This database is registered to receive a new world",
+            Self::DamagedInstallation =>
+                "This database contains retained data but has no current world header",
             Self::StaleCut => "PostgreSQL does not match the selected world revision",
             Self::InvalidRecord => "A current PostgreSQL record is invalid",
             Self::Capacity => "PostgreSQL transfer cannot fit its allowance",
@@ -279,9 +286,6 @@ impl Store {
                 return Err(StoreError::Schema);
             }
         } else {
-            if !initialize {
-                return Err(StoreError::InitializationRequired);
-            }
             // An unmarked gameplay layout is never mistaken for a new database.
             if transaction
                 .query_opt(
@@ -294,6 +298,9 @@ impl Store {
                 .is_some()
             {
                 return Err(StoreError::Schema);
+            }
+            if !initialize {
+                return Err(StoreError::InitializationRequired);
             }
             transaction
                 .batch_execute(

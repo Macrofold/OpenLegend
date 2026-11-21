@@ -239,9 +239,53 @@ impl Store {
         durable_head(&reader.client).await
     }
 
+    /// Classify an installation with no current header in the same snapshot
+    /// that observed its absence. The release shares the creation target's
+    /// occupancy test, including cold records and operational receipts.
+    async fn missing_opening(&self, transaction: &Transaction<'_>) -> StoreResult<StoreError> {
+        let occupied: bool = transaction
+            .query_one(&self.schema.creation_target_occupied, &[])
+            .await?
+            .try_get(0)?;
+        if occupied {
+            return Ok(StoreError::DamagedInstallation);
+        }
+        let registered: bool = transaction
+            .query_one("SELECT EXISTS(SELECT 1 FROM creation_target_registration)", &[])
+            .await?
+            .try_get(0)?;
+        Ok(if registered {
+            StoreError::AwaitingCreation
+        } else {
+            StoreError::OpeningRequired
+        })
+    }
+
+    pub(crate) async fn initialized_storage(&self) -> StoreResult<&'static str> {
+        let mut reader = self.reader.lock().await;
+        let transaction = reader
+            .client
+            .build_transaction()
+            .read_only(true)
+            .isolation_level(IsolationLevel::RepeatableRead)
+            .start()
+            .await?;
+        let state = if durable_head(&transaction).await?.is_some() {
+            "current-header-present"
+        } else {
+            match self.missing_opening(&transaction).await? {
+                StoreError::OpeningRequired => "empty",
+                StoreError::AwaitingCreation => "awaiting-creation",
+                error => return Err(error),
+            }
+        };
+        transaction.commit().await?;
+        Ok(state)
+    }
+
     /// Load actual complete canonical records in one fixed snapshot. Normal
     /// gameplay readers should use a scoped cut, not this startup selection.
-    pub async fn current_opening(&self) -> StoreResult<Option<CurrentOpening>> {
+    pub async fn current_opening(&self) -> StoreResult<CurrentOpening> {
         let mut reader = self.reader.lock().await;
         let transaction = reader
             .client
@@ -251,8 +295,7 @@ impl Store {
             .start()
             .await?;
         let Some(head) = durable_head(&transaction).await? else {
-            transaction.commit().await?;
-            return Ok(None);
+            return Err(self.missing_opening(&transaction).await?);
         };
         let maintenance = transaction
             .query_opt(
@@ -321,11 +364,11 @@ impl Store {
         };
         transaction.commit().await?;
         let records = self.opening_records(head, tables, &mut custody)?;
-        Ok(Some(CurrentOpening {
+        Ok(CurrentOpening {
             records,
             originals,
             custody,
-        }))
+        })
     }
 
     pub(super) fn opening_records(

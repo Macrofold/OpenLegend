@@ -13,6 +13,7 @@ pub struct StorageSchema {
     pub initialization: Vec<String>,
     pub(crate) permitted_unmarked: Vec<String>,
     pub(crate) received_value_owners: Vec<String>,
+    pub(crate) creation_target_occupied: String,
     pub(crate) tables: Vec<Table>,
     pub(crate) upsert_job: String,
     pub(crate) recall: RecallStatements,
@@ -173,6 +174,7 @@ impl StorageSchema {
             .checked_add(strings(&self.initialization)?)?
             .checked_add(strings(&self.permitted_unmarked)?)?
             .checked_add(strings(&self.received_value_owners)?)?
+            .checked_add(self.creation_target_occupied.capacity())?
             .checked_add(self.recall.insert.capacity())?
             .checked_add(self.upsert_job.capacity())?
             .checked_add(self.recall.reconcile.capacity())?
@@ -209,6 +211,7 @@ impl StorageSchema {
         self.checkpoint.validate(self)?;
         if self.version.is_empty()
             || self.upsert_job.is_empty()
+            || self.creation_target_occupied.is_empty()
             || self.transcript_account.is_empty()
             || self.banner_account.is_empty()
             || self.recall.insert.is_empty()

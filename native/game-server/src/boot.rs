@@ -55,6 +55,7 @@ async fn open_store(
     manifest: &ReleaseManifest,
     database: Config,
     budget: &ByteBudget,
+    initialize: bool,
 ) -> Result<Arc<Store>, BootError> {
     let _workspace = budget.reserve(16 * 1024 * 1024)?;
     let schema: StorageSchema = artifact(
@@ -67,8 +68,17 @@ async fn open_store(
     let (tls, _) = MakeRustlsConnect::with_native_certs()
         .map_err(|_| "No usable trust roots for PostgreSQL")?;
     Ok(Arc::new(
-        Store::open(database, tls, schema, false, budget.clone()).await?,
+        Store::open(database, tls, schema, initialize, budget.clone()).await?,
     ))
+}
+
+/// Explicitly prepare only the current PostgreSQL layout. Gameplay and
+/// authority still require the separate exact starting-world activation.
+pub async fn initialize_storage(release: &Path, database: Config) -> Result<&'static str, BootError> {
+    let manifest = read_manifest(release)?;
+    let budget = ByteBudget::new(TRANSIENT_BYTES);
+    let store = open_store(release, &manifest, database, &budget, true).await?;
+    Ok(store.initialized_storage().await?)
 }
 
 fn read_definitions(
@@ -101,7 +111,7 @@ pub async fn recover_checkpoint(
     let budget = ByteBudget::new(TRANSIENT_BYTES);
     let (definitions, custody) = read_definitions(release, &manifest, &budget)?;
     let language = Arc::new(LanguageProvider::open(&release.join("language"), &budget)?);
-    let store = open_store(release, &manifest, database, &budget).await?;
+    let store = open_store(release, &manifest, database, &budget, false).await?;
     let recovered = store
         .recover_checkpoint(
             directory,
@@ -249,11 +259,8 @@ impl CurrentServer {
                 )
             })
             .transpose()?;
-        let store = open_store(release, &manifest, database, budget).await?;
-        let mut opening = store
-            .current_opening()
-            .await?
-            .ok_or("No initialized current-format game world exists")?;
+        let store = open_store(release, &manifest, database, budget, false).await?;
+        let mut opening = store.current_opening().await?;
         let open_language =
             || LanguageProvider::open(&release.join("language"), budget).map(Arc::new);
         let mut language = opening.has_intentions().then(open_language).transpose()?;

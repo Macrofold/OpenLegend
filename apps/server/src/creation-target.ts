@@ -50,6 +50,32 @@ interface StoredReceipt {
   receipt: CreationActivationReceipt;
 }
 
+/** Detect gameplay or operational leftovers without counting their rows. An
+ * external art catalog and the creation registration may predate a world. */
+export function creationTargetOccupiedSql(): string {
+  const assetTables = new Set<string>(ASSET_TABLES);
+  const tables = [
+    ...new Set([
+      ...WORLD_RECORD_TABLES,
+      ...BACKUP_TABLES,
+      'recall_vectors',
+      'recall_sources',
+      'recall_place_capsules',
+      'mind_source_dependencies',
+      'memory_index_models',
+      'memory_index_queue',
+      'memory_vectors',
+    ]),
+  ].filter(
+    (table) =>
+      table !== 'meta' && table !== 'creation_target_registration' && !assetTables.has(table),
+  );
+  return `SELECT EXISTS(
+    ${tables.map((table) => `SELECT 1 FROM ${table}`).join(' UNION ALL ')}
+    UNION ALL SELECT 1 FROM meta WHERE key<>'schema'
+  ) AS occupied`;
+}
+
 /** Target admission and operational outcomes share the destination's sole SQL writer.
  * These tables never enter gameplay checkpoints. docs/projects/parallel-batch-07-playable-world-creation-tech-design.md#one-destination-commit-recoverable-source-status
  */
@@ -169,38 +195,8 @@ export class CreationTargetRepository {
   }
 
   async assertEmpty(): Promise<void> {
-    const assetTables = new Set<string>(ASSET_TABLES);
-    const tables = [
-      ...new Set([
-        ...WORLD_RECORD_TABLES,
-        ...BACKUP_TABLES,
-        'recall_vectors',
-        'recall_sources',
-        'recall_place_capsules',
-        'mind_source_dependencies',
-        'memory_index_models',
-        'memory_index_queue',
-        'memory_vectors',
-      ]),
-    ].filter(
-      (table) =>
-        table !== 'meta' && table !== 'creation_target_registration' && !assetTables.has(table),
-    );
-    // A destination's external-art catalog is independent of an empty gameplay
-    // target. Exact selected artwork is admitted/retained in the activation commit.
-    // Trusted owner catalogs close the check over cold/inconsistent leftovers as well as roots.
-    // EXISTS and LIMIT stop at the first occupied record rather than counting retained history.
-    const occupied = await this.db
-      .prepare(
-        `SELECT name FROM (${tables
-          .map((table) => `SELECT '${table}' AS name WHERE EXISTS(SELECT 1 FROM ${table})`)
-          .join(' UNION ALL ')}) occupied LIMIT 1`,
-      )
-      .get();
-    const metadata = await this.db
-      .prepare("SELECT key FROM meta WHERE key<>'schema' LIMIT 1")
-      .get();
-    if (occupied || metadata)
+    const result = await this.db.prepare(creationTargetOccupiedSql()).get();
+    if (result?.['occupied'] !== false)
       throw new CreationTargetError(
         'occupied',
         'This target contains retained world or operational data. No existing data was changed.',

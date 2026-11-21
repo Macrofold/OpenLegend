@@ -16,6 +16,7 @@ import { receivedCurrentOwnerTables } from '../apps/server/src/received-record-r
 import { ASSET_TABLES } from '../apps/server/src/asset-repository.js';
 import { readAssetConfiguration, readAssetIndex } from '../apps/server/src/asset-configuration.js';
 import { AUTHORITY_TABLES } from '../apps/server/src/authority.js';
+import { creationTargetOccupiedSql } from '../apps/server/src/creation-target.js';
 import {
   captureCurrentSources,
   RESTORED_HISTORY_POSITION_TABLES,
@@ -113,6 +114,7 @@ async function storageSchema(adminUrl: string) {
           version: DATABASE_SCHEMA,
           permittedUnmarked: [...ASSET_TABLES, ...AUTHORITY_TABLES],
           receivedValueOwners: [...receivedCurrentOwnerTables, 'mind_temporal_pages'],
+          creationTargetOccupied: creationTargetOccupiedSql(),
           initialization: database.initialization,
           upsertJob: JOB_UPSERT_SQL.replace(/\?/g, () => `$${++jobParameter}`).replace(
             '$4::jsonb',

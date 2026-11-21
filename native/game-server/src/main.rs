@@ -1,10 +1,10 @@
-use openlegend_game_server::boot::{CurrentServer, recover_checkpoint};
+use openlegend_game_server::boot::{CurrentServer, initialize_storage, recover_checkpoint};
 use std::error::Error;
 use std::ffi::OsString;
 use std::io::{self, Write};
 use std::path::PathBuf;
 
-const USAGE: &str = "Usage: openlegend-game-server serve|check-open RELEASE_DIRECTORY
+const USAGE: &str = "Usage: openlegend-game-server serve|check-open|initialize-storage RELEASE_DIRECTORY
        openlegend-game-server recover-checkpoint RELEASE_DIRECTORY CHECKPOINT_DIRECTORY SLOT_ID OPERATION_ID [FLOOR_SLOT_ID]";
 
 #[tokio::main]
@@ -20,6 +20,10 @@ async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     match mode.as_deref().and_then(std::ffi::OsStr::to_str) {
         Some("serve") if arguments.next().is_none() => {
             openlegend_game_server::launch::serve(&release, database).await
+        }
+        Some("initialize-storage") if arguments.next().is_none() => {
+            let state = initialize_storage(&release, database).await?;
+            write_report(&serde_json::json!({"installation": state}))
         }
         Some("check-open") if arguments.next().is_none() => {
             let server = CurrentServer::open(&release, database, 1).await?;
