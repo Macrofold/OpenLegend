@@ -8,6 +8,8 @@ The ordinary world installs interpreted fear and anger through the [two-stage th
 
 ## Selected first profile
 
+The [structured personal trigger target](../../features/noticing-and-remembering/who-gets-a-decision.md#general-behavior-without-a-catalogue-of-lives) lets an explicitly configured individual react to a category they personally recognize. A costume can qualify while a performer's hidden role cannot. This extension needs an admitted response for that individual; it does not enable the profile below for all NPCs or infer new standing sensitivities from free-form personality text.
+
 These are adjustable authored hypotheses for a first end-to-end trial. They deliberately give a small interpretation a short life and a strong interpretation enough persistence to be available at a later decision. Reusing the existing linear-decay mechanism keeps that trial small; matching the current fear/discomfort rate is not evidence that these feelings ought to fade alike. Compare other rates and available amounts if the complete episode exposes an unhelpful result; do not present the initial values as optimal or universal engineering bounds.
 
 | Selected term           | First-profile meaning                                                                                                                                                                                                                                                                                                                                                           |

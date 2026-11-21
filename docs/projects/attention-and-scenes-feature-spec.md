@@ -101,6 +101,8 @@ Fair exposure runs across justified ordinary thinking and at most one optional d
 
 ### 4.6 Familiarity and reasons to think
 
+The [witness decision specification](../features/noticing-and-remembering/who-gets-a-decision.md) defines eligibility when several people observe the same event, including the ordinary score-only bystander, personally directed communication and an individually recognized trigger. Its [fifty-witness example](../features/noticing-and-remembering/scenarios-and-acceptance.md#the-jester-and-fifty-witnesses) distinguishes people who perceive, react, have a choice and actually receive a decision.
+
 One valence-neutral acquaintance score can favor familiar people and supported places/things. A known enemy can be familiar; a familiar person need not be liked. Recognition gets a useful benefit early, while stronger acquaintance can keep influencing optional attention. Actual sensory profiles remain required: knowing a face does not identify a never-heard voice. Names, affection and recognition are not interchangeable.
 
 Ordinary walking can keep already-observed ground current when bounded native checks certify that the same region remains visible. Unverified ground remains unknown; newly exposed terrain still follows the existing discovery interval. The [geometry contract](attention-and-scenes-tech-design.md#51-received-scene-and-geometry) separates this confirmation from new memories.
