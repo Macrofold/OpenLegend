@@ -448,7 +448,7 @@ Save captures completed sources, actual listener evidence, admitted personal cha
 
 [Current verification](../verification/attention-and-memory-core.md) separates native/fixture correctness from diagnostic CPU results. The implemented source uses change-fed detail scoring and read-only received values; arbitrary population, dense semantic latency and ten-year service costs remain unqualified. Report the complete native/service path, not the ten-entry output count, as its cost.
 
-For native current-field and related-track preparation, see the [observation read experiments](native-simulation-hot-paths.md#1-reuse-obtained-observation-facts). They preserve existing acquisition and per-observer evidence.
+The [completed native observation experiments](completed/2026/native-simulation-hot-paths.md#1-reuse-obtained-observation-facts) cover current-field, related-track and warning-anchor reads. The retained warning scan preserves existing acquisition and per-observer evidence.
 
 The growing dimensions are actual speech/listener pairs, overlapping invitations reaching one actor, each actor's relevant actions and retained permitted history. A three-person initial encounter does not bound a settlement or a highly connected host. Final visible-row limits do not bound a full history scan.
 

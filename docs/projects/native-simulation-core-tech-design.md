@@ -191,7 +191,7 @@ Some remaining work will be serial, memory-bandwidth-bound or I/O-bound. Report 
 
 ## 6. Captures, saving, correction and restoration
 
-The [Rust preparation experiments](native-simulation-hot-paths.md) apply these capture and storage requirements to the current player, save and NPC callers. Their proposals and verification remain separate from the delivered contracts below.
+The [completed Rust preparation experiments](completed/2026/native-simulation-hot-paths.md) applied these capture and storage requirements to the player, save and NPC callers. See their linked results for the changes that earned retention.
 
 ### 6.1 Stable consumer products without a permanent immutable world graph
 
@@ -234,6 +234,8 @@ Keep one existing ordered database writer, pending save prefix and bounded live-
 Save completion acknowledges its exact prefix. If a newer native change arrives during encoding/I/O, it stays pending. Failure retains the accepted data and current backpressure, never resets dirty keys or invents durable success. Protected spending/access/source-release operations retain their barriers. No new journal, broker, local database or automatic replay system is introduced.
 
 On graceful shutdown, complete the final pending save, suppress future received-value collection and join the collector's outstanding SQL transaction while its live value-protection reader is still available. Apply that ordering on failed startup after adopting the writer as well. Once a save failure closes Native live admission, the automatic clock stops offering new work and retains the original failure and debt for recovery.
+
+In the Node-hosted server, the stopped world retires its compute queue. New submissions are refused and already admitted calls drain in order before the queue frees its backing and reservation. The bridge joins the owned host's workers off Node's thread. The application waits for `Closed` within the server's existing shutdown deadline. `Closing` is in progress, and `ShutdownPending` retains outstanding ownership. A new host can open after the old host clears the registry and reports `Closed`. An injected host remains the caller's responsibility. [Reservation lifetimes](../limits/native-simulation-core.md#nsc-l03--requests-captures-and-pending-data)
 
 The writer handoff carries the native accepted cut explicitly. It is independent of the in-world occurrence sequence: a restored world may contain many occurrences before the new native runtime's cut zero. Save-prefix allocation floors likewise start at the actual durable identity high-water mark; the candidate's later allocator value cannot acknowledge its own unsaved temporal batches.
 
