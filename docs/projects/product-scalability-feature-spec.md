@@ -26,7 +26,7 @@
 
 Enable persistent, consequential lives across very large populations without making each world, character, or minute of unattended history a permanent full-cost simulation obligation. This specification is about the player's relationship with the world: belonging, attention, absence, risk, local capacity, and participation in shared events. It is not a replacement deployment, replication, backup, or networking plan.
 
-The primary audience is a player participating in a shared authored reality. Other roles include a world creator selecting policies, a guild or property administrator granting access, an autonomous resident maintaining its own perspective, and a campaign author creating bounded pressures. Host operators retain independent authority over security and real resource limits.
+The primary audience is a player participating in a shared authored reality. Other roles include a world creator selecting policies, a guild or property administrator granting access, a non-player character (NPC) who lives in the world and makes decisions from their own perspective, and a campaign author creating bounded pressures. Host operators retain independent authority over security and real resource limits.
 
 ## 2. Product outcomes
 

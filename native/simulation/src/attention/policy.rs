@@ -111,7 +111,7 @@ pub struct SemanticAttentionPolicy {
 }
 
 impl SemanticAttentionPolicy {
-    /// Optional cue places belong to the installed resident attention policy.
+    /// The installed world may limit how many subjects an NPC tracks in detail solely because of ordinary cues.
     pub(crate) fn optional_cue_capacity(&self, controller: &str) -> Option<usize> {
         if controller == "npc" {
             self.npc_optional_cue_capacity

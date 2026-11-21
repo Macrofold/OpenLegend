@@ -130,9 +130,9 @@ export interface AttentionPolicy {
   };
   semantic: {
     discovery: boolean;
-    /** Game seconds between stand-alone resident checks for optional discovery. */
+    /** Game seconds between stand-alone server checks for an NPC's optional discovery decision. */
     npcIdleDiscoverySeconds?: number;
-    /** Optional cue places for autonomous residents after directed work and urgent cues. */
+    /** Maximum number of subjects an NPC can track in detail solely because of ordinary cues. */
     npcOptionalCueCapacity?: number;
   };
   scene: {

@@ -22,7 +22,7 @@ A capacity profile records connected humans, actual human inputs, autonomous NPC
 
 Use a small set of connected scenarios rather than every possible combination:
 
-- **Dispersed exploration:** increase independently active areas while holding local density roughly fixed. Include terrain/navigation residency and autonomous residents, not empty bots in featureless space.
+- **Dispersed exploration:** increase independently active areas while holding local density roughly fixed. Include the cost of keeping terrain and navigation data loaded, and use NPCs carrying out activities in each area.
 - **Concentrated encounter:** increase people and NPCs in one meaningful scene, then vary reach and interaction intensity. Report useful accepted participants, not merely open sockets or people queued away.
 - **Boundaries and nonlocal dependencies:** include supported large bodies, shared resources and long-range work; compare the same activity away from an ownership edge.
 - **Old world, same active scene:** independently grow history and dormant geography. Include ordinary play, correction/forgetting, cold reads, restart and first useful return.

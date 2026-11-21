@@ -32,7 +32,7 @@ A shared simulation of people, memory, survival, and worlds whose mechanics can 
 
 **Create a world by playing it. Share what you discover.**
 
-The implementation supports **local play and authenticated shared-world play** with native survival, durable saves, autonomous residents and a PlayCanvas scene. Live Jev and LLM adapters support conversation, resident reconsideration and the invention of usable recipes. Those live routes require your server-side keys and a spending allowance; without them, native survival works and AI features explicitly report unavailable.
+The implementation supports **local play and authenticated shared-world play** with native survival, durable saves, non-player characters (NPCs) that choose their own actions, and a PlayCanvas scene. Live Jev and LLM adapters support conversation, NPC decisions about what to do next, and the invention of usable recipes. Those live routes require your server-side keys and a spending allowance; without them, native survival works and AI features explicitly report unavailable.
 
 Hosted operations and scale qualification, regional replication, arbitrary invented physics, marketplace, memberships and creator fund remain future work. Automated fixture tests are not evidence of live model quality. See [verification status](docs/verification.md).
 

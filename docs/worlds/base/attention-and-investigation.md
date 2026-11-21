@@ -2,7 +2,7 @@
 
 **Selected design; runtime pending — 2026-10-25.** This profile supplies authored methods and starting values for [attention and investigation](../../projects/attention-and-investigation-feature-spec.md). The [technical design](../../projects/attention-and-investigation-tech-design.md) owns admission, physical fulfillment, subscriptions and immutable preparation. These are game settings awaiting qualification, not biological measurements or universal engine laws.
 
-The separate [attention experiment](attention.md) remains a rejected experiment. Ordinary eligible perception/history is not suppressed merely because a worker is busy.
+Base rejected an [earlier trial that skipped observations during routine work](attention.md#busy-worker-attention-experiment--not-retained). Ordinary eligible perception/history is not suppressed merely because a worker is busy.
 
 ## Methods and time
 

@@ -69,6 +69,8 @@ Before planning, implementing, reviewing or diagnosing executable behavior or ru
 
 Prefer the smallest clear, complete change that preserves correctness, robustness, performance, modularity and product intent. Reuse semantic owners and helpers; separate concerns, remove relevant dead code and avoid needless dependencies. Abstract shared meaning or a real second use, not merely similar syntax. Follow local patterns unless improving them deliberately.
 
+Use the same familiar term in conversation, documentation, designs and code for the same concept. Name the property a rule actually checks and the unit a limit counts. For example, use “NPC” when control matters and “resident” when living somewhere matters. Write “tracks up to ten subjects in detail” when the limit counts subjects.
+
 Checks assess evidence; they do not impose a quota of findings, edits, tasks or open questions. “No actionable findings,” “No changes needed,” and “Remaining work: None” are valid when supported. Leave sound work unchanged and finish when agreed obligations are satisfied. Missing required evidence remains a gap, not a reason to invent unrelated work or claim completion.
 
 Keep exploratory scratch out of canonical docs; reconcile accepted designs and tracked work under the documentation policy.

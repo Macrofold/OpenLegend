@@ -550,8 +550,7 @@ The read reserves no place. An explicit directed Send can wait for the addressed
 NPC's occupied position within the player's existing 30-second mutation request
 envelope. A wait for the shared job cap has a five-second deadline. Both deadlines
 start at the original admission and the wait holds neither the world nor
-cognition admission lane. Other NPCs' slot changes leave a still-occupied
-resident's waiter asleep.
+cognition admission lane. If this NPC is still busy, changes to another NPC's jobs do not wake the waiting request.
 
 A same-NPC waiter precedes new ordinary jobs for that NPC. A waiter at the shared
 cap precedes new ordinary jobs using that cap. Existing jobs and urgent work keep
@@ -601,7 +600,7 @@ Original recommendation: **Keep**.
 
 **Evidence:** Distinguish ordinary dense-neighbor growth from deliberately creating 10,000 objects. [Implementation](../../apps/server/src/recall.ts) (`candidateSet; select`). [Revisit C17](../maintainers/limits-audit.md#c17).
 
-**Measured follow-through, October 7:** the [AV02 complete resident caller](../verification/shield-defense.md#second-implementation-review--october-7-2026) prepared 1,584 choices with 1,509 carried lots, largely optional per-lot Drop suggestions; sampled warm calls ranged 37–248 ms on the shared host. Native attack/equipment admission and earlier incompatible-tool filtering are delivered, while general observation and pre-selection action preparation remain C17/PF work. This is diagnostic evidence, not hosted capacity or a new content cap.
+**Measured follow-through, October 7:** the [AV02 NPC decision preparation](../verification/shield-defense.md#second-implementation-review--october-7-2026) prepared 1,584 choices with 1,509 carried lots, largely optional per-lot Drop suggestions; sampled warm calls ranged 37–248 ms on the shared host. Native attack/equipment admission and earlier incompatible-tool filtering are delivered, while general observation and pre-selection action preparation remain C17/PF work. This is diagnostic evidence, not hosted capacity or a new content cap.
 
 **Implemented mitigation:** The count/text guards refuse oversized candidate preparation without deleting retained sources. Observation and resident-world preparation still precede them. [Preparation owner](../memory-architecture.md#retrieval-preparation-admission).
 
