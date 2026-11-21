@@ -82,8 +82,10 @@ impl Store {
         generation: String,
         actor: String,
         mut prior: ThoughtRead,
-        event_ids: Vec<String>,
+        mut event_ids: Vec<String>,
     ) -> StoreResult<ThoughtRead> {
+        event_ids.sort_unstable();
+        event_ids.dedup();
         let budget = self.budget.clone();
         let bytes = event_ids
             .iter()
@@ -113,43 +115,56 @@ impl Store {
                     return Err(StoreError::StaleCut);
                 }
 
-                // The current job index owns the original speech regardless
-                // of whether the provider ever ran or the reply later failed.
-                // Do not parse player prose as PostgreSQL JSONB. Canonical
-                // job bodies can contain independently encoded UTF-16 text.
+                // Fund escaped keys, driver buffers and one fixed-width row
+                // per input. No variable-size body transfer needs a preflight.
+                let work_bytes = event_ids
+                    .iter()
+                    .try_fold(
+                        actor
+                            .len()
+                            .checked_mul(24)
+                            .and_then(|bytes| bytes.checked_add(2048))
+                            .ok_or(StoreError::Capacity)?,
+                        |sum, id| sum.checked_add(2048)?.checked_add(id.len().checked_mul(24)?),
+                    )
+                    .ok_or(StoreError::Capacity)?;
+                let _working = budget.reserve(work_bytes).map_err(|_| StoreError::Capacity)?;
                 let encoded = event_ids
                     .iter()
                     .map(json_record)
                     .collect::<Result<Vec<_>, _>>()
                     .map_err(|_| StoreError::InvalidRecord)?;
-                let (_job_transfer, rows) = admitted_query(
-                    tx,
-                    "SELECT DISTINCT ON (selection #>> '{playerSpeechEventId}') payload FROM jobs \
-                     WHERE selection #>> '{kind}'='chat' AND selection #>> '{playerSpeechEventId}'=ANY($1) \
-                     ORDER BY selection #>> '{playerSpeechEventId}',created_at DESC,id DESC",
-                    &[&encoded],
-                    &budget,
+                let recipient = json_record(&actor).map_err(|_| StoreError::InvalidRecord)?;
+                // The latest job owns the original speech even if the
+                // provider never ran or the reply failed. Compare the actor
+                // after selecting that job, never against an older attempt.
+                let rows = openlegend_simulation::profile_result!(
+                    BODY,
+                    tx.query(
+                        "SELECT wanted.ordinality, latest.npc_id=$2 \
+                         FROM unnest($1::text[]) WITH ORDINALITY AS wanted(event_key,ordinality) \
+                         CROSS JOIN LATERAL ( \
+                           SELECT selection->>'npcId' AS npc_id FROM jobs \
+                           WHERE selection #>> '{kind}'='chat' \
+                             AND selection #>> '{playerSpeechEventId}'=wanted.event_key \
+                           ORDER BY created_at DESC,id DESC LIMIT 1 \
+                         ) latest",
+                        &[&encoded, &recipient],
+                    )
                 )
                 .await?;
-                #[derive(Deserialize)]
-                #[serde(rename_all="camelCase")]
-                struct SpeechOwner<'a> {
-                    #[serde(borrow)]
-                    request: SpeechRecipient<'a>,
-                    player_speech_event_id: &'a str,
-                }
-                #[derive(Deserialize)]
-                #[serde(rename_all="camelCase")]
-                struct SpeechRecipient<'a> {
-                    npc_id: &'a str,
-                }
+                openlegend_simulation::profile_count!(BODY_ROWS, rows.len() as u64);
                 for row in rows {
-                    let owner: SpeechOwner<'_> = serde_json::from_str(row.try_get(0)?)
-                        .map_err(|_| StoreError::InvalidRecord)?;
-                    if owner.request.npc_id == actor
-                        && event_ids.iter().any(|id| id == owner.player_speech_event_id)
-                    {
-                        prior.speech.insert(owner.player_speech_event_id.to_owned());
+                    let index = usize::try_from(row.try_get::<_, i64>(0)?)
+                        .ok()
+                        .and_then(|ordinality| ordinality.checked_sub(1))
+                        .ok_or(StoreError::InvalidRecord)?;
+                    let id = event_ids.get_mut(index).ok_or(StoreError::InvalidRecord)?;
+                    let owned = row
+                        .try_get::<_, Option<bool>>(1)?
+                        .ok_or(StoreError::InvalidRecord)?;
+                    if owned {
+                        prior.speech.insert(std::mem::take(id));
                     }
                 }
                 Ok(prior)
