@@ -60,7 +60,7 @@ Do not hold a compute worker while waiting for SQL, a model or a settlement that
 
 An internal spatial query may establish that a body is present. It does not establish that a particular NPC perceived it, knows its name, remembers it, or may reveal it to a player. Reusing physical preparation is valuable; sharing private knowledge is a semantic bug.
 
-Similarly, network interest is a delivery choice. Removing a distant object from a client's replicated set cannot remove its collisions, resource use or consequences for NPCs. A camera's culling set and a server's active simulation set have different consumers. [Epic's replication system](sources.md#s10) illustrates reusable network preparation, not a substitute for these OpenLegend distinctions.
+Similarly, network interest is a delivery choice. Removing a distant object from a client's replicated set cannot remove its collisions, resource use or consequences for NPCs. A camera's culling set and a server's active simulation set have different consumers. [Epic's replication system](sources.md#s10) illustrates reusable network preparation, not a substitute for these Open Legend distinctions.
 
 Keep prepared/captured source validity separate from current permission at publication. Delayed context can finish computation without gaining authority to publish forgotten or revoked evidence. A physical origin rebase, residency change or host migration must not generate a new sighting, name acquisition or chronology entry by itself.
 

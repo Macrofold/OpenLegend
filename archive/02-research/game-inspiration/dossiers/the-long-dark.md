@@ -1,6 +1,6 @@
 # G143 — The Long Dark
 
-**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 The Long Dark is most useful as a study of **survival as expedition accounting**. Its core dramatic unit is not crafting a castle or defeating waves of enemies; it is deciding whether today's weather, clothing, calories, daylight, fatigue, injuries and route knowledge justify leaving a warm shelter for something you may need tomorrow. The strongest stories come from chains of small decisions whose costs compound over hours or days. The current Survival game is no longer absolutely one-life-only: since TALES Part Five, an **optional Cheat Death** system can preserve a run at escalating cost, so the important contract is consequential mortality rather than an obsolete claim of unconditional save deletion.
 
@@ -463,13 +463,13 @@ These are direct qualitative samples, not prevalence measures. The Episode Five 
 
 **Survival and story serve different motivations.** The open mode became the long-lived center even though the project was originally framed around narrative ambitions.
 
-## R13 — transferable lessons and limits for OpenLegend
+## R13 — transferable lessons and limits for Open Legend
 
 ### 1. Make time a resource that other actions consume
 
 The Long Dark's deepest design is not hunger; it is that **everything takes time while the world keeps charging rent**. Crafting, harvesting, sleeping and waiting all advance the same survival clock.
 
-For OpenLegend, time can make "simple" actions consequential if weather, people, opportunities and needs continue evolving during them.
+For Open Legend, time can make "simple" actions consequential if weather, people, opportunities and needs continue evolving during them.
 
 ### 2. Irreversible harm creates thresholds players genuinely respect
 
@@ -481,7 +481,7 @@ Frostbite's maximum-health penalty is powerful because the player cannot simply 
 
 A veteran survives because they know where the cave is, which valley traps wind, where the rope climb exits and which shelter has a stove. Knowledge persists in the human even when the character dies.
 
-OpenLegend can support worlds where **learned topology and social/ecological knowledge** are as real as numeric progression.
+Open Legend can support worlds where **learned topology and social/ecological knowledge** are as real as numeric progression.
 
 ### 4. Equipment should store future options, not just stats
 
@@ -489,7 +489,7 @@ A match is "one future fire"; antibiotics are "one future infection answer"; a r
 
 ### 5. Shelters can become homes without full base-building
 
-Safehouse Customization adds authorship to found places. OpenLegend does not need every home to begin as player-placed walls; inhabiting, repairing, decorating and accumulating history in existing spaces can create stronger connection to the authored world.
+Safehouse Customization adds authorship to found places. Open Legend does not need every home to begin as player-placed walls; inhabiting, repairing, decorating and accumulating history in existing spaces can create stronger connection to the authored world.
 
 ### 6. Separate simulation modes when their contracts conflict
 
@@ -499,11 +499,11 @@ This is a clean precedent for avoiding one mode full of exceptions because incom
 
 ### 7. Long-lived simulations need deliberate refresh mechanisms
 
-Global loot/spawn refreshes, new regions and Tales can make veterans re-evaluate memorized routes. For a persistent OpenLegend world, the stronger version is not arbitrary reshuffling but **world change with an in-fiction cause** so knowledge evolves rather than being invalidated by patch fiat.
+Global loot/spawn refreshes, new regions and Tales can make veterans re-evaluate memorized routes. For a persistent Open Legend world, the stronger version is not arbitrary reshuffling but **world change with an in-fiction cause** so knowledge evolves rather than being invalidated by patch fiat.
 
 ### 8. Public promises accumulate expectation debt
 
-WINTERMUTE ultimately finished, but years of delay made its completion a reputational obligation separate from the success of Survival. OpenLegend should distinguish:
+WINTERMUTE ultimately finished, but years of delay made its completion a reputational obligation separate from the success of Survival. Open Legend should distinguish:
 - shipped behavior;
 - accepted near-term commitments;
 - research/possibilities.

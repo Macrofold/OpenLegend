@@ -10,7 +10,7 @@ Account for useful service and waiting separately. A job awaiting SQL should not
 
 Avoid making every subslice a job. Small work stays inline. Large work needs bounded coherent stopping points so a command or capture is not trapped behind an enormous batch. Also reserve enough operating headroom for saving, cleanup and recovery. No fixed CPU percentage is selected here; the required reserve is measured against actual obligations.
 
-[Google's resource-aware overload discussion](sources.md#s14) supports this distinction between request counts and demand. OpenLegend's application is to budget native work, retained bytes and dependency service, not merely HTTP requests or logged-in players.
+[Google's resource-aware overload discussion](sources.md#s14) supports this distinction between request counts and demand. Open Legend's application is to budget native work, retained bytes and dependency service, not merely HTTP requests or logged-in players.
 
 ## Cognition is an asynchronous consumer with real aggregate cost
 

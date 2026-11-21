@@ -52,7 +52,7 @@ Neither library removes expensive preparation. Recast's single-mesh stacked gene
 
 Both libraries separately routed at the same horizontal coordinates on the ground and the y=3 lookout. Following the ramp corridor in at most 10 cm increments, using `moveAlongSurface` plus surface-height lookup rather than only interpolating the straight-path corners, reached the destination in both. Recast produced 196 samples and navcat 198, with no unmatched physical stance in those sampled ramp runs. Observed support sequence was terrain, ramp, deck.
 
-**Integration blocker: navmesh height is approximate.** The flat surfaces were approximately 5 cm above their true planes; maximum measured ramp height correction was about 7.5 cm for Recast and 10 cm for navcat, greater than OpenLegend's 1.5 cm support tolerance. Project results back to the exact intended mechanical support with bounded correction/provenance; do not globally loosen physical support checks or choose any nearby floor. The probe's nearest-height mapping is diagnostic only, not a production semantic-support binding.
+**Integration blocker: navmesh height is approximate.** The flat surfaces were approximately 5 cm above their true planes; maximum measured ramp height correction was about 7.5 cm for Recast and 10 cm for navcat, greater than Open Legend's 1.5 cm support tolerance. Project results back to the exact intended mechanical support with bounded correction/provenance; do not globally loosen physical support checks or choose any nearby floor. The probe's nearest-height mapping is diagnostic only, not a production semantic-support binding.
 
 The initial lower climb settings fragmented the ramp for one or both generators. Three voxels allowed both to route it. This is a rasterization qualification finding, not permission for actors to acquire a 15 cm step ability. Voxel build tolerance and physical movement rules must be reconciled explicitly.
 
@@ -80,7 +80,7 @@ For each engine, an open route became partial after adding a full structural wal
 
 Each tiled probe removed the three tiles of one entire crossing column. The route became partial. Re-adding the saved tile data restored it, and references from the removed tiles were invalid both after removal and after re-addition. This verifies salt/reference invalidation in this case, not incremental production generation of newly invented topology. Tile removal/re-add is not the same as measuring an affected-tile rebuild under load.
 
-An exported/imported Recast mesh and JSON-round-tripped navcat mesh recovered the sampled route. Those are derived-data serialization probes, not OpenLegend save integration. Semantic support IDs, world/load/geometry epochs and active action progress must remain OpenLegend-owned; raw polygon references cannot become permanent entity identities.
+An exported/imported Recast mesh and JSON-round-tripped navcat mesh recovered the sampled route. Those are derived-data serialization probes, not Open Legend save integration. Semantic support IDs, world/load/geometry epochs and active action progress must remain Open Legend-owned; raw polygon references cannot become permanent entity identities.
 
 ### Scheduling, cancellation and memory lifecycle
 
@@ -106,7 +106,7 @@ No rigid-body dynamics integration, native save adapter, crowd physics or lighti
 
 ## Required production guards before adoption
 
-1. One authoritative OpenLegend geometry/motion owner. Render meshes, collider handles and polygon refs remain derived data. No model output can define executable callbacks.
+1. One authoritative Open Legend geometry/motion owner. Render meshes, collider handles and polygon refs remain derived data. No model output can define executable callbacks.
 2. Agreement among body shape, clearance, slope, step behavior, navmesh sampling error and final swept movement. Reject unsafe candidate segments; do not emit false arrival or spin indefinitely on an unusable corridor.
 3. Exact support provenance at endpoints, ramp transitions and stacked floors. Do not permit navmesh box tops to become usable supports merely because generated triangles are horizontal.
 4. Cache navigation by geometry revision and bounded body profiles. Prepare structural changes off the request path; update affected tiles where qualified. Ordinary actor movement, camera movement and cosmetic art changes do not rebuild static navigation.

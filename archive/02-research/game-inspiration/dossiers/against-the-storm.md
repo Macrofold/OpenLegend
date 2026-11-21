@@ -4,7 +4,7 @@
 
 [Preserved overview](../games/against-the-storm.md) · [Detailed mechanics study](../mechanics/against-the-storm-substitution-pressure-and-renewable-settlement-problems.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md)
 
-Against the Storm's strongest OpenLegend lesson is that **renewal can come from incomplete local problems without erasing the larger world**. Each settlement is bounded and disposable at the macro scale, yet player knowledge, the Smoldering City, world-map progress and campaign consequences persist. The game continually makes scarcity, missing capabilities and timing useful rather than treating a fully solved economy as the only desirable end state. Interpretations here are research proposals, not accepted OpenLegend requirements.
+Against the Storm's strongest Open Legend lesson is that **renewal can come from incomplete local problems without erasing the larger world**. Each settlement is bounded and disposable at the macro scale, yet player knowledge, the Smoldering City, world-map progress and campaign consequences persist. The game continually makes scarcity, missing capabilities and timing useful rather than treating a fully solved economy as the only desirable end state. Interpretations here are research proposals, not accepted Open Legend requirements.
 
 ## 1. Identity, current scope and player promise
 
@@ -65,7 +65,7 @@ This structure matters because “reset” can mean several different things:
 - knowledge persists;
 - campaign direction persists.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A persistent world can still contain **bounded projects**:
 - expedition;
@@ -113,7 +113,7 @@ Frogs emphasize stone masonry, rainwater and upgradeable species-specific housin
 
 Bats emphasize metallurgy and harsh sacrifice/discipline themes. The unlocked Manorial Court permits deliberate expulsion with a workforce benefit: it is a consequential population-management option, not evidence of freely simulated political deliberation. [ATS-C](#ats-c)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Inhabitants should differ because:
 - what they can do;
@@ -139,7 +139,7 @@ Therefore:
 This creates a valuable kind of incompleteness:
 > the settlement is a solution using the tools actually available.
 
-OpenLegend procedural worlds can similarly vary:
+Open Legend procedural worlds can similarly vary:
 - known technologies;
 - teachers;
 - institutions;
@@ -175,7 +175,7 @@ It is:
 - scarce ingredients may have competing uses;
 - production limits prevent accidental consumption.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A craft/invention system can support semantic categories:
 - combustible fuel;
@@ -206,7 +206,7 @@ The development history preserves a useful distinction:
 - poorly legible logistics made it less useful;
 - the developers revised the abstraction rather than simply adding throughput.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 An autonomous worker is not successful because it “did things.”
 
@@ -231,7 +231,7 @@ Without limits, automation can consume:
 
 Therefore automation is paired with **policy**.
 
-OpenLegend agent delegation should likewise expose:
+Open Legend agent delegation should likewise expose:
 - target amount;
 - minimum reserve;
 - permitted inputs;
@@ -273,7 +273,7 @@ It is not:
 - autonomous belief;
 - one person's private memory.
 
-OpenLegend can preserve the economic link while replacing aggregate-only population logic with richer individual actors where appropriate.
+Open Legend can preserve the economic link while replacing aggregate-only population logic with richer individual actors where appropriate.
 
 ## 9. Reputation versus Queen's Impatience
 
@@ -318,7 +318,7 @@ During a dangerous Storm, removing workers from woodcutting may reduce Hostility
 
 That makes **pausing production** a meaningful action. [ATS-D](#ats-d)
 
-OpenLegend schedules should similarly allow:
+Open Legend schedules should similarly allow:
 - season;
 - danger;
 - ritual;
@@ -402,7 +402,7 @@ Their rewards/consequences can alter:
 
 These give authored local meaning inside a procedural settlement.
 
-OpenLegend can similarly embed:
+Open Legend can similarly embed:
 - authored problems;
 - generated location/state;
 - multiple lawful solution paths.
@@ -436,7 +436,7 @@ This is a strong design sequence:
 3. make the cost legible;
 4. preserve the meaningful tradeoff.
 
-OpenLegend needs/hunger/repair systems should pass the same test.
+Open Legend needs/hunger/repair systems should pass the same test.
 
 ## 16. Building, roads and settlement layout
 
@@ -465,7 +465,7 @@ Hubs improve automatically when the required housing and decoration conditions a
 
 **Interpretation:** placement, population and aesthetics can contribute to the same useful project. The design risk is converting expressive decoration into a repetitive threshold-filling exercise. A smaller well-situated hub can be more useful than expansion whose ongoing fuel demand the economy cannot support.
 
-### OpenLegend opportunity
+### Open Legend opportunity
 
 A generated settlement should not be a static backdrop. Distances should matter enough that warehouse placement, workshop grouping, roads, gates and housing create understandable consequences without requiring microscopic path optimization.
 
@@ -544,7 +544,7 @@ Custom/training modes let players experiment under selected conditions.
 
 The 1.10 update added support for four species in Training Expeditions. [ATS-E](#ats-e)
 
-These are useful OpenLegend patterns:
+These are useful Open Legend patterns:
 - separate learning/sandbox contracts from canonical persistent worlds;
 - do not make every debug/creator ability part of normal embodiment.
 
@@ -581,7 +581,7 @@ On September 24, 2026, **1.11 Rebel Hideout**:
 
 The two-species modifier is revealing: less content in one run can create a different strategy space. Variation does not require always adding.
 
-**Save compatibility is version-specific:** the 1.10 announcement closed ongoing settlements with compensation while retaining broader progress. The 1.11 preview explicitly said that closure was unnecessary for this smaller change. Neither policy is a promise that every future update preserves every active settlement, nor an OpenLegend migration recommendation. [ATS-E](#ats-e) [ATS-X](#ats-x)
+**Save compatibility is version-specific:** the 1.10 announcement closed ongoing settlements with compensation while retaining broader progress. The 1.11 preview explicitly said that closure was unnecessary for this smaller change. Neither policy is a promise that every future update preserves every active settlement, nor an Open Legend migration recommendation. [ATS-E](#ats-e) [ATS-X](#ats-x)
 
 ## 23. Art, audio, interface and feel
 
@@ -798,7 +798,7 @@ A route offers Amber for goods plus provisions, but those resources are needed l
 
 A player places a Small Hearth near distant work, assigns a keeper and supplies fuel. Shorter rest trips improve access, but the extra consumption competes with other jobs. The next choice is whether local housing and development justify maintaining that hub. **Limit:** it does not duplicate the Ancient Hearth's special firekeeper bonus. [ATS-T](#ats-t)
 
-## 31. Transferable inspiration for OpenLegend
+## 31. Transferable inspiration for Open Legend
 
 ### A. Use bounded projects inside persistent history
 

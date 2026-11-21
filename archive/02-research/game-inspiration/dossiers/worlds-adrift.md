@@ -2,7 +2,7 @@
 
 **G15 · Complete research pass, September 26, 2026.** This dossier covers Bossa Studios' original persistent sandbox MMO through its July 2019 shutdown. It does **not** silently substitute the later game *Lost Skies*: that title is a separate, non-MMO successor-in-spirit built from some of the same ideas. [Preserved earlier chapter](../games/worlds-adrift.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-Worlds Adrift is one of the most important OpenLegend references in this library because its most memorable mechanics were not abstract stat systems. They were **physical verbs**—grapple, swing, climb, glide, lift, attach, repair, sail, board, shoot, salvage—and a player-built vehicle that turned those verbs into emergent stories. It is also a warning about coupling a mechanically expensive simulation to an always-online MMO operating model before the surrounding game has enough durable reasons to stay.
+Worlds Adrift is one of the most important Open Legend references in this library because its most memorable mechanics were not abstract stat systems. They were **physical verbs**—grapple, swing, climb, glide, lift, attach, repair, sail, board, shoot, salvage—and a player-built vehicle that turned those verbs into emergent stories. It is also a warning about coupling a mechanically expensive simulation to an always-online MMO operating model before the surrounding game has enough durable reasons to stay.
 
 The original Steam page identifies Bossa Studios as developer/publisher and says the game is no longer available. Its unfinished roadmap remains historical, not a presently playable promise. [WA01](#wa01)
 
@@ -61,7 +61,7 @@ Personal identity instead emerged from:
 - crew/social affiliations;
 - practical skill at traversal, engineering, piloting and combat.
 
-That matters for OpenLegend: **identity can be expressed through capability, possessions, history and role in a group without requiring a formal class label.**
+That matters for Open Legend: **identity can be expressed through capability, possessions, history and role in a group without requiring a formal class label.**
 
 ## 3. Traversal: grappling, climbing and gliding as core skill
 
@@ -107,7 +107,7 @@ That means one mechanic can become:
 - improvised cargo handling;
 - a way to avoid losing resources to the void.
 
-**OpenLegend lesson:** a high-quality universal verb can create more possibility than dozens of bespoke interaction prompts.
+**Open Legend lesson:** a high-quality universal verb can create more possibility than dozens of bespoke interaction prompts.
 
 <a id="2-grappling-is-useful-before-the-first-ship-exists"></a>
 <a id="study-2"></a>
@@ -140,7 +140,7 @@ The key design property is **shared causality**:
 
 This makes accidents narratively interesting because they are consequences of reusable laws.
 
-### OpenLegend implication
+### Open Legend implication
 
 Where feasible, reusable world laws should sit below content-specific mechanics. “Explosion applies impulse and damage” is more generative than “explosion can only break objects explicitly tagged for this quest.” The cost, demonstrated later in the lifecycle section, is engineering and runtime complexity.
 
@@ -186,7 +186,7 @@ The progression loop therefore linked **curiosity to capability**: exploration o
 
 Schematics could also be found in chests/ruins. This meant knowledge-tree unlocks and world-found schematics overlapped. A detailed Steam reviewer liked both ideas independently but criticized the redundancy: finding a schematic could make spending knowledge on the same branch feel wasteful even when that investment was required to reach later nodes. [WA38](#wa38)
 
-This is a useful warning for OpenLegend progression:
+This is a useful warning for Open Legend progression:
 - **discovery unlocks** feel special because the world gave you something;
 - **tree unlocks** feel agentic because you chose a path;
 - if both grant the same entitlement without meaningful distinction, one can invalidate the other.
@@ -235,7 +235,7 @@ The gauntlet supported multiple functions:
 - lift/manipulate;
 - scan, with Knowledge rewards narrowed in 2019 as described in [the progression study](#study-5).
 
-That is another compact OpenLegend pattern: a single diegetic tool can expose several world-valid verbs instead of proliferating arbitrary UI actions.
+That is another compact Open Legend pattern: a single diegetic tool can expose several world-valid verbs instead of proliferating arbitrary UI actions.
 
 ## 7. Ship construction: the player's moving base and build
 
@@ -282,7 +282,7 @@ Instead of one “ship HP” bar being the only meaningful state, combat could d
 
 That turns damage into changing functionality. A crippled ship may still fly; a disarmed ship may flee; a coreless ship may fall.
 
-**OpenLegend lesson:** componentized machines create richer consequences when local damage changes capabilities rather than only reducing a global number.
+**Open Legend lesson:** componentized machines create richer consequences when local damage changes capabilities rather than only reducing a global number.
 
 <a id="4-lift-propulsion-and-defense-are-different-dependencies"></a>
 <a id="study-4"></a>
@@ -419,7 +419,7 @@ This creates an interesting hybrid:
 - curated/integrated by the developer;
 - persistent MMO simulation running across those locations.
 
-**OpenLegend lesson:** player invention does not have to mean “each player runs a separate modded server.” Community artifacts can enter a shared canon through a review/publishing pipeline.
+**Open Legend lesson:** player invention does not have to mean “each player runs a separate modded server.” Community artifacts can enter a shared canon through a review/publishing pipeline.
 
 <a id="8-island-creator-changes-who-authors-exploration"></a>
 <a id="study-8"></a>
@@ -452,7 +452,7 @@ The distinction is crucial:
 - **emergent narrative** answered “what happened to us?”;
 - the game was weaker at consistently answering “what should we care about doing next?”
 
-OpenLegend wants both.
+Open Legend wants both.
 
 <a id="7-discovery-connects-a-material-world-with-a-cultural-one"></a>
 <a id="study-7"></a>
@@ -477,13 +477,13 @@ Update 27's food changes supplied temporary benefits such as movement/climbing i
 
 ## 14. NPCs, creatures and AI
 
-Worlds Adrift was player-centric rather than NPC-society-centric. It did not contain the kind of town simulation, schedule system or conversational agent ecology OpenLegend targets.
+Worlds Adrift was player-centric rather than NPC-society-centric. It did not contain the kind of town simulation, schedule system or conversational agent ecology Open Legend targets.
 
 Creatures existed as part of the world; early demonstrations highlighted flying manta-like animals and ambitions for an ecosystem whose populations could be affected by player harvesting. [WA36](#wa36)
 
 But Bossa's closure discussion makes clear that the envisioned PvE/ecology/content layer was not fully realized. Do not read prototype/press-demo ambitions as a complete shipped ecosystem simulation. [WA47](#wa47)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Worlds Adrift is more useful for:
 - physical agents;
@@ -513,7 +513,7 @@ Players could:
 
 The Knowledge system could encourage specialization because fully researching every crafting family was expensive. A crew could therefore become socially differentiated by expertise rather than hard class. [WA33](#wa33)
 
-This is a strong OpenLegend idea: **roles can emerge from learned capabilities and responsibility rather than class selection.**
+This is a strong Open Legend idea: **roles can emerge from learned capabilities and responsibility rather than class selection.**
 
 There was no authored romance/friendship meter system comparable to a party RPG.
 
@@ -700,7 +700,7 @@ Developer Luke Williams separately described major gameplay ambitions that never
 
 Bossa announced shutdown in May 2019. Servers ultimately closed in **July 2019**, making the original MMO unplayable as a live service. [WA52](#wa52)
 
-The important OpenLegend causal loop is plausible without overclaiming:
+The important Open Legend causal loop is plausible without overclaiming:
 
 > expensive persistent simulation → more maintenance pressure → less capacity for goals/content/polish → weaker ability to grow/retain enough players → less economic room to pay for the expensive simulation.
 
@@ -756,7 +756,7 @@ Worlds Adrift sold the fantasy of a persistent world where a player's ship and d
 
 Bossa's retrospective specifically mentions wipes as harmful to momentum. [WA51](#wa51)
 
-This should not be confused with OpenLegend's development-stage policy where incompatible saves may intentionally be discarded. The relevant lesson begins once players are invited to treat a world as durable:
+This should not be confused with Open Legend's development-stage policy where incompatible saves may intentionally be discarded. The relevant lesson begins once players are invited to treat a world as durable:
 
 **persistence is a product promise, not merely a database implementation detail.**
 
@@ -775,7 +775,7 @@ The release ties **Blight** to server slowdown and prioritizes destruction using
 
 **Interpretation:** operational cleanup expressed as weather becomes part of the risk environment. It is understandable only when warnings and behavior are coherent. Resource pressure is not automatically an interesting fictional threat. Storing an absent ship can honor continuity without simulating every part; deleting it to recover performance is another promise.
 
-The original chapter's wipe warning remains intact. It does not invalidate OpenLegend's different development-save policy. Durable public investment needs a contract distinct from prototype iteration.
+The original chapter's wipe warning remains intact. It does not invalidate Open Legend's different development-save policy. Durable public investment needs a contract distinct from prototype iteration.
 
 #### Recovery has protected and exposed possessions
 
@@ -812,13 +812,13 @@ In a developer interview published by **coherence**, Williams and Mark Dugdale e
 
 **Interpretation:** this is stronger evidence than a petition or a speculative forum title, but weaker than a complete playable restored MMO. This research did not execute its binaries, test compatibility or certify security, authorization or feature completeness. Its existence qualifies any absolute claim that reconstruction can never be attempted without converting a partial project into a finished service.
 
-## 23. Transferable inspiration for OpenLegend
+## 23. Transferable inspiration for Open Legend
 
 ### A. Give players verbs whose usefulness is not predetermined
 
 Grapple is a traversal mechanic, rescue mechanic, boarding mechanic, cargo mechanic and improvisation mechanic because it interacts with shared physics.
 
-For OpenLegend, analogous primitives might include:
+For Open Legend, analogous primitives might include:
 - attach/detach;
 - contain/pour;
 - heat/cool;
@@ -847,7 +847,7 @@ Then damage, invention and repair all operate on the same object graph.
 
 A storm wall asks “is your machine and pilot ready?” rather than “is level >= 20?”
 
-OpenLegend can use:
+Open Legend can use:
 - environmental constraints;
 - social permissions;
 - knowledge requirements;
@@ -864,7 +864,7 @@ Island Creator is a clean precedent for player-made geography being promoted int
 
 Worlds Adrift could generate extraordinary anecdotes but Bossa itself later described a shortage of goals, richer creatures, lore access, PvE targets and territory systems.
 
-For OpenLegend, “agents can do anything” is not enough. Players need:
+For Open Legend, “agents can do anything” is not enough. Players need:
 - goals they choose;
 - goals others create;
 - world pressures;
@@ -876,7 +876,7 @@ For OpenLegend, “agents can do anything” is not enough. Players need:
 
 ### F. Infrastructure ambition should follow demonstrated gameplay value
 
-OpenLegend should not assume “persistent shared world” automatically means MMO-scale global simulation. The smallest authority model that preserves the actual player value is strategically safer.
+Open Legend should not assume “persistent shared world” automatically means MMO-scale global simulation. The smallest authority model that preserves the actual player value is strategically safer.
 
 ### G. Design the shutdown/degradation path before promising permanence
 
@@ -892,7 +892,7 @@ The Worlds Adrift Island Creator reviews show how much emotional value remained 
 <a id="15-transferable-patterns-and-limits-for-openlegend"></a>
 <a id="study-15"></a>
 
-### Detailed study 15: Transferable patterns and limits for OpenLegend
+### Detailed study 15: Transferable patterns and limits for Open Legend
 
 **A home can be an executable construction.** The ship's material, placement, repair and travel consequences make it more than a cosmetic base. A good invention should change what people can attempt, not only what they can display.
 

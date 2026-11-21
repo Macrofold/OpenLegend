@@ -56,7 +56,7 @@
 
 **Appeal in the selected accounts:** The positive player accounts value exploration and collecting alongside creatures doing useful work. The producer’s RimWorld influence makes the intended connection explicit: automation has an emotional dimension when the workers are beings rather than anonymous blocks. This helps explain the concept; it does not quantify which part caused the commercial breakout. [FG-PAL-P](sources-04.md#source-fg-pal-p) [FG-PAL-D](sources-04.md#source-fg-pal-d)
 
-**Counterpoint:** The early-access review identifies uneven polish and the friction around worker behavior, alongside a derivative-feeling mixture of familiar systems and an intentionally uncomfortable treatment of creatures as resources. Separate taste in that tone from bugs. An unreliable worker can turn delegation into another supervision task; that is an OpenLegend design risk, not a claim that all current Palworld workers remain broken. [FG-PAL-C](sources-04.md#source-fg-pal-c)
+**Counterpoint:** The early-access review identifies uneven polish and the friction around worker behavior, alongside a derivative-feeling mixture of familiar systems and an intentionally uncomfortable treatment of creatures as resources. Separate taste in that tone from bugs. An unreliable worker can turn delegation into another supervision task; that is an Open Legend design risk, not a claim that all current Palworld workers remain broken. [FG-PAL-C](sources-04.md#source-fg-pal-c)
 
 **Interpretive tension:** A helper is engaging when both its usefulness and its individuality matter. Perfect compliance risks making it an appliance; constant failure makes it a chore.
 
@@ -68,7 +68,7 @@
 
 **Counterpoint:** The skeptical review is a valuable correction to a one-sided success story: declared personality traits and tiny interaction summaries did not make its colonists feel like people to that critic. Early waiting and administrative friction exposed the machinery. This is not a majority finding; it shows that emergent incident variety and emotional believability are separable achievements. [FG-RW-C](sources-04.md#source-fg-rw-c)
 
-**Interpretive tension:** OpenLegend cannot assume either that fluent dialogue solves RimWorld’s limitations or that simulation alone makes dialogue unnecessary. Test the connection between expressed personality, actual choices, and remembered consequences.
+**Interpretive tension:** Open Legend cannot assume either that fluent dialogue solves RimWorld’s limitations or that simulation alone makes dialogue unnecessary. Test the connection between expressed personality, actual choices, and remembered consequences.
 
 **Concrete anchors:** The valued worker no longer works the same way (documented bodily consequence); An attacker can become someone the colony relies on (documented social/management option); Chronology makes a family relationship strange (attributed reviewer incident). [Full guide](../games/rimworld.md#field-guide-rimworld).
 
@@ -76,7 +76,7 @@
 
 **Appeal in the selected accounts:** The review values collaborative creation especially: people contribute different skills to a shared construction rather than merely stand beside one another during combat. Its own examples move from basic shelter to functional contraptions. A created place can be both expressive and useful, and improving it supplies the next project. [FG-MC-C](sources-04.md#source-fg-mc-c)
 
-**Counterpoint:** The 2011 reviewer needed community documentation to learn many crafting and circuit possibilities. That specific onboarding state is historical, but the general tradeoff remains relevant: an expressive vocabulary can be hard to discover. “There is no prescribed goal” can also become “I do not know what to do”; that latter point is an OpenLegend design risk, not a newly measured Minecraft complaint. [FG-MC-C](sources-04.md#source-fg-mc-c)
+**Counterpoint:** The 2011 reviewer needed community documentation to learn many crafting and circuit possibilities. That specific onboarding state is historical, but the general tradeoff remains relevant: an expressive vocabulary can be hard to discover. “There is no prescribed goal” can also become “I do not know what to do”; that latter point is an Open Legend design risk, not a newly measured Minecraft complaint. [FG-MC-C](sources-04.md#source-fg-mc-c)
 
 **Interpretive tension:** The creator’s meaningful contribution need not be manual repetition. Choosing what to make, understanding its tradeoffs, and seeing it work can remain satisfying even as better tools remove tedious placement.
 
@@ -104,7 +104,7 @@
 
 ### Baldur’s Gate 3
 
-**Appeal in the selected accounts:** The review praises the conjunction of rich characters and systemic freedom: people have agendas worth caring about, while interactions let the player act creatively around them. The world reacts to earlier choices rather than treating every quest as an isolated transaction. That makes a useful comparison for OpenLegend’s ambition to connect action and relationship continuity. [FG-BG-C](sources-04.md#source-fg-bg-c)
+**Appeal in the selected accounts:** The review praises the conjunction of rich characters and systemic freedom: people have agendas worth caring about, while interactions let the player act creatively around them. The world reacts to earlier choices rather than treating every quest as an isolated transaction. That makes a useful comparison for Open Legend’s ambition to connect action and relationship continuity. [FG-BG-C](sources-04.md#source-fg-bg-c)
 
 **Counterpoint:** The same critic finds the rules daunting and some timing/point-of-no-return signals confusing. More possibilities can create uncertainty about what an action or transition will actually commit. Those are legibility problems even inside an exceptionally positive review. Historical performance or late-act complaints elsewhere in the master are not presented as a fresh current bug audit. [FG-BG-C](sources-04.md#source-fg-bg-c)
 

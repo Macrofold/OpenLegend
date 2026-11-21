@@ -105,7 +105,7 @@ Do not fund every optional stage merely because the root has an allowance. Each 
 
 Track image/model generation, any language/vision planning or review, rigging/animation, conversion compute, artifact storage/transfer, and shared compute separately where applicable. Count settled costs plus outstanding/uncertain commitments once against the root and applicable shared ceilings. Do not add the same provider charge again as workflow cost. A missing price or credible upper bound blocks automatic dispatch.
 
-The existing Macrofold Worker is selected and funded by its owner. OpenLegend must not create, replace, resume, or destroy shared compute merely because an asset is pending. Per-Run limits are not a cap on shared Worker idle/allocation expense; follow [the current Worker contract](../ai-providers.md#shared-worker-setup-and-cutover). An art integration needs an explicit compatible execution adapter; current language inference routes are not proof of image/mesh support.
+The existing Macrofold Worker is selected and funded by its owner. Open Legend must not create, replace, resume, or destroy shared compute merely because an asset is pending. Per-Run limits are not a cap on shared Worker idle/allocation expense; follow [the current Worker contract](../ai-providers.md#shared-worker-setup-and-cutover). An art integration needs an explicit compatible execution adapter; current language inference routes are not proof of image/mesh support.
 
 Cancellation stops future paid stages immediately and requests cancellation of known accepted work where supported. It does not promise a refund or the disappearance of an in-progress result. If a subscriber disappears, remaining permitted subscribers may still justify the artifact. If none remain, follow the plan's cancellation/retention policy without spawning replacement work. Deleting an entity never causes a completed asset to recreate it.
 
@@ -178,13 +178,13 @@ Pack export includes permitted runtime bytes, exact manifests/compatible family 
 
 No provider is selected by this proposal. Start with authored/procedural fixtures and one replaceable production adapter; do not build integrations for many vendors before measuring the first real family. Select a provider using repeatable identity/style output, rigid geometry and part quality, controllable dimensions, compatible export, rig coverage, API task/reconciliation semantics, rights/privacy terms, retention, and total useful-asset cost including correction/rejection.
 
-Official documentation checked September 27, 2026 establishes possibilities, not OpenLegend performance:
+Official documentation checked September 27, 2026 establishes possibilities, not Open Legend performance:
 
 - [Meshy Image to 3D](https://docs.meshy.ai/en/api/image-to-3d) exposes asynchronous tasks and model outputs including GLB. Its requested polygon count can differ from the result. Therefore local result validation is required; no latency or quality guarantee is inferred.
 - [Meshy Multi-Image to 3D](https://docs.meshy.ai/en/api/multi-image-to-3d) accepts multiple views of the same object. This supports evaluating a shared-reference route, not assuming independently generated views agree.
 - [Meshy Rigging](https://docs.meshy.ai/en/api/rigging) explicitly focuses on standard humanoid assets with clear limbs and lists non-humanoid assets as unsuitable. Do not present this as arbitrary animal, six-limbed creature, garment-fit, or assembly automation.
-- [Meshy Asset Retention](https://docs.meshy.ai/en/api/asset-retention) and task expiry metadata make provider storage a separate operational concern. Collect and retain permitted approved outputs in OpenLegend's durable store.
-- [Khronos glTF 2.0](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html) is the chosen interchange baseline; OpenLegend still needs its narrower importer and semantic checks.
+- [Meshy Asset Retention](https://docs.meshy.ai/en/api/asset-retention) and task expiry metadata make provider storage a separate operational concern. Collect and retain permitted approved outputs in Open Legend's durable store.
+- [Khronos glTF 2.0](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html) is the chosen interchange baseline; Open Legend still needs its narrower importer and semantic checks.
 
 Pin selected model/configuration/adapter versions and record the actual reported revision, rather than silently relying on a changing `latest` alias. Verify current limits, pricing, terms, and account capabilities before real dispatch. A hosted API's existence is not evidence that its price or output is appropriate for this game.
 

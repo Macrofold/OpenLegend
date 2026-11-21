@@ -1,7 +1,7 @@
 # Higgsfield art flow
 
 Apply the [shared procedure](README.md) and requested [profile](profiles.md). Higgsfield
-supplies generation and editing; OpenLegend's coordinator owns scope, inspection, file
+supplies generation and editing; Open Legend's coordinator owns scope, inspection, file
 preservation and the final result.
 
 ## Access and setup
@@ -114,7 +114,7 @@ guarantee deterministic regeneration or exportable native source.
 ## Current source notes
 
 Checked 2026-10-24 against primary documentation; verify volatile controls and account
-availability at execution time. These sources document capabilities, not an OpenLegend
+availability at execution time. These sources document capabilities, not an Open Legend
 quality benchmark or a completed account setup.
 
 - [CLI setup, job recovery and current model catalog](https://github.com/higgsfield-ai/cli)

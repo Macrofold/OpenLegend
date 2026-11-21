@@ -4,7 +4,7 @@
 
 **Interpretation.** A world that resists the player can make survival, loyalty, and improvement feel earned. An injury or rescue can become a character’s identity rather than a temporary inconvenience. But disadvantage is only useful if the player can perceive a path to action.
 
-**Transfer.** OpenLegend’s NPCs should have their own priorities and limits. Assistance should sometimes depend on trust, resources, or incompatible commitments. A world of endlessly accommodating assistants would remove much of the social texture you are trying to create.
+**Transfer.** Open Legend’s NPCs should have their own priorities and limits. Assistance should sometimes depend on trust, resources, or incompatible commitments. A world of endlessly accommodating assistants would remove much of the social texture you are trying to create.
 
 **Pitfall.** Do not confuse unfriendliness of interface with meaningful harshness. A player losing to an understandable world rule is different from losing because they cannot tell what their command will do.
 
@@ -34,7 +34,7 @@
 
 3. **A home places you inside other people’s territory.** *Documented sandbox system.* Settlement, travel, trade, and faction relationships are connected choices. Where the group establishes itself changes whom it encounters and what pressures it faces. A technically functional base is not automatically a politically or logistically good home. [FG-KE-O](../references/sources-04.md#source-fg-ke-o)
 
-**What to borrow for OpenLegend.** Give OpenLegend inhabitants reasons to resist, cooperate, remember, and rescue—not just agreeable conversation. Protect the line between a meaningful world consequence and a technical failure. Ensure several viable forms of purpose exist once immediate survival becomes easy.
+**What to borrow for Open Legend.** Give Open Legend inhabitants reasons to resist, cooperate, remember, and rescue—not just agreeable conversation. Protect the line between a meaningful world consequence and a technical failure. Ensure several viable forms of purpose exist once immediate survival becomes easy.
 
 *Scope/evidence note:* Base-game systems unless noted; examples describe documented mechanics, not a play session conducted for this research.
 <!-- END FIELDGUIDE ADDITION -->

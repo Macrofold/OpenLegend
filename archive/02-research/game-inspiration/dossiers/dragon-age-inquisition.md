@@ -43,7 +43,7 @@ The organization is represented by authored operations and results, not thousand
 
 ## 3. Eighteen worked mechanics and objects
 
-Each entry identifies an actual affordance, its limiting condition and the experience it can produce. The final sentence is a **proposed transferable principle**, not an OpenLegend feature claim.
+Each entry identifies an actual affordance, its limiting condition and the experience it can produce. The final sentence is a **proposed transferable principle**, not an Open Legend feature claim.
 
 ### M01 — Created identity without a separately playable origin
 
@@ -256,7 +256,7 @@ The 2012 announcement refers to a Frostbite 2 foundation; the finished-game prod
 
 **Business model:** premium game, paid narrative/cosmetic content and a later bundle; multiplayer additionally has optional purchases. The current EA product page discloses paid random items and account/app requirements. Those dependencies affect long-term access even for a game with substantial solo value. Current prices are intentionally not quoted because sale and regional conditions vary. Current matchmaking, server lifetime and operating economics were not verified. [N1](#n1) [R3](#r3)
 
-## 10. Proposed OpenLegend inspiration, without importing the assets or scope
+## 10. Proposed Open Legend inspiration, without importing the assets or scope
 
 The useful unit is not “build Dragon Age.” It is a small relationship between a person's actions and a world's response.
 

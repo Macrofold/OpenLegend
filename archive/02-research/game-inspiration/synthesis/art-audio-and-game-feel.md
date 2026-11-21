@@ -15,7 +15,7 @@ What makes ordinary moments expressive, legible and satisfying?
 
 ## Ownership boundary
 
-PRESENT owns expressive execution and immediate feedback. Navigation/controls belong to TRAVEL and UX, the world's physical result belongs to the action/world owner, and setting meaning belongs to LORE. A visual or audio cue may communicate a fact without becoming the source of that fact. This is research, not an approved OpenLegend implementation.
+PRESENT owns expressive execution and immediate feedback. Navigation/controls belong to TRAVEL and UX, the world's physical result belongs to the action/world owner, and setting meaning belongs to LORE. A visual or audio cue may communicate a fact without becoming the source of that fact. This is research, not an approved Open Legend implementation.
 
 ## Focused evidence — Sea of Stars
 
@@ -41,7 +41,7 @@ This supports expressive environments without making every surface equally detai
 
 A dominant light is more convincing when neighboring stone, cloth, water, skin and vegetation respond coherently while retaining their material differences. The player's eye can then infer source, reach and atmosphere.
 
-OpenLegend's implication is already consistent with its current art direction: prefer a small number of purposeful light relationships over unexplained bright patches. A screenshot cannot establish the source game's renderer, moving-shadow stability or performance.
+Open Legend's implication is already consistent with its current art direction: prefer a small number of purposeful light relationships over unexplained bright patches. A screenshot cannot establish the source game's renderer, moving-shadow stability or performance.
 
 <a id="present-l003"></a>
 
@@ -55,7 +55,7 @@ The transferable principle is not “add timing minigames.” It is: when an adm
 
 ### PRESENT-L004 — Presentation convenience must not rewrite physical identity
 
-A distinctive scar, handed tool, closure, missing part or carried object should stay attached to the same side and person across supported views. A creator account describes Sea of Stars deliberately mirroring a scar for retro presentation; OpenLegend's grounded-world target chooses continuity instead.
+A distinctive scar, handed tool, closure, missing part or carried object should stay attached to the same side and person across supported views. A creator account describes Sea of Stars deliberately mirroring a scar for retro presentation; Open Legend's grounded-world target chooses continuity instead.
 
 This is more than polish for a world of remembered individuals. Recognition, equipment and later evidence can refer to persistent physical facts, while the renderer remains only their depiction.
 
@@ -67,7 +67,7 @@ A [GamesRadar+ review](https://www.gamesradar.com/sea-of-stars-review/) reports 
 
 For Open Legend, where a person actually works, performs, stops or moves out of audible reach, the corresponding sound may change as permitted by the world's existing action and hearing rules. Do not infer musicianship, interruptions or proximity merely from decorative audio, or make real simulation depend on the soundtrack. Audible human life may be important even where it grants no combat advantage. [Sound and feedback production](../../../../docs/production-workflows/audio-and-feedback.md) owns how to explore an appropriate sound treatment.
 
-## Current OpenLegend baseline and existing design owners
+## Current Open Legend baseline and existing design owners
 
 The [creative brief](../../../../art-direction/final-board/creative-brief.md), [current art decisions](../../../../art-direction/decisions.md), [3D pixel-art feature specification](../../../../docs/projects/3d-pixel-art-feature-spec.md) and [scene production workflow](../../../../docs/production-workflows/scenes-and-interfaces.md) already own the selected visual direction and production route. This pass strengthens their acceptance questions; it does not select a renderer or reopen the current believable-proportion requirement.
 
@@ -84,9 +84,9 @@ Player interaction is separately owned by the UI handbook and action contracts. 
 
 ## Open questions and missing evidence
 
-This is a one-source incorporation. Wider PRESENT research should compare games with very different budgets, cameras and action models before generalizing production cost or feedback intensity. Motion stability, ordinary-play readability and OpenLegend player enjoyment still require direct evidence.
+This is a one-source incorporation. Wider PRESENT research should compare games with very different budgets, cameras and action models before generalizing production cost or feedback intensity. Motion stability, ordinary-play readability and Open Legend player enjoyment still require direct evidence.
 
-For action execution specifically, the ND38 design separates the selected world's mechanics, character competence, human input skill, accessibility and client authority. Competitive input authenticity remains a deferred decision, and optional execution must still demonstrate a worthwhile choice after mastery. Sea of Stars supplies a comparison, not evidence that OpenLegend's selected timing or finishing interactions are enjoyable.
+For action execution specifically, the ND38 design separates the selected world's mechanics, character competence, human input skill, accessibility and client authority. Competitive input authenticity remains a deferred decision, and optional execution must still demonstrate a worthwhile choice after mastery. Sea of Stars supplies a comparison, not evidence that Open Legend's selected timing or finishing interactions are enjoyable.
 
 ## Design subtopics
 

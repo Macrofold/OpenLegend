@@ -1,7 +1,7 @@
 ---
 name: openlegend-behavior-debugging
 description: >-
-  Diagnose and test missing or unexpected OpenLegend character behavior through controlled
+  Diagnose and test missing or unexpected Open Legend character behavior through controlled
   context, state, goal and action experiments, then generalize the demonstrated fix.
 ---
 

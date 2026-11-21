@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md#october-17-mobile-successes-and-unsuccessful-services) · [Research status](../research-progress-mobile-2026-10-17.md) · [Research requirements](../research-requirements.md)
 
-**Research date: October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no OpenLegend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
+**Research date: October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no Open Legend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
 
 ## Game, mechanics and player-created content
 
@@ -152,7 +152,7 @@ The inspected material presents Earth primarily as Minecraft creatures and build
 | **Moobloom**    | The yellow flower-covered cow can provide a buttercup through shearing and milk through a bucket. It connects a distinctive look to usable materials. The archive marks some flower-trail probabilities as needing information, so those percentages are excluded. Minecraft's later mob-vote proposal is not evidence of additional released Earth behavior. [Earth-specific entry](https://wiki.ronlab.site/content/minecraftwiki_en_all_maxi_2025-11/Earth:Moobloom)        |
 | **Jolly Llama** | The publisher's November 2019 park promotion introduced it through an exclusive Adventure before wider availability. A recognizable creature thus linked an outing, an encounter and something to bring into a personal build. [Mojang's contemporary announcement](https://www.minecraft.net/en-us/article/minecraft-earth-mobs-park)                                                                                                                                         |
 
-**Interpretation for OpenLegend research:** a fictional world can gain meaning through what the player makes and what its inhabitants do, even without a plot-heavy campaign. Here, a desired habitat could motivate collection, while a completed collection could remove that motivation unless the player found another worthwhile project. Whether such projects sustain enjoyment and spending is a separate question examined through the reception and commercial evidence. This observation does not authorize a feature, an economy restriction or a monetization design.
+**Interpretation for Open Legend research:** a fictional world can gain meaning through what the player makes and what its inhabitants do, even without a plot-heavy campaign. Here, a desired habitat could motivate collection, while a completed collection could remove that motivation unless the player found another worthwhile project. Whether such projects sustain enjoyment and spending is a separate question examined through the reception and commercial evidence. This observation does not authorize a feature, an economy restriction or a monetization design.
 
 #### Context-source access and scope
 
@@ -324,7 +324,7 @@ The evidence suggests a relationship worth testing: supplies gain personal value
 
 Initial wonder, continued play and payment also need separate explanations. Encountering familiar objects through a camera may motivate an initial trial; that does not establish a recurring reason to create or buy. Time spent undoing unwanted edits or restarting an interrupted session is different from voluntary effort refining a design. The financial record belongs in the commercial section. Neither enthusiasm at closure nor angry forum comments establish whether the game could sustain its costs, and no mental-health explanation is inferred from repeated use.
 
-### OpenLegend research questions
+### Open Legend research questions
 
 - **Purpose after collection:** can a player point to a personally desired use for the latest reward, and does that use remain appealing after the first experiment?
 - **Creative control:** how many actions express the player's intention, and how many merely repair tracking or placement mistakes? Does a clear preview help the player trust the result?
@@ -332,7 +332,7 @@ Initial wonder, continued play and payment also need separate explanations. Enco
 - **Practical access:** can a session fit the available room, lighting, device and connection, and can the player resume it when those conditions change?
 - **Return after a break:** do people come back for an unfinished project, a partner, a collection target or new tools? Which update addresses their actual reason for stopping?
 
-These are research hypotheses and comparison questions, not instructions to import Minecraft Earth's mechanics into OpenLegend.
+These are research hypotheses and comparison questions, not instructions to import Minecraft Earth's mechanics into Open Legend.
 
 ### Evidence register and scope of reading
 

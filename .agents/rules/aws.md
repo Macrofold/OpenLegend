@@ -1,10 +1,10 @@
-# AWS access for OpenLegend
+# AWS access for Open Legend
 
 For verification machines, read the [managed-worker procedure](verification-workers.md) before provisioning, starting, claiming or using one, including an existing instance. It owns exclusive use, cleanup and the distinction between designed and available tooling; AWS access alone does not grant a claim.
 
 ## Project and profile isolation
 
-Use the explicitly selected `openlegend` profile and `us-east-2` Region for OpenLegend's current AWS project. Its AWS account ID is `027677879749`; verify it with STS before resource mutations. These settings do not apply to Mike's work projects.
+Use the explicitly selected `openlegend` profile and `us-east-2` Region for Open Legend's current AWS project. Its AWS account ID is `027677879749`; verify it with STS before resource mutations. These settings do not apply to Mike's work projects.
 
 On Mike's current machine, the CLI supporting browser sign-in is `$HOME/.local/bin/aws` (2.38.1 at setup). The ordinary `aws` command remains his work installation. Use the explicit executable and profile, for example:
 
@@ -14,7 +14,7 @@ On Mike's current machine, the CLI supporting browser sign-in is `$HOME/.local/b
 
 Do not change the default/work profiles, export a global `AWS_PROFILE`, copy credentials into the repository, or create long-lived access keys to avoid sign-in. Renew only the selected profile when required. Signing in does not authorize unrelated resources, spending or permission changes; the root task policy still applies.
 
-If Mike has renewed the session, repeat the identity check above. A successful identity check for the expected project confirms credential renewal. Continue with the applicable worker ownership and spending checks, including the original campaign and outstanding commitments on resumption. If renewal is still needed, follow the installed AWS sign-in instructions with the explicit OpenLegend executable, profile and Region. Ask before running the interactive login command.
+If Mike has renewed the session, repeat the identity check above. A successful identity check for the expected project confirms credential renewal. Continue with the applicable worker ownership and spending checks, including the original campaign and outstanding commitments on resumption. If renewal is still needed, follow the installed AWS sign-in instructions with the explicit Open Legend executable, profile and Region. Ask before running the interactive login command.
 
 The `aws-mcp` Codex connection allows only `AWS_MCP_PROXY_PROFILES=openlegend`, with `AWS_REGION` and `AWS_DEFAULT_REGION` set to `us-east-2` in that server's environment. Its service endpoint is in `us-east-1`; that does not change the project's selected resource Region. Never add a work profile to its allowed list without an explicit request. CLI is the primary path for local files and repeatable commands; MCP provides AWS knowledge and API tools using the same project permissions. An unavailable MCP connection does not require console-based resource management when CLI access works.
 
@@ -24,7 +24,7 @@ Use installed AWS skills selectively for the affected service. Their advice does
 
 The following guidance is from [AWS's new-experience rules](https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/refs/heads/main/rules/aws-starter-rules.md), distributed under the [Apache 2.0 license](../references/aws-agent-toolkit-LICENSE.txt). It is scoped above and formatted for this repository; existing project instructions take precedence. AWS's live documentation owns service availability and authentication limits.
 
-Mike uses AWS's new experience with social sign-in. The OpenLegend project and selected Region are identified above. The project's spending limit, permission and worker cleanup instructions govern routine worker operations. In particular, the runner already has a cleanup decision for its own disposable resources.
+Mike uses AWS's new experience with social sign-in. The Open Legend project and selected Region are identified above. The project's spending limit, permission and worker cleanup instructions govern routine worker operations. In particular, the runner already has a cleanup decision for its own disposable resources.
 
 ### Terminology
 

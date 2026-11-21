@@ -32,7 +32,7 @@ The mainline dossiers document several kinds of relationship consequence. Origin
 
 Combat cooperation offers a parallel history. Ordered tactics let a player specify repeatable behavior, while primer/detonator combinations make the moment of cooperation visible. Veilguard retains that joint-action opportunity but reduces the symmetry between protagonist and companions. Neither “everybody is directly controllable” nor “companions act without micromanagement” by itself establishes autonomy. An independently simulated person would additionally need bounded knowledge, goals, authority and a coherent response to interruption. The evidence reviewed does not establish a general-purpose autonomous cognition system in any of these titles.
 
-A useful small research experiment would give a helper one explicit routine and one conflicting personal obligation. The observation to record is not whether the helper produces natural dialogue, but whether the player understands why the routine paused, what remains possible and how the relationship can change the next decision. This is a proposed experiment, not an accepted OpenLegend feature.
+A useful small research experiment would give a helper one explicit routine and one conflicting personal obligation. The observation to record is not whether the helper produces natural dialogue, but whether the player understands why the routine paused, what remains possible and how the relationship can change the next decision. This is a proposed experiment, not an accepted Open Legend feature.
 
 ## 3. Continuity is a curated history, not a transferred universe
 
@@ -127,7 +127,7 @@ The smaller games reveal a parallel experimentation structure. EA2D worked with 
 
 There are also different end-of-life outcomes: an offline conversion for Legends, closure and archival/fan adaptation for The Last Court, and a server-dependent shutdown for Heroes. A surviving reward, a surviving image archive and a playable standalone game preserve different amounts of value. None is equivalent to perpetual service continuity. The study found no defensible comparable revenue series across these smaller games, so it does not rank their profitability or infer failure merely from eventual retirement.
 
-For OpenLegend, the strongest proposed takeaway is **portable meaning with explicit mechanical ownership**. A world can support different experiences without pretending they share identical rules. A card game's favor, an action game's detonation and a tactics game's flank can all express cooperation, but the state and interaction contract should remain clear. A shared setting is a source of coherence, not permission to blur authority, economics, perception or control.
+For Open Legend, the strongest proposed takeaway is **portable meaning with explicit mechanical ownership**. A world can support different experiences without pretending they share identical rules. A card game's favor, an action game's detonation and a tactics game's flank can all express cooperation, but the state and interaction contract should remain clear. A shared setting is a source of coherence, not permission to blur authority, economics, perception or control.
 
 ## 10. Reading/viewing routes and source record
 

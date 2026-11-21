@@ -1,4 +1,4 @@
-# OpenLegend limits and decisions
+# Open Legend limits and decisions
 
 **Skilled combat execution (ND38):** [ASE-L01–ASE-L10](limits/action-execution-and-skill-expression.md) records timing, physical contact and input-lifetime bounds plus the withdrawn fitting/assistance and ownership-neutralization restrictions. [ASE01–ASE12](maintainers/action-execution-and-skill-expression.md) owns the combat-only correction, focused requalification and independent combat acceptance.
 

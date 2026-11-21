@@ -2,7 +2,7 @@
 
 **G07 · Full research pass completed September 25, 2026.** Covers the major native activities, creator ecosystem and R01–R14 categories. This is not an exhaustive seasonal item database, personal playthrough, proprietary code audit or representative player survey. Historical rules, current documentation, experiments and scheduled closures are distinguished.
 
-[Preserved earlier chapter](../games/fortnite.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Fortnite is both a family of Epic-made activities and a creator ecosystem. A claim about one mode is not a rule for every island. This is design research, not a current purchasing guide or an OpenLegend implementation specification. Named licensed characters are reference examples, not proposed assets to copy.
+[Preserved earlier chapter](../games/fortnite.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Fortnite is both a family of Epic-made activities and a creator ecosystem. A claim about one mode is not a rule for every island. This is design research, not a current purchasing guide or an Open Legend implementation specification. Named licensed characters are reference examples, not proposed assets to copy.
 
 ## 1. The mode is part of the player promise
 
@@ -293,7 +293,7 @@ The player listing is self-selected, associated with a particular platform page 
 
 **A platform needs an audience journey and an operating model.** Editing, publishing, discovery, a satisfying first session, a return occasion and creator compensation are distinct achievements. A giant catalog can still be hard to navigate; a record event can coexist with cost pressure.
 
-These are reference lessons, not an instruction for OpenLegend to copy Fortnite's scale, event calendar, license strategy, monetization or competitive structure.
+These are reference lessons, not an instruction for Open Legend to copy Fortnite's scale, event calendar, license strategy, monetization or competitive structure.
 
 ## 18. Reading routes, coverage and preservation
 
@@ -339,7 +339,7 @@ Start with the official current mode descriptions and the historical constructio
 | R13 — Inspiration/limits | §17 and labeled interpretation throughout |
 | R14 — Sources/navigation/preservation | This section and annotated sources |
 
-**Per-game preservation:** the supplied master's Fortnite chapter and the full existing `games/fortnite.md` were compared. Their third-person/multiple-mode distinction, OG record-day account, creator-platform ambition, unresolved exact Newzoo ranking, limited earlier reception evidence and restrained OpenLegend recommendations remain unchanged. This dossier adds the missing full pass without retroactively claiming those sources had already been retrieved. Original source, review, metric and viewing registers were not overwritten. The packet-wide preservation audit remains a separate pending gate.
+**Per-game preservation:** the supplied master's Fortnite chapter and the full existing `games/fortnite.md` were compared. Their third-person/multiple-mode distinction, OG record-day account, creator-platform ambition, unresolved exact Newzoo ranking, limited earlier reception evidence and restrained Open Legend recommendations remain unchanged. This dossier adds the missing full pass without retroactively claiming those sources had already been retrieved. Original source, review, metric and viewing registers were not overwritten. The packet-wide preservation audit remains a separate pending gate.
 
 **Evidence limits:** no personal gameplay, full-video viewing, source-code audit, private cost/retention/attribution dataset or representative review survey. Some community mechanics were accessible through indexed text only. Current primary documentation supersedes incompatible old guides where indicated; conflicting transfer-policy answers remain unresolved. A documented experimental tool is not asserted universally production-ready merely because its tutorial is public.
 

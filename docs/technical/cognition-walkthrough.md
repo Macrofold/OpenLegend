@@ -404,7 +404,7 @@ Decision preparation also has a small query/candidate-vector cache and can embed
 
 ## Cycle 8: consolidate, reflect and learn during downtime
 
-**Starts:** at a safe eligible opportunity with actual pending memory/learning work. **Produces:** summaries, revised self-understanding or tentative learned methods. It does not run simply because a deer moves, and it does not guarantee every recent observation becomes a permanent summary.
+**Starts:** at a safe eligible opportunity with actual pending memory/learning work. **Produces:** summaries, revised self-understanding or tentative learned activities. It does not run simply because a deer moves, and it does not guarantee every recent observation becomes a permanent summary.
 
 The four subtables cover task scheduling, summarization, reflection and learning. Scheduling selects eligible work; it does not run all three activities every time. **8M**, **8C**, **8R** and **8L** identify those separate sequences.
 

@@ -10,7 +10,7 @@
 
 ## 1. Define experiences using real supported components
 
-OpenLegend should support ordinary tools, evolving shelters, unusual organisms and senses, world-authored laws, and reusable mechanisms. The common infrastructure must not assume hunger, human limbs, combustion, magic, or a numeric health meter. It does require typed identities, explicit authority, coherent effects, supported computation, and durable outcomes.
+Open Legend should support ordinary tools, evolving shelters, unusual organisms and senses, world-authored laws, and reusable mechanisms. The common infrastructure must not assume hunger, human limbs, combustion, magic, or a numeric health meter. It does require typed identities, explicit authority, coherent effects, supported computation, and durable outcomes.
 
 A new name or schema field does not implement behavior. A new law is executable only when supported host operations can express its semantics or a separately qualified algorithm provides them. A material property with no consumer remains descriptive/unused and must be labeled as such. Native implementations can be replaceable world systems; being compiled does not make a wilderness rule a platform invariant.
 

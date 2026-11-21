@@ -1,6 +1,6 @@
 # Dragon Age: Origins — full research dossier
 
-**G51 · Research pass and identified production-history remedy completed September 26, 2026.** Scope: BioWare/EA's 2009 Origins, the 2010 Awakening expansion and the major downloadable campaigns. PC and original console interfaces differ; Ultimate Edition bundles content but does not turn every module into one continuous campaign. Design transfers below are research proposals, not accepted OpenLegend requirements. Section 13.1 adds the base game's development sequence and constraints; inherited gameplay and review evidence is preserved, not represented as newly replayed or reread.
+**G51 · Research pass and identified production-history remedy completed September 26, 2026.** Scope: BioWare/EA's 2009 Origins, the 2010 Awakening expansion and the major downloadable campaigns. PC and original console interfaces differ; Ultimate Edition bundles content but does not turn every module into one continuous campaign. Design transfers below are research proposals, not accepted Open Legend requirements. Section 13.1 adds the base game's development sequence and constraints; inherited gameplay and review evidence is preserved, not represented as newly replayed or reread.
 
 [Requirements](../research-requirements.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md)
 
@@ -68,7 +68,7 @@ The recruitable cast includes Alistair, Morrigan, Leliana, Sten, Wynne, Zevran, 
 
 Approval is an individual relationship measure. Conversations, witnessed choices and gifts affect it; personal quests and additional flags gate important developments. Romances with Alistair, Morrigan, Leliana or Zevran have their own eligibility and progression conditions. A high number is therefore not sufficient to explain every relationship state. Gifts can repair many disagreements, but should not be described as overriding every decisive plot condition. [M11](#m11)
 
-The system does not infer arbitrary memories from every interaction. Its strength is authored specificity: people disagree for recognizable reasons. **Interpretation:** OpenLegend can borrow individual evaluators and persistent relational consequences without reducing trust, fear, desire, respect and obligation to one interchangeable affection value.
+The system does not infer arbitrary memories from every interaction. Its strength is authored specificity: people disagree for recognizable reasons. **Interpretation:** Open Legend can borrow individual evaluators and persistent relational consequences without reducing trust, fear, desire, respect and obligation to one interchangeable affection value.
 
 ## 9. Main story choices connect local and national stakes
 
@@ -238,7 +238,7 @@ The player recruits Shale before exploring the golem question. A combat-capable 
 
 An Awakening commander finds ore and funds fortification work rather than spending everything on personal gear. The reward is tied to the place and people entrusted to them. **Limit:** this is a bounded upgrade quest; a general settlement system would also need labour, supply, maintenance and communication rules that Awakening does not establish. [A5](#a5)
 
-## 18. What OpenLegend should learn—and not assume
+## 18. What Open Legend should learn—and not assume
 
 **Background should remain operational.** A person's origin can affect access, interpretation and obligations after an introductory sequence. Convergence is not inherently bad; forgetting the route to it is.
 
@@ -250,7 +250,7 @@ An Awakening commander finds ore and funds fortification work rather than spendi
 
 **Let one system supply an alternative inside another.** A prior alliance changing a family crisis is a stronger cross-system connection than simply adding a combat bonus. For generative worlds, the alternative must remain grounded in actual capabilities and authority.
 
-**Companions can be interpreters of places.** Bringing different people should change which history, danger or opportunity becomes apparent. OpenLegend would need perception and knowledge boundaries so an absent actor does not mysteriously know everything.
+**Companions can be interpreters of places.** Bringing different people should change which history, danger or opportunity becomes apparent. Open Legend would need perception and knowledge boundaries so an absent actor does not mysteriously know everything.
 
 **Do not copy authored branching and call it universal agency.** Origins' powerful moments are carefully constructed. A more open simulation needs rules for analogous consequences when no writer has pre-enumerated the branch, plus safeguards against incoherent or irreversible outcomes.
 

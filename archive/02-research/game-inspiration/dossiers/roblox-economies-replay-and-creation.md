@@ -2,7 +2,7 @@
 
 **G04 scoped supplement · October 13, 2026.** [Full platform dossier](roblox.md) · [Preserved chapter](../games/roblox.md) · [Roster](../research-roster.md) · [Expanded requirements](../research-economics-engagement-and-creation.md) · [Scope and verification](../research-progress-expansion-2026-10-13.md).
 
-Mike asked whether our Roblox research explains money-making and tycoon games, why experiences are compelling or repetitive, his enjoyment of dying and rebuilding in Apocalypse Rising, and how creators actually build content. This supplement addresses those questions. It is reference research, not an OpenLegend implementation plan, an exhaustive Roblox API audit, a new full review of every Roblox experience, or authorization to research G150–G166.
+Mike asked whether our Roblox research explains money-making and tycoon games, why experiences are compelling or repetitive, his enjoyment of dying and rebuilding in Apocalypse Rising, and how creators actually build content. This supplement addresses those questions. It is reference research, not an Open Legend implementation plan, an exhaustive Roblox API audit, a new full review of every Roblox experience, or authorization to research G150–G166.
 
 ## 1. What was already covered, and what this adds
 
@@ -109,7 +109,7 @@ Roblox creators use **Luau**, derived from Lua, with optional type annotations a
 
 There is an important execution distinction. A local script can present input and interface behavior on a player's device; shared outcomes require the server's game logic. Communication tools let a client request an action, not establish that the request is legitimate. Roblox's own security guidance requires the creator to check relevant permissions, quantities, timing and authoritative values. A player asking to buy an object should not get to declare its price or their balance. [S18], [S24]
 
-This matters for the OpenLegend comparison: **trusted developer-authored scripts installed into an experience are not equivalent to allowing any player or generated text to execute arbitrary code in a running world**. Roblox demonstrates the value of extensible authoring; it does not establish that a different engine should erase its own permission and execution boundaries.
+This matters for the Open Legend comparison: **trusted developer-authored scripts installed into an experience are not equivalent to allowing any player or generated text to execute arbitrary code in a running world**. Roblox demonstrates the value of extensible authoring; it does not establish that a different engine should erase its own permission and execution boundaries.
 
 ### Packages are useful, but a catalog is not automatic compatibility
 
@@ -133,7 +133,7 @@ Next, inspect the experience with more than one simulated client and different d
 
 Finally, package a useful subassembly—such as the configurable workshop station—with its behavior and dependencies. Another creator may adapt that component without copying the entire economy or world. That ability to reuse a working piece while retaining local authorship is the part of the Roblox model most relevant to the question. [S20]
 
-## 7. Implications for OpenLegend, and the important limits
+## 7. Implications for Open Legend, and the important limits
 
 **Research interpretation:** offer different depths of contribution. Playing a world, building within its rules, configuring a reusable object and authoring a new rule should not require the same skills or permissions. A person who only wants to make a meaningful place should not first have to design an entire multiplayer economy.
 

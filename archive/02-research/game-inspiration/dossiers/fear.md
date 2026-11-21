@@ -10,13 +10,13 @@ Jeff Orkin's developer paper describes a small execution state machine beneath g
 
 The squad layer is **not entirely emergent coordination**. A coordinator forms squads, selects authored squad behaviors and issues orders; individual goals still participate in arbitration. This is a hybrid of explicit team direction and individual planning, not evidence that every apparent flanking maneuver arose independently. [F1, pp. 13–15]
 
-The paper establishes historical implementation intent and developer-observed behavior. It does not establish open-ended personal understanding, long-term autobiographical memory, current hardware throughput or an OpenLegend performance result. The working-memory and squad diagrams were inspected in addition to the extracted text.
+The paper establishes historical implementation intent and developer-observed behavior. It does not establish open-ended personal understanding, long-term autobiographical memory, current hardware throughput or an Open Legend performance result. The working-memory and squad diagrams were inspected in addition to the extracted text.
 
 ## What is intelligent, and what is authored?
 
 The important distinction is between **authoring the language of possible action** and **authoring every sentence in that language**. A planner can combine understood means in a new order without possessing a broad understanding of the world. The authoring burden moves toward correct prerequisites, effects and costs; it does not disappear.
 
-For OpenLegend, this suggests separating three questions:
+For Open Legend, this suggests separating three questions:
 
 | Question | Possible responsibility | Failure to avoid |
 | --- | --- | --- |
@@ -24,7 +24,7 @@ For OpenLegend, this suggests separating three questions:
 | Which known means could accomplish that chosen purpose? | A bounded planner or reusable procedure, where the world supports it. | Revealing an unknown method because the engine can calculate it. |
 | What actually happens when the person attempts it? | The authoritative simulation. | Treating a planner's predicted effect as a committed outcome. |
 
-These are proposed applications, not descriptions of new OpenLegend facilities.
+These are proposed applications, not descriptions of new Open Legend facilities.
 
 ## A complete hypothetical application
 

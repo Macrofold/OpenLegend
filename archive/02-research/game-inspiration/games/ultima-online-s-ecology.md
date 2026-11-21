@@ -4,6 +4,6 @@
 
 **Interpretation.** A model can be internally elegant while irrelevant or unstable under real player incentives. If harvesting everything is rewarded, players need not behave like cautious ecological participants. The system must survive the behavior the game encourages, not merely the behavior its designers find plausible.
 
-**OpenLegend implication.** Test adversarial and optimizing play early. Can a reusable construct duplicate rewards, exhaust a shared resource, monopolize NPC attention, or make one interaction dominate all others? Do not rely on a world agent to verbally discourage behavior that the mechanics reward.
+**Open Legend implication.** Test adversarial and optimizing play early. Can a reusable construct duplicate rewards, exhaust a shared resource, monopolize NPC attention, or make one interaction dominate all others? Do not rely on a world agent to verbally discourage behavior that the mechanics reward.
 
 Also ask whether players can perceive the system at all. Hidden simulation may support later outcomes, but its value must be demonstrated. An ecology that changes no visible decision or consequence is a poor priority merely because it sounds foundational.

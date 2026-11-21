@@ -24,7 +24,7 @@ The active research branches can continue changing independently. The original p
 
 The original 28-world source pins remain historical. The later [29-world reassessment](../../archive/02-research/worldbuilding/reassessment-progress.md), integrated from `codex/world-idea-repertoires` at `467e7f1be02f2a3e9bb69ebb83bfdef435483c9e`, supplies revised dossiers, comparative essays, D&D supplements and explicit evidence follow-ups. That research is now local; its source-reading limits remain with the research owners. This integration does not claim a fresh assessment of every source-to-catalogue link.
 
-Spore's detailed Q&A does not establish released native branching dialogue; catalogue proposals remain original OpenLegend ideas. Worlds Adrift's historical save-discard practices do not determine OpenLegend's [current development save policy](../../AGENTS.md#development-save-policy): incompatible development saves may be replaced, while current-format integrity, credentials and real spending records remain protected.
+Spore's detailed Q&A does not establish released native branching dialogue; catalogue proposals remain original Open Legend ideas. Worlds Adrift's historical save-discard practices do not determine Open Legend's [current development save policy](../../AGENTS.md#development-save-policy): incompatible development saves may be replaced, while current-format integrity, credentials and real spending records remain protected.
 
 ## Research basis for the foundation revision
 
@@ -1562,7 +1562,7 @@ The [combat-response synthesis](../../archive/02-research/game-inspiration/synth
 
 ## Additional studies and navigation
 
-**Mobile studies, G168–G177:** the [positive experience map](../../archive/02-research/game-inspiration/essays/mobile-success-failure-and-umamusume.md#what-all-ten-games-can-contribute) links all ten dossiers; its [OpenLegend interpretations](../../archive/02-research/game-inspiration/essays/mobile-success-failure-and-umamusume.md#openlegends-particular-opportunity) connect the findings to the current design foundation. The [mobile ledger](../../archive/02-research/game-inspiration/research-progress-mobile-2026-10-17.md) owns completion.
+**Mobile studies, G168–G177:** the [positive experience map](../../archive/02-research/game-inspiration/essays/mobile-success-failure-and-umamusume.md#what-all-ten-games-can-contribute) links all ten dossiers; its [Open Legend interpretations](../../archive/02-research/game-inspiration/essays/mobile-success-failure-and-umamusume.md#open-legends-particular-opportunity) connect the findings to the current design foundation. The [mobile ledger](../../archive/02-research/game-inspiration/research-progress-mobile-2026-10-17.md) owns completion.
 
 These studies deepen the numbered game and world dossiers without renumbering the current game roster. Their source-specific evidence remains in the research library; the catalogue entries link them where a lesson was actually incorporated.
 

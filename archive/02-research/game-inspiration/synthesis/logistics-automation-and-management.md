@@ -14,7 +14,7 @@ How can organizing work free attention for better decisions rather than make the
 
 ## Ownership boundary
 
-Owns coordinating flows and work at scale. Recipes belong to CRAFT, economic incentives to ECON, and personal motivations to NPC. This is research, not an approved OpenLegend specification.
+Owns coordinating flows and work at scale. Recipes belong to CRAFT, economic incentives to ECON, and personal motivations to NPC. This is research, not an approved Open Legend specification.
 
 ## Candidate reading routes — not assessed
 
@@ -28,7 +28,7 @@ Owns coordinating flows and work at scale. Recipes belong to CRAFT, economic inc
 
 ## Consolidated lessons and tradeoffs
 
-## Current OpenLegend baseline and existing design owners
+## Current Open Legend baseline and existing design owners
 
 Use the [source and goal map](source-and-goal-map.md#topic-logistics) to locate relevant research, current contracts and existing designs. Record delivered scope, designed-but-unimplemented scope and genuinely new questions separately; linked documents are not a fresh runtime audit.
 
@@ -36,13 +36,13 @@ Use the [source and goal map](source-and-goal-map.md#topic-logistics) to locate 
 
 <!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
 
-## Possible OpenLegend applications and limits
+## Possible Open Legend applications and limits
 
 ## Open questions and missing evidence
 
 <!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
 
-## OpenLegend-specific research subtopics
+## Open Legend-specific research subtopics
 
 ### Delegated work without delegated personhood
 

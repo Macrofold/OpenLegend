@@ -1,6 +1,6 @@
 # G126 — Crusader Kings III
 
-**Status: complete full-pass research dossier.** Research date: September 26, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 26, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 Crusader Kings III is unusually valuable because it treats political power as a **network of people with memories, traits, obligations, fears, families and legal claims** rather than as a state-shaped resource meter. The map matters, but the durable story unit is usually a relationship.
 

@@ -1,12 +1,12 @@
 # Gameplay frameworks, authored rules, and semantic systems
 
-Research snapshot: **23 October 2026**. Engine baseline: Unreal Engine 5.8 and Unity 6.6. This chapter describes mechanisms and their limits; it does not propose an OpenLegend gameplay architecture. The [OpenLegend context and coverage map](00-openlegend-context-and-coverage.md) distinguishes existing behavior from intended systems.
+Research snapshot: **23 October 2026**. Engine baseline: Unreal Engine 5.8 and Unity 6.6. This chapter describes mechanisms and their limits; it does not propose an Open Legend gameplay architecture. The [Open Legend context and coverage map](00-openlegend-context-and-coverage.md) distinguishes existing behavior from intended systems.
 
 ## What this part of the engine actually supplies
 
 An engine's gameplay framework connects objects, execution, state, authoring, and network authority. It does not determine what those states mean in a particular world. A floating-point attribute can represent hunger, an effect can alter it, and an ability can consume a resource. Whether that constitutes eating, nutrition, ownership, a witnessed theft, or a remembered obligation depends on additional authored rules and their execution.
 
-This distinction matters for OpenLegend's intended needs, injuries, relationships, agreements, ecology, invention, and narrative systems. The useful comparison is between explicit mechanisms: lifecycle ownership, conditional activation, interruption, shared definitions, mutable instances, authority, and history. Similar feature names do not establish equivalent world behavior.
+This distinction matters for Open Legend's intended needs, injuries, relationships, agreements, ecology, invention, and narrative systems. The useful comparison is between explicit mechanisms: lifecycle ownership, conditional activation, interruption, shared definitions, mutable instances, authority, and history. Similar feature names do not establish equivalent world behavior.
 
 ## 1. Framework ownership and lifetimes
 
@@ -91,11 +91,11 @@ Unreal's **Common Conversation is Experimental**. Its current API separates an a
 
 Unity Behavior and Unreal StateTree/Behavior Trees provide additional authored decision/execution graphs, examined in [chapter 03](03-ai-navigation-and-crowds.md). A conversation tree, behavior tree, animation graph, and effect graph all use graph-shaped authoring, but their state, timing, cancellation, and output contracts differ. Their common visual shape is not evidence of interchangeable runtime semantics.
 
-## 7. Relationship to OpenLegend's intended world systems
+## 7. Relationship to Open Legend's intended world systems
 
 The existing [engine/world boundary](../../docs/engine-and-world-boundaries.md), [repertoire coverage](../../docs/repertoires/coverage.md), and [needs-design register](../../docs/maintainers/needs-design.md) identify a much wider world than a conventional ability-and-animation example. The following table records how the researched mechanisms relate to those areas. It is a **coverage and evidence map**, not a list of proposed implementations.
 
-| Existing OpenLegend area of interest                     | Engine mechanisms examined                                                                        | What those mechanisms do not, by themselves, establish                                                              |
+| Existing Open Legend area of interest                    | Engine mechanisms examined                                                                        | What those mechanisms do not, by themselves, establish                                                              |
 | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | Needs, stamina, health, injuries, illness                | Attributes, effects, timers, execution graphs, physical contacts                                  | A validated physiological model; the causal meaning of symptoms, treatment, or death.                               |
 | Inventory, crafting, tools, materials, invention         | Shared definitions, typed registries, components, activation/commit lifecycles, import pipelines  | Conservation, ownership transfer, recipe semantics, or atomic durable exchange.                                     |
@@ -105,7 +105,7 @@ The existing [engine/world boundary](../../docs/engine-and-world-boundaries.md),
 | Weather, heat, fire, fluids, destruction                 | Physics, fields, rendering, particles, material systems, procedural world generation              | Agreement between visible phenomena and mechanically meaningful world state.                                        |
 | World authoring and extensibility                        | Registries, feature plugins, data assets, graph authoring, serialization                          | Stable authored-rule compatibility, trust isolation, validation of arbitrary rules, or save migration.              |
 
-These limits are deliberately narrower than saying an engine “cannot” support a system. The documentation establishes reusable infrastructure. Application code, external systems, content, and validation can supply further meaning. This study does not infer that work is already included or prescribe what OpenLegend should add.
+These limits are deliberately narrower than saying an engine “cannot” support a system. The documentation establishes reusable infrastructure. Application code, external systems, content, and validation can supply further meaning. This study does not infer that work is already included or prescribe what Open Legend should add.
 
 ## 8. Cross-system findings
 
@@ -117,11 +117,11 @@ Several observations recur across this chapter and the rest of the collection:
 4. **Prediction is scoped.** Ability prediction, movement prediction, animation trajectories, and anticipated world events have different consumers and correction mechanisms. Evidence for one is not evidence for all.
 5. **An engine event is not automatically a durable historical fact.** Callbacks and presentation cues describe runtime activity; persistence, replay, provenance, and observer-specific memory require their own evidence.
 
-These are comparisons of the documented mechanisms and OpenLegend's existing stated boundaries. They make no adoption decision and introduce no new runtime contract.
+These are comparisons of the documented mechanisms and Open Legend's existing stated boundaries. They make no adoption decision and introduce no new runtime contract.
 
 ## Source provenance and inspection record
 
-All entries were inspected on **23 October 2026**. Unreal entries resolve to current **5.8** documentation/API pages; Unity entries use explicit **6000.6** paths. They describe the mechanisms above, not measured OpenLegend performance. The older sample-game links embedded in some Epic pages were not used as evidence of current sample compatibility.
+All entries were inspected on **23 October 2026**. Unreal entries resolve to current **5.8** documentation/API pages; Unity entries use explicit **6000.6** paths. They describe the mechanisms above, not measured Open Legend performance. The older sample-game links embedded in some Epic pages were not used as evidence of current sample compatibility.
 
 | ID  | Primary source                                                                                                                                                                                                                                                 | Evidence used                                                                             |
 | --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |

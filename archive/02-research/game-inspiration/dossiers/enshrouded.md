@@ -1,6 +1,6 @@
 # G145 — Enshrouded
 
-**Full-pass research dossier; original refresh cutoff: October 25, 2026. Focused NPC, hosting and Dragonwilds-comparison follow-up: October 26 UTC.** The original September 27 pass is preserved and reconciled with the shipped 1.0 game. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [October refresh ledger](../research-progress-enshrouded-2026-10-25.md) · [Earlier research history](../research-progress.md). Research and explicitly labeled OpenLegend ideas, not runtime or design contracts.
+**Full-pass research dossier; original refresh cutoff: October 25, 2026. Focused NPC, hosting and Dragonwilds-comparison follow-up: October 26 UTC.** The original September 27 pass is preserved and reconciled with the shipped 1.0 game. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [October refresh ledger](../research-progress-enshrouded-2026-10-25.md) · [Earlier research history](../research-progress.md). Research and explicitly labeled Open Legend ideas, not runtime or design contracts.
 
 Enshrouded is most useful as a study of **making a handcrafted RPG world physically editable without giving up authored geography**. Its terrain is voxel-based enough to dig, cut, build and terraform, yet the continent still has deliberate cities, towers, dungeons, quest routes and environmental storytelling. The strongest design seam is between **authored adventure** and **player-authored place**: explore to rescue people and find recipes/resources, then bring that capability home and physically reshape a sanctuary.
 
@@ -25,7 +25,7 @@ At the October 25 cutoff:
 
 - **PC and PlayStation 5/PS5 Pro are released.** PC supports up to **16** players; PS5 supports up to **eight**. Platform-specific caps must not be collapsed into one universal number.
 - **Crossplay is not available at launch.** Keen says it is being worked on without giving a release date. Xbox Series X|S is still planned for **spring 2027**.
-- Existing PC owners receive 1.0 without buying the base game again; the launch FAQ supports continuing Early Access saves through conversion and also permits a voluntary fresh start. These are Enshrouded's product commitments, not OpenLegend compatibility requirements.
+- Existing PC owners receive 1.0 without buying the base game again; the launch FAQ supports continuing Early Access saves through conversion and also permits a voluntary fresh start. These are Enshrouded's product commitments, not Open Legend compatibility requirements.
 - The latest first-party patch located is **Hotfix 1.0.0.3, October 21, 2026**. Its crash, multiplayer-loading and migration fixes show that launch did not end maintenance; the notes are not proof of universal reliability.
 
 [Launch release and platform limits](https://www.terminals.io/games/enshrouded/news/5100) · [Launch FAQ](https://enshrouded.com/en-US/news/enshrouded-launch-faq-early-access-reward-world) · [PS5 store](https://store.playstation.com/en-us/product/EP4137-PPSA32539_00-0013250200429445) · [Hotfix 1.0.0.3](https://enshrouded.com/en-US/news/changelog-for-hotfix-1003).
@@ -227,7 +227,7 @@ Characters can move across worlds/servers while retaining:
 
 World-owned progression such as many crafting recipes/NPC availability remains local to the destination server.
 
-This **portable character + persistent world** split is one of the game's most important ownership choices. Paid third-party hosting makes a world available without a friend leaving their own computer running; it does not by itself solve membership, permissions, shared loot or progression alignment. The [hosting supplement](enshrouded/04-hosting-and-world-governance.md) examines the supplied Nitrado precedent and separates verified host controls from proposed OpenLegend world policies.
+This **portable character + persistent world** split is one of the game's most important ownership choices. Paid third-party hosting makes a world available without a friend leaving their own computer running; it does not by itself solve membership, permissions, shared loot or progression alignment. The [hosting supplement](enshrouded/04-hosting-and-world-governance.md) examines the supplied Nitrado precedent and separates verified host controls from proposed Open Legend world policies.
 
 ### Useful absences
 
@@ -345,7 +345,7 @@ Eight major Early Access updates repeatedly redefined the systems before 1.0. Fo
 - **save continuity**;
 - **system continuity**.
 
-Keeping a save does not mean every build decision can remain valid when the underlying rules are redesigned. This is historical product analysis; OpenLegend's [current development save policy](../../../../AGENTS.md#development-save-policy) forbids adding legacy support and is not changed by this example.
+Keeping a save does not mean every build decision can remain valid when the underlying rules are redesigned. This is historical product analysis; Open Legend's [current development save policy](../../../../AGENTS.md#development-save-policy) forbids adding legacy support and is not changed by this example.
 
 ## R05 — worked interactions and concrete situations
 
@@ -426,7 +426,7 @@ The transferable pattern is **capability as relationship/place**: "we found the 
 
 ### Enemies are encounter/RPG actors, not long-memory agents
 
-Scavengers, Shroud creatures, wildlife and bosses have combat behavior, patrol/awareness and encounter roles. Update 6 and later patches improve Shroud enemies and cover/pathing. There is no evidence of persistent individual enemy memory, player-joinable faction reputation or emergent diplomacy; do not project OpenLegend-style agency onto them. Keen's own product copy refers to rival creature factions, but the player does not negotiate/join them through a dynamic political-reputation layer.
+Scavengers, Shroud creatures, wildlife and bosses have combat behavior, patrol/awareness and encounter roles. Update 6 and later patches improve Shroud enemies and cover/pathing. There is no evidence of persistent individual enemy memory, player-joinable faction reputation or emergent diplomacy; do not project Open Legend-style agency onto them. Keen's own product copy refers to rival creature factions, but the player does not negotiate/join them through a dynamic political-reputation layer.
 
 ### Co-op is cooperative, not PvP competitive
 
@@ -567,7 +567,7 @@ Creative director Antony Christoulakis said in a late-2025 interview that the au
 
 Keen subsequently announced **five million players** in January 2026, and **more than 5.5 million through Early Access** in the October launch communication. These are dated company audience claims. [Second anniversary](https://enshrouded.com/en-US/news/enshroudeds-road-to-release-2nd-year-anniversary-celebration) · [Launch release](https://www.terminals.io/games/enshrouded/news/5100).
 
-"Players" is not automatically equivalent to net paid units, active users, concurrent users or revenue. The [commercial evidence and estimates](enshrouded/02-development-and-commercial-history.md) separately examine reported scale, third-party Steam estimates, methodology, coverage, costs and uncertainty. They support a strong demand outcome; private profit and retention remain undisclosed. A paid-server offer establishes an available business model, not the proportion of Enshrouded players who rent or the unit economics of an OpenLegend service.
+"Players" is not automatically equivalent to net paid units, active users, concurrent users or revenue. The [commercial evidence and estimates](enshrouded/02-development-and-commercial-history.md) separately examine reported scale, third-party Steam estimates, methodology, coverage, costs and uncertainty. They support a strong demand outcome; private profit and retention remain undisclosed. A paid-server offer establishes an available business model, not the proportion of Enshrouded players who rent or the unit economics of an Open Legend service.
 
 The Early Access success financed team growth and a longer development scope. Keen's Jan. 2025 roadmap explicitly delayed 1.0 into 2026 because support let it make the game larger than originally planned. [2025 roadmap](https://enshrouded.com/en-US/news/enshrouded-roadmap-2025-anniversary-trailer).
 
@@ -642,29 +642,29 @@ These were qualitative samples, not prevalence estimates. They show how the Sept
 
 **Feature growth versus performance.** Water, richer Shroud, more AI and huge builds expand the interacting workload. Optimization was a stated 1.0 goal, and current reports remain mixed. The research does not isolate which subsystem causes a player's failure or benchmark many-player scale.
 
-## R13 — transferable inspiration and limits for OpenLegend
+## R13 — transferable inspiration and limits for Open Legend
 
 These are research hypotheses and comparative lessons, not new implementation requirements or priorities. The linked studies own the detailed evidence and its limits.
 
-The [application map](enshrouded/05-comparison-with-dragonwilds.md#7-focused-openlegend-decisions-to-investigate) routes the useful lessons into [gameplay selection principles](../../../../docs/repertoires/gameplay-priorities.md#keep-play-worthwhile-as-players-learn-and-return), existing feature designs, player observations and the [design register](../../../../docs/maintainers/needs-design.md). Those documents own OpenLegend's selected scope and follow-through.
+The [application map](enshrouded/05-comparison-with-dragonwilds.md#7-focused-open-legend-decisions-to-investigate) routes the useful lessons into [gameplay selection principles](../../../../docs/repertoires/gameplay-priorities.md#keep-play-worthwhile-as-players-learn-and-return), existing feature designs, player observations and the [design register](../../../../docs/maintainers/needs-design.md). Those documents own Open Legend's selected scope and follow-through.
 
 ### 1. An authored world can still be physically editable
 
-Enshrouded demonstrates that **handcrafted narrative geography and voxel agency can coexist**. Its particular base/overworld persistence boundary is one implementation of that product promise, with the restrictions described in the [building study](enshrouded/01-building-and-creation.md). OpenLegend can investigate how authored places remain interesting to change without adopting the same reset boundary or choosing a voxel representation from this comparison alone.
+Enshrouded demonstrates that **handcrafted narrative geography and voxel agency can coexist**. Its particular base/overworld persistence boundary is one implementation of that product promise, with the restrictions described in the [building study](enshrouded/01-building-and-creation.md). Open Legend can investigate how authored places remain interesting to change without adopting the same reset boundary or choosing a voxel representation from this comparison alone.
 
 ### 2. Persistence boundaries should follow meaning
 
-Enshrouded preserves base changes while allowing changes elsewhere to reset. The design tradeoff is bounded lasting authorship alongside renewable exploration; an edit outside that boundary can still matter to its maker. This is not evidence that all player intent lies inside a claim or that resetting shared geography is appropriate for OpenLegend.
+Enshrouded preserves base changes while allowing changes elsewhere to reset. The design tradeoff is bounded lasting authorship alongside renewable exploration; an edit outside that boundary can still matter to its maker. This is not evidence that all player intent lies inside a claim or that resetting shared geography is appropriate for Open Legend.
 
-Keep **authoritative physical state**, historical evidence, personal memory and disposable computation distinct. OpenLegend's [save ownership contract](../../../../docs/save-and-load.md#state-ownership-and-save-scope) preserves the facts necessary to continue the world. Avoiding a permanent log of every intermediate operation does not authorize restoring mined resources, erasing construction or losing a committed consequence. Any selected regrowth, decay or reset must be an actual world rule; storage optimization cannot silently create it.
+Keep **authoritative physical state**, historical evidence, personal memory and disposable computation distinct. Open Legend's [save ownership contract](../../../../docs/save-and-load.md#state-ownership-and-save-scope) preserves the facts necessary to continue the world. Avoiding a permanent log of every intermediate operation does not authorize restoring mined resources, erasing construction or losing a committed consequence. Any selected regrowth, decay or reset must be an actual world rule; storage optimization cannot silently create it.
 
 ### 3. People make unlocks memorable
 
-The [recruitment and residence lessons](enshrouded/01-building-and-creation.md#positive-lessons-and-limits-for-openlegend) suggest a useful sequence: **recruit → place → use → return**. Finding a particular person can motivate a room or workshop; a recognizable occupant and useful service can give the player a reason to visit again. OpenLegend could attach capability to **actors, institutions and places**, with residents' actual use of a space making construction socially meaningful. This is an opportunity to investigate, not evidence that Enshrouded runs an autonomous workforce.
+The [recruitment and residence lessons](enshrouded/01-building-and-creation.md#positive-lessons-and-limits-for-open-legend) suggest a useful sequence: **recruit → place → use → return**. Finding a particular person can motivate a room or workshop; a recognizable occupant and useful service can give the player a reason to visit again. Open Legend could attach capability to **actors, institutions and places**, with residents' actual use of a space making construction socially meaningful. This is an opportunity to investigate, not evidence that Enshrouded runs an autonomous workforce.
 
 ### 4. Remove survival chores that do not support the fantasy
 
-Under Enshrouded's **Default** rules, food primarily prepares the character for an expedition. The transferable question is what a need lets the player plan, choose or contribute. World-authored needs in OpenLegend could create relationships and consequences when they serve the intended experience.
+Under Enshrouded's **Default** rules, food primarily prepares the character for an expedition. The transferable question is what a need lets the player plan, choose or contribute. World-authored needs in Open Legend could create relationships and consequences when they serve the intended experience.
 
 Gathering can itself be a chosen pleasure. The [Dragonwilds comparison](enshrouded/05-comparison-with-dragonwilds.md#3-when-magical-gathering-is-play-and-when-efficiency-is-insufficient) distinguishes **throughput**, **a new method of acting**, and **social usefulness**. Examine the whole resource cycle—inputs, travel, collection, carrying, processing, storage and use—when judging whether an improvement gives someone more enjoyable choices. A satisfying action and a worthwhile destination both matter; faster collection alone does not establish a better overall experience.
 
@@ -672,13 +672,13 @@ Gathering can itself be a chosen pleasure. The [Dragonwilds comparison](enshroud
 
 Spire → fast travel → glider is a beautiful sequence: learn/climb the world, then permanently lower future travel cost.
 
-OpenLegend can make roads, portals, mounts, favors, maps and social access convert exploration into **new connectivity**.
+Open Legend can make roads, portals, mounts, favors, maps and social access convert exploration into **new connectivity**.
 
 ### 6. Portable identity + world-owned state is a useful multiplayer split
 
 Characters keep identity/equipment/skills across servers; worlds retain people/stations/collective history.
 
-For a future OpenLegend or Macrofold-backed hosting design, the research suggests evaluating ownership explicitly:
+For a future Open Legend or Macrofold-backed hosting design, the research suggests evaluating ownership explicitly:
 
 - actor-owned state;
 - world-owned state;
@@ -686,27 +686,27 @@ For a future OpenLegend or Macrofold-backed hosting design, the research suggest
 - portable knowledge;
 - non-portable world consequences.
 
-The [asynchronous building case](enshrouded/04-hosting-and-world-governance.md#a-players-reported-rental-motive-asynchronous-building) supplies a positive purpose for availability: friends can contribute at different times and return to discover each other's work. For OpenLegend, recognizable contributions and a legible next shared goal could make returning worthwhile. The account does not establish a retention effect or an ownership contract.
+The [asynchronous building case](enshrouded/04-hosting-and-world-governance.md#a-players-reported-rental-motive-asynchronous-building) supplies a positive purpose for availability: friends can contribute at different times and return to discover each other's work. For Open Legend, recognizable contributions and a legible next shared goal could make returning worthwhile. The account does not establish a retention effect or an ownership contract.
 
 ### 7. User-created worlds are a natural extension of expressive systems
 
-Adventure Sharing lets players make their creations available for other people to visit. OpenLegend's extensibility can likewise aim for invention that becomes **content other people inhabit**, with actual usable places, activities and world-owned consequences.
+Adventure Sharing lets players make their creations available for other people to visit. Open Legend's extensibility can likewise aim for invention that becomes **content other people inhabit**, with actual usable places, activities and world-owned consequences.
 
 ### 8. Released-game continuity can preserve intent when systems change
 
 Forging the Path refunded/reset skill points when the tree changed. The documented reset shows that continued save access can coexist with asking players to choose their build again after the rules change. [Development chronology](enshrouded/02-development-and-commercial-history.md#chronology-content-structural-changes-and-commitments).
 
-For a released game with supported customer saves, a useful question is whether an old decision's **intent** can survive a changed rule; refunding and rechoosing is one documented alternative. This is comparative research. OpenLegend's [development save policy](../../../../AGENTS.md#development-save-policy) currently forbids legacy readers, migrations, adapters and compatibility-only paths. Nothing in this dossier authorizes them, or makes unrestricted cross-world transfer an accepted OpenLegend contract.
+For a released game with supported customer saves, a useful question is whether an old decision's **intent** can survive a changed rule; refunding and rechoosing is one documented alternative. This is comparative research. Open Legend's [development save policy](../../../../AGENTS.md#development-save-policy) currently forbids legacy readers, migrations, adapters and compatibility-only paths. Nothing in this dossier authorizes them, or makes unrestricted cross-world transfer an accepted Open Legend contract.
 
 ### What not to copy automatically
 
-- altar boundaries unless OpenLegend needs the same persistence solution;
+- altar boundaries unless Open Legend needs the same persistence solution;
 - unrestricted cross-world powerful-character transfer without governance;
 - dozens of crafting stations if they create UI/admin friction;
 - quest gating as a substitute for emergent goals;
 - voxel visuals/assets, names, lore or protected Enshrouded content;
 - a console, third-party mod or older-version capability treated as universal current behavior;
-- Enshrouded's released-product migration obligations treated as permission to change OpenLegend's development policy;
+- Enshrouded's released-product migration obligations treated as permission to change Open Legend's development policy;
 - small-group co-op evidence treated as validation for a many-player shared world.
 
 ## R14 — sources, preservation, route and requirement map
@@ -824,7 +824,7 @@ https://enshrouded.com/en-US/news/the-enshrouded-original-soundtrack-is-now-avai
 https://enshrouded.com/en-US/news/enshrouded-10-is-live-check-out-our-highlights-video
 https://www.terminals.io/games/enshrouded/news/5100
 
-**S30 — Keen launch FAQ, October 13, 2026.** Primary no-repurchase, save-continuation and crossplay boundary. Accessed October 25; its released-product continuity policy does not apply to OpenLegend development.  
+**S30 — Keen launch FAQ, October 13, 2026.** Primary no-repurchase, save-continuation and crossplay boundary. Accessed October 25; its released-product continuity policy does not apply to Open Legend development.  
 https://enshrouded.com/en-US/news/enshrouded-launch-faq-early-access-reward-world
 
 **S31 — Keen Hotfix 1.0.0.3, October 21, 2026.** Latest shipped patch located at the October 25 cutoff. Primary documented fixes and limitations, not a benchmark or population estimate.  
@@ -848,7 +848,7 @@ https://www.cgmagonline.com/review/game/enshrouded-1-0-pc-review/
 3. Read the [reception study](enshrouded/03-player-reception.md) for 1.0 criticism and dated player accounts. Use S16–S20 and the preserved September sample as history, with their access/version limits.
 4. Read the [hosting study](enshrouded/04-hosting-and-world-governance.md) for rental, membership and rules. S10 explains the early quest-progression failure and developer response.
 5. Read the [development/commercial chronology](enshrouded/02-development-and-commercial-history.md) for all eight updates, scope growth, production evidence and bounded estimates. S07–S09 record former promises, not today's release status.
-6. Use R13 for OpenLegend interpretation, including [chosen gathering and the whole resource cycle](enshrouded/05-comparison-with-dragonwilds.md#3-when-magical-gathering-is-play-and-when-efficiency-is-insufficient), [recruitment and repeated visits](enshrouded/01-building-and-creation.md#positive-lessons-and-limits-for-openlegend), and [asynchronous contributions](enshrouded/04-hosting-and-world-governance.md#a-players-reported-rental-motive-asynchronous-building). These remain proposals subject to current project policy.
+6. Use R13 for Open Legend interpretation, including [chosen gathering and the whole resource cycle](enshrouded/05-comparison-with-dragonwilds.md#3-when-magical-gathering-is-play-and-when-efficiency-is-insufficient), [recruitment and repeated visits](enshrouded/01-building-and-creation.md#positive-lessons-and-limits-for-open-legend), and [asynchronous contributions](enshrouded/04-hosting-and-world-governance.md#a-players-reported-rental-motive-asynchronous-building). These remain proposals subject to current project policy.
 
 ### Requirement-to-section map
 
@@ -887,4 +887,4 @@ https://www.cgmagonline.com/review/game/enshrouded-1-0-pc-review/
 
 **Gate: uncertain, PC, October 25, 2026.** The refresh found a mixed Nexus catalog and maintained unofficial loaders/editor projects beyond native building. Those demonstrate tools and authorship; the available evidence does not yet establish sustained community **use** strongly enough to certify a popular modding ecosystem. Native Adventure Sharing and Sparkworks do not themselves satisfy this gate.
 
-The [building supplement](enshrouded/01-building-and-creation.md) owns the bounded findings: EML, Shroudtopia, ShroudForge, their author-documented workflows and version limits, plus a concrete withdrawn-tool example. No tool was installed or tested. These facts are useful without inventing adoption, official SDK support, console compatibility or creator earnings. Its external executable extensions do not alter OpenLegend's [generated-content and development-save boundaries](../../../../AGENTS.md#boundaries).
+The [building supplement](enshrouded/01-building-and-creation.md) owns the bounded findings: EML, Shroudtopia, ShroudForge, their author-documented workflows and version limits, plus a concrete withdrawn-tool example. No tool was installed or tested. These facts are useful without inventing adoption, official SDK support, console compatibility or creator earnings. Its external executable extensions do not alter Open Legend's [generated-content and development-save boundaries](../../../../AGENTS.md#boundaries).

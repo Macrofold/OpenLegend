@@ -2,7 +2,7 @@
 
 **G89 · Research pass and corrective coverage review, September 26, 2026.** Primary mechanics baseline: the 2006 PlayStation 2 Final Fantasy XII. Final Fantasy XII International Zodiac Job System (Japan, 2007) and Final Fantasy XII: The Zodiac Age (2017 onward) are separated where they materially change license/job progression, summoning, Quickenings, Trial Mode, speed/QoL or respec behavior. [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Coverage audit](../coverage-audit-g81-g100.md).
 
-The highest-value OpenLegend precedent is the **Gambit system**: the player does not merely issue commands; they author prioritized conditional policies that party members execute autonomously. This turns party AI into a visible, editable part of play.
+The highest-value Open Legend precedent is the **Gambit system**: the player does not merely issue commands; they author prioritized conditional policies that party members execute autonomously. This turns party AI into a visible, editable part of play.
 
 No personal playthrough is claimed. Mechanics examples are reconstructed from developer interviews, reviews and version-specific written references. The corrective pass preserves the original research while correcting example priorities and adding operative equipment, Bazaar, fishing, musical and interaction detail. **Spoilers:** section 24 discusses political identities; section 27 reveals optional fishing progression.
 
@@ -166,11 +166,11 @@ The computer is not deciding the party strategy for the player. The player decid
 
 Hiroaki Kato describes the satisfaction as defeating a formidable enemy after finely tuning Gambits. Lead programmer Takashi Katano recalled that the system was difficult to evaluate during development because its value only became clear once the whole battle loop came together. [FFXII01](#ffxii01)
 
-This is one of the strongest precedents for OpenLegend's agents:
+This is one of the strongest precedents for Open Legend's agents:
 
 > **Autonomy is more controllable when users can author policy above individual actions.**
 
-OpenLegend should not copy XII's exact condition/action menu, but it can offer:
+Open Legend should not copy XII's exact condition/action menu, but it can offer:
 - standing orders;
 - role policies;
 - delegation boundaries;
@@ -209,7 +209,7 @@ Survival rules now precede theft and offense. **Full HP is a proxy for a fresh t
 
 The same character has one identity but multiple **operational policies**.
 
-For OpenLegend, this suggests reusable “developer / bodyguard / medic / travel / emergency” agent policies could be more useful than micromanaging every decision.
+For Open Legend, this suggests reusable “developer / bodyguard / medic / travel / emergency” agent policies could be more useful than micromanaging every decision.
 
 ## 7. Gambits expose both the power and limit of deterministic agents
 
@@ -228,7 +228,7 @@ They struggle when:
 
 That is exactly why direct manual commands remain available.
 
-OpenLegend can generalize this into a layered architecture:
+Open Legend can generalize this into a layered architecture:
 - deterministic policies for safety/authority/routine;
 - richer cognition for ambiguous goals;
 - human override for consequential edge cases.
@@ -358,7 +358,7 @@ So “who receives this Esper?” can change the broader build.
 
 Summoning also removes the other active party members while the summoner and Esper fight, meaning the summon is a temporary allied actor rather than a single spell animation. [FFXII10](#ffxii10)
 
-OpenLegend lesson:
+Open Legend lesson:
 - forming a bond/contract with a powerful entity can grant both a callable agent **and** unlock capabilities in the summoner.
 
 ## 14. Loot replaces monster-wallet logic
@@ -377,7 +377,7 @@ This is more diegetic than enemies carrying universal currency:
 - creatures produce biological/material resources;
 - those resources become economic value only after trade.
 
-For OpenLegend, this is closer to a causal economy:
+For Open Legend, this is closer to a causal economy:
 **entity → material output → market sale → money**
 
 rather than:
@@ -405,7 +405,7 @@ The loop is:
 
 This is mechanically elegant but **information-hostile** because exact recipes are mostly opaque.
 
-OpenLegend could preserve the causal economy while exposing knowledge through:
+Open Legend could preserve the causal economy while exposing knowledge through:
 - smiths;
 - recipes;
 - rumors;
@@ -433,7 +433,7 @@ This changes how the player traverses a zone:
 
 A seemingly small loot system creates **route-planning behavior**.
 
-OpenLegend should seek similar cross-system consequences:
+Open Legend should seek similar cross-system consequences:
 - ecology affects economy;
 - target choice affects future resource yield;
 - a hunting strategy changes movement through the world.
@@ -485,7 +485,7 @@ That gives exploration a systemic layer:
 
 The drawback is opacity. Without hints, many Rare Game conditions are effectively guide-dependent.
 
-OpenLegend should keep conditional ecology but let observant players learn it through:
+Open Legend should keep conditional ecology but let observant players learn it through:
 - tracks;
 - NPC expertise;
 - habitat knowledge;
@@ -586,7 +586,7 @@ Example:
 
 A sufficiently expressive status vocabulary makes the party appear “smart” without requiring reactive micromanagement.
 
-OpenLegend should similarly distinguish:
+Open Legend should similarly distinguish:
 - things agents can safely handle by standing order;
 - novel states that need attention.
 
@@ -631,7 +631,7 @@ This makes fast travel:
 
 The world does not vanish into a menu immediately.
 
-OpenLegend can use the same broad principle:
+Open Legend can use the same broad principle:
 - discover infrastructure first;
 - pay its material/social cost;
 - let routine travel become easier afterward.
@@ -683,7 +683,7 @@ But these factions do not generally:
 - dynamically negotiate treaties;
 - recruit/respond to arbitrary player policy.
 
-OpenLegend should borrow the **institutional specificity**, then make it dynamic.
+Open Legend should borrow the **institutional specificity**, then make it dynamic.
 
 ## 26. NPC density creates social texture without general autonomy
 
@@ -699,7 +699,7 @@ They provide:
 
 Some players praise Ivalice's density; current Steam testimony also criticizes many NPCs as noninteractive set dressing. [FFXII15](#ffxii15)
 
-This exposes the exact OpenLegend opportunity:
+This exposes the exact Open Legend opportunity:
 
 > A dense crowd becomes much more valuable if those people are actual stateful actors rather than decorative dialogue nodes.
 
@@ -721,7 +721,7 @@ A large amount of content is not surfaced through one modern quest tracker.
 
 That rewards curiosity but also creates guide dependency.
 
-For OpenLegend:
+For Open Legend:
 - hidden causality is good;
 - invisible author intent is not.
 The player should be able to investigate the world itself.
@@ -805,7 +805,7 @@ The later 2020 patch further demonstrates that a remaster can continue revising 
 - job reset;
 - multiple Gambit sets.
 
-This is useful for OpenLegend's own long-term design:
+This is useful for Open Legend's own long-term design:
 **preservation does not require preserving every usability defect.**
 
 ### The score's identity and the cost of changing its medium
@@ -1023,7 +1023,7 @@ That separation between **capability** and **policy** is foundational for agent 
 | Replay/challenge | New Game+, weak/New Game− modes in Zodiac line |
 | Mods | PC community mods external to native design |
 
-## 38. OpenLegend transferable inspiration and limits
+## 38. Open Legend transferable inspiration and limits
 
 ### A. Separate capability from policy
 
@@ -1039,7 +1039,7 @@ This is one of the clearest agent-architecture lessons in games.
 
 Three Gambit sets anticipate modern agent configurations.
 
-OpenLegend could support:
+Open Legend could support:
 - travel policy;
 - combat policy;
 - work policy;
@@ -1050,7 +1050,7 @@ OpenLegend could support:
 
 When two rules can fire, users need to know which wins.
 
-OpenLegend should expose:
+Open Legend should expose:
 - matched condition;
 - rejected higher rules;
 - action chosen;
@@ -1072,7 +1072,7 @@ Automation should remove **known repetition**, while novel state changes demand 
 
 Two-job Zodiac builds change capability; Gambit sets change operational behavior.
 
-OpenLegend should not conflate:
+Open Legend should not conflate:
 - training/tools;
 - goal;
 - policy;
@@ -1082,7 +1082,7 @@ OpenLegend should not conflate:
 
 Loot/Bazaar makes creature/material identity economically meaningful.
 
-OpenLegend can model actual production chains rather than abstract monster gold.
+Open Legend can model actual production chains rather than abstract monster gold.
 
 ### H. Hidden recipes need in-world knowledge
 
@@ -1094,7 +1094,7 @@ Recipes/market transformation should be discoverable through people, research an
 
 Clan Centurio makes Hunts feel like a profession/community.
 
-OpenLegend quests should often emerge from:
+Open Legend quests should often emerge from:
 - employers;
 - families;
 - guilds;
@@ -1108,7 +1108,7 @@ rather than a global task board.
 
 Hunts/Rare Game make conditions matter.
 
-OpenLegend should use environmental state as a causal input to:
+Open Legend should use environmental state as a causal input to:
 - creature behavior;
 - production;
 - travel;
@@ -1119,13 +1119,13 @@ OpenLegend should use environmental state as a causal input to:
 
 FFXII's cities look socially rich, but most people are scripted scenery.
 
-OpenLegend can turn that visual density into true agent density—but should avoid simulating people at high cost when they have no relevance.
+Open Legend can turn that visual density into true agent density—but should avoid simulating people at high cost when they have no relevance.
 
 ### L. Respec policy should match uncertainty
 
 Current TZA lets the player undo opaque job choices.
 
-OpenLegend should make irreversible life decisions rare and causally justified; experimentation should usually be recoverable.
+Open Legend should make irreversible life decisions rare and causally justified; experimentation should usually be recoverable.
 
 ## 39. Preservation and requirement audit
 
@@ -1175,7 +1175,7 @@ The surrounding world reinforces the same philosophy:
 - jobs shape available actions;
 - Gambits shape autonomous action selection.
 
-For OpenLegend, the most important takeaway is:
+For Open Legend, the most important takeaway is:
 
 > **Give agents real capabilities, then let players express standing intent as inspectable policy—without removing the need to intervene when the world becomes genuinely new.**
 

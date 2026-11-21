@@ -223,7 +223,7 @@ This was not an all-time highest-helpfulness sample, a statistical player survey
 
 **Treat optionality as an integration problem.** An activity can be freely skippable while still affecting goals a player cares about. Conversely, forcing every side system into mandatory progression would solve disconnection by removing choice. Useful alternatives include meaningful cross-system rewards and explicitly self-contained pastimes.
 
-**Separate an experimental scenario from the world's baseline.** The Tyranny powers show how a new action vocabulary can reframe familiar space. They are reference mechanisms, not instructions to import copyrighted names, imagery or fictional cultural claims into OpenLegend.
+**Separate an experimental scenario from the world's baseline.** The Tyranny powers show how a new action vocabulary can reframe familiar space. They are reference mechanisms, not instructions to import copyrighted names, imagery or fictional cultural claims into Open Legend.
 
 These are research interpretations and possible inspirations, not accepted implementation requirements or engine tasks.
 

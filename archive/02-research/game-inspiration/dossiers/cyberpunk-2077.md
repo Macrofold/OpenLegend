@@ -2,7 +2,7 @@
 
 **G68 · Complete research pass, September 26, 2026.** This dossier uses the **post-2.0 / Patch 2.31 game** as the current base-game reference while preserving the materially different December 2020 launch state. **Phantom Liberty** is treated as a paid expansion layered on top of the free 2.0 systems overhaul, not as the source of every modern mechanic. Current platforms include PC, PS5, Xbox Series X|S, Nintendo Switch 2, and Mac; last-generation PS4/Xbox One remain on older feature/patch branches and do not receive the modern 2.x systems. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-Cyberpunk 2077 is one of the clearest examples in this corpus of a game whose **mechanical identity changed after launch**. For OpenLegend, its strongest ideas are:
+Cyberpunk 2077 is one of the clearest examples in this corpus of a game whose **mechanical identity changed after launch**. For Open Legend, its strongest ideas are:
 - bodily modification as build composition;
 - multiple playstyles sharing the same authored spaces;
 - relationships/side quests carrying more emotional weight than the nominal open-world filler;
@@ -59,7 +59,7 @@ They do **not** create three entirely separate campaigns. [CP04](#cp04)
 
 This distinction matters because launch marketing created expectations of more structural divergence than the finished system supplies.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Backstory is most valuable when it creates:
 - knowledge;
@@ -90,7 +90,7 @@ Examples:
 
 Perk points can be refunded individually for free outside combat; attributes have a much more constrained reset boundary. [CP06](#cp06)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A progression node earns its existence when it creates:
 - a new verb;
@@ -116,7 +116,7 @@ This is a useful hybrid:
 - attributes/perks are deliberate build choices;
 - skills record **what the player actually does**.
 
-OpenLegend can distinguish:
+Open Legend can distinguish:
 - intention/education;
 - embodied practice;
 - current role.
@@ -154,7 +154,7 @@ Major mutually exclusive build-defining operating systems include:
 
 Equipping one closes off the others.
 
-### OpenLegend relevance
+### Open Legend relevance
 
 This is strong compositional body design:
 > a body has typed slots, resource limits, compatibility and consequences.
@@ -198,7 +198,7 @@ The same hacking framework applies to:
 This is one of Cyberpunk's best transferable systems:
 > one semantic capability—network intrusion—produces many context-specific interactions because objects expose compatible affordances.
 
-OpenLegend should prefer that over bespoke “hack camera,” “hack door,” “hack car” features with unrelated implementations.
+Open Legend should prefer that over bespoke “hack camera,” “hack door,” “hack car” features with unrelated implementations.
 
 ## 7. Weapons and combat families
 
@@ -255,7 +255,7 @@ Update 2.0 moved defense to cyberware, restoring:
 - visual authorship;
 - semantic bodily protection.
 
-That is a useful correction for OpenLegend:
+That is a useful correction for Open Legend:
 > optimization should not force players to violate the fiction of an object's function.
 
 ## 9. Movement and traversal
@@ -288,7 +288,7 @@ The movement build can materially change mission approaches:
 
 Night City is visually vertical but only selected surfaces/interiors are interactable.
 
-OpenLegend should avoid implying that every visible window/door is a simulation affordance unless the world supports it.
+Open Legend should avoid implying that every visible window/door is a simulation affordance unless the world supports it.
 
 ## 10. Stealth and detection
 
@@ -314,7 +314,7 @@ Cyberpunk's best encounter spaces often support:
 - isolate another;
 - complete objective unseen.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Stealth is strongest as:
 > perception + sound + visibility + knowledge + environment.
@@ -334,7 +334,7 @@ Update 2.0 explicitly rebuilt police around clear Heat states:
 This transformation is important product evidence:
 > a world reaction system can be structurally wrong even if individual missions are excellent.
 
-OpenLegend should build law around reusable causal rules early rather than scripted emergency spawning.
+Open Legend should build law around reusable causal rules early rather than scripted emergency spawning.
 
 ## 12. Vehicle combat and current vehicle systems
 
@@ -357,7 +357,7 @@ Patch 2.31 improved AutoDrive:
 - navigation;
 - Free Roam traffic-rule behavior. [CP03](#cp03)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Vehicles can participate in the same world affordances:
 - attack;
@@ -374,7 +374,7 @@ The original pass jumped from 2.0 to later vehicle/customization updates and omi
 - **repeatable apartment hangouts** with a completed romance partner;
 - repeatable car races and additional ambient/QoL features. [CP27](#cp27)
 
-These are not as mechanically foundational as the 2.0 perk/police rebuild, but they matter to the OpenLegend comparison because they make Night City more inhabitable after the authored relationship quest ends. In particular, the romance hangout is a small attempt to turn a completed narrative relationship into **repeatable persistent social state** rather than leaving it frozen at the end of a quest chain.
+These are not as mechanically foundational as the 2.0 perk/police rebuild, but they matter to the Open Legend comparison because they make Night City more inhabitable after the authored relationship quest ends. In particular, the romance hangout is a small attempt to turn a completed narrative relationship into **repeatable persistent social state** rather than leaving it frozen at the end of a quest chain.
 
 ## 13. Quests, Gigs, and open-world activity
 
@@ -398,7 +398,7 @@ The weaker open-world activities can devolve into:
 
 This tension appears in both launch and current player criticism. [CP10](#cp10) [CP11](#cp11)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Generated opportunities should carry:
 - people;
@@ -429,7 +429,7 @@ Others mostly change flavor.
 
 Cyberpunk is often more reactive than its open-world surface suggests, but less radically branching than early hype implied.
 
-OpenLegend should make **degrees of consequence legible**:
+Open Legend should make **degrees of consequence legible**:
 - conversational flavor;
 - local state change;
 - systemic world change.
@@ -448,7 +448,7 @@ He:
 
 This is a powerful relationship structure because he cannot simply leave.
 
-### OpenLegend relevance
+### Open Legend relevance
 
 Persistent companions can be:
 - internal;
@@ -487,7 +487,7 @@ The strongest relationship arcs are attached to actual lives:
 - River and family/police investigation;
 - Kerry and artistic/identity conflict.
 
-OpenLegend should build relationships around shared problems and obligations rather than gifts alone.
+Open Legend should build relationships around shared problems and obligations rather than gifts alone.
 
 ## 17. Factions, gangs, corps, and reputation limits
 
@@ -520,7 +520,7 @@ Most faction consequences are:
 - quest-authored;
 - combat-hostility contextual.
 
-OpenLegend can extend this into:
+Open Legend can extend this into:
 - memory;
 - standing;
 - debts;
@@ -548,7 +548,7 @@ Update 2.x improved:
 
 It still is not an NPC-life simulation.
 
-### OpenLegend opportunity
+### Open Legend opportunity
 
 Preserve Cyberpunk's:
 - density;
@@ -571,7 +571,7 @@ Quests can have irreversible character/world outcomes, but combat failure itself
 
 This supports cinematic RPG flow but weakens embodied mortality.
 
-OpenLegend can offer different world contracts:
+Open Legend can offer different world contracts:
 - reload;
 - injury;
 - rescue;
@@ -624,7 +624,7 @@ It enhances cyberware-focused capabilities such as:
 
 The tree is orthogonal to the main attribute/perk system.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 An expansion can add a new progression axis only when it corresponds to a new world mechanism.
 
@@ -867,7 +867,7 @@ It is:
 
 **Next:** disable turret, distract guard, find route.
 
-**OpenLegend lesson:** perception can be delegated through devices.
+**Open Legend lesson:** perception can be delegated through devices.
 
 ### B. Overclock trades bodily safety for cognition throughput
 
@@ -921,7 +921,7 @@ It is:
 
 **Limit:** many activities still funnel into combat and not every visible route is systemic.
 
-## 29. Transferable inspiration for OpenLegend
+## 29. Transferable inspiration for Open Legend
 
 ### A. The body should be a real system
 

@@ -1,4 +1,4 @@
-# Research scope, OpenLegend context, and evidence method
+# Research scope, Open Legend context, and evidence method
 
 **Research date:** October 17, 2026. **Repository baseline:** [Macrofold/OpenLegend `main` at `0eb7358f251d1ab706592ccb6e9829e98c729fe9`](https://github.com/Macrofold/OpenLegend/commit/0eb7358f251d1ab706592ccb6e9829e98c729fe9).
 
@@ -8,9 +8,9 @@ This research answers Mike's request to understand how capable developers automa
 
 The research makes recommendations; it does not silently accept a new art direction, change the runtime, remove existing safeguards, or close gameplay and visual acceptance work. The [research index](README.md) owns the reading order and conclusions.
 
-## 1. Start from the game OpenLegend is trying to deliver
+## 1. Start from the game Open Legend is trying to deliver
 
-OpenLegend's priority is a complete, enjoyable survival-adventure with usable combat, exploration, rewards, progression, crafting and a functional home. A small real instance of useful invention, independent character choice and remembered consequence belongs in that first experience. An enormous simulation or a catalogue of generated assets is not itself that experience. This is the project's accepted selection policy, not an inference from an influencer's preferred genre. [Gameplay priorities](../../../docs/repertoires/gameplay-priorities.md)
+Open Legend's priority is a complete, enjoyable survival-adventure with usable combat, exploration, rewards, progression, crafting and a functional home. A small real instance of useful invention, independent character choice and remembered consequence belongs in that first experience. An enormous simulation or a catalogue of generated assets is not itself that experience. This is the project's accepted selection policy, not an inference from an influencer's preferred genre. [Gameplay priorities](../../../docs/repertoires/gameplay-priorities.md)
 
 The larger ambition is an engine for authored realities, with a playable bundled world. Another world can have different laws, creatures, vocabulary and presentation. Native mechanisms and the selected world's authored content remain distinct. AI can propose language, appearances and supported new content; a plausible description does not grant a game effect, permission or new physical law. [Root instructions](../../../AGENTS.md) · [Engine and world boundaries](../../../docs/engine-and-world-boundaries.md)
 
@@ -21,7 +21,7 @@ That combination changes which production advice is useful. A workflow that rapi
 | Area            | What the inspected baseline establishes                                                                                                                                                                            | Consequence for this research                                                                                                                               |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | World rendering | PlayCanvas presents a dimensional scene with meshes, lit sprites, camera movement, depth and shadow behavior.                                                                                                      | Assess how to improve the existing renderer and asset preparation before proposing an engine replacement.                                                   |
-| Character art   | A bundled animated mercenary pilot is delivered, with a separate pixel-resolution character render and depth integration. General generated assets, arbitrary rigs and broad production qualification remain open. | Do not describe OpenLegend as sprite-only, or treat one model pilot as a complete 3D production pipeline.                                                   |
+| Character art   | A bundled animated mercenary pilot is delivered, with a separate pixel-resolution character render and depth integration. General generated assets, arbitrary rigs and broad production qualification remain open. | Do not describe Open Legend as sprite-only, or treat one model pilot as a complete 3D production pipeline.                                                   |
 | Interface       | React and React Aria support a custom design system. The October 16 world-first redesign changes ordinary navigation, speech, records and world interaction.                                                       | “There is no design system” is contradicted by the documents; whether its visible execution is good enough requires direct visual and interaction evidence. |
 | Authoring       | A unified owner conversation and bounded reviewed world changes have implementation, alongside unfinished broader authoring capabilities.                                                                          | Development-agent automation and an in-game World Agent are different permission and publication contexts.                                                  |
 | Generated art   | The runtime invention-art contract is an accepted target. The broader progressive-appearance implementation remains partly proposed.                                                                               | Offline production can use external tools now without pretending that the game already runs that entire pipeline.                                           |
@@ -38,7 +38,7 @@ The creative target is dimensional wilderness, expressive recognizable people, m
 
 The interface brief already calls for deep forest-green surfaces, warm ivory text, muted sage, restrained antique gold, tactile detail and game-oriented interactions. It explicitly rejects generic dashboard presentation. React Aria supplies interaction primitives, not this visual identity. Proposed production changes should make those existing choices tangible through a reference screen, assets, shared components and review. They should not create a second competing design system. [UI brief](../../../docs/ui-design-brief.md) · [UI foundations](../../../docs/ui-ux/foundations.md)
 
-Camera freedom matters. A technique that works from one fixed side view can fail when OpenLegend's camera rotates or tilts. The research therefore distinguishes final sprites, model-generated sprite sheets, rigid meshes, articulated models, shared rigs, attached equipment, procedural state effects and UI-only illustrations. “Generate a character” is too vague to establish usable delivery.
+Camera freedom matters. A technique that works from one fixed side view can fail when Open Legend's camera rotates or tilts. The research therefore distinguishes final sprites, model-generated sprite sheets, rigid meshes, articulated models, shared rigs, attached equipment, procedural state effects and UI-only illustrations. “Generate a character” is too vague to establish usable delivery.
 
 ## 3. What counts as evidence
 
@@ -52,7 +52,7 @@ A source is evaluated at the level of the claim being used. A respected studio m
 | Vendor case study or sponsored demonstration                      | Named adoption or a vendor-supported example, with attributed claims.             | Independent productivity measurement or an unbiased comparison.                                                            |
 | Research benchmark with published method                          | Performance on the described tasks, judge and model versions.                     | Game-specific player enjoyment, production art quality, long-lived character fidelity, or generalization to this codebase. |
 | Community discussion                                              | Leads, recurring failure modes, useful hypotheses and practitioner vocabulary.    | Representative prevalence, verified credentials, or a controlled model comparison.                                         |
-| Researcher's synthesis                                            | A justified recommendation connecting multiple sources to OpenLegend.             | A measured outcome; proposed experiments remain unrun.                                                                     |
+| Researcher's synthesis                                            | A justified recommendation connecting multiple sources to Open Legend.             | A measured outcome; proposed experiments remain unrun.                                                                     |
 
 We record creator identity, the relevant game, release/demo status, access to reproducible material, commercial incentives, and whether success numbers are independently established. “Shipped” is not a synonym for “good,” and sales or review counts do not isolate the effect of AI. A prototype can still contain valuable production techniques.
 
@@ -72,7 +72,7 @@ The research therefore records visual quality, functional behavior, integration,
 
 ### Development-time automation and generation during play
 
-A developer may review an asset offline, repair it, commit it and ship it. A live player-created item needs bounded spending, provenance, compatible representations, truthful readiness, failure recovery and controlled publication. An unattended desktop workflow is not an acceptable specification for that live system. Existing OpenLegend authorities continue to own those requirements. [Runtime art contract](../../../docs/invention-art-pipeline.md)
+A developer may review an asset offline, repair it, commit it and ship it. A live player-created item needs bounded spending, provenance, compatible representations, truthful readiness, failure recovery and controlled publication. An unattended desktop workflow is not an acceptable specification for that live system. Existing Open Legend authorities continue to own those requirements. [Runtime art contract](../../../docs/invention-art-pipeline.md)
 
 ### Reference art and production assets
 
@@ -89,7 +89,7 @@ It then branches into:
 3. Game art, animation, environment, lighting, UI, audio, story, character and playtesting workflows.
 4. Current official model capabilities and research evaluations, avoiding generic coding leaderboards.
 5. Counterexamples: manual cleanup, failed rigs, visual inconsistency, incomplete demos, human editorial work, and workloads where native rules or existing assets are better.
-6. OpenLegend-specific application, with existing owners, tradeoffs and a small test that could falsify a recommendation.
+6. Open Legend-specific application, with existing owners, tradeoffs and a small test that could falsify a recommendation.
 
 The source register and individual dossiers preserve the inspected sources and their access limits. Search-result discovery is not silently represented as reading a whole article or watching a whole video. Dates shown by a crawler, a source's own publication date and the October 17 research date are different facts. Ambiguous relative timestamps are not converted into invented exact dates.
 
@@ -99,6 +99,6 @@ The attached transcripts are read as supplied, including transcription errors. T
 
 No finite web search can establish that every relevant private workflow or public source has been found. The useful standard is explicit coverage of every requested subject, multiple independent lines of evidence for major recommendations, source-file inspection for shortlisted skills, current official checks for changing capabilities, and disclosure of unresolved questions.
 
-This assignment completes a research and recommendation package. It does not claim a paid bake-off, live OpenLegend UI inspection, installation test of external tools, benchmarked device capacity, completed asset production, or human playtest. Those activities would supply evidence that documents and videos cannot.
+This assignment completes a research and recommendation package. It does not claim a paid bake-off, live Open Legend UI inspection, installation test of external tools, benchmarked device capacity, completed asset production, or human playtest. Those activities would supply evidence that documents and videos cannot.
 
 A recommendation is strongest when it is useful even if today's leading model changes: curate a visual target; reuse approved components; generate only missing content; keep asset identity and mechanics separate; show agents the actual result; compare alternatives fairly; measure accepted output and correction effort; preserve the player's experience as the goal.

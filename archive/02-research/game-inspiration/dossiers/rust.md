@@ -1,6 +1,6 @@
 # G131 — Rust
 
-**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 Rust is a useful reference because its durable game is not merely hunger, thirst, crafting, or gunplay. It is a **temporary-property social sandbox** in which every useful object can become a reason to travel, fight, bargain, hide, automate, betray, cooperate, or log back in at an inconvenient hour. Bases create attachment but never complete safety; server wipes make accumulation deliberately temporary; proximity voice and server populations turn strangers into both the richest content and the largest source of friction. Its twelve-plus years of live development also make version discipline essential: the current 2026 game contains farming genetics, electricity, industrial automation, clans, rentable apartments and shops, a deep-sea/boat layer, current Blueprint Fragment progression, and many other systems absent from the 2018 launch reviews.
 
@@ -471,7 +471,7 @@ Across very different tastes, a durable pattern survives:
 
 The lesson is not "hardcore loss is good." It is that **loss is most compelling when players can understand the risk, choose exposure, develop counterplay, and generate a story from the result**. Rust repeatedly crosses—and sometimes violates—that line.
 
-## R13 — transferable inspiration and limits for OpenLegend
+## R13 — transferable inspiration and limits for Open Legend
 
 These are research interpretations, not accepted product requirements.
 
@@ -510,7 +510,7 @@ A wipe gives experienced players a reason to revisit low-tier tools, uncertain n
 
 Softcore raid windows and accelerated gathering change who can participate, not merely how much damage enemies deal.
 
-**Potential OpenLegend analogue:** world authors could control persistence, loss and social exposure as coherent rule bundles.  
+**Potential Open Legend analogue:** world authors could control persistence, loss and social exposure as coherent rule bundles.  
 **Do not copy:** dozens of poorly explained toggles that fracture expectations.
 
 ### 7. Player-authored security is a story engine

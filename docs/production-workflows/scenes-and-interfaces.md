@@ -98,7 +98,7 @@ For borders, textured panels, ornamental rails and connecting elements before sc
 
 **Route:** player decision → information/interaction sketch → visual alternatives → complete-screen exemplar and art kit → shared components → live states → game integration → visual and interaction review.
 
-OpenLegend already has a design system and a recent world-first interface redesign. Begin with the actual current screen and owner, not an old screenshot or an assumption that the theme is missing. The [UI research](../../archive/02-research/ai-game-development/08-ui-quality-and-production.md) separates plausible causes of a weak result; it does not claim to have diagnosed today's running interface.
+Open Legend already has a design system and a recent world-first interface redesign. Begin with the actual current screen and owner, not an old screenshot or an assumption that the theme is missing. The [UI research](../../archive/02-research/ai-game-development/08-ui-quality-and-production.md) separates plausible causes of a weak result; it does not claim to have diagnosed today's running interface.
 
 ### 1. Define the player's task and capture its current state
 
@@ -140,7 +140,7 @@ Test at actual slot size, including the smallest intended use. Preserve text, qu
 
 **Consume:** the approved exemplar, art kit, real data/actions and current [design-system production guide](../../apps/client/src/design-system/README.md).
 
-**Produce:** a working screen using shared tokens and semantic components. React Aria's interaction primitives can retain correct labels, keyboard behavior and focus while OpenLegend supplies appearance. The implementation agent should have the visual target and a way to inspect the actual result.
+**Produce:** a working screen using shared tokens and semantic components. React Aria's interaction primitives can retain correct labels, keyboard behavior and focus while Open Legend supplies appearance. The implementation agent should have the visual target and a way to inspect the actual result.
 
 Where a new shared role is needed, add it to the existing component/token owner. Avoid copying palette values or creating a one-off component family that makes later screens diverge. Preserve object identity and the same native action route when an operation is reachable from multiple views.
 

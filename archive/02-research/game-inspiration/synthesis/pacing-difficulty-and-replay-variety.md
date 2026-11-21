@@ -14,7 +14,7 @@ How do challenges and possibilities stay well matched as players learn?
 
 ## Ownership boundary
 
-Owns challenge and temporal structure. Motivations/compulsion belong to FUN, reset consequences to LOSS, and update cadence to LIVE. This is research, not an approved OpenLegend specification.
+Owns challenge and temporal structure. Motivations/compulsion belong to FUN, reset consequences to LOSS, and update cadence to LIVE. This is research, not an approved Open Legend specification.
 
 ## Candidate reading routes — not assessed
 
@@ -28,7 +28,7 @@ Owns challenge and temporal structure. Motivations/compulsion belong to FUN, res
 
 ## Consolidated lessons and tradeoffs
 
-## Current OpenLegend baseline and existing design owners
+## Current Open Legend baseline and existing design owners
 
 Use the [source and goal map](source-and-goal-map.md#topic-pacing) to locate relevant research, current contracts and existing designs. Record delivered scope, designed-but-unimplemented scope and genuinely new questions separately; linked documents are not a fresh runtime audit.
 
@@ -36,13 +36,13 @@ Use the [source and goal map](source-and-goal-map.md#topic-pacing) to locate rel
 
 <!-- Follow intention, available knowledge, choice, cost/resistance, actual outcome and what happens next. Compare relevant peaceful/adversarial methods, another participant's perspective, and a satisfying stopping or return point. -->
 
-## Possible OpenLegend applications and limits
+## Possible Open Legend applications and limits
 
 ## Open questions and missing evidence
 
 <!-- Compare alternative designs and omission, prerequisites, player/developer burdens, contrary evidence, confidence and what would change a recommendation. Use the template proportionally; do not invent metrics or feature approval. -->
 
-## OpenLegend-specific research subtopics
+## Open Legend-specific research subtopics
 
 ### Quiet life, wanted pressure and worthwhile stopping
 

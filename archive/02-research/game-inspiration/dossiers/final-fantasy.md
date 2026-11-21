@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md)
 
-**Full-category research pass: September 26, 2026.** The original Final Fantasy and its major remake lineages are the subject, not the separately assigned sequels. This completes the earlier checkpoint without discarding its review disagreements or source limits. No firsthand gameplay, full-video viewing or proprietary implementation inspection is claimed. The worked examples are constructed from documented rules. Inspiration is not an accepted OpenLegend design.
+**Full-category research pass: September 26, 2026.** The original Final Fantasy and its major remake lineages are the subject, not the separately assigned sequels. This completes the earlier checkpoint without discarding its review disagreements or source limits. No firsthand gameplay, full-video viewing or proprietary implementation inspection is claimed. The worked examples are constructed from documented rules. Inspiration is not an accepted Open Legend design.
 
 ## 1. Identity, promise and edition boundaries — R01
 
@@ -204,7 +204,7 @@ That does not erase the earlier negative helpful review about omitted remake con
 
 **Sparse characterization can coexist with memorable party history.** A group can matter through its shared survival. Dependency: enough variation and consequence to distinguish one journey from another. Failure mode: confusing low dialogue volume with either automatic emotional depth or automatic lack of depth.
 
-These are research interpretations, not a proposal to copy protected character names, assets, dialogue or exact progression into OpenLegend.
+These are research interpretations, not a proposal to copy protected character names, assets, dialogue or exact progression into Open Legend.
 
 ## 11. Coverage, preservation and viewing routes — R14
 

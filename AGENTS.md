@@ -1,6 +1,6 @@
 # Working on Open Legend
 
-OpenLegend is an engine for authored realities with a playable bundled world. Deliver useful features without making that world's laws universal or building speculative infrastructure.
+Open Legend is an engine for authored realities with a playable bundled world. Deliver useful features without making that world's laws universal or building speculative infrastructure.
 
 Before acting, ensure these instructions are available through the end of [Completion and handoff — every task](#completion-and-handoff--every-task). If startup supplied only an excerpt or truncated text, read the missing remainder from this file; do not assume an injected excerpt is complete.
 
@@ -177,6 +177,6 @@ Once agreed deliverables, affected-diff review and selected required checks pass
 
 ## AWS Agent Toolkit
 
-Before OpenLegend AWS operations, cloud-resource configuration or CLI/MCP access changes, read [AWS project access and experience guidance](.agents/rules/aws.md). Keep the OpenLegend profile separate from work profiles. An incidental prose mention of AWS does not require that workflow.
+Before Open Legend AWS operations, cloud-resource configuration or CLI/MCP access changes, read [AWS project access and experience guidance](.agents/rules/aws.md). Keep the Open Legend profile separate from work profiles. An incidental prose mention of AWS does not require that workflow.
 
 <!-- END AWS Agent Toolkit rules -->

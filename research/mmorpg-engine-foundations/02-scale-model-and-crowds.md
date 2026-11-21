@@ -8,7 +8,7 @@ Separate connected humans, native bodies, autonomous decisions, independently ac
 
 Count each actual entity's authoritative progression once, not once per nearby human. Shared NPCs and compatible scene preparation offer amortization; independent conversations, personal evidence and real audience bytes still cost work. Human control does not automatically require a full autonomous model-decision budget for every avatar, nor does it remove the installed native/psychological responses. Measure the actual control and activity mix rather than multiply one small NPC-heavy scene by player count.
 
-OpenLegend's cognition and memory differ from conventional MMO workloads, but this does not establish that every OpenLegend scene is heavier than every other game's scene. Jagex's cycle and population description is a useful contrast, not a conversion factor [S02].
+Open Legend's cognition and memory differ from conventional MMO workloads, but this does not establish that every Open Legend scene is heavier than every other game's scene. Jagex's cycle and population description is a useful contrast, not a conversion factor [S02].
 
 ## What physical exclusion actually buys
 
@@ -30,7 +30,7 @@ This does not make the entire group serial. Candidate discovery, independent cal
 
 Individual all-to-all updates among 5,000 people entail 24,995,000 directed sender-recipient relationships per update opportunity. That is not necessarily a packet count: selective delivery, change suppression, shared preparation and batching can reduce actual work. Batching alone cannot remove genuine recipient information or authorization costs.
 
-Blizzard's Ahn'Qiraj account illustrates concentrated communication growth [S01]. Epic's replication graph illustrates reusable relevance preparation instead of repeating every actor-by-client test [S05]. For OpenLegend, share compatible objective geometry and source preparation, then preserve each observer's reception, identity, freshness and permissions. Shared computation is not shared knowledge.
+Blizzard's Ahn'Qiraj account illustrates concentrated communication growth [S01]. Epic's replication graph illustrates reusable relevance preparation instead of repeating every actor-by-client test [S05]. For Open Legend, share compatible objective geometry and source preparation, then preserve each observer's reception, identity, freshness and permissions. Shared computation is not shared knowledge.
 
 Presentation detail, evidence precision and mechanical effect are separate. A distant body may be drawn cheaply without becoming nonexistent or immune to an admitted effect. Aggregate crowd perception, when selected by the world, must retain individual exceptions and source precision; it cannot manufacture an exact transcript or names afterward. Client interest filtering must not silently determine authoritative collision or attack eligibility.
 
@@ -68,4 +68,4 @@ Spatial locality is useful immediately for queries and residency. Transparent sa
 
 A vast world can reduce ordinary concentration but cannot guarantee avoidance of a capital, rare event or coordinated gathering. Qualify both dispersed and concentrated play. A blocked entrant still consumes connection and nearby-service resources; people queued outside are not supported active encounter capacity. Arrival fairness, safe waiting/return and existing obligations belong to the [capacity contract](../../docs/product-scalability/capacity-and-economics.md), not a second congestion policy here.
 
-The conditional opportunity is substantial: if supported interactions, active working sets, required recipient detail and global coordination remain bounded or composable, additional resources can support more useful activity. Neither a 5,000-player complete OpenLegend battle nor its impossibility is established by the sources. Seek the largest quality-qualified envelope rather than assuming either infinite scaling or a small fixed cap.
+The conditional opportunity is substantial: if supported interactions, active working sets, required recipient detail and global coordination remain bounded or composable, additional resources can support more useful activity. Neither a 5,000-player complete Open Legend battle nor its impossibility is established by the sources. Seek the largest quality-qualified envelope rather than assuming either infinite scaling or a small fixed cap.

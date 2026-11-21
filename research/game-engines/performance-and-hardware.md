@@ -47,7 +47,7 @@ WebGPU can reduce submission overhead and enable algorithms that keep more work 
 
 ### Common GPU bottlenecks
 
-**Too many pixels shaded.** Transparent smoke, foliage, overlapping sprites, read-through effects and full-screen passes can shade the same pixel repeatedly. A low polygon count does not guarantee a cheap frame.
+**Too many pixels shaded.** Transparent smoke, foliage, overlapping sprites, see-through reveal effects and full-screen passes can shade the same pixel repeatedly. A low polygon count does not guarantee a cheap frame.
 
 **Too many shadow views.** Shadowed lights create additional rendering work. A light without shadows and a light with high-resolution dynamic shadows are not equivalent. Particle count alone says little about the cost of a smoky fire that covers half the screen.
 

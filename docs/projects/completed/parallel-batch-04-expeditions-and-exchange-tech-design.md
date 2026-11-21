@@ -56,7 +56,7 @@ Completion requires the formerly refused southward escape to produce an actual m
 
 ## PX02 — Reciprocal offer contract
 
-**Delivered October 5:** the implementation follows the immediate offer contract below. [Social rules](../../worlds/base/social.md#offering-and-accepting-possessions) now own current behavior; [BW11](../../limits/base-world.md#bw11) owns adopted PX-L01 bounds and recent explicit disclosures. [Evidence](../../verification/reciprocal-barter.md) covers native, PostgreSQL, actual client and controlled voluntary resident decisions. Broader generalized agreements, currency, promises, standing reservations and population qualification remain outside PX02.
+**Delivered October 5:** the implementation follows the immediate offer contract below. [Social rules](../../worlds/base/social.md#offering-and-accepting-possessions) now own current behavior; [BW11](../../limits/base-world.md#bw11) owns adopted PX-L01 bounds and recent explicit disclosures. [Evidence](../../verification/reciprocal-barter.md) covers native, PostgreSQL, actual client and controlled voluntary NPC decisions. Broader generalized agreements, currency, promises, standing reservations and population qualification remain outside PX02.
 
 ### Current owner and intended model
 

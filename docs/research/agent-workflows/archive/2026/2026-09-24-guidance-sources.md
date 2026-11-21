@@ -1,6 +1,6 @@
 # Research and scope of the guidance
 
-Reviewed 2026-09-24. This is an optional source/rationale record, not an additional instruction bundle. Sources describe their own systems; the resulting OpenLegend policy is deliberately narrower than adopting every recommendation. Volatile tool-loading behavior should be rechecked when an adapter changes.
+Reviewed 2026-09-24. This is an optional source/rationale record, not an additional instruction bundle. Sources describe their own systems; the resulting Open Legend policy is deliberately narrower than adopting every recommendation. Volatile tool-loading behavior should be rechecked when an adapter changes.
 
 ## Agent engineering
 
@@ -8,7 +8,7 @@ Reviewed 2026-09-24. This is an optional source/rationale record, not an additio
 - [OpenAI: Harness engineering](https://openai.com/index/harness-engineering/): repository knowledge should be navigable, with mechanical checks for enforceable structure. Applied as a root map, existing design owners and a small guidance checker; not an excuse to generate a large parallel documentation system.
 - [Anthropic: Effective context engineering](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents): high-signal context, appropriate instruction altitude and on-demand retrieval. Applied by separating permanent boundaries from task procedures and optional references.
 - [Claude Code best practices](https://code.claude.com/docs/en/best-practices) and [long-running agent harnesses](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents): clear outcomes, useful verification and durable progress. Existing focused trackers supply continuity; no second progress diary or mandatory planning ceremony is added.
-- [Evaluating AGENTS.md (2026)](https://arxiv.org/abs/2602.11988): repository-context guidance can add overhead without improving the evaluated tasks. This is task/model-specific evidence, not proof that OpenLegend instructions are harmful or that every instruction can be removed. It motivates checking actual loading and trimming redundant context.
+- [Evaluating AGENTS.md (2026)](https://arxiv.org/abs/2602.11988): repository-context guidance can add overhead without improving the evaluated tasks. This is task/model-specific evidence, not proof that Open Legend instructions are harmful or that every instruction can be removed. It motivates checking actual loading and trimming redundant context.
 
 ## Formats and discovery
 

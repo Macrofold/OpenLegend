@@ -23,7 +23,7 @@ Physical exclusion can bound some local interaction work under explicit assumpti
 - [Engine foundations and sequencing](03-foundations-and-sequencing.md): expensive-to-retrofit seams and deferred machinery.
 - [Persistent worlds and hosting](04-persistent-worlds-and-hosting.md): independent seed histories, residency, storage growth, provider boundaries and complete cost.
 - [Qualification and capacity](05-qualification-and-capacity.md): useful-work, quality and operating evidence.
-- [Primary sources](sources.md): mechanism evidence and its limits, not transferable OpenLegend benchmarks.
+- [Primary sources](sources.md): mechanism evidence and its limits, not transferable Open Legend benchmarks.
 
 The [focused handoff](../../docs/maintainers/decisions/mmorpg-engine-foundations.md) records completed near-term design slices and remaining consumer-specific questions. The source-reconciled [native runtime foundation pair](../../docs/projects/native-runtime-foundations-feature-spec.md) and [NRF tracker](../../docs/maintainers/native-runtime-foundations.md) specify four isolated candidates, preserving current NSC repairs and gates rather than duplicating them. Its [evidence map](../../docs/projects/native-runtime-foundations-evidence-and-repertoire.md) inspects the now-accessible Rust implementation and all repertoire scopes. [NSC](../../docs/maintainers/native-simulation-core.md) retains proof/conversion adoption; the [capacity owner](../../docs/product-scalability/capacity-and-economics.md#maintained-records) retains later PS/PF/PT/PD qualification.
 

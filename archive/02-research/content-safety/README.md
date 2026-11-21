@@ -1,6 +1,6 @@
 # Content safety, mature storytelling and AI companions
 
-**Reviewed October 16, 2026.** This folder preserves the research behind Mike's decision to support mature, non-graphic storytelling while excluding graphic interactive sexual roleplay from the initial OpenLegend product. It separates law, voluntary ratings, commercial restrictions, product judgment and implementation requirements.
+**Reviewed October 16, 2026.** This folder preserves the research behind Mike's decision to support mature, non-graphic storytelling while excluding graphic interactive sexual roleplay from the initial Open Legend product. It separates law, voluntary ratings, commercial restrictions, product judgment and implementation requirements.
 
 | Document | Purpose |
 | --- | --- |

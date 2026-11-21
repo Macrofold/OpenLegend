@@ -1,6 +1,6 @@
 # Slay the Spire: deck ecology, information, and costly synergies
 
-**Inspiration and reference only.** This extends the [original chapter](../games/slay-the-spire.md), not OpenLegend's implementation requirements. Compare [Balatro](balatro-scoring-operators-risk-and-readable-combinations.md) for a different form of compositional mastery.
+**Inspiration and reference only.** This extends the [original chapter](../games/slay-the-spire.md), not Open Legend's implementation requirements. Compare [Balatro](balatro-scoring-operators-risk-and-readable-combinations.md) for a different form of compositional mastery.
 
 **Scope:** Slay the Spire I, not its sequel, unofficial multiplayer mods, or Downfall. Historical reviews describe their release-era experience. Mechanics below are selected documented interactions, not an exhaustive current balance guide or source-code inspection. Constructed examples illustrate rules rather than sessions played for this research. Research access: September 25, 2026.
 
@@ -20,7 +20,7 @@ The original chapter discusses skipping a reward and removing a card as strategi
 
 **Worked choice:** a deck already has a promising interaction but the character is injured. Upgrading a key card may improve many subsequent fights; resting may be what makes reaching those fights possible. The proper comparison is not “permanent value beats temporary value.” It is whether the long-term benefit can actually be realized under the present risk.
 
-**Interpretation:** a good reference catalog records absence as well as acquisition. Declining another mechanic can preserve a world's clarity. Removing a weak component can make the remaining system more dependable. Neither idea requires reproducing cards, health bars or a run reset in OpenLegend.
+**Interpretation:** a good reference catalog records absence as well as acquisition. Declining another mechanic can preserve a world's clarity. Removing a weak component can make the remaining system more dependable. Neither idea requires reproducing cards, health bars or a run reset in Open Legend.
 
 ## 3. Intent: information can create strategy rather than remove it
 
@@ -68,7 +68,7 @@ The critic particularly values the sound of repeated attacks, frost effects and 
 
 **Interpretation:** repeated systemic effects can acquire an expressive identity without long dialogue or elaborate animation. A player recognizes the rhythm of “my build working.” The narrative is often a sequence of commitments and corrections: an initial plan, an unlucky offer, a risky detour, a rescue through an unexpected combination.
 
-This is not a substitute for authored people in a relationship-centered game. It is another kind of story that can coexist with them. Names such as Dead Branch, Corruption and Runic Pyramid are reference identifiers here, not proposed assets or fictional concepts for OpenLegend.
+This is not a substitute for authored people in a relationship-centered game. It is another kind of story that can coexist with them. Names such as Dead Branch, Corruption and Runic Pyramid are reference identifiers here, not proposed assets or fictional concepts for Open Legend.
 
 ## 8. Production: measure choices, then interpret them
 

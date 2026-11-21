@@ -1,16 +1,16 @@
-# Why Umamusume made billions — and what OpenLegend can take forward
+# Why Umamusume made billions — and what Open Legend can take forward
 
 [Research library](../README.md) · [Ten full dossiers and completion record](../research-progress-mobile-2026-10-17.md) · [Research requirements](../research-requirements.md)
 
-**Research date: October 17, 2026.** The ten underlying dossiers are complete within their recorded evidence limits. This synthesis connects their mechanics, reported pleasures and commercial outcomes to possible OpenLegend experiences. Design interpretations and constructed examples below are proposals; their enjoyment and commercial value have not been tested in OpenLegend.
+**Research date: October 17, 2026.** The ten underlying dossiers are complete within their recorded evidence limits. This synthesis connects their mechanics, reported pleasures and commercial outcomes to possible Open Legend experiences. Design interpretations and constructed examples below are proposals; their enjoyment and commercial value have not been tested in Open Legend.
 
 ## The question the comparison needs to answer
 
-The useful question behind the quoted $2.5 billion is what people value enough to spend their attention, affection and money on. For OpenLegend, the strongest opportunity is to connect an enjoyable activity with a particular ambition, a method the player can make their own, and an outcome that matters afterward. Commercial viability adds a further question: can we repeatedly deliver that value at a supportable cost?
+The useful question behind the quoted $2.5 billion is what people value enough to spend their attention, affection and money on. For Open Legend, the strongest opportunity is to connect an enjoyable activity with a particular ambition, a method the player can make their own, and an outcome that matters afterward. Commercial viability adds a further question: can we repeatedly deliver that value at a supportable cost?
 
 Our working explanation for Umamusume is that character attachment, repeated improvement, persistent ownership and renewed goals can reinforce each other. The dossiers document the relevant mechanisms; the strength of each mechanism's contribution to revenue remains an inference. Public spending estimates cannot tell us how much income came from affection for a character, competitive ambition, convenience, an expiring offer or another motive. The final comparison therefore distinguishes the observable product from the proposed explanation of its results.
 
-For a design question, start with [what all ten games can contribute](#what-all-ten-games-can-contribute), then [OpenLegend's particular opportunity](#openlegends-particular-opportunity). The [canonical fun synthesis](fun-and-sustainable-engagement.md) owns the broader principles; [current gameplay priorities](../../../../docs/repertoires/gameplay-priorities.md) own selection for the playable game.
+For a design question, start with [what all ten games can contribute](#what-all-ten-games-can-contribute), then [Open Legend's particular opportunity](#open-legends-particular-opportunity). The [canonical fun synthesis](fun-and-sustainable-engagement.md) owns the broader principles; [current gameplay priorities](../../../../docs/repertoires/gameplay-priorities.md) own selection for the playable game.
 
 ## Why the parts fit together in Umamusume
 
@@ -38,7 +38,7 @@ A production report describes concept work, choreography, motion capture and cut
 
 The five successful cases were selected for commercial scale or endurance; the other five were selected because their released online services ended. These labels describe outcomes, not the quality of every activity inside a game. The cases differ in audience, genre, period, geography, distribution and production commitments. Use them to develop better possibilities and comparisons, rather than to rank mechanics by revenue.
 
-The first column provides a reading route into existing evidence. The final column is our proposed OpenLegend interpretation, not a claim that the reference already delivered that experience or that the proposal will succeed.
+The first column provides a reading route into existing evidence. The final column is our proposed Open Legend interpretation, not a claim that the reference already delivered that experience or that the proposal will succeed.
 
 | Game and evidence route                                                                                                                                                                                                            | Positive experience to study                            | Perspective to carry forward                                                                                                                                      |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -70,25 +70,25 @@ This suggests separating four questions in further research:
 
 The answers should remain specific to the intended audience. A design that requires coordination, uninterrupted attention or comfort with a large interface asks for a different commitment than a short solitary puzzle. Neither commitment is inherently superior; the commercial question is whether enough of the intended audience values the actual experience under real conditions.
 
-## OpenLegend's particular opportunity
+## Open Legend's particular opportunity
 
 The [current selection policy](../../../../docs/repertoires/gameplay-priorities.md#the-game-we-need-to-be-able-to-play) calls for a complete, enjoyable adventure with a real early instance of useful invention, independent character choice and persistent consequence. Those qualities belong in connected play from the start. The [design foundation](../../../../docs/repertoires/design-foundation.md#how-systems-produce-a-situation) supplies a broader range of motives, including curiosity, mastery, possession, affection, power, beauty, humor and conflict.
 
 Our strongest proposed direction is **an adventure in which the player's chosen method changes both what they can do and what happens among particular people and places**. Its appeal needs to be visible in play: a clever maneuver, a surprising discovery, a hard-won object, an expressive creation or a rival's understandable response. The engine's breadth earns its place by making those experiences possible.
 
-The distinctive bet is a useful invention beyond the world's prewritten answers, combined with characters whose own purposes can change the outcome. These ten commercial contrasts do not establish market uniqueness. Judge a proposed situation alongside the [existing systemic, narrative and creative comparisons](../../../../docs/repertoires/design-foundation.md#what-the-research-actually-makes-available), and ask what additional experience OpenLegend makes possible and why someone would prefer it. Breadth of possibility matters when a player can recognize and enjoy the difference.
+The distinctive bet is a useful invention beyond the world's prewritten answers, combined with characters whose own purposes can change the outcome. These ten commercial contrasts do not establish market uniqueness. Judge a proposed situation alongside the [existing systemic, narrative and creative comparisons](../../../../docs/repertoires/design-foundation.md#what-the-research-actually-makes-available), and ask what additional experience Open Legend makes possible and why someone would prefer it. Breadth of possibility matters when a player can recognize and enjoy the difference.
 
 ### Four positive design perspectives
 
 **Give an adventure a method the player can own.** A desirable destination, readable opposition and useful rewards can make the player want to act. Timing, positioning, observation, equipment and invention offer different kinds of competence. Preserve a viable known approach while allowing a supported new idea to produce a real alternative. The important result is that the player recognizes how their method affected events. A larger menu of nominal choices adds little if every approach feels the same.
 
-**Let people change the situation through their own purposes.** A capable ally, jealous competitor, principled resident or dangerous enemy can make an otherwise familiar task particular. Participation may involve practical help, rivalry, affection, refusal or a bargain. A character's response should follow what they know and want; the player can win, lose, cooperate or walk away. The references' human cooperation and authored character stories are useful comparisons, but they do not establish that OpenLegend's independent characters will work. That remains part of the experience to demonstrate.
+**Let people change the situation through their own purposes.** A capable ally, jealous competitor, principled resident or dangerous enemy can make an otherwise familiar task particular. Participation may involve practical help, rivalry, affection, refusal or a bargain. A character's response should follow what they know and want; the player can win, lose, cooperate or walk away. The references' human cooperation and authored character stories are useful comparisons, but they do not establish that Open Legend's independent characters will work. That remains part of the experience to demonstrate.
 
 **Make progress visible, usable and personally desirable.** A discovery can open an approach; an earned object can change a fight; a finished home can express a taste; a remembered event can change a relationship. These are different kinds of value. A beautiful room, a performance or an amusing invention can be satisfying in itself. Let successful projects remain finished, and let players choose which new ambition deserves their attention.
 
 **Make the moment feel distinctive.** The pleasure of a well-directed action, an enemy's readable threat, an unexpected sound, an arresting view or a comic reaction matters alongside persistent systems. Choose a coherent mood and presentation for the authored world. Give anticipation, action, payoff and quiet enjoyment room to breathe. A proposed interaction needs an account of what the player sees, hears, directs and feels; a database of possible consequences does not supply that account.
 
-These perspectives extend the existing [fun principles](fun-and-sustainable-engagement.md#3-eighteen-central-principles). They do not require a new general system for each pleasure. In particular, fixed combinations in the source games are not evidence of live invention, and human social behavior is not evidence of autonomous character behavior. OpenLegend must earn those parts of its promise in its own playable situations.
+These perspectives extend the existing [fun principles](fun-and-sustainable-engagement.md#3-eighteen-central-principles). They do not require a new general system for each pleasure. In particular, fixed combinations in the source games are not evidence of live invention, and human social behavior is not evidence of autonomous character behavior. Open Legend must earn those parts of its promise in its own playable situations.
 
 ### Two concrete situations to explore
 
@@ -119,15 +119,15 @@ Player testimony, observation and repeated behavior can inform these judgments t
 
 ## Commercial perspectives that serve the intended game
 
-The mobile results make the relationship between value, audience and delivery worth examining. They do not select OpenLegend's financing or purchase model. Our proposed commercial questions are:
+The mobile results make the relationship between value, audience and delivery worth examining. They do not select Open Legend's financing or purchase model. Our proposed commercial questions are:
 
 1. **Who wants this particular experience?** Describe a recognizable adventure and the kind of participation it offers. Check whether prospective players find the actual situation appealing and can explain its appeal. A promise to support any imaginable reality leaves this question unanswered.
-2. **What can communicate the appeal faithfully?** A readable moment of discovery, invention, mastery or character consequence can be a candidate for showing what a world offers. Evaluate whether the moment is understandable and representative before assuming it will attract an audience. The research supplies no measured acquisition rate for OpenLegend.
+2. **What can communicate the appeal faithfully?** A readable moment of discovery, invention, mastery or character consequence can be a candidate for showing what a world offers. Evaluate whether the moment is understandable and representative before assuming it will attract an audience. The research supplies no measured acquisition rate for Open Legend.
 3. **How much worthwhile play can a bounded addition support?** A place, object or character may participate in several situations when goals and circumstances change. Study whether that reuse creates desired play. Also leave room for an authored surprise or beautiful moment whose value is concentrated in one encounter.
 4. **Can both playing and making be worthwhile?** Players need a good experience; world makers need to realize an intention, try it and improve it. A useful authoring capability should eventually help someone deliver enjoyable participation. Author convenience and visitor enjoyment require separate observation.
 5. **Can we support the experience we offer?** Examine ongoing authoring, presentation, generation where used, operation and support alongside what the audience values. If purchases are introduced, identify the benefit someone affirmatively wants at the offered price. A large gross-spending example does not supply our demand, cost structure or willingness to pay.
 
-Location dependence, licensed attachment, randomized acquisitions, purchase pressure and a frequent release schedule belong to specific source businesses. Transfer the useful player experience deliberately, and decide separately whether any surrounding commercial mechanism fits OpenLegend. The immediate benefit of this research is a better candidate experience and a clearer account of what would make it desirable and supportable.
+Location dependence, licensed attachment, randomized acquisitions, purchase pressure and a frequent release schedule belong to specific source businesses. Transfer the useful player experience deliberately, and decide separately whether any surrounding commercial mechanism fits Open Legend. The immediate benefit of this research is a better candidate experience and a clearer account of what would make it desirable and supportable.
 
 ## A large total can come from very different audiences
 
@@ -183,7 +183,7 @@ The dates also resist a single external explanation. Wizards Unite's reported co
 
 ### Useful systems do not establish sufficient demand
 
-Durango is especially relevant to OpenLegend because its dossier records extensive specialization, production, settlement and player creation. Those systems offer concrete ways for possessions and other people to matter. Their presence did not ensure that the online business continued. Its final offline island modes preserved a bounded experience. [Dossier](../dossiers/durango-wild-lands.md); [preservation account](https://www.inven.co.kr/webzine/news/?news=231121).
+Durango is especially relevant to Open Legend because its dossier records extensive specialization, production, settlement and player creation. Those systems offer concrete ways for possessions and other people to matter. Their presence did not ensure that the online business continued. Its final offline island modes preserved a bounded experience. [Dossier](../dossiers/durango-wild-lands.md); [preservation account](https://www.inven.co.kr/webzine/news/?news=231121).
 
 This makes a better research question than either praising or rejecting complexity in general: which decisions did the complexity enable, which people valued those decisions, and what work had to be sustained around them? The same question applies to a small puzzle and a large simulated world. A count of features cannot substitute for an account of their use.
 
@@ -191,7 +191,7 @@ This makes a better research question than either praising or rejecting complexi
 
 Respawn cited shortfalls in content quality, quantity and cadence. [Archived publisher statement](https://devtrackers.gg/apex-legends/p/0a52ffaa-a-development-update-on-apex-legends-mobile). Ateam's cost-recovery evidence is recorded in the financial section above. These are different kinds of evidence from a reviewer's judgment that a match was enjoyable. The game, its operation and its commercial continuation need separate evaluation.
 
-For an operator pursuing a financial return, continued operation requires the expected value of future receipts to justify the obligations needed to earn them. A publisher can also consider other uses for the same staff and capital. The public record here does not disclose all of those alternatives. It therefore supports examining production burden and cost recovery without inventing a numerical break-even point or treating a shutdown announcement as a full postmortem. Other financing arrangements can support a game; the selected mobile businesses do not settle OpenLegend's model.
+For an operator pursuing a financial return, continued operation requires the expected value of future receipts to justify the obligations needed to earn them. A publisher can also consider other uses for the same staff and capital. The public record here does not disclose all of those alternatives. It therefore supports examining production burden and cost recovery without inventing a numerical break-even point or treating a shutdown announcement as a full postmortem. Other financing arrangements can support a game; the selected mobile businesses do not settle Open Legend's model.
 
 Both groups supply worthwhile experiences and counterexamples. An ended service can contain a compelling encounter or creative possibility; a large business can contain exhausting obligations. The positive opportunity map and the operating evidence answer different questions. Neither should erase the other.
 

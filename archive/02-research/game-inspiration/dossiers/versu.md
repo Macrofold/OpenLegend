@@ -14,7 +14,7 @@ The conversation account separately describes topical continuity, turn-taking, i
 
 ## The strongest transfer: coordinate opportunities, not compulsory responses
 
-OpenLegend needs a way for shared activity to remain coherent without making everyone a puppet of the activity. A meal, outing or game can supply common context and feasible next steps. It should not decide that a person accepts an invitation, forgives an insult or wants to continue.
+Open Legend needs a way for shared activity to remain coherent without making everyone a puppet of the activity. A meal, outing or game can supply common context and feasible next steps. It should not decide that a person accepts an invitation, forgives an insult or wants to continue.
 
 The distinction also reduces a false choice between an entirely scripted conversation and a completely unstructured stream of generated text. Some structure can preserve who was addressed, what was asked, which terms were offered and which actions actually occurred. Generative interpretation can remain open where it adds value.
 
@@ -46,4 +46,4 @@ A useful future comparison would ask whether shared structure improves continuit
 
 **V2.** Emily Short and Richard Evans, [Versu: Conversation Implementation](https://emshort.blog/2013/02/26/versu-conversation-implementation/), February 26, 2013. Main technical article reviewed, not its entire comment discussion.
 
-No code audit, playtest, controlled player study, throughput measurement or full-game completion is claimed. These findings authorize no change to OpenLegend's social rules.
+No code audit, playtest, controlled player study, throughput measurement or full-game completion is claimed. These findings authorize no change to Open Legend's social rules.

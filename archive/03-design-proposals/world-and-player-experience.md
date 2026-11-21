@@ -150,7 +150,7 @@ Submission is distinct from private arrival and reading; there is no sender-faci
 
 World sectors can begin as discrete areas with visible transitions. A destination at capacity places the traveler in a cancellable queue while preserving their current location. Border crossing should feel like travel rather than a mysterious connection error. Friend invitations and parties need a policy when sectors are full.
 
-Add biomes and scenarios only when existing residents can use them meaningfully. A zombie outbreak or dragon can be a creator-introduced event package with scope, duration, rules, spawning limits, and recovery plan. A scenario director is separate from resident cognition: it creates circumstances; residents decide how to respond.
+Add biomes and scenarios only when existing residents can use them meaningfully. A zombie outbreak or dragon can be a creator-introduced event package with scope, duration, rules, spawning limits, and recovery plan. A scenario director is separate from NPC cognition: it creates circumstances; residents decide how to respond.
 
 ## Product boundaries for the first release
 

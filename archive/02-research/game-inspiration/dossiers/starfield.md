@@ -1,6 +1,6 @@
 # G167 — Starfield: authored exploration, modular ships and a creator ecosystem
 
-**Research date:** October 14, 2026. **Scope:** the released game, major version boundaries, and a focused investigation of its popular modding community. Research and interpretation, not an accepted OpenLegend feature specification. No hands-on game, Creation Kit or mod-installation verification was performed.
+**Research date:** October 14, 2026. **Scope:** the released game, major version boundaries, and a focused investigation of its popular modding community. Research and interpretation, not an accepted Open Legend feature specification. No hands-on game, Creation Kit or mod-installation verification was performed.
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Scoped progress](../research-progress-modding-2026-10-14.md) · [Cross-game creator principles](../essays/player-created-content-modding-and-marketplaces.md)
 
@@ -27,7 +27,7 @@ The five skill families are Physical, Social, Combat, Science and Tech. Backgrou
 
 Several interface-level activities are especially important to the experience: security puzzles gate access; persuasion introduces uncertain conversational outcomes; scanning turns environmental observation into resource and exploration information. The PCGamesN review describes the tension between its chosen background and mandatory violence, and finds some conversation checks mechanically conspicuous rather than dramatically persuasive. This is an attributed criticism of the launch design, not proof that every player experiences the same mismatch. [S13]
 
-For OpenLegend research, distinguish **expressing an identity** from **receiving identity-flavored text**. A background matters more when it changes useful options, constraints and relationships than when it only inserts a line into a conversation. That is a design interpretation, not a claim about Starfield's internal implementation.
+For Open Legend research, distinguish **expressing an identity** from **receiving identity-flavored text**. A background matters more when it changes useful options, constraints and relationships than when it only inserts a line into a conversation. That is a design interpretation, not a claim about Starfield's internal implementation.
 
 ### Equipment, resources and composition
 
@@ -117,7 +117,7 @@ Sources: [S11–S15]. PC Gamer and Windows Central are both Future publications,
 
 **Steam evidence limit:** the helpful-review page was requested, but its accessible response exposed interface scaffolding rather than review bodies. The store response was age-gated; attempts to retrieve positive and negative review bodies through Steam's public review endpoint also failed. Consequently, no Steam quotations, positive/negative sample, current percentage or prevalence claim is supplied. The creator interview below provides direct enthusiast testimony but is not substituted for a representative sample of base-game players. This is an explicit source-access limitation, not evidence that Steam reviews do not exist. [S17]
 
-**Interpretation:** these critics differ substantially on whether the game's breadth sustains curiosity. Commonly discussed frictions are not automatically bugs: some concern desired role-playing freedom, some interface effort, some authored writing and some expectations of continuous space travel. An OpenLegend lesson should identify which kind of problem it addresses before prescribing more content or a more powerful editor.
+**Interpretation:** these critics differ substantially on whether the game's breadth sustains curiosity. Commonly discussed frictions are not automatically bugs: some concern desired role-playing freedom, some interface effort, some authored writing and some expectations of continuous space travel. An Open Legend lesson should identify which kind of problem it addresses before prescribing more content or a more powerful editor.
 
 ## 7. R15 applicability: yes, with platform boundaries
 
@@ -195,13 +195,13 @@ The underlying game's purchase and required expansion are separate from paying f
 
 Bethesda deliberately supports a creator ecosystem: the official program allows approved Verified Creators to price eligible content and receive royalties. The verified public sources here do not establish a universal royalty percentage or profit distribution. [S35]
 
-Genesis's external, free distribution is **not** evidence that the project is accepted into Bethesda's paid marketplace or licensed by Disney/Lucasfilm. The project disclaims affiliation, and Bethesda's mod guidelines impose content and permission requirements. A free fan project is not a general-purpose rights-clearing mechanism. OpenLegend should learn from the workflow and collaboration, not copy protected characters, music or asset provenance assumptions. [S27, S34]
+Genesis's external, free distribution is **not** evidence that the project is accepted into Bethesda's paid marketplace or licensed by Disney/Lucasfilm. The project disclaims affiliation, and Bethesda's mod guidelines impose content and permission requirements. A free fan project is not a general-purpose rights-clearing mechanism. Open Legend should learn from the workflow and collaboration, not copy protected characters, music or asset provenance assumptions. [S27, S34]
 
 ## 11. Transferable principles and what not to copy
 
 **Support a coherent experience, not just file editing.** An editor, packager, validator, installer, compatibility report and support route solve different problems. Genesis makes the integrating work visible. An excellent authoring surface can still fail players if installation or updates are unreliable.
 
-**Expose useful composition before unlimited code.** Ships and outposts illustrate meaningful arrangement of trusted components. Official content authoring and native extensions then show different capability tiers. For OpenLegend, generated or player-authored data must still pass the current authority and trusted-family boundaries; a mod's name, popularity or creator reputation cannot authorize arbitrary code or spending.
+**Expose useful composition before unlimited code.** Ships and outposts illustrate meaningful arrangement of trusted components. Official content authoring and native extensions then show different capability tiers. For Open Legend, generated or player-authored data must still pass the current authority and trusted-family boundaries; a mod's name, popularity or creator reputation cannot authorize arbitrary code or spending.
 
 **Make consequences legible while editing.** Explain why a construction cannot work, which dependency is missing and what an update changes. A vague compatibility badge cannot replace a specific supported configuration or a record of which package owns a changed definition.
 
@@ -209,7 +209,7 @@ Genesis's external, free distribution is **not** evidence that the project is ac
 
 **Do not outsource the base game's responsibilities.** A popular mod ecosystem is not proof that unpaid creators will fix onboarding, narrative or technical problems. The contrasting reviews show why “there is plenty of content” is not a sufficient answer to friction or an unfulfilled player fantasy.
 
-**Keep future public compatibility distinct from today's development policy.** Dependency integrity and transparent update behavior are relevant research lessons. They do not authorize backward-compatible save readers, legacy APIs, migrations or an unused package loader in OpenLegend now. The [root development policy](../../../../AGENTS.md) remains controlling; implementation would require separately approved scope and decisions.
+**Keep future public compatibility distinct from today's development policy.** Dependency integrity and transparent update behavior are relevant research lessons. They do not authorize backward-compatible save readers, legacy APIs, migrations or an unused package loader in Open Legend now. The [root development policy](../../../../AGENTS.md) remains controlling; implementation would require separately approved scope and decisions.
 
 The [comparative essay](../essays/player-created-content-modding-and-marketplaces.md) develops the principles alongside No Man's Sky's native construction and unofficial mod tools, and EVE's constrained creator marketplace and external APIs. It owns the cross-game recommendations rather than duplicating them here.
 
@@ -229,7 +229,7 @@ The [comparative essay](../essays/player-created-content-modding-and-marketplace
 | R10 | Sections 5 and 10: Direct, platform distribution, creator video-to-installation story and explicit causality limits. |
 | R11 | Sections 5 and 10: dated player milestone, separate economic models and qualified creator spending. |
 | R12 | Section 6: five substantive original reviews; explicit unavailable Steam review-body evidence. |
-| R13 | Section 11: concrete transfer principles, alternatives and current OpenLegend boundaries. |
+| R13 | Section 11: concrete transfer principles, alternatives and current Open Legend boundaries. |
 | R14 | This register, adjacent source IDs, reading links and preserved edition/access qualifications. |
 | R15 | Sections 7–10: popularity gate, tools, workflow, representative work, compatibility, governance and incentives. |
 

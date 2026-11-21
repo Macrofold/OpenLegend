@@ -58,7 +58,7 @@ The owner's full review began from delivered commit `72d204092c17e3a6c5cb10ff3a5
 The review fixed four demonstrated correctness problems:
 
 - Saved water geometry accepted four unrelated finite numbers in place of missing named bounds. Exact source/stance/endpoint/water record validation now rejects that malformed current save.
-- An ingredient role named `constructor` passed definition admission but could never resolve through safe record lookup. Definitions, public commands and learned-method fields now reuse one executable-role check. Invalid text/ingredient/output records also fail at definition admission.
+- An ingredient role named `constructor` passed definition admission but could never resolve through safe record lookup. Definitions, public commands and learned activity fields now reuse one executable-role check. Invalid text/ingredient/output records also fail at definition admission.
 - Selecting usable raw food without perceived heat could erase cooking entirely. The actual Inventory → Explore uses and targets → Show unavailable → search Cook path now displays **Cook river fish — A perceived lit heat source is needed.** Its unavailable choice cannot execute. This was inspected visually in the production browser at 1280×720 using an owned PostgreSQL world with one prior catch and no fire entities.
 - A stale cook command could describe a replacement preparation after the selected definition changed. The description now resolves the exact reviewed version/digest and falls back to the general cooking explanation when stale, rather than displaying replacement instructions.
 

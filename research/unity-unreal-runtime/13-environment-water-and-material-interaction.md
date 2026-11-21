@@ -4,7 +4,7 @@
 | -------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ---------- |
 | Complete for the documented mechanisms below | Gas and liquid effects, water surfaces, buoyancy, script queries, contact materials, sky, clouds, and fog | 2026-10-23 |
 
-This chapter examines **Unreal Engine 5.8**, **Unity 6.6**, **HDRP 17.6.0**, and **Unity Physics 6.6.0**. Patch provenance is in [chapter 01](01-evidence-and-version-baseline.md). Water appearance, fluid motion, object forces, and material contact response have distinct representations and update contracts. The research does not prescribe OpenLegend systems or implementation work.
+This chapter examines **Unreal Engine 5.8**, **Unity 6.6**, **HDRP 17.6.0**, and **Unity Physics 6.6.0**. Patch provenance is in [chapter 01](01-evidence-and-version-baseline.md). Water appearance, fluid motion, object forces, and material contact response have distinct representations and update contracts. The research does not prescribe Open Legend systems or implementation work.
 
 ## 1. Maturity applies to each feature
 
@@ -114,7 +114,7 @@ The HDRP environment-limitations page makes the interactions explicit. Atmospher
 
 The water/fluids and atmosphere sections examine different representations of an environment. A surface height, a velocity grid, a collision response, an extinction field, and a color texture are not substitutes for one another. Their update regions, consumer threads, numerical approximations, and retained history differ.
 
-For the intended OpenLegend world scope, this is an **evidence boundary**, not a design: visual rain or fire, fluid motion, mechanical force, heat transfer, exposure, resource availability, and remembered consequences require separately established behavior. A persuasive image can demonstrate its own rendering result without validating all of those additional consequences. The existing [perception](02-simulation-and-perception.md), [physics](04-physics-and-spatial-queries.md), [presentation](08-rendering-animation-and-audio.md), and [semantic-system](11-gameplay-frameworks-and-semantic-systems.md) chapters retain the corresponding distinctions.
+For the intended Open Legend world scope, this is an **evidence boundary**, not a design: visual rain or fire, fluid motion, mechanical force, heat transfer, exposure, resource availability, and remembered consequences require separately established behavior. A persuasive image can demonstrate its own rendering result without validating all of those additional consequences. The existing [perception](02-simulation-and-perception.md), [physics](04-physics-and-spatial-queries.md), [presentation](08-rendering-animation-and-audio.md), and [semantic-system](11-gameplay-frameworks-and-semantic-systems.md) chapters retain the corresponding distinctions.
 
 ## Source and provenance register
 

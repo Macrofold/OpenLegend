@@ -1,6 +1,6 @@
 # Evaluating independent, expressive and low-refusal NPCs
 
-**October 20, 2026. Status: proposed research protocol; all new comparisons are unrun.** This extends the existing [E1–E8 experiment dossier](06-openlegend-applications-and-experiments.md), rather than creating another implementation or acceptance backlog. [The needs-design map](../../../docs/maintainers/npc-cognition-research-needs-design.md) owns remaining preparation. The goal is to discover which model and arrangement fit OpenLegend, not crown a universal roleplay model from public rankings. The [playable-opportunity review](12-playable-opportunities-and-review.md) supplies the positive experience hypotheses and complementary player research.
+**October 20, 2026. Status: proposed research protocol; all new comparisons are unrun.** This extends the existing [E1–E8 experiment dossier](06-openlegend-applications-and-experiments.md), rather than creating another implementation or acceptance backlog. [The needs-design map](../../../docs/maintainers/npc-cognition-research-needs-design.md) owns remaining preparation. The goal is to discover which model and arrangement fit Open Legend, not crown a universal roleplay model from public rankings. The [playable-opportunity review](12-playable-opportunities-and-review.md) supplies the positive experience hypotheses and complementary player research.
 
 ## Begin with a worthwhile player experience
 
@@ -70,7 +70,7 @@ The [refusal taxonomy](09-low-refusal-character-simulation.md#1-what-freedom-mea
 
 [Rethinking Role-Playing Evaluation, March 4, 2026](https://arxiv.org/html/2603.03915v1) finds that concealing famous character identities reduces measured roleplay quality and studies personality descriptions as support. Its human comparison is narrow, and a distinctive remaining biography can still reveal an identity. Reading: HTML method, results and human-evaluation scope.
 
-**Our inference:** reserve original OpenLegend-style people and unfamiliar names for held-out episodes. Name substitution is a useful control, not a guarantee of uncontaminated evaluation. Do not let knowledge of an existing franchise stand in for using our supplied biography and actual experience.
+**Our inference:** reserve original Open Legend-style people and unfamiliar names for held-out episodes. Name substitution is a useful control, not a guarantee of uncontaminated evaluation. Do not let knowledge of an existing franchise stand in for using our supplied biography and actual experience.
 
 The earlier [InCharacter, CharacterEval, LongMemEval and LoCoMo panel](03-architectures-and-papers.md#5-character-and-memory-evaluation-papers) still supplies complementary dimensions. [Low-refusal research](09-low-refusal-character-simulation.md) adds over-refusal and player-pleasing distinctions. Public datasets require their own reuse/training rights review; open paper access is not a data license.
 

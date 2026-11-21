@@ -29,7 +29,7 @@ At the inspected revision, source inspection and the [subsystem status recorded 
 
 The latest [navigation/custom-value evidence](workshop-navigation.md) separately records real local MCP/HTTP and native execution for those additions, including stale review after drain, replay and restart. Earlier [write recovery](workshop-continuation.md) and [transport/funding](workshop-transport-funding.md) evidence remains scoped to its named runs. None establishes actual hosted model/harness usefulness, full interaction correctness, graphical graph editing, generated art, or population-scale performance.
 
-The original read-only MCP milestone is not the current product endpoint. Read-only mode still exists as an independently useful grant, while mutating/session tools require the configured write surface and retained application context. The `ol_` prefix is only the OpenLegend tool namespace.
+The original read-only MCP milestone is not the current product endpoint. Read-only mode still exists as an independently useful grant, while mutating/session tools require the configured write surface and retained application context. The `ol_` prefix is only the Open Legend tool namespace.
 
 ## Known prose discrepancies and authoritative resolution
 

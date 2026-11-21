@@ -1,4 +1,4 @@
-# OpenLegend synthetic decision benchmark
+# Open Legend synthetic decision benchmark
 
 The current corpus contains **4,000 scored decision questions in 724 scenes**, plus **80 separate structured-generation tasks**. Eighty additional authored episodes have seven controlled views each, with 32–512 memories, twenty explicitly hypothetical trackers, functional injuries, personal history and proposed emotional reactions. Forty matched mood views and twelve difficult planning views reuse those episode groups. Twelve controls exercise selected joy rules that are not yet installed gameplay.
 

@@ -1,6 +1,6 @@
 # G93 — Final Fantasy XVI
 
-**Research pass and corrective player-evidence review:** September 26, 2026. **Scope:** the original PS5 game, later platform releases and free updates, Echoes of the Fallen, The Rising Tide and their distinct challenge modes. **Purpose:** research and possible inspiration, not an approved OpenLegend architecture or implementation backlog.
+**Research pass and corrective player-evidence review:** September 26, 2026. **Scope:** the original PS5 game, later platform releases and free updates, Echoes of the Fallen, The Rising Tide and their distinct challenge modes. **Purpose:** research and possible inspiration, not an approved Open Legend architecture or implementation backlog.
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Coverage audit](../coverage-audit-g81-g100.md) · [Previous: Final Fantasy XV](final-fantasy-xv.md)
 
@@ -169,7 +169,7 @@ The literal **deadlands** offer a small world-rule illustration: the community r
 
 **Echoes** investigates suspicious crystals and the ancient Sagespire; **Rising Tide** reaches hidden Mysidia to rescue Leviathan's Dominant. Both occur before the final confrontation and require late progression plus specified sidequests. Their caps—55/105 for Echoes and 60/110 for Rising Tide—distinguish ordinary and Final Fantasy mode. Neither supplies unrestricted post-ending rebuilding of Valisthea. [S9](#s9) [S11](#s11)
 
-For OpenLegend, the interesting connection is between capabilities and institutions: a person with supernatural power can still be subordinated, exploited or made responsible for others. The limitation is that XVI expresses most such changes through authored scenes and progression, not a general political simulation the player can redirect arbitrarily.
+For Open Legend, the interesting connection is between capabilities and institutions: a person with supernatural power can still be subordinated, exploited or made responsible for others. The limitation is that XVI expresses most such changes through authored scenes and progression, not a general political simulation the player can redirect arbitrarily.
 
 ## 9. Presentation, music, interface, and accessibility
 
@@ -189,7 +189,7 @@ Takai identifies **Final Fantasy V's job composition** as an influence on XVI's 
 
 In the **November 29, 2024 localization interview**, Koji Fox distinguishes concise voiced dialogue from the much larger lore corpus; Eve Chauviré describes restructuring French dialogue to match English-timed mouth animation. The same account identifies **Momoka Aono** as the central Active Time Lore implementer working with writers and evolving tables. A late English entry named Ultima prematurely, requiring a correction coordinated with **Nobuaki Komoto**. Translation can move a name's first appearance within a sentence, so a trigger aligned to Japanese timing can expose knowledge too early or too late elsewhere. These are firsthand production examples, not a claim that the final system is error-free. [S14](#s14)
 
-The lesson is more exact than “add a lore button.” An information aid needs versioned disclosure conditions, coordination with actual dialogue and a way to audit cross-language changes. The same risk would apply to an agent that summarizes a world using facts the observing character has not yet learned. That last connection is our hypothesis, not the developers' OpenLegend recommendation.
+The lesson is more exact than “add a lore button.” An information aid needs versioned disclosure conditions, coordination with actual dialogue and a way to audit cross-language changes. The same risk would apply to an agent that summarizes a world using facts the observing character has not yet learned. That last connection is our hypothesis, not the developers' Open Legend recommendation.
 
 The documented updates show sustained revisions to control, convenience, scoring and content. They do not establish a private development budget, team-size recipe or guaranteed update cadence for another project. A first-party interview is evidence of stated intent and process, not independent proof that a particular decision caused the reviews or commercial result.
 
@@ -237,15 +237,15 @@ Three dated Metacritic review bodies were read September 26, 2026. They are not 
 
 **Interpretation:** affection for the major fights can coexist with dissatisfaction about repetition. Agreement that combat feels easy does not prove identical settings or reasons. The accounts supply concrete disagreement, not prevalence estimates or verified technical defects.
 
-## 14. OpenLegend implications — hypotheses and limits
+## 14. Open Legend implications — hypotheses and limits
 
 **Separate selectable identity from composable actions.** Three Eikon identities and mastered cross-assignment provide a bounded way to combine powers without displaying every action at once. The transferable idea is managing an action surface, not copying a particular slot count or implying arbitrary powers are compatible.
 
 **Make state change the meaning of an action.** A pull that becomes a takedown, a counter that responds to a projectile and a refill that grants a new resource interval create legible conditional opportunities. Their limits should be as understandable as their rewards.
 
-**Knowledge access is part of world consistency.** Active Time Lore suggests assistance that knows what context is relevant now. The localization example warns that a correct fact can still be wrong to reveal at that moment. OpenLegend's agent memories and narrator views would need comparable boundaries, not one omniscient summary shared indiscriminately.
+**Knowledge access is part of world consistency.** Active Time Lore suggests assistance that knows what context is relevant now. The localization example warns that a correct fact can still be wrong to reveal at that moment. Open Legend's agent memories and narrator views would need comparable boundaries, not one omniscient summary shared indiscriminately.
 
-**Attachment does not require direct control—but do not confuse the two.** An authored companion may be emotionally important without being commandable. A player seeking genuine delegation, reciprocal goals or relationship choice needs different systems. The dossier establishes the distinction rather than recommending that OpenLegend remove those ambitions.
+**Attachment does not require direct control—but do not confuse the two.** An authored companion may be emotionally important without being commandable. A player seeking genuine delegation, reciprocal goals or relationship choice needs different systems. The dossier establishes the distinction rather than recommending that Open Legend remove those ambitions.
 
 **A reward can connect activities or merely increment a number.** Named crafting dependencies give some hunts a purpose beyond experience; commonplace upgrades attract weaker reception. Before expanding an item catalog, ask what decisions each object actually creates.
 

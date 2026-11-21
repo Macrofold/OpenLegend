@@ -6,7 +6,7 @@
 
 Physics cost depends on what is represented, which pairs or queries become candidates, how contacts are solved, and when results become available. Those are separate stages. A cheaper representation can change the answer; a delayed result can remain pending; a non-allocating query can still be incomplete. This chapter examines those distinctions in **Unreal Engine 5.8**, **Unity 6.6**, and **Unity Physics 6.6.0**. Patch baselines and the evidence policy are in [chapter 01](01-evidence-and-version-baseline.md).
 
-This is research into documented engine behavior. It does not prescribe OpenLegend physics, collision shapes, simulation frequencies, or implementation work.
+This is research into documented engine behavior. It does not prescribe Open Legend physics, collision shapes, simulation frequencies, or implementation work.
 
 ## 1. There is more than one physics world or backend
 
@@ -134,7 +134,7 @@ Unity's OverlapSphereNonAlloc writes into the caller's array without growing it 
 | Full fixed-capacity result array | The available result capacity was filled             | The complete set was returned                              |
 | Completed older result           | The requested calculation finished                   | Its assumptions remain valid after world changes           |
 
-The table is analytical synthesis of the preceding contracts. It is not an additional engine API or an OpenLegend result protocol.
+The table is analytical synthesis of the preceding contracts. It is not an additional engine API or an Open Legend result protocol.
 
 ## 7. Current Unity Physics Core 2D deserves separate treatment
 
@@ -181,7 +181,7 @@ Unity's Physics Debug window visualizes collision geometry, contacts, queries, b
 - This chapter does not claim the engines use one universal broadphase, solver, threading schedule, or determinism guarantee across all integrations and platforms.
 - The current documentation describes controls and API contracts more completely than worst-case overload behavior. Strict latency, fairness, and memory ceilings are not inferred where unspecified.
 - Source pages with newer version headers sometimes retain old prose, incomplete enumerations, or loose explanations. The identified conflicts are retained as provenance findings rather than silently normalized.
-- No engine was run and no performance numbers were measured. A source describing an optimization establishes a mechanism or vendor claim, not its benefit for OpenLegend.
+- No engine was run and no performance numbers were measured. A source describing an optimization establishes a mechanism or vendor claim, not its benefit for Open Legend.
 
 ## Source and provenance register
 

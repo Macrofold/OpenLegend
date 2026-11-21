@@ -1,6 +1,6 @@
 # G139 — Subnautica
 
-**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 Subnautica is one of the strongest survival-game examples of **progression as permission to enter a deeper world**. Oxygen, pressure, light, vehicle crush depth, batteries, food/water and creature danger are not independent maintenance meters; together they define a moving boundary around what the player can safely investigate. New equipment expands that boundary, and the hand-authored ecology/story gives every expansion a reason.
 
@@ -1075,7 +1075,7 @@ Steam samples are self-selected, and humorous one-line reviews are evidence of a
 
 The remarkable point is that critics who often dislike survival games repeatedly praised Subnautica because **survival systems serve exploration rather than become the whole objective**.
 
-## R13 — transferable inspiration and limits for OpenLegend
+## R13 — transferable inspiration and limits for Open Legend
 
 ### 1. Progression can be geography
 
@@ -1100,7 +1100,7 @@ Farming/filtration/power/storage reduce early survival maintenance.
 
 Leviathans are valuable because they make places frightening.
 
-**OpenLegend relevance:** creatures can define territories/behavior without every encounter ending in combat/rewards.
+**Open Legend relevance:** creatures can define territories/behavior without every encounter ending in combat/rewards.
 
 ### 5. Vehicles can be nested scales of embodiment
 

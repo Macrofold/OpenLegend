@@ -6,7 +6,7 @@
 
 ## 1. Scope and delivery order
 
-The original custom-model baseline was `Macrofold/OpenLegend` `main` `27c6fb8152ec58c34334e74ba91a9d5bec6a30ff`. The native decision extension uses the newer `origin/main` base `a60f15ac4`; the [implementation plan](custom-models-implementation-plan.md#native-kev-and-huihui-integration) owns its exact source and integration identity. This project adds native judgments and normal production generation through Macrofold custom deployments. The [feature specification](custom-models-feature-spec.md) owns behavior; Macrofold's [canonical contract](https://github.com/Macrofold/Macrofold/blob/design/huggingface-model-deployments-2026-10-22/docs/projects/hugging-face-model-deployments-contract.md) owns the external API. OpenLegend supplies a stable deployment reference and optionally pins its model revision. It does not manage serving processes or hosting sessions.
+The original custom-model baseline was `Macrofold/OpenLegend` `main` `27c6fb8152ec58c34334e74ba91a9d5bec6a30ff`. The native decision extension uses the newer `origin/main` base `a60f15ac4`; the [implementation plan](custom-models-implementation-plan.md#native-kev-and-huihui-integration) owns its exact source and integration identity. This project adds native judgments and normal production generation through Macrofold custom deployments. The [feature specification](custom-models-feature-spec.md) owns behavior; Macrofold's [canonical contract](https://github.com/Macrofold/Macrofold/blob/design/huggingface-model-deployments-2026-10-22/docs/projects/hugging-face-model-deployments-contract.md) owns the external API. Open Legend supplies a stable deployment reference and optionally pins its model revision. It does not manage serving processes or hosting sessions.
 
 Deliver MX01–MX03, then production acceptance MX06 and documentation/release integration MX08. Optional generation benchmark work MX04–MX05 and comparative studies MX07 consume the finished provider capability; they are not prerequisites for production operation. No new general orchestrator, world model registry, billing ledger, gameplay response parser or per-character model process is needed.
 
@@ -96,7 +96,7 @@ Managed and imported operator-trusted endpoints are production-eligible when the
 
 The game credential has deployment read/use and existing owned-Run submit/read/cancel rights, scoped to its authorized workspace/resources. It has no deployment-management or hosting credentials. Source/license/account prerequisites and standing host policy are Macrofold/operator concerns, not fields injected into NPC context or gameplay saves.
 
-SystemOne declares `accepted_parameters:["state","questions"]`, false chat/schema/tool/streaming flags, empty schema keywords and a null schema dialect. Native preparation reduces the output allowance to the declared maximum without requiring chat JSON support. Existing local input-size checks remain in force; Macrofold and the serving runtime enforce the model's context limit. OpenLegend does not claim an exact local token count from the descriptor's context-window value. A protocol mismatch fails before dispatch; the chat and native preparation paths share target metadata and deadline ownership.
+SystemOne declares `accepted_parameters:["state","questions"]`, false chat/schema/tool/streaming flags, empty schema keywords and a null schema dialect. Native preparation reduces the output allowance to the declared maximum without requiring chat JSON support. Existing local input-size checks remain in force; Macrofold and the serving runtime enforce the model's context limit. Open Legend does not claim an exact local token count from the descriptor's context-window value. A protocol mismatch fails before dispatch; the chat and native preparation paths share target metadata and deadline ownership.
 
 ### 3.3 Output modes and streaming
 
@@ -130,7 +130,7 @@ The sibling cost attribution is:
 
 Existing billing fields describe the request fee only. Initial custom deployment inference uses BYOK with an explicit zero separate inference fee; per-call provider infrastructure cost is null because shared hosting is billed independently. Preserve the existing positive request reservation until its exact Run/accounting outcome permits settlement. Fixed known zero request charging does not depend on complete token counters; missing usage remains missing telemetry. Uncertain dispatch/completion retains the existing execution/financial treatment and independently known evidence.
 
-Macrofold's deployment cost view owns startup, idle/busy capacity, storage and provider billing uncertainty over time. Show those costs separately; never duplicate a whole host bill per NPC call, invent a zero token rate or require invoice finality before accepting a valid answer. OpenLegend's monthly/per-call inference budget does not claim to cap an independently funded GPU deployment. Standing service authorization and its limits stay with Macrofold; the game does not reserve an entire hosting period on each turn.
+Macrofold's deployment cost view owns startup, idle/busy capacity, storage and provider billing uncertainty over time. Show those costs separately; never duplicate a whole host bill per NPC call, invent a zero token rate or require invoice finality before accepting a valid answer. Open Legend's monthly/per-call inference budget does not claim to cap an independently funded GPU deployment. Standing service authorization and its limits stay with Macrofold; the game does not reserve an entire hosting period on each turn.
 
 ### 3.5 Errors and recovery
 
@@ -183,7 +183,7 @@ Freeze one effective request record containing the target, chosen format, output
 
 The existing world-host operating review shows the configured workspace and each judgment/fast/complex deployment, revision selection, output reduction and chat output policy. Its existing configuration fingerprint includes those same safe values, so changing a target invalidates an earlier prepared operating review. The displayed native model identifies the actual selected deployment; neither the review nor its fingerprint contains credentials. No second review workflow or per-call approval is added.
 
-OpenLegend config changes take effect under its existing controlled restart. Macrofold-side revision updates and same-revision recovery work through the stable deployment reference without restarting OpenLegend. There is no speculative hot-reload subsystem or extra per-turn configuration lookup.
+Open Legend config changes take effect under its existing controlled restart. Macrofold-side revision updates and same-revision recovery work through the stable deployment reference without restarting Open Legend. There is no speculative hot-reload subsystem or extra per-turn configuration lookup.
 
 ## 5. Lifecycle and world boundaries
 
@@ -205,7 +205,7 @@ Reuse immutable revision/capability data and current prepared schema validation.
 
 Use existing cognition concurrency/backpressure and deadlines; Macrofold owns shared serving capacity. No per-NPC GPU process, second game scheduler or universal serialization is added. A shared host can batch/concurrently serve supported requests while the game retains its own publication/order semantics. Native movement and other zero-call work must not await hosting administration.
 
-Measure end-to-end accepted/usable output latency, request bytes, throughput, capacity refusals and actual host cost on a representative supported workload. Separate warm steady-state, startup/recovery and concurrent service. Count additional control-plane round trips and verify warm requests add none from OpenLegend. Streaming first useful permitted output and full completion are distinct. Existing PF/PS population qualification remains authoritative; this design supplies no invented town-scale capacity claim.
+Measure end-to-end accepted/usable output latency, request bytes, throughput, capacity refusals and actual host cost on a representative supported workload. Separate warm steady-state, startup/recovery and concurrent service. Count additional control-plane round trips and verify warm requests add none from Open Legend. Streaming first useful permitted output and full completion are distinct. Existing PF/PS population qualification remains authoritative; this design supplies no invented town-scale capacity claim.
 
 ## 7. Production implementation acceptance
 
@@ -220,7 +220,7 @@ MX06 verifies the production path independently of optional evaluation tooling:
 - No-call modes perform no external inference. Missing optional usage/provenance does not alone discard valid content; request zero fee and nonzero/unknown host cost remain distinct.
 - Representative warm/concurrent and recovery measurements meet the existing caller's useful deadline and operating budget, with measured limits recorded rather than inferred from fixture success.
 
-Use the task's authorized focused tests and suitable existing checks/ad-hoc cases under repository verification policy. Native and Huihui live calls require currently authorized, ready services; old acceptance IDs are retired and cannot be used as configuration. Managed official Kev qualification upstream does not establish this OpenLegend caller's live acceptance, and the protected managed chat runtime remains unqualified. Live host/model checks require the normal bounded spending authority and tested Macrofold/OpenLegend revisions. Static docs or fixtures cannot close live service acceptance. Production capability delivery does not require a comparative model winner or the optional research corpus; external-player release and content/privacy obligations retain their existing PD/CE/CR/AG/NST owners.
+Use the task's authorized focused tests and suitable existing checks/ad-hoc cases under repository verification policy. Native and Huihui live calls require currently authorized, ready services; old acceptance IDs are retired and cannot be used as configuration. Managed official Kev qualification upstream does not establish this Open Legend caller's live acceptance, and the protected managed chat runtime remains unqualified. Live host/model checks require the normal bounded spending authority and tested Macrofold/OpenLegend revisions. Static docs or fixtures cannot close live service acceptance. Production capability delivery does not require a comparative model winner or the optional research corpus; external-player release and content/privacy obligations retain their existing PD/CE/CR/AG/NST owners.
 
 ## 8. Optional evaluation through the existing harness
 

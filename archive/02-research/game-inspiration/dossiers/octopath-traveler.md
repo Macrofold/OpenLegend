@@ -1,6 +1,6 @@
 # G107 — Octopath Traveler
 
-**Full research pass, September 26, 2026.** Original Octopath Traveler; not Octopath Traveler II, Champions of the Continent or Octopath Traveler 0. Research and interpretations are not accepted OpenLegend requirements. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Library](../README.md).
+**Full research pass, September 26, 2026.** Original Octopath Traveler; not Octopath Traveler II, Champions of the Continent or Octopath Traveler 0. Research and interpretations are not accepted Open Legend requirements. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Library](../README.md).
 
 **Evidence boundary:** five independent written reviews were read. During the September 27 audit, the current English all-time Steam helpful-review surfaces became accessible, so this dossier now also samples highly ranked positive and negative player reviews; these are qualitative snapshots, not prevalence estimates. Earlier named Steam discussion participants and other direct players remain preserved as separate testimony. Rules-based examples below are constructed illustrations, not personally observed playtests. Late-game spoilers are isolated.
 
@@ -171,7 +171,7 @@ An accessible Reddit discussion offers a different tension: **w4rm_h4nds** appre
 
 **Design ensemble structure as its own system.** Eight stories do not automatically produce eight evolving relationships. A project seeking a living social world should not copy combat-party architecture and assume social continuity follows. Conversely, anthology structure is legitimate when clearly promised; forcing every character into a single plot can erase the appeal of local, personal stakes.
 
-**Match failure cost to what the player is learning.** An optional roster-wide challenge can reveal neglected skills, but expensive rematches also tax experimentation. Whether that is desirable depends on the intended audience and mode. None of these observations approves an OpenLegend subsystem, copyrighted character, item name or art asset.
+**Match failure cost to what the player is learning.** An optional roster-wide challenge can reveal neglected skills, but expensive rematches also tax experimentation. Whether that is desirable depends on the intended audience and mode. None of these observations approves an Open Legend subsystem, copyrighted character, item name or art asset.
 
 ## Sources, viewing routes and preservation
 

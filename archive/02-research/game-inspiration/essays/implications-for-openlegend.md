@@ -1,6 +1,6 @@
-## 9. Implications for OpenLegend
+## 9. Implications for Open Legend
 
-**Selection:** the [current gameplay priorities](../../../../docs/repertoires/gameplay-priorities.md) own selection: enjoyable adventure, useful invention, independent character choice and persistent consequence belong in connected play from the start. Apply the numbered priorities below within that connected experience. The [mobile comparison](mobile-success-failure-and-umamusume.md#openlegends-particular-opportunity) explores positive possibilities for action, discovery and expressive creation.
+**Selection:** the [current gameplay priorities](../../../../docs/repertoires/gameplay-priorities.md) own selection: enjoyable adventure, useful invention, independent character choice and persistent consequence belong in connected play from the start. Apply the numbered priorities below within that connected experience. The [mobile comparison](mobile-success-failure-and-umamusume.md#open-legends-particular-opportunity) explores positive possibilities for action, discovery and expressive creation.
 
 ### 9.1 Choose a first player promise that does not require explaining the engine
 
@@ -40,7 +40,7 @@ Prioritize a small set of observable continuity cases:
 - A failed invention changes the next attempt.
 - A remembered location or person becomes useful when a new goal appears.
 
-The test is not whether an NPC can retrieve a record when asked. It is whether the record appropriately changes what happens. That is the opportunity suggested by the contrast among RimWorld, Hades, and The Sims—not a claim that any of them uses OpenLegend’s architecture. [RW1](../references/sources-01.md#source-rw1) [HD2](../references/sources-01.md#source-hd2) [SIM2](../references/sources-01.md#source-sim2)
+The test is not whether an NPC can retrieve a record when asked. It is whether the record appropriately changes what happens. That is the opportunity suggested by the contrast among RimWorld, Hades, and The Sims—not a claim that any of them uses Open Legend’s architecture. [RW1](../references/sources-01.md#source-rw1) [HD2](../references/sources-01.md#source-hd2) [SIM2](../references/sources-01.md#source-sim2)
 
 ### 9.5 Make invention a decision, not a transaction with a wish engine
 

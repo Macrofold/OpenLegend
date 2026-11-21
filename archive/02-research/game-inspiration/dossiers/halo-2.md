@@ -12,7 +12,7 @@ The graph is shared while transient execution memory is allocated to active beha
 
 ## A useful distinction: shared ability, personal experience
 
-OpenLegend can reuse a method without making its users interchangeable. The definition of how a known method works can be shared; the person's current progress, permission, selected materials, failures, interpretation and reason for doing it cannot simply become shared mutable state.
+Open Legend can reuse a method without making its users interchangeable. The definition of how a known method works can be shared; the person's current progress, permission, selected materials, failures, interpretation and reason for doing it cannot simply become shared mutable state.
 
 This principle applies beyond behavior trees. Repeating a large immutable action description in every character record is different from retaining the character's own history of using that action. Likewise, an embedding index is not the memory itself, and a cached route is not evidence that the character has personally traveled it.
 
@@ -42,4 +42,4 @@ Readable movement, attention and follow-through may let players infer an intenti
 
 **H1.** Damian Isla, Bungie, *GDC 2005 Proceeding: Handling Complexity in the Halo 2 AI*, March 11, 2005. [Developer-authored proceedings](https://www.gamedeveloper.com/programming/gdc-2005-proceeding-handling-complexity-in-the-i-halo-2-i-ai). Read the introduction, selection, impulses, tagging and memory sections. No game execution, current source audit or controlled player study was performed.
 
-This topic-only addition does not claim reception, economy, full content, multiplayer or modding coverage, and does not authorize an OpenLegend behavior-tree rewrite.
+This topic-only addition does not claim reception, economy, full content, multiplayer or modding coverage, and does not authorize an Open Legend behavior-tree rewrite.

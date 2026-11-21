@@ -1,6 +1,6 @@
 # Beyond the dossiers — critique, design theory and evaluation
 
-**Research expansion, October 14, 2026.** This paper reviews the earlier [main synthesis](../essays/fun-and-sustainable-engagement.md) rather than assuming its conclusions are correct. Companion papers cover [mobile and recent games](fun-research-expansion-mobile-and-recent.md) and [AI-era play](fun-research-expansion-ai.md). These are research interpretations and candidate experiments, not new OpenLegend feature requirements. The earlier [foundations](fun-engagement-and-compulsion-research.md) remain the owner of basic terminology and their five original sources.
+**Research expansion, October 14, 2026.** This paper reviews the earlier [main synthesis](../essays/fun-and-sustainable-engagement.md) rather than assuming its conclusions are correct. Companion papers cover [mobile and recent games](fun-research-expansion-mobile-and-recent.md) and [AI-era play](fun-research-expansion-ai.md). These are research interpretations and candidate experiments, not new Open Legend feature requirements. The earlier [foundations](fun-engagement-and-compulsion-research.md) remain the owner of basic terminology and their five original sources.
 
 ## 1. Assessment of the earlier assessment
 
@@ -29,7 +29,7 @@ The supplied Roblox account also needs to remain a counterexample to an overly c
 
 **Inspected:** paper text and rendered pages 1–3, including the diagrams. **Type:** design framework, not a controlled test. Mechanics are the specified parts and rules; dynamics concern their behavior in play; aesthetics name the desired experience. Its non-exhaustive vocabulary includes sensation, fantasy, narrative, challenge, fellowship, discovery, expression and submission/pastime. These are not eight scientifically established player types. The paper also considers feedback effects that can make an early advantage reduce later engagement.
 
-**Our use:** start with the experience, then work backward to a plausible playable cause. For an OpenLegend rescue, “fellowship” might mean noticing a partner's contribution; a plausible cause is one person creating an opening another can use, with an intelligible result. Merely adding a second actor or a cooperation statistic does not establish it. Conversely, atmosphere can be an intended experience without being justified by a combat multiplier. The framework organizes a hypothesis; observing players must still challenge it.
+**Our use:** start with the experience, then work backward to a plausible playable cause. For an Open Legend rescue, “fellowship” might mean noticing a partner's contribution; a plausible cause is one person creating an opening another can use, with an intelligible result. Merely adding a second actor or a cooperation statistic does not establish it. Conversely, atmosphere can be an intended experience without being justified by a combat multiplier. The framework organizes a hypothesis; observing players must still challenge it.
 
 <a id="t02"></a>
 ### T02 — Pattern learning: preserve something worth getting better at
@@ -65,7 +65,7 @@ The essay treats challenges as nested patterns involving preparation, interactio
 
 **Inspected:** primary institutional abstract and metadata. In two studies, closer competitive outcomes were more enjoyable than large victories even though the latter increased perceived competence; suspense helped explain the relationship. A subsequent choice measure favored previously suspenseful games, with performance concern moderating the effect. This is evidence from a particular competitive task, not a universal win-rate prescription or proof that uncertainty about controls is beneficial.
 
-**Our use:** preserve uncertainty about whether a sound plan will succeed while reducing uncertainty about what an input means. Useful opposition can force adaptation without concealing the rules. For OpenLegend, a rival with a comprehensible competing objective is a better hypothesis than either an automatically compliant character or an opaque random refusal. This remains a proposed application, not a measured transfer from the experimental game.
+**Our use:** preserve uncertainty about whether a sound plan will succeed while reducing uncertainty about what an input means. Useful opposition can force adaptation without concealing the rules. For Open Legend, a rival with a comprehensible competing objective is a better hypothesis than either an automatically compliant character or an opaque random refusal. This remains a proposed application, not a measured transfer from the experimental game.
 
 ## 3. Measure the mechanism separately from the outcome
 
@@ -103,7 +103,7 @@ The essay treats challenges as nested patterns involving preparation, interactio
 
 **Inspected:** institutional abstract and bibliographic record, not the full paper. The authors examine conflicts between creator and player interests and the subtleties of classifying design patterns. This is conceptual ethical analysis, not proof that any particular timer, reward or social mechanic causes harm.
 
-**Our use:** examine who benefits when the player continues, pays or invites someone. A short match may coexist with a burdensome acquisition system; a compelling companion may coexist with pressure to buy additional conversation. Consider the complete offer, clear costs and credible exit rather than blessing an entire product because one component is enjoyable. This is an evaluation principle, not a claim that OpenLegend currently has those monetization features.
+**Our use:** examine who benefits when the player continues, pays or invites someone. A short match may coexist with a burdensome acquisition system; a compelling companion may coexist with pressure to buy additional conversation. Consider the complete offer, clear costs and credible exit rather than blessing an entire product because one component is enjoyable. This is an evaluation principle, not a claim that Open Legend currently has those monetization features.
 
 ## 4. A more discriminating working model
 
@@ -115,7 +115,7 @@ Four kinds of uncertainty should be reviewed separately. **Execution uncertainty
 
 For a prototype, write a short hypothesis before changing it: **intended experience → proposed interaction → expected observation → competing explanation → disconfirming observation**. Example: visible cooperation should make a companion feel useful; compare equally capable help with and without a readable contribution; ask what the companion actually did and whether that changed the player's plan. More dialogue alone might increase novelty or reading time instead. A player who cannot identify a contribution, or who feels deprived of their own role, provides evidence against this particular design.
 
-## 5. OpenLegend mapping and evidence discipline
+## 5. Open Legend mapping and evidence discipline
 
 The product mapping uses repository documentation at GitHub main **`1700f3b23a39acfdd14f3a6ab34c8ce330847bc3`**, not a fresh runtime qualification. [Playable game first](https://github.com/Macrofold/OpenLegend/blob/1700f3b23a39acfdd14f3a6ab34c8ce330847bc3/docs/repertoires/gameplay-priorities.md) prioritizes a complete adventure containing a real instance of practical invention and an independent, observation-grounded character consequence. [The README](https://github.com/Macrofold/OpenLegend/blob/1700f3b23a39acfdd14f3a6ab34c8ce330847bc3/README.md) distinguishes existing native play and finite recipe invention from broader targets.
 

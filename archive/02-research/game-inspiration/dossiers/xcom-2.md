@@ -1,6 +1,6 @@
 # G125 — XCOM 2
 
-**Status: complete full-pass research dossier.** Research date: September 26, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 26, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 XCOM 2 is a reference for converting interchangeable procedural units into people the player cares about, then making operational pressure force painful tradeoffs among those people. Its tactical battles, strategic economy and campaign clock continuously damage one another: a bad tactical win can create a strategic roster crisis, while a delayed research/build choice can make later battles materially harder.
 

@@ -121,7 +121,7 @@ Resolved foundation scope: supply source fidelity and extensible classification/
 
 ## D60 — Gameplay save and load policy
 
-Save/load authorization is settled: the world creator and authorized OpenLegend system administrators may save/load games; ordinary participants do not receive that power. The [save/load design](../../docs/save-and-load.md#external-work-privacy-and-shared-authority) owns that boundary, privacy and coherent restoration. Reasonable autosave/recovery defaults and retention choices are delegated engineering work. Development compatibility is governed by the [root policy](../../AGENTS.md#development-save-policy) and its [RP02 review entry](../../docs/maintainers/revisitable-policies.md#rp02--development-state-compatibility).
+Save/load authorization is settled: the world creator and authorized Open Legend system administrators may save/load games; ordinary participants do not receive that power. The [save/load design](../../docs/save-and-load.md#external-work-privacy-and-shared-authority) owns that boundary, privacy and coherent restoration. Reasonable autosave/recovery defaults and retention choices are delegated engineering work. Development compatibility is governed by the [root policy](../../AGENTS.md#development-save-policy) and its [RP02 review entry](../../docs/maintainers/revisitable-policies.md#rp02--development-state-compatibility).
 
 Residual shared/cloud features must specify participant notification/reconnect, private-channel timeline treatment, divergent branches and cross-world effects before shipping them. These are not blockers for the supported-gameplay foundation. Exact point-in-time rewind beyond retained checkpoints is not promised.
 

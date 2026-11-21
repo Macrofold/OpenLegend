@@ -36,7 +36,7 @@ Owns the act and medium of communication and how it is understood. KNOW owns evi
 
 ## Consolidated lessons and tradeoffs
 
-## Current OpenLegend baseline and existing design owners
+## Current Open Legend baseline and existing design owners
 
 Read [hearing and speech](../../../../docs/hearing-and-speech.md), [narration and conversations](../../../../docs/narration-and-conversations.md), and [current design dispositions](../../../../docs/maintainers/needs-design.md#current-design-dispositions), particularly the separate hearing, language, message and voice extensions. Existing hearing is not a missing feature merely because broader communication remains proposed.
 
@@ -44,7 +44,7 @@ Read [hearing and speech](../../../../docs/hearing-and-speech.md), [narration an
 
 <!-- Trace an invitation, negotiation or warning from intention through permitted listeners and interpretation to actual response and later consequences. Include disagreement, nonreceipt and correction without erasing witnessed history. -->
 
-## Possible OpenLegend applications and limits
+## Possible Open Legend applications and limits
 
 ## Open questions and missing evidence
 

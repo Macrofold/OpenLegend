@@ -2,7 +2,7 @@
 
 **G17 · Complete research pass, September 26, 2026.** This dossier treats *No Man's Sky* as a ten-year evolving game rather than freezing it at the August 2016 launch. Launch mechanics and reviews are preserved because they explain the game's original design tension; current-system claims are grounded in later Hello Games updates through **Cosmos 7.0 (September 9, 2026)**. Time-limited Expeditions and community events are labeled separately from permanent systems. [Preserved earlier chapter](../games/no-man-s-sky.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-The most important comparison for OpenLegend is no longer simply “procedural generation can feel shallow.” Modern No Man's Sky has become a **portfolio of overlapping player projects** layered onto one generated universe: explore, document, mine, fight, trade, build, farm, fish, manage settlements, raise creatures, battle creatures, customize ships, captain freighters, dispatch fleets, build Corvettes, salvage wreckage, run Expeditions, improve guild standing, own stations, join alliances, and pursue story/lore. The design question is how those projects reinforce—or fail to reinforce—the feeling that a procedurally generated place is meaningfully different.
+The most important comparison for Open Legend is no longer simply “procedural generation can feel shallow.” Modern No Man's Sky has become a **portfolio of overlapping player projects** layered onto one generated universe: explore, document, mine, fight, trade, build, farm, fish, manage settlements, raise creatures, battle creatures, customize ships, captain freighters, dispatch fleets, build Corvettes, salvage wreckage, run Expeditions, improve guild standing, own stations, join alliances, and pursue story/lore. The design question is how those projects reinforce—or fail to reinforce—the feeling that a procedurally generated place is meaningfully different.
 
 The 2016 launch, later free updates and platform-specific capabilities are not one timeless ruleset. No personal gameplay, full-video viewing, procedural-code audit or representative player survey is claimed. Worked situations below are constructed from documented rules, not play sessions conducted for this research.
 
@@ -77,7 +77,7 @@ without committing to a mutually exclusive class.
 
 The benefit is freedom to change goals. The drawback is that the avatar can lack the authored personal identity or build-defining tradeoffs of a class RPG.
 
-**OpenLegend lesson:** roles can emerge from the things a player repeatedly does, owns and is trusted to operate. Formal classes are optional.
+**Open Legend lesson:** roles can emerge from the things a player repeatedly does, owns and is trusted to operate. Formal classes are optional.
 
 ## 3. Core survival: hazards turn planets into resource problems
 
@@ -108,7 +108,7 @@ At launch this maintenance was one of the game's most criticized systems because
 
 Waypoint later made these pressures configurable. A player can independently tune combat, economy and survival challenge rather than choosing only one rigid ruleset. [NMS28](#nms28)
 
-**OpenLegend lesson:** survival pressure is most valuable when it changes plans and places, not when it becomes repetitive UI tax. Difficulty dimensions should be separable when possible.
+**Open Legend lesson:** survival pressure is most valuable when it changes plans and places, not when it becomes repetitive UI tax. Difficulty dimensions should be separable when possible.
 
 <a id="3-survival-pressure-is-several-systemsand-a-chosen-configuration"></a>
 <a id="study-3"></a>
@@ -166,7 +166,7 @@ Remnant's Gravitino Coil lets the player physically:
 
 large objects. Remnant couples it to salvage cleanup and physical hauling rather than treating salvage entirely as an inventory click. [NMS38](#nms38)
 
-This is unusually relevant to OpenLegend: **an object moving through world space becomes gameplay**, not just a database transfer.
+This is unusually relevant to Open Legend: **an object moving through world space becomes gameplay**, not just a database transfer.
 
 ## 5. Skills and progression: technology graphs instead of XP levels
 
@@ -209,7 +209,7 @@ This yields **orthogonal progression**:
 - faction reputation can unlock benefits without raising an avatar level;
 - creature-battle strength belongs to companions, not the Traveller.
 
-For OpenLegend, this is a useful model for avoiding “one number explains power.”
+For Open Legend, this is a useful model for avoiding “one number explains power.”
 
 <a id="4-technology-layout-gives-an-old-item-another-improvement-path"></a>
 <a id="study-4"></a>
@@ -252,7 +252,7 @@ At launch, slot scarcity was effectively a primary progression system. Critics d
 
 Later updates separated/expanded inventory structures and Waypoint substantially overhauled inventory size/usability. [NMS28](#nms28)
 
-**OpenLegend lesson:** inventory pressure can create preparation decisions, but a storage schema should not fight the fantasy continuously. “What can I carry?” and “what abilities have I installed?” may deserve different capacities.
+**Open Legend lesson:** inventory pressure can create preparation decisions, but a storage schema should not fight the fantasy continuously. “What can I carry?” and “what abilities have I installed?” may deserve different capacities.
 
 <a id="2-materials-are-useful-because-their-transformations-differ"></a>
 <a id="study-2"></a>
@@ -319,7 +319,7 @@ Voyagers added a new scale: fully walkable, multi-crew **Corvette-class** ships 
 
 Hello Games says supporting relative spaces with players editing/walking aboard a moving/warping ship required broad engine rework. [NMS37](#nms37)
 
-For OpenLegend, a constructed vehicle can become **place + inventory + capability + social space**, not just a mount.
+For Open Legend, a constructed vehicle can become **place + inventory + capability + social space**, not just a mount.
 
 <a id="6-a-corvette-is-both-a-build-and-a-place-to-inhabit"></a>
 <a id="study-6"></a>
@@ -457,7 +457,7 @@ Remnant makes some scrap **world objects that must be moved/loaded**, creating a
 
 Cosmos adds massive space hulks that can be stripped for parts under time/structural constraints, extending salvage into deep space. [NMS41](#nms41)
 
-**OpenLegend lesson:** acquisition systems feel different when the method changes:
+**Open Legend lesson:** acquisition systems feel different when the method changes:
 - discover;
 - defeat;
 - excavate;
@@ -506,7 +506,7 @@ The most important behavioral difference from pure exploration is **return value
 - hosted others;
 - attached projects/memories to it.
 
-This is the same ownership mechanism OpenLegend can exploit with settlements, inventions and relationship history.
+This is the same ownership mechanism Open Legend can exploit with settlements, inventions and relationship history.
 
 <a id="5-bases-turn-landscape-into-a-functioning-place"></a>
 <a id="study-5"></a>
@@ -541,7 +541,7 @@ Beacon later expanded the model:
 
 ### Important limitation
 
-Settlement inhabitants are **bounded management NPCs**, not deep autonomous people. Their disputes and decisions create flavor/management choices, but they do not approach OpenLegend's intended persistent personal memory/agency.
+Settlement inhabitants are **bounded management NPCs**, not deep autonomous people. Their disputes and decisions create flavor/management choices, but they do not approach Open Legend's intended persistent personal memory/agency.
 
 **What to borrow:** a place can periodically surface civic problems without requiring constant micromanagement.
 
@@ -554,7 +554,7 @@ Settlement inhabitants are **bounded management NPCs**, not deep autonomous peop
 
 **Constructed choice:** invest in the building that supports the next expedition, improve residents' living conditions or settle a dispute whose outcomes do not align perfectly with revenue. A settlement is useful when those decisions change later activity or recognition, not merely when it displays another population count.
 
-**Interpretation:** visible records and particular citizens can invite attachment. They do not prove that every biography is an independently simulated mind. The distinction matters for OpenLegend: an authored request, an aggregate production rule and an autonomous person's decision are different claims.
+**Interpretation:** visible records and particular citizens can invite attachment. They do not prove that every biography is an independently simulated mind. The distinction matters for Open Legend: an authored request, an aggregate production rule and an autonomous person's decision are different claims.
 
 The reduced demand for defensive returns is a useful counterexample to equating more realism or more crises with better long-term care. A person should be able to leave home on purpose, not constantly abandon every other project because the game owns their attention.
 
@@ -585,7 +585,7 @@ Orbital made guild standing more materially visible through envoys, donations an
 
 Knowledge Stones and NPC interaction teach alien words. Early critics liked deciphering fragments but found many NPC encounters structurally repetitive. [NMS43](#nms43) [NMS42](#nms42)
 
-This is an excellent contrast for OpenLegend:
+This is an excellent contrast for Open Legend:
 - **language as collectible vocabulary** is legible and gameable;
 - **language as actual communicative capability** could change what actors can understand, teach or conceal.
 
@@ -645,13 +645,13 @@ It adds turn-based creature battling where:
 - daily seeded challenges create shared strategy discussions;
 - ranked Arena League progression supplies rewards/titles. [NMS39](#nms39)
 
-This is an unusually direct OpenLegend lesson:
+This is an unusually direct Open Legend lesson:
 
 **generated difference becomes meaningful when downstream systems read it.**
 
 A toxic-world creature is not merely green/purple—it can carry battle affinities/abilities linked to its origin.
 
-OpenLegend should generalize this:
+Open Legend should generalize this:
 - origin;
 - anatomy;
 - culture;
@@ -674,7 +674,7 @@ This matters because not every system needs to maximize danger. A persistent wor
 - economic side projects;
 - low-stakes mastery.
 
-OpenLegend can use similarly calm mechanics to make settlements/worlds feel inhabited between high-stakes events.
+Open Legend can use similarly calm mechanics to make settlements/worlds feel inhabited between high-stakes events.
 
 ## 18. Exploration and procedural world generation
 
@@ -712,7 +712,7 @@ Launch reviewers repeatedly found **visual variation without decision variation*
 
 Modern No Man's Sky mitigates this by layering more activities onto locations, but the critique still appears in current negative Steam reviews: some players feel that identical systems repeat across an enormous galaxy. [NMS44](#nms44)
 
-For OpenLegend the metric should be:
+For Open Legend the metric should be:
 
 > Did this world's differences change the player's available plans, relationships, costs, risks or beliefs?
 
@@ -755,7 +755,7 @@ This changes space from **travel medium** into:
 - political/social territory;
 - destination.
 
-That is an important worldbuilding principle for OpenLegend: if a region exists in simulation, ask whether players can **live, own, build, organize and care about it**, not merely pass through it.
+That is an important worldbuilding principle for Open Legend: if a region exists in simulation, ask whether players can **live, own, build, organize and care about it**, not merely pass through it.
 
 ## 20. Alliances and social structures
 
@@ -782,7 +782,7 @@ This is still much simpler than a simulated institution with laws, treasury righ
 
 **place ownership + membership + shared identity + shared progression = proto-institution.**
 
-OpenLegend can deepen each element through actual world rules.
+Open Legend can deepen each element through actual world rules.
 
 ## 21. Expeditions and community events
 
@@ -810,7 +810,7 @@ The Swarm is a universe-level temporary community war:
 
 This is **event architecture**, not a permanent faction-war world simulation.
 
-For OpenLegend:
+For Open Legend:
 - temporary world crises can produce synchrony;
 - permanent institutions should not require constant seasonal reset;
 - distinguish durable world history from event scaffolding.
@@ -834,7 +834,7 @@ Later updates add more characters and lore, but No Man's Sky remains **world/pro
 
 There is no Dragon Age-like relationship party whose personal arcs anchor every hour.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A generated universe can be compelling without a conventional party, but persistent people make difference easier to care about.
 
@@ -893,7 +893,7 @@ The game therefore has **criminal verbs**, but it does not deeply simulate:
 - legal identity;
 - local legal variance.
 
-OpenLegend can take the next step by making crime a social/institutional fact, not only an escalation meter.
+Open Legend can take the next step by making crime a social/institutional fact, not only an escalation meter.
 
 ## 25. Death, failure and recovery
 
@@ -942,7 +942,7 @@ Over years, Hello Games repeatedly revised:
 
 Beyond made the **entire game** playable in VR with embodied cockpit, Multi-Tool and inventory interactions. [NMS21](#nms21)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A deep world needs:
 - fast ordinary interactions;
@@ -1119,9 +1119,9 @@ No public source in this pass supports a reliable feature-by-feature ROI calcula
 - procedural generation becomes meaningful merely by adding more assets;
 - “we'll fix it later” is a responsible launch strategy.
 
-For OpenLegend, the best application is **compound systems on persistent player investment without relying on future redemption to justify today's missing core loop.**
+For Open Legend, the best application is **compound systems on persistent player investment without relying on future redemption to justify today's missing core loop.**
 
-## 32. Transferable inspiration for OpenLegend
+## 32. Transferable inspiration for Open Legend
 
 ### A. Many orthogonal projects can coexist in one world
 
@@ -1136,14 +1136,14 @@ No Man's Sky now supports players who primarily:
 - customize;
 - socialize.
 
-OpenLegend's extensible mechanics can support the same diversity without forcing one victory path.
+Open Legend's extensible mechanics can support the same diversity without forcing one victory path.
 
 ### B. Procedural difference must propagate into mechanics
 
 Xeno Arena is a direct demonstration:
 - creature origin/body/personality → battle abilities/traits.
 
-OpenLegend should make:
+Open Legend should make:
 - anatomy;
 - sensory capability;
 - materials;
@@ -1158,7 +1158,7 @@ flow into downstream interactions.
 
 Orbital's custom ship builder does not erase found ships; discovered ships receive their own authenticity/trade distinction.
 
-When OpenLegend lets players invent/craft something, do not automatically make found/natural/authored variants worthless.
+When Open Legend lets players invent/craft something, do not automatically make found/natural/authored variants worthless.
 
 ### D. Make transport into place
 
@@ -1169,11 +1169,11 @@ Corvettes, freighters, bases and stations blur:
 - social space;
 - production site.
 
-OpenLegend's object model should allow sufficiently large/complex constructs to become **containers/places with internal state and inhabitants**, rather than forcing an artificial vehicle/building divide.
+Open Legend's object model should allow sufficiently large/complex constructs to become **containers/places with internal state and inhabitants**, rather than forcing an artificial vehicle/building divide.
 
 ### E. NPC management events are useful but not sufficient
 
-Settlements provide bounded choices and civic flavor. OpenLegend can keep that low-cost event layer while adding persistent people whose:
+Settlements provide bounded choices and civic flavor. Open Legend can keep that low-cost event layer while adding persistent people whose:
 - memories;
 - relationships;
 - occupations;
@@ -1196,13 +1196,13 @@ A planet can matter because:
 - alliance station;
 - Expedition objective.
 
-OpenLegend should similarly allow **layers of meaning** to accumulate on places.
+Open Legend should similarly allow **layers of meaning** to accumulate on places.
 
 ### G. Separate persistent systems from seasonal scaffolding
 
 Expeditions and The Swarm create synchrony, but they are not the world's permanent social order.
 
-OpenLegend should distinguish:
+Open Legend should distinguish:
 - durable history/institutions;
 - temporary scenarios/events;
 - optional fresh starts.
@@ -1215,7 +1215,7 @@ The launch game is a long-running cautionary example of survival costs becoming 
 
 Orbital's reputation-price relationship is simple but concrete.
 
-OpenLegend reputation can go farther:
+Open Legend reputation can go farther:
 - who trusts you;
 - who teaches you;
 - prices;
@@ -1229,7 +1229,7 @@ OpenLegend reputation can go farther:
 
 No Man's Sky's launch loneliness was partly structural: aliens were often reward terminals with faces.
 
-OpenLegend should treat persistent actors and institutions as **anchors of generated space**. A world feels less interchangeable when the same people remember what happened there.
+Open Legend should treat persistent actors and institutions as **anchors of generated space**. A world feels less interchangeable when the same people remember what happened there.
 
 ## 33. Requirement and preservation check
 

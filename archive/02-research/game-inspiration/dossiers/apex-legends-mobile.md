@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md#october-17-mobile-successes-and-unsuccessful-services) · [Research status](../research-progress-mobile-2026-10-17.md) · [Research requirements](../research-requirements.md)
 
-**Research date: October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no OpenLegend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
+**Research date: October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no Open Legend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
 
 ## Game, mechanics and player-created content
 
@@ -192,7 +192,7 @@ Ranked losses and seasonal resets affected competitive standing; temporary point
 
 All URLs adjacent to claims identify written evidence. Primary EA pages were readable for Prime Time and Cold Snap. Later publisher notes were read through explicitly identified reproductions; their attribution does not make a TapTap user an EA employee. Dedicated guides supply Mobile item, class, control and ability detail. The release-era tables preserve their dates; no current PC rules or unverified leaked Legends were added.
 
-Several original EA routes and Mobile wiki pages failed to load. Their unread bodies do not support this account. Numerical details with contradictory sources—some weapon statistics, exact revival timers, the final rank formula and the complete last-day queue schedule—remain unresolved rather than filled from the PC game. Post-shutdown webpage update stamps are separated from the May 2022 rules those pages describe. The companion context covers fiction and actual room/tournament capabilities; the commercial section screens unofficial modifications and current OpenLegend policy boundaries.
+Several original EA routes and Mobile wiki pages failed to load. Their unread bodies do not support this account. Numerical details with contradictory sources—some weapon statistics, exact revival timers, the final rank formula and the complete last-day queue schedule—remain unresolved rather than filled from the PC game. Post-shutdown webpage update stamps are separated from the May 2022 rules those pages describe. The companion context covers fiction and actual room/tournament capabilities; the commercial section screens unofficial modifications and current Open Legend policy boundaries.
 
 ### Fiction that connects to the mobile game
 
@@ -220,7 +220,7 @@ There is evidence of actual community use rather than only an interface descript
 
 **Final-season tournaments** were opt-in communal objectives with live leaderboards, according to archived iOS 1.3.672 notes dated February 10, 2023. [Preserved publisher release text](https://appshunter.io/ios/app/apex-legends-mobile/id1543991460). A [prelaunch report](https://www.gamespot.com/articles/despite-impending-shutdown-apex-legends-mobile-update-introduces-horizon-olympus-and-tournaments/1100-6511464/) names Elimination, Legend and Ranked variants. Neither establishes user-authored brackets or unrestricted room hosting. Client release, season activation and service closure are separate dates; the commercial section uses the publisher's closure policy.
 
-**Creation boundary:** choosing skins, banners, emotes, a HUD arrangement, a perk loadout or a hosted match can express identity and intent at different levels. None alone establishes importing new maps, weapon logic, animations or narrative assets. The external-artifact investigation is recorded separately under R15. The research question for OpenLegend is which kind of authorship players actually value—presentation, tactical preparation, social organization or changing rules—before assuming that all require the same editor.
+**Creation boundary:** choosing skins, banners, emotes, a HUD arrangement, a perk loadout or a hosted match can express identity and intent at different levels. None alone establishes importing new maps, weapon logic, animations or narrative assets. The external-artifact investigation is recorded separately under R15. The research question for Open Legend is which kind of authorship players actually value—presentation, tactical preparation, social organization or changing rules—before assuming that all require the same editor.
 
 ### Narrative and creation source access
 
@@ -411,7 +411,7 @@ TapTap's [reproduced Champions notes](https://www.taptap.io/br/post/1775214) ena
 
 Launch reviews do not evaluate every later competitive configuration. Controller criticism is also build-specific: several early reviewers describe imperfect use, rather than complete technical absence. iMore's premium-only Fade claim is excluded; character unlock rules are established in mechanics.
 
-### Research questions for OpenLegend
+### Research questions for Open Legend
 
 These are hypotheses to investigate, not implementation directives or explanations proven to have caused Mobile's commercial outcome.
 

@@ -1,6 +1,6 @@
 # Dungeons & Dragons v.3.5: explicit machinery, specialization, and the cost of detail
 
-Research date: 2026-09-27. This dossier studies the 2003 revision of third-edition tabletop D&D. It does not substitute Pathfinder, a computer-game adaptation, or a collection of internet homebrew for that ruleset. It is reference research, not an accepted OpenLegend design.
+Research date: 2026-09-27. This dossier studies the 2003 revision of third-edition tabletop D&D. It does not substitute Pathfinder, a computer-game adaptation, or a collection of internet homebrew for that ruleset. It is reference research, not an accepted Open Legend design.
 
 Navigation: [D&D hub](../games/dungeons-and-dragons.md) · [current revised edition](dungeons-and-dragons-2024.md) · [adjudication study](../mechanics/dungeons-and-dragons-adjudication.md) · [worldbuilding](../../worldbuilding/worlds/29-dungeons-and-dragons.md).
 
@@ -140,7 +140,7 @@ A separate direct-player sample, **“Folks who still play D&D 3.5…”** on r/
 
 The most useful conflict is not simply detail versus simplicity. The same rule density can supply reliable expectations to one table and create exclusion or constant reference work at another. A group that enjoys construction puzzles can experience complexity as content; a group seeking immediate character interaction can experience it as delay. Successful adaptation should preserve a choice’s consequences without requiring every player to become a rules archivist.
 
-## 10. What OpenLegend can learn—and should not inherit automatically
+## 10. What Open Legend can learn—and should not inherit automatically
 
 **Strong candidates:** distinguish routine competence from risky resolution; make time and retries real; keep trained permission separate from a numerical bonus; let material and equipment properties change approaches; support persistent preparation and limited resources; represent different injuries with different remedies; and make important constraints inspectable.
 

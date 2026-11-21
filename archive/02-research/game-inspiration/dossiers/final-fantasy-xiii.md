@@ -175,7 +175,7 @@ This is a powerful abstraction for agent systems.
 
 > **A group can have reusable modes that change everyone's decision policy at once.**
 
-OpenLegend could support:
+Open Legend could support:
 - “travel quietly”;
 - “protect civilians”;
 - “gather resources”;
@@ -233,7 +233,7 @@ Saboteur debuffs can also support the setup.
 
 The best attack is therefore not always “highest immediate damage.”
 
-OpenLegend lesson:
+Open Legend lesson:
 - combat/status systems become deeper when players can create **temporary world states** that change the value of later actions.
 
 ## 8. Chain decay forces role composition
@@ -269,7 +269,7 @@ This is a controversial abstraction because it makes the controlled character st
 
 The game offsets punishment by allowing a fast retry immediately before many battles.
 
-**OpenLegend warning:** control focus should not automatically imply ontological authority. If several autonomous people are still alive, a human-controlled avatar dying should not necessarily mean the whole simulation declares failure.
+**Open Legend warning:** control focus should not automatically imply ontological authority. If several autonomous people are still alive, a human-controlled avatar dying should not necessarily mean the whole simulation declares failure.
 
 ### Retry, victory and a high rating are different results
 
@@ -292,7 +292,7 @@ So approach state matters:
 
 This is much more causal than random invisible encounters.
 
-OpenLegend can extend this:
+Open Legend can extend this:
 - awareness;
 - surprise;
 - preparation;
@@ -398,7 +398,7 @@ This lets the player choose a weapon based on:
 
 An early weapon can therefore remain part of a long-term build path.
 
-OpenLegend lesson:
+Open Legend lesson:
 - meaningful possessions should often be **improvable** rather than disposable by item-level churn.
 
 ### Blazefire Saber is a particular chain, not a generic promise
@@ -422,7 +422,7 @@ This creates a strange hybrid:
 - money is less tied to monster extermination;
 - but retail feels abstracted away from physical social/economic institutions.
 
-For OpenLegend:
+For Open Legend:
 - separating monster death from universal currency is good;
 - replacing merchants with omnipresent menu shops loses social/economic world texture.
 
@@ -442,7 +442,7 @@ It also contributes to the feeling that early Cocoon is a **combat/story corrido
 
 There are fewer reasons to find particular craftspeople, merchants or settlements.
 
-OpenLegend should usually keep world functions attached to **entities/places with identity**, unless abstraction is explicitly part of the fiction.
+Open Legend should usually keep world functions attached to **entities/places with identity**, unless abstraction is explicitly part of the fiction.
 
 ## 17. Eidolons are character crisis encounters, not vendor unlocks
 
@@ -501,7 +501,7 @@ This matters because many RPGs make support optional flavor until extreme diffic
 
 FFXIII makes support part of the **central role-switch grammar**.
 
-OpenLegend lesson:
+Open Legend lesson:
 - changing another entity's state can deserve equal mechanical status to direct damage.
 
 ## 20. Linear Cocoon is intentionally a tutorialized dramatic corridor
@@ -596,7 +596,7 @@ This produces strong authored character arcs but little player-authored relation
 - no romance choice;
 - no procedural social memory.
 
-OpenLegend should borrow **relational stakes** while replacing fixed scripts with stateful agent history.
+Open Legend should borrow **relational stakes** while replacing fixed scripts with stateful agent history.
 
 ## 25. XIII-2: monsters and time gates replace fixed third-party identity
 
@@ -622,7 +622,7 @@ Instead of one largely linear route:
 
 Kitase/Toriyama explicitly described XIII-2 as more **player-driven**, contrasting with XIII's strongly story-driven structure. [FFXIII23](#ffxiii23)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A system can preserve its core tactical abstraction while changing:
 - party identity;
@@ -848,7 +848,7 @@ Ravager Auto-battle does not choose arbitrary game actions. It chooses from Rava
 
 That boundedness is why the automation remains predictable. **Situation:** the player wants elemental pressure but the currently assigned role is wrong for that purpose. **Actions:** choose the appropriate Paradigm, inspect the selected queue and override it when necessary. **Result:** role assignment changes what the automated controller can propose. **Next decision:** continue the mode or return to a recovery role. **Limit:** no role can select an ability the character has not learned; automation is not a substitute for build readiness. [FFXIII05](#ffxiii05) [FFXIII07](#ffxiii07)
 
-**OpenLegend implication:** agent autonomy should usually operate within explicit roles/permissions rather than search every possible world action.
+**Open Legend implication:** agent autonomy should usually operate within explicit roles/permissions rather than search every possible world action.
 
 ### C. Equipment upgrading rewards transformation knowledge
 
@@ -891,7 +891,7 @@ Narrative transformation is earned by demonstrating system knowledge. **Conditio
 
 **Lightning Returns comparison. Intention:** reach a scheduled opportunity before it closes. **Conditions:** the route is uncertain and Chronostasis is available. **Actions:** inspect the map and plan while the ordinary menu pauses the clock; use the EP ability only when field time matters. **Interaction:** information gathering and timed travel spend different resources. **Result:** planning need not consume the same deadline as running the route. **Next choice:** travel, complete a nearby task or deliberately wait for an opening. **Limit:** carry the correct rule into the chosen activity—the Ultimate Lair does not preserve ordinary battle-time protection. [FFXIII39](#ffxiii39) [FFXIII42](#ffxiii42)
 
-## 34. OpenLegend transferable inspiration and limits
+## 34. Open Legend transferable inspiration and limits
 
 ### A. Control groups through operating modes, not only individual orders
 
@@ -1010,7 +1010,7 @@ The player is not expected to queue every heal, buff and attack across all three
 Its biggest weakness follows from the same abstraction:
 when too many world interactions are simplified into combat corridors, Save Station menus and tightly gated progression, the fiction can feel less like a place and more like a delivery system for encounters.
 
-For OpenLegend:
+For Open Legend:
 
 > **Move repetitive control upward into reusable policy—but keep the underlying world rich enough that agents have more to do than execute combat scripts.**
 

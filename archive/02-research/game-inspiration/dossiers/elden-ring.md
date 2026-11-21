@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md)
 
-**Full case study; evidence cutoff October 24, 2026.** Scope: the February 25, 2022 base game, Shadow of the Erdtree, and the released Tarnished Edition/Pack. Nightreign is a separate game. The original September research remains here with its dated evidence; the chapters below provide the detailed systems, lore, reception, economics and modding study. Research is not an accepted OpenLegend feature or implementation plan. The [scoped completion record](../research-progress-elden-ring-2026-10-24.md) owns coverage and evidence limits; whole-library preservation gates remain separate.
+**Full case study; evidence cutoff October 24, 2026.** Scope: the February 25, 2022 base game, Shadow of the Erdtree, and the released Tarnished Edition/Pack. Nightreign is a separate game. The original September research remains here with its dated evidence; the chapters below provide the detailed systems, lore, reception, economics and modding study. Research is not an accepted Open Legend feature or implementation plan. The [scoped completion record](../research-progress-elden-ring-2026-10-24.md) owns coverage and evidence limits; whole-library preservation gates remain separate.
 
 ## Read by question
 
@@ -12,7 +12,7 @@
 | [World, exploration and narrative](elden-ring/02-world-exploration-and-narrative.md) | Regions and route structure, dungeons, traversal, history and cosmology, NPC quest studies, endings, environmental storytelling, presentation and production. **Major spoilers.** |
 | [Reception, commercial and cultural impact](elden-ring/03-reception-commercial-and-cultural-impact.md) | What different players valued or disliked, base game versus expansion, replay/abandonment, independent reviews, direct player accounts, reported sales and the attributed $2 billion estimate. |
 | [Native multiplayer and modding](elden-ring/04-multiplayer-and-modding.md) | Messages, co-op, invasions, arenas, native limits, community tools, major mods, authoring/distribution workflows and compatibility boundaries. |
-| [Design synthesis and OpenLegend implications](elden-ring/05-design-synthesis-and-openlegend.md) | Connected gameplay loops, inherited versus distinctive choices, dated patch decisions, transferable hypotheses, counterexamples and links to existing OpenLegend direction. |
+| [Design synthesis and Open Legend implications](elden-ring/05-design-synthesis-and-openlegend.md) | Connected gameplay loops, inherited versus distinctive choices, dated patch decisions, transferable hypotheses, counterexamples and links to existing Open Legend direction. |
 
 The study covers all major system families and required research dimensions. It is not an item-by-item statistical database, a claim to resolve every lore ambiguity, or a firsthand playtest. Older player accounts remain dated; detailed chapters identify patch and platform boundaries.
 
@@ -30,7 +30,7 @@ The character's starting package matters without being a permanent class prohibi
 
 Walking, sprinting, jumping, crouching, rolling, backstepping, climbing ladders and riding support different approaches. Torrent adds speed, a double jump and Spirit Spring traversal, but not universal safe landings or dungeon access. Attacks include light/heavy, charged, jumping, running and critical actions. Blocking, parrying, guard counters and evasion are distinct defenses: a guard counter follows a block, not a successful parry. Powerstancing compatible weapons offers a combined moveset. Health, FP and stamina constrain different actions. [E8](#e8)
 
-**Interpretation:** naming these operations matters because “melee combat” conceals several independent decisions. A player can choose when to enter range, whether to spend a scarce resource, and whether to seek a stagger rather than immediately maximize damage. An experimental OpenLegend combat scene should preserve that decision structure before adding dozens of nominally different attacks.
+**Interpretation:** naming these operations matters because “melee combat” conceals several independent decisions. A player can choose when to enter range, whether to spend a scarce resource, and whether to seek a stagger rather than immediately maximize damage. An experimental Open Legend combat scene should preserve that decision structure before adding dozens of nominally different attacks.
 
 ### Stance, poise and critical openings
 
@@ -146,7 +146,7 @@ The distribution model is premium software with separately purchasable expansion
 
 Martin's blog links a story trailer and gameplay reveal; Bandai Namco's 2024 announcement pairs the expansion reveal with platform and bundle information. The September 2026 Community Quests promotion additionally sets collective in-game targets with artwork and Twitch-badge rewards. Its announced September 1–28, 2026 window is historical; that announcement establishes participation goals and rewards, not verified campaign outcomes. [E13](#e13) [E11](#e11) [E21](#e21)
 
-**Interpretation:** a surprising vista, an unusual victory, a build explanation and a lore reconstruction are different word-of-mouth units. The game gives audiences several reasons to share beyond a plot summary. The existence of such sharing opportunities does not quantify their contribution to sales, and a celebrated developer plus an internationally known author is not a reproducible marketing baseline for OpenLegend.
+**Interpretation:** a surprising vista, an unusual victory, a build explanation and a lore reconstruction are different word-of-mouth units. The game gives audiences several reasons to share beyond a plot summary. The existence of such sharing opportunities does not quantify their contribution to sales, and a celebrated developer plus an internationally known author is not a reproducible marketing baseline for Open Legend.
 
 ## 9. Reception comparison
 
@@ -172,7 +172,7 @@ An additional direct Steam discussion about expansion blessings contains a subst
 
 **Unlock relief from an old scarcity.** A bearing changes future access instead of awarding only a consumable bundle. This can make mastery reduce repetitive work. The alternative is perpetual collection pressure, appropriate only when acquiring the resource stays interesting. Do not assume scarcity must remain unchanged for the entire life of a world.
 
-**Make character revision meaningful without destroying investment.** Rebirth preserves a journey while permitting a different approach. A cost can give the change weight, but excessive scarcity makes players afraid to experiment. An OpenLegend design could distinguish cosmetic identity, learned commitments and reversible equipment choices rather than charge the same price for all three.
+**Make character revision meaningful without destroying investment.** Rebirth preserves a journey while permitting a different approach. A cost can give the change weight, but excessive scarcity makes players afraid to experiment. An Open Legend design could distinguish cosmetic identity, learned commitments and reversible equipment choices rather than charge the same price for all three.
 
 **Use history to constrain creation, not to overexplain it.** Martin's handoff suggests a useful division between foundational events and moment-to-moment content. Consistent historical constraints can support many local stories. The risk is requiring a large lore dossier before ordinary play makes sense. Local stakes should work even for a player who never reads the complete mythology.
 
@@ -196,7 +196,7 @@ An additional direct Steam discussion about expansion blessings contains a subst
 | R10 | §8 and [distribution, marketing and cultural circulation](elden-ring/03-reception-commercial-and-cultural-impact.md) |
 | R11 | §8 and [dated commercial evidence, estimated spending, costs and causal limits](elden-ring/03-reception-commercial-and-cultural-impact.md) |
 | R12 | §9 and [substantive independent criticism, Steam accounts, enjoyment/return/abandonment](elden-ring/03-reception-commercial-and-cultural-impact.md) |
-| R13 | §10 and [comparative synthesis, tradeoffs and OpenLegend hypotheses](elden-ring/05-design-synthesis-and-openlegend.md) |
+| R13 | §10 and [comparative synthesis, tradeoffs and Open Legend hypotheses](elden-ring/05-design-synthesis-and-openlegend.md) |
 | R14 | This map, preserved examples/source register, each chapter's adjacent citations and source-access qualifications, [completion evidence](../research-progress-elden-ring-2026-10-24.md) |
 | R15 | **Applicable: yes, PC community modding.** [Tools, representative projects, workflow, distribution, conflicts, incentives and limits](elden-ring/04-multiplayer-and-modding.md). Native construction and official source-code access are not implied. |
 

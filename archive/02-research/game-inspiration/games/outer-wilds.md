@@ -4,7 +4,7 @@
 
 **Interpretation.** A discovery can change the player’s model of the world rather than their inventory. A finite environment can remain compelling when information connects to other information and makes new action possible. Mystery needs deliberate structure; obscurity alone is not curiosity.
 
-**Transfer.** OpenLegend can make learning a process, location, person’s motive, or sensory limitation useful. Let players ask questions because they noticed a contradiction or opportunity—not only because the quest log tells them to. Prototype whether an intended revelation is interesting before implementing a vast supporting simulation.
+**Transfer.** Open Legend can make learning a process, location, person’s motive, or sensory limitation useful. Let players ask questions because they noticed a contradiction or opportunity—not only because the quest log tells them to. Prototype whether an intended revelation is interesting before implementing a vast supporting simulation.
 
 **Pitfall.** Endless generation can dilute carefully constructed mystery. If the world agent immediately explains every secret, it may remove the very reward that makes exploration worthwhile. Creator assistance and in-character knowledge require separate boundaries.
 
@@ -36,7 +36,7 @@
 
 3. **The same place is not equally accessible at every time.** *Documented environment; moderate location spoilers.* The official description highlights a city affected by rising sand and a world with crumbling terrain. Learning when something changes can alter a route. This creates meaningful temporal state without requiring the designer to generate a brand-new map for every visit. [FG-OW-O](../references/sources-03.md#source-fg-ow-o)
 
-**What to borrow for OpenLegend.** Use knowledge as an actual OpenLegend capability: a remembered route, sensory clue, or causal hypothesis should enable a different action. Keep creator omniscience separate from embodied evidence. When a test fails, preserve enough feedback to distinguish unsupported mechanics, incorrect theory, and execution failure.
+**What to borrow for Open Legend.** Use knowledge as an actual Open Legend capability: a remembered route, sensory clue, or causal hypothesis should enable a different action. Keep creator omniscience separate from embodied evidence. When a test fails, preserve enough feedback to distinguish unsupported mechanics, incorrect theory, and execution failure.
 
 *Scope/evidence note:* Spoiler policy: no ending, solution sequence, or late-game objective is explained. Even the mechanics examples reveal part of the exploratory premise.
 <!-- END FIELDGUIDE ADDITION -->

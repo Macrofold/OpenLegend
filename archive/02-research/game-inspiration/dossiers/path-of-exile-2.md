@@ -213,7 +213,7 @@ A fresh audit against the explicit mechanics inventory found the dossier complet
 
 The strongest transferable patterns are **a skill as a composable object**, **a preparation choice that enables automatic execution**, **a resource budget that changes with active configuration**, and **a difficulty modifier that also changes recovery opportunities**. The corresponding limits are equally important: better-shaped output is not automatically a compatible action, and preserving an object is not the same as preserving its usefulness.
 
-For OpenLegend, expose which stage failed: missing resource, incompatible support, invalid target, unsuitable active set or a technical defect. Let an invented capability alter a real approach. Do not import periodic economic resets, extreme punishment or enormous loot breadth without testing whether they serve the intended persistent-world experience.
+For Open Legend, expose which stage failed: missing resource, incompatible support, invalid target, unsuitable active set or a technical defect. Let an invented capability alter a real approach. Do not import periodic economic resets, extreme punishment or enormous loot breadth without testing whether they serve the intended persistent-world experience.
 
 **Coverage:** R01 §§1/6, including the explicit class/release boundary; R02 §§2–8, including passive routes and ordinary crafting; R03 §§3–5, including equipment bases, modification families and socket permanence; R04 §§3–8; R05 the distinct worked situations throughout; R06 §§3/7–8; R07 §9 and the control/preview interfaces; R08 §§1/6/9; R09 §10 and the class/content update sequence; R10–R11 §10 and retained chapter metrics; R12 §11; R13 here; R14 here and the annotations below.
 

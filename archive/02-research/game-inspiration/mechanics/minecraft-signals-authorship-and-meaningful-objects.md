@@ -1,6 +1,6 @@
 # Minecraft: signals, authorship, and meaningful objects
 
-**Gameplay inspiration; researched September 25, 2026.** This supplements the [Minecraft chapter](../games/minecraft.md), preserving its broad success analysis, earlier videos, and commercial history. The examples use explicitly dated official descriptions and player feedback, not a claim to audit every current edition. No gameplay or source-code test was conducted. This is reference material, not an OpenLegend architecture or task list.
+**Gameplay inspiration; researched September 25, 2026.** This supplements the [Minecraft chapter](../games/minecraft.md), preserving its broad success analysis, earlier videos, and commercial history. The examples use explicitly dated official descriptions and player feedback, not a claim to audit every current edition. No gameplay or source-code test was conducted. This is reference material, not an Open Legend architecture or task list.
 
 ## 1. A shared component becomes valuable through unrelated uses
 

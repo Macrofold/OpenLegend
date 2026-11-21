@@ -2,7 +2,7 @@
 
 **G63 · Complete research pass, September 26, 2026.** This dossier treats **Birthright, Conquest, and Revelation as three materially distinct campaigns built on one mechanical platform**. It also distinguishes the rare physical Special Edition from the original retail/download model and the much harsher 2026 preservation reality: Nintendo 3DS eShop purchases ended March 27, 2023 and 3DS online services ended April 8, 2024, so Revelation and other digital-only content are no longer newly purchasable through their original storefront. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-Fates is particularly relevant to OpenLegend for three reasons:
+Fates is particularly relevant to Open Legend for three reasons:
 
 1. **One world state can branch into genuinely different campaigns**, not merely different endings.
 2. It deliberately repairs Awakening's overpowered Pair Up system by separating **offensive cooperation** from **defensive pairing**.
@@ -70,7 +70,7 @@ The route decision is a rare RPG example where a single early choice changes:
 - what maps/objectives follow;
 - which relationship graph is available.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A consequential choice is more meaningful when it changes **simulation structure**, not only dialogue flags.
 
@@ -140,7 +140,7 @@ The Lead/Support roles can be switched.
 
 That creates a genuine positional decision instead of “always pair everyone.”
 
-### OpenLegend transfer
+### Open Legend transfer
 
 When two agents cooperate, distinguish:
 - help that requires **independent presence**;
@@ -192,7 +192,7 @@ Route matters:
 
 This is more systemic than Path of Radiance/Awakening forging because repeated object copies and materials are part of the upgrade economy.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Upgrading an object can consume:
 - another instance of the same object;
@@ -217,14 +217,14 @@ This creates an unusually social progression graph:
 
 > relationship → access to another person's discipline → learn class skills → carry knowledge onward.
 
-That is one of the clearest OpenLegend precedents in the entire Fire Emblem series.
+That is one of the clearest Open Legend precedents in the entire Fire Emblem series.
 
 ### Relationship-based teaching
 
 The abstraction is gamey—the spouse does not literally teach lessons—but the semantic model is strong:
 - knowing a person can open a path unavailable alone.
 
-OpenLegend can implement this more literally:
+Open Legend can implement this more literally:
 - observation;
 - mentorship;
 - prerequisites;
@@ -252,7 +252,7 @@ Support rank affects:
 
 The support graph is still a whitelist authored in advance. Many plausible relationships simply cannot develop mechanically.
 
-OpenLegend's relationship substrate should be open-ended while allowing authored arcs to sit on top.
+Open Legend's relationship substrate should be open-ended while allowing authored arcs to sit on top.
 
 ## 9. Children and Deeprealms
 
@@ -267,7 +267,7 @@ To explain rapid aging, children are raised in **Deeprealms**, alternate spaces 
 
 Contemporary reviewers frequently identified this as less convincing than Awakening's fictionally central future-children premise. GamesRadar and RPG Site specifically call the explanation contrived. [FA15](#fa15) [FA05](#fa05)
 
-### OpenLegend warning
+### Open Legend warning
 
 Do not preserve a successful mechanic merely because players liked it if the world must contort implausibly to support it.
 
@@ -290,7 +290,7 @@ Examples span:
 - proximity;
 - terrain/HP conditions.
 
-### OpenLegend transfer
+### Open Legend transfer
 
 An actor can have:
 - transferable learned skills;
@@ -321,7 +321,7 @@ A Dragon Vein is:
 - with an eligibility rule;
 - whose effect changes the shared map.
 
-OpenLegend should make comparable world actions describable as:
+Open Legend should make comparable world actions describable as:
 > actor capability + world affordance + explicit state transition.
 
 ## 12. Capture and recruited enemies
@@ -337,7 +337,7 @@ Captured enemies can be:
 This is mechanically unusual because an enemy unit can become:
 > opponent → prisoner → recruited actor.
 
-### OpenLegend opportunity
+### Open Legend opportunity
 
 Surrender/capture should be stateful:
 - captivity;
@@ -386,7 +386,7 @@ Unlike Path of Radiance's menu Base, My Castle gives the intermission layer:
 - **ownership**;
 - **shared presentation**.
 
-OpenLegend can use home/camp/workshop spaces as persistent social memory rather than abstract menus.
+Open Legend can use home/camp/workshop spaces as persistent social memory rather than abstract menus.
 
 ## 14. My Castle invasions and multiplayer
 
@@ -405,7 +405,7 @@ Nintendo ended 3DS **online** play and other Internet communication on April 8, 
 
 For Fates, that means the authored My Castle/home layer itself is still an offline game system, and nearby/local exchanges should not be conflated with the retired Internet service. The network-dependent sharing surface is what disappeared.
 
-This is a strong preservation warning for OpenLegend:
+This is a strong preservation warning for Open Legend:
 > if a created place has meaning, its basic existence should not depend on a matchmaking server surviving.
 
 ## 15. Economy and route identity
@@ -456,7 +456,7 @@ Destructoid notes Phoenix as effectively story-first accessibility. [FA16](#fa16
 
 This creates three consequence contracts on top of difficulty settings.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Death/failure policy should be configurable independently of:
 - enemy intelligence;
@@ -482,7 +482,7 @@ Reviews and later criticism frequently argue:
 - family framing can be undercut by romance availability and hidden lineage facts;
 - child Deeprealms feel mechanically motivated.
 
-This is a critical OpenLegend warning:
+This is a critical Open Legend warning:
 > branching worlds need each branch to be internally truthful, not deliberately incomplete merely to upsell another branch.
 
 ## 18. Production: why three games existed
@@ -600,7 +600,7 @@ This dossier does not assume every Japanese interaction/localization feature exi
 
 **Consequence:** the same class/combat mechanics demand different planning.
 
-**OpenLegend lesson:** authored reality variants can modify *laws/opportunities* while reusing engine primitives.
+**Open Legend lesson:** authored reality variants can modify *laws/opportunities* while reusing engine primitives.
 
 ## 21. Marketing, distribution, participation, and preservation
 
@@ -714,7 +714,7 @@ But product fragmentation has costs:
 - story criticism spills across packages;
 - preservation becomes worse when one route is digital-only.
 
-## 24. Transferable inspiration for OpenLegend
+## 24. Transferable inspiration for Open Legend
 
 ### A. World forks should change laws/opportunities, not just cutscenes
 
@@ -732,7 +732,7 @@ That is a strong template for authored alternate realities.
 Partner/Friendship Seals encode:
 > knowing someone changes what you can learn.
 
-Implement that semantically in OpenLegend with:
+Implement that semantically in Open Legend with:
 - teaching;
 - observation;
 - trust;
@@ -752,7 +752,7 @@ Agents might choose:
 
 Dragon Veins are legible switches with shared consequences.
 
-OpenLegend can generalize to:
+Open Legend can generalize to:
 - floodgate;
 - power grid;
 - ritual seal;

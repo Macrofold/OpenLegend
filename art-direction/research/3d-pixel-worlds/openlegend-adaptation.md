@@ -1,4 +1,4 @@
-# Adapting the research to OpenLegend
+# Adapting the research to Open Legend
 
 **Current art direction:** the [current visual requirements](../../decisions.md#current-visual-requirements--october-16-2026) pair beautiful dimensional pixel art with believable proportions and explicitly reject visibly low-poly, blocky, cutesy and big-head/small-body styles. Technique evidence below remains useful; Bitgem is a rejected style reference, not a recommended source family.
 
@@ -16,7 +16,7 @@ The inspected checkout was `codex/mercenary-voxel-art` at `26f622ec70bd96506e2b1
 | Presentation boundary | [Renderer interface](../../../apps/client/src/world-renderer.ts) and [scene implementation](../../../apps/client/src/scene.ts) separate scene presentation from gameplay authority. | Put visual materials/effects in presentation; do not make a shader responsible for game rules.                                 |
 | Camera and scene      | [World presentation](../../../docs/world-presentation.md) describes the current free camera, sprites/models, selection, depth/reveal and fog.                                       | A new look must preserve these interactions and current view permissions.                                                      |
 | Camera inputs         | The installed engine exposes render targets, scene color/depth requests and custom projection callbacks.                                                                            | There are plausible building blocks for compositing, water and reflection experiments. Correct integration remains unverified. |
-| Effect framework      | The installed `CameraFrame` source includes resolution scaling, bloom, grading, depth of field and related settings. The inspected OpenLegend scene does not instantiate it.        | Engine availability is not evidence that these effects are enabled, correctly ordered or qualified in OpenLegend.              |
+| Effect framework      | The installed `CameraFrame` source includes resolution scaling, bloom, grading, depth of field and related settings. The inspected Open Legend scene does not instantiate it.        | Engine availability is not evidence that these effects are enabled, correctly ordered or qualified in Open Legend.              |
 | Normals for outlines  | Depth/color access does not itself establish a suitable per-pixel normal buffer in our scene.                                                                                       | Inspect the chosen path; an additional material/pass may be needed. Do not promise a free normal-based outline pass.           |
 
 The installed engine inspection used its `build/playcanvas/src/framework/components/camera/component.js` and `build/playcanvas/src/extras/render-passes/camera-frame.js` files. Those dependencies are not repository source files. [Official post-effect documentation](https://developer.playcanvas.com/user-manual/graphics/posteffects/) and the [camera API](https://api.playcanvas.com/engine/classes/CameraComponent.html) provide further context, but current online documentation may describe a newer version than the pinned package.
@@ -79,7 +79,7 @@ The [qualification document](../../../docs/projects/3d-pixel-art-validation.md) 
 - **Garment coverage:** standing and representative action extremes do not expose the body through the cape or shirt. Check the interior and hem, not only the front silhouette.
 - **Environment readability:** water, fog, vegetation and outlines preserve ground contact, important objects, target selection and hidden-character indication.
 - **Motion:** moving plants, shadows, fine textures and highlights do not create distracting shimmer. Record continuous footage, not selected stills alone.
-- **Operational cost:** compare the same camera path and visible population with effects on/off. Record hardware, backend, render dimensions, frame-time distribution, memory and resource counts; do not transfer another game's benchmark to OpenLegend.
+- **Operational cost:** compare the same camera path and visible population with effects on/off. Record hardware, backend, render dimensions, frame-time distribution, memory and resource counts; do not transfer another game's benchmark to Open Legend.
 
 ## Preserve the existing engine boundaries
 

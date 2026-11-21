@@ -15,7 +15,7 @@ Making quiet animal checks cheaper saves CPU but does not fix the actual game. T
 
 The current diagnostic driver itself serializes resident choices. It never offers a burst of already-ready choices to the world service. Consequently, a production batching queue cannot simply be added and assumed useful. First supply a controlled burst in this private workload and measure the benefit it could actually provide. An improvement would justify designing the corresponding production owner; a poor result would argue against that larger change.
 
-Unity and Unreal use recorded commands and consolidated application points to avoid repeatedly stopping shared processing for structural changes. That supports investigating shared publication points; neither source establishes that OpenLegend can safely merge durable decisions. Our distinct job, permission, history and recovery rules still need their own proof. [Unity's command-buffer explanation](https://github.com/Unity-Technologies/EntityComponentSystemSamples/blob/master/EntitiesSamples/Docs/entity-command-buffers.md), [Unreal's deferred-command API](https://dev.epicgames.com/documentation/unreal-engine/API/Runtime/MassEntity/FMassDeferredCommand?lang=en-US).
+Unity and Unreal use recorded commands and consolidated application points to avoid repeatedly stopping shared processing for structural changes. That supports investigating shared publication points; neither source establishes that Open Legend can safely merge durable decisions. Our distinct job, permission, history and recovery rules still need their own proof. [Unity's command-buffer explanation](https://github.com/Unity-Technologies/EntityComponentSystemSamples/blob/master/EntitiesSamples/Docs/entity-command-buffers.md), [Unreal's deferred-command API](https://dev.epicgames.com/documentation/unreal-engine/API/Runtime/MassEntity/FMassDeferredCommand?lang=en-US).
 
 ## Scope chosen before code
 
@@ -41,7 +41,7 @@ Evolve one bounded actual PostgreSQL scenario. At a fixed game time, compare six
 
 Only successful complete behavior/storage/failure checks plus fewer complete controlled saves release a new four-run actual comparison. Preselect the same fresh 120-second expanded HTTP/SSE workload in separate/grouped/grouped/separate order, original 300-second outer and SQL/report limits, finite resources and no sampled recording, providers, refill or forced collection. A short rehearsal may qualify the changed driver first but cannot claim capacity. No browser run or production integration is released automatically. If grouping does not improve complete actual work and command waits, retain the negative result and reject the larger production coordinator.
 
-[Standalone remaining bottlenecks](bottlenecks.md) · [Previous failed quiet-animal trial](40-quiet-threat-wakeups.md) · [Durable plan](../../projects/three-times-scene-performance.md#group-ready-resident-decisions-diagnostic)
+[Standalone remaining bottlenecks](bottlenecks.md) · [Previous failed quiet-animal trial](40-quiet-threat-wakeups.md) · [Durable plan](../../projects/three-times-scene-performance.md#group-ready-npc-decisions-diagnostic)
 
 ## Source-driven plan refinement before implementation
 

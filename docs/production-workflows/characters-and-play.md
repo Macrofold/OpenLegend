@@ -91,7 +91,7 @@ If a promising experience needs a missing capability, identify that gap and its 
 
 ## 5. Let participants choose and follow through
 
-Run the situation through ordinary supported player controls and resident decisions when that work is authorized. Give participants their own evidence, available means and actual consequences. The [agency owner](../agent-agency.md), [AI-provider owner](../ai-providers.md), [speech/conversation owner](../narration-and-conversations.md) and [memory owner](../memory-architecture.md) retain their existing responsibilities.
+Run the situation through ordinary supported player controls and NPC decisions when that work is authorized. Give participants their own evidence, available means and actual consequences. The [agency owner](../agent-agency.md), [AI-provider owner](../ai-providers.md), [speech/conversation owner](../narration-and-conversations.md) and [memory owner](../memory-architecture.md) retain their existing responsibilities.
 
 A resident can accept, refuse, misunderstand, compromise, continue a purpose, rest or pursue another opportunity when that fits their circumstances. The author should not secretly make the decisive choice to ensure that the scene reaches a preferred dramatic beat. A motive can matter even when two different people choose the same action for different reasons.
 
@@ -145,6 +145,6 @@ Keep evidence proportional to the claim. A script can verify an action path; a f
 
 ## Research rationale and maintained ownership
 
-The [developer case studies](../../archive/02-research/ai-game-development/02-developer-case-studies.md) support editable production, deliberate situation structure, iterative character authoring and complete-game inspection at different levels of evidence. The [procedural dossier](../../archive/02-research/ai-game-development/03-procedural-art-and-animation.md) explains how coherent reusable art can make revision affordable. The specific player-value applications here are OpenLegend design judgments grounded in its existing ambitions; the research does not empirically prove their enjoyment.
+The [developer case studies](../../archive/02-research/ai-game-development/02-developer-case-studies.md) support editable production, deliberate situation structure, iterative character authoring and complete-game inspection at different levels of evidence. The [procedural dossier](../../archive/02-research/ai-game-development/03-procedural-art-and-animation.md) explains how coherent reusable art can make revision affordable. The specific player-value applications here are Open Legend design judgments grounded in its existing ambitions; the research does not empirically prove their enjoyment.
 
 Use [the shared production index](README.md) for route selection and cross-route work. Keep current behavior in its feature owner, project-specific decisions in the selected project, unfinished work in its focused tracker and actual play evidence in its existing verification report. The [needs-design register](../maintainers/needs-design.md) already routes character integration, useful demonstrations and creation/reuse. A new tool candidate does not by itself require another design group.

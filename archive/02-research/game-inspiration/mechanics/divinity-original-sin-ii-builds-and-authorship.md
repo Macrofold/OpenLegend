@@ -2,7 +2,7 @@
 
 **G57 operational supplement, September 27, 2026.** Read with the [full dossier](../dossiers/divinity-original-sin-ii.md). This addresses the [audit's remaining R02/R03/R06/R14 findings](../references/games-51-60-coverage-audit.md#g57--divinity-original-sin-ii). The original ten cases, six reviews, player samples and production history remain in that dossier. [Progress](../research-progress.md) owns task state.
 
-The default reference is Definitive Edition without optional Gift Bag rules. PC Game Master tools, separate Arena matches and the ordinary campaign have different authority and persistence contracts. The explanations below are desk research, not gameplay, watched footage or an accepted OpenLegend design. Source limitations and contradictions are retained where consequential.
+The default reference is Definitive Edition without optional Gift Bag rules. PC Game Master tools, separate Arena matches and the ordinary campaign have different authority and persistence contracts. The explanations below are desk research, not gameplay, watched footage or an accepted Open Legend design. Source limitations and contradictions are retained where consequential.
 
 ## 1. Talents change the rules a build operates under
 
@@ -58,7 +58,7 @@ The user-interface documentation lists encounter management, entity control, sta
 
 Tom Marks's May 2017 hands-on session with Larian found enough control to improvise and circumvent programmed rules. He also found the world less independently responsive than the ordinary campaign because NPC conversation required the GM's attention. Other players could wander while waiting for one person's adjudication. This is a **pre-release firsthand assessment**, not a new 2026 playtest or a claim every group has the same problem. [G6](#g6)
 
-**Interpretation:** author freedom and participant freedom are not identical. A GM may be able to invent any response yet be unable to service four simultaneous conversations. OpenLegend should not confuse a powerful authoring interface with solved autonomous social simulation. The transferable question is how an exceptional request becomes a visible, authorized state change without concealing who made the ruling.
+**Interpretation:** author freedom and participant freedom are not identical. A GM may be able to invent any response yet be unable to service four simultaneous conversations. Open Legend should not confuse a powerful authoring interface with solved autonomous social simulation. The transferable question is how an exceptional request becomes a visible, authorized state change without concealing who made the ruling.
 
 ## 5. Arena isolates tactical competition
 

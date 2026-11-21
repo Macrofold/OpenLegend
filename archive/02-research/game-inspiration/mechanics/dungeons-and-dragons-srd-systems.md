@@ -1,6 +1,6 @@
 # D&D SRD 5.2.1: systemic possibilities beyond the character sheet
 
-**Research date:** 2026-09-27. **Basis:** Mike's uploaded, 364-page SRD 5.2.1, read through all sections and catalogues. **Status:** reference research and original adaptation proposals; no OpenLegend rule, implementation, or acceptance criterion is adopted by this document.
+**Research date:** 2026-09-27. **Basis:** Mike's uploaded, 364-page SRD 5.2.1, read through all sections and catalogues. **Status:** reference research and original adaptation proposals; no Open Legend rule, implementation, or acceptance criterion is adopted by this document.
 
 [Packet hub](../games/dungeons-and-dragons.md) · [Current-edition dossier](../dossiers/dungeons-and-dragons-2024.md) · [DM adjudication](dungeons-and-dragons-adjudication.md) · [Worldbuilding dossier](../../worldbuilding/worlds/29-dungeons-and-dragons.md)
 
@@ -8,7 +8,7 @@
 
 The first dossier established the basic game and selected interactions. This pass asks a different question: **what recurring design machinery becomes visible when the spell, item, hazard, monster, and animal catalogues are read together?** The answer is richer than an ability-check simulator. The same underlying ideas recur as professional knowledge, borrowed perception, altered bodies, stored work, contingent actions, territorial rules, dependencies, transformations, and consequences that survive an encounter.
 
-The opportunity for OpenLegend is to make those relationships playable. A player should be able to learn why an unfamiliar creature behaves differently, use a mundane object intelligently, make something that remains useful, or solve a problem by changing its dependencies rather than merely increasing damage. These are hypotheses about a good game, not evidence of measured player preference or a demand to implement every D&D subsystem.
+The opportunity for Open Legend is to make those relationships playable. A player should be able to learn why an unfamiliar creature behaves differently, use a mundane object intelligently, make something that remains useful, or solve a problem by changing its dependencies rather than merely increasing damage. These are hypotheses about a good game, not evidence of measured player preference or a demand to implement every D&D subsystem.
 
 **Reading convention.** `[S, p. N, Entry]` refers to the printed page and named entry of the supplied [SRD 5.2.1](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf). Source descriptions are rules-based observations. Paragraphs marked **Adaptation**, **Constructed situation**, or **Interpretation** are our synthesis, not additional D&D rules. Exact source wording, rather than remembered 2014 rules or a wiki's older statistics, controls this pass.
 
@@ -90,7 +90,7 @@ Alarm, Magic Mouth, Glyph of Warding, Contingency, and Programmed Illusion store
 
 **Constructed situation:** a merchant installs a warning device at a storeroom. It detects an opening, not theft as an abstract intention. A worker opening the door legitimately can activate it; an intruder entering elsewhere may not. The player can improve the design by changing placement, adding identification, or coordinating with staff. The interesting learning is about coverage and false alarms, not memorizing the spell name.
 
-Do not turn bounded automation into arbitrary generated code. Conversely, do not make every trigger require a paid language-model judgment. Settled conditions should remain cheap and stable. This is a proposed design direction, not a benchmark or a claim about OpenLegend's current implementation.
+Do not turn bounded automation into arbitrary generated code. Conversely, do not make every trigger require a paid language-model judgment. Settled conditions should remain cheap and stable. This is a proposed design direction, not a benchmark or a claim about Open Legend's current implementation.
 
 ## 6. Lasting magic makes infrastructure, economies, and politics playable
 
@@ -160,7 +160,7 @@ Sentient magic items have senses, communication, purposes, and possible conflict
 
 **Constructed situation:** a celebrated weapon wants its creator's lost techniques rediscovered. It assists a competent wielder but resists an unrelated campaign of conquest. The player can negotiate, fulfill part of the purpose, find another tool, or seek to alter the relationship. The item needs its own bounded knowledge; it should not produce a complete quest solution whenever convenient.
 
-The Vampire's charm and lycanthrope curses also show that D&D sometimes imposes substantial loss of control. Their exact effects must not be mislabeled as ordinary attraction or voluntary agreement. Whether OpenLegend uses such mechanics, provides warnings, permits player-controlled cursed forms, or restricts them is a separate game-design choice. `[S, pp. 335–339]`
+The Vampire's charm and lycanthrope curses also show that D&D sometimes imposes substantial loss of control. Their exact effects must not be mislabeled as ordinary attraction or voluntary agreement. Whether Open Legend uses such mechanics, provides warnings, permits player-controlled cursed forms, or restricts them is a separate game-design choice. `[S, pp. 335–339]`
 
 ## 9. Creatures are libraries of interaction, not just enemies with different HP
 
@@ -193,7 +193,7 @@ The Troll can produce severed limbs that remain active; a surviving limb has a d
 
 The monster chapter also warns against a tempting transfer error: extra damage in a creature's weapon attack is not automatically an intrinsic property that transfers with the looted weapon. Equipment and monster abilities have their own rules. `[S, pp. 254–257]`
 
-**Adaptation:** OpenLegend may prefer more symmetric item behavior, but that is a deliberate departure. A recovered sword should clearly distinguish its own powers from the skill, physiology, or temporary enchantment of its former wielder. Do not promise players every number they saw on the enemy's attack.
+**Adaptation:** Open Legend may prefer more symmetric item behavior, but that is a deliberate departure. A recovered sword should clearly distinguish its own powers from the skill, physiology, or temporary enchantment of its former wielder. Do not promise players every number they saw on the enemy's attack.
 
 ## 10. Death, curses, injuries, and containment can produce adventures
 
@@ -330,4 +330,4 @@ The SRD supplies a large playable vocabulary, not a full account of agriculture,
 
 This work includes material from the System Reference Document 5.2.1 (“SRD 5.2.1”) by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.
 
-The source material is paraphrased, reorganized, and analyzed here. Original scenarios and proposed OpenLegend adaptations are identified separately. This attribution does not license unrelated D&D setting prose, illustrations, trademarks, or commercial-book content. No source artwork or complete rulebook is added to the repository.
+The source material is paraphrased, reorganized, and analyzed here. Original scenarios and proposed Open Legend adaptations are identified separately. This attribution does not license unrelated D&D setting prose, illustrations, trademarks, or commercial-book content. No source artwork or complete rulebook is added to the repository.

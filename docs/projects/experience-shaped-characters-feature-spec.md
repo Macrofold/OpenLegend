@@ -28,14 +28,14 @@ The current daily sleep-eligible review performs faithful consolidation using th
 
 ## 3. Keep the kinds of change distinct
 
-| What changes                          | Its meaning                                                                             | What that change cannot do                                                                |
-| ------------------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Present feeling                       | A supported current appraisal of a perceived cause, such as pleasure or disappointment. | Rewrite an event, command another person, or automatically become a stable trait.         |
-| Understanding of another person       | This actor's current, possibly mixed assessment in their subject knowledge.             | Change that person's reciprocal view, private intentions, ownership or consent.           |
-| Current self-understanding            | A revisable account of what this person tends to enjoy, avoid, value or expect.         | Replace protected origins, grant a mechanical bonus, or force a future action.            |
-| Interpretation of an older experience | What the person now thinks an available remembered event might mean.                    | Make later testimony into earlier witnessing or manufacture unavailable quotations.       |
-| Practical competence                  | Actually supported knowledge and proficiency under a learned method.                    | Increase because a reflection says “I have grown” or a dream depicts successful practice. |
-| Shared world history and obligations  | What actually happened and the accepted commitments that still apply.                   | Disappear because somebody changes their feelings or stops thinking about them.           |
+| What changes                          | Its meaning                                                                                                         | What that change cannot do                                                                |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Present feeling                       | A supported current appraisal of a perceived cause, such as pleasure or disappointment.                             | Rewrite an event, command another person, or automatically become a stable trait.         |
+| Understanding of another person       | This actor's current, possibly mixed assessment in their subject knowledge.                                         | Change that person's reciprocal view, private intentions, ownership or consent.           |
+| Current self-understanding            | A revisable account of what this person tends to enjoy, avoid, value or expect.                                     | Replace protected origins, grant a mechanical bonus, or force a future action.            |
+| Interpretation of an older experience | What the person now thinks an available remembered event might mean.                                                | Make later testimony into earlier witnessing or manufacture unavailable quotations.       |
+| Character skill                       | Proficiency supported by an installed rule. Knowing the steps of a learned activity is a separate kind of progress. | Increase because a reflection says “I have grown” or a dream depicts successful practice. |
+| Shared world history and obligations  | What actually happened and the accepted commitments that still apply.                                               | Disappear because somebody changes their feelings or stops thinking about them.           |
 
 For example, “I felt embarrassed,” “Jo can be considerate,” and “I sometimes enjoy showing an unfinished idea” are related but different claims. Keep the event in memory, the understanding of Jo in Jo's subject note, and the concise current outlook in self-understanding. Do not copy the full encounter into three growing biographies.
 

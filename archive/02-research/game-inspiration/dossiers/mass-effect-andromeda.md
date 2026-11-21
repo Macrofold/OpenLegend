@@ -175,7 +175,7 @@ The English **Most Helpful (All Time)** page for app **1238000** was readable on
 
 **Synthesis — interpretation:** two players can agree that the story is weaker and disagree about the recommendation because the enjoyable activity occupies a different share of their attention. A useful research evaluation should separately ask whether the game supports exploration, expressive combat, companion attachment and reliable access, rather than assign all four one verdict.
 
-## 12. Conditional OpenLegend research lessons
+## 12. Conditional Open Legend research lessons
 
 **Show what progress makes possible.** An outpost, a safer route or a recovered specialist can communicate advancement more meaningfully than an abstract completion total. A small experiment could compare identical rewards presented only numerically against rewards with a visible change in available actions. The risk is decorative change that promises functionality the settlement does not actually have.
 
@@ -191,7 +191,7 @@ The English **Most Helpful (All Time)** page for app **1238000** was readable on
 
 **Give new characters room to become particular.** A cast cannot inherit three games of attachment by sharing familiar species. Repeated conversation, competent action, conflicting obligations and remembered assistance offer testable foundations. More biography text is not automatically a substitute for an experience shared with the player.
 
-These are conditional research hypotheses, not accepted OpenLegend requirements, implementation tasks or permission to reuse BioWare's fiction.
+These are conditional research hypotheses, not accepted Open Legend requirements, implementation tasks or permission to reuse BioWare's fiction.
 
 ## 13. Reading route, requirement map and preservation
 

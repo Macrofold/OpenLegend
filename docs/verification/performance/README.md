@@ -12,7 +12,7 @@ The [BK28 implementation evidence](bookkeeping/2026/2026-11-07-bk28-implementati
 
 The [BK29 latest-source investigation](bookkeeping/2026/2026-11-07-bk29-profile.md) measures `330da6405` after the retention/retry fixes, attributes remaining CPU and repeated animal-response reception, and separates completed profiles from blocked or incomplete follow-ups. Its structural proposals remain unimplemented.
 
-For the integrated attention branch, start with the [October 30 complete-game diagnosis](2026-10/attention-runtime.md): standard and crowded failures, literal processing steps, exact reader obstruction and proposed root corrections. The earlier whole-game campaigns start with [Why OpenLegend is still slow](bottlenecks.md). It gives the actual outcome, ranked costs, gameplay trade-offs and missing evidence without requiring code knowledge.
+For the integrated attention branch, start with the [October 30 complete-game diagnosis](2026-10/attention-runtime.md): standard and crowded failures, literal processing steps, exact reader obstruction and proposed root corrections. The earlier whole-game campaigns start with [Why Open Legend is still slow](bottlenecks.md). It gives the actual outcome, ranked costs, gameplay trade-offs and missing evidence without requiring code knowledge.
 
 The [October 31 runtime-unification qualification](2026-10/runtime-unification.md) records the isolated cleanup branch, current-format correctness, failed normal/substantial operating checks and remaining evidence.
 
@@ -106,7 +106,7 @@ The previous reader report is preserved as [earlier reader-report detail](reader
 
 - [Late browser trace](45-late-browser-trace.md): qualify the recorder before tracing the unexplained pause during actual play.
 
-[Resident decisions sharing a save](46-resident-decision-save-groups.md) records the selected bounded diagnostic of fewer complete saves, individual admission/failure checks and its future actual comparison. No result is yet available.
+[NPC decisions sharing a save](46-resident-decision-save-groups.md) records the selected bounded diagnostic of fewer complete saves, individual admission/failure checks and its future actual comparison. No result is yet available.
 
 - [Capture the browser when a freeze happens](47-catch-a-freeze.md): selected bounded rolling-recording investigation; no result yet.
 

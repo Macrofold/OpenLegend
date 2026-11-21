@@ -232,7 +232,7 @@ No Steam review surface for this exact release was established, so no fabricated
 
 **Treat authoring and preservation as product responsibilities.** Accessible example maps can teach an expressive system; compatibility failures can strand the resulting community work. A new capability is not a successful upgrade if the old creations can no longer be understood or used.
 
-These are research interpretations, not accepted OpenLegend implementation tasks. Warcraft names, dialogue, characters and art are reference examples, not proposed reusable assets.
+These are research interpretations, not accepted Open Legend implementation tasks. Warcraft names, dialogue, characters and art are reference examples, not proposed reusable assets.
 
 ## 12. Reading / viewing route and requirement map
 

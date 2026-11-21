@@ -4,13 +4,13 @@
 
 ## The experience
 
-A player or group could create a persistent OpenLegend world through the product, arrange its hosting, choose who may join and select supported rules for the experience they want. Friends could participate without depending on the paying owner's personal computer or presence. Membership management and the world's continued service would be understandable within the same product.
+A player or group could create a persistent Open Legend world through the product, arrange its hosting, choose who may join and select supported rules for the experience they want. Friends could participate without depending on the paying owner's personal computer or presence. Membership management and the world's continued service would be understandable within the same product.
 
 The shared project should also work across different schedules: one member explores or supplies materials, another builds, and someone returning later discovers useful work their friends contributed. The [supplied Fort Armco account](../../archive/02-research/game-inspiration/dossiers/enshrouded/04-hosting-and-world-governance.md#a-players-reported-rental-motive-asynchronous-building) describes that as a reason to rent a server. It is one attributed use case, not measured demand or a promise that absent players experience every shared milestone. The [participation proposal's shared-project journey](../projects/participants-and-world-travel-feature-spec.md#proposed-continuation-contribute-while-a-friend-is-away) follows the proposed experience through actual work, a later return and a changed permission.
 
 Private worlds complement the larger shared-world ambition. In official worlds, a base could become a home, shop, inn, workshop, sanctuary, trading stop or contested stronghold used by many people and autonomous inhabitants. More participants can make construction socially consequential through visitors, trade, shared projects, alliances and rivalry. Population alone does not create that value; people need useful reasons to encounter and affect one another.
 
-Enshrouded supplies a concrete precedent for rented dedicated worlds and an in-game hosting-partner route. Its small cooperative worlds are not evidence that OpenLegend's larger persistent worlds or AI costs are already qualified. The [hosting research](../../archive/02-research/game-inspiration/dossiers/enshrouded/04-hosting-and-world-governance.md) separates the observed product from that proposed extension.
+Enshrouded supplies a concrete precedent for rented dedicated worlds and an in-game hosting-partner route. Its small cooperative worlds are not evidence that Open Legend's larger persistent worlds or AI costs are already qualified. The [hosting research](../../archive/02-research/game-inspiration/dossiers/enshrouded/04-hosting-and-world-governance.md) separates the observed product from that proposed extension.
 
 ## Control who belongs and what they may do
 
@@ -58,7 +58,7 @@ A PvE label does not settle whether environmental danger can damage a building. 
 
 The future design should define the experience people are choosing before they invest in a home. It should explain meaningful rule changes, their timing and what happens to existing property or obligations. Moving a protected community into unrestricted destruction is a consequential product change, not just a hidden configuration edit.
 
-Enforcement must consider supported indirect effects as well as direct commands. Enshrouded's response to flood griefing shows why preventing edits to a house can still leave it vulnerable to nearby terrain changes. In OpenLegend, delegated NPC work, fire, projectiles, creatures, obstruction or other hazards must follow the relevant world's actual laws and permission owners. This is a design question for the mechanisms that are selected, not a requirement to build every possible hazard.
+Enforcement must consider supported indirect effects as well as direct commands. Enshrouded's response to flood griefing shows why preventing edits to a house can still leave it vulnerable to nearby terrain changes. In Open Legend, delegated NPC work, fire, projectiles, creatures, obstruction or other hazards must follow the relevant world's actual laws and permission owners. This is a design question for the mechanisms that are selected, not a requirement to build every possible hazard.
 
 Distinguish a physical prohibition from fictional law. One world may make theft impossible without permission; another may allow theft and let witnesses, institutions or retaliation respond. Labels and discovery information should describe the actual experience.
 
@@ -72,11 +72,11 @@ The attractive promise is a convenient, persistent place for a chosen group, wit
 
 A hosting offer must distinguish stored world retention, hours of availability, simultaneous capacity, background simulation, model/invention allowances and support. An always-accessible world does not automatically imply unlimited autonomous activity while empty. If the host has paid for guest participation, the existing commercial direction does not require those guests to buy another hosting subscription for the same access.
 
-The later product decision must settle price and included usage, who operates the service, member limits and service capacity, suspension/cancellation, retained work and permitted retrieval, owner departure or transfer, outages and restoration. OpenLegend's private human records make unrestricted raw server-file export a different question from exporting a construction or customer-owned world content.
+The later product decision must settle price and included usage, who operates the service, member limits and service capacity, suspension/cancellation, retained work and permitted retrieval, owner departure or transfer, outages and restoration. Open Legend's private human records make unrestricted raw server-file export a different question from exporting a construction or customer-owned world content.
 
 Those terms should state what access stops when payment ends, what remains stored and for how long, and how permitted retrieval works. Backups and restoration need their own scope: who may request a restore, and what happens to other contributors' work completed after that backup. No retention duration, unrestricted export or unilateral rollback right is selected by this idea.
 
-First-party operation, an integrated provider and self-hosting are distinguishable options. No vendor, subscription price, lifetime service promise, capacity figure or data-export entitlement is selected here. Enshrouded rental offers and discussion establish a relevant market precedent; they do not measure demand, renewal or operating margin for OpenLegend.
+First-party operation, an integrated provider and self-hosting are distinguishable options. No vendor, subscription price, lifetime service promise, capacity figure or data-export entitlement is selected here. Enshrouded rental offers and discussion establish a relevant market precedent; they do not measure demand, renewal or operating margin for Open Legend.
 
 ## Design follow-through through existing owners
 

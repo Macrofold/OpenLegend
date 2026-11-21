@@ -2,11 +2,11 @@
 
 **G62 · Complete research pass, September 26, 2026.** This dossier covers the original Nintendo 3DS game, distinguishing the 2012 Japanese release from the 2013 North American/European releases and separating base-game systems from downloadable maps/classes/items that can no longer be newly purchased after the Nintendo 3DS eShop shutdown. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-Awakening is especially valuable to OpenLegend because it turns a tactics game's **social graph into a build system**. Positioning two people together can change combat, repeated cooperation changes their relationship, relationships can become marriages, and marriages determine the identities/build options of recruitable children. The resulting chain is unusually compositional:
+Awakening is especially valuable to Open Legend because it turns a tactics game's **social graph into a build system**. Positioning two people together can change combat, repeated cooperation changes their relationship, relationships can become marriages, and marriages determine the identities/build options of recruitable children. The resulting chain is unusually compositional:
 
 > battlefield adjacency → trust/support → marriage → descendant → inherited classes/skills/stats → new battlefield possibilities.
 
-That is powerful, but it also exposes hazards OpenLegend should avoid: pair bonuses can dominate tactical variety; fixed romance graphs can make people feel like optimization inputs; and generated descendants can become build products rather than characters if inheritance is too transparent.
+That is powerful, but it also exposes hazards Open Legend should avoid: pair bonuses can dominate tactical variety; fixed romance graphs can make people feel like optimization inputs; and generated descendants can become build products rather than characters if inheritance is too transparent.
 
 ## 1. Identity, scope, and player promise
 
@@ -53,7 +53,7 @@ This means avatar creation is mechanically consequential but still bounded:
 - the player does not choose arbitrary powers;
 - identity is authored inside Fire Emblem's class/stat vocabulary.
 
-### OpenLegend implication
+### Open Legend implication
 
 A player-authored person becomes more grounded when choices affect:
 - embodied capability;
@@ -131,7 +131,7 @@ GameSpot praised how positioning became richer, but also noted that deeper Dual 
 
 Later Fire Emblem Fates explicitly redesigned Pair Up because Awakening's implementation was considered too powerful/unpredictable: Fates split offensive assistance and defensive pairing into more deterministic systems. [AW06](#aw06)
 
-**OpenLegend lesson:** when one relationship mechanic simultaneously grants mobility, offense, defense, stats and social growth, it can become the obviously dominant action. Composability needs counterweights.
+**Open Legend lesson:** when one relationship mechanic simultaneously grants mobility, offense, defense, stats and social growth, it can become the obviously dominant action. Composability needs counterweights.
 
 ## 5. Supports, friendship, marriage, and social feedback
 
@@ -170,7 +170,7 @@ Awakening gives relationships unusually high mechanical stakes. That encourages 
 - which inherited skill should the child receive?
 - what stat modifiers combine best?
 
-OpenLegend can preserve mechanical consequences without making affection feel primarily like breeding/equipment math.
+Open Legend can preserve mechanical consequences without making affection feel primarily like breeding/equipment math.
 
 ## 6. Children, time travel, and inheritance
 
@@ -201,7 +201,7 @@ The impressive part is that inheritance is not detached from fiction:
 - the future creates the child;
 - the child's capabilities reflect lineage.
 
-OpenLegend could generalize lineage beyond combat genetics:
+Open Legend could generalize lineage beyond combat genetics:
 - trade knowledge;
 - language;
 - land claims;
@@ -232,7 +232,7 @@ Skills learned through earlier careers remain usable subject to the five-skill e
 
 The class is a **current role**, not the person's entire identity.
 
-That is directly relevant to OpenLegend's extensible characters:
+That is directly relevant to Open Legend's extensible characters:
 - professions should change;
 - learned capabilities can persist;
 - bodily/social prerequisites can constrain transitions.
@@ -260,7 +260,7 @@ The important structure:
 
 This creates a **build graph** rather than a linear skill tree.
 
-### OpenLegend transfer
+### Open Legend transfer
 
 A living-world system can model:
 - source of learning;
@@ -327,7 +327,7 @@ RPGamer notes that this makes Awakening structurally closer to *The Sacred Stone
 
 Open encounters improve accessibility but weaken scarcity if grinding solves every difficulty spike.
 
-OpenLegend should distinguish:
+Open Legend should distinguish:
 - **world persistence** from
 - **infinite replenishment**.
 
@@ -357,7 +357,7 @@ This exposes an important distinction:
 - hard because numbers are larger;
 - hard because volatile enemy traits force resets.
 
-OpenLegend should prefer difficulty that creates new decisions rather than opaque restart lotteries.
+Open Legend should prefer difficulty that creates new decisions rather than opaque restart lotteries.
 
 ## 12. Recruitment, Paralogues, and optional goals
 
@@ -379,7 +379,7 @@ Children Paralogues tie social decisions to future tactical content.
 This is valuable:
 > the relationship graph changes which adventures exist.
 
-OpenLegend can go further by creating opportunities from actual world relationships rather than fixed unlock tables.
+Open Legend can go further by creating opportunities from actual world relationships rather than fixed unlock tables.
 
 ## 13. Enemy AI and map design
 
@@ -408,7 +408,7 @@ These are lightweight ambient character touches rather than full simulation.
 The larger pattern is useful:
 > not every social event needs to be a quest or major cinematic.
 
-OpenLegend can make ordinary:
+Open Legend can make ordinary:
 - meals;
 - work chatter;
 - small gifts;
@@ -429,7 +429,7 @@ Awakening makes the Avatar unusually central:
 
 Game Informer found the early story less compelling than the combat but thought later twists and the “change fate” theme improved it. [AW11](#aw11)
 
-### OpenLegend relevance
+### Open Legend relevance
 
 A player-created character can have authored narrative importance without being fully predefined.
 
@@ -456,7 +456,7 @@ The interface supports:
 
 GameSpot's principal UI criticism was that some advanced Pair Up/Dual probabilities were not surfaced intuitively enough. [AW01](#aw01)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Simulation depth should be **queryable at the decision point**. Hiding relationship-combat probabilities several menus deep turns depth into spreadsheet archaeology.
 
@@ -509,7 +509,7 @@ When externally purchased content becomes unavailable:
 - owners may redownload;
 - newcomers cannot acquire it normally.
 
-OpenLegend invention/world packages should have durable ownership/export/versioning rather than depending on a storefront staying alive forever.
+Open Legend invention/world packages should have durable ownership/export/versioning rather than depending on a storefront staying alive forever.
 
 ## 19. Worked interactions
 
@@ -577,7 +577,7 @@ OpenLegend invention/world packages should have durable ownership/export/version
 
 **Result:** identical combat rules create different emotional and temporal stakes.
 
-**OpenLegend takeaway:** consequence policy is a first-class world/game contract, not merely difficulty “numbers.”
+**Open Legend takeaway:** consequence policy is a first-class world/game contract, not merely difficulty “numbers.”
 
 ## 20. Production and development
 
@@ -704,7 +704,7 @@ This is not evidence that “casual players like relationships and hardcore play
 The more defensible lesson:
 > adding a second source of mastery—relationships/build composition—can broaden attachment, but it competes for design attention with spatial tactical mastery.
 
-## 24. Transferable inspiration for OpenLegend
+## 24. Transferable inspiration for Open Legend
 
 ### A. Let relationships change what people can physically do together
 
@@ -728,7 +728,7 @@ Awakening shows the emotional power of a relationship feeding directly into acti
 Second Seal builds are an excellent precedent:
 - current class != complete learned identity.
 
-For an OpenLegend actor, history can include:
+For an Open Legend actor, history can include:
 - former profession;
 - teacher;
 - injuries;
@@ -740,7 +740,7 @@ For an OpenLegend actor, history can include:
 
 Awakening's children are compelling because family choices affect future people.
 
-OpenLegend can make inheritance multidimensional:
+Open Legend can make inheritance multidimensional:
 - biology;
 - culture;
 - property;
@@ -765,7 +765,7 @@ Casual/Classic proves that:
 
 are independent axes.
 
-OpenLegend can separately configure:
+Open Legend can separately configure:
 - enemy competence;
 - scarcity;
 - death permanence;
@@ -776,7 +776,7 @@ OpenLegend can separately configure:
 
 StreetPass teams turned a player's roster/build into something another player could encounter.
 
-OpenLegend worlds could share:
+Open Legend worlds could share:
 - travelers;
 - rumors;
 - artifacts;
@@ -791,7 +791,7 @@ The developers explicitly prioritized “love for the characters.” [AW14](#aw1
 
 A simulation can be deep and still fail if people become fungible stat bundles.
 
-OpenLegend should keep:
+Open Legend should keep:
 - names;
 - faces/voices;
 - memories;
@@ -815,7 +815,7 @@ without counterplay.
 
 ### Fixed romance compatibility is a content-production shortcut
 
-Awakening can hand-author every support pair. OpenLegend wants broader social possibility, so compatibility should emerge from:
+Awakening can hand-author every support pair. Open Legend wants broader social possibility, so compatibility should emerge from:
 - identity;
 - orientation/preferences;
 - history;
@@ -829,7 +829,7 @@ rather than only an authored whitelist.
 
 If descendants' value is mostly stat inheritance, players optimize spouses as breeding inputs.
 
-OpenLegend should preserve uncertainty and personhood.
+Open Legend should preserve uncertainty and personhood.
 
 ### Unlimited grinding can erase world pressure
 

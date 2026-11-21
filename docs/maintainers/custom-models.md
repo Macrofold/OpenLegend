@@ -1,6 +1,6 @@
 # Custom models — implementation and acceptance
 
-**Status: In progress — native judgment, chat routing and tools implemented; live Kev/Huihui qualification blocked by current application-key access · October 24, 2026.** This tracker owns OpenLegend's production use of Macrofold custom deployments. Optional experiments consume that capability. Passing local and synthetic checks does not establish hosted-model reliability or character quality.
+**Status: In progress — native judgment, chat routing and tools implemented; live Kev/Huihui qualification blocked by current application-key access · October 24, 2026.** This tracker owns Open Legend's production use of Macrofold custom deployments. Optional experiments consume that capability. Passing local and synthetic checks does not establish hosted-model reliability or character quality.
 
 ## Maintained records
 
@@ -104,7 +104,7 @@ Native judgments and ordinary NPC replies use separately configured deployment t
 
 - [ ] Verify automatic same-revision host recovery, current-revision update for new requests, optional pins and valid completion of earlier admitted work. Interrupted/unknown requests are never replayed. Include an upgrade that makes a formerly unsupported request valid: stale local capability rejection refreshes once before refusal, repeated unsupported work respects the shared negative-cache cooldown, and a new revision in a successful receipt invalidates only later preparation.
 
-  Live external inference verifies a same-model output-capacity revision, new unpinned selection, stale-pin refusal and original-Run observation after that change with no new provider call. Capability refresh/cooldown is covered by injected scenarios. This OpenLegend caller's managed-worker restart remains unverified: the earlier selected external worker was opaque. Macrofold subsequently qualified managed official Kev separately; that upstream evidence does not close the game caller's native or chat operating checks.
+  Live external inference verifies a same-model output-capacity revision, new unpinned selection, stale-pin refusal and original-Run observation after that change with no new provider call. Capability refresh/cooldown is covered by injected scenarios. This Open Legend caller's managed-worker restart remains unverified: the earlier selected external worker was opaque. Macrofold subsequently qualified managed official Kev separately; that upstream evidence does not close the game caller's native or chat operating checks.
 
 - [x] Exercise unavailable/capacity/context/revocation/deadline/cancellation cases, accepted-Run recovery, request settlement and missing usage/hosting-cost evidence.
 
@@ -114,7 +114,7 @@ Native judgments and ordinary NPC replies use separately configured deployment t
 
   Four live Qwen 2.5 7B JSON-object API calls returned validated values, including two concurrent requests and streaming; the ordinary complex NPC path published live speech. [Evidence](../verification/custom-models.md#live-external-model-checks) retains all four NPC attempts, measured limits/timings, native fast-reply rejection, separate provider/request fees and verified cleanup preserving accounting. This bounded workload does not establish sustained GPU capacity, reliable character quality or managed-worker recovery. Required current-head CI is reported with the implementation PR.
 
-- [ ] Qualify the native Kev and Huihui chat targets through this OpenLegend adapter against current authorized services. Native input must exercise multiple named questions/all three types, grant/workspace restrictions, service unavailability, context failure, same-key replay and uncertainty recovery; chat retains local JSON validation. Distinguish native scoring, provider interval and complete caller timing. The current application key receives HTTP 403 for deployment discovery, so neither live target is verified by this task. This does not prove that the account has no services. No replacement hosting or inference was launched.
+- [ ] Qualify the native Kev and Huihui chat targets through this Open Legend adapter against current authorized services. Native input must exercise multiple named questions/all three types, grant/workspace restrictions, service unavailability, context failure, same-key replay and uncertainty recovery; chat retains local JSON validation. Distinguish native scoring, provider interval and complete caller timing. The current application key receives HTTP 403 for deployment discovery, so neither live target is verified by this task. This does not prove that the account has no services. No replacement hosting or inference was launched.
 
   Exact intended sources and upstream qualification limits are in [operator setup](../live-ai-setup.md#discover-and-authorize-a-current-service). Official Kev is not the incompatible community uncensored checkpoint. Huihui's prior imported-endpoint inference does not qualify the protected managed chat runtime. Former upstream acceptance IDs were deleted and are not usable settings. Current-service evidence remains in the [verification report](../verification/custom-models.md).
 

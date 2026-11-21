@@ -1,6 +1,6 @@
 # Vampire Survivors: automated attacks, evolution, and cooperative agency
 
-**Reference, not requirements.** This supplements the [original chapter](../games/vampire-survivors.md). It studies what players decide when routine attacks are automated, rather than prescribing an OpenLegend combat system.
+**Reference, not requirements.** This supplements the [original chapter](../games/vampire-survivors.md). It studies what players decide when routine attacks are automated, rather than prescribing an Open Legend combat system.
 
 **Scope:** selected base-game weapons, the developer's 2023 couch-co-op design, and the separately documented online mode. These are not one interchangeable ruleset. Expansion examples are explicitly labeled. Mechanics references describe observable behavior, not inspected proprietary code. Worked situations are constructed illustrations. Accessed September 25, 2026.
 
@@ -26,7 +26,7 @@ King Bible produces orbiting damaging books. Its amount, speed, duration and are
 
 The documented ordinary evolution pattern requires a sufficiently upgraded base weapon, the corresponding passive item, and an eligible chest. There are weapon and stage exceptions; it is inaccurate to say every evolution always needs every passive maxed, or that every chest after an arbitrary universal time is equivalent. [V2](#v2)
 
-Selected named relationships are Whip with Hollow Heart producing Bloody Tear, Magic Wand with Empty Tome producing Holy Wand, and King Bible with Spellbinder producing Unholy Vespers. [V5](#v5) These names identify reference examples rather than an OpenLegend content list.
+Selected named relationships are Whip with Hollow Heart producing Bloody Tear, Magic Wand with Empty Tome producing Holy Wand, and King Bible with Spellbinder producing Unholy Vespers. [V5](#v5) These names identify reference examples rather than an Open Legend content list.
 
 **Worked commitment:** selecting a passive for a future evolution can occupy an opportunity that could have supported a different present need. A nearly completed recipe has potential value but is not the same as an already functioning capability. Obtaining the missing prerequisite can transform the usefulness of earlier choices.
 

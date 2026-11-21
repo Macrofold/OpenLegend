@@ -234,7 +234,7 @@ A separately retrieved negative review by **Cobra**, May 9, 2024, criticizes the
 
 **Do not mistake technical failure for dramatic risk.** A companion's authored mortality can intensify attachment; a disappearing NPC or corrupted save breaks trust. Both remove access, but they have different causes and design meanings. Preservation and reliability are part of sustaining a choice-rich game, not separate from the quality of its choices.
 
-These hypotheses neither authorize OpenLegend implementation nor propose copying Fallout's names, settings, assets or particular political factions.
+These hypotheses neither authorize Open Legend implementation nor propose copying Fallout's names, settings, assets or particular political factions.
 
 ## Annotated sources and reading routes
 

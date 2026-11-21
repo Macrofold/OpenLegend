@@ -2,7 +2,7 @@
 
 **G58 operational supplement — September 27, 2026.** Read with the [full Kingmaker dossier](../dossiers/pathfinder-kingmaker.md). This supplies the concrete R02–R05 explanations missing from the [manuscript audit](../references/games-51-60-coverage-audit.md#g58--pathfinder-kingmaker). The original nine cases, six publications' reviews, later reassessment, three expansions and production evidence remain in their original owner. [Progress](../research-progress.md) owns completion state.
 
-Scope is Owlcat's Kingmaker, including its native turn-based edition, not tabletop Pathfinder or Wrath's mythic/crusade systems. Sources are versioned rule references and firsthand guides. This is documentary research, not gameplay, a source-code audit or an approved OpenLegend specification. The extra examples are constructed from the cited rules rather than invented sessions.
+Scope is Owlcat's Kingmaker, including its native turn-based edition, not tabletop Pathfinder or Wrath's mythic/crusade systems. Sources are versioned rule references and firsthand guides. This is documentary research, not gameplay, a source-code audit or an approved Open Legend specification. The extra examples are constructed from the cited rules rather than invented sessions.
 
 ## 1. A turn is several different permissions
 

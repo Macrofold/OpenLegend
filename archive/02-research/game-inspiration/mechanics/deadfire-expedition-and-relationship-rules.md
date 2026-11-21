@@ -1,8 +1,8 @@
 # Deadfire: expedition, relationship and recovery rules
 
-**G55 operational supplement — September 27, 2026.** Read with the [full Deadfire dossier](../dossiers/pillars-of-eternity-ii-deadfire.md). This supplies the R02/R04/R06 explanations identified in the [coverage audit](../references/games-51-60-coverage-audit.md#g55--pillars-of-eternity-ii-deadfire), with additional R05 examples. The original ten cases, reviews, expansion analyses and production research remain in their existing owner. [Progress](../research-progress.md) owns task state; this is researched gameplay, not an accepted OpenLegend specification.
+**G55 operational supplement — September 27, 2026.** Read with the [full Deadfire dossier](../dossiers/pillars-of-eternity-ii-deadfire.md). This supplies the R02/R04/R06 explanations identified in the [coverage audit](../references/games-51-60-coverage-audit.md#g55--pillars-of-eternity-ii-deadfire), with additional R05 examples. The original ten cases, reviews, expansion analyses and production research remain in their existing owner. [Progress](../research-progress.md) owns task state; this is researched gameplay, not an accepted Open Legend specification.
 
-Scope is the unmodified, post-update Deadfire campaign. Original 2018 guides and later rules accounts are differentiated below. No gameplay, video viewing, proprietary code inspection or present console/network test was performed. Named people and objects identify the reference game, not proposed OpenLegend assets.
+Scope is the unmodified, post-update Deadfire campaign. Original 2018 guides and later rules accounts are differentiated below. No gameplay, video viewing, proprietary code inspection or present console/network test was performed. Named people and objects identify the reference game, not proposed Open Legend assets.
 
 ## 1. A vessel is a loadout and a workplace
 

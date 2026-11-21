@@ -84,7 +84,7 @@ Ogion's restraint can initially look like an absence of teaching to someone impa
 
 ### Vetch: friendship without possessive rescue
 
-Vetch's loyalty gives Ged help without replacing Ged's responsibility. His practical competence and continued presence make companionship more than praise for the central hero. The story's movement toward self-recognition requires another person's support, even though no friend can perform that recognition on someone else's behalf. (P1.)
+Vetch's loyalty gives Ged help without replacing Ged's responsibility. His practical ability and continued presence make companionship more than praise for the central hero. The story's movement toward self-recognition requires another person's support, even though no friend can perform that recognition on someone else's behalf. (P1.)
 
 ## 8. Interlocking example: leaving the Tombs
 

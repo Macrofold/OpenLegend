@@ -2,7 +2,7 @@
 
 **G18 · Complete research pass, September 26, 2026.** *EverQuest Next* (EQN) was cancelled in March 2016 and never released to the public as a finished MMO. This dossier therefore studies **documented design, prototypes, demonstrations, developer interviews and contemporary previews**, not fabricated shipped mechanics or player reviews. Its separately released sibling **Landmark** is used only where it implemented/shared technology or exposed the intended creation pipeline; Landmark is not silently treated as EverQuest Next. [Preserved earlier chapter](../games/everquest-next.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-EQN is unusually relevant to OpenLegend because its public design aimed at many of the same hard problems:
+EQN is unusually relevant to Open Legend because its public design aimed at many of the same hard problems:
 
 - NPCs acting from preferences rather than fixed spawn scripts;
 - world state changing from aggregate player action;
@@ -41,7 +41,7 @@ The art direction used exaggerated features and readable silhouettes/expressions
 
 Traditional race/lore identity still mattered, but **class was meant to be collectible rather than permanent**.
 
-That is the first major OpenLegend lesson:
+That is the first major Open Legend lesson:
 
 > identity can be layered: body/race/history can be persistent while learned roles remain recombinable.
 
@@ -69,7 +69,7 @@ The team explicitly described the design as having some vertical power growth in
 
 Because there was no enormous global character-level number, SOE intended veteran and new players to remain able to adventure together. A veteran could work on a less-developed class/build rather than requiring a mentoring/downscaling system. [EQN07](#eqn07)
 
-That is a strong OpenLegend principle for social worlds:
+That is a strong Open Legend principle for social worlds:
 - progression should create **more options and history**;
 - it need not make older players categorically unable to participate with newer ones.
 
@@ -90,7 +90,7 @@ Engadget's SOE Live account used a concrete example:
 
 That ties **mechanical capability acquisition to social consequence**.
 
-OpenLegend can use this pattern broadly:
+Open Legend can use this pattern broadly:
 - a necromancy school is learned from people who trust you;
 - a profession is licensed by an institution;
 - a forbidden technique requires entering a relationship with a faction;
@@ -126,7 +126,7 @@ The small active vocabulary was intended to:
 - make another player's current behavior visually inferable;
 - reduce hotbar sprawl.
 
-This is useful for OpenLegend's invention system:
+This is useful for Open Legend's invention system:
 
 > world capability can be huge while **moment-to-moment actionable affordances stay bounded**.
 
@@ -151,7 +151,7 @@ This is more interesting than “rare sword +12” when:
 - class/build determines usefulness;
 - gear is part of progression rather than a disconnected drop number.
 
-OpenLegend inventions can preserve this:
+Open Legend inventions can preserve this:
 - bronze versus glass versus living wood should change actual behavior;
 - components should carry capabilities;
 - visual form can expose enough information for other actors to reason about the object.
@@ -176,7 +176,7 @@ The important structural idea is more valuable anyway:
 
 > crafters would contribute to shared world change, not merely manufacture combat consumables for fighters.
 
-In OpenLegend:
+In Open Legend:
 - builders;
 - doctors;
 - researchers;
@@ -207,7 +207,7 @@ This creates a good system dependency:
 
 If a player collapses a floor and reveals a cavern but movement only follows marked roads, destructibility is mostly spectacle.
 
-OpenLegend should similarly connect:
+Open Legend should similarly connect:
 - body capability;
 - environment;
 - movement;
@@ -243,7 +243,7 @@ Destruction was supposed to reveal:
 
 This turns excavation into **knowledge acquisition** rather than cosmetic terraforming.
 
-OpenLegend can borrow that without global voxel destruction:
+Open Legend can borrow that without global voxel destruction:
 - walls can hide rooms;
 - mining changes access/resources;
 - floods/fire alter routes;
@@ -253,7 +253,7 @@ The important property is **world topology changes from action**.
 
 ## 10. Emergent AI: preferences rather than spawn points
 
-EQN's proposed “emergent AI” is one of the closest historical analogues to OpenLegend's world-agent/actor ambitions.
+EQN's proposed “emergent AI” is one of the closest historical analogues to Open Legend's world-agent/actor ambitions.
 
 SOE's recurring orc example:
 - orcs prefer places where travelers are vulnerable;
@@ -283,7 +283,7 @@ A preference-based actor/group is:
 - sensitive to other systems;
 - capable of creating unexpected conflict.
 
-This is directly useful for OpenLegend:
+This is directly useful for Open Legend:
 - wolves seek prey and avoid dense settlement;
 - thieves seek valuable low-security targets;
 - scholars relocate toward archives;
@@ -314,7 +314,7 @@ The public model was closer to:
 - group goals;
 - dynamic event triggers.
 
-OpenLegend can combine this deterministic/structured substrate with language-model cognition.
+Open Legend can combine this deterministic/structured substrate with language-model cognition.
 
 ### Production warning
 
@@ -348,7 +348,7 @@ Or:
 
 This is stronger than a universal “karma +5” meter because **different groups remember the same action differently**.
 
-OpenLegend should prefer:
+Open Legend should prefer:
 - event provenance;
 - observer knowledge;
 - relationship/faction interpretation
@@ -359,7 +359,7 @@ over one omniscient morality number.
 
 Public EQN messaging sometimes spoke broadly about “NPCs remembering,” but most concrete examples are faction/group/world consequences rather than a demonstrated simulation where every individual has rich autobiographical memory.
 
-That distinction matters. OpenLegend's design is more ambitious at the personal level.
+That distinction matters. Open Legend's design is more ambitious at the personal level.
 
 ## 13. Quests without static quest hubs
 
@@ -409,7 +409,7 @@ Examples included:
 
 SOE explicitly said a finished Rallying Call would not simply reset for the next group of players; server histories could diverge. [EQN07](#eqn07) [EQN18](#eqn18)
 
-### OpenLegend inspiration
+### Open Legend inspiration
 
 This is one of the best historical precedents for:
 
@@ -421,7 +421,7 @@ A migration, famine, invention, succession crisis or war can unfold because many
 
 If a world arc requires enough active users to advance, low population can stall the story.
 
-OpenLegend should allow:
+Open Legend should allow:
 - autonomous NPC progress;
 - small-group worlds;
 - scaling contribution thresholds
@@ -448,7 +448,7 @@ not:
 
 Georgeson explicitly noted that a city built earlier could later be destroyed. [EQN04](#eqn04)
 
-OpenLegend's event/history architecture is well suited to this:
+Open Legend's event/history architecture is well suited to this:
 - persistent state;
 - provenance;
 - remembered causal transitions;
@@ -465,7 +465,7 @@ A 2014 Storybricks/EQN panel account says SOE wanted story embedded in:
 
 instead of primarily delivered by clicking through NPC text. [EQN19](#eqn19)
 
-This is a deep OpenLegend principle:
+This is a deep Open Legend principle:
 
 > lore should create **constraints, motivations and actions**, not merely encyclopedia entries.
 
@@ -546,7 +546,7 @@ The planned reward philosophy leaned away from **XP-grind repetition** and towar
 - new options;
 - build composition.
 
-That is OpenLegend-relevant because long-term progression can reward **new verbs** rather than only larger numbers.
+That is Open Legend-relevant because long-term progression can reward **new verbs** rather than only larger numbers.
 
 ## 20. No conventional “magic system” was fully specified
 
@@ -565,7 +565,7 @@ The known design supports:
 
 Do not infer more.
 
-For OpenLegend, the interesting part is **ability composition**, not EQN's unfinished specific magic rules.
+For Open Legend, the interesting part is **ability composition**, not EQN's unfinished specific magic rules.
 
 ## 21. World map and layered environment
 
@@ -582,7 +582,7 @@ This is the right structural contrast to theme-park MMO maps where:
 - quest hubs remain unchanged forever;
 - the same dungeon waits in the same state.
 
-OpenLegend can create a much smaller world and still achieve the valuable part:
+Open Legend can create a much smaller world and still achieve the valuable part:
 **location has state and history.**
 
 ## 22. Landmark: public creator technology, not the cancelled MMO itself
@@ -607,7 +607,7 @@ SOE used the same/similar tools internally to build EQN environments.
 
 SOE planned and ran contests/workshops where Landmark creators could build structures consistent with EQN racial/world design, with selected creations feeding into development. [EQN22](#eqn22)
 
-This is highly relevant to OpenLegend:
+This is highly relevant to Open Legend:
 
 > give players the same **authoring substrate** used for first-party content, then curate contributions into the canonical world.
 
@@ -636,7 +636,7 @@ Three useful functions:
 
 This is a sophisticated product-development pattern.
 
-OpenLegend could similarly expose mature subsets early:
+Open Legend could similarly expose mature subsets early:
 - invention creator;
 - scenario builder;
 - species builder;
@@ -754,9 +754,9 @@ We should **not** assert:
 
 Those may be plausible contributing narratives, but the sourced official explanation is broader.
 
-## 27. The most important OpenLegend warning: subsystem success ≠ game success
+## 27. The most important Open Legend warning: subsystem success ≠ game success
 
-EQN's design deck can sound like an OpenLegend wish list:
+EQN's design deck can sound like an Open Legend wish list:
 - autonomous groups;
 - world memory;
 - player consequence;
@@ -767,7 +767,7 @@ EQN's design deck can sound like an OpenLegend wish list:
 
 Yet the project was cancelled.
 
-That means each OpenLegend subsystem must answer:
+That means each Open Legend subsystem must answer:
 > **What fun player decision does this create today?**
 
 Examples:
@@ -779,7 +779,7 @@ Examples:
 
 A technically impressive simulation can otherwise become infrastructure in search of a game.
 
-## 28. Transferable inspiration for OpenLegend
+## 28. Transferable inspiration for Open Legend
 
 ### A. Preference-based spawning/settlement is superior to static spawn points
 
@@ -790,7 +790,7 @@ EQN's orc example remains excellent:
 - choose suitable place;
 - move when conditions change.
 
-OpenLegend can generalize this to:
+Open Legend can generalize this to:
 - animals;
 - camps;
 - merchants;
@@ -814,7 +814,7 @@ Individuals can then reason inside that institutional context.
 
 Discovering a class through helping a faction is much richer than clicking a skill tree.
 
-OpenLegend inventions can define:
+Open Legend inventions can define:
 - who can teach;
 - prerequisites;
 - cultural ownership;
@@ -852,7 +852,7 @@ If a settlement was never founded in one world:
 - descendants should not remember it;
 - later wars should differ.
 
-OpenLegend's separate worlds are a natural fit for this.
+Open Legend's separate worlds are a natural fit for this.
 
 ### G. Story should compile into motivations and opportunities
 
@@ -864,7 +864,7 @@ This is far more useful than lore that only fills a codex.
 
 Landmark exposed voxel tools and community creation early.
 
-OpenLegend should ensure the invention workflow is:
+Open Legend should ensure the invention workflow is:
 - legible;
 - fun;
 - debuggable;
@@ -886,7 +886,7 @@ still need:
 - authored aesthetic/context;
 - good pacing.
 
-OpenLegend should use generation to **multiply intentional design**, not replace it.
+Open Legend should use generation to **multiply intentional design**, not replace it.
 
 ## 29. Requirement and preservation check
 

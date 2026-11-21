@@ -1,6 +1,6 @@
 # Kevin in Halo — source-based reconstruction
 
-Research date: **October 20, 2026**. Status: **external source inspection and architectural analysis; not a reproduced benchmark or an adopted OpenLegend design**.
+Research date: **October 20, 2026**. Status: **external source inspection and architectural analysis; not a reproduced benchmark or an adopted Open Legend design**.
 
 ## Finding the actual implementation
 
@@ -35,7 +35,7 @@ The brain's receive loop checks for input with a one-second timeout. That timeou
 
 Physical execution runs in the native game update. Once an order exists, movement and combat can continue without waiting for another semantic request. Therefore all of the following can be true at once: current state is frequently refreshed, Kevin aims smoothly every game tick, Kev is called several times for a meaningful event, and Gemma is not invoked for every action.
 
-For OpenLegend, preserve this distinction in both measurements and vocabulary. Count native updates, perception changes, admitted decision opportunities, decision-model requests, generative requests and speech chunks separately. Calling all of them “AI ticks” would conceal the actual cost and latency.
+For Open Legend, preserve this distinction in both measurements and vocabulary. Count native updates, perception changes, admitted decision opportunities, decision-model requests, generative requests and speech chunks separately. Calling all of them “AI ticks” would conceal the actual cost and latency.
 
 ## 3. The real action-selection call graph
 
@@ -50,11 +50,11 @@ A typical player command follows this path:
 5. If it requests visual interpretation, obtain the frame and call the vision-capable model before sending the resolved action.
 6. Send the action command; generate and stream Kevin's spoken response through the separate speech path.
 
-For autonomous game events, an additional Noul question can decide whether to speak, unless a speech cooldown suppresses that question. Player lines are answered by the current implementation. This is not a universal requirement that every OpenLegend NPC must answer a player.
+For autonomous game events, an additional Noul question can decide whether to speak, unless a speech cooldown suppresses that question. Player lines are answered by the current implementation. This is not a universal requirement that every Open Legend NPC must answer a player.
 
 Consequently, “one reaction” is not necessarily one inference call. A target-bearing action plus a speech judgment can require several sequential small calls; an ambiguous visual destination adds a generative vision call. Independent questions can sometimes be batched, but a target question that depends on the action selection cannot be naively batched without changing the decision problem.
 
-Kev receives the latest **20 feed lines**, along with persona, current situation, mission context and the older-memory summary. Dialogue receives a larger history. Twenty lines are neither twenty tokens nor a guarantee that all relevant commitments survived. This optimization is useful evidence for purpose-specific context, but not a safe replacement for OpenLegend's required-evidence contract.
+Kev receives the latest **20 feed lines**, along with persona, current situation, mission context and the older-memory summary. Dialogue receives a larger history. Twenty lines are neither twenty tokens nor a guarantee that all relevant commitments survived. This optimization is useful evidence for purpose-specific context, but not a safe replacement for Open Legend's required-evidence contract.
 
 The public Kev card describes a prefill-only decision model with a pointer head, rather than autoregressive text generation. It implements the System One-style interface, but API similarity is not evidence that it contains Jev's weights or was trained on Jev's outputs. Its own card distinguishes training/validated context from larger advertised serving capacity. [Kev model card][kev]
 
@@ -80,7 +80,7 @@ This resembles the broad idea of [Set-of-Mark prompting](https://arxiv.org/abs/2
 
 Transfer the separation between native geometry and semantic reference resolution. “Stand near that rock” can be resolved against actor-permitted candidate objects or places, with a request-bound handle and an explicit ambiguous/no-match result. An image may help with appearance or an otherwise unrepresented pattern. It should not be mandatory for facts the engine already knows and can lawfully project.
 
-Do not give an OpenLegend resident the human's camera by default. A shared view, a pointed-at object and the resident's own line of sight are different acquisition events. A future image route needs a selected viewpoint, capture time, allowed content, identity rules and currentness validation. Camera UI, hidden labels and tooltips can leak information even when the underlying landscape image looks harmless.
+Do not give an Open Legend NPC the player's camera by default. A shared view, a pointed-at object and the NPC's own line of sight are different acquisition events. A future image route needs a selected viewpoint, capture time, allowed content, identity rules and freshness validation. Camera UI, hidden labels and tooltips can leak information even when the underlying landscape image looks harmless.
 
 ## 5. Why he can aim, run and fight so quickly
 
@@ -92,7 +92,7 @@ One-off selections become ordinary control flags: jump, melee, reload, grenade, 
 
 That architecture explains the apparent immediacy without proving the demo's end-to-end reaction time. The supplied transcript has no trustworthy frame timings, queue traces or unedited latency distribution. Deaths, falling from a bridge and inconsistent behavior remain relevant counterexamples to the claim of a fully competent companion.
 
-**OpenLegend-specific boundary:** its selected CTR design currently grants one offensive choice one actual strike. Kevin's retained fighting behavior is not permission to silently install automatic repeated attacks. A finite actor-chosen combat activity with explicit stopping, retargeting and withdrawal rules would need its own scoped design review under existing agency/combat owners.
+**Open Legend-specific boundary:** its selected CTR design currently grants one offensive choice one actual strike. Kevin's retained fighting behavior is not permission to silently install automatic repeated attacks. A finite actor-chosen combat activity with explicit stopping, retargeting and withdrawal rules would need its own scoped design review under existing agency/combat owners.
 
 ## 6. Mission knowledge, memory and apparent awareness
 
@@ -100,9 +100,9 @@ Mission context is partly authored. The brain reads `levels/<level>.txt` from th
 
 The memory mechanism is comparatively simple: a chronological feed plus an older-history summary. Its size estimate uses four characters per token. It normally considers folding at roughly 16,000 estimated tokens, targets about 12,000 after folding, and has a larger pressure threshold. A summarization request asks for a paragraph of at most 250 words. That wording does not guarantee preservation of every name, promise, causal distinction or exact quantity.
 
-Save/load restores stored memory for that game save; a generation counter prevents an old asynchronous summary from being accepted into a different restored memory. The implementation retains a finite collection of save-associated memories. These are useful continuity mechanisms, not proof of OpenLegend's more demanding persistent multi-actor, forgetting and disclosure semantics.
+Save/load restores stored memory for that game save; a generation counter prevents an old asynchronous summary from being accepted into a different restored memory. The implementation retains a finite collection of save-associated memories. These are useful continuity mechanisms, not proof of Open Legend's more demanding persistent multi-actor, forgetting and disclosure semantics.
 
-There is an important source-level weakness to avoid copying: the action path appends a sentence describing the chosen action after sending its command, without demonstrating an acknowledged completed game result at that point. A model may subsequently speak as though an instruction succeeded. OpenLegend should preserve intention, accepted action, progress and completed outcome as different facts.
+There is an important source-level weakness to avoid copying: the action path appends a sentence describing the chosen action after sending its command, without demonstrating an acknowledged completed game result at that point. A model may subsequently speak as though an instruction succeeded. Open Legend should preserve intention, accepted action, progress and completed outcome as different facts.
 
 ## 7. Why the voice feels so alive
 
@@ -116,7 +116,7 @@ A proper reproduction would pin the game/mod commit, model weight hashes, quanti
 
 Run commands with synonyms, negation, cancellation, contradictory prior instructions and ambiguous referents. Compare continuing a chosen action with genuinely changed circumstances. Verify hold-fire under new enemies, interrupted speech, a target disappearing, a blocked destination, death and save/load. Keep every failed attempt, not only a successful jump.
 
-For OpenLegend, those experiments belong to the existing R03/R24, CR12/AG12, CE05 and CTR owners. The [application and experiment dossier](06-openlegend-applications-and-experiments.md) specifies the comparisons. This research ran no models, paid APIs, game build or benchmark.
+For Open Legend, those experiments belong to the existing R03/R24, CR12/AG12, CE05 and CTR owners. The [application and experiment dossier](06-openlegend-applications-and-experiments.md) specifies the comparisons. This research ran no models, paid APIs, game build or benchmark.
 
 ## Primary source register
 

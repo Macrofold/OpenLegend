@@ -6,7 +6,7 @@ Original report SHA-256: `300805b7ae03997676586ac5aa3bc5ea240d17ecc687429d11fcc4
 
 ---
 
-# Why OpenLegend is still slow
+# Why Open Legend is still slow
 
 **Working report, October 16, 2026. The smooth 3× requirement is not met.** This report stands on its own. It distinguishes measured costs from suspicions and will change as the remaining experiments finish. It is not a claim that every possible implementation has been exhausted.
 

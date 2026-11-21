@@ -1,4 +1,4 @@
-# OpenLegend benchmarks
+# Open Legend benchmarks
 
 Choose a runtime or model comparison below. Each report owns its measurements; the newest date or fastest sample is not automatically applicable evidence. New growing topics group related runs by question/campaign in year folders under the [documentation system](../documentation-system.md).
 

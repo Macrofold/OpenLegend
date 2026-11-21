@@ -207,7 +207,7 @@ A further recommended body on the helpful surface also criticizes equipment/inve
 
 ## 11. Transferable patterns and limits
 
-These are research interpretations, not adopted OpenLegend requirements.
+These are research interpretations, not adopted Open Legend requirements.
 
 **Make readiness legible.** Food, shelter, repair and equipment can change what an expedition makes possible. The player should be able to connect preparation to an outcome. The counter-risk is an identical mandatory checklist before every minor activity; a nominal bonus can function as a tax.
 

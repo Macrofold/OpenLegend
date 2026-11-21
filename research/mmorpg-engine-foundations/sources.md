@@ -2,7 +2,7 @@
 
 [Collection](README.md)
 
-Reviewed for this research on November 11, 2026. Publication dates below are historical where stated; undated documentation can change. Sources establish mechanisms and reported cases, not OpenLegend benchmarks. The analytical recommendations in this collection are synthesis, not endorsements by the cited authors. No PDF-only figure or table is used as evidence.
+Reviewed for this research on November 11, 2026. Publication dates below are historical where stated; undated documentation can change. Sources establish mechanisms and reported cases, not Open Legend benchmarks. The analytical recommendations in this collection are synthesis, not endorsements by the cited authors. No PDF-only figure or table is used as evidence.
 
 ## MMO concentration and population management
 
@@ -10,7 +10,7 @@ Reviewed for this research on November 11, 2026. Publication dates below are his
 
 [Engineer's Workshop: Recreating the Ahn'Qiraj War Effort](https://news.blizzard.com/en-us/article/23504702/engineers-workshop-recreating-the-ahnqiraj-war-effort).
 
-Developer account of concentrated-player testing, communication growth, software optimization and population-management tradeoffs. Useful for hotspot and fan-out reasoning. Its historical sharding/layering behavior is not proof of current WoW internals or a way to merge OpenLegend's divergent persistent histories.
+Developer account of concentrated-player testing, communication growth, software optimization and population-management tradeoffs. Useful for hotspot and fan-out reasoning. Its historical sharding/layering behavior is not proof of current WoW internals or a way to merge Open Legend's divergent persistent histories.
 
 ### S02 — Jagex: world capacity
 
@@ -22,7 +22,7 @@ Describes Old School RuneScape's 600 ms game cycle, worlds with many NPCs, playe
 
 [Introducing Time Dilation](https://www.eveonline.com/news/view/introducing-time-dilation-tidi), April 2011.
 
-Explains a controlled simulation-time response to overload rather than unchecked processing delay. This is a gameplay/clock tradeoff, not additional throughput or an automatically suitable policy for OpenLegend. Historical internal bottleneck proportions are not current capacity evidence.
+Explains a controlled simulation-time response to overload rather than unchecked processing delay. This is a gameplay/clock tradeoff, not additional throughput or an automatically suitable policy for Open Legend. Historical internal bottleneck proportions are not current capacity evidence.
 
 ### S04 — ArenaNet: megaserver placement
 
@@ -36,13 +36,13 @@ Explains placing players into map copies using social and other affinity factors
 
 [Replication Graph](https://dev.epicgames.com/documentation/en-us/unreal-engine/replication-graph-in-unreal-engine).
 
-Describes persistent reusable relevance structures and replication lists instead of repeated actor-by-client tests. Its example of 100 connected players and about 50,000 replicated actors is not a claim about 50,000 fully cognitive NPCs. Recipient permissions and OpenLegend's personal evidence remain separate requirements.
+Describes persistent reusable relevance structures and replication lists instead of repeated actor-by-client tests. Its example of 100 connected players and about 50,000 replicated actors is not a claim about 50,000 fully cognitive NPCs. Recipient permissions and Open Legend's personal evidence remain separate requirements.
 
 ### S06 — Wube: optimization and multicore limits
 
 [Friday Facts 421: Optimizations 2.0](https://www.factorio.com/blog/post/fff-421), July 26, 2024.
 
-Reports inactive-object work removal, shared registrations, successful parallel control-behavior evaluation and a memory-bandwidth-limited electric-network experiment. Several changes also simplified useful player configurations. The comparison supports workload-specific decomposition and reusable operations, not a general claim for or against multicore execution. Reported gains belong to Wube's workloads, not OpenLegend.
+Reports inactive-object work removal, shared registrations, successful parallel control-behavior evaluation and a memory-bandwidth-limited electric-network experiment. Several changes also simplified useful player configurations. The comparison supports workload-specific decomposition and reusable operations, not a general claim for or against multicore execution. Reported gains belong to Wube's workloads, not Open Legend.
 
 ### S07 — Wube: nonlocal dependencies
 
@@ -54,7 +54,7 @@ Discusses challenges for dividing simulation work, including dependencies that d
 
 [Simulation Islands](https://box2d.org/posts/2023/10/simulation-islands/), October 2023.
 
-Explains connected constraint groups, their maintenance and sleeping behavior. Supports distinguishing local neighbour count from a coupled component. It does not prove that a large component cannot contain parallel work or that OpenLegend should adopt Box2D.
+Explains connected constraint groups, their maintenance and sleeping behavior. Supports distinguishing local neighbour count from a coupled component. It does not prove that a large component cannot contain parallel work or that Open Legend should adopt Box2D.
 
 ### S09 — Box2D: deterministic parallelism
 
@@ -72,7 +72,7 @@ Primary research overview and demonstrations of reciprocal local avoidance. Its 
 
 [RVO2 parameter documentation](https://gamma-web.iacs.umd.edu/RVO2/documentation/2.0/params.html).
 
-Documents neighbour distance, maximum neighbours and time horizons, including safety implications of restrictive settings. Relevant to rejecting silent candidate truncation as a supposedly neutral optimization. Parameter defaults are not proposed OpenLegend limits.
+Documents neighbour distance, maximum neighbours and time horizons, including safety implications of restrictive settings. Relevant to rejecting silent candidate truncation as a supposedly neutral optimization. Parameter defaults are not proposed Open Legend limits.
 
 ## Large worlds and storage
 
@@ -80,13 +80,13 @@ Documents neighbour distance, maximum neighbours and time horizons, including sa
 
 [World Partition](https://dev.epicgames.com/documentation/en-us/unreal-engine/world-partition-in-unreal-engine).
 
-Describes grid-based streaming of world content. Content residency is distinct from authoritative simulation ownership, continuing NPC life and durable state. OpenLegend can use the distinction without replacing its renderer or adopting Unreal's implementation.
+Describes grid-based streaming of world content. Content residency is distinct from authoritative simulation ownership, continuing NPC life and durable state. Open Legend can use the distinction without replacing its renderer or adopting Unreal's implementation.
 
 ### S13 — Epic: large-world coordinates
 
 [Large World Coordinates](https://dev.epicgames.com/documentation/en-us/unreal-engine/large-world-coordinates-in-unreal-engine-5).
 
-Describes precision changes and conversion concerns across engine systems. Relevant to a native port accidentally narrowing coordinates, and to checking local-frame, physics, navigation, persistence and rendering boundaries together. It does not prescribe one numerical layout for OpenLegend.
+Describes precision changes and conversion concerns across engine systems. Relevant to a native port accidentally narrowing coordinates, and to checking local-frame, physics, navigation, persistence and rendering boundaries together. It does not prescribe one numerical layout for Open Legend.
 
 ### S14 — PostgreSQL: isolation
 
@@ -106,7 +106,7 @@ Explains maintenance associated with updated/deleted row versions and recovery o
 
 [Handling Overload](https://sre.google/sre-book/handling-overload/).
 
-Discusses admission, queueing and controlled overload responses. OpenLegend must distinguish replaceable optional work from accepted effects and mandatory privacy/accounting work. Generic load shedding does not authorize silently dropping gameplay outcomes.
+Discusses admission, queueing and controlled overload responses. Open Legend must distinguish replaceable optional work from accepted effects and mandatory privacy/accounting work. Generic load shedding does not authorize silently dropping gameplay outcomes.
 
 ### S17 — Google SRE: cascading failures
 
@@ -140,6 +140,6 @@ The current table lists AWS SimSpace Weaver as shut down. Older spatial-simulati
 
 ## Evidence limits
 
-No reviewed source demonstrates OpenLegend's 1,000–5,000-player target with its complete semantics. External entity counts, claimed cloud fleet sizes and isolated crowd demonstrations are not transferable benchmarks. This collection does not estimate a maximum player count from another game's marketing or choose a vendor from historical prices.
+No reviewed source demonstrates Open Legend's 1,000–5,000-player target with its complete semantics. External entity counts, claimed cloud fleet sizes and isolated crowd demonstrations are not transferable benchmarks. This collection does not estimate a maximum player count from another game's marketing or choose a vendor from historical prices.
 
 Repository evidence and conversation context are recorded separately in [the coverage chapter](01-context-and-existing-coverage.md). Missing access to the implementation branch remains an explicit gap. Future measurements must identify exact code, workload, enabled behavior, hardware, time policy, latency, cost and failure envelope before supporting a capacity claim.

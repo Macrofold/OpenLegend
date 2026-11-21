@@ -193,7 +193,7 @@ The English **Most Helpful (All Time)** Steam surface was read on September 26, 
 
 The inspected Metacritic player text includes **pale81, July 21, 2025**, criticizing late puzzle gates despite enjoying the first half. This provides a negative viewpoint without treating aggregate scores as explanation. The underlying design disagreement is whether obscurity feels like discovery, inconvenience or an obstacle to a coherent role. It needs task-specific observation, not a claim that one audience simply lacks patience. [P2](#p2)
 
-## 9. Proposed OpenLegend experiments and hard boundaries
+## 9. Proposed Open Legend experiments and hard boundaries
 
 **One verb, two contexts.** Test a water-producing action against both combat fire and an ordinary burning object. Keep material, scope, cost and observation rules the same; let the social interpretation differ. A successful demonstration should also include an invalid target and unintended collateral effect, not only the celebratory solution.
 

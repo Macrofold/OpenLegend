@@ -1,12 +1,12 @@
 # Primary sources and evidence limits
 
-Checked **2026-11-09**. Publication dates below describe the source, not the date of a newly verified deployment. Living documentation can change; this register records the inspected section and supported claim. No inaccessible full talk, benchmark, proprietary source or uninspected PDF is treated as read. External examples establish mechanisms and failure modes, not OpenLegend capacity. Recommendations in this corpus are analysis drawn from these sources and the pinned repository baseline.
+Checked **2026-11-09**. Publication dates below describe the source, not the date of a newly verified deployment. Living documentation can change; this register records the inspected section and supported claim. No inaccessible full talk, benchmark, proprietary source or uninspected PDF is treated as read. External examples establish mechanisms and failure modes, not Open Legend capacity. Recommendations in this corpus are analysis drawn from these sources and the pinned repository baseline.
 
 ## S01
 
 **AWS, “Host persistent world games on Amazon GameLift Servers,” June 18, 2025.** [Article](https://aws.amazon.com/blogs/gametech/host-persistent-world-games-on-amazon-gamelift-servers/).
 
-Inspected lifecycle, session mapping and persistence guidance. Persistent world records and routing must outlive an individual hosting session. Its example hosting and database choices are examples, not a measured thousand-player simulation or an adopted OpenLegend stack. An idle-session teardown example does not settle autonomous NPC advancement policy.
+Inspected lifecycle, session mapping and persistence guidance. Persistent world records and routing must outlive an individual hosting session. Its example hosting and database choices are examples, not a measured thousand-player simulation or an adopted Open Legend stack. An idle-session teardown example does not settle autonomous NPC advancement policy.
 
 ## S02
 
@@ -18,13 +18,13 @@ Managed player-session functionality is limited to 200 players per game session;
 
 **Agones, “Scheduling and Autoscaling,” current documentation.** [Manual](https://agones.dev/site/docs/advanced/scheduling-and-autoscaling/).
 
-Inspected allocation versus pod placement versus scale-down, packed scheduling, protection against eviction during gameplay, and cloud autoscaler integration including GKE. It manages server-process/fleet placement; it does not implement OpenLegend's cell authority, coherent clock, persistent state or AI job migration. No Agones/GKE adoption is selected.
+Inspected allocation versus pod placement versus scale-down, packed scheduling, protection against eviction during gameplay, and cloud autoscaler integration including GKE. It manages server-process/fleet placement; it does not implement Open Legend's cell authority, coherent clock, persistent state or AI job migration. No Agones/GKE adoption is selected.
 
 ## S04
 
 **CCP, “Introducing Time Dilation (TiDi),” April 22, 2011.** [Developer article](https://www.eveonline.com/news/view/introducing-time-dilation-tidi).
 
-Historical explanation of accumulated server work and deliberate coherent slowdown. Useful evidence that overload behavior affects game semantics. Its timing policy and historical internal performance proportions are not OpenLegend settings or a current EVE benchmark.
+Historical explanation of accumulated server work and deliberate coherent slowdown. Useful evidence that overload behavior affects game semantics. Its timing policy and historical internal performance proportions are not Open Legend settings or a current EVE benchmark.
 
 ## S05
 
@@ -36,13 +36,13 @@ Inspected simulation-frame, spatial fan-out and cosmetic delivery discussion. Se
 
 **Jagex, “More Worlds, More Power: The Road To Greater Capacity,” August 7, 2025.** [Infrastructure report](https://secure.runescape.com/m=news/more-worlds-more-power-the-road-to-greater-capacity?oldschool=1).
 
-Inspected per-world hosting and shared-infrastructure constraints. Adding worlds also required work on underlying infrastructure. Plans for cloud-hosted worlds in this historical report are not proof of their present rollout status. OSRS populations and cycles are not equivalent to OpenLegend's independent sensory/evidence/cognition workload.
+Inspected per-world hosting and shared-infrastructure constraints. Adding worlds also required work on underlying infrastructure. Plans for cloud-hosted worlds in this historical report are not proof of their present rollout status. OSRS populations and cycles are not equivalent to Open Legend's independent sensory/evidence/cognition workload.
 
 ## S07
 
 **ArenaNet, “Introducing the Megaserver System,” April 2014 feature announcement.** [Official description](https://www.guildwars2.com/en/news/introducing-the-megaserver-system/).
 
-Describes assigning players among map copies using social and population considerations. Relevant contrast: distributing interchangeable map populations does not reconcile distinct persistent histories. The announcement's prototype/simulation numbers are not current capacity measurements and are not carried into OpenLegend estimates.
+Describes assigning players among map copies using social and population considerations. Relevant contrast: distributing interchangeable map populations does not reconcile distinct persistent histories. The announcement's prototype/simulation numbers are not current capacity measurements and are not carried into Open Legend estimates.
 
 ## S08
 
@@ -78,7 +78,7 @@ Inspected double-precision changes across systems and warnings about narrower in
 
 **Godot, “Large world coordinates,” stable documentation.** [Manual](https://docs.godotengine.org/en/stable/tutorials/physics/large_world_coordinates.html).
 
-Explains loss of floating-point resolution away from the origin and differences between scalar and vector representation. Its recommended coordinate ranges are Godot examples, not safe operating limits for OpenLegend's particular collision tolerances and providers.
+Explains loss of floating-point resolution away from the origin and differences between scalar and vector representation. Its recommended coordinate ranges are Godot examples, not safe operating limits for Open Legend's particular collision tolerances and providers.
 
 ## S14
 
@@ -96,7 +96,7 @@ Inspected resource exhaustion, retry/queue feedback and loss of useful throughpu
 
 **David Yanacek / Amazon Builders' Library, “Avoiding insurmountable queue backlogs,” December 5, 2019.** [Article](https://aws.amazon.com/builders-library/avoiding-insurmountable-queue-backlogs/) (redirects to AWS Builder Center).
 
-Inspected backlog modes, latency and usefulness of delayed results. A durable queue can preserve work while making recovery prohibitively slow. It does not justify a new broker for OpenLegend, automatic replay of paid inference, or dropping accepted authoritative effects.
+Inspected backlog modes, latency and usefulness of delayed results. A durable queue can preserve work while making recovery prohibitively slow. It does not justify a new broker for Open Legend, automatic replay of paid inference, or dropping accepted authoritative effects.
 
 ## S17
 

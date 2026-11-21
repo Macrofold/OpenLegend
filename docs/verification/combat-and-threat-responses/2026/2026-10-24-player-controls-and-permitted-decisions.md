@@ -29,7 +29,7 @@ The native owner retains a minimal pair revision after expired detail so an old
 Speak gesture cannot become valid again after an intervening fight. Active queued
 or paused offensive continuation keeps its existing preference current; other
 work and opponents retain their own ownership. Primitive cancellation is saved
-inside the existing activity continuation rather than editing learned methods or
+inside the existing activity continuation rather than editing learned activities or
 cancelling a mixed-purpose parent. No client receives these private life/episode
 records: the remaining authenticated wire work must use opaque scope-bound
 references, consistent with existing body presentation references.

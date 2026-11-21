@@ -2,7 +2,7 @@
 
 **G72 · Complete research pass, September 26, 2026.** This dossier treats the currently playable post-2022 game as the present reference while preserving the 2015 launch and both major expansions. **The Witcher 3: Wild Hunt — Remastered is announced for September 29, 2026—three days after this research pass—and is therefore future, not shipped functionality.** CD PROJEKT RED has already made **Hearts of Stone** and **Blood and Wine** free to current base-game owners, but the Remastered combat/traversal/new-skill changes are not attributed to today's build. The separately announced **Songs of the Past** expansion is scheduled for 2027 and likewise remains future. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-For OpenLegend, The Witcher 3 is one of the strongest references for **quests rooted in people and consequences rather than objective templates**. It also demonstrates how a fixed protagonist can support meaningful roleplay: Geralt has an established profession, history, relationships and temperament, while the player still determines how he applies them.
+For Open Legend, The Witcher 3 is one of the strongest references for **quests rooted in people and consequences rather than objective templates**. It also demonstrates how a fixed protagonist can support meaningful roleplay: Geralt has an established profession, history, relationships and temperament, while the player still determines how he applies them.
 
 Its monster contracts provide an especially useful interaction grammar:
 > report/problem → investigate evidence → identify creature → consult knowledge → prepare oil/potion/bomb/sign → track → fight → decide social consequence.
@@ -54,7 +54,7 @@ Player agency instead operates through:
 - quest solutions;
 - build specialization.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Roleplay does not require blank-slate identity.
 
@@ -87,7 +87,7 @@ This separates:
 - what Geralt knows,
 - what Geralt currently emphasizes.
 
-OpenLegend can model:
+Open Legend can model:
 - broad learned repertoire;
 - limited attention/preparation loadout
 
@@ -143,7 +143,7 @@ Igni can:
 - burn;
 - exploit creature vulnerabilities.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A small spell vocabulary becomes powerful when effects participate in:
 - physics;
@@ -171,7 +171,7 @@ During investigations, Geralt:
 
 PC Gamer praised contracts but criticized that the investigation itself often requires little deduction: locating highlighted evidence lets Geralt infer the answer automatically. [W3-01](#w3-01)
 
-### OpenLegend transfer
+### Open Legend transfer
 
 Professional perception should produce:
 - observations,
@@ -212,7 +212,7 @@ knows to use:
 - Yrden,
 rather than merely increasing generic DPS.
 
-OpenLegend should make creature classification/knowledge actionable but fallible.
+Open Legend should make creature classification/knowledge actionable but fallible.
 
 ## 8. Monster contracts: profession as quest generator
 
@@ -238,7 +238,7 @@ Many complicate the initial framing:
 - creature can be intelligent;
 - killing may not be morally obvious.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A profession becomes compelling when it exposes a reusable **problem grammar** whose specific people/state vary.
 
@@ -265,7 +265,7 @@ Potion/decoction use raises **Toxicity**.
 This creates a bodily capacity constraint:
 > preparation power is limited by what Geralt's mutated body can metabolize.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Consumable systems are richer when:
 - body state;
@@ -298,7 +298,7 @@ Knowledge/diagram is separate from:
 - materials;
 - craftsperson capability.
 
-OpenLegend should model:
+Open Legend should model:
 > knowing how ≠ personally having the tools/skill/resources to manufacture.
 
 ## 11. Inventory, durability, repair, and merchants
@@ -327,7 +327,7 @@ Merchants have differentiated stock/services.
 
 Inventory becomes cluttered because open-world loot volume exceeds the semantic importance of most objects.
 
-OpenLegend should bias toward fewer objects with:
+Open Legend should bias toward fewer objects with:
 - provenance;
 - ownership;
 - history;
@@ -401,7 +401,7 @@ The Baron storyline is famous not because of objective novelty, but because:
 - supernatural events encode family trauma;
 - choices remain morally compromised.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Quest quality comes from:
 > people whose states collide,
@@ -426,7 +426,7 @@ Game Informer praised the “ripple effect” of choices across the world. [W3-0
 
 Many consequences are still hand-authored branches.
 
-OpenLegend's opportunity:
+Open Legend's opportunity:
 - derive consequences from shared world state where possible,
 - reserve authored branches for high-value narrative structure.
 
@@ -451,7 +451,7 @@ Most relationship depth comes through:
 
 rather than an explicit affection meter.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Relationships are strongest when:
 - existing history;
@@ -475,7 +475,7 @@ These sequences:
 
 They do not form a fully open alternate-character campaign.
 
-### OpenLegend transfer
+### Open Legend transfer
 
 Perspective shifts can reveal:
 - knowledge;
@@ -530,7 +530,7 @@ Gwent is not isolated in an arcade menu:
 - players are actual NPCs;
 - tournaments have story.
 
-OpenLegend can integrate games/hobbies into social networks.
+Open Legend can integrate games/hobbies into social networks.
 
 ## 20. Death, meditation, difficulty, and preparation
 
@@ -573,7 +573,7 @@ It adds:
 
 PC Gamer described it as exceptional storytelling whose gameplay remains structurally familiar. [W3-08](#w3-08)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 An expansion need not add a huge map if it introduces:
 - compelling people;
@@ -658,7 +658,7 @@ PC Gamer's retrospective highlights how the studio's strongest achievement was n
 
 Hearts of Stone developers later said they intentionally expanded the kind of long, character-driven quest that players loved in the base game. [W3-12](#w3-12)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A reusable world engine is valuable only if authored/generative people remain specific.
 
@@ -805,7 +805,7 @@ It is closer to:
 
 **Result:** later settlement/person state reveals cost that was not shown in advance.
 
-**OpenLegend lesson:** consequences should emerge from causal state, not tooltip morality labels.
+**Open Legend lesson:** consequences should emerge from causal state, not tooltip morality labels.
 
 ### F. Corvo Bianco gives retirement a place
 
@@ -815,7 +815,7 @@ It is closer to:
 
 **Result:** “endgame” becomes inhabitation, not infinite combat.
 
-## 30. Transferable inspiration for OpenLegend
+## 30. Transferable inspiration for Open Legend
 
 ### A. Build quests from professions and people
 
@@ -869,7 +869,7 @@ Use systemic faction/person state where possible.
 
 ### Do not copy Geralt's fixed identity into an engine-level assumption
 
-This is a world/game choice, not a universal OpenLegend rule.
+This is a world/game choice, not a universal Open Legend rule.
 
 ## 32. Requirement and preservation map
 

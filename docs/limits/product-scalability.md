@@ -164,7 +164,7 @@ Material unresolved product choices are owned by [PS-D01–PS-D06](../maintainer
 
 ## PS-L33 — Omitted crowd extensions and expansion trigger
 
-**Status: Proposed; restrictiveness: Medium.** No general crowd director, universal attention-slot count, automatic shared belief, meeting reward economy, timed physical speech, public concert capacity or mass combat capacity is selected for DG18's first delivery. The separate existing proposals remain available where a real consumer benefits. Add people or richer scenes only when they produce worthwhile encounters and survive complete cost, legibility, secrecy and intervention qualification. If density mainly creates noise or managing the scene displaces playing, split or shrink the authored gathering. No claim of enjoyment, scalability or model reliability follows from this product document.
+**Status: Proposed; restrictiveness: Medium.** No general crowd director, universal limit on the number of subjects tracked in detail, automatic shared belief, meeting reward economy, timed physical speech, public concert capacity or mass combat capacity is selected for DG18's first delivery. The separate existing proposals remain available where a real consumer benefits. Add people or richer scenes only when they produce worthwhile encounters and survive complete cost, legibility, secrecy and intervention qualification. If density mainly creates noise or managing the scene displaces playing, split or shrink the authored gathering. No claim of enjoyment, scalability or model reliability follows from this product document.
 
 ## PS-L34 — First useful visit scope
 

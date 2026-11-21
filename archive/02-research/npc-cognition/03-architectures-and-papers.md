@@ -15,7 +15,7 @@ Our recommended comparison architecture is a hierarchy of responsibilities, not 
 | Choice | Current decision provider, a small local decision model, or a justified generative route | A meaningful unresolved choice; finite exact options and truthful uncertainty. |
 | Expression and reflection | Character-conditioned dialogue, optional prosody, separately scheduled memory work | Actual communication or useful reconsideration; no mandatory thought, narration or speech per action. |
 
-OpenLegend already has relevant owners and substantial foundations. This research does not authorize replacing them with a parallel “nervous system,” planner, memory database or scheduler. The [design-preparation map](../../../docs/maintainers/npc-cognition-research-needs-design.md) identifies the specific remaining questions.
+Open Legend already has relevant owners and substantial foundations. This research does not authorize replacing them with a parallel “nervous system,” planner, memory database or scheduler. The [design-preparation map](../../../docs/maintainers/npc-cognition-research-needs-design.md) identifies the specific remaining questions.
 
 ## 2. Architecture families and their tradeoffs
 
@@ -23,7 +23,7 @@ OpenLegend already has relevant owners and substantial foundations. This researc
 
 A game bridge supplies structured state or readable actor-permitted descriptions; a model chooses a high-level supported action; a native controller executes it and reports outcomes. Kevin is a direct source-level example. This route can be fast, exact about geometry/resources and easy to inspect. Its weakness is coverage: an unreported state change may effectively not exist to cognition. An unfiltered state dump creates omniscience instead.
 
-For OpenLegend, this is the strongest initial architecture hypothesis because the engine already owns the world. The useful improvement is better evidence, context selection, continued activity and timely choices—not forcing the model to rediscover a known inventory through pixels. See [Kevin](01-kevin-source-reconstruction.md) and [Mantella](02-mantella-and-npc-systems.md).
+For Open Legend, this is the strongest initial architecture hypothesis because the engine already owns the world. The useful improvement is better evidence, context selection, continued activity and timely choices—not forcing the model to rediscover a known inventory through pixels. See [Kevin](01-kevin-source-reconstruction.md) and [Mantella](02-mantella-and-npc-systems.md).
 
 ### Screenshot-and-controls agents
 
@@ -37,11 +37,11 @@ Our proposed use of pixels is selective: novel appearance, reading a legitimatel
 
 ### Skill libraries and tool-using planners
 
-[SayCan, 2022](https://arxiv.org/abs/2204.01691) combines language-model usefulness with skill feasibility estimates in robotics. Its central separation is relevant: a desirable action is not necessarily executable. OpenLegend should use actual native prerequisite checks where available, not replace them with a learned probability. A skill's estimated success remains distinct from authority to perform it. **Reading: primary abstract.**
+[SayCan, 2022](https://arxiv.org/abs/2204.01691) combines language-model usefulness with skill feasibility estimates in robotics. Its central separation is relevant: a desirable action is not necessarily executable. Open Legend should use actual native prerequisite checks where available, not replace them with a learned probability. A skill's estimated success remains distinct from authority to perform it. **Reading: primary abstract.**
 
 [ReAct, 2022](https://arxiv.org/abs/2210.03629) interleaves model reasoning and environment actions/feedback. It motivates bounded investigation when an actor needs information, but not mandatory multi-step reasoning for greetings, footsteps or a known meal. A successful tool trace is evidence for that task, not permission to invent another participant's response. **Reading: primary abstract.**
 
-[Voyager, 2023](https://arxiv.org/abs/2305.16291) uses an automatic curriculum, an executable skill library and iterative feedback in Minecraft. Reusable skills are a useful alternative to repeatedly rediscovering the same method. Its open-ended exploration objective is not a resident's personality, and generated code is not automatically safe to run in an authoritative server. OpenLegend's existing admitted methods and capability boundaries remain controlling. **Reading: primary abstract.**
+[Voyager, 2023](https://arxiv.org/abs/2305.16291) uses an automatic curriculum, an executable skill library and iterative feedback in Minecraft. Reusable skills are a useful alternative to repeatedly rediscovering the same method. Its open-ended exploration objective is not a resident's personality, and generated code is not automatically safe to run in an authoritative server. Open Legend's existing admitted methods and capability boundaries remain controlling. **Reading: primary abstract.**
 
 Distinguish three forms of learning: adding a memory, acquiring a validated executable method, and updating model weights. Journal entries and retrieved experience cards accomplish the first; they do not prove the other two. An actor-authored intention may suggest a future habit, but a developer-authored conditional biography must not be presented as independently formed motivation.
 
@@ -49,11 +49,11 @@ Distinguish three forms of learning: adding a memory, acquiring a validated exec
 
 [STRATA, September 30, 2026](https://arxiv.org/html/2609.38881v1) separates strategic, logistics, tactical and post-match review agents for Red Alert. Experience cards are proposed from traces, then validated/revised using later matches. Its reported increase from 30% to 100% wins is confined to a fixed scenario; the limitations identify one map, one seed, one decision model and limited matches. This is evidence for a promising decomposition, not a universal result. **Reading: primary abstract plus HTML architecture and limitations.**
 
-For OpenLegend, the transferable question is whether an expensive longer-horizon choice can leave a precise, revisable objective for cheaper execution. Do not copy a global strategic agent's knowledge into a resident. Do not create four model calls where a single native continuation already works. Experience cards would require source provenance, contextual applicability and rejection of contradicted advice, rather than an ever-growing instruction pile.
+For Open Legend, the transferable question is whether an expensive longer-horizon choice can leave a precise, revisable objective for cheaper execution. Do not copy a global strategic agent's knowledge into a resident. Do not create four model calls where a single native continuation already works. Experience cards would require source provenance, contextual applicability and rejection of contradicted advice, rather than an ever-growing instruction pile.
 
 ### Integrated commercial and local inference stacks
 
-[NVIDIA ACE](https://developer.nvidia.com/ace-for-games) is a component suite rather than one model that solves cognition, voice, memory and animation. The [in-game inference SDK article](https://developer.nvidia.com/blog/bring-nvidia-ace-ai-characters-to-games-with-the-new-in-game-inference-sdk) describes embedding inference alongside game workloads. The relevant lesson is resource scheduling and reusable components, not automatic suitability for OpenLegend's browser client or authoritative server. **Reading: first-party product and technical articles; not installed.**
+[NVIDIA ACE](https://developer.nvidia.com/ace-for-games) is a component suite rather than one model that solves cognition, voice, memory and animation. The [in-game inference SDK article](https://developer.nvidia.com/blog/bring-nvidia-ace-ai-characters-to-games-with-the-new-in-game-inference-sdk) describes embedding inference alongside game workloads. The relevant lesson is resource scheduling and reusable components, not automatic suitability for Open Legend's browser client or authoritative server. **Reading: first-party product and technical articles; not installed.**
 
 A local model can reduce network delay and improve privacy, yet still contend with rendering and speech synthesis. A hosted small model can be faster than a poorly configured local one. Deployment choice must use the real concurrency and context distribution, not a warm single-prompt showcase.
 
@@ -69,13 +69,13 @@ The cheapest architecture can be the one with fewer gates. An inexpensive classi
 
 ## 4. Memory: useful advances without a second canonical mind
 
-OpenLegend already has actor-specific experience, knowledge, required recall, consolidation and a prior [Hindsight evaluation](../hindsight-memory-evaluation.md). The following papers suggest candidate improvements at those boundaries, not a reason to replace the whole system.
+Open Legend already has actor-specific experience, knowledge, required recall, consolidation and a prior [Hindsight evaluation](../hindsight-memory-evaluation.md). The following papers suggest candidate improvements at those boundaries, not a reason to replace the whole system.
 
 ### Foundational generative agents
 
 [Generative Agents, 2023](https://arxiv.org/abs/2304.03442) links remembered observations, retrieval, reflection and planning in a small simulated community. Its ablations support studying the contribution of those components to believable behavior. It does not prove real-time combat, scalable persistent hosting, secure private knowledge or subjective consciousness. **Reading: primary abstract; use the original paper for detailed replication.**
 
-A relevant OpenLegend test is whether a specific previous encounter changes a later voluntary choice. A generated reflection paragraph without subsequent behavioral consequences does not establish useful memory.
+A relevant Open Legend test is whether a specific previous encounter changes a later voluntary choice. A generated reflection paragraph without subsequent behavioral consequences does not establish useful memory.
 
 ### Temporal and hierarchical recall
 
@@ -85,13 +85,13 @@ A relevant OpenLegend test is whether a specific previous encounter changes a la
 
 [LycheeMemory V2, August 13, 2026; revised October 14](https://arxiv.org/html/2608.12990v2) batches related exchanges into semantic segments and emits typed, provenance-linked records with entity, topic and temporal indexes. A query planner selects retrieval routes. Its limitations explicitly leave end-to-end latency, storage growth and continuous deployment unmeasured and report weaker preference-intensive results. The main accuracy numbers use particular reader, embedding and reranker choices; they cannot be compared uncritically with another paper's headline. **Reading: HTML method, evaluation framing and limitations.**
 
-The OpenLegend hypothesis is narrower: can native event/episode boundaries plus bounded semantic help reduce repeated maintenance calls without losing exact important incidents? Compare with current consolidation and a modest fixed-window/native-boundary baseline. A semantic segmentation call on every line could simply move cost to another stage.
+The Open Legend hypothesis is narrower: can native event/episode boundaries plus bounded semantic help reduce repeated maintenance calls without losing exact important incidents? Compare with current consolidation and a modest fixed-window/native-boundary baseline. A semantic segmentation call on every line could simply move cost to another stage.
 
 ### Associative retrieval beyond nearest neighbors
 
 [MemCode, October 14, 2026](https://arxiv.org/html/2610.19472v1) writes source-linked atomic memory units and supplements dense retrieval with a learned discrete codebook and co-occurrence path. Its inspected method uses a bounded one-hop expansion and reconstructs original spans through source pointers. It explicitly targets retrieval-intensive dialogue memory, not fully deployed planning/tool agents, and warns that extraction can distort motivations, emotion and pragmatic meaning. **Reading: HTML methodology and limitations.**
 
-For OpenLegend, test additional recall candidates before accepting generated memory rewrites. Keep exact speech, important incidents and current obligations available independently. The paper's asset register includes non-commercial dataset restrictions; code/model/data permissions require separate review before commercial training or reuse. Faster batch memory construction is not evidence of subsecond decision latency.
+For Open Legend, test additional recall candidates before accepting generated memory rewrites. Keep exact speech, important incidents and current obligations available independently. The paper's asset register includes non-commercial dataset restrictions; code/model/data permissions require separate review before commercial training or reuse. Faster batch memory construction is not evidence of subsecond decision latency.
 
 ### Retrieval-driven reconsolidation
 
@@ -109,9 +109,9 @@ For OpenLegend, test additional recall candidates before accepting generated mem
 
 [InCharacter](https://arxiv.org/abs/2310.17976), initially October 2023 and revised June 2024, evaluates personality fidelity using interviews rather than only character trivia. It motivates testing distinct tendencies across varied questions. A convincing interview still does not establish that a resident independently acts that way when food, work and another person's wishes compete. **Reading: primary abstract.**
 
-[CharacterEval](https://arxiv.org/abs/2401.01275), January 2024, provides a multi-turn Chinese roleplay benchmark with multiple evaluation dimensions and human quality control. Its main lesson for our comparison is that style, role knowledge and conversational quality should not be collapsed into one score. Language/cultural coverage and known fictional characters differ from OpenLegend's original worlds. **Reading: primary abstract.**
+[CharacterEval](https://arxiv.org/abs/2401.01275), January 2024, provides a multi-turn Chinese roleplay benchmark with multiple evaluation dimensions and human quality control. Its main lesson for our comparison is that style, role knowledge and conversational quality should not be collapsed into one score. Language/cultural coverage and known fictional characters differ from Open Legend's original worlds. **Reading: primary abstract.**
 
-[ES-MemEval](https://arxiv.org/abs/2602.01885), February 2026, extends memory evaluation to changing, implicit personal context and conflict detection. It is an adjacent benchmark, not evidence that OpenLegend is a therapeutic system. Evolving personal interpretation is a useful test dimension; clinical benefit is not an implied product claim. **Reading: primary abstract.**
+[ES-MemEval](https://arxiv.org/abs/2602.01885), February 2026, extends memory evaluation to changing, implicit personal context and conflict detection. It is an adjacent benchmark, not evidence that Open Legend is a therapeutic system. Evolving personal interpretation is a useful test dimension; clinical benefit is not an implied product claim. **Reading: primary abstract.**
 
 These should inform the existing CE05/CR12/R24 program. Do not create a new leaderboard that rewards eloquence while ignoring actual consequences, refusal, quiet activity, stale evidence or whole-session cost.
 

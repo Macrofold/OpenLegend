@@ -6,17 +6,17 @@
 
 My interpretation is that strong stories emerge when a player can connect **who someone is → what they did → what changed**. The system need not produce novelist-quality dialogue if actions, needs, and relationships already generate legible drama. Conversely, eloquent text cannot compensate for characters who behave interchangeably.
 
-**Adversity and pacing.** A narrative needs contrast: preparation, relative safety, complication, crisis, and aftermath. RimWorld’s named storytellers are game pacing systems, not LLM narrators. The lesson is not to have OpenLegend secretly invalidate every success. It is to provide enough changing pressure that players make choices, while allowing recovery and expression. [RW1](../references/sources-01.md#source-rw1)
+**Adversity and pacing.** A narrative needs contrast: preparation, relative safety, complication, crisis, and aftermath. RimWorld’s named storytellers are game pacing systems, not LLM narrators. The lesson is not to have Open Legend secretly invalidate every success. It is to provide enough changing pressure that players make choices, while allowing recovery and expression. [RW1](../references/sources-01.md#source-rw1)
 
 **Why players can care.** Scarcity makes choosing whom to help significant. Differences among people prevent an optimal workforce from being entirely interchangeable. Persistence lets a minor earlier incident become relevant later. The important variable is the consequence density of the simulation—not the number of hidden personality values.
 
 **Sharing mechanism.** A colony episode is retellable because it contains a protagonist, predicament, surprising turn, and outcome. My hypothesis is that systems-driven stories create word-of-mouth material even for viewers who do not yet understand every rule. That is not a measured attribution of RimWorld sales to storytelling.
 
-**Less important to copy immediately.** A complete social-science model, long conversations for every action, realistic medical detail, or an enormous initial population. OpenLegend should prefer a few people whose motives matter over a crowd with impressive-looking private state. Abstract representations can work when the player can inspect the relevant causes.
+**Less important to copy immediately.** A complete social-science model, long conversations for every action, realistic medical detail, or an enormous initial population. Open Legend should prefer a few people whose motives matter over a crowd with impressive-looking private state. Abstract representations can work when the player can inspect the relevant causes.
 
 **Risks.** Arbitrary-looking disaster feels different from costly but understandable consequence. A character described as traumatized who behaves normally breaks the causal chain. Conversely, relentless penalties can turn care into babysitting. Too much hidden interaction makes failure impossible to learn from.
 
-**OpenLegend application.** Select a small set of behaviors to make consequential: keeping or breaking a promise, refusing unreasonable work, remembering help, changing a plan after evidence, and caring about a particular person or place. Use AI where it improves interpretation and action selection. Do not confuse the number of memories stored with the player’s experience of being remembered.
+**Open Legend application.** Select a small set of behaviors to make consequential: keeping or breaking a promise, refusing unreasonable work, remembering help, changing a plan after evidence, and caring about a particular person or place. Use AI where it improves interpretation and action selection. Do not confuse the number of memories stored with the player’s experience of being remembered.
 
 
 <!-- BEGIN FIELDGUIDE ADDITION -->
@@ -30,7 +30,7 @@ My interpretation is that strong stories emerge when a player can connect **who 
 
 **What they dislike or find limiting.** The skeptical review is a valuable correction to a one-sided success story: declared personality traits and tiny interaction summaries did not make its colonists feel like people to that critic. Early waiting and administrative friction exposed the machinery. This is not a majority finding; it shows that emergent incident variety and emotional believability are separable achievements. [FG-RW-C](../references/sources-04.md#source-fg-rw-c)
 
-**The design tension.** OpenLegend cannot assume either that fluent dialogue solves RimWorld’s limitations or that simulation alone makes dialogue unnecessary. Test the connection between expressed personality, actual choices, and remembered consequences.
+**The design tension.** Open Legend cannot assume either that fluent dialogue solves RimWorld’s limitations or that simulation alone makes dialogue unnecessary. Test the connection between expressed personality, actual choices, and remembered consequences.
 
 **Watch to understand the game**
 
@@ -44,7 +44,7 @@ My interpretation is that strong stories emerge when a player can connect **who 
 
 3. **Chronology makes a family relationship strange.** *Attributed reviewer incident.* The critic describes a colonist who was chronologically 114 but biologically 24, with a son and granddaughter biologically older than her. The generated relationship sparked imagination even for a reviewer unconvinced by everyday social behavior. A striking record can invite a story without guaranteeing the ongoing simulation fulfills it. [FG-RW-C](../references/sources-04.md#source-fg-rw-c)
 
-**What to borrow for OpenLegend.** Keep RimWorld as a central reference, but treat its contested emotional believability as a testable opportunity. Give characters consequential abilities and obligations; ensure their expressed identity affects choices. A very complete event log is not itself a convincing person.
+**What to borrow for Open Legend.** Keep RimWorld as a central reference, but treat its contested emotional believability as a testable opportunity. Give characters consequential abilities and obligations; ensure their expressed identity affects choices. A very complete event log is not itself a convincing person.
 
 *Scope/evidence note:* Base-game systems unless noted; examples describe documented mechanics, not a play session conducted for this research.
 <!-- END FIELDGUIDE ADDITION -->

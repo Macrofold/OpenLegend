@@ -36,7 +36,7 @@
 
 3. **A powerful line attack has collateral consequences.** *Documented interaction.* The review describes an eigenrifle’s piercing effect as something that can harm more than the intended enemy. Positioning and what lies beyond the target matter. The same general attack property creates both power and responsibility; a larger damage number alone would not supply that decision. [FG-QU-C](../references/sources-03.md#source-fg-qu-c)
 
-**What to borrow for OpenLegend.** For OpenLegend, pair extensible embodiment with authored meaning and clear feedback. A third sense or additional limb should change investigation or action—not just its schema. Preserve a choice of challenge policy rather than assuming permadeath is necessary to make experimentation meaningful.
+**What to borrow for Open Legend.** For Open Legend, pair extensible embodiment with authored meaning and clear feedback. A third sense or additional limb should change investigation or action—not just its schema. Preserve a choice of challenge policy rather than assuming permadeath is necessary to make experimentation meaningful.
 
 *Scope/evidence note:* Base-game systems unless noted; examples describe documented mechanics, not a play session conducted for this research.
 <!-- END FIELDGUIDE ADDITION -->

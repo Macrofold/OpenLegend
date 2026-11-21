@@ -1,7 +1,7 @@
 ---
 name: ol-design
 description: >-
-  Generate and refine OpenLegend artwork, explore visual directions, and prepare requested
+  Generate and refine Open Legend artwork, explore visual directions, and prepare requested
   art exports through Standard or Higgsfield, with clarification, critique and preservation.
 argument-hint: '<artwork or visual-design request>'
 ---

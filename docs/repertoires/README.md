@@ -4,7 +4,7 @@
 
 **28 canonical catalogues: 7,872 non-action entries and 385 action examples.** Each catalogue contains the full descriptions, stable IDs, current priorities, useful worked patterns, applicability, build gaps and research. There is one maintained version of each idea—not separate source inventories and ranking registers. The 272 worked patterns overlap some entries; these are not additive counts of unique features.
 
-**A complete, enjoyable OpenLegend experience comes first.** Readable combat, exploration, rewards, progression, useful crafting and building belong alongside a small real instance of practical invention, independent characters and persistent consequences. Neither chores nor a technical showcase can substitute for enjoyable play. Start with the [priority policy](gameplay-priorities.md), then [whole-game coverage](coverage.md) and [selection and scale](selection-and-scale.md).
+**A complete, enjoyable Open Legend experience comes first.** Readable combat, exploration, rewards, progression, useful crafting and building belong alongside a small real instance of practical invention, independent characters and persistent consequences. Neither chores nor a technical showcase can substitute for enjoyable play. Start with the [priority policy](gameplay-priorities.md), then [whole-game coverage](coverage.md) and [selection and scale](selection-and-scale.md).
 
 These are proposals, not installed capabilities, approved implementation commitments or fixed world canon. [Architecture](../architecture.md), [maintainer work](../maintainers/README.md) and [verification](../verification.md) own delivered behavior, task status and evidence. No playtest or measured improvement in enjoyment is asserted here.
 

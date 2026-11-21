@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md)
 
-**Full research pass, September 26, 2026.** Original campaign, post-completion Challenges and Journeyer's Charts are distinguished. Five substantive independent review bodies and contrasting helpful Steam accounts were read. The checkpoint's disagreements and update corrections are preserved below. This standalone expansion-roster dossier replaces no original packet or selective mechanics chapter. Global preservation/integration gates remain separate. Research only: no accepted OpenLegend design, runtime change or implementation backlog.
+**Full research pass, September 26, 2026.** Original campaign, post-completion Challenges and Journeyer's Charts are distinguished. Five substantive independent review bodies and contrasting helpful Steam accounts were read. The checkpoint's disagreements and update corrections are preserved below. This standalone expansion-roster dossier replaces no original packet or selective mechanics chapter. Global preservation/integration gates remain separate. Research only: no accepted Open Legend design, runtime change or implementation backlog.
 
 ## 1. Identity and player promise
 
@@ -119,11 +119,11 @@ The accessible Steam surface was **Most Helpful (Week), English**, not an all-ti
 
 The useful disagreement is specific. A compact weapon vocabulary can produce mastery or feel repetitive. A mapless route can reward attention or waste it. Difficulty can be satisfying in the encounter yet frustrating in the trip between attempts. Calling the game a Soulslike or refusing that label does not answer any of those questions.
 
-## 9. OpenLegend transfer hypotheses
+## 9. Open Legend transfer hypotheses
 
 **One action, several understandable configurations.** The gourd system suggests adding depth to a familiar action before proliferating buttons. The dependency is clear explanation of which layer changes capacity, recovery and secondary effects. A failure mode is making the user compare nearly identical descriptions across unrelated menus.
 
-**Earn service relationships through concrete help.** A favor can change where someone lives and what recurring support becomes available. For OpenLegend, the interesting test is whether the player remembers the person as well as the benefit. Avoid claiming that an authored hub justifies a general migration/economy simulation.
+**Earn service relationships through concrete help.** A favor can change where someone lives and what recurring support becomes available. For Open Legend, the interesting test is whether the player remembers the person as well as the benefit. Avoid claiming that an authored hub justifies a general migration/economy simulation.
 
 **Separate acquiring a form from borrowing an action.** A full transformation and a brief Spirit skill impose different learning, animation, AI and balance requirements. A reusable mechanic should name its scope: whose body changes, which actions become available, how long it lasts and what ends it. “Can transform” is not a sufficient specification.
 
@@ -131,7 +131,7 @@ The useful disagreement is specific. A compact weapon vocabulary can produce mas
 
 **Distinguish visible scenery from usable space.** Rich scenery increases the cost of misleading affordances. A world need not be fully traversable, but its limits should be readable enough that players can form reliable expectations. More accurate collision feedback may matter more than another square kilometer.
 
-**Recover accomplishments without erasing meaningful consequences.** Shrine retrieval of uncollected Spirits protects a recorded success. A missable quest remains a different decision. An OpenLegend persistence model should specify which state is protected and which expires, rather than use one generic recovery policy for everything.
+**Recover accomplishments without erasing meaningful consequences.** Shrine retrieval of uncollected Spirits protects a recorded success. A missable quest remains a different decision. An Open Legend persistence model should specify which state is protected and which expires, rather than use one generic recovery policy for everything.
 
 **Let later modes serve a different return intention.** A rematch mode is for practice; a new cycle is for replay; a map is for navigation. Bundling them into one catch-all endgame system can obscure their distinct audiences. None requires pretending the original campaign offers unlimited procedural stories.
 

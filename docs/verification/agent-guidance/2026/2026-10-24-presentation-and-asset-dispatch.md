@@ -2,7 +2,7 @@
 
 Historical campaigns filed October 24, 2026 from `ecf49b1237e0aa83e408572a486aadb7f29cb910`. Original dates, versions, allowed actions, observations and limitations remain below. These trials do not qualify the revised workflow; [CG05](../../../maintainers/agent-guidance.md#cg05--read-only-routing-cases) owns current dispatch gaps.
 
-## Grounded art sourcing read-through — October 16, 2026
+## Grounded art sourcing see-through reveal — October 16, 2026
 
 The root's conditional art-direction route now loads the [current visual requirements](../../../../art-direction/decisions.md#current-visual-requirements--october-16-2026) and [creative brief](../../../../art-direction/final-board/creative-brief.md) before sourcing, concept prompts and visual asset decisions, including new files and client-folder starts. The requirements remain owned by the art documents; root instructions do not duplicate the style contract. Existing technical authoring/rendering work retains its PlayCanvas route.
 

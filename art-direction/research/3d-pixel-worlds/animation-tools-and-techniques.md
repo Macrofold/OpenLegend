@@ -28,7 +28,7 @@ This is a production proposal, not a new gameplay action specification. Existing
 | [Blender glTF export](https://docs.blender.org/manual/en/5.1/addons/import_export/scene_gltf2.html)                                    | Transfer geometry, skinning and supported animation into a web-friendly asset.                                                                                               | Actions, tracks, baked constraints and material conversion need an actual round trip. Blender simulation logic does not automatically travel with a mesh.                                              |
 | [glTF interpolation](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html#interpolation)                                          | `STEP` interpolation holds the previous key value; linear interpolation changes between keys.                                                                                | The installed PlayCanvas parser/evaluator supports `STEP`, but blending, extra procedural motion and export settings can change the final result. A format feature is not an end-to-end qualification. |
 
-The t3ssel8r transcript describes FBX and a custom Unity import step that disables interpolation and removes repeated frames. OpenLegend need not recreate that importer merely to achieve held poses. First test the existing asset route with deliberately exported interpolation. No new paid tool or engine is required by this research.
+The t3ssel8r transcript describes FBX and a custom Unity import step that disables interpolation and removes repeated frames. Open Legend need not recreate that importer merely to achieve held poses. First test the existing asset route with deliberately exported interpolation. No new paid tool or engine is required by this research.
 
 ## Separate the pose from travel and camera movement
 
@@ -65,7 +65,7 @@ y_next = y + T * v
 v_next = (k2 * v + T * (x + k3 * x_dot - y_next)) / (k2 + T * k1)
 ```
 
-Set the target and its velocity to zero, `k1 = k2 = 1`, and `T = 4`. The update matrix is `[[1, 4], [-0.8, -3]]`, with eigenvalues approximately `-0.105573` and `-1.894427`. The latter's magnitude exceeds one, so repeated updates can grow. This is a counterexample for the displayed equation, not a test of the creator's complete game or pole-matching implementation. Do not copy the stability claim into an OpenLegend contract without checking the actual selected solver and timestep range.
+Set the target and its velocity to zero, `k1 = k2 = 1`, and `T = 4`. The update matrix is `[[1, 4], [-0.8, -3]]`, with eigenvalues approximately `-0.105573` and `-1.894427`. The latter's magnitude exceeds one, so repeated updates can grow. This is a counterexample for the displayed equation, not a test of the creator's complete game or pole-matching implementation. Do not copy the stability claim into an Open Legend contract without checking the actual selected solver and timestep range.
 
 ## Smears and action readability
 

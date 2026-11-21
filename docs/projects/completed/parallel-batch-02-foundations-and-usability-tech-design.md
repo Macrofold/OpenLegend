@@ -372,7 +372,7 @@ Keep the form vertically ordered: activity, selected resources/objects, quantiti
 3. Connect the camp form to shared storage selection and role searches; preserve review/start authority and draft/focus behavior.
 4. Demonstrate the feature acceptance through server/domain callers and the real game UI, including large unrelated prefixes, stale/revoked reads, nested private bags, interrupted movement, changing stock and failed final admission. Count candidates examined/materialized per page and distinguish cold work. Record actual activity effects and evidence limits in the existing camp-life report.
 
-This is approximately 450–850 changed logic lines, 20–36 engineer-hours including integration, relevant evidence and docs. Risks are stale authority, confusing browsing with character observation, and broad preparation concealed by page size. All required mechanisms are already on the audited main; NP03's new material is not a prerequisite. Broader live learned-method acceptance remains with PW10 rather than being silently added to or closed by this scoped repair.
+This is approximately 450–850 changed logic lines, 20–36 engineer-hours including integration, relevant evidence and docs. Risks are stale authority, confusing browsing with character observation, and broad preparation concealed by page size. All required mechanisms are already on the audited main; NP03's new material is not a prerequisite. Broader live learned activity acceptance remains with PW10 rather than being silently added to or closed by this scoped repair.
 
 ### Delivered implementation
 

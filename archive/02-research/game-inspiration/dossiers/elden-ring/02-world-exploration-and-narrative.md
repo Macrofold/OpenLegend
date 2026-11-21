@@ -2,7 +2,7 @@
 
 [Dossier](../elden-ring.md)
 
-**Scope:** the base game and _Shadow of the Erdtree_, with their edition boundaries retained in the parent dossier. **Major spoilers:** this chapter discusses hidden regions, NPC outcomes, endings and the expansion's revelations. The research distinguishes developer statements, documented game rules, transcribed in-game accounts and interpretation; a character's belief is not automatically the world's objective truth. These are research findings, not accepted OpenLegend designs.
+**Scope:** the base game and _Shadow of the Erdtree_, with their edition boundaries retained in the parent dossier. **Major spoilers:** this chapter discusses hidden regions, NPC outcomes, endings and the expansion's revelations. The research distinguishes developer statements, documented game rules, transcribed in-game accounts and interpretation; a character's belief is not automatically the world's objective truth. These are research findings, not accepted Open Legend designs.
 
 ## 1. The central design achievement
 
@@ -237,7 +237,7 @@ Ranni deserves particular care. Frontline Gaming Japan's comparison argues that 
 
 ## 5. Quest case studies: what the player actually does
 
-The following are designed-path studies, not a guarantee that every possible order, aggression state or patch-specific edge case is covered. Each separates the gameplay requirement from its emotional interpretation. Guides sometimes overstate optional encounters as mandatory, so only the dependency relevant to the case is asserted. Exact item names identify the studied game; they are not proposed OpenLegend content.
+The following are designed-path studies, not a guarantee that every possible order, aggression state or patch-specific edge case is covered. Each separates the gameplay requirement from its emotional interpretation. Guides sometimes overstate optional encounters as mandatory, so only the dependency relevant to the case is asserted. Exact item names identify the studied game; they are not proposed Open Legend content.
 
 ### 5.1 Worked interaction 4: Ranni turns an optional relationship into an alternate campaign
 
@@ -317,7 +317,7 @@ Trina's position is not merely that Miquella should lose. Her dialogue describes
 
 **Synthesis from the quest studies:** these characters have strong identities, fixed loyalties, staged moves, dialogue conditions, aggression states, rewards and some branching outcomes. They can act against the player's preference and can be encountered in different orders. None of that establishes an unrestricted simulation of work, family formation, trade, political succession or daily life. The documented quests are authored sequences whose visible transitions depend on specific player actions and progression conditions.
 
-That boundary matters for OpenLegend research. Emotional independence can arise from a character whose desire is clear and whose outcome the player cannot simply optimize. It does not require autonomous reasoning about every possible event. Conversely, a script that makes a character vanish between fixed points is not proof of the kind of continuously legible independent life OpenLegend may want. The case supports strong character motives and meaningful consequences; it does not validate an entire people simulation.
+That boundary matters for Open Legend research. Emotional independence can arise from a character whose desire is clear and whose outcome the player cannot simply optimize. It does not require autonomous reasoning about every possible event. Conversely, a script that makes a character vanish between fixed points is not proof of the kind of continuously legible independent life Open Legend may want. The case supports strong character motives and meaningful consequences; it does not validate an entire people simulation.
 
 The player also has different relationships to information about characters. A remembered voice, a map name, an item description, a summons and a corpse each preserve something different. Patch 1.03's NPC map labels help recover where someone was encountered without becoming a full quest journal. [W11](#w11) **Interpretation:** this distinction is valuable. Remembering an established fact can support player agency without automatically revealing the next answer.
 

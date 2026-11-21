@@ -1,7 +1,7 @@
 ---
 name: openlegend-art
 description: >-
-  Run OpenLegend art requests through the Standard or Higgsfield flow: style, UI,
+  Run Open Legend art requests through the Standard or Higgsfield flow: style, UI,
   asset, character, scene, material and motion studies, production kits or explicit integration.
 ---
 

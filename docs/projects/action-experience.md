@@ -16,7 +16,7 @@
 
 ## Original problem and direction
 
-At the design baseline, an actor selected “hunt with knife,” but terminal feedback described equip/strike commands and their outcomes. It lost the activity's purpose and native approach steps. A flat list cannot adequately describe nested work, several targets, partial outcomes or relationships between produced resources. At that baseline, successful hunt → harvest → cook → eat choices did not create a reusable learned method. The implementation now records and learns these connections.
+At the design baseline, an actor selected “hunt with knife,” but terminal feedback described equip/strike commands and their outcomes. It lost the activity's purpose and native approach steps. A flat list cannot adequately describe nested work, several targets, partial outcomes or relationships between produced resources. At that baseline, successful hunt → harvest → cook → eat choices did not create a reusable learned activity. The implementation now records and learns these connections.
 
 Choosing well also requires more than a clear action name or complete weapon statistics. The context must connect the actor's needs, goals and commitments to known targets, requirements, costs, possible consequences and uncertainty. For a sequence, it must retain later requirements and resource conflicts even when the first action is available. The [choice-information contract](action-experience-tech-design.md#cognitive-information-for-action-choice) composes existing actor context and family facts without choosing the character's goal or prescribing an action.
 
@@ -38,7 +38,7 @@ The implementation-readiness review covers this entire package and its linked AC
 
 ## Delivery sequence
 
-1. **Truthful action records and informed choices:** preserve selected meaning and committed outcomes; implement nested/scoped projections and relevant single-action context through existing owners. Define the shared decision-information contract before learned-method preparation.
+1. **Truthful action records and informed choices:** preserve selected meaning and committed outcomes; implement nested/scoped projections and relevant single-action context through existing owners. Define the shared decision-information contract before learned activity preparation.
 2. **Connected evidence:** explicit multi-output/resource/evidence links and bounded incremental candidate construction.
 3. **Learning and reuse:** idle typed assessment, shared structural deduplication, actor-owned acquisition and contextual retrieval with whole-sequence requirements/consequences.
 4. **Chosen method execution:** existing AC/AG composition, current remaining-work context, guarded continuation and interruptible repetition.
@@ -52,7 +52,7 @@ The [tracker](../maintainers/action-experience.md) owns detailed work, dependenc
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
 | Before coding each affected slice          | Finalize its typed contracts, current-format storage shape, AC descriptor adapters, role/output bindings and required supported operators; re-estimate scope against the current code | AE01–AE04/AE06/AE09, existing AC/AG/SL owners |
 | Before enabling new preparation or storage | Select finite measured request/traversal/queue/retention/admission envelopes and verify overflow/recovery; existing small plan limits do not bound the new stores                     | AEL01–AEL08 and their named AE owners         |
-| Before enabling learned-method use         | Verify actor-scoped evidence, atomic retain, duplicate suppression, invalidation/revocation, current privacy overlays after restore and native continuation through actual outputs    | AE06–AE10                                     |
+| Before enabling learned activity use       | Verify actor-scoped evidence, atomic retain, duplicate suppression, invalidation/revocation, current privacy overlays after restore and native continuation through actual outputs    | AE06–AE10                                     |
 | Before claiming behavioral completion      | Run the integrated AXE cases through downstream callers and budgeted model trials; fixtures establish mechanics, not model comprehension or reliable behavior                         | AE10                                          |
 
 The initial contract uses exact compatible structural matching, evidence-backed tentative retention and eligible idle learning. Approximate semantic matching, automatic numerical confidence promotion/decay, and learning during an ongoing native wait are later policy extensions, not hidden prerequisites or enabled defaults. [D67](../maintainers/decisions/characters-and-evidence.md#d67--action-records-and-learned-activities) tracks those future choices. [AEL](../limits/action-experience.md) now records selected budgets; the verification report is the source for measured runtime results.

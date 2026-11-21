@@ -1,7 +1,7 @@
 ---
 name: openlegend-prioritize
 description: >-
-  Choose, compare or reprioritize future OpenLegend work around worthwhile player experiences
+  Choose, compare or reprioritize future Open Legend work around worthwhile player experiences
   and the foundations that enable or protect them; not routine execution of an agreed task.
 ---
 
@@ -17,7 +17,7 @@ Apply [the developer-question rule](../../../AGENTS.md#resolve-developer-questio
 
 1. **Begin with an experience somebody would value.** Name who benefits and what becomes worth doing, watching or creating: discovering a possibility, inventing something useful, getting to know a person, making a place, overcoming an enemy, gaining power, or enjoying the world. Then identify the behavior and mechanics it needs. A detailed schedule, realistic resource loop, flexible engine or new action does not justify itself. Include players who enjoy observing independent characters and creators who want to make a playable reality, not only direct character control.
 
-2. **Reduce breadth while preserving the selected experience's promise.** Keep the relevant part of OpenLegend's premise real: useful invention, independent characters, persistent consequences and player initiative. One interesting resident and an actually invented useful object may suffice. Do not replace promised live invention or free choice with a hidden canned demonstration to claim completion. Each increment need not exercise every promise at once. A deliberately authored world or a reliable known recipe can be appropriate; it is not evidence of invention or independent choice.
+2. **Reduce breadth while preserving the selected experience's promise.** Keep the relevant part of Open Legend's premise real: useful invention, independent characters, persistent consequences and player initiative. One interesting resident and an actually invented useful object may suffice. Do not replace promised live invention or free choice with a hidden canned demonstration to claim completion. Each increment need not exercise every promise at once. A deliberately authored world or a reliable known recipe can be appropriate; it is not evidence of invention or independent choice.
 
 3. **Deliver a complete worthwhile activity before expanding supporting systems.** Describe how someone enters it, makes a meaningful choice, reaches a result and experiences that result. Find the smallest end-to-end version with a payoff. Separate genuine dependencies from convenient implementation order: ordinary conversation need not wait for crowds, useful follow-through need not wait for unattended communities, and competence need not wait for generalized dice. Preserve needed integrity and engine/world seams without making a speculative framework a prerequisite. Prior document order, checklist position, sunk effort and proximity to recently edited code are not independent reasons for priority.
 

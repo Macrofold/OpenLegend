@@ -80,7 +80,7 @@ These existing situations illustrate combinations; their complete scenarios and 
 
 ## Lessons from stored research
 
-These are design interpretations from existing repository studies, not fresh external verification, gameplay observations or measured effects in OpenLegend.
+These are design interpretations from existing repository studies, not fresh external verification, gameplay observations or measured effects in Open Legend.
 
 | Stored source                                                                                                                                                                                            | Useful lesson                                                                                                                                                | Application in this slice                                                                                                                                                               |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

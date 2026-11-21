@@ -1,6 +1,6 @@
 # Invention foundation
 
-**Status: accepted target design.** This is the entry point and canonical coordination contract for OpenLegend invention projects, editable revisions, mechanical acceptance, staged presentation, and later redesign. It defines required behavior as the implementation expands; it is not a claim that every described capability exists. Current execution belongs to [Architecture](architecture.md#shared-invention-workflow), evidence to [Verification](verification.md), and delivery to [INV](maintainers/inventions-and-world-evolution.md). This specification does not enable paid work, change deployed locks, admit G2 execution, or require a replacement engine.
+**Status: accepted target design.** This is the entry point and canonical coordination contract for Open Legend invention projects, editable revisions, mechanical acceptance, staged presentation, and later redesign. It defines required behavior as the implementation expands; it is not a claim that every described capability exists. Current execution belongs to [Architecture](architecture.md#shared-invention-workflow), evidence to [Verification](verification.md), and delivery to [INV](maintainers/inventions-and-world-evolution.md). This specification does not enable paid work, change deployed locks, admit G2 execution, or require a replacement engine.
 
 ## Current recipe-family slice
 
@@ -231,7 +231,7 @@ Expose a correlated view of request, selected revision, checks, generation attem
 
 Measure time to a usable result, time to improved art, spend per usable invention, revision/repair counts, false rejection and unnecessary escalation, cache reuse, later defects, and incremental runtime cost. Report fixture evidence, measured provider behavior, and design expectations separately.
 
-Vendor services may accelerate text generation, classification, images, rigs, or validation tooling, but they remain replaceable workers. OpenLegend owns meaning, permissions, canonical drafts, mechanical acceptance, manifests, state, and funding. A character platform must not become a second memory or world authority; an asset API must not decide collision or anatomy. No vendor-specific orchestration object belongs in the domain save.
+Vendor services may accelerate text generation, classification, images, rigs, or validation tooling, but they remain replaceable workers. Open Legend owns meaning, permissions, canonical drafts, mechanical acceptance, manifests, state, and funding. A character platform must not become a second memory or world authority; an asset API must not decide collision or anatomy. No vendor-specific orchestration object belongs in the domain save.
 
 The default art strategy is exact authorized reuse, trusted composition and immediate state effects, then optional paid generation. Authoring software and offline asset tools may supply reusable families; the runtime must still support inventions created during play. Provider rankings and price lists belong in research/configuration, not permanent correctness rules.
 

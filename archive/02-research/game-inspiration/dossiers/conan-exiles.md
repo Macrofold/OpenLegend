@@ -1,6 +1,6 @@
 # G136 — Conan Exiles
 
-**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 Conan Exiles is a useful reference because it layers a traditional survival-crafting chassis with **character builds, slavery/follower labor, religion, sorcery, dungeons, siege warfare and authored sword-and-sorcery exploration**. It is less systemic than Rust about social betrayal and less physically simulated than 7 Days to Die, but it asks a different question: how much RPG structure can a survival sandbox absorb before it stops feeling like a sandbox?
 
@@ -421,7 +421,7 @@ There is an authored escape/endgame route through the Exiled Lands story, but ma
 **Actions:** bring follower to base and assign/use their specialization.  
 **Interaction:** an NPC becomes production infrastructure.  
 **Result:** human acquisition changes manufacturing capability.  
-**Limit:** this is thematically coercive and mechanically controversial; an OpenLegend analogue should not assume slavery is a neutral reusable pattern.
+**Limit:** this is thematically coercive and mechanically controversial; an Open Legend analogue should not assume slavery is a neutral reusable pattern.
 
 ### Case 3 — living settlements make production visible
 
@@ -782,7 +782,7 @@ These are self-selected current testimonies. They are useful for modern friction
 
 The current product is substantially better supported and broader than launch reviews describe, but the same systems that create longevity also increase compatibility/server/UI complexity.
 
-## R13 — transferable inspiration and limits for OpenLegend
+## R13 — transferable inspiration and limits for Open Legend
 
 ### 1. Survival sandboxes can support real RPG builds
 
@@ -815,7 +815,7 @@ Purge mechanics turn accumulated settlement value into a reason the world attack
 
 Enhanced’s merged Siptah/Exiled Lands model lets one character inhabit multiple authored spaces.
 
-**OpenLegend relevance:** world packages could be connected without pretending all rules are universal.  
+**Open Legend relevance:** world packages could be connected without pretending all rules are universal.  
 **Limit:** migration/persistence semantics must be explicit.
 
 ### 6. Persistent followers make a base legible
@@ -899,7 +899,7 @@ The seven-file packet predates G136. This dossier establishes the full per-game 
 3. Read 2.2.0 to understand that massive player construction became a networking architecture problem, not merely a graphics issue.
 4. Compare PC Gamer/GameSpot/Wccftech: they agree on breadth but differ sharply on whether the grind/roughness is worth it.
 5. Sample September 2026 Steam reviews to see modern praise for Enhanced/mods and current Bazaar/update friction.
-6. For OpenLegend inspiration, focus on follower roles, corruption tradeoffs, connected worlds and settlement pressure rather than the literal slavery framing.
+6. For Open Legend inspiration, focus on follower roles, corruption tradeoffs, connected worlds and settlement pressure rather than the literal slavery framing.
 
 No video scene or timestamp is represented as watched in this pass.
 

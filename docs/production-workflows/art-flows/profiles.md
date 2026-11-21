@@ -68,7 +68,7 @@ is an example, not the permanent visual direction.
 Produce a few coherent directions using the same representative subjects and viewing
 conditions. State shape, proportion, palette/value, material, edge and lighting rules;
 show one meaningful variation that tests consistency. Explain the intended emotional
-effect and fit with OpenLegend's current direction.
+effect and fit with Open Legend's current direction.
 
 Avoid replacing practical comparison with unrelated polished hero images. A concept may
 be painterly even when its eventual world representation differs. Production requires

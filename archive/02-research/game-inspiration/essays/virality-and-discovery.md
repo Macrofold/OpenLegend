@@ -4,7 +4,7 @@
 
 Different games naturally produce different objects of attention:
 
-| Shareable unit | Illustrative cases | OpenLegend possibility |
+| Shareable unit | Illustrative cases | Open Legend possibility |
 |---|---|---|
 | An impressive construction | Minecraft, Satisfactory | A visible, working invention or transformed settlement |
 | A surprising causal story | RimWorld, Dwarf Fortress, Kenshi | A promise, unexpected collaboration, rescue, or invention backfire |
@@ -37,7 +37,7 @@ Do not optimize only the first step. An exceptional demo that cannot be reproduc
 
 A recognizable frame lowers the explanation cost: build a shelter, rescue a friend, return with supplies, fulfill a promise. The unusual interaction supplies the surprise.
 
-For OpenLegend, the novel part should often be **how the world and characters respond**, not a completely unfamiliar interface or ten-minute explanation of the ontology. A familiar premise gives the player enough knowledge to recognize why a result is remarkable.
+For Open Legend, the novel part should often be **how the world and characters respond**, not a completely unfamiliar interface or ten-minute explanation of the ontology. A familiar premise gives the player enough knowledge to recognize why a result is remarkable.
 
 This is a design recommendation, not proof that familiar premises always outperform novel ones. Qud is an important counterweight: strong strangeness can be part of the appeal when the world supports it coherently. [QU1](../references/sources-01.md#source-qu1)
 
@@ -55,13 +55,13 @@ Do not collapse these into “network effects”:
 
 Roblox’s discovery documentation illustrates the importance of player engagement and repeated participation. Dreams’ support decision shows that a valued creation environment alone does not guarantee an indefinitely sustainable platform. [RB2](../references/sources-01.md#source-rb2) [DR1](../references/sources-01.md#source-dr1)
 
-OpenLegend should prove a small reuse loop locally before building marketplace economics. A second creator successfully modifying and using a mechanic is better evidence than a large catalogue of generated artifacts nobody runs.
+Open Legend should prove a small reuse loop locally before building marketplace economics. A second creator successfully modifying and using a mechanic is better evidence than a large catalogue of generated artifacts nobody runs.
 
 ### 7.5 A spike can expose the product’s weak point
 
 Innersloth’s 2020 announcement described server work consuming development time during a large influx. Worlds Adrift’s founder described a different trap: limiting sales to protect infrastructure also constrained buzz. These are specific accounts, not universal growth laws. [AM1](../references/sources-01.md#source-am1) [WA1](../references/sources-01.md#source-wa1)
 
-The actionable lesson is to know the supported launch envelope. OpenLegend should have a clear single-world experience and operating limits before promising massive shared populations. Fast code generation does not remove support, reliability, moderation, or onboarding obligations.
+The actionable lesson is to know the supported launch envelope. Open Legend should have a clear single-world experience and operating limits before promising massive shared populations. Fast code generation does not remove support, reliability, moderation, or onboarding obligations.
 
 ### Delayed discovery is possible, but not a strategy to assume
 
@@ -71,7 +71,7 @@ Among Us demonstrates that a product can find a much larger audience well after 
 
 A sustainable specialist audience may be a better initial target than a cultural phenomenon. A premium single-player game, a cooperative world service, and a creator marketplace have different cost structures and acquisition requirements. Do not require Minecraft-scale discovery or Roblox-scale participation for the first business model to function.
 
-For OpenLegend, avoid designing an operating model that needs a breakout before the core experience can improve. That is a strategic recommendation informed by the cautionary cases, not a financial forecast.
+For Open Legend, avoid designing an operating model that needs a breakout before the core experience can improve. That is a strategic recommendation informed by the cautionary cases, not a financial forecast.
 
 ---
 
@@ -79,7 +79,7 @@ For OpenLegend, avoid designing an operating model that needs a breakout before 
 
 The table separates observed evidence from proposed mechanisms. A product can use several mechanisms, and the public record rarely isolates their individual financial contribution.
 
-| Mechanism | Strong comparison | Evidence or interpretation | OpenLegend application |
+| Mechanism | Strong comparison | Evidence or interpretation | Open Legend application |
 |---|---|---|---|
 | A personally made artifact | Minecraft / Terraria | Large documented creator culture; reviews describe return projects and friends | A working invention or changed settlement, understandable without an engine lecture |
 | A retellable consequence | RimWorld / Zomboid | Player stories center on characters, mistakes and practical chains | Show what happened and why; do not make bugs the source of surprise |
@@ -96,7 +96,7 @@ Sources: [MC3](../references/sources-01.md#source-mc3) [REV-TE](../references/so
 
 A premium game can create value, reach a satisfying ending and remain successful while its concurrency declines. A new patch can bring back groups without converting all of them into daily users. A live-service game can have intentionally cyclical participation. A platform can transfer attention among experiences while one title falls.
 
-For OpenLegend, decide what return means. Is the player returning to a person and place, beginning a new scenario, meeting friends for an occasion, or trying a new reusable construct? These can coexist, but each needs a clear promise. Do not optimize a daily-attendance metric if the best intended experience is an occasional meaningful expedition.
+For Open Legend, decide what return means. Is the player returning to a person and place, beginning a new scenario, meeting friends for an occasion, or trying a new reusable construct? These can coexist, but each needs a clear promise. Do not optimize a daily-attendance metric if the best intended experience is an occasional meaningful expedition.
 
 ### 7.9 A more honest acquisition test
 

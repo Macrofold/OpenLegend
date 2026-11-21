@@ -26,11 +26,11 @@ Thus “renderer-driven” does not mean texture-free, and “textured” does n
 
 The supplied [scene-building transcript](transcripts/t3ssel8r-scene-user-transcript.txt), associated with [Creating a Scene for my 3D Pixel Art Game](https://www.youtube.com/watch?v=ERA7-I5nPAU), describes simple Blender forms, procedural displacement, remeshing/decimation, edited foliage normals, and importing the result into Unity. Terrain and leaf/grass placement are then configured in the engine. This directly supports a geometry/material/rendering workflow. It does not establish that every asset is texture-free or disclose every shader.
 
-For [Dynamic 3D Pixel Art Particle Lighting](https://www.youtube.com/watch?v=0xJqzUHJ2fI), the creator's published description says a light-volume pass reuses depth and normal information to approximate deferred lighting without redrawing geometry for each light. It also describes optional screen-space contact shadows by marching through depth. That supports many small light effects as a research direction; the description supplies no transferable OpenLegend light-count or frame-time guarantee.
+For [Dynamic 3D Pixel Art Particle Lighting](https://www.youtube.com/watch?v=0xJqzUHJ2fI), the creator's published description says a light-volume pass reuses depth and normal information to approximate deferred lighting without redrawing geometry for each light. It also describes optional screen-space contact shadows by marching through depth. That supports many small light effects as a research direction; the description supplies no transferable Open Legend light-count or frame-time guarantee.
 
 The creator's public comments explain [orthographic camera snapping](https://www.reddit.com/r/Unity3D/comments/wu5cxh/pixel_perfect_camera_in_3d_my_question_is_in_the/), [small perturbations and softened light thresholds](https://www.reddit.com/r/IndieGaming/comments/zzvuy3/ruins_daynight/), and [outlines based on predicted neighboring depth](https://www.reddit.com/r/PixelArt/comments/l3oozg/sunbeams_after_rain/). These are t3ssel8r's comments within the linked discussions; the other posters' implementations are separate. The complete renderer is not published by these comments. Keep its exact implementation separate from our proposed reconstruction.
 
-## A proposed OpenLegend rendering sequence
+## A proposed Open Legend rendering sequence
 
 This diagram describes responsibilities to test, not a mandatory new rendering framework. A pass is one stage that draws or computes an image used by later stages.
 
@@ -66,7 +66,7 @@ The attached outline transcript is **Robin Seibold's [Outlines — Devlog 2](htt
 
 The supplied tutorial describes a normal-image pass followed by depth/normal edge detection, object masks, angle-dependent depth thresholds and a pass for objects that block outlines. Its important lesson is that a masked character must not draw its outline through an occluding object. Avoid reading and writing the same texture in an unsupported feedback loop; use separate targets when the graphics API requires them.
 
-The repository also documents limitations involving displaced geometry and antialiasing. For OpenLegend, the normal/depth pass must evaluate the same skinning, grass motion, cutout texture and cloth pose as the color pass. Otherwise the outline will describe an earlier or undeformed surface. This agreement matters more than selecting a fashionable edge detector.
+The repository also documents limitations involving displaced geometry and antialiasing. For Open Legend, the normal/depth pass must evaluate the same skinning, grass motion, cutout texture and cloth pose as the color pass. Otherwise the outline will describe an earlier or undeformed surface. This agreement matters more than selecting a fashionable edge detector.
 
 Use outlines selectively. A dark rim on every grass blade can make the scene excessively busy, and a thick face outline can consume the space reserved for eyes. Outline visibility must follow the same permitted scene and reveal rules as ordinary drawing.
 
@@ -74,7 +74,7 @@ Use outlines selectively. A dark rim on every grass blade can make the scene exc
 
 The supplied [Red Giraffe camera transcript](transcripts/red-giraffe-camera-user-transcript.txt) describes rounding the render camera to the coarse grid, preserving the rounding error, then offsetting the enlarged result to recover smooth translation. The creator explicitly acknowledges remaining rotation artifacts and treats blur, dithering and resolution changes as masking strategies. This is not a universal shimmer solution.
 
-For a fixed-orientation orthographic camera, the [earlier camera explanation](rendering-techniques.md#camera-snapping-and-compensation) remains useful. Perspective motion and arbitrary rotation change sample coverage differently across the scene. Evaluate [texel splatting](texel-splatting.md) as a distinct sampling experiment. Do not silently restrict OpenLegend's camera to make a shader look stable.
+For a fixed-orientation orthographic camera, the [earlier camera explanation](rendering-techniques.md#camera-snapping-and-compensation) remains useful. Perspective motion and arbitrary rotation change sample coverage differently across the scene. Evaluate [texel splatting](texel-splatting.md) as a distinct sampling experiment. Do not silently restrict Open Legend's camera to make a shader look stable.
 
 When diagnosing shimmer, freeze one cause at a time: camera, pose, light and procedural texture motion. Moving shadows or intentional light-band transitions are different from a stationary material's samples crawling under the camera. The user identified a relevant symptom; this research has not reproduced the mercenary defect or proved that one algorithm repairs it.
 
@@ -89,9 +89,9 @@ The supplied [grass transcript](transcripts/dylearn-grass-user-transcript.txt) a
 - Bend plants around nearby characters and use slightly softened shading thresholds to avoid distracting band popping.
 - Project a cloud pattern along the light direction to a chosen cloud height, rather than requiring a giant shadow-casting card above the scene.
 
-**OpenLegend adaptation:** start with instanced clusters and shared wind/color inputs. Keep the wind tied to the permitted world presentation. The demonstration's fixed list of 64 characters is an implementation choice, not our population limit. Its per-blade interaction loop can grow with blades × submitted characters. Select nearby relevant contributors per patch, or compare a bounded interaction field when measured density justifies it. Do not scan every world character for every blade.
+**Open Legend adaptation:** start with instanced clusters and shared wind/color inputs. Keep the wind tied to the permitted world presentation. The demonstration's fixed list of 64 characters is an implementation choice, not our population limit. Its per-blade interaction loop can grow with blades × submitted characters. Select nearby relevant contributors per patch, or compare a bounded interaction field when measured density justifies it. Do not scan every world character for every blade.
 
-Cloud projection needs deliberate behavior when the light is almost parallel to the cloud plane, where the intersection calculation becomes poorly conditioned. Phase seeds should remain stable when instances are reordered. Keep a billboard's base planted while its top moves, and inspect pitch/rotation rather than judging one camera view. These are proposed adaptation checks, not defects measured in OpenLegend.
+Cloud projection needs deliberate behavior when the light is almost parallel to the cloud plane, where the intersection calculation becomes poorly conditioned. Phase seeds should remain stable when instances are reordered. Keep a billboard's base planted while its top moves, and inspect pitch/rotation rather than judging one camera view. These are proposed adaptation checks, not defects measured in Open Legend.
 
 The source's use of Godot's `LIGHT_VERTEX` replaces an older custom-engine approach. In PlayCanvas the equivalent result needs explicit control of the material's lighting/shadow sample position; a renamed variable alone is not a port. [Tool/license notes](tool-and-license-notes.md) distinguish the code from the artwork.
 

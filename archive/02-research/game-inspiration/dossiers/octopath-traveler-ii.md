@@ -1,6 +1,6 @@
 # G108 — Octopath Traveler II
 
-**Full research pass, September 26, 2026.** Standalone sequel set in Solistia, not the original's Orsterra or the mobile Champions of the Continent. This is an inspiration dossier, not an approved OpenLegend feature specification. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Original game](octopath-traveler.md).
+**Full research pass, September 26, 2026.** Standalone sequel set in Solistia, not the original's Orsterra or the mobile Champions of the Continent. This is an inspiration dossier, not an approved Open Legend feature specification. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Original game](octopath-traveler.md).
 
 Five substantive written reviews were read, alongside primary character/system descriptions, developer testimony, specialist guides and contrasting direct players. The September 27 audit recovered Steam's indexed English **Most Helpful (All Time)** review surface plus current negative-review bodies, so this dossier now includes ranked positive testimony and contrasting negative player accounts; dynamic rankings are not prevalence estimates. Worked interactions are constructed from documented rules, not firsthand playtests.
 
@@ -175,7 +175,7 @@ Another player's objection is about labor rather than power: **SacredSacrifice**
 
 **Give purchases qualitative consequences.** A boat, a restored tool or a recording device can change the set of things the player can do. This is often more memorable than a percentage upgrade. It still needs clear costs and routes back from a bad investment.
 
-These are comparative design hypotheses, not instructions to copy characters, music, protected names or a complete ruleset, and not approval to implement anything in OpenLegend.
+These are comparative design hypotheses, not instructions to copy characters, music, protected names or a complete ruleset, and not approval to implement anything in Open Legend.
 
 ## Annotated evidence and viewing routes
 

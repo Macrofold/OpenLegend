@@ -2,9 +2,9 @@
 
 **Evidence.** Scribblenauts lets players introduce objects and modify them through words/adjectives. A Nintendo World Report review of the later Mega Pack found considerable charm but also low challenge, control friction, and some repetitive or incongruous generated puzzles. [SC1](../references/sources-01.md#source-sc1) [SC2](../references/sources-01.md#source-sc2)
 
-**Interpretation.** This is among the closest conceptual precedents for OpenLegend’s language-to-mechanics promise. The delight is “the game understood my idea.” Sustained interest requires a second question: “Was choosing and using that idea interesting?” A broad vocabulary can conceal a narrow set of strategically useful answers.
+**Interpretation.** This is among the closest conceptual precedents for Open Legend’s language-to-mechanics promise. The delight is “the game understood my idea.” Sustained interest requires a second question: “Was choosing and using that idea interesting?” A broad vocabulary can conceal a narrow set of strategically useful answers.
 
-**OpenLegend implication.** Guard against the universal solution. If every problem can be solved by asking for an overpowered object or the world agent’s optimal plan, creativity becomes a retrieval task. Give supported approaches different costs, limitations, side effects, and social consequences. Let constraints be legible rather than arbitrary refusals.
+**Open Legend implication.** Guard against the universal solution. If every problem can be solved by asking for an overpowered object or the world agent’s optimal plan, creativity becomes a retrieval task. Give supported approaches different costs, limitations, side effects, and social consequences. Let constraints be legible rather than arbitrary refusals.
 
 **Interface lesson.** Lowering the conceptual barrier to invention is not enough if input, validation, correction, or execution is cumbersome. The player should see what was understood, what is supported, and what actually happened. A rejected action needs a useful explanation, not a silent no-op or a fabricated successful story.
 
@@ -36,7 +36,7 @@
 
 3. **Making toxic waste disappear is not always “cleaning it up”.** *Attributed player puzzle / solution.* A player asking about Capital City Runoff received an accepted solution to shoot the toxic barrels. A comment reports that using a black hole removed them but did not complete the objective. The mismatch illustrates a hidden success predicate, not a principled model of environmental cleanup. [FG-SC-P](../references/sources-04.md#source-fg-sc-p)
 
-**What to borrow for OpenLegend.** Your World Agent should explain supported effects and validation outcomes, not merely accept a plausible paraphrase. Make success predicates match the intended fiction where possible. Keep playful creator freedom distinct from embodied challenge, and do not let one universal generated solution erase every interesting choice.
+**What to borrow for Open Legend.** Your World Agent should explain supported effects and validation outcomes, not merely accept a plausible paraphrase. Make success predicates match the intended fiction where possible. Keep playful creator freedom distinct from embodied challenge, and do not let one universal generated solution erase every interesting choice.
 
 *Scope/evidence note:* Unlimited is the focus. The review also discusses Unmasked; its separate mission-generation complaints are not treated as Unlimited mechanics. No claim that Scribblenauts is an LLM-based game.
 <!-- END FIELDGUIDE ADDITION -->

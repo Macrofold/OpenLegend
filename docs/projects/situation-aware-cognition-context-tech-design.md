@@ -487,7 +487,7 @@ The same finalized model contract must reach direct OpenAI generation in `packag
 
 The package boundary already captures/freeze-validates a schema for local decoding. Retain those exact schema bytes across the provider wait and reuse them at final parse; a caller mutation cannot change what was requested. Diagnostics may project a compact summary, but an authorized exact request inspection must correspond to what was actually dispatched. Trace coverage must distinguish a prepared request, an accepted remote request, final output validation and committed operations.
 
-The [dated provider research](situation-aware-cognition-context-evidence-and-decisions.md) supports nested closed alternatives, describes schema/tool input overhead and explains exact-prefix caching. It does not establish compatibility or savings for the configured OpenLegend route; actual adapter qualification remains required before activation.
+The [dated provider research](situation-aware-cognition-context-evidence-and-decisions.md) supports nested closed alternatives, describes schema/tool input overhead and explains exact-prefix caching. It does not establish compatibility or savings for the configured Open Legend route; actual adapter qualification remains required before activation.
 
 ## 12. Freshness, authority, publication and persistence
 
@@ -590,7 +590,7 @@ Address these concrete current growth points in their existing owners:
 - Reuse target-independent native capability/equipment/recovery checks before evaluating remaining tool/target combinations. Distinct purposes can reuse one physical check but retain distinct semantic identities.
 - Select complete source keys/sizes before cold SQL hydration; batch related permitted reads in one compatible snapshot and verify the actual database plan. A `LIMIT` on returned rows is not proof that the database did bounded work.
 - Compile immutable installed request descriptions/schema fragments once per exact definition pin, then bind only the actor-specific references/choices needed now. Do not recompile a full family for each item or actor if its immutable meaning is identical.
-- Keep public supports and learned methods paged/selected through existing query owners; a broad catalog's public status is not a reason to serialize it for every greeting.
+- Keep public supports and learned activities paged/selected through existing query owners; a broad catalog's public status is not a reason to serialize it for every greeting.
 - Diagnostics use counters/reason enums and bounded selected manifests first. Full private text is loaded only for an authorized explicit inspection; context logging does not create a second full transcript store per poll.
 
 Use request-scoped reuse by default. A longer-lived cache needs an existing owner, explicit dependencies, bounded retention and disposal on source correction, grant/control changes and restore. Do not store another actor's private prepared text under a shared world-only key. Dynamic schema compilation caches, if justified, key the exact immutable schema digest and dialect, not merely its schema name. Missing invalidation coverage requires rebuilding, not a speculative cache.

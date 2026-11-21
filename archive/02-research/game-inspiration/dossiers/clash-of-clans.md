@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md#october-17-mobile-successes-and-unsuccessful-services) · [Research status](../research-progress-mobile-2026-10-17.md) · [Research requirements](../research-requirements.md)
 
-**Research date: October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no OpenLegend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
+**Research date: October 17, 2026.** This is an additive reference study of the selected mobile game and its explicitly identified platform/edition counterparts. It combines documented mechanics, concrete constructed situations, original commercial evidence, production context and independent reception. It grants no Open Legend implementation or monetization decision. Detailed access and version limitations remain beside the claims.
 
 ## Game, mechanics and player-created content
 
@@ -142,7 +142,7 @@ Dragon Duke's March 2026 escape illustrates how a character introduction can als
 
 **Seasonal story spoiler:** June 2026's Anime Fury sequel cast the Duke as a corrupted opponent whom the other heroes confront. Ten Japanese manga artists contributed ten differently styled chapters, released daily and readable in-game. Matching hero skins, scenery and limited activities connected that story to the month's play. This is substantive authored transmedia inside the client; it does not establish that every village action advances a branching plot or that the event's alternate costumes replace the permanent setting's history. [Supercell, “Anime Fury Returns”, June 1, 2026](https://supercell.com/en/games/clashofclans/blog/news/anime-fury-returns-season-2-hits-different/).
 
-**Interpretation:** much of the enduring narrative is the player's own village and clan history: the layout that finally defended well, the donated army that enabled an attack, or the war decided by a last attempt. Authored heroes and seasonal stories can give those activities emotional texture without requiring a large quest narrative. A transferable research question for OpenLegend is whether familiar, useful characters acquire meaning through repeated consequential interaction; a decorative backstory by itself would not test that proposition.
+**Interpretation:** much of the enduring narrative is the player's own village and clan history: the layout that finally defended well, the donated army that enabled an attack, or the war decided by a last attempt. Authored heroes and seasonal stories can give those activities emotional texture without requiring a large quest narrative. A transferable research question for Open Legend is whether familiar, useful characters acquire meaning through repeated consequential interaction; a decorative backstory by itself would not test that proposition.
 
 ### Native layout creation, testing and sharing
 
@@ -298,11 +298,11 @@ These accounts distinguish continued play, returning after absence, and reported
 
 Rich praises vibrant visuals and quirky warriors viewed close up; these are specifically 2012 observations. Willington describes a pleasing isometric presentation with limited animation frames, but also camera pans mistaken for building drags and disruptive loading when returning home. These are historical touch-interface criticisms, not a present-device benchmark. Morris describes explosions, cries, and brief ghost/tombstone defeat imagery without blood. That documents stylized battle feedback; no soundtrack quality or modern audio mix was assessed firsthand here. The reading evidence suggests that visual charm and battlefield readability deserve separate evaluation.
 
-### Research interpretation and OpenLegend hypotheses
+### Research interpretation and Open Legend hypotheses
 
 The sources suggest three distinct reasons to return: finish something personally arranged, apply a lesson from a raid, and participate in a functioning clan. They also identify different failure points: a wait blocks an intended experiment, a control or reliability problem obscures the result, or a social group cannot sustain itself. A delay can suit one player's available time while irritating another. Neither reaction establishes that waiting is intrinsically enjoyable.
 
-For OpenLegend, investigate whether a persistent settlement can make repeated encounters feel consequential without erasing accumulated work after failure; whether intelligible defeat feedback produces a self-chosen next attempt; and whether social coordination remains rewarding when a player returns after an absence. These are hypotheses grounded in the accounts above, not instructions to copy timers, premium acceleration, or clan obligations. Distinguish wanting to improve from returning merely because resources, rankings, or teammates might suffer.
+For Open Legend, investigate whether a persistent settlement can make repeated encounters feel consequential without erasing accumulated work after failure; whether intelligible defeat feedback produces a self-chosen next attempt; and whether social coordination remains rewarding when a player returns after an absence. These are hypotheses grounded in the accounts above, not instructions to copy timers, premium acceleration, or clan obligations. Distinguish wanting to improve from returning merely because resources, rankings, or teammates might suffer.
 
 ### Access limits and viewing routes
 

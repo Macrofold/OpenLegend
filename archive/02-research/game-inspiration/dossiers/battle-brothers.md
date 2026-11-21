@@ -1,6 +1,6 @@
 # G121 — Battle Brothers
 
-**Full R01–R15 research pass, including the economics, enjoyment, lore and creation amendment.** Research date: October 20, 2026; earlier dated review and version observations remain labeled. Canonical scope: [G121 in the roster](../research-roster.md); standards: [research requirements](../research-requirements.md) and [economics, engagement and creation](../research-economics-engagement-and-creation.md); earlier completion record: [research ledger](../research-progress.md). This is reference research, not an accepted OpenLegend design or implementation task. **Spoilers:** ancient-world history, religious conflict and named late-game encounters, without detailed legendary-battle solutions.
+**Full R01–R15 research pass, including the economics, enjoyment, lore and creation amendment.** Research date: October 20, 2026; earlier dated review and version observations remain labeled. Canonical scope: [G121 in the roster](../research-roster.md); standards: [research requirements](../research-requirements.md) and [economics, engagement and creation](../research-economics-engagement-and-creation.md); earlier completion record: [research ledger](../research-progress.md). This is reference research, not an accepted Open Legend design or implementation task. **Spoilers:** ancient-world history, religious conflict and named late-game encounters, without detailed legendary-battle solutions.
 
 ## R01 — Identity, editions and the player promise
 
@@ -271,7 +271,7 @@ The evidence distinguishes four issues: preference for open-ended company play; 
 
 ## R13 — Transferable inspiration and limits
 
-These are research interpretations, not accepted OpenLegend requirements.
+These are research interpretations, not accepted Open Legend requirements.
 
 **Make identity consequential before demanding affection.** A recruit's distinctive usefulness can become a history of reliance. Background, growth potential and visible contribution reinforce each other. The condition is continuity: repeated encounters must let a player recognize what this person did. The failure mode is replacing personality with an efficient stat spreadsheet. An alternative is a smaller authored cast with stronger explicit relationships.
 
@@ -285,13 +285,13 @@ These are research interpretations, not accepted OpenLegend requirements.
 
 **Do not borrow opaque onboarding as authenticity.** The review record gives substantial reason to separate depth from hidden controls and inadequately explained rules. Better previews, clearer feedback and accessible formation tools can preserve hard decisions while removing accidental confusion. These lessons are about systems and presentation, not permission to copy protected characters, art, music or fictional names.
 
-### What is most relevant to OpenLegend's character stories
+### What is most relevant to Open Legend's character stories
 
 The most promising research lesson is **continuity with changed options**. A person becomes recognizable through repeated contribution; an event changes what that person can do; the group must adapt while remembering the cause. Battle Brothers supplies evidence for this through injuries, chosen development and company survival. It does not demonstrate autonomous career discovery, natural-language personal memory, or unconstrained social evolution. [S08, S37, S38]
 
-**Constructed comparison, not an OpenLegend feature proposal:** keeping a damaged veteran useful in a different role can preserve both the remembered person and the consequence of the injury. If every impairment makes replacement strictly better, the rational roster decision may erase the very history the designer wanted to generate. If every injury secretly grants a superior build, suffering becomes an optimization resource. The research question is which meaningful choices remain after adversity, not how many permanent penalties can be attached to a character.
+**Constructed comparison, not an Open Legend feature proposal:** keeping a damaged veteran useful in a different role can preserve both the remembered person and the consequence of the injury. If every impairment makes replacement strictly better, the rational roster decision may erase the very history the designer wanted to generate. If every injury secretly grants a superior build, suffering becomes an optimization resource. The research question is which meaningful choices remain after adversity, not how many permanent penalties can be attached to a character.
 
-The transfer also depends on the game's social promise. Battle Brothers casts the player as an employer in a harsh mercenary economy; dismissing people is an expected action. A world centered on broader personal lives may need different reasons, responsibilities and activities to keep an injured person consequential. That is a conditional difference to investigate, not permission to impose this mercenary worldview on every OpenLegend world.
+The transfer also depends on the game's social promise. Battle Brothers casts the player as an employer in a harsh mercenary economy; dismissing people is an expected action. A world centered on broader personal lives may need different reasons, responsibilities and activities to keep an injured person consequential. That is a conditional difference to investigate, not permission to impose this mercenary worldview on every Open Legend world.
 
 ## R14 — Evidence, source register, viewing routes and preservation
 
@@ -411,7 +411,7 @@ These packages include executable game scripts. The inspected documentation does
 
 The Nexus permission fields for the inspected overhaul pages restrict unapproved reuploads, conversions and asset reuse; they also restrict specified paid uses. Repository access must not be mistaken for a permissive art/content license. Contributor agreements, mod-page permissions and original-game rights are separate. No verified creator payout, total donation income, subscription receipts or earnings distribution was found; download availability is not proof that contributors receive no money. The clearest documented incentives are improving the game to suit a design preference, enabling replay variety, collaboration and public credit. [S49–S54]
 
-**Conditional OpenLegend lesson:** a creator ecosystem needs more than an import button. These projects demonstrate demand for revising rules, presentation and progression together, but also the cost of dependency maintenance, conflicts, permissions and complete playtesting. Authoring tools can remove repetitive compilation/packaging work while leaving judgment, writing, balance and coherent consequences with creators. This is a research finding about responsibilities, not an instruction to adopt Battle Brothers' file-loading architecture or execute arbitrary player-supplied scripts.
+**Conditional Open Legend lesson:** a creator ecosystem needs more than an import button. These projects demonstrate demand for revising rules, presentation and progression together, but also the cost of dependency maintenance, conflicts, permissions and complete playtesting. Authoring tools can remove repetitive compilation/packaging work while leaving judgment, writing, balance and coherent consequences with creators. This is a research finding about responsibilities, not an instruction to adopt Battle Brothers' file-loading architecture or execute arbitrary player-supplied scripts.
 
 ### R15 coverage and policy boundary
 
@@ -423,8 +423,8 @@ The Nexus permission fields for the inspected overhaul pages restrict unapproved
 | Composition and durability      | [Compatibility](#compatibility-trust-ownership-and-incentives): version coupling, dependencies, save limits and documented failure boundaries.                                    |
 | Distribution and governance     | [Compatibility, trust and ownership](#compatibility-trust-ownership-and-incentives) and the discovery qualification below.                                                        |
 | Creator and platform incentives | [Incentives](#compatibility-trust-ownership-and-incentives): stated goals, public credit, permissions and unknown earnings.                                                       |
-| Transfer and limits             | [Conditional OpenLegend lesson](#compatibility-trust-ownership-and-incentives) and the current policy links below.                                                                |
+| Transfer and limits             | [Conditional Open Legend lesson](#compatibility-trust-ownership-and-incentives) and the current policy links below.                                                                |
 
 Nexus provides discovery, endorsements and Posts/Bugs routes, while author-maintained guides supply compatibility recommendations. Project-specific moderation decisions were not inspected. [S49, S52, S55]
 
-Any OpenLegend application remains governed by its [generated-content and authority boundaries](../../../../AGENTS.md#boundaries) and [development compatibility policy](../../../../AGENTS.md#development-save-policy). Another game's mod installation or save policy does not authorize changing these contracts.
+Any Open Legend application remains governed by its [generated-content and authority boundaries](../../../../AGENTS.md#boundaries) and [development compatibility policy](../../../../AGENTS.md#development-save-policy). Another game's mod installation or save policy does not authorize changing these contracts.

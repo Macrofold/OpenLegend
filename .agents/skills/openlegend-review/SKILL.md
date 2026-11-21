@@ -1,7 +1,7 @@
 ---
 name: openlegend-review
 description: >-
-  Thoroughly review and improve OpenLegend changes for correctness, performance, architecture,
+  Thoroughly review and improve Open Legend changes for correctness, performance, architecture,
   extensibility and UX; explicit findings-only/read-only requests prohibit edits.
 ---
 

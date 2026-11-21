@@ -1,7 +1,7 @@
 ---
 name: openlegend-guidance
 description: >-
-  Edit OpenLegend instructions, routing, compatibility adapters or the guidance checker while
+  Edit Open Legend instructions, routing, compatibility adapters or the guidance checker while
   preserving meaning, selective loading and one policy owner.
 ---
 

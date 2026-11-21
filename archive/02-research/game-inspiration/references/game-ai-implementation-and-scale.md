@@ -10,7 +10,7 @@ A useful comparison distinguishes **mechanical competence** at a chosen activity
 
 Priority trees, utility scoring, planning and learned policies answer different parts of the problem. Their developers generally still specify sensors, actions, world rules and some objective or selection structure. A planner can compose new sequences from authored actions; a neural policy can change associations without inventing new executable physics. “Hardcoded” is therefore too coarse to describe either the capability or the authoring burden.
 
-The comparison below attributes implementation only where the evidence supports it. The OpenLegend applications are our hypotheses, not claims made by the source games.
+The comparison below attributes implementation only where the evidence supports it. The Open Legend applications are our hypotheses, not claims made by the source games.
 
 <a id="rimworld"></a>
 ## 2. RimWorld: separate the activity from the occasion to choose it
@@ -48,7 +48,7 @@ Tarn Adams's 2018 development records describe emotions, recollection, memory fo
 
 The [dossier](../dossiers/dwarf-fortress.md) distinguishes local fortress activity, adventure and generated historical context. Those layers must not be collapsed into a claim that every historical person performs an equally detailed simulation at every moment.
 
-**Our lesson:** continuity can contribute more than frequent deliberation. A relevant experience should affect a later opportunity, while repetitive observations should not become independent corroboration. Precise event retention, a person's interpretation and a lasting personal change are different records. Do not prescribe a universal emotional response or copy a fixed numerical relationship model into OpenLegend merely because it is computationally convenient.
+**Our lesson:** continuity can contribute more than frequent deliberation. A relevant experience should affect a later opportunity, while repetitive observations should not become independent corroboration. Precise event retention, a person's interpretation and a lasting personal change are different records. Do not prescribe a universal emotional response or copy a fixed numerical relationship model into Open Legend merely because it is computationally convenient.
 
 <a id="rain-world"></a>
 ## 6. Rain World: small embodied concerns can create an ecosystem
@@ -103,7 +103,7 @@ These are scoped reassessments of the linked dossier sections, with new primary 
 | [Dragon's Dogma 2](../dossiers/dragons-dogma-2.md), Pawns, inclinations and experience | A companion's useful knowledge and action can matter beyond a biography. | Inclination policies and borrowed experience are not unrestricted learning or direct multiplayer; no new expansion/release claims. |
 | [Wildermyth](../dossiers/wildermyth.md), roles, relationships and Legacy | Authored scenes can bind to continuing individuals; changes in body and capability make history operational. | Conditional casting is not autonomous interpretation. Legacy preserves selected identity, not every prior world fact. |
 | [S.T.A.L.K.E.R. 2](../dossiers/stalker-2-heart-of-chornobyl.md), version/perception boundaries | A living-world promise must survive transitions between detailed encounters and broader activity. | The archived release history is not a freshly verified current A-Life algorithm or a guarantee that every promised system worked at launch. |
-| [Crusader Kings III](../dossiers/crusader-kings-iii.md), traits, stress, commitments and succession | People, obligations and social connections can be the durable unit of simulation; personality need not make contrary action physically impossible. | The game's stress/opinion rules are authored abstractions, not a psychological model OpenLegend must adopt. |
+| [Crusader Kings III](../dossiers/crusader-kings-iii.md), traits, stress, commitments and succession | People, obligations and social connections can be the durable unit of simulation; personality need not make contrary action physically impossible. | The game's stress/opinion rules are authored abstractions, not a psychological model Open Legend must adopt. |
 
 The wider library contains other relevant candidates, including authored RPG companions, strategy opponents, older Ultima/Elder Scrolls games and queued social simulations. Their coverage is not silently marked complete by this focused sample. The [inventory](../research-progress-intelligent-simulation-2026-10-14.md) distinguishes assessed evidence from remaining broad-library coverage.
 
@@ -124,11 +124,11 @@ The wider library contains other relevant candidates, including authored RPG com
 
 The first eight are unnumbered additions; Shadows of Doubt retains G159. Original Creatures is not a completion of the queued Creatures 3 or Docking Station research.
 
-## 11. What this changes about the OpenLegend hypothesis
+## 11. What this changes about the Open Legend hypothesis
 
 The strongest commonality is not “use a behavior tree” or “use a utility model.” It is a separation between selecting an activity, competently carrying it out, retaining consequences and noticing when the selection no longer suffices. Different games deliberately economize on different parts.
 
-For OpenLegend, retain broad interpretation and choice where personal meaning matters. Reduce repeated bookkeeping, repeated preparation and repeated authorization of unchanged means. A particular person should be able to adopt a routine without being reduced to it. A capability description should help discover possible action without deciding that it outranks a promise. A memory should carry consequences without becoming compulsory dramatic narration.
+For Open Legend, retain broad interpretation and choice where personal meaning matters. Reduce repeated bookkeeping, repeated preparation and repeated authorization of unchanged means. A particular person should be able to adopt a routine without being reduced to it. A capability description should help discover possible action without deciding that it outranks a promise. A memory should carry consequences without becoming compulsory dramatic narration.
 
 The main unresolved risk is semantic attention: a cheap observer may miss the quiet detail that changes everything for this person. Neither a large behavior library nor a frequent LLM loop automatically solves that. The [academic/industrial evidence](language-model-societies-and-simile.md) and [architecture study](efficient-individual-simulation.md) examine calibration, concurrency, fidelity and complete-episode evaluation.
 

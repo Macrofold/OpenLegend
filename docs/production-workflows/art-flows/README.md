@@ -84,7 +84,7 @@ viewing scale, constraints, references, required outputs, comparison conditions,
 completion. State routine assumptions and continue. Search for existing usable sources and
 narrow missing reference gaps; do not repeat broad research that the request already settles.
 
-Preserve OpenLegend's grounded proportions, material craft and emotional range where relevant.
+Preserve Open Legend's grounded proportions, material craft and emotional range where relevant.
 A painted concept or high-resolution UI border is not required to become pixelated merely
 because the world uses dimensional pixel rendering. Evaluate how it sits beside the world.
 A world style preference does not silently choose new UI ornament or typography.

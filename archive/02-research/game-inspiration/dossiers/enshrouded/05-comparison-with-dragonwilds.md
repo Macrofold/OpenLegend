@@ -1,6 +1,6 @@
 # Enshrouded and RuneScape: Dragonwilds — why similar activities feel different
 
-**Evidence checked October 26, 2026 UTC (October 25 in America/New_York).** Focused follow-up to the [Enshrouded dossier](../enshrouded.md) and [RuneScape: Dragonwilds dossier](../runescape-dragonwilds.md), especially the latter's §§17–18. The existing Dragonwilds dossier already includes a September 26 full-release research pass and mixed as well as favorable reception; this chapter supplements that work. This is comparative research and proposed OpenLegend learning, not an approved design. No firsthand playtest or retention study was performed.
+**Evidence checked October 26, 2026 UTC (October 25 in America/New_York).** Focused follow-up to the [Enshrouded dossier](../enshrouded.md) and [RuneScape: Dragonwilds dossier](../runescape-dragonwilds.md), especially the latter's §§17–18. The existing Dragonwilds dossier already includes a September 26 full-release research pass and mixed as well as favorable reception; this chapter supplements that work. This is comparative research and proposed Open Legend learning, not an approved design. No firsthand playtest or retention study was performed.
 
 ## 1. The useful finding is the disagreement over the value of the journey
 
@@ -57,7 +57,7 @@ Dragonwilds' practice-based progression can unlock actions that change how work 
 
 That benefit has limits. Faster collection can coexist with an increasing recipe bill, additional processing steps or a more expensive replenishment loop. It can improve the feel of individual actions while leaving the time before the next desired expedition unchanged. The important measure is the complete cycle: obtain spell inputs, travel, collect, carry, process, store and use. A spectacle that saves ten swings may still leave the player doing the same unwanted commute.
 
-For OpenLegend, distinguish three outcomes in testing:
+For Open Legend, distinguish three outcomes in testing:
 
 | Outcome              | What a player gains                          | Useful question                                                   |
 | -------------------- | -------------------------------------------- | ----------------------------------------------------------------- |
@@ -77,7 +77,7 @@ Several corrections matter before borrowing the Reddit argument. **Dragonwilds a
 
 A feature's existence also does not invalidate reported friction. A player who misses nearby-storage access may face poor discovery, unclear range, confusing permissions or an inconvenient layout. That requires observing the actual interaction. Copying a feature checklist without its onboarding would preserve the problem.
 
-For OpenLegend, a promising test is a small settlement whose usefulness and history remain visible: a repaired room, a workshop someone operates, a shared resource project, or a visitor who benefits from a builder's work. More simultaneous players create possibilities for those relationships; they do not guarantee them. Permission clarity and protection from unwanted loss become part of the construction experience.
+For Open Legend, a promising test is a small settlement whose usefulness and history remain visible: a repaired room, a workshop someone operates, a shared resource project, or a visitor who benefits from a builder's work. More simultaneous players create possibilities for those relationships; they do not guarantee them. Permission clarity and protection from unwanted loss become part of the construction experience.
 
 ## 5. Time, interruption and returning after a break
 
@@ -92,7 +92,7 @@ For OpenLegend, a promising test is a small settlement whose usefulness and hist
 
 A long campaign can satisfy these conditions. Conversely, a game that technically permits a thirty-minute login can consume nearly all of it in maintenance. A favorable ten-hour impression is useful evidence about the opening, but it cannot establish that later crafting, travel and recovery preserve the same session shape.
 
-OpenLegend's shared worlds need their own interruption contract because an individual cannot assume the whole world pauses with them. Protected places, understandable logout behavior, resumable projects and advance disclosure of raid or theft rules are candidates to test. The user's proposed peaceful and contested worlds can offer different expectations, provided the risk is clear before substantial construction. These are proposals, not claims about either comparison game's exact multiplayer logout rules.
+Open Legend's shared worlds need their own interruption contract because an individual cannot assume the whole world pauses with them. Protected places, understandable logout behavior, resumable projects and advance disclosure of raid or theft rules are candidates to test. The user's proposed peaceful and contested worlds can offer different expectations, provided the risk is clear before substantial construction. These are proposals, not claims about either comparison game's exact multiplayer logout rules.
 
 ## 6. Exploration and combat must justify the preparation
 
@@ -104,7 +104,7 @@ The 1.0 Dragonwilds combat revision changes controls, including cancellation and
 
 **Interpretation:** flexible equipment is more valuable when encounters offer reasons to use it. Strong animation feedback, readable danger, enemy responses and useful alternative tactics need separate examination from nominal build count. If progression requires combat, the quality of combat also becomes part of the builder's experience; if combat requires lengthy material preparation, that preparation becomes part of the fighter's experience.
 
-## 7. Focused OpenLegend decisions to investigate
+## 7. Focused Open Legend decisions to investigate
 
 The research informs the [gameplay selection principles](../../../../../docs/repertoires/gameplay-priorities.md#keep-play-worthwhile-as-players-learn-and-return), the following existing design owners and their work trackers. Those owners define scope and acceptance; this table is a route to them, not a parallel backlog or an implementation claim. The first-playable target retains priority. Further construction freedom, new skill families and commercial world profiles require their own selection.
 

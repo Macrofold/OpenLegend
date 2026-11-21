@@ -2,7 +2,7 @@
 
 **G71 · Complete research pass, September 26, 2026.** This dossier treats the core 2011 game, its three major add-ons (**Dawnguard, Hearthfire, Dragonborn**), the 2016 **Special Edition**, and the 2021 **Anniversary Edition/Upgrade** as related but distinct release layers. Current official state includes a **August 20, 2026 Special Edition update** that increased console mod storage and changed Creations behavior; current Steam reviews therefore include fresh mod-compatibility complaints that should not be projected backward onto the 2011 game. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-Skyrim is one of the most important OpenLegend precedents because it lets a player construct identity primarily through **what they do**:
+Skyrim is one of the most important Open Legend precedents because it lets a player construct identity primarily through **what they do**:
 - swing one-handed weapons → improve One-Handed;
 - sneak → improve Sneak;
 - smith → improve Smithing;
@@ -68,7 +68,7 @@ The game asks:
 
 This was a major simplification from older Elder Scrolls class/attribute structures.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Identity can emerge from:
 - practice;
@@ -193,7 +193,7 @@ Characters can:
 
 The left/right-hand system is especially expressive because magic and weapons share the same immediate action slots.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Action interfaces can emerge from **what is physically equipped in each hand**, not only a global hotbar.
 
@@ -221,7 +221,7 @@ Magic covers:
 
 Higher mastery can require quests/training rather than automatically appearing.
 
-### OpenLegend relevance
+### Open Legend relevance
 
 A magic system is strongest when spells interact with:
 - perception;
@@ -256,7 +256,7 @@ Shouts include:
 This composes:
 > exploration/knowledge → dragon hunting/resource → language → embodied power.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Language itself can be an executable world system.
 
@@ -305,7 +305,7 @@ These systems compose strongly:
 
 Extreme stacking can create runaway equipment scaling.
 
-OpenLegend should:
+Open Legend should:
 - cap recursive amplification;
 - make provenance/cost visible.
 
@@ -350,7 +350,7 @@ Carriages can move the player between major cities.
 
 PC Gamer's original review begins with a memorable unscripted combat encounter precisely because Skyrim's strongest stories often happen **between** quest markers. [SK01](#sk01)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 The world must have enough reusable activity that:
 > going somewhere is itself gameplay.
@@ -379,7 +379,7 @@ Many contain localized stories independent of the main quest.
 
 Repeated prefab structure/enemy composition becomes visible over long play.
 
-OpenLegend procedural spaces need:
+Open Legend procedural spaces need:
 - causal history;
 - inhabitants with needs;
 - physical purpose,
@@ -414,7 +414,7 @@ Crime includes:
 
 Witnessed crimes create bounty by **hold**.
 
-### OpenLegend relevance
+### Open Legend relevance
 
 Local jurisdiction is important:
 > a crime in Whiterun is not automatically a universal metaphysical crime everywhere.
@@ -442,7 +442,7 @@ Thieves Guild relationships can unlock bribery/other options.
 
 Witness propagation is simplistic and faction/state consequences are shallow.
 
-OpenLegend can generalize:
+Open Legend can generalize:
 - law jurisdiction;
 - witnesses;
 - evidence;
@@ -474,7 +474,7 @@ Most NPCs do not:
 - remember arbitrary interactions;
 - evolve occupations/relationships.
 
-OpenLegend can build on the **schedule + identity** foundation with deeper cognition.
+Open Legend can build on the **schedule + identity** foundation with deeper cognition.
 
 ## 15. Radiant Story and dynamic quest targeting
 
@@ -501,7 +501,7 @@ Players eventually recognize templates:
 - retrieve object;
 - clear location.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A procedural task becomes meaningful only when its **causal need** is real:
 > this person needs food because their storehouse burned,
@@ -538,7 +538,7 @@ Relationships are mechanically shallow:
 - limited partner individuality after marriage;
 - no deep negotiation/conflict.
 
-OpenLegend should treat relationship as an ongoing state, not a one-time eligibility flag.
+Open Legend should treat relationship as an ongoing state, not a one-time eligibility flag.
 
 ## 17. Factions and parallel identities
 
@@ -568,7 +568,7 @@ A legendary archmage can also become:
 
 with surprisingly little institutional reaction.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Faction roles should create:
 - obligations;
@@ -591,7 +591,7 @@ The world does change, but the simulation remains bounded.
 
 Cities are not dynamically rebuilding economies/alliances based on the war.
 
-### OpenLegend opportunity
+### Open Legend opportunity
 
 Political state should affect:
 - taxes;
@@ -639,7 +639,7 @@ NPC death can be permanent unless:
 
 The essential-NPC system protects quest continuity but creates obvious artificiality when supposedly vulnerable people cannot die.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Protecting authored quests by making actors immortal is a brittle shortcut.
 
@@ -745,7 +745,7 @@ But they demonstrate the value of:
 
 Bethesda's August 20, 2026 Special Edition update increased console mod storage and changed Creations functionality. Current Steam reviews include many negative posts reporting broken PC mod lists and forced-update frustration. [SK02](#sk02) [SK04](#sk04)
 
-This is a critical OpenLegend lesson:
+This is a critical Open Legend lesson:
 > extension compatibility is part of the product contract.
 
 A patch that is “correct” for base game can still destroy user-created worlds.
@@ -901,7 +901,7 @@ This is a **platform/extension compatibility** complaint more than a rejection o
 
 **Result:** player knowledge and character Alchemy skill develop together.
 
-**OpenLegend lesson:** experimentation can produce persistent knowledge objects.
+**Open Legend lesson:** experimentation can produce persistent knowledge objects.
 
 ### C. Crime remains local to a hold
 
@@ -937,9 +937,9 @@ This is a **platform/extension compatibility** complaint more than a rejection o
 
 **Result:** external content stack may stop loading.
 
-**OpenLegend lesson:** extensibility requires versioned contracts and migration discipline.
+**Open Legend lesson:** extensibility requires versioned contracts and migration discipline.
 
-## 31. Transferable inspiration for OpenLegend
+## 31. Transferable inspiration for Open Legend
 
 ### A. Let practice create identity
 

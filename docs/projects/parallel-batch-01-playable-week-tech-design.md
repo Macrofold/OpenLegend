@@ -141,7 +141,7 @@ Route the admitted exact transfer through the existing native command owner, wit
 
 ### Preserve inspectable choices through refresh
 
-`decision-context.ts` prepares learned-activity pages and continuation options, but `refreshDecisionActions` reconstructs only native/planning actions. Extract the shared candidate composition for these existing consumers. Preserve source identity, inspected page/cursor and selection bindings while recomputing feasibility against the current world. Do not retain a stale command just to preserve its label, rebuild all recall or expose every learned method at once.
+`decision-context.ts` prepares learned-activity pages and continuation options, but `refreshDecisionActions` reconstructs only native/planning actions. Extract the shared candidate composition for these existing consumers. Preserve source identity, inspected page/cursor and selection bindings while recomputing feasibility against the current world. Do not retain a stale command just to preserve its label, rebuild all recall or expose every learned activity at once.
 
 Verify through the real director: inspect a later page, refresh, select its method or next page, and execute or receive an explicit stale explanation. Changed/deleted methods, another actor and a new save timeline must not inherit the old continuation.
 
@@ -291,7 +291,7 @@ Read-only inspection of Macrofold's local repository at `9948ba644bceb9ad03d0ee3
 - Native runs/session messages with supported incremental output return a Run receipt; `/v1/runs/{id}/stream` carries durable event sequences. `output.delta` carries answer text. Event paging supports recovery.
 - Run SSE rotates after about 55 seconds; reconnect with `Last-Event-ID` or `after`, preserving the run and credentials. Disconnect does not cancel.
 - `incremental_output` capability differs from general `streaming`. Unsupported harnesses reject explicit streaming before admission; do not silently change the model or harness.
-- Final result retrieval is independent. Stream EOF, readable text or a terminal event alone is not OpenLegend validation/installation or proof of settled persistence/accounting.
+- Final result retrieval is independent. Stream EOF, readable text or a terminal event alone is not Open Legend validation/installation or proof of settled persistence/accounting.
 - Direct inference streaming is a different, non-replayable contract. This work uses the existing native World Agent lane, not a new direct inference route. TypeSafe/Jev decisions are not an incremental-text route; no Jev request is added. Planning/audit Jev cost remains **$0**.
 
 For supported owner World Agent submissions, request top-level `stream: true` on the existing native Run/session-message path and consume the admitted Run's stream; do not enable it globally for actor decisions or change their provider route. Keep admission identity, model, permissions and spending unchanged.

@@ -37,7 +37,7 @@ Meaningful absences prevent misleading comparisons: there is no native multiplay
 
 ## 3. The mechanics that carry the experience
 
-The following explanations combine sourced rule observations with explicitly analytical consequences. They are not evidence of proprietary AI structures or claims that OpenLegend already implements these ideas.
+The following explanations combine sourced rule observations with explicitly analytical consequences. They are not evidence of proprietary AI structures or claims that Open Legend already implements these ideas.
 
 ### 3.1 One body, several kinds of timing
 
@@ -247,7 +247,7 @@ Across critics and players, the important disputes are practical: Does reduced i
 
 **Third, let equipment alter verbs.** An accessory that changes the cost of ability use or converts an affliction is more interesting than an unbounded stack of flat bonuses. The dependency needs visible explanation and counterplay; free-form narration must not invent a compatible effect that the rules do not support.
 
-**Fourth, make the public world as legible as the private household.** Strong companion scenes do not compensate automatically for civilians ignoring nearby violence. A smaller project could choose a modest set of reliable local reactions over a large unresponsive city. That is an experiment proposal, not a claim about existing OpenLegend performance or implementation.
+**Fourth, make the public world as legible as the private household.** Strong companion scenes do not compensate automatically for civilians ignoring nearby violence. A smaller project could choose a modest set of reliable local reactions over a large unresponsive city. That is an experiment proposal, not a claim about existing Open Legend performance or implementation.
 
 **Fifth, preserve different failure types.** Combat defeat, a bad assignment, a city sacrificed under time pressure and an authored unavoidable loss are not equivalent. Receipts and narrative feedback should explain the causal class without requiring spoilers or disclosing every future branch.
 

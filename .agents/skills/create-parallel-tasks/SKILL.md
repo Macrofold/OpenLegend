@@ -1,7 +1,7 @@
 ---
 name: create-parallel-tasks
 description: >-
-  Prioritize OpenLegend work from plans, TODOs and current code; define independently
+  Prioritize Open Legend work from plans, TODOs and current code; define independently
   completable parallel assignments and standalone prompts, defaulting to five tasks.
 ---
 

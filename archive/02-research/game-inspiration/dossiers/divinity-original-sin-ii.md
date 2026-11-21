@@ -1,6 +1,6 @@
 # G57 — Divinity: Original Sin II
 
-**Status: original research September 26, 2026; identified build/authoring gaps addressed September 27.** Reference research and conditional inspiration, not an approved OpenLegend design or implementation plan. [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md) · [Original Sin I](divinity-original-sin.md) · [Builds and authorship supplement](../mechanics/divinity-original-sin-ii-builds-and-authorship.md).
+**Status: original research September 26, 2026; identified build/authoring gaps addressed September 27.** Reference research and conditional inspiration, not an approved Open Legend design or implementation plan. [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md) · [Original Sin I](divinity-original-sin.md) · [Builds and authorship supplement](../mechanics/divinity-original-sin-ii-builds-and-authorship.md).
 
 ## 1. Identity, scope, and the player promise
 
@@ -264,7 +264,7 @@ Hashimoto tested PS4 Story and Classic modes and local cooperation. The account 
 
 **Synthesis:** the productive disagreement is between players who experience freedom as a supply of clever alternatives and players who experience it as a responsibility to optimize, search and administer. Lower difficulty, clearer information and easier experimentation address different parts of that problem; none is a universal substitute for the others.
 
-## 10. Conditional inspiration for OpenLegend
+## 10. Conditional inspiration for Open Legend
 
 These are research hypotheses, not tasks or commitments.
 

@@ -6,7 +6,7 @@
 
 ## Scope and reason
 
-The owner supplied a successful Jev response that OpenLegend rejected because one
+The owner supplied a successful Jev response that Open Legend rejected because one
 answer's three returned scores summed to 0.99. Choosing the highest value needs no assertion
 that the values sum to one. The owner authorized removing unnecessary validation,
 adding coding guidance against it, and scanning the codebase for related harm or bloat.

@@ -18,7 +18,7 @@ The existing NPC owner among the 35 topics was filled instead of creating an ove
 
 | File | What it contributes |
 | --- | --- |
-| [NPC guide](synthesis/characters-companions-and-relationships.md) | Sixteen stable lessons, current OpenLegend comparison, complete hypothetical episodes, tradeoffs, quiet autonomy and explicit research-to-existing-design mapping. |
+| [NPC guide](synthesis/characters-companions-and-relationships.md) | Sixteen stable lessons, current Open Legend comparison, complete hypothetical episodes, tradeoffs, quiet autonomy and explicit research-to-existing-design mapping. |
 | [Game AI implementation and scale](references/game-ai-implementation-and-scale.md) | Reassessment of 21 existing dossiers, deeper primary implementation evidence where accessible, and comparison with the focused additions. |
 | [Efficient individual simulation](references/efficient-individual-simulation.md) | Temporal abstraction, event scheduling, value of computation, data locality, movement, causal concurrency, multidimensional fidelity and complete-workload measurement. |
 | [Language-model societies and Simile](references/language-model-societies-and-simile.md) | Memory and individual evidence, revised human-response studies, Simile's 2026 confidence and corporate work, large-agent denominators, skills and evaluation. |
@@ -65,8 +65,8 @@ Two especially important refreshes are retained: the June 2026 revision of the 1
 
 ## Review and remaining research boundaries
 
-Review checks actual source-to-lesson contributions, contrary evidence, current-versus-target OpenLegend claims, stable keys, topic-only labels, matrix dimensions/codes and local navigation. This is document verification, not gameplay or a performance test. Final publication is established by repository commits; no self-referential future commit hash is invented in this record.
+Review checks actual source-to-lesson contributions, contrary evidence, current-versus-target Open Legend claims, stable keys, topic-only labels, matrix dimensions/codes and local navigation. This is document verification, not gameplay or a performance test. Final publication is established by repository commits; no self-referential future commit hash is invented in this record.
 
-No paid model calls, simulations, model training, game playtests or OpenLegend runtime benchmarks were performed. The current Songs of Syx citizen controller remains unverified; the previously used RimWorld decompilation was unavailable. Several GDC sources are descriptions only. These limits constrain the strength of the findings rather than becoming invented implementation details.
+No paid model calls, simulations, model training, game playtests or Open Legend runtime benchmarks were performed. The current Songs of Syx citizen controller remains unverified; the previously used RimWorld decompilation was unavailable. Several GDC sources are descriptions only. These limits constrain the strength of the findings rather than becoming invented implementation details.
 
 The research does not settle a safe cognition cadence, acceptable approximation of a particular person, a calibrated decision gate or whole-life reliability. Those require separately authorized design and evaluation through existing owners. The broader NPC topic still includes unreviewed source coverage and deeper relationship domains; other learning topics and world dossiers are not marked complete. This focused pass supplies reusable evidence and hypotheses, not a claim to have exhausted every relevant game or paper.

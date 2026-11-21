@@ -6,7 +6,7 @@ Navigation: [D&D research hub](../games/dungeons-and-dragons.md) · [current tab
 
 ## 1. The important resemblance—and the important difference
 
-OpenLegend's proposed experience resembles tabletop role-playing in a consequential way: a player describes an intention that need not appear on a menu, and the world responds using the character's capabilities and the circumstances. D&D explicitly accommodates this description–action–resolution loop. Its rules also distinguish ordinary success, impossible attempts, and uncertain attempts; a DM does not have to assign a die roll to every sentence. [D1]
+Open Legend's proposed experience resembles tabletop role-playing in a consequential way: a player describes an intention that need not appear on a menu, and the world responds using the character's capabilities and the circumstances. D&D explicitly accommodates this description–action–resolution loop. Its rules also distinguish ordinary success, impossible attempts, and uncertain attempts; a DM does not have to assign a die roll to every sentence. [D1]
 
 But **the world creator is not the whole Dungeon Master**. At a table, one human often combines several jobs:
 
@@ -34,7 +34,7 @@ Neither edition is a universal physical or psychological simulation. Hit points,
 
 ## 3. A proposed adjudication sequence
 
-The sequence below is an original synthesis. It is not a claim that all good DMs consciously execute this algorithm, nor that OpenLegend already implements it.
+The sequence below is an original synthesis. It is not a claim that all good DMs consciously execute this algorithm, nor that Open Legend already implements it.
 
 ### Step A: understand the intention and the approach
 
@@ -267,7 +267,7 @@ The following are proposed acceptance questions, not tests run in this research 
 14. Can correction and replay distinguish a rule change from a different random outcome?
 15. Does the experience remain enjoyable for quiet, novice, nonperforming players as well as expert improvisers?
 
-The overarching question is whether the world **reliably understands what the player is trying to do and responds for stable reasons**. That is the part of good tabletop adjudication most worth carrying into OpenLegend.
+The overarching question is whether the world **reliably understands what the player is trying to do and responds for stable reasons**. That is the part of good tabletop adjudication most worth carrying into Open Legend.
 
 ## Sources and evidence register
 

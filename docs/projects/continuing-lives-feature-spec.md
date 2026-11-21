@@ -75,7 +75,7 @@ A chosen activity has an understandable objective, method, current step, relevan
 
 The activity may continue through routine steps already justified by that choice. It cannot reinterpret "make cord" as "steal a neighbor's rope," decide to sell the result, accept a dangerous escort job or abandon an old friend merely because those outcomes would be convenient. Those are new choices with new consequences.
 
-A resident can have known habits and standing plans, but their origin matters. Creator-authored starting routines, the resident's later choices, learned methods and a player's request are distinguishable. A request is not obedience unless the resident actually accepts or the world explicitly supplies that kind of control.
+A resident can have known habits and standing plans, but their origin matters. Creator-authored starting routines, the resident's later choices, learned activities and a player's request are distinguishable. A request is not obedience unless the resident actually accepts or the world explicitly supplies that kind of control.
 
 ### 3.3 Initial activity coverage
 
@@ -553,7 +553,7 @@ The release judgment is whether a person can leave without repetitive instructio
 
 ## 16. Research refinement — a chosen life can continue and change
 
-**Design target, October 15, 2026; not new runtime evidence.** This section resolves the continuation, attention and later-conduct questions in the [intelligent-simulation follow-up](../maintainers/needs-design.md#intelligent-individuals-and-efficient-simulation-research-derived-design-follow-up). It extends DG02 and DG17, consuming DG23, ND19 and conditional ND20 without replacing their scopes. The [character guide](../../archive/02-research/game-inspiration/synthesis/characters-companions-and-relationships.md#8-openlegend-specific-research-subtopics-and-design-mapping) and [simulation study §§2–3](../../archive/02-research/game-inspiration/references/efficient-individual-simulation.md#2-let-a-choice-remain-useful) motivate narrower delegation and meaningful reconsideration; they do not establish model reliability.
+**Design target, October 15, 2026; not new runtime evidence.** This section resolves the continuation, attention and later-conduct questions in the [intelligent-simulation follow-up](../maintainers/needs-design.md#intelligent-individuals-and-efficient-simulation-research-derived-design-follow-up). It extends DG02 and DG17, consuming DG23, ND19 and conditional ND20 without replacing their scopes. The [character guide](../../archive/02-research/game-inspiration/synthesis/characters-companions-and-relationships.md#8-open-legend-specific-research-subtopics-and-design-mapping) and [simulation study §§2–3](../../archive/02-research/game-inspiration/references/efficient-individual-simulation.md#2-let-a-choice-remain-useful) motivate narrower delegation and meaningful reconsideration; they do not establish model reliability.
 
 ### 16.1 Choosing an activity includes choosing its limits
 

@@ -4,7 +4,7 @@
 
 **Interpretation.** A toolset can generate value beyond its original use, but finished activities help non-creators participate. Reusable components and playable conventions make creation legible. Not everyone must start from an empty editor.
 
-**Transfer.** OpenLegend’s packs should support several adoption levels: play an example world, install a compatible mechanic, specialize a template, or author a new construct. A short playable demonstration may communicate a pack’s value better than a technical feature list.
+**Transfer.** Open Legend’s packs should support several adoption levels: play an example world, install a compatible mechanic, specialize a template, or author a new construct. A short playable demonstration may communicate a pack’s value better than a technical feature list.
 
 **Pitfall.** Mods and community modes extend a product; they do not excuse a weak default experience. Do not assume that because a mature toolbox eventually supports many genres, a new engine should ship with no opinionated game at all.
 
@@ -36,7 +36,7 @@
 
 3. **A shared map becomes a trust problem.** *Documented community mode.* Trouble in Terrorist Town places hidden-role deception around a common environment. Information, accusation, cooperation, and betrayal generate variation under a recognizable rule set. Exact server rules vary, so one dramatic clip does not establish a universal TTT behavior. [FG-GM-S](../references/sources-04.md#source-fg-gm-s)
 
-**What to borrow for OpenLegend.** For OpenLegend, distribute a reusable mechanic with a small understandable activity that demonstrates it. Separate “can author,” “can install,” and “can find a reliable group.” Do not confuse human-performed role-play videos—including fake “self-aware AI” shows—with evidence of implemented AI autonomy.
+**What to borrow for Open Legend.** For Open Legend, distribute a reusable mechanic with a small understandable activity that demonstrates it. Separate “can author,” “can install,” and “can find a reliable group.” Do not confuse human-performed role-play videos—including fake “self-aware AI” shows—with evidence of implemented AI autonomy.
 
 *Scope/evidence note:* Base-game systems unless noted; examples describe documented mechanics, not a play session conducted for this research.
 <!-- END FIELDGUIDE ADDITION -->

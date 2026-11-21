@@ -5,9 +5,9 @@ description: Squash-merge the newest local/origin source branch into a destinati
 
 # Squash-merge a branch and push
 
-Usage: `merge-branch <source>` or `merge-branch <source> into <destination>`. Default to the working repository's freshly verified `origin` default branch; in OpenLegend this is local `main`. An invocation authorizes the selected integration and normal destination push. Reading/editing the skill or an ordinary merge request does not itself authorize publication.
+Usage: `merge-branch <source>` or `merge-branch <source> into <destination>`. Default to the working repository's freshly verified `origin` default branch; in Open Legend this is local `main`. An invocation authorizes the selected integration and normal destination push. Reading/editing the skill or an ordinary merge request does not itself authorize publication.
 
-Operate on the working repository, even when the global entrypoint loads this file from another checkout. Apply the target repository's instructions and verification rules. In OpenLegend, follow [Rebase](../openlegend-rebase/SKILL.md) for preservation and conflict stops, and [rebase verification](../../rules/verification.md#rebase-verification) for proportional checks. Those project-specific links apply only to OpenLegend.
+Operate on the working repository, even when the global entrypoint loads this file from another checkout. Apply the target repository's instructions and verification rules. In Open Legend, follow [Rebase](../openlegend-rebase/SKILL.md) for preservation and conflict stops, and [rebase verification](../../rules/verification.md#rebase-verification) for proportional checks. Those project-specific links apply only to Open Legend.
 
 ## Default path
 

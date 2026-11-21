@@ -2,7 +2,7 @@
 
 **G04 · Full research pass completed September 25, 2026.** Covers R01–R14 at the platform level, with concrete supported interactions and distinct creator/player perspectives. It is not an exhaustive API manual, a source-code audit, a legal opinion, or a claim of personally playing every experience.
 
-Read with the [preserved Roblox chapter](../games/roblox.md), [requirements](../research-requirements.md) and [resume ledger](../research-progress.md). Grow a Garden and Steal a Brainrot have their own required passes; their existence does not make their rules universal Roblox rules. Other named experiences below illustrate platform differences rather than replacing their own possible game studies. This is inspiration/reference, not an OpenLegend architecture plan.
+Read with the [preserved Roblox chapter](../games/roblox.md), [requirements](../research-requirements.md) and [resume ledger](../research-progress.md). Grow a Garden and Steal a Brainrot have their own required passes; their existence does not make their rules universal Roblox rules. Other named experiences below illustrate platform differences rather than replacing their own possible game studies. This is inspiration/reference, not an Open Legend architecture plan.
 
 **October 14, 2026 addition:** §14 integrates Mike's supplied YouTube transcript on addictive Roblox games. The [transcript study](../references/roblox-addictiveness-video.md) owns its complete 22-selection comparison, provenance, personal rankings and evidence limits. This is experience-level evidence within a platform dossier, not a new platform-wide causal finding or a fresh full research pass for every named experience. [RB27](#rb27)
 
@@ -185,7 +185,7 @@ A platform-wide numerical review score cannot resolve these perspectives. Someon
 
 **A promotional success can arrive before production readiness.** The TTK account shows attention reaching a test slice. [RB26](#rb26) A shareable clip, a good first session and a durable content plan remain different milestones.
 
-## 14. What OpenLegend can draw from this—and what not to copy
+## 14. What Open Legend can draw from this—and what not to copy
 
 The useful precedent is a **layered path from consumer to contributor**: play something, recognize its rules, adapt a working artifact, collaborate, then perhaps author a new activity. Lowering authoring friction is valuable, but it does not supply audience fit, coherent rules, discovery, safe participation or continued creator trust.
 
@@ -209,7 +209,7 @@ Do not assume a general engine needs a public marketplace first, that a catalog 
 
 **Do not turn the video's rhetoric into platform history or policy.** Its first-of-a-genre claims, broad attention-span explanation, audience figures and claim that Steal an Egg was banned specifically for addictiveness remain unverified here. The independently located official announcement concerns reward-driven media feeds in Roblox Kids and Select; it does not establish that particular takedown's cause. The transcript study owns the narrower policy wording and retrieval limits. [RB27](#rb27)
 
-**Research takeaway:** preserve an interesting activity between rewards, let improvements open or deepen possibilities, and distinguish voluntary return from pressure not to leave. A satisfying ending or a comfortable occasional visit can fulfill a game's promise. These are hypotheses for cross-game comparison, not authorization to import scarce-drop timers, manipulative monetization or a mandatory sandbox into OpenLegend.
+**Research takeaway:** preserve an interesting activity between rewards, let improvements open or deepen possibilities, and distinguish voluntary return from pressure not to leave. A satisfying ending or a comfortable occasional visit can fulfill a game's promise. These are hypotheses for cross-game comparison, not authorization to import scarce-drop timers, manipulative monetization or a mandatory sandbox into Open Legend.
 
 ## 15. Reading routes, coverage and preservation
 
@@ -251,7 +251,7 @@ The official tutorial and case-study pages link videos and editable examples. Th
 | R13 inspiration/limits | §14 and labeled interpretations |
 | R14 evidence/navigation/preservation | This section and annotated sources |
 
-**Per-subject preservation:** the supplied master's §3.3 and complete `games/roblox.md` were inspected. The prior platform distinction, dated annual/quarterly figures, discovery interpretation, Grow a Garden and Steal a Brainrot subsections, safety/creator cautions and OpenLegend hypotheses remain unchanged. Those experience subsections still require their separate full passes. The original metric/source ledgers were not overwritten; the seven-file packet-wide reconciliation remains a separate gate.
+**Per-subject preservation:** the supplied master's §3.3 and complete `games/roblox.md` were inspected. The prior platform distinction, dated annual/quarterly figures, discovery interpretation, Grow a Garden and Steal a Brainrot subsections, safety/creator cautions and Open Legend hypotheses remain unchanged. Those experience subsections still require their separate full passes. The original metric/source ledgers were not overwritten; the seven-file packet-wide reconciliation remains a separate gate.
 
 **Evidence limits:** no personal gameplay, code audit, full-video claim, representative sentiment survey, private revenue attribution or typical-creator earnings estimate. Several forum posts were retrieved through substantive indexed text rather than a fully rendered forum page. Feature and policy descriptions are dated; announced future access is not treated as shipped. These limits qualify the evidence rather than replacing missing required sections.
 

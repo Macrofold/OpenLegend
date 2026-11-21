@@ -6,7 +6,7 @@
 
 **Key versus optional.** Survival does not require making every basic meter lethal. Small-group cooperation can be valuable without an MMO. The right level of friction depends on the intended fantasy rather than a universal realism rule.
 
-**Transfer.** Decide which needs in OpenLegend create interesting tradeoffs and which simply charge an attention tax. Make food, shelter, and assistance tactically or socially meaningful. Preserve the possibility of serious consequences, but test whether the player wants another expedition afterward.
+**Transfer.** Decide which needs in Open Legend create interesting tradeoffs and which simply charge an attention tax. Make food, shelter, and assistance tactically or socially meaningful. Preserve the possibility of serious consequences, but test whether the player wants another expedition afterward.
 
 **Pitfall.** Do not assume a breakout launch gives a small team unlimited ability to deliver every announced system quickly. Scope and maintenance still constrain production; a roadmap is not content already in players’ hands.
 
@@ -36,7 +36,7 @@
 
 3. **The base matters during the quiet part.** *Documented player activity.* Cooking, farming, brewing, and improving shelter provide things to do between expeditions. These are not merely screens that replenish resources: the built place accumulates personal choices. A player can delay the next dangerous objective and still participate meaningfully in the world. [FG-VA-O](../references/sources-04.md#source-fg-va-o)
 
-**What to borrow for OpenLegend.** For OpenLegend, connect household work and invention to actual ventures or community aims. Let some sessions be quiet without emptying them of purpose. Test whether a constraint produces cooperation and planning, or merely repeated inventory handling.
+**What to borrow for Open Legend.** For Open Legend, connect household work and invention to actual ventures or community aims. Let some sessions be quiet without emptying them of purpose. Test whether a constraint produces cooperation and planning, or merely repeated inventory handling.
 
 *Scope/evidence note:* Version note: the retrieved official announcement dates 1.0 to September 9, 2026. The selected video predates it; earlier analysis remains historical where so labeled. [FG-VA-REL](../references/sources-04.md#source-fg-va-rel)
 <!-- END FIELDGUIDE ADDITION -->

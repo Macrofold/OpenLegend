@@ -93,7 +93,7 @@ Recommended intervention: shorten universal instructions, route specialty detail
 
 ## Primary research and applicability
 
-Research retrieved October 21, 2026, America/New_York. Recommendations below are our application to OpenLegend; vendor examples are not universal mandates. The proposals deliberately avoid copying a complex multi-agent harness into this one-agent workflow.
+Research retrieved October 21, 2026, America/New_York. Recommendations below are our application to Open Legend; vendor examples are not universal mandates. The proposals deliberately avoid copying a complex multi-agent harness into this one-agent workflow.
 
 ### A. Codex instruction discovery
 
@@ -105,7 +105,7 @@ Application: preserve root/local guarantees while shrinking the entry point and 
 
 [OpenAI, “Harness engineering”](https://openai.com/index/harness-engineering/) describes replacing a large instruction manual with a short entry point and structured repository knowledge. It also emphasizes machine-visible application behavior and architectural boundaries.
 
-Application: keep authoritative knowledge discoverable instead of duplicating it into every task. Do not import the article's agent-review loops or merge practices wholesale; their experiment and economics differ from OpenLegend's restrictions. Its reported productivity is not an estimate of our potential gain.
+Application: keep authoritative knowledge discoverable instead of duplicating it into every task. Do not import the article's agent-review loops or merge practices wholesale; their experiment and economics differ from Open Legend's restrictions. Its reported productivity is not an estimate of our potential gain.
 
 ### C. Context engineering
 
@@ -129,13 +129,13 @@ Application: choose verification timing according to the task's uncertainty and 
 
 [Gloaguen et al., “Evaluating AGENTS.md,” arXiv v1](https://arxiv.org/html/2602.11988v1) studies SWE-bench Lite and 138 AGENTbench issues from 12 Python repositories. Generated context reduced average resolution in the reported settings and raised cost by about 20–23%; developer-written files generally helped success but also increased effort/cost. Trace analysis found more testing and exploration.
 
-Application: audit obligations and redundant content rather than assuming more instructions improve results. This does **not** show that removing OpenLegend's authority or world contracts would help: the tasks, languages, models, and quality criteria differ. The paper's nuanced human-written result is more useful than the headline “AGENTS.md is harmful.”
+Application: audit obligations and redundant content rather than assuming more instructions improve results. This does **not** show that removing Open Legend's authority or world contracts would help: the tasks, languages, models, and quality criteria differ. The paper's nuanced human-written result is more useful than the headline “AGENTS.md is harmful.”
 
 ### G. Environment is part of measurement
 
 [Anthropic, “Quantifying infrastructure noise in agentic coding evals”](https://www.anthropic.com/research/infrastructure-noise) demonstrates that resource allocations and enforcement can alter benchmark reliability and results, and discusses other infrastructure confounders.
 
-Application: keep resource/setup facts with measurements, avoid interfering workloads, and classify environment failures. It does not establish that Docker or memory pressure caused the OpenLegend delay. Repeating an unchanged failed environment is not a useful correctness test.
+Application: keep resource/setup facts with measurements, avoid interfering workloads, and classify environment failures. It does not establish that Docker or memory pressure caused the Open Legend delay. Repeating an unchanged failed environment is not a useful correctness test.
 
 ### H. Grade the intended behavior, not a brittle fixture
 

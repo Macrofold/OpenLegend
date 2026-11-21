@@ -29,7 +29,7 @@ No UI or protocol change is needed. Invites, World operations and account bindin
 
 - **No tunnel for local testing.** Use plain `http://localhost` with the opt-in. Sharing a running local server with other machines needs HTTPS hosting or a tunnel and belongs to D05.
 - **Client type.** A server-side web application with a client secret (the existing `OPEN_LEGEND_OIDC_CLIENT_SECRET`) and authorization code with PKCE, unchanged.
-- **Separate environments.** Development uses its own Auth0 tenant, application and disposable world. Production uses a separate tenant whose own login domain is fixed before real players ([IDP02](../maintainers/multiplayer.md#identity-provider--auth0)), because each OpenLegend account is keyed by login-service address plus user ID.
+- **Separate environments.** Development uses its own Auth0 tenant, application and disposable world. Production uses a separate tenant whose own login domain is fixed before real players ([IDP02](../maintainers/multiplayer.md#identity-provider--auth0)), because each Open Legend account is keyed by login-service address plus user ID.
 - **First owner.** The first owner is still configured once through `OPEN_LEGEND_ACCOUNT_BINDINGS` with the Auth0 user ID copied from the dashboard; later people join by invite. No new bootstrap feature.
 
 ## Verification
@@ -64,7 +64,7 @@ Mike authorized making the current worktree work with real Auth0 and Macrofold, 
 
 - Keep Macrofold on its existing port and the game on the Auth0-approved game origin. Preserve the current world and unrelated Macrofold work.
 - Use the dedicated Jev route, existing encrypted provider credentials, selected isolated Worker and asynchronous inference admission. Verify decisions, structured replies and native memory through real downstream callers within the shared $10 task ceiling. Unknown costs retain their reservations.
-- Replace the obsolete development tool connection with an exact game endpoint, a new random bearer secret stored encrypted by Macrofold, its hash and seven-day expiry in ignored game configuration, and the exact current world. Existing authenticated authoring sessions and human approval continue to control writes. Limit approved tools to the implemented OpenLegend catalogue and select the connection explicitly.
+- Replace the obsolete development tool connection with an exact game endpoint, a new random bearer secret stored encrypted by Macrofold, its hash and seven-day expiry in ignored game configuration, and the exact current world. Existing authenticated authoring sessions and human approval continue to control writes. Limit approved tools to the implemented Open Legend catalogue and select the connection explicitly.
 - Add only the exact game origin to Macrofold's supported local-MCP network allowlist. Reload the existing API and dispatcher through their operator-owned lifecycle; never stop unrelated previews or weaken hosted network checks.
 - Exercise real Auth0 sign-in, player control, NPC dialogue and a bounded World agent read/conversation. Check connector denial without the credential and session-bound authoring. Reconcile the verification report and relevant trackers; configuration readiness alone does not meet completion.
 

@@ -2,7 +2,7 @@
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Requirements](../research-requirements.md)
 
-**Full research pass, September 26, 2026.** Covers the original single-player game, the redesigned 2016 Survival mode, all six official add-ons, Game of the Year and Anniversary packaging, and current platform boundaries. Not Fallout 76, Fallout Shelter, Fallout 4 VR or a claim that modded features are native. Five substantive independent review bodies and contrasting helpful Steam accounts were read. The earlier checkpoint's examples and disagreements are retained here. This expansion-roster subject has no designated original-packet chapter to replace; packet, chapter and mechanics files are unchanged. Global packet reconciliation remains a separate gate. No runtime or accepted OpenLegend design change.
+**Full research pass, September 26, 2026.** Covers the original single-player game, the redesigned 2016 Survival mode, all six official add-ons, Game of the Year and Anniversary packaging, and current platform boundaries. Not Fallout 76, Fallout Shelter, Fallout 4 VR or a claim that modded features are native. Five substantive independent review bodies and contrasting helpful Steam accounts were read. The earlier checkpoint's examples and disagreements are retained here. This expansion-roster subject has no designated original-packet chapter to replace; packet, chapter and mechanics files are unchanged. Global packet reconciliation remains a separate gate. No runtime or accepted Open Legend design change.
 
 ## 1. Identity and what a session feels like
 
@@ -141,11 +141,11 @@ The comparison exposes three independent tensions: build/exploration freedom ver
 
 **Connect personal improvement to a place the player cares about.** A farm feeding adhesive for an equipment project makes settlement work relevant to an adventurer. The important property is a causal connection between ambitions, not the number of separate crafting stations. It needs bounded resource chains and understandable labor allocation; otherwise the settlement becomes an unexplained tax.
 
-**Separate resource sharing from physical transport.** Fallout's supply-line abstraction is useful precisely because it does not fully simulate every movement. OpenLegend should state which goods, needs and delays are represented. A fully physical economy may create interesting interruption and escort play, but also much higher consistency and recovery obligations. The abstraction is not inherently less valuable when its boundary is legible.
+**Separate resource sharing from physical transport.** Fallout's supply-line abstraction is useful precisely because it does not fully simulate every movement. Open Legend should state which goods, needs and delays are represented. A fully physical economy may create interesting interruption and escort play, but also much higher consistency and recovery obligations. The abstraction is not inherently less valuable when its boundary is legible.
 
 **Maintenance requires an ownership payoff.** Hurley and Carter show opposite responses to power-armor costs. Investment can create a home ritual and attachment, or cause a prized system never to be used. A prototype should test both behaviors rather than assume scarcity creates emotional value. Repair, replacement, fuel and permanent loss serve different fantasies and should not be conflated.
 
-**Let social disagreement be specific.** Companion approval can make an action socially situated, but one approval meter is not a substitute for knowledge, allegiance, trust and affection. For OpenLegend, a useful experiment would separate what a witness observed from how that person judged it. Do not infer that every NPC needs the full complexity of a written companion arc.
+**Let social disagreement be specific.** Companion approval can make an action socially situated, but one approval meter is not a substitute for knowledge, allegiance, trust and affection. For Open Legend, a useful experiment would separate what a witness observed from how that person judged it. Do not infer that every NPC needs the full complexity of a written companion arc.
 
 **Make recovery rules shape geography deliberately.** A meaningful bed can turn shelter into infrastructure. The cost is repeated travel and the possibility of losing an enjoyable session to a technical failure. Difficulty options, reliable saves and clearer risk communication are alternatives to assuming that harsher recovery automatically creates immersion.
 

@@ -371,7 +371,7 @@ Official posts discuss shared modern UI infrastructure, player-facing regression
 
 ### O01
 
-**OpenLegend expedition implementation/review, October 6, 2026.** [Native and production-browser evidence](../verification/rewarding-expeditions.md#production-browser-interaction) · [requested review](../verification/rewarding-expeditions.md#requested-review--october-6-2026).
+**Open Legend expedition implementation/review, October 6, 2026.** [Native and production-browser evidence](../verification/rewarding-expeditions.md#production-browser-interaction) · [requested review](../verification/rewarding-expeditions.md#requested-review--october-6-2026).
 
 Selecting the record initially retained its pre-inspection detail, and the compact inventory separately retained obsolete facts/known-method wording after inspection or learning. Corrected client refresh preserves selection and rejects late reads; the server includes inspection and learned knowledge in its display dependencies. Transfer this lesson to mutation-driven detail and derived projections: list identity or quantity alone cannot describe all permitted facts. This is observed project evidence, not a new external standard, general device qualification or proof of player enjoyment. Destination: [React mutation guidance](react.md#effects-asynchronous-work-and-mutations).
 
@@ -491,13 +491,13 @@ Applied synthesis: choose an illustrated option, manipulate its preview in the w
 
 ### OL01
 
-**OpenLegend shelter delivery review, October 6, 2026.** [Recorded browser and native evidence](../verification/editable-shelters.md#delivery-review).
+**Open Legend shelter delivery review, October 6, 2026.** [Recorded browser and native evidence](../verification/editable-shelters.md#delivery-review).
 
 The original shelter controls allowed overlapping reads. The repair used one cancellable read owner for polling and post-write refresh; controlled three/five-second delays recorded at most one read in flight. Deliberate failed reads disabled Review, retained the draft and recovered. Sleep temporarily removed a selected canopy from view; an explicit unavailable state retained that identity until waking. This supports [the asynchronous-work guidance](react.md#effects-asynchronous-work-and-mutations), not a universal polling cadence, representative accessibility result or measured frame-rate improvement.
 
 ### OL02
 
-**OpenLegend reviewed condition-removal review, October 14, 2026.** [Recorded browser failure/replacement/late-read evidence](../verification/reviewed-content-removal.md#actual-browser-failure-replacement-and-late-read-checks).
+**Open Legend reviewed condition-removal review, October 14, 2026.** [Recorded browser failure/replacement/late-read evidence](../verification/reviewed-content-removal.md#actual-browser-failure-replacement-and-late-read-checks).
 
 Actual native Apply succeeded while a separate HTTP detail read was deliberately failed. Both Work and inspection entrypoints retained the successful receipt and refreshed the selected source, removing obsolete controls. Reinstalling the same IDs used fresh labels/versions; releasing an older generated inspection reply after Apply did not restore removed controls. This supports adopting the acknowledged result and notifying affected read owners before follow-up detail, through [the existing React procedure](react.md#effects-asynchronous-work-and-mutations). It does not qualify natural-language generation, broad accessibility, player enjoyment or larger-world responsiveness.
 

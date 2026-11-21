@@ -1,6 +1,6 @@
 # G141 — Raft
 
-**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 Raft is most useful as a study of **turning the player's home into the vehicle, progression surface, shared social space, and visible record of a run**. The same object begins as four fragile foundations and can become a multi-deck powered vessel with collection nets, farms, livestock, engines, storage, kitchens, navigation, decoration and specialized workspaces. The game's strongest loop is not simply survival at sea; it is repeatedly converting passing opportunity into a better moving home.
 
@@ -400,11 +400,11 @@ These samples are qualitative, version-sensitive testimony—not a prevalence es
 
 These are audience/playstyle differences, not one objective verdict.
 
-## R13 — transferable inspiration and limits for OpenLegend
+## R13 — transferable inspiration and limits for Open Legend
 
 ### 1. Let one persistent place absorb many systems
 
-Raft's home simultaneously represents safety, wealth, travel, production, expression and shared memory. OpenLegend can learn from the **convergence**, not the literal ocean vessel: when players can continually add meaning/capability to a persistent place or object, every new system reinforces attachment to the same history.
+Raft's home simultaneously represents safety, wealth, travel, production, expression and shared memory. Open Legend can learn from the **convergence**, not the literal ocean vessel: when players can continually add meaning/capability to a persistent place or object, every new system reinforces attachment to the same history.
 
 **Dependency:** additions must remain legible and meaningfully usable.  
 **Failure mode:** the home becomes a junk drawer of mandatory machines.
@@ -413,7 +413,7 @@ Raft's home simultaneously represents safety, wealth, travel, production, expres
 
 The strongest upgrades eliminate a repeated low-level obligation: nets reduce hook spam; better water/food reduces survival babysitting; engines remove drift helplessness. This is stronger than "+10% efficiency" because the player feels their life changed.
 
-**OpenLegend pattern:** some mastery should convert previously active chores into reliable delegated/infrastructural behavior, freeing cognition for richer goals.
+**Open Legend pattern:** some mastery should convert previously active chores into reliable delegated/infrastructural behavior, freeing cognition for richer goals.
 
 ### 3. A base that moves avoids the "abandoned starter home" problem
 
@@ -429,7 +429,7 @@ Raft's co-op naturally creates cook, builder, diver, captain, fisher and quarter
 
 Current negative Steam testimony is especially useful here: some players feel story destinations and mandatory large machines cause them to rebuild an aesthetically loved raft, while the mobile-home loop becomes transit between fetch-heavy spaces.
 
-For OpenLegend, a new progression layer should ask: **does it deepen the original fantasy or temporarily replace it?**
+For Open Legend, a new progression layer should ask: **does it deepen the original fantasy or temporarily replace it?**
 
 ### 6. Repetition must mutate before it becomes maintenance
 

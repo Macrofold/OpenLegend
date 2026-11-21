@@ -1,4 +1,4 @@
-# OpenLegend decision-model benchmark
+# Open Legend decision-model benchmark
 
 Results completed **October 17, 2026**. Luna low, medium and high each have **4,000 / 4,000 answers** and **80 / 80 separate structured outputs**. Native Luna Decisions returned **3,999 answers and one explicit refusal**; all its requests completed. Every question has an answer key. Accuracy means **correct answers divided by answers received**; missing answers do not count as wrong decisions.
 

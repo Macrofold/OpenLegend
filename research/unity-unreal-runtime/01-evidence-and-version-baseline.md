@@ -6,9 +6,9 @@
 
 ## Purpose and scope
 
-This collection studies how contemporary Unreal Engine and Unity runtime systems work: what they calculate, what triggers that calculation, how they share or defer it, what they preserve, and what they approximate. OpenLegend's current code, accepted boundaries and intended systems determine which questions matter. They do not turn the external engines' mechanisms into selected OpenLegend designs.
+This collection studies how contemporary Unreal Engine and Unity runtime systems work: what they calculate, what triggers that calculation, how they share or defer it, what they preserve, and what they approximate. Open Legend's current code, accepted boundaries and intended systems determine which questions matter. They do not turn the external engines' mechanisms into selected Open Legend designs.
 
-The deliverable is research. It does not select an engine, propose an OpenLegend architecture, create an implementation roadmap, change gameplay guarantees, or authorize benchmarks. The earlier engine/platform comparison remains in [game-engine research](../game-engines/README.md). Current OpenLegend behavior and accepted requirements remain in their existing specifications and maintainers' trackers.
+The deliverable is research. It does not select an engine, propose an Open Legend architecture, create an implementation roadmap, change gameplay guarantees, or authorize benchmarks. The earlier engine/platform comparison remains in [game-engine research](../game-engines/README.md). Current Open Legend behavior and accepted requirements remain in their existing specifications and maintainers' trackers.
 
 Coverage includes simulation clocks and scheduling; sensing, attention and AI execution; navigation and crowds; physical simulation and spatial queries; data layout, concurrency and memory; large worlds and streaming; multiplayer, persistence and replay; graphics, animation and audio; content pipelines, tools, interfaces and platforms; environmental media and material interactions; gameplay scripting, compilation and execution; profiling and verification; and the research frontier where published evidence extends beyond shipping engine capabilities. Related subjects are included when they illuminate a real subsystem boundary, rather than simply adding technology names.
 
@@ -35,11 +35,11 @@ Unreal's announcement discusses work toward UE6; that is roadmap evidence, not a
 | --------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
 | Versioned official manual or API reference                | Supported behavior, configuration, contracts and declared limitations of the named version | Internal algorithms absent from the text, a shipping workload's performance, or correctness on every platform |
 | Release notes and official staff announcements            | Additions, removals, maturity changes, fixes and exact patch provenance                    | A complete explanation of the affected algorithm or independent confirmation of marketing performance claims  |
-| First-party engineering article or technical presentation | Mechanism, motivation, implementation details and a specified example workload             | A universal result for other content, hardware, engine releases or OpenLegend                                 |
+| First-party engineering article or technical presentation | Mechanism, motivation, implementation details and a specified example workload             | A universal result for other content, hardware, engine releases or Open Legend                                |
 | Primary paper or author-maintained research material      | The authors' method, experimental setup, findings and stated limits                        | Integration into a shipping engine, production readiness or superiority outside its evaluation                |
 | Official sample or public source                          | What that sample or revision actually implements                                           | A default engine guarantee or a production-scale qualification                                                |
 | Search excerpt, landing page or video description         | Discovery and attribution                                                                  | Full-text or full-video inspection; detailed claims not present in the accessible evidence                    |
-| Original analysis in this collection                      | Reasoned comparison of the inspected mechanisms and their boundaries                       | A measured result, an external author's claim, or an accepted OpenLegend decision                             |
+| Original analysis in this collection                      | Reasoned comparison of the inspected mechanisms and their boundaries                       | A measured result, an external author's claim, or an accepted Open Legend decision                            |
 
 Each chapter cites its specific claims and retains a local source register with version/date, medium and access limitations. Current documentation is often undated; **accessed on October 23, 2026** is an inspection date, not an invented publication date. A book, paper or talk is not silently made current by a recent search-engine crawl.
 
@@ -67,9 +67,9 @@ The following are analytical rules for this research, not proposed game mechanic
 - **Separate visibility and knowledge.** Camera culling, server replication relevance, acoustic playback, simulated sensing and what a character remembers answer different questions.
 - **Separate visual continuity and world continuity.** Interpolation can smooth what the player sees without proving that intermediate collisions, speech exposure or resource transfers were simulated.
 - **Account for the whole lifecycle.** Construction, mutation, invalidation, cancellation, destruction, restoration and publication can dominate an otherwise cheap query.
-- **Label vendor and paper measurements.** Their hardware, content, build, workload, quality settings and evaluation scope remain part of the claim. No external speedup is converted into an OpenLegend speedup.
+- **Label vendor and paper measurements.** Their hardware, content, build, workload, quality settings and evaluation scope remain part of the claim. No external speedup is converted into an Open Legend speedup.
 
-No new runtime, engine, browser or provider benchmarks are part of this research task. Existing OpenLegend measurements are treated as revision-specific evidence, with corrections and workload limits retained. Static source inspection is not a performance test.
+No new runtime, engine, browser or provider benchmarks are part of this research task. Existing Open Legend measurements are treated as revision-specific evidence, with corrections and workload limits retained. Static source inspection is not a performance test.
 
 ## Inspection limits
 

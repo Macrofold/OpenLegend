@@ -296,7 +296,7 @@ Original recommendation: **Review**.
 
 **Removed by the Worker cutover — absence rechecked 2026-10-06 · Restrictiveness: — (removed).**
 
-The old `MACROFOLD_COMPUTE_MAX_USD` default of $0 and maximum of $100 belonged to finite Sandbox allocation. Current configuration does not read it. OpenLegend selects an existing operator-owned Worker; it does not allocate compute or translate that old allowance into an hourly Worker ceiling. Run/model limits do not cap shared allocation or idle spend.
+The old `MACROFOLD_COMPUTE_MAX_USD` default of $0 and maximum of $100 belonged to finite Sandbox allocation. Current configuration does not read it. Open Legend selects an existing operator-owned Worker; it does not allocate compute or translate that old allowance into an hourly Worker ceiling. Run/model limits do not cap shared allocation or idle spend.
 
 **Reason / tradeoff:** Preserve the [application/world compute owner's controls](../ai-providers.md#shared-worker-setup-and-cutover), explicit authorization and settlement of real historical obligations. The removal does not authorize unlimited compute, restoring a legacy allocator or refunding uncertain charges. The original **Review** recommendation is superseded by the accepted Worker ownership contract.
 

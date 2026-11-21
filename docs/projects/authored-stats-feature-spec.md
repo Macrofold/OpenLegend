@@ -170,7 +170,7 @@ Pausing the activity earns no work time. The world itself advances or pauses und
 
 ### 7.1 The attempt lifecycle
 
-The human or NPC chooses a supported method from the actual situation. Before work, the interface presents permitted stakes and prospects, never a preview of future dice. Starting binds the intended task, target, applicable rule and actual work. The actor performs the required stage. The check resolves once when that stage reaches its declared outcome point and the relevant action is still admissible.
+The player or NPC chooses a supported method from the actual situation. Before work, the interface presents permitted stakes and prospects, never a preview of future dice. Starting binds the intended task, target, applicable rule and actual work. The actor performs the required stage. The check resolves once when that stage reaches its declared outcome point and the relevant action is still admissible.
 
 In the optional patch candidate, randomness resolves once at the fastening step at the end of the first T. No dice result is revealed before the required work is earned. Canceling earlier preserves actual partial effort/state under the action rule and yields no sample to inspect. Resuming retained work preserves the same unresolved attempt; the conditions for its still-unperformed step follow §6.3. Reconnect and background transitions cannot create another result. Real preparation may improve an unresolved attempt's prospects, while canceling or relabeling a resolved attempt cannot change its outcome.
 
@@ -252,7 +252,7 @@ The service model used to choose an action is separate from the fictional stat. 
 
 The player can make meaningful progress by learning a method, inventing and keeping useful equipment, understanding an animal's behavior, becoming better prepared, building a chosen place or following through on a shared plan. NPCs can retain permitted experience and respond to the actual relationship. Those payoffs matter even without a level-up screen; each still requires its supported action, knowledge or relationship behavior.
 
-Observed success/failure can become actual experience and evidence. The October 3 proposal supplied **no automatic numerical skill gain, experience-point award or personality rewrite**. The October 5 DG14 expansion now selects one explicit exception: finite practice can earn a narrow sling-handling improvement under the [base-world rule](../worlds/base/practical-competence.md). The selected release/coaching consumer is now implemented; it awards no general XP or personality change and does not grant a learned activity. ND04's broader progression and [action experience](../maintainers/action-experience.md)'s learned-method responsibilities remain separate.
+Observed success/failure can become actual experience and evidence. The October 3 proposal supplied **no automatic numerical skill gain, experience-point award or personality rewrite**. The October 5 DG14 expansion now selects one explicit exception: finite practice can earn a narrow sling-handling improvement under the [base-world rule](../worlds/base/practical-competence.md). The selected release/coaching consumer is now implemented; it awards no general XP or personality change and does not grant a learned activity. ND04's broader progression and [action experience](../maintainers/action-experience.md)'s learned activity responsibilities remain separate.
 
 ## 10. Authoring the rule without programming
 
@@ -479,7 +479,7 @@ Progression can be a reason to revisit a useful activity, but withholding the ac
 
 A player can borrow a sling and learn to handle it without learning its private construction recipe. A creator can install a sling definition without teaching every resident to manufacture it. An experienced resident can be mechanically practiced and still dislike hunting. Someone can remember a successful hunt as a possible method without having completed the new handling requirement.
 
-These distinctions preserve the current [action-experience contract](../action-experience.md). Its automatic learned-method retention is currently NPC-only and can retain, decline or remain uncertain. This new world-authored practice effect applies to applicable human- or AI-controlled characters who actually perform eligible work. It is a mechanical consequence of that work, not an automatic decision to practice, a forced learned plan or a rewrite of their personality.
+These distinctions preserve the current [action-experience contract](../action-experience.md). The current automatic learning route requires the `npc` controller. Its judgment can retain a learned activity, decline, or remain uncertain. This new world-authored practice effect applies to eligible player characters and NPCs who actually perform eligible work. It is a mechanical consequence of that work, not an automatic decision to practice, a forced learned plan or a rewrite of their personality.
 
 ### 16.3 The independent player journey
 
@@ -573,7 +573,7 @@ The reviewable proposal identifies applicability, initial state, what counts as 
 
 The base-world numbers are one authored profile. They do not establish a universal engine skill system or permit arbitrary formula execution. A creator renaming the skill preserves its meaning; changing the family, effect or learning rule requires a real supported revision. A social-stat request cannot reuse a physical accuracy modifier to force consent.
 
-The selected competence now uses the existing typed-state, permitted-presentation and action/evidence owners, with the real target and finite coaching episode. The [scoped technical design](authored-stats-tech-design.md) describes that integration. The [practical-competence tracker](../maintainers/practical-competence.md) distinguishes delivered native, SQL, UI and genuine-choice evidence from remaining human appreciation and broader work; unrelated checked EWF tasks are not substitute evidence.
+The selected competence now uses the existing typed-state, permitted-presentation and action/evidence owners, with the real target and finite coaching episode. The [scoped technical design](authored-stats-tech-design.md) describes that integration. The [character skill tracker](../maintainers/practical-competence.md) distinguishes delivered native, SQL, UI and genuine-choice evidence from remaining human appreciation and broader work; unrelated checked EWF tasks are not substitute evidence.
 
 ### 16.10 Affordable operation and retained evidence
 
@@ -660,7 +660,7 @@ The selected practice and coaching mechanics are implemented; their claimed play
 
 - Package and sequence: [five product specifications](five-product-feature-specs.md).
 - October 5 continuation: [DG11–DG15](completed/product-design-groups-11-15.md); [base-world sling practice](../worlds/base/practical-competence.md) owns the selected authored law.
-- Design needs: [ND03](../maintainers/needs-design.md#nd03--world-authored-stats-checks-and-their-effects) and [ND04's practical slice](../maintainers/needs-design.md#nd04--experience-shaped-personality-and-practical-skill-growth). [Practical competence](../maintainers/practical-competence.md) owns this new consumer's work; broader progression and personality remain separate.
+- Design needs: [ND03](../maintainers/needs-design.md#nd03--world-authored-stats-checks-and-their-effects) and [ND04's practical slice](../maintainers/needs-design.md#nd04--experience-shaped-personality-and-practical-skill-growth). [Character skill](../maintainers/practical-competence.md) owns this new consumer's work; broader progression and personality remain separate.
 - Existing delivery owners: [EWF02/EWF04](../maintainers/extensible-world-foundation.md), [INV](../maintainers/inventions-and-world-evolution.md), [AC08–AC10](../maintainers/action-capabilities.md) and [state contributions](../maintainers/state-contributions.md). No existing delivered checkbox is reopened or counted as completion of this consumer.
 - Proposed scope and tuning: [authored-stat limits](../limits/authored-stats.md), alongside shared [state-effect](../limits/state-effects.md), [invention](../limits/inventions.md), [action-experience](../limits/action-experience.md) and [product-scalability](../limits/product-scalability.md) inventories.
 - Current contracts: [state effects](../status-effects.md), [agency](../agent-agency.md), [world constitution](../world-constitution.md), [engine/world boundaries](../engine-and-world-boundaries.md) and [action experience](../action-experience.md).

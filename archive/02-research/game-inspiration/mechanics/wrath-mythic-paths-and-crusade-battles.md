@@ -2,7 +2,7 @@
 
 **G59 operational supplement — September 27, 2026.** Read with the [full Wrath dossier](../dossiers/pathfinder-wrath-of-the-righteous.md). This addresses the [remaining R02–R04 audit findings](../references/games-51-60-coverage-audit.md#g59--pathfinder-wrath-of-the-righteous), with five additional R05 cases. The original ten situations, five reviews, six premium expansions, ordinary character rules and late-path costs remain in their existing owner. [Progress](../research-progress.md) owns task state.
 
-Scope is the computer adaptation, not tabletop mythic rules, Kingmaker's administration or optional rule-changing mods. These are documented operations and conditional design interpretations, not a played campaign, watched footage, inspected proprietary implementation or accepted OpenLegend plan. Mythic and strategic story spoilers are limited to explaining the systems.
+Scope is the computer adaptation, not tabletop mythic rules, Kingmaker's administration or optional rule-changing mods. These are documented operations and conditional design interpretations, not a played campaign, watched footage, inspected proprietary implementation or accepted Open Legend plan. Mythic and strategic story spoilers are limited to explaining the systems.
 
 ## 1. Early paths change the activity, not just its name
 

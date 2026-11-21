@@ -245,7 +245,7 @@ A negative-filter Steam request failed. The directly inspected Metacritic user t
 
 The recurring disagreement is not simply “complex RPGs are good or bad.” Players can love a class system and dislike its encounter pacing, love local writing and feel little urgency in the main plot, or enjoy crew identity while resenting resupply. These distinctions are useful design evidence because each suggests a different intervention rather than a generic demand for more content.
 
-## 10. Proposed OpenLegend experiments and what not to import
+## 10. Proposed Open Legend experiments and what not to import
 
 **A helper's expertise should have an owner.** Party Assist suggests a low-friction way for specialists to matter during another person's task. A small experiment could require an adviser to be present, able to communicate and willing to help. Record the supported part of the task and what remains beyond the group's skill. Do not grant absent people automatic knowledge or treat a whole party as one omniscient character.
 
@@ -259,7 +259,7 @@ The recurring disagreement is not simply “complex RPGs are good or bad.” Pla
 
 **A powerful protagonist can remain bounded.** Influence over aftermath, institutions and relationships can be meaningful even when the player cannot reverse a cosmic event. The scope of agency must be communicated early enough that the ending feels like a consequence of the world's scale rather than an arbitrary confiscation of control.
 
-These are proposed research experiments, not accepted engine requirements or claims about current OpenLegend implementation. Private-campaign pause, abstract faction states and authored time travel are especially poor candidates for copying unchanged into a shared autonomous world. Preserve the useful decision; redesign its world and concurrency assumptions explicitly.
+These are proposed research experiments, not accepted engine requirements or claims about current Open Legend implementation. Private-campaign pause, abstract faction states and authored time travel are especially poor candidates for copying unchanged into a shared autonomous world. Preserve the useful decision; redesign its world and concurrency assumptions explicitly.
 
 ## 11. Study and viewing packet
 

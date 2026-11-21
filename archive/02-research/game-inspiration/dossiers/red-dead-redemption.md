@@ -2,7 +2,7 @@
 
 **G69 · Complete research pass, September 26, 2026.** This dossier studies the original **2010 Red Dead Redemption**, preserves its original multiplayer as a historical system, and separates **Undead Nightmare** as an alternate single-player horror continuity. The current single-player reference is the modern Rockstar/Double Eleven line: PS4/Switch (2023), PC (2024), and native PS5/Xbox Series/Switch 2 plus iOS/Android/Netflix (December 2, 2025). Current ports include the single-player base game, Undead Nightmare, and Game of the Year-era bonus content but **do not include the original multiplayer**. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-For OpenLegend, Red Dead Redemption is especially useful as a demonstration that an open world can feel alive with a relatively small set of reusable frontier systems:
+For Open Legend, Red Dead Redemption is especially useful as a demonstration that an open world can feel alive with a relatively small set of reusable frontier systems:
 - travel by horse;
 - animal ecology;
 - random roadside incidents;
@@ -76,7 +76,7 @@ time to matter between missions.
 
 Game Informer explicitly praised the slower rural rhythm because travel created space for the world to interrupt the player. [RD04](#rd04)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Traversal speed determines how much **ambient simulation** the player perceives.
 
@@ -102,7 +102,7 @@ Mechanically it:
 - creates Western quick-draw fantasy;
 - lets one skilled gunfighter dominate groups.
 
-### OpenLegend relevance
+### Open Legend relevance
 
 Perceptual/cognitive speed can be a capability.
 
@@ -141,7 +141,7 @@ Contemporary preview evidence describes:
 - mounted shooting;
 - train/horse combat. [RD05](#rd05)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Combat verbs become more expressive when tools can:
 - restrain;
@@ -165,9 +165,9 @@ This is cinematic rather than simulation-heavy:
 - wounds generally do not persist as limb injuries;
 - bullets do not create long-term medical state.
 
-### OpenLegend contrast
+### Open Legend contrast
 
-If OpenLegend wants bodily continuity:
+If Open Legend wants bodily continuity:
 - wounds;
 - blood loss;
 - infection;
@@ -218,7 +218,7 @@ The duel is not forced to end in death. Shooting the opponent's gun/hand can **d
 This is a stronger reputation pattern than a passive shop discount:
 > public notoriety changes who approaches you, and the encounter can in turn change both Fame and Honor.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Reputation needs multiple axes:
 - known;
@@ -248,7 +248,7 @@ The honor/fame/law systems compose:
 
 Witness identity/memory is simplified compared with a full simulation.
 
-OpenLegend can extend law through:
+Open Legend can extend law through:
 - who saw;
 - what they saw;
 - whether they can identify the actor;
@@ -271,7 +271,7 @@ This is a strong systemic objective because the same combat space supports:
 - nonlethal capture;
 - transport.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Objectives should often care about **method**, not only final state.
 
@@ -314,7 +314,7 @@ Animal populations are not a deep persistent ecology:
 - individual animals are mostly transient;
 - resource pressure does not create long-term ecosystem collapse.
 
-This is an obvious OpenLegend expansion opportunity.
+This is an obvious Open Legend expansion opportunity.
 
 ## 10. Challenges: progression through embodied acts
 
@@ -336,7 +336,7 @@ Ranks unlock:
 
 Game Informer explicitly noted each activity has its own progression structure. [RD04](#rd04)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Achievement/progression can arise from **observed behavior in the world** rather than a detached XP tree.
 
@@ -356,7 +356,7 @@ These are stronger than generic task-board quests because they are attached to:
 - a place;
 - a recognizable problem.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A generated quest should preferably be:
 > someone in a state that creates a need
@@ -381,7 +381,7 @@ The player may:
 
 The Guardian specifically praised the sense that events unfold around the player rather than waiting inertly for activation. [RD06](#rd06)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Events should be able to **continue without the player** where feasible.
 
@@ -469,7 +469,7 @@ but must use violence to satisfy a state coercing him into eliminating his past 
 
 Game Informer praised the late movement into Blackwater specifically because modernity visibly encroaches on the frontier the player has just inhabited. [RD04](#rd04)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A setting becomes meaningful when historical change affects:
 - technology;
@@ -493,7 +493,7 @@ But it creates a crucial effect:
 
 GamesRadar later singled out the final/ranch structure as a rare case where gameplay and narrative conclusion are inseparable. [RD07](#rd07)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Mundane actions become emotionally significant when they:
 - contrast with prior violence;
@@ -526,7 +526,7 @@ The game turns death into:
 It avoids:
 > “reload before the ending forever.”
 
-### OpenLegend inspiration
+### Open Legend inspiration
 
 This is one of the strongest precedents for:
 - heirs;
@@ -559,7 +559,7 @@ Audio includes:
 
 The famous Mexico-entry musical moment works because hours of mostly instrumental travel establish contrast.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Silence and low event density can be meaningful if:
 - place;
@@ -630,7 +630,7 @@ Game Informer praised the premise/characters/Dead Eye zombie combat but criticiz
 Undead Nightmare demonstrates:
 > same map + changed entity/state laws = radically different game.
 
-OpenLegend's world packages/events can reuse geography while replacing:
+Open Legend's world packages/events can reuse geography while replacing:
 - ecology;
 - disease rules;
 - social order;
@@ -653,7 +653,7 @@ Contemporary/retrospective reporting from former staff describes:
 
 Those accounts are evidence about production experience, not about player-facing mechanic intent. [RD15](#rd15)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 World-system ambition is expensive if every discipline must hand-author huge volumes.
 
@@ -807,7 +807,7 @@ That distinction belongs in any commercial analysis.
 
 **Result:** familiar geography becomes strategically/emotionally different.
 
-## 27. Transferable inspiration for OpenLegend
+## 27. Transferable inspiration for Open Legend
 
 ### A. Separate fame from moral reputation
 

@@ -8,7 +8,7 @@
 
 Physical data is renderer-independent. The current `WorldRenderer` boundary accepts the existing authorized `GameView` DTO and returns intentions; it does not expose PlayCanvas objects to React or the domain. This minimal implemented interface is smaller than the eventual rendering projection described in the [runtime contract](../archive/07-technical-architecture/spatial-world-runtime.md#10-playcanvas-isolation-and-hybrid-assets). [Architecture](architecture.md#spatial-world-foundation) identifies delivered behavior; the remaining target is not implicitly complete.
 
-**Status: accepted target; a bounded native 3D foundation is implemented.** This specification establishes OpenLegend's intended spatial behavior. The [runtime contract](../archive/07-technical-architecture/spatial-world-runtime.md) owns technical representation and execution. The [SW tracker](maintainers/spatial-world.md) owns tasks, dependencies, and acceptance. [Architecture](architecture.md) continues to describe the running implementation.
+**Status: accepted target; a bounded native 3D foundation is implemented.** This specification establishes Open Legend's intended spatial behavior. The [runtime contract](../archive/07-technical-architecture/spatial-world-runtime.md) owns technical representation and execution. The [SW tracker](maintainers/spatial-world.md) owns tasks, dependencies, and acceptance. [Architecture](architecture.md) continues to describe the running implementation.
 
 ## Client replacement path
 
@@ -37,7 +37,7 @@ An installed client can still depend on hosted simulation and AI. Offline play w
 
 ## The decision
 
-OpenLegend is fundamentally a **three-dimensional simulated world**. Positions, physical extents, movement, interaction distances, sight, and hearing account for height. Its initial control style is tactical rather than first-person: actors usually walk on surfaces, and flyers initially use supported aerial routes. A free rigid-body physics sandbox is not required.
+Open Legend is fundamentally a **three-dimensional simulated world**. Positions, physical extents, movement, interaction distances, sight, and hearing account for height. Its initial control style is tactical rather than first-person: actors usually walk on surfaces, and flyers initially use supported aerial routes. A free rigid-body physics sandbox is not required.
 
 Presentation is independent. A generated animal can be a two-dimensional sprite while its body occupies a three-dimensional position and volume. A humanoid can later use a rigged 3D model beside that animal without creating a different set of physical rules. Terrain, ramps, floors, and barriers need simple geometry that conveys their actual spatial shape; painted textures and sprite scenery can decorate that geometry.
 

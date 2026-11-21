@@ -8,7 +8,7 @@ identify the examples; they are not download links or proof that this checkout c
 
 ## Request
 
-Explore an original OpenLegend UI surface language: borders, textured panels, corners,
+Explore an original Open Legend UI surface language: borders, textured panels, corners,
 inset frames, title rails, dividers, tabs, brackets, medallions and scaffolding-like elements
 that connect interface parts. Study material, construction and ornament before designing
 whole screens.
@@ -18,7 +18,7 @@ purpose **UI style** and finish **study**. Select Standard, Higgsfield or both f
 request. A useful initial comparison is three coherent directions per requested flow,
 adjustable to the actual request and budget.
 
-Keep OpenLegend's [current direction](../../decisions.md#current-visual-requirements--october-16-2026)
+Keep Open Legend's [current direction](../../decisions.md#current-visual-requirements--october-16-2026)
 and [creative brief](../../final-board/creative-brief.md) as context. These references support
 exploring richer interface craftsmanship; they do not choose a final palette, require a
 parchment-book interface, or change the world's rendering style.

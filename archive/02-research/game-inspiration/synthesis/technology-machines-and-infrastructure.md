@@ -26,7 +26,7 @@ Owns functional device systems and infrastructure capabilities. CRAFT owns makin
 
 ## Candidate reading routes — not assessed
 
-[Factorio](../dossiers/factorio.md), [Oxygen Not Included](../dossiers/oxygen-not-included.md), [Subnautica](../dossiers/subnautica.md), and [magic, technology and ecology](../../worldbuilding/magic-technology-and-ecology.md). These identify comparison questions, not proof of a particular OpenLegend implementation.
+[Factorio](../dossiers/factorio.md), [Oxygen Not Included](../dossiers/oxygen-not-included.md), [Subnautica](../dossiers/subnautica.md), and [magic, technology and ecology](../../worldbuilding/magic-technology-and-ecology.md). These identify comparison questions, not proof of a particular Open Legend implementation.
 
 ## Desired experiences and contrasting approaches
 
@@ -36,7 +36,7 @@ Owns functional device systems and infrastructure capabilities. CRAFT owns makin
 
 ## Consolidated lessons and tradeoffs
 
-## Current OpenLegend baseline and existing design owners
+## Current Open Legend baseline and existing design owners
 
 Read the [technology repertoire](../../../../docs/repertoires/technology.md), [invention journeys](../../../../docs/invention-scenarios.md) and [world-family scope](../../../../docs/repertoires/design-foundation.md). In particular, the existing planetary-science-fiction proposal uses inhabited ships and abstract transit; this guide does not authorize playable spaceflight or override that selected scope.
 
@@ -44,7 +44,7 @@ Read the [technology repertoire](../../../../docs/repertoires/technology.md), [i
 
 <!-- Follow an actual need, chosen method, resources and expertise through assembly/use, failure/repair, adoption and changed dependencies. Ask what remains for people to choose after a task becomes reliable. -->
 
-## Possible OpenLegend applications and limits
+## Possible Open Legend applications and limits
 
 ## Open questions and missing evidence
 

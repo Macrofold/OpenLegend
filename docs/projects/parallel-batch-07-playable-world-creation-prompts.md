@@ -11,7 +11,7 @@ This is the historical October 11 launch prompt for one assignment with internal
 ```text
 Implement Batch 07 — Playable world creation, covering all OC01–OC05 as one complete assignment. Let an authorized creator describe a small supported world, preserve the parts they choose, inspect a real starting opportunity, review the exact opening, start it on an operator-prepared empty host and play a useful activity whose consequences survive reopening. Follow AGENTS.md and applicable repository guidance.
 
-After selecting and refreshing local main under AGENTS.md, create and switch to the new branch codex/playable-world-creation. The planning baseline is OpenLegend local main, equal to refreshed origin/main at 2c3f52038e3c1afae0f2cc7586c3e740f1cf5ad5; these Batch 07 documents must also be present on your selected base.
+After selecting and refreshing local main under AGENTS.md, create and switch to the new branch codex/playable-world-creation. The planning baseline is Open Legend’s local main, equal to refreshed origin/main at 2c3f52038e3c1afae0f2cc7586c3e740f1cf5ad5; these Batch 07 documents must also be present on your selected base.
 
 Start readiness: Ready. Existing invention, World Agent questions/review, native actions, authored definitions, persistence and account/control owners are available on that base. This assignment implements all missing initial-world construction and empty-target integration itself.
 Open prerequisites: None.

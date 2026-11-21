@@ -4,7 +4,7 @@
 
 ## What a person can choose
 
-A person may choose a short camp project: gather a material from a known source, return to a chosen basket, put a chosen quantity inside while leaving some available for themselves, then add one unit to a chosen fire. These real actions can provide evidence for that person's existing learning process. They are not a compulsory starting goal or a preinstalled learned method.
+A person may choose a short camp project: gather a material from a known source, return to a chosen basket, put a chosen quantity inside while leaving some available for themselves, then add one unit to a chosen fire. These real actions can provide evidence for that person's existing learning process. They are not a compulsory starting goal or a preinstalled learned activity.
 
 A person may also explicitly watch an already burning fire for a chosen period, using either carried fuel or one specified nearby cache. The person spends actual fuel and their physical action time. They can stop, change their mind, fail, or choose something else. The watch is one requested occasion, not a learned “if hungry, maintain camp” policy or an automatic daily schedule.
 
@@ -67,11 +67,11 @@ These are examples assembled from selected/current facts, not compulsory behavio
 - “The watch ended at the chosen time. I used 3 branches.”
 - “The watch ended at the chosen time after an interruption. I used 2 branches; I was not watching throughout.”
 
-The speaker/observer sees only permitted names and facts. Public witnesses do not learn private minima, intentions or unseen contents from these summaries. A guarded fuel failure publishes only the visible stop; its detailed stock/minimum reason is an actor-private event and retained result. An actor's learned method records their own evidence; another person's successful watch teaches no unseen conditional branch.
+The speaker/observer sees only permitted names and facts. Public witnesses do not learn private minima, intentions or unseen contents from these summaries. A guarded fuel failure publishes only the visible stop; its detailed stock/minimum reason is an actor-private event and retained result. The actor’s record of learning the activity links to their own evidence; another person's successful watch teaches no unseen conditional branch.
 
 ## Deliberate scope
 
-The finite learned method preserves demonstrated amounts and compatible object/place roles. Choosing different amounts creates a new requested attempt; it is not automatically a verified generalization. A one-session watch can run conditional native control without becoming learned conditional knowledge. The actor retains free choice before every new selection, while already selected native steps continue without another model call per step.
+The learned activity’s shared method definition preserves demonstrated amounts and compatible object/place roles. Choosing different amounts creates a new requested attempt; it is not automatically a verified generalization. A one-session watch can run conditional native control without becoming learned conditional knowledge. The actor retains free choice before every new selection, while already selected native steps continue without another model call per step.
 
 Only an eligible NPC's existing optional retention assessment can learn the supported finite gather/return/pack/fuel trace. Actual native receipts establish what moved or was spent, not a preference to retain it or repeat it. Ground-cache rebinding requires the actor's current permitted inspection; stale or partial contents are not hidden knowledge. No starting goal, successful method, compulsory retention or model selection is installed by these requests.
 

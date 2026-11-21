@@ -172,7 +172,7 @@ This creates an expert-knowledge split:
 
 Kitase later reflected that FFVIII launched in an era without strong online knowledge-sharing, and that the unfamiliar systems were harder for players to understand without guides or communities. [FFVIII01](#ffviii01)
 
-**OpenLegend lesson:** rich transformation systems need discoverability inside the world. Expert depth is valuable; requiring an external wiki to discover the intended resource network is not.
+**Open Legend lesson:** rich transformation systems need discoverability inside the world. Expert depth is valuable; requiring an external wiki to discover the intended resource network is not.
 
 ## 7. Triple Triad: world culture that feeds the main game
 
@@ -211,7 +211,7 @@ Repeatedly summoning or using associated actions can raise compatibility while s
 
 This is not a full social simulation, but it is notable that the game models a **character ↔ supernatural companion relationship state** with mechanical consequences.
 
-For OpenLegend, the interesting abstraction is broader:
+For Open Legend, the interesting abstraction is broader:
 
 > repeated interaction between entities can change how efficiently they cooperate.
 
@@ -319,7 +319,7 @@ Progress and information can be discovered through in-world magazines:
 
 RPGFan highlights how Limit progression and weapon creation are embedded in world artifacts rather than abstract skill menus. [FFVIII05](#ffviii05)
 
-**OpenLegend lesson:** knowledge objects—manuals, field notes, teachers, magazines—can be acquisition or explanation channels. The interface should distinguish which function an object actually performs.
+**Open Legend lesson:** knowledge objects—manuals, field notes, teachers, magazines—can be acquisition or explanation channels. The interface should distinguish which function an object actually performs.
 
 ## 13. ATB and combat actions
 
@@ -364,7 +364,7 @@ Traversal evolves through:
 
 Balamb Garden becoming mobile is especially important because an institution itself becomes a vehicle. The player's “home base” changes from a fixed school to a traversable world entity.
 
-That is an unusual and valuable OpenLegend precedent:
+That is an unusual and valuable Open Legend precedent:
 - buildings/institutions need not remain static;
 - world-scale events can change what an existing place **is capable of doing**.
 
@@ -409,7 +409,7 @@ NPCs do not typically have:
 - evolving social networks;
 - autonomous strategic goals simulated outside scripts.
 
-The SeeD salary/rank system is notable because it makes institutional membership mechanically persistent, even though the institution itself is not simulated like OpenLegend aims to simulate organizations.
+The SeeD salary/rank system is notable because it makes institutional membership mechanically persistent, even though the institution itself is not simulated like Open Legend aims to simulate organizations.
 
 ## 17. Concrete system interactions
 
@@ -570,7 +570,7 @@ These are qualitative player accounts, not prevalence estimates. Technical compl
 | Building/settlements | No player construction/management |
 | Endgame/optional | Optional GFs, Islands Closest to Heaven/Hell, Deep Sea Research Center, Omega Weapon, card/sidequest completion |
 
-## 23. OpenLegend transferable lessons and limits
+## 23. Open Legend transferable lessons and limits
 
 ### A. Power can come from relationships between systems, not levels
 
@@ -671,7 +671,7 @@ Magic can be:
 
 Cards can become items. Items can become magic. GFs can turn learned AP into commands, stat permissions and refinement functions. Employment produces money. Enemy difficulty follows the party rather than remaining fixed.
 
-For OpenLegend, the valuable principle is not “copy Junction.” It is:
+For Open Legend, the valuable principle is not “copy Junction.” It is:
 
 > **Let world entities and social roles participate in a transparent graph of transformations, permissions and learned capabilities—then make that graph understandable enough that players do not need to fight the interface to discover the game.**
 

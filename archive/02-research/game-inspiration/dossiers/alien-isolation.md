@@ -12,7 +12,7 @@ This is a narrower, more useful account than either “the Alien is a neural lea
 
 ## Three different meanings of learning
 
-For OpenLegend, separate retaining an experience, updating an expectation or preference, and learning a new reusable means. The first can be an exact observation. The second can be a character's interpretation. The third needs an actually supported method, not just a claim in generated dialogue.
+For Open Legend, separate retaining an experience, updating an expectation or preference, and learning a new reusable means. The first can be an exact observation. The second can be a character's interpretation. The third needs an actually supported method, not just a claim in generated dialogue.
 
 A simple, conditional memory can be sufficient where the modeled response is narrow. It cannot interpret an arbitrary apology, recognize an unexpected conflict of commitments, or infer the meaning of a cherished object unless the system represents those things somehow. Conversely, using a language model does not make every subsequent change evidence-based: the prompt and retrieved evidence still have to preserve the relevant occurrence.
 
@@ -28,7 +28,7 @@ The useful engine contribution is reliable evidence and competent execution. Whe
 
 One lasting, relevant change can communicate more continuity than frequent unrelated verbal reactions. This is our design hypothesis, not a measured effect in the interview. It motivates evaluating whether a prior event affects the next appropriate opportunity—not counting how often the character says it remembers.
 
-It also exposes a product boundary. Difficulty management may deliberately make an enemy more capable without the corresponding personal experience. That may serve a horror game's pacing, but OpenLegend should not silently treat such adjustment as a discovered fact or a personal memory. The world's director, author and inhabitants need not have identical knowledge or authority.
+It also exposes a product boundary. Difficulty management may deliberately make an enemy more capable without the corresponding personal experience. That may serve a horror game's pacing, but Open Legend should not silently treat such adjustment as a discovered fact or a personal memory. The world's director, author and inhabitants need not have identical knowledge or authority.
 
 The multi-Alien production problem cautions against extrapolating from a successful single-character demonstration. Shared resources, observation, coordination and concurrent decisions create new interactions; multiplying a working controller is not sufficient evidence of a functioning society.
 
@@ -36,4 +36,4 @@ The multi-Alien production problem cautions against extrapolating from a success
 
 **AI1.** AVP Galaxy, *Alien: Isolation Developer Interview*, October 2024, direct interview with Andy Bray, Dion Lay and Will Porter. [Transcript](https://www.avpgalaxy.net/website/interviews/alien-isolation-developers/). The navigation discussion and learning/persistence section were read. No claim is made here about a separately verified two-controller architecture, current performance or online weight training.
 
-Whole-game content, reception, commercial outcomes and modding remain unassessed by this topic-only pass. The dossier does not authorize a difficulty director or a native fear policy for OpenLegend.
+Whole-game content, reception, commercial outcomes and modding remain unassessed by this topic-only pass. The dossier does not authorize a difficulty director or a native fear policy for Open Legend.

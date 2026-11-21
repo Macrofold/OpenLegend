@@ -144,13 +144,13 @@ The following substantive article bodies were read through their conclusions. Th
 
 **Expose causes, not only scores.** The strongest reference is an inspectable relationship among stock, flow, capacity, dependencies and control. An invention that fails should reveal which supported requirement is unmet. That principle can apply to a small workshop without simulating planetary industry.
 
-**Separate design authorship from repetitive execution.** Blueprint and construction-robot distinctions show how an expressed decision can be executed more conveniently without deciding its purpose. A proposed OpenLegend experiment could let a player inspect and revise a bounded construction plan; it need not automatically optimize every tradeoff for them.
+**Separate design authorship from repetitive execution.** Blueprint and construction-robot distinctions show how an expressed decision can be executed more conveniently without deciding its purpose. A proposed Open Legend experiment could let a player inspect and revise a bounded construction plan; it need not automatically optimize every tradeoff for them.
 
 **Let places invalidate selected assumptions.** Fulgora, Gleba and Aquilo are useful because familiar operations remain recognizable while a constraint changes. A new setting need not introduce an entirely unrelated skill tree. Conversely, changing every assumption simultaneously can make earned competence feel irrelevant.
 
 **Do not universalize one motivation.** Factorio's comparatively thin authored social world is compatible with its central promise. It is not evidence that companions, psychological needs or interpersonal drama are unimportant in a game pursuing a different promise. A throughput optimizer is not automatically a good world inhabitant.
 
-**Do not promise unlimited simulation.** The historical optimization study and current port work show that rich-looking behavior depends on representation, testing and constraints. This research does not measure how many machines another engine could support, approve a particular architecture, or turn Factorio's rules into OpenLegend requirements.
+**Do not promise unlimited simulation.** The historical optimization study and current port work show that rich-looking behavior depends on representation, testing and constraints. This research does not measure how many machines another engine could support, approve a particular architecture, or turn Factorio's rules into Open Legend requirements.
 
 ## 13. Coverage, evidence and preservation
 

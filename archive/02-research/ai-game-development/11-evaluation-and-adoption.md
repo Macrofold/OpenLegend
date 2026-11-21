@@ -6,7 +6,7 @@
 
 We can be confident that the research has covered the major relevant production areas and checked the supplied leads against stronger evidence. We can also be confident that several popular conclusions are unsupported: catalog coverage does not choose an engine, a polished demo does not isolate a language model, and a generated mesh is not automatically a usable character.
 
-We cannot be 100% certain that every useful private workflow, unindexed tutorial or newly released tool has been found. Nor can further reading determine which candidate works best on OpenLegend's exact art, characters, context and budget. The next increase in confidence comes from a small comparative production exercise whose output remains useful to the project.
+We cannot be 100% certain that every useful private workflow, unindexed tutorial or newly released tool has been found. Nor can further reading determine which candidate works best on Open Legend's exact art, characters, context and budget. The next increase in confidence comes from a small comparative production exercise whose output remains useful to the project.
 
 The [coverage register](13-source-register-and-coverage.md) records what was investigated and which evidence remains unavailable. This plan offers comparisons for the remaining decision-relevant uncertainty. The [reusable production routes](../../../docs/production-workflows/README.md) explain the complete working methods; these trials help select between candidates for a particular route.
 
@@ -46,7 +46,7 @@ For the **implementation-agent comparison**, give the incumbent and one challeng
 
 Review in a blinded order where practical. Score family consistency, item recognition, hierarchy, readability and fidelity to the brief. Independently check behavior: selection, equipment, quantities, long names, unavailable art, pending/rejected operations, changes while the panel is open, focus and return to world control.
 
-**Decision:** adopt an improved art route or agent for this task when the complete usable screen improves and correction effort is acceptable. Include how well the screen expresses OpenLegend's identity and makes actual possessions worth inspecting or using. A beautiful but static panel does not pass. If both agents struggle with the same ambiguous brief, repair the input before declaring a model failure.
+**Decision:** adopt an improved art route or agent for this task when the complete usable screen improves and correction effort is acceptable. Include how well the screen expresses Open Legend's identity and makes actual possessions worth inspecting or using. A beautiful but static panel does not pass. If both agents struggle with the same ambiguous brief, repair the input before declaring a model failure.
 
 **Deliverables:** baseline and candidate captures, approved art kit, actual interaction record, total work/cost and a short decision. [Detailed UI procedure](08-ui-quality-and-production.md).
 
@@ -90,7 +90,7 @@ Repeat the procedure on a second compatible body or equipment configuration only
 
 ### Trial E: authoring and persistent-character behavior
 
-**Question:** which candidate improves the particular character work OpenLegend needs?
+**Question:** which candidate improves the particular character work Open Legend needs?
 
 Start with the actual configured incumbent, Claude Opus 5.5 and Gemini 4 Argon if available through appropriate approved routes. Record effective model identities and settings; model names in docs are not proof of deployment configuration.
 
@@ -139,7 +139,7 @@ These are proposed categories to tailor to the exact task. They do not add a uni
 
 ### Count failures and recovery
 
-A provider timeout, an unusable export or a discarded model consumes work. Record it. After an ambiguous failure, inspect existing state before retrying a mutating operation. A repeated paid request may produce a second charge or duplicate asset without solving the original problem. Existing OpenLegend budget, cancellation and retry rules govern actual use. [AI-provider owner](../../../docs/ai-providers.md).
+A provider timeout, an unusable export or a discarded model consumes work. Record it. After an ambiguous failure, inspect existing state before retrying a mutating operation. A repeated paid request may produce a second charge or duplicate asset without solving the original problem. Existing Open Legend budget, cancellation and retry rules govern actual use. [AI-provider owner](../../../docs/ai-providers.md).
 
 For long agent work, preserve a useful checkpoint at accepted boundaries and maintain a concise outstanding-defect list. Recover from the actual saved state instead of asking a new session to infer completion from a confident progress message. This is a production recommendation, not permission to alter any connected external project.
 
@@ -181,4 +181,4 @@ The research recommends no automatic engine migration, global provider switch, m
 
 The requested desk research, source appraisal, project mapping, skills audit, comparative model assessment and proposed production procedures are the deliverable. The unrun comparisons above can resolve uncertain adoption decisions; they are explicitly outside the completed research's claims. They are not a compulsory portfolio before using a compatible reference, repairing an obvious defect or pursuing already authorized work.
 
-The immediate value is concrete: reusable routes from an idea to working content, compatible skills to inspect, credible model/asset challengers, and comparisons that connect production gains to OpenLegend's creative ambitions. Existing owners preserve the distinction between a useful method, a delivered capability and an experience people have actually enjoyed.
+The immediate value is concrete: reusable routes from an idea to working content, compatible skills to inspect, credible model/asset challengers, and comparisons that connect production gains to Open Legend's creative ambitions. Existing owners preserve the distinction between a useful method, a delivered capability and an experience people have actually enjoyed.

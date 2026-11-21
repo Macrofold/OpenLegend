@@ -4,11 +4,11 @@ Vast land and sea create a different scaling problem from a crowded camp. The ea
 
 ## Coordinate precision is a foundation, not a late visual polish task
 
-OpenLegend's current spatial contract uses continuous world coordinates in metres. That is a useful unit convention, but it does not establish precision through every provider, typed array, native bridge, saved field and GPU conversion. A double-precision host scalar can still be narrowed by a geometry API or native vector representation.
+Open Legend's current spatial contract uses continuous world coordinates in metres. That is a useful unit convention, but it does not establish precision through every provider, typed array, native bridge, saved field and GPU conversion. A double-precision host scalar can still be narrowed by a geometry API or native vector representation.
 
 [Godot's documentation](sources.md#s13) explains the loss of floating-point resolution away from the origin. [Epic's large-world work](sources.md#s12) demonstrates that precision changes cross multiple engine systems and interfaces. These are reasons to audit the entire path now, not reasons to adopt either engine.
 
-For illustration, IEEE single-precision spacing around 1,000,000 metres is 0.0625 metres: `2^(floor(log2(1000000))-23)`. That is an arithmetic example, not OpenLegend's selected world extent or a claim that any installed provider currently fails there. The acceptable error depends on body/support/contact tolerances, intended reach, navigation and authored scale.
+For illustration, IEEE single-precision spacing around 1,000,000 metres is 0.0625 metres: `2^(floor(log2(1000000))-23)`. That is an arithmetic example, not Open Legend's selected world extent or a claim that any installed provider currently fails there. The acceptable error depends on body/support/contact tolerances, intended reach, navigation and authored scale.
 
 A later design should compare a sufficiently precise global representation with bounded local computation frames, and a space/chunk-plus-local-position representation. Neither implies one CPU per coordinate cell. Do not select a global f32 representation merely because a physics API accepts f32, or make every unrelated scalar f64 without an actual need.
 

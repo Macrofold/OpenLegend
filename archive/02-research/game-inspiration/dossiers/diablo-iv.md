@@ -2,7 +2,7 @@
 
 **G12 · Full research pass completed September 26, 2026.** The major systems and R01–R14 are addressed below. This is not an exhaustive seasonal balance database, personal playthrough, proprietary-code audit or representative player survey. The [preserved three-game comparison](../games/path-of-exile-path-of-exile-2-and-diablo-iv.md) retains its earlier evidence and conclusions. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-Diablo IV's permanent systems, expansion entitlements, temporary seasons and historical introductions are separated. Diablo II, Diablo III, Immortal and an announced successor do not establish its rules. Numerical tuning from a launch or PTR explanation is not automatically current. Named characters and artwork are references, not assets proposed for copying into OpenLegend.
+Diablo IV's permanent systems, expansion entitlements, temporary seasons and historical introductions are separated. Diablo II, Diablo III, Immortal and an announced successor do not establish its rules. Numerical tuning from a launch or PTR explanation is not automatically current. Named characters and artwork are references, not assets proposed for copying into Open Legend.
 
 ## 1. What a session actually asks the player to do
 
@@ -136,7 +136,7 @@ The defense redesign makes armour/resistances rating systems and exposes **Tough
 
 Ordinary retries and **Hardcore** have different emotional stakes. Historical support text reproduced in the official forums explicitly treated Hardcore deaths as final, including deaths beyond the player's control. The present support URL exposed only its navigation shell during retrieval, so this dossier does not claim a newly read current restoration-policy body. [D20](#d20) The documented modern modes still distinguish Normal and Hardcore; a server-error story is not silently classified as intended tactical failure.
 
-**Interpretation:** accepting a severe game rule does not make losing through an unexplained technical interruption enjoyable. The comparison for OpenLegend is to make chosen challenge, operational failure and authorized recovery distinguishable, not automatically adopt another service's restoration policy.
+**Interpretation:** accepting a severe game rule does not make losing through an unexplained technical interruption enjoyable. The comparison for Open Legend is to make chosen challenge, operational failure and authorized recovery distinguishable, not automatically adopt another service's restoration policy.
 
 ## 9. Endgame activities pose different problems
 
@@ -274,7 +274,7 @@ The original packet's 2024 interruption/monetization testimony and later 2026 pr
 
 **Do not import seasonal resets into long-lived world care by default.** Rebirth can preserve identity while deliberately resetting power. That may be appropriate for an optional scenario, not a silent update to a settlement with relationships and personally constructed projects.
 
-These are research interpretations, not accepted OpenLegend implementation requirements or a recommendation to imitate Diablo's scale, monetization or loss policy.
+These are research interpretations, not accepted Open Legend implementation requirements or a recommendation to imitate Diablo's scale, monetization or loss policy.
 
 ## 17. Coverage, viewing routes and preservation
 

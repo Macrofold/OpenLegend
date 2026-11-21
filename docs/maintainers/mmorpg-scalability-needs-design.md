@@ -6,7 +6,7 @@
 
 ## Scope and ownership
 
-This focused register identifies hard-to-retrofit foundations for OpenLegend's simulation-heavy persistent worlds. The working scenario is many independently evolving seed copies, vast land/sea, roughly 1,000 or more players per world and potentially thousands of world datasets. These are research workloads, not newly selected release gates or measured capacity. Older release/growth criteria remain owned by PF/PS/PD until reconciled explicitly.
+This focused register identifies hard-to-retrofit foundations for Open Legend's simulation-heavy persistent worlds. The working scenario is many independently evolving seed copies, vast land/sea, roughly 1,000 or more players per world and potentially thousands of world datasets. These are research workloads, not newly selected release gates or measured capacity. Older release/growth criteria remain owned by PF/PS/PD until reconciled explicitly.
 
 MSF records own **design preparation and cross-owner reconciliation only**. Their eventual designs belong in the existing canonical spatial, world-creation, native, scheduling, product-scalability, save/data and delivery owners. Do not create a second implementation queue for NSC, BK, PF, NET, SL, PS or PD. Close an MSF record when its actual missing contract is designed or verified as already covered; link the canonical result and leave runtime/qualification status with the existing owner.
 
@@ -14,14 +14,14 @@ The inspected baseline is `56e9ab35a1d6ac71ccce9cf97c0f76250a78e977` on `codex/s
 
 ## Priority and dependency map
 
-| Record | Design-preparation timing | Smallest useful result | Consuming owners |
-| --- | --- | --- | --- |
-| MSF01 | Now, before native spatial layouts and bridge types spread | Explicit precision/space contract and a small offset-scene qualification plan | Spatial/SW, NSC, save/protocol/render adapters |
-| MSF02 | Contract boundary now; detailed scope soon, before vast geography is offered | Complete versus partial physical-query coverage and dependency-safe residency lifecycle | Spatial, current data/SL, NSC/PF |
-| MSF03 | Now, before world lifecycle assumptions spread into new consumers | Two independent seed instances with scoped identity, creation/restore distinction and process-independent lifecycle | World creation/composition, SL, authority, NSC/PD |
-| MSF04 | Now, alongside each supported native-family conversion | Reconciled cost/influence/validity coverage using existing admission and dependency owners | NSC, native work, dependency invalidation, extensible world foundation |
-| MSF05 | Soon, before an unattended/continuing-world service promise | Selected advancement/suspension/reactivation promise with obligations and cost boundaries | PS/continuing lives, simulation time, native family owners |
-| MSF06 | Audit boundaries now; full hosted profile before multiplayer/many-world expansion | One aggregate resource/lifetime map and honest overload/resync behavior | Scheduling, NET, BK, PF, PD and AI orchestration |
+| Record | Design-preparation timing                                                         | Smallest useful result                                                                                              | Consuming owners                                                       |
+| ------ | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| MSF01  | Now, before native spatial layouts and bridge types spread                        | Explicit precision/space contract and a small offset-scene qualification plan                                       | Spatial/SW, NSC, save/protocol/render adapters                         |
+| MSF02  | Contract boundary now; detailed scope soon, before vast geography is offered      | Complete versus partial physical-query coverage and dependency-safe residency lifecycle                             | Spatial, current data/SL, NSC/PF                                       |
+| MSF03  | Now, before world lifecycle assumptions spread into new consumers                 | Two independent seed instances with scoped identity, creation/restore distinction and process-independent lifecycle | World creation/composition, SL, authority, NSC/PD                      |
+| MSF04  | Now, alongside each supported native-family conversion                            | Reconciled cost/influence/validity coverage using existing admission and dependency owners                          | NSC, native work, dependency invalidation, extensible world foundation |
+| MSF05  | Soon, before an unattended/continuing-world service promise                       | Selected advancement/suspension/reactivation promise with obligations and cost boundaries                           | PS/continuing lives, simulation time, native family owners             |
+| MSF06  | Audit boundaries now; full hosted profile before multiplayer/many-world expansion | One aggregate resource/lifetime map and honest overload/resync behavior                                             | Scheduling, NET, BK, PF, PD and AI orchestration                       |
 
 These preparation tasks can run in parallel where their inputs are known. MSF02 consumes MSF01's space contract and MSF04's influence information. MSF05 constrains which state MSF02 may safely evict. MSF03 and MSF06 meet at world startup, shutdown, recovery and shared resources. None requires implementing a cluster before completing NSC's smaller proof.
 
@@ -143,15 +143,15 @@ Distinguish simulation, personal evidence and public publication. Share only tar
 
 ## Existing foundations to preserve and qualify, not redesign here
 
-| Foundation / unresolved evidence | Canonical owner | Required reconciliation |
-| --- | --- | --- |
-| Resident Rust authority, bridge, private acceptance, multicore, cells, custody and adaptation | [NSC](native-simulation-core.md) | Preserve selected design and full-game conversion inventory; MSF does not mark any implementation or experiment complete |
-| Meaningful perception, identity, independent detail freshness, correction and forgetting | Current attention/perception/memory owners and [PS](product-scalability.md) | Candidate sharing and physical residency never grant model/player knowledge |
-| Bounded changed-record saving, retention and physical cleanup | [Production data/BK](production-data.md) | Qualify world age, actual physical bytes, dependency pins, maintenance lag and database I/O; no new indefinite event journal |
-| Current-format load, identity high-water and operational non-rewindable state | [Save/load](save-and-load.md) | Qualify complete recovery cuts and mature-world restore, not only fresh saves; no compatibility infrastructure for zero users |
-| Complete-path performance, dense/dispersed populations and AWS measurements | [PF](performance.md) | Use the [scenario matrix](../../research/mmorpg-foundations/08-sequencing-and-qualification.md); establish criteria before runs and preserve failed outcomes |
-| External waits and actual resource termination | [NET](bounded-network-requests.md) | Reuse finite lifetime/capacity rules for new loaders and consumers; timeout is not proof of termination |
-| Fleet deployment, distributed storage, hosted failure/recovery and build upgrades | [Production deployment](production-deployment.md) | Trigger later work by measured needs or a real service promise; process allocation is not regional simulation authority |
+| Foundation / unresolved evidence                                                              | Canonical owner                                                             | Required reconciliation                                                                                                                                      |
+| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Resident Rust authority, bridge, private acceptance, multicore, cells, custody and adaptation | [NSC](native-simulation-core.md)                                            | Preserve selected design and full-game conversion inventory; MSF does not mark any implementation or experiment complete                                     |
+| Meaningful perception, identity, independent detail freshness, correction and forgetting      | Current attention/perception/memory owners and [PS](product-scalability.md) | Candidate sharing and physical residency never grant model/player knowledge                                                                                  |
+| Bounded changed-record saving, retention and physical cleanup                                 | [Production data/BK](production-data.md)                                    | Qualify world age, actual physical bytes, dependency pins, maintenance lag and database I/O; no new indefinite event journal                                 |
+| Current-format load, identity high-water and operational non-rewindable state                 | [Save/load](save-and-load.md)                                               | Qualify complete recovery cuts and mature-world restore, not only fresh saves; no compatibility infrastructure for zero users                                |
+| Complete-path performance, dense/dispersed populations and AWS measurements                   | [PF](performance.md)                                                        | Use the [scenario matrix](../../research/mmorpg-foundations/08-sequencing-and-qualification.md); establish criteria before runs and preserve failed outcomes |
+| External waits and actual resource termination                                                | [NET](bounded-network-requests.md)                                          | Reuse finite lifetime/capacity rules for new loaders and consumers; timeout is not proof of termination                                                      |
+| Fleet deployment, distributed storage, hosted failure/recovery and build upgrades             | [Production deployment](production-deployment.md)                           | Trigger later work by measured needs or a real service promise; process allocation is not regional simulation authority                                      |
 
 ## Completion rule
 

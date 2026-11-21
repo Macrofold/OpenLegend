@@ -1,6 +1,6 @@
 # G92 — Final Fantasy XV
 
-**Research pass:** September 26, 2026. **Scope:** the 2016 game, its significant free updates, Royal/Windows editions, playable Episodes and Comrades; cancelled content and non-game continuations remain separate. **Purpose:** a gameplay/production reference, not accepted OpenLegend design.
+**Research pass:** September 26, 2026. **Scope:** the 2016 game, its significant free updates, Royal/Windows editions, playable Episodes and Comrades; cancelled content and non-game continuations remain separate. **Purpose:** a gameplay/production reference, not accepted Open Legend design.
 
 [Library](../README.md) · [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Previous: Final Fantasy XIV](final-fantasy-xiv.md)
 
@@ -123,7 +123,7 @@ This inventory is supported by the distinct activity guides, not inferred from o
 
 In **Justice Monsters V**, elemental monster-balls, charging, switching and interrupting a boss target coexist with bumper-triggered prize opportunities. Accumulated chests determine the external reward when the session ends. **Totomostro** emphasizes choosing a team and intervening with horns rather than performing its attacks directly. Both give money or specialized currency another use; neither establishes real-money gambling. [S36](#s36) [S32](#s32)
 
-Late purpose can come from collections, a weapon, dungeon mastery, revisiting an activity or a different playable perspective. The world does not offer unrestricted construction, civilian job selection, branching diplomacy or a player-run kingdom after its ending. Those absences matter for OpenLegend: a convincing journey through places is not evidence that those places contain a full social simulation.
+Late purpose can come from collections, a weapon, dungeon mastery, revisiting an activity or a different playable perspective. The world does not offer unrestricted construction, civilian job selection, branching diplomacy or a player-run kingdom after its ending. Those absences matter for Open Legend: a convincing journey through places is not evidence that those places contain a full social simulation.
 
 ## 6. Companions, relationships, factions, and AI
 
@@ -260,7 +260,7 @@ A **June 28, 2023** recommended account dislikes repeated tasks and thin world/s
 
 These are mixed-content, helpfulness-selected historical accounts, not a random survey or current sentiment measure. Displayed lifetime hours can postdate publication. Technical problems were not reproduced, and the negative-only sample remains unavailable.
 
-## 14. OpenLegend implications — hypotheses, not requirements
+## 14. Open Legend implications — hypotheses, not requirements
 
 **Make relationships useful beyond combat.** Repeated contributions can express a group through distributed competence. The transferable pattern is not these exact characters or hobbies. Repetition and usefulness may create familiarity without psychological depth.
 

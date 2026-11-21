@@ -3,11 +3,11 @@
 
 <!-- END FIELDGUIDE INTRO -->
 # What makes a living world worth playing?
-## Comparative game research for OpenLegend
+## Comparative game research for Open Legend
 
 **Research dates:** September 22–23, 2026; expanded edition September 23  
 **Scope:** 47 named games/platforms across 38 case-study chapters, with deeper treatment of the requested perspective comparisons, developer accounts, reception tensions, and economic/growth histories. Coverage depth and unavailable evidence are explicitly marked.  
-**Audience:** OpenLegend’s founder, designers, and engineers.  
-**Purpose:** Product and design research—not a new implementation specification, an instruction to copy every feature, or a forecast of OpenLegend’s commercial results.
+**Audience:** Open Legend’s founder, designers, and engineers.  
+**Purpose:** Product and design research—not a new implementation specification, an instruction to copy every feature, or a forecast of Open Legend’s commercial results.
 
 ---

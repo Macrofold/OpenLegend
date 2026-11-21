@@ -4,7 +4,7 @@ Use a backed-up or isolated save. Choose the player action and the outcome the c
 
 ## Live invention and survival journey
 
-When qualifying this particular journey, verify a real conversation and later permitted recall, one resident decision, a generated sling that is crafted and used, finite harvest/cooking/eating, reuse without regeneration, and a separately compatible bow/arrow path. Exercise pause, restart, idempotent resubmission, stale work and uncertain accounting. Keep the relevant acceptance criterion open when a model misroutes, leaks, refuses or produces an invalid definition.
+When qualifying this particular journey, verify a real conversation and later permitted recall, one NPC decision, a generated sling that is crafted and used, finite harvest/cooking/eating, reuse without regeneration, and a separately compatible bow/arrow path. Exercise pause, restart, idempotent resubmission, stale work and uncertain accounting. Keep the relevant acceptance criterion open when a model misroutes, leaks, refuses or produces an invalid definition.
 
 ## Continuing an episode
 

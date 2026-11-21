@@ -1,6 +1,6 @@
 # Character experience and inner life
 
-This proposal describes the kind of characters OpenLegend should make possible and the ideas informing that ambition. The [compelling characters feature spec](../../docs/projects/compelling-characters-feature-spec.md) owns the proposed behavior; the [character experience tracker](../../docs/maintainers/character-experience.md) owns follow-through. This companion does not establish another work queue or claim that the proposed experiences are implemented.
+This proposal describes the kind of characters Open Legend should make possible and the ideas informing that ambition. The [compelling characters feature spec](../../docs/projects/compelling-characters-feature-spec.md) owns the proposed behavior; the [character experience tracker](../../docs/maintainers/character-experience.md) owns follow-through. This companion does not establish another work queue or claim that the proposed experiences are implemented.
 
 ## A particular person living a life
 

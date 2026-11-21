@@ -20,7 +20,7 @@ This is an authorized implementation project. It complements the [attention runt
 - Speech, impacts, action outcomes, deliberate inspection, acquired knowledge, meaningful outward changes, cooperation and obligations retain their exact supported evidence and timing. Useful retained accounts survive cold storage and restart. Correction/forgetting revoke dependent information immediately even when physical cleanup is deferred.
 - World time, bodily processes, animals, movement, collision and committed action effects continue independently of optional cognition. A wakeup does not automatically purchase a model call. Existing quiet continuations, urgency, fairness, paid-call admission and recovery remain.
 - A person can retain beliefs, relationships, identity, commitments and fallible interpretations. Protected identity and exact evidence links survive consolidation of storage. An old verifier passing an alternate pipeline is not evidence that the live game supports the same behavior.
-- Inventory pages, learned methods, private notes and known places remain discoverable. Required tools and promised terms cannot vanish because optional context is paged. Partial inventory cannot justify a claim that an item is absent.
+- Inventory pages, learned activities, private notes and known places remain discoverable. Required tools and promised terms cannot vanish because optional context is paged. Partial inventory cannot justify a claim that an item is absent.
 - Walking, gathering, replenishment, dropping possessions, construction and permissions retain their present results and deterministic selection order. The same request must not become a different gameplay action merely because candidates are selected more efficiently.
 
 ## 3. Scope and decisions

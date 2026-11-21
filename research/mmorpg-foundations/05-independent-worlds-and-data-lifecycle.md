@@ -6,7 +6,7 @@ The working scenario is many copies of one seed world, each with its own evolvin
 
 A seed is a pinned starting definition and its dependencies. A created world is one particular history with its own identities, time, state and operational bindings. A hosting process is a replaceable executor. A player session is a temporary participation relationship. None should be used as an implicit substitute for another.
 
-[AWS's persistent-world guidance](sources.md#s01) provides a concrete example of durable world/session mapping. Its cloud services are not selected here; the relevant requirement is that a world can stop, reopen on another process and still be the same world. Existing OpenLegend creation, restore, authority and NSC boundaries should supply that lifecycle rather than a second “MMO world manager” with its own source of truth.
+[AWS's persistent-world guidance](sources.md#s01) provides a concrete example of durable world/session mapping. Its cloud services are not selected here; the relevant requirement is that a world can stop, reopen on another process and still be the same world. Existing Open Legend creation, restore, authority and NSC boundaries should supply that lifecycle rather than a second “MMO world manager” with its own source of truth.
 
 At creation, instantiate a fresh world against exact seed/definition pins through the existing initializer and authorized creation owner. Record enough provenance to explain which starting material it used. Later, restoring it reads its actual current state; it does not rerun creation. Changing a shared seed must not silently update existing mutable worlds.
 
@@ -36,7 +36,7 @@ The first useful validation uses two independent worlds in one process or ordina
 
 A logical world is a semantic identity. A simulation cell is an ownership/locality unit. A database partition is a storage/query organization. There is no requirement for one of each per machine. A small world may share a host and database with others; a large world may later span many compute owners while retaining the initial centralized writer.
 
-[Earlier OpenLegend scale notes](../../archive/07-technical-architecture/data-delivery-and-scale.md) already require world-qualified records and caution against cross-world transactions in ordinary gameplay. Preserve that route. Account/catalog/discovery services can legitimately be global, but they should not require scanning all world states for each player interaction. Cross-world travel or a genuinely shared campaign is a separately designed product operation, not an accidental SQL join.
+[Earlier Open Legend scale notes](../../archive/07-technical-architecture/data-delivery-and-scale.md) already require world-qualified records and caution against cross-world transactions in ordinary gameplay. Preserve that route. Account/catalog/discovery services can legitimately be global, but they should not require scanning all world states for each player interaction. Cross-world travel or a genuinely shared campaign is a separately designed product operation, not an accidental SQL join.
 
 [PostgreSQL's partitioning rules](sources.md#s17) show why key/constraint design matters before physical placement. Its [multicolumn-index documentation](sources.md#s18) shows why query shape matters, not merely an index's existence. This research does not select partition-per-world tables, schema-per-world, database-per-world, a new distributed database, or a partition count. Establish exact world/owner key semantics and representative query coverage now; choose placement later.
 
@@ -44,14 +44,14 @@ A logical world is a semantic identity. A simulation cell is an ownership/locali
 
 These data classes have different purposes and lifetimes:
 
-| Class | Necessary meaning | Scaling risk |
-| --- | --- | --- |
-| Current physical/canonical state and active continuation | What exists and what accepted work is underway | Loading all geography, whole-record rewrite amplification or loss of pending effects |
-| Personal current knowledge and required support | What a particular actor can legitimately know and act upon | Treating a cache eviction or physical unload as forgetting; sharing private evidence |
-| Retained chronological experience and narrative artifacts | What remains available from a particular perspective with actual precision | Endless detail growth, source pin chains, global history scans |
-| Immutable definitions and assets | Exact installed meanings and presentation dependencies | Premature reclamation or unbounded duplicate materialization |
-| Operational receipts, billing, grants and privacy fences | Effects and restrictions that may outlive gameplay rewind | Duplicate external work, restored authority or lost accounting after recovery |
-| Diagnostics and prepared consumer captures | Temporary explanation/transport products | Accidentally pinning whole old worlds indefinitely |
+| Class                                                     | Necessary meaning                                                          | Scaling risk                                                                         |
+| --------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Current physical/canonical state and active continuation  | What exists and what accepted work is underway                             | Loading all geography, whole-record rewrite amplification or loss of pending effects |
+| Personal current knowledge and required support           | What a particular actor can legitimately know and act upon                 | Treating a cache eviction or physical unload as forgetting; sharing private evidence |
+| Retained chronological experience and narrative artifacts | What remains available from a particular perspective with actual precision | Endless detail growth, source pin chains, global history scans                       |
+| Immutable definitions and assets                          | Exact installed meanings and presentation dependencies                     | Premature reclamation or unbounded duplicate materialization                         |
+| Operational receipts, billing, grants and privacy fences  | Effects and restrictions that may outlive gameplay rewind                  | Duplicate external work, restored authority or lost accounting after recovery        |
+| Diagnostics and prepared consumer captures                | Temporary explanation/transport products                                   | Accidentally pinning whole old worlds indefinitely                                   |
 
 Existing BK, schema, history-residency and NSC work already establish much of this separation. Preserve it. Do not impose a second event log to “make everything replayable,” or log every changing coordinate forever in the name of persistence. Meaningful events, current state and recovery coverage have distinct owners.
 

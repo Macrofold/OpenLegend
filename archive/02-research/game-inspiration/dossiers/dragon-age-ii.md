@@ -1,6 +1,6 @@
 # Dragon Age II — full research dossier
 
-**G52 · Research pass and identified production-history remedy completed September 26, 2026, with the documented Steam-sampling access limit retained (§17).** Scope: BioWare/EA's 2011 game, Legacy, Mark of the Assassin, The Exiled Prince and the smaller equipment/service additions. Interpretations are research proposals, not accepted OpenLegend requirements. Section 15.1 now separates creative intent, production workflow and schedule constraints; earlier mechanics, seven cases, reviews and expansion evidence remain.
+**G52 · Research pass and identified production-history remedy completed September 26, 2026, with the documented Steam-sampling access limit retained (§17).** Scope: BioWare/EA's 2011 game, Legacy, Mark of the Assassin, The Exiled Prince and the smaller equipment/service additions. Interpretations are research proposals, not accepted Open Legend requirements. Section 15.1 now separates creative intent, production workflow and schedule constraints; earlier mechanics, seven cases, reviews and expansion evidence remain.
 
 [Requirements](../research-requirements.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Origins](dragon-age-origins.md)
 
@@ -64,7 +64,7 @@ Kirkwall's map offers day and night versions of locations, with different encoun
 
 Rogues use Cunning thresholds for locks and traps. The system no longer presents the same broad standalone non-combat skill catalogue as Origins. Investigation and persuasion occur through authored dialogue opportunities; calling on a companion can provide a different solution. A restricted but specific alternative can be more expressive than a universal 'persuade' button, provided the player understands why that person helps. [M16](#m16) [M2](#m2)
 
-**Interpretation:** explicit time slices are a production-efficient way to broaden a place. OpenLegend's stronger persistence ambitions would require reconciling what changes in the interval instead of assuming a menu transition constitutes lived time.
+**Interpretation:** explicit time slices are a production-efficient way to broaden a place. Open Legend's stronger persistence ambitions would require reconciling what changes in the interval instead of assuming a menu transition constitutes lived time.
 
 ## 9. Companions, homes and ideological disagreement
 
@@ -90,7 +90,7 @@ Later acts escalate the Qunari crisis and the mage–templar conflict. Hawke can
 
 Combat knockouts leave injuries that reduce maximum health. Injury kits or returning home remove that penalty; restoring ordinary health is a different operation. A full-party defeat generally returns the player to a save rather than generating a continuing captured-party narrative. Difficulty can be changed, with Nightmare introducing friendly-fire considerations. [M17](#m17) [M3](#m3)
 
-Replay comes from classes, dialogue tendencies, companions, relationship routes and decisions, not an endless procedural endgame. There is no cooperative base campaign, general farming/survival economy, freely constructed player city, or autonomous faction simulation. Hawke's improved home expresses social ascent but is not a survival game's building editor. Imports preserve selected continuity, not the entire state of Origins. These limits matter when comparing the game's strong character writing to OpenLegend's broader simulation goals.
+Replay comes from classes, dialogue tendencies, companions, relationship routes and decisions, not an endless procedural endgame. There is no cooperative base campaign, general farming/survival economy, freely constructed player city, or autonomous faction simulation. Hawke's improved home expresses social ascent but is not a survival game's building editor. Imports preserve selected continuity, not the entire state of Origins. These limits matter when comparing the game's strong character writing to Open Legend's broader simulation goals.
 
 ## 12. Legacy: a weapon that is also a key to family history
 
@@ -198,7 +198,7 @@ Legacy's weapon-key gains a selected property as Hawke advances through a seal. 
 
 Tallis and Hawke enter a section whose visibility and distraction rules differ from ordinary combat. The player learns which familiar abilities are unavailable and chooses a permitted route. **Limit:** a temporary mode needs clear entry/exit rules and reliable resets, or its novelty becomes frustration. [D2](#d2)
 
-## 19. OpenLegend inspiration and counterexamples
+## 19. Open Legend inspiration and counterexamples
 
 **Disagreement need not be relationship failure.** Distinguish affection, agreement, respect and non-negotiable commitments. Rivalry is an instructive approximation, not the final ontology for agents.
 

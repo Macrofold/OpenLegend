@@ -1,6 +1,6 @@
 ## Executive judgment
 
-**OpenLegend’s most promising position is a playable world of consequential relationships and inventive problem-solving—not an unlimited simulation demonstration and not a creator platform that needs a large community before it becomes enjoyable.**
+**Open Legend’s most promising position is a playable world of consequential relationships and inventive problem-solving—not an unlimited simulation demonstration and not a creator platform that needs a large community before it becomes enjoyable.**
 
 The cases suggest a useful division of labor: Minecraft demonstrates accessible construction and player ownership; RimWorld demonstrates consequential people and readable adversity; Hades demonstrates expressive, situation-aware character continuity; Roblox demonstrates the distribution and operating machinery required once creation becomes an ecosystem. None, alone, is a sufficient product blueprint. [MC1](../references/sources-01.md#source-mc1) [RW1](../references/sources-01.md#source-rw1) [HD2](../references/sources-01.md#source-hd2) [RB2](../references/sources-01.md#source-rb2)
 
@@ -19,7 +19,7 @@ The strongest recommendations are:
 
 These are design judgments drawn from contrasting cases, not claims that controlled experiments have isolated a universal formula for success.
 
-**The second-pass conclusion:** OpenLegend does not need an FPS camera to support a substantial audience. Its stronger opportunity is readable systems and particular inhabitants: the practical uncertainty of Zomboid, useful emotional automation suggested by Palworld, the meaningful compositions of Balatro/Noita, and the persistent attachment of Stardew/RimWorld/Hades. Camera choice must still be tested with the intended audience; public counts do not establish age preferences. [MET-PZ](../references/sources-02.md#source-met-pz) [PAL1](../references/sources-03.md#source-pal1) [CRIT-BA](../references/sources-03.md#source-crit-ba)
+**The second-pass conclusion:** Open Legend does not need an FPS camera to support a substantial audience. Its stronger opportunity is readable systems and particular inhabitants: the practical uncertainty of Zomboid, useful emotional automation suggested by Palworld, the meaningful compositions of Balatro/Noita, and the persistent attachment of Stardew/RimWorld/Hades. Camera choice must still be tested with the intended audience; public counts do not establish age preferences. [MET-PZ](../references/sources-02.md#source-met-pz) [PAL1](../references/sources-03.md#source-pal1) [CRIT-BA](../references/sources-03.md#source-crit-ba)
 
 **Three evidence layers remain separate:** the game’s mechanics and creator intent; specific reviewers’ experiences; and public popularity/commercial measures. A compelling causal story about growth is labeled as interpretation unless an actual creator account or measured channel record supports it.
 

@@ -12,7 +12,7 @@ The studio's GDC announcement separately identifies mission technology that conn
 
 ## The useful architectural question
 
-Generating an interesting person once is different from preserving that person through later interactions. For OpenLegend, a generated profile should not be the only place where identity appears. Possessions, relationships, observations and accepted intentions need to refer to the same continuing character.
+Generating an interesting person once is different from preserving that person through later interactions. For Open Legend, a generated profile should not be the only place where identity appears. Possessions, relationships, observations and accepted intentions need to refer to the same continuing character.
 
 Conversely, procedural consistency is not cognition. A plausible schedule can provide context and opportunities without proving that the person chose its priorities. A rule-generated social connection can create a starting condition; it does not establish what either participant currently feels or remembers.
 
@@ -34,7 +34,7 @@ Returning to the ordinary routine can be a meaningful choice rather than a failu
 
 **Do not count potential generated profiles as concurrently active minds.** The practical scaling question is how many identities are retained, how many activities are advancing, how often choices are reconsidered and how much information each update touches.
 
-A simpler authored cast may deliver stronger continuity than a much larger generated population. Procedural variety is useful only where the resulting distinctions affect choices, relationships or what a participant can discover. The cited material does not quantify that tradeoff for OpenLegend.
+A simpler authored cast may deliver stronger continuity than a much larger generated population. Procedural variety is useful only where the resulting distinctions affect choices, relationships or what a participant can discover. The cited material does not quantify that tradeoff for Open Legend.
 
 ## Sources and remaining boundary
 

@@ -1,6 +1,6 @@
 # Cost model and structural failure modes
 
-This chapter is engineering analysis, not a measured OpenLegend capacity model. It supplies variables and counterexamples for the existing PF/NSC qualification owners. [Baseline evidence](01-baseline-and-existing-coverage.md) controls all statements about current code; [sources](sources.md) support external examples.
+This chapter is engineering analysis, not a measured Open Legend capacity model. It supplies variables and counterexamples for the existing PF/NSC qualification owners. [Baseline evidence](01-baseline-and-existing-coverage.md) controls all statements about current code; [sources](sources.md) support external examples.
 
 ## Capacity is a vector, not a player count
 
@@ -8,7 +8,7 @@ Track at least: stored worlds; concurrently advancing worlds; connected humans; 
 
 Two worlds with 1,000 connected humans can differ greatly. One may have scattered explorers with small local encounters; another may place everyone around a burning market with many NPCs, projectiles, inventories, speech recipients and independent memories. Fewer humans can still produce more work if autonomous actors interact continuously. A world with no current clients can still have admitted simulation and AI obligations. A huge empty sea can be cheap in active CPU yet expensive if represented as eagerly resident fine cells.
 
-Google's overload guidance explicitly cautions against treating request rate as a stable proxy for resource demand [S14](sources.md#s14). The corresponding OpenLegend inference is to use player count as one workload label, never as the sole cost or placement signal.
+Google's overload guidance explicitly cautions against treating request rate as a stable proxy for resource demand [S14](sources.md#s14). The corresponding Open Legend inference is to use player count as one workload label, never as the sole cost or placement signal.
 
 ## A useful accounting decomposition
 
@@ -32,23 +32,23 @@ These are accounting identities or analytical bounds, not measured coefficients.
 
 ## What multicore can and cannot do
 
-For fixed work with serial fraction `s` and `p` equally capable workers, the idealized bound is `speedup <= 1 / (s + (1-s)/p)`, before synchronization, memory and scheduling overhead. For example, a hypothetical 20% serial fraction bounds 16-worker speedup at 4×. This illustration is arithmetic, not an estimate of OpenLegend's serial fraction.
+For fixed work with serial fraction `s` and `p` equally capable workers, the idealized bound is `speedup <= 1 / (s + (1-s)/p)`, before synchronization, memory and scheduling overhead. For example, a hypothetical 20% serial fraction bounds 16-worker speedup at 4×. This illustration is arithmetic, not an estimate of Open Legend's serial fraction.
 
 A nearly saturated main thread establishes a bottleneck in that execution path; it does not establish that all its work can be parallelized or that a language change removes the required work. Native work can remain serial behind a world mutex. Conversely, pure calculations for several observers in one cell can run concurrently without first distributing geography.
 
-The Factorio team's belt work illustrates a relevant mechanism: identify independent interacting groups, then deal explicitly with cross-group consequences and determinism [S09](sources.md#s09). It does not justify transplanting Factorio's scheduler or simulation model. OpenLegend already chooses explicit phases and disjoint ranges rather than a universal dynamically rebuilt task graph.
+The Factorio team's belt work illustrates a relevant mechanism: identify independent interacting groups, then deal explicitly with cross-group consequences and determinism [S09](sources.md#s09). It does not justify transplanting Factorio's scheduler or simulation model. Open Legend already chooses explicit phases and disjoint ranges rather than a universal dynamically rebuilt task graph.
 
 Measure useful completed progression, command/capture tail latency, total process/thread CPU, allocations and bytes moved. Count phase preparation and deterministic result application. If all cores become busy but throughput and latency do not improve, the change has not earned adoption. More memory bandwidth, tighter layout or less work may matter more than more workers; NSC already treats these as measured questions.
 
 ## Five different expansion problems
 
-| Expansion | Likely pressure | Foundation that prevents avoidable rework |
-| --- | --- | --- |
-| More independent worlds | Shared pools, startup, routing, database lanes, external job capacity and minimum per-world overhead | Stable world identity, explicit lifecycle, bounded host-wide resources and world-scoped access |
-| More geography in one world | Terrain/object residency, spatial query coverage, navigation preparation and coordinate precision | Sparse physical representation, local frames, complete/partial query semantics and replaceable preparation units |
-| More dispersed active regions | Dependency selection, cross-boundary overlap, controller coordination and eventual transport | Existing ownership/influence contracts; no assumption that distant work requires a full-world scan |
-| More participants in one encounter | Real interaction density, contested writes, receiving and fan-out | Deterministic semantic owners, actual audience filtering, measured density envelope and honest admission |
-| More lifetime history | Retrieval, correction, retention, snapshots, backups and restoration | Current state separate from retained history, scoped indexed reads, bounded reclamation and recoverable cuts |
+| Expansion                          | Likely pressure                                                                                      | Foundation that prevents avoidable rework                                                                        |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| More independent worlds            | Shared pools, startup, routing, database lanes, external job capacity and minimum per-world overhead | Stable world identity, explicit lifecycle, bounded host-wide resources and world-scoped access                   |
+| More geography in one world        | Terrain/object residency, spatial query coverage, navigation preparation and coordinate precision    | Sparse physical representation, local frames, complete/partial query semantics and replaceable preparation units |
+| More dispersed active regions      | Dependency selection, cross-boundary overlap, controller coordination and eventual transport         | Existing ownership/influence contracts; no assumption that distant work requires a full-world scan               |
+| More participants in one encounter | Real interaction density, contested writes, receiving and fan-out                                    | Deterministic semantic owners, actual audience filtering, measured density envelope and honest admission         |
+| More lifetime history              | Retrieval, correction, retention, snapshots, backups and restoration                                 | Current state separate from retained history, scoped indexed reads, bounded reclamation and recoverable cuts     |
 
 None of these is proved by another. A thousand independent tiny worlds is not proof of a thousand players in one town. A large static map is not proof of sparse-state correctness. A long run with silent history deletion is not an aged-world test.
 

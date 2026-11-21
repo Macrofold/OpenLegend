@@ -6,7 +6,7 @@
 
 ### Environment and method
 
-OpenLegend source and refreshed `origin/main`: `b528af6d`; working branch: `codex/np05-npc-reply-preview`. The worktree had no `.env` or inherited provider configuration, so the probe explicitly loaded the existing local game's configuration from the primary checkout. Credentials, connection IDs, database URLs and payloads are omitted here.
+Open Legend source and refreshed `origin/main`: `b528af6d`; working branch: `codex/np05-npc-reply-preview`. The worktree had no `.env` or inherited provider configuration, so the probe explicitly loaded the existing local game's configuration from the primary checkout. Credentials, connection IDs, database URLs and payloads are omitted here.
 
 That configuration selects Macrofold at `http://localhost:3210`, BYOK, with `MACROFOLD_JEV_MODEL=meta/muse-spark-1.3-contributor`. NPC level-2/complex generation settings retain their defaults, `openai/gpt-5-mini` and `openai/gpt-5`. The configured Macrofold key takes precedence over direct OpenAI. No model, route, response schema, prompt, recipient or operation policy was changed.
 

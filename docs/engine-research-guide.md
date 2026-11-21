@@ -1,6 +1,6 @@
-# Using engine research to improve OpenLegend
+# Using engine research to improve Open Legend
 
-This guide connects the [current Unreal and Unity research](../research/unity-unreal-runtime/README.md) to OpenLegend's existing product and design documents. The engine evidence cutoff is **2026-10-23**; this design integration was reviewed on **2026-10-24**. Its [version and evidence baseline](../research/unity-unreal-runtime/01-evidence-and-version-baseline.md) owns external claims; this guide supplies **interpretation and design preparation**, not measured OpenLegend benefits.
+This guide connects the [current Unreal and Unity research](../research/unity-unreal-runtime/README.md) to Open Legend's existing product and design documents. The engine evidence cutoff is **2026-10-23**; this design integration was reviewed on **2026-10-24**. Its [version and evidence baseline](../research/unity-unreal-runtime/01-evidence-and-version-baseline.md) owns external claims; this guide supplies **interpretation and design preparation**, not measured Open Legend benefits.
 
 The opportunity is to make the project's defining experiences work well together: useful invention, people with independent purposes, places worth exploring and changing, and consequences that matter on a later return. [Gameplay priorities](repertoires/gameplay-priorities.md) and the [first-playable world](worlds/base/playable-openings.md#first-playable-game-target) already select that direction. The engine study helps explain ways to support it and questions to resolve inside existing designs. It does not select an engine migration, new world laws, a population target or a new implementation programme.
 
@@ -18,7 +18,7 @@ Use [simulation and perception](../research/unity-unreal-runtime/02-simulation-a
 
 ### Let useful capabilities combine across activities
 
-The study of definitions, tasks, effects and content lifetimes makes a transferable engineering opportunity visible: a capability can have a clear executable meaning while different authored worlds give it different purposes and consequences. That supports OpenLegend's ambition for an invention or learned method to be useful beyond its first demonstration.
+The study of definitions, tasks, effects and content lifetimes makes a transferable engineering opportunity visible: a capability can have a clear executable meaning while different authored worlds give it different purposes and consequences. That supports Open Legend's ambition for an invention or learned activity to be useful beyond its first demonstration.
 
 A proposed tool becomes interesting when it changes an available approach, can be understood and used through ordinary interaction, and retains a worthwhile use afterward. The relevant question is what existing operations can express that behavior, and precisely which computation is missing if they cannot. A general plugin, graph or scripting system is not itself the player benefit.
 
@@ -96,7 +96,7 @@ Start with a concrete question from the selected experience or an observed failu
 For a finding that could affect a design, the useful record contains:
 
 - **The intended benefit and existing owner.** Name the activity, choice, expression or consequence helped. Link its current feature/technical pair or persistent contract.
-- **The evidence and the inference.** Link the precise research section. Separate documented engine behavior from the proposed relevance to OpenLegend.
+- **The evidence and the inference.** Link the precise research section. Separate documented engine behavior from the proposed relevance to Open Legend.
 - **The smallest consequential decision.** Identify the actual missing contract, measured repeated work, presentation problem or unsupported authoring capability. Compare the proposed change with the existing adequate route and a credible simpler option.
 - **The evidence that would change the conclusion.** State what would establish correctness, meaningful behavior, player understanding/value and complete cost for that particular question. Reuse the owner's current qualification rather than adding a parallel procedure.
 

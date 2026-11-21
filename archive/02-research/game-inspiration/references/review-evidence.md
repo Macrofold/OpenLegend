@@ -67,7 +67,7 @@ Where a qualification is the researcher’s interpretation rather than an explic
 
 **Balatro:** a creator diary gives a specific record of demo changes, creator exposure and feedback. This supports an iterative development account, not a universal recipe for streamer success. [BA1](sources-03.md#source-ba1)
 
-## Interpretation for OpenLegend
+## Interpretation for Open Legend
 
 The useful output of review research is a set of testable conflicts: comfort versus pressure; autonomy versus lost agency; knowledge versus opacity; consequences versus arbitrary punishment; novelty versus stable competence; expressive authorship versus tedious configuration; social occasion versus attendance obligation.
 
@@ -89,7 +89,7 @@ A representative cross-language review sample, verified age profiles, equal-dept
 - **Developer description:** evidence for the intended/published mechanic, not independent proof that players enjoy it.
 - **Mechanics reference:** documentation of a rule or interaction, not a verified recording of a particular session.
 - **Video recommendation:** metadata/official-link validation only; no claim of full playback analysis.
-- **OpenLegend interpretation:** a proposed design lesson rather than a demonstrated causal result.
+- **Open Legend interpretation:** a proposed design lesson rather than a demonstrated causal result.
 
 ## Coverage and contrasting evidence
 

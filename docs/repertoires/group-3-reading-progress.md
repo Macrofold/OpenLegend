@@ -46,7 +46,7 @@ The final source registers retain the difference between rules, creator intent, 
 
 Across the research, shared capability does not erase individual desire; attachment can conflict with efficiency; comfort can be a finished achievement; a particular failure can produce learning, anger, humor or departure; and a person's title, competence, obligations, trust, affection and consent can diverge. A catalogue entry must make one of those differences selectable and consequential rather than merely attach a label. Beauty, ordinary pleasure, cruelty, competitive ambition and strange minds remain available without compulsory redemption or a sinister explanation for every happy life.
 
-New repertoire examples are **creative synthesis**, not copied franchise events, clinical predictions or implemented OpenLegend behavior. No fresh external-current-state audit, gameplay, audiovisual inspection, live-model experiment or representative sentiment study is claimed.
+New repertoire examples are **creative synthesis**, not copied franchise events, clinical predictions or implemented Open Legend behavior. No fresh external-current-state audit, gameplay, audiovisual inspection, live-model experiment or representative sentiment study is claimed.
 
 ## Catalogue delivery
 

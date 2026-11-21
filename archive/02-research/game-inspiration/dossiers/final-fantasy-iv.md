@@ -63,7 +63,7 @@ That means a useful modern comparison is:
 - **DS/3D:** same broad narrative spine but harder encounters and a new build layer through Augments;
 - **Complete Collection:** preservation/bundle branch with sequel/interlude material.
 
-For OpenLegend, this is a valuable case in how a remake can alter **player agency and optimization** even when the plot appears familiar.
+For Open Legend, this is a valuable case in how a remake can alter **player agency and optimization** even when the plot appears familiar.
 
 ## 3. Core action vocabulary
 
@@ -254,7 +254,7 @@ This creates a useful sequence:
 4. reach a new region or world layer;
 5. encounter new resource/enemy/story constraints.
 
-**OpenLegend pattern:** progression can live in **world permission** rather than a character-level gate. A vehicle, relationship or physical tool can expand the set of reachable plans.
+**Open Legend pattern:** progression can live in **world permission** rather than a character-level gate. A vehicle, relationship or physical tool can expand the set of reachable plans.
 
 ## 10. Dungeons and encounters as rule tests
 
@@ -334,7 +334,7 @@ Named kingdoms/groups such as Baron, Mysidia, Fabul, Troia, Eblan, the Dwarves, 
 
 The current Pixel Remaster product is officially **single-player**. [FFIV07](#ffiv07) The Super Famicom/SNES family did include a configuration that could assign battle control across two controllers; localization research shows this in the Japanese and North American variants. That was local controller sharing inside one party, not a separate persistent multiplayer world, co-op campaign economy or network social system. [FFIV15](#ffiv15)
 
-For OpenLegend this is an important negative case: memorable relationships do **not** require a generalized social simulation, but a fixed script cannot provide the open-ended interpersonal causality OpenLegend is aiming for.
+For Open Legend this is an important negative case: memorable relationships do **not** require a generalized social simulation, but a fixed script cannot provide the open-ended interpersonal causality Open Legend is aiming for.
 
 ## 13. Art, audio, interface, and feel
 
@@ -407,7 +407,7 @@ The design lesson is not that one branch is “correct.” They serve different 
 - story continuity;
 - convenience.
 
-A future OpenLegend mechanic should likewise distinguish **core world law** from optional convenience/presentation and from expansion content.
+A future Open Legend mechanic should likewise distinguish **core world law** from optional convenience/presentation and from expansion content.
 
 ## 16. Preliminary transferable inspiration and limits
 
@@ -415,9 +415,9 @@ A future OpenLegend mechanic should likewise distinguish **core world law** from
 
 FFIV's strongest characters are mechanically recognizable before the player reads a biography. Jump, Summon, Twincast, Throw and Cover are identities.
 
-**OpenLegend application:** an NPC/player role can become memorable when capabilities, obligations and constraints arise from who they are in the world, not merely from prose traits.
+**Open Legend application:** an NPC/player role can become memorable when capabilities, obligations and constraints arise from who they are in the world, not merely from prose traits.
 
-**Limit:** fixed verbs reduce self-authorship. OpenLegend should not assume every person needs a locked JRPG class.
+**Limit:** fixed verbs reduce self-authorship. Open Legend should not assume every person needs a locked JRPG class.
 
 ### B. Party turnover can make narrative loss mechanically real
 
@@ -431,7 +431,7 @@ When someone leaves, tactics change.
 
 ATB proves that menu-based decision making can still make hesitation consequential.
 
-**Application:** some OpenLegend systems could have world time continue during planning where fiction demands urgency.
+**Application:** some Open Legend systems could have world time continue during planning where fiction demands urgency.
 
 **Limit:** never make UI navigation speed itself the hidden difficulty unless that is intentional and accessible.
 
@@ -557,18 +557,18 @@ The current Steam aggregate is strongly positive, but the helpful-review surface
 
 Those 2021 player complaints are **historical version evidence**, not a complete description of the 2026 product. Square Enix later added optional encounter toggling and 0–4× EXP controls to the Pixel Remaster line, giving modern players more control over pacing. [FFIV06](#ffiv06) Helpful Steam reviews are also self-selected and discoverability-weighted; they are qualitative testimony, not prevalence estimates.
 
-## 21. OpenLegend lessons, now tested against reception
+## 21. Open Legend lessons, now tested against reception
 
 The most transferable pattern is **bounded systemic depth**. FFIV does not need dozens of independent simulation layers because it knows the party's capabilities and can author situations that make particular verbs matter. GamesRadar explicitly praised how distinct characters, battle rules and dungeons reinforce one another, while DS reviews show how modest extra composition through Augments can add replay/build depth without discarding character identity. [FFIV17](#ffiv17) [FFIV19](#ffiv19)
 
-For OpenLegend that suggests:
+For Open Legend that suggests:
 
 - **Make capabilities socially/fictionally owned.** A person's history, profession, body, relationships and possessions should produce verbs that feel like theirs.
 - **Let absence change possibility.** Losing a guide, healer, mechanic, translator or trusted official should change plans because their capabilities/permissions leave with them.
-- **Design world laws that support multiple known answers.** Mist Dragon, Asura and Bahamut are memorable because ordinary verbs change meaning under a local rule. OpenLegend should prefer legible causal laws over arbitrary bespoke exceptions.
+- **Design world laws that support multiple known answers.** Mist Dragon, Asura and Bahamut are memorable because ordinary verbs change meaning under a local rule. Open Legend should prefer legible causal laws over arbitrary bespoke exceptions.
 - **Preserve build authorship where the fiction allows it.** FFIV's fixed-party approach works in a scripted journey; a sandbox needs ways to learn, teach, delegate, equip, recruit or invent alternatives rather than trapping the player behind one predetermined party.
 - **Separate accessibility from world truth.** Fast-forward, automation, information display and input support can be presentation conveniences. EXP/encounter multipliers modify progression law and should be framed accordingly.
-- **Do not copy linearity by accident.** FFIV's story-first structure benefits from controlled party composition and encounter sequencing. OpenLegend's promise is different; it should borrow the mechanical legibility without assuming one authored order of events.
+- **Do not copy linearity by accident.** FFIV's story-first structure benefits from controlled party composition and encounter sequencing. Open Legend's promise is different; it should borrow the mechanical legibility without assuming one authored order of events.
 
 ## 22. Requirement, source, and preservation audit
 
@@ -602,7 +602,7 @@ For OpenLegend that suggests:
 
 FFIV's lasting design value is the **tight coupling between authored identity, available verbs and encounter rules**. Its party turnover means narrative events change the player's tactical system; ATB turns menu decisions into timed commitments; traversal tools repeatedly reinterpret the world map; bosses teach that state, counters, timing and utility spells matter. The major rereleases then act like controlled experiments around the original constraint: how much build freedom, challenge, bonus content and convenience can be added without losing the clarity of fixed character identity?
 
-For OpenLegend, the highest-value lesson is not to reproduce FFIV's linear campaign. It is to make **who is present, what they know/can do, and what local world laws are active** materially determine the option space.
+For Open Legend, the highest-value lesson is not to reproduce FFIV's linear campaign. It is to make **who is present, what they know/can do, and what local world laws are active** materially determine the option space.
 
 ## 24. Storage, bespoke forging and complete noncombat situations
 

@@ -1,10 +1,10 @@
-# OpenLegend context and research coverage
+# Open Legend context and research coverage
 
 Research date: **23 October 2026**. Repository: **Macrofold/OpenLegend**. Grounding revision: [`d1299aaf7cd834efbc9937e31c81efa3773b8418`](https://github.com/Macrofold/OpenLegend/commit/d1299aaf7cd834efbc9937e31c81efa3773b8418), the verified `main` base used to create this research branch.
 
 ## 1. Purpose and authority
 
-This collection studies how current Unreal and Unity systems work, the work they perform, the guarantees they provide, and the tradeoffs they expose. It includes adjacent current research where that helps distinguish a shipping engine mechanism from an experimental capability. It does **not** select an engine, propose OpenLegend subsystem designs, authorize implementation, or revise the accepted product direction.
+This collection studies how current Unreal and Unity systems work, the work they perform, the guarantees they provide, and the tradeoffs they expose. It includes adjacent current research where that helps distinguish a shipping engine mechanism from an experimental capability. It does **not** select an engine, propose Open Legend subsystem designs, authorize implementation, or revise the accepted product direction.
 
 The research is separate from the existing [engine/platform comparison](../game-engines/README.md), which answers broader platform-choice questions. This collection answers runtime-mechanism questions. The [application guide](../../docs/engine-research-guide.md) connects the findings to worthwhile experiences, existing design owners and remaining scoped questions.
 
@@ -22,7 +22,7 @@ The architecture and performance documents are large, evolving records. Relevant
 
 The intended product is an engine for authored realities with a coherent default world. The [engine/world boundary](../../docs/engine-and-world-boundaries.md) distinguishes runtime responsibilities—identity, admission, authorization, bounded execution, observation delivery, and preservation—from authored rules about species, needs, cognition, physics policy, and social behavior. That document labels itself a **target architecture** and explicitly does not claim that the current implementation already supplies a fully general module runtime.
 
-The same document retains PlayCanvas, React, the authoritative domain, application coordination, and replaceable execution adapters. This research does not change that decision. Unreal and Unity are studied as sources of concrete mechanisms, including mechanisms whose assumptions differ from OpenLegend's current browser/server architecture.
+The same document retains PlayCanvas, React, the authoritative domain, application coordination, and replaceable execution adapters. This research does not change that decision. Unreal and Unity are studied as sources of concrete mechanisms, including mechanisms whose assumptions differ from Open Legend's current browser/server architecture.
 
 The [repertoire catalogue](../../docs/repertoires/README.md) spans 28 categories, including actions, combat, objects, adventure, abilities, needs, resources, crafting, settlements, ecology, bodies, economy, relationships, characters, mechanics, psychology, traits, diplomacy, institutions, history, languages, arts, faith, magic, technology, automation, unusual realities, and simulation experiments. The catalogue explicitly calls its entries proposals, not installed capabilities or commitments to ship every item. Its priorities put a complete, enjoyable game ahead of an isolated technical showcase.
 
@@ -42,7 +42,7 @@ The following is a bounded description of documented current behavior, supplemen
 | Animals and cognition       | Default-world animals have native behavior; not every participant action requires a language model. Character cognition and execution have separate owners. [README](../../README.md), [inspected animal source](https://github.com/Macrofold/OpenLegend/blob/d1299aaf7cd834efbc9937e31c81efa3773b8418/packages/domain/src/worlds/base/animal-behavior.ts). | Neural-agent research must not be used to describe all simulation work or all animal decision cost.                                                                |
 | Persistence and publication | Current documentation distinguishes durable records/receipts and revisions from scoped public updates, including typed server-sent events. [Architecture](../../docs/architecture.md).                                                                                                                                                                      | A SaveGame file, replication stream, replay, and database history solve different problems.                                                                        |
 
-The exact language/library versions installed in OpenLegend were not upgraded or benchmarked. The Unreal/Unity version baseline belongs to [chapter 01](01-evidence-and-version-baseline.md), not to this repository table.
+The exact language/library versions installed in Open Legend were not upgraded or benchmarked. The Unreal/Unity version baseline belongs to [chapter 01](01-evidence-and-version-baseline.md), not to this repository table.
 
 ## 4. Source-level grounding of the motivating animal/perception workload
 
@@ -109,7 +109,7 @@ Coverage is organized by the questions an engine must answer. The chapters exami
 
 The [needs-design register](../../docs/maintainers/needs-design.md) extends beyond an engine's renderer or AI framework. Its intended areas remain visible in the analysis:
 
-- **Personal activities, independent initiative, meaningful attention, and shared activity:** execution lifecycles, decision scheduling, bounded work, reservations, and asynchronous cancellation are covered in chapters 02, 03, and 11. The research distinguishes cheap selection from expensive interpretation without deciding how OpenLegend should allocate them.
+- **Personal activities, independent initiative, meaningful attention, and shared activity:** execution lifecycles, decision scheduling, bounded work, reservations, and asynchronous cancellation are covered in chapters 02, 03, and 11. The research distinguishes cheap selection from expensive interpretation without deciding how Open Legend should allocate them.
 - **Bodies, care, ecology, aging, food, materials, weather, heat, and fire:** chapters 04, 08, 09, 11, and 13 separate physics, visible effects, population updates, authoring infrastructure, and application-specific meanings. A convincing fire effect is not evidence of heat transfer or persistent burn damage.
 - **Building, crafting, invention, publishing, and alternate worlds:** chapters 06, 09, 11, and 14 examine content residency, runtime generation, definitions, feature composition, and the limits of treating loaded content as executable rules.
 - **Barter, ownership, promises, groups, institutions, conflict, and continuity:** chapters 07 and 11 examine identity, authority, durable state, and execution semantics; chapter 12 discusses contemporary multiagent evidence. No benchmark is treated as validation of a full simulated society.
@@ -134,6 +134,6 @@ These are analytical questions used to read the evidence. They do not add projec
 
 ## 8. What “comprehensive” means for this collection
 
-The collection covers the relevant engine system families and their interactions, current version/maturity discrepancies, the intended OpenLegend world scope, and selected contemporary primary research. It records actual inspection depth and access limitations. It does not claim to have consumed every page, paper, plugin, or video on the internet.
+The collection covers the relevant engine system families and their interactions, current version/maturity discrepancies, the intended Open Legend world scope, and selected contemporary primary research. It records actual inspection depth and access limitations. It does not claim to have consumed every page, paper, plugin, or video on the internet.
 
-The release and package facts are bounded by the research date. Where a current manual retains an older explanation, the chapters state the conflict and use dated release evidence or more specific current APIs. Where a paper or talk demonstrates a research result, that result remains distinct from an installed engine capability and from measured OpenLegend behavior. The [version/evidence baseline](01-evidence-and-version-baseline.md) defines these rules for the entire collection.
+The release and package facts are bounded by the research date. Where a current manual retains an older explanation, the chapters state the conflict and use dated release evidence or more specific current APIs. Where a paper or talk demonstrates a research result, that result remains distinct from an installed engine capability and from measured Open Legend behavior. The [version/evidence baseline](01-evidence-and-version-baseline.md) defines these rules for the entire collection.

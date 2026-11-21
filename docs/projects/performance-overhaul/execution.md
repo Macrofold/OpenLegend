@@ -71,7 +71,7 @@ Use the existing expanded scene (17 people, 40 animals, objects/buildings and fi
 
 ## Final ordinary follow-up selected before editing
 
-- [x] Reject automatic model-work preparation when the configured AI allowance is zero, before character scans, maintenance inspection, job creation or source hydration. Run 4 performed more than 100,000 character-input scans and admitted 46 unfundable thoughts despite zero provider spending. Keep explicit-duration native work, existing learned methods, evidence retention and already-admitted-result ownership unchanged. The coordinator's existing allowance policy already forbids new non-native human requests at zero allowance. Qualify zero-budget refusal and funded admission/cancellation through the real director, then use the fifth ordinary complete observation. This is removal of impossible work, not a reduced-cognition setting for funded play.
+- [x] Reject automatic model-work preparation when the configured AI allowance is zero, before character scans, maintenance inspection, job creation or source hydration. Run 4 performed more than 100,000 character-input scans and admitted 46 unfundable thoughts despite zero provider spending. Keep explicit-duration native work, existing learned activities, evidence retention and already-admitted-result ownership unchanged. The coordinator's existing allowance policy already forbids new non-native human requests at zero allowance. Qualify zero-budget refusal and funded admission/cancellation through the real director, then use the fifth ordinary complete observation. This is removal of impossible work, not a reduced-cognition setting for funded play.
 
 ## Progress records
 

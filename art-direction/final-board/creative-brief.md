@@ -40,7 +40,7 @@ This is a **design vignette, not a claim of implemented behavior or a mandate th
 
 ### Emberville — A varied world with room for action and ordinary life
 
-**Mike's preference:** Beautiful pixel art and a wide variety of two-dimensional places, with real-time combat worth studying. The character proportions are too cartoony for OpenLegend; the Stardew Valley resemblance is a reference association, not a selected style.
+**Mike's preference:** Beautiful pixel art and a wide variety of two-dimensional places, with real-time combat worth studying. The character proportions are too cartoony for Open Legend; the Stardew Valley resemblance is a reference association, not a selected style.
 
 **Visual reading:** Misty streets, warm timber interiors, luminous laboratory equipment, webbed caves, open desert and cultivated land create distinct places through layout, material, light and apparent use. The trailers also contrast damaged and furnished interiors, construction and fighting.
 
@@ -56,11 +56,11 @@ This is a **design vignette, not a claim of implemented behavior or a mandate th
 
 **Creative translation:** Carry purposeful palette and light through places, people and interfaces. Make gestures and reactions readable within believable anatomy. Choose interface materials that fit the current world and task, such as a field journal or workshop notebook, while keeping text, navigation and action results clear.
 
-**Context:** These are observations of official promotional footage and images, not a playthrough or renderer analysis. Their craft informs OpenLegend's dimensional pixel art; the cartoon proportions and music-industry setting are outside the selected scope. See the [illustrated study and frame references](../research/rockbeasts/README.md) and [narrative case study](../../docs/narrative/case-studies/rockbeasts.md).
+**Context:** These are observations of official promotional footage and images, not a playthrough or renderer analysis. Their craft informs Open Legend's dimensional pixel art; the cartoon proportions and music-industry setting are outside the selected scope. See the [illustrated study and frame references](../research/rockbeasts/README.md) and [narrative case study](../../docs/narrative/case-studies/rockbeasts.md).
 
 ### Sea of Stars — Expressive environments in a grounded world
 
-**Mike's preference:** The beauty of its expressive pixel art, environmental detail and novelty, varied colors and lighting. OpenLegend should retain a more real, believable world and people; the cartoon JRPG character treatment is outside the target.
+**Mike's preference:** The beauty of its expressive pixel art, environmental detail and novelty, varied colors and lighting. Open Legend should retain a more real, believable world and people; the cartoon JRPG character treatment is outside the target.
 
 **Creative interpretation:** Organize richness around large landforms and purposeful pixel groups. Distinctive roots, rock, water, vegetation and structures should explain a place's character and use. Let local light affect nearby bodies and materials, give colorful accents quieter surroundings, and support warmth, curiosity, danger and loss within the same visual language. Natural proportions and practical construction remain the foundation.
 
@@ -68,7 +68,7 @@ This is a **design vignette, not a claim of implemented behavior or a mandate th
 
 The broad curve establishes the route; bark marks follow its form; leaf and moss clusters sit beside larger quiet areas of water. This is a useful example of organized detail rather than a demand for uniformly finer texture. Source: [official Steam gallery](https://store.steampowered.com/app/1244090/Sea_of_Stars_Sunset_Edition/), inspected October 18, 2026. Publicity imagery; exact captured build is unspecified. Copyright remains with its owners; reference use does not grant production reuse.
 
-**Use in art review:** Read the [illustrated study and scene criteria](../research/sea-of-stars/README.md) with the [current visual requirements](../decisions.md#current-visual-requirements--october-16-2026). Review actual gameplay scale, movement, overlap, natural foliage gaps and light response. This reference does not establish a 2D camera, a renderer technique, a performance result or approval of an unseen OpenLegend scene. The [full dossier](../../archive/02-research/game-inspiration/dossiers/sea-of-stars.md) keeps mechanics and production findings separate from accepted art preferences.
+**Use in art review:** Read the [illustrated study and scene criteria](../research/sea-of-stars/README.md) with the [current visual requirements](../decisions.md#current-visual-requirements--october-16-2026). Review actual gameplay scale, movement, overlap, natural foliage gaps and light response. This reference does not establish a 2D camera, a renderer technique, a performance result or approval of an unseen Open Legend scene. The [full dossier](../../archive/02-research/game-inspiration/dossiers/sea-of-stars.md) keeps mechanics and production findings separate from accepted art preferences.
 
 ### Dimensional pixel art — October 14 direction
 
@@ -82,7 +82,7 @@ A pixel-authored surface does not require cubic anatomy. Cloth may use a continu
 
 The [starting-scene art plan](../../docs/projects/3d-pixel-art-first-scene-plan.md) applies this brief to the existing starting scene, preserving its playtesting content while adding controlled technique experiments, an authored/generated asset pair and measured moving review. [Tracked tasks](../../docs/maintainers/3d-pixel-art.md#first-scene-delivery-and-experiment-tasks) own unfinished work; approving the direction does not approve an unseen result.
 
-See the [local reference gallery](../research/3d-pixel-worlds/gallery.md), [creator evidence](../research/3d-pixel-worlds/reference-techniques.md) and [OpenLegend adaptation proposal](../research/3d-pixel-worlds/openlegend-adaptation.md). These explain which examples are polygon meshes, articulated sprites, 2D illustrations or low-resolution renders; liking their finish does not select one shared construction method.
+See the [local reference gallery](../research/3d-pixel-worlds/gallery.md), [creator evidence](../research/3d-pixel-worlds/reference-techniques.md) and [Open Legend adaptation proposal](../research/3d-pixel-worlds/openlegend-adaptation.md). These explain which examples are polygon meshes, articulated sprites, 2D illustrations or low-resolution renders; liking their finish does not select one shared construction method.
 
 ### Dave the Diver — Personality at every scale
 

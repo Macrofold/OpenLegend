@@ -1,6 +1,6 @@
 # RuneScape: Dragonwilds — full research dossier
 
-**G50 · Complete research pass, September 26, 2026.** Current scope is the released 1.0 game, with Early Access observations preserved as historical evidence. Inspiration below is not an accepted OpenLegend feature specification.
+**G50 · Complete research pass, September 26, 2026.** Current scope is the released 1.0 game, with Early Access observations preserved as historical evidence. Inspiration below is not an accepted Open Legend feature specification.
 
 [Requirements](../research-requirements.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [RuneScape](runescape.md) · [Old School RuneScape](old-school-runescape.md)
 
@@ -40,7 +40,7 @@ Runecrafting has an active-versus-automatic production distinction. Attuning pro
 
 Farming supplies another example. Humidify creates a moving watering effect, while Uproot changes harvesting at area scale. Such spells are meaningful because crops, water, disease and tools already have ordinary rules. Without those underlying systems, the spell would be little more than a menu shortcut. [S6](#s6)
 
-**Interpretation:** for OpenLegend, the transferable pattern is a power acting on shared world properties. The caution is that eliminating every logistical constraint can erase the very situations that make the power interesting.
+**Interpretation:** for Open Legend, the transferable pattern is a power acting on shared world properties. The caution is that eliminating every logistical constraint can erase the very situations that make the power interesting.
 
 ## 5. Survival, rest and regional hazards
 
@@ -68,7 +68,7 @@ Snapping pieces, planning with blueprints and a free-camera construction ability
 
 Creative and Custom worlds change the ownership contract. Creative play removes ordinary survival/resource barriers; Custom worlds expose adjustable rules. Characters and compatible world types are intentionally separated, so unrestricted creative acquisition does not simply become standard progression. Private chests, protected graves and building-ownership tools address griefing without assuming all co-op participants are equally trusted. [S14](#s14)
 
-**Interpretation:** a shared house is simultaneously a creative artifact, a production interface and a permissions problem. OpenLegend's equivalent should distinguish permission to visit, consume, alter and retrieve rather than hide all of them behind one 'friend' flag.
+**Interpretation:** a shared house is simultaneously a creative artifact, a production interface and a permissions problem. Open Legend's equivalent should distinguish permission to visit, consume, alter and retrieve rather than hide all of them behind one 'friend' flag.
 
 ## 8. Combat and the 1.0 control changes
 
@@ -94,7 +94,7 @@ Failure can leave possessions at a gravestone and turn the next session segment 
 
 Protected graves and configurable friend access distinguish recovery from theft. Custom settings allow a different risk contract, while separate character/world compatibility protects standard progression from unannounced rule changes. Exact loss and difficulty settings should be read from the chosen world, not assumed from another person's review. [S14](#s14) [S16](#s16)
 
-**Interpretation:** OpenLegend can use recovery to generate help, debt and companionship. It should not assume that punishment itself creates an interesting story. A corpse run with no meaningful choice is only a delay.
+**Interpretation:** Open Legend can use recovery to generate help, debt and companionship. It should not assume that punishment itself creates an interesting story. A corpse run with no meaningful choice is only a delay.
 
 ## 11. Story, NPCs and region progression
 
@@ -104,7 +104,7 @@ Smaller quests connect familiar RuneScape humour to mechanical rewards. Cook's A
 
 The final Scorned Wilderness distinguishes a buildable hub from a raid area that forbids building. That is an important boundary: the game does not promise unrestricted construction as a solution to every authored boss encounter. [S2](#s2)
 
-There is no verified generalized companion-party control, romance approval matrix, faction diplomacy simulator, full NPC work schedule or open-ended dialogue engine. Temporary helpers and particular NPC services should not be inflated into those systems. This absence is central to the OpenLegend comparison: a world populated by quest-givers is not yet an agent society.
+There is no verified generalized companion-party control, romance approval matrix, faction diplomacy simulator, full NPC work schedule or open-ended dialogue engine. Temporary helpers and particular NPC services should not be inflated into those systems. This absence is central to the Open Legend comparison: a world populated by quest-givers is not yet an agent society.
 
 ## 12. Endgame, activity variety and economy
 
@@ -200,11 +200,11 @@ A friend dies during a shared expedition. The group consults the world's grave-a
 
 ### G. Turn an NPC request into a place
 
-A player responds to the elderly Garou's request for a home. They gather, plan and build toward a named character's need rather than a generic resource quota. The resulting place gives the construction activity narrative context. **Limit:** a scripted housing quest does not establish ongoing autonomous occupancy, preferences or household simulation. Those would be additional OpenLegend capabilities. [S18](#s18)
+A player responds to the elderly Garou's request for a home. They gather, plan and build toward a named character's need rather than a generic resource quota. The resulting place gives the construction activity narrative context. **Limit:** a scripted housing quest does not establish ongoing autonomous occupancy, preferences or household simulation. Those would be additional Open Legend capabilities. [S18](#s18)
 
 ## 20. Transferable inspiration and cautions
 
-**Let powers operate on shared systems.** Gathering, crop care and traversal provide meaningful targets for magic. OpenLegend can generalize the interaction principle while keeping effects within inspectable world laws.
+**Let powers operate on shared systems.** Gathering, crop care and traversal provide meaningful targets for magic. Open Legend can generalize the interaction principle while keeping effects within inspectable world laws.
 
 **Separate convenience from new agency.** A spell that creates another viable route or production plan offers more than a spell that removes a click. Some friction should simply be fixed rather than sold back as progression.
 

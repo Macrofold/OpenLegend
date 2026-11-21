@@ -1,6 +1,6 @@
 # Balatro: scoring operators, risk, and readable combinations
 
-**Gameplay inspiration, not an OpenLegend specification.** Read the [original Balatro chapter](../games/balatro.md) for the earlier comparative argument and historical growth evidence; this study adds concrete interaction analysis. See the [mechanics index](README.md) for other systems.
+**Gameplay inspiration, not an Open Legend specification.** Read the [original Balatro chapter](../games/balatro.md) for the earlier comparative argument and historical growth evidence; this study adds concrete interaction analysis. See the [mechanics index](README.md) for other systems.
 
 **Scope:** the established base-game rules described below, including the post-1.0.1f form of Hanging Chad. This is not a feature inventory for an announced or future update. Developer statements and reviews retain their dates. Rules references are community-maintained descriptions of game effects, not a source-code audit. Worked examples are analytical constructions, not recorded play sessions. Research access: September 25, 2026.
 
@@ -52,7 +52,7 @@ Brainstorm instead copies the leftmost Joker. Moving Brainstorm need not change 
 
 **Worked design choice:** a player wants an extra use of a strong compatible effect. Blueprint asks for adjacency; Brainstorm asks the player to dedicate the left edge. A later purchase can therefore require reorganizing the construction, not just filling a vacancy. When the copy target becomes unsuitable, the copying object may remain useful by changing its target.
 
-**Interpretation:** this is a portable inspiration pattern for magic, work procedures or devices: copy a bounded capability with an explicit selector, not an entire object's identity. The interesting variation lies in binding and placement. Do not mistake that observation for a recommendation to reproduce these exact rules in OpenLegend.
+**Interpretation:** this is a portable inspiration pattern for magic, work procedures or devices: copy a bounded capability with an explicit selector, not an entire object's identity. The interesting variation lies in binding and placement. Do not mistake that observation for a recommendation to reproduce these exact rules in Open Legend.
 
 ## 6. Risk management is not the same as removing randomness
 

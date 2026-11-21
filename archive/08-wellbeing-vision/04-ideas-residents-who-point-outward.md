@@ -211,7 +211,7 @@ Residents age and die. Handled carelessly, that is churn or cruelty. Handled wit
 ### 26. Adult romance only, and never the engine
 **Next · [Law] + [Moderate]**
 - Opt-in, verified adults only. Never paid, never jealous, never exclusive. The Narrator periodically reflects on the player's human relationships. Oregon's 2026 law bars simulated "romantic interest" toward minors; Character.AI, Meta and OpenAI all moved away from romantic role-play with minors.
-- **Better spectacle:** make resident–resident romances and player–player relationships the main love stories. Nintendo's *Tomodachi Life: Living the Dream*, where autonomous residents fall in and out of love with each other, sold 8 million+ copies in four months — without language models.
+- **Better spectacle:** make resident–resident romances and player–player relationships the main love stories. Nintendo's *Tomodachi Life: Living the Dream*, where NPCs fall in and out of love with each other, sold 8 million+ copies in four months — without language models.
 
 ---
 

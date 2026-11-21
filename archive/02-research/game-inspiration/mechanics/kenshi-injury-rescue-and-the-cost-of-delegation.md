@@ -1,6 +1,6 @@
 # Kenshi: injury, rescue, and the cost of delegation
 
-**Gameplay inspiration; researched September 25, 2026.** This supplements the [Kenshi chapter](../games/kenshi.md), preserving its earlier review comparisons, videos, and conclusions. This is not an OpenLegend specification or task list. Published mechanics, attributed incidents, and our interpretations are distinguished. No gameplay session or proprietary code was inspected.
+**Gameplay inspiration; researched September 25, 2026.** This supplements the [Kenshi chapter](../games/kenshi.md), preserving its earlier review comparisons, videos, and conclusions. This is not an Open Legend specification or task list. Published mechanics, attributed incidents, and our interpretations are distinguished. No gameplay session or proprietary code was inspected.
 
 ## 1. Defeat can open a new problem instead of closing the session
 
@@ -87,7 +87,7 @@ A creator's persistence, unusual aesthetic, or survival story may help explain i
 
 What makes a failed expedition produce a new possibility? Can an injured person remain a participant rather than an unusable asset? Which routine failures should a delegate solve and which require the player's judgment? Can a home support adventure without consuming it? Does earned competence come from meaningful activity or repetitive training? Can important status changes continue to affect the world after the initial scene?
 
-These questions preserve Kenshi's most relevant tensions without prescribing its cruelty, pacing, interface, or fictional setting for OpenLegend.
+These questions preserve Kenshi's most relevant tensions without prescribing its cruelty, pacing, interface, or fictional setting for Open Legend.
 
 ## Sources and limitations
 

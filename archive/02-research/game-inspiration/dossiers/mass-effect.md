@@ -195,7 +195,7 @@ For contrasting original-game appreciation, the accessible Metacritic game page 
 
 **Synthesis — interpretation:** attachment to characters can coexist with frustration about the operations between story beats. The player evidence also exposes something a conventional plot summary misses: access and end-of-campaign communication affect which authored content a person actually experiences.
 
-## 13. OpenLegend research hypotheses — not accepted requirements
+## 13. Open Legend research hypotheses — not accepted requirements
 
 **Remembered assistance as an alternative to a universal persuasion check.** A prior favor can make a later conflict resolvable for a different reason than charisma. The promising ingredient is an intelligible connection between the favor and the present trust, not merely a hidden numerical bonus. A possible small study would compare “you helped my family” with a generic reputation threshold. It would need to show why that person remembers and why the memory matters; otherwise the callback becomes an arbitrary password.
 
@@ -209,7 +209,7 @@ For contrasting original-game appreciation, the accessible Metacritic game page 
 
 **Do not copy breadth without encounter density.** A large destination catalogue and repeated interiors may create an initial impression of scale but fail under repeated use. Compare a smaller set of locations with distinct purposes against a larger set of minimally differentiated errands. Likewise, more loot is not automatically more meaningful progression.
 
-These proposals are our synthesis, not claims about OpenLegend's current implementation. They do not authorize engineering changes, reproduce BioWare's fiction or require adopting its morality dichotomy.
+These proposals are our synthesis, not claims about Open Legend's current implementation. They do not authorize engineering changes, reproduce BioWare's fiction or require adopting its morality dichotomy.
 
 ## 14. Reading, viewing and evidence map
 

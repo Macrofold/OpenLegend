@@ -217,7 +217,7 @@ No Steam release/review surface for this exact subject was established, so no in
 
 **Change the mission's economy to change its emotional stakes.** A finite rescue expedition makes preservation important without inventing a new combat system. Persistent-world designs cannot reset everything as freely, so comparable episodes would need a plausible boundary and an honest account of what can be replaced.
 
-**Separate attachment from psychological simulation.** Expense, animation and acknowledgment can make units memorable, but they do not constitute relationships or autonomous lives. These are inspiration patterns, not an argument that OpenLegend should copy Warcraft's combat-only society, faction names or copyrighted characters.
+**Separate attachment from psychological simulation.** Expense, animation and acknowledgment can make units memorable, but they do not constitute relationships or autonomous lives. These are inspiration patterns, not an argument that Open Legend should copy Warcraft's combat-only society, faction names or copyrighted characters.
 
 **Audit convenience changes against the whole system.** Enlarging selection can improve usability while changing the burden of control and exposing pathing assumptions. The right lesson is to test the new experience, not preserve inconvenience for authenticity or assume every modern feature is a free improvement. These paragraphs are research interpretation, not accepted implementation requirements.
 

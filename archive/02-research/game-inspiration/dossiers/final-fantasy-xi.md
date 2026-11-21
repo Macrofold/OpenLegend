@@ -2,7 +2,7 @@
 
 **G88 · Research pass and corrective coverage review, September 26, 2026.** This dossier treats *Final Fantasy XI* as a **24-year evolving MMORPG**, not a frozen 2002/2003 launch artifact. Launch-era reviews are preserved because they explain the game's original social contract; current-system claims are grounded in Square Enix's official 2023–2026 returning-player guides and September 2026 service state. PlayStation 2/Xbox 360 support, original level-cap assumptions, pre-Trust party requirements, and later PC-only operation are kept distinct. [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Coverage audit](../coverage-audit-g81-g100.md).
 
-The central OpenLegend relevance is unusually strong: FFXI models a persistent world in which **one character can inhabit many professions, social groups and long-term equipment identities**, while combat's most distinctive power comes from timed cooperation between separately controlled people. Its 2013→2026 Trust evolution is also a rare live experiment in what happens when a socially interdependent MMORPG gradually makes its story and progression solo-accessible.
+The central Open Legend relevance is unusually strong: FFXI models a persistent world in which **one character can inhabit many professions, social groups and long-term equipment identities**, while combat's most distinctive power comes from timed cooperation between separately controlled people. Its 2013→2026 Trust evolution is also a rare live experiment in what happens when a socially interdependent MMORPG gradually makes its story and progression solo-accessible.
 
 No personal playthrough is claimed. Current population cannot be inferred from unofficial census sites; official congestion evidence is used without fabricating global MAU. The corrective pass preserves the original research and adds operative activity/acquisition rules and complete situations. **Section 27 contains Chains of Promathia character and ending spoilers.** Historical mode schedules and guide prices are not current service promises.
 
@@ -118,7 +118,7 @@ Changing jobs:
 
 The 2003 GameSpot review already identified this as an elegant answer to MMO alt proliferation: one character slot can experience most class content because the adventurer can switch professions rather than become a different person. [FFXI09](#ffxi09)
 
-For OpenLegend this is important:
+For Open Legend this is important:
 
 > A person can have many careers over a lifetime without becoming a new entity.
 
@@ -167,7 +167,7 @@ Examples:
 
 The Rune Fencer history is especially valuable. Developer Yasuhiro Taniguchi says the team noticed players using **Red Mage as a tank** and used that emergent tactic as inspiration for a new magic-user tank job. [FFXI11](#ffxi11)
 
-That is exactly the kind of feedback loop OpenLegend should support:
+That is exactly the kind of feedback loop Open Legend should support:
 
 **players discover emergent role → designers/world agents notice pattern → world gains a codified profession/technique**
 
@@ -206,7 +206,7 @@ This gives FFXI three different notions of competence:
 - job abilities/spells;
 - practiced weapon/magic skill.
 
-OpenLegend can generalize that:
+Open Legend can generalize that:
 - having the title “blacksmith”;
 - knowing how forging works;
 - having actually practiced forging
@@ -277,7 +277,7 @@ A concrete party situation:
 4. Black Mage times a matching spell into the burst window;
 5. the same party actions produce more value because they were causally sequenced.
 
-**OpenLegend lesson:** collaboration is much more compelling when *joint action creates a new state/effect*, not when players merely stack independent DPS.
+**Open Legend lesson:** collaboration is much more compelling when *joint action creates a new state/effect*, not when players merely stack independent DPS.
 
 ## 11. Party, alliance and role dependency
 
@@ -334,7 +334,7 @@ The September 2026 update:
 - raised free-trial character level cap to 75;
 - stated that further Trust enhancements were planned. [FFXI06](#ffxi06)
 
-This is a major design case for OpenLegend:
+This is a major design case for Open Legend:
 
 > NPC agents can preserve access to a social game's systems when human availability is unreliable—but if they become too complete, they can also remove reasons to meet humans.
 
@@ -354,7 +354,7 @@ They use authored behavior rules:
 
 A 2026 returning player described learning which Trusts open/follow particular Skillchains, while also noting a frustrating edge case where Trusts would not independently attack because the player had not entered the required engaged state. [FFXI19](#ffxi19)
 
-That is a powerful OpenLegend lesson:
+That is a powerful Open Legend lesson:
 - **bounded agents are predictable and cheap**;
 - **general agents are flexible but harder to control**.
 
@@ -402,7 +402,7 @@ FFXI also has extensive **job-specific equipment** families:
 
 These can be reforged/upgraded to item-level states and further +2/+3 tiers, preserving the visual/role lineage of older gear into modern progression. [FFXI22](#ffxi22)
 
-**OpenLegend inspiration:** meaningful personal artifacts can evolve with a character instead of being discarded every expansion.
+**Open Legend inspiration:** meaningful personal artifacts can evolve with a character instead of being discarded every expansion.
 
 ## 17. Equipment swapping makes context matter more than one “best set”
 
@@ -422,7 +422,7 @@ The underlying design value is that gear can specialize **a verb or state** rath
 
 The downside is enormous complexity and inventory pressure. Modern FFXI accumulated Mog Wardrobes/storage systems partly because long-lived jobs retain many specialized pieces.
 
-OpenLegend should borrow situational equipment value, not the inventory-management burden.
+Open Legend should borrow situational equipment value, not the inventory-management burden.
 
 ### Storage and exchange are distinct restrictions
 
@@ -444,7 +444,7 @@ The design intent/effect is different from modern checkpoint RPGs:
 
 The historical cost was also punitive enough to amplify social frustration when failure resulted from another player's mistake.
 
-For OpenLegend:
+For Open Legend:
 - consequences should persist;
 - but a cooperative world should avoid making one person's error erase disproportionate amounts of another person's life-time investment.
 
@@ -475,7 +475,7 @@ The world still has physical zones/routes, but repeated journeys are compressed.
 This is a useful live-service lesson:
 - **discovery travel** and **routine travel** do not need the same friction.
 
-OpenLegend can make first journeys physically meaningful while allowing established knowledge/infrastructure to shorten repeated logistics.
+Open Legend can make first journeys physically meaningful while allowing established knowledge/infrastructure to shorten repeated logistics.
 
 ## 20. Player economy: Auction House, Bazaar and direct trade
 
@@ -563,7 +563,7 @@ This is not full freeform housing architecture, but it gives the player:
 - expression;
 - service hub.
 
-OpenLegend should go much further: housing can be a physical object in the shared simulation with ownership, guests, storage, workspaces, safety and social meaning.
+Open Legend should go much further: housing can be a physical object in the shared simulation with ownership, guests, storage, workspaces, safety and social meaning.
 
 ### Mog Garden and other noncombat loops
 
@@ -589,7 +589,7 @@ In 2015, the game expanded to let players equip two Linkshells at once. [FFXI30]
 
 The elegant fiction/mechanics connection is that community membership is represented by a **world object and channel**, not an invisible account-only Discord abstraction.
 
-OpenLegend can generalize this:
+Open Legend can generalize this:
 - guild badge;
 - radio frequency;
 - magical token;
@@ -614,7 +614,7 @@ It is:
 
 > When cooperation is mechanically required, communication capability becomes part of the game system.
 
-OpenLegend agents/players may likewise have:
+Open Legend agents/players may likewise have:
 - language barriers;
 - partial translation;
 - interpreters;
@@ -653,7 +653,7 @@ That separation protected the cooperative shared-world contract:
 - economy and story could exist without constant predation;
 - competitive play had explicit contexts.
 
-OpenLegend should similarly treat violence permissions as world laws/context, not assume every shared reality must allow unrestricted player killing.
+Open Legend should similarly treat violence permissions as world laws/context, not assume every shared reality must allow unrestricted player killing.
 
 ### Their objectives create different uses for fighting
 
@@ -741,7 +741,7 @@ This supports different long-horizon goals:
 - collection;
 - social/endgame group leadership.
 
-**OpenLegend lesson:** persistent worlds survive longer when they support several durable identities rather than one universal “raid score.”
+**Open Legend lesson:** persistent worlds survive longer when they support several durable identities rather than one universal “raid score.”
 
 ### Entry, objective, reward and persistence are different contracts
 
@@ -804,7 +804,7 @@ That criticism appears:
 - in 2025/2026 community jokes about PlayOnline being the “first boss”;
 - in new/returning-player help threads. [FFXI09](#ffxi09) [FFXI39](#ffxi39)
 
-OpenLegend product lesson:
+Open Legend product lesson:
 - a rich world cannot compensate indefinitely for onboarding that prevents users from reaching it.
 
 ## 32. Production: Square merged entire teams to build an MMO
@@ -846,7 +846,7 @@ Examples:
 
 A retrospective on Rhapsodies calls Trust an “ace up our sleeve” because it could be extended through monthly updates and reduce dependence on shrinking party availability. [FFXI42](#ffxi42)
 
-OpenLegend lesson:
+Open Legend lesson:
 
 > Design extension seams for the future, but let real player behavior—not speculative infrastructure—decide which seams get used.
 
@@ -963,7 +963,7 @@ These are qualitative anecdotes, not prevalence estimates.
 
 **Named contrasting example:** the official lesson uses **Flat Blade → Gust Slash → Detonation**, creating a **Wind** chain. The earlier Ice/Water situation needs its own compatible sequence; these named skills are not falsely assigned to those elements. After Detonation, the next decision is whether a suitable Wind spell can land in the burst window or whether recovery is more urgent. **Limit:** available TP, eligible weapons/skills and a surviving target are prerequisites; two good attacks used too far apart do not create the intended joint result. The old lesson's blanket restriction on repeating a skill is not adopted for every later multi-property skill. [FFXI14](#ffxi14) [FFXI15](#ffxi15)
 
-**OpenLegend implication:** group expertise can be encoded as temporal protocols players learn socially.
+**Open Legend implication:** group expertise can be encoded as temporal protocols players learn socially.
 
 ### B. One person, many careers
 
@@ -1066,7 +1066,7 @@ World mastery becomes infrastructure. **Next decision:** choose a useful newly a
 | Current platform | Windows service; PS2/Xbox 360 ended March 2016 |
 | Current free-trial progression | Level cap raised to 75 in September 2026 |
 
-## 39. OpenLegend transferable inspiration and limits
+## 39. Open Legend transferable inspiration and limits
 
 ### A. One person should support many careers
 
@@ -1074,7 +1074,7 @@ FFXI avoids requiring a new avatar for every profession.
 
 **Borrow:** preserve identity, memories, relationships and possessions while jobs/skills change over time.
 
-**Limit:** switching instantly at a safe menu is convenient but not causally rich. OpenLegend can model training, certification, tools and transition costs.
+**Limit:** switching instantly at a safe menu is convenient but not causally rich. Open Legend can model training, certification, tools and transition costs.
 
 ### B. Joint actions should create capabilities no individual has
 
@@ -1132,7 +1132,7 @@ Modern teleportation fixed one of classic FFXI's greatest time taxes.
 
 Trusts, level cap, item level, platform retirement and expansion systems radically changed FFXI.
 
-**Borrow:** long-lived OpenLegend worlds need version/migration policy that preserves identity/history while allowing systems to improve.
+**Borrow:** long-lived Open Legend worlds need version/migration policy that preserves identity/history while allowing systems to improve.
 
 ### K. Do not preserve friction merely because it created nostalgia
 
@@ -1142,7 +1142,7 @@ Classic party waits and travel helped create memorable social stories, but also 
 
 ## 40. Preservation and requirement audit
 
-No FFXI-specific prior game/mechanics/dossier owner existed on this branch before G88, so this pass is additive. The corrective pass retains the original sections, five examples, critical/player evidence and FFXI01–45 sources. It develops their missing operative detail rather than treating an endgame or pastime list as sufficient research. Added recommendations remain hypotheses, not accepted OpenLegend requirements.
+No FFXI-specific prior game/mechanics/dossier owner existed on this branch before G88, so this pass is additive. The corrective pass retains the original sections, five examples, critical/player evidence and FFXI01–45 sources. It develops their missing operative detail rather than treating an endgame or pastime list as sufficient research. Added recommendations remain hypotheses, not accepted Open Legend requirements.
 
 | Requirement | Coverage |
 | --- | --- |
@@ -1193,7 +1193,7 @@ Its combat then proves that the most satisfying multiplayer depth can come from 
 
 Its 24-year evolution adds an equally important lesson: a social world must adapt when population topology changes. Trusts, fast travel, Records of Eminence, item-level compression and 2026 solo upgrades preserve access to a world designed for a different era.
 
-For OpenLegend:
+For Open Legend:
 
 > **Make people meaningfully interdependent, but design enough agents, markets, delegation and temporal flexibility that meaning does not become a scheduling prison.**
 

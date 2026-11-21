@@ -1,6 +1,6 @@
-# OpenLegend production workflows
+# Open Legend production workflows
 
-**Status:** proposed, reusable development procedures derived from the [AI game-development research](../../archive/02-research/ai-game-development/README.md). They organize production work; they do not claim that every route or tool has been qualified in OpenLegend. Existing art decisions, gameplay contracts, implementation trackers and task authorization retain their owners.
+**Status:** proposed, reusable development procedures derived from the [AI game-development research](../../archive/02-research/ai-game-development/README.md). They organize production work; they do not claim that every route or tool has been qualified in Open Legend. Existing art decisions, gameplay contracts, implementation trackers and task authorization retain their owners.
 
 Before creating, downloading, editing, exporting or capturing any asset file, follow [Working with game assets](../asset-workflow.md) for exact inputs, external editable workspaces, preservation and publication. This applies across model, animation, image, audio, interface and scene work; each route below still owns its creative and gameplay requirements.
 
@@ -130,7 +130,7 @@ Use a shared baseline and explicit output locations. Review each handoff as it a
 
 The language agent, image generator, mesh generator, rigging tool, authoring application and runtime renderer can be different tools. Record the complete route when comparing results. Use the [inspected skills and tooling](../../archive/02-research/ai-game-development/04-skills-and-tooling.md), [asset and audio assessment](../../archive/02-research/ai-game-development/07-image-3d-and-audio-models.md), and [character-model assessment](../../archive/02-research/ai-game-development/06-models-for-stories-and-characters.md) for dated candidates and compatibility details.
 
-Prefer a saved graph, editable material, export preset or narrow script when a repeated transformation is understood. A hosted service or local tool may execute that transformation; neither needs to become a universal workflow platform. Inspect unfamiliar skills and use the exact selected application/model version. A skill's example world laws or editor defaults do not become OpenLegend policy.
+Prefer a saved graph, editable material, export preset or narrow script when a repeated transformation is understood. A hosted service or local tool may execute that transformation; neither needs to become a universal workflow platform. Inspect unfamiliar skills and use the exact selected application/model version. A skill's example world laws or editor defaults do not become Open Legend policy.
 
 When comparing candidate routes, retain equivalent briefs, reference quality and delivery requirements. Measure useful output, manual correction, elapsed time, actual charges and the cost of a meaningful revision. Stop broadening a comparison when it has resolved the decision. [Evaluation and adoption](../../archive/02-research/ai-game-development/11-evaluation-and-adoption.md) owns the proposed comparison method; its trials remain unrun unless actual evidence says otherwise.
 

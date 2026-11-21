@@ -1,6 +1,6 @@
-# OpenLegend server costs and player demand
+# Open Legend server costs and player demand
 
-**Evidence reviewed: November 17, 2026 (UTC).** This is the maintained owner of OpenLegend's server-cost research, economic assumptions and calculated scenarios. It is not a production capacity guarantee, a deployment decision or a spending authorization. Runtime qualification remains in the [native-core tracker](../../docs/maintainers/native-simulation-core.md); exact measurements remain in the linked benchmark records.
+**Evidence reviewed: November 17, 2026 (UTC).** This is the maintained owner of Open Legend's server-cost research, economic assumptions and calculated scenarios. It is not a production capacity guarantee, a deployment decision or a spending authorization. Runtime qualification remains in the [native-core tracker](../../docs/maintainers/native-simulation-core.md); exact measurements remain in the linked benchmark records.
 
 ## Current conclusion
 
@@ -10,7 +10,7 @@
 
 At five simultaneous players per instance, 60 play-hours per subscriber and ideal scaling, baseline compute is **$2.42 per paying subscriber per 30-day month** on the measured AWS `m7i.xlarge`, priced at **$0.2016/hour ($145.152 for 720 hours)**. Keeping the middle forecast's peak fleet running all month instead costs **$5.52 per subscriber-month at 10,000 subscribers**. The optional 32% reserve raises those figures to **$3.19 elastic / $7.29 fixed**. These figures exclude database storage, external AI and other separately billed services.
 
-The [priced hardware shortlist](#priced-hardware-shortlist) compares actual named AWS and Google Cloud machines. ARM, newer x86 and higher-RAM machines could improve cost per supported workload; none has an OpenLegend capacity qualification in this research. **Real machine prices do not make the assumed 5/10/15-player capacities measured facts.**
+The [priced hardware shortlist](#priced-hardware-shortlist) compares actual named AWS and Google Cloud machines. ARM, newer x86 and higher-RAM machines could improve cost per supported workload; none has an Open Legend capacity qualification in this research. **Real machine prices do not make the assumed 5/10/15-player capacities measured facts.**
 
 The principal unknowns are supported players per instance, the cost of worlds without connected players, and how much capacity the persistent-world architecture can actually release as demand falls. These unknowns matter more than the arithmetic's displayed decimal places.
 
@@ -35,7 +35,7 @@ All scenario currency is USD, before taxes, discounts and credits. A modeled mon
 
 The cost tables price **running VM compute**. Co-located PostgreSQL consumes part of that purchased capacity; `K` must accommodate it. Do not add a second database-compute charge for that same CPU. A separately deployed database has its own compute bill and requires a new capacity measurement. Storage, backups and replication are separate in either arrangement.
 
-## What OpenLegend measurements establish
+## What Open Legend measurements establish
 
 The standard machine is an AWS `m7i.xlarge`: **4 vCPU, 16 GiB RAM, Linux/x86-64, Ohio (`us-east-2`)**. The ordinary opening contains **one player, two human NPCs, three hares and 1,246 scenery records**. It runs movement, animal reactions, perception/history, permitted views, two controlled conversations and ordinary one-second background saves. Controlled HTTPS replies exercise real request and application paths; these runs do not measure external model generation cost or latency.
 
@@ -88,7 +88,7 @@ The supplied November 16 research, _Open Legend: Player Numbers and Server Econo
 | [SWTOR, February 2012, EA transcript pp. 7–9](https://s204.q4cdn.com/701424631/files/doc_financials/2012/q3/ERTS_Q3FY12_Transcript.pdf)                                             | About 1.7 million subscriptions; about 1 million daily users playing four hours/day | Inferred average CCU is `1,000,000 × 4 / 24 ≈ 166,667`, or 10.2 subscribers per average CCU. Bundled access remained included. Daily users are not simultaneous users.                                                                                 |
 | [RuneScape, GDC Europe 2015, slide 6](https://media.gdcvault.com/gdceurope2015/Mansell_Phil_AnalyticsInAction.pdf)                                                                  | 600,000+ subscribers; 70,000 average and 100,000 peak CCU                           | Approximately 8.6 per average and 6 per peak CCU. Free-to-play hybrid; concurrency was not identified as paid-only or as Old School RuneScape alone.                                                                                                   |
 
-Several reported peak ratios are around 4–6 subscribers per peak CCU. Some average ratios are around 8–10. Neither is a rule for OpenLegend. Match payment status, population, period, region and platforms before forming a ratio. In particular, worldwide subscriptions divided by Steam-only concurrency is not comparable.
+Several reported peak ratios are around 4–6 subscribers per peak CCU. Some average ratios are around 8–10. Neither is a rule for Open Legend. Match payment status, population, period, region and platforms before forming a ratio. In particular, worldwide subscriptions divided by Steam-only concurrency is not comparable.
 
 The reliable accounting identity for the same paying cohort is:
 
@@ -114,7 +114,7 @@ Weekday CCU(h) = A × f(h)
 Weekend CCU(h) = 1.2 × A × f(h)
 ```
 
-The shape's daily mean is 1, maximum 2 and minimum 0.4. The modeled monthly peak is **2.27848 times whole-month average CCU**. The assumed peak is at 9 p.m.; this is not observed OpenLegend traffic.
+The shape's daily mean is 1, maximum 2 and minimum 0.4. The modeled monthly peak is **2.27848 times whole-month average CCU**. The assumed peak is at 9 p.m.; this is not observed Open Legend traffic.
 
 ### Daily demand curve
 
@@ -197,7 +197,7 @@ AWS rates were retrieved directly through its Price List API on November 17, fro
 
 The consequential comparisons are:
 
-- **ARM versus x86:** C8g/C9g and N4A/C4A are candidates for better workload-per-dollar, with C8a as a modern x86 comparison and C6g/C7g as cheaper older alternatives. OpenLegend's Linux ARM64 build, native dependencies and actual gameplay performance remain unqualified here; no vendor performance percentage is applied to our measurements.
+- **ARM versus x86:** C8g/C9g and N4A/C4A are candidates for better workload-per-dollar, with C8a as a modern x86 comparison and C6g/C7g as cheaper older alternatives. Open Legend's Linux ARM64 build, native dependencies and actual gameplay performance remain unqualified here; no vendor performance percentage is applied to our measurements.
 - **RAM versus compute-only sizing:** M8g doubles C8g's RAM for **$28.80 more per 720 hours (12.54%)**. N4A standard doubles N4A highcpu RAM for **$34.68 more (18.53%)**. Extra RAM is valuable if it admits more useful work or reduces costly reads; otherwise it is unused capacity. Active world state, PostgreSQL, independent consumers and runtime overhead all compete for it.
 - **Newer or faster cores:** C9g costs **9.00% more than C8g**. Under the same utilization and other costs, it must deliver more than 9.00% additional useful throughput to lower compute cost per unit of work. M8azn is a candidate for an expensive serial calculation that other cores cannot accelerate, not an established economical default.
 
@@ -219,7 +219,7 @@ Fixed instance count = ceil(b × Cpeak / K)
 Monthly VM compute cost = fixed instance count × 720 × P
 ```
 
-`ceil` means round upward to a whole instance. For an actual schedule, cost is `P × integral(running instance count over real hours)`. Minimum fleet size, world placement, scale-up lead time and multiple regions can prevent the ideal fleet from following demand. [AWS target-tracking guidance](https://docs.aws.amazon.com/gameliftservers/latest/developerguide/fleets-autoscaling-target.html) explains why starting instances/processes can take minutes. That session-hosting mechanism does not establish that OpenLegend can move or suspend persistent world work.
+`ceil` means round upward to a whole instance. For an actual schedule, cost is `P × integral(running instance count over real hours)`. Minimum fleet size, world placement, scale-up lead time and multiple regions can prevent the ideal fleet from following demand. [AWS target-tracking guidance](https://docs.aws.amazon.com/gameliftservers/latest/developerguide/fleets-autoscaling-target.html) explains why starting instances/processes can take minutes. That session-hosting mechanism does not establish that Open Legend can move or suspend persistent world work.
 
 ### Capacity and price sensitivity
 
@@ -291,7 +291,7 @@ For the same useful capacity and running hours, GameLift's included transfer off
 
 AWS's policy covers generation 6 and later managed GameLift instances, on-demand and Spot, in supported regions except China. It does not make ordinary EC2/ECS traffic or separately hosted backend traffic free. [Bandwidth policy](https://aws.amazon.com/about-aws/whats-new/2026/06/amazon-gamelift-servers-free-network-bandwidth/).
 
-Service fit remains unqualified. GameLift permits long-running sessions, but its built-in session management supports up to 200 players; larger sessions require custom management. AWS also identifies additional access work for databases in private VPC subnets and recommends custom EC2/ECS/EKS arrangements for large partitioned MMOs. Its session manager does not implement OpenLegend's world partitioning, privacy or persistence. [GameLift FAQ](https://aws.amazon.com/gamelift/servers/faqs/).
+Service fit remains unqualified. GameLift permits long-running sessions, but its built-in session management supports up to 200 players; larger sessions require custom management. AWS also identifies additional access work for databases in private VPC subnets and recommends custom EC2/ECS/EKS arrangements for large partitioned MMOs. Its session manager does not implement Open Legend's world partitioning, privacy or persistence. [GameLift FAQ](https://aws.amazon.com/gamelift/servers/faqs/).
 
 Ordinary **ECS on self-managed EC2 adds no ECS orchestration fee**; EC2 and supporting services remain billable. ECS Managed Instances adds a management fee, and Fargate bills requested resources under a different price model. These are distinct hosting options, not interchangeable names for the same price. [ECS pricing](https://aws.amazon.com/ecs/pricing/). Kubernetes/Agones can schedule server processes but does not by itself distribute one authoritative world. No platform switch is adopted here.
 
@@ -309,7 +309,7 @@ The following [AWS GameLift worked examples](https://aws.amazon.com/gamelift/ser
 | Fighting game: twenty-four 2-player sessions      |              $0.741 |                        48 |                                         $0.93 |                                                 $1.22 |
 | Battle royale: four sessions averaging 30 players |              $0.823 |                       120 |                                         $0.41 |                                                 $0.54 |
 
-These are vendor examples for session games, not measured OpenLegend capacity or MMO financial statements. The formula is `P / occupied players × 60 × b`, with baseline `b = 1` or optional `b = 1.32`; inconsistent vendor summary totals are not used. Compare cost per occupied player-hour at equivalent gameplay requirements, not raw players per machine. Included bandwidth under eligible GameLift terms does not establish free egress for ordinary EC2 hosting.
+These are vendor examples for session games, not measured Open Legend capacity or MMO financial statements. The formula is `P / occupied players × 60 × b`, with baseline `b = 1` or optional `b = 1.32`; inconsistent vendor summary totals are not used. Compare cost per occupied player-hour at equivalent gameplay requirements, not raw players per machine. Included bandwidth under eligible GameLift terms does not establish free egress for ordinary EC2 hosting.
 
 The supplied research also records Homecoming's **January 2020 hosting bill of $4,820.39** and **1,787 average CCU**. Dividing by `1,787 × 744` player-hours gives **$0.003626/player-hour**, or about **$0.22 per 60 hours**. This is historical donation-funded hosting, not a subscriber charge or modern MMO target. Its actual spare capacity is already in the bill; do not add a hypothetical reserve again. The [operator's finance post](https://forums.homecomingservers.com/topic/14562-february-2020-donations-finances/?comment=153662&do=findComment) and [population post](https://forums.homecomingservers.com/topic/16094-homecoming-statistics-march-2020/) are retained as source references; access returned HTTP 403 during this review, so those figures remain attributed to the supplied research rather than independently reverified here.
 

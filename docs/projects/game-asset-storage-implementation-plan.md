@@ -4,7 +4,7 @@
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | All asset payloads are external and strict cleanup, publication and recovery checks pass; existing-world owner sign-in remains pending. | 2026-10-18   |
 
-The [feature](game-asset-storage-feature-spec.md), [technical design](game-asset-storage-tech-design.md), [AS tracker](../maintainers/game-asset-storage.md) and [AST limits](../limits/game-asset-storage.md) own requirements and acceptance. Mike authorized the complete implementation, AWS provisioning in the authenticated OpenLegend project, migration, documentation and agent routing. History rewriting remains a separate AS08 operation with its own concrete coordination plan.
+The [feature](game-asset-storage-feature-spec.md), [technical design](game-asset-storage-tech-design.md), [AS tracker](../maintainers/game-asset-storage.md) and [AST limits](../limits/game-asset-storage.md) own requirements and acceptance. Mike authorized the complete implementation, AWS provisioning in the authenticated Open Legend project, migration, documentation and agent routing. History rewriting remains a separate AS08 operation with its own concrete coordination plan.
 
 ## Scope, base and ownership
 

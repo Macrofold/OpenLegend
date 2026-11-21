@@ -1,4 +1,4 @@
-# Research applications for OpenLegend production
+# Research applications for Open Legend production
 
 **Research checked:** 17 October 2026. **Status:** proposed task examples for future development. The reusable routes now live in [Production workflows](../../../docs/production-workflows/README.md); this research preserves their source-specific applications. No example implements a capability, authorizes service purchases or replaces the current project owners.
 
@@ -26,7 +26,7 @@ Split work along outcomes and ownership. For example, an inventory-art task can 
 
 **Acceptance evidence:** a complete player action or understandable visual improvement in the real client, the required impact-based checks, and a separate judgment of what became more interesting, expressive, satisfying or useful. Record defects and remaining uncertainty as well as gains.
 
-**Why here:** OpenLegend's current priority is a playable survival-adventure with genuine invention and independent characters in the early loop. A task should improve that experience rather than create infrastructure with no current consumer. [Gameplay priorities](../../../docs/repertoires/gameplay-priorities.md), [root workflow](../../../AGENTS.md).
+**Why here:** Open Legend's current priority is a playable survival-adventure with genuine invention and independent characters in the early loop. A task should improve that experience rather than create infrastructure with no current consumer. [Gameplay priorities](../../../docs/repertoires/gameplay-priorities.md), [root workflow](../../../AGENTS.md).
 
 ## 2. Produce a polished inventory slice
 
@@ -58,7 +58,7 @@ Separate base color from lighting information where the delivery path needs that
 
 **Acceptance evidence:** two visibly related useful variants, a cheap specified revision, valid exports and stable in-game appearance. A procedural label alone is not sufficient.
 
-**Why here:** controlled surface variation matches OpenLegend's dimensional wilderness and reduces the need to generate unrelated texture images. [Procedural evidence and limitations](03-procedural-art-and-animation.md).
+**Why here:** controlled surface variation matches Open Legend's dimensional wilderness and reduces the need to generate unrelated texture images. [Procedural evidence and limitations](03-procedural-art-and-animation.md).
 
 ## 4. Take one prop from idea through world appearance and icon
 
@@ -74,7 +74,7 @@ Normalize orientation, scale and pivot in the editable source. Apply the approve
 
 **Acceptance evidence:** recognizable function and silhouette, world/icon agreement, valid scale and placement, supported materials, acceptable delivery cost, and no invented mechanical capability. If the trial installs or replaces a representation, also exercise a failed/delayed load and a reload: preserve the same object, current state, adequate fallback and admitted mechanics. An offline asset study does not require a publication test suite.
 
-**Why here:** it isolates the proposed general asset intake from the additional difficulty of skinning and animation. OpenLegend already displays a live character; the useful experiment is repeatable intake and identity, not proving that 3D can appear at all. [Invention-art owner](../../../docs/invention-art-pipeline.md), [asset proposal](../../../docs/projects/3d-pixel-art-asset-pipeline.md).
+**Why here:** it isolates the proposed general asset intake from the additional difficulty of skinning and animation. Open Legend already displays a live character; the useful experiment is repeatable intake and identity, not proving that 3D can appear at all. [Invention-art owner](../../../docs/invention-art-pipeline.md), [asset proposal](../../../docs/projects/3d-pixel-art-asset-pipeline.md).
 
 ## 5. Add a useful action to a compatible character
 
@@ -110,7 +110,7 @@ Add distant simplification only when needed. Inspect the runtime representation 
 
 **Acceptance evidence:** a scene that remains navigable and readable, predictable regeneration of decorative choices, and no accidental change to collision, harvestability or hidden information.
 
-**Why here:** procedural population can make a world rich, but OpenLegend's physical meaning belongs to the world. Large-studio placement systems provide a production principle, not a mandate to rebuild their infrastructure. [Procedural dossier](03-procedural-art-and-animation.md), [engine/world boundaries](../../../docs/engine-and-world-boundaries.md).
+**Why here:** procedural population can make a world rich, but Open Legend's physical meaning belongs to the world. Large-studio placement systems provide a production principle, not a mandate to rebuild their infrastructure. [Procedural dossier](03-procedural-art-and-animation.md), [engine/world boundaries](../../../docs/engine-and-world-boundaries.md).
 
 ## 7. Author an encounter and a person with room for choice
 
@@ -126,7 +126,7 @@ Use an authoring model to propose and revise dialogue examples, motives, environ
 
 **Acceptance evidence:** a situation the player wants to engage with and can affect, a person whose own concern matters, and a consequence the player understands or wants to investigate. Keep actual world validity separate from these experience judgments. A refusal, retreat or quiet shared activity can be an appropriate outcome.
 
-**Why here:** OpenLegend's authored people and non-canned invention distinguish it from both a fixed quest script and a narrator that can decree anything. [Character direction](../../../docs/projects/compelling-characters-feature-spec.md), [game priorities](../../../docs/repertoires/gameplay-priorities.md).
+**Why here:** Open Legend's authored people and non-canned invention distinguish it from both a fixed quest script and a narrator that can decree anything. [Character direction](../../../docs/projects/compelling-characters-feature-spec.md), [game priorities](../../../docs/repertoires/gameplay-priorities.md).
 
 ## 8. Evaluate a resident through repeated visits and consequences
 
@@ -142,7 +142,7 @@ Save what context was actually delivered, including the distinction between obse
 
 **Acceptance evidence:** distinct concise voice, plausible agency, faithful uncertainty, no unauthorized knowledge or invented event, appropriate continuity/development, and acceptable complete cost and delay. Separately identify what made this particular person curious, amusing, challenging or worth knowing to a player. Accurate recollection alone cannot establish that result.
 
-**Why here:** public memory products and mods demonstrate that stored context, actual model input and the final spoken response are separate stages. OpenLegend's own perspective requirements are stricter than a mod that shares the player's camera with every NPC. [Narrative dossier](06-models-for-stories-and-characters.md), [runtime case studies](02-developer-case-studies.md).
+**Why here:** public memory products and mods demonstrate that stored context, actual model input and the final spoken response are separate stages. Open Legend's own perspective requirements are stricter than a mod that shares the player's camera with every NPC. [Narrative dossier](06-models-for-stories-and-characters.md), [runtime case studies](02-developer-case-studies.md).
 
 ## 9. Produce feedback audio and, when justified, character voices
 
@@ -174,7 +174,7 @@ Assign the defect to its cause: art, layout, control, world rules, asset export,
 
 **Acceptance evidence:** the selected checks establish their actual technical scope, and labeled player observations address the intended experience. Record why someone wanted to continue, change approach, return or finish contentedly; time spent alone does not explain enjoyment. Small sessions do not establish retention or broad appeal. Existing episode and verification owners retain the evidence, rather than a second universal fun rubric.
 
-**Why here:** EA's production testing augments existing scripted systems selectively, and Play2Code makes browser play part of iterative repair. Neither demonstrates that automated agents can decide all of OpenLegend's fun, art or character quality. [EA/other cases](02-developer-case-studies.md), [Play2Code's public method](https://continual-game-generation.vercel.app/), [project verification](../../../.agents/rules/verification.md).
+**Why here:** EA's production testing augments existing scripted systems selectively, and Play2Code makes browser play part of iterative repair. Neither demonstrates that automated agents can decide all of Open Legend's fun, art or character quality. [EA/other cases](02-developer-case-studies.md), [Play2Code's public method](https://continual-game-generation.vercel.app/), [project verification](../../../.agents/rules/verification.md).
 
 ## A compact task record
 

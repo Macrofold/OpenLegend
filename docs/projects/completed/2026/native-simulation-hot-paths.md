@@ -92,7 +92,7 @@ Screen `sim_work_invocations` under `execution/save.rs::map`, which calls `RowEn
 
 Measure prior write rows inside and outside affected tables with the narrow pending-row probes. The existing merge folds writes and deletes for affected tables and expiry only for tables with new expiry. Other rows remain in the same accepted suffix. Use the previous retained size plus the change in affected table backing. Keep allocation preflight before acceptance and the original immutable save prefix through write, acknowledgement or exact retry. Verify an older held prefix, delete/recreation with a later masked update, refusal before acceptance, and cold continuation. [Pending owner](../../../../native/simulation/src/records/save.rs) · [Sparse fold](../../../../native/simulation/src/records/merge.rs)
 
-## Optional resident discovery and wildlife
+## Optional NPC discovery and wildlife
 
 The stand-alone Base candidate spaces checks for optional discovery by 300 game seconds. A useful pending cue can schedule a later inspection. Direct conversation, urgent reactions and meaningful changes keep their existing paths. Verify the new timing with a real pending cue, a cue withdrawn before it is due, a direct conversation during the interval, and a saved discovery reopened cold. Count actual optional dispatches separately from inspections and complete work. The existing profile does not attribute nearby witness cost to deer movement, so a deer-rest variant needs that evidence first. [Authored Base settings](../../../../packages/domain/src/worlds/base/attention.ts) · [Scheduled reasons](../../../../native/game-server/src/npc/schedule/select.rs)
 

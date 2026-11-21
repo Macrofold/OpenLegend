@@ -176,7 +176,7 @@ The September 23 Unstable patch addresses related defect categories, but this do
 
 **Synthesis:** meaningful danger, repetitive upkeep, opaque controls, group reliability and self-authored purpose are different dimensions. A player can love the first and reject one of the others. More recipes do not repair desynchronization; a technical fix does not supply a new purpose for someone already materially secure.
 
-## 10. OpenLegend patterns and limits — interpretation
+## 10. Open Legend patterns and limits — interpretation
 
 **Ordinary objects can carry complex stakes.** A useful household object needs a contextual relationship to an intention, not an elaborate rarity hierarchy. A generator matters because of what depends on it and what it makes the player do next.
 

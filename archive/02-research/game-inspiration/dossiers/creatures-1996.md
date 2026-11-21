@@ -10,7 +10,7 @@ Grand, Cliff and Malhotra describe genetically specified bodies, simulated bioch
 
 This is a valuable counterexample to equating all pre-LLM game AI with fixed behavior trees. Some parameters and associations really can change through experience. Yet learned selection does not eliminate authored sensors, action definitions, environment rules, reward mechanisms or execution code.
 
-## What it means for OpenLegend
+## What it means for Open Legend
 
 The strongest transfer is the separation of **a person or creature's learned selection** from **the world's supported actions**. A model can change which ability it uses without acquiring the authority to change that ability's effects. The same applies to an LLM or Decision API: a proposal and its success are different records.
 
@@ -26,7 +26,7 @@ A transferable learned association should remain appropriately scoped. Learning 
 
 A demonstrated method could become available for later selection, but observation, understanding, physical capability and permission are different prerequisites. The character still decides whether to use what they learned. Rewarding every successful demonstration with unconditional repetition would erase that distinction.
 
-For OpenLegend, reusing a known method is a promising way to amortize expensive reasoning. Training a whole new low-level controller may be justified only if existing native execution cannot provide the desired competence. It brings data, debugging and generalization costs rather than automatically replacing them with intelligence.
+For Open Legend, reusing a known method is a promising way to amortize expensive reasoning. Training a whole new low-level controller may be justified only if existing native execution cannot provide the desired competence. It brings data, debugging and generalization costs rather than automatically replacing them with intelligence.
 
 ## Perceived life and evidence limits
 

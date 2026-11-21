@@ -14,7 +14,7 @@ The [Wellbeing Vision](08-wellbeing-vision/README.md) is open ideation on how Op
 
 Created September 18, 2026 (America/New_York); web research continued into September 19 UTC. Updated for wilderness, native survival, accelerated time, Macrofold/memory, and the accepted PlayCanvas/custom-simulation and grounded pixel-art direction. This archive began as documentation-only planning. The prototype now exists; [implementation status](05-project/implementation-status.md) owns delivery evidence. Proposed systems and dated research are not live acceptance.
 
-Open Legend is a shared world of embodied people and autonomous residents whose needs, memories, emotions, and relationships shape their lives—and whose available interactions can grow through play.
+Open Legend is a shared world of embodied people and NPCs whose needs, memories, emotions, and relationships shape their lives—and whose available interactions can grow through play.
 
 For active task documents and their owning specifications, use the [master TODO and implementation-plan index](../docs/maintainers/README.md).
 
@@ -26,7 +26,7 @@ The [AI game development research](02-research/ai-game-development/README.md) re
 
 The [worldbuilding research library](02-research/worldbuilding/README.md) compares 29 world dossiers through six essays and a matrix. Its whole-world reassessment covers ordinary pleasures, ambition, institutions, conflict, relationships and consequences without prescribing one tone or changing engine contracts. The [source audit](02-research/worldbuilding/source-audit.md) and [reassessment ledger](02-research/worldbuilding/reassessment-progress.md) distinguish actual reading, committed work and remaining evidence limits.
 
-The [Hindsight memory evaluation](02-research/hindsight-memory-evaluation.md) compares the external framework with OpenLegend's actor-scoped memory, knowledge and recovery contracts. It recommends evaluating optional retrieval rather than replacing the canonical mind; source snapshots, tradeoffs, dependency/fork strategy and an unrun R11/R19 benchmark proposal are preserved as research, not an adoption decision.
+The [Hindsight memory evaluation](02-research/hindsight-memory-evaluation.md) compares the external framework with Open Legend's actor-scoped memory, knowledge and recovery contracts. It recommends evaluating optional retrieval rather than replacing the canonical mind; source snapshots, tradeoffs, dependency/fork strategy and an unrun R11/R19 benchmark proposal are preserved as research, not an adoption decision.
 
 The [agency research](02-research/agency-cognition-and-planning.md) supports [optional decisions and persistent pursuit](../docs/agent-agency.md), with [runtime semantics](07-technical-architecture/agent-agency-runtime.md) and [AG delivery tasks](../docs/maintainers/agent-agency.md). These extend memory and the event framework without claiming runtime implementation.
 

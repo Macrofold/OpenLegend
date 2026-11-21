@@ -4,7 +4,7 @@
 | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Complete source synthesis; no engine execution or platform benchmark | 2026-10-23; Unreal Engine 5.8 and Unity 6.6, with separately versioned packages identified below | Procedural content, importing and building assets, runtime ownership, UI/input, accessibility/localization, editor tooling, and browser delivery |
 
-This chapter studies how authored or generated material becomes usable runtime content, and how a player interacts with its presentation. It makes no engine selection or proposed OpenLegend design. Release-channel verification is centralized in the [version baseline](01-evidence-and-version-baseline.md); rendering and animation are covered in [chapter 08](08-rendering-animation-and-audio.md).
+This chapter studies how authored or generated material becomes usable runtime content, and how a player interacts with its presentation. It makes no engine selection or proposed Open Legend design. Release-channel verification is centralized in the [version baseline](01-evidence-and-version-baseline.md); rendering and animation are covered in [chapter 08](08-rendering-animation-and-audio.md).
 
 The repository's [engine/world boundaries](../../docs/engine-and-world-boundaries.md) and [architecture](../../docs/architecture.md) distinguish authored reality, world state, presentation, and authority. Those distinctions are important when interpreting engine terminology. A generated tree mesh, an instantiated tree object, a persistent individual plant, and a character's knowledge of that plant are different outputs. The mechanisms below often produce only one of them. Statements labeled **research interpretation** explain this distinction without prescribing new systems.
 
@@ -54,7 +54,7 @@ The following table is an analytical classification of the mechanisms studied he
 | Instance lifetime        | Objects referring to shared assets, activation and destruction   | That the underlying asset can be unloaded immediately                |
 | Persistent world history | Stable identity and consequential changes                        | That visual content can reconstruct every saved semantic fact        |
 
-The engine documentation below directly describes the first six categories. The final category is included to mark an evidence boundary relevant to OpenLegend, not to claim the engines lack save systems or to propose one.
+The engine documentation below directly describes the first six categories. The final category is included to mark an evidence boundary relevant to Open Legend, not to claim the engines lack save systems or to propose one.
 
 ### Unreal Interchange: import is a pipeline, not a single file read
 
@@ -72,7 +72,7 @@ Unreal's Asset Manager runs in editor and packaged contexts. Primary assets have
 
 Unreal's Derived Data Cache (DDC) stores regenerable results such as processed assets and shaders. A hierarchy checks faster caches before slower ones, promotes found data, and generates missing data before populating caches asynchronously. Zen is the default local DDC backend. Its local/shared service uses asynchronous HTTP and is intended for trusted network contexts; authenticated Cloud DDC has a different deployment/security boundary. The documentation distinguishes this from older archive-based backends. [C12]
 
-The useful mechanism is avoiding repeated derivation, not treating a cache as source-of-truth storage. Cache eviction, source revision, importer changes, or platform changes can require regeneration. Build caches, packaged content, runtime asset residency, and a saved world are separate lifetimes. This is a research interpretation of regenerability and ownership, not a storage proposal for OpenLegend.
+The useful mechanism is avoiding repeated derivation, not treating a cache as source-of-truth storage. Cache eviction, source revision, importer changes, or platform changes can require regeneration. Build caches, packaged content, runtime asset residency, and a saved world are separate lifetimes. This is a research interpretation of regenerability and ownership, not a storage proposal for Open Legend.
 
 ### Unity import dependencies and repeated refresh work
 
@@ -140,7 +140,7 @@ CommonUI addresses a related but separate layer: styled widgets, focus and input
 
 Unity Input System **1.20.1** actions abstract intent from device controls. Bindings can cover multiple devices, deliver callbacks or polled values, and support runtime rebinding. The action system is documented for runtime rather than EditorWindow input. [C27] Package version and interaction context matter when reusing examples; an editor extension and an in-game input layer are not necessarily interchangeable consumers.
 
-**Research interpretation.** Input systems translate device activity into local intent. They do not establish server authorization, ownership, action feasibility, or protection against stale state. Those distinctions remain relevant whether the player uses a keyboard, touch, a controller, assistive technology, or a streamed browser session. No new OpenLegend command interface is proposed here.
+**Research interpretation.** Input systems translate device activity into local intent. They do not establish server authorization, ownership, action feasibility, or protection against stale state. Those distinctions remain relevant whether the player uses a keyboard, touch, a controller, assistive technology, or a streamed browser session. No new Open Legend command interface is proposed here.
 
 ## 7. Accessibility and localization have their own data
 
@@ -152,7 +152,7 @@ Unity 6.6's Accessibility module is enabled by default and lists Android TalkBac
 
 The module's architecture batches native events through Update and can refresh node frames in LateUpdate when a window moves/resizes. Registration and deregistration have explicit lifecycles. Much work is conditional on active accessibility features or changed information, but that does not establish zero cost in every configuration. [C30]
 
-**Research interpretation.** A visual label, a screen-reader label, a tooltip, a subtitle, and an in-world sign can expose the same fact through different channels. Hiding pixels does not automatically remove the fact from an independently supplied accessibility tree. Conversely, making an object visible does not provide a useful label or navigation order. The evidence supports analyzing these representations separately; it does not prescribe an OpenLegend accessibility implementation.
+**Research interpretation.** A visual label, a screen-reader label, a tooltip, a subtitle, and an in-world sign can expose the same fact through different channels. Hiding pixels does not automatically remove the fact from an independently supplied accessibility tree. Conversely, making an object visible does not provide a useful label or navigation order. The evidence supports analyzing these representations separately; it does not prescribe an Open Legend accessibility implementation.
 
 ### Localization covers catalogs, assets, and formatting
 
@@ -209,7 +209,7 @@ The following are research conclusions from the mechanisms above, not adoption d
 - Modern browser support is broader than older engine documentation suggests, but managed threading, native jobs, GPU features, memory limits, and streamed rendering remain distinct capabilities.
 - Current-version headers require content-level scrutiny. Experimental status, stale prose, package defaults, newer compatible releases, and backend-specific exclusions all materially change what a source can support.
 
-The inspected sources do not establish an OpenLegend content scale, population limit, build duration, interaction latency, deterministic procedural-world guarantee, or cross-platform performance result. They provide mechanisms and limitations against which such a claim could later be evaluated. No implementation plan, engine migration, or benchmark program is proposed in this chapter.
+The inspected sources do not establish an Open Legend content scale, population limit, build duration, interaction latency, deterministic procedural-world guarantee, or cross-platform performance result. They provide mechanisms and limitations against which such a claim could later be evaluated. No implementation plan, engine migration, or benchmark program is proposed in this chapter.
 
 ## 11. Provenance and source register
 

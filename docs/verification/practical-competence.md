@@ -152,7 +152,7 @@ Additional second-review Jev/provider cost is **$0**. Cumulative task exposure r
 
 ## Intelligence-weighted progress — October 27, 2026
 
-**Separate prototype evidence:** the following campaign ran on the mechanics implementation preserved at `codex/character-mechanics-prototype`, commit `1ad0bbf6cdcbb0d079e4407bd0938d8a4e2ba05b`. Intelligence-weighted progress is not installed by the current UI-only Gildmoss delivery. The earlier practical-competence evidence retains its original implementation scope.
+**Separate prototype evidence:** the following campaign ran on the mechanics implementation preserved at `codex/character-mechanics-prototype`, commit `1ad0bbf6cdcbb0d079e4407bd0938d8a4e2ba05b`. Intelligence-weighted progress is not installed by the current UI-only Gildmoss delivery. The earlier character skill evidence retains its original implementation scope.
 
 A disposable native scenario used the existing equipped-sling fixture and ordinary `aim` → `release-shot` command owners, including preparation and actual combat recovery. Each shot spent exactly one compatible projectile. The release owner captured the effective Intelligence factor once; only its admitted actor gained support. No provider, browser, server or database was started for these checks; `AI_BUDGET_USD=0`.
 

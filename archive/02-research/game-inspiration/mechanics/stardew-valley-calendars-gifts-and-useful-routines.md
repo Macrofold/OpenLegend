@@ -1,6 +1,6 @@
 # Stardew Valley: calendars, gifts, and useful routines
 
-**Gameplay inspiration; researched September 25, 2026.** This extends the [Stardew Valley chapter](../games/stardew-valley.md). Earlier sales history, creator interviews, review evidence, and videos remain there. The mechanics here are source-backed examples, not a play session or an OpenLegend feature specification.
+**Gameplay inspiration; researched September 25, 2026.** This extends the [Stardew Valley chapter](../games/stardew-valley.md). Earlier sales history, creator interviews, review evidence, and videos remain there. The mechanics here are source-backed examples, not a play session or an Open Legend feature specification.
 
 ## 1. One harvested object can have several futures
 

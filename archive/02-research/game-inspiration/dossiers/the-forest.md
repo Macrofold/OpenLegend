@@ -1,6 +1,6 @@
 # G137 — The Forest
 
-**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 The Forest is one of the clearest examples of a survival game whose horror works because **the enemies appear to be watching the player's behavior rather than merely waiting at spawn points**. Its resource, crafting and building systems are deliberately compact; the memorable tension comes from an authored peninsula where cutting trees, lighting fires, building walls and entering caves all make the player more capable while also changing how exposed and conspicuous they feel.
 
@@ -752,7 +752,7 @@ Rebreather/climbing axe/keycard are more interesting than +10% damage because th
 
 Surface building creates ownership/safety; caves remove certainty and deliver progression.
 
-**Potential OpenLegend pattern:** safe authored places can make dangerous exploration more meaningful.  
+**Potential Open Legend pattern:** safe authored places can make dangerous exploration more meaningful.  
 **Limit:** if home becomes completely safe, world pressure disappears.
 
 ### 5. Failure can relocate the player into fiction
@@ -771,7 +771,7 @@ Fires/walls/cleared trees help the player and can make them easier to find.
 
 Adding another human is not merely "+1 combat power"; it changes fear, attention and humor.
 
-**OpenLegend implication:** multiplayer design should account for emotional consequences of shared presence.
+**Open Legend implication:** multiplayer design should account for emotional consequences of shared presence.
 
 ### 8. Authored story can coexist with sandbox pacing
 

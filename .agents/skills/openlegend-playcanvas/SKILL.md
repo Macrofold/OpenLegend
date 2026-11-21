@@ -1,7 +1,7 @@
 ---
 name: openlegend-playcanvas
 description: >-
-  Author, integrate or review OpenLegend scene assets, offline 3D export/inspection tools, PlayCanvas
+  Author, integrate or review Open Legend scene assets, offline 3D export/inspection tools, PlayCanvas
   rendering and its measurement, cameras, picking or resource lifecycles; not prose mentions or ordinary React-only UI.
 ---
 

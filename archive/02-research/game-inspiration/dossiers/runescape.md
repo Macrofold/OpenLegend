@@ -4,7 +4,7 @@
 
 [Requirements](../research-requirements.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md)
 
-The central comparison is one persistent person learning many roles. The counterexample is equally important: accumulated systems can create obsolete activities, confusing interfaces, commercial distrust and crowded places with little actual interaction. Interpretations below are research proposals, not accepted OpenLegend requirements.
+The central comparison is one persistent person learning many roles. The counterexample is equally important: accumulated systems can create obsolete activities, confusing interfaces, commercial distrust and crowded places with little actual interaction. Interpretations below are research proposals, not accepted Open Legend requirements.
 
 ## 1. Identity, lineage and current boundary
 
@@ -50,7 +50,7 @@ The modern reworked loop includes extraction, efficiency/stamina management, ore
 
 Gathering differs in location, attention, tools, node behavior and downstream uses. Havenhythe Part I adds Hunter 110, clockwork trapping, new Big Game Hunter encounters, high-level ranged-equipment materials and fish farming. Its stealth/detection-oriented hunts are more than a larger number on the same resource node. [RS-B](#rs-b)
 
-**Interpretation:** a new level range is strongest when it changes preparation or action structure. Extra repetition alone is a weaker expansion, particularly when autonomous labor would make human click-time scarcity an unsuitable baseline for OpenLegend.
+**Interpretation:** a new level range is strongest when it changes preparation or action structure. Extra repetition alone is a weaker expansion, particularly when autonomous labor would make human click-time scarcity an unsuitable baseline for Open Legend.
 
 ## 7. Farming, breeding and deliberate return
 
@@ -66,7 +66,7 @@ Farmhands can alter that rhythm. A babysitter can hold animals at the adolescent
 
 Excavation yields damaged artifacts and materials; restoration, collections and mysteries lead to progress and Relic powers. Place, object and authored history thus feed a persistent mechanical reward rather than remain a detached lore screen. [RS-F](#rs-f)
 
-**Interpretation:** OpenLegend could extend the pattern with actual provenance—maker, owners, damage and burial—rather than assume a long generated description proves that history happened. Archaeology also needs useful discovery feedback; an artifact that only fills an inventory slot creates administration instead of curiosity.
+**Interpretation:** Open Legend could extend the pattern with actual provenance—maker, owners, damage and burial—rather than assume a long generated description proves that history happened. Archaeology also needs useful discovery feedback; an artifact that only fills an inventory slot creates administration instead of curiosity.
 
 ## 9. Invention, augmentation and several kinds of consumption
 

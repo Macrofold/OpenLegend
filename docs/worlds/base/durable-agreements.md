@@ -6,7 +6,7 @@
 
 The reference activity is an optional commission between two known people: one would like an understood small pouch for an outing; the other wants an offered food payment and is willing to make it. An illustrative bargain is **one empty small woven pouch for two cooked-meat items**, with no deadline and a planned meeting at the known camp. This is an example proposed by a participant, not a fixed fair price, compulsory request, standing order, automatic NPC goal or starting-world endowment.
 
-The output definition must already be installed, known and supported. A maker needs the actual learned method to produce it and real supplies to work. Merely agreeing adds none of those. The customer can decline, make their own pouch, give a gift instead, change the outing or do nothing. The item provides its actual current organizational use; it grants no carrying strength, food preservation, waterproofing or group storage rights.
+The output definition must already be installed, known and supported. A maker needs to know how to make it and real supplies to work. Merely agreeing adds none of those. The customer can decline, make their own pouch, give a gift instead, change the outing or do nothing. The item provides its actual current organizational use; it grants no carrying strength, food preservation, waterproofing or group storage rights.
 
 A useful scene can let the participants pursue separate activities and later return with what they chose. That needs real desire, distribution, knowledge or travel. The game must not slow ordinary weaving to justify a commission or require the human to leave the session while the maker performs a few seconds of work.
 

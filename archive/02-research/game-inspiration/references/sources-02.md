@@ -13,7 +13,7 @@ The biggest missing datasets are comparable retention cohorts, actual newcomer o
 
 The research deliberately avoids unsupported creator-revenue promises, rumored sales totals, the claim that every canceled project was intrinsically unfun, and the claim that a highly reviewed game serves all player types. Sources with inaccessible primary archives are identified as contemporaneous reporting instead.
 
-For OpenLegend, the highest-value next evidence is observed player behavior in a small playable world—not another market-size estimate. The final section of the brief specifies falsifiable product tests.
+For Open Legend, the highest-value next evidence is observed player behavior in a small playable world—not another market-size estimate. The final section of the brief specifies falsifiable product tests.
 
 
 # Expanded-pass sources

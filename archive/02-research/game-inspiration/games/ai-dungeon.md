@@ -4,7 +4,7 @@
 
 **Interpretation.** Free-form narrative interaction can be compelling as collaborative imagination. It is a different promise from a shared authoritative simulation. A player may enjoy rewriting the fiction in a story tool; the same flexibility can make a tactical or persistent-world accomplishment feel unearned.
 
-**OpenLegend implication.** Keep three boundaries visible: proposed action, admitted action, and actual consequence. A model’s willingness to narrate success must not decide whether a resource was consumed or a character learned something. Persistent memory should improve continuity, while native state prevents contradiction.
+**Open Legend implication.** Keep three boundaries visible: proposed action, admitted action, and actual consequence. A model’s willingness to narrate success must not decide whether a resource was consumed or a character learned something. Persistent memory should improve continuity, while native state prevents contradiction.
 
 **Product risk to test.** Novelty may attract experimentation without creating a reliable return loop. Model changes, latency, uncertain outcomes, and inconsistent characterization can affect the experience even when the underlying engine is unchanged. Treat these as design and operating risks to measure, not as proven explanations of AI Dungeon’s commercial performance.
 
@@ -32,13 +32,13 @@
 
 **Three concrete in-game situations**
 
-1. **Action, speech, and story authoring are different inputs.** *Documented interface.* Do frames what the character attempts; Say frames dialogue; Story lets the player supply narrative text more directly. These modes make the user’s role partly authorial. For OpenLegend, that distinction suggests explicit separation between embodied intent and creator control rather than one ambiguous chat box. [FG-AID-O](../references/sources-04.md#source-fg-aid-o)
+1. **Action, speech, and story authoring are different inputs.** *Documented interface.* Do frames what the character attempts; Say frames dialogue; Story lets the player supply narrative text more directly. These modes make the user’s role partly authorial. For Open Legend, that distinction suggests explicit separation between embodied intent and creator control rather than one ambiguous chat box. [FG-AID-O](../references/sources-04.md#source-fg-aid-o)
 
 2. **An unwanted continuation can be edited or retried.** *Documented authoring workflow.* The player can change text or request another continuation, effectively helping select the story’s next version. That is useful for collaborative fiction. It would be a different promise if retrying also changed authoritative damage, transferred items, or another player’s completed action. [FG-AID-O](../references/sources-04.md#source-fg-aid-o)
 
 3. **Remembered essentials still compete for context.** *Documented context mechanism.* Plot Essentials supplies recurring facts and Story Cards can introduce relevant contextual material. Those tools can help maintain a premise, but adding more text uses context and is not proof the model will apply every fact. Persistent prompt content and reliable behavioral memory are distinct goals. [FG-AID-M](../references/sources-04.md#source-fg-aid-m)
 
-**What to borrow for OpenLegend.** Use AI Dungeon to study language affordances and the pleasure of co-authorship, not as proof that unrestricted narration is sufficient world authority. OpenLegend should retain actual outcome receipts, scoped knowledge, and useful correction tools while making technical failures distinct from fictional choices.
+**What to borrow for Open Legend.** Use AI Dungeon to study language affordances and the pleasure of co-authorship, not as proof that unrestricted narration is sufficient world authority. Open Legend should retain actual outcome receipts, scoped knowledge, and useful correction tools while making technical failures distinct from fictional choices.
 
 *Scope/evidence note:* Base-game systems unless noted; examples describe documented mechanics, not a play session conducted for this research.
 <!-- END FIELDGUIDE ADDITION -->

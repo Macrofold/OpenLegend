@@ -1,6 +1,6 @@
 # Representative objects study
 
-Original OpenLegend Blender models and hand-authored pixel patterns, licensed
+Original Open Legend Blender models and hand-authored pixel patterns, licensed
 AGPL-3.0-only with the repository. No downloaded model, provider output or
 third-party image is used in these objects.
 

@@ -147,7 +147,7 @@ Documented examples include:
 
 The interface communicates composition spatially: two linked sockets form a relationship.
 
-That is an important OpenLegend precedent. System composition is easier to reason about when the UI shows **what modifies what** instead of hiding it in a formula.
+That is an important Open Legend precedent. System composition is easier to reason about when the UI shows **what modifies what** instead of hiding it in a formula.
 
 ## 6. Enemy Skill and Manipulate: the world teaches abilities
 
@@ -164,7 +164,7 @@ This creates a multi-system acquisition loop:
 
 The world itself becomes a curriculum.
 
-**OpenLegend transfer:** creatures, teachers, artifacts and observed phenomena can be sources of learnable actions. Knowledge acquisition becomes more meaningful when the player has to interact with the source rather than merely spend an abstract skill point.
+**Open Legend transfer:** creatures, teachers, artifacts and observed phenomena can be sources of learnable actions. Knowledge acquisition becomes more meaningful when the player has to interact with the source rather than merely spend an abstract skill point.
 
 ## 7. Character identity persists through Limit Breaks
 
@@ -376,7 +376,7 @@ This is not:
 
 But it is an early example of the game quietly tracking **relational history** and later reflecting it in a social scene.
 
-For OpenLegend, the useful idea is the delayed consequence, not the hidden scalar itself: past interactions should be able to change later social opportunities.
+For Open Legend, the useful idea is the delayed consequence, not the hidden scalar itself: past interactions should be able to change later social opportunities.
 
 ## 16. Encounters and build recomposition
 
@@ -629,7 +629,7 @@ Remake Midgar:
 
 Push Square's review praised the combat and expanded core character work while criticizing some corridor level design, sidequests and uneven environmental texture quality; it also emphasized that the narrative is not an exact replica. [FFVII30](#ffvii30)
 
-**OpenLegend lesson:** a reinterpretation can preserve a resource/system concept while changing its interaction layer. “ATB” need not imply identical controls. Pressure, weapon learning and Hard Mode are developed in §30.
+**Open Legend lesson:** a reinterpretation can preserve a resource/system concept while changing its interaction layer. “ATB” need not imply identical controls. Pressure, weapon learning and Hard Mode are developed in §30.
 
 ## 24. Rebirth (2024): relationship mechanics and regional exploration move to the foreground
 
@@ -695,7 +695,7 @@ This section exists only to keep the 2026 trilogy status accurate.
 | Building/settlements | No player building/management |
 | User-generated systems | No native editor; mod community is significant on PC but external to original design |
 
-## 27. OpenLegend transferable lessons and limits
+## 27. Open Legend transferable lessons and limits
 
 ### A. Make abilities portable when the fiction supports portable knowledge
 
@@ -800,7 +800,7 @@ Materia says that many abilities belong to objects and can move between people. 
 
 Around that combat core, chocobo breeding and Gold Saucer show how side systems can feed traversal and build power, while the world map repeatedly expands the player's geographic agency.
 
-For OpenLegend, the highest-value lesson is:
+For Open Legend, the highest-value lesson is:
 
 > **Let capability move through the world—through people, objects, teaching and discovery—without letting mobility of skill erase the causal identity of the person using it.**
 

@@ -1,12 +1,12 @@
-# Hindsight memory evaluation for OpenLegend
+# Hindsight memory evaluation for Open Legend
 
 Research date: **2026-09-26**. Status: **desk research and architectural recommendation; no adoption, integration, fork, paid execution or comparative benchmark completed**.
 
-This record captures the Hindsight investigation requested by Mike and its OpenLegend-specific conclusions. It belongs in research rather than the technical contract directory because an evaluated dependency is not an accepted architecture. The suggested integration and evaluation below remain proposals, not authorization to implement them.
+This record captures the Hindsight investigation requested by Mike and its Open Legend-specific conclusions. It belongs in research rather than the technical contract directory because an evaluated dependency is not an accepted architecture. The suggested integration and evaluation below remain proposals, not authorization to implement them.
 
 ## Scope, evidence and owners
 
-The original OpenLegend implementation review used commit [`ce7ef555f50c979ac3d2179cf5876ea4a55e1318`](https://github.com/Macrofold/OpenLegend/tree/ce7ef555f50c979ac3d2179cf5876ea4a55e1318). This document is being archived from the subsequently updated `main` at [`61c9d1ca52b4267aa405187f4b6799ded9b24317`](https://github.com/Macrofold/OpenLegend/tree/61c9d1ca52b4267aa405187f4b6799ded9b24317). The latter contains additional foundation, persistence and lifecycle changes: historical code findings below describe the reviewed snapshot, not a complete re-audit of those later changes. Current knowledge ownership and conservative correction behavior were checked again while archiving.
+The original Open Legend implementation review used commit [`ce7ef555f50c979ac3d2179cf5876ea4a55e1318`](https://github.com/Macrofold/OpenLegend/tree/ce7ef555f50c979ac3d2179cf5876ea4a55e1318). This document is being archived from the subsequently updated `main` at [`61c9d1ca52b4267aa405187f4b6799ded9b24317`](https://github.com/Macrofold/OpenLegend/tree/61c9d1ca52b4267aa405187f4b6799ded9b24317). The latter contains additional foundation, persistence and lifecycle changes: historical code findings below describe the reviewed snapshot, not a complete re-audit of those later changes. Current knowledge ownership and conservative correction behavior were checked again while archiving.
 
 Selected upstream code was inspected at [`vectorize-io/hindsight@ccfe85b4851957ac2adf88b4a9ddf9668b2882f1`](https://github.com/vectorize-io/hindsight/tree/ccfe85b4851957ac2adf88b4a9ddf9668b2882f1); its API package declares version `0.10.1`. Official documentation was checked on the research date. Moving documentation and an upstream main commit are not proof that every described feature exists in a particular release artifact. Recheck the exact deployment version before implementation. [Package manifest][hs-package]
 
@@ -14,7 +14,7 @@ Evidence categories used here:
 
 - **Observed implementation:** named code and configuration at the pinned commits.
 - **Documented capability or vendor result:** an upstream claim, not independently reproduced here.
-- **Recommendation or inference:** the proposed application to OpenLegend.
+- **Recommendation or inference:** the proposed application to Open Legend.
 - **Unverified:** lifecycle, quality, cost and scale behavior that needs a matched local experiment.
 
 The review covered relevant memory, knowledge, recall, consolidation, maintenance, context and persistence code and their specifications; it was not an exhaustive security review of either repository. No test suite, live-memory acceptance script or benchmark was run for this investigation.
@@ -23,15 +23,15 @@ Existing owners remain authoritative: [Memory architecture](../../docs/memory-ar
 
 ## 1. Recommendation
 
-**Do not use Hindsight as a drop-in replacement for OpenLegend's complete memory system. Consider it as an optional, replaceable retrieval service. Do not maintain a divergent fork before an experiment establishes its value and a specific missing extension point.**
+**Do not use Hindsight as a drop-in replacement for Open Legend's complete memory system. Consider it as an optional, replaceable retrieval service. Do not maintain a divergent fork before an experiment establishes its value and a specific missing extension point.**
 
-OpenLegend must own what a character experienced, what they believe, what they have forgotten, and what those things authorize. Hindsight organizes, retrieves and reasons over supplied information. Its richer retrieval may be useful, but those responsibilities are not interchangeable.
+Open Legend must own what a character experienced, what they believe, what they have forgotten, and what those things authorize. Hindsight organizes, retrieves and reasons over supplied information. Its richer retrieval may be useful, but those responsibilities are not interchangeable.
 
 | Candidate use | Recommendation | Reason |
 | --- | --- | --- |
-| Replace canonical experience, knowledge and accepted mind | Do not adopt this approach | Would require recreating OpenLegend's evidence, privacy, authority and save/load contracts around another writable store |
+| Replace canonical experience, knowledge and accepted mind | Do not adopt this approach | Would require recreating Open Legend's evidence, privacy, authority and save/load contracts around another writable store |
 | Generate optional recall candidates | Evaluate | Most plausible incremental benefit over the inspected retrieval baseline |
-| Synthesize proposed interpretations | Consider only after retrieval qualification | Potentially useful, but publication must remain an OpenLegend transition |
+| Synthesize proposed interpretations | Consider only after retrieval qualification | Potentially useful, but publication must remain an Open Legend transition |
 | Offline trace analysis or permitted creator investigation | Reasonable lower-risk pilot | Can test usefulness without changing live NPC memory; does not prove NPC suitability |
 | Fork the whole framework into an NPC mind engine | Defer | Combines upstream infrastructure maintenance with the game-specific work that still remains |
 
@@ -45,15 +45,15 @@ A bank is a namespace containing memory and its configuration. Banks can corresp
 
 Hindsight's learning is primarily external-memory accumulation and use, not automatic retraining of the calling model. The original paper describes TEMPR for memory organization/retrieval and CARA for memory-informed reasoning. Its original world/experience/opinion/observation framing should not be treated as an exact current API schema: implementation and product terminology have evolved. [Research paper][hs-paper]
 
-For OpenLegend, a bank scoped to one world, actor and active restore generation is the recommended first experiment, not a Hindsight requirement. Do not begin with an omniscient world bank whose output is merely filtered at the end.
+For Open Legend, a bank scoped to one world, actor and active restore generation is the recommended first experiment, not a Hindsight requirement. Do not begin with an omniscient world bank whose output is merely filtered at the end.
 
 ### 2.2 Retain: extraction, indexing and source preservation
 
 Normal `retain` processing is more than an append. Its modules cover chunk storage, LLM fact extraction, embedding, entity resolution, fact storage, and temporal, semantic, entity and causal links. Extracted records can carry dates, location and described reasons as well as text. A claimed causal link remains a model interpretation of input, not proof from a simulation. [Retain modules][hs-retain-code], [fact extraction][hs-extraction-code]
 
-The documented `world` and `experience` categories distinguish information about the external world from the bank agent's own history. They do not certify truth. A `world` fact is not necessarily an authoritative OpenLegend world fact. Speaker context matters when retaining third-party statements. [Retain architecture][hs-retain]
+The documented `world` and `experience` categories distinguish information about the external world from the bank agent's own history. They do not certify truth. A `world` fact is not necessarily an authoritative Open Legend world fact. Speaker context matters when retaining third-party statements. [Retain architecture][hs-retain]
 
-The API accepts timestamps, context, metadata, document IDs and explicitly supplied entities. Document IDs support updates rather than unconditional duplicate appends. Async operation identity supports submission reconciliation; it must still be reconciled with OpenLegend's durable spending and exactly-once acceptance rules. [Retain API][hs-retain-api]
+The API accepts timestamps, context, metadata, document IDs and explicitly supplied entities. Document IDs support updates rather than unconditional duplicate appends. Async operation identity supports submission reconciliation; it must still be reconciled with Open Legend's durable spending and exactly-once acceptance rules. [Retain API][hs-retain-api]
 
 Extraction mode matters. `chunks` stores chunk text without an extraction LLM; `verbatim` preserves original chunk text while extracting metadata; other modes permit richer rewriting. A restrictive mission can produce zero searchable memories even though the source document is stored and retention reports success. Ingestion success therefore does not establish recall coverage. [Retain architecture][hs-retain]
 
@@ -63,29 +63,29 @@ Current documentation also supports inline images with compatible vision executi
 
 After retention, automatic background consolidation can create and revise observations from retained facts. Observations carry supporting fact references. Consolidation can be disabled and requested explicitly; source facts are not simply retired because an observation was generated. These are useful facilities for maintained interpretations, not guarantees of faithful synthesis. [Observations][hs-observations]
 
-This differs from OpenLegend's routine-memory cleanup. Hindsight is constructing higher-level knowledge; OpenLegend also has rules for when source experiences may leave active recall, which incidents must remain distinct, and how complete source coverage is validated. Similar naming does not imply compatible lifecycle semantics.
+This differs from Open Legend's routine-memory cleanup. Hindsight is constructing higher-level knowledge; Open Legend also has rules for when source experiences may leave active recall, which incidents must remain distinct, and how complete source coverage is validated. Similar naming does not imply compatible lifecycle semantics.
 
 ### 2.4 Recall: complementary retrieval methods
 
 Hindsight combines semantic, lexical, graph and temporal retrieval. Reciprocal-rank fusion combines positions across retrieval lists; an optional cross-encoder judges query-memory pairs, followed by additional ranking signals and result packing. Search depth and returned-text allowance are separate controls. The lexical backend is configurable: native PostgreSQL text search is not the same algorithm as a true BM25 backend. [Retrieval architecture][hs-retrieval]
 
-This is the strongest adoption hypothesis. A character deciding whether to trust a merchant might need an old incident involving that merchant's associate rather than a passage that resembles the present question. Graph and time-aware candidates could help find that incident. This is an illustrative use case, not an observed OpenLegend result.
+This is the strongest adoption hypothesis. A character deciding whether to trust a merchant might need an old incident involving that merchant's associate rather than a passage that resembles the present question. Graph and time-aware candidates could help find that incident. This is an illustrative use case, not an observed Open Legend result.
 
 The documented ranking also uses supporting-fact count for observations. Repeated copies of one rumor are not independent corroboration; a retrieval score must not become character confidence or objective truth. [Retrieval architecture][hs-retrieval]
 
 ### 2.5 Reflect: reasoning over memory
 
-`reflect` runs a bounded reasoning process rather than simply returning search hits. It can consult maintained models, observations and underlying facts. Disposition and freeform instructions influence interpretation. These are useful steering controls, but skepticism, literalism and empathy settings are not a complete psychology or an automatic mapping to OpenLegend traits. [Reflect architecture][hs-reflect]
+`reflect` runs a bounded reasoning process rather than simply returning search hits. It can consult maintained models, observations and underlying facts. Disposition and freeform instructions influence interpretation. These are useful steering controls, but skepticism, literalism and empathy settings are not a complete psychology or an automatic mapping to Open Legend traits. [Reflect architecture][hs-reflect]
 
 The inspected tools allow hierarchical retrieval, reading maintained models, expanding memory to source chunks/documents, and returning supporting identifiers. Tools' descriptions of raw memories as ground truth must be understood relative to supplied source material, not as game-engine authority. [Reflect tools][hs-reflect-code]
 
-Structured reflection can involve a further conversion pass. The API documents successful requests whose structured conversion fails and reports `structured_output_error`. OpenLegend still needs to distinguish valid text, valid structured output and a valid accepted mutation. [Reflect API][hs-reflect-api]
+Structured reflection can involve a further conversion pass. The API documents successful requests whose structured conversion fails and reports `structured_output_error`. Open Legend still needs to distinguish valid text, valid structured output and a valid accepted mutation. [Reflect API][hs-reflect-api]
 
 ### 2.6 Mental models and knowledge pages
 
 Mental models maintain answers to standing questions and can be refreshed. Knowledge pages provide a document-like surface, including incremental refresh from observations; their documented update path avoids consulting other knowledge pages. This reduces one source of recursive synthesis but does not establish complete factual correctness or dependency tracking. [Mental models][hs-models], [knowledge pages][hs-pages]
 
-These overlap conceptually with character knowledge pads. The meaningful distinction is ownership: a generated page may inform a proposal, but must not independently change the accepted version of an OpenLegend relationship, belief or identity.
+These overlap conceptually with character knowledge pads. The meaningful distinction is ownership: a generated page may inform a proposal, but must not independently change the accepted version of an Open Legend relationship, belief or identity.
 
 ### 2.7 Runtime and deployment
 
@@ -93,9 +93,9 @@ The PostgreSQL path combines vectors, text search, relational/JSON data and grap
 
 The service architecture includes the API, background processing and a control-plane UI. Dedicated workers can use PostgreSQL as their task broker. Embeddings and rerankers may be local or remote depending on configuration. [Services][hs-services]
 
-The Node all-in-one wrapper starts a Python daemon. Its embedded-version default is documented as `latest`; a reproducible OpenLegend evaluation should override moving defaults and pin the SDK, service, models and configuration. Installing an npm package does not make the full engine native Node infrastructure. [Node wrapper][hs-node]
+The Node all-in-one wrapper starts a Python daemon. Its embedded-version default is documented as `latest`; a reproducible Open Legend evaluation should override moving defaults and pin the SDK, service, models and configuration. Installing an npm package does not make the full engine native Node infrastructure. [Node wrapper][hs-node]
 
-## 3. What OpenLegend already has
+## 3. What Open Legend already has
 
 The inspected system is not merely a transcript plus embeddings. These findings describe the original code snapshot unless otherwise stated.
 
@@ -128,7 +128,7 @@ Batching excludes retained speech, separates important incidents, and supplies c
 
 The memory specification and cognition tracker distinguish implemented foundations from remaining integrated and live behavioral acceptance. A script or fixture is not evidence that a matched Hindsight comparison has occurred. [Memory specification][ol-memory], [cognition tracker](../../docs/maintainers/cognition-redesign.md)
 
-The knowledge specification rechecked at the archive base still documents a conservative correction/forgetting path: it clears knowledge text alongside accepted-mind reset; forgetting also clears observer identity associations. More selective invalidation requires evidence before replacing that boundary. Hindsight's evidence-linked synthesis is useful inspiration here, but does not automatically supply OpenLegend's complete dependency semantics. [Knowledge at archive base][ol-knowledge]
+The knowledge specification rechecked at the archive base still documents a conservative correction/forgetting path: it clears knowledge text alongside accepted-mind reset; forgetting also clears observer identity associations. More selective invalidation requires evidence before replacing that boundary. Hindsight's evidence-linked synthesis is useful inspiration here, but does not automatically supply Open Legend's complete dependency semantics. [Knowledge at archive base][ol-knowledge]
 
 ## 4. Why this is not a drop-in replacement
 
@@ -136,11 +136,11 @@ The knowledge specification rechecked at the archive base still documents a cons
 
 Illustrative sequence: Ada hears Mike accuse Ben of stealing berries. The experience is that Ada heard an accusation. Her belief may be that Ben stole something. The engine's truth may differ from both.
 
-OpenLegend deliberately permits uncertain or false beliefs without permitting subjective text to rewrite physical facts. Hindsight can represent attributed claims, but its general-purpose fact/observation categories do not enforce this game-specific distinction on their own. Acquisition must remain typed and scoped before any extraction or synthesis. A dream, a self-authored thought and another person's testimony must not be promoted into witnessed evidence. [Memory specification][ol-memory], [knowledge][ol-knowledge], [extracted fact model][hs-extraction-code]
+Open Legend deliberately permits uncertain or false beliefs without permitting subjective text to rewrite physical facts. Hindsight can represent attributed claims, but its general-purpose fact/observation categories do not enforce this game-specific distinction on their own. Acquisition must remain typed and scoped before any extraction or synthesis. A dream, a self-authored thought and another person's testimony must not be promoted into witnessed evidence. [Memory specification][ol-memory], [knowledge][ol-knowledge], [extracted fact model][hs-extraction-code]
 
 ### 4.2 Entity resolution is not permission to recognize someone
 
-OpenLegend distinguishes a canonical stored subject from recognition of the present exposure. A note about someone is not sufficient proof that a newly visible stranger is that person. [Knowledge][ol-knowledge]
+Open Legend distinguishes a canonical stored subject from recognition of the present exposure. A note about someone is not sufficient proof that a newly visible stranger is that person. [Knowledge][ol-knowledge]
 
 Hindsight's `resolve_entities: false` applies to explicitly supplied entities; its automatically extracted entities still go through resolution. Observer-scoped identifiers and controlled text therefore matter even when that switch is used. Do not export hidden global names and rely on output redaction to undo a merge already made inside memory. [Retain API][hs-retain-api], [retain types][hs-types]
 
@@ -154,13 +154,13 @@ A character restored to Day 3 must not retrieve discarded Day 7 knowledge. Use h
 
 Hindsight retains original facts alongside observations. Document updates, curation and deletion facilities help manage content, but their existence is not proof that every derivative or in-flight task satisfies a game-level forgetting contract. [Observations][hs-observations], [document API][hs-documents]
 
-OpenLegend forgetting must cover optional indexes, source expansion, accepted knowledge, cached context, provider sessions, timeline copies and late completions. Either demonstrate full lineage invalidation or quarantine/rebuild the affected external bank while falling back to native recall. Deleting a search row is insufficient if a page or source chunk still contains the detail. Creator audit retention must not create a backdoor into an NPC's recall.
+Open Legend forgetting must cover optional indexes, source expansion, accepted knowledge, cached context, provider sessions, timeline copies and late completions. Either demonstrate full lineage invalidation or quarantine/rebuild the affected external bank while falling back to native recall. Deleting a search row is insufficient if a page or source chunk still contains the detail. Creator audit retention must not create a backdoor into an NPC's recall.
 
 ### 4.5 One accepted mind, not two writers
 
-OpenLegend knowledge mutations are revision-checked; empty documents leave tombstones to block stale recreation. Reflection publication is atomic. These are not merely storage preferences. [Knowledge][ol-knowledge], [memory specification][ol-memory]
+Open Legend knowledge mutations are revision-checked; empty documents leave tombstones to block stale recreation. Reflection publication is atomic. These are not merely storage preferences. [Knowledge][ol-knowledge], [memory specification][ol-memory]
 
-An independently refreshed Hindsight page and an independently edited OpenLegend pad would create two versions of what the character believes. Initially keep Hindsight synthesis read-only or disabled. Later generated interpretations may become proposals through the existing owner. Remembering a recipe cannot grant a capability; recalling a promise cannot fulfill or erase it.
+An independently refreshed Hindsight page and an independently edited Open Legend pad would create two versions of what the character believes. Initially keep Hindsight synthesis read-only or disabled. Later generated interpretations may become proposals through the existing owner. Remembering a recipe cannot grant a capability; recalling a promise cannot fulfill or erase it.
 
 ### 4.6 Immediate experience must survive index lag
 
@@ -168,11 +168,11 @@ Recent dialogue and trigger evidence remain available natively before external p
 
 ### 4.7 Freshness and retries cross two services
 
-OpenLegend validates source versions after async attention and distinguishes uncertain paid completion. Hindsight operation identity can assist reconciliation but does not, by itself, make cross-service acceptance atomic. Use a committed outbox and idempotent identifiers; recheck generation, source eligibility and revision after each external result. No blind paid resend after a timeout. [Recall][ol-recall], [repository][ol-repository], [retain API][hs-retain-api]
+Open Legend validates source versions after async attention and distinguishes uncertain paid completion. Hindsight operation identity can assist reconciliation but does not, by itself, make cross-service acceptance atomic. Use a committed outbox and idempotent identifiers; recheck generation, source eligibility and revision after each external result. No blind paid resend after a timeout. [Recall][ol-recall], [repository][ol-repository], [retain API][hs-retain-api]
 
 ### 4.8 Backend budgets are not the complete game budget
 
-Hindsight's recall `budget` means search depth, not a dollar reservation. The returned-text budget excludes some surrounding response material; source chunks have an independent allowance. The documented packing policy can return the highest-ranked fact whole when nothing fits. OpenLegend must separately bound transport bytes, assembled context, timeout, concurrency and total spend. [Recall API][hs-recall-api], [retrieval][hs-retrieval]
+Hindsight's recall `budget` means search depth, not a dollar reservation. The returned-text budget excludes some surrounding response material; source chunks have an independent allowance. The documented packing policy can return the highest-ranked fact whole when nothing fits. Open Legend must separately bound transport bytes, assembled context, timeout, concurrency and total spend. [Recall API][hs-recall-api], [retrieval][hs-retrieval]
 
 ## 5. Build, adopt, host or fork
 
@@ -184,7 +184,7 @@ Hindsight's recall `budget` means search depth, not a dollar reservation. The re
 | Managed Hindsight Cloud | Lower setup burden for a disposable pilot | Service availability, pricing, provider/data terms and lifecycle constraints | Suitable for controlled permitted traces; not assumed cheaper |
 | Maintain a divergent fork | Change missing internals directly | Upstream security/migration merge burden plus our own game semantics | Only after proven benefit and a specific unavoidable patch |
 
-The first-party upstream code at the inspected commit is MIT-licensed. This permits modification and redistribution subject to its notice requirements and reduces proprietary implementation lock-in. It is not a guarantee of ongoing support, an SLA, or blanket licensing of every dependency/model. OpenLegend's own licensing remains unchanged. [License][hs-license], [dependency manifest][hs-package]
+The first-party upstream code at the inspected commit is MIT-licensed. This permits modification and redistribution subject to its notice requirements and reduces proprietary implementation lock-in. It is not a guarantee of ongoing support, an SLA, or blanket licensing of every dependency/model. Open Legend's own licensing remains unchanged. [License][hs-license], [dependency manifest][hs-package]
 
 Bank export/import/clone exists, so portability is not purely hypothetical. However, exports do not preserve database IDs or embeddings; import re-embeds and re-resolves entities. That is useful migration capability, not a byte-identical gameplay checkpoint or deterministic reconstruction of every retrieval result. Keep canonical source revisions outside the dependency. [Bank API][hs-banks]
 
@@ -200,7 +200,7 @@ Self-hosting does not imply all content stays local when remote LLM, embedding o
 
 ## 6. Economics and scaling
 
-Hindsight's performance documentation describes a read-heavy design, around ten or more reads per write. That is a workload assumption to test, not evidence that it cannot handle simulation writes. Its latency guidance is deployment-dependent and was not measured in OpenLegend. [Performance][hs-performance]
+Hindsight's performance documentation describes a read-heavy design, around ten or more reads per write. That is a workload assumption to test, not evidence that it cannot handle simulation writes. Its latency guidance is deployment-dependent and was not measured in Open Legend. [Performance][hs-performance]
 
 A simulation may have substantial write fan-out: one native event can create many different actor-permitted experiences. Per-actor extraction, embedding and synthesis can multiply work even when the canonical event is shared. Never reduce that cost by merging private actor inputs into one omniscient synthesis job. Accelerated game time also creates more maintenance opportunities without increasing the acceptable real-time spending allowance. These are architectural inferences to measure.
 
@@ -226,11 +226,11 @@ Do not initially place indexing and synthesis on the simulation's critical datab
 This is an architectural sketch for an authorized experiment, not a delivered API or a second current specification.
 
 ```text
-OpenLegend commits an actor-permitted experience
+Open Legend commits an actor-permitted experience
   -> transactional outbox with immutable source/version identity
   -> world + actor + active-generation Hindsight bank
   -> optional recall candidate references
-  -> OpenLegend validates mapping, eligibility and current revisions
+  -> Open Legend validates mapping, eligibility and current revisions
   -> reload canonical permitted text and add required native evidence
   -> existing attention and compact context
   -> existing cognition, admission and accepted publication
@@ -238,7 +238,7 @@ OpenLegend commits an actor-permitted experience
 
 ### 7.1 Preserve canonical ownership
 
-Treat Hindsight as disposable derived infrastructure. Keep experiences, accepted knowledge/mind, recognition, obligations, techniques and save authority in OpenLegend. Losing the backend should reduce optional retrieval quality, not erase the character. Persist any accepted generated interpretation through existing domain transitions so it survives independently of the dependency.
+Treat Hindsight as disposable derived infrastructure. Keep experiences, accepted knowledge/mind, recognition, obligations, techniques and save authority in Open Legend. Losing the backend should reduce optional retrieval quality, not erase the character. Persist any accepted generated interpretation through existing domain transitions so it survives independently of the dependency.
 
 The initial seam is candidate selection around `RecallService.candidates()` and `MemoryRepository.select()`, not wholesale replacement of `MemoryRepository`, which also owns source eligibility, lineage and lifecycle data. The adapter should provide candidate-to-source mappings, versions, scores and coverage/operation status. It must not invent missing original IDs or treat generated text as authoritative evidence. [Recall][ol-recall], [repository][ol-repository]
 
@@ -254,7 +254,7 @@ One bank per generation is a conservative starting design, not a claim of accept
 
 Disable automatic observations, model/page refreshes and `reflect` in the first pilot. Compare `chunks` with `verbatim`: the former isolates inexpensive indexing, while the latter exercises metadata extraction without rewriting source text. A chunks-only failure does not establish that the richer framework is useless. Conversely, a richer-mode success must include its ingestion and maintenance cost. [Retain architecture][hs-retain]
 
-Keep OpenLegend's exact latest dialogue, stimulus and obligations on the native required path. Revalidate selected source versions after Hindsight and after attention. Reject rather than silently truncate required context when the full task cannot fit.
+Keep Open Legend's exact latest dialogue, stimulus and obligations on the native required path. Revalidate selected source versions after Hindsight and after attention. Reject rather than silently truncate required context when the full task cannot fit.
 
 ### 7.4 Lifecycle and failure handling
 
@@ -266,7 +266,7 @@ Use a timeout and circuit breaker around optional retrieval. Fall back to native
 
 ### 7.5 Only then evaluate synthesis
 
-After retrieval qualification, an observation or reflected interpretation can be a staged, evidence-linked proposal. OpenLegend validates actor scope, source generation/revisions, forgotten evidence and document revision, then publishes through the existing owner. No auto-refresh writes directly to About me, knowledge pads, goals or protected obligations.
+After retrieval qualification, an observation or reflected interpretation can be a staged, evidence-linked proposal. Open Legend validates actor scope, source generation/revisions, forgotten evidence and document revision, then publishes through the existing owner. No auto-refresh writes directly to About me, knowledge pads, goals or protected obligations.
 
 As a separate low-risk path, an authorized creator tool can analyze permitted traces offline. Its broader investigative access must never widen a player's or NPC's knowledge.
 
@@ -276,7 +276,7 @@ The empirical question extends R11/R19; detailed implementation acceptance remai
 
 Compare three arms:
 
-1. Current OpenLegend at a newly pinned implementation baseline.
+1. Current Open Legend at a newly pinned implementation baseline.
 2. A modest native candidate improvement, such as lexical/time candidates and rank fusion.
 3. Hindsight through the scoped candidate adapter, with separate minimal and richer ingestion configurations.
 
@@ -323,7 +323,7 @@ To resume, read the current canonical owners and R11/R19, pin the then-current c
 
 ## 10. Source register
 
-All vendor pages below were consulted for the 2026-09-26 evaluation or its archival verification. Links are primary sources. The official benchmark site displayed **94.6% on LongMemEvalS** when checked on the research date. This is a dated vendor-reported result, not an independently reproduced OpenLegend result or a claim that the original paper used the same experiment. [Benchmark site][hs-benchmarks], [paper][hs-paper]
+All vendor pages below were consulted for the 2026-09-26 evaluation or its archival verification. Links are primary sources. The official benchmark site displayed **94.6% on LongMemEvalS** when checked on the research date. This is a dated vendor-reported result, not an independently reproduced Open Legend result or a claim that the original paper used the same experiment. [Benchmark site][hs-benchmarks], [paper][hs-paper]
 
 ### Upstream evidence
 
@@ -331,7 +331,7 @@ All vendor pages below were consulted for the 2026-09-26 evaluation or its archi
 - Deployment, security and economics: [storage][hs-storage], [services][hs-services], [Node wrapper][hs-node], [extensions][hs-extensions], [Memory Defense][hs-defense], [performance][hs-performance], [billing][hs-billing].
 - Pinned implementation: [license][hs-license], [package/dependencies][hs-package], [retain modules][hs-retain-code], [input types][hs-types], [fact extraction][hs-extraction-code], [reflect tools][hs-reflect-code].
 
-### OpenLegend evidence
+### Open Legend evidence
 
 - Original snapshot: [memory semantics][ol-memory], [experience/acceptance][ol-experience], [recall][ol-recall], [SQL memory repository][ol-repository], [consolidation policy][ol-consolidation], [maintenance][ol-maintenance].
 - Archival follow-up: [knowledge contract at `61c9d1c`][ol-knowledge]. Current live acceptance and delivery status must be read from the linked maintained owners, not inferred from this dated report.

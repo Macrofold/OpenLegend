@@ -2,7 +2,7 @@
 
 **G70 · Complete research pass, September 26, 2026.** This dossier separates the **single-player 2018 story** from **Red Dead Online**, which shares the world and core controls but has a separate custom avatar, progression/economy, social structure, monetization and service history. The current PC release remains the 2019 version; no native PS5/Xbox Series edition was located in the sources read for this pass, so backwards-compatible play is not mislabeled as a current-generation remaster. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-Red Dead Redemption 2 is one of the most relevant open-world references for OpenLegend because it asks the player to inhabit a **socially embedded body** rather than merely steer a mission avatar. Arthur:
+Red Dead Redemption 2 is one of the most relevant open-world references for Open Legend because it asks the player to inhabit a **socially embedded body** rather than merely steer a mission avatar. Arthur:
 - lives in a camp with a persistent community;
 - eats, sleeps, dresses for weather, gets dirty and gains/loses weight;
 - bonds with a particular horse;
@@ -65,7 +65,7 @@ This is a powerful embodied model:
 
 Arthur can be hungry or exhausted without instantly becoming unplayable.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Needs should often create:
 - pressure;
@@ -146,7 +146,7 @@ The camp is highly authored:
 - NPC autonomy is sophisticated staging rather than general human simulation;
 - resources do not create a deep emergent production economy.
 
-OpenLegend can take the social persistence while making work/needs more systemic.
+Open Legend can take the social persistence while making work/needs more systemic.
 
 ## 5. Chores and mundane contribution
 
@@ -170,7 +170,7 @@ A community feels real when:
 Three Houses and RDR2 converge here:
 > small routine actions can create attachment to place—but become tedious if the player must manually repeat them forever.
 
-OpenLegend should permit delegation after meaning is established.
+Open Legend should permit delegation after meaning is established.
 
 ## 6. Horse ownership, bonding, and care
 
@@ -210,7 +210,7 @@ That can destroy:
 
 This is one of the game's strongest emergent attachment systems.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Attachment emerges when an entity combines:
 - useful capability;
@@ -243,7 +243,7 @@ The horse acts as a **mobile inventory boundary**.
 
 Arthur cannot instantaneously materialize every owned rifle from an abstract bag.
 
-OpenLegend should use:
+Open Legend should use:
 - body slots;
 - carried containers;
 - nearby storage;
@@ -299,7 +299,7 @@ Legendary hunts create named/scarce encounters whose materials feed unique:
 - trinkets/talismans;
 - completion.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Resource quality should depend on **process**, not just entity death.
 
@@ -328,7 +328,7 @@ This is impressive behavioral ecology, but not a fully persistent population sim
 - killing a region's deer does not create a decades-long ecosystem collapse;
 - most individual wild animals are not persistent identities.
 
-OpenLegend can extend this toward:
+Open Legend can extend this toward:
 - population;
 - migration;
 - predation;
@@ -424,7 +424,7 @@ Arthur can:
 - pay bounty;
 - sometimes be arrested/jail.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Law should be a **knowledge-propagation system**:
 > event → observer → report → institution → response.
@@ -453,7 +453,7 @@ Unlike a purely cosmetic morality meter, Honor feeds both world and narrative.
 
 One scalar still collapses many moral dimensions.
 
-OpenLegend should instead model:
+Open Legend should instead model:
 - relationship-specific memory;
 - faction reputation;
 - public reputation;
@@ -476,7 +476,7 @@ Random roadside encounters can also pay forward:
 
 This is a major improvement over one-shot random events.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 The strongest “random encounter” is one that becomes:
 > persistent person + changed relationship + later consequence.
@@ -548,7 +548,7 @@ Long rides are frequently accompanied by:
 
 The Guardian's review describes the game as largely being about **being somewhere**—hunting, fishing, riding and speaking around campfires between bursts of action. [R2-05](#r2-05)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Travel should not always be collapsed into loading.
 
@@ -571,7 +571,7 @@ Many story missions demand:
 
 PC Gamer's review summarizes this tension: a monumental open world “straining against stubborn mission design.” [R2-02](#r2-02)
 
-### Why it matters for OpenLegend
+### Why it matters for Open Legend
 
 Do not author goals as hidden choreography.
 
@@ -671,7 +671,7 @@ Current Steam reviews still divide around the same choice:
 The game demonstrates:
 > realism is valuable when it reinforces attention/meaning; it becomes friction when it repeats after the meaning is learned.
 
-OpenLegend can automate repeated routine while preserving first-time embodiment.
+Open Legend can automate repeated routine while preserving first-time embodiment.
 
 ## 24. Production scale and labor
 
@@ -685,7 +685,7 @@ These are attributed production facts, not evidence that crunch caused any parti
 
 RDR2's fidelity was extraordinarily expensive.
 
-OpenLegend should seek:
+Open Legend should seek:
 - simulation reuse;
 - authored rules;
 - generative variation
@@ -796,7 +796,7 @@ The same feature—high interaction friction—can be:
 - the reason one player feels embodied;
 - the reason another quits.
 
-OpenLegend should expose automation/pace preferences without flattening world meaning.
+Open Legend should expose automation/pace preferences without flattening world meaning.
 
 ## 28. Red Dead Online: a separate persistent game
 
@@ -910,7 +910,7 @@ Take-Two's CEO called Red Dead Online successful in 2026 even while players cont
 
 **Result:** different moral/legal consequences.
 
-**OpenLegend lesson:** law begins with perceived information.
+**Open Legend lesson:** law begins with perceived information.
 
 ### C. Perfect pelt requires the correct method
 
@@ -948,7 +948,7 @@ Take-Two's CEO called Red Dead Online successful in 2026 even while players cont
 
 **Limit:** repeated economy optimization can flatten the original hunting fantasy into grind.
 
-## 32. Transferable inspiration for OpenLegend
+## 32. Transferable inspiration for Open Legend
 
 ### A. Persistent social hubs should change with community state
 
@@ -987,7 +987,7 @@ Reappearing strangers are far stronger than disposable random-event rewards.
 
 RDR2 achieves extraordinary aliveness with authored/state-driven behavior.
 
-OpenLegend can combine that staging wisdom with actual memory/agency.
+Open Legend can combine that staging wisdom with actual memory/agency.
 
 ### H. Succession preserves meaning after death
 

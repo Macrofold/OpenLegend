@@ -300,7 +300,7 @@ goods or refund while releasing the tool. Actual PostgreSQL reconstruction retai
 both output ports and their exact physical identities. Five independently corrupted
 SQL records (missing ports, wrong quantity, duplicate port, wrong tool requirement,
 changed output definition) each refuse before activation; restoring each original
-row permits the unchanged world again. A later learned method actually consumes
+row permits the unchanged world again. A later learned activity actually consumes
 the secondary mineral chips and creates its ordinary output once, then persists.
 Two simultaneous service requests for the last input admit one, spend once,
 preserve that work and complete its two pieces; the second cannot replace it or

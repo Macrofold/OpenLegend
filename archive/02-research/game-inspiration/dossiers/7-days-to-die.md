@@ -1,6 +1,6 @@
 # G135 — 7 Days to Die
 
-**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 7 Days to Die is most useful as a study in **turning an open, destructible survival world into a repeating preparedness test**. Nearly every system—scavenging, mining, crafting, perks, vehicles, farming, electricity, traps, traders and architecture—can feed the same question: what will happen when the next Blood Moon horde attacks? The distinctive design is not merely “zombies every seven days.” It is the combination of a countdown, voxel destruction, structural integrity and adversarial pathfinding that makes a base a hypothesis the horde repeatedly tests.
 
@@ -757,7 +757,7 @@ A September 2026 12,000+ hour recommended reviewer on the Steam community front 
 
 The core research question is therefore not "is the game finished?" but **how much authored direction can be added before an open survival sandbox stops feeling self-directed**.
 
-## R13 — transferable inspiration and limits for OpenLegend
+## R13 — transferable inspiration and limits for Open Legend
 
 These are research hypotheses, not accepted implementation requirements.
 
@@ -800,7 +800,7 @@ Magazine-based crafting forces explorers to leave home; trader jobs pull players
 
 V3.0 exposes 150+ sandbox controls rather than forcing every player into one survival model.
 
-**Potential OpenLegend implication:** world authors can own rule bundles while engine primitives stay reusable.  
+**Potential Open Legend implication:** world authors can own rule bundles while engine primitives stay reusable.  
 **Limit:** unconstrained toggles make testing, documentation and multiplayer expectation much harder.
 
 ### 7. Iterative attacks are natural design tests
@@ -820,7 +820,7 @@ Forges/electricity/activity make a productive base more noticeable.
 
 A 2016 console guide, Alpha 21 guide and V3.2 guide can contradict each other honestly.
 
-**OpenLegend lesson:** mechanics documentation should attach behavior to version/world-package provenance.
+**Open Legend lesson:** mechanics documentation should attach behavior to version/world-package provenance.
 
 ### 10. Modding can preserve discarded official philosophies
 

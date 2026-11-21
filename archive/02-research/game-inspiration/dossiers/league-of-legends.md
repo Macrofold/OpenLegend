@@ -2,7 +2,7 @@
 
 **G08 · Full research pass completed September 25, 2026.** This covers the major gameplay and product systems and all R01–R14 categories. It is not an exhaustive champion/item database, personal playthrough or representative player survey. Current primary documentation, historical descriptions and bounded community references are distinguished.
 
-[Preserved League/Dota chapter](../games/league-of-legends-and-dota-2.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). This is PC League of Legends, not Wild Rift, Teamfight Tactics or Dota 2. League Classic is a distinct native mode combining historical elements, not proof that every old guide describes modern Summoner's Rift. Character/lore examples are references, not proposed OpenLegend assets.
+[Preserved League/Dota chapter](../games/league-of-legends-and-dota-2.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). This is PC League of Legends, not Wild Rift, Teamfight Tactics or Dota 2. League Classic is a distinct native mode combining historical elements, not proof that every old guide describes modern Summoner's Rift. Character/lore examples are references, not proposed Open Legend assets.
 
 ## 1. One objective connects several activities
 
@@ -268,7 +268,7 @@ Read Riot's basic guide, then the two champion examples and clarity essay before
 | R13 inspiration/limits | §16 and labeled interpretation throughout |
 | R14 evidence/navigation/preservation | This section and annotated references |
 
-**Per-game preservation:** the supplied master's League/Dota section and full repository pair chapter were compared. Its historical re-review assessments, Dota-only metrics, Riot clarity explanation, non-FPS argument, team-dependence cautions and OpenLegend recommendations remain unchanged in `games/league-of-legends-and-dota-2.md`. This independent League pass does not count Dota 2 as complete. Earlier source, review, viewing and metric registers were not overwritten. Packet-wide reconciliation remains a separate pending gate.
+**Per-game preservation:** the supplied master's League/Dota section and full repository pair chapter were compared. Its historical re-review assessments, Dota-only metrics, Riot clarity explanation, non-FPS argument, team-dependence cautions and Open Legend recommendations remain unchanged in `games/league-of-legends-and-dota-2.md`. This independent League pass does not count Dota 2 as complete. Earlier source, review, viewing and metric registers were not overwritten. Packet-wide reconciliation remains a separate pending gate.
 
 **Limits:** no personal gameplay, full-video viewing, private code/budget audit, current universal item table, representative sentiment series or reliable current total-player estimate. Several community references were indexed-only and preserve older balance histories. Current Riot statements qualify older documentation where specified; intended social outcomes are not independently proven. A completed pass is not a claim to know every private production fact.
 

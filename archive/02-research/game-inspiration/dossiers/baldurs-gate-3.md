@@ -190,7 +190,7 @@ This closure does not add new claimed playtesting. It makes the existing evidenc
 | R10 visibility/distribution | §§8, 10; observed channels separated from growth hypotheses |
 | R11 commercial evidence | §10; dated inherited concurrency, attributed sales, historical price and metric limits |
 | R12 reception | §11; five complete written reviews, player disagreement and failed Steam access explicitly separated |
-| R13 transfer/limitations | §12; research hypotheses, not accepted OpenLegend work |
+| R13 transfer/limitations | §12; research hypotheses, not accepted Open Legend work |
 | R14 evidence/preservation | This section and annotated sources below |
 
 The original chapter and granular mechanics study were read and are **not edited by this pass**. They retain their longer corpse/disguise, potion, concentration/Haste, box/vent/support, gaseous traversal, goblin-camp, Wyll/Karlach, player-disagreement and writing-interview passages, along with their source annotations. Their original Game Informer video route remains in the chapter; it was **not watched** here and no timestamps are invented. This is preservation of the two relevant repository owners, not certification of the separate seven-file packet-wide P01 gate. The roster and progress links provide the continuation route; later subjects and global integration gates remain open.

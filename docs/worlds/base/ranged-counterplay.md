@@ -33,7 +33,7 @@ The allowance chooses a starting stance within range. The two-metre floor keeps 
 
 ## Selected contact consequences
 
-**Physical-contact qualification passes in CTR01; wider combat acceptance remains open.** A projectile is a physical committed effect. It damages what it actually contacts according to the installed world/material law, regardless of which body was selected at release. This world allows direct human PvP and collateral injury to vulnerable humans, NPCs and animals. Friendship, the intended target, an attacker's change of mind, and the word **practice** grant no projectile immunity.
+**Physical-contact qualification passes in CTR01; wider combat acceptance remains open.** A projectile is a physical committed effect. It damages what it actually contacts according to the installed world/material law, regardless of which body was selected at release. This world allows direct human PvP and collateral injury to vulnerable characters and animals. Friendship, the intended target, an attacker's change of mind, and the word **practice** grant no projectile immunity.
 
 The engine supplies ordered swept collision and typed contact-effect execution. The bundled world selects **damage on actual contact**, using existing captured ranged weapon/ammunition injury and the contacted body's current susceptibility and defenses. A different installed world can supply a supported harmless training-contact profile or different participant policy. Do not hardcode the wilderness's damage rule in collision detection, client targeting or generic actor classification.
 

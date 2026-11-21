@@ -1,6 +1,6 @@
 # G109 — Star Wars: Knights of the Old Republic
 
-**Full research pass, September 26, 2026.** Original BioWare game, not KOTOR II, The Old Republic MMO or a remake. Research hypotheses here are not approved OpenLegend requirements. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Library](../README.md).
+**Full research pass, September 26, 2026.** Original BioWare game, not KOTOR II, The Old Republic MMO or a remake. Research hypotheses here are not approved Open Legend requirements. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Library](../README.md).
 
 Seven substantive written reviews across four editorial sites were read, spanning original and port editions. The initial Steam pass yielded a small **Most Helpful (Week), English** sample; the September 27 audit additionally recovered Steam's indexed English **Most Helpful (All Time)** surface, while retaining the weekly positive/negative bodies as contrasting current testimony. The six worked situations below are constructed from documented rules, not personally observed playtests. Major ending spoilers have their own section.
 
@@ -73,7 +73,7 @@ The ordinary traveling group is the protagonist plus two companions. The wider c
 | **Mission Vao** | A streetwise Twi'lek Scoundrel whose friendship with Zaalbar precedes the player. Technical and covert skills give her utility beyond being an optimistic voice. [S21](#s21) |
 | **Zaalbar** | A physically formidable Wookiee with ties to Kashyyyk and an existing bond with Mission. His history connects party membership to a particular place. [S21](#s21) |
 | **Canderous Ordo** | A Mandalorian veteran working as a mercenary on Taris. Martial pride and dissatisfaction with his present work distinguish him from a generic heavy-weapon specialist. [S20](#s20) |
-| **T3-M4** | An expert droid whose technical specialization changes how the group handles machines and locks. Practical competence contributes to character recognition without extensive spoken biography. [S21](#s21) |
+| **T3-M4** | An expert droid whose technical specialization changes how the group handles machines and locks. T3-M4’s technical skill makes the character recognizable without extensive spoken biography. [S21](#s21) |
 | **HK-47** | A combat droid acquired on Tatooine, memorable for violent interpretations and dry delivery. Translation and repair-linked interactions make him more than a collection of attack bonuses. The profile's in-world manufacturing rumors are not treated as confirmed history. [S20](#s20) [S19](#s19) |
 | **Jolee Bindo** | An older former Jedi living in Kashyyyk's Shadowlands, skeptical rather than simply obedient to institutional doctrine. His connection to Sunry opens a consequential side story. [S20](#s20) [S23](#s23) |
 | **Juhani** | A Cathar Jedi struggling with anger and perfectionism. The player can reconcile with or kill her during Dantooine's grove encounter; recruitment therefore depends on an earlier decision rather than an inevitable collection checklist. [S21](#s21) [S27](#s27) |

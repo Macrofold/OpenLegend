@@ -2,13 +2,13 @@
 
 **Current art direction:** the [current visual requirements](../../decisions.md#current-visual-requirements--october-16-2026) pair beautiful dimensional pixel art with believable proportions and explicitly reject visibly low-poly, blocky, cutesy and big-head/small-body styles. Technique evidence below remains useful; Bitgem is a rejected style reference, not a recommended source family.
 
-34 locally saved images, retrieved October 14, 2026. Open an image at its original size when judging pixel structure. These are published reference media, not captures of OpenLegend or proof of our rendering performance.
+34 locally saved images, retrieved October 14, 2026. Open an image at its original size when judging pixel structure. These are published reference media, not captures of Open Legend or proof of our rendering performance.
 
 The strongest direction references are **Garbage Country** for environments and **The Last Night / REPLACED** for fine detail and cinematic light. **EthrA** contributes dimensional environment composition; Mike wants richer characters. Captions below are visual observations, not claims about unpublished shader code.
 
 [Research index](README.md) · [Technical evidence](reference-techniques.md) · [Complete source/rights/hash manifest](image-manifest.json)
 
-Creator rights are retained. Research/reference only; not licensed for use as OpenLegend game assets. Historical promotional images may not represent a released or current build. The two Last Night GIF frames cannot demonstrate their source animation in a still gallery.
+Creator rights are retained. Research/reference only; not licensed for use as Open Legend game assets. Historical promotional images may not represent a released or current build. The two Last Night GIF frames cannot demonstrate their source animation in a still gallery.
 
 ## Garbage Country
 
@@ -88,9 +88,9 @@ Conversation view: the large portrait and small world figure serve different lev
 
 ### ethra-04
 
-![Elevated landscape view: layered terrain and atmospheric depth remain useful references for OpenLegend.](https://assets.openlegend.ai/studies/public/blobs/sha256/46/46af3f8c0840160c0cc18157a13e61b973fa28020d29f5d20f5264b83ed254f7)
+![Elevated landscape view: layered terrain and atmospheric depth remain useful references for Open Legend.](https://assets.openlegend.ai/studies/public/blobs/sha256/46/46af3f8c0840160c0cc18157a13e61b973fa28020d29f5d20f5264b83ed254f7)
 
-Elevated landscape view: layered terrain and atmospheric depth remain useful references for OpenLegend.
+Elevated landscape view: layered terrain and atmospheric depth remain useful references for Open Legend.
 
 **Credit:** StoneLab Games. **Media:** published screenshot; 1920 × 1080 source. [Source page](https://store.steampowered.com/app/2177510/) · [Published media](https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2177510/53cddfaa5bc0abc980040a22f5a1792f4d716eb0/ss_53cddfaa5bc0abc980040a22f5a1792f4d716eb0.1920x1080.jpg?t=1791632579).
 

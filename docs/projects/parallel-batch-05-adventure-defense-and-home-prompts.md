@@ -63,13 +63,13 @@ Read:
 - docs/projects/parallel-batch-05-adventure-defense-and-home-tech-design.md: shared/common requirements and all of “AV03 — Practical skill from committed experience”. Supply docs/projects/authored-stats-tech-design.md as the canonical scoped counterpart while delivering the feature; this is not design-only work.
 - docs/maintainers/practical-competence.md, AV03 in docs/maintainers/parallel-batch-05-adventure-defense-and-home.md and docs/limits/authored-stats.md.
 
-Existing sling release, typed state and committed evidence are available. No shelter, cross-world library, general skill tree or PX04 trip controller is required. Keep recipe knowledge, tentative learned methods, actual handling competence and willingness separate. Use the current equipment owner, not a parallel store while AV02 generalizes equipment.
+Existing sling release, typed state and committed evidence are available. No shelter, cross-world library, general skill tree or PX04 trip controller is required. Keep recipe knowledge, learned activities, the character’s sling handling skill and willingness separate. Use the current equipment owner, not a parallel store while AV02 generalizes equipment.
 
 Count actual released shots once, including misses; improvement affects later shots. Deliver a real inert target and actual ammunition use, not an immortal animal. Coaching requires each participant's choice, permitted observation and chosen feedback. A resident may refuse; native completion cannot invent speech. Preserve the independent route and capable beginner.
 
 Complete independent practice, genuine voluntary coaching, interruption/refusal, missing/private/inapplicable values, support correction, blocked releases, duplicate outcomes and current-format return. Separate native/fixture evidence from actual NPC choice and player-value evidence. Current policy controls provider use and exact cost reporting.
 
-Update the authored-stats pair, practical-competence world/limits, PC02–PC06, AV03, DG14/ND03/ND04's practical subset and EWF/SC/AE/AG/CE consumers in the technical reconciliation map. Do not close general progression, personality, recipe teaching or learned-method projects.
+Update the authored-stats pair, world rule and limits for Sling handling, PC02–PC06, AV03, DG14/ND03/ND04's practical subset and EWF/SC/AE/AG/CE consumers in the technical reconciliation map. Do not close general progression, personality, recipe teaching or learned activity projects.
 ```
 
 ## 4. Build, inhabit and alter a real shelter — AV04

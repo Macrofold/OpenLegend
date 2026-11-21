@@ -1,6 +1,6 @@
 # Noita: wands, reactive materials, and the price of experimentation
 
-**Reference study; researched September 25, 2026.** This extends the [Noita game chapter](../games/noita.md), including its existing videos and conclusions. It is not an OpenLegend specification. Gameplay rules, attributed experiences, and our interpretations are distinguished below. No game session or proprietary source-code inspection was performed.
+**Reference study; researched September 25, 2026.** This extends the [Noita game chapter](../games/noita.md), including its existing videos and conclusions. It is not an Open Legend specification. Gameplay rules, attributed experiences, and our interpretations are distinguished below. No game session or proprietary source-code inspection was performed.
 
 ## 1. The interesting object is a system, not a stronger gun
 
@@ -55,7 +55,7 @@ Andrew Duncan's review describes electricity interacting with water and nearby m
 - Accept a dangerous but powerful configuration, or sacrifice output for control.
 - Escape through an uncertain material, or remain in an understood danger.
 
-These are analytical questions prompted by the documented mechanics, not instructions to reproduce a particular Noita rule in OpenLegend.
+These are analytical questions prompted by the documented mechanics, not instructions to reproduce a particular Noita rule in Open Legend.
 
 ## 5. What different reviewers actually experienced
 

@@ -1,18 +1,18 @@
 # Lessons from games and cloud platforms
 
-These cases answer “which assumptions are expensive to discover late?” They are not stack recommendations or a ranking by advertised player count. External factual summaries are deliberately narrow; the OpenLegend implications are engineering analysis. The [source register](sources.md) records exact provenance and limits.
+These cases answer “which assumptions are expensive to discover late?” They are not stack recommendations or a ranking by advertised player count. External factual summaries are deliberately narrow; the Open Legend implications are engineering analysis. The [source register](sources.md) records exact provenance and limits.
 
 ## Ultima Online: query costs and architectural boundaries mattered
 
 The original lead designer distinguishes two often-confused failures: the AI's radial-search/pathfinding cost and a closed resource loop disrupted by hoarding. He also describes substantial multiserver rearchitecture when expected concurrency increased [S08](sources.md#s08).
 
-**Transferable lesson:** do not equate elegant world rules with affordable repeated discovery, and do not assume the prototype's world boundary can later be distributed by a hosting change. This supports early locality, ownership and work-accounting contracts. It does not imply that OpenLegend should remove ecology or use a particular search algorithm. Economic equilibrium is a separate design question from whether the engine can perform the work.
+**Transferable lesson:** do not equate elegant world rules with affordable repeated discovery, and do not assume the prototype's world boundary can later be distributed by a hosting change. This supports early locality, ownership and work-accounting contracts. It does not imply that Open Legend should remove ecology or use a particular search algorithm. Economic equilibrium is a separate design question from whether the engine can perform the work.
 
 ## EVE: honest overload, fan-out and scope-specific offload
 
 The historical TiDi article explains deliberate slowdown as an alternative to work accumulating without useful timing [S04](sources.md#s04). The 2025 cosmetics report separately shows that moving presentation delivery out of the simulation required additional spatial tracking and internal traffic [S05](sources.md#s05).
 
-**Transferable lesson:** report queue age and actual game-time progress; account for offload's new coordination cost; keep nonmechanical presentation separable. **Do not transfer:** EVE's clock rate, slowdown policy, cosmetic throughput or speculative future gains as OpenLegend capacity. A cosmetics benchmark cannot establish heavy NPC cognition or contested physical simulation throughput.
+**Transferable lesson:** report queue age and actual game-time progress; account for offload's new coordination cost; keep nonmechanical presentation separable. **Do not transfer:** EVE's clock rate, slowdown policy, cosmetic throughput or speculative future gains as Open Legend capacity. A cosmetics benchmark cannot establish heavy NPC cognition or contested physical simulation throughput.
 
 ## Old School RuneScape: world-count growth still has shared dependencies
 
@@ -24,7 +24,7 @@ Jagex's August 2025 report says additional worlds required underlying infrastruc
 
 ArenaNet's megaserver introduction describes placing players into map copies with social and population considerations [S07](sources.md#s07).
 
-**Transferable lesson:** useful placement policy can improve social density, but OpenLegend's independent evolved worlds are not interchangeable map copies. Filling spare capacity cannot silently replace the town where a player's friend, construction or historical consequence actually exists. Fresh-world creation can serve growth; it does not provide automatic overflow capacity for one already-lived history. Cross-world travel remains a separate product operation.
+**Transferable lesson:** useful placement policy can improve social density, but Open Legend's independent evolved worlds are not interchangeable map copies. Filling spare capacity cannot silently replace the town where a player's friend, construction or historical consequence actually exists. Fresh-world creation can serve growth; it does not provide automatic overflow capacity for one already-lived history. Cross-world travel remains a separate product operation.
 
 ## Factorio: independence is more useful than indiscriminate threading
 
@@ -36,7 +36,7 @@ Wube explains how transport lines that cannot affect one another can be processe
 
 The replication graph retains reusable candidate structures [S10](sources.md#s10). World Partition streams level content using grid cells and streaming sources [S11](sources.md#s11). Large World Coordinates addresses precision through engine systems and interfaces [S12](sources.md#s12).
 
-**Transferable lesson:** keep these concerns separate in OpenLegend too. A network relevance index is not personal knowledge; a streamed level is not distributed authoritative simulation; a large world coordinate is not proof that every provider preserves required precision. Borrow mechanisms where their contract fits, not an engine name as an architectural answer.
+**Transferable lesson:** keep these concerns separate in Open Legend too. A network relevance index is not personal knowledge; a streamed level is not distributed authoritative simulation; a large world coordinate is not proof that every provider preserves required precision. Borrow mechanisms where their contract fits, not an engine name as an architectural answer.
 
 ## AWS: hosting is not the simulation architecture
 
@@ -58,10 +58,10 @@ There is no need for a Google Cloud versus AWS cost contest or a multi-cloud abs
 
 Google's SRE chapters and AWS's backlog analysis support resource-sensitive admission, finite retained work and protection against overload feedback [S14](sources.md#s14), [S15](sources.md#s15), [S16](sources.md#s16). PostgreSQL's current versioned manuals support planning keys/query shapes and accounting for physical cleanup rather than assuming logical deletion immediately shrinks storage [S17](sources.md#s17), [S18](sources.md#s18), [S19](sources.md#s19).
 
-**Transferable lesson:** a simulation-heavy game is also a long-running stateful service. Routine data handling, queues and maintenance deserve first-class budgets. **Do not transfer:** web-service degradation techniques that return partial/approximate truth where OpenLegend requires exact mechanical effects, or cloud products simply because a source uses them.
+**Transferable lesson:** a simulation-heavy game is also a long-running stateful service. Routine data handling, queues and maintenance deserve first-class budgets. **Do not transfer:** web-service degradation techniques that return partial/approximate truth where Open Legend requires exact mechanical effects, or cloud products simply because a source uses them.
 
 ## Comparison boundary
 
-This corpus does not claim to know every proprietary MMO implementation, reproduce a GDC talk unavailable in full, or establish a precise RuneScape/World of Warcraft-to-OpenLegend cost ratio. The user's heavier-simulation premise motivates a broader workload model; actual relative cost depends on executed mechanics, populations, fidelity and hardware. “Many more NPC interactions than human commands” is a reason to measure autonomous work independently, not an empirical performance coefficient.
+This corpus does not claim to know every proprietary MMO implementation, reproduce a GDC talk unavailable in full, or establish a precise RuneScape/World of Warcraft-to-Open Legend cost ratio. The user's heavier-simulation premise motivates a broader workload model; actual relative cost depends on executed mechanics, populations, fidelity and hardware. “Many more NPC interactions than human commands” is a reason to measure autonomous work independently, not an empirical performance coefficient.
 
 The common lesson is not “copy a successful MMO's stack.” It is to identify the invariants that survive scale—identity, ownership, locality, time, bounded work, disclosure, durable effects and lifecycle—and qualify the workload those invariants must carry.

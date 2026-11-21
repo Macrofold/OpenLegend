@@ -1,6 +1,6 @@
 # G133 — ARK: Survival Evolved
 
-**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 27, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 ARK: Survival Evolved is a useful reference because it turns creatures into **infrastructure, companions, vehicles, weapons, production tools and inheritable projects**. The famous fantasy is riding dinosaurs, but the deeper system is a progression lattice: survivor attributes and Engrams unlock technology; tamed creatures alter harvesting and traversal; breeding turns animals into long-running optimization lines; caves/artifacts/bosses gate Tek technology and Ascension; tribes distribute labor and ownership; server settings can radically compress or expand every timer. Its greatest strength and most repeated criticism are the same thing: there is an enormous amount to build, tame, breed and discover, but default time costs and technical friction can make loss feel larger than the decisions that caused it.
 
@@ -721,7 +721,7 @@ PCGamesN reported the launch backlash centered not only on DLC quality but on th
 
 The useful conclusion is not that ARK is "too big." It is that **breadth compounds operational friction**: every additional creature, map, recipe, server rule and mod can create new combinations worth playing and new states the product must maintain.
 
-## R13 — transferable inspiration and limits for OpenLegend
+## R13 — transferable inspiration and limits for Open Legend
 
 These are research hypotheses, not accepted implementation requirements.
 
@@ -771,14 +771,14 @@ ARK bosses test breeding, saddles, resource economy and cave/Artifact progressio
 
 Higher taming/breeding/gather rates can preserve system relationships while reducing real-time burden.
 
-**Potential OpenLegend implication:** separate "strategic depth" from "hours required."  
+**Potential Open Legend implication:** separate "strategic depth" from "hours required."  
 **Limit:** too many opaque server knobs fragment expectations.
 
 ### 8. Persistent shared ownership needs governance
 
 Tribe ranks/ownership policies prove that collaborative bases require permission models.
 
-**Potential lesson:** if OpenLegend supports multiplayer persistent worlds, ownership/roles are gameplay and safety architecture, not admin afterthoughts.
+**Potential lesson:** if Open Legend supports multiplayer persistent worlds, ownership/roles are gameplay and safety architecture, not admin afterthoughts.
 
 ### 9. Mod/community content can become canonical supply
 
@@ -843,7 +843,7 @@ This dossier therefore establishes the dedicated owner for G133 and does **not**
 3. Read Wildcard's **Official Network shutdown** and **save-release** posts together; persistence ownership changed product meaning in 2023.
 4. Read Aquatica's Steam/store announcement, then the July 2025 apology/preaquatica post, then the January 2026 official-server sunset. Together they show why ASE cannot be treated as "frozen in 2023."
 5. Compare current Steam positives and negatives with launch reviews. Creature fantasy/modding remain loved; grind/technical stewardship remain durable criticism.
-6. For OpenLegend inspiration, focus on creature-as-capability, lineage, contextual rosters, boss preparation and server-rate configurability—not ARK's literal timers.
+6. For Open Legend inspiration, focus on creature-as-capability, lineage, contextual rosters, boss preparation and server-rate configurability—not ARK's literal timers.
 
 No video scene or timestamp is represented as watched in this pass.
 

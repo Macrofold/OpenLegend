@@ -1,10 +1,10 @@
 # Slay the Spire — full research dossier
 
-**G43 · Research pass and substantive audit remedies, September 26, 2026.** This dossier covers the **original Slay the Spire**, not Slay the Spire 2, the board-game adaptation, Downfall, unofficial multiplayer mods, or sequel-only co-op/mechanics. Mega Crit's FAQ states that no more content updates are planned for the original while the studio works on the sequel. Historical Early Access and launch reviews remain version-qualified. The audit adds operational orb/stance rules, distinct key costs and the sparse authored narrative, without claiming a new playthrough or an exhaustive re-reading of inherited sources. OpenLegend adaptations are research interpretations, not accepted implementation requirements.
+**G43 · Research pass and substantive audit remedies, September 26, 2026.** This dossier covers the **original Slay the Spire**, not Slay the Spire 2, the board-game adaptation, Downfall, unofficial multiplayer mods, or sequel-only co-op/mechanics. Mega Crit's FAQ states that no more content updates are planned for the original while the studio works on the sequel. Historical Early Access and launch reviews remain version-qualified. The audit adds operational orb/stance rules, distinct key costs and the sparse authored narrative, without claiming a new playthrough or an exhaustive re-reading of inherited sources. Open Legend adaptations are research interpretations, not accepted implementation requirements.
 
 [Preserved overview](../games/slay-the-spire.md) · [Detailed mechanics study](../mechanics/slay-the-spire-deck-ecology-information-and-costly-synergies.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Library](../README.md)
 
-Slay the Spire's central lesson for OpenLegend is not “cards are good.” It is that a player can make deep decisions when three scales remain connected and legible: **this turn, the evolving deck, and the future route**. A choice that looks strong alone can make the whole system worse. Declining, removing and postponing are therefore real verbs.
+Slay the Spire's central lesson for Open Legend is not “cards are good.” It is that a player can make deep decisions when three scales remain connected and legible: **this turn, the evolving deck, and the future route**. A choice that looks strong alone can make the whole system worse. Declining, removing and postponing are therefore real verbs.
 
 ## 1. Identity, current scope and promise
 
@@ -137,7 +137,7 @@ The Runic Dome Relic demonstrates that information itself has value:
 
 The cost affects experienced and novice players differently because learned enemy patterns can partially substitute for UI information. [STS-D](#sts-d)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 Uncertainty is not automatically depth.
 
@@ -166,7 +166,7 @@ This gives combat a direct relationship to map routing:
 - do I need a Rest Site?
 - can I Smith instead of Rest?
 
-OpenLegend can similarly make local outcomes alter future opportunity without requiring run resets.
+Open Legend can similarly make local outcomes alter future opportunity without requiring run resets.
 
 ## 6. Card rewards: taking nothing is a first-class option
 
@@ -183,7 +183,7 @@ Adding a strong card may still be wrong because it:
 This teaches a deep general rule:
 > local value is not system value.
 
-OpenLegend creator tooling should not equate:
+Open Legend creator tooling should not equate:
 - more mechanics;
 - more agent tools;
 - more memories;
@@ -202,7 +202,7 @@ Removing a weak/basic card:
 
 That makes deletion a positive upgrade.
 
-A mechanics catalog for OpenLegend should therefore surface:
+A mechanics catalog for Open Legend should therefore surface:
 - redundancy;
 - conflicts;
 - unused systems;
@@ -286,7 +286,7 @@ Both can be powerful alone.
 
 Together, expensive randomized cards can remain stuck in hand and reduce the value of extra draw unless the deck has disposal/energy solutions. [STS-G](#sts-g)
 
-This is a strong OpenLegend pattern:
+This is a strong Open Legend pattern:
 > annotate assumptions and compatibility, not only individual power.
 
 ## 11. Potions: bounded tactical exceptions
@@ -355,7 +355,7 @@ The deck and route are coupled:
 - strong deck → safely take more Elites → gain more Relics;
 - weak/injured deck → route defensively → gain fewer rewards.
 
-OpenLegend worlds can create similar feedback between:
+Open Legend worlds can create similar feedback between:
 - preparedness;
 - route;
 - opportunity;
@@ -400,7 +400,7 @@ This is the distinction between:
 - maximum eventual strength;
 - **time-to-usefulness**.
 
-OpenLegend inventions/agents should be evaluated on whether they help before the situation is already lost.
+Open Legend inventions/agents should be evaluated on whether they help before the situation is already lost.
 
 ## 16. Act 4 and the Heart: three different prices for access
 
@@ -434,7 +434,7 @@ This supports mastery because:
 - the base grammar stays recognizable;
 - pressure increases gradually.
 
-OpenLegend difficulty modes can likewise adjust:
+Open Legend difficulty modes can likewise adjust:
 - scarcity;
 - information;
 - consequence;
@@ -514,7 +514,7 @@ PC Gamer praised the sound identity of effects such as poison/frost/repeated att
 
 Nintendo Life praised the Switch port's readable text and clear information presentation while noting minor framerate drops. [STS-K](#sts-k)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A systemic game can look modest and still feel rich if:
 - state is legible;
@@ -737,7 +737,7 @@ These are constructed rule illustrations unless an attributed source says otherw
 
 **Goal:** reach the Heart. **State:** the Ruby Key is still missing at a Rest Site and HP is low. **Choice:** Recall now or recover and rely on a later opportunity. **Consequence:** obtaining admission can make the route less survivable; delaying can constrain the final Act. **Next decision:** inspect the remaining path, not merely the key checklist. The example concerns the original single-player game, not the board game's party-wide sacrifice rule. [STS-W](#sts-w)
 
-## 27. Transferable inspiration for OpenLegend
+## 27. Transferable inspiration for Open Legend
 
 ### A. Treat subtraction as a first-class creator action
 

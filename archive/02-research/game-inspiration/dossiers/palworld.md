@@ -1,10 +1,10 @@
 # Palworld — full research dossier
 
-**G41 · Research pass and substantive audit remedies, September 26, 2026.** The design baseline is **Palworld 1.0 (July 10, 2026)**, with explicitly identified later documentation snapshots, not a claim that 1.0 was the last maintenance patch. January 2024 Early Access observations remain historical. The audit adds operational fishing, passive modification, mission/faction and multiplayer rules, corrects the furnace example and source attribution, and replaces the incomplete 1.0 citation. It does not claim a fresh playthrough or re-verification of every inherited fact. Proposed OpenLegend adaptations remain research interpretations, not accepted implementation requirements.
+**G41 · Research pass and substantive audit remedies, September 26, 2026.** The design baseline is **Palworld 1.0 (July 10, 2026)**, with explicitly identified later documentation snapshots, not a claim that 1.0 was the last maintenance patch. January 2024 Early Access observations remain historical. The audit adds operational fishing, passive modification, mission/faction and multiplayer rules, corrects the furnace example and source attribution, and replaces the incomplete 1.0 citation. It does not claim a fresh playthrough or re-verification of every inherited fact. Proposed Open Legend adaptations remain research interpretations, not accepted implementation requirements.
 
 [Preserved overview](../games/palworld.md) · [Detailed creature/work study](../mechanics/palworld-useful-creatures-care-and-automation.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Library](../README.md)
 
-Palworld matters to OpenLegend because it connects **useful autonomous creatures** to almost every part of play. Pals are not merely combat summons or cosmetic companions: they can fight, traverse, gather, farm, transport, craft, generate power, operate production, breed, inherit traits, become sick or stressed, and visually inhabit a base. The result is one of the clearest mainstream examples of “a helper is more emotionally legible when it is also a creature with a body, needs and recognizable identity.”
+Palworld matters to Open Legend because it connects **useful autonomous creatures** to almost every part of play. Pals are not merely combat summons or cosmetic companions: they can fight, traverse, gather, farm, transport, craft, generate power, operate production, breed, inherit traits, become sick or stressed, and visually inhabit a base. The result is one of the clearest mainstream examples of “a helper is more emotionally legible when it is also a creature with a body, needs and recognizable identity.”
 
 ## 1. Identity, edition boundary and player promise
 
@@ -75,7 +75,7 @@ Technology points unlock:
 
 This makes progression partly **capability access** rather than only numerical strength.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A character's growth can be expressed as:
 - direct learned capability;
@@ -140,7 +140,7 @@ The same encountered creature can become:
 This is a strong compositional pattern:
 > encounter → relationship/ownership transition → new capability.
 
-OpenLegend can generalize this beyond “capture”:
+Open Legend can generalize this beyond “capture”:
 - recruit;
 - befriend;
 - hire;
@@ -205,7 +205,7 @@ The important design pattern is:
 
 Version 1.0's large Partner Skill rework reinforces this direction. [PAL-C](#pal-c)
 
-For OpenLegend, a companion becomes more memorable when:
+For Open Legend, a companion becomes more memorable when:
 - what it wants;
 - what it can do;
 - how it moves;
@@ -241,7 +241,7 @@ This produces a readable labor system:
 
 The fantasy and the industrial role reinforce each other.
 
-### OpenLegend pattern
+### Open Legend pattern
 
 Do not give every NPC one generic “work” score.
 
@@ -329,7 +329,7 @@ If needs are too forgiving:
 If needs are too punitive:
 - automation becomes babysitting.
 
-OpenLegend should aim for needs that create:
+Open Legend should aim for needs that create:
 - occasional planning;
 - character expression;
 - social consequences;
@@ -426,7 +426,7 @@ This lets a player invest in:
 - “the objectively best species,” or
 - “the creature I personally care about.”
 
-OpenLegend should support the latter where possible:
+Open Legend should support the latter where possible:
 > affection/history should not always force abandoning a favorite entity for a statistically superior replacement.
 
 ## 13. Traversal and exploration
@@ -518,12 +518,12 @@ Zoe's separate mission sequence can recruit her as an ally; June 2025's release 
 
 However, current September 2026 Steam testimony still includes players who find human NPC characterization and story weaker than the Pals/world. [PAL-N](#pal-n)
 
-### OpenLegend contrast
+### Open Legend contrast
 
 Palworld demonstrates that:
 - memorable systemic creatures can carry enormous emotional weight even with limited dialogue.
 
-OpenLegend can go further by giving inhabitants:
+Open Legend can go further by giving inhabitants:
 - memory;
 - relationships;
 - beliefs;
@@ -545,10 +545,10 @@ The game also supports deliberately provocative actions such as:
 
 These are not necessary moral endorsements; they are world actions the design allows.
 
-For OpenLegend, the useful point is:
+For Open Legend, the useful point is:
 > a systemic world can permit socially prohibited behavior while making law, witnesses, reputation and consequences explicit.
 
-Palworld often uses these systems primarily for dark comedy/gameplay. OpenLegend's social simulation can make consequences deeper. The comparison does not credit Palworld with a general consent, legal-evidence or remembered-reputation model.
+Palworld often uses these systems primarily for dark comedy/gameplay. Open Legend's social simulation can make consequences deeper. The comparison does not credit Palworld with a general consent, legal-evidence or remembered-reputation model.
 
 ## 16. Failure, death and recovery
 
@@ -610,7 +610,7 @@ Persistent-server play changes the value of automation:
 
 ### Concurrency lesson
 
-OpenLegend will need stronger ownership semantics than “whoever can touch the object.”
+Open Legend will need stronger ownership semantics than “whoever can touch the object.”
 
 Shared worlds need:
 - personal property;
@@ -669,7 +669,7 @@ Recent Steam accounts praise:
 
 while still noting pop-in and visual roughness. [PAL-N](#pal-n)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 For autonomous agents, animation/state readability matters as much as dialogue.
 
@@ -714,7 +714,7 @@ That created:
 
 The later **GDC 2025 account is John Buckley's**, not the January 2024 producer interview. In Chris Kerr's reporting, Buckley describes threats, reduced public communication, muting work channels outside working hours and deliberately circulating positive feedback internally. Those are attributed coping practices, not an independent finding about every allegation or worker's experience. The live article displays **March 18, 2025**; the older library register recorded March 17. Its content is preserved through the same source, with the live metadata discrepancy stated rather than hidden. [PAL-Y](#pal-y)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A systemic/AI product can become operationally constrained by success before architecture or moderation processes are mature. Scale planning is not only runtime throughput; it includes:
 - support;
@@ -942,7 +942,7 @@ These are rules-based illustrations unless explicitly sourced. None is a playtes
 
 **Lesson:** automation changes where attention is spent; it should still have a comprehensible end state.
 
-## 26. Transferable inspiration for OpenLegend
+## 26. Transferable inspiration for Open Legend
 
 ### A. Useful characters beat chat-only characters
 
@@ -962,7 +962,7 @@ Dialogue should deepen a useful actor rather than substitute for usefulness.
 
 Pal species identity often suggests function.
 
-OpenLegend characters can similarly signal:
+Open Legend characters can similarly signal:
 - profession;
 - equipment;
 - physical traits;
@@ -1023,7 +1023,7 @@ A mature settlement should make repetitive gathering easier unless a deliberate 
 
 ### I. NPC personality cannot be only creature animation
 
-Current 1.0 feedback that human NPCs remain thin is a warning for OpenLegend: systemic utility and social memory should reinforce each other.
+Current 1.0 feedback that human NPCs remain thin is a warning for Open Legend: systemic utility and social memory should reinforce each other.
 
 ## 27. Requirement and preservation check
 

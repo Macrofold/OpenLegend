@@ -1,4 +1,4 @@
-# Practical competence
+# Character skill
 
 CF02 now consumes this release owner: handling contributes to aim steadiness, while later moving-body/cover geometry determines contact. It removes the previous extra fleeing multiplier and records practice once at committed release, without credit for aiming/cancellation or reloading an occurrence. [Batch 06 evidence](../verification/rivals-and-contested-ground.md) retains combined player/opponent qualification as open; it does not close human appreciation or all competence uses.
 
@@ -65,6 +65,6 @@ The checked delivery below records the original qualified coaching consumer. Cur
 
 The October 14 world-boundary correction makes the installed skill definition the source of rank/progress/effect text, exact practice/coaching offers and spoken eligibility. A different two-release definition, voluntary separately chosen feedback, speech refusal and four-boundary PostgreSQL restoration passed [focused native evidence](../verification/world-engine-boundaries.md#ranged-rules-materials-replacement-life-and-practice). This closes the reported ownership defect without changing the bundled six/three-release tuning or closing PC05 population and PC06 human-appreciation gaps.
 
-EWF02/EWF04 retain typed-state and permitted presentation. AC and existing native action owners retain actual execution, interruption and resources. AE retains action occurrence evidence and tentative learned methods; this proposal does not relax its current no-general-teaching/automatic-confidence boundaries. SC retains the one authoritative contribution. INV retains exact admitted sling definitions and authorized rule changes. Existing memory, privacy, simulation-time and persistence owners remain controlling.
+EWF02/EWF04 retain typed-state and permitted presentation. AC and existing native action owners retain actual execution, interruption and resources. AE retains action occurrence evidence and tentative learned activities; this proposal does not relax its current no-general-teaching/automatic-confidence boundaries. SC retains the one authoritative contribution. INV retains exact admitted sling definitions and authorized rule changes. Existing memory, privacy, simulation-time and persistence owners remain controlling.
 
 Numerical competence is not a new cognition controller. Broad practical skills, personality development, general method teaching, social checks, paid training and a permanent progression economy remain outside this consumer.

@@ -5,7 +5,7 @@
 Recast/Detour is selected on measured preparation cost and established upstream use; navcat remains a researched alternative, not an installed parallel backend. JavaScript conveniences are not proof of scalability. The current adapter keeps trusted capability rules, exact support and action execution separate from navigation; teleport execution does not require a walking route. Rapier supplies selected shape overlap/sweep operations, not automatic lighting, hearing or dynamics. See [integration evidence](../../docs/verification/recast-integration.md), [shared calibration](../07-technical-architecture/spatial-world-runtime.md#movement-calibration) and [presentation](../../docs/world-presentation.md). Historical source evaluations and superseded experiments below are research context, not competing current-provider requirements.
 
 
-**Research snapshot: September 22, 2026.** This is a targeted primary-source design review, not an engine benchmark or a systematic survey of all games. Documentation and selected source interfaces were inspected; no third-party package was installed, no game implementation was reverse-engineered, and no OpenLegend runtime test was performed in this review.
+**Research snapshot: September 22, 2026.** This is a targeted primary-source design review, not an engine benchmark or a systematic survey of all games. Documentation and selected source interfaces were inspected; no third-party package was installed, no game implementation was reverse-engineered, and no Open Legend runtime test was performed in this review.
 
 The [spatial-world specification](../../docs/spatial-world.md) owns chosen behavior, the [runtime contract](../07-technical-architecture/spatial-world-runtime.md) owns technical requirements, and the [SW tracker](../../docs/maintainers/spatial-world.md) owns tasks and acceptance. Active experiments and unresolved product choices belong in the existing research backlog and open-decisions documents.
 
@@ -13,7 +13,7 @@ The [spatial-world specification](../../docs/spatial-world.md) owns chosen behav
 
 The useful combination is a three-dimensional physical scene, surface-constrained ground navigation, a separate limited air-route representation, and interchangeable visual representations. “3D world” does not require that every creature perform free rigid-body motion or that every object have bespoke 3D artwork.
 
-Three especially useful lessons are: separate navigation from actual movement; separate camera access from character knowledge; and separate the asset's visual representation from its physical body. The first has direct navigation-system precedent below. The latter two also follow from OpenLegend's existing authority and privacy requirements; they are not claims about how every referenced game works.
+Three especially useful lessons are: separate navigation from actual movement; separate camera access from character knowledge; and separate the asset's visual representation from its physical body. The first has direct navigation-system precedent below. The latter two also follow from Open Legend's existing authority and privacy requirements; they are not claims about how every referenced game works.
 
 ## Implementation selections and alternatives
 
@@ -21,7 +21,7 @@ Three especially useful lessons are: separate navigation from actual movement; s
 | --- | --- | --- | --- |
 | Ground routes | Recast/Detour through recast-navigation-js | Mature surface-navigation architecture; browser/Node TypeScript integration | Exact package/profile/worker behavior must be tested in this repo |
 | Physical geometric tests | Rapier shape-level queries behind an adapter | Existing ray/overlap/sweep mathematics without adopting another dynamics authority | Shape-pair coverage, initialization, and cost need qualification |
-| Air/connector search | ngraph.path over a bounded semantic graph | Directed weighted routes with OpenLegend-owned positions and capabilities | Graph edges still need real clearance and native execution |
+| Air/connector search | ngraph.path over a bounded semantic graph | Directed weighted routes with Open Legend-owned positions and capabilities | Graph edges still need real clearance and native execution |
 | Rendering | Retain PlayCanvas behind a small interface | Existing project investment already isolates much game authority | Refactor scene/input coupling; do not assume a one-file engine swap |
 | Model interchange | A supported glTF/GLB 2.0 profile | Portable mesh/skin/animation representation alongside normal images | A compatibility baseline, not a statement that 2.0 is the newest specification |
 
@@ -31,7 +31,7 @@ These are architectural recommendations. SW01 can reject an implementation packa
 
 A properly designed layered tactical grid can represent multiple floors and meaningful height. It is a credible alternative, not inherently “fake 3D.” Merely attaching Y to the current single flat grid, however, does not provide multiple support surfaces, volumetric clearance, or flight.
 
-For OpenLegend's continuous positions, irregular terrain, and future admitted constructions, a surface navmesh is the preferred ground representation. A layered graph remains useful for semantic connectors and constrained airspace. This is our design judgment, not evidence that XCOM uses Recast internally.
+For Open Legend's continuous positions, irregular terrain, and future admitted constructions, a surface navmesh is the preferred ground representation. A layered graph remains useful for semantic connectors and constrained airspace. This is our design judgment, not evidence that XCOM uses Recast internally.
 
 ### Why not a full physics engine as the game authority?
 
@@ -73,7 +73,7 @@ Queries distinguish polygon selection, corridor finding, detail height, and surf
 
 The shape API exposes ray tests, shape intersections, contacts, and moving-shape impact queries with explicit transforms. This creates an option to use collision mathematics without synchronizing a second moving rigid-body world. Broad-phase bounds alone are not exact collision tests.
 
-**Transfer:** use these behind renderer-independent numeric interfaces; test the actual body/terrain shape combinations. This does not establish their throughput in OpenLegend or eliminate the need for snapshot consistency, stable hit ordering, tolerances, and failure coverage.
+**Transfer:** use these behind renderer-independent numeric interfaces; test the actual body/terrain shape combinations. This does not establish their throughput in Open Legend or eliminate the need for snapshot consistency, stable hit ordering, tolerances, and failure coverage.
 
 ### R05 — Determinism is conditional
 
@@ -81,7 +81,7 @@ The shape API exposes ray tests, shape intersections, contacts, and moving-shape
 
 The documented guarantee depends on identical initialization/input conditions and ordering, with caveats about computations outside the library. It is not a guarantee that an application using arbitrary wall clocks, asynchronous completion order, or changed versions will reproduce outcomes.
 
-**Transfer:** pin versions, preserve canonical inputs and accepted routes, keep native time separate from rendering, and test save/load continuity. OpenLegend's application invariants remain its own responsibility.
+**Transfer:** pin versions, preserve canonical inputs and accepted routes, keep native time separate from rendering, and test save/load continuity. Open Legend's application invariants remain its own responsibility.
 
 ### R06 — ngraph.path: general graph routing
 
@@ -113,7 +113,7 @@ Epic describes distinct avoidance mechanisms and their relationship to navigatio
 
 The abstract describes runtime heightmap-based air navigation, hierarchical refinement, and transitions between air and ground behavior.
 
-**Transfer:** aerial navigation need not begin as a dense universal volume. OpenLegend's proposed corridor graph is its own simpler engineering choice, not a reproduction of Guerrilla's algorithm. The abstract does not establish support for arbitrary stacked caves or provide performance guarantees transferable to this game.
+**Transfer:** aerial navigation need not begin as a dense universal volume. Open Legend's proposed corridor graph is its own simpler engineering choice, not a reproduction of Guerrilla's algorithm. The abstract does not establish support for arbitrary stacked caves or provide performance guarantees transferable to this game.
 
 ### R10 — XCOM 2: camera controls and floor focus are separate
 
@@ -121,7 +121,7 @@ The abstract describes runtime heightmap-based air navigation, hierarchical refi
 
 The manual exposes independent camera pan, rotation, zoom, recenter, and floor ascent/descent controls.
 
-**Transfer:** offer a distinct level-focus operation rather than overloading all camera motion into zoom or moving the actor. Do not copy shortcut keys that conflict with OpenLegend's existing panels. This documents user-facing behavior, not XCOM's pathfinding algorithm.
+**Transfer:** offer a distinct level-focus operation rather than overloading all camera motion into zoom or moving the actor. Do not copy shortcut keys that conflict with Open Legend's existing panels. This documents user-facing behavior, not XCOM's pathfinding algorithm.
 
 ### R11 — XCOM 2: authored spatial building blocks with procedural assembly
 
@@ -137,7 +137,7 @@ The session concerns combining procedural assembly and level-design building blo
 
 The engine documents orbit/pan/zoom examples, camera transforms, and orthographic/perspective rendering. Existing controls can inform implementation without changing engines.
 
-**Transfer:** keep camera state and gameplay gesture arbitration in OpenLegend, converting to PlayCanvas objects at the adapter. Verify examples against the pinned engine version. No sample's picking result establishes character sight or server authority.
+**Transfer:** keep camera state and gameplay gesture arbitration in Open Legend, converting to PlayCanvas objects at the adapter. Verify examples against the pinned engine version. No sample's picking result establishes character sight or server authority.
 
 ### R13 — PlayCanvas: hybrid rendering, picking, and optional physics
 
@@ -153,7 +153,7 @@ PlayCanvas supports sprite assets within its 3D rendering environment and docume
 
 The graphics engineer discusses real-time 3D characters within a painterly presentation and the animation opportunities that change provides.
 
-**Transfer:** an art direction can preserve painted visual character while using different runtime representations. This review does not promise Hades-quality animation from a generated sprite or apply that game's memory/performance results to OpenLegend.
+**Transfer:** an art direction can preserve painted visual character while using different runtime representations. This review does not promise Hades-quality animation from a generated sprite or apply that game's memory/performance results to Open Legend.
 
 ### R15 — Portable assets and runtime loading
 
@@ -173,7 +173,7 @@ The documentation separates geometric/acoustic propagation structures from the a
 
 ## What the research does not settle
 
-None of these sources establishes the right navmesh resolution, clearance bucket count, population ceiling, pitch range, sprite-direction count, or worker budget for OpenLegend. Package support and examples do not establish its integration quality. Those values require the SW fixture and performance work.
+None of these sources establishes the right navmesh resolution, clearance bucket count, population ceiling, pitch range, sprite-direction count, or worker budget for Open Legend. Package support and examples do not establish its integration quality. Those values require the SW fixture and performance work.
 
 The hardest project-specific boundaries are not solved by choosing a package: a route cannot reveal hidden topology; a cutaway cannot create bodily sight; a physics query must see the correct candidate snapshot; a cache miss must not become in-world time; and a newly generated image cannot change the body's mechanics. The runtime contract makes those requirements explicit rather than attributing them to a reference game.
 
@@ -181,6 +181,6 @@ This design intentionally avoids a complete renderer rewrite, a universal physic
 
 ## Algorithmic follow-up: lazy native work
 
-The native implementation now uses lazy exact stance/edge evaluation over a bounded lattice, rather than the original researched vendor stack. [Boost Graph's A* documentation](https://www.boost.org/doc/libs/latest/libs/graph/doc/html/graph/algorithms/shortest_paths/astar_search.html) describes on-demand neighbor expansion for implicit graphs. This is algorithmic precedent, not a new OpenLegend dependency or evidence that our partial-lattice representation is a fully implicit infinite graph. The finite cardinal/seam heuristic and closed-region proof are OpenLegend-specific and remain qualified by the [runtime contract](../07-technical-architecture/spatial-world-runtime.md#initial-native-provider) and SR11.
+The native implementation now uses lazy exact stance/edge evaluation over a bounded lattice, rather than the original researched vendor stack. [Boost Graph's A* documentation](https://www.boost.org/doc/libs/latest/libs/graph/doc/html/graph/algorithms/shortest_paths/astar_search.html) describes on-demand neighbor expansion for implicit graphs. This is algorithmic precedent, not a new Open Legend dependency or evidence that our partial-lattice representation is a fully implicit infinite graph. The finite cardinal/seam heuristic and closed-region proof are Open Legend-specific and remain qualified by the [runtime contract](../07-technical-architecture/spatial-world-runtime.md#initial-native-provider) and SR11.
 
-[Immer's performance guidance](https://immerjs.github.io/immer/performance/) motivates reducing expensive proxy searches and reusing unchanged structure. OpenLegend keeps its pinned Immer 10.1.1 and public native mutation boundaries; it does not adopt APIs from a newer documentation version. Participant IDs are collected before the native draft and refreshed at known replacement boundaries, while permitted observations receive one isolated deep copy. The [third-pass measurements](../../docs/verification/spatial-scaling-followup.md#spatial-scaling-review-third-pass), rather than upstream advice, establish the observed benefit and the rejected snapshot experiment.
+[Immer's performance guidance](https://immerjs.github.io/immer/performance/) motivates reducing expensive proxy searches and reusing unchanged structure. Open Legend keeps its pinned Immer 10.1.1 and public native mutation boundaries; it does not adopt APIs from a newer documentation version. Participant IDs are collected before the native draft and refreshed at known replacement boundaries, while permitted observations receive one isolated deep copy. The [third-pass measurements](../../docs/verification/spatial-scaling-followup.md#spatial-scaling-review-third-pass), rather than upstream advice, establish the observed benefit and the rejected snapshot experiment.

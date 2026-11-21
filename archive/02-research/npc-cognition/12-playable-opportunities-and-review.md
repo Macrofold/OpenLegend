@@ -2,7 +2,7 @@
 
 **October 20, 2026 — research hypotheses, not selected features or measured player outcomes.** [Gameplay priorities](../../../docs/repertoires/gameplay-priorities.md) and [compelling characters](../../../docs/projects/compelling-characters-feature-spec.md) own the game goals. This research asks how cognition can support them; [evaluation](11-evaluation-and-research-gates.md) owns comparison methods.
 
-OpenLegend's opportunity is more than unlimited dialogue: freely expressed intentions, independent people and practical invention can have understandable, lasting consequences in a physical world. Technical reliability supports that promise but does not establish enjoyment. Pleasant company, humor and a beautiful shared experience can also matter without a mechanical reward.
+Open Legend's opportunity is more than unlimited dialogue: freely expressed intentions, independent people and practical invention can have understandable, lasting consequences in a physical world. Technical reliability supports that promise but does not establish enjoyment. Pleasant company, humor and a beautiful shared experience can also matter without a mechanical reward.
 
 <a id="2-positive-opportunities-to-carry-forward"></a>
 
@@ -45,7 +45,7 @@ These sources motivate questions rather than establish a universally best NPC ar
 | Source | Relevant evidence | Limits of this reading |
 | --- | --- | --- |
 | [Comme il Faut](https://ojs.aaai.org/index.php/AIIDE/article/view/12454) and [Prom Week](https://ojs.aaai.org/index.php/AIIDE/article/view/12662) | Social knowledge and relationships can produce playable choices and consequences, not just dialogue flavor. | Primary abstracts; not a code audit. Authored norms remain world-specific. |
-| [Versu](https://ieeexplore.ieee.org/document/6648395/) | Social practices offer possibilities while autonomous agents choose actions. | Primary abstract; online 2013, journal issue 2014. A precedent for authored situations, not a proposal to replace OpenLegend's agency. |
+| [Versu](https://ieeexplore.ieee.org/document/6648395/) | Social practices offer possibilities while autonomous agents choose actions. | Primary abstract; online 2013, journal issue 2014. A precedent for authored situations, not a proposal to replace Open Legend's agency. |
 | [Open-Ended NPC Dialogue Favors Casual Players](https://ieeexplore.ieee.org/abstract/document/11114150), CoG 2025 | A 64-participant pilot comparing static, rephrased, hybrid and open dialogue reports engagement benefits, especially for casual players. | Publisher abstract. Conversation length is not proof of lasting enjoyment or better physical gameplay. |
 | [The Double-Edged Sword of Open-Ended Interaction](https://arxiv.org/abs/2604.10107), 2026 | A 130-participant prototype study reports greater autonomy and cognitive load, usability/trust costs and no significant overall-experience improvement. | Primary abstract. Different prototypes, participants and measures prevent pooling it with the preceding study as one verdict. |
 | [Symbolically Scaffolded Play](https://arxiv.org/html/2510.25820v1), 2025 | A small human pilot found no reliable experience difference; separate synthetic evaluation suggests role-specific effects of constraints. | HTML framing/study descriptions; manuscript contains template placeholders. Tentative evidence, not human proof that JSON or retrieval helps or harms all NPCs. |

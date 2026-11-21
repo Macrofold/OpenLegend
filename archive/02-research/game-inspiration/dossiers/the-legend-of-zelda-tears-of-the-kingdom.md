@@ -1,6 +1,6 @@
 # G111 — The Legend of Zelda: Tears of the Kingdom
 
-**Full research pass — September 26, 2026; requirement audit and additions the same day.** [Roster](../research-roster.md) · [R01–R14 requirements](../research-requirements.md) · [Progress](../research-progress.md). Research and comparative interpretation, not an approved OpenLegend design or implementation task. Five independently authored written reviews, an additional critical essay, primary developer interviews, and separately identified player comments were read in the original pass. The follow-up audit read this entire dossier, checked the mechanics inventory against the requirements, and retrieved the additional sources identified below; it does not claim a second reading of every original source. No gameplay session, source-code audit, or video playback is claimed. Late-game systems and story structure are discussed; narrative spoilers are marked.
+**Full research pass — September 26, 2026; requirement audit and additions the same day.** [Roster](../research-roster.md) · [R01–R14 requirements](../research-requirements.md) · [Progress](../research-progress.md). Research and comparative interpretation, not an approved Open Legend design or implementation task. Five independently authored written reviews, an additional critical essay, primary developer interviews, and separately identified player comments were read in the original pass. The follow-up audit read this entire dossier, checked the mechanics inventory against the requirements, and retrieved the additional sources identified below; it does not claim a second reading of every original source. No gameplay session, source-code audit, or video playback is claimed. Late-game systems and story structure are discussed; narrative spoilers are marked.
 
 ## Identity, editions, and the central promise
 
@@ -245,7 +245,7 @@ On the device guide, `lyle_catcliffe` reports on May 30, 2023 that substantial p
 
 **Useful failure should remain legible.** A bad landing or unstable bridge can teach and entertain; hidden validity rules, poor controls or frame drops obscure responsibility. Study what players can explain afterward, not simply how often a machine fails.
 
-These are comparative hypotheses, not permission to implement construction, copy named powers/assets or change OpenLegend's architecture.
+These are comparative hypotheses, not permission to implement construction, copy named powers/assets or change Open Legend's architecture.
 
 ## Annotated source register
 

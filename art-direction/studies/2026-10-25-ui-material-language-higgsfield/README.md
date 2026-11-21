@@ -33,7 +33,7 @@ published publicly.
 
 ## Brief
 
-- **Request (Mike, 2026-10-25):** explore OpenLegend's UI materials and construction: textured
+- **Request (Mike, 2026-10-25):** explore Open Legend's UI materials and construction: textured
   panels, borders, corners, inset frames, title rails, ornamental joints and scaffolding-like
   elements connecting panels. The top-left character panel matters most. It should be "stylized
   for the vibe of the game", a grounded medieval survival world. Show the pieces individually

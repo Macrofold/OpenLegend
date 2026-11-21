@@ -22,7 +22,7 @@ Search for convincing anatomy, garment construction, branching structure, natura
 
 ## Evidence and recommendation
 
-Inspected the public product text and browser previews for Big Medium Small's medieval character gallery, Poly Haven's chest, Maxtree's shade trees and NatureManufacture's forest. Their more natural proportions and forms are a visual assessment from those previews, not a head-to-head test in OpenLegend. Dekogon's listing establishes the relevant product scope; its imported geometry and pixel result remain untested.
+Inspected the public product text and browser previews for Big Medium Small's medieval character gallery, Poly Haven's chest, Maxtree's shade trees and NatureManufacture's forest. Their more natural proportions and forms are a visual assessment from those previews, not a head-to-head test in Open Legend. Dekogon's listing establishes the relevant product scope; its imported geometry and pixel result remain untested.
 
 Start the next source comparison with **Poly Haven for a free prop/rock control**, **Big Medium Small for character/clothing form**, and **Maxtree or NatureManufacture for vegetation**. Keep the original mercenary as the identity and character-quality control. This is a research recommendation; no supplier has earned blanket approval and no paid pack was purchased or downloaded in this task.
 

@@ -2,7 +2,7 @@
 
 ## Implementation qualification — October 9, 2026
 
-The complete CF01–CF05 assignment is in progress on `codex/rivals-and-contested-ground`, based on OpenLegend local `main` at `2c3f52038e3c1afae0f2cc7586c3e740f1cf5ad5`. The [batch tracker](../maintainers/parallel-batch-06-rivals-and-contested-ground.md) owns unfinished acceptance. These observations qualify specific native mechanics and interfaces, not independently chosen combat, a completed encounter, enjoyment or population capacity.
+The complete CF01–CF05 assignment is in progress on `codex/rivals-and-contested-ground`, based on Open Legend local `main` at `2c3f52038e3c1afae0f2cc7586c3e740f1cf5ad5`. The [batch tracker](../maintainers/parallel-batch-06-rivals-and-contested-ground.md) owns unfinished acceptance. These observations qualify specific native mechanics and interfaces, not independently chosen combat, a completed encounter, enjoyment or population capacity.
 
 The evolving disposable native scenario uses the actual domain commands, navigation fixture and saved world randomness with `AI_BUDGET_USD=0`. Controlled equipment, positions and prior injuries are identified as fixtures. It demonstrated:
 
@@ -109,7 +109,7 @@ Independent hostile melee/ranged/evasive choice, adaptation, lost-sight behavior
 
 ## Resumed normal dispatch — October 11, 2026
 
-Mike requested ten-minute availability checks for up to 90 minutes, then completion of the original assignment when the repaired path works. The Macrofold repair chat reports a synthetic Muse response in 3.45 seconds at an estimated $0.0000184. Read-only checks through OpenLegend's authorized key now find Muse and the configured GPT-5 mini/complex/summary models enabled; health reports local Docker configuration ready and the ordinary worker process is running. Jev uses its separate decision-rate policy. Those observations establish available model definitions and a running process, not complete game execution.
+Mike requested ten-minute availability checks for up to 90 minutes, then completion of the original assignment when the repaired path works. The Macrofold repair chat reports a synthetic Muse response in 3.45 seconds at an estimated $0.0000184. Read-only checks through Open Legend's authorized key now find Muse and the configured GPT-5 mini/complex/summary models enabled; health reports local Docker configuration ready and the ordinary worker process is running. Jev uses its separate decision-rate policy. Those observations establish available model definitions and a running process, not complete game execution.
 
 The private evolving scenario used a disposable PostgreSQL database, the real HTTP server at normal timer cadence, ordinary embodiment/control requests, background decision admission and Macrofold dispatch. It placed only the player at a controlled supported point near the Watchpost; opponent biographies, goals, equipment, scores and choices were unchanged. No inference IDs were manually advanced. Initial setup errors used an incorrect entry endpoint and attempted fixture placement while paused; both refused before paid work. Corrected setup produced actual Jev-selected work, including Kest picking up supplies, but no completed detailed decision. These are controlled-start live choices, not a complete ordinary-player encounter.
 

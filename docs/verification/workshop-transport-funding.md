@@ -18,7 +18,7 @@ The manual driver initially assumed that a seed world explicitly stores the defa
 
 ## Native execution and funding
 
-The actual OpenLegend HTTP turn runner, Macrofold request encoder, provisioner and native executor were exercised against an isolated loopback server returning explicitly synthetic Macrofold responses. This is transport/application evidence, **not** a real Macrofold server, native harness, model judgment, or billing invoice.
+The actual Open Legend HTTP turn runner, Macrofold request encoder, provisioner and native executor were exercised against an isolated loopback server returning explicitly synthetic Macrofold responses. This is transport/application evidence, **not** a real Macrofold server, native harness, model judgment, or billing invoice.
 
 A $0.50 session with a new $0.10 worker allocation sent a $0.40 run cap, not a competing $0.50 model reservation. Both real application reservations succeeded. After a synthetic $0.04 completion, the second turn reused the same worker and remote session and sent a $0.36 run cap. Only one worker creation was observed. Replayed message IDs returned their saved completion; session context echoed by the synthetic responder was redacted from replies. Final exposure was $0.18 spent, including $0.10 uncertain worker cost, no outstanding reservations, and $0.32 available. The uncertainty is included in spent, not added a second time.
 

@@ -1,6 +1,6 @@
 # Against the Storm: substitution, pressure, and renewable settlement problems
 
-**Gameplay inspiration only.** The [original chapter](../games/against-the-storm.md) discusses why bounded settlements can renew city-building decisions. This study examines the actual choices beneath that premise. It does not authorize changes to OpenLegend's persistence policy or create implementation tasks.
+**Gameplay inspiration only.** The [original chapter](../games/against-the-storm.md) discusses why bounded settlements can renew city-building decisions. This study examines the actual choices beneath that premise. It does not authorize changes to Open Legend's persistence policy or create implementation tasks.
 
 **Evidence scope:** selected base-system mechanics and dated early-access design changes. The official-hosted wiki warns that several pages were last reviewed against older versions; exact costs, species preferences, recipe rosters and expansion content can change. This study uses qualitative relationships rather than presenting those tables as a synchronized balance snapshot. Worked situations are analysis, not observed play sessions. Accessed September 25, 2026.
 
@@ -38,7 +38,7 @@ Resolve reflects influences such as food, housing, services, workplace comfort, 
 
 **Worked choice:** the settlement cannot simultaneously supply all desirable comforts. Directing a limited product to one group's need may keep that group participating, but changes what remains for others. A production decision is no longer only about selling the most valuable output.
 
-**Interpretation:** differences among inhabitants become meaningful when they alter priorities. This is still an aggregate management system, not evidence of individually reasoned beliefs or AI conversations. OpenLegend could draw on the connection between practical needs and social consequences without pretending a happiness number is a complete person.
+**Interpretation:** differences among inhabitants become meaningful when they alter priorities. This is still an aggregate management system, not evidence of individually reasoned beliefs or AI conversations. Open Legend could draw on the connection between practical needs and social consequences without pretending a happiness number is a complete person.
 
 The tension is between care and optimization: a player can become attached to the community, or treat its preferences as thresholds to manipulate. Merely adding more need categories does not decide which experience results.
 
@@ -62,7 +62,7 @@ Current wiki documentation describes Blightrot's difficulty boundary and other p
 
 **Worked choice:** use an engine to obtain a needed output sooner, accept the associated burden, and prepare to handle it. Alternatively, leave the engine off and solve the shortage another way. The benefit and downside belong to the same decision, while the interface helps anticipate the cost.
 
-**Interpretation:** the important change was not simply lowering difficulty. It was moving from unavoidable servicing toward a choice whose consequences a player could influence. Then the team reduced arithmetic friction without deleting the underlying tradeoff. This is a particularly useful example when evaluating whether an OpenLegend need or maintenance mechanic earns the attention it consumes.
+**Interpretation:** the important change was not simply lowering difficulty. It was moving from unavoidable servicing toward a choice whose consequences a player could influence. Then the team reduced arithmetic friction without deleting the underlying tradeoff. This is a particularly useful example when evaluating whether an Open Legend need or maintenance mechanic earns the attention it consumes.
 
 ## 7. What the reception does and does not establish
 

@@ -2,7 +2,7 @@
 
 **G65 · Complete research pass, September 26, 2026.** This dossier studies Fire Emblem Heroes as a **live-service mobile tactics/collection game**, not as a mainline Fire Emblem substitute. Current reference point: **Ver. 10.9.0 / Book X** in September 2026, including the newly introduced Vista Heroes and Divine Games. Launch-era reviews are used to establish the original promise; current official notices and player accounts establish how nine years of systems/power growth changed that experience. [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-Heroes is a remarkable OpenLegend case because it proves how aggressively a deep tactics vocabulary can be compressed:
+Heroes is a remarkable Open Legend case because it proves how aggressively a deep tactics vocabulary can be compressed:
 - tiny maps;
 - four-unit teams;
 - deterministic hit/damage;
@@ -105,7 +105,7 @@ Movement type and weapon/range compose:
 - armor has low mobility but historically high stats/specialized skills;
 - infantry has broad skill access.
 
-### OpenLegend lesson
+### Open Legend lesson
 
 A tiny rules space can remain expressive when orthogonal dimensions combine:
 - body/mobility;
@@ -173,7 +173,7 @@ It can also be:
 This creates secondary value:
 > “I do not want this character for my team, but I need their skill for my favorite.”
 
-### OpenLegend transfer
+### Open Legend transfer
 
 This is highly relevant to:
 - teaching;
@@ -181,7 +181,7 @@ This is highly relevant to:
 - artifacts;
 - technique transfer.
 
-But OpenLegend should preserve semantic acquisition:
+But Open Legend should preserve semantic acquisition:
 - who taught it?
 - what practice is required?
 - can the learner understand it?
@@ -248,7 +248,7 @@ It does not eliminate:
 - limited-time pressure;
 - spending variance.
 
-### OpenLegend warning
+### Open Legend warning
 
 Do not use probabilistic scarcity to gate core expression merely because it drives engagement.
 
@@ -283,7 +283,7 @@ The September 2026 update describes Vista Heroes as granting:
 The exact current category matters less than the pattern:
 > collectible type becomes a new layer of game rules.
 
-### OpenLegend warning
+### Open Legend warning
 
 A growing platform must prefer **general primitives** over one new exception taxonomy per content release.
 
@@ -309,7 +309,7 @@ Ver. 10.9.0 continues monthly Ephemera/manual lineups. [HE03](#he03)
 This is a useful inventory abstraction:
 > when an entity's remaining value is purely knowledge/material, convert it into a lighter representation.
 
-OpenLegend could similarly archive:
+Open Legend could similarly archive:
 - recipes;
 - teachings;
 - blueprints;
@@ -402,7 +402,7 @@ Mode proliferation creates many reasons to use a roster—but also demands that 
 
 ## 12. Aether Raids: player-authored tactical space
 
-Aether Raids is especially relevant to OpenLegend.
+Aether Raids is especially relevant to Open Legend.
 
 Players configure:
 - defensive units;
@@ -448,7 +448,7 @@ An April 2026 newcomer thread contains experienced players explicitly warning ab
 - power creep;
 - old units requiring extreme investment. [HE09](#he09)
 
-### OpenLegend lesson
+### Open Legend lesson
 
 When effect text becomes longer than the decision it supports, **semantic compression** is overdue.
 
@@ -480,7 +480,7 @@ The collection is persistent and safe.
 This is appropriate for a gacha product:
 > permanent destruction of a paid/randomly acquired Hero would be commercially and emotionally incompatible.
 
-OpenLegend should similarly align loss rules with ownership expectations.
+Open Legend should similarly align loss rules with ownership expectations.
 
 ## 15. Monetization layers
 
@@ -586,7 +586,7 @@ It creates:
 - demand signal;
 - character promotion.
 
-### OpenLegend inspiration
+### Open Legend inspiration
 
 Community voting can guide:
 - curated official content;
@@ -727,7 +727,7 @@ The correct conclusion is:
 
 **Next:** inspect results and iterate.
 
-**OpenLegend lesson:** player-authored places can create asynchronous social gameplay.
+**Open Legend lesson:** player-authored places can create asynchronous social gameplay.
 
 ### D. Hall of Forms turns random skill offers into a temporary build run
 
@@ -749,9 +749,9 @@ The correct conclusion is:
 
 **Result:** no random miss exists, yet outcome can be harder to understand than an older probabilistic system.
 
-**OpenLegend lesson:** determinism alone does not create legibility.
+**Open Legend lesson:** determinism alone does not create legibility.
 
-## 23. Transferable inspiration for OpenLegend
+## 23. Transferable inspiration for Open Legend
 
 ### A. Compress interfaces, not underlying meaning
 
@@ -760,13 +760,13 @@ Heroes proves a complex genre can fit:
 - tiny maps;
 - short sessions.
 
-OpenLegend can expose a context-specific subset of actions without deleting world depth.
+Open Legend can expose a context-specific subset of actions without deleting world depth.
 
 ### B. Make reusable capability transfer a core primitive
 
 Skill Inheritance is one of the strongest systems here.
 
-OpenLegend equivalents:
+Open Legend equivalents:
 - teach technique;
 - copy blueprint;
 - transfer spell inscription;
@@ -804,13 +804,13 @@ Heroes demonstrates how constrained scenarios expose:
 - counter relationships;
 - sequence order.
 
-OpenLegend can use small challenge spaces to teach new mechanics.
+Open Legend can use small challenge spaces to teach new mechanics.
 
 ## 24. Limits / do not copy automatically
 
 ### Do not monetize relationship with random access
 
-A favorite character should not require unpredictable spend in OpenLegend.
+A favorite character should not require unpredictable spend in Open Legend.
 
 ### Do not solve old-content relevance with endless upgrade currencies
 

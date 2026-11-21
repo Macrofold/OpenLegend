@@ -188,7 +188,7 @@ The DG17 proposal deliberately uses today's mechanical clock and current MP04 ab
 DG17's proposed first operating envelope adds the following qualification; it does not establish a commercial offer or measured cost:
 
 - [ ] Measure the complete admitted community period, including required decisions, ordinary mechanics, retained evidence, unresolved charges, interruption and return; distinguish real elapsed time from completed game time.
-- [ ] Demonstrate coherent world-wide stop/resume under the isolated profile, with no automatic top-up, provider-reset resume, fabricated resident decision, unattended time debt or selective continued harmful subsystem.
+- [ ] Demonstrate coherent world-wide stop/resume under the isolated profile, with no automatic top-up, provider-reset resume, fabricated NPC decision, unattended time debt or selective continued harmful subsystem.
 - [ ] Keep funding authority, actual current supplies, supported effects and service readiness independently visible to admission; preserve current accounting and retention owners.
 
 - [ ] Measure interaction-cost envelopes for dispersed play, markets, concerts, unrestricted combat, and after-entry effect growth.

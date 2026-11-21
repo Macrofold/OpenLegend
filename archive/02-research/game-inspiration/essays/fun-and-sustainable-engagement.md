@@ -12,7 +12,7 @@ The [research roster](../research-roster.md) owns subject identities. The topic-
 
 Later roster additions are outside this G01–G148 review; their own progress ledgers retain their status.
 
-The [ten-game mobile comparison, G168–G177](mobile-success-failure-and-umamusume.md#what-all-ten-games-can-contribute), provides a positive experience map and [concrete OpenLegend interpretations](mobile-success-failure-and-umamusume.md#openlegends-particular-opportunity). Both successful games and closed services contribute possibilities for enjoyable play. That synthesis owns the commercial comparisons and evidence for G168–G177; this document owns the general fun principles and the G01–G148 review.
+The [ten-game mobile comparison, G168–G177](mobile-success-failure-and-umamusume.md#what-all-ten-games-can-contribute), provides a positive experience map and [concrete Open Legend interpretations](mobile-success-failure-and-umamusume.md#open-legends-particular-opportunity). Both successful games and closed services contribute possibilities for enjoyable play. That synthesis owns the commercial comparisons and evidence for G168–G177; this document owns the general fun principles and the G01–G148 review.
 
 The corpus was taken from a branch beginning at GitHub main commit `7a576214fbb9891b2e9f742db56bbeccaa3a58a1`. This review inspected relevant dossier mechanics, interpretations, worked situations and limitations. It did **not** replay 148 games, rerun their original research passes, independently verify every external source, or turn constructed examples into observed sessions. Existing facts retain their version, audience and source boundaries. The 22 selected video categories/entries are a supplemental account, not 22 newly completed dossiers.
 
@@ -61,7 +61,7 @@ Hades distinguishes weapons through handling; Battle Brothers makes shield outco
 
 **Review question:** with the next payout temporarily removed, what would still be satisfying, expressive, funny, beautiful or interesting? This is a diagnostic thought experiment, not a demand that every game remove progression. Also evaluate the complete activity: preparing supplies may be satisfying precisely because it anticipates an expedition. Removing that context can invalidate the comparison rather than reveal that the preparation was worthless.
 
-**Inspect the action itself:** game-feel research distinguishes coherent physicality, amplified feedback and support for translating intention into action. For OpenLegend, examine targeting, approach, commitment, visible or audible result and recovery of control together. More particles, camera movement or dialogue cannot automatically compensate for an action that is hard to direct; too much feedback can conceal the important cue. This is our application of the survey, not a universal effects or latency prescription. [Theory T04](../references/fun-research-expansion-theory.md#t04)
+**Inspect the action itself:** game-feel research distinguishes coherent physicality, amplified feedback and support for translating intention into action. For Open Legend, examine targeting, approach, commitment, visible or audible result and recovery of control together. More particles, camera movement or dialogue cannot automatically compensate for an action that is hard to direct; too much feedback can conceal the important cue. This is our application of the survey, not a universal effects or latency prescription. [Theory T04](../references/fun-research-expansion-theory.md#t04)
 
 ### P03 — Supply direction without unnecessarily prescribing the method
 
@@ -167,7 +167,7 @@ Balatro, Slay the Spire and Against the Storm make offers and context affect the
 
 **Counterweight:** random deprivation is not automatically interesting variation. Replaying social preparation, leveling reserves or revisiting a long known route can become a tax on the genuinely new part. New Game Plus, alternate starts, rematches and saved designs should preserve the right work without assuming everything must persist. [G64, G76](../references/fun-and-engagement-dossier-evidence.md) · [G108, G124, G147](../references/fun-and-engagement-dossier-evidence-g81-g148.md)
 
-The newer cases sharpen the hypothesis: Blue Prince varies routes through room drafting; Mewgenics connects future teams to inherited consequences; Is This Seat Taken? combines immediately understandable preferences. These are developer-described structures, not proof of endless novelty. For OpenLegend, test a changed arrangement of learned possibilities before assuming more generated content is the missing ingredient. [Recent cases C01–C05](../references/fun-research-expansion-mobile-and-recent.md#recent-games)
+The newer cases sharpen the hypothesis: Blue Prince varies routes through room drafting; Mewgenics connects future teams to inherited consequences; Is This Seat Taken? combines immediately understandable preferences. These are developer-described structures, not proof of endless novelty. For Open Legend, test a changed arrangement of learned possibilities before assuming more generated content is the missing ingredient. [Recent cases C01–C05](../references/fun-research-expansion-mobile-and-recent.md#recent-games)
 
 ### P15 — Make leaving, returning and finishing trustworthy
 
@@ -193,7 +193,7 @@ Input simplicity and shallow play are different. A small action vocabulary can s
 
 **Our design hypothesis:** make ordinary actions easy to enter, richer intentions possible when useful, and a return easy to understand. Check touch targeting, readable text, non-audio information, alternatives to hover and whether the player can recover their purpose after an interruption. Voice should not be assumed available or desirable everywhere. Accessibility concerns the barrier relative to the person's capabilities; easing one motor demand need not remove tactical judgment. [Mobile lessons and guidance](../references/fun-research-expansion-mobile-and-recent.md#mobile-lessons)
 
-**Counterweight:** these lessons do not authorize a mobile port, offline progression or mandatory short sessions. Shared-world rules and chosen challenges still matter. For OpenLegend, evaluate the actual supported interaction surface; a narrow-screen layout is not proof that the whole game is usable on a phone.
+**Counterweight:** these lessons do not authorize a mobile port, offline progression or mandatory short sessions. Shared-world rules and chosen challenges still matter. For Open Legend, evaluate the actual supported interaction surface; a narrow-screen layout is not proof that the whole game is usable on a phone.
 
 ### P18 — Make AI expand useful participation without dissolving the game
 
@@ -201,7 +201,7 @@ AI's value depends on its role: helping an author create, understanding an unusu
 
 **Our design position:** keep a viable known route, make genuinely novel input useful within supported rules, and ensure the resulting capability remains learnable. A character can disagree for a coherent reason without the software unpredictably changing the facts. An authored clue-giver and an evasive suspect need not speak with the same freedom. A visually navigable generated world does not by itself establish durable possessions or consequences. [Role and world-model boundaries](../references/fun-research-expansion-ai.md#a06)
 
-Evaluate prompt composition, correction, reading and waiting as costs of participation. Compare with strong direct controls and authored alternatives, not only a cumbersome command language. Preserve the creator's ability to reject and revise; do not turn embodied play into unrestricted author control. A model's consistency rating, an impressive transcript or a first successful demonstration is not evidence of human fun or worthwhile return. [AI principles and OpenLegend comparisons](../references/fun-research-expansion-ai.md#4-learnings-to-carry-into-the-main-principles)
+Evaluate prompt composition, correction, reading and waiting as costs of participation. Compare with strong direct controls and authored alternatives, not only a cumbersome command language. Preserve the creator's ability to reject and revise; do not turn embodied play into unrestricted author control. A model's consistency rating, an impressive transcript or a first successful demonstration is not evidence of human fun or worthwhile return. [AI principles and Open Legend comparisons](../references/fun-research-expansion-ai.md#4-learnings-to-carry-into-the-main-principles)
 
 ## 4. What changed when the Roblox account met the wider corpus
 
@@ -217,9 +217,9 @@ The narrator's most useful discovery is that a recognizable income loop, attract
 
 These are our cross-case interpretations, not claims that the video experimentally demonstrated them. Historical firsts, dopamine measurements, universal brain adaptation and exact audience/decline figures are not adopted without adequate evidence. [Complete transcript study and limitations](../references/roblox-addictiveness-video.md)
 
-## 5. OpenLegend: hypotheses worth testing, not approved features
+## 5. Open Legend: hypotheses worth testing, not approved features
 
-The corpus does not imply that OpenLegend should collect every mechanic. A useful initial test is a small, coherent experience in which several forms of participation reinforce one another. The following constructed examples are **proposals for research**, not statements about existing implementation or confirmed player outcomes.
+The corpus does not imply that Open Legend should collect every mechanic. A useful initial test is a small, coherent experience in which several forms of participation reinforce one another. The following constructed examples are **proposals for research**, not statements about existing implementation or confirmed player outcomes.
 
 **One worthwhile situation before an enormous world.** Give a player a concrete purpose—help someone reach a place before an in-world danger arrives—with a few understandable approaches. A repaired route, negotiated assistance and a prepared expedition should differ in cost and consequence. Success should visibly change something the player cared about. Test P03–P07 before assuming more locations solve weak participation.
 
@@ -304,7 +304,7 @@ All 148 subject records contributed a positive possibility, a counterexample, a 
 
 The strongest conclusion is not an effect-size ranking. It is a set of distinctions that recur across unlike cases: action versus reward; knowledge versus stats; ownership versus usable capability; preparation versus maintenance; authored purpose versus free method; consequence versus error; repeated context versus repeated content; social contribution versus social gate; desired return versus costly departure; and expressive freedom versus the effort required to use it.
 
-**Remaining uncertainty:** the corpus was selected for game inspiration, not randomly sampled; editions and audiences differ; testimonials and developer intentions have different evidentiary strength; many titles share design lineages; long-term clinical and commercial outcomes were not measured here. Cross-case agreement generates better questions, not proof of causality. In particular, 148 dossiers are not 148 independent experiments. The broader web run is also targeted rather than systematic: several studies were accessible only as abstracts or indexed sections, some are preprints, and many recent-game cases use developer descriptions. None supplies a universal effect size or measured improvement in OpenLegend.
+**Remaining uncertainty:** the corpus was selected for game inspiration, not randomly sampled; editions and audiences differ; testimonials and developer intentions have different evidentiary strength; many titles share design lineages; long-term clinical and commercial outcomes were not measured here. Cross-case agreement generates better questions, not proof of causality. In particular, 148 dossiers are not 148 independent experiments. The broader web run is also targeted rather than systematic: several studies were accessible only as abstracts or indexed sections, some are preprints, and many recent-game cases use developer descriptions. None supplies a universal effect size or measured improvement in Open Legend.
 
 When new evidence changes a principle, update this canonical document and its case records together. Keep basic terminology and the original five studies in the [foundations reference](../references/fun-engagement-and-compulsion-research.md); expanded source findings in the [theory](../references/fun-research-expansion-theory.md), [mobile/recent](../references/fun-research-expansion-mobile-and-recent.md) and [AI](../references/fun-research-expansion-ai.md) papers; detailed rostered-game facts in their dossiers; and supplied-source interpretation in the [Roblox transcript study](../references/roblox-addictiveness-video.md). Preserve disagreements and version boundaries rather than revising every case to fit a preferred thesis.
 

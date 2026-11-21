@@ -2,7 +2,7 @@
 
 **Research supplement updated September 26, 2026.** Read with [the Inquisition dossier](../dossiers/dragon-age-inquisition.md), which already links this document. Sections 1–3 supply the operational build/multiplayer explanations identified by the later audit; section 4 preserves the original access record. This is a bounded companion to the long dossier, not a competing progress ledger. [Canonical progress](../research-progress.md) owns completion; [requirements](../research-requirements.md) own R01–R14.
 
-The main dossier's eighteen mechanics, ten cases, five inherited reviews, expansion studies and viewing routes remain intact. These additional explanations are source-based research, not firsthand gameplay, a present matchmaking test or an accepted OpenLegend implementation plan.
+The main dossier's eighteen mechanics, ten cases, five inherited reviews, expansion studies and viewing routes remain intact. These additional explanations are source-based research, not firsthand gameplay, a present matchmaking test or an accepted Open Legend implementation plan.
 
 ## 1. Campaign builds: identity, allocation, equipment and preparation
 
@@ -90,7 +90,7 @@ The following findings were recorded during the earlier September 26 completion 
 
 Nicholas Tan, [GameRevolution review](https://www.gamerevolution.com/review/72685-dragon-age-inquisition-trespasser-review), September 10, 2015; substantive PC review body inspected. The Exalted Council asks what legitimacy the Inquisition retains after defeating Corypheus. Ferelden worries about sovereignty; Orlais wants influence over the organization. The epilogue advances two years and closes access to the base campaign's open activities. Tan values the character farewells, interlocking levels and stronger resolution, while criticizing a consequential betrayal's abbreviated reaction and the Anchor's tendency to dominate combat. His roughly ten-hour experience is an individual review duration, not a completion-time distribution.
 
-**Research interpretation:** gaining authority and surrendering authority are different playable problems. A leadership system needs a constituency, jurisdiction and sunset condition, not merely a larger resource bar. This interpretation does not establish that Inquisition simulates independent states or that OpenLegend implements such a system.
+**Research interpretation:** gaining authority and surrendering authority are different playable problems. A leadership system needs a constituency, jurisdiction and sunset condition, not merely a larger resource bar. This interpretation does not establish that Inquisition simulates independent states or that Open Legend implements such a system.
 
 ### Sound and promotion
 

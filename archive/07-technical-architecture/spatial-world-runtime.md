@@ -2,7 +2,7 @@
 
 ## Initial native provider
 
-The current provider is Recast/Detour ground planning in a server worker plus Rapier shape-level round-body clearance. The earlier lattice planner is superseded. Plain XYZ/support state, finite slab/ramp/box source geometry, specialized sight/acoustic queries and native action execution remain OpenLegend-owned. Detailed current implementation facts and limits are in [Architecture](../../docs/architecture.md#spatial-world-foundation); [SW](../../docs/maintainers/spatial-world.md) owns delivery. The target extension sections below do not imply arbitrary geometry, rigid-body dynamics, crowd arbitration, generated flight graphs or a model loader are installed.
+The current provider is Recast/Detour ground planning in a server worker plus Rapier shape-level round-body clearance. The earlier lattice planner is superseded. Plain XYZ/support state, finite slab/ramp/box source geometry, specialized sight/acoustic queries and native action execution remain Open Legend-owned. Detailed current implementation facts and limits are in [Architecture](../../docs/architecture.md#spatial-world-foundation); [SW](../../docs/maintainers/spatial-world.md) owns delivery. The target extension sections below do not imply arbitrary geometry, rigid-body dynamics, crowd arbitration, generated flight graphs or a model loader are installed.
 
 ## Movement calibration
 
@@ -223,7 +223,7 @@ Do not reuse a Detour walkability raycast or projected neighborhood query as a g
 
 ### Native route representation
 
-Store OpenLegend route segments, not a vendor query object:
+Store Open Legend route segments, not a vendor query object:
 
 ```text
 walk segment: supported surface refs, bounded 3D path/detail samples

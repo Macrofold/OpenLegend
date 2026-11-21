@@ -1,6 +1,6 @@
 # Fun, engagement and compulsion — research foundations
 
-**Research reference, October 14, 2026.** This document owns the terminology and selective outside-research foundation for the [canonical cross-dossier synthesis](../essays/fun-and-sustainable-engagement.md). It is not a clinical assessment, an exhaustive literature review, a neuroscience model, or an approved OpenLegend implementation specification. Game-specific evidence belongs in the dossiers and the [two-volume evidence map](fun-and-engagement-dossier-evidence.md).
+**Research reference, October 14, 2026.** This document owns the terminology and selective outside-research foundation for the [canonical cross-dossier synthesis](../essays/fun-and-sustainable-engagement.md). It is not a clinical assessment, an exhaustive literature review, a neuroscience model, or an approved Open Legend implementation specification. Game-specific evidence belongs in the dossiers and the [two-volume evidence map](fun-and-engagement-dossier-evidence.md).
 
 ## The answer: related, but not the same thing
 
@@ -32,7 +32,7 @@ When a source says **addictive**, preserve the source's intended language, then 
 
 Across four studies, the authors report relationships between perceived competence/autonomy and enjoyment, preferences and aspects of well-being. Their multiplayer-community study also relates autonomy, competence and relatedness to enjoyment and future play. The abstract connects intuitive controls with competence/autonomy and presence.
 
-**Use:** ask whether players feel effective, endorse their actions, and experience wanted connection. **Limit:** these are psychological experiences, not a recipe requiring maximum difficulty, maximum choices or mandatory multiplayer. The publisher abstract was inspected; this pass does not reproduce the full methods, effect sizes or validate a particular OpenLegend feature.
+**Use:** ask whether players feel effective, endorse their actions, and experience wanted connection. **Limit:** these are psychological experiences, not a recipe requiring maximum difficulty, maximum choices or mandatory multiplayer. The publisher abstract was inspected; this pass does not reproduce the full methods, effect sizes or validate a particular Open Legend feature.
 
 ### F2 — Wanting to play and feeling driven to play can differ
 
@@ -82,6 +82,6 @@ The transcript's “dopamine maxing,” claims of universal attention-span decli
 
 A proposed review should pair behavior with the player's account: what they intended to do, which moments they enjoyed, what felt worthwhile afterward, why they continued, and whether they could leave without an unwanted penalty. Someone completing a short story and departing satisfied should not automatically score worse than someone repeatedly checking a timer while wishing to leave.
 
-Test changes against their intended value. Reducing interruption cost is different from making combat easier. Explaining a rule is different from solving a mystery. Accelerating repetitive catching-up is different from granting power that erases the next challenge. Removing an attendance penalty is different from removing a social occasion. These distinctions are supported as design comparisons by the dossier corpus, not yet established as outcomes for OpenLegend.
+Test changes against their intended value. Reducing interruption cost is different from making combat easier. Explaining a rule is different from solving a mystery. Accelerating repetitive catching-up is different from granting power that erases the next challenge. Removing an attendance penalty is different from removing a social occasion. These distinctions are supported as design comparisons by the dossier corpus, not yet established as outcomes for Open Legend.
 
-The [canonical synthesis](../essays/fun-and-sustainable-engagement.md) owns the cross-game principles, counterexamples, OpenLegend hypotheses and proposed evaluation questions. Future research should revise these interpretations when player evidence disagrees, preserve edition and audience differences, and distinguish a design recommendation from a demonstrated causal result.
+The [canonical synthesis](../essays/fun-and-sustainable-engagement.md) owns the cross-game principles, counterexamples, Open Legend hypotheses and proposed evaluation questions. Future research should revise these interpretations when player evidence disagrees, preserve edition and audience differences, and distinguish a design recommendation from a demonstrated causal result.

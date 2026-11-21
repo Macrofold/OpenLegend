@@ -4,7 +4,7 @@
 | ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | Not started | Mike deferred this follow-on during the imported UI review; its design and IWB01–IWB07 remain tracked for later selection. | 2026-10-16   |
 
-**Design scope selected by Mike:** turn the inventory, crafting, equipment and construction learnings into a concrete OpenLegend follow-on with implementation tasks. This document proposes the additions; it does not authorize runtime implementation or change current world rules. Parent design needs remain [ND13 — usable action controls](../maintainers/needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization) and [ND07 — usable buildings](../maintainers/needs-design.md#nd07--editable-buildings-that-become-usable-homes). Neither broader entry is closed by this selected slice.
+**Design scope selected by Mike:** turn the inventory, crafting, equipment and construction learnings into a concrete Open Legend follow-on with implementation tasks. This document proposes the additions; it does not authorize runtime implementation or change current world rules. Parent design needs remain [ND13 — usable action controls](../maintainers/needs-design.md#nd13--stable-action-recommendations-and-complete-control-customization) and [ND07 — usable buildings](../maintainers/needs-design.md#nd07--editable-buildings-that-become-usable-homes). Neither broader entry is closed by this selected slice.
 
 ## Maintained records
 
@@ -15,7 +15,7 @@
 
 ## 1. What already exists, and why this is a follow-on
 
-The missing sequence in the Rust research was **missing current-version visual evidence about Rust**, not a finding that OpenLegend has no inventory or construction. The owner audit began at `b72e9d9aab8072eb1b5ae9d25f620a4421509148`; this project branches from published main `57a2977e22bab3f7293caa4a176c9ef4ba800751`, which also integrates foundation privacy and continuity repairs. Current client excerpts were checked at that latter revision. Described delivery below relies on the named current owners and their recorded evidence, not a new playtest.
+The missing sequence in the Rust research was **missing current-version visual evidence about Rust**, not a finding that Open Legend has no inventory or construction. The owner audit began at `b72e9d9aab8072eb1b5ae9d25f620a4421509148`; this project branches from published main `57a2977e22bab3f7293caa4a176c9ef4ba800751`, which also integrates foundation privacy and continuity repairs. Current client excerpts were checked at that latter revision. Described delivery below relies on the named current owners and their recorded evidence, not a new playtest.
 
 ### Existing inventory foundation
 

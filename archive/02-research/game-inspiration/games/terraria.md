@@ -12,7 +12,7 @@
 
 **Growth mechanism.** The specific review accounts support a return-with-friends/update loop, while the chart provides scale—not attribution. My hypothesis is that repeated improvements and mod-enabled variation extend a paid game’s cultural lifespan. The first successful version did not need the accumulated content of fifteen years. Copying the final catalogue while ignoring how players learn a few interacting basics would be a poor production plan.
 
-**For OpenLegend.** Give invented capabilities recognizable consequences. A better shelter might unlock longer expeditions; a carrying construct might change which resources are viable; a communication mechanism might enable coordination between differently embodied actors. These are more valuable than another tier whose only property is a larger number. Make the World Agent explain supported options without quietly selecting the optimum or disclosing mysteries the embodied player should discover.
+**For Open Legend.** Give invented capabilities recognizable consequences. A better shelter might unlock longer expeditions; a carrying construct might change which resources are viable; a communication mechanism might enable coordination between differently embodied actors. These are more valuable than another tier whose only property is a larger number. Make the World Agent explain supported options without quietly selecting the optimum or disclosing mysteries the embodied player should discover.
 
 **Reusable-mechanics lesson.** Mods and new equipment can be a reason to replay with a group, but the variation has to alter decisions. For a player-created construct, include an intelligible example, prerequisites, limits and at least one situation where a different construct would be preferable. Breadth then increases meaningful choice rather than merely increasing search cost.
 
@@ -42,7 +42,7 @@
 
 3. **Construction attracts useful residents.** *Documented settlement system.* Suitable homes let encountered allies settle and provide services. A building is therefore both self-expression and a functional link in progression. The world becomes more useful through the player’s construction rather than treating every structure as cosmetic scenery. [FG-TE-O](../references/sources-04.md#source-fg-te-o)
 
-**What to borrow for OpenLegend.** For OpenLegend, connect supported discoveries to things a player wants to try next. A new tool should alter a practical choice; a home should support activity and relationships. Preserve room for discovery while making basic affordances understandable without external documentation.
+**What to borrow for Open Legend.** For Open Legend, connect supported discoveries to things a player wants to try next. A new tool should alter a practical choice; a home should support activity and relationships. Preserve room for discovery while making basic affordances understandable without external documentation.
 
 *Scope/evidence note:* Base-game systems unless noted; examples describe documented mechanics, not a play session conducted for this research.
 <!-- END FIELDGUIDE ADDITION -->

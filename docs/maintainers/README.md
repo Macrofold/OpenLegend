@@ -22,7 +22,7 @@ The complete selected design is now in the [integrated pair](../projects/first-p
 
 ## Game production methods
 
-[Production workflows](../production-workflows/README.md) connect ideas to editable art, working assets, animation, scenes, interfaces, character situations and coordinated feedback. The [research collection](../../archive/02-research/ai-game-development/README.md) explains the evidence and OpenLegend-specific creative opportunities; [remaining preparation](needs-design.md#ai-assisted-game-production-research-and-design-integration) maps choices into existing owners. Art studies, V3D/INV, CE, UIUX and playability work retain their task and acceptance records.
+[Production workflows](../production-workflows/README.md) connect ideas to editable art, working assets, animation, scenes, interfaces, character situations and coordinated feedback. The [research collection](../../archive/02-research/ai-game-development/README.md) explains the evidence and Open Legend-specific creative opportunities; [remaining preparation](needs-design.md#ai-assisted-game-production-research-and-design-integration) maps choices into existing owners. Art studies, V3D/INV, CE, UIUX and playability work retain their task and acceptance records.
 
 The [focused game-reference map](../../archive/02-research/game-inspiration/README.md#player-stories-authored-worlds-and-personal-meaning) routes narrative, collectible, art and marketing learnings to their existing design and production owners. Its concrete follow-up lives in ND01, ND04, ND30, ND38 and DG29/DG33/DG34 in [Future work needing design](needs-design.md); it is not another implementation queue.
 
@@ -36,7 +36,7 @@ The [completed Rust game server record](completed/2026/rust-game-server.md) link
 
 [Simpler saving and evidence lifetimes (BK)](production-data.md#bookkeeping-simplification) owns installed direct saving, grouped personal evidence, shared values, independent retained support and background cleanup. The [received-batch and lifetime conversion](../projects/bookkeeping-simplification-batch-design.md) is installed with connected correctness checks; BK23 retains failed AWS operating qualification. BK12/BK16 retain failed normal-speed and unmet sustainable-cleanup acceptance. Current save/privacy/accounting protections remain required throughout conversion.
 
-[Using engine research to improve OpenLegend](../engine-research-guide.md) connects the current Unreal/Unity study to player value, existing feature/technical owners and [scoped design questions](needs-design.md#current-engine-research-design-questions-and-existing-owners). It is the reading map; the linked maintainers retain delivery and qualification.
+[Using engine research to improve Open Legend](../engine-research-guide.md) connects the current Unreal/Unity study to player value, existing feature/technical owners and [scoped design questions](needs-design.md#current-engine-research-design-questions-and-existing-owners). It is the reading map; the linked maintainers retain delivery and qualification.
 
 ## General emotions, bodily reactions and adaptive review
 
@@ -116,7 +116,7 @@ Free sharing, paid distribution, visits and a funded program are separately scop
 
 ## Product design groups 11–15
 
-[Group assignment](../projects/completed/product-design-groups-11-15.md). Delivery owners: DG11 [optional connection study](wellbeing-evidence.md); DG12 [world creation](parallel-batch-07-playable-world-creation.md)/[invention reuse](inventions-and-world-evolution.md); DG13 [shelters](editable-shelters.md); DG14 [practical competence](practical-competence.md); DG15 [NC20 story perspective](narration-and-conversations.md).
+[Group assignment](../projects/completed/product-design-groups-11-15.md). Delivery owners: DG11 [optional connection study](wellbeing-evidence.md); DG12 [world creation](parallel-batch-07-playable-world-creation.md)/[invention reuse](inventions-and-world-evolution.md); DG13 [shelters](editable-shelters.md); DG14 [character skill](practical-competence.md); DG15 [NC20 story perspective](narration-and-conversations.md).
 
 Reuse the [shelter technical design](../projects/editable-shelters-tech-design.md) and [evidence](../verification/editable-shelters.md), and [competence technical design](../projects/authored-stats-tech-design.md) and [evidence](../verification/practical-competence.md). Their selected component evidence does not close larger home or character-quality requirements.
 

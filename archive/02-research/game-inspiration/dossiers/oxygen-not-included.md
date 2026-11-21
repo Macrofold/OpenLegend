@@ -1,6 +1,6 @@
 # G129 — Oxygen Not Included
 
-**Status: complete full-pass research dossier.** Research date: September 26, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an OpenLegend implementation proposal.
+**Status: complete full-pass research dossier.** Research date: September 26, 2026. [Roster](../research-roster.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md). Research only, not an Open Legend implementation proposal.
 
 Oxygen Not Included is most useful as a study of **self-generated systemic pressure**. A colony rarely needs an external raid to become interesting: every Duplicant consumes resources and produces waste, every machine moves matter or energy while generating new constraints, and every temporary fix can create a delayed thermal, logistical, morale, power or resource problem.
 
