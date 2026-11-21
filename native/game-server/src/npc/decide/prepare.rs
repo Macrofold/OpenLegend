@@ -11,13 +11,14 @@ use openlegend_simulation::{
     host::{ByteBudget, ByteReservation, CapacityError},
     narration::{NameArticle, NativeText, name_phrase, native_text},
     reception::{KnowledgeDocument, SpeechAddressing, SpeechParticipant},
+    records::SqlCell,
     runtime::{RuntimeError, RuntimeJson, RuntimeNpcRead, RuntimeNpcResponseTicket},
     state::{CharacterTrait, Goal, Named, Point},
     text::JsText,
     values::deserialize_present_safe_integer,
 };
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
-use serde_json::{Value, json};
+use serde_json::{Value, json, value::RawValue};
 use std::{borrow::Cow, collections::HashMap, fmt::Write as _, sync::Arc};
 
 mod recall;
@@ -94,7 +95,7 @@ struct CurrentNpc {
 struct CurrentAgency {
     goals: Vec<Goal>,
     plan: Option<CurrentPlan>,
-    attempts: Value,
+    attempts: Box<RawValue>,
 }
 
 #[derive(Deserialize)]
@@ -617,7 +618,11 @@ fn project(
     let mut offers = Vec::new();
     let identity = identity(&own.identity, &own_name, &self_reference);
     let body = body_text(own)?;
-    let work_facts = agency(own.agency.as_ref(), &prepared["workContext"])?;
+    let work_facts = agency(
+        own.agency.as_ref(),
+        &prepared["workContext"],
+        game.host.budget(),
+    )?;
     let notepad = own
         .knowledge
         .as_ref()
@@ -969,7 +974,11 @@ fn body_text(own: &CurrentActor) -> Result<String, CallFailure> {
     Ok(parts.join(" "))
 }
 
-fn agency(agency: Option<&CurrentAgency>, work: &Value) -> Result<Value, CallFailure> {
+fn agency(
+    agency: Option<&CurrentAgency>,
+    work: &Value,
+    budget: &ByteBudget,
+) -> Result<Value, CallFailure> {
     let remaining = |value: &Value| {
         Some(
             value["views"]
@@ -998,9 +1007,55 @@ fn agency(agency: Option<&CurrentAgency>, work: &Value) -> Result<Value, CallFai
         .and_then(|agency| agency.plan.as_ref())
         .map_or(0, |plan| plan.revision);
     let mut fields = json!({"goals":null,"plan":remaining(&work["plan"]),"paused":remaining(&work["suspended"]),
-        "planRevision":revision,"attempts":agency.map(|agency| &agency.attempts)});
+        "planRevision":revision,"attempts":null});
     fields["goals"] = goals.map_or(Value::Null, Value::Array);
+    if let Some(agency) = agency {
+        fields["attempts"] = pending_intentions(&agency.attempts, budget)?;
+    }
     Ok(fields)
+}
+
+/// Decode the bounded retained intentions with the native exact-text reader.
+/// This workspace is temporary. The caller funds the independent prompt value.
+fn pending_intentions(raw: &RawValue, budget: &ByteBudget) -> Result<Value, CallFailure> {
+    let text = raw.get();
+    if text == "[]" {
+        return Ok(Value::Array(Vec::new()));
+    }
+    let bound = SqlCell::json_decode_bound(text).ok_or_else(|| capacity(CapacityError))?;
+    let _workspace = budget.reserve(bound).map_err(capacity)?;
+    let attempts = serde_json::from_str::<Vec<SqlCell>>(text).map_err(invalid)?;
+    Ok(Value::Array(
+        attempts
+            .into_iter()
+            .map(intention_prompt_value)
+            .collect::<Result<_, _>>()?,
+    ))
+}
+
+fn intention_prompt_value(value: SqlCell) -> Result<Value, CallFailure> {
+    Ok(match value {
+        SqlCell::Null => Value::Null,
+        SqlCell::Bool(value) => Value::Bool(value),
+        SqlCell::Number(value) => Value::Number(value),
+        SqlCell::Text(JsText::Unicode(value)) => Value::String(value),
+        SqlCell::Text(value) => Value::String(prompt_text(&value).into_owned()),
+        SqlCell::Array(items) => Value::Array(
+            items
+                .into_iter()
+                .map(intention_prompt_value)
+                .collect::<Result<_, _>>()?,
+        ),
+        SqlCell::Object(fields) => Value::Object(
+            fields
+                .into_iter()
+                .map(|(key, value)| intention_prompt_value(value).map(|value| (key, value)))
+                .collect::<Result<_, _>>()?,
+        ),
+        // Admitted pending intentions and their slots/resolution use closed
+        // field names. A prose conversion must never change a member identity.
+        SqlCell::ExactObject(_) => return Err(CallFailure::Invalid),
+    })
 }
 
 fn received_body(

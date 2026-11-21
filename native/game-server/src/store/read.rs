@@ -5,11 +5,14 @@ use super::schema::{SqlType, Table};
 use super::{
     DurableHead, Session, Store, StoreError, StoreResult, durable_head, ordinal, sql_ordinal,
 };
+use crate::language::{LanguageError, LanguageProvider};
 use openlegend_simulation::events::OriginalOccurrenceInput;
 use openlegend_simulation::host::{ByteBudget, ByteReservation};
 use openlegend_simulation::records::{
-    CurrentRecords, EntityOrdering, EntityOrderingEntry, InstalledRow, OwnerCoverage, SqlCell,
+    CurrentRecords, EntityOrdering, EntityOrderingEntry, InstalledRow, NormalizedIntent,
+    OwnerCoverage, SqlCell,
 };
+use openlegend_simulation::text::JsText;
 use serde::de::{DeserializeSeed, IgnoredAny, MapAccess, Visitor};
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
@@ -27,6 +30,82 @@ pub struct CurrentOpening {
     pub records: CurrentRecords,
     pub originals: Vec<OriginalOccurrenceInput>,
     pub custody: ByteReservation,
+}
+
+impl CurrentOpening {
+    pub(crate) fn has_intentions(&self) -> bool {
+        !self.records.tables["sim_intentions"].is_empty()
+    }
+
+    /// After reading the exact saved rows, independently prepare each
+    /// normalized description with the release's pinned language provider.
+    /// Keep the preparation charged to the opening until the native importer
+    /// consumes each row's identity and checks its exact saved text.
+    pub(crate) fn prepare_intentions(
+        &mut self,
+        language: &LanguageProvider,
+        budget: &ByteBudget,
+    ) -> StoreResult<()> {
+        let rows = &self.records.tables["sim_intentions"];
+        if rows.is_empty() {
+            return Ok(());
+        }
+        #[derive(Deserialize)]
+        struct SavedIntention {
+            description: JsText,
+        }
+        grow(
+            &mut self.custody,
+            rows.len()
+                .checked_mul(size_of::<NormalizedIntent>())
+                .ok_or(StoreError::Capacity)?,
+        )?;
+        let mut intentions = Vec::new();
+        intentions
+            .try_reserve_exact(rows.len())
+            .map_err(|_| StoreError::Capacity)?;
+        for row in rows {
+            // A TEXT row retains its exact JSON escapes. Fund the independent
+            // string, decoded units and transient raw JSON before parsing.
+            let size = row
+                .payload
+                .len()
+                .checked_mul(12)
+                .and_then(|n| n.checked_add(row.id.len()))
+                .and_then(|n| n.checked_add(128))
+                .ok_or(StoreError::Capacity)?;
+            let mut decoded = budget.reserve(size).map_err(|_| StoreError::Capacity)?;
+            let saved: SavedIntention =
+                serde_json::from_str(&row.payload).map_err(|_| StoreError::InvalidRecord)?;
+            let (normalized, normalized_custody) = language
+                .normalize_intention(&saved.description, budget)
+                .map_err(|error| match error {
+                    LanguageError::Capacity => StoreError::Capacity,
+                    _ => StoreError::InvalidRecord,
+                })?;
+            decoded
+                .resize(
+                    row.id
+                        .len()
+                        .checked_add(saved.description.storage_bytes())
+                        .ok_or(StoreError::Capacity)?,
+                )
+                .map_err(|_| StoreError::Capacity)?;
+            self.custody
+                .merge(decoded)
+                .map_err(|_| StoreError::Capacity)?;
+            self.custody
+                .merge(normalized_custody)
+                .map_err(|_| StoreError::Capacity)?;
+            intentions.push(NormalizedIntent {
+                row_id: row.id.clone(),
+                description: saved.description,
+                normalized,
+            });
+        }
+        self.records.normalized_intents = intentions;
+        Ok(())
+    }
 }
 
 /// These are the existing receipt fields, including the distinct read-only
@@ -343,9 +422,8 @@ impl Store {
                 .ok_or(StoreError::InvalidRecord)
         });
         let entity_ordering = entity_ordering(ids, tables["sim_entities"].len(), custody)?;
-        // Text normalizations remain owned by the prepared installation. Until
-        // those supported SQL owners are linked, refuse positive saved rows.
-        if !tables["sim_intentions"].is_empty() || !tables["activity_methods"].is_empty() {
+        // Activity method signatures still need their separate preparation.
+        if !tables["activity_methods"].is_empty() {
             return Err(StoreError::InvalidRecord);
         }
         Ok(CurrentRecords {

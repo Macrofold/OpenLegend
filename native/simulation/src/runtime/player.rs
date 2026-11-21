@@ -520,9 +520,14 @@ impl RuntimePlayerRead {
             .controls
             .as_ref()
             .ok_or_else(|| failure("control geometry is still required"))?;
-        let (perception, _perception_custody) =
-            self.read.perception.write_json(budget).map_err(failure)?;
-        let (controls, _controls_custody) = controls.write_json(budget).map_err(failure)?;
+        let (perception, _perception_custody) = self
+            .read
+            .perception
+            .write_json(budget)
+            .map_err(|error| session_failure(error.into()))?;
+        let (controls, _controls_custody) = controls
+            .write_json(budget)
+            .map_err(|error| session_failure(error.into()))?;
         // Every member is already encoded by its semantic owner. Joining those
         // complete encodings avoids decoding a private graph just to re-encode it.
         let parts = [

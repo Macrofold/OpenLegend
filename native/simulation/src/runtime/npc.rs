@@ -656,7 +656,9 @@ impl RuntimeNpcRead {
         let candidates = self
             .candidates()
             .ok_or_else(|| failure("NPC choices are unavailable"))?;
-        let (encoded, custody) = candidates.write_json(budget).map_err(failure)?;
+        let (encoded, custody) = candidates
+            .write_json(budget)
+            .map_err(|error| session_failure(error.into()))?;
         // This standalone packet already owns the complete wire encoding.
         // Moving the backing keeps its existing reservation through export.
         Ok(RuntimeJson {
@@ -773,8 +775,11 @@ impl RuntimeNpcRead {
     }
 
     pub fn packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
-        let (perception, _perception_custody) =
-            self.read.perception.write_json(budget).map_err(failure)?;
+        let (perception, _perception_custody) = self
+            .read
+            .perception
+            .write_json(budget)
+            .map_err(|error| session_failure(error.into()))?;
         let appraisals = self
             .read
             .appraisals_json()
@@ -790,8 +795,9 @@ impl RuntimeNpcRead {
             .ok_or_else(|| failure("NPC semantic validity capture is unavailable"))?;
         let candidates = self
             .candidates()
-            .map(|candidates| candidates.write_json(budget).map_err(failure))
-            .transpose()?;
+            .map(|candidates| candidates.write_json(budget))
+            .transpose()
+            .map_err(|error| session_failure(error.into()))?;
         let (candidate_key, candidate_value) = candidates
             .as_ref()
             .map_or((&b""[..], &b""[..]), |(json, _)| {

@@ -250,10 +250,16 @@ impl CurrentServer {
             })
             .transpose()?;
         let store = open_store(release, &manifest, database, budget).await?;
-        let opening = store
+        let mut opening = store
             .current_opening()
             .await?
             .ok_or("No initialized current-format game world exists")?;
+        let open_language =
+            || LanguageProvider::open(&release.join("language"), budget).map(Arc::new);
+        let mut language = opening.has_intentions().then(open_language).transpose()?;
+        if let Some(language) = &language {
+            opening.prepare_intentions(language, budget)?;
+        }
         let receipt = RuntimeActivation {
             world_id: opening.records.world_id.clone(),
             generation: opening.records.generation.clone(),
@@ -293,9 +299,9 @@ impl CurrentServer {
                 None => Ok(SpatialProvider::new(map, budget)?),
             }
         })??;
-        let language = navigation
-            .map(|_| LanguageProvider::open(&release.join("language"), host.budget()).map(Arc::new))
-            .transpose()?;
+        if language.is_none() && navigation.is_some() {
+            language = Some(open_language()?);
+        }
         let cut = session.accepted_progress()?;
         let verified = VerifiedOpening {
             world_id: cut.world_id.to_owned(),

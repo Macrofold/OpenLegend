@@ -50,6 +50,61 @@ impl LexicalVector {
 }
 
 impl LanguageProvider {
+    /// Prepare a saved intention's exact Source match text with the pinned ICU
+    /// data. Return its own admitted bytes for the current-record installer.
+    pub(crate) fn normalize_intention(
+        &self,
+        input: &JsText,
+        budget: &ByteBudget,
+    ) -> Result<(JsText, ByteReservation), LanguageError> {
+        use LanguageError::Capacity;
+        let input_custody = budget
+            .reserve(input.units_len().checked_mul(2).ok_or(Capacity)?)
+            .map_err(|_| Capacity)?;
+        let input: Vec<_> = input.units().collect();
+        let (mut lower, lower_custody) = self.normalized_lower(&input, budget)?;
+        drop(input);
+        drop(input_custody);
+        // Source trims and collapses ECMAScript whitespace after NFKC and
+        // root lowercase. All other code units, including NUL and isolated
+        // surrogates, remain exact. The output never gets ahead of the read.
+        let mut write = 0;
+        let mut gap = false;
+        for read in 0..lower.len() {
+            let unit = lower[read];
+            if char::from_u32(unit.into())
+                .is_some_and(openlegend_simulation::encoding::is_js_whitespace)
+            {
+                gap = write != 0;
+            } else {
+                if gap {
+                    lower[write] = u16::from(b' ');
+                    write += 1;
+                }
+                lower[write] = unit;
+                write += 1;
+                gap = false;
+            }
+        }
+        lower.truncate(write);
+        // Fund Unicode conversion or JSON escaping before handing off either
+        // the converted buffer or the original UTF-16 allocation.
+        let mut custody = budget
+            .reserve(
+                write
+                    .checked_mul(12)
+                    .and_then(|n| n.checked_add(128))
+                    .ok_or(Capacity)?,
+            )
+            .map_err(|_| Capacity)?;
+        let normalized = JsText::from_units(lower);
+        custody.merge(lower_custody).map_err(|_| Capacity)?;
+        custody
+            .resize(normalized.storage_bytes())
+            .map_err(|_| Capacity)?;
+        Ok((normalized, custody))
+    }
+
     /// Generate exactly the Source tsvector text from one admitted search body.
     /// Transient ICU work is dropped before handing the result to a SQL owner.
     pub fn lexical_vector(

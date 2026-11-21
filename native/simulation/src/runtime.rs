@@ -3,7 +3,8 @@
 //! Opaque products retain their actual custody rather than exposing a world.
 use crate::encoding::{json_record, json_record_len};
 use crate::host::{
-    ByteBudget, ByteReservation, CandidateFence, CandidateKey, FenceError, ResidentReservation,
+    ByteBudget, ByteReservation, CandidateFence, CandidateKey, CapacityError, FenceError,
+    ResidentReservation,
 };
 use crate::simulation::{
     CompletedOperation, ProviderQuestion, ProviderResponse, Session, SessionStep,
@@ -112,8 +113,8 @@ impl RuntimeError {
         }
     }
 
-    /// A live host can defer work that refused byte admission before acceptance.
-    /// Semantic, rollback and owner errors still stop the affected operation.
+    /// The operation exhausted its byte allowance. Callers decide whether they
+    /// can defer or retry from their own acceptance and settlement state.
     pub fn is_capacity(&self) -> bool {
         matches!(self.refusal, Refusal::Capacity)
     }
@@ -137,8 +138,8 @@ impl std::fmt::Display for RuntimeError {
     }
 }
 impl std::error::Error for RuntimeError {}
-impl From<crate::host::CapacityError> for RuntimeError {
-    fn from(error: crate::host::CapacityError) -> Self {
+impl From<CapacityError> for RuntimeError {
+    fn from(error: CapacityError) -> Self {
         RuntimeError {
             refusal: Refusal::Capacity,
             ..failure(error)
@@ -362,14 +363,14 @@ impl RuntimeJson {
         let length = parts
             .iter()
             .try_fold(0usize, |n, part| n.checked_add(part.len()))
-            .ok_or_else(|| failure("capacity"))?;
-        let mut custody = budget.reserve(length).map_err(failure)?;
+            .ok_or(CapacityError)?;
+        let mut custody = budget.reserve(length)?;
         let mut bytes = Vec::new();
-        bytes.try_reserve_exact(length).map_err(failure)?;
+        bytes.try_reserve_exact(length).map_err(|_| CapacityError)?;
         for part in parts {
             bytes.extend_from_slice(part);
         }
-        custody.resize(bytes.capacity()).map_err(failure)?;
+        custody.resize(bytes.capacity())?;
         Ok(Self {
             bytes,
             custody,
@@ -381,21 +382,21 @@ impl RuntimeJson {
     pub fn consumer(&self, budget: &ByteBudget) -> Result<RuntimeConsumer, RuntimeError> {
         consumer::prepare(&self.bytes, budget, 64 * std::mem::size_of::<u64>())
     }
+    /// Count and encode a detached packet. Its reservation belongs to the
+    /// returned buffer, with byte refusal distinct from a serializer error.
     fn encode(
         value: &(impl Serialize + ?Sized),
         budget: &ByteBudget,
     ) -> Result<Self, RuntimeError> {
         let length = json_record_len(value).map_err(failure)?;
-        let mut custody = budget
-            .reserve(
-                length
-                    .checked_mul(2)
-                    .map(|n| n.max(8))
-                    .ok_or_else(|| failure("capacity"))?,
-            )
-            .map_err(failure)?;
+        let mut custody = budget.reserve(
+            length
+                .checked_mul(2)
+                .map(|n| n.max(8))
+                .ok_or(CapacityError)?,
+        )?;
         let bytes = json_record(value).map_err(failure)?.into_bytes();
-        custody.resize(bytes.capacity()).map_err(failure)?;
+        custody.resize(bytes.capacity())?;
         Ok(Self {
             bytes,
             custody,

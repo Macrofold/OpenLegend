@@ -141,7 +141,7 @@ pub struct CurrentRecords {
     pub coverage: Vec<OwnerCoverage>,
 }
 
-/// One finite Node language result, bound to a current canonical SQL row.
+/// One finite language result, bound to a current canonical SQL row.
 /// The row importer consumes this preparation; it is not saved world authority.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
