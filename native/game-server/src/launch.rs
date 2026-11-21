@@ -244,7 +244,18 @@ async fn run(
     let _ = end_http.send(true);
     let _ = end_clock.send(true);
     let _ = end_lexical.send(true);
-    let stop_decisions = async move { decisions.stop().await };
+    let stop_decisions = async move {
+        // Let the scheduler acknowledge its in-flight PostgreSQL write and
+        // register the corresponding task before draining decision owners.
+        let scheduled = match scheduler {
+            Some(task) => task.await,
+            None => Ok(()),
+        };
+        let settled = decisions.stop().await;
+        scheduled?;
+        settled?;
+        Ok::<_, LaunchError>(())
+    };
     tokio::pin!(stop_decisions);
     // Let pending accepted commands finish while their writer still runs.
     while http_result.is_none() || clock_result.is_none() || decision_result.is_none() {
@@ -268,9 +279,6 @@ async fn run(
         save_result = Some(save_work.await);
     }
     lexical.await?;
-    if let Some(scheduler) = scheduler {
-        scheduler.await?;
-    }
     signal?;
     decision_result.expect("joined decision owner")?;
     save_result.expect("joined save owner")?;

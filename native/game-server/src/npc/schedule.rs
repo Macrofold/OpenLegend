@@ -238,11 +238,9 @@ impl Director {
             if *stop.borrow() {
                 return;
             }
-            let result = tokio::select! {
-                biased;
-                _ = stop.changed() => return,
-                result = self.scheduling_pass(&inbox, &mut queue) => result,
-            };
+            // A pass can be committing the next opportunity and its durable
+            // job together. Stop between passes so COMMIT keeps its owner.
+            let result = self.scheduling_pass(&inbox, &mut queue).await;
             match result {
                 Ok(())
                 | Err(WorldError::Host(
