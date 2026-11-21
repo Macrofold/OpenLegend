@@ -4,6 +4,7 @@ Choose the owner for your question; these indexes are navigation, not required r
 
 | Need                               | Start here                                                                                         |
 | ---------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Which term to use                  | [Project glossary](glossary/README.md)                                                             |
 | What the game supports             | [Feature owners](features/README.md)                                                               |
 | How the engine works               | [Technical contracts](technical/README.md), [architecture](architecture.md)                        |
 | Bundled world rules/content        | [Base world](worlds/base/README.md)                                                                |

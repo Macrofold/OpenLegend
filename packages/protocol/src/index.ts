@@ -1956,7 +1956,8 @@ export interface OperationsView {
   access?: {
     grants: AccessGrantView[];
     invites: InviteView[];
-    /** Living people without a current or historical human owner. */
+    /** Characters eligible for a player invitation: living, unretired, outside player control
+     * and without a current account binding or recorded player-account ownership. */
     candidates: Array<{ actorId: string; name: string }>;
   };
   maintenanceHistory?: MaintenanceWindowView[];

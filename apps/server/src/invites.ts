@@ -205,8 +205,8 @@ export class InviteRepository {
 }
 export class InviteError extends Error {}
 
-/** Characters with a current grant or a historical human owner are never offered again;
- * transferring a human's private history needs consent rules (docs/limits/multiplayer.md#mp06). */
+/** Exclude characters already bound by a grant or recorded as belonging to a player account.
+ * Transferring their private history would require consent rules (docs/limits/multiplayer.md#mp06). */
 export async function ownedActors(
   store: SqlGameRepository,
   worldId: string,

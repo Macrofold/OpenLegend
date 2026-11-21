@@ -33,7 +33,7 @@ This design uses the integrated [perspective](perspective-perception-tech-design
 
 PersonalEncounter.episode is an observer recognition/exposure association, **not a combat episode ID**. AttackObservationReceipt deduplicates observation of the same committed preparation. The existing ten-normal-second contextual grace, native animal episode and emotional cause all have different semantics; none is reused as a surprise timer.
 
-The inspected source already has world-enabled human PvP and actual vulnerable-collider injury. Broader CTR delivery/qualification remains open. Existing guaranteed-accuracy strike RNG behavior also differs from its accepted one-draw contract (AC09.6); F adds no random draws and does not claim to repair or qualify that separate gap.
+The inspected source already has world-enabled player-versus-player combat and actual vulnerable-collider injury. Broader CTR delivery/qualification remains open. Existing guaranteed-accuracy strike RNG behavior also differs from its accepted one-draw contract (AC09.6); F adds no random draws and does not claim to repair or qualify that separate gap.
 
 ## SUR-C01 — World policy and protected mechanism
 
@@ -708,7 +708,7 @@ These IDs specify future coverage, not running tests or a requirement for one se
 | SUR-T45 | Generalized fear with ranged danger heuristic               | Selected conditionAdjustment none prevents accidental double penalty. Walking/running speed remains unchanged by F/D fear.                                                                               |
 | SUR-T46 | Fatal surprising contact                                    | Original life receives terminal no-effect D receipt, no active shock on dead/new body; harm and outcome remain coherent without retries.                                                                 |
 | SUR-T47 | Native memoryless animal                                    | Same fair warning/cut rule, compact existing CTR/native references, no AI/cognition/memory prerequisite or second danger map.                                                                            |
-| SUR-T48 | Autonomous human accepts/refuses warning response           | Registration remains native; choices remain independent. No forced guard/flee/attack or interpreted emotion outside the owning accepted producer.                                                        |
+| SUR-T48 | NPC chooses or declines a response to a warning             | Registration remains native; choices remain independent. No forced guard/flee/attack or interpreted emotion outside the owning accepted producer.                                                        |
 | SUR-T49 | Deliberate noisy diversion                                  | Actual investigation may open an escape route; registered scoped danger may remove surprise within that scope. No forced facing or erased warning.                                                       |
 | SUR-T50 | Voluntary watch handoff                                     | Incoming watcher must actually accept/fulfill/earn lead. Outgoing work ends on its own boundary; a promise does not transfer readiness to another body.                                                  |
 

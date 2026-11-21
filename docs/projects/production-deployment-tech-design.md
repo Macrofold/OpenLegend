@@ -175,7 +175,7 @@ The [playbook](production-deployment-playbook.md#8-close-the-non-server-release-
 
 ## 9. Capacity, cost and the scale path
 
-Retain the [selected workloads](../../archive/07-technical-architecture/data-delivery-and-scale.md#1-what-scaling-means-for-this-product): first release **100 humans, 100 agents, 100 animals and 1,000 other objects**, with half of each in one scene; growth **10,000 concurrent humans**, with **200 humans and agents combined** in the local scene and an explicit animal/object/activity profile. These are unqualified targets, not stored-content ceilings.
+Retain the [selected workloads](../../archive/07-technical-architecture/data-delivery-and-scale.md#1-what-scaling-means-for-this-product): the first release targets **100 players, 100 NPCs, 100 animals and 1,000 other objects** across the shared world. One scene must contain half of each group. The growth target is **10,000 concurrent players**, with **200 player characters and NPCs combined** in one scene. State the animal population, other objects and activity tested. These are unqualified targets, not stored-content ceilings.
 
 **Pilot → qualified first release.** One recoverable world; bounded native/AI/client work; infrastructure above. Promotion requires real Auth0/browser mixed play, dense scene, aged history, sustained load, failure/recovery and measured spend.
 

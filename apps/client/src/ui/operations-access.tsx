@@ -220,8 +220,9 @@ export function AccessSection({
                 </label>
               ) : (
                 <p className="ol-muted">
-                  No living person without a human owner is available. A creator can add a person
-                  with God mode first.
+                  No character is available for this player invitation. It needs a living character
+                  who hasn’t retired or been assigned to a player account. A creator can add a
+                  character in God mode.
                 </p>
               ))}
             {role === 'player' && !!actorId && !characterAvailable && (

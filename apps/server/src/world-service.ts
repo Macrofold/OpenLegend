@@ -4252,7 +4252,7 @@ export class WorldService {
       ? { ok: true, world: departure.world }
       : { ok: false, outcome: departure.outcome };
   }
-  /** Invite enrollment: an unowned person becomes a human character in the same commit that
+  /** Invite enrollment: an unowned character becomes player-controlled in the same commit that
    * redeems the invite and records its grant. The caller validates inside this writer lane.
    * Like a rebinding, the body departs until its new controller explicitly takes control.
    * docs/projects/completed/multiplayer-entry-maintenance.md#decisions */

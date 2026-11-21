@@ -204,7 +204,7 @@ export const Settings = memo(function Settings({
               ['left', 'Left'],
               ['right', 'Right'],
               ['attackMode', 'Toggle attack mode (Shift + key)'],
-              ['create', 'Create (Shift + key)'],
+              ['create', 'Invention shortcut (saved but inactive)'],
             ] as const
           ).map(([key, label]) => (
             <label key={key}>
@@ -266,19 +266,20 @@ export const Settings = memo(function Settings({
         <Section title="Keyboard shortcuts">
           <dl className="ol-shortcut-list">
             {[
-              ['I', 'Inventory'],
-              ['C', 'Craft'],
-              ['K', 'Character'],
-              ['J', 'Events'],
+              ['C or I', 'Character, including inventory'],
+              ['K', 'Crafting'],
+              ['J', 'Journal'],
+              ['M', 'Map'],
+              ['B', 'Build'],
               ['Shift + S', 'Speak'],
               ['Shift + A', 'Act'],
               ['T', 'Use the equipped item on a target'],
               ['V', 'In view'],
               ['W / A / S / D', 'Move (default bindings)'],
               ['Shift + T', 'Toggle attack mode (default binding)'],
-              ['Shift + W', 'Create (default binding)'],
+              ['1–9, 0', 'Choose a hotbar slot'],
               ['P', 'Pause or resume the world'],
-              ['Shift + ] / [', 'Faster / slower world time'],
+              ['Shift + ] / Shift + [', 'Faster / slower world time in God mode'],
               ['Escape', 'Cancel the current choice first; otherwise open or close Game'],
             ].map(([key, purpose]) => (
               <div key={key}>
@@ -288,8 +289,9 @@ export const Settings = memo(function Settings({
             ))}
           </dl>
           <p className="ol-caption">
-            Typing and choosing text with an input method take priority over game shortcuts. Enter
-            sends the text you are writing; Shift + Enter adds a new line.
+            Open Game and choose Invent something to work on an invention. While writing a message,
+            Enter sends it and Shift + Enter adds a new line. Composing text takes priority over
+            game shortcuts.
           </p>
         </Section>
         <Section title="Leaving and returning">

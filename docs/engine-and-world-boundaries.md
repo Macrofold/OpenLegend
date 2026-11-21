@@ -251,8 +251,8 @@ Transport and presentation adapt these owners; they do not create another capabi
 
 Use the existing [G0–G3 classification](../archive/07-technical-architecture/declarations-and-evolution.md#generation-levels-and-executable-references):
 
-- Configure existing behavior inside its supported envelope.
-- Compose registered state, predicates, effects, and processes as G1 where the interpreter supports them.
+- G0 expresses speech, interpretations or plans through existing actions and supported outcomes. A character can propose lighting a fire without defining a new fire rule.
+- G1 configures or composes supported behavior through typed definitions, such as a material or recipe. It can combine registered state, predicates, effects and processes where the interpreter supports them.
 - Introduce a bounded new algorithm as G2 only when an isolated execution interface is implemented and qualified.
 - Add a host primitive, privilege, storage interpretation, or incompatible runtime change through G3 engineering.
 

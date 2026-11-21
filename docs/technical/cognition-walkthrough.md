@@ -26,7 +26,7 @@ The server repeatedly moves the world forward. During that work, it updates what
 
 Step references include their cycle: **1.4** means cycle 1, step 4. Subtables use a letter, such as **4R.2** for the second recall step. Measurements use these same references. For the overall diagnosis, jump to [why CPU remains high](#why-the-tiny-opening-still-consumes-so-much-cpu), [database work and defects](#measured-work-in-saving-and-record-lifetime), or [designed next changes](#designed-next-changes-not-yet-implemented).
 
-**Native** means ordinary game code acting under installed rules, without an AI model call. Moving a deer and choosing its routine foraging behavior can both be native work. The measured opening made zero external model calls, yet still used almost an entire main CPU core.
+In this TypeScript walkthrough, **native** describes behavior the simulation executes under the installed world rules without an AI model call. Later [server comparisons](../glossary/runtime-and-storage.md#which-program-runs-the-game) use **Native** as the name of a Rust implementation. Moving a deer and choosing its routine foraging behavior can both be native work. The measured opening made zero external model calls, yet still used almost an entire main CPU core.
 
 **Async** means a job can wait while other work proceeds. It does not automatically put its JavaScript calculations on another core. Database/provider waits release the main JavaScript thread; synchronous scans, copies, sorting and encoding still occupy it. Some geometry calculations have a separate worker.
 

@@ -1377,8 +1377,8 @@ export class AuthorityRepository {
         .prepare('INSERT INTO auth_actor_owners VALUES (?,?,?)')
         .run(worldId, actorId, accountId);
   }
-  /** Reapply current human ownership to a candidate before either gameplay or
-   * operational installation; historical gameplay cannot restore revoked bindings. */
+  /** Reapply current account-to-character bindings before installing the candidate.
+   * Restoring a checkpoint must honor access changes made since it was saved. */
   async restoreBindings(world: WorldState): Promise<void> {
     for (const [actorId, accountId] of await this.actorOwners(world.id)) {
       const actor = entityGet(world.entities, actorId)?.actor;
@@ -1397,7 +1397,7 @@ export class AuthorityRepository {
       const actor = entityGet(world.entities, grant.actorId)?.actor;
       if (!actor)
         throw new Error(
-          'The save lacks a currently bound human character; authority cannot be restored from historical state.',
+          'This checkpoint cannot be restored because it is missing a character currently assigned to an account in this world.',
         );
       if (actor.controller !== 'player') {
         materializeNativeValuesInPlace(world);

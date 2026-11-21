@@ -100,9 +100,9 @@ New world access comes from startup bindings or an **operator-issued invite** ([
 
 **Reported · Restrictiveness: Very safe.**
 
-A character’s historical human owner **cannot transfer to another account**. Rebinding leaves the former character human-owned rather than making it an NPC; both characters depart before new control is acquired.
+Once a player account owns a character, **that character cannot be reassigned to another account**. When the account changes characters, its previous character keeps its player controller. Both characters depart before the player acquires control again.
 
-**Reason / tradeoff:** Protect historical private human ownership; transferring it needs consent and historical access rules.
+**Reason / tradeoff:** The account’s association with the character protects private history. A transfer would require rules for consent and continued access to that history.
 
 ## MP09
 
@@ -162,7 +162,7 @@ The world-assistant discussion feature requires creator permission.
 
 **Current (September 28, 2026) · Restrictiveness: Safe.**
 
-Invite links are **single-use** bearer links with a 256-bit token stored only as a SHA-256 hash and shown once. Expiry is **1 hour to 30 days** (default **7 days**); a world has at most **100 pending invites**, and one character can have one pending player invite. The token survives the OIDC round trip in an HttpOnly cookie for **15 minutes**. A redeemer that already holds a grant in the world leaves the invite unused. Issuers delegate only capabilities they hold; player invites bind a living person with no current or historical human owner ([MP06](#mp06)). The console lists the newest **200** invites and at most **500** grants ordered by account ID; the grant list is not a newest-grants list.
+Invite links are **single-use** bearer links with a 256-bit token stored only as a SHA-256 hash and shown once. Expiry is **1 hour to 30 days** (default **7 days**); a world has at most **100 pending invites**, and one character can have one pending player invite. The token survives the OIDC round trip in an HttpOnly cookie for **15 minutes**. A redeemer that already holds a grant in the world leaves the invite unused. Issuers delegate only capabilities they hold; player invites bind a living character with no account currently bound to it and no recorded player account owner ([MP06](#mp06)). The console lists the newest **200** invites and at most **500** grants ordered by account ID; the grant list is not a newest-grants list.
 
 **Reason / tradeoff:** Short-lived, revocable, one-time links limit exposure of a forwarded link; bounded pending/list sizes keep the console and admission checks small. Expired or used links require a new invite. [Implementation](../../apps/server/src/invites.ts).
 

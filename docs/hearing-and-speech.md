@@ -157,7 +157,6 @@ type PerceivedSpeech = {
   intelligibility: 'none' | 'partial' | 'clear';
   segments: SpeechSegment[];
   speaker: { nameAtTime: string /* permitted grammar */ } | null;
-  addressing: 'ambient' | 'directed' | null;
   addressee: { nameAtTime: string /* permitted grammar */ } | null;
   delivery: SpeechVolume | null;
   direction: {
