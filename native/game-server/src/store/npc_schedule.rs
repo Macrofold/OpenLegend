@@ -51,15 +51,13 @@ impl Store {
         })).await
     }
 
-    /// Read only the chosen actor's durable cursor and exact speech job IDs.
-    /// The caller must independently validate the game's accepted trigger
-    /// and keep the snapshot alive until it has attempted the joined write.
+    /// Read the chosen actor's durable cursor for selecting the native trigger.
+    /// The detached result retains the exact predecessor for the joined write.
     pub(crate) async fn thought_read(
         &self,
         world: String,
         generation: String,
         actor: String,
-        event_ids: Vec<String>,
     ) -> StoreResult<ThoughtRead> {
         let budget = self.budget.clone();
         self.read_operational(move |tx|Box::pin(async move {
@@ -68,18 +66,71 @@ impl Store {
             let schedule=key(&world,&actor);
             let (_transfer, rows)=admitted_query(tx,"SELECT value FROM meta WHERE key=$1",&[&schedule],&budget).await?;
             let raw=rows.first().map(|row|row.try_get::<_,&str>(0)).transpose()?;
-            let mut bytes=raw.map_or(Some(2048),|value|json_tree_allocation_bound(value).and_then(|n|n.checked_add(value.len())).and_then(|n|n.checked_add(2048))).ok_or(StoreError::Capacity)?;
-            bytes=event_ids.iter().try_fold(bytes,|n,id|n.checked_add(256+id.len())).ok_or(StoreError::Capacity)?;
+            let bytes=raw.map_or(Some(2048),|value|json_tree_allocation_bound(value).and_then(|n|n.checked_add(value.len())).and_then(|n|n.checked_add(2048))).ok_or(StoreError::Capacity)?;
             let custody=budget.reserve(bytes).map_err(|_|StoreError::Capacity)?;
             let cursor=raw.map(|value|serde_json::from_str(value).map_err(|_|StoreError::InvalidRecord)).transpose()?.unwrap_or_default();
-            let mut speech=BTreeSet::new();
-            if !event_ids.is_empty() {
+            Ok(ThoughtRead {cursor,speech:BTreeSet::new(),expected:raw.map(str::to_owned),_custody:custody})
+        })).await
+    }
+
+    /// Read job ownership only for speech selected by the native trigger.
+    /// Check its predecessor and generation in the job snapshot. If either
+    /// changed during capture, refuse and let a later wake rebuild the trigger.
+    pub(crate) async fn thought_speech(
+        &self,
+        world: String,
+        generation: String,
+        actor: String,
+        mut prior: ThoughtRead,
+        event_ids: Vec<String>,
+    ) -> StoreResult<ThoughtRead> {
+        let budget = self.budget.clone();
+        let bytes = event_ids
+            .iter()
+            .try_fold(prior._custody.bytes(), |sum, id| {
+                sum.checked_add(256)?.checked_add(id.len())
+            })
+            .ok_or(StoreError::Capacity)?;
+        prior
+            ._custody
+            .resize(bytes)
+            .map_err(|_| StoreError::Capacity)?;
+        self.read_operational(move |tx| {
+            Box::pin(async move {
+                let head = durable_head(tx).await?.ok_or(StoreError::StaleCut)?;
+                if head.world_id != world || head.generation != generation {
+                    return Err(StoreError::StaleCut);
+                }
+                let schedule = key(&world, &actor);
+                let same: bool = tx
+                    .query_one(
+                        "SELECT (SELECT value FROM meta WHERE key=$1) IS NOT DISTINCT FROM $2",
+                        &[&schedule, &prior.expected],
+                    )
+                    .await?
+                    .try_get(0)?;
+                if !same {
+                    return Err(StoreError::StaleCut);
+                }
+
                 // The current job index owns the original speech regardless
                 // of whether the provider ever ran or the reply later failed.
                 // Do not parse player prose as PostgreSQL JSONB. Canonical
                 // job bodies can contain independently encoded UTF-16 text.
-                let encoded=event_ids.iter().map(json_record).collect::<Result<Vec<_>,_>>().map_err(|_|StoreError::InvalidRecord)?;
-                let (_job_transfer,rows)=admitted_query(tx,"SELECT DISTINCT ON (selection #>> '{playerSpeechEventId}') payload FROM jobs WHERE selection #>> '{kind}'='chat' AND selection #>> '{playerSpeechEventId}'=ANY($1) ORDER BY selection #>> '{playerSpeechEventId}',created_at DESC,id DESC",&[&encoded],&budget).await?;
+                let encoded = event_ids
+                    .iter()
+                    .map(json_record)
+                    .collect::<Result<Vec<_>, _>>()
+                    .map_err(|_| StoreError::InvalidRecord)?;
+                let (_job_transfer, rows) = admitted_query(
+                    tx,
+                    "SELECT DISTINCT ON (selection #>> '{playerSpeechEventId}') payload FROM jobs \
+                     WHERE selection #>> '{kind}'='chat' AND selection #>> '{playerSpeechEventId}'=ANY($1) \
+                     ORDER BY selection #>> '{playerSpeechEventId}',created_at DESC,id DESC",
+                    &[&encoded],
+                    &budget,
+                )
+                .await?;
                 #[derive(Deserialize)]
                 #[serde(rename_all="camelCase")]
                 struct SpeechOwner<'a> {
@@ -89,16 +140,22 @@ impl Store {
                 }
                 #[derive(Deserialize)]
                 #[serde(rename_all="camelCase")]
-                struct SpeechRecipient<'a> { npc_id: &'a str }
+                struct SpeechRecipient<'a> {
+                    npc_id: &'a str,
+                }
                 for row in rows {
-                    let owner:SpeechOwner<'_>=serde_json::from_str(row.try_get(0)?).map_err(|_|StoreError::InvalidRecord)?;
-                    if owner.request.npc_id==actor && event_ids.iter().any(|id|id==owner.player_speech_event_id) {
-                        speech.insert(owner.player_speech_event_id.to_owned());
+                    let owner: SpeechOwner<'_> = serde_json::from_str(row.try_get(0)?)
+                        .map_err(|_| StoreError::InvalidRecord)?;
+                    if owner.request.npc_id == actor
+                        && event_ids.iter().any(|id| id == owner.player_speech_event_id)
+                    {
+                        prior.speech.insert(owner.player_speech_event_id.to_owned());
                     }
                 }
-            }
-            Ok(ThoughtRead {cursor,speech,expected:raw.map(str::to_owned),_custody:custody})
-        })).await
+                Ok(prior)
+            })
+        })
+        .await
     }
 
     /// Publish the same native opportunity at most once. The previous

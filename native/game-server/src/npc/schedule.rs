@@ -436,7 +436,6 @@ impl Director {
                 observed.world_id.clone(),
                 observed.generation.clone(),
                 observed.actor_id.clone(),
-                Vec::new(),
             )
             .await?;
         let bytes = request(
@@ -458,15 +457,17 @@ impl Director {
         if !plan.matches(observed) {
             return Ok(None);
         }
-        let prior = if plan.speech_ids().is_empty() {
+        let speech_ids = plan.speech_ids();
+        let prior = if speech_ids.is_empty() {
             prior
         } else {
             store
-                .thought_read(
+                .thought_speech(
                     observed.world_id.clone(),
                     observed.generation.clone(),
                     observed.actor_id.clone(),
-                    plan.speech_ids(),
+                    prior,
+                    speech_ids,
                 )
                 .await?
         };

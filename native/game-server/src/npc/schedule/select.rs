@@ -9,6 +9,7 @@ use openlegend_simulation::{
     host::{ByteBudget, ByteReservation},
     runtime::NpcScheduleCause,
 };
+use serde::Deserialize;
 use serde_json::{Value, json};
 
 pub(super) struct Inspection {
@@ -39,8 +40,10 @@ impl Inspection {
         // The decoded original and digest scratch overlap only for this pass.
         let bytes = json_tree_allocation_bound(text).ok_or("NPC intake size")?;
         let custody = budget.reserve(bytes.checked_mul(3).ok_or("NPC intake size")? + 4096)?;
-        let input = serde_json::from_str(text)?;
-        let read = serde_json::from_str(text)?;
+        let read: Value = serde_json::from_str(text)?;
+        // The native packet already owns one accepted snapshot. Read its
+        // typed queue fields from that tree instead of parsing the text again.
+        let input = Inputs::deserialize(&read)?;
         Ok(Self {
             input,
             read,
