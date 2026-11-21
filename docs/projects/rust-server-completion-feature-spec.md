@@ -1,8 +1,8 @@
 # Complete game on the Rust server
 
-| Status      | Current progress                                                                                           | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | The full-game design is complete and the existing Rust executable serves the previously qualified opening. | 2026-11-21   |
+| Status      | Current progress                                                                                            | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The first direct Rust conversation slice works through the previously qualified opening and a cold restart. | 2026-11-21   |
 
 ## What a player should be able to do
 

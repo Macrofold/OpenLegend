@@ -220,13 +220,14 @@ impl Collected {
             budget,
         )?;
         let through = self.through.max(facts.value.own.accepted_cut);
-        let projection_custody = self.projection_custody(&facts, budget)?;
+        let projection_custody =
+            self.projection_custody(&facts, &fresh, ProjectionPurpose::Recall, budget)?;
         let source_data = self.sources.as_ref().map(|data| &data.value);
         let mut ranked = Vec::new();
         let (mut binding, context, _, _) = project(
             game,
             work,
-            &facts.value,
+            (&fresh, &facts.value),
             &self.attention.ordinals,
             source_data,
             &self.required,
@@ -327,6 +328,8 @@ impl Collected {
     pub(super) fn projection_custody(
         &self,
         fresh: &CurrentRead,
+        read: &RuntimeNpcRead,
+        purpose: ProjectionPurpose,
         budget: &ByteBudget,
     ) -> Result<ByteReservation, CallFailure> {
         // A selected ordinal produces two 24-byte aliases, a two-field JSON
@@ -338,10 +341,39 @@ impl Collected {
             .len()
             .checked_mul(2048)
             .ok_or_else(|| capacity(CapacityError))?;
+        // The detached scene owns labels, prose, aliases and a structured
+        // record per selected body. Its custody is separate from the loan.
+        let bodies = read
+            .selected_body_ordinals()
+            .map_err(packet_failure)?
+            .iter()
+            .try_fold(0usize, |bytes, &ordinal| {
+                let body = read.presented_body(ordinal).ok_or(CallFailure::Invalid)?;
+                let text = if matches!(purpose, ProjectionPurpose::Decision) {
+                    let seen = body.observed.ok_or(CallFailure::Invalid)?.body;
+                    [
+                        body.name.name.storage_bytes(),
+                        body.name.indefinite_article.as_ref().map_or(0, String::len),
+                        seen.description
+                            .as_ref()
+                            .map_or(0, |text| text.storage_bytes()),
+                    ]
+                    .into_iter()
+                    .chain(seen.outward.iter().map(String::len))
+                    .try_fold(0usize, usize::checked_add)
+                } else {
+                    Some(0)
+                };
+                text.and_then(|text| text.checked_mul(12))
+                    .and_then(|text| text.checked_add(2048))
+                    .and_then(|text| bytes.checked_add(text))
+                    .ok_or_else(|| capacity(CapacityError))
+            })?;
         let bytes = fresh
             ._custody
             .bytes()
             .checked_add(attention)
+            .and_then(|bytes| bytes.checked_add(bodies))
             .and_then(|n| {
                 n.checked_add(
                     self.sources

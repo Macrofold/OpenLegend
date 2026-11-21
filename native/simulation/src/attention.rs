@@ -39,6 +39,8 @@ pub struct AttentionPoint {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct AttentionPresentation {
     pub key: String,
+    #[serde(skip)]
+    pub selected: bool,
     pub description_revision: String,
     pub change_revision: String,
     #[serde(

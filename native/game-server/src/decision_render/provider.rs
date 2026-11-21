@@ -6,7 +6,10 @@ use crate::{
     network::NetworkError,
     provider_transport::{PreparedProviderRequest, ProviderDestination},
 };
-use openlegend_simulation::host::{ByteBudget, ByteReservation};
+use openlegend_simulation::{
+    host::{ByteBudget, ByteReservation},
+    records::SqlCell,
+};
 use serde::Serialize;
 use serde_json::Value;
 use std::collections::BTreeMap;
@@ -421,8 +424,14 @@ fn finite(value: &Value) -> Option<f64> {
 }
 
 pub(crate) struct GenerationOutput {
-    pub(crate) value: Value,
-    _custody: ByteReservation,
+    value: SqlCell,
+    custody: ByteReservation,
+}
+
+impl GenerationOutput {
+    pub(crate) fn into_parts(self) -> (SqlCell, ByteReservation) {
+        (self.value, self.custody)
+    }
 }
 
 pub(crate) enum TextResult<'a> {
@@ -465,13 +474,9 @@ pub(crate) fn generation_output(
     if text.len() > 40_000 {
         return Err(RenderError::InvalidResponse);
     }
-    let size = openlegend_simulation::encoding::json_tree_allocation_bound(text)
-        .ok_or(RenderError::InvalidResponse)?;
+    let size = SqlCell::json_decode_bound(text).ok_or(RenderError::InvalidResponse)?;
     let custody = budget.reserve(size).map_err(|_| RenderError::Capacity)?;
     let value = serde_json::from_str(text).map_err(|_| RenderError::InvalidResponse)?;
     schema.validate(&value)?;
-    Ok(GenerationOutput {
-        value,
-        _custody: custody,
-    })
+    Ok(GenerationOutput { value, custody })
 }

@@ -337,6 +337,7 @@ impl Simulation {
         &self,
         actor_id: &str,
         required_appraisals: &[crate::appraisals::AppraisalScope],
+        bridge: bool,
         budget: &ByteBudget,
     ) -> Result<AcceptedActorRead, ActorReadError> {
         self.require_accepted_read()?;
@@ -357,7 +358,7 @@ impl Simulation {
         }
         self.capture_actor_encoded(
             actor_id,
-            ActorReadPurpose::NpcDecision,
+            ActorReadPurpose::NpcDecision { bridge },
             required_appraisals,
             budget,
         )
@@ -414,7 +415,7 @@ impl Simulation {
             .get(actor_id)
             .ok_or(ExecutionError::MissingActor)?;
         let actor = entity.actor.as_ref().ok_or(ExecutionError::MissingActor)?;
-        if matches!(purpose, ActorReadPurpose::NpcDecision) {
+        if matches!(purpose, ActorReadPurpose::NpcDecision { .. }) {
             require_supported_known_agreement_read(state, actor_id)?;
         }
         let (self_body_lease, self_body_reservation) =
@@ -447,7 +448,7 @@ impl Simulation {
             };
         let (own, prepared) = with_actor_self(state, actor_id, purpose, budget, prepare)?;
         let perception = capture_actor_perception(state, actor_id, purpose, budget)?;
-        let appraisals = if matches!(purpose, ActorReadPurpose::NpcDecision) {
+        let appraisals = if matches!(purpose, ActorReadPurpose::NpcDecision { .. }) {
             Some(crate::appraisals::capture_actor_appraisals(
                 state,
                 actor_id,
@@ -459,7 +460,7 @@ impl Simulation {
         };
         Ok((
             AcceptedActorRead {
-                native_validity: if matches!(purpose, ActorReadPurpose::NpcDecision) {
+                native_validity: if matches!(purpose, ActorReadPurpose::NpcDecision { .. }) {
                     Some(crate::capture::DecisionValidityWitness::capture(
                         state,
                         actor_id,

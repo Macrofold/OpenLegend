@@ -1,5 +1,8 @@
 use super::{DecisionPolicy, RenderError};
-use openlegend_simulation::host::{ByteBudget, ByteReservation};
+use openlegend_simulation::{
+    host::{ByteBudget, ByteReservation},
+    records::SqlCell,
+};
 use serde_json::{Value, json};
 
 /// These aliases must come from the corresponding native response binding.
@@ -49,12 +52,18 @@ impl BoundSchema {
     /// The body decoder and preview path use the same materialized provider
     /// schema. Converting received coordinates and current effect validation
     /// stay with the native response owner and its retained read.
-    pub(crate) fn validate(&self, value: &Value) -> Result<(), RenderError> {
+    pub(crate) fn validate(&self, value: &SqlCell) -> Result<(), RenderError> {
         if matches_schema(&self.value, value) {
-            let requests = value["queries"]
-                .as_array()
+            let requests = value
+                .get("queries")
+                .and_then(SqlCell::as_array)
                 .is_some_and(|queries| !queries.is_empty());
-            if !requests || value["operations"].as_array().is_some_and(Vec::is_empty) {
+            if !requests
+                || value
+                    .get("operations")
+                    .and_then(SqlCell::as_array)
+                    .is_some_and(<[SqlCell]>::is_empty)
+            {
                 return Ok(());
             }
         }
@@ -276,9 +285,102 @@ fn size_sum(base: usize, values: impl Iterator<Item = usize>) -> usize {
     values.fold(base, usize::saturating_add)
 }
 
+/// Validate an incremental preview and a complete exact-text response against
+/// the same schema without rebuilding either input as the other value type.
+trait SchemaValue: PartialEq<Value> + Sized {
+    fn null(&self) -> bool;
+    fn boolean(&self) -> bool;
+    fn string(&self) -> Option<&str>;
+    fn string_length(&self) -> Option<usize>;
+    fn number(&self) -> Option<f64>;
+    fn array(&self) -> Option<&[Self]>;
+    fn members(&self) -> Option<impl Iterator<Item = (&str, &Self)>>;
+    fn field(&self, name: &str) -> Option<&Self>;
+}
+
+impl SchemaValue for Value {
+    fn null(&self) -> bool {
+        self.is_null()
+    }
+
+    fn boolean(&self) -> bool {
+        self.is_boolean()
+    }
+
+    fn string(&self) -> Option<&str> {
+        self.as_str()
+    }
+
+    fn string_length(&self) -> Option<usize> {
+        Some(self.as_str()?.chars().count())
+    }
+
+    fn number(&self) -> Option<f64> {
+        self.as_f64()
+    }
+
+    fn array(&self) -> Option<&[Self]> {
+        self.as_array().map(Vec::as_slice)
+    }
+
+    fn members(&self) -> Option<impl Iterator<Item = (&str, &Self)>> {
+        Some(
+            self.as_object()?
+                .iter()
+                .map(|(key, value)| (key.as_str(), value)),
+        )
+    }
+
+    fn field(&self, name: &str) -> Option<&Self> {
+        self.get(name)
+    }
+}
+
+impl SchemaValue for SqlCell {
+    fn null(&self) -> bool {
+        self.is_null()
+    }
+
+    fn boolean(&self) -> bool {
+        self.as_bool().is_some()
+    }
+
+    fn string(&self) -> Option<&str> {
+        self.as_str()
+    }
+
+    fn string_length(&self) -> Option<usize> {
+        let text = self.as_text()?;
+        Some(
+            text.as_unicode()
+                .map_or_else(|| text.character_count(), |text| text.chars().count()),
+        )
+    }
+
+    fn number(&self) -> Option<f64> {
+        self.as_f64()
+    }
+
+    fn array(&self) -> Option<&[Self]> {
+        self.as_array()
+    }
+
+    fn members(&self) -> Option<impl Iterator<Item = (&str, &Self)>> {
+        Some(
+            self.as_object()?
+                .iter()
+                .map(|(key, value)| (key.as_str(), value)),
+        )
+    }
+
+    fn field(&self, name: &str) -> Option<&Self> {
+        self.get(name)
+    }
+}
+
 /// Validate the finite, reference-free shapes from the pinned schema producer.
 /// A schema outside that subset is refused rather than partially validated.
-fn matches_schema(schema: &Value, value: &Value) -> bool {
+fn matches_schema(schema: &Value, value: &impl SchemaValue) -> bool {
     let Some(fields) = schema.as_object() else {
         return false;
     };
@@ -306,12 +408,12 @@ fn matches_schema(schema: &Value, value: &Value) -> bool {
         return false;
     }
     if let Some(expected) = schema.get("const") {
-        if expected != value {
+        if value != expected {
             return false;
         }
     }
     if let Some(allowed) = schema.get("enum").and_then(Value::as_array) {
-        if !allowed.contains(value) {
+        if !allowed.iter().any(|expected| value == expected) {
             return false;
         }
     }
@@ -334,28 +436,27 @@ fn matches_schema(schema: &Value, value: &Value) -> bool {
     }
 }
 
-fn matches_type(kind: &str, schema: &Value, value: &Value) -> bool {
+fn matches_type(kind: &str, schema: &Value, value: &impl SchemaValue) -> bool {
     match kind {
-        "null" => value.is_null(),
-        "boolean" => value.is_boolean(),
-        "string" => value.as_str().is_some_and(|value| {
-            let length = value.chars().count();
+        "null" => value.null(),
+        "boolean" => value.boolean(),
+        "string" => value.string_length().is_some_and(|length| {
             let pattern = schema.get("pattern").and_then(Value::as_str);
             within_count(length, &schema["minLength"], &schema["maxLength"])
                 && match pattern {
                     None => true,
-                    Some("^[a-z][a-z0-9_]{0,23}$") => {
+                    Some("^[a-z][a-z0-9_]{0,23}$") => value.string().is_some_and(|value| {
                         let mut bytes = value.bytes();
                         value.len() <= 24
                             && bytes.next().is_some_and(|byte| byte.is_ascii_lowercase())
                             && bytes.all(|byte| {
                                 byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'_'
                             })
-                    }
+                    }),
                     _ => false,
                 }
         }),
-        "integer" | "number" => value.as_f64().is_some_and(|number| {
+        "integer" | "number" => value.number().is_some_and(|number| {
             number.is_finite()
                 && (kind != "integer" || number.fract() == 0.0)
                 && schema["minimum"]
@@ -365,13 +466,13 @@ fn matches_type(kind: &str, schema: &Value, value: &Value) -> bool {
                     .as_f64()
                     .is_none_or(|maximum| number <= maximum)
         }),
-        "array" => value.as_array().is_some_and(|array| {
+        "array" => value.array().is_some_and(|array| {
             within_count(array.len(), &schema["minItems"], &schema["maxItems"])
                 && array
                     .iter()
                     .all(|item| matches_schema(&schema["items"], item))
         }),
-        "object" => value.as_object().is_some_and(|object| {
+        "object" => value.members().is_some_and(|mut members| {
             let Some(properties) = schema["properties"].as_object() else {
                 return false;
             };
@@ -381,8 +482,8 @@ fn matches_type(kind: &str, schema: &Value, value: &Value) -> bool {
             schema["additionalProperties"] == json!(false)
                 && required
                     .iter()
-                    .all(|key| key.as_str().is_some_and(|key| object.contains_key(key)))
-                && object.iter().all(|(key, value)| {
+                    .all(|key| key.as_str().is_some_and(|key| value.field(key).is_some()))
+                && members.all(|(key, value)| {
                     properties
                         .get(key)
                         .is_some_and(|child| matches_schema(child, value))

@@ -199,10 +199,10 @@ impl ResponseReads {
     pub(crate) fn compatible(original: &AcceptedActorRead, current: &AcceptedActorRead) -> bool {
         matches!(
             original.purpose,
-            crate::capture::ActorReadPurpose::NpcDecision
+            crate::capture::ActorReadPurpose::NpcDecision { .. }
         ) && matches!(
             current.purpose,
-            crate::capture::ActorReadPurpose::NpcDecision
+            crate::capture::ActorReadPurpose::NpcDecision { .. }
         ) && original.perception.world_id == current.perception.world_id
             && original.perception.actor_id == current.perception.actor_id
             && original.perception.evidence.generation() == current.perception.evidence.generation()

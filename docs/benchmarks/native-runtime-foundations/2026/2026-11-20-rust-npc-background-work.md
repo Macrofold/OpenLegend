@@ -143,3 +143,13 @@ During steady play, median database commits were 9,062 → 8,659 and the Postgre
 The release executable SHA-256 prefixes in pair order were `8ac4a7290229`, `bad07241c3da` and `f302270e9b5c` for the full packet and `f7583dcfc2a5`, `0d698407e17c` and `f2b0334e921a` for the smaller packet.
 
 The runner verified cleanup, released slot 2 and recorded it stopped. An independent EC2 read confirmed the stop. The campaign settled at an estimated $0.585582 with no remaining campaign hold and $0 in provider charges. The continuing task ledger contained $94.574402 in estimated spend and $1.325803 in older holds against the shared $100 ceiling.
+
+## First typed conversation handoffs
+
+On November 21, pinned local debug source `a782ad14f45b8393c8d4eafdb154d335cd3eabc6` (executable SHA-256 `209d0db692f794295466939d852131048c800d89c9ef636c02728a19a444d52f`) used separate disposable PostgreSQL databases, the existing opening and controlled HTTPS. Rust served the real authenticated endpoints, player stream, clock, ordinary saver and reply application without a Node server process. The fixture driver and HTTPS model stand-in ran separately from the server.
+
+- A real walk appeared in the player stream while the reply's optional relevance request was held. Releasing it led to one final generation, one applied reply and a saved receipt recovered on a fresh process.
+- Withdrawing a required utterance while the same review was held changed its history privacy revision. The review attempt settled, the final generation never started and no reply applied. Cancelling during settlement likewise produced no final generation or reply. Both fixtures recovered accepted movement and closed cleanly.
+- A separate held generation returned exact UTF-16 text. Speech applied once and the dependent movement was refused for its invalid world destination. A repeated request recovered the same saved receipt. The older binary refused that exact response before applying it. An initial ordinary companion run failed the cold process's final save with `WriterUnavailable`. A repeat completed. The first failure remains evidence of an intermittent shutdown gap.
+
+These checks qualify the selected path locally. The overlapping-update check at the final source comparison, automatic prompt parity and isolated managed-worker comparisons remain open. No CPU, latency or memory improvement is attributed to these handoffs yet.

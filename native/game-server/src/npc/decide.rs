@@ -8,7 +8,7 @@ use crate::{
     decision_dispatch::{
         CallAuthority, CallFailure, DecisionDispatch, PreparedCall, ProviderObservation,
     },
-    decision_render::{BoundSchema, OfferedAction, provider},
+    decision_render::{BoundSchema, OfferedAction, RenderError, provider},
     live_save::LiveSaves,
     provider_transport::{
         FundedReply, HttpEvidence, ProviderDestination,
@@ -19,9 +19,10 @@ use crate::{
 use openlegend_simulation::{
     encoding::{json_tree_allocation_bound, sha256_hex},
     experience::PersonalSourceRef,
-    host::{ByteBudget, ByteReservation},
+    host::{ByteBudget, ByteReservation, CapacityError},
+    records::SqlCell,
+    runtime::{RuntimeError, RuntimeNpcOperations},
 };
-use serde::Serialize;
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::{sync::watch, time::Instant};
@@ -404,7 +405,7 @@ pub(super) async fn run(
                                 provider::TextResult::Refused => Err(CallFailure::Invalid),
                                 provider::TextResult::Complete(text) => {
                                     provider::generation_output(text, &schema, &parse_budget)
-                                        .map_err(|_| CallFailure::Invalid)
+                                        .map_err(generation_failure)
                                 }
                             }
                         } else {
@@ -415,7 +416,7 @@ pub(super) async fn run(
                 .await
                 .map_err(|error| error.at("generate"))?;
             ensure_running(&work)?;
-            let payload = effects(parsed, &prepared.frame, budget)
+            let payload = effects(parsed, &prepared.frame)
                 .map_err(|error| error.at("response-validation"))?;
             super::apply::apply(
                 saves,
@@ -483,23 +484,34 @@ async fn finish_native(
         .host
         .budget()
         .reserve(4096)
-        .map_err(|_| CallFailure::Invalid)?;
-    let operations = [serde_json::json!({
-        "localId":"action","requiresAccepted":[],"talk":null,"think":null,"goal":null,"plan":null,
-        "act":{"kind":"known","mode":if choice.transition=="continue" {"enqueue"} else {&choice.transition},
-            "actionId":choice.id,"verb":null,"targetEntityId":null,"description":null},
-    })];
-    let payload = crate::wire::encode(
-        &Operations {
-            operations: &operations,
-        },
-        b"",
-        b"",
-        game.host.budget(),
+        .map_err(response_capacity)?;
+    let mode = if choice.transition == "continue" {
+        "enqueue"
+    } else {
+        &choice.transition
+    };
+    let action = record([
+        ("kind", "known".into()),
+        ("mode", mode.into()),
+        ("actionId", choice.id.as_str().into()),
+        ("verb", SqlCell::Null),
+        ("targetEntityId", SqlCell::Null),
+        ("description", SqlCell::Null),
+    ]);
+    let operation = record([
+        ("localId", "action".into()),
+        ("requiresAccepted", SqlCell::Array(Vec::new())),
+        ("talk", SqlCell::Null),
+        ("think", SqlCell::Null),
+        ("goal", SqlCell::Null),
+        ("plan", SqlCell::Null),
+        ("act", action),
+    ]);
+    let payload = RuntimeNpcOperations::new(
+        record([("operations", SqlCell::Array(vec![operation]))]),
+        transient,
     )
-    .map_err(|_| CallFailure::Invalid)?;
-    drop(operations);
-    drop(transient);
+    .map_err(|error| CallFailure::World(error.into()))?;
     super::apply::apply(
         saves,
         game,
@@ -807,77 +819,111 @@ fn direct_output(
     for text in texts() {
         joined.push_str(text);
     }
-    provider::generation_output(&joined, schema, budget).map_err(|_| CallFailure::Invalid)
+    provider::generation_output(&joined, schema, budget).map_err(generation_failure)
 }
 
-#[derive(Serialize)]
-struct Operations<'a> {
-    operations: &'a [Value],
+fn response_capacity(error: CapacityError) -> CallFailure {
+    CallFailure::World(RuntimeError::from(error).into())
+}
+
+fn generation_failure(error: RenderError) -> CallFailure {
+    if matches!(error, RenderError::Capacity) {
+        response_capacity(CapacityError)
+    } else {
+        CallFailure::Invalid
+    }
+}
+
+fn record<const N: usize>(fields: [(&str, SqlCell); N]) -> SqlCell {
+    SqlCell::Object(
+        fields
+            .into_iter()
+            .map(|(name, value)| (name.to_owned(), value))
+            .collect(),
+    )
 }
 
 fn effects(
-    mut parsed: provider::GenerationOutput,
+    parsed: provider::GenerationOutput,
     frame: &prepare::ReceivedFrame,
-    budget: &ByteBudget,
-) -> Result<axum::body::Bytes, CallFailure> {
-    if parsed.value["queries"]
-        .as_array()
+) -> Result<RuntimeNpcOperations, CallFailure> {
+    let (value, mut custody) = parsed.into_parts();
+    let SqlCell::Object(mut response) = value else {
+        return Err(CallFailure::Invalid);
+    };
+    if response
+        .shift_remove("queries")
+        .as_ref()
+        .and_then(SqlCell::as_array)
         .is_some_and(|queries| !queries.is_empty())
     {
         return Err(CallFailure::Stale(
             "situation-query-continuation-unavailable",
         ));
     }
-    let operations = parsed.value["operations"]
-        .as_array_mut()
-        .ok_or(CallFailure::Invalid)?;
-    for operation in &mut *operations {
-        if let Some(fields) = operation.as_object_mut()
-            && fields.get("appraise").is_some_and(Value::is_null)
-        {
+    let Some(SqlCell::Array(operations)) = response.get_mut("operations") else {
+        return Err(CallFailure::Invalid);
+    };
+    for operation in operations {
+        let SqlCell::Object(fields) = operation else {
+            return Err(CallFailure::Invalid);
+        };
+        if fields.get("appraise").is_some_and(SqlCell::is_null) {
             fields.shift_remove("appraise");
         }
-        if let Some(arguments) = operation
-            .get_mut("act")
-            .and_then(|act| act.get_mut("invocation"))
-            .and_then(Value::as_object_mut)
-            && arguments.get("frame").and_then(Value::as_str) == Some("received")
-        {
-            if arguments.get("family").and_then(Value::as_str) != Some("move") {
-                return Err(CallFailure::Invalid);
-            }
-            let right = arguments
-                .get("x")
-                .and_then(Value::as_f64)
-                .ok_or(CallFailure::Invalid)?;
-            let forward = arguments
-                .get("z")
-                .and_then(Value::as_f64)
-                .ok_or(CallFailure::Invalid)?;
-            let x = frame.x - frame.heading.cos() * right + frame.heading.sin() * forward;
-            let z = frame.z + frame.heading.sin() * right + frame.heading.cos() * forward;
-            arguments.insert(
-                "x".into(),
-                serde_json::Number::from_f64(x)
-                    .ok_or(CallFailure::Invalid)?
-                    .into(),
-            );
-            arguments.insert(
-                "z".into(),
-                serde_json::Number::from_f64(z)
-                    .ok_or(CallFailure::Invalid)?
-                    .into(),
-            );
-            arguments.insert("frame".into(), "world".into());
-            if arguments.get("surfaceId").is_some_and(Value::is_null)
-                && let Some(surface) = frame.support.as_ref()
-            {
-                arguments.insert("surfaceId".into(), surface.clone().into());
-            }
+        let Some(SqlCell::Object(act)) = fields.get_mut("act") else {
+            continue;
+        };
+        let Some(SqlCell::Object(arguments)) = act.get_mut("invocation") else {
+            continue;
+        };
+        let Some(original) = arguments.get("frame") else {
+            continue;
+        };
+        if original.as_str() != Some("received") {
+            continue;
         }
+        if arguments.get("family").and_then(SqlCell::as_str) != Some("move") {
+            return Err(CallFailure::Invalid);
+        }
+        let right = arguments
+            .get("x")
+            .and_then(SqlCell::as_f64)
+            .ok_or(CallFailure::Invalid)?;
+        let forward = arguments
+            .get("z")
+            .and_then(SqlCell::as_f64)
+            .ok_or(CallFailure::Invalid)?;
+        let x = frame.x - frame.heading.cos() * right + frame.heading.sin() * forward;
+        let z = frame.z + frame.heading.sin() * right + frame.heading.cos() * forward;
+        let coordinate = |value| {
+            serde_json::Number::from_f64(value)
+                .map(SqlCell::Number)
+                .ok_or(CallFailure::Invalid)
+        };
+        *arguments.get_mut("x").expect("received x was read") = coordinate(x)?;
+        *arguments.get_mut("z").expect("received z was read") = coordinate(z)?;
+        *arguments.get_mut("frame").expect("received frame was read") = "world".into();
+        if let Some(value) = arguments
+            .get_mut("surfaceId")
+            .filter(|value| value.is_null())
+            && let Some(surface) = &frame.support
+        {
+            custody
+                .resize(
+                    custody
+                        .bytes()
+                        .checked_add(surface.len())
+                        .ok_or_else(|| response_capacity(CapacityError))?,
+                )
+                .map_err(response_capacity)?;
+            *value = surface.as_str().into();
+        }
+        // The replacement for the longer "received" tag uses its existing
+        // allowance. New coordinate values own no additional text backing.
     }
-    crate::wire::encode(&Operations { operations }, b"", b"", budget)
-        .map_err(|_| CallFailure::Invalid)
+    RuntimeNpcOperations::new(SqlCell::Object(response), custody)
+        .map_err(|error| CallFailure::World(error.into()))
 }
 
 struct FundedJson {

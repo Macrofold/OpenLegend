@@ -52,7 +52,8 @@ impl HostedWorld {
         request: Bytes,
     ) -> Result<RuntimeNpcRead, WorldError> {
         let _turn = self.enter().await?;
-        self.call(move |session| session.read_npc(&request)).await
+        self.call(move |session| session.read_npc_direct(&request))
+            .await
     }
 
     /// Read and begin the physical catalogue in one world turn. The native
@@ -65,7 +66,7 @@ impl HostedWorld {
     ) -> Result<RuntimeNpcRead, WorldError> {
         self.prepare_npc_at(
             game,
-            move |session| session.read_npc(&request),
+            move |session| session.read_npc_direct(&request),
             move |session, read| session.begin_npc_candidates(read, &selector),
         )
         .await
@@ -80,7 +81,7 @@ impl HostedWorld {
     ) -> Result<RuntimeNpcRead, WorldError> {
         self.prepare_npc_at(
             game,
-            move |session| session.read_npc(&request),
+            move |session| session.read_npc_direct(&request),
             NativeWorldSession::begin_npc_recall,
         )
         .await

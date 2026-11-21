@@ -146,7 +146,7 @@ impl NpcCandidateCursor {
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
         if candidate.base_cut != read.accepted_cut
-            || !matches!(read.purpose, ActorReadPurpose::NpcDecision)
+            || !matches!(read.purpose, ActorReadPurpose::NpcDecision { .. })
         {
             return Err(ExecutionError::InvalidCheckpoint);
         }

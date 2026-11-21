@@ -71,7 +71,8 @@ pub use crate::time::{AdmittedWorldInput, Direction, ReleaseInput, SteeringInput
 pub use consumer::RuntimeConsumer;
 pub(crate) use npc::HeldSourceProof;
 pub use npc::{
-    RuntimeNpcDecisionFrame, RuntimeNpcDecisionOrigin, RuntimeNpcPreparationStep,
+    RuntimeNpcDecisionFrame, RuntimeNpcDecisionOrigin, RuntimeNpcObservedBody,
+    RuntimeNpcOperations, RuntimeNpcPreparationStep, RuntimeNpcPresentedBody,
     RuntimeNpcPublication, RuntimeNpcRead, RuntimeNpcResponseTicket,
 };
 pub use player::{

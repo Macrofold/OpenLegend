@@ -82,9 +82,9 @@ pub(crate) use batch::{
 mod current_journal;
 pub(crate) use attention_control::{
     AttentionSelection, AttentionUpdate, CapturedAttentionPresentations, CapturedSemanticCauses,
-    acknowledge_attention, acknowledge_semantic_cause, capture_attention_read,
-    evaluate_attention_relations, next_attention_work_at, prune_withdrawn_attention,
-    set_attention_focus, update_attention,
+    acknowledge_attention, acknowledge_semantic_cause, capture_attention_presentations,
+    capture_attention_read, evaluate_attention_relations, next_attention_work_at,
+    prune_withdrawn_attention, set_attention_focus, update_attention,
 };
 mod cohort;
 pub(crate) use cohort::{

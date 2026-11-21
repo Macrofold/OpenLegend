@@ -9,19 +9,22 @@ use crate::reception::{
 use serde::ser::{SerializeMap, SerializeSeq};
 
 pub(crate) struct NpcCurrentCapture {
-    json: String,
+    bridge: Option<(String, ByteReservation)>,
     pub(super) attention: crate::reception::CapturedAttentionPresentations,
-    _storage: ByteReservation,
 }
 impl NpcCurrentCapture {
-    pub(super) fn encoded(&self) -> &str {
-        &self.json
+    pub(super) fn has_bridge_packet(&self) -> bool {
+        self.bridge.is_some()
     }
 }
 impl Serialize for NpcCurrentCapture {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let (json, _) = self
+            .bridge
+            .as_ref()
+            .ok_or_else(|| serde::ser::Error::custom("NPC read has no bridge representation"))?;
         let raw: &serde_json::value::RawValue =
-            serde_json::from_str(&self.json).map_err(serde::ser::Error::custom)?;
+            serde_json::from_str(json).map_err(serde::ser::Error::custom)?;
         raw.serialize(serializer)
     }
 }
@@ -165,6 +168,7 @@ pub(crate) fn prepare(
     scope: Option<&CurrentBodyReadScope<'_>>,
     names: &InstalledPersonalNameReader<'_>,
     first_ordinal: usize,
+    bridge: bool,
     budget: &ByteBudget,
 ) -> Result<PreparedNpcCurrent, ExecutionError> {
     let actor = state
@@ -178,6 +182,34 @@ pub(crate) fn prepare(
         .perception_evidence
         .as_ref()
         .and_then(|owners| owners.get(actor_id));
+    let fields = owner
+        .map_or(Some(0), |owner| {
+            owner.current.values().try_fold(0usize, |n, contact| {
+                contact
+                    .content
+                    .groups
+                    .iter()
+                    .try_fold(n, |n, group| n.checked_add(group.received.fields.len()))
+            })
+        })
+        .ok_or(ExecutionError::Capacity)?;
+    if !bridge {
+        let backing = budget.reserve(
+            fields
+                .checked_mul(size_of::<OwnedCurrentFacet>())
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let current = capture_fields(owner, scope, first_ordinal, fields, budget, |_, _, _| {})?;
+        let attention = crate::reception::capture_attention_presentations(state, actor_id, budget)?;
+        return Ok(PreparedNpcCurrent {
+            capture: NpcCurrentCapture {
+                bridge: None,
+                attention,
+            },
+            current,
+            backing,
+        });
+    }
     let mut references = 0usize;
     let mut overflow = false;
     if let Some(owner) = owner {
@@ -192,17 +224,6 @@ pub(crate) fn prepare(
     if overflow {
         return Err(ExecutionError::Capacity);
     }
-    let fields = owner
-        .map_or(Some(0), |owner| {
-            owner.current.values().try_fold(0usize, |n, contact| {
-                contact
-                    .content
-                    .groups
-                    .iter()
-                    .try_fold(n, |n, group| n.checked_add(group.received.fields.len()))
-            })
-        })
-        .ok_or(ExecutionError::Capacity)?;
     let contacts = owner.map_or(0, |owner| owner.current.len());
     let handle_count = contacts
         .checked_add(
@@ -245,54 +266,27 @@ pub(crate) fn prepare(
     grants
         .try_reserve_exact(fields)
         .map_err(|_| ExecutionError::Capacity)?;
-    let mut current = Vec::new();
-    current
-        .try_reserve_exact(fields)
-        .map_err(|_| ExecutionError::Capacity)?;
     let mut bodies = Vec::new();
     bodies
         .try_reserve_exact(contacts)
         .map_err(|_| ExecutionError::Capacity)?;
     if let (Some(owner), Some(scope)) = (owner, scope) {
-        for (id, contact) in &owner.current {
+        for id in owner.current.keys() {
             if scope.native_body(id)?.is_some() {
                 bodies.push(id.as_str());
             }
-            for group in &contact.content.groups {
-                let first = group
-                    .received
-                    .fields
-                    .keys()
-                    .find(|kind| kind.as_str() != "association")
-                    .or_else(|| group.received.fields.keys().next());
-                let Some(first) = first else {
-                    continue;
-                };
-                let original = contact
-                    .content
-                    .originals
-                    .get(&group.received.grant.original)
-                    .ok_or(ExecutionError::Invariant)?;
-                let first = current_group_native_facet(group, original, first, None)
-                    .ok_or(ExecutionError::Invariant)?;
-                if !scope.lease_eligible(first, true)? {
-                    continue;
-                }
-                for kind in group.received.fields.keys() {
-                    let input = current_group_native_facet(group, original, kind, None)
-                        .ok_or(ExecutionError::Invariant)?;
-                    if kind == "association" && !scope.lease_eligible(input, true)? {
-                        continue;
-                    }
-                    let ordinal = first_ordinal
-                        .checked_add(current.len())
-                        .ok_or(ExecutionError::Capacity)?;
-                    current.push(scope.capture_input(input, kind, budget)?);
-                    grants.push(Grant::new(id, input, ordinal));
-                }
-            }
         }
     }
+    let current = capture_fields(
+        owner,
+        scope,
+        first_ordinal,
+        fields,
+        budget,
+        |id, field, ordinal| {
+            grants.push(Grant::new(id, field, ordinal));
+        },
+    )?;
     let mut scene_ids = Vec::new();
     scene_ids
         .try_reserve_exact(contacts)
@@ -484,11 +478,62 @@ pub(crate) fn prepare(
     storage.resize(json.capacity())?;
     Ok(PreparedNpcCurrent {
         capture: NpcCurrentCapture {
-            json,
+            bridge: Some((json, storage)),
             attention: attention_read.presentations,
-            _storage: storage,
         },
         current,
         backing,
     })
+}
+
+fn capture_fields<'a>(
+    owner: Option<&'a PerceptionEvidenceOwner>,
+    scope: Option<&CurrentBodyReadScope<'_>>,
+    first_ordinal: usize,
+    fields: usize,
+    budget: &ByteBudget,
+    mut grant: impl FnMut(&'a str, CurrentNativeFacet<'a>, usize),
+) -> Result<Vec<OwnedCurrentFacet>, ExecutionError> {
+    let mut current = Vec::new();
+    current
+        .try_reserve_exact(fields)
+        .map_err(|_| ExecutionError::Capacity)?;
+    if let (Some(owner), Some(scope)) = (owner, scope) {
+        for (id, contact) in &owner.current {
+            for group in &contact.content.groups {
+                let first = group
+                    .received
+                    .fields
+                    .keys()
+                    .find(|kind| kind.as_str() != "association")
+                    .or_else(|| group.received.fields.keys().next());
+                let Some(first) = first else {
+                    continue;
+                };
+                let original = contact
+                    .content
+                    .originals
+                    .get(&group.received.grant.original)
+                    .ok_or(ExecutionError::Invariant)?;
+                let first = current_group_native_facet(group, original, first, None)
+                    .ok_or(ExecutionError::Invariant)?;
+                if !scope.lease_eligible(first, true)? {
+                    continue;
+                }
+                for kind in group.received.fields.keys() {
+                    let input = current_group_native_facet(group, original, kind, None)
+                        .ok_or(ExecutionError::Invariant)?;
+                    if kind == "association" && !scope.lease_eligible(input, true)? {
+                        continue;
+                    }
+                    let ordinal = first_ordinal
+                        .checked_add(current.len())
+                        .ok_or(ExecutionError::Capacity)?;
+                    current.push(scope.capture_input(input, kind, budget)?);
+                    grant(id, input, ordinal);
+                }
+            }
+        }
+    }
+    Ok(current)
 }

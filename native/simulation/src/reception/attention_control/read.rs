@@ -75,12 +75,17 @@ struct Product<'a> {
     cues: &'a [Cue<'a>],
 }
 
-pub(crate) fn capture_attention_read(
-    state: &crate::simulation::SimulationState,
+fn presentation_inputs<'a>(
+    state: &'a crate::simulation::SimulationState,
     observer: &str,
-    budget: &ByteBudget,
-) -> Result<CapturedAttentionRead, crate::execution::ExecutionError> {
-    let mut scratch = CurrentJournal::new(budget)?;
+    scratch: &mut CurrentJournal,
+) -> Result<
+    (
+        Option<&'a AttentionState>,
+        IndexMap<String, AttentionCandidate>,
+    ),
+    crate::execution::ExecutionError,
+> {
     let attention = owner(&state.reception, observer).and_then(|owner| owner.attention.as_ref());
     let candidates = if let Some(attention) = attention {
         build_candidates(
@@ -91,17 +96,39 @@ pub(crate) fn capture_attention_read(
             observer,
             attention,
             None,
-            &mut scratch,
+            scratch,
         )?
     } else {
         IndexMap::new()
     };
-    let latches = attention.map_or(0, |state| state.latches.len());
-    scratch.reserve_growth(
-        latches
-            .checked_mul(size_of::<Cue<'_>>())
-            .ok_or_else(capacity)?,
-    )?;
+    Ok((attention, candidates))
+}
+
+pub(crate) fn capture_attention_presentations(
+    state: &crate::simulation::SimulationState,
+    observer: &str,
+    budget: &ByteBudget,
+) -> Result<CapturedAttentionPresentations, crate::execution::ExecutionError> {
+    let mut scratch = CurrentJournal::new(budget)?;
+    let (attention, candidates) = presentation_inputs(state, observer, &mut scratch)?;
+    prepare_presentations(
+        state,
+        observer,
+        attention,
+        &candidates,
+        budget,
+        &mut scratch,
+    )
+}
+
+fn prepare_presentations(
+    state: &crate::simulation::SimulationState,
+    observer: &str,
+    attention: Option<&AttentionState>,
+    candidates: &IndexMap<String, AttentionCandidate>,
+    budget: &ByteBudget,
+    scratch: &mut CurrentJournal,
+) -> Result<CapturedAttentionPresentations, crate::execution::ExecutionError> {
     let presentation_bytes = candidates.iter().try_fold(
         candidates
             .len()
@@ -130,7 +157,7 @@ pub(crate) fn capture_attention_read(
         &crate::worlds::InstalledEvidenceMeaning,
         observer,
     )?;
-    for (key, candidate) in &candidates {
+    for (key, candidate) in candidates {
         let scope = scope.as_ref().ok_or_else(invalid)?;
         let body = scope
             .attention_source(
@@ -147,7 +174,7 @@ pub(crate) fn capture_attention_read(
                 channel: Some(&body.grant.channel),
                 ..Default::default()
             },
-            &mut scratch,
+            scratch,
         )?;
         presentation_storage.resize(
             presentation_storage
@@ -157,6 +184,8 @@ pub(crate) fn capture_attention_read(
         )?;
         presentations.push(AttentionPresentation {
             key: key.clone(),
+            selected: attention
+                .is_some_and(|attention| attention.entries.iter().any(|entry| &entry.key == key)),
             description_revision: candidate.description_revision.clone(),
             change_revision: candidate.change_revision.clone(),
             // Source presentation selects the channel without narrowing the
@@ -164,6 +193,33 @@ pub(crate) fn capture_attention_read(
             point,
         });
     }
+    Ok(CapturedAttentionPresentations {
+        entries: presentations,
+        _storage: presentation_storage,
+    })
+}
+
+pub(crate) fn capture_attention_read(
+    state: &crate::simulation::SimulationState,
+    observer: &str,
+    budget: &ByteBudget,
+) -> Result<CapturedAttentionRead, crate::execution::ExecutionError> {
+    let mut scratch = CurrentJournal::new(budget)?;
+    let (attention, candidates) = presentation_inputs(state, observer, &mut scratch)?;
+    let latches = attention.map_or(0, |state| state.latches.len());
+    scratch.reserve_growth(
+        latches
+            .checked_mul(size_of::<Cue<'_>>())
+            .ok_or_else(capacity)?,
+    )?;
+    let presentations = prepare_presentations(
+        state,
+        observer,
+        attention,
+        &candidates,
+        budget,
+        &mut scratch,
+    )?;
     let mut cues = Vec::new();
     cues.try_reserve_exact(latches).map_err(|_| capacity())?;
     let life = owner(&state.reception, observer).map_or(0, |owner| owner.life);
@@ -293,7 +349,7 @@ pub(crate) fn capture_attention_read(
     let product = Product {
         entries: attention.map_or(&[], |attention| attention.entries.as_slice()),
         candidates: &candidates,
-        presentations: &presentations,
+        presentations: &presentations.entries,
         cues: &cues,
     };
     let length = crate::encoding::json_record_len(&product)
@@ -315,9 +371,6 @@ pub(crate) fn capture_attention_read(
             _storage: cause_storage,
         },
         _storage: storage,
-        presentations: CapturedAttentionPresentations {
-            entries: presentations,
-            _storage: presentation_storage,
-        },
+        presentations,
     })
 }

@@ -12,7 +12,9 @@ use openlegend_simulation::{
     narration::{NameArticle, NativeText, name_phrase, native_text},
     reception::{KnowledgeDocument, SpeechAddressing, SpeechParticipant},
     records::SqlCell,
-    runtime::{RuntimeError, RuntimeJson, RuntimeNpcRead, RuntimeNpcResponseTicket},
+    runtime::{
+        RuntimeError, RuntimeJson, RuntimeNpcObservedBody, RuntimeNpcRead, RuntimeNpcResponseTicket,
+    },
     state::{CharacterTrait, Goal, Named, Point},
     text::JsText,
     values::deserialize_present_safe_integer,
@@ -45,7 +47,6 @@ type CurrentRead = FundedPreparation<CurrentFacts>;
 struct CurrentFacts {
     #[serde(rename = "self")]
     own: CurrentActor,
-    perception: CurrentPerception,
     appraisals: Option<CurrentAppraisals>,
     candidates: Option<Value>,
     recall: Option<Value>,
@@ -130,50 +131,6 @@ struct CurrentAppraisals {
 struct AppraisalName {
     entity_id: String,
     name: Named,
-}
-
-#[derive(Deserialize)]
-struct CurrentPerception {
-    bodies: Vec<CurrentBody>,
-    cut: Option<CurrentCut>,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct CurrentBody {
-    source_id: String,
-    lease_id: String,
-    physical_life: Option<u64>,
-    name: Option<Named>,
-    first: Option<usize>,
-    count: Option<usize>,
-}
-
-#[derive(Deserialize)]
-struct CurrentCut {
-    current: Vec<CurrentFacet>,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct CurrentFacet {
-    value: CurrentSensation,
-    value_measured_from: f64,
-    value_measured_through: f64,
-    value_acquired_at: f64,
-    confirmed_through: f64,
-}
-
-#[derive(Deserialize)]
-struct CurrentSensation {
-    body: Option<SeenBody>,
-}
-
-#[derive(Deserialize)]
-struct SeenBody {
-    position: Point,
-    description: Option<JsText>,
-    outward: [String; 4],
 }
 
 // The exact leased source and grant ordinals stay with the native ticket.
@@ -327,11 +284,12 @@ pub(super) async fn finish(
     )?;
     let through = collected.through.max(captured.value.own.accepted_cut);
     // The independent projection remains funded after its decoded inputs drop.
-    let projection = collected.projection_custody(&captured, budget)?;
+    let projection =
+        collected.projection_custody(&captured, &current, ProjectionPurpose::Decision, budget)?;
     let (binding, context, addressed, speech_trigger) = project(
         game,
         work,
-        &captured.value,
+        (&current, &captured.value),
         &collected.attention.ordinals,
         collected.sources.as_ref().map(|data| &data.value),
         &collected.required,
@@ -444,7 +402,7 @@ fn read_request(
 fn project(
     game: &CurrentServer,
     work: &Work,
-    facts: &CurrentFacts,
+    (read, facts): (&RuntimeNpcRead, &CurrentFacts),
     original_attention: &[usize],
     selected: Option<&PersonalPacket>,
     rows: &[usize],
@@ -453,7 +411,6 @@ fn project(
     let consumer = consumer(work);
     let decision = matches!(purpose, ProjectionPurpose::Decision);
     let own = &facts.own;
-    let perception = &facts.perception;
     let prepared = if decision {
         facts.candidates.as_ref()
     } else {
@@ -483,24 +440,19 @@ fn project(
         attention.push(json!({"alias":id,"ordinal":ordinal}));
         presented.push(ordinal);
     }
-    for index in records(&prepared["bodyOrdinals"])? {
-        let ordinal = get_u64(index)? as usize;
-        let body = perception.bodies.get(ordinal).ok_or(CallFailure::Invalid)?;
+    for &ordinal in read.selected_body_ordinals().map_err(packet_failure)? {
+        let body = read.presented_body(ordinal).ok_or(CallFailure::Invalid)?;
         let key = alias(&reference_key, "body", ordinal);
-        canonical.insert(body.source_id.as_str(), key.clone());
+        canonical.insert(body.source_id, key.clone());
         refs.push(key.clone());
         entities.push(json!({"alias":key,"source":{"kind":"body","ordinal":ordinal}}));
         if decision {
-            let name = name_phrase(
-                body.name.as_ref().ok_or(CallFailure::Invalid)?,
-                NameArticle::Definite,
-                false,
-            );
+            let name = name_phrase(body.name, NameArticle::Definite, false);
             let name = prompt_text(&name);
             physical.push(key.clone());
             descriptions.push(format!("{name} (ID:{key})"));
-            let current = &perception.cut.as_ref().ok_or(CallFailure::Invalid)?.current;
-            let (line, body) = received_body(own, current, body, &name, &key)?;
+            let observed = body.observed.ok_or(CallFailure::Invalid)?;
+            let (line, body) = received_body(own, observed, &name, &key);
             surroundings.push(line);
             scene.push(body);
         }
@@ -575,13 +527,10 @@ fn project(
         rendered_trigger
     {
         let value = &trigger.value;
-        let speaker_visible = value.source_body.as_ref().is_some_and(|source| {
-            perception.bodies.iter().any(|body| {
-                body.source_id == source.entity_id
-                    && Some(body.lease_id.as_str()) == source.lease_id.as_deref()
-                    && body.physical_life == Some(source.physical_life)
-            })
-        });
+        let speaker_visible = value
+            .source_body
+            .as_ref()
+            .is_some_and(|source| read.source_body_is_current(source));
         let speaker = value
             .speech
             .as_ref()
@@ -787,9 +736,6 @@ fn alias(key: &str, kind: &str, index: usize) -> String {
 
 fn text(value: &Value) -> Result<&str, CallFailure> {
     value.as_str().ok_or(CallFailure::Invalid)
-}
-fn get_u64(value: &Value) -> Result<u64, CallFailure> {
-    value.as_u64().ok_or(CallFailure::Invalid)
 }
 fn records(value: &Value) -> Result<&[Value], CallFailure> {
     value
@@ -1060,19 +1006,11 @@ fn intention_prompt_value(value: SqlCell) -> Result<Value, CallFailure> {
 
 fn received_body(
     own: &CurrentActor,
-    current: &[CurrentFacet],
-    selected: &CurrentBody,
+    facet: RuntimeNpcObservedBody<'_>,
     name: &str,
     alias: &str,
-) -> Result<(String, Value), CallFailure> {
-    let start = selected.first.ok_or(CallFailure::Invalid)?;
-    let count = selected.count.ok_or(CallFailure::Invalid)?;
-    let end = start.checked_add(count).ok_or(CallFailure::Invalid)?;
-    let selected = current.get(start..end).ok_or(CallFailure::Invalid)?;
-    let (facet, body) = selected
-        .iter()
-        .find_map(|facet| facet.value.body.as_ref().map(|body| (facet, body)))
-        .ok_or(CallFailure::Invalid)?;
+) -> (String, Value) {
+    let body = facet.body;
     let x = body.position.x - own.position.x;
     let y = body.position.y - own.position.y;
     let z = body.position.z - own.position.z;
@@ -1094,13 +1032,13 @@ fn received_body(
         line.push(' ');
         line.push_str(detail);
     }
-    Ok((
+    (
         line,
         json!({"reference": alias, "label": name, "relative": relative,
             "valueMeasuredFrom":facet.value_measured_from,"valueMeasuredThrough":facet.value_measured_through,
             "valueAcquiredAt":facet.value_acquired_at,"confirmedThrough":facet.confirmed_through,
         }),
-    ))
+    )
 }
 
 fn activity_requests(

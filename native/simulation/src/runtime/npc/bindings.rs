@@ -6,6 +6,7 @@ use crate::capture::{
     NpcCatalogueSource,
 };
 use crate::host::retained_size::{HeapBytes, heap_sum};
+use crate::response::ResponseEnvelopeError;
 use std::sync::atomic::AtomicU8;
 mod copies;
 
@@ -43,6 +44,37 @@ pub struct RuntimeNpcResponseTicket {
     attempt_candidates: Arc<Vec<crate::response::ResponseAttemptCandidate>>,
     phase: Arc<AtomicU8>,
     _custody: Arc<ByteReservation>,
+}
+
+/// An ordered response from the stand-alone host, with the memory that owns
+/// it. The native writer still checks the installed envelope and all effects.
+pub struct RuntimeNpcOperations {
+    value: crate::records::SqlCell,
+    custody: ByteReservation,
+}
+
+impl RuntimeNpcOperations {
+    /// Move an already funded response into the mutation attempt. Keep the
+    /// retained graph funded through waits and release decode workspace here.
+    pub fn new(
+        value: crate::records::SqlCell,
+        mut custody: ByteReservation,
+    ) -> Result<Self, RuntimeError> {
+        let bytes = crate::response::ActorResponse::retained_bytes(&value).ok_or(CapacityError)?;
+        if bytes > custody.bytes() {
+            return Err(CapacityError.into());
+        }
+        custody.resize(bytes)?;
+        Ok(Self { value, custody })
+    }
+}
+
+fn response_failure(error: ResponseEnvelopeError) -> RuntimeError {
+    if error.is_capacity() {
+        CapacityError.into()
+    } else {
+        failure(error)
+    }
 }
 
 impl RuntimeNpcResponseTicket {
@@ -256,9 +288,42 @@ impl NativeWorldSession {
         response: &str,
         protected: bool,
     ) -> Result<CandidateKey, RuntimeError> {
+        self.begin_npc_response_with(owner, protected, |limits, budget| {
+            crate::response::ActorResponse::decode(response, limits, budget)
+                .map_err(response_failure)
+        })
+    }
+
+    /// The application transfers its external decoder's exact operation
+    /// fields without another trip through JSON. This is the same candidate
+    /// admission, including receipt hashing, as the bytes-based entry point.
+    pub fn begin_npc_response_owned(
+        &mut self,
+        owner: &mut Option<RuntimeNpcResponseTicket>,
+        response: RuntimeNpcOperations,
+        protected: bool,
+    ) -> Result<CandidateKey, RuntimeError> {
+        self.begin_npc_response_with(owner, protected, move |limits, budget| {
+            if !budget.owns(&response.custody) {
+                return Err(failure("NPC response belongs to another native budget"));
+            }
+            crate::response::ActorResponse::admit(response.value, limits, response.custody)
+                .map_err(response_failure)
+        })
+    }
+
+    fn begin_npc_response_with(
+        &mut self,
+        owner: &mut Option<RuntimeNpcResponseTicket>,
+        protected: bool,
+        prepare: impl FnOnce(
+            &crate::response::ResponseLimits,
+            &ByteBudget,
+        ) -> Result<crate::response::ActorResponse, RuntimeError>,
+    ) -> Result<CandidateKey, RuntimeError> {
         use crate::response::{
-            ActorResponse, ResponseAliases, ResponseBindingInput, ResponseBindings,
-            ResponseNativeGuard, ResponseReads,
+            ResponseAliases, ResponseBindingInput, ResponseBindings, ResponseNativeGuard,
+            ResponseReads,
         };
         self.require_active()?;
         if protected && !self.session.save_barrier_complete() {
@@ -297,12 +362,10 @@ impl NativeWorldSession {
         {
             return Err(failure("NPC response consumer is no longer available"));
         }
-        let mut response = ActorResponse::decode(
-            response,
+        let mut response = prepare(
             &simulation.state.installed.actor_response_limits,
             &self.budget,
-        )
-        .map_err(failure)?;
+        )?;
         response
             .resolve_appraisals(
                 &simulation.state,

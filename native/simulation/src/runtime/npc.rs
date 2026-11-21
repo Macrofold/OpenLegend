@@ -3,9 +3,7 @@
 //! source lease; the context producer must bind those independently.
 use super::*;
 use crate::appraisals::AppraisalScope;
-use crate::capture::{
-    CapturedBodyBinding, NpcOfferCoverage, PreparedNpcCandidates, PreparedNpcRead,
-};
+use crate::capture::{NpcOfferCoverage, PreparedNpcCandidates, PreparedNpcRead};
 use crate::host::PublicationLease;
 use crate::simulation::AcceptedActorRead;
 use std::mem::size_of;
@@ -15,11 +13,13 @@ mod bindings;
 mod held_sources;
 mod origin;
 mod perspectives;
+mod presentation;
 pub(super) use bindings::ActiveNpcResponse;
-pub use bindings::RuntimeNpcResponseTicket;
+pub use bindings::{RuntimeNpcOperations, RuntimeNpcResponseTicket};
 pub(super) use held_sources::HeldReceiptRegistry;
 pub(crate) use held_sources::HeldSourceProof;
 pub use origin::{RuntimeNpcDecisionFrame, RuntimeNpcDecisionOrigin};
+pub use presentation::{RuntimeNpcObservedBody, RuntimeNpcPresentedBody};
 
 /// A brief dispatch gate, never retained while SQL or a provider is awaited.
 /// Historical disclosure and current response semantics are separate routes.
@@ -319,6 +319,20 @@ impl NativeWorldSession {
     }
 
     pub fn read_npc(&mut self, request: &[u8]) -> Result<RuntimeNpcRead, RuntimeError> {
+        self.read_npc_with_presentation(request, true)
+    }
+
+    /// The Rust formatter borrows received presentation from the detached
+    /// native read and needs no bridge scene bytes.
+    pub fn read_npc_direct(&mut self, request: &[u8]) -> Result<RuntimeNpcRead, RuntimeError> {
+        self.read_npc_with_presentation(request, false)
+    }
+
+    fn read_npc_with_presentation(
+        &mut self,
+        request: &[u8],
+        bridge: bool,
+    ) -> Result<RuntimeNpcRead, RuntimeError> {
         self.require_active()?;
         let _decode = decode_preparation(request, &self.budget)?;
         let request: NpcReadRequest = serde_json::from_slice(request).map_err(failure)?;
@@ -342,6 +356,7 @@ impl NativeWorldSession {
             .read_npc(
                 &request.actor_id,
                 &request.required_appraisals,
+                bridge,
                 &self.budget,
             )
             .map_err(failure)?;
@@ -687,43 +702,18 @@ impl RuntimeNpcRead {
         )
     }
 
-    /// Encode the recall renderer's current facts. Bodies only need identities
-    /// and leases for alias rewriting and the exact current-speaker check.
-    /// The caller owns the encoded bytes; this read still owns all evidence.
+    /// Encode the remaining recall facts while their callers move to typed
+    /// presentation. Body identities and leases are borrowed from this read.
     pub fn recall_packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
         let Some(PreparedNpcRead::Recall(read)) = &self.preparation else {
             return Err(failure("NPC recall context is unavailable"));
         };
-        struct Bodies<'a>(&'a [CapturedBodyBinding]);
-        impl Serialize for Bodies<'_> {
-            fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-                #[derive(Serialize)]
-                #[serde(rename_all = "camelCase")]
-                struct Body<'a> {
-                    source_id: &'a str,
-                    lease_id: &'a str,
-                    physical_life: Option<u64>,
-                }
-                let mut sequence = serializer.serialize_seq(Some(self.0.len()))?;
-                for body in self.0 {
-                    sequence.serialize_element(&Body {
-                        source_id: &body.source_id,
-                        lease_id: &body.lease_id,
-                        physical_life: body.physical_life,
-                    })?;
-                }
-                sequence.end()
-            }
-        }
         let context = RuntimeJson::encode(&read.context(), budget)?;
-        let bodies = RuntimeJson::encode(&Bodies(&self.read.perception.bodies), budget)?;
         RuntimeJson::join(
             &[
                 b"{\"self\":",
                 self.read.own_json().as_bytes(),
-                b",\"perception\":{\"bodies\":",
-                bodies.bytes(),
-                b"},\"recall\":",
+                b",\"recall\":",
                 context.bytes(),
                 b"}",
             ],
@@ -731,28 +721,9 @@ impl RuntimeNpcRead {
         )
     }
 
-    /// Encode the stand-alone decision formatter's inputs from this accepted
-    /// read. History and validity stay with the native read for binding; the
-    /// formatter owns only the encoded presentation bytes.
+    /// Encode the remaining stand-alone decision facts. Received bodies are
+    /// borrowed directly; evidence and validity stay with the binding read.
     pub fn decision_packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
-        #[derive(Serialize)]
-        struct Perception<'a> {
-            bodies: &'a [CapturedBodyBinding],
-            cut: CurrentCut<'a>,
-        }
-        #[derive(Serialize)]
-        struct CurrentCut<'a> {
-            current: &'a [Arc<crate::reception::CapturedCurrentFacet>],
-        }
-        let perception = RuntimeJson::encode(
-            &Perception {
-                bodies: &self.read.perception.bodies,
-                cut: CurrentCut {
-                    current: &self.read.perception.evidence.cut().current,
-                },
-            },
-            budget,
-        )?;
         let appraisals = self
             .read
             .appraisals_json()
@@ -762,8 +733,6 @@ impl RuntimeNpcRead {
             &[
                 b"{\"self\":",
                 self.read.own_json().as_bytes(),
-                b",\"perception\":",
-                perception.bytes(),
                 b",\"appraisals\":",
                 appraisals.as_bytes(),
                 b",\"candidates\":",

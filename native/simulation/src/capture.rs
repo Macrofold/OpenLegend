@@ -83,7 +83,7 @@ const BODY_VALUE_KINDS: [&str; 9] = [
 #[derive(Clone, Copy)]
 pub(crate) enum ActorReadPurpose {
     PlayerView,
-    NpcDecision,
+    NpcDecision { bridge: bool },
 }
 
 /// Unported agreement consumers must not replace personally received terms
@@ -202,9 +202,6 @@ impl CapturedActorPerception {
             .as_ref()
             .map_or(&[], |current| current.attention.entries.as_slice())
     }
-    pub(crate) fn encoded_npc_current(&self) -> Option<&str> {
-        self.npc_current.as_ref().map(|current| current.encoded())
-    }
     pub(crate) fn write_json(
         &self,
         budget: &ByteBudget,
@@ -218,7 +215,10 @@ impl CapturedActorPerception {
             cut: self.evidence.cut(),
             geometry: self.geometry.as_ref(),
             player: self.player.as_ref(),
-            npc_current: self.npc_current.as_ref(),
+            npc_current: self
+                .npc_current
+                .as_ref()
+                .filter(|capture| capture.has_bridge_packet()),
         };
         let length =
             crate::encoding::json_record_len(&product).map_err(|_| ExecutionError::Invariant)?;
@@ -453,13 +453,14 @@ pub(crate) fn capture_actor_perception(
         .and_then(|owner| owner.visual_confirmation.as_ref())
         .map(|confirmation| confirmation.through);
     let (npc_current, current, _current_backing) =
-        if matches!(purpose, ActorReadPurpose::NpcDecision) {
+        if let ActorReadPurpose::NpcDecision { bridge } = purpose {
             let prepared = npc_current::prepare(
                 state,
                 actor_id,
                 scope.as_ref(),
                 &names,
                 current.len(),
+                bridge,
                 budget,
             )?;
             let count = current
@@ -487,7 +488,7 @@ pub(crate) fn capture_actor_perception(
         };
     drop(names);
     drop(scope);
-    let (acquired, geometry) = if matches!(purpose, ActorReadPurpose::NpcDecision) {
+    let (acquired, geometry) = if matches!(purpose, ActorReadPurpose::NpcDecision { .. }) {
         let read = crate::reception::current_received_geometry(state, actor_id, budget)?;
         let count = read.observations().count();
         let mut acquired = Vec::new();
@@ -689,7 +690,7 @@ pub(crate) fn with_actor_self<T>(
         .get(actor_id)
         .ok_or(ExecutionError::MissingEntity)?;
     let actor = entity.actor.as_ref().ok_or(ExecutionError::MissingActor)?;
-    let private = matches!(purpose, ActorReadPurpose::NpcDecision);
+    let private = matches!(purpose, ActorReadPurpose::NpcDecision { .. });
     if private && (!entity.has_memory() || actor.controller != "npc") {
         return Err(ExecutionError::UnsupportedFamily);
     }

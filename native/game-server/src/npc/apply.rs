@@ -10,8 +10,9 @@ use crate::{
     store::{AdmittedJob, TerminalOutcome},
     world::{ApplicationStart, WorldError},
 };
-use axum::body::Bytes;
-use openlegend_simulation::runtime::{RuntimeDirectOutput, RuntimeError, RuntimeNpcResponseTicket};
+use openlegend_simulation::runtime::{
+    RuntimeDirectOutput, RuntimeError, RuntimeNpcOperations, RuntimeNpcResponseTicket,
+};
 use std::sync::Arc;
 use tokio::{sync::watch, time::Instant};
 
@@ -29,7 +30,7 @@ pub(super) async fn apply(
     game: &Arc<CurrentServer>,
     job: &Arc<AdmittedJob>,
     ticket: Arc<RuntimeNpcResponseTicket>,
-    draft: Bytes,
+    draft: RuntimeNpcOperations,
     permit: Option<(Arc<Authority>, Arc<AuthorizedScope>)>,
     cancellation: watch::Receiver<bool>,
     deadline: Instant,
@@ -76,13 +77,9 @@ pub(super) async fn apply(
                     Ok(lease) => drop(lease),
                     Err(reason) => return Ok(ApplicationStart::Existing(Applied::Stale(reason))),
                 }
-                let text =
-                    std::str::from_utf8(&draft).map_err(RuntimeError::application_refused)?;
-                Ok(ApplicationStart::Candidate(session.begin_npc_response(
-                    &mut ticket,
-                    text,
-                    false,
-                )?))
+                Ok(ApplicationStart::Candidate(
+                    session.begin_npc_response_owned(&mut ticket, draft, false)?,
+                ))
             },
             move |question| {
                 let provider = provider.clone();

@@ -1,8 +1,8 @@
 # Complete Rust server — technical design
 
-| Status      | Current progress                                                                               | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------- | ------------ |
-| Not started | The full-game host and retirement design is complete, with implementation tracked under NSC04. | 2026-11-21   |
+| Status      | Current progress                                                              | Last updated |
+| ----------- | ----------------------------------------------------------------------------- | ------------ |
+| In progress | The first typed conversation handoffs pass focused caller checks under NSC04. | 2026-11-21   |
 
 ## Ownership and the unit of delivery
 

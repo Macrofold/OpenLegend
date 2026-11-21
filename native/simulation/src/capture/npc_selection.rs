@@ -27,7 +27,7 @@ impl NpcObservationSelection {
         expanded_body_ordinals: &[usize],
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
-        if !matches!(read.purpose, super::ActorReadPurpose::NpcDecision)
+        if !matches!(read.purpose, super::ActorReadPurpose::NpcDecision { .. })
             || read.accepted_cut != state.accepted_cut
             || read.perception.world_id != state.physical.header.id
             || read.perception.evidence.generation() != state.generation

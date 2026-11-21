@@ -24,6 +24,11 @@ impl From<crate::host::CapacityError> for ResponseEnvelopeError {
         Self::Capacity
     }
 }
+impl ResponseEnvelopeError {
+    pub(crate) fn is_capacity(&self) -> bool {
+        matches!(self, Self::Capacity)
+    }
+}
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum ResponseKind {
     Talk,
@@ -325,6 +330,22 @@ impl ActorResponse {
         )?;
         let value: SqlCell =
             serde_json::from_str(source).map_err(|_| ResponseEnvelopeError::Malformed)?;
+        reservation.resize(Self::retained_bytes(&value).ok_or(ResponseEnvelopeError::Capacity)?)?;
+        Self::admit(value, limits, reservation)
+    }
+
+    pub(crate) fn retained_bytes(value: &SqlCell) -> Option<usize> {
+        value.heap_bytes()?.checked_add(size_of::<Self>())
+    }
+
+    /// Check the current response grammar and byte bound directly on the
+    /// already funded value. Keeping its fields in order preserves replay
+    /// digests for both the in-process and the bytes-based entry points.
+    pub(crate) fn admit(
+        value: SqlCell,
+        limits: &ResponseLimits,
+        reservation: ByteReservation,
+    ) -> Result<Self, ResponseEnvelopeError> {
         let Some(operations) = value.get("operations").and_then(SqlCell::as_array) else {
             return Err(ResponseEnvelopeError::Malformed);
         };
@@ -357,12 +378,6 @@ impl ActorResponse {
         if !valid {
             return Err(ResponseEnvelopeError::Malformed);
         }
-        reservation.resize(
-            value
-                .heap_bytes()
-                .and_then(|n| n.checked_add(size_of::<Self>()))
-                .ok_or(ResponseEnvelopeError::Capacity)?,
-        )?;
         Ok(Self {
             value,
             _reservation: reservation,

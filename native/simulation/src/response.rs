@@ -15,7 +15,7 @@ mod state;
 pub(crate) use state::{ResponseCheckpoint, ResponseJournal, ResponseState};
 mod envelope;
 mod save;
-pub(crate) use envelope::{ActorResponse, ResponseKind, ResponseOperation};
+pub(crate) use envelope::{ActorResponse, ResponseEnvelopeError, ResponseKind, ResponseOperation};
 mod bindings;
 pub(crate) use bindings::{
     AppraisalCreatesAnswer, AppraisalCreatesRequest, AppraisalSelection,
