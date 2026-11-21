@@ -1118,7 +1118,7 @@ The optional change to bystander movement memory in profiler proposal 2 remains 
 
 ### NPC and background-work follow-up
 
-The [profiling findings](../benchmarks/native-runtime-foundations/2026/2026-11-20-rust-hot-path-comparisons.md#next-profiling-candidates-outside-movement-perception-and-saving) define this batch. The [evidence record](../benchmarks/native-runtime-foundations/2026/2026-11-20-rust-npc-background-work.md) records the collected comparisons, real caller checks and fixture failures. The final joint build still needs its ordinary-play and cold-continuation check.
+The [profiling findings](../benchmarks/native-runtime-foundations/2026/2026-11-20-rust-hot-path-comparisons.md#next-profiling-candidates-outside-movement-perception-and-saving) define this batch. The [evidence record](../benchmarks/native-runtime-foundations/2026/2026-11-20-rust-npc-background-work.md) records the collected comparisons, real caller checks and fixture failures. The [final joint build](../benchmarks/native-runtime-foundations/2026/2026-11-20-rust-npc-background-work.md#final-ordinary-play) completed the ordinary opening, both saved conversations and cold continuation on the standard worker.
 
 | Experiment          | Implementation and completion check                                                                                                                                                                                                                        |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1132,7 +1132,7 @@ The stand-alone scheduler can defer a temporary intake allocation refusal or a c
 
 The stand-alone scheduler and reply formatter read selected fields from their native captures and retain exact text in the accepted evidence. Prompts render an isolated UTF-16 unit as a visible escape while keeping it distinct from a literal backslash in that passage. The [live gameplay check](../benchmarks/native-runtime-foundations/2026/2026-11-20-rust-npc-background-work.md#exact-text-gameplay) completes both the reply and another resident's background decision, then continues after reopening the world.
 
-Build and review the candidates before running checks. Use the same 26-actor stand-alone opening, ordinary clock and background saves, two controlled saved conversations, and cold continuation. Compare complete gameplay in three interleaved repetitions on standard workers with independent databases. Diagnostics establish which work ran and whether time or work shifted; they stay separate from clean timing.
+The matched comparisons used the same 26-actor stand-alone opening, ordinary clock and background saves, two controlled saved conversations, and cold continuation. Three interleaved repetitions on standard workers used independent databases. The single final joint run checked the retained implementation through the same gameplay and an additional mixed-ownership status case.
 
 ## Overlap and dependencies
 

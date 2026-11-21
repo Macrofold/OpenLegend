@@ -19,7 +19,7 @@ The experiments follow the [prior profile findings](2026-11-20-rust-hot-path-com
 
 **Batch lexical reuse removed.** The same campaign proved the implementation worked, but ordinary CPU varied and median sampled memory grew. The lookup and extra ownership did not earn retention. The existing search correctness and coverage rules remain the authority.
 
-The 15 steady windows in these two campaigns recorded 1,824 automatic jobs prompted by current physical relations, 586 prompted by events, and zero optional-discovery jobs. The counts come from durable jobs. Individual jobs can use more than one model judgment. Slowing optional curiosity further would miss the work exercised in this opening.
+The 27 frozen steady windows recorded 3,273 automatic jobs prompted by current physical relations, 1,066 prompted by events, and zero optional-discovery jobs. The counts come from durable jobs. Individual jobs can use more than one model judgment. Slowing optional curiosity further would miss the work exercised in this opening.
 
 **Recall preparation retained.** Its frozen candidate used 3.8–7.2% less combined CPU per completed game-second in all three pairs. Automatic resident judgments varied, including one pair in which the candidate completed more. The final implementation retains the narrow recall path, with the exact-text repair qualified separately below.
 
@@ -27,7 +27,7 @@ The 15 steady windows in these two campaigns recorded 1,824 automatic jobs promp
 
 **Body deadline sharing retained as a simplification.** Combined CPU changed by −2.4%, −5.1% and +2.1%. The comparison supplies no repeatable CPU gain. The focused timing check and exact saved cuts justify sharing the same attribute read and threshold across comparison and forecasting.
 
-All 12 physical runs in `8080089e-123b-4eec-853d-8aa47d11b53c` completed the required ordinary workload and cold continuation. The manifest verified all 161 files. The runner recorded clean cleanup and retired slot 5, and AWS reported neither the instance nor its volume. The controller settled its estimated cost at $0.732312 with no campaign reservation left.
+All 12 physical runs in `8080089e-123b-4eec-853d-8aa47d11b53c` completed the required ordinary workload and cold continuation. All 161 files matched the manifest. The runner recorded clean cleanup and retired slot 5, and AWS reported neither the instance nor its volume. The controller settled its estimated cost at $0.732312 with no campaign reservation left.
 
 ## Matched 180-second windows
 
@@ -88,3 +88,13 @@ The disposable HTTP scenario compared local Rust builds `2f7644ffa3d8` and `c067
 The repaired build preserved the original speech and three searchable personal rows. The actual provider prompt preserved the NUL and distinguished the isolated unit from the literal escape. One reply committed, a replay returned the same receipt, and a second resident completed a background decision while retaining their original evidence. An authorized walk, the receipt and the original wording survived cold reopening. A new ordinary conversation then completed. Separate held withdrawal and cancellation cases saved movement and recovered their terminal receipts without applying a reply. All owned local processes and databases cleaned up.
 
 The scheduler's selective reader also matched the prior scheduling digests, proposals, deadlines and source order in six ordinary diagnostic cases. An additional case preserved the exact cue containing an isolated unit, a NUL and an astral character through job preparation. These checks establish correctness. The retained joint build's ordinary-play check is separate from the frozen timing comparison.
+
+A repeated live scheduling check forced the predecessor to change while the real SQL write was waiting. The refused write consumed no attempt. A later update committed one optional decision, and reopening retained its spent interval.
+
+## Final ordinary play
+
+Campaign `81dfa3e0-f151-4ef4-99d8-d0e655721b09` verified integrated source `b7929269db8b`, release executable `7b07fa2b152a`, and all 24 sealed files on the standard 16 GiB worker. Type and network checks passed. The player completed 34 saved walks, steering and two controlled saved conversations. Reopening recovered the receipt and produced a usable view in 941 ms. The separate authenticated status check displayed the same four permitted jobs out of 525 before and after reopening and kept the job with missing owner metadata private.
+
+In the single 180-second steady window, server and PostgreSQL CPU used 43.47% and 6.18% of one core. The client used 0.87%. The game completed all 10,800 offered game-seconds at 100.00001% of intended speed. The direct clock does not expose its internal debt. First movement reached the stream in 58.6 ms median and 85.4 ms p95. Durable acknowledgement took 537.4 ms median and 1,085.6 ms p95. Concurrent memory peaked at 528.9 MiB. Shutdown released all native memory reservations. PostgreSQL's database-wide scan counter advanced by 1,053,220, and WAL grew by 106.0 MB. Combined CPU was 8.275 ms per completed game-second. The frozen comparisons above carry the repeated timing evidence.
+
+The runner verified cleanup, released the claim and confirmed slot 2 stopped. AWS independently reported the instance stopped. The final campaign settled at an estimated $0.319763 with no campaign reservation and $0 in provider charges.
