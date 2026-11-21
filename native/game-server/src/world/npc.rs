@@ -12,6 +12,13 @@ use openlegend_simulation::runtime::{
 pub(crate) type BeginNpcRead =
     fn(&mut NativeWorldSession, &mut RuntimeNpcRead, &[u8]) -> Result<CandidateKey, RuntimeError>;
 
+type ActorPreparationStep<T> = fn(
+    &mut NativeWorldSession,
+    &mut T,
+    CandidateKey,
+    Option<(&RuntimeProvider, RuntimeProviderInput)>,
+) -> Result<RuntimeNpcPreparationStep, RuntimeError>;
+
 pub(crate) enum NpcBinding {
     Issued(RuntimeNpcResponseTicket),
     Refused {
@@ -64,10 +71,11 @@ impl HostedWorld {
         request: Bytes,
         selector: Bytes,
     ) -> Result<RuntimeNpcRead, WorldError> {
-        self.prepare_npc_at(
+        self.prepare_actor_read(
             game,
             move |session| session.read_npc_direct(&request),
             move |session, read| session.begin_npc_candidates(read, &selector),
+            NativeWorldSession::step_npc_preparation,
         )
         .await
     }
@@ -79,10 +87,11 @@ impl HostedWorld {
         game: Arc<CurrentServer>,
         request: Bytes,
     ) -> Result<RuntimeNpcRead, WorldError> {
-        self.prepare_npc_at(
+        self.prepare_actor_read(
             game,
             move |session| session.read_npc_direct(&request),
             NativeWorldSession::begin_npc_recall,
+            NativeWorldSession::step_npc_preparation,
         )
         .await
     }
@@ -96,27 +105,31 @@ impl HostedWorld {
         request: Bytes,
         begin: BeginNpcRead,
     ) -> Result<RuntimeNpcRead, WorldError> {
-        self.prepare_npc_at(
+        self.prepare_actor_read(
             game,
             move |_| Ok(read),
             move |session, read| begin(session, read, &request),
+            NativeWorldSession::step_npc_preparation,
         )
         .await
     }
 
-    async fn prepare_npc_at(
+    /// Drive a private read without publishing a mutation or leaving its
+    /// source snapshot and cancellation dependent on the caller's lifetime.
+    pub(crate) async fn prepare_actor_read<T: Send + 'static>(
         self: &Arc<Self>,
         game: Arc<CurrentServer>,
-        read: impl FnOnce(&mut NativeWorldSession) -> Result<RuntimeNpcRead, RuntimeError>
+        read: impl FnOnce(&mut NativeWorldSession) -> Result<T, RuntimeError>
         + Send
         + 'static,
         begin: impl FnOnce(
             &mut NativeWorldSession,
-            &mut RuntimeNpcRead,
+            &mut T,
         ) -> Result<CandidateKey, RuntimeError>
         + Send
         + 'static,
-    ) -> Result<RuntimeNpcRead, WorldError> {
+        advance: ActorPreparationStep<T>,
+    ) -> Result<T, WorldError> {
         let queued = self
             .waiting
             .clone()
@@ -162,7 +175,8 @@ impl HostedWorld {
                                     Some((ticket, input)) => (Some(ticket), Some(input)),
                                     None => (None, None),
                                 };
-                                let result = session.step_npc_preparation(
+                                let result = advance(
+                                    session,
                                     &mut read,
                                     key,
                                     ticket.as_ref().zip(input),

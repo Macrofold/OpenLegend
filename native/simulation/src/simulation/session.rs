@@ -1232,7 +1232,8 @@ impl Session {
                                 | CompletedOperation::HostControl(_)
                                 | CompletedOperation::Participation(_)
                         )
-                        || matches!(&result, CompletedOperation::Response(done) if done.protected());
+                        || matches!(&result, CompletedOperation::Response(done) if done.protected())
+                        || matches!(&result, CompletedOperation::Consolidation(done) if done.protected);
                     let source_versions = preparing.driver.take_source_versions();
                     let (source_plan, _source_storage) = source_versions.map_or_else(
                         || (crate::received::SourceVersionPlan::empty(), None),
@@ -1402,6 +1403,7 @@ impl Session {
             &crate::received::SourceVersionPlan,
             Option<&crate::records::SaveRows>,
             PreparedReadProgress<'_>,
+            &SimulationState,
         ),
         SessionError,
     > {
@@ -1431,6 +1433,7 @@ impl Session {
                 sequence: state.physical.header.sequence,
                 paused: state.physical.header.paused,
             },
+            state,
         ))
     }
     pub(crate) fn pin_protected_prefix(

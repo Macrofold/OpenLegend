@@ -33,7 +33,7 @@ pub(super) fn cell(value: &impl Serialize) -> Result<SqlCell, ExecutionError> {
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct ConsolidationGroup {
+pub struct ConsolidationGroup {
     pub source_keys: Vec<String>,
     pub text: JsText,
 }
@@ -60,6 +60,55 @@ pub(crate) struct ConsolidationFormatAnswer {
     #[serde(skip)]
     _storage: Option<ByteReservation>,
 }
+
+pub(crate) fn consolidation_reading(
+    record: &PersonalSourceRecord,
+    budget: &ByteBudget,
+) -> Result<(JsText, ByteReservation), ExecutionError> {
+    use crate::narration::{NativeText, native_text, native_text_bound};
+
+    #[derive(Deserialize)]
+    struct Text {
+        text: NativeText,
+    }
+    #[derive(Deserialize)]
+    struct Memory {
+        summary: JsText,
+    }
+
+    let _decode = budget.reserve(encoded_body_bound(record.payload())?)?;
+    let invalid = |_| ExecutionError::InvalidCheckpoint;
+    let (reading, mut storage) = match record.header().reference.kind {
+        PersonalSourceKind::Awareness => {
+            let Text { text } = serde_json::from_str(record.payload()).map_err(invalid)?;
+            let rendered =
+                budget.reserve(native_text_bound(&text).ok_or(ExecutionError::Capacity)?)?;
+            (native_text(&text), rendered)
+        }
+        PersonalSourceKind::Memory => {
+            let Memory { summary } = serde_json::from_str(record.payload()).map_err(invalid)?;
+            let storage = budget.reserve(summary.storage_bytes())?;
+            (summary, storage)
+        }
+        PersonalSourceKind::Summary => {
+            let Text {
+                text: NativeText::Literal(text),
+            } = serde_json::from_str(record.payload()).map_err(invalid)?
+            else {
+                return Err(ExecutionError::InvalidCheckpoint);
+            };
+            let storage = budget.reserve(text.storage_bytes())?;
+            (text, storage)
+        }
+    };
+    storage.resize(reading.storage_bytes())?;
+    Ok((reading, storage))
+}
+
+pub(crate) fn consolidation_key(reference: &PersonalSourceRef) -> Result<String, ExecutionError> {
+    json_record(&(&reference.kind, &reference.id)).map_err(|_| ExecutionError::Invariant)
+}
+
 impl ConsolidationFormatAnswer {
     pub(crate) fn decode(text: &str, budget: &ByteBudget) -> Result<Self, HistoryPreparationError> {
         let storage =
@@ -75,6 +124,37 @@ impl ConsolidationFormatAnswer {
     }
 }
 impl ConsolidationFormatRequest {
+    /// Render the protected readings with the same exact narration owner used
+    /// when their acquired accounts are read. Routine group text comes from
+    /// the admitted summary and needs no separate reading for publication.
+    pub(crate) fn protected_readings(
+        &self,
+        threshold: f64,
+        budget: &ByteBudget,
+    ) -> Result<ConsolidationFormatAnswer, ExecutionError> {
+        let mut storage = budget.reserve(
+            self.sources
+                .len()
+                .checked_mul(size_of::<JsText>())
+                .ok_or(ExecutionError::Capacity)?,
+        )?;
+        let mut readings = Vec::with_capacity(self.sources.len());
+        for source in &self.sources {
+            if source.record.header().importance < threshold {
+                readings.push(JsText::default());
+                continue;
+            }
+            let (text, retained) = consolidation_reading(&source.record, budget)?;
+            storage.merge(retained)?;
+            readings.push(text);
+        }
+        Ok(ConsolidationFormatAnswer {
+            binding: self.binding,
+            readings,
+            _storage: Some(storage),
+        })
+    }
+
     pub(crate) fn validate(
         &self,
         answer: &ConsolidationFormatAnswer,
@@ -206,13 +286,13 @@ impl PreparedConsolidation {
         let mut retired = Vec::new();
         for (index, source) in request.sources.iter().enumerate() {
             let h = source.record.header();
-            if h.reference.kind == PersonalSourceKind::Memory
-                && !matches!(h.record_kind.as_deref(), Some("episode" | "reflection"))
+            if h.class == AccountClass::Sensory
+                || h.reference.kind == PersonalSourceKind::Memory
+                    && !matches!(h.record_kind.as_deref(), Some("episode" | "reflection"))
             {
                 return Err(ExecutionError::InvalidCheckpoint.into());
             }
-            let key = json_record(&(&h.reference.kind, &h.reference.id))
-                .map_err(|_| ExecutionError::Invariant)?;
+            let key = consolidation_key(&h.reference)?;
             if positions.insert(key, index).is_some() {
                 return Err(ExecutionError::InvalidCheckpoint.into());
             }

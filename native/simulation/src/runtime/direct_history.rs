@@ -244,6 +244,17 @@ impl RuntimeRecallRead<'_> {
 }
 
 impl RuntimeRecallDecoder<'_> {
+    pub(super) fn for_state<'a>(
+        state: &'a crate::simulation::SimulationState,
+        budget: &'a crate::host::ByteBudget,
+    ) -> Result<RuntimeRecallDecoder<'a>, RuntimeError> {
+        Ok(RuntimeRecallDecoder {
+            hard_bytes: derived_hard_bytes(state)?,
+            account_law: state.installed.account_law(),
+            budget,
+        })
+    }
+
     pub fn with_awareness<T>(
         &self,
         payload: &str,
@@ -421,11 +432,7 @@ impl NativeWorldSession {
             .session
             .restore_projection_state(self.restoring)
             .map_err(failure)?;
-        Ok(RuntimeRecallDecoder {
-            hard_bytes: derived_hard_bytes(state)?,
-            account_law: state.installed.account_law(),
-            budget: &self.budget,
-        })
+        RuntimeRecallDecoder::for_state(state, &self.budget)
     }
 }
 

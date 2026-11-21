@@ -27,6 +27,7 @@ mod player_stream;
 mod player_view;
 mod presence;
 mod privacy_edit;
+mod recall_maintenance;
 #[cfg(feature = "profile-campaign")]
 mod profile;
 mod provider_transport;

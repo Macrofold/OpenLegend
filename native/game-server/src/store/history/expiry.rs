@@ -111,10 +111,16 @@ impl Store {
             let actors: Vec<_> = rows.iter().map(|row| row.actor_id).collect();
             let events: Vec<_> = rows.iter().map(|row| row.event_id).collect();
             transaction
-                .query_opt(&self.schema.lexical.remove_awareness, &[&world, &batch])
+                .query_opt(
+                    &self.schema.lexical.remove_accounts,
+                    &[&world, &batch, &"awareness", &Option::<&str>::None],
+                )
                 .await?;
             transaction
-                .execute(&self.schema.recall.reconcile, &[&world, &actors, &events])
+                .execute(
+                    &self.schema.recall.reconcile,
+                    &[&world, &actors, &events, &Option::<&str>::None],
+                )
                 .await?;
             let mut compactions = BTreeMap::new();
             for actor in actors {

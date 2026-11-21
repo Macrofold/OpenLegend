@@ -3,7 +3,10 @@
 use super::*;
 mod consolidation;
 mod reflection;
-pub use consolidation::{RuntimeConsolidationDream, RuntimeConsolidationTicket};
+pub use consolidation::{
+    RuntimeConsolidationBinding, RuntimeConsolidationDream, RuntimeConsolidationGroup,
+    RuntimeConsolidationTicket,
+};
 pub use reflection::RuntimeReflectionTicket;
 pub struct RuntimeMaintenanceRead {
     pub(crate) read: Arc<crate::capture::maintenance::MaintenanceCapture>,
@@ -21,8 +24,11 @@ impl RuntimeMaintenancePublication {
 }
 impl RuntimeMaintenanceRead {
     pub fn packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
-        let raw: &serde_json::value::RawValue =
-            serde_json::from_str(self.read.packet()).map_err(failure)?;
+        let packet = self
+            .read
+            .packet()
+            .ok_or_else(|| failure("maintenance has no bridge packet"))?;
+        let raw: &serde_json::value::RawValue = serde_json::from_str(packet).map_err(failure)?;
         RuntimeJson::encode(raw, budget)
     }
 }
@@ -82,12 +88,27 @@ impl NativeWorldSession {
             .map_err(failure)
     }
     pub fn read_maintenance(&self, input: &[u8]) -> Result<RuntimeMaintenanceRead, RuntimeError> {
-        self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let request = serde_json::from_slice(input).map_err(failure)?;
+        self.require_active()?;
         let read = crate::capture::maintenance::MaintenanceCapture::capture(
             &self.session.accepted().map_err(failure)?.state,
             request,
+            &self.budget,
+        )
+        .map_err(failure)?;
+        Ok(RuntimeMaintenanceRead {
+            read: Arc::new(read),
+        })
+    }
+    pub fn read_maintenance_direct(
+        &self,
+        actor_id: String,
+    ) -> Result<RuntimeMaintenanceRead, RuntimeError> {
+        self.require_active()?;
+        let read = crate::capture::maintenance::MaintenanceCapture::capture_consolidation(
+            &self.session.accepted().map_err(failure)?.state,
+            actor_id,
             &self.budget,
         )
         .map_err(failure)?;

@@ -39,7 +39,7 @@ pub(crate) struct LexicalStatements {
     pub work: String,
     pub write: String,
     pub complete: String,
-    pub remove_awareness: String,
+    pub remove_accounts: String,
 }
 
 #[derive(Deserialize)]
@@ -182,7 +182,7 @@ impl StorageSchema {
             .checked_add(self.lexical.work.capacity())?
             .checked_add(self.lexical.write.capacity())?
             .checked_add(self.lexical.complete.capacity())?
-            .checked_add(self.lexical.remove_awareness.capacity())?
+            .checked_add(self.lexical.remove_accounts.capacity())?
             .checked_add(self.tables.capacity().checked_mul(size_of::<Table>())?)?;
         bytes = self
             .source_versions
@@ -216,7 +216,7 @@ impl StorageSchema {
             || self.lexical.work.is_empty()
             || self.lexical.write.is_empty()
             || self.lexical.complete.is_empty()
-            || self.lexical.remove_awareness.is_empty()
+            || self.lexical.remove_accounts.is_empty()
             || self.source_versions.statements().any(String::is_empty)
             || self
                 .tables

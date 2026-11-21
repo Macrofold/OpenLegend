@@ -31,8 +31,9 @@ mod maintenance;
 pub use learning::{RuntimeActivityLearning, RuntimeActivityLearningStep};
 mod startup;
 pub use maintenance::{
-    RuntimeConsolidationDream, RuntimeConsolidationTicket, RuntimeMaintenancePublication,
-    RuntimeMaintenanceRead, RuntimeReflectionTicket,
+    RuntimeConsolidationBinding, RuntimeConsolidationDream, RuntimeConsolidationGroup,
+    RuntimeConsolidationTicket, RuntimeMaintenancePublication, RuntimeMaintenanceRead,
+    RuntimeReflectionTicket,
 };
 mod npc;
 mod npc_intake;
@@ -1185,8 +1186,15 @@ impl NativeWorldSession {
             source_versions,
             protected_save,
             progress,
+            state,
         ) = self.session.prepared_products(key).map_err(failure)?;
         let restore = self.session.prepared_restore_facts(key).map_err(failure)?;
+        let consolidation_recall = match operation {
+            CompletedOperation::Consolidation(done) if done.protected => {
+                Some(RuntimeRecallDecoder::for_state(state, &self.budget)?)
+            }
+            _ => None,
+        };
         Ok(RuntimePreparedProducts {
             operation,
             history,
@@ -1198,6 +1206,7 @@ impl NativeWorldSession {
             protected_save,
             progress,
             restore,
+            consolidation_recall,
         })
     }
     /// Requires the genuine fence result, never an acceptance boolean supplied
@@ -1359,6 +1368,7 @@ pub struct RuntimePreparedProducts<'a> {
     protected_save: Option<&'a crate::records::SaveRows>,
     progress: crate::simulation::session::PreparedReadProgress<'a>,
     restore: Option<crate::simulation::session::PreparedRestoreFacts<'a>>,
+    consolidation_recall: Option<RuntimeRecallDecoder<'a>>,
 }
 impl RuntimePreparedProducts<'_> {
     pub fn outcome(&self) -> &crate::commands::Outcome {
@@ -1375,6 +1385,16 @@ impl RuntimePreparedProducts<'_> {
 
     pub fn protected_save(&self) -> Option<&crate::records::SaveRows> {
         self.protected_save
+    }
+
+    /// The exact protected consolidation actor and its installed recall law.
+    pub fn consolidation_recall(&self) -> Option<(&str, &[String], &RuntimeRecallDecoder<'_>)> {
+        let CompletedOperation::Consolidation(done) = self.operation else {
+            return None;
+        };
+        self.consolidation_recall
+            .as_ref()
+            .map(|law| (done.actor.as_str(), done.retired.as_slice(), law))
     }
 
     pub fn progress(&self) -> &RuntimeProgress<'_> {

@@ -255,7 +255,7 @@ impl Store {
                 transaction
                     .execute(
                         &self.schema.recall.reconcile,
-                        &[&save.world_id, &actors, &ids],
+                        &[&save.world_id, &actors, &ids, &"memory"],
                     )
                     .await?;
             }

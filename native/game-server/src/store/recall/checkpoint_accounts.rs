@@ -1,5 +1,5 @@
-//! Place exact recalled memory and summary dependencies during full recovery.
-//! No abandoned search rows are read or treated as gameplay inputs.
+//! Place exact memory and summary dependencies from canonical account rows.
+//! Recovery and consolidation share the installed recognition law.
 
 use super::recovery::Records;
 use super::*;
@@ -9,7 +9,6 @@ use openlegend_simulation::runtime::RuntimeRecallDecoder;
 use openlegend_simulation::text::JsText;
 use serde::Deserialize;
 use serde_json::value::RawValue;
-use tokio_postgres::Row;
 
 #[derive(Default, Deserialize)]
 struct OriginalObservations {
@@ -107,7 +106,7 @@ struct Body {
     observations: OriginalObservations,
 }
 
-struct Placement {
+pub(super) struct Placement {
     actor: String,
     id: String,
     source: String,
@@ -115,6 +114,55 @@ struct Placement {
     learning: Vec<(PersonalSourceKind, String)>,
     places: Vec<String>,
     spans: Vec<String>,
+}
+
+impl Placement {
+    pub(super) fn sql_output_bytes(&self) -> Option<usize> {
+        [&self.exact, &self.places, &self.spans]
+            .into_iter()
+            .flatten()
+            .try_fold(self.source.len().checked_add(4)?, |n, value| {
+                n.checked_add(value.len())?.checked_add(1)
+            })
+    }
+
+    pub(super) fn retained_bytes(&self) -> Option<usize> {
+        let bytes = self
+            .actor
+            .capacity()
+            .checked_add(self.id.capacity())?
+            .checked_add(self.source.capacity())?
+            .checked_add(
+                self.learning
+                    .capacity()
+                    .checked_mul(std::mem::size_of::<(PersonalSourceKind, String)>())?,
+            )?;
+        [&self.exact, &self.places, &self.spans]
+            .into_iter()
+            .try_fold(bytes, |n, values| {
+                values.iter().try_fold(
+                    n.checked_add(
+                        values
+                            .capacity()
+                            .checked_mul(std::mem::size_of::<String>())?,
+                    )?,
+                    |n, value| n.checked_add(value.capacity()),
+                )
+            })?
+            .checked_add(
+                self.learning
+                    .iter()
+                    .try_fold(0usize, |n, (_, source)| n.checked_add(source.capacity()))?,
+            )
+    }
+}
+
+pub(super) struct AccountImage<'a> {
+    pub record: &'a str,
+    pub id: &'a str,
+    pub actor: &'a str,
+    pub revision: &'a str,
+    pub payload: &'a str,
 }
 
 struct PlacementBuilder<'a> {
@@ -231,15 +279,26 @@ impl Store {
             }
             let mut placements = Vec::with_capacity(rows.len());
             for row in &rows {
-                placements.push(compile_placement(world, kind, row, decoder)?);
+                placements.push(compile_placement(
+                    world,
+                    kind,
+                    AccountImage {
+                        record: row.try_get(0)?,
+                        id: row.try_get(3)?,
+                        actor: row.try_get(4)?,
+                        revision: row.try_get(5)?,
+                        payload: row.try_get(6)?,
+                    },
+                    decoder,
+                )?);
             }
-            self.insert_restored_accounts(tx, world, source_kind(kind), hard, &placements)
+            self.insert_retained_accounts(tx, world, source_kind(kind), hard, &placements)
                 .await?;
         }
         Ok(())
     }
 
-    async fn insert_restored_accounts(
+    pub(super) async fn insert_retained_accounts(
         &self,
         tx: &Transaction<'_>,
         world: &str,
@@ -247,6 +306,17 @@ impl Store {
         hard: i64,
         rows: &[Placement],
     ) -> StoreResult<()> {
+        // The compiled placement and the PostgreSQL parameter live together.
+        // Keep a separate charge for the joined arrays and their wire copies.
+        let wire = rows
+            .iter()
+            .try_fold(1024usize, |n, row| n.checked_add(row.sql_output_bytes()?))
+            .and_then(|n| n.checked_mul(3))
+            .ok_or(StoreError::Capacity)?;
+        let _wire = self
+            .budget
+            .reserve(wire)
+            .map_err(|_| StoreError::Capacity)?;
         let fields = array(rows.iter().map(|row| row.source.as_str()));
         tx.query_opt(&self.schema.recall.insert, &[&fields, &hard])
             .await?;
@@ -291,23 +361,28 @@ impl Store {
         Self::write_learning_dependencies(tx, world, kind, &learning).await?;
         let actors: Vec<_> = rows.iter().map(|row| row.actor.as_str()).collect();
         let ids: Vec<_> = rows.iter().map(|row| row.id.as_str()).collect();
-        tx.execute(&self.schema.recall.reconcile, &[&world, &actors, &ids])
-            .await?;
+        tx.execute(
+            &self.schema.recall.reconcile,
+            &[&world, &actors, &ids, &Option::<&str>::None],
+        )
+        .await?;
         Ok(())
     }
 }
 
-fn compile_placement(
+pub(super) fn compile_placement(
     world: &str,
     kind: PersonalSourceKind,
-    row: &Row,
+    image: AccountImage<'_>,
     decoder: &RuntimeRecallDecoder<'_>,
 ) -> StoreResult<Placement> {
-    let record: &str = row.try_get(0)?;
-    let id: &str = row.try_get(3)?;
-    let actor: &str = row.try_get(4)?;
-    let revision: &str = row.try_get(5)?;
-    let payload: &str = row.try_get(6)?;
+    let AccountImage {
+        record,
+        id,
+        actor,
+        revision,
+        payload,
+    } = image;
     let data: Body = serde_json::from_str(payload).map_err(|_| StoreError::InvalidRecord)?;
     let summary = kind == PersonalSourceKind::Summary;
     if data.id != id || (!summary && data.actor_id.as_deref() != Some(actor)) {

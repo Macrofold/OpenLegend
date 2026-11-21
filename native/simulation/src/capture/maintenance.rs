@@ -111,10 +111,13 @@ pub(crate) struct MaintenanceCapture {
     obligations: String,
     pub(crate) mind_revision: u64,
     pub(crate) inner_revision: Option<u64>,
+    packet: Option<MaintenancePacket>,
+    _storage: ByteReservation,
+}
+struct MaintenancePacket {
     packet: String,
     values: Vec<String>,
     dependencies: String,
-    _storage: ByteReservation,
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -416,6 +419,31 @@ impl MaintenanceCapture {
         request: MaintenanceRequest,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
+        Self::capture_with_packet(state, request, budget, true)
+    }
+
+    pub(crate) fn capture_consolidation(
+        state: &SimulationState,
+        actor_id: String,
+        budget: &ByteBudget,
+    ) -> Result<Self, ExecutionError> {
+        Self::capture_with_packet(
+            state,
+            MaintenanceRequest {
+                actor_id,
+                resident_pressure: None,
+            },
+            budget,
+            false,
+        )
+    }
+
+    fn capture_with_packet(
+        state: &SimulationState,
+        request: MaintenanceRequest,
+        budget: &ByteBudget,
+        with_packet: bool,
+    ) -> Result<Self, ExecutionError> {
         let id = request.actor_id.as_str();
         let entity = state
             .physical
@@ -441,82 +469,6 @@ impl MaintenanceCapture {
         }
         let (body_fence, body_storage) = encode(&body_fence(&state.installed, actor)?, budget)?;
         let (obligations, obligation_storage) = encode(&Obligations(memory), budget)?;
-        let (values, values_storage) = queue_values(state, id, budget)?;
-        let (dependencies, dependency_storage) = dependencies(state, id, budget)?;
-        #[derive(Serialize)]
-        #[serde(rename_all = "camelCase")]
-        struct Packet<'a> {
-            world_id: &'a str,
-            generation: &'a str,
-            actor_id: &'a str,
-            name: &'a crate::text::JsText,
-            alive: bool,
-            available: bool,
-            reflection_safe: bool,
-            body_fence: &'a str,
-            has_action: bool,
-            active_plan: bool,
-            sim_time: f64,
-            last_reflection_at: f64,
-            #[serde(skip_serializing_if = "Option::is_none")]
-            dream: Option<Dream<'a>>,
-            learning_pending: bool,
-            mind_revision: u64,
-            inner_world_revision: Option<u64>,
-            last_dream_episode: Option<&'a str>,
-            active_obligations_digest: String,
-            values: &'a [String],
-            dependency_token: &'a str,
-            enrolled: bool,
-            #[serde(skip_serializing_if = "Option::is_none")]
-            resident_pressure: Option<bool>,
-        }
-        let digest_storage = budget.reserve(64)?;
-        let packet = Packet {
-            world_id: &state.physical.header.id,
-            generation: &state.generation,
-            actor_id: id,
-            name: &entity.name,
-            alive: actor.alive,
-            available: available(state, id, MaintenancePurpose::Maintenance)?,
-            reflection_safe: available(state, id, MaintenancePurpose::Reflection)?,
-            body_fence: &body_fence,
-            has_action: actor.action.is_some(),
-            active_plan: actor
-                .agency
-                .plan
-                .as_ref()
-                .is_some_and(|p| p.status == crate::plans::PlanStatus::Active),
-            sim_time: state.physical.header.sim_time,
-            last_reflection_at: mind.last_reflection_at,
-            dream: dream(state, id),
-            learning_pending: state
-                .activity
-                .learning
-                .get(id)
-                .is_some_and(|cursor| !cursor.pending.is_empty()),
-            mind_revision: mind.revision,
-            inner_world_revision: inner_revision,
-            last_dream_episode: mind.last_dream_episode.as_deref(),
-            active_obligations_digest: crate::encoding::sha256_hex(obligations.as_bytes()),
-            values: &values,
-            dependency_token: &dependencies,
-            enrolled: actor.alive
-                && entity.has_memory()
-                && (state
-                    .minds
-                    .minds
-                    .as_ref()
-                    .is_some_and(|m| m.contains_key(id))
-                    || state.activity.learning.contains_key(id)),
-            resident_pressure: request
-                .resident_pressure
-                .as_ref()
-                .map(|p| resident_pressure(state, p))
-                .transpose()?,
-        };
-        let (packet, packet_storage) = encode(&packet, budget)?;
-        drop(digest_storage);
         let mut storage = budget.reserve(
             size_of::<Self>()
                 + 2 * size_of::<usize>()
@@ -526,9 +478,94 @@ impl MaintenanceCapture {
         )?;
         storage.merge(body_storage)?;
         storage.merge(obligation_storage)?;
-        storage.merge(packet_storage)?;
-        storage.merge(values_storage)?;
-        storage.merge(dependency_storage)?;
+        let packet = if with_packet {
+            let (values, values_storage) = queue_values(state, id, budget)?;
+            let (dependencies, dependency_storage) = dependencies(state, id, budget)?;
+            #[derive(Serialize)]
+            #[serde(rename_all = "camelCase")]
+            struct Packet<'a> {
+                world_id: &'a str,
+                generation: &'a str,
+                actor_id: &'a str,
+                name: &'a crate::text::JsText,
+                alive: bool,
+                available: bool,
+                reflection_safe: bool,
+                body_fence: &'a str,
+                has_action: bool,
+                active_plan: bool,
+                sim_time: f64,
+                last_reflection_at: f64,
+                #[serde(skip_serializing_if = "Option::is_none")]
+                dream: Option<Dream<'a>>,
+                learning_pending: bool,
+                mind_revision: u64,
+                inner_world_revision: Option<u64>,
+                last_dream_episode: Option<&'a str>,
+                active_obligations_digest: String,
+                values: &'a [String],
+                dependency_token: &'a str,
+                enrolled: bool,
+                #[serde(skip_serializing_if = "Option::is_none")]
+                resident_pressure: Option<bool>,
+            }
+            let digest_storage = budget.reserve(64)?;
+            let packet = Packet {
+                world_id: &state.physical.header.id,
+                generation: &state.generation,
+                actor_id: id,
+                name: &entity.name,
+                alive: actor.alive,
+                available: available(state, id, MaintenancePurpose::Maintenance)?,
+                reflection_safe: available(state, id, MaintenancePurpose::Reflection)?,
+                body_fence: &body_fence,
+                has_action: actor.action.is_some(),
+                active_plan: actor
+                    .agency
+                    .plan
+                    .as_ref()
+                    .is_some_and(|p| p.status == crate::plans::PlanStatus::Active),
+                sim_time: state.physical.header.sim_time,
+                last_reflection_at: mind.last_reflection_at,
+                dream: dream(state, id),
+                learning_pending: state
+                    .activity
+                    .learning
+                    .get(id)
+                    .is_some_and(|cursor| !cursor.pending.is_empty()),
+                mind_revision: mind.revision,
+                inner_world_revision: inner_revision,
+                last_dream_episode: mind.last_dream_episode.as_deref(),
+                active_obligations_digest: crate::encoding::sha256_hex(obligations.as_bytes()),
+                values: &values,
+                dependency_token: &dependencies,
+                enrolled: actor.alive
+                    && entity.has_memory()
+                    && (state
+                        .minds
+                        .minds
+                        .as_ref()
+                        .is_some_and(|m| m.contains_key(id))
+                        || state.activity.learning.contains_key(id)),
+                resident_pressure: request
+                    .resident_pressure
+                    .as_ref()
+                    .map(|p| resident_pressure(state, p))
+                    .transpose()?,
+            };
+            let (packet, packet_storage) = encode(&packet, budget)?;
+            drop(digest_storage);
+            storage.merge(packet_storage)?;
+            storage.merge(values_storage)?;
+            storage.merge(dependency_storage)?;
+            Some(MaintenancePacket {
+                packet,
+                values,
+                dependencies,
+            })
+        } else {
+            None
+        };
         Ok(Self {
             request,
             world: state.physical.header.id.clone(),
@@ -538,13 +575,11 @@ impl MaintenanceCapture {
             mind_revision: mind.revision,
             inner_revision,
             packet,
-            values,
-            dependencies,
             _storage: storage,
         })
     }
-    pub(crate) fn packet(&self) -> &str {
-        &self.packet
+    pub(crate) fn packet(&self) -> Option<&str> {
+        self.packet.as_ref().map(|packet| packet.packet.as_str())
     }
     pub(crate) fn scope_current(&self, state: &SimulationState) -> bool {
         self.world == state.physical.header.id && self.generation == state.generation
@@ -554,6 +589,9 @@ impl MaintenanceCapture {
         state: &SimulationState,
         budget: &ByteBudget,
     ) -> Result<bool, ExecutionError> {
+        let Some(packet) = &self.packet else {
+            return Ok(false);
+        };
         if !self.scope_current(state)
             || state
                 .physical
@@ -566,7 +604,7 @@ impl MaintenanceCapture {
         let (values, _storage) = queue_values(state, &self.request.actor_id, budget)?;
         let (dependencies, _dependency_storage) =
             dependencies(state, &self.request.actor_id, budget)?;
-        Ok(values == self.values && dependencies == self.dependencies)
+        Ok(values == packet.values && dependencies == packet.dependencies)
     }
     pub(crate) fn current(
         &self,

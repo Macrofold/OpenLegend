@@ -30,6 +30,7 @@ pub(crate) struct ConsolidationInput {
     pub source_bytes: u64,
     pub storage: ByteReservation,
     pub dream: Option<DreamInput>,
+    pub protected: bool,
 }
 pub(crate) enum ConsolidationAnswer {
     Sources(NpcSourcesAnswer),
@@ -55,6 +56,7 @@ pub(crate) struct CompletedConsolidation {
     pub outcome: Outcome,
     pub actor: String,
     pub retired: Vec<String>,
+    pub protected: bool,
     _storage: ByteReservation,
 }
 pub(crate) struct ConsolidationCursor {
@@ -74,6 +76,7 @@ pub(crate) struct ConsolidationCursor {
     dream_question: Option<MaintenanceFormatRequest>,
     sources: Option<crate::capture::PreparedNpcSources>,
     duplicate: bool,
+    protected: bool,
     budget: ByteBudget,
     storage: Option<ByteReservation>,
 }
@@ -133,6 +136,7 @@ impl ConsolidationCursor {
             dream_question: None,
             sources: None,
             duplicate: false,
+            protected: input.protected,
             budget: budget.clone(),
             storage: Some(storage),
         })
@@ -207,6 +211,7 @@ impl ConsolidationCursor {
             },
             actor: self.body.request.actor_id.clone(),
             retired,
+            protected: self.protected && ok && code == "consolidated",
             _storage: storage,
         }))
     }
@@ -240,13 +245,63 @@ impl ConsolidationCursor {
         }
         let sources = self.sources.take().ok_or(ExecutionError::Invariant)?;
         let binding = self.binding(core)?;
-        self.format = Some(ConsolidationFormatRequest::prepare(
+        let format = ConsolidationFormatRequest::prepare(
             binding,
             &self.body.request.actor_id,
             &sources,
             &self.budget,
-        )?);
+        )?;
+        if self.protected {
+            let answer =
+                format.protected_readings(self.limits.protected_importance, &self.budget)?;
+            return self.after_format(core, format, answer);
+        }
+        self.format = Some(format);
         Ok(Progress::Format)
+    }
+
+    fn after_format(
+        &mut self,
+        core: &mut CoreMutation<'_>,
+        format: ConsolidationFormatRequest,
+        answer: ConsolidationFormatAnswer,
+    ) -> Result<Progress, DriveError> {
+        let prepared = match PreparedConsolidation::prepare(
+            core.state,
+            format,
+            answer,
+            &self.job,
+            self.groups.take().ok_or(ExecutionError::Invariant)?,
+            self.limits,
+            &self.budget,
+        ) {
+            Ok(p) => p,
+            Err(crate::experience::HistoryPreparationError::Owner(
+                ExecutionError::InvalidCheckpoint,
+            )) => return self.reject(core, "Invalid memory groups or source coverage."),
+            Err(e) => return Err(e.into()),
+        };
+        let binding = self.binding(core)?;
+        let existing = core
+            .state
+            .experience
+            .optional_collection(
+                prepared.actor_id(),
+                crate::experience::PersonalSourceKind::Summary,
+            )
+            .map_err(ExecutionError::from)?;
+        let keys = prepared.collation_keys().chain(
+            existing
+                .filter(|c| c.coverage().complete)
+                .into_iter()
+                .flat_map(|c| c.records())
+                .map(|r| r.header().reference.id.as_str()),
+        );
+        let collation = CollationRequest::prepare(binding, keys, &self.budget)
+            .map_err(|_| DriveError::Capacity)?;
+        self.prepared = Some(prepared);
+        self.collation = Some(collation);
+        Ok(Progress::Collation)
     }
     fn drive(
         &mut self,
@@ -256,7 +311,7 @@ impl ConsolidationCursor {
         if self.checkpoint.is_none() {
             return Err(ExecutionError::InvalidCheckpoint.into());
         }
-        if self.dream.is_none() {
+        if self.dream.is_none() && !self.protected {
             if let Some(message) = self.initial_problem.take() {
                 return self.reject(core, message);
             }
@@ -269,11 +324,17 @@ impl ConsolidationCursor {
             };
             let sources = source.complete(core, answer, &self.budget)?;
             self.source = None;
+            self.duplicate = sources.duplicate_summary.ok_or(ExecutionError::Invariant)?;
+            if self.protected && self.duplicate {
+                // Exact committed jobs must still be recognizable after their
+                // routine originals have moved out of current recall.
+                self.initial_problem = None;
+                return self.after_dream(core);
+            }
             if !sources.unavailable_personal.is_empty() || !sources.unavailable_receipts.is_empty()
             {
                 return self.reject(core, "Source coverage changed.");
             }
-            self.duplicate = sources.duplicate_summary.ok_or(ExecutionError::Invariant)?;
             self.sources = Some(sources);
             if let Some(dream) = self.dream.as_ref() {
                 let binding = GeometryBinding::new(
@@ -331,42 +392,7 @@ impl ConsolidationCursor {
             };
             format.validate(&answer)?;
             let format = self.format.take().ok_or(ExecutionError::Invariant)?;
-            let prepared = match PreparedConsolidation::prepare(
-                core.state,
-                format,
-                answer,
-                &self.job,
-                self.groups.take().ok_or(ExecutionError::Invariant)?,
-                self.limits,
-                &self.budget,
-            ) {
-                Ok(p) => p,
-                Err(crate::experience::HistoryPreparationError::Owner(
-                    ExecutionError::InvalidCheckpoint,
-                )) => return self.reject(core, "Invalid memory groups or source coverage."),
-                Err(e) => return Err(e.into()),
-            };
-            let binding = self.binding(core)?;
-            let existing = core
-                .state
-                .experience
-                .optional_collection(
-                    prepared.actor_id(),
-                    crate::experience::PersonalSourceKind::Summary,
-                )
-                .map_err(ExecutionError::from)?;
-            let keys = prepared.collation_keys().chain(
-                existing
-                    .filter(|c| c.coverage().complete)
-                    .into_iter()
-                    .flat_map(|c| c.records())
-                    .map(|r| r.header().reference.id.as_str()),
-            );
-            let collation = CollationRequest::prepare(binding, keys, &self.budget)
-                .map_err(|_| DriveError::Capacity)?;
-            self.prepared = Some(prepared);
-            self.collation = Some(collation);
-            return Ok(Progress::Collation);
+            return self.after_format(core, format, answer);
         }
         if let Some(question) = self.collation.as_mut() {
             let answer = match answer {

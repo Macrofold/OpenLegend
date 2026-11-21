@@ -6,30 +6,31 @@ use crate::capture::maintenance::{
     MaintenancePurpose,
 };
 use crate::capture::{NpcHistoricalScope, NpcSourceSelection, PreparedNpcSources};
-use crate::experience::consolidation::{ConsolidationGroup, ConsolidationLimits};
+pub use crate::experience::consolidation::ConsolidationGroup as RuntimeConsolidationGroup;
+use crate::experience::consolidation::ConsolidationLimits;
 use crate::host::retained_size::HeapBytes;
 use std::mem::size_of;
 mod dream;
 pub use dream::RuntimeConsolidationDream;
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Binding {
-    job_id: String,
-    selection: NpcSourceSelection,
-    protected_importance: f64,
+pub struct RuntimeConsolidationBinding {
+    pub job_id: String,
+    pub selection: NpcSourceSelection,
+    pub protected_importance: f64,
     #[serde(deserialize_with = "crate::values::deserialize_safe_integer")]
-    summary_bytes: u64,
-    requires_body: bool,
+    pub summary_bytes: u64,
+    pub requires_body: bool,
     #[serde(
         default,
         deserialize_with = "crate::values::deserialize_present_option"
     )]
-    dream_episode: Option<String>,
+    pub dream_episode: Option<String>,
 }
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Groups {
-    groups: Vec<ConsolidationGroup>,
+    groups: Vec<RuntimeConsolidationGroup>,
 }
 pub struct RuntimeConsolidationTicket {
     pub(super) job: String,
@@ -53,9 +54,19 @@ impl NativeWorldSession {
         body: &RuntimeMaintenanceRead,
         input: &[u8],
     ) -> Result<RuntimeConsolidationTicket, RuntimeError> {
-        self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
-        let mut input: Binding = serde_json::from_slice(input).map_err(failure)?;
+        let input = serde_json::from_slice(input).map_err(failure)?;
+        self.bind_consolidation_direct(body, input)
+    }
+
+    /// Binds an owned, actor-scoped selection to the live native maintenance read.
+    /// The ticket admits its own custody and checks the exact sources again when applied.
+    pub fn bind_consolidation_direct(
+        &mut self,
+        body: &RuntimeMaintenanceRead,
+        mut input: RuntimeConsolidationBinding,
+    ) -> Result<RuntimeConsolidationTicket, RuntimeError> {
+        self.require_active()?;
         let state = &self.session.accepted().map_err(failure)?.state;
         if !crate::values::is_safe_record_id(&input.job_id)
             || !body.read.scope_current(state)
@@ -154,18 +165,7 @@ impl NativeWorldSession {
         if ticket.candidate.is_some() || ticket.sources.is_some() {
             return Err(failure("consolidation sources are already being prepared"));
         }
-        let _encoded = self
-            .budget
-            .reserve(
-                crate::encoding::json_record_len(&ticket.selection)
-                    .map_err(failure)?
-                    .checked_mul(2)
-                    .ok_or_else(|| failure("capacity"))?,
-            )
-            .map_err(failure)?;
-        let json = crate::encoding::json_record(&ticket.selection).map_err(failure)?;
-        let _decode = decode_preparation(json.as_bytes(), &self.budget)?;
-        let selection = serde_json::from_str(&json).map_err(failure)?;
+        let (_selection, selection) = ticket.copy_selection(&self.budget)?;
         let key = self
             .session
             .begin_npc_sources(Arc::clone(&ticket.scope), selection)
@@ -290,36 +290,52 @@ impl NativeWorldSession {
         dream: Option<&RuntimeConsolidationDream>,
         interpretation: Option<&[u8]>,
     ) -> Result<CandidateKey, RuntimeError> {
-        self.require_active()?;
         let _decode = decode_preparation(input, &self.budget)?;
         let input: Groups = serde_json::from_slice(input).map_err(failure)?;
+        let dream = match (dream, interpretation) {
+            (None, None) => None,
+            (Some(dream), Some(raw)) => Some((dream, raw)),
+            _ => {
+                return Err(failure(
+                    "dream publication requires its native binding and raw interpretation",
+                ));
+            }
+        };
+        self.begin_consolidation_owned(owner, input.groups, dream, false)
+    }
+
+    /// Starts a whole protected consolidation from caller-funded groups.
+    /// SQL publication and acceptance must settle together for this candidate.
+    pub fn begin_consolidation_direct(
+        &mut self,
+        owner: &mut Option<RuntimeConsolidationTicket>,
+        groups: Vec<RuntimeConsolidationGroup>,
+    ) -> Result<CandidateKey, RuntimeError> {
+        self.begin_consolidation_owned(owner, groups, None, true)
+    }
+
+    fn begin_consolidation_owned(
+        &mut self,
+        owner: &mut Option<RuntimeConsolidationTicket>,
+        groups: Vec<RuntimeConsolidationGroup>,
+        dream: Option<(&RuntimeConsolidationDream, &[u8])>,
+        protected: bool,
+    ) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
         let ticket = owner
             .as_ref()
             .ok_or_else(|| failure("consolidation was released"))?;
-        if !ticket.sources_ready()
+        if !(ticket.sources_ready() || protected && ticket.duplicate())
             || ticket.candidate.is_some()
             || !self.consolidation_current(ticket)?
         {
             return Err(failure("consolidation source preparation changed"));
         }
-        let _copy = self
-            .budget
-            .reserve(
-                crate::encoding::json_record_len(&ticket.selection)
-                    .map_err(failure)?
-                    .checked_mul(12)
-                    .ok_or_else(|| failure("capacity"))?,
-            )
-            .map_err(failure)?;
-        let selection = serde_json::from_str(
-            &crate::encoding::json_record(&ticket.selection).map_err(failure)?,
-        )
-        .map_err(failure)?;
+        let (_selection, selection) = ticket.copy_selection(&self.budget)?;
         let storage = self
             .budget
             .reserve(
-                input
-                    .groups
+                groups
                     .heap_bytes()
                     .and_then(|n| n.checked_add(ticket.job.len()))
                     .and_then(|n| {
@@ -334,15 +350,9 @@ impl NativeWorldSession {
                     .ok_or_else(|| failure("capacity"))?,
             )
             .map_err(failure)?;
-        let dream = match (dream, interpretation) {
-            (None, None) => None,
-            (Some(dream), Some(raw)) => Some(dream.prepare(ticket, raw, &self.budget)?),
-            _ => {
-                return Err(failure(
-                    "dream publication requires its native binding and raw interpretation",
-                ));
-            }
-        };
+        let dream = dream
+            .map(|(dream, raw)| dream.prepare(ticket, raw, &self.budget))
+            .transpose()?;
         let candidate = self
             .session
             .begin_consolidation(crate::cognition::consolidation::ConsolidationInput {
@@ -350,12 +360,13 @@ impl NativeWorldSession {
                 body: Arc::clone(&ticket.body),
                 admission: MaintenanceAdmission {
                     purpose: MaintenancePurpose::Maintenance,
-                    requires_body: ticket.admission.requires_body,
+                    requires_body: ticket.admission.requires_body
+                        || protected && !ticket.duplicate() && ticket.has_routine(),
                     dream_episode: ticket.admission.dream_episode.clone(),
                 },
                 scope: Arc::clone(&ticket.scope),
                 selection,
-                groups: input.groups,
+                groups,
                 limits: ticket.limits,
                 source_count: ticket.sources.as_ref().map_or(0, |s| s.personal.len()),
                 source_bytes: ticket
@@ -368,6 +379,7 @@ impl NativeWorldSession {
                     .ok_or_else(|| failure("capacity"))?,
                 storage,
                 dream,
+                protected,
             })
             .map_err(failure)?;
         *owner = None;
@@ -375,6 +387,96 @@ impl NativeWorldSession {
     }
 }
 impl RuntimeConsolidationTicket {
+    pub fn actor_id(&self) -> &str {
+        &self.scope.actor_id
+    }
+
+    /// Return exact singleton readings for a protected-only or previously
+    /// committed selection. Routine sources require the admitted inference path.
+    pub fn protected_groups(
+        &self,
+        budget: &ByteBudget,
+    ) -> Result<Option<(Vec<RuntimeConsolidationGroup>, ByteReservation)>, RuntimeError> {
+        if !budget.owns(&self._storage) {
+            return Err(failure("consolidation source preparation changed"));
+        }
+        if self.duplicate() {
+            return Ok(Some((Vec::new(), budget.reserve(0).map_err(failure)?)));
+        }
+        if !self.sources_ready() {
+            return Err(failure("consolidation source preparation changed"));
+        }
+        let sources = self
+            .sources
+            .as_ref()
+            .ok_or_else(|| failure("missing consolidation sources"))?;
+        if self.has_routine() {
+            return Ok(None);
+        }
+        let bytes = sources
+            .personal
+            .iter()
+            .try_fold(0usize, |n, source| {
+                let id = &source.record.header().reference.id;
+                n.checked_add(size_of::<RuntimeConsolidationGroup>() + size_of::<String>() + 32)?
+                    .checked_add(id.len().checked_mul(6)?)
+            })
+            .ok_or_else(|| failure("capacity"))?;
+        let mut storage = budget.reserve(bytes).map_err(failure)?;
+        let mut groups = Vec::with_capacity(sources.personal.len());
+        for source in &sources.personal {
+            let record = source
+                .current_record()
+                .ok_or_else(|| failure("source has moved"))?;
+            use crate::experience::consolidation::{consolidation_key, consolidation_reading};
+            let key = consolidation_key(&record.header().reference).map_err(failure)?;
+            let (text, text_storage) = consolidation_reading(record, budget).map_err(failure)?;
+            storage.merge(text_storage).map_err(failure)?;
+            groups.push(RuntimeConsolidationGroup {
+                source_keys: vec![key],
+                text,
+            });
+        }
+        Ok(Some((groups, storage)))
+    }
+
+    fn copy_selection(
+        &self,
+        budget: &ByteBudget,
+    ) -> Result<(ByteReservation, NpcSourceSelection), RuntimeError> {
+        // This ticket admits only a personal selection without receipt or parent
+        // lookups. Custody for the new cursor is acquired while the copy is funded.
+        let capacity = self
+            .selection
+            .personal
+            .len()
+            .checked_mul(size_of::<crate::capture::NpcPersonalSelection>())
+            .and_then(|n| n.checked_add(self.job.len()))
+            .and_then(|base| {
+                self.selection
+                    .personal
+                    .iter()
+                    .try_fold(base, |n, item| n.checked_add(item.reference.heap_bytes()?))
+            })
+            .ok_or_else(|| failure("capacity"))?;
+        let storage = budget.reserve(capacity).map_err(failure)?;
+        Ok((
+            storage,
+            NpcSourceSelection {
+                receipts: Vec::new(),
+                personal: self
+                    .selection
+                    .personal
+                    .iter()
+                    .map(|item| crate::capture::NpcPersonalSelection {
+                        reference: item.reference.clone(),
+                        through: None,
+                    })
+                    .collect(),
+                consolidation_job: Some(self.job.clone()),
+            },
+        ))
+    }
     fn sources_ready(&self) -> bool {
         self.sources.as_ref().is_some_and(|s| {
             !s.personal.is_empty()
@@ -384,6 +486,19 @@ impl RuntimeConsolidationTicket {
                 && s.personal
                     .iter()
                     .all(|p| p.current_record().is_some() && p.through.is_none())
+        })
+    }
+
+    fn duplicate(&self) -> bool {
+        self.sources.as_ref().and_then(|s| s.duplicate_summary) == Some(true)
+    }
+
+    fn has_routine(&self) -> bool {
+        self.sources.as_ref().is_some_and(|sources| {
+            sources
+                .personal
+                .iter()
+                .any(|source| source.record.header().importance < self.limits.protected_importance)
         })
     }
     pub fn candidate_key(&self) -> Option<CandidateKey> {

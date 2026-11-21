@@ -22,6 +22,7 @@ use tokio_postgres::Transaction;
 
 pub(crate) mod activity_results;
 mod checkpoint_accounts;
+pub(crate) mod consolidation;
 mod recovery;
 
 const TABLE: &str = "mind_awareness";
@@ -292,7 +293,7 @@ impl Store {
             let actors: Vec<_> = batch.iter().map(|row| row.actor.as_str()).collect();
             let ids: Vec<_> = batch.iter().map(|row| row.id.as_str()).collect();
             transaction
-                .execute(&self.schema.recall.reconcile, &[&world, &actors, &ids])
+                .execute(&self.schema.recall.reconcile, &[&world, &actors, &ids, &"awareness"])
                 .await?;
         }
         Ok(())

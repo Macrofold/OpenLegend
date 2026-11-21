@@ -161,8 +161,9 @@ async function storageSchema(adminUrl: string) {
             work: lexicalWorkSql(),
             write: lexicalWriteSql('$1::text', '$2', '$3'),
             complete: lexicalCompletionSql('$1::text', '$2', '$3', '$4::bigint'),
-            removeAwareness: `WITH changed AS (
-              DELETE FROM recall_sources WHERE world_id=$1 AND source_kind='awareness' AND record_id=ANY($2::text[])
+            removeAccounts: `WITH changed AS (
+              DELETE FROM recall_sources WHERE world_id=$1 AND source_kind=$3 AND record_id=ANY($2::text[])
+              AND ($4::text IS NULL OR actor_id=$4)
               RETURNING world_id,actor_id,id,source_kind,revision) ${enqueueLexicalSql('changed', true)}`,
           },
           sourceVersions: {
@@ -182,7 +183,7 @@ async function storageSchema(adminUrl: string) {
           recall: {
             insert: memoryProjectionSql('$2::bigint', '$1::text'),
             reconcile: memoryReconciliationSql(
-              "SELECT actor_id,id,'awareness'::text FROM unnest($2::text[],$3::text[]) c(actor_id,id)",
+              'SELECT actor_id,id,$4::text FROM unnest($2::text[],$3::text[]) c(actor_id,id)',
               '$1',
             ),
           },
