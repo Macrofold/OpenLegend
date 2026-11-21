@@ -6,6 +6,7 @@ import { playerInteractionRequest } from './player-interaction-request.js';
 import { recoverHumanRequest } from './human-request-recovery.js';
 import { createServer, type ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
+import { setTimeout as delay } from 'node:timers/promises';
 import { NativeHost } from '@open-legend/native-simulation';
 import { z } from 'zod';
 import {
@@ -68,6 +69,31 @@ const controlRequest = z
     presenceSequence: sequence.optional(),
   })
   .strict();
+
+async function closeOwnedNativeHost(host: NativeHost, until: number): Promise<void> {
+  // Joining happens off Node's thread. Wait for the bridge's actual release
+  // receipt within the server's existing shutdown deadline.
+  let status = host.requestShutdown();
+  while (status.phase === 'Closing' || status.phase === 'ShutdownPending') {
+    const remaining = until - performance.now();
+    if (remaining <= 0) break;
+    await delay(Math.min(20, remaining));
+    status = host.status();
+    if (
+      status.phase === 'ShutdownPending' &&
+      status.pendingJobs === 0 &&
+      status.pendingBytes === 0 &&
+      status.residentReservedBytes === 0 &&
+      status.pendingSaveReservedBytes === 0 &&
+      performance.now() < until
+    )
+      status = host.requestShutdown();
+  }
+  if (status.phase !== 'Closed')
+    throw new Error(
+      `${status.phase}, ${status.pendingJobs} jobs and reserved bytes ${status.pendingBytes} transient, ${status.residentReservedBytes} resident, ${status.pendingSaveReservedBytes} pending-save${status.error ? ` (${status.error})` : ''}.`,
+    );
+}
 
 /** Explicit selected-proof composition. The ordinary full-game factory remains
  * separate; this factory adopts only validated current SQL and never constructs
@@ -1256,9 +1282,11 @@ export async function createNativeGameServer(options: {
           );
         if (!options.store) await stage('Storage', () => store.close());
         if (!options.host) {
-          const status = host.requestShutdown();
-          if (status.phase !== 'Closed')
-            problems.push('Native host still owns outstanding consumers or work.');
+          try {
+            await closeOwnedNativeHost(host, until);
+          } catch (error) {
+            problems.push(`Native host: ${error instanceof Error ? error.message : String(error)}`);
+          }
         }
         return {
           saved,

@@ -169,14 +169,18 @@ impl HostRuntime {
                             retained.phase.store(SHUTDOWN_PENDING, Ordering::Release);
                             return;
                         }
-                        retained.phase.store(CLOSED, Ordering::Release);
-                        if let Ok(mut registry) = registry().lock()
-                            && registry
-                                .as_ref()
-                                .is_some_and(|current| Arc::ptr_eq(current, &retained))
+                        let Ok(mut registry) = registry().lock() else {
+                            retained.unavailable("native host registry is unavailable".into());
+                            return;
+                        };
+                        if registry
+                            .as_ref()
+                            .is_some_and(|current| Arc::ptr_eq(current, &retained))
                         {
                             *registry = None;
                         }
+                        // A caller can open its next host as soon as it sees Closed.
+                        retained.phase.store(CLOSED, Ordering::Release);
                     }
                     Ok(Err(HostError::ShutdownIncomplete)) => {
                         // The global owner retains the pool and its reservations.
