@@ -15,6 +15,12 @@ impl NpcObservationSelection {
     pub(crate) fn body_ordinals(&self) -> &[usize] {
         &self.body_ordinals
     }
+
+    pub(crate) fn contains_body(&self, ordinal: usize) -> bool {
+        // Preparation visits the captured bodies in ordinal order.
+        self.body_ordinals.binary_search(&ordinal).is_ok()
+    }
+
     pub(crate) fn prepare(
         state: &SimulationState,
         read: &AcceptedActorRead,

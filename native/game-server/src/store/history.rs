@@ -2,7 +2,7 @@
 //! perspectives are separate and must come from their actual received account.
 
 use super::{
-    AdmittedJob, PrefixProjection, PreparedRecall, Store, StoreError, StoreResult,
+    AdmittedJob, PrefixProjection, PreparedRecall, Store, StoreError, StoreResult, postgres_text,
     recall::activity_results::{self, PreparedActivityMemories},
     sql_ordinal,
 };
@@ -204,9 +204,7 @@ impl PrefixProjection for OrdinaryProjection<'_> {
                 .await?;
         }
         for job in self.jobs {
-            self.store
-                .write_conversation_job(transaction, &job.job)
-                .await?;
+            self.store.write_conversation_job(transaction, job).await?;
         }
         Ok(())
     }
@@ -520,7 +518,7 @@ struct HistoryRow<'a> {
     position: i64,
     payload: &'a str,
     response_id: Option<Cow<'a, str>>,
-    references: Vec<Cow<'a, str>>,
+    references: Vec<&'a str>,
     utterance_id: Option<Cow<'a, str>>,
 }
 
@@ -539,12 +537,14 @@ impl<'a> HistoryRow<'a> {
         if let Some(data) = &event.data {
             let mut seen = HashSet::new();
             for value in data.values() {
-                if let EventScalar::Text(reference) = value {
-                    // Source deduplicates code units before PostgreSQL converts
-                    // display/index strings to Unicode scalar values.
-                    if reference.as_unicode() != Some(&event.id) && seen.insert(reference) {
-                        references.push(sql_text(reference));
-                    }
+                // A reference can match only an ID representable as PostgreSQL
+                // text. The canonical payload independently preserves prose.
+                if let EventScalar::Text(reference) = value
+                    && let Some(reference) = postgres_text(reference)
+                    && reference != event.id
+                    && seen.insert(reference)
+                {
+                    references.push(reference);
                 }
             }
         }

@@ -67,7 +67,13 @@ import {
   type PreparedMemoryRetention,
   mergeRetirementPredecessors,
 } from './temporal-storage.js';
-import { insertRows, sqlRecordBatches, sqlRowBatches, SqlWriteBatch } from './sql-rows.js';
+import {
+  insertRows,
+  sqlRecordBatches,
+  sqlRowBatches,
+  sqlSearchText,
+  SqlWriteBatch,
+} from './sql-rows.js';
 import { LexicalProjection, enqueueLexicalSql } from './lexical-projection.js';
 import { recordBackgroundFailure } from './performance.js';
 import type { ConsolidationBatch } from './memory-consolidation.js';
@@ -857,6 +863,10 @@ function* sourceRows(
             revision: personalAccountRevision(row.payload),
           }).map((place) => place.capsule);
     if (places.some((capsule) => !capsule)) throw new MemoryPreparationError();
+    const sourceText =
+      kind === 'awareness'
+        ? nativeText((value as unknown as Awareness).text)
+        : (value[kind === 'memory' ? 'summary' : 'text'] ?? '');
     const values: unknown[] = [
       worldId,
       actorId,
@@ -873,9 +883,7 @@ function* sourceRows(
       value['kind'] === 'commitment' && !value['resolved'] ? 1 : 0,
       0,
       value['sequence'] ?? 0,
-      kind === 'awareness'
-        ? nativeText((value as unknown as Awareness).text)
-        : (value[kind === 'memory' ? 'summary' : 'text'] ?? ''),
+      typeof sourceText === 'string' ? sqlSearchText(sourceText) : sourceText,
       kind === 'awareness' && hasLinguisticSpeech(value as unknown as Awareness) ? 1 : 0,
       Buffer.byteLength(row.payload),
       kind === 'awareness' ? value['retentionClass'] : 'memory',

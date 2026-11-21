@@ -21,7 +21,7 @@ The experiments follow the [prior profile findings](2026-11-20-rust-hot-path-com
 
 The 15 steady windows in these two campaigns recorded 1,824 automatic jobs prompted by current physical relations, 586 prompted by events, and zero optional-discovery jobs. The counts come from durable jobs. Individual jobs can use more than one model judgment. Slowing optional curiosity further would miss the work exercised in this opening.
 
-**Recall, scheduler intake, and body deadline comparisons remain open.** Campaign `8080089e-123b-4eec-853d-8aa47d11b53c` froze candidates `9da6700c34fc`, `3488206b08d7`, and `2eab0b629e8e`, respectively, against the common control. AWS access expired after the worker started. Collect and verify the original campaign, including worker cleanup, before deciding whether to keep each change. The final integrated cold-continuation check and the focused check that missing job ownership cannot expose a status row are still open on the final retained code.
+**Recall, scheduler intake, and body deadline comparisons remain open.** Campaign `8080089e-123b-4eec-853d-8aa47d11b53c` froze candidates `9da6700c34fc`, `3488206b08d7`, and `2eab0b629e8e`, respectively, against the common control. AWS access expired after the worker started. Collect and verify the original campaign, including worker cleanup, before deciding whether to keep each change. The focused checks below cover the review repairs. The final ordinary-play rollout and its integrated cold continuation still need verification on the retained revision.
 
 ## Matched 180-second windows
 
@@ -52,3 +52,13 @@ Database and allocation figures below are steady-run medians except for the tran
 | Compact job status      | `36ea64692091` | `99d097da43e2`   | `89f67b13-dbbf-4604-b73b-47be2a55f2ef` | 6/6            |
 | Lexical reuse           | `36ea64692091` | `ef5a3191f3a5`   | `89f67b13-dbbf-4604-b73b-47be2a55f2ef` | 6/6            |
 | Speech ownership lookup | `4173d7a41315` | `a9bce622ddf7`   | `dc40cf1e-ff6e-4c9a-86aa-e81c871a1dbf` | 6/6            |
+
+## November 21 review checks
+
+The schema-64 checks passed on local PostgreSQL with pinned Rust 1.99.1 debug build `2f7644ffa3d8` and a controlled loopback provider. These are correctness and SQL plan checks. The frozen AWS timings cover their original sources.
+
+- **Scheduler recovery.** The real scheduling transaction waited on a held cursor row, detected its changed predecessor, and rolled back. A later world update dispatched and saved one optional decision. Reopening preserved its spent interval. A separate reservation probe verified that a temporary decode allocation refusal retains its capacity classification.
+- **Status and retry.** The authenticated state route displayed the same four permitted statuses out of 525 jobs before and after reopening. It withheld the foreign-owned job with missing scope metadata even though it referenced the viewer's own speech. An explicit retry read the failed job's stored text exactly, refused a superseded same-scope attempt, ignored four newer jobs with different scope, and saved one reply for two requests with the same ID. Reopening returned the same receipt. A 4,000-row PostgreSQL plan used the existing speech index for retry eligibility.
+- **Held recall.** While a memory review was held, the player moved and either withdrew the selected evidence or cancelled the request. Both cases saved movement and returned the expected refusal without applying a reply. Reopening recovered the terminal receipt. NPC reference binding still checks externally supplied ordinals against the permitted selection.
+- **Speech and restore.** Both server paths saved the exact spoken text containing NUL and an isolated UTF-16 unit, with three permitted searchable rows each. The stand-alone server reopened the saved speech. The recovery command removed 68 old speech links and preserved the other job values, two already-unlinked jobs, and access grants. Failure on the second page rolled back all 64 earlier staged edits, and retry and cold reopening recovered one exact receipt.
+- **Known limit.** The same speech still reproduced a stand-alone scheduler stop before selection, including on cold reopening. The SQL fixes preserve the original speech and remove the save failure. Scheduler and reply preparation for this special input still require the [tracked exact-text read changes](../../../maintainers/native-simulation-core.md#npc-and-background-work-follow-up).

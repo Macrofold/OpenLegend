@@ -10,7 +10,7 @@ use openlegend_simulation::{
     host::ByteReservation,
 };
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeSet, sync::Arc};
+use std::{borrow::Cow, collections::BTreeSet, sync::Arc};
 
 #[derive(Default, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -164,20 +164,22 @@ impl Store {
                 struct SpeechOwner<'a> {
                     #[serde(borrow)]
                     request: SpeechRecipient<'a>,
-                    player_speech_event_id: &'a str,
+                    #[serde(borrow)]
+                    player_speech_event_id: Cow<'a, str>,
                 }
                 #[derive(Deserialize)]
                 #[serde(rename_all="camelCase")]
                 struct SpeechRecipient<'a> {
-                    npc_id: &'a str,
+                    #[serde(borrow)]
+                    npc_id: Cow<'a, str>,
                 }
                 for row in rows {
                     let owner: SpeechOwner<'_> = serde_json::from_str(row.try_get(0)?)
                         .map_err(|_| StoreError::InvalidRecord)?;
                     if owner.request.npc_id == actor
-                        && event_ids.iter().any(|id| id == owner.player_speech_event_id)
+                        && event_ids.iter().any(|id| id == owner.player_speech_event_id.as_ref())
                     {
-                        prior.speech.insert(owner.player_speech_event_id.to_owned());
+                        prior.speech.insert(owner.player_speech_event_id.into_owned());
                     }
                 }
                 Ok(prior)
@@ -210,7 +212,7 @@ impl Store {
             tx.execute("INSERT INTO meta(key,value) VALUES($1,$2) ON CONFLICT(key) DO UPDATE SET value=excluded.value WHERE meta.value IS DISTINCT FROM excluded.value",&[&key,&value]).await?;
             if let Some(job)=job.as_ref() {
                 if job.job.request.npc_id!=actor || job.job.kind!="thought" || cursor.attempted_job_id.as_deref()!=Some(job.job.id.as_str()) {return Err(StoreError::InvalidRecord);}
-                store.write_conversation_job(tx,&job.job).await?;
+                store.write_conversation_job(tx,job).await?;
             }
             Ok(())
         })).await

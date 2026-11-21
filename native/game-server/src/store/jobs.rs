@@ -3,13 +3,15 @@
 
 use super::{CommitError, Store, StoreError, StoreResult, read::admitted_query};
 use crate::{authority::RequestScope, player_events::SpeechReplyStatus};
+use indexmap::IndexMap;
 use openlegend_simulation::{
-    encoding::{json_record, json_record_len},
+    encoding::{json_record, json_record_len, json_tree_allocation_bound},
     host::{ByteBudget, ByteReservation},
     text::JsText,
     worlds::base_observed::SpeechVolume,
 };
 use serde::{Deserialize, Serialize};
+use serde_json::value::RawValue;
 use std::sync::Arc;
 use tokio_postgres::Transaction;
 
@@ -53,7 +55,10 @@ pub(crate) struct JobRequest {
 }
 
 pub(crate) struct AdmittedJob {
+    // Held in an Arc and replaced through `advance`, so its admitted byte
+    // count still describes the body when a later save acquires it.
     pub job: ConversationJob,
+    encoded_len: usize,
     _custody: ByteReservation,
 }
 
@@ -73,7 +78,11 @@ impl AdmittedJob {
                     .ok_or(StoreError::Capacity)?,
             )
             .map_err(|_| StoreError::Capacity)?;
-        Ok(Arc::new(Self { job, _custody }))
+        Ok(Arc::new(Self {
+            job,
+            encoded_len: length,
+            _custody,
+        }))
     }
 
     pub(crate) fn advance(
@@ -114,6 +123,66 @@ impl AdmittedJob {
 }
 
 impl Store {
+    /// Detach former-timeline speech links during the existing restore
+    /// transaction. Read and update bounded pages, preserving all other job
+    /// fields verbatim, including text PostgreSQL JSON cannot represent.
+    pub(super) async fn detach_job_speech(&self, tx: &Transaction<'_>) -> StoreResult<()> {
+        const PAGE: i64 = 64;
+        let mut after = None::<String>;
+        let mut cursor = self.budget.reserve(0).map_err(|_| StoreError::Capacity)?;
+        loop {
+            let (_transfer, rows) = admitted_query(
+                tx,
+                "SELECT id,payload FROM jobs WHERE ($1::text IS NULL OR id>$1) \
+                 AND selection ? 'playerSpeechEventId' ORDER BY id LIMIT $2",
+                &[&after, &PAGE],
+                &self.budget,
+            )
+            .await?;
+            if rows.is_empty() {
+                return Ok(());
+            }
+            let mut working = self
+                .budget
+                .reserve(8192)
+                .map_err(|_| StoreError::Capacity)?;
+            let mut ids = Vec::with_capacity(rows.len());
+            let mut payloads = Vec::with_capacity(rows.len());
+            for row in &rows {
+                let payload: &str = row.try_get(1)?;
+                let bytes = json_tree_allocation_bound(payload)
+                    .and_then(|bytes| bytes.checked_mul(2))
+                    .and_then(|bytes| bytes.checked_add(working.bytes()))
+                    .ok_or(StoreError::Capacity)?;
+                working.resize(bytes).map_err(|_| StoreError::Capacity)?;
+                let mut fields: IndexMap<String, &RawValue> =
+                    serde_json::from_str(payload).map_err(|_| StoreError::InvalidRecord)?;
+                fields
+                    .shift_remove("playerSpeechEventId")
+                    .ok_or(StoreError::InvalidRecord)?;
+                ids.push(row.try_get::<_, &str>(0)?);
+                payloads.push(json_record(&fields).map_err(|_| StoreError::InvalidRecord)?);
+            }
+            let updated = tx.execute(
+                "UPDATE jobs SET payload=owned.payload,selection=selection-'playerSpeechEventId' \
+                 FROM unnest($1::text[],$2::text[]) owned(id,payload) WHERE jobs.id=owned.id",
+                &[&ids, &payloads],
+            ).await?;
+            if updated != ids.len() as u64 {
+                return Err(StoreError::StaleCut);
+            }
+            if updated < PAGE as u64 {
+                return Ok(());
+            }
+            let last = ids.last().ok_or(StoreError::InvalidRecord)?;
+            drop(after.take());
+            cursor
+                .resize(last.len())
+                .map_err(|_| StoreError::Capacity)?;
+            after = Some((*last).to_owned());
+        }
+    }
+
     pub(crate) async fn conversation_job(&self, id: &str) -> StoreResult<Option<Arc<AdmittedJob>>> {
         let budget = self.budget.clone();
         let id = id.to_owned();
@@ -139,7 +208,7 @@ impl Store {
     ) -> Result<(), CommitError> {
         let store = self.clone();
         self.operational(move |tx| {
-            Box::pin(async move { store.write_conversation_job(tx, &record.job).await })
+            Box::pin(async move { store.write_conversation_job(tx, &record).await })
         })
         .await
     }
@@ -168,15 +237,30 @@ impl Store {
                     .player_speech_event_id
                     .as_deref()
                     .ok_or(StoreError::InvalidRecord)?;
+                let key_bytes = [
+                    speech,
+                    &scope.account_id,
+                    &scope.actor_id,
+                    &scope.world_id,
+                    &scope.timeline_id,
+                ]
+                .into_iter()
+                .map(str::len)
+                .sum::<usize>();
+                let _keys = store
+                    .budget
+                    .reserve(512 + key_bytes * 12)
+                    .map_err(|_| StoreError::Capacity)?;
                 let speech = json_record(speech).map_err(|_| StoreError::InvalidRecord)?;
+                let scope = JobAuthority::encode(scope)?;
                 let eligible: bool = tx
                     .query_one(
                         "SELECT COALESCE((SELECT id=$2 AND selection->>'status'='failed' FROM jobs \
-             WHERE selection->>'kind'='chat' AND selection->>'playerSpeechEventId'=$1 \
-             AND payload::jsonb #>> '{authority,worldId}'=$3 \
-             AND payload::jsonb #>> '{authority,timelineId}'=$4 \
-             AND payload::jsonb #>> '{authority,actorId}'=$5 \
-             AND payload::jsonb #>> '{authority,accountId}'=$6 \
+             WHERE selection #>> '{kind}'='chat' AND selection #>> '{playerSpeechEventId}'=$1 \
+             AND selection #>> '{authority,worldId}'=$3 \
+             AND selection #>> '{authority,timelineId}'=$4 \
+             AND selection #>> '{authority,actorId}'=$5 \
+             AND selection #>> '{authority,accountId}'=$6 \
              ORDER BY created_at DESC,id DESC LIMIT 1),false)",
                         &[
                             &speech,
@@ -189,13 +273,14 @@ impl Store {
                     )
                     .await?
                     .try_get(0)?;
+                drop((speech, scope, _keys));
                 if !eligible {
                     return Ok(false);
                 }
                 if *stopped.borrow() {
                     return Err(StoreError::Cancelled);
                 }
-                store.write_conversation_job(tx, job).await?;
+                store.write_conversation_job(tx, &record).await?;
                 // The write can await a database lock after the HTTP request
                 // disconnects. Refuse until COMMIT owns the outcome.
                 if *stopped.borrow() {
@@ -211,17 +296,13 @@ impl Store {
         })
     }
 
+    /// Reserve temporary SQL encoding space using the admitted body's exact
+    /// size. The caller keeps the body reservation until the write completes.
     pub(super) async fn write_conversation_job(
         &self,
         tx: &Transaction<'_>,
-        job: &ConversationJob,
+        record: &AdmittedJob,
     ) -> StoreResult<()> {
-        #[derive(Serialize)]
-        #[serde(rename_all = "camelCase")]
-        struct DisplayOwner {
-            account_id: String,
-            actor_id: String,
-        }
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
         struct Selection<'a> {
@@ -233,21 +314,16 @@ impl Store {
             player_speech_event_id: Option<String>,
             #[serde(skip_serializing_if = "Option::is_none")]
             npc_id: Option<String>,
-            display_owner: Option<DisplayOwner>,
+            authority: Option<JobAuthority>,
             #[serde(skip_serializing_if = "Option::is_none")]
             display_message: Option<String>,
         }
+        // Canonical TEXT plus a double-encoded display message and routing keys.
         let _working = self
             .budget
-            .reserve(
-                8 * 1024
-                    + json_record_len(job)
-                        .map_err(|_| StoreError::InvalidRecord)?
-                        // Canonical TEXT plus a double-encoded display message and routing keys.
-                        .checked_mul(8)
-                        .ok_or(StoreError::Capacity)?,
-            )
+            .reserve(8 * 1024 + record.encoded_len * 8)
             .map_err(|_| StoreError::Capacity)?;
+        let job = &record.job;
         let invalid = |_| StoreError::InvalidRecord;
         let mut body = json_record(job).map_err(invalid)?;
         // The shared SQL appends the final completion time and preserves
@@ -259,17 +335,6 @@ impl Store {
             .map(json_record)
             .transpose()
             .map_err(invalid)?;
-        let display_owner = job
-            .authority
-            .as_ref()
-            .map(|scope| {
-                Ok(DisplayOwner {
-                    account_id: json_record(&scope.account_id)?,
-                    actor_id: json_record(&scope.actor_id)?,
-                })
-            })
-            .transpose()
-            .map_err(invalid)?;
         let selected = json_record(&Selection {
             kind: &job.kind,
             status: job.status,
@@ -279,7 +344,11 @@ impl Store {
                 .then(|| json_record(&job.request.npc_id))
                 .transpose()
                 .map_err(invalid)?,
-            display_owner,
+            authority: job
+                .authority
+                .as_ref()
+                .map(JobAuthority::encode)
+                .transpose()?,
             display_message: (job.kind != "thought")
                 .then(|| json_record(&job.message))
                 .transpose()
@@ -297,5 +366,28 @@ impl Store {
             return Err(StoreError::StaleCut);
         }
         Ok(())
+    }
+}
+
+/// SQL identity values carry their exact JSON string encoding. The canonical
+/// job can have quoted text PostgreSQL's JSON decoder cannot represent.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct JobAuthority {
+    account_id: String,
+    actor_id: String,
+    world_id: String,
+    timeline_id: String,
+}
+
+impl JobAuthority {
+    fn encode(scope: &RequestScope) -> StoreResult<Self> {
+        let key = |id: &str| json_record(id).map_err(|_| StoreError::InvalidRecord);
+        Ok(Self {
+            account_id: key(&scope.account_id)?,
+            actor_id: key(&scope.actor_id)?,
+            world_id: key(&scope.world_id)?,
+            timeline_id: key(&scope.timeline_id)?,
+        })
     }
 }

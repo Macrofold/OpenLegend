@@ -6,8 +6,8 @@ use openlegend_simulation::{
     activity::ResultEvidence,
     encoding::{json_record, json_tree_allocation_bound, sha256_hex},
     experience::PersonalSourceKind,
-    host::{ByteBudget, ByteReservation},
-    runtime::NpcScheduleCause,
+    host::{ByteBudget, ByteReservation, CapacityError},
+    runtime::{NpcScheduleCause, RuntimeError},
 };
 use serde::Deserialize;
 use serde_json::{Value, json};
@@ -36,14 +36,17 @@ pub(super) struct Proposal {
 type ReadResult<T> = Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 impl Inspection {
-    pub(super) fn read(text: &str, budget: &ByteBudget) -> ReadResult<Self> {
+    pub(super) fn read(text: &str, budget: &ByteBudget) -> Result<Self, RuntimeError> {
         // The decoded original and digest scratch overlap only for this pass.
-        let bytes = json_tree_allocation_bound(text).ok_or("NPC intake size")?;
-        let custody = budget.reserve(bytes.checked_mul(3).ok_or("NPC intake size")? + 4096)?;
-        let read: Value = serde_json::from_str(text)?;
+        let bytes = json_tree_allocation_bound(text)
+            .and_then(|bytes| bytes.checked_mul(3))
+            .and_then(|bytes| bytes.checked_add(4096))
+            .ok_or(CapacityError)?;
+        let custody = budget.reserve(bytes)?;
+        let read: Value = serde_json::from_str(text).map_err(RuntimeError::application_refused)?;
         // The native packet already owns one accepted snapshot. Read its
         // typed queue fields from that tree instead of parsing the text again.
-        let input = Inputs::deserialize(&read)?;
+        let input = Inputs::deserialize(&read).map_err(RuntimeError::application_refused)?;
         Ok(Self {
             input,
             read,

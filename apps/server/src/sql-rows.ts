@@ -6,6 +6,15 @@ import { toUSVString } from 'node:util';
  * PostgreSQL to decode isolated UTF-16 units or conflating identity keys. */
 export const sqlTextKey = (value: string) => JSON.stringify(value);
 
+const unsupportedPostgresText = /[\u0000\uD800-\uDFFF]/gu;
+
+/** Exact raw text references must match a representable PostgreSQL TEXT key. */
+export const isPostgresText = (value: string) => value.search(unsupportedPostgresText) === -1;
+
+/** Derived word searches use ordinary separators for code units PostgreSQL
+ * cannot store. Read the original wording from the canonical record. */
+export const sqlSearchText = (value: string) => value.replace(unsupportedPostgresText, ' ');
+
 // Bound PostgreSQL parameters and bytes so a batch cannot grow without limit.
 export const parameterBatchLimit = 10000;
 

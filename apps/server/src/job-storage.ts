@@ -17,8 +17,13 @@ export function jobSelection(job: JobRecord): string {
     completedAt: job.completedAt,
     playerSpeechEventId: storedText(job.playerSpeechEventId),
     npcId: job.kind === 'thought' ? storedText(job.request.npcId) : undefined,
-    displayOwner: owner
-      ? { accountId: storedText(owner.accountId), actorId: storedText(owner.actorId) }
+    authority: owner
+      ? {
+          accountId: storedText(owner.accountId),
+          actorId: storedText(owner.actorId),
+          worldId: storedText(owner.worldId),
+          timelineId: storedText(owner.timelineId),
+        }
       : null,
     // The actual private content of a thought is never part of the status display.
     displayMessage: job.kind === 'thought' ? undefined : storedText(job.message),

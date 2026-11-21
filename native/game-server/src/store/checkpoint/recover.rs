@@ -666,13 +666,7 @@ impl Store {
             "UPDATE story_jobs SET state='cancelled' WHERE world_id=$1 AND state IN ('running','queued')",
             &[world],
         ).await?;
-        tx.execute(
-            "UPDATE jobs SET payload=(payload::jsonb-'playerSpeechEventId')::text,
-                    selection=selection-'playerSpeechEventId'
-             WHERE selection ? 'playerSpeechEventId'",
-            &[],
-        )
-        .await?;
+        self.detach_job_speech(tx).await?;
         tx.execute(
             "DELETE FROM memory_vectors WHERE world_id=$1 AND generation<>$2",
             &[world, &head.generation],

@@ -10,7 +10,7 @@ use crate::{
     authority::now_ms,
     decision_render::SchedulingPolicy,
     player_events::SpeechReplyStatus,
-    store::{AdmittedJob, ConversationJob, JobRequest, StoreError},
+    store::{AdmittedJob, CommitError, ConversationJob, JobRequest, StoreError},
     world::{ApplicationStart, WorldError},
 };
 use indexmap::IndexMap;
@@ -250,7 +250,13 @@ impl Director {
                     | openlegend_world_host::pool::HostError::Capacity,
                 ))
                 | Err(WorldError::Fence(openlegend_simulation::host::FenceError::Busy))
-                | Err(WorldError::Storage(StoreError::Capacity | StoreError::StaleCut)) => {}
+                | Err(WorldError::Storage(StoreError::Capacity | StoreError::StaleCut))
+                | Err(WorldError::Commit(CommitError::RolledBack(
+                    StoreError::Capacity | StoreError::StaleCut,
+                ))) => {
+                    // A refused attempt leaves the wake unacknowledged. Only
+                    // a confirmed rollback is eligible for a later pass.
+                }
                 Err(WorldError::Simulation(error)) if error.is_busy() || error.is_capacity() => {}
                 Err(error) => {
                     eprintln!("NPC scheduling stopped: {error}");
@@ -452,8 +458,7 @@ impl Director {
                 .await?,
         );
         let plan = trigger
-            .with_schedule_facts(|text| select::Inspection::read(text, self.game.host.budget()))
-            .map_err(RuntimeError::application_refused)?;
+            .with_schedule_facts(|text| select::Inspection::read(text, self.game.host.budget()))?;
         if !plan.matches(observed) {
             return Ok(None);
         }

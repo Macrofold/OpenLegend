@@ -74,14 +74,14 @@ impl Store {
                        (recent.selection->>'totalLatencyMs')::float8 AS total_latency, \
                        permitted, h.payload AS speech_origin \
                      FROM recent CROSS JOIN LATERAL (SELECT COALESCE(CASE \
-                       WHEN recent.selection->'displayOwner'='null'::jsonb THEN \
+                       WHEN recent.selection->'authority'='null'::jsonb THEN \
                          recent.selection #>> '{request,invention,actorId}'=$3 OR \
                          (recent.selection->>'kind'='thought' AND recent.selection->>'npcId'=$3) \
-                       ELSE recent.selection #>> '{displayOwner,accountId}'=$2 AND \
-                         recent.selection #>> '{displayOwner,actorId}'=$3 \
+                       ELSE recent.selection #>> '{authority,accountId}'=$2 AND \
+                         recent.selection #>> '{authority,actorId}'=$3 \
                        END,false) AS permitted) scope \
                      LEFT JOIN history_events h ON NOT permitted \
-                       AND recent.selection->'displayOwner'='null'::jsonb AND h.world_id=$1 \
+                       AND recent.selection->'authority'='null'::jsonb AND h.world_id=$1 \
                        AND h.id=((recent.selection->>'playerSpeechEventId')::json #>> '{}') \
                      WHERE permitted OR h.id IS NOT NULL \
                      ORDER BY recent.created_at DESC,recent.id DESC",
@@ -260,14 +260,14 @@ impl Store {
 fn own_speech(payload: Option<&str>, actor: &str) -> StoreResult<bool> {
     #[derive(Deserialize)]
     #[serde(rename_all = "camelCase")]
-    struct Speaker<'a> {
-        actor_id: Option<&'a str>,
+    struct Speaker {
+        actor_id: Option<String>,
     }
     payload
         .map(|text| {
-            let event: Speaker<'_> =
+            let event: Speaker =
                 serde_json::from_str(text).map_err(|_| StoreError::InvalidRecord)?;
-            Ok(event.actor_id == Some(actor))
+            Ok(event.actor_id.as_deref() == Some(actor))
         })
         .transpose()
         .map(|allowed| allowed.unwrap_or(false))

@@ -50,7 +50,7 @@ pub use schema::StorageSchema;
 pub(crate) use source_versions::PreparedSourceVersions;
 pub use write::{CommitError, PrefixProjection};
 
-use openlegend_simulation::host::ByteBudget;
+use openlegend_simulation::{host::ByteBudget, text::JsText};
 use std::fmt;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -63,6 +63,13 @@ use tokio_postgres_rustls::MakeRustlsConnect;
 
 const SQL_TIMEOUT: Duration = Duration::from_secs(5);
 const MAX_SAFE_INTEGER: u64 = 9_007_199_254_740_991;
+
+/// Borrow exact text when it can participate in a PostgreSQL comparison.
+fn postgres_text(value: &JsText) -> Option<&str> {
+    value
+        .as_unicode()
+        .filter(|text| !text.as_bytes().contains(&0))
+}
 
 #[derive(Debug)]
 pub enum StoreError {

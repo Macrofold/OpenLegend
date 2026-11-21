@@ -2,7 +2,7 @@
 //! references. SQL recall eligibility and lexical admission share the Source
 //! repository's generated statements and the current schema.
 
-use super::{Store, StoreError, StoreResult, sql_ordinal};
+use super::{Store, StoreError, StoreResult, postgres_text, sql_ordinal};
 use openlegend_simulation::{
     encoding::{json_record, sha256_hex},
     experience::{
@@ -14,8 +14,9 @@ use openlegend_simulation::{
     reception::{EvidenceSource, Intelligibility, SpeechPerception},
     records::SaveRows,
     runtime::RuntimeRecallRead,
+    text::JsText,
 };
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 use std::collections::HashSet;
 use tokio_postgres::Transaction;
 
@@ -78,10 +79,26 @@ struct Source<'a> {
     importance: f64,
     required: i64,
     sequence: i64,
-    search_text: &'a openlegend_simulation::text::JsText,
+    #[serde(serialize_with = "serialize_search_text")]
+    search_text: &'a JsText,
     linguistic: i64,
     payload_bytes: i64,
     retention_class: openlegend_simulation::experience::AwarenessRetentionClass,
+}
+
+/// Both lexical workers treat these unsupported units as word boundaries.
+/// Only the derived SQL search field can substitute their separator.
+fn serialize_search_text<S: Serializer>(text: &JsText, serializer: S) -> Result<S::Ok, S::Error> {
+    if let Some(text) = postgres_text(text) {
+        return serializer.serialize_str(text);
+    }
+    let searchable: String = char::decode_utf16(text.units())
+        .map(|unit| match unit {
+            Ok('\0') | Err(_) => ' ',
+            Ok(character) => character,
+        })
+        .collect();
+    serializer.serialize_str(&searchable)
 }
 
 impl Store {

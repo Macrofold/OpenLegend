@@ -289,8 +289,7 @@ impl NpcBindingRead<'_> {
         if !self
             .current_selection
             .ok_or_else(invalid)?
-            .body_ordinals()
-            .contains(&ordinal)
+            .contains_body(ordinal)
         {
             return Err(invalid());
         }
@@ -637,7 +636,12 @@ impl NpcBindingMaps {
             .current_selection
             .map_or(&[][..], |selection| selection.body_ordinals())
         {
-            let body = read.body(ordinal)?;
+            let body = read
+                .current
+                .perception
+                .bodies
+                .get(ordinal)
+                .ok_or_else(invalid)?;
             if let Some(episode) = &body.episode {
                 reserve(&mut storage, body.source_id.len() + episode.len())?;
                 insert(&mut expected_encounters, &body.source_id, episode.clone())?;

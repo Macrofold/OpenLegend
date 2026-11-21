@@ -5,6 +5,7 @@ import type { StorySource } from './history.js';
 import { HistoryBatch } from './history-batch.js';
 import { encodeStoryAccount, encodeTemporalStoryAccount } from './personal-accounts.js';
 import type { ReceivedEventAccount } from './received-event-accounts.js';
+import { isPostgresText } from './sql-rows.js';
 import type { SqlDatabase } from './store.js';
 
 export interface AppendHistoryInput {
@@ -38,7 +39,8 @@ export function historyEventRow(worldId: string, event: WorldEvent, encoded: str
     [
       ...new Set(
         Object.values(event.data ?? {}).filter(
-          (value): value is string => typeof value === 'string' && value !== event.id,
+          (value): value is string =>
+            typeof value === 'string' && value !== event.id && isPostgresText(value),
         ),
       ),
     ],
