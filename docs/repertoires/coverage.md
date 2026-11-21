@@ -8,6 +8,8 @@ The scores are **1 Core, 2 Complete, 3 Depth, 4 Detail, 5 Specialist**, defined 
 
 ## 1 Core: close the playable loop
 
+When choosing a playable combination for the stand-alone server, check its [actual caller and family coverage](../maintainers/native-simulation-core-coverage.md#full-server-conversion-inventory). A capability delivered in the TypeScript game can still need a Rust path.
+
 These are interconnected capabilities, not a serial delivery queue. Deliver a thin playable combination rather than finishing one isolated subsystem exhaustively. The source links identify repertoire owners, not claims that their full proposed mechanics exist. The empty-handed opening, basic camp walls/entrance, required character cast and cooperation, and independent roaming conflict are first-playable coverage; broader family-level expansion below cannot demote those selected requirements.
 
 | Player capability                  | Minimum useful scope                                                                                                                                                                                                                                                                                                  | Owning repertoire                                                                                                                  |
