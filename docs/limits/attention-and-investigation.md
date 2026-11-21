@@ -20,6 +20,8 @@ Eight scan foci already need four normal seconds of dwell, so the scan deadline 
 
 These are user-selected work/input bounds, not threat, observer, history, passive detection or native danger-set caps. A visitor predicate may match newly observed visitors without appending them all to the terms. Current physical focus alone contributes current coverage; a scan list is not simultaneous preparation. The existing single physical lane and one suspended plan remain authoritative; qualified observation facets on walking/guard work do not enable a general parallel activity graph. Increase the request envelope only with a real scenario and measured downstream preparation/projection cost.
 
+The one-condition design restricts what a watch can express. The need to validate inputs and bound evaluation work does not establish that exactly one condition is necessary. Apply the [shared decision rule](README.md#entry-structure) when reviewing this choice in [ATI01](../maintainers/attention-and-investigation.md#ati01--admit-actual-observation-work).
+
 ## ATI-L04 — Search and continuation work
 
 **Safe.** Select up to **16** candidate work units before preparing a page; retain at most **64** checked-unit references in one selected inquiry. The invocation's maximumChecks may be smaller; its original overall deadline still applies. Each check or dependency-driven recheck consumes the allowance. A full allowance yields a partial result and explicit next choice, not a false “nothing here.” Checked-unit identity uses existing permitted spatial/object/action references; never a hidden emitter.

@@ -77,6 +77,8 @@ Keep exploratory scratch out of canonical docs; reconcile accepted designs and t
 
 ### Validate only for a concrete purpose
 
+Apply the [shared rule for choosing limits](docs/limits/README.md#entry-structure) to minimums, maximums and behavioral restrictions. Enforce necessary protective bounds and require a concrete justification for any additional restriction.
+
 Before adding or retaining a runtime check, identify what its consumer needs, a plausible path to an unusable or harmful value, and the consequence the check prevents. Without that purpose, omit the check. Validate at the owning boundary and reuse its result; do not repeat checks on trusted internal values unless mutation, elapsed work or a new trust boundary can invalidate them. Do not reject usable provider output merely to assert that the provider followed a mathematical convention or repeated supplied metadata: consume the values needed for the task, such as selecting the highest offered choice score, without requiring their total to be one. Keep validation that protects permissions, privacy, current-format storage integrity, spending, executable proposals and actual game preconditions; these have concrete failure consequences.
 
 ### Document shared helpers

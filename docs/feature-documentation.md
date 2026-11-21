@@ -20,7 +20,7 @@ Each new or substantially changed feature spec, technical design or persistent f
 
 Guidance-only workflow changes keep operational decisions in their guidance owner and history; they need no gameplay limits inventory. Filing changes and ordinary implementation plans do not require extra feature/design pairs.
 
-If a newly assessed feature has no discretionary limits, say so explicitly in its limits inventory, with the reason and applicable shared limits links. Do not invent a cap just to fill a template. Existing documents can adopt this structure when touched; this migration links every feature represented by the supplied inventories.
+Apply the [shared rule for choosing limits](limits/README.md#entry-structure) before selecting a feature restriction. If a newly assessed feature needs no discretionary limits, explain why in its inventory and link the applicable shared protections. Existing documents can adopt this structure when touched; this migration links every feature represented by the supplied inventories.
 
 ## Minimal navigation example
 
