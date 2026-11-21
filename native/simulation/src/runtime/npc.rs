@@ -3,6 +3,7 @@
 //! source lease; the context producer must bind those independently.
 use super::*;
 use crate::appraisals::AppraisalScope;
+use crate::capture::{CapturedBodyBinding, NpcOfferCoverage, PreparedNpcCandidates, PreparedNpcRead};
 use crate::host::PublicationLease;
 use crate::simulation::AcceptedActorRead;
 use std::mem::size_of;
@@ -30,7 +31,7 @@ pub struct RuntimeNpcRead {
     history: crate::experience::CapturedHistoryCuts,
     pub(super) historical_scope: Arc<crate::capture::NpcHistoricalScope>,
     reference_facts: crate::capture::NpcReferenceFacts,
-    candidates: Option<crate::capture::PreparedNpcCandidates>,
+    preparation: Option<PreparedNpcRead>,
     action_catalogue: Option<RuntimeNpcActionCatalogue>,
     intent_ids: Vec<String>,
     pub(super) work_generation: u64,
@@ -46,7 +47,7 @@ pub struct RuntimeNpcRead {
 /// without replacing the context's original body, source or reference cut.
 struct RuntimeNpcActionCatalogue {
     read: Arc<AcceptedActorRead>,
-    candidates: crate::capture::PreparedNpcCandidates,
+    candidates: PreparedNpcCandidates,
     work_generation: u64,
     _custody: Arc<ByteReservation>,
 }
@@ -415,7 +416,7 @@ impl NativeWorldSession {
             history,
             historical_scope,
             reference_facts,
-            candidates: None,
+            preparation: None,
             action_catalogue: None,
             intent_ids,
             work_generation,
@@ -433,20 +434,33 @@ impl NativeWorldSession {
         request: &[u8],
     ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
-        if read.candidate_key.is_some() || read.candidates.is_some() {
-            return Err(failure(
-                "NPC choices were already prepared or preparation is active",
-            ));
-        }
+        read.require_unprepared()?;
         let _decode = decode_preparation(request, &self.budget)?;
         let request: CandidateRequest = serde_json::from_slice(request).map_err(failure)?;
+        self.begin_npc_context(
+            read,
+            &request.expanded_body_ordinals,
+            Some(request.coverage),
+        )
+    }
+
+    /// Prepare remaining work and bind current presented bodies for recall.
+    /// The prepared read owns its work display and leases until review ends.
+    pub fn begin_npc_recall(&mut self, read: &mut RuntimeNpcRead) -> Result<CandidateKey, RuntimeError> {
+        self.require_active()?;
+        read.require_unprepared()?;
+        self.begin_npc_context(read, &[], None)
+    }
+
+    fn begin_npc_context(
+        &mut self,
+        read: &mut RuntimeNpcRead,
+        expanded: &[usize],
+        coverage: Option<NpcOfferCoverage>,
+    ) -> Result<CandidateKey, RuntimeError> {
         let key = self
             .session
-            .begin_npc_candidates(
-                &read.read,
-                &request.expanded_body_ordinals,
-                request.coverage,
-            )
+            .begin_npc_candidates(&read.read, expanded, coverage)
             .map_err(failure)?;
         read.candidate_key = Some(key);
         Ok(key)
@@ -489,8 +503,8 @@ impl NativeWorldSession {
                     return Err(error);
                 }
             },
-            SessionStep::NpcCandidates(candidates) => {
-                read.candidates = Some(candidates);
+            SessionStep::NpcCandidates(prepared) => {
+                read.preparation = Some(prepared);
                 read.candidate_key = None;
                 RuntimeNpcPreparationStep::Complete
             }
@@ -604,6 +618,22 @@ impl NativeWorldSession {
 }
 
 impl RuntimeNpcRead {
+    fn require_unprepared(&self) -> Result<(), RuntimeError> {
+        if self.candidate_key.is_some() || self.preparation.is_some() {
+            return Err(failure(
+                "NPC choices were already prepared or preparation is active",
+            ));
+        }
+        Ok(())
+    }
+
+    fn candidates(&self) -> Option<&PreparedNpcCandidates> {
+        match &self.preparation {
+            Some(PreparedNpcRead::Offers(candidates)) => Some(candidates),
+            _ => None,
+        }
+    }
+
     pub fn receipt_liveness_backing_bytes() -> usize {
         held_sources::marker_backing_bytes()
     }
@@ -619,8 +649,7 @@ impl RuntimeNpcRead {
     /// immutable base would make every retained formatter pin another copy.
     pub fn candidates_packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
         let candidates = self
-            .candidates
-            .as_ref()
+            .candidates()
             .ok_or_else(|| failure("NPC choices are unavailable"))?;
         let (encoded, custody) = candidates.write_json(budget).map_err(failure)?;
         // This standalone packet already owns the complete wire encoding.
@@ -650,6 +679,51 @@ impl RuntimeNpcRead {
             budget,
         )
     }
+
+    /// Encode the recall renderer's current facts. Bodies only need identities
+    /// and leases for alias rewriting and the exact current-speaker check.
+    /// The caller owns the encoded bytes; this read still owns all evidence.
+    pub fn recall_packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
+        let Some(PreparedNpcRead::Recall(read)) = &self.preparation else {
+            return Err(failure("NPC recall context is unavailable"));
+        };
+        struct Bodies<'a>(&'a [CapturedBodyBinding]);
+        impl Serialize for Bodies<'_> {
+            fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                #[derive(Serialize)]
+                #[serde(rename_all = "camelCase")]
+                struct Body<'a> {
+                    source_id: &'a str,
+                    lease_id: &'a str,
+                    physical_life: Option<u64>,
+                }
+                let mut sequence = serializer.serialize_seq(Some(self.0.len()))?;
+                for body in self.0 {
+                    sequence.serialize_element(&Body {
+                        source_id: &body.source_id,
+                        lease_id: &body.lease_id,
+                        physical_life: body.physical_life,
+                    })?;
+                }
+                sequence.end()
+            }
+        }
+        let context = RuntimeJson::encode(&read.context(), budget)?;
+        let bodies = RuntimeJson::encode(&Bodies(&self.read.perception.bodies), budget)?;
+        RuntimeJson::join(
+            &[
+                b"{\"self\":",
+                self.read.own_json().as_bytes(),
+                b",\"perception\":{\"bodies\":",
+                bodies.bytes(),
+                b"},\"recall\":",
+                context.bytes(),
+                b"}",
+            ],
+            budget,
+        )
+    }
+
     pub fn packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
         let (perception, _perception_custody) =
             self.read.perception.write_json(budget).map_err(failure)?;
@@ -667,8 +741,7 @@ impl RuntimeNpcRead {
             .as_ref()
             .ok_or_else(|| failure("NPC semantic validity capture is unavailable"))?;
         let candidates = self
-            .candidates
-            .as_ref()
+            .candidates()
             .map(|candidates| candidates.write_json(budget).map_err(failure))
             .transpose()?;
         let (candidate_key, candidate_value) = candidates

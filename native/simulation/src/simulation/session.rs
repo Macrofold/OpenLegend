@@ -187,7 +187,7 @@ pub(crate) enum SessionStep {
     Question(Arc<ProviderQuestion>),
     Prepared(PreparedCandidate),
     Preview(PreviewOutcome),
-    NpcCandidates(crate::capture::PreparedNpcCandidates),
+    NpcCandidates(crate::capture::PreparedNpcRead),
     NpcSources(crate::capture::PreparedNpcSources),
 }
 pub(crate) struct PreviewOutcome {
@@ -669,7 +669,7 @@ impl Session {
         &mut self,
         read: &super::AcceptedActorRead,
         expanded: &[usize],
-        coverage: crate::capture::NpcOfferCoverage,
+        coverage: Option<crate::capture::NpcOfferCoverage>,
     ) -> Result<CandidateKey, SessionError> {
         let (key, mut journal) = self.begin()?;
         let driver = (|| {

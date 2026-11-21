@@ -1,10 +1,10 @@
 //! Bounded personal recall discovery and disclosure before executable decisions.
 
 use super::{
-    Arc, ByteBudget, ByteReservation, CallFailure, CurrentServer, FundedJson, ReceivedFrame,
-    RuntimeNpcRead, RuntimeNpcResponseTicket, Work, capture, capture_offers, capture_origin,
-    consumer, describe_experience, ensure_running, get_u64, invalid, json, personal_description,
-    personal_evidence, project, project_markers, records,
+    Arc, ByteBudget, ByteReservation, CallFailure, CurrentServer, FundedJson, ProjectionPurpose,
+    ReceivedFrame, RuntimeNpcRead, RuntimeNpcResponseTicket, Work, capture_origin, consumer,
+    decode_capture, describe_experience, ensure_running, get_u64, invalid, json,
+    personal_description, personal_evidence, project, project_markers, read_request, records,
 };
 use crate::{
     decision_render::{BoundAttention, RenderError},
@@ -211,10 +211,14 @@ impl Collected {
         if self.optional.is_empty() {
             return Ok(None);
         }
-        let consumer = consumer(work);
         let budget = game.host.budget();
-        let fresh = capture_offers(game, work, consumer, "recall-current-offers").await?;
-        let facts = capture(&fresh, budget)?;
+        let request = read_request(work, consumer(work), budget)?;
+        let fresh = game
+            .world
+            .capture_npc_recall(game.clone(), request)
+            .await
+            .map_err(|error| CallFailure::World(error).at("recall-current-context"))?;
+        let facts = decode_capture(fresh.recall_packet(budget).map_err(invalid)?, budget)?;
         let _custody = self.projection_custody(&facts, budget)?;
         let source_data = self.sources.as_ref().map(|data| &data.value);
         let mut ranked = Vec::new();
@@ -225,9 +229,8 @@ impl Collected {
             &self.attention.ordinals,
             source_data,
             &self.required,
-            consumer,
+            ProjectionPurpose::Recall,
         )?;
-        let fields = &context.fields;
         let rows = records(&source_data.ok_or(CallFailure::Invalid)?["inventory"]["personal"])?;
         for &row in &self.optional {
             let source = rows.get(row).ok_or(CallFailure::Invalid)?;
@@ -244,21 +247,8 @@ impl Collected {
             project_markers(&mut candidate, &HashMap::new(), &[]);
             ranked.push(candidate);
         }
-        let state = json!({
-            "stimulus":fields["stimulus"],
-            "goal":fields["agency"]["goals"].as_array()
-                .and_then(|goals| goals.first())
-                .and_then(|goal| goal["objective"].as_str()).unwrap_or_default(),
-            "includedContext":{
-                "identity":fields["identity"],"notepad":fields["notepad"],
-                "triggerFacts":fields["triggerFacts"],"now":fields["now"],
-                "body":fields["body"],"agency":fields["agency"],
-                "conversation":fields["conversation"],"recall":fields["recall"],
-                "experience":fields["experience"],
-            },
-        });
         let request = match game.cognition.recall_attention(
-            state.as_object().ok_or(CallFailure::Invalid)?,
+            context.fields.as_object().ok_or(CallFailure::Invalid)?,
             &ranked,
             budget,
         ) {
@@ -280,9 +270,6 @@ impl Collected {
                 }),
         );
         let selection = &mut binding["selection"];
-        selection["purpose"] = "recall".into();
-        selection["validity"] = "prepared-response".into();
-        selection["actions"] = json!([]);
         selection["evidence"] = personal_evidence(source_data, disclosed)?;
         let request_bytes = crate::wire::encode(&binding, b"", b"", budget).map_err(invalid)?;
         let through = self

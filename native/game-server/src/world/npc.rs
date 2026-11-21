@@ -66,8 +66,22 @@ impl HostedWorld {
         self.prepare_npc_at(
             game,
             move |session| session.read_npc(&request),
-            selector,
-            NativeWorldSession::begin_npc_candidates,
+            move |session, read| session.begin_npc_candidates(read, &selector),
+        )
+        .await
+    }
+
+    /// Hold the actor's exact accepted presentation and remaining work without
+    /// probing commands. Review retains this read only through disclosure.
+    pub(crate) async fn capture_npc_recall(
+        self: &Arc<Self>,
+        game: Arc<CurrentServer>,
+        request: Bytes,
+    ) -> Result<RuntimeNpcRead, WorldError> {
+        self.prepare_npc_at(
+            game,
+            move |session| session.read_npc(&request),
+            NativeWorldSession::begin_npc_recall,
         )
         .await
     }
@@ -81,8 +95,10 @@ impl HostedWorld {
         request: Bytes,
         begin: BeginNpcRead,
     ) -> Result<RuntimeNpcRead, WorldError> {
-        self.prepare_npc_at(game, move |_| Ok(read), request, begin)
-            .await
+        self.prepare_npc_at(game, move |_| Ok(read), move |session, read| {
+            begin(session, read, &request)
+        })
+        .await
     }
 
     async fn prepare_npc_at(
@@ -91,8 +107,9 @@ impl HostedWorld {
         read: impl FnOnce(&mut NativeWorldSession) -> Result<RuntimeNpcRead, RuntimeError>
         + Send
         + 'static,
-        request: Bytes,
-        begin: BeginNpcRead,
+        begin: impl FnOnce(&mut NativeWorldSession, &mut RuntimeNpcRead) -> Result<CandidateKey, RuntimeError>
+        + Send
+        + 'static,
     ) -> Result<RuntimeNpcRead, WorldError> {
         let queued = self
             .waiting
@@ -122,7 +139,7 @@ impl HostedWorld {
                 let (key, selected) = world
                     .call(move |session| {
                         let mut read = read(session)?;
-                        let key = begin(session, &mut read, &request)?;
+                        let key = begin(session, &mut read)?;
                         Ok((key, read))
                     })
                     .await?;

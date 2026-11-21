@@ -130,15 +130,14 @@ impl NativeWorldSession {
         }
         let original = ticket
             .original
-            .candidates
-            .as_ref()
+            .candidates()
             .ok_or_else(|| failure("original NPC choices unavailable"))?;
         let current = ticket
             .current
             .action_catalogue
             .as_ref()
             .map(|catalogue| &catalogue.candidates)
-            .or(ticket.current.candidates.as_ref())
+            .or(ticket.current.candidates())
             .ok_or_else(|| failure("current NPC choices unavailable"))?;
         let controls = ticket
             .bindings
@@ -480,7 +479,7 @@ impl NativeWorldSession {
             action.serial == first.serial
                 || action.serial == fresh.serial
                 || action.candidate_key.is_some()
-                || action.candidates.is_none()
+                || action.candidates().is_none()
                 || fresh.action_catalogue.is_some()
                 || request.selection.purpose != NpcBindingPurpose::Decision
                 || !crate::response::ResponseReads::compatible(&fresh.read, &action.read)
@@ -492,6 +491,8 @@ impl NativeWorldSession {
         if first.serial == fresh.serial
             || first.candidate_key.is_some()
             || fresh.candidate_key.is_some()
+            || matches!(&fresh.preparation, Some(PreparedNpcRead::Recall(_)))
+                && request.selection.purpose != NpcBindingPurpose::Recall
         {
             return Err(failure("NPC response capture is unavailable"));
         }
@@ -504,9 +505,9 @@ impl NativeWorldSession {
         {
             return Err(stale(reason));
         }
-        let candidates = fresh.candidates.as_ref();
+        let candidates = fresh.candidates();
         let action_candidates = action
-            .and_then(|read| read.candidates.as_ref())
+            .and_then(RuntimeNpcRead::candidates)
             .or_else(|| {
                 fresh
                     .action_catalogue
@@ -528,8 +529,9 @@ impl NativeWorldSession {
                 original_references: &first.reference_facts,
                 sources: &first.sources,
                 perspectives: &first.perspectives,
+                current_selection: fresh.preparation.as_ref().map(PreparedNpcRead::selection),
                 candidates,
-                original_candidates: first.candidates.as_ref(),
+                original_candidates: first.candidates(),
                 action_read: action_perception,
                 action_candidates,
                 intent_ids: &fresh.intent_ids,
@@ -575,9 +577,9 @@ impl NativeWorldSession {
             bindings.situation.semantic_causes = Some(selected);
         }
         let catalogue = match request.selection.prototype_source {
-            NpcCatalogueSource::Original => first.candidates.as_ref(),
+            NpcCatalogueSource::Original => first.candidates(),
             NpcCatalogueSource::Current => action
-                .and_then(|read| read.candidates.as_ref())
+                .and_then(RuntimeNpcRead::candidates)
                 .or(action_candidates)
                 .or(candidates),
         };
@@ -616,12 +618,12 @@ impl NativeWorldSession {
             .as_deref_mut()
             .and_then(Option::take)
             .map(|mut read| {
+                let Some(PreparedNpcRead::Offers(candidates)) = read.preparation.take() else {
+                    return Err(failure("NPC action catalogue unavailable"));
+                };
                 Ok::<_, RuntimeError>(super::RuntimeNpcActionCatalogue {
                     read: Arc::clone(&read.read),
-                    candidates: read
-                        .candidates
-                        .take()
-                        .ok_or_else(|| failure("NPC action catalogue unavailable"))?,
+                    candidates,
                     work_generation: read.work_generation,
                     _custody: Arc::clone(&read._custody),
                 })

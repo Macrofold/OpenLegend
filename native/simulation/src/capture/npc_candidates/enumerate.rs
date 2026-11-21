@@ -124,7 +124,7 @@ impl NpcCandidateCursor {
             }
             Enumerate::Follow(index, count) => {
                 if index == self.targets.len()
-                    || matches!(self.coverage, NpcOfferCoverage::Suggestions)
+                    || matches!(self.coverage, Some(NpcOfferCoverage::Suggestions))
                         && count as u64 >= rules.follow_suggestions
                 {
                     self.stage = Enumerate::Status(0, 0);

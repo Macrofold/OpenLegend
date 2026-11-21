@@ -10,7 +10,7 @@ use openlegend_simulation::{
     experience::{PersonalSourceKind, PersonalSourceRef},
     host::{ByteBudget, ByteReservation},
     narration::{NameArticle, name_phrase, native_text},
-    runtime::{RuntimeNpcRead, RuntimeNpcResponseTicket},
+    runtime::{RuntimeJson, RuntimeNpcRead, RuntimeNpcResponseTicket},
     state::Named,
 };
 use serde_json::{Value, json};
@@ -19,6 +19,12 @@ use std::{collections::HashMap, sync::Arc};
 mod recall;
 pub(super) use openlegend_simulation::runtime::RuntimeNpcDecisionFrame as ReceivedFrame;
 pub(super) use recall::{Collected, RecallReview, collect};
+
+#[derive(Clone, Copy)]
+enum ProjectionPurpose {
+    Recall,
+    Decision,
+}
 
 pub(super) struct Prepared {
     pub(super) through: u64,
@@ -104,7 +110,7 @@ pub(super) async fn finish(
     ensure_running(work)?;
     let budget = game.host.budget();
     let current = capture_offers(game, work, consumer(work), "current-offers").await?;
-    let captured = capture(&current, budget)?;
+    let captured = decode_capture(current.packet(budget).map_err(invalid)?, budget)?;
     let through = collected
         .through
         .max(get_u64(&captured.value["self"]["acceptedCut"])?);
@@ -118,7 +124,7 @@ pub(super) async fn finish(
         &collected.attention.ordinals,
         collected.sources.as_ref().map(|data| &data.value),
         &collected.required,
-        consumer(work),
+        ProjectionPurpose::Decision,
     )?;
     drop(collected.attention);
     let route = game
@@ -221,8 +227,7 @@ fn read_request(
     .map_err(invalid)
 }
 
-fn capture(read: &RuntimeNpcRead, budget: &ByteBudget) -> Result<FundedJson, CallFailure> {
-    let packet = read.packet(budget).map_err(invalid)?;
+fn decode_capture(packet: RuntimeJson, budget: &ByteBudget) -> Result<FundedJson, CallFailure> {
     FundedJson::read(
         std::str::from_utf8(packet.bytes()).map_err(invalid)?,
         budget,
@@ -236,11 +241,17 @@ fn project(
     original_attention: &[usize],
     selected: Option<&Value>,
     rows: &[usize],
-    consumer: &str,
+    purpose: ProjectionPurpose,
 ) -> Result<(Value, Projection, bool, bool), CallFailure> {
+    let consumer = consumer(work);
+    let decision = matches!(purpose, ProjectionPurpose::Decision);
     let own = &facts["self"];
     let current_body = &facts["perception"];
-    let choices = &facts["candidates"];
+    let prepared = if decision {
+        &facts["candidates"]
+    } else {
+        &facts["recall"]
+    };
     let own_name = named(&own["observerName"], NameArticle::None)?;
     let reference_key = uuid::Uuid::new_v4().simple().to_string();
     let self_reference = alias(&reference_key, "myself", 0);
@@ -248,7 +259,10 @@ fn project(
     let mut canonical = HashMap::from([(work.actor.as_str(), self_reference.clone())]);
     let mut physical = Vec::new();
     let mut entities = vec![json!({"alias":self_reference,"source":{"kind":"myself"}})];
-    let mut descriptions = vec![format!("Myself: {own_name} (ID:{self_reference})")];
+    let mut descriptions = Vec::new();
+    if decision {
+        descriptions.push(format!("Myself: {own_name} (ID:{self_reference})"));
+    }
     let mut surroundings = Vec::new();
     let mut scene = Vec::new();
     let mut attention = Vec::new();
@@ -260,21 +274,23 @@ fn project(
         attention.push(json!({"alias":id,"ordinal":ordinal}));
         presented.push(ordinal);
     }
-    for index in records(&choices["bodyOrdinals"])? {
+    for index in records(&prepared["bodyOrdinals"])? {
         let ordinal = get_u64(index)? as usize;
         let body = current_body["bodies"]
             .get(ordinal)
             .ok_or(CallFailure::Invalid)?;
-        let name = named(&body["name"], NameArticle::Definite)?;
         let key = alias(&reference_key, "body", ordinal);
         canonical.insert(text(&body["sourceId"])?, key.clone());
         refs.push(key.clone());
-        physical.push(key.clone());
         entities.push(json!({"alias":key,"source":{"kind":"body","ordinal":ordinal}}));
-        descriptions.push(format!("{name} (ID:{key})"));
-        let (line, body) = received_body(own, current_body, body, &name, &key)?;
-        surroundings.push(line);
-        scene.push(body);
+        if decision {
+            let name = named(&body["name"], NameArticle::Definite)?;
+            physical.push(key.clone());
+            descriptions.push(format!("{name} (ID:{key})"));
+            let (line, body) = received_body(own, current_body, body, &name, &key)?;
+            surroundings.push(line);
+            scene.push(body);
+        }
     }
     let mut source_entries = Vec::with_capacity(rows.len());
     if let Some(selected) = selected {
@@ -306,10 +322,11 @@ fn project(
     }
     let addressed = trigger.is_some_and(|row| row["value"]["triggerKind"] == "addressed_speech");
     let speech = trigger.is_some_and(|row| row["value"]["eventType"] == "speech");
-    let speech_trigger = work
-        .automatic
-        .as_ref()
-        .is_none_or(|trigger| trigger.causes.is_empty())
+    let speech_trigger = decision
+        && work
+            .automatic
+            .as_ref()
+            .is_none_or(|trigger| trigger.causes.is_empty())
         && speech_only(&work.source, &source_entries);
     if consumer == "chat" && !addressed {
         return Err(CallFailure::Stale("decision-heard-addressing"));
@@ -372,48 +389,74 @@ fn project(
             json!({}),
         )
     };
-    let actor_actions = records(&choices["offers"])?;
     let mut actions = Vec::new();
     let mut offers = Vec::new();
-    for (ordinal, offer) in actor_actions.iter().enumerate() {
-        let id = format!("a{ordinal}");
-        let caption = text(&offer["description"])?;
-        actions.push(json!({"alias":id,"ordinal":ordinal,"source":"current"}));
-        offers.push(NativeOffer {
-            id,
-            caption: caption.to_owned(),
-            no_intervention: offer["hasCommand"] == false,
-            transition: text(&offer["transition"])?.to_owned(),
-        });
-    }
-    let speaks = own["speech"].as_bool().ok_or(CallFailure::Invalid)?;
-    let expressions = own["npc"]["expressions"]
-        .as_bool()
-        .ok_or(CallFailure::Invalid)?;
-    let preview_player = work
-        .permit
-        .as_ref()
-        .and_then(|(_, scope)| canonical.get(scope.scope.actor_id.as_str()).cloned());
     let identity = identity(own, &own_name, &self_reference)?;
-    let about = about_me(game, own)?;
     let body = body_text(own)?;
-    let work_facts = agency(own, &choices["workContext"])?;
-    let mut fields = json!({
-        "identity":identity,"aboutMe":about,"body":body,"feelings":feelings(own,&facts["appraisals"] )?,
-        "capabilities":{"speech":speaks,"expressions":expressions},"commitments":[],
-        "stimulus":stimulus,"triggerFacts":trigger_facts,"conversation":conversation,
-        "agency":work_facts,"currentSupport":own["supportSurfaceId"],"publicSurfaces":[],
-        "now":display_time(now),"simTime":now,"recall":recall,"experience":experience,
-        "surroundings":surroundings,"receivedSituation":{"measuredAt":now,"bodies":scene},
-        "activityRequests":activity_requests(game,&choices["activity"],&canonical)?,
-        "possessions":[],"notepad":own["knowledge"]["general"],
-        "knowledge":[],"references":descriptions,"situationQueries":true,
-    });
+    let work_facts = agency(own, &prepared["workContext"])?;
+    let (mut fields, speaks, expressions, preview_player) = if decision {
+        for (ordinal, offer) in records(&prepared["offers"])?.iter().enumerate() {
+            let id = format!("a{ordinal}");
+            let caption = text(&offer["description"])?;
+            actions.push(json!({"alias":id,"ordinal":ordinal,"source":"current"}));
+            offers.push(NativeOffer {
+                id,
+                caption: caption.to_owned(),
+                no_intervention: offer["hasCommand"] == false,
+                transition: text(&offer["transition"])?.to_owned(),
+            });
+        }
+        let speaks = own["speech"].as_bool().ok_or(CallFailure::Invalid)?;
+        let expressions = own["npc"]["expressions"]
+            .as_bool()
+            .ok_or(CallFailure::Invalid)?;
+        let preview_player = work
+            .permit
+            .as_ref()
+            .and_then(|(_, scope)| canonical.get(scope.scope.actor_id.as_str()).cloned());
+        let fields = json!({
+            "identity":identity,"aboutMe":about_me(game, own)?,"body":body,"feelings":feelings(own,&facts["appraisals"])?,
+            "capabilities":{"speech":speaks,"expressions":expressions},"commitments":[],
+            "stimulus":stimulus,"triggerFacts":trigger_facts,"conversation":conversation,
+            "agency":work_facts,"currentSupport":own["supportSurfaceId"],"publicSurfaces":[],
+            "now":display_time(now),"simTime":now,"recall":recall,"experience":experience,
+            "surroundings":surroundings,"receivedSituation":{"measuredAt":now,"bodies":scene},
+            "activityRequests":activity_requests(game,&prepared["activity"],&canonical)?,
+            "possessions":[],"notepad":own["knowledge"]["general"],
+            "knowledge":[],"references":descriptions,"situationQueries":true,
+        });
+        (fields, speaks, expressions, preview_player)
+    } else {
+        let goal = work_facts["goals"]
+            .as_array()
+            .and_then(|goals| goals.first())
+            .and_then(|goal| goal["objective"].as_str())
+            .unwrap_or_default();
+        let fields = json!({
+            "stimulus":stimulus,"goal":goal,
+            "includedContext":{
+                "identity":identity,"notepad":own["knowledge"]["general"],
+                "triggerFacts":trigger_facts,"now":display_time(now),"body":body,
+                "agency":work_facts,"conversation":conversation,"recall":recall,
+                "experience":experience,
+            },
+        });
+        (fields, false, false, None)
+    };
     project_markers(&mut fields, &canonical, &refs);
+    let (purpose, validity, evidence) = if decision {
+        (
+            "decision",
+            "decision",
+            personal_evidence(selected, rows.iter().copied())?,
+        )
+    } else {
+        ("recall", "prepared-response", json!([]))
+    };
     let binding = json!({"decisionId":work.job.job.id,"selection":{
-        "consumer":consumer,"purpose":"decision","validity":"decision","actions":actions,
+        "consumer":consumer,"purpose":purpose,"validity":validity,"actions":actions,
         "prototypeSource":"current","perspectives":[],"semanticCauses":work.automatic.as_ref().map_or(&[][..],|trigger|trigger.causes.as_slice()),"intents":[],
-        "evidence":personal_evidence(selected, rows.iter().copied())?,"entities":entities,"identities":[],"knowledge":[],
+        "evidence":evidence,"entities":entities,"identities":[],"knowledge":[],
         "observations":[],"current":[],"receipts":[],"attention":attention,"presented":presented,"appraisals":null,
     }});
     Ok((

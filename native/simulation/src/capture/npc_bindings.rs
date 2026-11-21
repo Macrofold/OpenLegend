@@ -1,6 +1,6 @@
 //! Only ordinals and their displayed spellings cross the formatter boundary.
 //! Commands, subjects and proof stay with the two actual native captures.
-use super::{NpcReferenceFacts, PreparedNpcCandidates, PreparedNpcSources};
+use super::{NpcObservationSelection, NpcReferenceFacts, PreparedNpcCandidates, PreparedNpcSources};
 use crate::execution::ExecutionError;
 use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
 use crate::host::{ByteBudget, ByteReservation};
@@ -272,6 +272,7 @@ pub(crate) struct NpcBindingRead<'a> {
     pub original_references: &'a NpcReferenceFacts,
     pub sources: &'a [PreparedNpcSources],
     pub perspectives: &'a [super::NpcPerspectiveSnapshot],
+    pub current_selection: Option<&'a NpcObservationSelection>,
     pub candidates: Option<&'a PreparedNpcCandidates>,
     pub original_candidates: Option<&'a PreparedNpcCandidates>,
     /// Optional post-routing feasibility has its own acquired body scope. It
@@ -284,9 +285,8 @@ pub(crate) struct NpcBindingRead<'a> {
 impl NpcBindingRead<'_> {
     fn body(&self, ordinal: usize) -> Result<&super::CapturedBodyBinding, ExecutionError> {
         if !self
-            .candidates
+            .current_selection
             .ok_or_else(invalid)?
-            .selection()
             .body_ordinals()
             .contains(&ordinal)
         {
@@ -423,8 +423,8 @@ impl NpcBindingMaps {
             .ok_or(ExecutionError::Capacity)?;
         let encounter_count = count
             .checked_add(
-                read.candidates
-                    .map_or(0, |candidates| candidates.selection().body_ordinals().len()),
+                read.current_selection
+                    .map_or(0, |selection| selection.body_ordinals().len()),
             )
             .ok_or(ExecutionError::Capacity)?;
         for selected in &selection.perspectives {
@@ -632,8 +632,8 @@ impl NpcBindingMaps {
         let mut entity_leases = IndexMap::with_capacity(count);
         let mut expected_encounters = IndexMap::with_capacity(encounter_count);
         for &ordinal in read
-            .candidates
-            .map_or(&[][..], |candidates| candidates.selection().body_ordinals())
+            .current_selection
+            .map_or(&[][..], |selection| selection.body_ordinals())
         {
             let body = read.body(ordinal)?;
             if let Some(episode) = &body.episode {

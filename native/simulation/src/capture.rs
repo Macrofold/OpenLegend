@@ -55,7 +55,7 @@ pub(crate) use npc_selection::NpcObservationSelection;
 mod npc_candidates;
 pub(crate) use npc_candidates::{
     NpcCandidateAnswer, NpcCandidateCursor, NpcCandidateStep, NpcDescriptionsAnswer,
-    NpcDescriptionsRequest, NpcOfferCoverage, PreparedNpcCandidates,
+    NpcDescriptionsRequest, NpcOfferCoverage, PreparedNpcCandidates, PreparedNpcRead,
 };
 mod outcomes;
 mod player;

@@ -8,6 +8,43 @@ pub(crate) enum NpcOfferCoverage {
     CompletePhysical,
 }
 
+pub(crate) struct PreparedNpcRecall {
+    pub(crate) selection: NpcObservationSelection,
+    pub(super) work_context: NpcWorkContext,
+    pub(super) _storage: ByteReservation,
+}
+
+impl PreparedNpcRecall {
+    pub(crate) fn context(&self) -> impl Serialize + '_ {
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Context<'a> {
+            body_ordinals: &'a [usize],
+            work_context: &'a NpcWorkContext,
+        }
+        Context {
+            body_ordinals: self.selection.body_ordinals(),
+            work_context: &self.work_context,
+        }
+    }
+}
+
+/// A recall read retains presentation and its observation selection. Only a
+/// full catalogue can bind executable choices.
+pub(crate) enum PreparedNpcRead {
+    Recall(PreparedNpcRecall),
+    Offers(PreparedNpcCandidates),
+}
+
+impl PreparedNpcRead {
+    pub(crate) fn selection(&self) -> &NpcObservationSelection {
+        match self {
+            Self::Recall(read) => &read.selection,
+            Self::Offers(read) => read.selection(),
+        }
+    }
+}
+
 /// All ordinals address native-owned records from this same capture. They are
 /// formatting inputs, not permission maps that Node can replace on application.
 #[derive(Serialize)]
@@ -136,5 +173,5 @@ pub(crate) enum NpcCandidateStep<'a> {
     Descriptions(&'a NpcDescriptionsRequest),
     Geometry(&'a GeometryQueries),
     Display(&'a mut ActivityDisplayCursor),
-    Complete(PreparedNpcCandidates),
+    Complete(PreparedNpcRead),
 }

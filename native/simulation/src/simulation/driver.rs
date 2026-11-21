@@ -1155,7 +1155,7 @@ impl OperationCursor {
 enum DriverCompletion {
     LearningBatch(Arc<crate::activity::PreparedActivityLearning>),
     Operation(CompletedOperation),
-    NpcCandidates(crate::capture::PreparedNpcCandidates),
+    NpcCandidates(crate::capture::PreparedNpcRead),
     NpcSources(crate::capture::PreparedNpcSources),
 }
 pub(crate) enum DriveStep {
@@ -1163,7 +1163,7 @@ pub(crate) enum DriveStep {
     Continue,
     Question(Arc<ProviderQuestion>),
     Complete(CompletedOperation),
-    NpcCandidates(crate::capture::PreparedNpcCandidates),
+    NpcCandidates(crate::capture::PreparedNpcRead),
     NpcSources(crate::capture::PreparedNpcSources),
 }
 pub(crate) struct OperationDriver {
@@ -2349,7 +2349,7 @@ fn poll_npc_candidates(
     answer: &mut Option<Answer>,
     mut route: Option<NpcCandidateReply>,
     budget: &ByteBudget,
-) -> Result<Poll<crate::capture::PreparedNpcCandidates, NpcCandidateReply>, DriveError> {
+) -> Result<Poll<crate::capture::PreparedNpcRead, NpcCandidateReply>, DriveError> {
     use crate::capture::{NpcCandidateAnswer as Reply, NpcCandidateStep as Step};
     let mut supplied = None;
     if matches!(route, Some(NpcCandidateReply::Descriptions)) {

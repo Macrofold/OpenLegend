@@ -1,7 +1,6 @@
-//! Actor-scoped discovery uses the same prospective command owner as Source.
-//! This cursor runs under a private candidate checkpoint: it never admits an
-//! action or allocates a world ID. The caller closes that checkpoint before
-//! retaining this detached inventory alongside its originating accepted read.
+//! Actor-scoped preparation runs under a private candidate checkpoint. The
+//! same owner displays remaining work for recall and the executable catalogue.
+//! Only the catalogue path probes commands. Neither path admits an action.
 use super::{ActorReadPurpose, NpcObservationSelection};
 use crate::commands::{
     ActivityDisplayCursor, CommandChoiceAnswer, CommandChoiceCursor, CommandChoiceStep,
@@ -65,7 +64,7 @@ enum Waiting {
 pub(crate) struct NpcCandidateCursor {
     actor: String,
     candidate: CandidateKey,
-    coverage: NpcOfferCoverage,
+    coverage: Option<NpcOfferCoverage>,
     selection: Option<NpcObservationSelection>,
     targets: Vec<Target>,
     stage: Enumerate,
@@ -136,11 +135,13 @@ impl<'a> CommandInput<'a> {
 }
 
 impl NpcCandidateCursor {
+    /// A missing offer coverage selects only the recall view of current work.
+    /// Both paths own the same-cut attended body selection.
     pub(crate) fn prepare(
         core: &CoreMutation<'_>,
         read: &AcceptedActorRead,
         expanded: &[usize],
-        coverage: NpcOfferCoverage,
+        coverage: Option<NpcOfferCoverage>,
         candidate: CandidateKey,
         budget: &ByteBudget,
     ) -> Result<Self, ExecutionError> {
@@ -150,16 +151,16 @@ impl NpcCandidateCursor {
             return Err(ExecutionError::InvalidCheckpoint);
         }
         let selection = NpcObservationSelection::prepare(core.state, read, expanded, budget)?;
-        let bytes = selection
-            .body_ordinals()
+        let offered_bodies = coverage.map_or(&[][..], |_| selection.body_ordinals());
+        let bytes = offered_bodies
             .len()
             .checked_mul(size_of::<Target>())
             .and_then(|n| n.checked_add(read.perception.actor_id.len() + size_of::<Self>()))
             .ok_or(ExecutionError::Capacity)?;
         let mut storage = budget.reserve(bytes)?;
-        let mut targets = Vec::with_capacity(selection.body_ordinals().len());
+        let mut targets = Vec::with_capacity(offered_bodies.len());
         let cut = read.perception.evidence.cut();
-        for &index in selection.body_ordinals() {
+        for &index in offered_bodies {
             let binding = &read.perception.bodies[index];
             if binding.source_id == read.perception.actor_id {
                 continue;
@@ -197,11 +198,14 @@ impl NpcCandidateCursor {
                 visible: false,
             });
         }
-        let (work, work_storage) =
-            ResponseWorkIdentity::capture(core.state, &read.perception.actor_id, budget)?;
+        let (work, work_storage) = coverage
+            .map(|_| ResponseWorkIdentity::capture(core.state, &read.perception.actor_id, budget))
+            .transpose()?
+            .unzip();
         let work_context = NpcWorkContext::prepare(core, &read.perception.actor_id, budget)?;
-        let description_context =
-            DescriptionContext::prepare(core, read, selection.body_ordinals(), budget)?;
+        let description_context = coverage
+            .map(|_| DescriptionContext::prepare(core, read, offered_bodies, budget))
+            .transpose()?;
         let actor = core
             .state
             .physical
@@ -211,6 +215,8 @@ impl NpcCandidateCursor {
             .ok_or(ExecutionError::MissingActor)?;
         let stage = if !actor.alive || actor.incapacitated || core.state.physical.header.paused {
             Enumerate::Done
+        } else if coverage.is_none() {
+            Enumerate::CurrentWork(0)
         } else {
             Enumerate::Visibility
         };
@@ -232,13 +238,13 @@ impl NpcCandidateCursor {
             child_copy: None,
             pending: None,
             offers: Vec::new(),
-            work: Some(work),
-            work_storage: Some(work_storage),
+            work,
+            work_storage,
             budget: budget.clone(),
-            storage: Some(budget.reserve(size_of::<PreparedNpcCandidates>())?),
+            storage: Some(budget.reserve(size_of::<PreparedNpcRead>())?),
             _cursor_storage: storage,
             done: false,
-            description_context: Some(description_context),
+            description_context,
             description_request: None,
             descriptions_done: false,
             activity: None,
@@ -551,6 +557,16 @@ impl NpcCandidateCursor {
             if self.enumerate(core)? {
                 continue;
             }
+            if self.coverage.is_none() {
+                self.done = true;
+                return Ok(NpcCandidateStep::Complete(PreparedNpcRead::Recall(
+                    PreparedNpcRecall {
+                        selection: self.selection.take().ok_or(ExecutionError::Invariant)?,
+                        work_context: self.work_context.take().ok_or(ExecutionError::Invariant)?,
+                        _storage: self.storage.take().ok_or(ExecutionError::Invariant)?,
+                    },
+                )));
+            }
             if self.activity_done.is_none() {
                 if self.activity.is_none() {
                     self.activity = Some(NpcActivityPreparation::prepare(
@@ -606,7 +622,7 @@ impl NpcCandidateCursor {
                     .filter(|target| target.visible)
                     .map(|target| target.body),
             );
-            return Ok(NpcCandidateStep::Complete(PreparedNpcCandidates {
+            return Ok(NpcCandidateStep::Complete(PreparedNpcRead::Offers(PreparedNpcCandidates {
                 offers: std::mem::take(&mut self.offers),
                 work_context: self.work_context.take().ok_or(ExecutionError::Invariant)?,
                 visible_body_ordinals,
@@ -615,7 +631,7 @@ impl NpcCandidateCursor {
                 work: self.work.take().ok_or(ExecutionError::Invariant)?,
                 _work_storage: self.work_storage.take().ok_or(ExecutionError::Invariant)?,
                 _storage: self.storage.take().ok_or(ExecutionError::Invariant)?,
-            }));
+            })));
         }
     }
 }
