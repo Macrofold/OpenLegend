@@ -16,7 +16,7 @@ export function jobSelection(job: JobRecord): string {
     status: job.status,
     completedAt: job.completedAt,
     playerSpeechEventId: storedText(job.playerSpeechEventId),
-    npcId: storedText(job.request.npcId),
+    npcId: job.kind === 'thought' ? storedText(job.request.npcId) : undefined,
     displayOwner: owner
       ? { accountId: storedText(owner.accountId), actorId: storedText(owner.actorId) }
       : null,

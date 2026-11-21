@@ -231,7 +231,8 @@ impl Store {
             completed_at: Option<i64>,
             #[serde(skip_serializing_if = "Option::is_none")]
             player_speech_event_id: Option<String>,
-            npc_id: String,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            npc_id: Option<String>,
             display_owner: Option<DisplayOwner>,
             #[serde(skip_serializing_if = "Option::is_none")]
             display_message: Option<String>,
@@ -274,7 +275,10 @@ impl Store {
             status: job.status,
             completed_at: job.completed_at,
             player_speech_event_id: event,
-            npc_id: json_record(&job.request.npc_id).map_err(invalid)?,
+            npc_id: (job.kind == "thought")
+                .then(|| json_record(&job.request.npc_id))
+                .transpose()
+                .map_err(invalid)?,
             display_owner,
             display_message: (job.kind != "thought")
                 .then(|| json_record(&job.message))
