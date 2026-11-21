@@ -24,11 +24,19 @@ type Job<H, W> = Box<dyn FnOnce(&Arc<H>, &Arc<W>) + Send>;
 
 pub struct SerialDispatch<H, W> {
     state: Mutex<Pending<H, W>>,
-    _storage: ByteReservation,
 }
 struct Pending<H, W> {
     running: bool,
+    retiring: bool,
     jobs: VecDeque<Job<H, W>>,
+    storage: Option<ByteReservation>,
+}
+
+impl<H, W> Pending<H, W> {
+    fn release_queue(&mut self) {
+        self.jobs = VecDeque::new();
+        self.storage = None;
+    }
 }
 
 impl<H, W> SerialDispatch<H, W> {
@@ -49,22 +57,37 @@ impl<H, W> SerialDispatch<H, W> {
         Ok(Self {
             state: Mutex::new(Pending {
                 running: false,
+                retiring: false,
                 jobs,
+                storage: Some(storage),
             }),
-            _storage: storage,
         })
     }
 
-    fn enter(&self, job: Job<H, W>) -> Option<Job<H, W>> {
+    /// Stop accepting operations after the durable writer has stopped. Already
+    /// queued calls finish in order. Free their queue backing and its charge
+    /// after the last call, even if application handles still own the world.
+    pub fn retire(&self) {
         let mut state = self.state.lock().unwrap_or_else(|error| error.into_inner());
+        state.retiring = true;
+        if !state.running {
+            state.release_queue();
+        }
+    }
+
+    fn enter(&self, job: Job<H, W>) -> Result<Option<Job<H, W>>, HostError> {
+        let mut state = self.state.lock().unwrap_or_else(|error| error.into_inner());
+        if state.retiring {
+            return Err(HostError::Closed);
+        }
         if state.running {
             // The already admitted active job and waiters all use one host
             // allowance. The queue backing cannot grow beyond that allowance.
             state.jobs.push_back(job);
-            None
+            Ok(None)
         } else {
             state.running = true;
-            Some(job)
+            Ok(Some(job))
         }
     }
 
@@ -73,6 +96,9 @@ impl<H, W> SerialDispatch<H, W> {
         let next = state.jobs.pop_front();
         if next.is_none() {
             state.running = false;
+            if state.retiring {
+                state.release_queue();
+            }
         }
         next
     }
@@ -128,7 +154,7 @@ where
             || world.poison(),
         );
     });
-    if let Some(job) = world.dispatch().enter(job) {
+    if let Some(job) = world.dispatch().enter(job)? {
         schedule(host, world, job);
     }
     Ok(cancellation)

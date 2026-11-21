@@ -780,6 +780,7 @@ impl NativeWorld {
                 .finish_stop()
                 .map_err(operation_error)?;
             *owner = None;
+            world.dispatch.retire();
             world.stopped.store(true, Ordering::Release);
             drop(owner);
             host.worlds
