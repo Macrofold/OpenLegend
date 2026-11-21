@@ -506,14 +506,12 @@ impl NativeWorldSession {
             return Err(stale(reason));
         }
         let candidates = fresh.candidates();
-        let action_candidates = action
-            .and_then(RuntimeNpcRead::candidates)
-            .or_else(|| {
-                fresh
-                    .action_catalogue
-                    .as_ref()
-                    .map(|catalogue| &catalogue.candidates)
-            });
+        let action_candidates = action.and_then(RuntimeNpcRead::candidates).or_else(|| {
+            fresh
+                .action_catalogue
+                .as_ref()
+                .map(|catalogue| &catalogue.candidates)
+        });
         let action_perception = action.map(|read| read.read.as_ref()).or_else(|| {
             fresh
                 .action_catalogue

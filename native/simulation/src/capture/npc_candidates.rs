@@ -479,8 +479,17 @@ impl NpcCandidateCursor {
                         .queries(),
                 ));
             }
-            if self.activity.as_ref().is_some_and(|activity| activity.queries.is_some()) {
-                return Ok(NpcCandidateStep::Geometry(self.activity.as_ref().and_then(|activity| activity.queries.as_ref()).ok_or(ExecutionError::Invariant)?));
+            if self
+                .activity
+                .as_ref()
+                .is_some_and(|activity| activity.queries.is_some())
+            {
+                return Ok(NpcCandidateStep::Geometry(
+                    self.activity
+                        .as_ref()
+                        .and_then(|activity| activity.queries.as_ref())
+                        .ok_or(ExecutionError::Invariant)?,
+                ));
             }
             if self.plan_display.is_some() {
                 return Ok(NpcCandidateStep::Display(
@@ -622,16 +631,18 @@ impl NpcCandidateCursor {
                     .filter(|target| target.visible)
                     .map(|target| target.body),
             );
-            return Ok(NpcCandidateStep::Complete(PreparedNpcRead::Offers(PreparedNpcCandidates {
-                offers: std::mem::take(&mut self.offers),
-                work_context: self.work_context.take().ok_or(ExecutionError::Invariant)?,
-                visible_body_ordinals,
-                activity: self.activity_done.take().ok_or(ExecutionError::Invariant)?,
-                selection: self.selection.take().ok_or(ExecutionError::Invariant)?,
-                work: self.work.take().ok_or(ExecutionError::Invariant)?,
-                _work_storage: self.work_storage.take().ok_or(ExecutionError::Invariant)?,
-                _storage: self.storage.take().ok_or(ExecutionError::Invariant)?,
-            })));
+            return Ok(NpcCandidateStep::Complete(PreparedNpcRead::Offers(
+                PreparedNpcCandidates {
+                    offers: std::mem::take(&mut self.offers),
+                    work_context: self.work_context.take().ok_or(ExecutionError::Invariant)?,
+                    visible_body_ordinals,
+                    activity: self.activity_done.take().ok_or(ExecutionError::Invariant)?,
+                    selection: self.selection.take().ok_or(ExecutionError::Invariant)?,
+                    work: self.work.take().ok_or(ExecutionError::Invariant)?,
+                    _work_storage: self.work_storage.take().ok_or(ExecutionError::Invariant)?,
+                    _storage: self.storage.take().ok_or(ExecutionError::Invariant)?,
+                },
+            )));
         }
     }
 }

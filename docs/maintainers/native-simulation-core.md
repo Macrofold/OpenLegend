@@ -1116,7 +1116,19 @@ The [current Rust profiler](../benchmarks/native-runtime-foundations/2026/2026-1
 
 The optional change to bystander movement memory in profiler proposal 2 remains a product decision. These experiments preserve the existing authored behavior, and leave the separate multicore gates in place.
 
-The [next profiling candidates](../benchmarks/native-runtime-foundations/2026/2026-11-20-rust-hot-path-comparisons.md#next-profiling-candidates-outside-movement-perception-and-saving) identify work to measure before changing NPC decisions, job-status reads, body deadlines or search indexing. They are outside these experiments.
+### NPC and background-work follow-up
+
+The [profiling findings](../benchmarks/native-runtime-foundations/2026/2026-11-20-rust-hot-path-comparisons.md#next-profiling-candidates-outside-movement-perception-and-saving) define this batch. The following are separate experiments. Each must complete its real caller checks and matched comparisons before retention.
+
+| Experiment          | Implementation and completion check                                                                                                                                                                                                                                                                       |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| NPC memory review   | Use the same permitted evidence and plan labels without preparing executable choices. Compare controlled review, fresh final choices, withdrawal, cancellation and a single saved reply.                                                                                                                  |
+| Resident scheduling | Decode one intake and reuse the first exact cursor. Compare the narrow speech routing lookup separately with the same current job metadata on both sides. Exercise a pending cue, addressed speech, replacement and the latest job's exact owner. Measure why decisions run before tuning Base curiosity. |
+| Job-status display  | Read the compact projection of the same newest 12 jobs. Keep current permission, order, status and spending admission. Compare a busy mixed-scope job history and ordinary play. Measure index write cost alongside read savings. The candidate database format requires a fresh development database.    |
+| Body deadlines      | Reuse the compared attribute and threshold in the crossing calculation. The current Base definitions give a rule index nothing to skip. Compare timed crossings, effects and saved continuation.                                                                                                          |
+| Search indexing     | Reuse one vector for exact identical text within one prepared batch. Each source keeps its own revision, permission and publishing claim. Compare indexed results and coverage, including correction and replacement, then measure whether duplicate text is frequent enough to justify the lookup.       |
+
+Build and review the candidates before running checks. Use the same 26-actor stand-alone opening, ordinary clock and background saves, two controlled saved conversations, and cold continuation. Compare complete gameplay in three interleaved repetitions on standard workers with independent databases. Diagnostics establish which work ran and whether time or work shifted; they stay separate from clean timing.
 
 ## Overlap and dependencies
 

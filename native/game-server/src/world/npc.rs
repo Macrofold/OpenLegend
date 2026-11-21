@@ -95,9 +95,11 @@ impl HostedWorld {
         request: Bytes,
         begin: BeginNpcRead,
     ) -> Result<RuntimeNpcRead, WorldError> {
-        self.prepare_npc_at(game, move |_| Ok(read), move |session, read| {
-            begin(session, read, &request)
-        })
+        self.prepare_npc_at(
+            game,
+            move |_| Ok(read),
+            move |session, read| begin(session, read, &request),
+        )
         .await
     }
 
@@ -107,7 +109,10 @@ impl HostedWorld {
         read: impl FnOnce(&mut NativeWorldSession) -> Result<RuntimeNpcRead, RuntimeError>
         + Send
         + 'static,
-        begin: impl FnOnce(&mut NativeWorldSession, &mut RuntimeNpcRead) -> Result<CandidateKey, RuntimeError>
+        begin: impl FnOnce(
+            &mut NativeWorldSession,
+            &mut RuntimeNpcRead,
+        ) -> Result<CandidateKey, RuntimeError>
         + Send
         + 'static,
     ) -> Result<RuntimeNpcRead, WorldError> {

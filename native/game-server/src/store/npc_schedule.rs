@@ -60,17 +60,45 @@ impl Store {
         actor: String,
     ) -> StoreResult<ThoughtRead> {
         let budget = self.budget.clone();
-        self.read_operational(move |tx|Box::pin(async move {
-            let head=durable_head(tx).await?.ok_or(StoreError::StaleCut)?;
-            if head.world_id!=world || head.generation!=generation {return Err(StoreError::StaleCut);}
-            let schedule=key(&world,&actor);
-            let (_transfer, rows)=admitted_query(tx,"SELECT value FROM meta WHERE key=$1",&[&schedule],&budget).await?;
-            let raw=rows.first().map(|row|row.try_get::<_,&str>(0)).transpose()?;
-            let bytes=raw.map_or(Some(2048),|value|json_tree_allocation_bound(value).and_then(|n|n.checked_add(value.len())).and_then(|n|n.checked_add(2048))).ok_or(StoreError::Capacity)?;
-            let custody=budget.reserve(bytes).map_err(|_|StoreError::Capacity)?;
-            let cursor=raw.map(|value|serde_json::from_str(value).map_err(|_|StoreError::InvalidRecord)).transpose()?.unwrap_or_default();
-            Ok(ThoughtRead {cursor,speech:BTreeSet::new(),expected:raw.map(str::to_owned),_custody:custody})
-        })).await
+        self.read_operational(move |tx| {
+            Box::pin(async move {
+                let head = durable_head(tx).await?.ok_or(StoreError::StaleCut)?;
+                if head.world_id != world || head.generation != generation {
+                    return Err(StoreError::StaleCut);
+                }
+                let schedule = key(&world, &actor);
+                let (_transfer, rows) = admitted_query(
+                    tx,
+                    "SELECT value FROM meta WHERE key=$1",
+                    &[&schedule],
+                    &budget,
+                )
+                .await?;
+                let raw = rows
+                    .first()
+                    .map(|row| row.try_get::<_, &str>(0))
+                    .transpose()?;
+                let bytes = raw
+                    .map_or(Some(2048), |value| {
+                        json_tree_allocation_bound(value)
+                            .and_then(|n| n.checked_add(value.len()))
+                            .and_then(|n| n.checked_add(2048))
+                    })
+                    .ok_or(StoreError::Capacity)?;
+                let custody = budget.reserve(bytes).map_err(|_| StoreError::Capacity)?;
+                let cursor = raw
+                    .map(|value| serde_json::from_str(value).map_err(|_| StoreError::InvalidRecord))
+                    .transpose()?
+                    .unwrap_or_default();
+                Ok(ThoughtRead {
+                    cursor,
+                    speech: BTreeSet::new(),
+                    expected: raw.map(str::to_owned),
+                    _custody: custody,
+                })
+            })
+        })
+        .await
     }
 
     /// Read job ownership only for speech selected by the native trigger.
@@ -125,10 +153,15 @@ impl Store {
                             .checked_mul(24)
                             .and_then(|bytes| bytes.checked_add(2048))
                             .ok_or(StoreError::Capacity)?,
-                        |sum, id| sum.checked_add(2048)?.checked_add(id.len().checked_mul(24)?),
+                        |sum, id| {
+                            sum.checked_add(2048)?
+                                .checked_add(id.len().checked_mul(24)?)
+                        },
                     )
                     .ok_or(StoreError::Capacity)?;
-                let _working = budget.reserve(work_bytes).map_err(|_| StoreError::Capacity)?;
+                let _working = budget
+                    .reserve(work_bytes)
+                    .map_err(|_| StoreError::Capacity)?;
                 let encoded = event_ids
                     .iter()
                     .map(json_record)

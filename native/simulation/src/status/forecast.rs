@@ -191,9 +191,8 @@ fn comparison_transition(
         });
     };
     let rate = rates.get(target, &compare.attribute);
-    let saturated = range.is_some_and(|(min, max)| {
-        (value <= min && rate < 0.0) || (value >= max && rate > 0.0)
-    });
+    let saturated = range
+        .is_some_and(|(min, max)| (value <= min && rate < 0.0) || (value >= max && rate > 0.0));
     let after = if rate == 0.0 || saturated {
         f64::INFINITY
     } else if value == threshold {

@@ -1268,9 +1268,10 @@ impl StatusRead<'_> {
                 }
                 matches
             }
-            StatusCondition::Compare { compare } => self
-                .compare_attribute(bindings.target(compare.target), compare, false)?
-                .matches,
+            StatusCondition::Compare { compare } => {
+                self.compare_attribute(bindings.target(compare.target), compare, false)?
+                    .matches
+            }
             StatusCondition::Field { field } => {
                 match self.entities.get(bindings.target(field.target)) {
                     Some(entity) => compare_status(

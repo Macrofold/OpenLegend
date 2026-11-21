@@ -3,7 +3,9 @@
 //! source lease; the context producer must bind those independently.
 use super::*;
 use crate::appraisals::AppraisalScope;
-use crate::capture::{CapturedBodyBinding, NpcOfferCoverage, PreparedNpcCandidates, PreparedNpcRead};
+use crate::capture::{
+    CapturedBodyBinding, NpcOfferCoverage, PreparedNpcCandidates, PreparedNpcRead,
+};
 use crate::host::PublicationLease;
 use crate::simulation::AcceptedActorRead;
 use std::mem::size_of;
@@ -446,7 +448,10 @@ impl NativeWorldSession {
 
     /// Prepare remaining work and bind current presented bodies for recall.
     /// The prepared read owns its work display and leases until review ends.
-    pub fn begin_npc_recall(&mut self, read: &mut RuntimeNpcRead) -> Result<CandidateKey, RuntimeError> {
+    pub fn begin_npc_recall(
+        &mut self,
+        read: &mut RuntimeNpcRead,
+    ) -> Result<CandidateKey, RuntimeError> {
         self.require_active()?;
         read.require_unprepared()?;
         self.begin_npc_context(read, &[], None)

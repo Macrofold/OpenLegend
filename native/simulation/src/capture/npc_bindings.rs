@@ -1,6 +1,8 @@
 //! Only ordinals and their displayed spellings cross the formatter boundary.
 //! Commands, subjects and proof stay with the two actual native captures.
-use super::{NpcObservationSelection, NpcReferenceFacts, PreparedNpcCandidates, PreparedNpcSources};
+use super::{
+    NpcObservationSelection, NpcReferenceFacts, PreparedNpcCandidates, PreparedNpcSources,
+};
 use crate::execution::ExecutionError;
 use crate::host::retained_size::{HeapBytes, heap_sum, map_storage};
 use crate::host::{ByteBudget, ByteReservation};
