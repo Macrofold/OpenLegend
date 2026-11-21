@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                      | Last updated |
 | ----------- | ------------------------------------------------------------------------------------- | ------------ |
-| In progress | Isolated comparisons are complete and the retained release is in final caller checks. | 2026-11-20   |
+| In progress | The release comparison is complete. The targeted physical warning check remains open. | 2026-11-20   |
 
 During a walk, residents and the player should see the same permitted facts, hear the same speech and get the same reactions. The AI panel should show the same totals a fresh read would return. Save recovery should return the same accepted changes, and an NPC should receive the same decision input and apply its reply exactly once. These experiments build on the shipped Base limit for spare bystander tracking. [Current profile](../benchmarks/native-runtime-foundations/2026/2026-11-20-current-rust-server-profile.md) · [Current authority and storage design](native-simulation-core-tech-design.md#6-captures-saving-correction-and-restoration)
 
@@ -17,7 +17,7 @@ Each proposed runtime change is an **experiment**. Compare one change at a time 
 3. For materially exercised arms, use the [ordinary stand-alone comparison](../limits/native-simulation-core.md#nsc-l10--stand-alone-rust-server-comparison) with three interleaved pairs and fresh databases on the managed 16 GiB worker. Use the 26-actor opening, real player stream, ordinary clock and one-second saves, both controlled HTTPS replies and the 2 GiB allowance. Run ordinary movement with the AI panel closed. Add the smallest relevant visible-panel, held-reader or dense-observer case when needed. Freeze inputs and allowed work variation before dispatch. Keep diagnostics out of clean timing.
 4. Use the [comparison and reporting method](../performance/measurement.md#planning-comparisons). A pure CPU change needs a repeatable gain beyond observed variation. A database change can earn its place by materially reducing statements or reader hold time while preserving complete CPU, latency and memory within the planned tolerances. Apply the existing [timing and durability targets](../maintainers/native-simulation-core.md#applicable-multiplayer-timing-policy). Record skipped, failed and inconclusive arms as well as retained ones.
 
-Native reception and record changes serve both Rust hosts. The player-view and NPC formatter changes belong to the stand-alone application. The formats stay common. The installed world supplies sensing, attention and cognition rules. The engine resolves facts using those rules and the observer's own sources. For example, another installed sight channel can yield a different valid observation of the same moving body. A borrowed result stays with the exact observer, contact and channel that acquired it. These experiments need no new world definitions or save-format changes.
+Native reception and record changes serve both Rust hosts. The stand-alone application owns its player-view and NPC formatting. The installed world supplies sensing, attention and cognition rules. The engine resolves facts using those rules and the observer's sources. Another installed sight channel can yield a different valid observation of the same moving body. A borrowed result stays with the exact observer, contact and channel that acquired it. Save formats stay common. The optional discovery trial alone changes an authored gameplay setting.
 
 ## 1. Reuse obtained observation facts
 

@@ -23,6 +23,10 @@ The focused release `423f7dc8a` passed network, types, and the optimized server 
 
 The corrected original-Send case passed on `b97530bf5` in `8d6b5c1e-a3fb-4a71-b4a5-49882d8f4a0f`. The player moved while the request waited for the resident. Cancelling before admission left zero jobs, utterances and provider requests. A new Send with the same ID saved one utterance and one reply. Cold recovery found that same completed job. The stand-alone privacy case `4c37259d-a002-4454-ad66-d412615d489d` observed real speech on the permitted stream and confirmed two independent saved witnesses. Protected forgetting sent a fresh reset without the withdrawn event and preserved the witnesses and the shared original after restart.
 
+The attached browser case `c74dd7fb-de19-4733-b2b4-fc6b2c2e1dcb` passed on `b97530bf5`. Chromium 145.0.7632.6 ran visibly at 1920 × 1080 on the approved M1 Pro over the managed worker's private tunnel. It saved camera and Story preferences through the rendered controls and read the visible allowance on opening its panel. The server rejected logged-out and foreign-scope reads. Both scripted conversations saved, with the answering NPC the actual payer. Two independently authorized streams closed without partial frames. Cold reopening returned the camera setting written only by the browser and recovered the original movement receipt. Earlier attached retries failed when the browser fixture read a body after Chromium discarded it and when it used the wrong Journal button name. This was a functional browser check.
+
+The held-intent caller `d6ea6e0b-d2fb-4ec7-a3a8-4ea8833c471c` withdrew the selected speech before network submission. The server sent zero provider requests, kept the two independent witnesses and recovered the same refusal after restart. In the paired unrelated-change case, movement changed recognition and support while the selected speech stayed current. The server applied one reply and recovered it cold. For optional discovery, a single qualifying cue waited for game second 300. A real walk removed that cue at about game second 63. No optional job was admitted. The positive, direct-conversation and withdrawal cases together verify the changed timing. These checks used a diagnostic build, outside clean timing.
+
 ## Diagnostic work counts
 
 In three focused profile windows, the table-selective save fold skipped 669,343–724,082 prior write-row revisits per 180 seconds. That was **54.75–57.15%** of the rows the previous fold would have revisited. It still examined 543,011–553,267 rows in tables where something changed. Both counters lost zero records. They count simulation-side visits to unsaved rows. PostgreSQL still commits the same required rows. [Save acceptance](../../../../native/simulation/src/records/save.rs) · Campaign `d4060b8d-87e7-4480-a10e-1a7e53dbfae5`
@@ -36,6 +40,26 @@ The separate PostgreSQL relay recorded one complete ordinary run per version. It
 | Scoped preferences and usage |                    277.0 |               49,860 |        65,823 |     161.08 |       44.79 |
 
 The preference split still needs the existing maintenance and narrator-eligibility statement. It removes unrelated account data from that hot read. The usage split takes its monthly aggregate out of every movement-view preparation. The scoped panel requests it separately. [Statement owners](../../../../native/game-server/src/store/view_profile.rs) · [Usage owner](../../../../native/game-server/src/store/view_cognition.rs) · Campaign `3622eb76-18ec-4b92-ad31-dd49cf912cd0`
+
+## Integrated release comparison
+
+Campaign `2e8fc56f-45ab-4070-9edf-489ad71d3722` collected all six complete runs of `744c6b2c5` and `75e457bcf` on the standard 16 GiB worker. Both arms finished 34 saved walks, steering, both controlled conversations and an exact cold receipt. Server CPU includes all process threads. Client CPU is separate. Each cell gives median / mean / p95. CPU and game speed use three entire 180-second windows per arm. Latency uses 96 steady walks per arm.
+
+| Metric                              |                     Control |            Retained changes |
+| ----------------------------------- | --------------------------: | --------------------------: |
+| Rust server, % of one core          |       53.02 / 51.13 / 53.19 |       49.48 / 50.32 / 53.72 |
+| Exclusive PostgreSQL, % of one core |          8.62 / 8.49 / 8.97 |          7.25 / 7.15 / 7.31 |
+| Stream client, % of one core        |          0.93 / 0.94 / 0.97 |          0.86 / 0.87 / 0.92 |
+| Achieved game speed, % of intended  | 100.028 / 100.019 / 100.028 | 100.000 / 100.000 / 100.001 |
+| Command response, ms                |            7.0 / 8.0 / 15.3 |            6.7 / 7.7 / 13.1 |
+| First movement received, ms         |          44.5 / 52.7 / 93.1 |          58.6 / 57.3 / 86.3 |
+| Durable receipt, ms                 |      572.0 / 564.2 / 1092.3 |      585.8 / 587.5 / 1080.2 |
+
+Median server plus PostgreSQL CPU per completed game second fell from 10.301 to 9.455 ms, or 8.2%. The three pairs improved by 8.46%, 0.75% and 1.26%. The median improvement is smaller than the spread of the control runs. Median sampled concurrent memory fell from 575.5 to 531.0 MiB and the median transient reservation peak fell from 288.8 to 197.1 MiB. The candidate median had 9,199 versus 8,911 PostgreSQL transactions and 110.54 versus 96.89 MB of WAL. Transactions include the independent receipt observer. The relay above is a separate statement count. The player stream measured rate and receipt time. It did not expose internal clock debt or browser paint time.
+
+The final held relative-movement case `7bead812-1dc0-4b47-8dce-39af3539fe05` passed on diagnostic source `9769a14b`. The full and narrow original readers agreed on the same frame, scope and ordered attention references. The resident moved from x=18.7 m to x=15.4 m while waiting for the controlled reply. The resulting move reached the destination computed from the original frame, saved one effect, and recovered the same result and position after restart. The earlier run correctly refused after the old walk had completed and created a new result.
+
+The focused physical warning case remains open. The control in `b0c124bd-db9e-45cb-b46f-812cd0c5a591` did demonstrate natural sight loss and a new lease on reacquisition. It did not produce the intended positive closing-body warning and reported outstanding native work at shutdown. Its candidate did not run. Ordinary gameplay, privacy, response and durable continuation passed independently. The scan remains provisional pending the matched warning and mixed-host cleanup check.
 
 ## Isolated comparisons
 
