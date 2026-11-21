@@ -62,7 +62,7 @@ impl Store {
                 let account_key = json_record(&account).map_err(invalid)?;
                 let actor_key = json_record(&actor).map_err(invalid)?;
                 // Keep the existing newest-12 window before applying permission.
-                // Only jobs without a recorded owner may qualify through speech.
+                // Only an explicit unowned job may qualify through speech.
                 let (mut charges, rows) = admitted_query(
                     tx,
                     "WITH recent AS (SELECT id, selection, created_at FROM jobs \
@@ -74,14 +74,14 @@ impl Store {
                        (recent.selection->>'totalLatencyMs')::float8 AS total_latency, \
                        permitted, h.payload AS speech_origin \
                      FROM recent CROSS JOIN LATERAL (SELECT COALESCE(CASE \
-                       WHEN recent.selection ? 'displayOwner' THEN \
-                         recent.selection #>> '{displayOwner,accountId}'=$2 AND \
-                         recent.selection #>> '{displayOwner,actorId}'=$3 \
-                       ELSE recent.selection #>> '{request,invention,actorId}'=$3 OR \
+                       WHEN recent.selection->'displayOwner'='null'::jsonb THEN \
+                         recent.selection #>> '{request,invention,actorId}'=$3 OR \
                          (recent.selection->>'kind'='thought' AND recent.selection->>'npcId'=$3) \
+                       ELSE recent.selection #>> '{displayOwner,accountId}'=$2 AND \
+                         recent.selection #>> '{displayOwner,actorId}'=$3 \
                        END,false) AS permitted) scope \
                      LEFT JOIN history_events h ON NOT permitted \
-                       AND NOT (recent.selection ? 'displayOwner') AND h.world_id=$1 \
+                       AND recent.selection->'displayOwner'='null'::jsonb AND h.world_id=$1 \
                        AND h.id=((recent.selection->>'playerSpeechEventId')::json #>> '{}') \
                      WHERE permitted OR h.id IS NOT NULL \
                      ORDER BY recent.created_at DESC,recent.id DESC",

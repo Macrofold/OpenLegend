@@ -19,7 +19,7 @@ export function jobSelection(job: JobRecord): string {
     npcId: key(job.request.npcId),
     displayOwner: owner
       ? { accountId: key(owner.accountId), actorId: key(owner.actorId) }
-      : undefined,
+      : null,
     // The actual private content of a thought is never part of the status display.
     displayMessage: job.kind === 'thought' ? undefined : key(job.message),
     queueLatencyMs: job.queueLatencyMs,

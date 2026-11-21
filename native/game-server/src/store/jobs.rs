@@ -232,7 +232,6 @@ impl Store {
             #[serde(skip_serializing_if = "Option::is_none")]
             player_speech_event_id: Option<String>,
             npc_id: String,
-            #[serde(skip_serializing_if = "Option::is_none")]
             display_owner: Option<DisplayOwner>,
             #[serde(skip_serializing_if = "Option::is_none")]
             display_message: Option<String>,
