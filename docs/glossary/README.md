@@ -42,4 +42,4 @@ Search all tables from the repository root with `rg -in 'word' docs/glossary`. D
 
 Use the visible label in player instructions and the exact identifier in code examples. A player opens **Journal → Commitments**. The internal key is `promises`.
 
-Add a shared term to its subject table. Define what it refers to, whose perspective matters, and link the rule, type or control that establishes its meaning. Keep gameplay rules, tuning, measurements and delivery status with their existing owners.
+Give each distinct concept its own row in the relevant subject table. Put an acronym or an established name for the same concept in parentheses. Use examples or links to explain how different terms relate. Define what each term refers to, whose perspective matters, and link the rule, type or control that establishes its meaning. Keep gameplay rules, tuning, measurements and delivery status with their existing owners.
