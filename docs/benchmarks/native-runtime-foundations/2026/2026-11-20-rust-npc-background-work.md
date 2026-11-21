@@ -114,3 +114,32 @@ The local control `87965e985ff7` rejected a current-format world with two valid 
 Two local scenarios used a separate executable `d1c03aa48a34` to exhaust only the foreground packet's byte allowance. The first refused the encoder's reservation and the second refused the final packet join after its components were prepared. Both saved a preparation-capacity outcome before any provider dispatch or reply effect. The player could explicitly retry their original speech and receive exactly one saved reply. Cold reopening recovered both outcomes and accepted a fresh conversation. All native reservations returned to zero at shutdown.
 
 The successful retries encoded the full and narrow products from the same two live reads. Their internal sizes were 134,130 → 63,399 bytes and 134,154 → 63,412 bytes, about 53% less in each case. This diagnostic measured packet bytes separately from the clean CPU comparison.
+
+## Full versus smaller reply packet
+
+Campaign `d9d493c7-8fad-4806-9f53-1a5880da33a4` ran six clean release cases on the same managed 16 GiB `m7i.xlarge` in slot 2. The two sources include both correctness fixes and differ only in the stand-alone reply packet selected. The full-packet source was `5f93dcd7c816` and the smaller-packet source was `eb32be23a7cd`. The sealed plan `b2ac3d6c7ba4` ordered full, smaller, smaller, full, full, smaller. The unchanged tools, driver and language archives were `33263c97650e`, `a37df8d96f2a` and `ab6dec394581`. All 83 collected files passed checksum verification.
+
+Each independent database ran the same opening with one player, ten human NPCs, ten deer, five hares and 1,246 scenery objects. Each run completed the 180-second steady window with one simulation worker, the 2 GiB allowance, a player stream, one-second saves, 34 saved movement commands, steering and two saved controlled conversations. A separate cold restart recovered the receipt. The harness collected 32 command, movement and durability timings per steady window. Values below are median / average / p95. For a run-level metric, p95 is the largest of three runs.
+
+| Measure                                                          |                 Full packet |              Smaller packet |
+| ---------------------------------------------------------------- | --------------------------: | --------------------------: |
+| Server CPU, % of one core                                        |       50.27 / 49.89 / 51.36 |       48.41 / 48.32 / 49.33 |
+| Exclusive PostgreSQL CPU, % of one core                          |          6.81 / 6.75 / 7.07 |          6.56 / 6.70 / 7.00 |
+| Client CPU, % of one core                                        |          0.94 / 0.95 / 0.97 |          0.95 / 0.95 / 0.97 |
+| Achieved game speed, % of intended                               | 100.000 / 100.000 / 100.000 | 100.000 / 100.009 / 100.028 |
+| Command response, ms                                             |            8.2 / 9.2 / 16.4 |            7.9 / 8.7 / 17.8 |
+| First movement in the player stream, ms                          |         45.5 / 54.2 / 101.2 |          47.5 / 52.6 / 92.9 |
+| Command to durable acknowledgement, ms                           |      579.4 / 599.7 / 1107.1 |      573.7 / 590.1 / 1082.2 |
+| Concurrent server and PostgreSQL memory peak, MiB                |       532.0 / 532.0 / 539.7 |       537.0 / 537.2 / 540.9 |
+| Transient native reservation peak, MiB                           |       185.2 / 185.7 / 189.0 |       150.9 / 151.8 / 155.8 |
+| Combined server and PostgreSQL CPU, ms per completed game-second |          9.51 / 9.44 / 9.74 |          9.16 / 9.17 / 9.39 |
+
+The harness used a separate 1.48 → 1.46% of one core on average. Every run offered 10,800 game-seconds. Observed completions were 10,799.95–10,800.00 for the full packet and 10,800.01–10,803.01 for the smaller packet. The small difference follows the observed window boundaries. The running clock did not expose its internal elapsed-time debt. Cold startup to first usable view took 1,058 / 1,068 / 1,093 ms for the full packet and 1,042 / 1,045 / 1,058 ms for the smaller packet.
+
+During steady play, median database commits were 9,062 → 8,659 and the PostgreSQL `tup_returned` scan counter increased by 1.04 → 1.54 million. Median WAL growth was 103.88 → 102.54 MB and database growth was 34.11 → 35.81 MB. This driver measures database counters and exclusive database CPU. Individual statement counts and prepared-row bytes are unavailable. Median resident and pending-save reservation peaks changed from 172.83 → 172.99 MiB and 7.28 → 7.22 MiB.
+
+**Disposition.** Retain the smaller packet. It removes serialization of unused fields, and peak transient reservations were lower in all three pairs. The median reservation fell 18.5%. Sampled concurrent memory was slightly higher. Complete CPU savings are inconclusive. Combined CPU per game-second changed by −8.0%, −3.7% and +3.5% across the three pairs. The paired steady-play jobs triggered by physical relations changed by 152 → 79, 116 → 85 and 83 → 162, in the same direction as combined CPU. Foreground work completed in every run, and the variable background work prevents attributing the whole CPU difference to the packet.
+
+The release executable SHA-256 prefixes in pair order were `8ac4a7290229`, `bad07241c3da` and `f302270e9b5c` for the full packet and `f7583dcfc2a5`, `0d698407e17c` and `f2b0334e921a` for the smaller packet.
+
+The runner verified cleanup, released slot 2 and recorded it stopped. An independent EC2 read confirmed the stop. The campaign settled at an estimated $0.585582 with no remaining campaign hold and $0 in provider charges. The continuing task ledger contained $94.574402 in estimated spend and $1.325803 in older holds against the shared $100 ceiling.

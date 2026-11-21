@@ -1134,6 +1134,8 @@ The stand-alone scheduler uses the save loader's number rules for observation se
 
 The matched comparisons used the same 26-actor stand-alone opening, ordinary clock and background saves, two controlled saved conversations, and cold continuation. Three interleaved repetitions on standard workers used independent databases. The single final joint run checked the retained implementation through the same gameplay and an additional mixed-ownership status case.
 
+The [isolated reply-packet comparison](../benchmarks/native-runtime-foundations/2026/2026-11-20-rust-npc-background-work.md#full-versus-smaller-reply-packet) retains the smaller packet with lower transient reservations in all three pairs. Complete CPU savings remain inconclusive because the runs did different amounts of background NPC work.
+
 ## Overlap and dependencies
 
 | Existing owner                                            | Reconciliation                                                                                                                                                                                                                        |
