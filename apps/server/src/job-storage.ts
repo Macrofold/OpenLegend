@@ -6,15 +6,24 @@ import { sqlTextKey } from './sql-rows.js';
 const key = (value: string | undefined) =>
   typeof value === 'string' ? sqlTextKey(value) : undefined;
 
-/** Rebuildable routing/index facts, never request prose or another job body. */
+/** Rebuildable job routing and display fields. The canonical request remains TEXT. */
 export function jobSelection(job: JobRecord): string {
   const invention = job.request.invention,
-    decision = job.decision;
+    decision = job.decision,
+    owner = job.authority;
   return JSON.stringify({
     kind: job.kind,
     status: job.status,
     completedAt: job.completedAt,
     playerSpeechEventId: key(job.playerSpeechEventId),
+    npcId: key(job.request.npcId),
+    displayOwner: owner
+      ? { accountId: key(owner.accountId), actorId: key(owner.actorId) }
+      : undefined,
+    // The actual private content of a thought is never part of the status display.
+    displayMessage: job.kind === 'thought' ? undefined : key(job.message),
+    queueLatencyMs: job.queueLatencyMs,
+    totalLatencyMs: job.totalLatencyMs,
     request: invention
       ? {
           invention: {

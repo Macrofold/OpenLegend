@@ -214,7 +214,7 @@ function diagnosticRootSelection(filters: Record<string, string>, access?: Diagn
 import { digest } from './content-digest.js';
 import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '62';
+export const DATABASE_SCHEMA = '63';
 // A checkpoint installs complete physical history; its pages cannot first pass
 // ordinary append classification against the abandoned timeline.
 const restoreDiffTables = new Set(
@@ -1098,6 +1098,7 @@ export class SqlGameRepository implements GameRepository {
       CREATE TABLE IF NOT EXISTS jobs (
         id TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, payload TEXT NOT NULL, selection JSONB NOT NULL, created_at BIGINT NOT NULL
       );
+      CREATE INDEX IF NOT EXISTS jobs_recent ON jobs (created_at DESC, id DESC);
       CREATE INDEX IF NOT EXISTS jobs_inventor ON jobs ((selection #>> '{request,invention,worldId}'), (selection #>> '{request,invention,actorId}'), created_at, id);
       CREATE INDEX IF NOT EXISTS jobs_speech_event ON jobs ((selection #>> '{playerSpeechEventId}')) WHERE (selection #>> '{kind}') = 'chat';
       CREATE INDEX IF NOT EXISTS jobs_inventor_timeline ON jobs ((selection #>> '{request,invention,worldId}'), (selection #>> '{request,invention,actorId}'), (selection #>> '{request,invention,timelineId}'), created_at, id);

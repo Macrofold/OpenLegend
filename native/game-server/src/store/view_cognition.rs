@@ -30,29 +30,12 @@ struct JobScope {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct Job {
+struct ReplyJob {
     id: String,
-    kind: String,
     status: SpeechReplyStatus,
     message: JsText,
     authority: Option<JobScope>,
     player_speech_event_id: Option<String>,
-    request: JobRequest,
-    queue_latency_ms: Option<f64>,
-    total_latency_ms: Option<f64>,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct JobRequest {
-    npc_id: Option<String>,
-    invention: Option<InventionScope>,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct InventionScope {
-    actor_id: String,
 }
 
 impl Store {
@@ -71,41 +54,60 @@ impl Store {
         let store = Arc::clone(self);
         self.read_operational(move |tx| {
             Box::pin(async move {
+                let invalid = |_| StoreError::InvalidRecord;
+                let _keys = budget.reserve(
+                    (account.len() + actor.len()).checked_mul(6)
+                        .and_then(|bytes| bytes.checked_add(64)).ok_or(StoreError::Capacity)?,
+                ).map_err(|_| StoreError::Capacity)?;
+                let account_key = json_record(&account).map_err(invalid)?;
+                let actor_key = json_record(&actor).map_err(invalid)?;
+                // Keep the existing newest-12 window before applying permission.
+                // Only jobs without a recorded owner may qualify through speech.
                 let (mut charges, rows) = admitted_query(
                     tx,
-                    "WITH recent AS (SELECT id, payload, selection, created_at FROM jobs \
+                    "WITH recent AS (SELECT id, selection, created_at FROM jobs \
                          ORDER BY created_at DESC,id DESC LIMIT 12) \
-                     SELECT recent.payload,h.payload AS speech_origin FROM recent \
-                     LEFT JOIN history_events h ON h.world_id=$1 \
+                     SELECT recent.id, recent.selection->>'kind' AS kind, \
+                       (recent.selection->'status')::text AS status, \
+                       recent.selection->>'displayMessage' AS message, \
+                       (recent.selection->>'queueLatencyMs')::float8 AS queue_latency, \
+                       (recent.selection->>'totalLatencyMs')::float8 AS total_latency, \
+                       permitted, h.payload AS speech_origin \
+                     FROM recent CROSS JOIN LATERAL (SELECT COALESCE(CASE \
+                       WHEN recent.selection ? 'displayOwner' THEN \
+                         recent.selection #>> '{displayOwner,accountId}'=$2 AND \
+                         recent.selection #>> '{displayOwner,actorId}'=$3 \
+                       ELSE recent.selection #>> '{request,invention,actorId}'=$3 OR \
+                         (recent.selection->>'kind'='thought' AND recent.selection->>'npcId'=$3) \
+                       END,false) AS permitted) scope \
+                     LEFT JOIN history_events h ON NOT permitted \
+                       AND NOT (recent.selection ? 'displayOwner') AND h.world_id=$1 \
                        AND h.id=((recent.selection->>'playerSpeechEventId')::json #>> '{}') \
+                     WHERE permitted OR h.id IS NOT NULL \
                      ORDER BY recent.created_at DESC,recent.id DESC",
-                    &[&world],
+                    &[&world, &account_key, &actor_key],
                     &budget,
                 )
                 .await?;
+                drop(account_key);
+                drop(actor_key);
+                drop(_keys);
                 let mut jobs = Vec::with_capacity(rows.len());
                 for row in &rows {
-                    let payload: &str = row.try_get(0)?;
-                    let job: Job =
-                        serde_json::from_str(payload).map_err(|_| StoreError::InvalidRecord)?;
-                    let allowed = match &job.authority {
-                        Some(owner) => owner.account_id == account && owner.actor_id == actor,
-                        None => job.request.invention.as_ref().is_some_and(|target| target.actor_id == actor)
-                            || (job.kind == "thought" && job.request.npc_id.as_deref() == Some(&actor))
-                            || (job.player_speech_event_id.is_some() && own_speech(row.try_get::<_, Option<&str>>(1)?, &actor)?),
-                    };
-                    if !allowed {
+                    if !row.try_get::<_, bool>(6)? && !own_speech(row.try_get(7)?, &actor)? {
                         continue;
                     }
-                    let message = if job.kind == "thought" {
-                        let status = json_record(&job.status).map_err(|_| StoreError::InvalidRecord)?;
-                        format!("Resident reconsideration: {}.", status.trim_matches('"')).into()
+                    let kind: String = row.try_get(1)?;
+                    let encoded_status: &str = row.try_get(2)?;
+                    let status = serde_json::from_str(encoded_status).map_err(invalid)?;
+                    let message = if kind == "thought" {
+                        format!("Resident reconsideration: {}.", encoded_status.trim_matches('"')).into()
                     } else {
-                        job.message
+                        serde_json::from_str(row.try_get(3)?).map_err(invalid)?
                     };
                     jobs.push(AiJob {
-                        id: job.id, kind: job.kind, status: job.status, message,
-                        queue_latency_ms: job.queue_latency_ms, total_latency_ms: job.total_latency_ms,
+                        id: row.try_get(0)?, kind, status, message,
+                        queue_latency_ms: row.try_get(4)?, total_latency_ms: row.try_get(5)?,
                     });
                 }
                 let problem = jobs.iter().find(|job| matches!(job.status, SpeechReplyStatus::Failed | SpeechReplyStatus::Completed))
@@ -232,7 +234,7 @@ impl Store {
                 let mut result = IndexMap::new();
                 for row in &rows {
                     let payload: &str = row.try_get(0)?;
-                    let job: Job = serde_json::from_str(payload).map_err(|_| StoreError::InvalidRecord)?;
+                    let job: ReplyJob = serde_json::from_str(payload).map_err(|_| StoreError::InvalidRecord)?;
                     let Some(id) = job.player_speech_event_id else { return Err(StoreError::InvalidRecord) };
                     if job.authority.as_ref().is_some_and(|owner| owner.account_id != account || owner.actor_id != actor) {
                         continue;

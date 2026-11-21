@@ -218,6 +218,12 @@ impl Store {
     ) -> StoreResult<()> {
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
+        struct DisplayOwner {
+            account_id: String,
+            actor_id: String,
+        }
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
         struct Selection<'a> {
             kind: &'a str,
             status: SpeechReplyStatus,
@@ -225,6 +231,11 @@ impl Store {
             completed_at: Option<i64>,
             #[serde(skip_serializing_if = "Option::is_none")]
             player_speech_event_id: Option<String>,
+            npc_id: String,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            display_owner: Option<DisplayOwner>,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            display_message: Option<String>,
         }
         let _working = self
             .budget
@@ -232,7 +243,8 @@ impl Store {
                 8 * 1024
                     + json_record_len(job)
                         .map_err(|_| StoreError::InvalidRecord)?
-                        .checked_mul(2)
+                        // Canonical TEXT plus a double-encoded display message and routing keys.
+                        .checked_mul(8)
                         .ok_or(StoreError::Capacity)?,
             )
             .map_err(|_| StoreError::Capacity)?;
@@ -247,11 +259,28 @@ impl Store {
             .map(json_record)
             .transpose()
             .map_err(invalid)?;
+        let display_owner = job
+            .authority
+            .as_ref()
+            .map(|scope| {
+                Ok(DisplayOwner {
+                    account_id: json_record(&scope.account_id)?,
+                    actor_id: json_record(&scope.actor_id)?,
+                })
+            })
+            .transpose()
+            .map_err(invalid)?;
         let selected = json_record(&Selection {
             kind: &job.kind,
             status: job.status,
             completed_at: job.completed_at,
             player_speech_event_id: event,
+            npc_id: json_record(&job.request.npc_id).map_err(invalid)?,
+            display_owner,
+            display_message: (job.kind != "thought")
+                .then(|| json_record(&job.message))
+                .transpose()
+                .map_err(invalid)?,
         })
         .map_err(invalid)?;
         if tx
