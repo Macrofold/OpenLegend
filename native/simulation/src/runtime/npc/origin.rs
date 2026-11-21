@@ -1,9 +1,6 @@
 //! The stand-alone decision formatter's inputs from its original accepted read.
-use super::{
-    AcceptedActorRead, ByteBudget, ByteReservation, RuntimeError, RuntimeNpcRead, failure,
-};
-use crate::install::reserve_typed_parse;
-use serde::Deserialize;
+use super::{AcceptedActorRead, ByteBudget, ByteReservation, RuntimeError, RuntimeNpcRead};
+pub use crate::capture::npc_self::RuntimeNpcDecisionFrame;
 use std::mem::size_of;
 
 pub struct RuntimeNpcDecisionOrigin<'a> {
@@ -14,28 +11,6 @@ pub struct RuntimeNpcDecisionOrigin<'a> {
     pub at: f64,
     pub identity_through: u64,
     read: &'a AcceptedActorRead,
-}
-
-pub struct RuntimeNpcDecisionFrame {
-    pub x: f64,
-    pub z: f64,
-    pub heading: f64,
-    pub support: Option<String>,
-    _storage: ByteReservation,
-}
-
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct OriginFrame {
-    position: HorizontalPosition,
-    heading: f64,
-    support_surface_id: Option<String>,
-}
-
-#[derive(Deserialize)]
-struct HorizontalPosition {
-    x: f64,
-    z: f64,
 }
 
 impl RuntimeNpcRead {
@@ -55,29 +30,6 @@ impl RuntimeNpcRead {
 }
 
 impl RuntimeNpcDecisionOrigin<'_> {
-    /// Decode only the pose used for relative effects. The capture's encoded
-    /// numbers retain the existing JSON normalization. The frame carries
-    /// its support string's independent allowance through response application.
-    pub fn frame(&self, budget: &ByteBudget) -> Result<RuntimeNpcDecisionFrame, RuntimeError> {
-        let encoded = self.read.own_json();
-        let mut storage =
-            reserve_typed_parse::<OriginFrame>(encoded, 0, None, budget).map_err(failure)?;
-        let frame: OriginFrame = serde_json::from_str(encoded).map_err(failure)?;
-        storage.resize(
-            frame
-                .support_surface_id
-                .as_ref()
-                .map_or(0, String::capacity),
-        )?;
-        Ok(RuntimeNpcDecisionFrame {
-            x: frame.position.x,
-            z: frame.position.z,
-            heading: frame.heading,
-            support: frame.support_surface_id,
-            _storage: storage,
-        })
-    }
-
     /// Selected original entries in the native presentation order. The
     /// output owns only ordinal backing, independently of the detached read.
     pub fn attention_ordinals(

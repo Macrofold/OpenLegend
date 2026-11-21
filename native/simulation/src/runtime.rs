@@ -68,6 +68,7 @@ mod retained_values;
 pub use crate::simulation::session::PreparedReadProgress as RuntimeProgress;
 pub use handoff::RuntimeOutputHandoff;
 mod consumer;
+pub use crate::capture::npc_self::{RuntimeNpcSelf, RuntimeNpcSelfPrompt};
 pub use crate::time::{AdmittedWorldInput, Direction, ReleaseInput, SteeringInput};
 pub use consumer::RuntimeConsumer;
 pub(crate) use npc::HeldSourceProof;

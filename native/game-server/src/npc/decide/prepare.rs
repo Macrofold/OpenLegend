@@ -10,17 +10,21 @@ use openlegend_simulation::{
     experience::{AwarenessSourceBody, PersonalSourceKind, PersonalSourceRef},
     host::{ByteBudget, ByteReservation, CapacityError},
     narration::{NameArticle, NativeText, name_phrase, native_text},
-    reception::{KnowledgeDocument, SpeechAddressing, SpeechParticipant},
+    reception::{
+        AttributeDisplay, AttributeKnowledge, KnowledgeDocument, SpeechAddressing,
+        SpeechParticipant,
+    },
     records::SqlCell,
     runtime::{
-        RuntimeError, RuntimeJson, RuntimeNpcObservedBody, RuntimeNpcRead, RuntimeNpcResponseTicket,
+        RuntimeError, RuntimeJson, RuntimeNpcObservedBody, RuntimeNpcRead,
+        RuntimeNpcResponseTicket, RuntimeNpcSelf, RuntimeNpcSelfPrompt,
     },
-    state::{CharacterTrait, Goal, Named, Point},
+    state::{Goal, Named},
     text::JsText,
-    values::deserialize_present_safe_integer,
+    values::{AttributeValue, deserialize_present_safe_integer},
 };
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
-use serde_json::{Value, json, value::RawValue};
+use serde_json::{Value, json};
 use std::{borrow::Cow, collections::HashMap, fmt::Write as _, sync::Arc};
 
 mod recall;
@@ -45,79 +49,9 @@ type CurrentRead = FundedPreparation<CurrentFacts>;
 /// private history and response-validity products that this caller never uses.
 #[derive(Deserialize)]
 struct CurrentFacts {
-    #[serde(rename = "self")]
-    own: CurrentActor,
     appraisals: Option<CurrentAppraisals>,
     candidates: Option<Value>,
     recall: Option<Value>,
-}
-
-/// Decode only what enters the prompt. Private thoughts, for example, can
-/// remain on the original capture even when their text is valid only in UTF-16.
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct CurrentActor {
-    actor_id: String,
-    accepted_cut: u64,
-    at: f64,
-    identity: CurrentIdentity,
-    observer_name: Named,
-    position: Point,
-    heading: f64,
-    support_surface_id: Option<String>,
-    attributes: Vec<Value>,
-    action_status_labels: Vec<String>,
-    action: Option<CurrentAction>,
-    speech: bool,
-    npc: Option<CurrentNpc>,
-    agency: Option<CurrentAgency>,
-    mind: Option<CurrentMind>,
-    knowledge: Option<CurrentKnowledge>,
-}
-
-#[derive(Deserialize)]
-struct CurrentIdentity {
-    species: Option<String>,
-    traits: Option<Vec<CharacterTrait>>,
-}
-
-#[derive(Deserialize)]
-struct CurrentAction {
-    #[serde(rename = "type")]
-    kind: String,
-}
-
-#[derive(Deserialize)]
-struct CurrentNpc {
-    expressions: bool,
-}
-
-#[derive(Deserialize)]
-struct CurrentAgency {
-    goals: Vec<Goal>,
-    plan: Option<CurrentPlan>,
-    attempts: Box<RawValue>,
-}
-
-#[derive(Deserialize)]
-struct CurrentPlan {
-    revision: u64,
-}
-
-#[derive(Deserialize)]
-struct CurrentMind {
-    documents: Vec<CurrentDocument>,
-}
-
-#[derive(Deserialize)]
-struct CurrentDocument {
-    id: String,
-    text: JsText,
-}
-
-#[derive(Deserialize)]
-struct CurrentKnowledge {
-    general: Option<KnowledgeDocument>,
 }
 
 #[derive(Deserialize)]
@@ -282,7 +216,7 @@ pub(super) async fn finish(
         &current.decision_packet(budget).map_err(packet_failure)?,
         budget,
     )?;
-    let through = collected.through.max(captured.value.own.accepted_cut);
+    let through = collected.through.max(current.accepted_cut());
     // The independent projection remains funded after its decoded inputs drop.
     let projection =
         collected.projection_custody(&captured, &current, ProjectionPurpose::Decision, budget)?;
@@ -410,7 +344,9 @@ fn project(
 ) -> Result<(Value, Projection, bool, bool), CallFailure> {
     let consumer = consumer(work);
     let decision = matches!(purpose, ProjectionPurpose::Decision);
-    let own = &facts.own;
+    let self_facts = read.current_self().map_err(packet_failure)?;
+    let own = self_facts.prompt().ok_or(CallFailure::Invalid)?;
+    let origin = read.decision_origin();
     let prepared = if decision {
         facts.candidates.as_ref()
     } else {
@@ -452,7 +388,7 @@ fn project(
             physical.push(key.clone());
             descriptions.push(format!("{name} (ID:{key})"));
             let observed = body.observed.ok_or(CallFailure::Invalid)?;
-            let (line, body) = received_body(own, observed, &name, &key);
+            let (line, body) = received_body(self_facts, observed, &name, &key);
             surroundings.push(line);
             scene.push(body);
         }
@@ -501,7 +437,7 @@ fn project(
         return Err(CallFailure::Stale("decision-heard-addressing"));
     }
     let world = &game.view_policy().world;
-    let now = own.at;
+    let now = origin.at;
     let display_time = |seconds| game_time(seconds, world.offset_hours, world.day_label.as_deref());
     let mut experience = Vec::new();
     let mut conversation = Vec::new();
@@ -565,17 +501,12 @@ fn project(
     };
     let mut actions = Vec::new();
     let mut offers = Vec::new();
-    let identity = identity(&own.identity, &own_name, &self_reference);
+    let identity = identity(own, &own_name, &self_reference);
     let body = body_text(own)?;
-    let work_facts = agency(
-        own.agency.as_ref(),
-        &prepared["workContext"],
-        game.host.budget(),
-    )?;
+    let work_facts = agency(own, &prepared["workContext"])?;
     let notepad = own
-        .knowledge
+        .notepad
         .as_ref()
-        .and_then(|knowledge| knowledge.general.as_ref())
         .map(|document| {
             prompt_record(document, &document.text, |text| KnowledgeDocument {
                 text,
@@ -596,16 +527,16 @@ fn project(
             });
         }
         let speaks = own.speech;
-        let expressions = own.npc.as_ref().ok_or(CallFailure::Invalid)?.expressions;
+        let expressions = own.expressions;
         let preview_player = work
             .permit
             .as_ref()
             .and_then(|(_, scope)| canonical.get(scope.scope.actor_id.as_str()).cloned());
         let fields = json!({
-            "identity":identity,"aboutMe":about_me(game, own.mind.as_ref().ok_or(CallFailure::Invalid)?)?,"body":body,"feelings":feelings(&own.actor_id,facts.appraisals.as_ref().ok_or(CallFailure::Invalid)?)?,
+            "identity":identity,"aboutMe":about_me(game, own)?,"body":body,"feelings":feelings(origin.actor_id,facts.appraisals.as_ref().ok_or(CallFailure::Invalid)?)?,
             "capabilities":{"speech":speaks,"expressions":expressions},"commitments":[],
             "stimulus":stimulus,"triggerFacts":trigger_facts,"conversation":conversation,
-            "agency":work_facts,"currentSupport":own.support_surface_id,"publicSurfaces":[],
+            "agency":work_facts,"currentSupport":self_facts.support,"publicSurfaces":[],
             "now":display_time(now),"simTime":now,"recall":recall,"experience":experience,
             "surroundings":surroundings,"receivedSituation":{"measuredAt":now,"bodies":scene},
             "activityRequests":activity_requests(game,&prepared["activity"],&canonical)?,
@@ -823,12 +754,12 @@ fn personal_description(entry: &PersonalSource) -> Result<(String, f64), CallFai
     Ok((description, date))
 }
 
-fn identity(identity: &CurrentIdentity, label: &str, token: &str) -> String {
+fn identity(identity: &RuntimeNpcSelfPrompt, label: &str, token: &str) -> String {
     let species = identity.species.as_deref().unwrap_or("unknown");
     let mut formatted = format!("I am {label} (ID:{token}). Species: {species}.");
-    if let Some(traits) = identity.traits.as_ref().filter(|items| !items.is_empty()) {
+    if !identity.traits.is_empty() {
         formatted.push_str(" My traits: ");
-        for (index, entry) in traits.iter().enumerate() {
+        for (index, entry) in identity.traits.iter().enumerate() {
             if index > 0 {
                 formatted.push_str("; ");
             }
@@ -841,8 +772,8 @@ fn identity(identity: &CurrentIdentity, label: &str, token: &str) -> String {
     formatted
 }
 
-fn about_me(game: &CurrentServer, mind: &CurrentMind) -> Result<String, CallFailure> {
-    let documents = &mind.documents;
+fn about_me(game: &CurrentServer, own: &RuntimeNpcSelfPrompt) -> Result<String, CallFailure> {
+    let documents = &own.documents;
     let titles = documents
         .iter()
         .map(|doc| JsText::from(format!("{}.md", doc.id)))
@@ -872,42 +803,41 @@ fn about_me(game: &CurrentServer, mind: &CurrentMind) -> Result<String, CallFail
     Ok(result)
 }
 
-fn body_text(own: &CurrentActor) -> Result<String, CallFailure> {
+fn body_text(own: &RuntimeNpcSelfPrompt) -> Result<String, CallFailure> {
     let mut parts = Vec::new();
     for attribute in &own.attributes {
-        let name = text(&attribute["name"])?;
-        let show = |field: &str| -> Result<String, CallFailure> {
-            if let Some(text) = attribute[field].as_str() {
-                Ok(text.into())
-            } else {
-                json_record(&attribute[field]).map_err(invalid)
+        let name = &attribute.name;
+        let measurement = match attribute.status {
+            AttributeKnowledge::Unknown => format!("{name}: unknown."),
+            AttributeKnowledge::Known => {
+                let value = match attribute.value.as_ref() {
+                    Some(AttributeValue::Category(category)) => Cow::Borrowed(category.as_str()),
+                    Some(AttributeValue::Number(number)) => {
+                        Cow::Owned(json_record(&number).map_err(invalid)?)
+                    }
+                    None => Cow::Borrowed("null"),
+                };
+                match attribute.display {
+                    AttributeDisplay::Meter => {
+                        let unit = attribute
+                            .unit
+                            .as_ref()
+                            .map(|unit| format!(" {unit}"))
+                            .unwrap_or_default();
+                        let min = json_record(&attribute.min).map_err(invalid)?;
+                        let max = json_record(&attribute.max).map_err(invalid)?;
+                        format!("{name}: {value}{unit} (range {min}–{max}{unit}).")
+                    }
+                    AttributeDisplay::Category => format!("{name}: {value}."),
+                }
             }
         };
-        let measurement = if attribute["status"] == "unknown" {
-            format!("{name}: unknown.")
-        } else if attribute["display"] == "meter" {
-            let unit = attribute["unit"]
-                .as_str()
-                .map(|unit| format!(" {unit}"))
-                .unwrap_or_default();
-            format!(
-                "{name}: {}{unit} (range {}–{}{unit}).",
-                show("value")?,
-                show("min")?,
-                show("max")?
-            )
-        } else {
-            format!("{name}: {}.", show("value")?)
-        };
         parts.push(measurement);
-        if let Some(condition) = attribute["condition"]
-            .as_str()
-            .or_else(|| attribute["concern"].as_str())
-        {
-            parts.push(condition.into());
+        if let Some(condition) = attribute.concern.as_ref() {
+            parts.push(prompt_text(condition).into_owned());
         }
-        if let Some(meaning) = attribute["meaning"].as_str() {
-            parts.push(meaning.into());
+        if let Some(meaning) = &attribute.meaning {
+            parts.push(meaning.clone());
         }
     }
     for status in &own.action_status_labels {
@@ -915,16 +845,12 @@ fn body_text(own: &CurrentActor) -> Result<String, CallFailure> {
     }
     parts.push(format!(
         "Current activity: {}.",
-        own.action.as_ref().map_or("idle", |action| &action.kind)
+        own.action.as_deref().unwrap_or("idle")
     ));
     Ok(parts.join(" "))
 }
 
-fn agency(
-    agency: Option<&CurrentAgency>,
-    work: &Value,
-    budget: &ByteBudget,
-) -> Result<Value, CallFailure> {
+fn agency(own: &RuntimeNpcSelfPrompt, work: &Value) -> Result<Value, CallFailure> {
     let remaining = |value: &Value| {
         Some(
             value["views"]
@@ -935,67 +861,63 @@ fn agency(
                 .join("; "),
         )
     };
-    let goals = agency
-        .map(|agency| {
-            agency
-                .goals
-                .iter()
-                .map(|goal| {
-                    prompt_record(goal, &goal.objective, |objective| Goal {
-                        objective,
-                        ..goal.clone()
-                    })
-                })
-                .collect::<Result<Vec<_>, _>>()
+    let goals = own
+        .goals
+        .iter()
+        .map(|goal| {
+            prompt_record(goal, &goal.objective, |objective| Goal {
+                objective,
+                ..goal.clone()
+            })
         })
-        .transpose()?;
-    let revision = agency
-        .and_then(|agency| agency.plan.as_ref())
-        .map_or(0, |plan| plan.revision);
-    let mut fields = json!({"goals":null,"plan":remaining(&work["plan"]),"paused":remaining(&work["suspended"]),
-        "planRevision":revision,"attempts":null});
-    fields["goals"] = goals.map_or(Value::Null, Value::Array);
-    if let Some(agency) = agency {
-        fields["attempts"] = pending_intentions(&agency.attempts, budget)?;
-    }
-    Ok(fields)
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(
+        json!({"goals":goals,"plan":remaining(&work["plan"]),"paused":remaining(&work["suspended"]),
+        "planRevision":own.plan_revision,"attempts":pending_intentions(own)?}),
+    )
 }
 
-/// Decode the bounded retained intentions with the native exact-text reader.
-/// This workspace is temporary. The caller funds the independent prompt value.
-fn pending_intentions(raw: &RawValue, budget: &ByteBudget) -> Result<Value, CallFailure> {
-    let text = raw.get();
-    if text == "[]" {
-        return Ok(Value::Array(Vec::new()));
-    }
-    let bound = SqlCell::json_decode_bound(text).ok_or_else(|| capacity(CapacityError))?;
-    let _workspace = budget.reserve(bound).map_err(capacity)?;
-    let attempts = serde_json::from_str::<Vec<SqlCell>>(text).map_err(invalid)?;
-    Ok(Value::Array(
-        attempts
-            .into_iter()
-            .map(intention_prompt_value)
-            .collect::<Result<_, _>>()?,
-    ))
+/// Apply the permitted display conversion only to the outbound provider
+/// fields. The captured intention still holds its exact text and binding.
+fn pending_intentions(own: &RuntimeNpcSelfPrompt) -> Result<Vec<Value>, CallFailure> {
+    own.intentions()
+        .map(|intent| {
+            let mut value = serde_json::Map::from_iter([
+                ("id".into(), json!(intent.id)),
+                ("description".into(), json!(prompt_text(intent.description))),
+                ("normalized".into(), json!(prompt_text(intent.normalized))),
+                ("targetEntityId".into(), json!(intent.target_entity_id)),
+            ]);
+            if let Some(slots) = intent.slots {
+                value.insert("slots".into(), intention_prompt_value(slots)?);
+            }
+            value.insert("mode".into(), json!(intent.mode));
+            value.insert("manifestRevision".into(), json!(intent.manifest_revision));
+            value.insert("status".into(), json!(intent.status));
+            if let Some(resolution) = intent.resolution {
+                value.insert("resolution".into(), intention_prompt_value(resolution)?);
+            }
+            Ok(Value::Object(value))
+        })
+        .collect()
 }
 
-fn intention_prompt_value(value: SqlCell) -> Result<Value, CallFailure> {
+fn intention_prompt_value(value: &SqlCell) -> Result<Value, CallFailure> {
     Ok(match value {
         SqlCell::Null => Value::Null,
-        SqlCell::Bool(value) => Value::Bool(value),
-        SqlCell::Number(value) => Value::Number(value),
-        SqlCell::Text(JsText::Unicode(value)) => Value::String(value),
-        SqlCell::Text(value) => Value::String(prompt_text(&value).into_owned()),
+        SqlCell::Bool(value) => Value::Bool(*value),
+        SqlCell::Number(value) => Value::Number(value.clone()),
+        SqlCell::Text(value) => Value::String(prompt_text(value).into_owned()),
         SqlCell::Array(items) => Value::Array(
             items
-                .into_iter()
+                .iter()
                 .map(intention_prompt_value)
                 .collect::<Result<_, _>>()?,
         ),
         SqlCell::Object(fields) => Value::Object(
             fields
-                .into_iter()
-                .map(|(key, value)| intention_prompt_value(value).map(|value| (key, value)))
+                .iter()
+                .map(|(key, value)| intention_prompt_value(value).map(|value| (key.clone(), value)))
                 .collect::<Result<_, _>>()?,
         ),
         // Admitted pending intentions and their slots/resolution use closed
@@ -1005,7 +927,7 @@ fn intention_prompt_value(value: SqlCell) -> Result<Value, CallFailure> {
 }
 
 fn received_body(
-    own: &CurrentActor,
+    own: &RuntimeNpcSelf,
     facet: RuntimeNpcObservedBody<'_>,
     name: &str,
     alias: &str,

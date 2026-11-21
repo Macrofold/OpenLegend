@@ -1,6 +1,7 @@
 //! Accepted-boundary reads borrow one native authority. Detached products retain
 //! their genuine evidence/byte custody; there is no writable TypeScript world.
 use super::{Simulation, SimulationState};
+use crate::capture::npc_self::{RuntimeNpcSelf, RuntimeNpcSelfSelection, capture_npc_self};
 use crate::capture::{
     ActorReadPurpose, CapturedActorPerception, OwnActorProduct, PlayerSelfFacts,
     capture_actor_perception, encode_actor_self, require_supported_known_agreement_read,
@@ -70,6 +71,7 @@ pub(crate) struct AcceptedActorRead {
     pub accepted_cut: u64,
     pub purpose: ActorReadPurpose,
     own: Option<EncodedActorSelf>,
+    npc_self: Option<RuntimeNpcSelf>,
     appraisals: Option<crate::appraisals::CapturedActorAppraisals>,
     pub perception: CapturedActorPerception,
     actor_life: u64,
@@ -93,6 +95,10 @@ pub struct PlayerInputState {
     pub can_steer: bool,
 }
 impl AcceptedActorRead {
+    pub(crate) fn take_npc_self(&mut self) -> Option<RuntimeNpcSelf> {
+        self.npc_self.take()
+    }
+
     pub(crate) fn appraisal_read(&self) -> Option<&crate::appraisals::CapturedActorAppraisals> {
         self.appraisals.as_ref()
     }
@@ -337,7 +343,7 @@ impl Simulation {
         &self,
         actor_id: &str,
         required_appraisals: &[crate::appraisals::AppraisalScope],
-        bridge: bool,
+        selection: Option<RuntimeNpcSelfSelection>,
         budget: &ByteBudget,
     ) -> Result<AcceptedActorRead, ActorReadError> {
         self.require_accepted_read()?;
@@ -356,12 +362,21 @@ impl Simulation {
         {
             return Err(ActorReadError::Denied);
         }
-        self.capture_actor_encoded(
+        let purpose = ActorReadPurpose::NpcDecision {
+            bridge: selection.is_none(),
+        };
+        let Some(selection) = selection else {
+            return self.capture_actor_encoded(actor_id, purpose, required_appraisals, budget);
+        };
+        let (mut read, own) = self.capture_actor(
             actor_id,
-            ActorReadPurpose::NpcDecision { bridge },
+            purpose,
             required_appraisals,
             budget,
-        )
+            |product, budget| Ok((None, capture_npc_self(product, selection, budget)?)),
+        )?;
+        read.npc_self = Some(own);
+        Ok(read)
     }
     fn require_accepted_read(&self) -> Result<(), ActorReadError> {
         if self.fence.phase() != CandidatePhase::Idle {
@@ -473,6 +488,7 @@ impl Simulation {
                 accepted_cut: state.accepted_cut,
                 purpose,
                 own,
+                npc_self: None,
                 appraisals,
                 perception,
                 actor_life: actor.physical_life.unwrap_or(0),

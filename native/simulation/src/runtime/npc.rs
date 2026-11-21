@@ -3,7 +3,10 @@
 //! source lease; the context producer must bind those independently.
 use super::*;
 use crate::appraisals::AppraisalScope;
-use crate::capture::{NpcOfferCoverage, PreparedNpcCandidates, PreparedNpcRead};
+use crate::capture::{
+    NpcOfferCoverage, PreparedNpcCandidates, PreparedNpcRead,
+    npc_self::{RuntimeNpcSelf, RuntimeNpcSelfSelection},
+};
 use crate::host::PublicationLease;
 use crate::simulation::AcceptedActorRead;
 use std::mem::size_of;
@@ -29,6 +32,7 @@ pub struct RuntimeNpcPublication {
 
 pub struct RuntimeNpcRead {
     pub(super) read: Arc<AcceptedActorRead>,
+    own: Option<RuntimeNpcSelf>,
     pub(super) serial: u64,
     history: crate::experience::CapturedHistoryCuts,
     pub(super) historical_scope: Arc<crate::capture::NpcHistoricalScope>,
@@ -319,19 +323,25 @@ impl NativeWorldSession {
     }
 
     pub fn read_npc(&mut self, request: &[u8]) -> Result<RuntimeNpcRead, RuntimeError> {
-        self.read_npc_with_presentation(request, true)
+        self.read_npc_with_presentation(request, None)
     }
 
     /// The Rust formatter borrows received presentation from the detached
     /// native read and needs no bridge scene bytes.
     pub fn read_npc_direct(&mut self, request: &[u8]) -> Result<RuntimeNpcRead, RuntimeError> {
-        self.read_npc_with_presentation(request, false)
+        self.read_npc_with_presentation(request, Some(RuntimeNpcSelfSelection::Prompt))
+    }
+
+    /// Retain the original pose and source bindings before recall and model
+    /// preparation. This origin will not render a current prompt's self fields.
+    pub fn read_npc_origin(&mut self, request: &[u8]) -> Result<RuntimeNpcRead, RuntimeError> {
+        self.read_npc_with_presentation(request, Some(RuntimeNpcSelfSelection::Frame))
     }
 
     fn read_npc_with_presentation(
         &mut self,
         request: &[u8],
-        bridge: bool,
+        selection: Option<RuntimeNpcSelfSelection>,
     ) -> Result<RuntimeNpcRead, RuntimeError> {
         self.require_active()?;
         let _decode = decode_preparation(request, &self.budget)?;
@@ -352,11 +362,11 @@ impl NativeWorldSession {
         {
             return Err(failure("NPC consumer is no longer eligible"));
         }
-        let read = simulation
+        let mut read = simulation
             .read_npc(
                 &request.actor_id,
                 &request.required_appraisals,
-                bridge,
+                selection,
                 &self.budget,
             )
             .map_err(failure)?;
@@ -428,6 +438,7 @@ impl NativeWorldSession {
         let intent_ids = attempts.iter().map(|attempt| attempt.id.clone()).collect();
         self.next_read_serial = serial;
         Ok(RuntimeNpcRead {
+            own: read.take_npc_self(),
             read: Arc::new(read),
             serial,
             history,
@@ -665,6 +676,32 @@ impl RuntimeNpcRead {
     pub fn candidate_key(&self) -> Option<CandidateKey> {
         self.candidate_key
     }
+
+    pub fn current_self(&self) -> Result<&RuntimeNpcSelf, RuntimeError> {
+        self.own
+            .as_ref()
+            .ok_or_else(|| failure("Typed NPC self is unavailable"))
+    }
+
+    /// Take the originating pose with its custody. Its other evidence remains
+    /// available to the ticket through the original immutable read.
+    pub fn take_origin_frame(&mut self) -> Result<RuntimeNpcDecisionFrame, RuntimeError> {
+        Ok(self
+            .own
+            .take()
+            .ok_or_else(|| failure("The original NPC pose is unavailable"))?
+            .into_frame())
+    }
+
+    /// A completed recall projection no longer needs this independent input.
+    /// Retained bindings and bridge data still use their own accepted read.
+    pub fn release_current_self(&mut self) {
+        self.own = None;
+    }
+
+    pub fn accepted_cut(&self) -> u64 {
+        self.read.accepted_cut
+    }
     /// Preparation adds a finite product to the same read. Re-encoding its
     /// immutable base would make every retained formatter pin another copy.
     pub fn candidates_packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
@@ -709,16 +746,7 @@ impl RuntimeNpcRead {
             return Err(failure("NPC recall context is unavailable"));
         };
         let context = RuntimeJson::encode(&read.context(), budget)?;
-        RuntimeJson::join(
-            &[
-                b"{\"self\":",
-                self.read.own_json().as_bytes(),
-                b",\"recall\":",
-                context.bytes(),
-                b"}",
-            ],
-            budget,
-        )
+        RuntimeJson::join(&[b"{\"recall\":", context.bytes(), b"}"], budget)
     }
 
     /// Encode the remaining stand-alone decision facts. Received bodies are
@@ -731,9 +759,7 @@ impl RuntimeNpcRead {
         let candidates = self.candidates_packet(budget)?;
         RuntimeJson::join(
             &[
-                b"{\"self\":",
-                self.read.own_json().as_bytes(),
-                b",\"appraisals\":",
+                b"{\"appraisals\":",
                 appraisals.as_bytes(),
                 b",\"candidates\":",
                 candidates.bytes(),

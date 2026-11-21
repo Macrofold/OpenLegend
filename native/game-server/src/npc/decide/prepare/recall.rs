@@ -45,12 +45,12 @@ pub(in crate::npc::decide) async fn collect(
     let budget = game.host.budget();
     let consumer = consumer(work);
     let mut original = capture_origin(game, work, consumer).await?;
+    let frame = original.take_origin_frame().map_err(packet_failure)?;
     let origin = original.decision_origin();
     let through = origin.accepted_cut;
     if through < work.accepted_cut || origin.actor_id != work.actor {
         return Err(CallFailure::Stale("decision-accepted-read-cut"));
     }
-    let frame = origin.frame(budget).map_err(packet_failure)?;
     if work.source.is_empty() && work.job.job.player_speech_event_id.is_some() {
         return Err(CallFailure::Stale("decision-heard-source"));
     }
@@ -210,7 +210,7 @@ impl Collected {
         }
         let budget = game.host.budget();
         let request = read_request(work, consumer(work), budget)?;
-        let fresh = game
+        let mut fresh = game
             .world
             .capture_npc_recall(game.clone(), request)
             .await
@@ -219,7 +219,7 @@ impl Collected {
             &fresh.recall_packet(budget).map_err(packet_failure)?,
             budget,
         )?;
-        let through = self.through.max(facts.value.own.accepted_cut);
+        let through = self.through.max(fresh.accepted_cut());
         let projection_custody =
             self.projection_custody(&facts, &fresh, ProjectionPurpose::Recall, budget)?;
         let source_data = self.sources.as_ref().map(|data| &data.value);
@@ -234,6 +234,7 @@ impl Collected {
             ProjectionPurpose::Recall,
         )?;
         drop(facts);
+        fresh.release_current_self();
         let rows = &source_data.ok_or(CallFailure::Invalid)?.inventory.personal;
         for &row in &self.optional {
             let source = rows.get(row).ok_or(CallFailure::Invalid)?;
@@ -369,11 +370,14 @@ impl Collected {
                     .and_then(|text| bytes.checked_add(text))
                     .ok_or_else(|| capacity(CapacityError))
             })?;
+        let self_facts = read.current_self().map_err(packet_failure)?;
+        let own = self_facts.prompt().ok_or(CallFailure::Invalid)?;
         let bytes = fresh
             ._custody
             .bytes()
             .checked_add(attention)
             .and_then(|bytes| bytes.checked_add(bodies))
+            .and_then(|bytes| bytes.checked_add(own.projection_bytes()?))
             .and_then(|n| {
                 n.checked_add(
                     self.sources

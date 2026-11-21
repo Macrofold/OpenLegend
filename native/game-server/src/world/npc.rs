@@ -59,7 +59,7 @@ impl HostedWorld {
         request: Bytes,
     ) -> Result<RuntimeNpcRead, WorldError> {
         let _turn = self.enter().await?;
-        self.call(move |session| session.read_npc_direct(&request))
+        self.call(move |session| session.read_npc_origin(&request))
             .await
     }
 

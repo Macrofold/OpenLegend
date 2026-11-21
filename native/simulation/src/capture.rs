@@ -31,6 +31,7 @@ pub(crate) use npc_perspectives::{NpcPerspectiveEntity, NpcPerspectiveSnapshot};
 mod npc_current;
 pub(crate) mod npc_intake;
 mod npc_references;
+pub(crate) mod npc_self;
 mod npc_subject;
 pub(crate) use npc_bindings::{
     NpcActionOrdinal, NpcAliasOrdinal, NpcBindingMaps, NpcBindingPurpose, NpcBindingRead,

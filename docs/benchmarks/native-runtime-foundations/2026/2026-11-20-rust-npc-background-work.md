@@ -153,3 +153,11 @@ On November 21, pinned local debug source `a782ad14f45b8393c8d4eafdb154d335cd3ea
 - A separate held generation returned exact UTF-16 text. Speech applied once and the dependent movement was refused for its invalid world destination. A repeated request recovered the same saved receipt. The older binary refused that exact response before applying it. An initial ordinary companion run failed the cold process's final save with `WriterUnavailable`. A repeat completed. The first failure remains evidence of an intermittent shutdown gap.
 
 These checks qualify the selected path locally. The overlapping-update check at the final source comparison, automatic prompt parity and isolated managed-worker comparisons remain open. No CPU, latency or memory improvement is attributed to these handoffs yet.
+
+The release built from `b8d017d8baf375905cc472f95c02c8bdec441d11` (`c1998bb7b77da05f595ac98c8f72c32c672bd4ef241e767763e442fd155c0fbe`) passed the real held-generation case and the expanded own-facts case. The provider saw the expected private notepad, completed goal and pending intention with their exact text before and after restart. The reply settled once, and the refused dependent move left the successful speech intact. A same-cut diagnostic on the previous slice found byte-identical canonical receipt input through the typed and JSON round trips. The actual saved digest replayed exactly after restart. These are local correctness checks.
+
+### Shutdown during an automatic NPC commit
+
+An advisory lock on an isolated PostgreSQL fixture held the automatic scheduler at the actual `COMMIT`. The player’s accepted movement was visible and still needed the final save. On `a782ad14f45b`, stopping the server dropped the scheduler's transaction future. The writer closed admission as designed for an unknown outcome. The final save failed with `WriterUnavailable` and the process exited with status 1.
+
+The `b8d017d8baf3` release let the in-flight pass finish and register its task before draining the NPC jobs. The ordinary saver stayed available through that drain. The same held-commit check then saved the move, exited successfully and recovered the move on a cold process. Both fixtures cleaned up their owned databases. The diagnostic made no provider requests.
