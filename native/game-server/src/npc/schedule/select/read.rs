@@ -3,6 +3,7 @@
 
 use openlegend_simulation::{
     activity::ResultEvidence, experience::PersonalSourceKind, reception::EventScalar, text::JsText,
+    values::deserialize_present_safe_integer,
 };
 use serde::{Deserialize, Deserializer, Serialize, de::Error as _};
 use serde_json::{Value, value::RawValue};
@@ -53,6 +54,7 @@ struct EvidenceValue {
     id: Option<String>,
     event_id: Option<String>,
     event_type: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_present_safe_integer")]
     sequence: Option<u64>,
     importance: Option<f64>,
     source_id: Option<String>,

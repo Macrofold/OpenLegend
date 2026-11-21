@@ -107,6 +107,7 @@ impl CallFailure {
             Ok(_) => Outcome::Completed,
             Err(error) => match error.cause().1 {
                 Self::Cancelled => Outcome::Cancelled,
+                Self::World(error) if error.is_admission_refusal() => Outcome::Refused,
                 Self::Admission
                 | Self::Existing
                 | Self::Stale(_)

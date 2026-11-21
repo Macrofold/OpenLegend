@@ -748,6 +748,11 @@ impl Director {
                 "The reply could not be processed in time.",
                 "decode-admission-busy",
             ),
+            CallFailure::World(error) if error.is_admission_refusal() => (
+                SpeechReplyStatus::Failed,
+                "The world was too busy to process the reply.",
+                "world-admission",
+            ),
             CallFailure::World(_) | CallFailure::Commit(_) => (
                 SpeechReplyStatus::Failed,
                 "The reply could not be saved.",

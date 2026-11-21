@@ -98,7 +98,7 @@ where
 
 /// Optional count with the same mathematical-integer admission as a required
 /// count; a JSON `1.0` remains usable and null never erases a supplied counter.
-pub(crate) fn deserialize_present_safe_integer<'de, D: Deserializer<'de>>(
+pub fn deserialize_present_safe_integer<'de, D: Deserializer<'de>>(
     deserializer: D,
 ) -> Result<Option<u64>, D::Error> {
     deserialize_safe_integer(deserializer).map(Some)

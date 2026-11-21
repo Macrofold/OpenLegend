@@ -484,6 +484,8 @@ impl Director {
                 work.wake.discovery_at,
             )
             .map_err(RuntimeError::application_refused)?;
+        let (at, accepted_cut, sequence) = (plan.at(), plan.through(), plan.sequence());
+        drop(plan);
         let read = trigger.clone();
         let actor = observed.actor_id.clone();
         let wanted = proposal.references.clone();
@@ -576,7 +578,7 @@ impl Director {
                 .cursor
                 .watermark
                 .unwrap_or(0)
-                .max(plan.sequence())
+                .max(sequence)
                 .min(durably_known),
         );
         store
@@ -591,10 +593,9 @@ impl Director {
             .await
             .map_err(WorldError::Commit)?;
         if proposal.discovery.is_some() {
-            wake.discovery_at = policy.next_discovery_check(plan.at());
+            wake.discovery_at = policy.next_discovery_check(at);
         }
         let controller = self.clone();
-        let accepted_cut = plan.through();
         let automatic = AutomaticTrigger {
             read: trigger,
             evidence: proposal.evidence,

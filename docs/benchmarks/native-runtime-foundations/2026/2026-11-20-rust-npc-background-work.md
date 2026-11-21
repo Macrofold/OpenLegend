@@ -91,6 +91,14 @@ The scheduler's selective reader also matched the prior scheduling digests, prop
 
 A repeated live scheduling check forced the predecessor to change while the real SQL write was waiting. The refused write consumed no attempt. A later update committed one optional decision, and reopening retained its spent interval.
 
+## Saved sequences and private reply context
+
+The local control `c06736491ac5` reopened a valid saved observation with sequence `217.0`, then stopped background scheduling before looking up who heard the speech. A separate control saved the exact player speech and the NPC's private records, then failed the reply before contacting the provider.
+
+- The reviewed build `87965e985ff7` preserved the spellings `208.0` and `208e0` in separate reopened PostgreSQL worlds. Both runs reached the speech lookup, saved a background decision and applied one new conversational reply. A waiting scheduler write also rolled back on a changed predecessor, then saved one attempt on a later update.
+- The actual HTTPS prompts preserved the permitted mind document and distinguished an isolated UTF-16 unit from a literal escape before and after restart. The private thought was absent from all eight provider requests. The reply applied once, command replay returned the existing receipt, and movement and exact stored text survived reopening. In the held withdrawal and cancellation cases, movement saved and the conversation applied no reply. Each local scenario cleaned up its database and processes.
+- The decision packet omits history and validation fields consumed only by native binding or the full bridge reader. The formatter also skips unused nested fields and releases decoded inputs after its outputs own their storage. These checks establish correctness and identify work the server no longer does. The frozen AWS runs retain their own source and performance results.
+
 ## Final ordinary play
 
 Campaign `81dfa3e0-f151-4ef4-99d8-d0e655721b09` verified integrated source `b7929269db8b`, release executable `7b07fa2b152a`, and all 24 sealed files on the standard 16 GiB worker. Type and network checks passed. The player completed 34 saved walks, steering and two controlled saved conversations. Reopening recovered the receipt and produced a usable view in 941 ms. The separate authenticated status check displayed the same four permitted jobs out of 525 before and after reopening and kept the job with missing owner metadata private.

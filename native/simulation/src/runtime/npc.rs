@@ -729,6 +729,49 @@ impl RuntimeNpcRead {
         )
     }
 
+    /// Encode the stand-alone decision formatter's inputs from this accepted
+    /// read. History and validity stay with the native read for binding; the
+    /// formatter owns only the encoded presentation bytes.
+    pub fn decision_packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
+        #[derive(Serialize)]
+        struct Perception<'a> {
+            bodies: &'a [CapturedBodyBinding],
+            cut: CurrentCut<'a>,
+        }
+        #[derive(Serialize)]
+        struct CurrentCut<'a> {
+            current: &'a [Arc<crate::reception::CapturedCurrentFacet>],
+        }
+        let perception = RuntimeJson::encode(
+            &Perception {
+                bodies: &self.read.perception.bodies,
+                cut: CurrentCut {
+                    current: &self.read.perception.evidence.cut().current,
+                },
+            },
+            budget,
+        )?;
+        let appraisals = self
+            .read
+            .appraisals_json()
+            .ok_or_else(|| failure("NPC appraisal capture is unavailable"))?;
+        let candidates = self.candidates_packet(budget)?;
+        RuntimeJson::join(
+            &[
+                b"{\"self\":",
+                self.read.own_json().as_bytes(),
+                b",\"perception\":",
+                perception.bytes(),
+                b",\"appraisals\":",
+                appraisals.as_bytes(),
+                b",\"candidates\":",
+                candidates.bytes(),
+                b"}",
+            ],
+            budget,
+        )
+    }
+
     pub fn packet(&self, budget: &ByteBudget) -> Result<RuntimeJson, RuntimeError> {
         let (perception, _perception_custody) =
             self.read.perception.write_json(budget).map_err(failure)?;

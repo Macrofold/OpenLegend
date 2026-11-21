@@ -1,10 +1,11 @@
 //! Bounded personal recall discovery and disclosure before executable decisions.
 
 use super::{
-    Arc, ByteBudget, ByteReservation, CallFailure, CurrentRead, CurrentServer, PersonalSources,
-    ProjectionPurpose, ReceivedFrame, RuntimeNpcRead, RuntimeNpcResponseTicket, Work,
-    capture_origin, consumer, describe_experience, ensure_running, get_u64, invalid, json,
-    personal_description, personal_evidence, project, project_markers, read_request,
+    Arc, ByteBudget, ByteReservation, CallFailure, CapacityError, CurrentRead, CurrentServer,
+    PersonalSources, ProjectionPurpose, ReceivedFrame, RuntimeNpcRead, RuntimeNpcResponseTicket,
+    Work, capacity, capture_origin, consumer, describe_experience, ensure_running, invalid, json,
+    packet_failure, personal_description, personal_evidence, project, project_markers,
+    read_request, wire_failure,
 };
 use crate::{
     decision_render::{BoundAttention, RenderError},
@@ -49,11 +50,11 @@ pub(in crate::npc::decide) async fn collect(
     if through < work.accepted_cut || origin.actor_id != work.actor {
         return Err(CallFailure::Stale("decision-accepted-read-cut"));
     }
-    let frame = origin.frame(budget).map_err(invalid)?;
+    let frame = origin.frame(budget).map_err(packet_failure)?;
     if work.source.is_empty() && work.job.job.player_speech_event_id.is_some() {
         return Err(CallFailure::Stale("decision-heard-source"));
     }
-    let (ordinals, storage) = origin.attention_ordinals(budget).map_err(invalid)?;
+    let (ordinals, storage) = origin.attention_ordinals(budget).map_err(packet_failure)?;
     let attention = OriginAttention {
         ordinals,
         _storage: storage,
@@ -85,9 +86,9 @@ pub(in crate::npc::decide) async fn collect(
                         .checked_add(reference.revision.len())?
                         .checked_add(768)
                 })
-                .ok_or(CallFailure::Invalid)?,
+                .ok_or_else(|| capacity(CapacityError))?,
         )
-        .map_err(invalid)?;
+        .map_err(capacity)?;
     for (reference, required) in work
         .source
         .iter()
@@ -119,7 +120,7 @@ pub(in crate::npc::decide) async fn collect(
         None
     } else {
         ensure_running(work)?;
-        let select = crate::wire::encode(&json!({"personal":selected.iter().map(|(reference, _)| json!({"reference":reference})).collect::<Vec<_>>(),"receipts":[]}), b"", b"", budget).map_err(invalid)?;
+        let select = crate::wire::encode(&json!({"personal":selected.iter().map(|(reference, _)| json!({"reference":reference})).collect::<Vec<_>>(),"receipts":[]}), b"", b"", budget).map_err(wire_failure)?;
         original = game
             .world
             .prepare_npc(
@@ -130,7 +131,9 @@ pub(in crate::npc::decide) async fn collect(
             )
             .await
             .map_err(|error| CallFailure::World(error).at("original-sources"))?;
-        let product = original.latest_sources_packet(budget).map_err(invalid)?;
+        let product = original
+            .latest_sources_packet(budget)
+            .map_err(packet_failure)?;
         let data = PersonalSources::read(&product, budget)?;
         let inventory = &data.value.inventory;
         for &index in &inventory.unavailable_personal {
@@ -212,8 +215,12 @@ impl Collected {
             .capture_npc_recall(game.clone(), request)
             .await
             .map_err(|error| CallFailure::World(error).at("recall-current-context"))?;
-        let facts = CurrentRead::read(&fresh.recall_packet(budget).map_err(invalid)?, budget)?;
-        let _custody = self.projection_custody(&facts, budget)?;
+        let facts = CurrentRead::read(
+            &fresh.recall_packet(budget).map_err(packet_failure)?,
+            budget,
+        )?;
+        let through = self.through.max(facts.value.own.accepted_cut);
+        let projection_custody = self.projection_custody(&facts, budget)?;
         let source_data = self.sources.as_ref().map(|data| &data.value);
         let mut ranked = Vec::new();
         let (mut binding, context, _, _) = project(
@@ -225,6 +232,7 @@ impl Collected {
             &self.required,
             ProjectionPurpose::Recall,
         )?;
+        drop(facts);
         let rows = &source_data.ok_or(CallFailure::Invalid)?.inventory.personal;
         for &row in &self.optional {
             let source = rows.get(row).ok_or(CallFailure::Invalid)?;
@@ -265,8 +273,12 @@ impl Collected {
         );
         let selection = &mut binding["selection"];
         selection["evidence"] = personal_evidence(source_data, disclosed);
-        let request_bytes = crate::wire::encode(&binding, b"", b"", budget).map_err(invalid)?;
-        let through = self.through.max(get_u64(&facts.value.own["acceptedCut"])?);
+        let request_bytes =
+            crate::wire::encode(&binding, b"", b"", budget).map_err(wire_failure)?;
+        drop(binding);
+        drop(ranked);
+        drop(context);
+        drop(projection_custody);
         let origin = work.automatic.as_ref().map(|trigger| trigger.read.clone());
         let binding = game
             .world
@@ -325,7 +337,7 @@ impl Collected {
             .ordinals
             .len()
             .checked_mul(2048)
-            .ok_or(CallFailure::Invalid)?;
+            .ok_or_else(|| capacity(CapacityError))?;
         let bytes = fresh
             ._custody
             .bytes()
@@ -338,7 +350,7 @@ impl Collected {
                 )
             })
             .and_then(|n| n.checked_add(32_768))
-            .ok_or(CallFailure::Invalid)?;
-        budget.reserve(bytes).map_err(invalid)
+            .ok_or_else(|| capacity(CapacityError))?;
+        budget.reserve(bytes).map_err(capacity)
     }
 }
